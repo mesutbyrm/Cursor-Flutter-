@@ -28,6 +28,19 @@ Canlifal Mobile, [canlifal.com](https://canlifal.com) için Flutter ile hazırla
 - Keşfet, hashtag, beğeni, yorum ve kaydet yüzeyleri
 - Admin metrikleri, kullanıcı/yayın/içerik/coin/şikayet yönetimi panelleri
 
+## Kurulum
+
+Android ve iOS platform klasörleri repoya dahil olduğu için yeniden `flutter create` çalıştırmaya gerek yoktur.
+
+```bash
+flutter pub get
+```
+
+Firebase kullanımı için ortamınıza ait dosyaları ekleyin:
+
+- Android: `android/app/google-services.json`
+- iOS: `ios/Runner/GoogleService-Info.plist`
+
 ## Ortam değişkenleri
 
 Uygulama API ve gerçek zamanlı servis adreslerini `dart-define` ile alır:
