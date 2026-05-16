@@ -1,31 +1,45 @@
 # Canlifal Mobile
 
-Canlifal Mobile, [canlifal.com](https://canlifal.com) için Flutter ile hazırlanmış mobil uygulama kabuğudur. Uygulama siteyi WebView içinde açar ve ana bölümlere yerel alt navigasyonla hızlı erişim sağlar.
+Canlifal Mobile, [canlifal.com](https://canlifal.com) için Flutter ile hazırlanmış profesyonel Android/iOS uygulamasıdır. Koyu tema ağırlıklı sosyal medya arayüzü, canlı yayın, sohbet, fal, profil, premium/FanClub ve admin/moderasyon yüzeylerini tek modüler uygulamada toplar.
 
-## Özellikler
+## Teknoloji
 
-- Canlifal ana sayfasını güvenli `https` WebView içinde açar.
-- Ana Sayfa, Videolar, Canlı, Falcılar ve Fal bölümleri için alt navigasyon sunar.
-- Sayfa yükleme ilerlemesini gösterir.
-- Geri, yenile ve bağlantı hatasında tekrar dene akışlarını destekler.
-- Material 3 tema kullanır.
+- Flutter 3.41.8 / Dart 3.11.5 uyumlu kaynak kodu
+- Riverpod state management
+- GoRouter navigation
+- Dio API client + JWT bearer interceptor
+- WebSocket gerçek zamanlı iletişim katmanı
+- Firebase Authentication ve Firebase Cloud Messaging entegrasyon noktaları
+- Flutter Secure Storage token saklama
+- SharedPreferences tabanlı cache katmanı
+- LiveKit client entegrasyon servisi
+- Android ve iOS platform projeleri
 
-## Kurulum
+## Uygulama alanları
 
-Bu repoda Flutter kaynakları ve proje yapılandırması bulunur. Yeni bir makinede ilk kez çalıştırırken eksik platform klasörlerini Flutter CLI ile üretin:
+- Giriş, kayıt ve şifremi unuttum
+- Profil, avatar, kapak fotoğrafı, takip, rozet, seviye ve coin
+- Premium üyelik ve FanClub aksiyonları
+- Sonsuz kaydırmalı ana akış, hikayeler, trendler ve canlı yayın kartları
+- TikTok benzeri dikey canlı yayın deneyimi
+- Canlı yorum, emoji, hediye ve coin gönderme akışı
+- Grup sohbeti, sesli oda, online kullanıcı ve moderasyon aksiyonları
+- Kahve falı, tarot, astroloji ve canlı danışman ekranları
+- Keşfet, hashtag, beğeni, yorum ve kaydet yüzeyleri
+- Admin metrikleri, kullanıcı/yayın/içerik/coin/şikayet yönetimi panelleri
+
+## Ortam değişkenleri
+
+Uygulama API ve gerçek zamanlı servis adreslerini `dart-define` ile alır:
 
 ```bash
-flutter create --platforms=android,ios --project-name canlifal_mobile .
-flutter pub get
-flutter run
+flutter run \
+  --dart-define=CANLIFAL_API_URL=https://canlifal.com/api \
+  --dart-define=CANLIFAL_WS_URL=wss://canlifal.com/ws \
+  --dart-define=CANLIFAL_LIVEKIT_URL=wss://livekit.canlifal.com
 ```
 
-## Gereksinimler
-
-- Flutter SDK
-- Dart SDK `>=3.8.0 <4.0.0`
-- Android WebView için Android SDK 24 veya üzeri
-- iOS için iOS 13.0 veya üzeri
+Firebase için Android tarafında `android/app/google-services.json`, iOS tarafında `ios/Runner/GoogleService-Info.plist` eklenmelidir.
 
 ## Geliştirme komutları
 
@@ -33,7 +47,10 @@ flutter run
 flutter pub get
 flutter analyze
 flutter test
-flutter run
+flutter build apk --debug
 ```
 
-> Not: Bu cloud ortamında Flutter SDK kurulu olmadığı için `flutter analyze` ve `flutter test` komutları burada çalıştırılamadı.
+## Paket kimliği
+
+- Android applicationId: `com.canlifal.app`
+- iOS display name: `Canlifal`
