@@ -15,6 +15,8 @@ Bu sürüm WebView kullanmaz. Tüm ekranlar Flutter bileşenleriyle çizilir ve 
 - Instagram/TikTok benzeri profil, takipçi istatistikleri, gold üyelik ve jeton cüzdanı.
 - Bildirim ve mesaj giriş noktaları.
 - API bağlantıları için hazır aksiyon noktaları ve placeholder veri yapısı.
+- TikTok benzeri tam ekran canlı yayın modu.
+- Tencent RTC SDK (`tencent_rtc_sdk`) ile UserSig alıp TRTC odasına girme iskeleti.
 
 ## API bağlamak için gerekli bilgiler
 
@@ -61,7 +63,16 @@ flutter build apk --release --dart-define=API_BASE_URL=https://staging.example.c
 - `DELETE /api/video-streams/{streamId}/join?viewerId=...`
 - `POST /api/chat/rooms/{roomId}/gifts`
 
-Tencent RTC için UserSig `POST /api/trtc/usersig` endpointinden `userId + roomId` ile alınacak şekilde `TrtcService` iskeleti eklendi. Gerçek `tencent_rtc_sdk` oda giriş/çıkış, kamera/mikrofon ve rol geçişleri bir sonraki adımda bu servise bağlanacak.
+Tencent RTC için UserSig `POST /api/trtc/usersig` endpointinden `userId + roomId` ile alınır. `TrtcService`, `tencent_rtc_sdk` üzerinden `TRTCCloud.enterRoom`, yayıncı için kamera/mikrofon açma ve izleyici için remote video başlatma akışını hazırlar.
+
+Android build sırasında şu izinler manifest'e eklenmelidir:
+
+- `android.permission.INTERNET`
+- `android.permission.CAMERA`
+- `android.permission.RECORD_AUDIO`
+- `android.permission.MODIFY_AUDIO_SETTINGS`
+- `android.permission.BLUETOOTH`
+- `android.permission.BLUETOOTH_CONNECT`
 
 Tam API dokümanı repoda `docs/FLUTTER_API_DOKUMANTASYONU.md` altında tutulur.
 
