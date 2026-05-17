@@ -1,5 +1,5 @@
 name: canlifal_mobile
-description: Flutter mobile app shell for canlifal.com.
+description: Native Flutter mobile preview for Canlifal.
 publish_to: "none"
 version: 1.0.0+1
 
@@ -9,7 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  webview_flutter: ^4.13.1
 
 dev_dependencies:
   flutter_test:

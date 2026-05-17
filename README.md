@@ -1,13 +1,13 @@
 # Canlifal Mobile
 
-Canlifal Mobile, [canlifal.com](https://canlifal.com) için Flutter ile hazırlanmış mobil uygulama kabuğudur. Uygulama siteyi WebView içinde açar ve ana bölümlere yerel alt navigasyonla hızlı erişim sağlar.
+Canlifal Mobile, Canlifal için Flutter ile hazırlanmış native mobil uygulama önizlemesidir. Bu sürüm WebView yerine Flutter bileşenleriyle çizilen ana sayfa, videolar, canlı yayınlar, falcılar ve fal gönderme ekranlarını içerir.
 
 ## Özellikler
 
-- Canlifal ana sayfasını güvenli `https` WebView içinde açar.
-- Ana Sayfa, Videolar, Canlı, Falcılar ve Fal bölümleri için alt navigasyon sunar.
-- Sayfa yükleme ilerlemesini gösterir.
-- Geri, yenile ve bağlantı hatasında tekrar dene akışlarını destekler.
+- Ana Sayfa, Videolar, Canlı, Falcılar ve Fal bölümleri için native alt navigasyon sunar.
+- Mor/pembe vurgulu Material 3 kart tasarımı kullanır.
+- Popüler falcılar, video kartları, canlı yayın kartı ve fal seçenekleri gösterir.
+- Yenile akışı için kısa yükleme göstergesi ve bilgilendirme mesajı sunar.
 - Material 3 tema kullanır.
 
 ## Kurulum
@@ -24,7 +24,7 @@ flutter run
 
 - Flutter SDK
 - Dart SDK `>=3.8.0 <4.0.0`
-- Android WebView için Android SDK 24 veya üzeri
+- Android SDK
 - iOS için iOS 13.0 veya üzeri
 
 ## Geliştirme komutları
@@ -36,4 +36,4 @@ flutter test
 flutter run
 ```
 
-> Not: Bu cloud ortamında Flutter SDK kurulu olmadığı için `flutter analyze` ve `flutter test` komutları burada çalıştırılamadı.
+> Not: APK üretmek için platform klasörleri `flutter create --platforms=android` komutuyla oluşturulabilir.
