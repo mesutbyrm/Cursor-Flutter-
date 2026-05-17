@@ -139,6 +139,7 @@ class _SocialShellState extends State<SocialShell> {
   int _currentIndex = 0;
   bool _isRefreshing = false;
   bool _showLiveFullscreen = false;
+  AudioRoomModel? _activeRoom;
 
   @override
   void initState() {
@@ -156,6 +157,16 @@ class _SocialShellState extends State<SocialShell> {
         liveFuture: _liveFuture,
         giftFuture: _giftFuture,
         onClose: () => setState(() => _showLiveFullscreen = false),
+        onMessage: _showMessage,
+      );
+    }
+
+    if (_activeRoom != null) {
+      return VoiceRoomPage(
+        repository: _repository,
+        room: _activeRoom!,
+        giftFuture: _giftFuture,
+        onClose: () => setState(() => _activeRoom = null),
         onMessage: _showMessage,
       );
     }
@@ -221,6 +232,7 @@ class _SocialShellState extends State<SocialShell> {
                     giftFuture: _giftFuture,
                     isApiConfigured: _repository.isConfigured,
                     onOpenLive: _openLiveFullscreen,
+                    onOpenRoom: _openVoiceRoom,
                   ),
                 ),
               ),
@@ -235,9 +247,7 @@ class _SocialShellState extends State<SocialShell> {
           child: NavigationBar(
             height: 72,
             selectedIndex: _currentIndex,
-            onDestinationSelected: (int index) {
-              setState(() => _currentIndex = index);
-            },
+            onDestinationSelected: _selectDestination,
             destinations: <Widget>[
               for (final _Destination destination in _destinations)
                 NavigationDestination(
@@ -300,6 +310,26 @@ class _SocialShellState extends State<SocialShell> {
       _showLiveFullscreen = true;
     });
   }
+
+  void _openVoiceRoom(AudioRoomModel room) {
+    setState(() {
+      _currentIndex = 3;
+      _activeRoom = room;
+    });
+  }
+
+  void _selectDestination(int index) {
+    if (index == 2) {
+      _openLiveFullscreen();
+      return;
+    }
+
+    setState(() {
+      _currentIndex = index;
+      _showLiveFullscreen = false;
+      _activeRoom = null;
+    });
+  }
 }
 
 class _PageBody extends StatelessWidget {
@@ -313,6 +343,7 @@ class _PageBody extends StatelessWidget {
     required this.giftFuture,
     required this.isApiConfigured,
     required this.onOpenLive,
+    required this.onOpenRoom,
   });
 
   final int index;
@@ -323,6 +354,7 @@ class _PageBody extends StatelessWidget {
   final Future<List<GiftTypeModel>> giftFuture;
   final bool isApiConfigured;
   final VoidCallback onOpenLive;
+  final ValueChanged<AudioRoomModel> onOpenRoom;
 
   @override
   Widget build(BuildContext context) {
@@ -344,7 +376,12 @@ class _PageBody extends StatelessWidget {
             liveFuture: liveFuture,
             giftFuture: giftFuture,
           ),
-        if (index == 3) RoomsPage(onAction: onAction, roomFuture: roomFuture),
+        if (index == 3)
+          RoomsPage(
+            onAction: onAction,
+            roomFuture: roomFuture,
+            onOpenRoom: onOpenRoom,
+          ),
         if (index == 4) ProfilePage(onAction: onAction),
       ],
     );
@@ -1378,10 +1415,12 @@ class RoomsPage extends StatelessWidget {
     super.key,
     required this.onAction,
     required this.roomFuture,
+    required this.onOpenRoom,
   });
 
   final VoidCallback onAction;
   final Future<List<AudioRoomModel>> roomFuture;
+  final ValueChanged<AudioRoomModel> onOpenRoom;
 
   @override
   Widget build(BuildContext context) {
@@ -1423,7 +1462,7 @@ class RoomsPage extends StatelessWidget {
                           const Color(0xFF10B981),
                           const Color(0xFFF59E0B),
                         ][index % 3],
-                        onAction: onAction,
+                        onAction: () => onOpenRoom(rooms[index]),
                       ),
                       if (index != rooms.length - 1) const SizedBox(height: 12),
                     ],
@@ -1432,6 +1471,432 @@ class RoomsPage extends StatelessWidget {
               },
         ),
       ],
+    );
+  }
+}
+
+class VoiceRoomPage extends StatefulWidget {
+  const VoiceRoomPage({
+    super.key,
+    required this.repository,
+    required this.room,
+    required this.giftFuture,
+    required this.onClose,
+    required this.onMessage,
+  });
+
+  final AppRepository repository;
+  final AudioRoomModel room;
+  final Future<List<GiftTypeModel>> giftFuture;
+  final VoidCallback onClose;
+  final ValueChanged<String> onMessage;
+
+  @override
+  State<VoiceRoomPage> createState() => _VoiceRoomPageState();
+}
+
+class _VoiceRoomPageState extends State<VoiceRoomPage> {
+  bool _joining = true;
+  bool _micEnabled = false;
+  String _status = 'Odaya bağlanıyor...';
+
+  @override
+  void initState() {
+    super.initState();
+    _enterRoom();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF080312),
+      body: SafeArea(
+        child: Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: Row(
+                children: <Widget>[
+                  IconButton.filled(
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: widget.onClose,
+                    icon: const Icon(Icons.arrow_back),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          widget.room.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Text(
+                          _status,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.62),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_joining)
+                    const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.4,
+                        color: Colors.white,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+                children: <Widget>[
+                  _VoiceRoomHero(room: widget.room),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Konuşmacılar',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _SpeakerGrid(room: widget.room),
+                  const SizedBox(height: 20),
+                  _VoiceRoomChatPreview(room: widget.room),
+                  const SizedBox(height: 20),
+                  _VoiceRoomGiftPreview(
+                    giftFuture: widget.giftFuture,
+                    onGiftSelected: _sendGift,
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                8,
+                16,
+                MediaQuery.paddingOf(context).bottom + 12,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: _toggleMic,
+                      icon: Icon(_micEnabled ? Icons.mic : Icons.mic_off),
+                      label: Text(
+                        _micEnabled ? 'Mikrofon açık' : 'Koltuğa otur',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  IconButton.filledTonal(
+                    onPressed: () => _showGiftSheet(context),
+                    icon: const Icon(Icons.card_giftcard),
+                  ),
+                  const SizedBox(width: 10),
+                  IconButton.filledTonal(
+                    onPressed: () =>
+                        widget.onMessage('Oda paylaşımı bağlanacak'),
+                    icon: const Icon(Icons.share),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _enterRoom() async {
+    try {
+      await widget.repository.enterAudioRoom(widget.room.id);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _joining = false;
+        _status = 'Odaya girildi • ${widget.room.listenerCount} dinleyici';
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _joining = false;
+        _status = 'Güvenli önizleme modu • API giriş hatası: $error';
+      });
+    }
+  }
+
+  Future<void> _toggleMic() async {
+    final bool next = !_micEnabled;
+    setState(() {
+      _micEnabled = next;
+      _status = next ? 'Mikrofon açılıyor...' : 'Dinleyici moduna geçiliyor...';
+    });
+    try {
+      await widget.repository.enableRoomVoice(
+        roomId: widget.room.id,
+        enabled: next,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _status = next ? 'Koltuktasın • mikrofon açık' : 'Dinleyici modundasın';
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _status = next
+            ? 'Mikrofon UI açık • API yanıtı bekleniyor'
+            : 'Dinleyici modundasın';
+      });
+      widget.onMessage('Sesli oda API yanıtı alınamadı: $error');
+    }
+  }
+
+  void _showGiftSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return _LiveGiftSheet(
+          giftFuture: widget.giftFuture,
+          onGiftSelected: (GiftTypeModel gift) {
+            Navigator.of(context).pop();
+            _sendGift(gift);
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _sendGift(GiftTypeModel gift) async {
+    try {
+      await widget.repository.sendRoomGift(
+        roomId: widget.room.id,
+        giftTypeId: gift.id,
+        quantity: 1,
+      );
+      widget.onMessage('${gift.name} odaya gönderildi');
+    } catch (error) {
+      widget.onMessage('Odaya hediye gönderilemedi: $error');
+    }
+  }
+}
+
+class _VoiceRoomHero extends StatelessWidget {
+  const _VoiceRoomHero({required this.room});
+
+  final AudioRoomModel room;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _gradientDecoration(const <Color>[
+        Color(0xFF7C3AED),
+        Color(0xFF06B6D4),
+      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.graphic_eq, color: Colors.white, size: 44),
+          const SizedBox(height: 16),
+          Text(
+            room.title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${room.speakerCount} konuşmacı • ${room.listenerCount} dinleyici • Tencent sesli oda hazırlığı',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.82)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SpeakerGrid extends StatelessWidget {
+  const _SpeakerGrid({required this.room});
+
+  final AudioRoomModel room;
+
+  @override
+  Widget build(BuildContext context) {
+    final int speakerCount = room.speakerCount <= 0 ? 8 : room.speakerCount;
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: speakerCount.clamp(4, 12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+      ),
+      itemBuilder: (BuildContext context, int index) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              CircleAvatar(
+                backgroundColor: index == 0
+                    ? const Color(0xFFF59E0B)
+                    : const Color(0xFF7C3AED),
+                child: Icon(
+                  index == 0 ? Icons.workspace_premium : Icons.person,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                index == 0 ? 'Host' : 'Koltuk ${index + 1}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _VoiceRoomChatPreview extends StatelessWidget {
+  const _VoiceRoomChatPreview({required this.room});
+
+  final AudioRoomModel room;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Text(
+            'Oda sohbeti',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Sistem: ${room.title} odasına hoş geldin.',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.72)),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'API: /api/chat/rooms/${room.id}/messages',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.48)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VoiceRoomGiftPreview extends StatelessWidget {
+  const _VoiceRoomGiftPreview({
+    required this.giftFuture,
+    required this.onGiftSelected,
+  });
+
+  final Future<List<GiftTypeModel>> giftFuture;
+  final ValueChanged<GiftTypeModel> onGiftSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<GiftTypeModel>>(
+      future: giftFuture,
+      builder:
+          (BuildContext context, AsyncSnapshot<List<GiftTypeModel>> snapshot) {
+            final List<GiftTypeModel> gifts = snapshot.hasError
+                ? DemoData.giftTypes
+                : snapshot.data ?? DemoData.giftTypes;
+            return Row(
+              children: <Widget>[
+                for (final GiftTypeModel gift in gifts.take(3)) ...<Widget>[
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => onGiftSelected(gift),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          children: <Widget>[
+                            Text(
+                              gift.icon.isEmpty ? '🎁' : gift.icon,
+                              style: const TextStyle(fontSize: 26),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              gift.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            Text(
+                              '${gift.price} jeton',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.6),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (gift != gifts.take(3).last) const SizedBox(width: 10),
+                ],
+              ],
+            );
+          },
     );
   }
 }

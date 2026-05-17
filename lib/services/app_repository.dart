@@ -205,6 +205,20 @@ class AppRepository {
       body: <String, Object>{'giftTypeId': giftTypeId, 'quantity': quantity},
     );
   }
+
+  Future<void> enterAudioRoom(String roomId) async {
+    await _apiClient.post('/api/chat/rooms/$roomId/presence');
+  }
+
+  Future<void> enableRoomVoice({
+    required String roomId,
+    required bool enabled,
+  }) async {
+    await _apiClient.post(
+      '/api/chat/rooms/$roomId/voice',
+      body: <String, bool>{'enabled': enabled},
+    );
+  }
 }
 
 class DemoData {
