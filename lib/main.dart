@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:tencent_rtc_sdk/trtc_cloud_video_view.dart';
 
 import 'models/app_models.dart';
 import 'services/app_repository.dart';
@@ -567,10 +566,9 @@ class _FullScreenLivePageState extends State<FullScreenLivePage> {
 
   ActiveTrtcSession? _activeSession;
   String? _joinedStreamId;
-  int? _videoViewId;
   int _currentPage = 0;
   bool _connectingTrtc = false;
-  String _trtcStatus = 'TRTC hazırlanıyor';
+  String _trtcStatus = 'TRTC UserSig hazırlanıyor';
 
   @override
   void dispose() {
@@ -610,14 +608,7 @@ class _FullScreenLivePageState extends State<FullScreenLivePage> {
 
               return Stack(
                 children: <Widget>[
-                  Positioned.fill(
-                    child: TRTCCloudVideoView(
-                      onViewCreated: (int viewId) {
-                        _videoViewId = viewId;
-                        _joinTrtcIfReady(activeStream, force: true);
-                      },
-                    ),
-                  ),
+                  const Positioned.fill(child: _SafeLiveVideoPlaceholder()),
                   Positioned.fill(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
@@ -677,7 +668,7 @@ class _FullScreenLivePageState extends State<FullScreenLivePage> {
     LiveStreamModel stream, {
     bool force = false,
   }) async {
-    if (_videoViewId == null || _connectingTrtc) {
+    if (_connectingTrtc) {
       return;
     }
     if (!force && _joinedStreamId == stream.id) {
@@ -697,7 +688,6 @@ class _FullScreenLivePageState extends State<FullScreenLivePage> {
       _activeSession = await _trtcService.joinLiveRoom(
         stream: stream,
         userId: _viewerUserId,
-        videoViewId: _videoViewId!,
         onStatus: (String message) {
           if (mounted) {
             setState(() => _trtcStatus = message);
@@ -710,7 +700,7 @@ class _FullScreenLivePageState extends State<FullScreenLivePage> {
       setState(() {
         _joinedStreamId = stream.id;
         _trtcStatus =
-            'TRTC bağlı • SDKAppID ${_activeSession!.credentials.sdkAppId}';
+            'UserSig hazır • SDKAppID ${_activeSession!.credentials.sdkAppId}';
       });
     } catch (error) {
       if (!mounted) {
@@ -835,6 +825,61 @@ class _LiveBackdrop extends StatelessWidget {
                 fontSize: 54,
                 fontWeight: FontWeight.w900,
                 height: 0.95,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SafeLiveVideoPlaceholder extends StatelessWidget {
+  const _SafeLiveVideoPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            Color(0xFF090012),
+            Color(0xFF2E1065),
+            Color(0xFFBE185D),
+          ],
+        ),
+      ),
+      child: Stack(
+        children: <Widget>[
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.18,
+              child: GridView.count(
+                crossAxisCount: 5,
+                physics: const NeverScrollableScrollPhysics(),
+                children: List<Widget>.generate(
+                  40,
+                  (int index) =>
+                      const Icon(Icons.auto_awesome, color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+          Center(
+            child: Container(
+              width: 170,
+              height: 170,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.08),
+                border: Border.all(color: Colors.white24),
+              ),
+              child: const Icon(
+                Icons.videocam_rounded,
+                color: Colors.white,
+                size: 72,
               ),
             ),
           ),
