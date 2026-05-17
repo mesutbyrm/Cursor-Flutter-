@@ -22,6 +22,7 @@ class _VivaLiveAppState extends State<VivaLiveApp> {
   final AppRepository _repository = AppRepository();
   bool _showSplash = true;
   bool _isAuthenticated = false;
+  AppUser? _currentUser;
 
   @override
   void initState() {
@@ -51,11 +52,23 @@ class _VivaLiveAppState extends State<VivaLiveApp> {
         child: _showSplash
             ? const SplashScreen()
             : _isAuthenticated
-            ? const SocialShell()
+            ? SocialShell(
+                repository: _repository,
+                currentUser: _currentUser,
+                onLogout: () {
+                  setState(() {
+                    _isAuthenticated = false;
+                    _currentUser = null;
+                  });
+                },
+              )
             : AuthScreen(
                 repository: _repository,
-                onAuthenticated: () {
-                  setState(() => _isAuthenticated = true);
+                onAuthenticated: (AppUser? user) {
+                  setState(() {
+                    _isAuthenticated = true;
+                    _currentUser = user;
+                  });
                 },
               ),
       ),
@@ -134,7 +147,7 @@ class AuthScreen extends StatefulWidget {
   });
 
   final AppRepository repository;
-  final VoidCallback onAuthenticated;
+  final ValueChanged<AppUser?> onAuthenticated;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -304,7 +317,9 @@ class _AuthScreenState extends State<AuthScreen> {
                           color: Colors.white.withValues(alpha: 0.44),
                         ),
                       ),
-                      onPressed: _isLoading ? null : widget.onAuthenticated,
+                      onPressed: _isLoading
+                          ? null
+                          : () => widget.onAuthenticated(_guestUser),
                       icon: const Icon(Icons.explore),
                       label: const Text('Misafir olarak devam et'),
                     ),
@@ -348,7 +363,7 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => _isLoading = true);
     try {
       if (_isRegister) {
-        await widget.repository.register(
+        final AuthSession session = await widget.repository.register(
           name: _nameController.text.trim(),
           username: _usernameController.text.trim(),
           email: email,
@@ -359,13 +374,20 @@ class _AuthScreenState extends State<AuthScreen> {
               ? null
               : _referralController.text.trim(),
         );
+        if (!mounted) {
+          return;
+        }
+        widget.onAuthenticated(session.user);
       } else {
-        await widget.repository.login(email: email, password: password);
+        final AuthSession session = await widget.repository.login(
+          email: email,
+          password: password,
+        );
+        if (!mounted) {
+          return;
+        }
+        widget.onAuthenticated(session.user);
       }
-      if (!mounted) {
-        return;
-      }
-      widget.onAuthenticated();
     } catch (error) {
       _showMessage('Giriş yapılamadı: $error');
     } finally {
@@ -381,6 +403,18 @@ class _AuthScreenState extends State<AuthScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
+
+const AppUser _guestUser = AppUser(
+  id: 'guest',
+  name: 'Misafir Kullanıcı',
+  username: 'misafir',
+  avatarUrl: '',
+  followers: 0,
+  following: 0,
+  likes: 0,
+  isGold: false,
+  coinBalance: 0,
+);
 
 class _RegisterFields extends StatelessWidget {
   const _RegisterFields({
@@ -525,8 +559,48 @@ class _AuthTextField extends StatelessWidget {
   }
 }
 
+class _DarkTextField extends StatelessWidget {
+  const _DarkTextField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.68)),
+        prefixIcon: Icon(icon, color: Colors.white70),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.10),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+}
+
 class SocialShell extends StatefulWidget {
-  const SocialShell({super.key});
+  const SocialShell({
+    super.key,
+    required this.repository,
+    required this.currentUser,
+    required this.onLogout,
+  });
+
+  final AppRepository repository;
+  final AppUser? currentUser;
+  final VoidCallback onLogout;
 
   @override
   State<SocialShell> createState() => _SocialShellState();
@@ -541,7 +615,6 @@ class _SocialShellState extends State<SocialShell> {
     _Destination('Profil', Icons.person_outline, Icons.person),
   ];
 
-  final AppRepository _repository = AppRepository();
   late Future<List<FeedPostModel>> _feedFuture;
   late Future<List<LiveStreamModel>> _liveFuture;
   late Future<List<AudioRoomModel>> _roomFuture;
@@ -563,7 +636,8 @@ class _SocialShellState extends State<SocialShell> {
 
     if (_showLiveFullscreen) {
       return FullScreenLivePage(
-        repository: _repository,
+        repository: widget.repository,
+        currentUser: widget.currentUser,
         liveFuture: _liveFuture,
         giftFuture: _giftFuture,
         onClose: () => setState(() => _showLiveFullscreen = false),
@@ -573,7 +647,7 @@ class _SocialShellState extends State<SocialShell> {
 
     if (_activeRoom != null) {
       return VoiceRoomPage(
-        repository: _repository,
+        repository: widget.repository,
         room: _activeRoom!,
         giftFuture: _giftFuture,
         onClose: () => setState(() => _activeRoom = null),
@@ -600,7 +674,7 @@ class _SocialShellState extends State<SocialShell> {
                   style: TextStyle(fontWeight: FontWeight.w900),
                 ),
                 Text(
-                  current.label,
+                  '${current.label} • ${widget.currentUser?.name ?? 'Misafir'}',
                   style: Theme.of(context).textTheme.labelMedium,
                 ),
               ],
@@ -608,6 +682,7 @@ class _SocialShellState extends State<SocialShell> {
           ],
         ),
         actions: <Widget>[
+          _UserBadge(user: widget.currentUser),
           _NotificationButton(count: 9, onTap: _showApiNotice),
           IconButton(
             tooltip: 'Mesajlar',
@@ -640,9 +715,11 @@ class _SocialShellState extends State<SocialShell> {
                     liveFuture: _liveFuture,
                     roomFuture: _roomFuture,
                     giftFuture: _giftFuture,
-                    isApiConfigured: _repository.isConfigured,
+                    isApiConfigured: widget.repository.isConfigured,
                     onOpenLive: _openLiveFullscreen,
                     onOpenRoom: _openVoiceRoom,
+                    currentUser: widget.currentUser,
+                    onLogout: widget.onLogout,
                   ),
                 ),
               ),
@@ -685,7 +762,7 @@ class _SocialShellState extends State<SocialShell> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _repository.isConfigured
+          widget.repository.isConfigured
               ? 'API verileri yenilendi'
               : 'Demo veriler yenilendi. Canlı veri için API_BASE_URL gerekli.',
         ),
@@ -695,7 +772,7 @@ class _SocialShellState extends State<SocialShell> {
 
   void _showApiNotice() {
     _showMessage(
-      _repository.isConfigured
+      widget.repository.isConfigured
           ? 'Bu aksiyon API endpointine bağlanmaya hazır.'
           : 'API_BASE_URL verilince bu alan canlı veriye bağlanacak.',
     );
@@ -708,10 +785,10 @@ class _SocialShellState extends State<SocialShell> {
   }
 
   void _loadData() {
-    _feedFuture = _repository.fetchFeed();
-    _liveFuture = _repository.fetchLiveStreams();
-    _roomFuture = _repository.fetchAudioRooms();
-    _giftFuture = _repository.fetchGiftTypes();
+    _feedFuture = widget.repository.fetchFeed();
+    _liveFuture = widget.repository.fetchLiveStreams();
+    _roomFuture = widget.repository.fetchAudioRooms();
+    _giftFuture = widget.repository.fetchGiftTypes();
   }
 
   void _openLiveFullscreen() {
@@ -754,6 +831,8 @@ class _PageBody extends StatelessWidget {
     required this.isApiConfigured,
     required this.onOpenLive,
     required this.onOpenRoom,
+    required this.currentUser,
+    required this.onLogout,
   });
 
   final int index;
@@ -765,6 +844,8 @@ class _PageBody extends StatelessWidget {
   final bool isApiConfigured;
   final VoidCallback onOpenLive;
   final ValueChanged<AudioRoomModel> onOpenRoom;
+  final AppUser? currentUser;
+  final VoidCallback onLogout;
 
   @override
   Widget build(BuildContext context) {
@@ -792,7 +873,12 @@ class _PageBody extends StatelessWidget {
             roomFuture: roomFuture,
             onOpenRoom: onOpenRoom,
           ),
-        if (index == 4) ProfilePage(onAction: onAction),
+        if (index == 4)
+          ProfilePage(
+            onAction: onAction,
+            currentUser: currentUser,
+            onLogout: onLogout,
+          ),
       ],
     );
   }
@@ -988,6 +1074,7 @@ class FullScreenLivePage extends StatefulWidget {
   const FullScreenLivePage({
     super.key,
     required this.repository,
+    required this.currentUser,
     required this.liveFuture,
     required this.giftFuture,
     required this.onClose,
@@ -995,6 +1082,7 @@ class FullScreenLivePage extends StatefulWidget {
   });
 
   final AppRepository repository;
+  final AppUser? currentUser;
   final Future<List<LiveStreamModel>> liveFuture;
   final Future<List<GiftTypeModel>> giftFuture;
   final VoidCallback onClose;
@@ -1009,9 +1097,11 @@ class _FullScreenLivePageState extends State<FullScreenLivePage> {
   final TrtcService _trtcService = TrtcService();
   final TextEditingController _commentController = TextEditingController();
   late final String _viewerUserId =
+      widget.currentUser?.id ??
       'viewer_${DateTime.now().millisecondsSinceEpoch}';
 
   ActiveTrtcSession? _activeSession;
+  final List<LiveStreamModel> _createdStreams = <LiveStreamModel>[];
   String? _joinedStreamId;
   int _currentPage = 0;
   bool _connectingTrtc = false;
@@ -1040,12 +1130,19 @@ class _FullScreenLivePageState extends State<FullScreenLivePage> {
                 return const _FullScreenLoading();
               }
 
-              final List<LiveStreamModel> streams = snapshot.hasError
+              final List<LiveStreamModel> apiStreams = snapshot.hasError
                   ? DemoData.liveStreams
                   : snapshot.data ?? DemoData.liveStreams;
+              final List<LiveStreamModel> streams = <LiveStreamModel>[
+                ..._createdStreams,
+                ...apiStreams,
+              ];
 
               if (streams.isEmpty) {
-                return _EmptyLiveFullscreen(onClose: widget.onClose);
+                return _EmptyLiveFullscreen(
+                  onClose: widget.onClose,
+                  onCreate: _showCreateLiveSheet,
+                );
               }
 
               final LiveStreamModel activeStream = streams[_currentPage];
@@ -1090,6 +1187,7 @@ class _FullScreenLivePageState extends State<FullScreenLivePage> {
                     status: _trtcStatus,
                     connecting: _connectingTrtc,
                     onClose: widget.onClose,
+                    onCreate: _showCreateLiveSheet,
                   ),
                   _LiveActionRail(
                     stream: activeStream,
@@ -1206,6 +1304,138 @@ class _FullScreenLivePageState extends State<FullScreenLivePage> {
             } catch (error) {
               widget.onMessage('Hediye gönderilemedi: $error');
             }
+          },
+        );
+      },
+    );
+  }
+
+  void _showCreateLiveSheet() {
+    final TextEditingController titleController = TextEditingController(
+      text: 'Yeni canlı yayın',
+    );
+    final TextEditingController descriptionController = TextEditingController(
+      text: 'Canlı sohbet ve hediye yayını',
+    );
+    bool creating = false;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setSheetState) {
+            return Container(
+              padding: EdgeInsets.fromLTRB(
+                18,
+                18,
+                18,
+                MediaQuery.viewInsetsOf(context).bottom +
+                    MediaQuery.paddingOf(context).bottom +
+                    18,
+              ),
+              decoration: const BoxDecoration(
+                color: Color(0xFF130A20),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  const Text(
+                    'Canlı yayın aç',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  _DarkTextField(
+                    controller: titleController,
+                    label: 'Yayın başlığı',
+                    icon: Icons.live_tv,
+                  ),
+                  const SizedBox(height: 12),
+                  _DarkTextField(
+                    controller: descriptionController,
+                    label: 'Açıklama',
+                    icon: Icons.notes,
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: creating
+                        ? null
+                        : () async {
+                            setSheetState(() => creating = true);
+                            try {
+                              final LiveStreamModel stream = await widget
+                                  .repository
+                                  .createLiveStream(
+                                    title: titleController.text.trim().isEmpty
+                                        ? 'Canlı yayın'
+                                        : titleController.text.trim(),
+                                    description: descriptionController.text
+                                        .trim(),
+                                  );
+                              if (!mounted) {
+                                return;
+                              }
+                              setState(() {
+                                _createdStreams.insert(0, stream);
+                                _currentPage = 0;
+                                _joinedStreamId = null;
+                              });
+                              if (!context.mounted) {
+                                return;
+                              }
+                              Navigator.of(context).pop();
+                              widget.onMessage('Yayın oluşturuldu');
+                            } catch (error) {
+                              final LiveStreamModel
+                              demoStream = LiveStreamModel(
+                                id: 'local-live-${DateTime.now().millisecondsSinceEpoch}',
+                                title: titleController.text.trim().isEmpty
+                                    ? 'Canlı yayın'
+                                    : titleController.text.trim(),
+                                hostName: widget.currentUser?.name ?? 'Sen',
+                                viewerCount: 1,
+                                roomId:
+                                    'local_${DateTime.now().millisecondsSinceEpoch}',
+                                coverUrl: '',
+                              );
+                              if (!mounted) {
+                                return;
+                              }
+                              setState(() {
+                                _createdStreams.insert(0, demoStream);
+                                _currentPage = 0;
+                                _joinedStreamId = null;
+                              });
+                              if (!context.mounted) {
+                                return;
+                              }
+                              Navigator.of(context).pop();
+                              widget.onMessage(
+                                'API yayın açma yanıtı alınamadı; yerel önizleme açıldı: $error',
+                              );
+                            } finally {
+                              setSheetState(() => creating = false);
+                            }
+                          },
+                    icon: creating
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.videocam),
+                    label: Text(creating ? 'Açılıyor...' : 'Yayını başlat'),
+                  ),
+                ],
+              ),
+            );
           },
         );
       },
@@ -1341,11 +1571,13 @@ class _LiveTopBar extends StatelessWidget {
     required this.status,
     required this.connecting,
     required this.onClose,
+    required this.onCreate,
   });
 
   final String status;
   final bool connecting;
   final VoidCallback onClose;
+  final VoidCallback onCreate;
 
   @override
   Widget build(BuildContext context) {
@@ -1404,6 +1636,17 @@ class _LiveTopBar extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFEC4899),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            onPressed: onCreate,
+            icon: const Icon(Icons.videocam, size: 18),
+            label: const Text('Yayın aç'),
           ),
         ],
       ),
@@ -1760,9 +2003,10 @@ class _FullScreenLoading extends StatelessWidget {
 }
 
 class _EmptyLiveFullscreen extends StatelessWidget {
-  const _EmptyLiveFullscreen({required this.onClose});
+  const _EmptyLiveFullscreen({required this.onClose, required this.onCreate});
 
   final VoidCallback onClose;
+  final VoidCallback onCreate;
 
   @override
   Widget build(BuildContext context) {
@@ -1785,7 +2029,13 @@ class _EmptyLiveFullscreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 18),
-              FilledButton(onPressed: onClose, child: const Text('Geri dön')),
+              FilledButton.icon(
+                onPressed: onCreate,
+                icon: const Icon(Icons.videocam),
+                label: const Text('Yayın aç'),
+              ),
+              const SizedBox(height: 10),
+              TextButton(onPressed: onClose, child: const Text('Geri dön')),
             ],
           ),
         ),
@@ -2312,15 +2562,26 @@ class _VoiceRoomGiftPreview extends StatelessWidget {
 }
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key, required this.onAction});
+  const ProfilePage({
+    super.key,
+    required this.onAction,
+    required this.currentUser,
+    required this.onLogout,
+  });
 
   final VoidCallback onAction;
+  final AppUser? currentUser;
+  final VoidCallback onLogout;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        _ProfileHeader(onAction: onAction),
+        _ProfileHeader(
+          onAction: onAction,
+          user: currentUser,
+          onLogout: onLogout,
+        ),
         const SizedBox(height: 14),
         Row(
           children: <Widget>[
@@ -3112,9 +3373,15 @@ class _AudioRoomCard extends StatelessWidget {
 }
 
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({required this.onAction});
+  const _ProfileHeader({
+    required this.onAction,
+    required this.user,
+    required this.onLogout,
+  });
 
   final VoidCallback onAction;
+  final AppUser? user;
+  final VoidCallback onLogout;
 
   @override
   Widget build(BuildContext context) {
@@ -3128,18 +3395,27 @@ class _ProfileHeader extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 44,
                 backgroundColor: Colors.white,
-                child: Icon(Icons.person, size: 46, color: Color(0xFF7C3AED)),
+                backgroundImage: (user?.avatarUrl.isNotEmpty ?? false)
+                    ? NetworkImage(user!.avatarUrl)
+                    : null,
+                child: (user?.avatarUrl.isNotEmpty ?? false)
+                    ? null
+                    : const Icon(
+                        Icons.person,
+                        size: 46,
+                        color: Color(0xFF7C3AED),
+                      ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Text(
-                      'Kullanıcı Adı',
+                    Text(
+                      user?.name ?? 'Misafir Kullanıcı',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 22,
@@ -3147,13 +3423,18 @@ class _ProfileHeader extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '@kullanici • Gold üye',
+                      '@${user?.username ?? 'misafir'} • ${user?.isGold == true ? 'Gold üye' : 'Standart'}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.78),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const _LightPill(Icons.verified, 'Doğrulanmış profil'),
+                    _LightPill(
+                      user?.isGold == true
+                          ? Icons.workspace_premium
+                          : Icons.verified,
+                      user?.isGold == true ? 'Gold profil' : 'Giriş yapıldı',
+                    ),
                   ],
                 ),
               ),
@@ -3162,10 +3443,10 @@ class _ProfileHeader extends StatelessWidget {
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: const <Widget>[
-              _ProfileStat('12.8K', 'Takipçi'),
-              _ProfileStat('842', 'Takip'),
-              _ProfileStat('1.4M', 'Beğeni'),
+            children: <Widget>[
+              _ProfileStat(_compactCount(user?.followers ?? 0), 'Takipçi'),
+              _ProfileStat(_compactCount(user?.following ?? 0), 'Takip'),
+              _ProfileStat(_compactCount(user?.likes ?? 0), 'Beğeni'),
             ],
           ),
           const SizedBox(height: 18),
@@ -3185,9 +3466,9 @@ class _ProfileHeader extends StatelessWidget {
                     foregroundColor: Colors.white,
                     side: const BorderSide(color: Colors.white70),
                   ),
-                  onPressed: onAction,
-                  icon: const Icon(Icons.edit),
-                  label: const Text('Profili düzenle'),
+                  onPressed: onLogout,
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Çıkış'),
                 ),
               ),
             ],
@@ -3384,6 +3665,32 @@ class _ErrorCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _UserBadge extends StatelessWidget {
+  const _UserBadge({required this.user});
+
+  final AppUser? user;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 4),
+      child: Chip(
+        visualDensity: VisualDensity.compact,
+        avatar: CircleAvatar(
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          backgroundImage: (user?.avatarUrl.isNotEmpty ?? false)
+              ? NetworkImage(user!.avatarUrl)
+              : null,
+          child: (user?.avatarUrl.isNotEmpty ?? false)
+              ? null
+              : Text((user?.name ?? 'M').characters.first),
+        ),
+        label: Text(user?.name ?? 'Misafir', overflow: TextOverflow.ellipsis),
       ),
     );
   }
