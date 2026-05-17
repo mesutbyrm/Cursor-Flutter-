@@ -1260,7 +1260,9 @@ class _GiftButton extends StatelessWidget {
         ),
         child: Column(
           children: <Widget>[
-            Icon(Icons.card_giftcard, color: color),
+            gift.icon.isEmpty
+                ? Icon(Icons.card_giftcard, color: color)
+                : Text(gift.icon, style: const TextStyle(fontSize: 24)),
             const SizedBox(height: 6),
             Text(
               gift.name,

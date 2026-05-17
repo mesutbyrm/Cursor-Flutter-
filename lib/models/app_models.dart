@@ -50,12 +50,18 @@ class AppUser {
         fallback: 'Kullanıcı',
       ),
       username: _asString(json['username'], fallback: '@kullanici'),
-      avatarUrl: _asString(json['avatarUrl'] ?? json['avatar']),
+      avatarUrl: _asString(
+        json['image'] ?? json['avatarUrl'] ?? json['avatar'],
+      ),
       followers: _asInt(json['followers'] ?? json['followersCount']),
       following: _asInt(json['following'] ?? json['followingCount']),
       likes: _asInt(json['likes'] ?? json['likesCount']),
-      isGold: _asBool(json['isGold'] ?? json['gold']),
-      coinBalance: _asInt(json['coinBalance'] ?? json['coins']),
+      isGold:
+          _asBool(json['isGold'] ?? json['gold']) ||
+          _asString(json['membership']) == 'gold',
+      coinBalance: _asInt(
+        json['jetonBalance'] ?? json['coinBalance'] ?? json['coins'],
+      ),
     );
   }
 }
@@ -81,6 +87,7 @@ class FeedPostModel {
 
   factory FeedPostModel.fromJson(Map<String, dynamic> json) {
     final Map<String, dynamic> user = _asMap(json['user'] ?? json['author']);
+    final Map<String, dynamic> count = _asMap(json['_count']);
     return FeedPostModel(
       id: _asString(json['id'] ?? json['_id']),
       authorName: _asString(
@@ -95,8 +102,10 @@ class FeedPostModel {
       mediaUrl: _asString(
         json['mediaUrl'] ?? json['videoUrl'] ?? json['imageUrl'],
       ),
-      likes: _asInt(json['likes'] ?? json['likeCount']),
-      comments: _asInt(json['comments'] ?? json['commentCount']),
+      likes: _asInt(count['likes'] ?? json['likeCount'] ?? json['likes']),
+      comments: _asInt(
+        count['comments'] ?? json['commentCount'] ?? json['comments'],
+      ),
     );
   }
 }
@@ -154,8 +163,13 @@ class AudioRoomModel {
   factory AudioRoomModel.fromJson(Map<String, dynamic> json) {
     return AudioRoomModel(
       id: _asString(json['id'] ?? json['_id'] ?? json['roomId']),
-      title: _asString(json['title'] ?? json['name'], fallback: 'Sesli oda'),
-      listenerCount: _asInt(json['listenerCount'] ?? json['listeners']),
+      title: _asString(
+        json['title'] ?? json['nameTr'] ?? json['name'],
+        fallback: 'Sesli oda',
+      ),
+      listenerCount: _asInt(
+        json['listenerCount'] ?? json['onlineCount'] ?? json['listeners'],
+      ),
       speakerCount: _asInt(json['speakerCount'] ?? json['speakers']),
       roomId: _asString(json['roomId'] ?? json['trtcRoomId']),
       isGoldOnly: _asBool(json['isGoldOnly'] ?? json['goldOnly']),
@@ -169,6 +183,7 @@ class GiftTypeModel {
     required this.name,
     required this.price,
     required this.iconUrl,
+    required this.icon,
     required this.animationUrl,
     required this.soundUrl,
   });
@@ -177,6 +192,7 @@ class GiftTypeModel {
   final String name;
   final int price;
   final String iconUrl;
+  final String icon;
   final String animationUrl;
   final String soundUrl;
 
@@ -186,6 +202,7 @@ class GiftTypeModel {
       name: _asString(json['name'], fallback: 'Hediye'),
       price: _asInt(json['price'] ?? json['coinPrice'] ?? json['coins']),
       iconUrl: _asString(json['iconUrl'] ?? json['imageUrl']),
+      icon: _asString(json['icon']),
       animationUrl: _asString(json['animationUrl']),
       soundUrl: _asString(json['soundUrl']),
     );
@@ -198,14 +215,12 @@ class TrtcCredentials {
     required this.userId,
     required this.userSig,
     required this.roomId,
-    required this.role,
   });
 
   final int sdkAppId;
   final String userId;
   final String userSig;
   final String roomId;
-  final String role;
 
   factory TrtcCredentials.fromJson(Map<String, dynamic> json) {
     final Map<String, dynamic> data = _asMap(json['data'], fallback: json);
@@ -214,20 +229,34 @@ class TrtcCredentials {
       userId: _asString(data['userId']),
       userSig: _asString(data['userSig']),
       roomId: _asString(data['roomId']),
-      role: _asString(data['role']),
     );
   }
 }
 
 List<Map<String, dynamic>> jsonList(dynamic value) {
   final dynamic data = value is Map<String, dynamic>
-      ? value['data'] ?? value['items'] ?? value['results']
+      ? value['data'] ??
+            value['items'] ??
+            value['results'] ??
+            value['posts'] ??
+            value['rooms'] ??
+            value['notifications'] ??
+            value['stories'] ??
+            value['trends']
       : value;
   if (data is List) {
     return data.whereType<Map<String, dynamic>>().toList();
   }
   if (data is Map<String, dynamic>) {
-    final dynamic nested = data['items'] ?? data['results'] ?? data['data'];
+    final dynamic nested =
+        data['items'] ??
+        data['results'] ??
+        data['data'] ??
+        data['posts'] ??
+        data['rooms'] ??
+        data['notifications'] ??
+        data['stories'] ??
+        data['trends'];
     if (nested is List) {
       return nested.whereType<Map<String, dynamic>>().toList();
     }

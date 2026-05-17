@@ -73,7 +73,10 @@ class AppRepository {
     if (!isConfigured) {
       return DemoData.feedPosts;
     }
-    final dynamic json = await _apiClient.get('/api/social/feed');
+    final dynamic json = await _apiClient.get(
+      '/api/social/posts',
+      query: <String, String>{'page': '1', 'limit': '20'},
+    );
     return jsonList(json).map(FeedPostModel.fromJson).toList();
   }
 
@@ -89,7 +92,10 @@ class AppRepository {
     if (!isConfigured) {
       return DemoData.audioRooms;
     }
-    final dynamic json = await _apiClient.get('/api/audio-rooms');
+    final dynamic json = await _apiClient.get(
+      '/api/chat/rooms',
+      query: <String, String>{'withCounts': 'true'},
+    );
     return jsonList(json).map(AudioRoomModel.fromJson).toList();
   }
 
@@ -102,12 +108,12 @@ class AppRepository {
   }
 
   Future<TrtcCredentials> fetchTrtcUserSig({
+    required String userId,
     required String roomId,
-    required String role,
   }) async {
     final dynamic json = await _apiClient.post(
       '/api/trtc/usersig',
-      body: <String, String>{'roomId': roomId, 'role': role},
+      body: <String, String>{'userId': userId, 'roomId': roomId},
     );
     return TrtcCredentials.fromJson(json as Map<String, dynamic>);
   }
@@ -124,17 +130,65 @@ class AppRepository {
   }
 
   Future<void> sendProfileGift({
-    required String userId,
+    required String recipientUsername,
+    required String giftTypeId,
+  }) async {
+    await _apiClient.post(
+      '/api/gifts/send',
+      body: <String, String>{
+        'recipientUsername': recipientUsername,
+        'giftTypeId': giftTypeId,
+        'type': 'gift',
+      },
+    );
+  }
+
+  Future<AppUser> fetchProfile() async {
+    final dynamic json = await _apiClient.get('/api/user/profile');
+    return AppUser.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<Map<String, dynamic>> fetchBalance() async {
+    final dynamic json = await _apiClient.get('/api/jeton');
+    return json is Map<String, dynamic> ? json : <String, dynamic>{};
+  }
+
+  Future<LiveStreamModel> createLiveStream({
+    required String title,
+    required String description,
+  }) async {
+    final dynamic json = await _apiClient.post(
+      '/api/video-streams',
+      body: <String, String>{'title': title, 'description': description},
+    );
+    return LiveStreamModel.fromJson(json as Map<String, dynamic>);
+  }
+
+  Future<Map<String, dynamic>> joinLiveStream(String streamId) async {
+    final dynamic json = await _apiClient.post(
+      '/api/video-streams/$streamId/join',
+    );
+    return json is Map<String, dynamic> ? json : <String, dynamic>{};
+  }
+
+  Future<void> leaveLiveStream({
+    required String streamId,
+    required String viewerId,
+  }) async {
+    await _apiClient.delete(
+      '/api/video-streams/$streamId/join',
+      query: <String, String>{'viewerId': viewerId},
+    );
+  }
+
+  Future<void> sendRoomGift({
+    required String roomId,
     required String giftTypeId,
     required int quantity,
   }) async {
     await _apiClient.post(
-      '/api/gifts/send',
-      body: <String, Object>{
-        'recipientUserId': userId,
-        'giftTypeId': giftTypeId,
-        'quantity': quantity,
-      },
+      '/api/chat/rooms/$roomId/gifts',
+      body: <String, Object>{'giftTypeId': giftTypeId, 'quantity': quantity},
     );
   }
 }
@@ -217,6 +271,7 @@ class DemoData {
       name: 'Kalp',
       price: 10,
       iconUrl: '',
+      icon: '🌹',
       animationUrl: '',
       soundUrl: '',
     ),
@@ -225,6 +280,7 @@ class DemoData {
       name: 'Roket',
       price: 250,
       iconUrl: '',
+      icon: '🚀',
       animationUrl: '',
       soundUrl: '',
     ),
@@ -233,6 +289,7 @@ class DemoData {
       name: 'Taç',
       price: 500,
       iconUrl: '',
+      icon: '👑',
       animationUrl: '',
       soundUrl: '',
     ),

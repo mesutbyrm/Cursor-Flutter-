@@ -3,7 +3,7 @@ class ApiConfig {
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: '',
+    defaultValue: 'https://canlifal.com',
   );
 
   static const Duration requestTimeout = Duration(seconds: 20);

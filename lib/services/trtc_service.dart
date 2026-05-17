@@ -17,12 +17,14 @@ enum TrtcRole {
 
 class TrtcJoinRequest {
   const TrtcJoinRequest({
+    required this.userId,
     required this.roomId,
     required this.role,
     this.enableCamera = false,
     this.enableMicrophone = false,
   });
 
+  final String userId;
   final String roomId;
   final TrtcRole role;
   final bool enableCamera;
@@ -37,8 +39,8 @@ class TrtcService {
 
   Future<TrtcCredentials> prepareJoin(TrtcJoinRequest request) {
     return _repository.fetchTrtcUserSig(
+      userId: request.userId,
       roomId: request.roomId,
-      role: request.role.apiValue,
     );
   }
 }

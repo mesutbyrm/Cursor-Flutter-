@@ -35,11 +35,11 @@ Uygulamayı gerçek veriye bağlamak için şu bilgileri gönderin:
 
 ## Canlı API ile build alma
 
-Uygulama `API_BASE_URL` Dart define değeri verilirse gerçek endpointlere istek atar. Verilmezse demo verilerle çalışır.
+Uygulama varsayılan olarak `https://canlifal.com` API adresine istek atar. Farklı ortam için `API_BASE_URL` Dart define değeri verilebilir.
 
 ```bash
-flutter run --dart-define=API_BASE_URL=https://example.com
-flutter build apk --release --dart-define=API_BASE_URL=https://example.com
+flutter run --dart-define=API_BASE_URL=https://staging.example.com
+flutter build apk --release --dart-define=API_BASE_URL=https://staging.example.com
 ```
 
 Şu endpointler için servis katmanı hazırdır:
@@ -48,14 +48,22 @@ flutter build apk --release --dart-define=API_BASE_URL=https://example.com
 - `POST /api/auth/mobile-register`
 - `POST /api/auth/mobile-refresh`
 - `POST /api/trtc/usersig`
-- `GET /api/social/feed`
+- `GET /api/social/posts?page=1&limit=20`
 - `GET /api/video-streams`
-- `GET /api/audio-rooms`
+- `GET /api/chat/rooms?withCounts=true`
 - `GET /api/gifts/types`
 - `POST /api/gifts/send`
 - `POST /api/video-streams/{streamId}/gifts`
+- `GET /api/user/profile`
+- `GET /api/jeton`
+- `POST /api/video-streams`
+- `POST /api/video-streams/{streamId}/join`
+- `DELETE /api/video-streams/{streamId}/join?viewerId=...`
+- `POST /api/chat/rooms/{roomId}/gifts`
 
-Tencent RTC için UserSig backend'den alınacak şekilde `TrtcService` iskeleti eklendi. Gerçek Tencent Flutter SDK/plugin bilgisi netleşince `enterRoom`, `exitRoom`, kamera/mikrofon ve rol geçişleri bu servise bağlanacak.
+Tencent RTC için UserSig `POST /api/trtc/usersig` endpointinden `userId + roomId` ile alınacak şekilde `TrtcService` iskeleti eklendi. Gerçek `tencent_rtc_sdk` oda giriş/çıkış, kamera/mikrofon ve rol geçişleri bir sonraki adımda bu servise bağlanacak.
+
+Tam API dokümanı repoda `docs/FLUTTER_API_DOKUMANTASYONU.md` altında tutulur.
 
 ## Kurulum
 
