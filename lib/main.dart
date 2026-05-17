@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:tencent_rtc_sdk/trtc_cloud_video_view.dart';
 
 import 'models/app_models.dart';
 import 'services/app_repository.dart';
+import 'services/trtc_service.dart';
 
 const String kAppName = 'VivaLive';
 const String kLogoAsset = 'assets/brand/vivalive_logo.png';
@@ -137,6 +139,7 @@ class _SocialShellState extends State<SocialShell> {
   late Future<List<GiftTypeModel>> _giftFuture;
   int _currentIndex = 0;
   bool _isRefreshing = false;
+  bool _showLiveFullscreen = false;
 
   @override
   void initState() {
@@ -147,6 +150,16 @@ class _SocialShellState extends State<SocialShell> {
   @override
   Widget build(BuildContext context) {
     final _Destination current = _destinations[_currentIndex];
+
+    if (_showLiveFullscreen) {
+      return FullScreenLivePage(
+        repository: _repository,
+        liveFuture: _liveFuture,
+        giftFuture: _giftFuture,
+        onClose: () => setState(() => _showLiveFullscreen = false),
+        onMessage: _showMessage,
+      );
+    }
 
     return Scaffold(
       extendBody: true,
@@ -208,6 +221,7 @@ class _SocialShellState extends State<SocialShell> {
                     roomFuture: _roomFuture,
                     giftFuture: _giftFuture,
                     isApiConfigured: _repository.isConfigured,
+                    onOpenLive: _openLiveFullscreen,
                   ),
                 ),
               ),
@@ -261,15 +275,17 @@ class _SocialShellState extends State<SocialShell> {
   }
 
   void _showApiNotice() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _repository.isConfigured
-              ? 'Bu aksiyon API endpointine bağlanmaya hazır.'
-              : 'API_BASE_URL verilince bu alan canlı veriye bağlanacak.',
-        ),
-      ),
+    _showMessage(
+      _repository.isConfigured
+          ? 'Bu aksiyon API endpointine bağlanmaya hazır.'
+          : 'API_BASE_URL verilince bu alan canlı veriye bağlanacak.',
     );
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _loadData() {
@@ -277,6 +293,13 @@ class _SocialShellState extends State<SocialShell> {
     _liveFuture = _repository.fetchLiveStreams();
     _roomFuture = _repository.fetchAudioRooms();
     _giftFuture = _repository.fetchGiftTypes();
+  }
+
+  void _openLiveFullscreen() {
+    setState(() {
+      _currentIndex = 2;
+      _showLiveFullscreen = true;
+    });
   }
 }
 
@@ -290,6 +313,7 @@ class _PageBody extends StatelessWidget {
     required this.roomFuture,
     required this.giftFuture,
     required this.isApiConfigured,
+    required this.onOpenLive,
   });
 
   final int index;
@@ -299,6 +323,7 @@ class _PageBody extends StatelessWidget {
   final Future<List<AudioRoomModel>> roomFuture;
   final Future<List<GiftTypeModel>> giftFuture;
   final bool isApiConfigured;
+  final VoidCallback onOpenLive;
 
   @override
   Widget build(BuildContext context) {
@@ -316,6 +341,7 @@ class _PageBody extends StatelessWidget {
         if (index == 2)
           LivePage(
             onAction: onAction,
+            onOpenLive: onOpenLive,
             liveFuture: liveFuture,
             giftFuture: giftFuture,
           ),
@@ -446,11 +472,13 @@ class LivePage extends StatelessWidget {
   const LivePage({
     super.key,
     required this.onAction,
+    required this.onOpenLive,
     required this.liveFuture,
     required this.giftFuture,
   });
 
   final VoidCallback onAction;
+  final VoidCallback onOpenLive;
   final Future<List<LiveStreamModel>> liveFuture;
   final Future<List<GiftTypeModel>> giftFuture;
 
@@ -459,7 +487,7 @@ class LivePage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _LiveStage(onAction: onAction),
+        _LiveStage(onAction: onOpenLive),
         const SizedBox(height: 16),
         const _SectionTitle('Canlı yayınlar'),
         const SizedBox(height: 10),
@@ -494,7 +522,7 @@ class LivePage extends StatelessWidget {
                         color: index.isEven
                             ? const Color(0xFFEC4899)
                             : const Color(0xFF7C3AED),
-                        onAction: onAction,
+                        onAction: onOpenLive,
                       ),
                       if (index != streams.length - 1)
                         const SizedBox(height: 10),
@@ -506,6 +534,796 @@ class LivePage extends StatelessWidget {
         const SizedBox(height: 16),
         _GiftPanel(onAction: onAction, giftFuture: giftFuture),
       ],
+    );
+  }
+}
+
+class FullScreenLivePage extends StatefulWidget {
+  const FullScreenLivePage({
+    super.key,
+    required this.repository,
+    required this.liveFuture,
+    required this.giftFuture,
+    required this.onClose,
+    required this.onMessage,
+  });
+
+  final AppRepository repository;
+  final Future<List<LiveStreamModel>> liveFuture;
+  final Future<List<GiftTypeModel>> giftFuture;
+  final VoidCallback onClose;
+  final ValueChanged<String> onMessage;
+
+  @override
+  State<FullScreenLivePage> createState() => _FullScreenLivePageState();
+}
+
+class _FullScreenLivePageState extends State<FullScreenLivePage> {
+  final PageController _pageController = PageController();
+  final TrtcService _trtcService = TrtcService();
+  final TextEditingController _commentController = TextEditingController();
+  late final String _viewerUserId =
+      'viewer_${DateTime.now().millisecondsSinceEpoch}';
+
+  ActiveTrtcSession? _activeSession;
+  String? _joinedStreamId;
+  int? _videoViewId;
+  int _currentPage = 0;
+  bool _connectingTrtc = false;
+  String _trtcStatus = 'TRTC hazırlanıyor';
+
+  @override
+  void dispose() {
+    _trtcService.leave(_activeSession);
+    _pageController.dispose();
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: FutureBuilder<List<LiveStreamModel>>(
+        future: widget.liveFuture,
+        builder:
+            (
+              BuildContext context,
+              AsyncSnapshot<List<LiveStreamModel>> snapshot,
+            ) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const _FullScreenLoading();
+              }
+
+              final List<LiveStreamModel> streams = snapshot.hasError
+                  ? DemoData.liveStreams
+                  : snapshot.data ?? DemoData.liveStreams;
+
+              if (streams.isEmpty) {
+                return _EmptyLiveFullscreen(onClose: widget.onClose);
+              }
+
+              final LiveStreamModel activeStream = streams[_currentPage];
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _joinTrtcIfReady(activeStream);
+              });
+
+              return Stack(
+                children: <Widget>[
+                  Positioned.fill(
+                    child: TRTCCloudVideoView(
+                      onViewCreated: (int viewId) {
+                        _videoViewId = viewId;
+                        _joinTrtcIfReady(activeStream, force: true);
+                      },
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: <Color>[
+                            Colors.black.withValues(alpha: 0.10),
+                            Colors.black.withValues(alpha: 0.18),
+                            Colors.black.withValues(alpha: 0.78),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  PageView.builder(
+                    controller: _pageController,
+                    scrollDirection: Axis.vertical,
+                    itemCount: streams.length,
+                    onPageChanged: (int index) {
+                      setState(() => _currentPage = index);
+                      _joinTrtcIfReady(streams[index], force: true);
+                    },
+                    itemBuilder: (BuildContext context, int index) {
+                      return _LiveBackdrop(
+                        stream: streams[index],
+                        index: index,
+                      );
+                    },
+                  ),
+                  _LiveTopBar(
+                    status: _trtcStatus,
+                    connecting: _connectingTrtc,
+                    onClose: widget.onClose,
+                  ),
+                  _LiveActionRail(
+                    stream: activeStream,
+                    onLike: () => _like(activeStream),
+                    onGift: () => _showGiftSheet(activeStream),
+                    onShare: () =>
+                        widget.onMessage('Paylaşım ekranı bağlanacak'),
+                  ),
+                  _LiveBottomPanel(
+                    stream: activeStream,
+                    controller: _commentController,
+                    onSendComment: () => _sendComment(activeStream),
+                    onGift: () => _showGiftSheet(activeStream),
+                  ),
+                ],
+              );
+            },
+      ),
+    );
+  }
+
+  Future<void> _joinTrtcIfReady(
+    LiveStreamModel stream, {
+    bool force = false,
+  }) async {
+    if (_videoViewId == null || _connectingTrtc) {
+      return;
+    }
+    if (!force && _joinedStreamId == stream.id) {
+      return;
+    }
+    if (_joinedStreamId == stream.id) {
+      return;
+    }
+
+    setState(() {
+      _connectingTrtc = true;
+      _trtcStatus = 'TRTC UserSig alınıyor';
+    });
+
+    try {
+      await _trtcService.leave(_activeSession);
+      _activeSession = await _trtcService.joinLiveRoom(
+        stream: stream,
+        userId: _viewerUserId,
+        videoViewId: _videoViewId!,
+        onStatus: (String message) {
+          if (mounted) {
+            setState(() => _trtcStatus = message);
+          }
+        },
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _joinedStreamId = stream.id;
+        _trtcStatus =
+            'TRTC bağlı • SDKAppID ${_activeSession!.credentials.sdkAppId}';
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _trtcStatus = 'TRTC beklemede: $error');
+    } finally {
+      if (mounted) {
+        setState(() => _connectingTrtc = false);
+      }
+    }
+  }
+
+  Future<void> _like(LiveStreamModel stream) async {
+    try {
+      await widget.repository.likeLiveStream(stream.id);
+      widget.onMessage('Kalp gönderildi');
+    } catch (error) {
+      widget.onMessage('Beğeni gönderilemedi: $error');
+    }
+  }
+
+  Future<void> _sendComment(LiveStreamModel stream) async {
+    final String content = _commentController.text.trim();
+    if (content.isEmpty) {
+      return;
+    }
+    _commentController.clear();
+    try {
+      await widget.repository.sendStreamComment(
+        streamId: stream.id,
+        content: content,
+      );
+      widget.onMessage('Yorum gönderildi');
+    } catch (error) {
+      widget.onMessage('Yorum gönderilemedi: $error');
+    }
+  }
+
+  void _showGiftSheet(LiveStreamModel stream) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return _LiveGiftSheet(
+          giftFuture: widget.giftFuture,
+          onGiftSelected: (GiftTypeModel gift) async {
+            Navigator.of(context).pop();
+            try {
+              await widget.repository.sendStreamGift(
+                streamId: stream.id,
+                giftTypeId: gift.id,
+                quantity: 1,
+              );
+              widget.onMessage('${gift.name} hediyesi gönderildi');
+            } catch (error) {
+              widget.onMessage('Hediye gönderilemedi: $error');
+            }
+          },
+        );
+      },
+    );
+  }
+}
+
+class _LiveBackdrop extends StatelessWidget {
+  const _LiveBackdrop({required this.stream, required this.index});
+
+  final LiveStreamModel stream;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Color> colors = <Color>[
+      const Color(0xFF14001F),
+      index.isEven ? const Color(0xFF7C3AED) : const Color(0xFF0EA5E9),
+      index.isEven ? const Color(0xFFEC4899) : const Color(0xFF10B981),
+    ];
+    return IgnorePointer(
+      child: Stack(
+        children: <Widget>[
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.72,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: const Alignment(-0.25, -0.35),
+                    radius: 1.05,
+                    colors: colors,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 140,
+            left: 24,
+            child: _BlurCircle(color: colors.last, size: 160),
+          ),
+          Positioned(
+            right: -30,
+            bottom: 180,
+            child: _BlurCircle(color: colors[1], size: 230),
+          ),
+          Center(
+            child: Icon(
+              Icons.live_tv,
+              color: Colors.white.withValues(alpha: 0.16),
+              size: 180,
+            ),
+          ),
+          Positioned(
+            top: 120,
+            left: 20,
+            right: 20,
+            child: Text(
+              stream.title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.08),
+                fontSize: 54,
+                fontWeight: FontWeight.w900,
+                height: 0.95,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LiveTopBar extends StatelessWidget {
+  const _LiveTopBar({
+    required this.status,
+    required this.connecting,
+    required this.onClose,
+  });
+
+  final String status;
+  final bool connecting;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: 12,
+      right: 12,
+      top: MediaQuery.paddingOf(context).top + 8,
+      child: Row(
+        children: <Widget>[
+          IconButton.filled(
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.black.withValues(alpha: 0.34),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: onClose,
+            icon: const Icon(Icons.keyboard_arrow_down),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.34),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Row(
+                children: <Widget>[
+                  if (connecting)
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  else
+                    const Icon(
+                      Icons.sensors,
+                      color: Colors.greenAccent,
+                      size: 16,
+                    ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      status,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LiveActionRail extends StatelessWidget {
+  const _LiveActionRail({
+    required this.stream,
+    required this.onLike,
+    required this.onGift,
+    required this.onShare,
+  });
+
+  final LiveStreamModel stream;
+  final VoidCallback onLike;
+  final VoidCallback onGift;
+  final VoidCallback onShare;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      right: 12,
+      bottom: 118,
+      child: Column(
+        children: <Widget>[
+          CircleAvatar(
+            radius: 25,
+            backgroundColor: Colors.white,
+            child: Text(
+              stream.hostName.characters.first,
+              style: const TextStyle(fontWeight: FontWeight.w900),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _LiveRoundAction(
+            icon: Icons.favorite,
+            label: _compactCount(stream.viewerCount),
+            color: const Color(0xFFEF4444),
+            onTap: onLike,
+          ),
+          const SizedBox(height: 14),
+          _LiveRoundAction(
+            icon: Icons.chat_bubble,
+            label: 'Chat',
+            color: const Color(0xFF38BDF8),
+            onTap: () {},
+          ),
+          const SizedBox(height: 14),
+          _LiveRoundAction(
+            icon: Icons.card_giftcard,
+            label: 'Hediye',
+            color: const Color(0xFFF59E0B),
+            onTap: onGift,
+          ),
+          const SizedBox(height: 14),
+          _LiveRoundAction(
+            icon: Icons.share,
+            label: 'Paylaş',
+            color: Colors.white,
+            onTap: onShare,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LiveRoundAction extends StatelessWidget {
+  const _LiveRoundAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Column(
+        children: <Widget>[
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.32),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            ),
+            child: Icon(icon, color: color),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LiveBottomPanel extends StatelessWidget {
+  const _LiveBottomPanel({
+    required this.stream,
+    required this.controller,
+    required this.onSendComment,
+    required this.onGift,
+  });
+
+  final LiveStreamModel stream;
+  final TextEditingController controller;
+  final VoidCallback onSendComment;
+  final VoidCallback onGift;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: 16,
+      right: 82,
+      bottom: MediaQuery.paddingOf(context).bottom + 14,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Text(
+                  'CANLI',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${_compactCount(stream.viewerCount)} izleyici',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            stream.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 23,
+              fontWeight: FontWeight.w900,
+              height: 1.08,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '@${stream.hostName} • Tencent RTC canlı yayın',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.76)),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Yorum yaz...',
+                    hintStyle: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.62),
+                    ),
+                    filled: true,
+                    fillColor: Colors.black.withValues(alpha: 0.34),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(999),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onSubmitted: (_) => onSendComment(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filled(
+                onPressed: onSendComment,
+                icon: const Icon(Icons.send),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filledTonal(
+                onPressed: onGift,
+                icon: const Icon(Icons.card_giftcard),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LiveGiftSheet extends StatelessWidget {
+  const _LiveGiftSheet({
+    required this.giftFuture,
+    required this.onGiftSelected,
+  });
+
+  final Future<List<GiftTypeModel>> giftFuture;
+  final ValueChanged<GiftTypeModel> onGiftSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        MediaQuery.paddingOf(context).bottom + 16,
+      ),
+      decoration: const BoxDecoration(
+        color: Color(0xFF130A20),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: FutureBuilder<List<GiftTypeModel>>(
+        future: giftFuture,
+        builder:
+            (
+              BuildContext context,
+              AsyncSnapshot<List<GiftTypeModel>> snapshot,
+            ) {
+              final List<GiftTypeModel> gifts = snapshot.hasError
+                  ? DemoData.giftTypes
+                  : snapshot.data ?? DemoData.giftTypes;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      const Text(
+                        'Canlı hediyeler',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'API: /api/gifts/types',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.55),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    itemCount: gifts.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: 0.92,
+                        ),
+                    itemBuilder: (BuildContext context, int index) {
+                      final GiftTypeModel gift = gifts[index];
+                      return InkWell(
+                        onTap: () => onGiftSelected(gift),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.08),
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Text(
+                                gift.icon.isEmpty ? '🎁' : gift.icon,
+                                style: const TextStyle(fontSize: 30),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                gift.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${gift.price} jeton',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.68),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
+      ),
+    );
+  }
+}
+
+class _FullScreenLoading extends StatelessWidget {
+  const _FullScreenLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: Colors.black,
+      child: Center(child: CircularProgressIndicator(color: Colors.white)),
+    );
+  }
+}
+
+class _EmptyLiveFullscreen extends StatelessWidget {
+  const _EmptyLiveFullscreen({required this.onClose});
+
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: Colors.black,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Icon(Icons.live_tv, color: Colors.white, size: 52),
+              const SizedBox(height: 14),
+              const Text(
+                'Şu an canlı yayın yok',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 18),
+              FilledButton(onPressed: onClose, child: const Text('Geri dön')),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BlurCircle extends StatelessWidget {
+  const _BlurCircle({required this.color, required this.size});
+
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.34),
+        shape: BoxShape.circle,
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: color.withValues(alpha: 0.35),
+            blurRadius: 80,
+            spreadRadius: 24,
+          ),
+        ],
+      ),
     );
   }
 }

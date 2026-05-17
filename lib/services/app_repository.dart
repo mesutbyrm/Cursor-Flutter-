@@ -129,6 +129,20 @@ class AppRepository {
     );
   }
 
+  Future<void> likeLiveStream(String streamId) async {
+    await _apiClient.post('/api/video-streams/$streamId/like');
+  }
+
+  Future<void> sendStreamComment({
+    required String streamId,
+    required String content,
+  }) async {
+    await _apiClient.post(
+      '/api/video-streams/$streamId/comments',
+      body: <String, String>{'content': content},
+    );
+  }
+
   Future<void> sendProfileGift({
     required String recipientUsername,
     required String giftTypeId,
