@@ -8,6 +8,7 @@ Canlifal Mobile, [canlifal.com](https://canlifal.com) için Flutter ile hazırla
 - Riverpod state management
 - GoRouter navigation
 - Dio API client + JWT bearer interceptor
+- Canlifal public API entegrasyonları (`trend-videos`, `fortune-tellers`, `chat/rooms`, `video-streams`, `public-stats`)
 - WebSocket gerçek zamanlı iletişim katmanı
 - Firebase Authentication ve Firebase Cloud Messaging entegrasyon noktaları
 - Flutter Secure Storage token saklama
@@ -53,6 +54,8 @@ flutter run \
 ```
 
 Firebase için Android tarafında `android/app/google-services.json`, iOS tarafında `ios/Runner/GoogleService-Info.plist` eklenmelidir.
+
+> Not: Uygulama public Canlifal endpointlerinden gerçek veri okur. Giriş, yayın açma, coin satın alma ve LiveKit yayın tokeni gibi yetkili işlemler için canlifal.com backend oturum/token yanıtlarının mobil istemciye açılması gerekir.
 
 ## Geliştirme komutları
 

@@ -111,12 +111,19 @@ final adminMetricsProvider = FutureProvider<List<AdminMetric>>((Ref ref) async {
   return repository.getAdminMetrics();
 });
 
+final explorePostsProvider = FutureProvider<List<ContentPost>>((Ref ref) async {
+  final CanlifalRepository repository = await ref.watch(
+    canlifalRepositoryProvider.future,
+  );
+  return repository.getExplorePosts();
+});
+
 class AuthController extends ChangeNotifier {
   AuthController(this._repository);
 
   final AuthRepository _repository;
 
-  AppUser? _user = CanlifalSeed.currentUser;
+  AppUser? _user;
   bool _isBusy = false;
   String? _errorMessage;
 

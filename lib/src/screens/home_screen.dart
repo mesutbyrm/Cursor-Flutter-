@@ -183,7 +183,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     setState(() {
       _posts.addAll(pageItems);
       _page += 1;
-      _hasMore = _page < 8;
+      _hasMore = pageItems.isNotEmpty && _page < 8;
       _isLoading = false;
     });
   }

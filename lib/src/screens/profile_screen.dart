@@ -11,8 +11,10 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AppUser user =
-        ref.watch(authControllerProvider).user ?? CanlifalSeed.currentUser;
+    final AppUser? user = ref.watch(authControllerProvider).user;
+    if (user == null) {
+      return const Center(child: Text('Profil için giriş yapmanız gerekiyor.'));
+    }
     return ResponsiveMaxWidth(
       child: CustomScrollView(
         slivers: <Widget>[
@@ -88,39 +90,16 @@ class ProfileScreen extends ConsumerWidget {
               subtitle: 'Paylaşım, beğeni, yorum ve kaydet sistemi',
             ),
           ),
-          SliverList.builder(
-            itemCount: CanlifalSeed.feedPage(1).length,
-            itemBuilder: (BuildContext context, int index) {
-              final ContentPost post = CanlifalSeed.feedPage(1)[index];
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-                child: GlassCard(
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: CachedNetworkImage(
-                        imageUrl: post.mediaUrl,
-                        width: 58,
-                        height: 58,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    title: Text(
-                      post.caption,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: Text(
-                      '${compactNumber(post.likes)} beğeni · ${compactNumber(post.comments)} yorum',
-                    ),
-                    trailing: Icon(
-                      post.isSaved ? Icons.bookmark : Icons.bookmark_border,
-                    ),
-                  ),
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: GlassCard(
+                child: Text(
+                  'Profil gönderileri Canlifal kullanıcı API’sinden döndüğünde burada listelenir.',
+                  textAlign: TextAlign.center,
                 ),
-              );
-            },
+              ),
+            ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 110)),
         ],

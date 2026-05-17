@@ -32,23 +32,36 @@ class LiveScreen extends ConsumerWidget {
                 subtitle: 'Yayını aç, izle, sohbete katıl ve hediye gönder',
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
-              sliver: SliverGrid.builder(
-                itemCount: items.length,
-                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: MediaQuery.sizeOf(context).width > 720
-                      ? 380
-                      : 520,
-                  mainAxisExtent: 360,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
+            if (items.isEmpty)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(
+                    child: Text(
+                      'Canlifal üzerinde şu anda aktif canlı yayın yok.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
-                itemBuilder: (BuildContext context, int index) {
-                  return _LiveRoomCard(stream: items[index]);
-                },
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+                sliver: SliverGrid.builder(
+                  itemCount: items.length,
+                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: MediaQuery.sizeOf(context).width > 720
+                        ? 380
+                        : 520,
+                    mainAxisExtent: 360,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemBuilder: (BuildContext context, int index) {
+                    return _LiveRoomCard(stream: items[index]);
+                  },
+                ),
               ),
-            ),
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -783,7 +796,7 @@ class _GiftDock extends StatelessWidget {
       onSelected: onGift,
       itemBuilder: (BuildContext context) {
         return <PopupMenuEntry<GiftItem>>[
-          for (final GiftItem gift in CanlifalSeed.gifts)
+          for (final GiftItem gift in CanlifalAssets.gifts)
             PopupMenuItem<GiftItem>(
               value: gift,
               child: Text(

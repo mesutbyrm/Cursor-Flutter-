@@ -14,14 +14,12 @@ class AuthScreen extends ConsumerStatefulWidget {
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
   final TextEditingController _emailController = TextEditingController(
-    text: 'demo@canlifal.com',
+    text: '',
   );
   final TextEditingController _passwordController = TextEditingController(
-    text: 'Canlifal123',
+    text: '',
   );
-  final TextEditingController _nameController = TextEditingController(
-    text: 'Canlifal Üyesi',
-  );
+  final TextEditingController _nameController = TextEditingController(text: '');
   bool _isRegister = false;
 
   @override

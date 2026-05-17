@@ -130,7 +130,7 @@ class ApiClient {
   final SecureTokenStorage _tokenStorage;
 
   Future<Map<String, dynamic>> getJson(String path) async {
-    final Response<dynamic> response = await dio.get<dynamic>(path);
+    final Response<dynamic> response = await dio.get<dynamic>(_apiPath(path));
     return _asMap(response.data);
   }
 
@@ -139,7 +139,7 @@ class ApiClient {
     Map<String, dynamic>? body,
   }) async {
     final Response<dynamic> response = await dio.post<dynamic>(
-      path,
+      _apiPath(path),
       data: body,
     );
     return _asMap(response.data);
@@ -150,6 +150,16 @@ class ApiClient {
       return data;
     }
     return <String, dynamic>{};
+  }
+
+  String _apiPath(String path) {
+    if (path.startsWith('/api/')) {
+      return path.substring('/api/'.length);
+    }
+    if (path.startsWith('/')) {
+      return path.substring(1);
+    }
+    return path;
   }
 }
 
@@ -181,8 +191,8 @@ class AuthRepository {
       );
       await _persistTokensIfPresent(data);
       return AppUser.fromJson(data['user'] as Map<String, dynamic>? ?? data);
-    } on Object {
-      return CanlifalSeed.currentUser;
+    } on Object catch (error) {
+      throw Exception('Giriş yapılamadı: $error');
     }
   }
 
@@ -207,8 +217,8 @@ class AuthRepository {
       );
       await _persistTokensIfPresent(data);
       return AppUser.fromJson(data['user'] as Map<String, dynamic>? ?? data);
-    } on Object {
-      return CanlifalSeed.currentUser.copyWith(level: 1, coins: 500);
+    } on Object catch (error) {
+      throw Exception('Kayıt oluşturulamadı: $error');
     }
   }
 
@@ -263,29 +273,67 @@ class CanlifalRepository {
   Future<List<ContentPost>> getFeedPage(int page) async {
     try {
       final Map<String, dynamic> data = await _apiClient.getJson(
-        '/feed?page=$page',
+        '/trend-videos?page=$page',
       );
       await _cacheService.writeJson('feed.$page', data);
       final Object? items = data['items'];
       if (items is List<dynamic>) {
-        return CanlifalSeed.feedPage(page);
+        return items
+            .whereType<Map<String, dynamic>>()
+            .map(ContentPost.fromTrendVideoJson)
+            .toList();
+      }
+      final Object? videos = data['videos'];
+      if (videos is List<dynamic>) {
+        return videos
+            .whereType<Map<String, dynamic>>()
+            .map(ContentPost.fromTrendVideoJson)
+            .toList();
       }
     } on Object {
-      _cacheService.readJson('feed.$page');
+      final Map<String, dynamic>? cached = _cacheService.readJson('feed.$page');
+      final Object? videos = cached?['videos'];
+      if (videos is List<dynamic>) {
+        return videos
+            .whereType<Map<String, dynamic>>()
+            .map(ContentPost.fromTrendVideoJson)
+            .toList();
+      }
     }
-    return CanlifalSeed.feedPage(page);
+    return <ContentPost>[];
   }
 
-  Future<List<StoryItem>> getStories() async => CanlifalSeed.stories;
+  Future<List<StoryItem>> getStories() async {
+    final List<FortuneService> tellers = await getFortuneServices();
+    return tellers
+        .where((FortuneService service) => service.isLive)
+        .map(
+          (FortuneService service) => StoryItem(
+            id: service.id,
+            title: service.advisor.displayName,
+            imageUrl: service.advisor.avatarUrl,
+            owner: service.advisor,
+            isLive: service.isLive,
+          ),
+        )
+        .toList();
+  }
 
   Future<List<LiveStream>> getLiveStreams() async {
     try {
-      final Map<String, dynamic> data = await _apiClient.getJson(
-        '/live-streams',
+      final Response<dynamic> response = await _apiClient.dio.get<dynamic>(
+        'video-streams',
       );
-      await _cacheService.writeJson('live-streams', data);
-      final Object? items = data['items'];
-      if (items is List<dynamic>) {
+      final Object? data = response.data;
+      final List<dynamic> items = data is List<dynamic>
+          ? data
+          : data is Map<String, dynamic> && data['items'] is List<dynamic>
+          ? data['items'] as List<dynamic>
+          : const <dynamic>[];
+      await _cacheService.writeJson('live-streams', <String, Object>{
+        'items': items,
+      });
+      if (items.isNotEmpty) {
         final List<LiveStream> streams = items
             .whereType<Map<String, dynamic>>()
             .map(LiveStream.fromJson)
@@ -297,7 +345,7 @@ class CanlifalRepository {
     } on Object {
       _cacheService.readJson('live-streams');
     }
-    return CanlifalSeed.liveStreams;
+    return <LiveStream>[];
   }
 
   Future<LiveStream?> getLiveStream(String id) async {
@@ -316,31 +364,153 @@ class CanlifalRepository {
   }) async {
     try {
       return _apiClient.postJson(
-        '/live-streams',
+        '/video-streams',
         body: <String, dynamic>{'title': title, 'description': description},
       );
     } on Object {
       return <String, dynamic>{
-        'requiresBackend': true,
         'message':
             'Canlı yayın başlatmak için API tarafında LiveKit oda token endpointi gerekir.',
       };
     }
   }
 
-  Future<List<ChatRoom>> getChatRooms() async => CanlifalSeed.rooms;
+  Future<List<ChatRoom>> getChatRooms() async {
+    try {
+      final Response<dynamic> response = await _apiClient.dio.get<dynamic>(
+        'chat/rooms?withCounts=true',
+      );
+      final Object? data = response.data;
+      final List<dynamic> rooms = data is List<dynamic>
+          ? data
+          : data is Map<String, dynamic> && data['rooms'] is List<dynamic>
+          ? data['rooms'] as List<dynamic>
+          : const <dynamic>[];
+      await _cacheService.writeJson('chat-rooms', <String, Object>{
+        'rooms': rooms,
+      });
+      return rooms
+          .whereType<Map<String, dynamic>>()
+          .map(ChatRoom.fromJson)
+          .toList();
+    } on Object {
+      final Object? rooms = _cacheService.readJson('chat-rooms')?['rooms'];
+      if (rooms is List<dynamic>) {
+        return rooms
+            .whereType<Map<String, dynamic>>()
+            .map(ChatRoom.fromJson)
+            .toList();
+      }
+      return <ChatRoom>[];
+    }
+  }
 
-  Future<List<ChatMessage>> getMessages(String roomId) async =>
-      CanlifalSeed.messages;
+  Future<List<ChatMessage>> getMessages(String roomId) async => <ChatMessage>[];
 
-  Future<List<FortuneService>> getFortuneServices() async =>
-      CanlifalSeed.fortunes;
+  Future<List<FortuneService>> getFortuneServices() async {
+    try {
+      final Map<String, dynamic> data = await _apiClient.getJson(
+        '/fortune-tellers',
+      );
+      await _cacheService.writeJson('fortune-tellers', data);
+      final Object? tellers = data['tellers'];
+      if (tellers is List<dynamic>) {
+        return tellers
+            .whereType<Map<String, dynamic>>()
+            .map(FortuneService.fromTellerJson)
+            .toList();
+      }
+    } on Object {
+      final Object? tellers = _cacheService.readJson(
+        'fortune-tellers',
+      )?['tellers'];
+      if (tellers is List<dynamic>) {
+        return tellers
+            .whereType<Map<String, dynamic>>()
+            .map(FortuneService.fromTellerJson)
+            .toList();
+      }
+    }
+    return <FortuneService>[];
+  }
 
-  Future<List<NotificationItem>> getNotifications() async =>
-      CanlifalSeed.notifications;
+  Future<List<NotificationItem>> getNotifications() async {
+    try {
+      final Map<String, dynamic> data = await _apiClient.getJson(
+        '/announcements',
+      );
+      final Object? items = data['items'] ?? data['announcements'];
+      if (items is List<dynamic>) {
+        return items.whereType<Map<String, dynamic>>().map((
+          Map<String, dynamic> item,
+        ) {
+          return NotificationItem(
+            id: item['id'] as String? ?? 'announcement',
+            title: item['title'] as String? ?? 'Canlifal',
+            body: item['body'] as String? ?? item['message'] as String? ?? '',
+            icon: item['icon'] as String? ?? '🔔',
+            createdLabel: '',
+          );
+        }).toList();
+      }
+    } on Object {
+      return <NotificationItem>[];
+    }
+    return <NotificationItem>[];
+  }
 
-  Future<List<AdminMetric>> getAdminMetrics() async =>
-      CanlifalSeed.adminMetrics;
+  Future<List<AdminMetric>> getAdminMetrics() async {
+    try {
+      final Map<String, dynamic> stats = await _apiClient.getJson(
+        '/public-stats',
+      );
+      return <AdminMetric>[
+        AdminMetric(
+          title: 'Kullanıcı',
+          value: '${(stats['users'] as Map<String, dynamic>?)?['total'] ?? 0}',
+          delta: 'canlı',
+        ),
+        AdminMetric(
+          title: 'Aktif yayın',
+          value:
+              '${(stats['video'] as Map<String, dynamic>?)?['activeStreams'] ?? 0}',
+          delta: 'video',
+        ),
+        AdminMetric(
+          title: 'Sohbet online',
+          value:
+              '${(stats['chat'] as Map<String, dynamic>?)?['totalOnline'] ?? 0}',
+          delta: 'chat',
+        ),
+        AdminMetric(
+          title: 'Toplam fal',
+          value:
+              '${(stats['fortunes'] as Map<String, dynamic>?)?['total'] ?? 0}',
+          delta: 'fal',
+        ),
+      ];
+    } on Object {
+      return <AdminMetric>[];
+    }
+  }
+
+  Future<List<ContentPost>> getExplorePosts() async {
+    try {
+      final Map<String, dynamic> data = await _apiClient.getJson(
+        '/celebrities/posts/latest?limit=30',
+      );
+      final Object? posts = data['posts'];
+      if (posts is List<dynamic>) {
+        return posts
+            .whereType<Map<String, dynamic>>()
+            .map(ContentPost.fromCelebrityPostJson)
+            .toList();
+      }
+    } on Object {
+      return <ContentPost>[];
+    }
+    return <ContentPost>[];
+  }
 }
 
 class RealtimeClient {

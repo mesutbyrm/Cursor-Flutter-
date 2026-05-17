@@ -36,7 +36,12 @@ final routerProvider = Provider<GoRouter>((Ref ref) {
     refreshListenable: auth,
     redirect: (BuildContext context, GoRouterState state) {
       final bool isAuthRoute = state.uri.path == '/auth';
-      if (!auth.isAuthenticated && !isAuthRoute) {
+      final bool requiresAuth = <String>[
+        '/profile',
+        '/admin',
+        '/live/create',
+      ].any(state.uri.path.startsWith);
+      if (!auth.isAuthenticated && requiresAuth && !isAuthRoute) {
         return '/auth';
       }
       if (auth.isAuthenticated && isAuthRoute) {

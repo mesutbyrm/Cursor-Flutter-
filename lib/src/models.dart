@@ -68,17 +68,29 @@ class AppUser {
   }
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
+    final String id = _string(json, <String>['id', 'userId']) ?? 'user';
+    final String displayName =
+        _string(json, <String>['displayName', 'name', 'channelName']) ??
+        'Canlifal';
+    final String username =
+        _string(json, <String>['username', 'slug']) ??
+        displayName.toLowerCase().replaceAll(RegExp(r'\s+'), '');
+    final String avatar =
+        _string(json, <String>['avatarUrl', 'avatar', 'image']) ??
+        CanlifalAssets.avatarPlaceholder;
     return AppUser(
-      id: json['id'] as String? ?? 'user-local',
-      username: json['username'] as String? ?? 'canlifal',
-      displayName: json['displayName'] as String? ?? 'Canlifal Üyesi',
-      avatarUrl: json['avatarUrl'] as String? ?? CanlifalSeed.avatar(0),
-      coverUrl: json['coverUrl'] as String? ?? CanlifalSeed.cover(0),
-      bio: json['bio'] as String? ?? 'Canlifal topluluğunda aktif.',
-      followers: json['followers'] as int? ?? 0,
-      following: json['following'] as int? ?? 0,
-      level: json['level'] as int? ?? 1,
-      coins: json['coins'] as int? ?? 250,
+      id: id,
+      username: username,
+      displayName: displayName,
+      avatarUrl: avatar,
+      coverUrl:
+          _string(json, <String>['coverUrl', 'cover', 'backgroundImage']) ??
+          avatar,
+      bio: json['bio'] as String? ?? '',
+      followers: _int(json, <String>['followers', 'followerCount']) ?? 0,
+      following: _int(json, <String>['following', 'followingCount']) ?? 0,
+      level: _int(json, <String>['level', 'levelPoints']) ?? 1,
+      coins: _int(json, <String>['coins', 'credits', 'balance']) ?? 0,
       tier: MembershipTier.values.firstWhere(
         (MembershipTier tier) => tier.name == json['tier'],
         orElse: () => MembershipTier.free,
@@ -132,6 +144,60 @@ class ContentPost {
   final String createdLabel;
   final bool isVideo;
   final bool isSaved;
+
+  factory ContentPost.fromTrendVideoJson(Map<String, dynamic> json) {
+    final Map<String, dynamic> category =
+        json['category'] as Map<String, dynamic>? ?? <String, dynamic>{};
+    final String title = json['title'] as String? ?? 'Canlifal video';
+    final String channel = json['channelName'] as String? ?? 'Canlifal';
+    final String id =
+        json['id'] as String? ?? json['youtubeId'] as String? ?? title;
+    return ContentPost(
+      id: id,
+      author: AppUser.fromJson(<String, dynamic>{
+        'id': channel,
+        'displayName': channel,
+        'username': channel,
+      }),
+      caption: title,
+      mediaUrl:
+          json['thumbnailUrl'] as String? ?? CanlifalAssets.coverPlaceholder,
+      hashtags: <String>[
+        '#video',
+        if (category['title'] is String) '#${category['title']}',
+      ],
+      likes: _int(json, <String>['viewCount']) ?? 0,
+      comments: 0,
+      saves: 0,
+      createdLabel: json['duration'] as String? ?? '',
+      isVideo: true,
+    );
+  }
+
+  factory ContentPost.fromCelebrityPostJson(Map<String, dynamic> json) {
+    final Map<String, dynamic> celebrity =
+        json['celebrity'] as Map<String, dynamic>? ?? <String, dynamic>{};
+    final String id = json['id'] as String? ?? 'post';
+    return ContentPost(
+      id: id,
+      author: AppUser.fromJson(celebrity),
+      caption: json['content'] as String? ?? '',
+      mediaUrl:
+          json['imageUrl'] as String? ??
+          json['mediaUrl'] as String? ??
+          celebrity['image'] as String? ??
+          CanlifalAssets.coverPlaceholder,
+      hashtags: <String>[
+        if (json['platform'] is String) '#${json['platform']}',
+        if (json['postType'] is String) '#${json['postType']}',
+      ],
+      likes: _int(json, <String>['likeCount', 'likes']) ?? 0,
+      comments: _int(json, <String>['commentCount', 'comments']) ?? 0,
+      saves: _int(json, <String>['saveCount', 'saves']) ?? 0,
+      createdLabel: _dateLabel(json['createdAt'] as String?),
+      isVideo: json['postType'] == 'video',
+    );
+  }
 }
 
 class LiveStream {
@@ -175,12 +241,19 @@ class LiveStream {
       description:
           json['description'] as String? ?? 'Canlifal canlı yayın odası.',
       host: AppUser.fromJson(
-        json['host'] as Map<String, dynamic>? ?? <String, dynamic>{},
+        json['host'] as Map<String, dynamic>? ??
+            json['broadcaster'] as Map<String, dynamic>? ??
+            json['user'] as Map<String, dynamic>? ??
+            <String, dynamic>{},
       ),
-      thumbnailUrl: json['thumbnailUrl'] as String? ?? CanlifalSeed.cover(0),
+      thumbnailUrl:
+          json['thumbnailUrl'] as String? ??
+          json['thumbnail'] as String? ??
+          CanlifalAssets.coverPlaceholder,
       watchUrl:
           json['watchUrl'] as String? ?? 'https://canlifal.com/canli-yayinlar',
-      viewers: json['viewers'] as int? ?? 0,
+      viewers:
+          _int(json, <String>['viewers', 'viewerCount', 'totalViewers']) ?? 0,
       status: StreamStatus.values.firstWhere(
         (StreamStatus status) => status.name == json['status'],
         orElse: () => StreamStatus.live,
@@ -188,9 +261,12 @@ class LiveStream {
       tags: (json['tags'] as List<dynamic>? ?? const <dynamic>[])
           .whereType<String>()
           .toList(),
-      playbackUrl: json['playbackUrl'] as String?,
-      liveKitToken: json['liveKitToken'] as String?,
-      chatRoomId: json['chatRoomId'] as String?,
+      playbackUrl:
+          json['playbackUrl'] as String? ??
+          json['hlsUrl'] as String? ??
+          json['streamUrl'] as String?,
+      liveKitToken: json['liveKitToken'] as String? ?? json['token'] as String?,
+      chatRoomId: json['chatRoomId'] as String? ?? json['roomId'] as String?,
       isMultiGuest: json['isMultiGuest'] as bool? ?? false,
     );
   }
@@ -216,6 +292,32 @@ class ChatRoom {
   final int unreadCount;
   final bool isVoice;
   final List<AppUser> moderators;
+
+  factory ChatRoom.fromJson(Map<String, dynamic> json) {
+    final Map<String, dynamic> owner =
+        json['owner'] as Map<String, dynamic>? ?? <String, dynamic>{};
+    return ChatRoom(
+      id: json['id'] as String? ?? json['slug'] as String? ?? 'room',
+      name:
+          json['nameTr'] as String? ??
+          json['name'] as String? ??
+          json['nameEn'] as String? ??
+          'Sohbet',
+      topic:
+          json['descTr'] as String? ??
+          json['topic'] as String? ??
+          json['descEn'] as String? ??
+          '',
+      avatarUrl:
+          json['backgroundImage'] as String? ??
+          owner['image'] as String? ??
+          CanlifalAssets.coverPlaceholder,
+      onlineCount: _int(json, <String>['onlineCount']) ?? 0,
+      unreadCount: _int(json, <String>['unreadCount', 'messageCount']) ?? 0,
+      isVoice: json['isVoice'] as bool? ?? json['activeDjId'] != null,
+      moderators: <AppUser>[if (owner.isNotEmpty) AppUser.fromJson(owner)],
+    );
+  }
 }
 
 class ChatMessage {
@@ -254,6 +356,42 @@ class FortuneService {
   final int priceCoins;
   final int queueCount;
   final bool isLive;
+
+  factory FortuneService.fromTellerJson(Map<String, dynamic> json) {
+    final List<String> specialties =
+        (json['specialties'] as List<dynamic>?)?.whereType<String>().toList() ??
+        const <String>[];
+    return FortuneService(
+      id: json['id'] as String? ?? 'fortune-teller',
+      category: _categoryFromSpecialty(
+        specialties.isEmpty ? null : specialties.first,
+      ),
+      title: json['displayName'] as String? ?? 'Canlı Falcı',
+      advisor: AppUser.fromJson(json),
+      rating: (json['rating'] as num?)?.toDouble() ?? 0,
+      priceCoins: _int(json, <String>['pricePerSession']) ?? 0,
+      queueCount: _int(json, <String>['pendingSessions', 'queueCount']) ?? 0,
+      isLive: json['isOnline'] as bool? ?? false,
+    );
+  }
+
+  factory FortuneService.fromCardJson(Map<String, dynamic> json) {
+    return FortuneService(
+      id: json['id'] as String? ?? json['href'] as String? ?? 'fortune-card',
+      category: _categoryFromSpecialty(
+        json['href'] as String? ?? json['name'] as String?,
+      ),
+      title: json['name'] as String? ?? 'Fal',
+      advisor: AppUser.fromJson(<String, dynamic>{
+        'displayName': 'Canlifal',
+        'image': json['image'],
+      }),
+      rating: 0,
+      priceCoins: 0,
+      queueCount: 0,
+      isLive: false,
+    );
+  }
 }
 
 class GiftItem {
@@ -300,247 +438,10 @@ class AdminMetric {
   final String delta;
 }
 
-class CanlifalSeed {
-  static String avatar(int index) =>
-      'https://images.unsplash.com/photo-${_avatars[index % _avatars.length]}?auto=format&fit=crop&w=400&q=80';
-
-  static String cover(int index) =>
-      'https://images.unsplash.com/photo-${_covers[index % _covers.length]}?auto=format&fit=crop&w=1200&q=80';
-
-  static const List<String> _avatars = <String>[
-    '1494790108377-be9c29b29330',
-    '1500648767791-00dcc994a43e',
-    '1534528741775-53994a69daeb',
-    '1507003211169-0a1dd7228f2d',
-    '1517841905240-472988babdf9',
-    '1527980965255-d3b416303d12',
-  ];
-
-  static const List<String> _covers = <String>[
-    '1519608487953-e999c86e7455',
-    '1500530855697-b586d89ba3ee',
-    '1492684223066-81342ee5ff30',
-    '1519681393784-d120267933ba',
-    '1500534314209-a25ddb2bd429',
-  ];
-
-  static final List<AppUser> users = <AppUser>[
-    AppUser(
-      id: 'u1',
-      username: 'mysticmelis',
-      displayName: 'Melis Yıldız',
-      avatarUrl: avatar(0),
-      coverUrl: cover(0),
-      bio: 'Kahve falı, ilişki enerjisi ve canlı danışmanlık.',
-      followers: 128400,
-      following: 146,
-      level: 42,
-      coins: 4200,
-      tier: MembershipTier.vip,
-      badges: const <BadgeKind>[BadgeKind.verified, BadgeKind.oracle],
-    ),
-    AppUser(
-      id: 'u2',
-      username: 'tarotkaan',
-      displayName: 'Kaan Tarot',
-      avatarUrl: avatar(1),
-      coverUrl: cover(1),
-      bio: 'Gece canlıları, tarot açılımları ve kolektif enerji.',
-      followers: 89200,
-      following: 214,
-      level: 35,
-      coins: 3100,
-      tier: MembershipTier.premium,
-      badges: const <BadgeKind>[BadgeKind.verified, BadgeKind.topCreator],
-      isFollowing: true,
-    ),
-    AppUser(
-      id: 'u3',
-      username: 'astroasya',
-      displayName: 'Asya Astroloji',
-      avatarUrl: avatar(2),
-      coverUrl: cover(2),
-      bio: 'Doğum haritası, transitler ve haftalık astroloji.',
-      followers: 154000,
-      following: 98,
-      level: 48,
-      coins: 8700,
-      tier: MembershipTier.vip,
-      badges: const <BadgeKind>[BadgeKind.verified, BadgeKind.founder],
-    ),
-  ];
-
-  static final AppUser currentUser = AppUser(
-    id: 'me',
-    username: 'canlifal_user',
-    displayName: 'Canlifal Kullanıcısı',
-    avatarUrl: avatar(4),
-    coverUrl: cover(4),
-    bio: 'Fal, canlı yayın ve sosyal keşif dünyasında.',
-    followers: 1240,
-    following: 389,
-    level: 12,
-    coins: 1250,
-    tier: MembershipTier.premium,
-    badges: const <BadgeKind>[BadgeKind.verified],
-  );
-
-  static final List<StoryItem> stories = <StoryItem>[
-    for (int i = 0; i < users.length; i++)
-      StoryItem(
-        id: 'story-$i',
-        title: users[i].displayName,
-        imageUrl: users[i].avatarUrl,
-        owner: users[i],
-        isLive: i != 1,
-      ),
-  ];
-
-  static List<ContentPost> feedPage(int page) {
-    return List<ContentPost>.generate(6, (int index) {
-      final int seed = page * 6 + index;
-      final AppUser author = users[seed % users.length];
-      return ContentPost(
-        id: 'post-$seed',
-        author: author,
-        caption: <String>[
-          'Bugünün enerjisi yüksek. Canlı yayında kahve fincanlarını yorumluyoruz.',
-          'Yeni tarot serisi yayında. Aşk, kariyer ve para için üç kart açılımı.',
-          'FanClub üyeleri için özel yayın ve coin hediyeleri başladı.',
-        ][seed % 3],
-        mediaUrl: cover(seed),
-        hashtags: <String>['#canlifal', '#tarot', '#keşfet', '#canlı'],
-        likes: 1240 + seed * 37,
-        comments: 86 + seed * 5,
-        saves: 340 + seed * 11,
-        createdLabel: '${seed + 2} dk',
-        isVideo: seed.isEven,
-        isSaved: seed % 4 == 0,
-      );
-    });
-  }
-
-  static final List<LiveStream> liveStreams = <LiveStream>[
-    LiveStream(
-      id: 'live-1',
-      title: 'Kahve Falı Gecesi',
-      description:
-          'Canlı kahve falı, hediye efektleri ve yorum sırası olan ana yayın.',
-      host: users[0],
-      thumbnailUrl: cover(0),
-      watchUrl: 'https://canlifal.com/canli-yayinlar',
-      viewers: 18400,
-      status: StreamStatus.live,
-      tags: const <String>['Kahve', 'Canlı Fal', 'Hediye'],
-      chatRoomId: 'room-1',
-      isMultiGuest: true,
-    ),
-    LiveStream(
-      id: 'live-2',
-      title: 'Tarot ile Aşk Açılımı',
-      description:
-          'Tarot danışmanı ile canlı soru-cevap ve premium sıra sistemi.',
-      host: users[1],
-      thumbnailUrl: cover(1),
-      watchUrl: 'https://canlifal.com/canli-yayinlar',
-      viewers: 12600,
-      status: StreamStatus.live,
-      tags: const <String>['Tarot', 'Aşk', 'Soru-Cevap'],
-      chatRoomId: 'room-2',
-    ),
-    LiveStream(
-      id: 'live-3',
-      title: 'Astroloji Harita Okuması',
-      description:
-          'Çoklu konuk desteği ile canlı harita yorumu ve FanClub yayını.',
-      host: users[2],
-      thumbnailUrl: cover(2),
-      watchUrl: 'https://canlifal.com/canli-yayinlar',
-      viewers: 24100,
-      status: StreamStatus.live,
-      tags: const <String>['Astroloji', 'Premium', 'FanClub'],
-      chatRoomId: 'room-2',
-      isMultiGuest: true,
-    ),
-  ];
-
-  static final List<ChatRoom> rooms = <ChatRoom>[
-    ChatRoom(
-      id: 'room-1',
-      name: 'Gece Fal Sohbeti',
-      topic: 'Kahve falı bekleyenler ve canlı yorumlar',
-      avatarUrl: cover(3),
-      onlineCount: 864,
-      unreadCount: 12,
-      isVoice: false,
-      moderators: <AppUser>[users[0]],
-    ),
-    ChatRoom(
-      id: 'room-2',
-      name: 'Sesli Tarot Odası',
-      topic: 'Discord hissinde sesli topluluk odası',
-      avatarUrl: cover(1),
-      onlineCount: 342,
-      unreadCount: 4,
-      isVoice: true,
-      moderators: <AppUser>[users[1], users[2]],
-    ),
-  ];
-
-  static final List<ChatMessage> messages = <ChatMessage>[
-    ChatMessage(
-      id: 'm1',
-      sender: users[0],
-      body: 'Yayına hoş geldiniz!',
-      sentAt: '23:12',
-    ),
-    ChatMessage(
-      id: 'm2',
-      sender: users[1],
-      body: 'Coin hediyeleri açıldı.',
-      sentAt: '23:13',
-      isGift: true,
-    ),
-    ChatMessage(
-      id: 'm3',
-      sender: currentUser,
-      body: 'Tarot sırası alabilir miyim?',
-      sentAt: '23:14',
-    ),
-  ];
-
-  static final List<FortuneService> fortunes = <FortuneService>[
-    FortuneService(
-      id: 'fortune-1',
-      category: FortuneCategory.coffee,
-      title: 'Canlı Kahve Falı',
-      advisor: users[0],
-      rating: 4.9,
-      priceCoins: 220,
-      queueCount: 8,
-      isLive: true,
-    ),
-    FortuneService(
-      id: 'fortune-2',
-      category: FortuneCategory.tarot,
-      title: 'Üç Kart Tarot',
-      advisor: users[1],
-      rating: 4.8,
-      priceCoins: 180,
-      queueCount: 5,
-      isLive: true,
-    ),
-    FortuneService(
-      id: 'fortune-3',
-      category: FortuneCategory.astrology,
-      title: 'Doğum Haritası',
-      advisor: users[2],
-      rating: 5,
-      priceCoins: 450,
-      queueCount: 13,
-      isLive: false,
-    ),
-  ];
+class CanlifalAssets {
+  static const String avatarPlaceholder = 'https://canlifal.com/favicon.ico';
+  static const String coverPlaceholder =
+      'https://canlifal.com/apple-touch-icon.png';
 
   static const List<GiftItem> gifts = <GiftItem>[
     GiftItem(id: 'gift-rose', name: 'Gül', emoji: '🌹', priceCoins: 25),
@@ -548,28 +449,65 @@ class CanlifalSeed {
     GiftItem(id: 'gift-crown', name: 'Taç', emoji: '👑', priceCoins: 250),
     GiftItem(id: 'gift-galaxy', name: 'Galaksi', emoji: '🌌', priceCoins: 900),
   ];
+}
 
-  static const List<NotificationItem> notifications = <NotificationItem>[
-    NotificationItem(
-      id: 'n1',
-      title: 'Canlı yayın başladı',
-      body: 'Melis Yıldız kahve falı yayınına geçti.',
-      icon: '🔴',
-      createdLabel: 'Şimdi',
-    ),
-    NotificationItem(
-      id: 'n2',
-      title: 'Yeni FanClub içeriği',
-      body: 'Premium üyeler için özel tarot açılımı yayınlandı.',
-      icon: '💜',
-      createdLabel: '8 dk',
-    ),
-  ];
+String? _string(Map<String, dynamic> json, List<String> keys) {
+  for (final String key in keys) {
+    final Object? value = json[key];
+    if (value is String && value.trim().isNotEmpty) {
+      return value;
+    }
+  }
+  return null;
+}
 
-  static const List<AdminMetric> adminMetrics = <AdminMetric>[
-    AdminMetric(title: 'Aktif kullanıcı', value: '42.8K', delta: '+12%'),
-    AdminMetric(title: 'Canlı yayın', value: '128', delta: '+8%'),
-    AdminMetric(title: 'Coin hacmi', value: '3.4M', delta: '+19%'),
-    AdminMetric(title: 'Şikayet kuyruğu', value: '24', delta: '-6%'),
-  ];
+int? _int(Map<String, dynamic> json, List<String> keys) {
+  for (final String key in keys) {
+    final Object? value = json[key];
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String) {
+      return int.tryParse(value);
+    }
+  }
+  return null;
+}
+
+String _dateLabel(String? iso) {
+  if (iso == null) {
+    return '';
+  }
+  final DateTime? date = DateTime.tryParse(iso);
+  if (date == null) {
+    return '';
+  }
+  final Duration diff = DateTime.now().difference(date);
+  if (diff.inDays > 0) {
+    return '${diff.inDays} gün';
+  }
+  if (diff.inHours > 0) {
+    return '${diff.inHours} sa';
+  }
+  return '${diff.inMinutes.clamp(0, 59)} dk';
+}
+
+FortuneCategory _categoryFromSpecialty(String? value) {
+  final String normalized = (value ?? '').toLowerCase();
+  if (normalized.contains('tarot')) {
+    return FortuneCategory.tarot;
+  }
+  if (normalized.contains('astro') || normalized.contains('burc')) {
+    return FortuneCategory.astrology;
+  }
+  if (normalized.contains('ruya') || normalized.contains('rüya')) {
+    return FortuneCategory.dream;
+  }
+  if (normalized.contains('numeroloji')) {
+    return FortuneCategory.numerology;
+  }
+  return FortuneCategory.coffee;
 }

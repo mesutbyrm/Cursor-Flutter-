@@ -14,7 +14,7 @@ class ChatScreen extends ConsumerStatefulWidget {
 }
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
-  String _selectedRoomId = CanlifalSeed.rooms.first.id;
+  String? _selectedRoomId;
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +22,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return ResponsiveMaxWidth(
       child: rooms.when(
         data: (List<ChatRoom> items) {
+          if (items.isEmpty) {
+            return const _EmptyChatRooms();
+          }
           final ChatRoom selected = items.firstWhere(
             (ChatRoom room) => room.id == _selectedRoomId,
             orElse: () => items.first,
@@ -155,8 +158,7 @@ class _Conversation extends ConsumerWidget {
             (CanlifalRepository repository) => repository.getMessages(room.id),
           ),
       builder: (BuildContext context, AsyncSnapshot<List<ChatMessage>> snapshot) {
-        final List<ChatMessage> messages =
-            snapshot.data ?? CanlifalSeed.messages;
+        final List<ChatMessage> messages = snapshot.data ?? <ChatMessage>[];
         return Padding(
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 100),
           child: GlassCard(
@@ -188,49 +190,59 @@ class _Conversation extends ConsumerWidget {
                 ),
                 const Divider(),
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: messages.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final ChatMessage message = messages[index];
-                      final bool mine =
-                          message.sender.id == CanlifalSeed.currentUser.id;
-                      return Align(
-                        alignment: mine
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 6),
-                          padding: const EdgeInsets.all(12),
-                          constraints: const BoxConstraints(maxWidth: 420),
-                          decoration: BoxDecoration(
-                            color: mine
-                                ? const Color(0xFF7C3AED)
-                                : Colors.white.withValues(alpha: .08),
-                            borderRadius: BorderRadius.circular(18),
+                  child: messages.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'Bu odada henüz mesaj yok veya mesajları görmek için giriş yapmanız gerekiyor.',
+                            textAlign: TextAlign.center,
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                message.sender.displayName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
+                        )
+                      : ListView.builder(
+                          itemCount: messages.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            final ChatMessage message = messages[index];
+                            final bool mine =
+                                message.sender.id ==
+                                ref.watch(authControllerProvider).user?.id;
+                            return Align(
+                              alignment: mine
+                                  ? Alignment.centerRight
+                                  : Alignment.centerLeft,
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(vertical: 6),
+                                padding: const EdgeInsets.all(12),
+                                constraints: const BoxConstraints(
+                                  maxWidth: 420,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: mine
+                                      ? const Color(0xFF7C3AED)
+                                      : Colors.white.withValues(alpha: .08),
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text(
+                                      message.sender.displayName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    Text(message.body),
+                                    Text(
+                                      message.sentAt,
+                                      style: const TextStyle(
+                                        color: Colors.white54,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              Text(message.body),
-                              Text(
-                                message.sentAt,
-                                style: const TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -248,6 +260,23 @@ class _Conversation extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _EmptyChatRooms extends StatelessWidget {
+  const _EmptyChatRooms();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Text(
+          'Canlifal sohbet odaları şu anda boş veya yüklenemiyor.',
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 }
