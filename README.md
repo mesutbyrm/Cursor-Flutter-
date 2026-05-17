@@ -1,18 +1,41 @@
-# Canlifal Mobile
+# VivaLive Flutter App
 
-Canlifal Mobile, Canlifal için Flutter ile hazırlanmış native mobil uygulama önizlemesidir. Bu sürüm WebView yerine Flutter bileşenleriyle çizilen ana sayfa, videolar, canlı yayınlar, falcılar ve fal gönderme ekranlarını içerir.
+VivaLive, canlı yayın, sesli sohbet odaları, sosyal paylaşım akışı, hikayeler, hediye/jeton sistemi, FunClub, oyunlar, gold üyelik, davet sistemi, trendler ve keşfet sayfası olan native Flutter uygulama önizlemesidir.
+
+Bu sürüm WebView kullanmaz. Tüm ekranlar Flutter bileşenleriyle çizilir ve API bilgileri geldiğinde gerçek site verilerine bağlanacak şekilde hazırlanmıştır.
 
 ## Özellikler
 
-- Ana Sayfa, Videolar, Canlı, Falcılar ve Fal bölümleri için native alt navigasyon sunar.
-- Mor/pembe vurgulu Material 3 kart tasarımı kullanır.
-- Popüler falcılar, video kartları, canlı yayın kartı ve fal seçenekleri gösterir.
-- Yenile akışı için kısa yükleme göstergesi ve bilgilendirme mesajı sunar.
-- Material 3 tema kullanır.
+- Akılda kalıcı logo ve gradient açılış ekranı.
+- TikTok benzeri canlı yayın sahnesi, izleyici rozeti, sohbet ve hediye aksiyonları.
+- Sesli sohbet odaları, konuşmacı/dinleyici görünümü ve oda açma aksiyonu.
+- Facebook tarzı sosyal akış kartları, beğeni, yorum, paylaşım ve hediye butonları.
+- Hikaye ekleme ve hikaye listesi.
+- Keşfet/trend sayfası, oyunlar, günlük görevler ve 12 fal/yorum türü.
+- Instagram/TikTok benzeri profil, takipçi istatistikleri, gold üyelik ve jeton cüzdanı.
+- Bildirim ve mesaj giriş noktaları.
+- API bağlantıları için hazır aksiyon noktaları ve placeholder veri yapısı.
+
+## API bağlamak için gerekli bilgiler
+
+Uygulamayı gerçek veriye bağlamak için şu bilgileri gönderin:
+
+1. Base API URL
+2. Giriş/kayıt endpointleri ve auth tipi: token, JWT, session vb.
+3. Kullanıcı profil endpointi
+4. Sosyal akış endpointi
+5. Canlı yayın listeleme, yayın açma ve yayın detay endpointleri
+6. Sesli oda listeleme, oda açma ve oda detay endpointleri
+7. Mesajlaşma endpointleri veya websocket bilgisi
+8. Bildirim endpointleri veya push notification bilgisi
+9. Hediye listesi, hediye gönderme ve jeton satın alma endpointleri
+10. Gold üyelik, FunClub, davet sistemi ve oyun endpointleri
+11. 12 fal/yorum türü için endpointler
+12. Örnek JSON cevapları ve gerekiyorsa API anahtarı
 
 ## Kurulum
 
-Bu repoda Flutter kaynakları ve proje yapılandırması bulunur. Yeni bir makinede ilk kez çalıştırırken eksik platform klasörlerini Flutter CLI ile üretin:
+Yeni bir makinede platform klasörlerini üretmek için:
 
 ```bash
 flutter create --platforms=android,ios --project-name canlifal_mobile .
@@ -20,20 +43,11 @@ flutter pub get
 flutter run
 ```
 
-## Gereksinimler
-
-- Flutter SDK
-- Dart SDK `>=3.8.0 <4.0.0`
-- Android SDK
-- iOS için iOS 13.0 veya üzeri
-
 ## Geliştirme komutları
 
 ```bash
 flutter pub get
+dart format lib/main.dart
 flutter analyze
-flutter test
-flutter run
+flutter build apk --release
 ```
-
-> Not: APK üretmek için platform klasörleri `flutter create --platforms=android` komutuyla oluşturulabilir.

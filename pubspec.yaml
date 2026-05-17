@@ -1,5 +1,5 @@
 name: canlifal_mobile
-description: Native Flutter mobile preview for Canlifal.
+description: Native Flutter social live streaming app preview.
 publish_to: "none"
 version: 1.0.0+1
 
@@ -17,3 +17,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/brand/vivalive_logo.png
