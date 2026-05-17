@@ -19,7 +19,9 @@ class VivaLiveApp extends StatefulWidget {
 }
 
 class _VivaLiveAppState extends State<VivaLiveApp> {
+  final AppRepository _repository = AppRepository();
   bool _showSplash = true;
+  bool _isAuthenticated = false;
 
   @override
   void initState() {
@@ -46,7 +48,16 @@ class _VivaLiveAppState extends State<VivaLiveApp> {
       ),
       home: AnimatedSwitcher(
         duration: const Duration(milliseconds: 450),
-        child: _showSplash ? const SplashScreen() : const SocialShell(),
+        child: _showSplash
+            ? const SplashScreen()
+            : _isAuthenticated
+            ? const SocialShell()
+            : AuthScreen(
+                repository: _repository,
+                onAuthenticated: () {
+                  setState(() => _isAuthenticated = true);
+                },
+              ),
       ),
     );
   }
@@ -109,6 +120,405 @@ class SplashScreen extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class AuthScreen extends StatefulWidget {
+  const AuthScreen({
+    super.key,
+    required this.repository,
+    required this.onAuthenticated,
+  });
+
+  final AppRepository repository;
+  final VoidCallback onAuthenticated;
+
+  @override
+  State<AuthScreen> createState() => _AuthScreenState();
+}
+
+class _AuthScreenState extends State<AuthScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _birthDateController = TextEditingController();
+  final TextEditingController _birthTimeController = TextEditingController();
+  final TextEditingController _referralController = TextEditingController();
+  bool _isRegister = false;
+  bool _isLoading = false;
+  bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _birthDateController.text = '1995-06-20';
+    _birthTimeController.text = '14:30';
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _nameController.dispose();
+    _usernameController.dispose();
+    _birthDateController.dispose();
+    _birthTimeController.dispose();
+    _referralController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: <Color>[
+              Color(0xFF080312),
+              Color(0xFF2E1065),
+              Color(0xFFEC4899),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 430),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    const Center(child: _LogoMark(size: 92, showGlow: true)),
+                    const SizedBox(height: 18),
+                    const Text(
+                      kAppName,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 34,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Canlı yayınlara, sesli odalara ve sosyal akışa katıl.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.72),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 26),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: _AuthModeButton(
+                              selected: !_isRegister,
+                              text: 'Giriş',
+                              onTap: () => setState(() => _isRegister = false),
+                            ),
+                          ),
+                          Expanded(
+                            child: _AuthModeButton(
+                              selected: _isRegister,
+                              text: 'Kayıt',
+                              onTap: () => setState(() => _isRegister = true),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 220),
+                      child: _isRegister
+                          ? _RegisterFields(
+                              key: const ValueKey<String>('register'),
+                              nameController: _nameController,
+                              usernameController: _usernameController,
+                              birthDateController: _birthDateController,
+                              birthTimeController: _birthTimeController,
+                              referralController: _referralController,
+                            )
+                          : const SizedBox(key: ValueKey<String>('login')),
+                    ),
+                    _AuthTextField(
+                      controller: _emailController,
+                      label: 'E-posta',
+                      icon: Icons.mail_outline,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 12),
+                    _AuthTextField(
+                      controller: _passwordController,
+                      label: 'Şifre',
+                      icon: Icons.lock_outline,
+                      obscureText: _obscurePassword,
+                      suffix: IconButton(
+                        onPressed: () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF7C3AED),
+                      ),
+                      onPressed: _isLoading ? null : _submit,
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(_isRegister ? 'Hesap oluştur' : 'Giriş yap'),
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        foregroundColor: Colors.white,
+                        side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.44),
+                        ),
+                      ),
+                      onPressed: _isLoading ? null : widget.onAuthenticated,
+                      icon: const Icon(Icons.explore),
+                      label: const Text('Misafir olarak devam et'),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Giriş: /api/auth/mobile-login • Kayıt: /api/auth/mobile-register',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.48),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text;
+    if (email.isEmpty || password.isEmpty) {
+      _showMessage('E-posta ve şifre gerekli.');
+      return;
+    }
+    if (_isRegister &&
+        (_nameController.text.trim().isEmpty ||
+            _usernameController.text.trim().isEmpty ||
+            _birthDateController.text.trim().isEmpty ||
+            _birthTimeController.text.trim().isEmpty)) {
+      _showMessage(
+        'Kayıt için ad, kullanıcı adı, doğum tarihi ve saati gerekli.',
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      if (_isRegister) {
+        await widget.repository.register(
+          name: _nameController.text.trim(),
+          username: _usernameController.text.trim(),
+          email: email,
+          password: password,
+          birthDate: _birthDateController.text.trim(),
+          birthTime: _birthTimeController.text.trim(),
+          referralCode: _referralController.text.trim().isEmpty
+              ? null
+              : _referralController.text.trim(),
+        );
+      } else {
+        await widget.repository.login(email: email, password: password);
+      }
+      if (!mounted) {
+        return;
+      }
+      widget.onAuthenticated();
+    } catch (error) {
+      _showMessage('Giriş yapılamadı: $error');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _RegisterFields extends StatelessWidget {
+  const _RegisterFields({
+    super.key,
+    required this.nameController,
+    required this.usernameController,
+    required this.birthDateController,
+    required this.birthTimeController,
+    required this.referralController,
+  });
+
+  final TextEditingController nameController;
+  final TextEditingController usernameController;
+  final TextEditingController birthDateController;
+  final TextEditingController birthTimeController;
+  final TextEditingController referralController;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        _AuthTextField(
+          controller: nameController,
+          label: 'Ad soyad',
+          icon: Icons.badge_outlined,
+        ),
+        const SizedBox(height: 12),
+        _AuthTextField(
+          controller: usernameController,
+          label: 'Kullanıcı adı',
+          icon: Icons.alternate_email,
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: _AuthTextField(
+                controller: birthDateController,
+                label: 'Doğum tarihi',
+                icon: Icons.calendar_today_outlined,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _AuthTextField(
+                controller: birthTimeController,
+                label: 'Doğum saati',
+                icon: Icons.schedule,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _AuthTextField(
+          controller: referralController,
+          label: 'Davet kodu (opsiyonel)',
+          icon: Icons.card_giftcard,
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+}
+
+class _AuthModeButton extends StatelessWidget {
+  const _AuthModeButton({
+    required this.selected,
+    required this.text,
+    required this.onTap,
+  });
+
+  final bool selected;
+  final String text;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        decoration: BoxDecoration(
+          color: selected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: selected ? const Color(0xFF7C3AED) : Colors.white,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthTextField extends StatelessWidget {
+  const _AuthTextField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.keyboardType,
+    this.obscureText = false,
+    this.suffix,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final TextInputType? keyboardType;
+  final bool obscureText;
+  final Widget? suffix;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.68)),
+        prefixIcon: Icon(icon, color: Colors.white70),
+        suffixIcon: suffix,
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.10),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.14)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: Colors.white),
         ),
       ),
     );

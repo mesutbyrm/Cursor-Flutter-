@@ -32,15 +32,26 @@ class AppRepository {
 
   Future<AuthSession> register({
     required String name,
+    required String username,
     required String email,
     required String password,
+    required String birthDate,
+    required String birthTime,
+    String? referralCode,
+    String preferredLanguage = 'tr',
   }) async {
     final dynamic json = await _apiClient.post(
       '/api/auth/mobile-register',
       body: <String, String>{
         'name': name,
+        'username': username,
         'email': email,
         'password': password,
+        'birthDate': birthDate,
+        'birthTime': birthTime,
+        'preferredLanguage': preferredLanguage,
+        if (referralCode != null && referralCode.isNotEmpty)
+          'referralCode': referralCode,
       },
     );
     final AuthSession session = AuthSession.fromJson(
