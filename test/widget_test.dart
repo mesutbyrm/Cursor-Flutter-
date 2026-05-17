@@ -8,6 +8,7 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: CanlifalApp()));
     await tester.pump();
 
-    expect(find.text('Canlifal'), findsOneWidget);
+    expect(find.text('Hikâyeler'), findsOneWidget);
+    expect(find.text('Profil'), findsOneWidget);
   });
 }
