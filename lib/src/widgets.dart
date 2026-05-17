@@ -12,25 +12,72 @@ class AnimatedGradientBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: const Color(0xFF080713),
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            Color(0xFF160021),
+            Color(0xFF12001F),
+            Color(0xFF101D3E),
+          ],
+        ),
+      ),
       child: Stack(
         children: <Widget>[
+          const Positioned.fill(child: _StarField()),
           Positioned(
-            top: -160,
-            right: -120,
-            child: _GlowOrb(color: Colors.purpleAccent.withValues(alpha: .34)),
+            top: -110,
+            left: -90,
+            child: _GlowOrb(
+              color: const Color(0xFFFF32D2).withValues(alpha: .28),
+            ),
           ),
           Positioned(
-            bottom: -180,
-            left: -130,
-            child: _GlowOrb(color: Colors.cyanAccent.withValues(alpha: .18)),
+            top: 120,
+            right: -160,
+            child: _GlowOrb(
+              color: const Color(0xFF8B5CF6).withValues(alpha: .35),
+            ),
+          ),
+          Positioned(
+            bottom: -190,
+            left: -140,
+            child: _GlowOrb(
+              color: const Color(0xFF2D6BFF).withValues(alpha: .22),
+            ),
           ),
           child,
         ],
       ),
     );
   }
+}
+
+class _StarField extends StatelessWidget {
+  const _StarField();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: _StarPainter());
+  }
+}
+
+class _StarPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()..color = Colors.white.withValues(alpha: .46);
+    for (int i = 0; i < 84; i++) {
+      final double x = ((i * 73) % 1000) / 1000 * size.width;
+      final double y = ((i * 149) % 1000) / 1000 * size.height;
+      final double radius = i % 5 == 0 ? 1.7 : .9;
+      canvas.drawCircle(Offset(x, y), radius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _GlowOrb extends StatelessWidget {
@@ -78,15 +125,25 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final BorderRadius borderRadius = BorderRadius.circular(28);
+    final BorderRadius borderRadius = BorderRadius.circular(24);
     return Container(
       margin: margin,
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: const Color(0xFFB832FF).withValues(alpha: .18),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
       child: ClipRRect(
         borderRadius: borderRadius,
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Material(
-            color: Colors.white.withValues(alpha: .07),
+            color: const Color(0xFF210032).withValues(alpha: .56),
             borderRadius: borderRadius,
             child: InkWell(
               borderRadius: borderRadius,
@@ -96,7 +153,15 @@ class GlassCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: borderRadius,
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: .10),
+                    color: const Color(0xFFB832FF).withValues(alpha: .36),
+                  ),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: <Color>[
+                      Colors.white.withValues(alpha: .10),
+                      const Color(0xFF6D15A8).withValues(alpha: .12),
+                    ],
                   ),
                 ),
                 child: child,
@@ -154,9 +219,9 @@ class GradientAvatar extends StatelessWidget {
             shape: BoxShape.circle,
             gradient: LinearGradient(
               colors: <Color>[
-                Color(0xFFFF2D75),
-                Color(0xFF7C3AED),
-                Color(0xFF22D3EE),
+                Color(0xFFFF3EDB),
+                Color(0xFFB832FF),
+                Color(0xFF1CCBFF),
               ],
             ),
           ),
@@ -174,7 +239,7 @@ class GradientAvatar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
-                color: const Color(0xFFFF2D75),
+                color: const Color(0xFFFF3EDB),
               ),
               child: const Text(
                 'LIVE',
@@ -204,19 +269,14 @@ class SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 12),
+      padding: const EdgeInsets.fromLTRB(16, 22, 16, 12),
       child: Row(
         children: <Widget>[
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  title,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-                ),
+                Text(title, style: CanlifalText.sectionTitle(context)),
                 if (subtitle != null)
                   Text(
                     subtitle!,
@@ -228,8 +288,174 @@ class SectionHeader extends StatelessWidget {
             ),
           ),
           if (actionLabel != null)
-            TextButton(onPressed: onAction, child: Text(actionLabel!)),
+            TextButton(
+              onPressed: onAction,
+              child: Text(
+                actionLabel!,
+                style: const TextStyle(
+                  color: Color(0xFFD88BFF),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class CanlifalText {
+  static TextStyle sectionTitle(BuildContext context) {
+    return Theme.of(context).textTheme.titleLarge!.copyWith(
+      fontWeight: FontWeight.w900,
+      color: Colors.white,
+      shadows: <Shadow>[
+        Shadow(
+          color: const Color(0xFFFF3EDB).withValues(alpha: .24),
+          blurRadius: 10,
+        ),
+      ],
+    );
+  }
+}
+
+class NeonIconTile extends StatelessWidget {
+  const NeonIconTile({
+    required this.icon,
+    required this.label,
+    this.gradient,
+    this.onTap,
+    this.size = 104,
+    super.key,
+  });
+
+  final String icon;
+  final String label;
+  final Gradient? gradient;
+  final VoidCallback? onTap;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      child: Column(
+        children: <Widget>[
+          GlassCard(
+            padding: EdgeInsets.zero,
+            onTap: onTap,
+            child: Container(
+              width: size,
+              height: size,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient:
+                    gradient ??
+                    const LinearGradient(
+                      colors: <Color>[Color(0xFF6D15A8), Color(0xFFD91CE8)],
+                    ),
+              ),
+              child: Text(icon, style: const TextStyle(fontSize: 38)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CircleLogo extends StatelessWidget {
+  const CircleLogo({
+    required this.imageUrl,
+    required this.label,
+    this.subtitle,
+    this.badge,
+    this.size = 68,
+    this.onTap,
+    super.key,
+  });
+
+  final String imageUrl;
+  final String label;
+  final String? subtitle;
+  final IconData? badge;
+  final double size;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: size + 20,
+        child: Column(
+          children: <Widget>[
+            Stack(
+              clipBehavior: Clip.none,
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: <Color>[Color(0xFFFF2D95), Color(0xFFB832FF)],
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: size / 2,
+                    backgroundColor: const Color(0xFF6D15A8),
+                    backgroundImage: CachedNetworkImageProvider(imageUrl),
+                    onBackgroundImageError:
+                        (Object error, StackTrace? stackTrace) {},
+                    child: imageUrl.isEmpty
+                        ? Text(
+                            label.characters.first.toUpperCase(),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 24,
+                            ),
+                          )
+                        : null,
+                  ),
+                ),
+                if (badge != null)
+                  Positioned(
+                    bottom: -2,
+                    right: -2,
+                    child: CircleAvatar(
+                      radius: 13,
+                      backgroundColor: const Color(0xFFFF3EDB),
+                      child: Icon(badge, size: 14),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+            ),
+            if (subtitle != null)
+              Text(
+                subtitle!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11, color: Colors.white54),
+              ),
+          ],
+        ),
       ),
     );
   }
