@@ -278,7 +278,55 @@ class CanlifalRepository {
 
   Future<List<StoryItem>> getStories() async => CanlifalSeed.stories;
 
-  Future<List<LiveStream>> getLiveStreams() async => CanlifalSeed.liveStreams;
+  Future<List<LiveStream>> getLiveStreams() async {
+    try {
+      final Map<String, dynamic> data = await _apiClient.getJson(
+        '/live-streams',
+      );
+      await _cacheService.writeJson('live-streams', data);
+      final Object? items = data['items'];
+      if (items is List<dynamic>) {
+        final List<LiveStream> streams = items
+            .whereType<Map<String, dynamic>>()
+            .map(LiveStream.fromJson)
+            .toList();
+        if (streams.isNotEmpty) {
+          return streams;
+        }
+      }
+    } on Object {
+      _cacheService.readJson('live-streams');
+    }
+    return CanlifalSeed.liveStreams;
+  }
+
+  Future<LiveStream?> getLiveStream(String id) async {
+    final List<LiveStream> streams = await getLiveStreams();
+    for (final LiveStream stream in streams) {
+      if (stream.id == id) {
+        return stream;
+      }
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>> createLiveRoom({
+    required String title,
+    required String description,
+  }) async {
+    try {
+      return _apiClient.postJson(
+        '/live-streams',
+        body: <String, dynamic>{'title': title, 'description': description},
+      );
+    } on Object {
+      return <String, dynamic>{
+        'requiresBackend': true,
+        'message':
+            'Canlı yayın başlatmak için API tarafında LiveKit oda token endpointi gerekir.',
+      };
+    }
+  }
 
   Future<List<ChatRoom>> getChatRooms() async => CanlifalSeed.rooms;
 

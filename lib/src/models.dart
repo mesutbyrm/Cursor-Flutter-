@@ -138,22 +138,62 @@ class LiveStream {
   const LiveStream({
     required this.id,
     required this.title,
+    required this.description,
     required this.host,
     required this.thumbnailUrl,
+    required this.watchUrl,
     required this.viewers,
     required this.status,
     required this.tags,
+    this.playbackUrl,
+    this.liveKitToken,
+    this.chatRoomId,
     this.isMultiGuest = false,
   });
 
   final String id;
   final String title;
+  final String description;
   final AppUser host;
   final String thumbnailUrl;
+  final String watchUrl;
   final int viewers;
   final StreamStatus status;
   final List<String> tags;
+  final String? playbackUrl;
+  final String? liveKitToken;
+  final String? chatRoomId;
   final bool isMultiGuest;
+
+  bool get hasNativePlayback =>
+      playbackUrl != null && playbackUrl!.trim().isNotEmpty;
+
+  factory LiveStream.fromJson(Map<String, dynamic> json) {
+    return LiveStream(
+      id: json['id'] as String? ?? 'live',
+      title: json['title'] as String? ?? 'Canlı Yayın',
+      description:
+          json['description'] as String? ?? 'Canlifal canlı yayın odası.',
+      host: AppUser.fromJson(
+        json['host'] as Map<String, dynamic>? ?? <String, dynamic>{},
+      ),
+      thumbnailUrl: json['thumbnailUrl'] as String? ?? CanlifalSeed.cover(0),
+      watchUrl:
+          json['watchUrl'] as String? ?? 'https://canlifal.com/canli-yayinlar',
+      viewers: json['viewers'] as int? ?? 0,
+      status: StreamStatus.values.firstWhere(
+        (StreamStatus status) => status.name == json['status'],
+        orElse: () => StreamStatus.live,
+      ),
+      tags: (json['tags'] as List<dynamic>? ?? const <dynamic>[])
+          .whereType<String>()
+          .toList(),
+      playbackUrl: json['playbackUrl'] as String?,
+      liveKitToken: json['liveKitToken'] as String?,
+      chatRoomId: json['chatRoomId'] as String?,
+      isMultiGuest: json['isMultiGuest'] as bool? ?? false,
+    );
+  }
 }
 
 class ChatRoom {
@@ -384,30 +424,42 @@ class CanlifalSeed {
     LiveStream(
       id: 'live-1',
       title: 'Kahve Falı Gecesi',
+      description:
+          'Canlı kahve falı, hediye efektleri ve yorum sırası olan ana yayın.',
       host: users[0],
       thumbnailUrl: cover(0),
+      watchUrl: 'https://canlifal.com/canli-yayinlar',
       viewers: 18400,
       status: StreamStatus.live,
       tags: const <String>['Kahve', 'Canlı Fal', 'Hediye'],
+      chatRoomId: 'room-1',
       isMultiGuest: true,
     ),
     LiveStream(
       id: 'live-2',
       title: 'Tarot ile Aşk Açılımı',
+      description:
+          'Tarot danışmanı ile canlı soru-cevap ve premium sıra sistemi.',
       host: users[1],
       thumbnailUrl: cover(1),
+      watchUrl: 'https://canlifal.com/canli-yayinlar',
       viewers: 12600,
       status: StreamStatus.live,
       tags: const <String>['Tarot', 'Aşk', 'Soru-Cevap'],
+      chatRoomId: 'room-2',
     ),
     LiveStream(
       id: 'live-3',
       title: 'Astroloji Harita Okuması',
+      description:
+          'Çoklu konuk desteği ile canlı harita yorumu ve FanClub yayını.',
       host: users[2],
       thumbnailUrl: cover(2),
+      watchUrl: 'https://canlifal.com/canli-yayinlar',
       viewers: 24100,
       status: StreamStatus.live,
       tags: const <String>['Astroloji', 'Premium', 'FanClub'],
+      chatRoomId: 'room-2',
       isMultiGuest: true,
     ),
   ];

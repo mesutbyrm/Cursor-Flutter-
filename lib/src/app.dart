@@ -69,6 +69,21 @@ final routerProvider = Provider<GoRouter>((Ref ref) {
             },
           ),
           GoRoute(
+            path: '/live/create',
+            pageBuilder: (BuildContext context, GoRouterState state) {
+              return _fadePage(state, const LiveBroadcastSetupScreen());
+            },
+          ),
+          GoRoute(
+            path: '/live/:id',
+            pageBuilder: (BuildContext context, GoRouterState state) {
+              return _fadePage(
+                state,
+                LiveWatchScreen(streamId: state.pathParameters['id']!),
+              );
+            },
+          ),
+          GoRoute(
             path: '/chat',
             pageBuilder: (BuildContext context, GoRouterState state) {
               return _fadePage(state, const ChatScreen());

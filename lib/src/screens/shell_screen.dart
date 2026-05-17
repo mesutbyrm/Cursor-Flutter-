@@ -104,9 +104,9 @@ class MainShellScreen extends ConsumerWidget {
           ),
         ),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => context.go('/live'),
+          onPressed: () => context.go('/live/create'),
           icon: const Icon(Icons.videocam),
-          label: const Text('Yayına Katıl'),
+          label: const Text('Yayın Aç'),
         ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: currentIndex,
