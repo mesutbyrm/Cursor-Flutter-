@@ -33,6 +33,30 @@ Uygulamayı gerçek veriye bağlamak için şu bilgileri gönderin:
 11. 12 fal/yorum türü için endpointler
 12. Örnek JSON cevapları ve gerekiyorsa API anahtarı
 
+## Canlı API ile build alma
+
+Uygulama `API_BASE_URL` Dart define değeri verilirse gerçek endpointlere istek atar. Verilmezse demo verilerle çalışır.
+
+```bash
+flutter run --dart-define=API_BASE_URL=https://example.com
+flutter build apk --release --dart-define=API_BASE_URL=https://example.com
+```
+
+Şu endpointler için servis katmanı hazırdır:
+
+- `POST /api/auth/mobile-login`
+- `POST /api/auth/mobile-register`
+- `POST /api/auth/mobile-refresh`
+- `POST /api/trtc/usersig`
+- `GET /api/social/feed`
+- `GET /api/video-streams`
+- `GET /api/audio-rooms`
+- `GET /api/gifts/types`
+- `POST /api/gifts/send`
+- `POST /api/video-streams/{streamId}/gifts`
+
+Tencent RTC için UserSig backend'den alınacak şekilde `TrtcService` iskeleti eklendi. Gerçek Tencent Flutter SDK/plugin bilgisi netleşince `enterRoom`, `exitRoom`, kamera/mikrofon ve rol geçişleri bu servise bağlanacak.
+
 ## Kurulum
 
 Yeni bir makinede platform klasörlerini üretmek için:

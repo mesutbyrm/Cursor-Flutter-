@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'models/app_models.dart';
+import 'services/app_repository.dart';
+
 const String kAppName = 'VivaLive';
 const String kLogoAsset = 'assets/brand/vivalive_logo.png';
 
@@ -127,8 +130,19 @@ class _SocialShellState extends State<SocialShell> {
     _Destination('Profil', Icons.person_outline, Icons.person),
   ];
 
+  final AppRepository _repository = AppRepository();
+  late Future<List<FeedPostModel>> _feedFuture;
+  late Future<List<LiveStreamModel>> _liveFuture;
+  late Future<List<AudioRoomModel>> _roomFuture;
+  late Future<List<GiftTypeModel>> _giftFuture;
   int _currentIndex = 0;
   bool _isRefreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -189,6 +203,11 @@ class _SocialShellState extends State<SocialShell> {
                     key: ValueKey<int>(_currentIndex),
                     index: _currentIndex,
                     onAction: _showApiNotice,
+                    feedFuture: _feedFuture,
+                    liveFuture: _liveFuture,
+                    roomFuture: _roomFuture,
+                    giftFuture: _giftFuture,
+                    isApiConfigured: _repository.isConfigured,
                   ),
                 ),
               ),
@@ -222,6 +241,7 @@ class _SocialShellState extends State<SocialShell> {
 
   Future<void> _refresh() async {
     setState(() => _isRefreshing = true);
+    _loadData();
     await Future<void>.delayed(const Duration(milliseconds: 700));
 
     if (!mounted) {
@@ -230,24 +250,55 @@ class _SocialShellState extends State<SocialShell> {
 
     setState(() => _isRefreshing = false);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('API verileri için ekran yenilendi')),
+      SnackBar(
+        content: Text(
+          _repository.isConfigured
+              ? 'API verileri yenilendi'
+              : 'Demo veriler yenilendi. Canlı veri için API_BASE_URL gerekli.',
+        ),
+      ),
     );
   }
 
   void _showApiNotice() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Bu alan API bilgileri gelince canlı veriye bağlanacak.'),
+      SnackBar(
+        content: Text(
+          _repository.isConfigured
+              ? 'Bu aksiyon API endpointine bağlanmaya hazır.'
+              : 'API_BASE_URL verilince bu alan canlı veriye bağlanacak.',
+        ),
       ),
     );
+  }
+
+  void _loadData() {
+    _feedFuture = _repository.fetchFeed();
+    _liveFuture = _repository.fetchLiveStreams();
+    _roomFuture = _repository.fetchAudioRooms();
+    _giftFuture = _repository.fetchGiftTypes();
   }
 }
 
 class _PageBody extends StatelessWidget {
-  const _PageBody({super.key, required this.index, required this.onAction});
+  const _PageBody({
+    super.key,
+    required this.index,
+    required this.onAction,
+    required this.feedFuture,
+    required this.liveFuture,
+    required this.roomFuture,
+    required this.giftFuture,
+    required this.isApiConfigured,
+  });
 
   final int index;
   final VoidCallback onAction;
+  final Future<List<FeedPostModel>> feedFuture;
+  final Future<List<LiveStreamModel>> liveFuture;
+  final Future<List<AudioRoomModel>> roomFuture;
+  final Future<List<GiftTypeModel>> giftFuture;
+  final bool isApiConfigured;
 
   @override
   Widget build(BuildContext context) {
@@ -255,10 +306,20 @@ class _PageBody extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 104),
       children: <Widget>[
-        if (index == 0) FeedPage(onAction: onAction),
+        if (index == 0)
+          FeedPage(
+            onAction: onAction,
+            feedFuture: feedFuture,
+            isApiConfigured: isApiConfigured,
+          ),
         if (index == 1) ExplorePage(onAction: onAction),
-        if (index == 2) LivePage(onAction: onAction),
-        if (index == 3) RoomsPage(onAction: onAction),
+        if (index == 2)
+          LivePage(
+            onAction: onAction,
+            liveFuture: liveFuture,
+            giftFuture: giftFuture,
+          ),
+        if (index == 3) RoomsPage(onAction: onAction, roomFuture: roomFuture),
         if (index == 4) ProfilePage(onAction: onAction),
       ],
     );
@@ -266,9 +327,16 @@ class _PageBody extends StatelessWidget {
 }
 
 class FeedPage extends StatelessWidget {
-  const FeedPage({super.key, required this.onAction});
+  const FeedPage({
+    super.key,
+    required this.onAction,
+    required this.feedFuture,
+    required this.isApiConfigured,
+  });
 
   final VoidCallback onAction;
+  final Future<List<FeedPostModel>> feedFuture;
+  final bool isApiConfigured;
 
   @override
   Widget build(BuildContext context) {
@@ -281,26 +349,51 @@ class FeedPage extends StatelessWidget {
         const SizedBox(height: 18),
         const _SectionTitle('Sosyal akış'),
         const SizedBox(height: 10),
-        _FeedPost(
-          avatarColor: const Color(0xFF7C3AED),
-          name: 'Mina Live',
-          username: '@mina',
-          text:
-              'Yeni canlı yayın odamız başladı. Hediye efekti, sesli sohbet ve özel FunClub odası açık!',
-          likes: '12.4K',
-          comments: '842',
-          onAction: onAction,
+        _ApiStatusBanner(
+          isConfigured: isApiConfigured,
+          liveText: 'Sosyal akış /api/social/feed endpointinden çekiliyor.',
+          demoText:
+              'Şu an demo akış gösteriliyor. Build sırasında API_BASE_URL verilirse canlı veriye bağlanır.',
         ),
-        const SizedBox(height: 12),
-        _FeedPost(
-          avatarColor: const Color(0xFF06B6D4),
-          name: 'Ege',
-          username: '@egeplus',
-          text:
-              'Bugünün trendi: kısa video, ortak yayın, jeton görevleri ve arkadaş daveti.',
-          likes: '8.1K',
-          comments: '391',
-          onAction: onAction,
+        const SizedBox(height: 10),
+        FutureBuilder<List<FeedPostModel>>(
+          future: feedFuture,
+          builder:
+              (
+                BuildContext context,
+                AsyncSnapshot<List<FeedPostModel>> snapshot,
+              ) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const _LoadingCard(text: 'Akış yükleniyor...');
+                }
+                if (snapshot.hasError) {
+                  return _ErrorCard(message: snapshot.error.toString());
+                }
+                final List<FeedPostModel> posts =
+                    snapshot.data ?? DemoData.feedPosts;
+                return Column(
+                  children: <Widget>[
+                    for (
+                      int index = 0;
+                      index < posts.length;
+                      index++
+                    ) ...<Widget>[
+                      _FeedPost(
+                        avatarColor: index.isEven
+                            ? const Color(0xFF7C3AED)
+                            : const Color(0xFF06B6D4),
+                        name: posts[index].authorName,
+                        username: posts[index].username,
+                        text: posts[index].text,
+                        likes: _compactCount(posts[index].likes),
+                        comments: _compactCount(posts[index].comments),
+                        onAction: onAction,
+                      ),
+                      if (index != posts.length - 1) const SizedBox(height: 12),
+                    ],
+                  ],
+                );
+              },
         ),
         const SizedBox(height: 18),
         const _SectionTitle('Hızlı sistemler'),
@@ -350,9 +443,16 @@ class ExplorePage extends StatelessWidget {
 }
 
 class LivePage extends StatelessWidget {
-  const LivePage({super.key, required this.onAction});
+  const LivePage({
+    super.key,
+    required this.onAction,
+    required this.liveFuture,
+    required this.giftFuture,
+  });
 
   final VoidCallback onAction;
+  final Future<List<LiveStreamModel>> liveFuture;
+  final Future<List<GiftTypeModel>> giftFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -363,32 +463,62 @@ class LivePage extends StatelessWidget {
         const SizedBox(height: 16),
         const _SectionTitle('Canlı yayınlar'),
         const SizedBox(height: 10),
-        _LiveListTile(
-          title: 'Gece sohbeti',
-          host: 'Lara',
-          viewers: '21.8K',
-          color: const Color(0xFFEC4899),
-          onAction: onAction,
-        ),
-        const SizedBox(height: 10),
-        _LiveListTile(
-          title: 'Ortak yayın',
-          host: 'Deniz & Arda',
-          viewers: '9.4K',
-          color: const Color(0xFF7C3AED),
-          onAction: onAction,
+        FutureBuilder<List<LiveStreamModel>>(
+          future: liveFuture,
+          builder:
+              (
+                BuildContext context,
+                AsyncSnapshot<List<LiveStreamModel>> snapshot,
+              ) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const _LoadingCard(
+                    text: 'Canlı yayınlar yükleniyor...',
+                  );
+                }
+                if (snapshot.hasError) {
+                  return _ErrorCard(message: snapshot.error.toString());
+                }
+                final List<LiveStreamModel> streams =
+                    snapshot.data ?? DemoData.liveStreams;
+                return Column(
+                  children: <Widget>[
+                    for (
+                      int index = 0;
+                      index < streams.length;
+                      index++
+                    ) ...<Widget>[
+                      _LiveListTile(
+                        title: streams[index].title,
+                        host: streams[index].hostName,
+                        viewers: _compactCount(streams[index].viewerCount),
+                        color: index.isEven
+                            ? const Color(0xFFEC4899)
+                            : const Color(0xFF7C3AED),
+                        onAction: onAction,
+                      ),
+                      if (index != streams.length - 1)
+                        const SizedBox(height: 10),
+                    ],
+                  ],
+                );
+              },
         ),
         const SizedBox(height: 16),
-        _GiftPanel(onAction: onAction),
+        _GiftPanel(onAction: onAction, giftFuture: giftFuture),
       ],
     );
   }
 }
 
 class RoomsPage extends StatelessWidget {
-  const RoomsPage({super.key, required this.onAction});
+  const RoomsPage({
+    super.key,
+    required this.onAction,
+    required this.roomFuture,
+  });
 
   final VoidCallback onAction;
+  final Future<List<AudioRoomModel>> roomFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -399,25 +529,44 @@ class RoomsPage extends StatelessWidget {
         const SizedBox(height: 16),
         const _SectionTitle('Sesli sohbet odaları'),
         const SizedBox(height: 10),
-        _AudioRoomCard(
-          title: 'Muhabbet Cafe',
-          subtitle: '12 konuşmacı • 248 dinleyici',
-          color: const Color(0xFF7C3AED),
-          onAction: onAction,
-        ),
-        const SizedBox(height: 12),
-        _AudioRoomCard(
-          title: 'Oyun gecesi',
-          subtitle: '6 konuşmacı • 183 dinleyici',
-          color: const Color(0xFF10B981),
-          onAction: onAction,
-        ),
-        const SizedBox(height: 12),
-        _AudioRoomCard(
-          title: 'Gold üyeler kulübü',
-          subtitle: 'Özel oda • 74 dinleyici',
-          color: const Color(0xFFF59E0B),
-          onAction: onAction,
+        FutureBuilder<List<AudioRoomModel>>(
+          future: roomFuture,
+          builder:
+              (
+                BuildContext context,
+                AsyncSnapshot<List<AudioRoomModel>> snapshot,
+              ) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const _LoadingCard(text: 'Sesli odalar yükleniyor...');
+                }
+                if (snapshot.hasError) {
+                  return _ErrorCard(message: snapshot.error.toString());
+                }
+                final List<AudioRoomModel> rooms =
+                    snapshot.data ?? DemoData.audioRooms;
+                return Column(
+                  children: <Widget>[
+                    for (
+                      int index = 0;
+                      index < rooms.length;
+                      index++
+                    ) ...<Widget>[
+                      _AudioRoomCard(
+                        title: rooms[index].title,
+                        subtitle:
+                            '${rooms[index].speakerCount} konuşmacı • ${rooms[index].listenerCount} dinleyici',
+                        color: <Color>[
+                          const Color(0xFF7C3AED),
+                          const Color(0xFF10B981),
+                          const Color(0xFFF59E0B),
+                        ][index % 3],
+                        onAction: onAction,
+                      ),
+                      if (index != rooms.length - 1) const SizedBox(height: 12),
+                    ],
+                  ],
+                );
+              },
         ),
       ],
     );
@@ -1027,15 +1176,10 @@ class _LiveListTile extends StatelessWidget {
 }
 
 class _GiftPanel extends StatelessWidget {
-  const _GiftPanel({required this.onAction});
+  const _GiftPanel({required this.onAction, required this.giftFuture});
 
   final VoidCallback onAction;
-
-  static const List<_Gift> _gifts = <_Gift>[
-    _Gift('Kalp', '10', Icons.favorite, Color(0xFFEC4899)),
-    _Gift('Roket', '250', Icons.rocket_launch, Color(0xFF7C3AED)),
-    _Gift('Taç', '500', Icons.workspace_premium, Color(0xFFF59E0B)),
-  ];
+  final Future<List<GiftTypeModel>> giftFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -1048,38 +1192,83 @@ class _GiftPanel extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: <Widget>[
-              for (final _Gift gift in _gifts) ...<Widget>[
-                Expanded(
-                  child: InkWell(
-                    onTap: onAction,
-                    borderRadius: BorderRadius.circular(18),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: gift.color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Column(
-                        children: <Widget>[
-                          Icon(gift.icon, color: gift.color),
-                          const SizedBox(height: 6),
-                          Text(
-                            gift.name,
-                            style: const TextStyle(fontWeight: FontWeight.w800),
+          FutureBuilder<List<GiftTypeModel>>(
+            future: giftFuture,
+            builder:
+                (
+                  BuildContext context,
+                  AsyncSnapshot<List<GiftTypeModel>> snapshot,
+                ) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const LinearProgressIndicator();
+                  }
+                  final List<GiftTypeModel> gifts = snapshot.hasError
+                      ? DemoData.giftTypes
+                      : snapshot.data ?? DemoData.giftTypes;
+                  return Row(
+                    children: <Widget>[
+                      for (
+                        int index = 0;
+                        index < gifts.take(3).length;
+                        index++
+                      ) ...<Widget>[
+                        Expanded(
+                          child: _GiftButton(
+                            gift: gifts[index],
+                            color: <Color>[
+                              const Color(0xFFEC4899),
+                              const Color(0xFF7C3AED),
+                              const Color(0xFFF59E0B),
+                            ][index % 3],
+                            onAction: onAction,
                           ),
-                          Text('${gift.price} jeton'),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                if (gift != _gifts.last) const SizedBox(width: 8),
-              ],
-            ],
+                        ),
+                        if (index != gifts.take(3).length - 1)
+                          const SizedBox(width: 8),
+                      ],
+                    ],
+                  );
+                },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _GiftButton extends StatelessWidget {
+  const _GiftButton({
+    required this.gift,
+    required this.color,
+    required this.onAction,
+  });
+
+  final GiftTypeModel gift;
+  final Color color;
+  final VoidCallback onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onAction,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          children: <Widget>[
+            Icon(Icons.card_giftcard, color: color),
+            const SizedBox(height: 6),
+            Text(
+              gift.name,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            Text('${gift.price} jeton'),
+          ],
+        ),
       ),
     );
   }
@@ -1362,6 +1551,98 @@ class _GameCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
           const Text('Jeton ve rozet ödülleri'),
+        ],
+      ),
+    );
+  }
+}
+
+class _ApiStatusBanner extends StatelessWidget {
+  const _ApiStatusBanner({
+    required this.isConfigured,
+    required this.liveText,
+    required this.demoText,
+  });
+
+  final bool isConfigured;
+  final String liveText;
+  final String demoText;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color = isConfigured
+        ? const Color(0xFF10B981)
+        : Theme.of(context).colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(
+            isConfigured ? Icons.cloud_done : Icons.integration_instructions,
+            color: color,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              isConfigured ? liveText : demoText,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoadingCard extends StatelessWidget {
+  const _LoadingCard({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      child: Row(
+        children: <Widget>[
+          const SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2.6),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Text(text)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorCard extends StatelessWidget {
+  const _ErrorCard({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'API verisi alınamadı: $message',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
         ],
       ),
     );
@@ -1695,18 +1976,19 @@ class _Feature {
   final String subtitle;
 }
 
-class _Gift {
-  const _Gift(this.name, this.price, this.icon, this.color);
-
-  final String name;
-  final String price;
-  final IconData icon;
-  final Color color;
-}
-
 class _MenuItem {
   const _MenuItem(this.icon, this.title);
 
   final IconData icon;
   final String title;
+}
+
+String _compactCount(int value) {
+  if (value >= 1000000) {
+    return '${(value / 1000000).toStringAsFixed(1)}M';
+  }
+  if (value >= 1000) {
+    return '${(value / 1000).toStringAsFixed(1)}K';
+  }
+  return value.toString();
 }
