@@ -10,7 +10,7 @@ flutter pub get
 flutter run --dart-define=API_BASE_URL=https://senin-api.example.com
 ```
 
-`API_BASE_URL` verilmezse varsayılan `https://api.canlifal.local` kullanılır (kendi backend adresinizle değiştirin).
+`API_BASE_URL` verilmezse varsayılan `https://canlifal.com` kullanılır (`lib/core/config/env.dart`; kendi backend adresinizle `--dart-define` verin).
 
 ## Mimari
 

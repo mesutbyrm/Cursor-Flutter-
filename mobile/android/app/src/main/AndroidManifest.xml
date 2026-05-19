@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Release merges only this manifest; without INTERNET, HTTPS/DNS fails in production APK. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="canlifal_social"
         android:name="${applicationName}"

@@ -155,6 +155,21 @@ extension DioApi on Dio {
 ApiException _mapDio(DioException e) {
   final code = e.response?.statusCode;
   final body = e.response?.data;
+
+  if (e.type == DioExceptionType.connectionError) {
+    final raw = (e.message ?? '').toLowerCase();
+    if (raw.contains('failed host lookup') || raw.contains('socketexception')) {
+      return ApiException(
+        'Sunucu adresi çözülemedi veya ağ yok. Wi-Fi/mobil veriyi ve canlifal.com erişimini kontrol edin; uygulamayı güncel APK ile yeniden kurmayı deneyin.',
+        statusCode: code,
+      );
+    }
+    return ApiException(
+      'Bağlantı kurulamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.',
+      statusCode: code,
+    );
+  }
+
   String msg = e.message ?? 'Ağ hatası';
   if (body is Map) {
     final m = body.cast<String, dynamic>();
