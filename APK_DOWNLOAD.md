@@ -24,6 +24,18 @@ Aşağıdaki görseller, uygulamadaki koyu tema + neon vurgu + giriş / ana sayf
 
 `releases/latest/download/...` kullanmıyoruz; GitHub “latest” etiketini semver’a göre sıraladığı için `apk-latest` gibi **sabit etiket + dosya adı** daha güvenilir.
 
+## Chrome Android: “İndiriliyor…” %100 / MB tamam ama bitmiyor
+
+Bu **dosya bozuk değil**; çoğu zaman Chrome’un APK’yı güvenlik taramasına sokması veya geçici dosyayı (`.crdownload`) nihai `canlifal-mobile-release.apk` adına taşırken arayüzün takılı kalmasıdır. Birkaç dakika bekleyin; **İndirilenler** uygulamasında dosya yine de oluşmuş olabilir.
+
+**Ne işe yarar:**
+
+1. **Sürüm sayfasından indirin** (genelde daha sorunsuz):  
+   **[apk-latest sürüm sayfası](https://github.com/mesutbyrm/Cursor-Flutter-/releases/tag/apk-latest)** → **Assets** → `canlifal-mobile-release.apk` üzerine uzun basıp **Bağlantıyı indir** veya dokunarak indirin.
+2. **Başka tarayıcı:** Firefox, Samsung Internet veya Edge ile aynı doğrudan bağlantıyı deneyin.
+3. **Bilgisayardan indirip** USB veya Drive ile telefona atın.
+4. İndirmeyi **iptal edip** Wi‑Fi / mobil veri değiştirerek yeniden deneyin; gerekirse Chrome’da **İndirilenler** önbelleğini temizleyin.
+
 ## Sürüm etiketi (v1.0.0 gibi)
 
 ```bash

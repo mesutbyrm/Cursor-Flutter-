@@ -86,4 +86,6 @@ Uygulama içinde **Giriş** ve **Kayıt** ekranlarının altında da aynı bağl
 
 404 alırsanız: GitHub → **Actions** → [**Build release APK**](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml) → **Run workflow** → dal **`main`**. Ayrıntılar: depo kökündeki [`APK_DOWNLOAD.md`](../APK_DOWNLOAD.md).
 
+Chrome’da doğrudan indirme **%100’de takılı** görünürse: [**apk-latest sürüm sayfası**](https://github.com/mesutbyrm/Cursor-Flutter-/releases/tag/apk-latest) → **Assets** → APK; veya Firefox / Samsung Internet. Açıklama: [`APK_DOWNLOAD.md`](../APK_DOWNLOAD.md).
+
 **Görsel özet:** [`docs/`](docs/) klasöründeki `ui-mockup-*.png` dosyaları ve kökteki [`APK_DOWNLOAD.md`](../APK_DOWNLOAD.md) tablosu.

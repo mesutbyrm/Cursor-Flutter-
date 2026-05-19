@@ -285,6 +285,36 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ),
                           ),
                         ),
+                        TextButton(
+                          onPressed: () async {
+                            final uri = Uri.parse(
+                              AppLinks.androidTestApkReleaseTagPage,
+                            );
+                            if (!await launchUrl(
+                              uri,
+                              mode: LaunchMode.externalApplication,
+                            )) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Bağlantı açılamadı'),
+                                ),
+                              );
+                            }
+                          },
+                          child: Text(
+                            'İndirme takılıyorsa: GitHub sürüm sayfası',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppTheme.muted.withValues(alpha: 0.95),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                              decorationColor:
+                                  AppTheme.muted.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ),
                         const SizedBox(height: 8),
                       ],
                     ),

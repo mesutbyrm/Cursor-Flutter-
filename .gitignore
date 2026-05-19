@@ -1,2 +1,5 @@
 # Yerel CI/Android SDK kurulumu (depoya eklenmez)
 /android-sdk-ci/
+
+# Yerel APK kopyaları (CI çıktısı; repoya eklenmez)
+*.apk
