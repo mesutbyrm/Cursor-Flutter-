@@ -16,6 +16,14 @@ flutter run --dart-define=API_BASE_URL=https://senin-api.example.com
 
 Koyu **kozmik mor** zemin, hafif **yıldız** dokusu (`CosmicBackground`), bölüm başlıklarında web’deki gibi **kırmızı dikey çubuk** (`CosmicSectionHeader`), alt gezinmede ortada **pembe–mor gradient FAB** (Canlı sekmesi). Renk sabitleri: `lib/core/theme/app_theme.dart`.
 
+## Premium ana sayfa (Keşfet)
+
+`/feed` rotası **`PremiumHomeScreen`** ile Dribbble seviyesinde üretim odaklı bir arayüz sunar: `carousel_slider`, `smooth_page_indicator`, `flutter_animate`, `responsive_sizer`, `google_fonts`. Kod yapısı:
+
+- `lib/screens/premium_home/` — ana ekran  
+- `lib/widgets/premium_home/` — başlık, hero carousel, hızlı işlemler, sohbet küreleri, fal & tarot  
+- `lib/models/`, `lib/data/`, `lib/theme/premium_live_theme.dart`, `lib/constants/premium_home_layout.dart`
+
 ## Mimari
 
 - **Domain:** entity + repository arayüzleri  

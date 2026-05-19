@@ -7,7 +7,7 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
-import '../../features/feed/presentation/pages/feed_page.dart';
+import '../../screens/premium_home/premium_home_screen.dart';
 import '../../features/live/presentation/pages/live_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
@@ -73,7 +73,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/feed',
-                builder: (context, state) => const FeedPage(),
+                builder: (context, state) => const PremiumHomeScreen(),
               ),
             ],
           ),

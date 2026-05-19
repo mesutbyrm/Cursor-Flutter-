@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -30,66 +32,72 @@ class MainShellPage extends StatelessWidget {
         children: [
           Padding(
             padding: EdgeInsets.only(top: 28, bottom: bottomInset),
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF12081E).withValues(alpha: 0.94),
-                border: Border(
-                  top: BorderSide(
-                    color: AppTheme.cosmicPurple.withValues(alpha: 0.45),
-                  ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.accent.withValues(alpha: 0.12),
-                    blurRadius: 24,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                top: false,
-                child: SizedBox(
-                  height: 58,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _ShellNavItem(
-                          icon: Icons.explore_outlined,
-                          selectedIcon: Icons.explore_rounded,
-                          label: 'Keşfet',
-                          selected: idx == 0,
-                          onTap: () => _goBranch(0),
-                        ),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF12081E).withValues(alpha: 0.72),
+                    border: Border(
+                      top: BorderSide(
+                        color: AppTheme.cosmicPurple.withValues(alpha: 0.55),
                       ),
-                      Expanded(
-                        child: _ShellNavItem(
-                          icon: Icons.public_outlined,
-                          selectedIcon: Icons.public_rounded,
-                          label: 'Sosyal',
-                          selected: idx == 1,
-                          onTap: () => _goBranch(1),
-                        ),
-                      ),
-                      const SizedBox(width: 56),
-                      Expanded(
-                        child: _ShellNavItem(
-                          icon: Icons.chat_bubble_outline_rounded,
-                          selectedIcon: Icons.chat_bubble_rounded,
-                          label: 'Mesaj',
-                          selected: idx == 3,
-                          onTap: () => _goBranch(3),
-                        ),
-                      ),
-                      Expanded(
-                        child: _ShellNavItem(
-                          icon: Icons.person_outline_rounded,
-                          selectedIcon: Icons.person_rounded,
-                          label: 'Profil',
-                          selected: idx == 4,
-                          onTap: () => _goBranch(4),
-                        ),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.accent.withValues(alpha: 0.18),
+                        blurRadius: 28,
+                        offset: const Offset(0, -6),
                       ),
                     ],
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: SizedBox(
+                      height: 58,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _ShellNavItem(
+                              icon: Icons.explore_outlined,
+                              selectedIcon: Icons.explore_rounded,
+                              label: 'Keşfet',
+                              selected: idx == 0,
+                              onTap: () => _goBranch(0),
+                            ),
+                          ),
+                          Expanded(
+                            child: _ShellNavItem(
+                              icon: Icons.workspace_premium_outlined,
+                              selectedIcon: Icons.workspace_premium_rounded,
+                              label: 'Abonelikler',
+                              selected: idx == 1,
+                              onTap: () => _goBranch(1),
+                            ),
+                          ),
+                          const SizedBox(width: 56),
+                          Expanded(
+                            child: _ShellNavItem(
+                              icon: Icons.chat_bubble_outline_rounded,
+                              selectedIcon: Icons.chat_bubble_rounded,
+                              label: 'Mesajlar',
+                              selected: idx == 3,
+                              onTap: () => _goBranch(3),
+                            ),
+                          ),
+                          Expanded(
+                            child: _ShellNavItem(
+                              icon: Icons.person_outline_rounded,
+                              selectedIcon: Icons.person_rounded,
+                              label: 'Profil',
+                              selected: idx == 4,
+                              onTap: () => _goBranch(4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -117,7 +125,7 @@ class MainShellPage extends StatelessWidget {
                     ],
                   ),
                   child: Icon(
-                    idx == 2 ? Icons.live_tv_rounded : Icons.videocam_rounded,
+                    idx == 2 ? Icons.live_tv_rounded : Icons.auto_awesome_rounded,
                     color: Colors.white,
                     size: 30,
                   ),
@@ -156,10 +164,25 @@ class _ShellNavItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              selected ? selectedIcon : icon,
-              size: 24,
-              color: c,
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: selected
+                    ? [
+                        BoxShadow(
+                          color: AppTheme.accent.withValues(alpha: 0.45),
+                          blurRadius: 14,
+                          spreadRadius: 0,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Icon(
+                selected ? selectedIcon : icon,
+                size: 24,
+                color: c,
+              ),
             ),
             const SizedBox(height: 2),
             Text(
