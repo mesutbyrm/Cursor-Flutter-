@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 @immutable
 class PremiumLiveStream {
@@ -11,6 +11,11 @@ class PremiumLiveStream {
     required this.avatarUrls,
     this.verified = true,
     this.extraAudienceCount = 0,
+    this.heroBackdropColors = const [
+      Color(0xFF2D1B69),
+      Color(0xFF12081E),
+      Color(0xFF0D0618),
+    ],
   });
 
   final String id;
@@ -22,4 +27,6 @@ class PremiumLiveStream {
   final bool verified;
   /// Avatar yığınının yanında "+128" gibi gösterilen ek izleyici sayısı.
   final int extraAudienceCount;
+  /// Ağ görseli yüklenemezse mockup’taki gibi dolu gradient zemin.
+  final List<Color> heroBackdropColors;
 }

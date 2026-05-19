@@ -11,6 +11,10 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../providers/feed_providers.dart';
 import '../widgets/feed_home_sections.dart';
 
+/// Eski “Keşfet” akışı — **yönlendiricide kullanılmıyor.** Oturum sonrası ana sayfa
+/// yalnızca `PremiumHomeScreen` (`/feed`). Bu sınıf kaldırılmadan önce API
+/// entegrasyonu premium ekrana taşınmalıdır.
+@Deprecated('Ana sayfa için PremiumHomeScreen kullanın (/feed).')
 class FeedPage extends ConsumerStatefulWidget {
   const FeedPage({super.key});
 

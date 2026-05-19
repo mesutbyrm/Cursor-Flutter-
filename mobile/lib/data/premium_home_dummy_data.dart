@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/premium_live_stream.dart';
 import '../models/premium_quick_action.dart';
+import '../models/premium_story_tray_item.dart';
 import '../models/premium_tarot_offer.dart';
 import '../models/premium_voice_room_sphere.dart';
 import '../theme/premium_live_theme.dart';
@@ -9,11 +10,61 @@ import '../theme/premium_live_theme.dart';
 abstract final class PremiumHomeDummyData {
   static const String userName = 'Cemre';
 
-  static String _pic(String seed) =>
-      'https://picsum.photos/seed/$seed/400/640';
+  /// picsum bazı bölgelerde yavaş / engelli olabiliyor; Unsplash sabit ID daha stabil.
+  static String _heroImg(String id) =>
+      'https://images.unsplash.com/photo-$id?auto=format&fit=crop&w=800&q=80';
 
   static String _face(String seed) =>
       'https://i.pravatar.cc/150?u=$seed';
+
+  static List<PremiumStoryTrayItem> get storyTrayItems => [
+        const PremiumStoryTrayItem(
+          id: 'add',
+          label: 'Hikayen',
+          avatarUrl: '',
+          isAddStory: true,
+        ),
+        PremiumStoryTrayItem(
+          id: 's1',
+          label: 'Özge',
+          avatarUrl: _face('story_ozge'),
+          hasNew: true,
+          isLive: true,
+        ),
+        PremiumStoryTrayItem(
+          id: 's2',
+          label: 'Ela',
+          avatarUrl: _face('story_ela'),
+          hasNew: true,
+        ),
+        PremiumStoryTrayItem(
+          id: 's3',
+          label: 'Arda',
+          avatarUrl: _face('story_arda'),
+          isLive: true,
+        ),
+        PremiumStoryTrayItem(
+          id: 's4',
+          label: 'Defne',
+          avatarUrl: _face('story_defne'),
+          hasNew: true,
+        ),
+        PremiumStoryTrayItem(
+          id: 's5',
+          label: 'Kaan',
+          avatarUrl: _face('story_kaan'),
+        ),
+        PremiumStoryTrayItem(
+          id: 's6',
+          label: 'Melis',
+          avatarUrl: _face('story_melis'),
+        ),
+        PremiumStoryTrayItem(
+          id: 's7',
+          label: 'Burak',
+          avatarUrl: _face('story_burak'),
+        ),
+      ];
 
   static List<PremiumLiveStream> get heroStreams => [
         PremiumLiveStream(
@@ -21,27 +72,42 @@ abstract final class PremiumHomeDummyData {
           streamerName: 'Özge',
           categoryLabel: 'Müzik • Sohbet',
           viewers: 4892,
-          imageUrl: _pic('canli_ozge'),
+          imageUrl: _heroImg('1493225457124-a3eb161ffa5f'),
           avatarUrls: [_face('a1'), _face('a2'), _face('a3')],
           extraAudienceCount: 128,
+          heroBackdropColors: const [
+            Color(0xFF4A148C),
+            Color(0xFF880E4F),
+            Color(0xFF0D0618),
+          ],
         ),
         PremiumLiveStream(
           id: '2',
           streamerName: 'Ela',
           categoryLabel: 'Gece Yayını',
           viewers: 2310,
-          imageUrl: _pic('canli_ela'),
+          imageUrl: _heroImg('1514525256071-8a285ddb903a'),
           avatarUrls: [_face('b1'), _face('b2'), _face('b3')],
           extraAudienceCount: 96,
+          heroBackdropColors: const [
+            Color(0xFF1A237E),
+            Color(0xFF6A1B9A),
+            Color(0xFF0D0B14),
+          ],
         ),
         PremiumLiveStream(
           id: '3',
           streamerName: 'Arda',
           categoryLabel: 'Eğlence',
           viewers: 1204,
-          imageUrl: _pic('canli_arda'),
+          imageUrl: _heroImg('1470225622910-7cf1b2cb5dfc'),
           avatarUrls: [_face('c1'), _face('c2'), _face('c3')],
           extraAudienceCount: 54,
+          heroBackdropColors: const [
+            Color(0xFF004D40),
+            Color(0xFF311B92),
+            Color(0xFF050210),
+          ],
         ),
       ];
 

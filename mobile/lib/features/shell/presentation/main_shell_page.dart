@@ -59,10 +59,10 @@ class MainShellPage extends StatelessWidget {
                       child: Row(
                         children: [
                           Expanded(
-                        child: _ShellNavItem(
-                          icon: Icons.travel_explore_outlined,
-                          selectedIcon: Icons.travel_explore_rounded,
-                          label: 'Keşfet',
+                            child: _ShellNavItem(
+                              icon: Icons.home_outlined,
+                              selectedIcon: Icons.home_rounded,
+                              label: 'Ana Sayfa',
                               selected: idx == 0,
                               onTap: () => _goBranch(0),
                             ),
@@ -124,8 +124,8 @@ class MainShellPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Icon(
-                    idx == 2 ? Icons.live_tv_rounded : Icons.blur_circular_rounded,
+                  child: const Icon(
+                    Icons.live_tv_rounded,
                     color: Colors.white,
                     size: 30,
                   ),

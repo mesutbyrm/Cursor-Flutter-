@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -37,9 +38,9 @@ class _HeroLiveCarouselState extends State<HeroLiveCarousel> {
           itemCount: widget.streams.length,
           options: CarouselOptions(
             height: h,
-            viewportFraction: 0.74,
+            viewportFraction: 0.8,
             enlargeCenterPage: true,
-            enlargeFactor: 0.16,
+            enlargeFactor: 0.14,
             padEnds: true,
             clipBehavior: Clip.none,
             onPageChanged: (i, _) => setState(() => _active = i),
@@ -72,29 +73,37 @@ class _HeroTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final base = GoogleFonts.montserrat(
-      fontSize: 18.5.sp,
+      fontSize: 17.5.sp,
       fontWeight: FontWeight.w800,
-      height: 1.22,
+      height: 1.2,
       color: Colors.white,
       letterSpacing: -0.35,
     );
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 1.w),
-      child: Wrap(
-        crossAxisAlignment: WrapCrossAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Canlı yayınlara ', style: base),
-          ShaderMask(
-            blendMode: BlendMode.srcIn,
-            shaderCallback: (b) =>
-                PremiumLiveTheme.heroTitleGradient.createShader(b),
-            child: Text(
-              'katıl, eğlenceye ',
-              style: base.copyWith(color: Colors.white),
-            ),
+          Text('Canlı yayınlara katıl,', style: base),
+          SizedBox(height: 0.25.h),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Flexible(
+                child: ShaderMask(
+                  blendMode: BlendMode.srcIn,
+                  shaderCallback: (b) =>
+                      PremiumLiveTheme.heroTitleGradient.createShader(b),
+                  child: Text(
+                    'eğlenceye ortak ol!',
+                    style: base.copyWith(color: Colors.white),
+                  ),
+                ),
+              ),
+              SizedBox(width: 1.2.w),
+              Text('❤️', style: base.copyWith(fontSize: 19.sp)),
+            ],
           ),
-          Text('ortak ol! ', style: base),
-          Text('❤️', style: base.copyWith(fontSize: 20.sp)),
         ],
       ),
     );
@@ -148,37 +157,23 @@ class _HeroLiveCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    stream.imageUrl,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, progress) {
-                      if (progress == null) return child;
-                      return Container(
-                        color: PremiumLiveTheme.deepPurple,
-                        alignment: Alignment.center,
-                        child: SizedBox(
-                          width: 28,
-                          height: 28,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            value: progress.expectedTotalBytes != null
-                                ? progress.cumulativeBytesLoaded /
-                                    progress.expectedTotalBytes!
-                                : null,
-                            color: PremiumLiveTheme.neonPink,
-                          ),
-                        ),
-                      );
-                    },
-                    errorBuilder: (_, __, ___) => Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF2D1B69), Color(0xFF0D0618)],
-                        ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: stream.heroBackdropColors,
                       ),
-                      alignment: Alignment.center,
-                      child: Icon(Icons.live_tv_rounded,
-                          size: 48, color: PremiumLiveTheme.neonPink),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: CachedNetworkImage(
+                      imageUrl: stream.imageUrl,
+                      fit: BoxFit.cover,
+                      fadeInDuration: const Duration(milliseconds: 280),
+                      fadeOutDuration: const Duration(milliseconds: 120),
+                      placeholder: (_, __) => const SizedBox.shrink(),
+                      errorWidget: (_, __, ___) => const SizedBox.shrink(),
                     ),
                   ),
                   Positioned.fill(
@@ -342,14 +337,17 @@ class _AvatarStack extends StatelessWidget {
                   ],
                 ),
                 child: ClipOval(
-                  child: Image.network(
-                    take[i],
+                  child: CachedNetworkImage(
+                    imageUrl: take[i],
                     width: 26,
                     height: 26,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => ColoredBox(
+                    placeholder: (_, __) => ColoredBox(
                       color: PremiumLiveTheme.cosmicPurple,
-                      child: Icon(Icons.person, size: 14, color: Colors.white54),
+                    ),
+                    errorWidget: (_, __, ___) => ColoredBox(
+                      color: PremiumLiveTheme.cosmicPurple,
+                      child: const Icon(Icons.person, size: 14, color: Colors.white54),
                     ),
                   ),
                 ),

@@ -112,8 +112,8 @@ class _QuickActionTile extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 9.2.sp,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 9.sp,
                       fontWeight: FontWeight.w800,
                       height: 1.1,
                       color: Colors.white,

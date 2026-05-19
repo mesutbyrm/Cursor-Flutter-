@@ -100,7 +100,7 @@ class _TarotCard extends StatelessWidget {
                         offer.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.montserrat(
                           fontSize: 14.5.sp,
                           fontWeight: FontWeight.w900,
                           height: 1.1,
@@ -112,7 +112,7 @@ class _TarotCard extends StatelessWidget {
                         offer.subtitle,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.montserrat(
                           fontSize: 10.5.sp,
                           height: 1.25,
                           color: PremiumLiveTheme.textMuted,
