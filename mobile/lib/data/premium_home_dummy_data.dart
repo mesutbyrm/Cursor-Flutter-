@@ -23,6 +23,7 @@ abstract final class PremiumHomeDummyData {
           viewers: 4892,
           imageUrl: _pic('canli_ozge'),
           avatarUrls: [_face('a1'), _face('a2'), _face('a3')],
+          extraAudienceCount: 128,
         ),
         PremiumLiveStream(
           id: '2',
@@ -30,7 +31,8 @@ abstract final class PremiumHomeDummyData {
           categoryLabel: 'Gece Yayını',
           viewers: 2310,
           imageUrl: _pic('canli_ela'),
-          avatarUrls: [_face('b1'), _face('b2')],
+          avatarUrls: [_face('b1'), _face('b2'), _face('b3')],
+          extraAudienceCount: 96,
         ),
         PremiumLiveStream(
           id: '3',
@@ -38,7 +40,8 @@ abstract final class PremiumHomeDummyData {
           categoryLabel: 'Eğlence',
           viewers: 1204,
           imageUrl: _pic('canli_arda'),
-          avatarUrls: [_face('c1'), _face('c2'), _face('c3'), _face('c4')],
+          avatarUrls: [_face('c1'), _face('c2'), _face('c3')],
+          extraAudienceCount: 54,
         ),
       ];
 
@@ -55,7 +58,7 @@ abstract final class PremiumHomeDummyData {
         ),
         PremiumQuickAction(
           title: 'Arkadaşlarını Davet Et',
-          icon: Icons.group_add_rounded,
+          icon: Icons.people_rounded,
           gradientIndex: 2,
         ),
         PremiumQuickAction(
@@ -83,7 +86,7 @@ abstract final class PremiumHomeDummyData {
           participants: 28,
           centerIcon: Icons.chat_bubble_rounded,
           glowColors: [PremiumLiveTheme.neonBlue, PremiumLiveTheme.neonPurple],
-          avatarUrls: [_face('v4'), _face('v5')],
+          avatarUrls: [_face('v4'), _face('v5'), _face('v5b')],
         ),
         PremiumVoiceRoomSphere(
           name: 'Yıldızların Altında',
@@ -97,14 +100,14 @@ abstract final class PremiumHomeDummyData {
           participants: 15,
           centerIcon: Icons.local_cafe_rounded,
           glowColors: [const Color(0xFF8D5524), PremiumLiveTheme.neonGold],
-          avatarUrls: [_face('v9'), _face('v10')],
+          avatarUrls: [_face('v9'), _face('v10'), _face('v10b')],
         ),
       ];
 
   static List<PremiumTarotOffer> get tarotOffers => [
         PremiumTarotOffer(
           title: 'Günlük Tarot',
-          subtitle: 'Kartların bugünkü mesajı',
+          subtitle: 'Bugünkü enerjini keşfet',
           icon: Icons.auto_fix_high_rounded,
           borderGradient: const LinearGradient(
             colors: [Color(0xFF4FACFE), PremiumLiveTheme.neonGold],
@@ -117,7 +120,7 @@ abstract final class PremiumHomeDummyData {
         ),
         PremiumTarotOffer(
           title: 'Aşk Falı',
-          subtitle: 'Kalp enerjisi ve uyum',
+          subtitle: 'Kalbinin söylediklerini dinle',
           icon: Icons.favorite_rounded,
           borderGradient: const LinearGradient(
             colors: [PremiumLiveTheme.neonPink, PremiumLiveTheme.neonPurple],
@@ -130,7 +133,7 @@ abstract final class PremiumHomeDummyData {
         ),
         PremiumTarotOffer(
           title: 'Kahve Falı',
-          subtitle: 'Fincandaki semboller',
+          subtitle: 'Fincandaki gizemi çöz',
           icon: Icons.local_cafe_rounded,
           borderGradient: const LinearGradient(
             colors: [Color(0xFF8D5524), PremiumLiveTheme.neonGold],
@@ -143,7 +146,7 @@ abstract final class PremiumHomeDummyData {
         ),
         PremiumTarotOffer(
           title: 'Kariyer Falı',
-          subtitle: 'İş ve yol haritası',
+          subtitle: 'Yolunu, hedefini, ışığını bul',
           icon: Icons.star_rounded,
           borderGradient: const LinearGradient(
             colors: [PremiumLiveTheme.neonPurple, PremiumLiveTheme.neonBlue],

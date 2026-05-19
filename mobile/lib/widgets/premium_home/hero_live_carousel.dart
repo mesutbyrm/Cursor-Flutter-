@@ -37,7 +37,7 @@ class _HeroLiveCarouselState extends State<HeroLiveCarousel> {
           itemCount: widget.streams.length,
           options: CarouselOptions(
             height: h,
-            viewportFraction: 0.78,
+            viewportFraction: 0.74,
             enlargeCenterPage: true,
             enlargeFactor: 0.16,
             padEnds: true,
@@ -54,11 +54,10 @@ class _HeroLiveCarouselState extends State<HeroLiveCarousel> {
           child: AnimatedSmoothIndicator(
             activeIndex: _active,
             count: widget.streams.length,
-            effect: ExpandingDotsEffect(
-              dotHeight: 6,
-              dotWidth: 6,
-              expansionFactor: 3.2,
-              spacing: 6,
+            effect: WormEffect(
+              dotHeight: 7,
+              dotWidth: 7,
+              spacing: 7,
               activeDotColor: PremiumLiveTheme.neonPink,
               dotColor: Colors.white.withValues(alpha: 0.22),
             ),
@@ -94,7 +93,11 @@ class _HeroTitle extends StatelessWidget {
               style: base.copyWith(color: Colors.white),
             ),
           ),
-          Text('ortak ol!', style: base),
+          Text('ortak ol! ', style: base),
+          Text(
+            '❤️',
+            style: base.copyWith(fontSize: 18.sp),
+          ),
         ],
       ),
     );
@@ -214,20 +217,10 @@ class _HeroLiveCard extends StatelessWidget {
                   ),
                   Positioned(
                     right: 12,
-                    bottom: 88,
-                    child: _AudioPulse()
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
-                        .scale(
-                          duration: 900.ms,
-                          begin: const Offset(1, 1),
-                          end: const Offset(1.08, 1.08),
-                        ),
-                  ),
-                  Positioned(
-                    left: 14,
-                    right: 14,
-                    bottom: 14,
+                    bottom: 12,
+                    left: 12,
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
@@ -258,8 +251,9 @@ class _HeroLiveCard extends StatelessWidget {
                             color: Colors.white.withValues(alpha: 0.78),
                           ),
                         ),
-                        SizedBox(height: 0.8.h),
+                        SizedBox(height: 0.85.h),
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Icon(Icons.remove_red_eye_outlined,
                                 size: 15.sp, color: Colors.white70),
@@ -273,7 +267,20 @@ class _HeroLiveCard extends StatelessWidget {
                               ),
                             ),
                             const Spacer(),
-                            _AvatarStack(urls: stream.avatarUrls),
+                            _AvatarStack(urls: stream.avatarUrls.take(3).toList()),
+                            if (stream.extraAudienceCount > 0) ...[
+                              SizedBox(width: 1.6.w),
+                              Text(
+                                '+${stream.extraAudienceCount}',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                            SizedBox(width: 2.w),
+                            _AudioPulse(),
                           ],
                         ),
                       ],
@@ -303,9 +310,11 @@ class _AvatarStack extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final take = urls.take(4).toList();
+    final take = urls.take(3).toList();
+    final n = take.length;
+    final stackW = n <= 1 ? 28.0 : 18.0 + (n - 1) * 14.0;
     return SizedBox(
-      width: 18.0 + (take.length.clamp(0, 4) - 1) * 14.0,
+      width: stackW,
       height: 28,
       child: Stack(
         clipBehavior: Clip.none,
@@ -348,7 +357,7 @@ class _AudioPulse extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(2.w),
+      padding: EdgeInsets.symmetric(horizontal: 1.4.w, vertical: 0.7.h),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(14),
@@ -357,7 +366,7 @@ class _AudioPulse extends StatelessWidget {
       child: Icon(
         Icons.graphic_eq_rounded,
         color: PremiumLiveTheme.neonPink,
-        size: 22.sp,
+        size: 18.sp,
       ),
     )
         .animate(onPlay: (c) => c.repeat(reverse: true))

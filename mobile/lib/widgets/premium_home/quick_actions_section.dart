@@ -8,6 +8,7 @@ import '../../constants/premium_home_layout.dart';
 import '../../models/premium_quick_action.dart';
 import '../../theme/premium_live_theme.dart';
 
+/// Görseldeki gibi tek yatay sıra: 5 kare gradient düğme.
 class QuickActionsSection extends StatelessWidget {
   const QuickActionsSection({super.key, required this.actions});
 
@@ -17,51 +18,36 @@ class QuickActionsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        final wide = c.maxWidth > 520;
-        final children = List.generate(actions.length, (i) {
-          final a = actions[i];
-          return _QuickActionTile(action: a, index: i)
-              .animate()
-              .fadeIn(
-                delay: PremiumHomeLayout.stagger * i,
-                duration: PremiumHomeLayout.animMedium,
-              )
-              .slideY(
-                begin: 0.12,
-                end: 0,
-                curve: Curves.easeOutCubic,
-                delay: PremiumHomeLayout.stagger * i,
-              );
-        });
-        if (wide) {
-          return Row(
-            children: [
-              for (var i = 0; i < children.length; i++) ...[
-                Expanded(child: children[i]),
-                if (i != children.length - 1) SizedBox(width: 1.4.w),
-              ],
-            ],
-          );
-        }
-        return Column(
+        const gap = 7.0;
+        final n = actions.length;
+        final tileW = (c.maxWidth - gap * (n - 1)) / n;
+        final tileH = tileW.clamp(86.0, 108.0);
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(child: children[0]),
-                SizedBox(width: 2.w),
-                Expanded(child: children[1]),
-              ],
-            ),
-            SizedBox(height: 1.4.h),
-            Row(
-              children: [
-                Expanded(child: children[2]),
-                SizedBox(width: 2.w),
-                Expanded(child: children[3]),
-              ],
-            ),
-            SizedBox(height: 1.4.h),
-            SizedBox(width: double.infinity, child: children[4]),
+            for (var i = 0; i < n; i++) ...[
+              if (i > 0) SizedBox(width: gap),
+              SizedBox(
+                width: tileW,
+                height: tileH,
+                child: _QuickActionTile(
+                  action: actions[i],
+                  index: i,
+                )
+                    .animate()
+                    .fadeIn(
+                      delay: PremiumHomeLayout.stagger * i,
+                      duration: PremiumHomeLayout.animMedium,
+                    )
+                    .slideY(
+                      begin: 0.1,
+                      end: 0,
+                      curve: Curves.easeOutCubic,
+                      delay: PremiumHomeLayout.stagger * i,
+                    ),
+              ),
+            ],
           ],
         );
       },
@@ -81,7 +67,7 @@ class _QuickActionTile extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(PremiumHomeLayout.glassRadius),
+        borderRadius: BorderRadius.circular(18),
         onTap: () {
           if (action.title.contains('Sesli')) {
             context.push('/voice-rooms');
@@ -89,54 +75,51 @@ class _QuickActionTile extends StatelessWidget {
             context.go('/live');
           }
         },
-        child: SizedBox(
-          height: 19.h.clamp(112.0, 168.0),
-          child: Ink(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(PremiumHomeLayout.glassRadius),
-              gradient: g,
-              boxShadow: [
-                BoxShadow(
-                  color: PremiumLiveTheme.neonPink.withValues(alpha: 0.18),
-                  blurRadius: 22,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(PremiumHomeLayout.glassRadius),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withValues(alpha: 0.22),
-                      Colors.white.withValues(alpha: 0.04),
-                    ],
-                  ),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.6.h),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(action.icon, color: Colors.white, size: 30.sp),
-                    SizedBox(height: 1.h),
-                    Text(
-                      action.title,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.5.sp,
-                        fontWeight: FontWeight.w800,
-                        height: 1.15,
-                        color: Colors.white,
-                      ),
-                    ),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: g,
+            boxShadow: [
+              BoxShadow(
+                color: PremiumLiveTheme.neonPink.withValues(alpha: 0.2),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.24),
+                    Colors.white.withValues(alpha: 0.05),
                   ],
                 ),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 1.2.w, vertical: 1.h),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(action.icon, color: Colors.white, size: 26.sp),
+                  SizedBox(height: 0.6.h),
+                  Text(
+                    action.title,
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 9.2.sp,
+                      fontWeight: FontWeight.w800,
+                      height: 1.1,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

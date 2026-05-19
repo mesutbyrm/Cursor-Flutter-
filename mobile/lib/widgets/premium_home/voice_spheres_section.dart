@@ -14,13 +14,13 @@ class VoiceSpheresSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 30.h,
+      height: 32.h,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: 2.w),
         physics: const BouncingScrollPhysics(),
         itemCount: rooms.length,
-        separatorBuilder: (_, __) => SizedBox(width: 4.w),
+        separatorBuilder: (_, _) => SizedBox(width: 4.w),
         itemBuilder: (context, i) {
           final r = rooms[i];
           return _VoiceSphere(room: r, index: i)
@@ -112,9 +112,11 @@ class _VoiceSphere extends StatelessWidget {
             ],
           ),
         ),
-        SizedBox(height: 1.h),
+        SizedBox(height: 0.9.h),
+        _AvatarRowWithCount(urls: room.avatarUrls, count: room.participants),
+        SizedBox(height: 0.7.h),
         SizedBox(
-          width: d + 8,
+          width: d + 12,
           child: Text(
             room.name,
             textAlign: TextAlign.center,
@@ -128,7 +130,7 @@ class _VoiceSphere extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: 0.35.h),
+        SizedBox(height: 0.25.h),
         Text(
           '${room.participants} kişi',
           style: GoogleFonts.plusJakartaSans(
@@ -137,27 +139,27 @@ class _VoiceSphere extends StatelessWidget {
             color: PremiumLiveTheme.textMuted,
           ),
         ),
-        SizedBox(height: 0.5.h),
-        _MiniAvatars(urls: room.avatarUrls),
       ],
     );
   }
 }
 
-class _MiniAvatars extends StatelessWidget {
-  const _MiniAvatars({required this.urls});
+class _AvatarRowWithCount extends StatelessWidget {
+  const _AvatarRowWithCount({required this.urls, required this.count});
 
   final List<String> urls;
+  final int count;
 
   @override
   Widget build(BuildContext context) {
-    final take = urls.take(4).toList();
+    final take = urls.take(3).toList();
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: [
         for (var i = 0; i < take.length; i++)
           Transform.translate(
-            offset: Offset(i * -6.0, 0),
+            offset: Offset(i * -7.0, 0),
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -166,8 +168,8 @@ class _MiniAvatars extends StatelessWidget {
               child: ClipOval(
                 child: Image.network(
                   take[i],
-                  width: 22,
-                  height: 22,
+                  width: 24,
+                  height: 24,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => ColoredBox(
                     color: PremiumLiveTheme.cosmicPurple,
@@ -177,6 +179,15 @@ class _MiniAvatars extends StatelessWidget {
               ),
             ),
           ),
+        SizedBox(width: take.isEmpty ? 0 : 6),
+        Text(
+          '$count',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w800,
+            color: Colors.white.withValues(alpha: 0.92),
+          ),
+        ),
       ],
     );
   }

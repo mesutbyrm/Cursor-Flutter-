@@ -10,6 +10,7 @@ class PremiumLiveStream {
     required this.imageUrl,
     required this.avatarUrls,
     this.verified = true,
+    this.extraAudienceCount = 0,
   });
 
   final String id;
@@ -19,4 +20,6 @@ class PremiumLiveStream {
   final String imageUrl;
   final List<String> avatarUrls;
   final bool verified;
+  /// Avatar yığınının yanında "+128" gibi gösterilen ek izleyici sayısı.
+  final int extraAudienceCount;
 }
