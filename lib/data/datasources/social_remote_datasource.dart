@@ -249,7 +249,7 @@ class SocialRemoteDatasource {
       ApiPaths.coinsSpend,
       body: <String, dynamic>{
         'amount': amount,
-        'reason': ?reason,
+        if (reason != null) 'reason': reason,
       },
     );
     return (data['balance'] as num?)?.toInt() ?? 0;
