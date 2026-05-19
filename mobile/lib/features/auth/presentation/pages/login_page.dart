@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/config/app_links.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
@@ -240,6 +242,36 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         TextButton(
                           onPressed: () => context.push('/register'),
                           child: const Text('Hesabın yok mu? Kayıt ol'),
+                        ),
+                        const SizedBox(height: 4),
+                        TextButton.icon(
+                          onPressed: () async {
+                            final uri = Uri.parse(AppLinks.androidTestApk);
+                            if (!await launchUrl(
+                              uri,
+                              mode: LaunchMode.externalApplication,
+                            )) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Bağlantı açılamadı'),
+                                ),
+                              );
+                            }
+                          },
+                          icon: Icon(
+                            Icons.download_rounded,
+                            size: 18,
+                            color: AppTheme.muted.withValues(alpha: 0.9),
+                          ),
+                          label: Text(
+                            'Android test APK indir',
+                            style: TextStyle(
+                              color: AppTheme.muted.withValues(alpha: 0.95),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 8),
                       ],

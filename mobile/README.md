@@ -67,4 +67,11 @@ cd mobile && flutter test
 
 ## APK (telefonda dene)
 
-Bu ortamda Android SDK olmadan APK üretilemez. GitHub’da **Actions → Build release APK** iş akışını çalıştırıp artifact’tan indirin; ayrıntılar için depo kökündeki [`APK_DOWNLOAD.md`](../APK_DOWNLOAD.md).
+**Doğrudan indirme (son `main` derlemesi, `apk-latest`):**  
+[canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk)
+
+Uygulama içinde **Giriş** ve **Kayıt** ekranlarının altında da aynı bağlantıya giden **«Android test APK indir»** düğmesi vardır (`lib/core/config/app_links.dart`).
+
+404 alırsanız: GitHub → **Actions** → [**Build release APK**](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml) → **Run workflow** → dal **`main`**. Ayrıntılar: depo kökündeki [`APK_DOWNLOAD.md`](../APK_DOWNLOAD.md).
+
+**Görsel özet:** [`docs/`](docs/) klasöründeki `ui-mockup-*.png` dosyaları ve kökteki [`APK_DOWNLOAD.md`](../APK_DOWNLOAD.md) tablosu.

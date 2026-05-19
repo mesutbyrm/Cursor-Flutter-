@@ -1,5 +1,19 @@
 # Canlifal — Android test APK
 
+## Görsel özet (tasarım mockup’ları)
+
+Aşağıdaki görseller, uygulamadaki koyu tema + neon vurgu + giriş / ana sayfa / sosyal–sesli odalar düzeninin **yaklaşık** önizlemesidir (gerçek ekran görüntüsü değil, referans mockup).
+
+| Giriş (Google + APK bağlantısı) | Ana sayfa (şeritler + hikâyeler) |
+|:---:|:---:|
+| ![Giriş mockup](mobile/docs/ui-mockup-login.png) | ![Ana sayfa mockup](mobile/docs/ui-mockup-home.png) |
+
+| Sosyal akış + sesli sohbet odaları (yan yana konsept) |
+|:---:|
+| ![Sosyal ve odalar mockup](mobile/docs/ui-mockup-social-voice.png) |
+
+---
+
 ## Doğrudan indirme (sabit bağlantı)
 
 `main` dalında [Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml) iş akışı **en az bir kez başarıyla bittikten** sonra aşağıdaki bağlantı her zaman son `main` derlemesindeki APK’yı verir:
