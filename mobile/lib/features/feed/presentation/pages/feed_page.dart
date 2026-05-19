@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../providers/feed_providers.dart';
@@ -72,7 +73,30 @@ class _FeedPageState extends ConsumerState<FeedPage> {
         ),
         data: (posts) {
           if (posts.isEmpty) {
-            return const Center(child: Text('Henüz gönderi yok'));
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.auto_stories_outlined,
+                        size: 56, color: AppTheme.muted),
+                    const SizedBox(height: 16),
+                    Text(
+                      Env.useNextAuth
+                          ? 'Henüz gönderi yok.\n'
+                              'İçerik sunucudan geldikçe listelenir; canlifal.com ile aynı hesaptan giriş yaptığınızdan emin olun.'
+                          : 'Henüz gönderi yok.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppTheme.muted,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
           return RefreshIndicator(
             color: AppTheme.accent,

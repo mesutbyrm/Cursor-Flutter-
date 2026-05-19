@@ -27,7 +27,9 @@ class PostDto {
       };
     }
     return PostDto(
-      id: pick(json, ['id', '_id', 'postId'])?.toString() ?? '',
+      id: pick(json, ['id', '_id', 'postId', 'storyId', 'mediaId'])
+              ?.toString() ??
+          '',
       author: UserDto.fromJson(authorMap).toEntity(),
       caption: pick(json, ['caption', 'text', 'description']) as String?,
       mediaUrl: pick(json, [

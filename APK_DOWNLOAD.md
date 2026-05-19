@@ -1,20 +1,28 @@
-# Canlifal — test APK
+# Canlifal — Android test APK
 
-Bu depoda **hazır bir APK dosyası** tutulmaz (her build imza ve sürümle değişir). Aşağıdaki yollardan biriyle APK alıp telefonda test edebilirsiniz.
+Bu depoda APK **Git ile birlikte zorunlu taşınmaz**; aşağıdaki bağlantılardan birini kullanın.
 
-## 1) GitHub Actions ile indir (önerilen)
+## Doğrudan indirme (GitHub Release)
 
-1. GitHub’da bu repo → **Actions**
-2. Sol menüden **“Build release APK”** iş akışını seçin
-3. **Run workflow** → dal olarak `main` veya güncel Flutter kodunun olduğu dalı seçin → **Run workflow**
-4. İşlem bitince sayfadaki **Artifacts** bölümünden **`canlifal-social-release-apk`** ZIP’ini indirin
-5. ZIP içindeki **`app-release.apk`** dosyasını Android’e aktarıp kurun
+**[Son sürüm — canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/latest/download/canlifal-mobile-release.apk)**
 
-> Not: İlk kez yüklüyorsanız “Bilinmeyen kaynak” için yükleme izni vermeniz gerekebilir. Play Store imzası yoktur; yalnızca test içindir.
+> Bu bağlantı, en az bir kez `v*` etiketiyle Release oluşturulup APK yüklendikten sonra çalışır. Şu an 404 alıyorsanız önce [GitHub Actions](#github-actions) ile bir build alın veya bakımçı `git tag v1.0.0 && git push origin v1.0.0` ile sürüm oluşturulsun.
 
-## 2) Kendi bilgisayarında derle
+Belirli sürüm örneği:  
+`https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/v1.0.0/canlifal-mobile-release.apk`
 
-[Flutter](https://docs.flutter.dev/get-started/install) ve **Android Studio** (SDK + lisanslar) kurulu olmalı.
+## GitHub Actions {#github-actions}
+
+1. **[Build release APK iş akışı](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml)** sayfasını açın  
+2. **Run workflow** → dal seçin (`main` veya Flutter kodunun olduğu dal) → çalıştırın  
+3. İşlem bitince **Artifacts** → **`canlifal-social-release-apk`** ZIP  
+4. ZIP içindeki **`canlifal-mobile-release.apk`** veya **`app-release.apk`** (iş akışı sürümüne göre) dosyasını kurun  
+
+> “Bilinmeyen kaynak” izni gerekebilir; Play Store imzası yoktur, test içindir.
+
+## Kendi bilgisayarında derle
+
+[Flutter](https://docs.flutter.dev/get-started/install) ve Android SDK kurulu olmalı.
 
 ```bash
 cd mobile
@@ -22,16 +30,14 @@ flutter pub get
 flutter build apk --release
 ```
 
-Çıktı dosyası:
+Çıktı: `mobile/build/app/outputs/flutter-apk/app-release.apk`
 
-`mobile/build/app/outputs/flutter-apk/app-release.apk`
-
-İsteğe bağlı API adresi:
+İsteğe bağlı API tabanı:
 
 ```bash
-flutter build apk --release --dart-define=API_BASE_URL=https://api.senin-domain.com
+flutter build apk --release --dart-define=API_BASE_URL=https://canlifal.com
 ```
 
 ## API
 
-Uygulama varsayılan olarak `lib/core/config/env.dart` içindeki tabanı kullanır; production için `API_BASE_URL` ile kendi backend’inizi verin. Uç yollar: `mobile/lib/core/network/api_endpoints.dart`.
+Varsayılan taban: `mobile/lib/core/config/env.dart` (`API_BASE_URL`). Uçlar: `mobile/lib/core/network/api_endpoints.dart`.
