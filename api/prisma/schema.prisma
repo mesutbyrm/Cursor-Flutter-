@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// Web sitesi ve Flutter uygulaması tarafından paylaşılan kullanıcı tablosu.
+model User {
+  id                Int       @id @default(autoincrement()) @db.UnsignedInt
+  uuid              String    @unique @db.Char(36)
+  email             String    @unique @db.VarChar(255)
+  password          String    @db.VarChar(255)
+  name              String    @db.VarChar(120)
+  phone             String?   @db.VarChar(20)
+  avatarUrl         String?   @map("avatar_url") @db.VarChar(500)
+  emailVerifiedAt   DateTime? @map("email_verified_at")
+  isActive          Boolean   @default(true) @map("is_active")
+  refreshTokenHash  String?   @map("refresh_token_hash") @db.VarChar(255)
+  passwordResetToken String?  @map("password_reset_token") @db.VarChar(64)
+  passwordResetExpires DateTime? @map("password_reset_expires")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@map("users")
+  @@index([email])
+  @@index([uuid])
+}
