@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../providers/auth_providers.dart';
 
@@ -46,7 +47,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     ref.listen(authControllerProvider, (prev, next) {
       next.whenOrNull(
         error: (e, _) => ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text(ApiException.userMessage(e))),
         ),
       );
     });
