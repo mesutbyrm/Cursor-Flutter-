@@ -6,7 +6,6 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/cosmic_background.dart';
-import '../../../../core/widgets/glow_panel.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../providers/feed_providers.dart';
@@ -89,10 +88,12 @@ class _FeedPageState extends ConsumerState<FeedPage> {
                 sliver: SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _FeedPeekHero(),
-                      const FeedLiveStrip(),
-                      const FeedVoiceRoomsStrip(),
+                    children: const [
+                      FeedTopShortcuts(),
+                      FeedStoriesStrip(),
+                      FeedLiveStrip(),
+                      FeedVoiceRoomsStrip(),
+                      FeedTrendVideosStrip(),
                     ],
                   ),
                 ),
@@ -283,56 +284,6 @@ class _FeedPageState extends ConsumerState<FeedPage> {
         ),
       ),
         ],
-      ),
-    );
-  }
-}
-
-class _FeedPeekHero extends StatelessWidget {
-  const _FeedPeekHero();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: GlowPanel(
-        borderRadius: 18,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            Icon(
-              Icons.auto_awesome_rounded,
-              color: AppTheme.accentGold.withValues(alpha: 0.95),
-              size: 22,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Senin için',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.muted.withValues(alpha: 0.95),
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'Canlı yayınlar, sesli odalar ve hikâyeler',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                      height: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
