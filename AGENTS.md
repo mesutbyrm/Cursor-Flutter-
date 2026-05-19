@@ -6,7 +6,6 @@
 
 - **Ana uygulama:** `mobile/` — `canlifal_social` Flutter paketi; tüm geliştirme ve CI komutları buradan çalıştırılır.
 - **Yerel API:** `api/` — Node.js + Express + Prisma JWT API (isteğe bağlı; üretimde `https://canlifal.com` kullanılabilir).
-- **Legacy kök Flutter:** repoda `lib/`, `android/`, `ios/` (kök) hâlâ bulunabilir; yeni işler için **`mobile/` kullanın** — CI yalnızca `mobile/` derler.
 
 ### Ortam
 
@@ -46,4 +45,3 @@
 
 - Firebase yapılandırma dosyaları repoda yok; uygulama eksikliği tolere eder
 - `api/node_modules/` commit edilmez
-- Kök `lib/` ile `mobile/lib/` **aynı uygulama değildir** — çift bakım yapmayın

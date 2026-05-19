@@ -5,13 +5,18 @@ api/.env
 # Yerel CI/Android SDK kurulumu (depoya eklenmez)
 /android-sdk-ci/
 
-# Flutter/Dart — kök (legacy) ve mobile/
+# Flutter/Dart artefaktları (kök veya mobile/)
 .dart_tool/
+build/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
-build/
+
+# Flutter/Dart (mobile/)
 mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
 mobile/build/
 
 # Android Studio / IntelliJ
@@ -25,16 +30,8 @@ mobile/build/
 .DS_Store
 
 # Generated mobile build artifacts
-android/.gradle/
-android/app/build/
 mobile/android/.gradle/
 mobile/android/app/build/
-ios/Flutter/Flutter.framework
-ios/Flutter/Flutter.podspec
-ios/Pods/
-ios/.symlinks/
-ios/Runner.xcworkspace/xcuserdata/
-ios/Runner.xcodeproj/xcuserdata/
 mobile/ios/Flutter/Flutter.framework
 mobile/ios/Flutter/Flutter.podspec
 mobile/ios/Pods/

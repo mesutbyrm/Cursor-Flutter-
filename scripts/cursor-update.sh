@@ -17,16 +17,13 @@ if ! command -v flutter >/dev/null 2>&1; then
   exit 1
 fi
 
-if [ -f "$ROOT/mobile/pubspec.yaml" ]; then
-  log "Flutter bağımlılıkları (mobile/)"
-  (cd "$ROOT/mobile" && flutter pub get)
-elif [ -f "$ROOT/pubspec.yaml" ]; then
-  log "Flutter bağımlılıkları (kök — legacy)"
-  flutter pub get
-else
-  warn "pubspec.yaml bulunamadı"
+if [ ! -f "$ROOT/mobile/pubspec.yaml" ]; then
+  warn "mobile/pubspec.yaml bulunamadı"
   exit 1
 fi
+
+log "Flutter bağımlılıkları (mobile/)"
+(cd "$ROOT/mobile" && flutter pub get)
 
 if [ -f "$ROOT/api/package.json" ] && command -v npm >/dev/null 2>&1; then
   log "Node API bağımlılıkları"
