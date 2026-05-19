@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_design.dart';
+import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../providers/profile_providers.dart';
 
@@ -15,52 +15,69 @@ class UserProfilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(userProfileProvider(userId));
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Profil'),
-      ),
+    return DiscoverSubPage(
+      title: 'Kullanıcı',
+      subtitle: 'Profil detayı',
       body: userAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
+        loading: () => const DiscoverAccentLoader(),
+        error: (e, _) => DiscoverEmptyState(
+          icon: Icons.person_off_outlined,
+          message: e.toString(),
+        ),
         data: (user) {
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             children: [
-              Row(
-                children: [
-                  UserAvatar(url: user.avatarUrl, radius: 40),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user.display,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        Text(
-                          '@${user.username}',
-                          style: const TextStyle(color: AppTheme.muted),
-                        ),
-                      ],
+              DiscoverGlassCard(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: AppDesign.heroGradient,
+                      ),
+                      child: UserAvatar(url: user.avatarUrl, radius: 36),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user.display,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          Text(
+                            '@${user.username}',
+                            style: const TextStyle(
+                              color: AppDesign.textMuted,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _Stat(label: 'Takipçi', value: '${user.followersCount}'),
-                  _Stat(label: 'Takip', value: '${user.followingCount}'),
-                ],
+              const SizedBox(height: 14),
+              DiscoverGlassCard(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _Stat(label: 'Takipçi', value: '${user.followersCount}'),
+                    Container(
+                      width: 1,
+                      height: 40,
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
+                    _Stat(label: 'Takip', value: '${user.followingCount}'),
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
               FilledButton(
@@ -73,13 +90,31 @@ class UserProfilePage extends ConsumerWidget {
                   }
                   ref.invalidate(userProfileProvider(userId));
                 },
-                child: Text(user.isFollowing ? 'Takipten çık' : 'Takip et'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                  backgroundColor: user.isFollowing
+                      ? Colors.white.withValues(alpha: 0.12)
+                      : AppDesign.accentPink,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: Text(
+                  user.isFollowing ? 'Takipten çık' : 'Takip et',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
               ),
               if (user.bio != null && user.bio!.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                Text(
-                  user.bio!,
-                  style: const TextStyle(height: 1.4),
+                const SizedBox(height: 14),
+                DiscoverGlassCard(
+                  child: Text(
+                    user.bio!,
+                    style: const TextStyle(
+                      color: AppDesign.textSecondary,
+                      height: 1.45,
+                    ),
+                  ),
                 ),
               ],
             ],
@@ -102,9 +137,16 @@ class _Stat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+          ),
         ),
-        Text(label, style: const TextStyle(color: AppTheme.muted)),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(color: AppDesign.textMuted, fontSize: 13),
+        ),
       ],
     );
   }

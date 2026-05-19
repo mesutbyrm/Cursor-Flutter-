@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_design.dart';
+import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../providers/messages_providers.dart';
 
@@ -13,59 +14,123 @@ class ConversationsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final list = ref.watch(conversationsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mesajlar'),
-        actions: [
-          IconButton(
-            onPressed: () => ref.invalidate(conversationsProvider),
-            icon: const Icon(Icons.refresh_rounded),
+    return DiscoverTabScrollPage(
+      title: 'Mesajlar',
+      subtitle: 'Sohbetlerin ve grup mesajların',
+      onRefresh: () async => ref.invalidate(conversationsProvider),
+      actions: [
+        DiscoverIconButton(
+          icon: Icons.refresh_rounded,
+          onPressed: () => ref.invalidate(conversationsProvider),
+        ),
+      ],
+      slivers: [
+        list.when(
+          loading: () => const SliverFillRemaining(
+            child: DiscoverAccentLoader(),
           ),
-        ],
-      ),
-      body: list.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
-        data: (items) {
-          if (items.isEmpty) {
-            return const Center(child: Text('Henüz mesajın yok'));
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (ctx, i) {
-              final c = items[i];
-              return ListTile(
-                leading: UserAvatar(url: c.avatarUrl, radius: 24),
-                title: Text(c.title,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text(
-                  c.subtitle ?? '',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppTheme.muted),
+          error: (e, _) => SliverFillRemaining(
+            child: DiscoverEmptyState(
+              icon: Icons.chat_bubble_outline,
+              message: e.toString(),
+            ),
+          ),
+          data: (items) {
+            if (items.isEmpty) {
+              return const SliverFillRemaining(
+                child: DiscoverEmptyState(
+                  icon: Icons.mail_outline_rounded,
+                  message: 'Henüz mesajın yok.\nYeni sohbetler burada listelenir.',
                 ),
-                trailing: c.unreadCount > 0
-                    ? CircleAvatar(
-                        radius: 11,
-                        backgroundColor: AppTheme.accent,
-                        child: Text(
-                          '${c.unreadCount}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                    : null,
-                onTap: () => context.push('/chat/${c.id}'),
               );
-            },
-          );
-        },
-      ),
+            }
+            return SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+              sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (ctx, i) {
+                  final c = items[i];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: DiscoverGlassCard(
+                      onTap: () => context.push('/chat/${c.id}'),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: AppDesign.heroGradient,
+                            ),
+                            child: UserAvatar(url: c.avatarUrl, radius: 26),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  c.title,
+                                  style: TextStyle(
+                                    fontWeight: c.unreadCount > 0
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  c.subtitle ?? '',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: AppDesign.textMuted,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (c.unreadCount > 0)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: AppDesign.heroGradient,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '${c.unreadCount}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            )
+                          else
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppDesign.textMuted.withValues(alpha: 0.6),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                childCount: items.length,
+              ),
+            ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
