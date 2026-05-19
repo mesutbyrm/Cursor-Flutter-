@@ -6,6 +6,8 @@ abstract class LiveRepository {
 
   Future<List<VoiceRoomEntity>> fetchVoiceRooms();
 
+  Future<VoiceRoomEntity?> fetchVoiceRoomById(String id);
+
   Future<String> createVideoStream({
     required String title,
     String? description,

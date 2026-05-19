@@ -13,6 +13,9 @@ class VoiceRoomEntity extends Equatable {
     this.backgroundImageUrl,
     this.ownerName,
     this.ownerAvatarUrl,
+    this.ownerId,
+    this.activeDjId,
+    this.djUserIds = const [],
     this.recentUserAvatars = const [],
   });
 
@@ -26,9 +29,14 @@ class VoiceRoomEntity extends Equatable {
   final String? backgroundImageUrl;
   final String? ownerName;
   final String? ownerAvatarUrl;
+  final String? ownerId;
+  final String? activeDjId;
+  final List<String> djUserIds;
   final List<String> recentUserAvatars;
 
   int get displayOnline => onlineCount > 0 ? onlineCount : userCount;
+
+  String get displayTitle => nameTr.trim().isEmpty ? 'Sohbet Odası' : nameTr.trim();
 
   @override
   List<Object?> get props => [
@@ -42,6 +50,9 @@ class VoiceRoomEntity extends Equatable {
         backgroundImageUrl,
         ownerName,
         ownerAvatarUrl,
+        ownerId,
+        activeDjId,
+        djUserIds,
         recentUserAvatars,
       ];
 }

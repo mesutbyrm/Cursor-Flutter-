@@ -46,6 +46,14 @@ class LiveRemoteDataSource {
     return asJsonList(body).map(_mapVoiceRoom).where((r) => r.id.isNotEmpty).toList();
   }
 
+  Future<VoiceRoomEntity?> fetchVoiceRoomById(String id) async {
+    final rooms = await fetchVoiceRooms();
+    for (final r in rooms) {
+      if (r.id == id || r.slug == id) return r;
+    }
+    return null;
+  }
+
   LiveStreamEntity _mapStreamRow(Map<String, dynamic> json) {
     final titleRaw = pick(json, ['title', 'name', 'description'])?.toString();
     final title = (titleRaw != null && titleRaw.trim().isNotEmpty)
@@ -150,10 +158,30 @@ class LiveRemoteDataSource {
     if (ru is List) {
       for (final u in ru) {
         if (u is Map) {
-          final img = pick(asJsonMap(u), ['image', 'avatar'])?.toString();
+          final m = asJsonMap(u);
+          final img = pick(m, ['image', 'avatar'])?.toString();
           if (img != null && img.isNotEmpty) recent.add(img);
         }
       }
+    }
+    final djIds = <String>[];
+    final djRaw = pick(json, ['djUserIds']);
+    if (djRaw is List) {
+      for (final id in djRaw) {
+        if (id != null) djIds.add(id.toString());
+      }
+    } else if (djRaw is String && djRaw.startsWith('[')) {
+      try {
+        final decoded = djRaw
+            .replaceAll('"', '')
+            .replaceAll('[', '')
+            .replaceAll(']', '')
+            .split(',');
+        for (final p in decoded) {
+          final s = p.trim();
+          if (s.isNotEmpty) djIds.add(s);
+        }
+      } catch (_) {}
     }
     return VoiceRoomEntity(
       id: pick(json, ['id'])?.toString() ?? '',
@@ -166,6 +194,10 @@ class LiveRemoteDataSource {
       backgroundImageUrl: pick(json, ['backgroundImage']) as String?,
       ownerName: ownerName,
       ownerAvatarUrl: ownerAvatar,
+      ownerId: pick(json, ['ownerId'])?.toString() ??
+          (o is Map ? pick(asJsonMap(o), ['id'])?.toString() : null),
+      activeDjId: pick(json, ['activeDjId'])?.toString(),
+      djUserIds: djIds,
       recentUserAvatars: recent,
     );
   }

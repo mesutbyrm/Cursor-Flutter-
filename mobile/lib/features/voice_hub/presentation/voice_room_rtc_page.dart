@@ -1,20 +1,31 @@
 import 'dart:ui';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/env.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_design.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
-import '../../profile/presentation/widgets/premium/profile_glass.dart';
+import '../../profile/presentation/providers/profile_providers.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
 import '../../trtc/presentation/trtc_room_manager.dart';
-import 'widgets/voice_room_seat_grid.dart';
+import '../domain/entities/chat_room_message.dart';
+import 'providers/chat_room_providers.dart';
+import 'widgets/voice_room/voice_room_action_row.dart';
+import 'widgets/voice_room/voice_room_announcement.dart';
+import 'widgets/voice_room/voice_room_bottom_bar.dart';
+import 'widgets/voice_room/voice_room_chat_panel.dart';
+import 'widgets/voice_room/voice_room_seats_panel.dart';
+import 'widgets/voice_room/voice_room_top_bar.dart';
 
-/// Sesli sohbet odası — web koltuk düzeni + Tencent TRTC ses.
+/// Sesli sohbet odası — web neon düzeni + TRTC ses + canlifal.com API.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
   const VoiceRoomRtcPage({super.key, required this.room});
 
@@ -26,16 +37,25 @@ class VoiceRoomRtcPage extends ConsumerStatefulWidget {
 
 class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   final _trtc = TrtcRoomManager();
+  final _messageCtrl = TextEditingController();
   var _joining = true;
   var _joined = false;
   String? _error;
   var _micOn = true;
   var _leaving = false;
+  var _announcementVisible = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _joinRoom());
+  }
+
+  @override
+  void dispose() {
+    _messageCtrl.dispose();
+    _trtc.dispose();
+    super.dispose();
   }
 
   Future<void> _joinRoom() async {
@@ -87,21 +107,40 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     if (_leaving) return;
     _leaving = true;
     await _trtc.leave();
-    if (mounted) context.go('/live');
+    if (mounted) context.go('/voice-rooms');
   }
 
-  @override
-  void dispose() {
-    _trtc.dispose();
-    super.dispose();
+  void _shareRoom() {
+    final slug = widget.room.slug;
+    final url = '${Env.siteOrigin}/sohbet/$slug';
+    Clipboard.setData(ClipboardData(text: url));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Paylaşım linki kopyalandı: $url')),
+    );
+  }
+
+  String _latestSystemJoin(List<ChatRoomMessage> messages) {
+    for (var i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].kind == ChatMessageKind.systemJoin) {
+        return messages[i].content;
+      }
+    }
+    final owner = widget.room.ownerName ?? 'Admin';
+    return '$owner Sohbet sesli odasına katıldı! 🎤';
   }
 
   @override
   Widget build(BuildContext context) {
-    final top = MediaQuery.paddingOf(context).top;
-    final bottom = MediaQuery.paddingOf(context).bottom;
     final room = widget.room;
+    final live = ref.watch(voiceRoomLiveProvider(room));
+    final coins = ref.watch(coinBalanceProvider).valueOrNull ??
+        ref.watch(authControllerProvider).valueOrNull?.coinBalance ??
+        0;
+    final online = live.presence.isNotEmpty
+        ? live.presence.length
+        : room.displayOnline;
     final user = ref.watch(authControllerProvider).valueOrNull;
+    final speakingId = _micOn ? user?.id : null;
 
     return PopScope(
       canPop: false,
@@ -114,18 +153,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            if (_joined)
-              VoiceRoomSeatGrid(
-                roomIcon: room.icon ?? '💬',
-                roomName: room.nameTr,
-                backgroundUrl: room.backgroundImageUrl,
-                centerAvatarUrl: user?.avatarUrl ?? room.ownerAvatarUrl,
-                recentAvatars: room.recentUserAvatars,
-                speakingUserIndex: _micOn ? 0 : null,
-              )
-            else if (_joining)
+            _RoomBackground(url: room.backgroundImageUrl),
+            if (_joining)
               const Center(child: DiscoverAccentLoader())
-            else
+            else if (!_joined)
               Center(
                 child: DiscoverEmptyState(
                   icon: Icons.headset_off_rounded,
@@ -139,79 +170,105 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     _joinRoom();
                   },
                 ),
-              ),
-            if (_joined)
+              )
+            else
               SafeArea(
                 child: Column(
                   children: [
                     Padding(
-                      padding: EdgeInsets.fromLTRB(8, top > 0 ? 4 : 8, 8, 0),
-                      child: _VoiceTopBar(
+                      padding: const EdgeInsets.fromLTRB(10, 6, 10, 0),
+                      child: VoiceRoomTopBar(
                         room: room,
+                        onlineCount: online,
                         onBack: _leave,
+                        onExit: _leave,
                       ),
                     ),
-                    const Spacer(),
-                    ClipRRect(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                        child: Container(
-                          padding: EdgeInsets.fromLTRB(
-                            16,
-                            12,
-                            16,
-                            bottom + 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.55),
-                            border: Border(
-                              top: BorderSide(
-                                color: AppDesign.accentPurple
-                                    .withValues(alpha: 0.35),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: VoiceRoomSeatsPanel(
+                        room: room,
+                        presence: live.presence,
+                        speakingUserId: speakingId,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Column(
+                          children: [
+                            if (_announcementVisible)
+                              VoiceRoomAnnouncement(
+                                text: room.descTr?.trim().isNotEmpty == true
+                                    ? room.descTr!.trim()
+                                    : 'Sohbet odasına hoş geldiniz...',
+                                onDismiss: () =>
+                                    setState(() => _announcementVisible = false),
+                              ),
+                            if (_announcementVisible) const SizedBox(height: 6),
+                            VoiceRoomSystemBanner(
+                              message: _latestSystemJoin(live.messages),
+                            ),
+                            const SizedBox(height: 8),
+                            VoiceRoomActionRow(
+                              dj: live.dj,
+                              onMusicTap: () {
+                                context.push(
+                                  CanlifalWebRoute.location(
+                                    relativePath: '/sohbet/${room.slug}',
+                                    title: room.displayTitle,
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 8),
+                            Expanded(
+                              child: VoiceRoomChatPanel(
+                                messages: live.messages,
                               ),
                             ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _VoiceFab(
-                                icon: _micOn
-                                    ? Icons.mic_rounded
-                                    : Icons.mic_off_rounded,
-                                label: _micOn ? 'Mik açık' : 'Kapalı',
-                                color: _micOn
-                                    ? AppDesign.accentPink
-                                    : AppDesign.textMuted,
-                                onTap: () {
-                                  final next = !_micOn;
-                                  _trtc.setMicEnabled(next);
-                                  setState(() => _micOn = next);
-                                },
-                              ),
-                              _VoiceFab(
-                                icon: Icons.chat_bubble_outline_rounded,
-                                label: 'Sohbet',
-                                color: AppDesign.accentCyan,
-                                onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Oda sohbeti web ile senkron — yakında',
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              _VoiceFab(
-                                icon: Icons.call_end_rounded,
-                                label: 'Ayrıl',
-                                color: AppDesign.liveRed,
-                                onTap: _leave,
-                              ),
-                            ],
-                          ),
+                          ],
                         ),
                       ),
+                    ),
+                    VoiceRoomBottomBar(
+                      controller: _messageCtrl,
+                      coinBalance: coins,
+                      micOn: _micOn,
+                      sending: live.sending,
+                      onMicToggle: () {
+                        final next = !_micOn;
+                        _trtc.setMicEnabled(next);
+                        setState(() => _micOn = next);
+                      },
+                      onSend: () {
+                        final text = _messageCtrl.text;
+                        _messageCtrl.clear();
+                        ref
+                            .read(voiceRoomLiveProvider(room).notifier)
+                            .sendMessage(text);
+                      },
+                      onRefresh: () =>
+                          ref.read(voiceRoomLiveProvider(room).notifier).refresh(),
+                      onShare: _shareRoom,
+                      onTopUp: () {
+                        context.push(
+                          CanlifalWebRoute.location(
+                            relativePath: '/cuzdan',
+                            title: 'Jeton Yükle',
+                          ),
+                        );
+                      },
+                      onGiftTap: () {
+                        context.push(
+                          CanlifalWebRoute.location(
+                            relativePath: '/sohbet/${room.slug}',
+                            title: 'Hediye Gönder',
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -223,109 +280,48 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   }
 }
 
-class _VoiceTopBar extends StatelessWidget {
-  const _VoiceTopBar({required this.room, required this.onBack});
+class _RoomBackground extends StatelessWidget {
+  const _RoomBackground({this.url});
 
-  final VoiceRoomEntity room;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return ProfileGlass(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      borderRadius: 18,
-      blur: 12,
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: onBack,
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-          const SizedBox(width: 8),
-          Text(room.icon ?? '💬', style: const TextStyle(fontSize: 22)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  room.nameTr,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  '${room.displayOnline} çevrimiçi',
-                  style: const TextStyle(
-                    color: AppDesign.textMuted,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppDesign.onlineGreen.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.circle, size: 8, color: AppDesign.onlineGreen),
-                SizedBox(width: 4),
-                Text(
-                  'CANLI',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 9),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VoiceFab extends StatelessWidget {
-  const _VoiceFab({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
+  final String? url;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    return Stack(
+      fit: StackFit.expand,
       children: [
-        Material(
-          color: color.withValues(alpha: 0.22),
-          shape: const CircleBorder(),
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Icon(icon, color: color, size: 26),
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [AppDesign.bgPurpleGlow, AppDesign.bgBase],
             ),
           ),
         ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+        if (url != null && url!.isNotEmpty)
+          CachedNetworkImage(
+            imageUrl: url!,
+            fit: BoxFit.cover,
+            color: Colors.black.withValues(alpha: 0.55),
+            colorBlendMode: BlendMode.darken,
+          ),
+        ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.2),
+                    AppDesign.bgBase.withValues(alpha: 0.92),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );

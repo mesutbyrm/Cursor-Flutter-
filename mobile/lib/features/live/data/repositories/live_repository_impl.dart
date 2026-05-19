@@ -16,6 +16,10 @@ class LiveRepositoryImpl implements LiveRepository {
   Future<List<VoiceRoomEntity>> fetchVoiceRooms() => _remote.fetchVoiceRooms();
 
   @override
+  Future<VoiceRoomEntity?> fetchVoiceRoomById(String id) =>
+      _remote.fetchVoiceRoomById(id);
+
+  @override
   Future<String> createVideoStream({
     required String title,
     String? description,

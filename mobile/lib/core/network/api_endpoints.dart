@@ -22,6 +22,16 @@ abstract final class ApiEndpoints {
   static const videoStreams = '/api/video-streams';
   /// Sesli / metin sohbet odaları (web `/sohbet/{slug}`).
   static const chatRooms = '/api/chat/rooms';
+
+  static String chatRoomMessages(String roomId) =>
+      '/api/chat/rooms/$roomId/messages';
+
+  static String chatRoomPresence(String roomId) =>
+      '/api/chat/rooms/$roomId/presence';
+
+  static String chatRoomDj(String roomId) => '/api/chat/rooms/$roomId/dj';
+
+  static String chatRoomGifts(String roomId) => '/api/chat/rooms/$roomId/gifts';
   /// Oturumlu kullanıcı profili (takipçi, bio, görsel — NextAuth çerezi).
   static const userSiteProfile = '/api/user/profile';
   /// Jeton / kredi bakiyesi (NextAuth).

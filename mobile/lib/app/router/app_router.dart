@@ -20,6 +20,7 @@ import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/shell/presentation/main_shell_page.dart';
 import '../../features/live/domain/entities/voice_room_entity.dart';
+import '../../features/voice_hub/presentation/voice_room_route_page.dart';
 import '../../features/voice_hub/presentation/voice_room_rtc_page.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
 
@@ -160,10 +161,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/voice-room/:id',
         builder: (context, state) {
           final room = state.extra as VoiceRoomEntity?;
-          if (room == null) {
-            return const VoiceRoomsHubPage();
+          if (room != null) {
+            return VoiceRoomRtcPage(room: room);
           }
-          return VoiceRoomRtcPage(room: room);
+          final id = state.pathParameters['id'] ?? '';
+          return VoiceRoomRoutePage(roomId: id);
         },
       ),
     ],
