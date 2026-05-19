@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -855,6 +856,11 @@ class _TrendVideoCard extends StatelessWidget {
                       ),
                     ),
                     Positioned(
+                      right: 8,
+                      bottom: 52,
+                      child: _TrendMediaMetaChip(post: post),
+                    ),
+                    Positioned(
                       top: 8,
                       left: 8,
                       child: Container(
@@ -939,6 +945,67 @@ class _TrendVideoCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Trend kartında süre (API) veya görüntülenme sayısı.
+class _TrendMediaMetaChip extends StatelessWidget {
+  const _TrendMediaMetaChip({required this.post});
+
+  final PostEntity post;
+
+  static String _formatDuration(int totalSec) {
+    final m = totalSec ~/ 60;
+    final s = totalSec % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dur = post.durationSeconds;
+    final views = post.viewCount;
+    if (dur != null && dur > 0) {
+      return _trendMetaPill(
+        icon: Icons.schedule_rounded,
+        label: _formatDuration(dur),
+      );
+    }
+    if (views > 0) {
+      return _trendMetaPill(
+        icon: Icons.visibility_rounded,
+        label: NumberFormat.compact(locale: 'tr_TR').format(views),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  static Widget _trendMetaPill({required IconData icon, required String label}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: Colors.white.withValues(alpha: 0.92)),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
       ),
     );
   }

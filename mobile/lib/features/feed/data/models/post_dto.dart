@@ -15,6 +15,7 @@ class PostDto {
     this.fortuneType,
     this.viewCount,
     this.isAutoShare,
+    this.durationSeconds,
   });
 
   factory PostDto.fromJson(Map<String, dynamic> json) {
@@ -60,7 +61,32 @@ class PostDto {
       fortuneType: pick(json, ['fortuneType', 'fortune_type'])?.toString(),
       viewCount: asInt(pick(json, ['viewCount', 'views'])),
       isAutoShare: json['isAuto'] == true,
+      durationSeconds: _pickDurationSeconds(json),
     );
+  }
+
+  static int? _pickDurationSeconds(Map<String, dynamic> json) {
+    final v = pick(json, [
+      'durationSeconds',
+      'duration',
+      'videoDuration',
+      'lengthSeconds',
+      'video_duration',
+    ]);
+    if (v == null) return null;
+    if (v is num) return v.round().clamp(0, 86400).toInt();
+    final s = v.toString();
+    final parsed = int.tryParse(s);
+    if (parsed != null) return parsed.clamp(0, 86400).toInt();
+    if (s.contains(':')) {
+      final parts = s.split(':').map((e) => int.tryParse(e.trim()) ?? 0).toList();
+      if (parts.isEmpty) return null;
+      if (parts.length == 2) return (parts[0] * 60 + parts[1]).clamp(0, 86400).toInt();
+      if (parts.length >= 3) {
+        return (parts[0] * 3600 + parts[1] * 60 + parts[2]).clamp(0, 86400).toInt();
+      }
+    }
+    return null;
   }
 
   final String id;
@@ -73,6 +99,7 @@ class PostDto {
   final String? fortuneType;
   final int? viewCount;
   final bool? isAutoShare;
+  final int? durationSeconds;
 
   PostEntity toEntity() {
     return PostEntity(
@@ -86,6 +113,7 @@ class PostDto {
       fortuneType: fortuneType,
       viewCount: viewCount ?? 0,
       isAutoShare: isAutoShare ?? false,
+      durationSeconds: durationSeconds,
     );
   }
 

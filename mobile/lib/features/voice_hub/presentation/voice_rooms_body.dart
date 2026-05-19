@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/config/env.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/cosmic_section_header.dart';
 import '../../../core/widgets/glow_panel.dart';
 import '../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
@@ -98,25 +99,75 @@ class VoiceRoomsBody extends ConsumerWidget {
             ),
           );
         }
+        final topPad =
+            MediaQuery.paddingOf(context).top + kToolbarHeight + 8;
         return RefreshIndicator(
           color: AppTheme.accent,
           onRefresh: () async => ref.invalidate(voiceRoomsProvider),
-          child: GridView.builder(
+          child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(
-              16,
-              MediaQuery.paddingOf(context).top + kToolbarHeight + 10,
-              16,
-              28,
-            ),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 14,
-              crossAxisSpacing: 14,
-              childAspectRatio: 0.78,
-            ),
-            itemCount: list.length,
-            itemBuilder: (ctx, i) => _VoiceRoomHeroCard(room: list[i]),
+            slivers: [
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(16, topPad, 16, 0),
+                sliver: SliverToBoxAdapter(
+                  child: GlowPanel(
+                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CosmicSectionHeader(
+                          title: 'Sesli sohbet odaları',
+                          trailing: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppTheme.accent.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color:
+                                    AppTheme.accentSecondary.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            child: Text(
+                              '${list.length} oda',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Site ile aynı liste. Bir odaya dokununca uygulama içi tarayıcıda sohbet açılır.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.35,
+                            color: AppTheme.muted.withValues(alpha: 0.95),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+                sliver: SliverGrid(
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 14,
+                    crossAxisSpacing: 14,
+                    childAspectRatio: 0.78,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (ctx, i) => _VoiceRoomHeroCard(room: list[i]),
+                    childCount: list.length,
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },

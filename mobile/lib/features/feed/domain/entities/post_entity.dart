@@ -14,6 +14,7 @@ class PostEntity extends Equatable {
     this.fortuneType,
     this.viewCount = 0,
     this.isAutoShare = false,
+    this.durationSeconds,
   });
 
   final String id;
@@ -27,6 +28,8 @@ class PostEntity extends Equatable {
   final String? fortuneType;
   final int viewCount;
   final bool isAutoShare;
+  /// Video süresi (saniye); API vermezse null.
+  final int? durationSeconds;
 
   @override
   List<Object?> get props => [
@@ -40,5 +43,6 @@ class PostEntity extends Equatable {
         fortuneType,
         viewCount,
         isAutoShare,
+        durationSeconds,
       ];
 }

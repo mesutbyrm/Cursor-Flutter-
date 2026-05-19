@@ -22,7 +22,7 @@ class VoiceRoomsHubPage extends ConsumerWidget {
             ],
           ).createShader(b),
           child: const Text(
-            'Sohbet odaları',
+            'Sesli sohbet odaları',
             style: TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 20,

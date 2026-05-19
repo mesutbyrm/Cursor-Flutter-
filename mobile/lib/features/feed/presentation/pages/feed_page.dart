@@ -49,7 +49,7 @@ class _FeedPageState extends ConsumerState<FeedPage> {
             ],
           ).createShader(b),
           child: const Text(
-            'Canlifal',
+            'Keşfet',
             style: TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 22,
