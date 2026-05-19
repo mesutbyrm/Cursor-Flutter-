@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:tencent_rtc_sdk/trtc_cloud.dart';
 import 'package:tencent_rtc_sdk/trtc_cloud_def.dart';
@@ -29,13 +30,33 @@ class TrtcRoomManager {
 
   static Future<bool> requestPermissions({required bool video}) async {
     if (kIsWeb) return false;
-    final mic = await Permission.microphone.request();
-    if (!mic.isGranted) return false;
-    if (video) {
-      final cam = await Permission.camera.request();
-      if (!cam.isGranted) return false;
+    try {
+      final mic = await Permission.microphone.request();
+      if (!mic.isGranted) {
+        if (mic.isPermanentlyDenied) {
+          await openAppSettings();
+        }
+        return false;
+      }
+      if (video) {
+        final cam = await Permission.camera.request();
+        if (!cam.isGranted) {
+          if (cam.isPermanentlyDenied) {
+            await openAppSettings();
+          }
+          return false;
+        }
+      }
+      return true;
+    } on MissingPluginException {
+      debugPrint(
+        'permission_handler kayıtlı değil — uygulamayı tamamen kapatıp yeniden kurun.',
+      );
+      return false;
+    } catch (e) {
+      debugPrint('İzin hatası: $e');
+      return false;
     }
-    return true;
   }
 
   Future<void> join({
