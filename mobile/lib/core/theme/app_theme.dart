@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   AppTheme._();
 
-  static const Color background = Color(0xFF0B0B0F);
+  static const Color background = Color(0xFF0B0B1E);
   static const Color surface = Color(0xFF14141C);
   static const Color surfaceElevated = Color(0xFF1C1C26);
   static const Color accent = Color(0xFFFE2C55);

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../../core/config/env.dart';
-import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/glow_panel.dart';
-import '../../../../core/widgets/user_avatar.dart';
+import '../../../../core/theme/app_design.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../providers/feed_providers.dart';
-import '../widgets/feed_home_sections.dart';
+import '../widgets/discover/discover_background.dart';
+import '../widgets/discover/discover_fortune_tarot.dart';
+import '../widgets/discover/discover_header.dart';
+import '../widgets/discover/discover_hero.dart';
+import '../widgets/discover/discover_live_carousel.dart';
+import '../widgets/discover/discover_quick_actions.dart';
+import '../widgets/discover/discover_voice_orbs.dart';
 
+/// Keşfet ana sayfa — pixel tasarım (canlı yayın, hızlı işlemler, odalar, fal).
 class FeedPage extends ConsumerStatefulWidget {
   const FeedPage({super.key});
 
@@ -19,351 +21,42 @@ class FeedPage extends ConsumerStatefulWidget {
 }
 
 class _FeedPageState extends ConsumerState<FeedPage> {
-  final _scroll = ScrollController();
-
-  @override
-  void dispose() {
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  Future<void> _refreshHome() async {
-    await ref.read(feedNotifierProvider.notifier).refresh();
+  Future<void> _refresh() async {
     ref.invalidate(liveStreamsProvider);
     ref.invalidate(voiceRoomsProvider);
+    await ref.read(feedNotifierProvider.notifier).refresh();
   }
 
   @override
   Widget build(BuildContext context) {
-    final feed = ref.watch(feedNotifierProvider);
-    final topPad = MediaQuery.paddingOf(context).top + kToolbarHeight + 8;
+    final top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: ShaderMask(
-          shaderCallback: (b) => const LinearGradient(
-            colors: [AppTheme.accentSecondary, AppTheme.accent],
-          ).createShader(b),
-          child: const Text(
-            'Canlifal',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 22,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Yenile',
-            onPressed: _refreshHome,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
-      ),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          const _FeedBackdrop(),
-          RefreshIndicator(
-        color: AppTheme.accent,
-        onRefresh: _refreshHome,
-        child: NotificationListener<ScrollNotification>(
-          onNotification: (n) {
-            if (n.metrics.pixels > n.metrics.maxScrollExtent - 500) {
-              ref.read(feedNotifierProvider.notifier).loadMore();
-            }
-            return false;
-          },
+      backgroundColor: AppDesign.bgBase,
+      body: DiscoverBackground(
+        child: RefreshIndicator(
+          color: AppDesign.accentPink,
+          backgroundColor: AppDesign.bgPurpleGlow,
+          onRefresh: _refresh,
           child: CustomScrollView(
-            controller: _scroll,
-            physics: const AlwaysScrollableScrollPhysics(),
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
             slivers: [
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(12, topPad, 12, 0),
-                sliver: SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _FeedPeekHero(),
-                      const FeedLiveStrip(),
-                      const FeedVoiceRoomsStrip(),
-                    ],
-                  ),
+              SliverToBoxAdapter(child: SizedBox(height: top)),
+              const SliverToBoxAdapter(child: DiscoverHeader()),
+              const SliverToBoxAdapter(child: DiscoverHeroHeadline()),
+              const SliverToBoxAdapter(child: DiscoverLiveCarousel()),
+              const SliverToBoxAdapter(child: DiscoverQuickActions()),
+              const SliverToBoxAdapter(child: DiscoverVoiceOrbs()),
+              const SliverToBoxAdapter(child: DiscoverFortuneTarot()),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: MediaQuery.paddingOf(context).bottom + 100,
                 ),
               ),
-              if (feed.isLoading)
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (feed.hasError)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          ApiException.userMessage(feed.error!),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 12),
-                        FilledButton(
-                          onPressed: () => ref
-                              .read(feedNotifierProvider.notifier)
-                              .refresh(),
-                          child: const Text('Tekrar dene'),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else if (feed.hasValue && feed.requireValue.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Padding(
-                    padding: const EdgeInsets.all(28),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.auto_stories_outlined,
-                            size: 56, color: AppTheme.muted),
-                        const SizedBox(height: 16),
-                        Text(
-                          Env.useNextAuth
-                              ? 'Henüz gönderi yok.\n'
-                                  'İçerik sunucudan geldikçe listelenir; canlifal.com ile aynı hesaptan giriş yaptığınızdan emin olun.'
-                              : 'Henüz gönderi yok.',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppTheme.muted,
-                            height: 1.35,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else if (feed.hasValue)
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (ctx, i) {
-                        final p = feed.requireValue[i];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: AspectRatio(
-                              aspectRatio: 9 / 14,
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  if (p.mediaUrl != null &&
-                                      p.mediaUrl!.isNotEmpty)
-                                    Image.network(
-                                      p.mediaUrl!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              Container(
-                                        color: AppTheme.surfaceElevated,
-                                        alignment: Alignment.center,
-                                        child: const Icon(Icons.play_circle_fill,
-                                            size: 64, color: AppTheme.muted),
-                                      ),
-                                    )
-                                  else
-                                    Container(
-                                      decoration: const BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: [
-                                            Color(0xFF1E1E2E),
-                                            Color(0xFF0B0B0F),
-                                          ],
-                                        ),
-                                      ),
-                                      child: const Center(
-                                        child: Icon(Icons.movie_filter_rounded,
-                                            size: 64, color: AppTheme.muted),
-                                      ),
-                                    ),
-                                  Positioned(
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    child: Container(
-                                      padding: const EdgeInsets.fromLTRB(
-                                          14, 36, 14, 14),
-                                      decoration: const BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                          colors: [
-                                            Colors.transparent,
-                                            Colors.black87,
-                                          ],
-                                        ),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () => context.push(
-                                                  '/user/${p.author.id}',
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    UserAvatar(
-                                                      url: p.author.avatarUrl,
-                                                      radius: 18,
-                                                    ),
-                                                    const SizedBox(width: 10),
-                                                    Text(
-                                                      p.author.display,
-                                                      style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              const Spacer(),
-                                              const Icon(Icons.favorite_border,
-                                                  color: Colors.white),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                '${p.likesCount}',
-                                                style: const TextStyle(
-                                                    color: Colors.white),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            p.caption ?? '',
-                                            maxLines: 3,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              color: Colors.white70,
-                                              height: 1.25,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                      childCount: feed.requireValue.length,
-                    ),
-                  ),
-                ),
             ],
           ),
-        ),
-      ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FeedBackdrop extends StatelessWidget {
-  const _FeedBackdrop();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppTheme.background,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF151028),
-            AppTheme.background,
-            const Color(0xFF0A1418),
-          ],
-          stops: const [0.0, 0.55, 1.0],
-        ),
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(0.85, -0.35),
-            radius: 0.95,
-            colors: [
-              AppTheme.accent.withValues(alpha: 0.16),
-              Colors.transparent,
-            ],
-          ),
-        ),
-        child: const SizedBox.expand(),
-      ),
-    );
-  }
-}
-
-class _FeedPeekHero extends StatelessWidget {
-  const _FeedPeekHero();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: GlowPanel(
-        borderRadius: 18,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            Icon(
-              Icons.auto_awesome_rounded,
-              color: AppTheme.accentSecondary.withValues(alpha: 0.95),
-              size: 22,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Senin için',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.muted.withValues(alpha: 0.95),
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'Canlı yayınlar, sesli odalar ve hikâyeler',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                      height: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );
