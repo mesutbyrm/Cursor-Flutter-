@@ -19,6 +19,8 @@ import '../../features/notifications/presentation/pages/notifications_page.dart'
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/shell/presentation/main_shell_page.dart';
+import '../../features/live/domain/entities/voice_room_entity.dart';
+import '../../features/voice_hub/presentation/voice_room_rtc_page.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
 
 class RouterRefresh extends ChangeNotifier {
@@ -153,6 +155,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/voice-rooms',
         builder: (context, state) => const VoiceRoomsHubPage(),
+      ),
+      GoRoute(
+        path: '/voice-room/:id',
+        builder: (context, state) {
+          final room = state.extra as VoiceRoomEntity?;
+          if (room == null) {
+            return const VoiceRoomsHubPage();
+          }
+          return VoiceRoomRtcPage(room: room);
+        },
       ),
     ],
   );

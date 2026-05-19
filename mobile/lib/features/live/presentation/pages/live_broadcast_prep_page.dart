@@ -8,7 +8,11 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
+import '../../../../core/config/env.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../domain/entities/live_broadcast_session.dart';
+import '../providers/live_providers.dart';
+import '../../../trtc/presentation/providers/trtc_providers.dart';
 
 /// Canlı yayın hazırlığı — neon cam arayüz.
 class LiveBroadcastPrepPage extends ConsumerStatefulWidget {
@@ -55,18 +59,56 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
     super.dispose();
   }
 
-  void _startLive() {
+  var _starting = false;
+
+  Future<void> _startLive() async {
+    if (_starting) return;
     final user = ref.read(authControllerProvider).valueOrNull;
-    final session = LiveBroadcastSession.demoHost(
-      title: _title.text.trim(),
-      category: _category,
-      tags: _tags,
-      description: _description.text.trim(),
-      streamerName: user?.display,
-      streamerHandle: user?.username,
-      avatarUrl: user?.avatarUrl,
-    );
-    context.push('/live/room', extra: session);
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Yayın için giriş yapmalısınız')),
+      );
+      return;
+    }
+
+    setState(() => _starting = true);
+    try {
+      var roomId = 'live-${DateTime.now().millisecondsSinceEpoch}';
+      if (Env.useNextAuth) {
+        roomId = await ref.read(liveRepositoryProvider).createVideoStream(
+              title: _title.text.trim(),
+              description: _description.text.trim(),
+              category: _category,
+              tags: _tags,
+            );
+      }
+
+      final trtc = await ref.read(trtcRemoteProvider).fetchUserSig(
+            userId: user.id,
+            roomId: roomId,
+          );
+
+      if (!mounted) return;
+      final session = LiveBroadcastSession.demoHost(
+        title: _title.text.trim(),
+        category: _category,
+        tags: _tags,
+        description: _description.text.trim(),
+        streamerName: user.display,
+        streamerHandle: user.username,
+        avatarUrl: user.avatarUrl,
+      ).copyWith(streamId: roomId, trtc: trtc);
+
+      context.push('/live/room', extra: session);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _starting = false);
+    }
   }
 
   @override
@@ -263,7 +305,10 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                       ],
                     ),
                     const SizedBox(height: 28),
-                    _StartLiveButton(onPressed: _startLive),
+                    _StartLiveButton(
+                      loading: _starting,
+                      onPressed: _starting ? null : _startLive,
+                    ),
                   ],
                 ),
               ),
@@ -574,37 +619,56 @@ class _SettingTile extends StatelessWidget {
 }
 
 class _StartLiveButton extends StatelessWidget {
-  const _StartLiveButton({required this.onPressed});
+  const _StartLiveButton({required this.onPressed, this.loading = false});
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onPressed,
+        onTap: loading ? null : onPressed,
         borderRadius: BorderRadius.circular(20),
         child: Ink(
           height: 58,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            gradient: AppDesign.heroGradient,
-            boxShadow: AppDesign.glowShadow(AppDesign.accentPink, blur: 28),
+            gradient: onPressed == null && !loading
+                ? null
+                : AppDesign.heroGradient,
+            color: onPressed == null && !loading
+                ? Colors.white.withValues(alpha: 0.1)
+                : null,
+            boxShadow: onPressed == null
+                ? null
+                : AppDesign.glowShadow(AppDesign.accentPink, blur: 28),
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.fiber_manual_record_rounded, color: Colors.white),
-              SizedBox(width: 10),
-              Text(
-                'CANLI YAYINA BAŞLA',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 15,
-                  letterSpacing: 0.5,
+              if (loading)
+                const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              else ...[
+                const Icon(Icons.fiber_manual_record_rounded, color: Colors.white),
+                const SizedBox(width: 10),
+                const Text(
+                  'CANLI YAYINA BAŞLA',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                    letterSpacing: 0.5,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

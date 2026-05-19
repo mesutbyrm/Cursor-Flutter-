@@ -3,25 +3,35 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_design.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
+import '../../../trtc/presentation/providers/trtc_providers.dart';
+import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../domain/entities/live_broadcast_session.dart';
+import '../providers/live_providers.dart';
 
-/// Aktif canlı yayın — video üzerinde neon cam katmanlar.
-class LiveBroadcastRoomPage extends StatefulWidget {
+/// Aktif canlı yayın — Tencent TRTC video + neon cam katmanlar.
+class LiveBroadcastRoomPage extends ConsumerStatefulWidget {
   const LiveBroadcastRoomPage({super.key, required this.session});
 
   final LiveBroadcastSession session;
 
   @override
-  State<LiveBroadcastRoomPage> createState() => _LiveBroadcastRoomPageState();
+  ConsumerState<LiveBroadcastRoomPage> createState() =>
+      _LiveBroadcastRoomPageState();
 }
 
-class _LiveBroadcastRoomPageState extends State<LiveBroadcastRoomPage>
+class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     with TickerProviderStateMixin {
+  final _trtc = TrtcRoomManager();
+  var _rtcReady = false;
+  String? _rtcError;
   final _chat = TextEditingController();
   final _messages = <_ChatMsg>[
     const _ChatMsg(
@@ -56,6 +66,33 @@ class _LiveBroadcastRoomPageState extends State<LiveBroadcastRoomPage>
       duration: const Duration(seconds: 4),
     )..repeat();
     _spawnFloats();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initTrtc());
+  }
+
+  Future<void> _initTrtc() async {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null || !_trtc.isSupported) return;
+
+    try {
+      var cred = widget.session.trtc;
+      final roomId = widget.session.streamId ?? widget.session.title;
+      final resolved = cred ??
+          await ref.read(trtcRemoteProvider).fetchUserSig(
+                userId: user.id,
+                roomId: roomId,
+              );
+
+      await _trtc.join(
+        credentials: resolved,
+        isHost: widget.session.isHost,
+        audioOnly: false,
+      );
+      if (mounted) setState(() => _rtcReady = true);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _rtcError = ApiException.userMessage(e));
+      }
+    }
   }
 
   void _spawnFloats() {
@@ -80,7 +117,45 @@ class _LiveBroadcastRoomPageState extends State<LiveBroadcastRoomPage>
     _timer.cancel();
     _floatCtrl.dispose();
     _chat.dispose();
+    _trtc.dispose();
     super.dispose();
+  }
+
+  Widget _videoLayer(LiveBroadcastSession s) {
+    if (!_rtcReady) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          _VideoBackground(),
+          if (_rtcError != null)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  _rtcError!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppDesign.textSecondary),
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    if (s.isHost) {
+      return TrtcLocalVideoView(manager: _trtc);
+    }
+
+    return ValueListenableBuilder<bool>(
+      valueListenable: _trtc.remoteVideoAvailable,
+      builder: (context, available, _) {
+        final anchor = _trtc.remoteAnchorUserId;
+        if (available && anchor != null && anchor.isNotEmpty) {
+          return TrtcRemoteVideoView(manager: _trtc, userId: anchor);
+        }
+        return _VideoBackground();
+      },
+    );
   }
 
   String get _timeLabel {
@@ -101,7 +176,7 @@ class _LiveBroadcastRoomPageState extends State<LiveBroadcastRoomPage>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          _VideoBackground(),
+          Positioned.fill(child: _videoLayer(s)),
           ..._floats.map((f) => _FloatingHeartWidget(
                 key: ValueKey(f.id),
                 gift: f,
@@ -175,6 +250,7 @@ class _LiveBroadcastRoomPageState extends State<LiveBroadcastRoomPage>
                 _BottomBar(
                   chatController: _chat,
                   isHost: s.isHost,
+                  trtc: s.isHost ? _trtc : null,
                   onSend: () {
                     final t = _chat.text.trim();
                     if (t.isEmpty) return;
@@ -213,7 +289,16 @@ class _LiveBroadcastRoomPageState extends State<LiveBroadcastRoomPage>
         ],
       ),
     );
-    if (ok == true && context.mounted) context.pop();
+    if (ok != true || !context.mounted) return;
+
+    await _trtc.leave();
+    final streamId = widget.session.streamId;
+    if (widget.session.isHost && streamId != null && streamId.isNotEmpty) {
+      try {
+        await ref.read(liveRepositoryProvider).endVideoStream(streamId);
+      } catch (_) {}
+    }
+    if (context.mounted) context.pop();
   }
 }
 
@@ -607,12 +692,14 @@ class _BottomBar extends StatelessWidget {
     required this.onSend,
     required this.onEnd,
     required this.isHost,
+    this.trtc,
   });
 
   final TextEditingController chatController;
   final VoidCallback onSend;
   final VoidCallback onEnd;
   final bool isHost;
+  final TrtcRoomManager? trtc;
 
   @override
   Widget build(BuildContext context) {
@@ -625,14 +712,35 @@ class _BottomBar extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (isHost)
+              if (isHost && trtc != null)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _MiniControl(icon: Icons.mic_rounded, label: 'Mik'),
-                    _MiniControl(icon: Icons.videocam_rounded, label: 'Kam'),
-                    _MiniControl(icon: Icons.cameraswitch_rounded, label: 'Çevir'),
-                    _MiniControl(icon: Icons.auto_awesome_rounded, label: 'Efekt'),
+                    _MiniControl(
+                      icon: trtc!.micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
+                      label: 'Mik',
+                      onTap: () => trtc!.setMicEnabled(!trtc!.micOn),
+                    ),
+                    _MiniControl(
+                      icon: trtc!.cameraOn
+                          ? Icons.videocam_rounded
+                          : Icons.videocam_off_rounded,
+                      label: 'Kam',
+                      onTap: () {
+                        if (trtc!.cameraOn) {
+                          trtc!.stopLocalPreview();
+                        }
+                      },
+                    ),
+                    _MiniControl(
+                      icon: Icons.cameraswitch_rounded,
+                      label: 'Çevir',
+                      onTap: trtc!.switchCamera,
+                    ),
+                    const _MiniControl(
+                      icon: Icons.auto_awesome_rounded,
+                      label: 'Efekt',
+                    ),
                   ],
                 ),
               if (isHost) const SizedBox(height: 10),
@@ -716,26 +824,34 @@ class _BottomBar extends StatelessWidget {
 }
 
 class _MiniControl extends StatelessWidget {
-  const _MiniControl({required this.icon, required this.label});
+  const _MiniControl({
+    required this.icon,
+    required this.label,
+    this.onTap,
+  });
 
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.12),
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.12),
+            ),
+            child: Icon(icon, size: 20, color: Colors.white),
           ),
-          child: Icon(icon, size: 20, color: Colors.white),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 9)),
-      ],
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(fontSize: 9)),
+        ],
+      ),
     );
   }
 }

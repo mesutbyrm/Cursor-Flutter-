@@ -7,7 +7,6 @@ import '../../../core/config/env.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_design.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
-import '../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/presentation/providers/live_providers.dart';
 
@@ -79,10 +78,8 @@ class _VoiceRoomHeroCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(AppDesign.radiusCard),
         onTap: () => context.push(
-          CanlifalWebRoute.location(
-            relativePath: '/sohbet/${room.slug}',
-            title: room.nameTr,
-          ),
+          '/voice-room/${room.id}',
+          extra: room,
         ),
         child: Ink(
           decoration: BoxDecoration(

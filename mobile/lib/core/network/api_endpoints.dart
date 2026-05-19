@@ -29,8 +29,13 @@ abstract final class ApiEndpoints {
   /// Diğer ortamlar için genel canlı listesi.
   static const liveStreams = '/api/live';
 
+  /// Tencent TRTC UserSig (POST: userId, roomId).
+  static const trtcUserSig = '/api/trtc/usersig';
+
   /// Canlı yayın hediye kataloğu (Tencent / site ile aynı liste).
   static const videoStreamGiftsCatalog = '/api/video-streams/gifts';
+
+  static String videoStreamEnd(String streamId) => '/api/video-streams/$streamId/end';
 
   static String videoStreamGifts(String streamId) =>
       '/api/video-streams/$streamId/gifts';

@@ -7,7 +7,10 @@ import '../../../../core/theme/app_design.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../voice_hub/presentation/voice_rooms_body.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../domain/entities/live_broadcast_session.dart';
+import '../../domain/entities/live_stream_entity.dart';
 import '../providers/live_providers.dart';
 
 class LivePage extends ConsumerStatefulWidget {
@@ -117,10 +120,7 @@ class _LiveStreamsTab extends ConsumerWidget {
             final s = streams[i];
             return DiscoverGlassCard(
               onTap: s.isLive
-                  ? () => context.push(
-                        '/live/room',
-                        extra: LiveBroadcastSession.fromStream(s),
-                      )
+                  ? () => _openLiveStream(context, ref, s)
                   : null,
               padding: const EdgeInsets.all(12),
               child: Row(
@@ -198,6 +198,41 @@ class _LiveStreamsTab extends ConsumerWidget {
         );
       },
     );
+  }
+
+  static Future<void> _openLiveStream(
+    BuildContext context,
+    WidgetRef ref,
+    LiveStreamEntity s,
+  ) async {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('İzlemek için giriş yapın')),
+      );
+      return;
+    }
+
+    try {
+      final cred = await ref.read(trtcRemoteProvider).fetchUserSig(
+            userId: user.id,
+            roomId: s.id,
+          );
+      if (!context.mounted) return;
+      context.push(
+        '/live/room',
+        extra: LiveBroadcastSession.fromStream(s).copyWith(
+          streamId: s.id,
+          trtc: cred,
+        ),
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
   }
 
   static Widget _thumbFallback() {

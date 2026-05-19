@@ -1,4 +1,5 @@
 import 'live_stream_entity.dart';
+import '../../../trtc/domain/entities/trtc_credentials.dart';
 
 /// Yayın hazırlığından odaya aktarılan veri.
 class LiveBroadcastSession {
@@ -13,6 +14,7 @@ class LiveBroadcastSession {
     this.streamerHandle,
     this.avatarUrl,
     this.viewerCount = 0,
+    this.trtc,
   });
 
   final String title;
@@ -25,6 +27,7 @@ class LiveBroadcastSession {
   final String? streamerHandle;
   final String? avatarUrl;
   final int viewerCount;
+  final TrtcCredentials? trtc;
 
   factory LiveBroadcastSession.fromStream(LiveStreamEntity stream) {
     return LiveBroadcastSession(
@@ -35,6 +38,26 @@ class LiveBroadcastSession {
       streamerName: stream.streamerName ?? 'Yayıncı',
       streamerHandle: 'yayinci',
       viewerCount: stream.viewerCount,
+      trtc: null,
+    );
+  }
+
+  LiveBroadcastSession copyWith({
+    String? streamId,
+    TrtcCredentials? trtc,
+  }) {
+    return LiveBroadcastSession(
+      title: title,
+      category: category,
+      tags: tags,
+      description: description,
+      isHost: isHost,
+      streamId: streamId ?? this.streamId,
+      streamerName: streamerName,
+      streamerHandle: streamerHandle,
+      avatarUrl: avatarUrl,
+      viewerCount: viewerCount,
+      trtc: trtc ?? this.trtc,
     );
   }
 
@@ -57,6 +80,7 @@ class LiveBroadcastSession {
       streamerName: streamerName ?? 'Cemre',
       streamerHandle: streamerHandle ?? 'cemreofficial',
       avatarUrl: avatarUrl,
+      trtc: null,
     );
   }
 }
