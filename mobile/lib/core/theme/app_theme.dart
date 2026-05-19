@@ -1,17 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// TikTok tarzı koyu tema — yüksek kontrast, neon vurgular.
+/// canlifal.com web arayüzüyle uyumlu kozmik koyu tema (mor gece, yıldız, pembe vurgular).
 class AppTheme {
   AppTheme._();
 
-  static const Color background = Color(0xFF0B0B0F);
-  static const Color surface = Color(0xFF14141C);
-  static const Color surfaceElevated = Color(0xFF1C1C26);
-  static const Color accent = Color(0xFFFE2C55);
-  static const Color accentSecondary = Color(0xFF25F4EE);
+  /// Ana zemin — çok koyu mor/lacivert.
+  static const Color background = Color(0xFF0A0518);
+  /// Kart / panel zemini.
+  static const Color surface = Color(0xFF151028);
+  static const Color surfaceElevated = Color(0xFF1E1235);
+  /// Kenarlık ve hafif parıltı için orta mor.
+  static const Color cosmicPurple = Color(0xFF4A2F7A);
+  /// Bölüm başlığı dikey çubuğu (web’deki kırmızı aksan).
+  static const Color sectionBar = Color(0xFFE53935);
+  /// Jeton / premium vurguları.
+  static const Color accentGold = Color(0xFFF4C430);
+  /// Ana etkileşim (FAB, canlı).
+  static const Color accent = Color(0xFFFF2D7A);
+  /// İkincil neon (ikon / link).
+  static const Color accentSecondary = Color(0xFFB388FF);
   static const Color onBackground = Color(0xFFF5F5F7);
-  static const Color muted = Color(0xFF8E8E93);
+  static const Color muted = Color(0xFFB0A8C9);
+
+  static LinearGradient get cosmicBackdropGradient => const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF1A0F2E),
+          Color(0xFF0D0618),
+          Color(0xFF050210),
+        ],
+        stops: [0.0, 0.45, 1.0],
+      );
+
+  static LinearGradient get fabGradient => const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFFFF2D7A),
+          Color(0xFFB400FF),
+        ],
+      );
 
   static ThemeData dark() {
     final base = ThemeData(

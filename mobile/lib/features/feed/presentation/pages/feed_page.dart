@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/cosmic_background.dart';
 import '../../../../core/widgets/glow_panel.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../live/presentation/providers/live_providers.dart';
@@ -42,8 +43,11 @@ class _FeedPageState extends ConsumerState<FeedPage> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: ShaderMask(
-          shaderCallback: (b) => const LinearGradient(
-            colors: [AppTheme.accentSecondary, AppTheme.accent],
+          shaderCallback: (b) => LinearGradient(
+            colors: [
+              AppTheme.accentGold,
+              AppTheme.accent,
+            ],
           ).createShader(b),
           child: const Text(
             'Canlifal',
@@ -65,7 +69,7 @@ class _FeedPageState extends ConsumerState<FeedPage> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          const _FeedBackdrop(),
+          const CosmicBackground(),
           RefreshIndicator(
         color: AppTheme.accent,
         onRefresh: _refreshHome,
@@ -284,42 +288,6 @@ class _FeedPageState extends ConsumerState<FeedPage> {
   }
 }
 
-class _FeedBackdrop extends StatelessWidget {
-  const _FeedBackdrop();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppTheme.background,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF151028),
-            AppTheme.background,
-            const Color(0xFF0A1418),
-          ],
-          stops: const [0.0, 0.55, 1.0],
-        ),
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(0.85, -0.35),
-            radius: 0.95,
-            colors: [
-              AppTheme.accent.withValues(alpha: 0.16),
-              Colors.transparent,
-            ],
-          ),
-        ),
-        child: const SizedBox.expand(),
-      ),
-    );
-  }
-}
-
 class _FeedPeekHero extends StatelessWidget {
   const _FeedPeekHero();
 
@@ -334,7 +302,7 @@ class _FeedPeekHero extends StatelessWidget {
           children: [
             Icon(
               Icons.auto_awesome_rounded,
-              color: AppTheme.accentSecondary.withValues(alpha: 0.95),
+              color: AppTheme.accentGold.withValues(alpha: 0.95),
               size: 22,
             ),
             const SizedBox(width: 10),

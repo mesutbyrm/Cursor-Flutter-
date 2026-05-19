@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/cosmic_background.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
@@ -34,8 +35,24 @@ class _LivePageState extends ConsumerState<LivePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Canlı & odalar'),
+        title: ShaderMask(
+          shaderCallback: (b) => LinearGradient(
+            colors: [
+              AppTheme.accentGold,
+              AppTheme.accent,
+            ],
+          ).createShader(b),
+          child: const Text(
+            'Canlı & odalar',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
+              color: Colors.white,
+            ),
+          ),
+        ),
         actions: [
           IconButton(
             tooltip: 'Yenile',
@@ -48,17 +65,27 @@ class _LivePageState extends ConsumerState<LivePage>
         ],
         bottom: TabBar(
           controller: _tab,
+          indicatorColor: AppTheme.accent,
+          labelColor: Colors.white,
+          unselectedLabelColor: AppTheme.muted,
+          dividerColor: Colors.transparent,
           tabs: const [
             Tab(text: 'Yayınlar', icon: Icon(Icons.live_tv_rounded)),
             Tab(text: 'Sohbet', icon: Icon(Icons.headset_mic_rounded)),
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tab,
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          _LiveStreamsTab(),
-          VoiceRoomsBody(),
+          const CosmicBackground(),
+          TabBarView(
+            controller: _tab,
+            children: const [
+              _LiveStreamsTab(),
+              VoiceRoomsBody(),
+            ],
+          ),
         ],
       ),
     );

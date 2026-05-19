@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/cosmic_section_header.dart';
 import '../../../../core/widgets/glow_panel.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
@@ -37,13 +38,11 @@ class FeedLiveStrip extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SectionTitleRow(
-                icon: Icons.live_tv_rounded,
+              CosmicSectionHeader(
                 title: 'Canlı yayınlar',
-                accent: AppTheme.accentSecondary,
                 trailing: TextButton(
                   onPressed: () => context.go('/live'),
-                  child: const Text('Tümü'),
+                  child: const Text('Tümünü gör'),
                 ),
               ),
               const SizedBox(height: 12),
@@ -216,13 +215,11 @@ class FeedVoiceRoomsStrip extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SectionTitleRow(
-                  icon: Icons.graphic_eq_rounded,
+                CosmicSectionHeader(
                   title: 'Sesli sohbet odaları',
-                  accent: AppTheme.accent,
                   trailing: TextButton(
                     onPressed: () => context.push('/voice-rooms'),
-                    child: const Text('Tümü'),
+                    child: const Text('Tüm odalar'),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -262,7 +259,7 @@ class _RoomChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFF1E1E2A),
+      color: AppTheme.surfaceElevated,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: () => _open(context),
@@ -273,7 +270,7 @@ class _RoomChip extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppTheme.accent.withValues(alpha: 0.22),
+              color: AppTheme.cosmicPurple.withValues(alpha: 0.5),
             ),
             gradient: LinearGradient(
               begin: Alignment.topLeft,

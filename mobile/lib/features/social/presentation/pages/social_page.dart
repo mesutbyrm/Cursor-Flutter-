@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/cosmic_background.dart';
 import '../../../../core/widgets/glow_panel.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../feed/domain/entities/post_entity.dart';
@@ -41,8 +42,11 @@ class _SocialPageState extends ConsumerState<SocialPage> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: ShaderMask(
-          shaderCallback: (b) => const LinearGradient(
-            colors: [AppTheme.accentSecondary, AppTheme.accent],
+          shaderCallback: (b) => LinearGradient(
+            colors: [
+              AppTheme.accentGold,
+              AppTheme.accent,
+            ],
           ).createShader(b),
           child: const Text(
             'Sosyal',
@@ -65,7 +69,7 @@ class _SocialPageState extends ConsumerState<SocialPage> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          const _SocialBackdrop(),
+          const CosmicBackground(),
           social.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
@@ -218,41 +222,6 @@ class _SocialPageState extends ConsumerState<SocialPage> {
             },
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SocialBackdrop extends StatelessWidget {
-  const _SocialBackdrop();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppTheme.background,
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            const Color(0xFF101A28),
-            AppTheme.background,
-            const Color(0xFF120C18),
-          ],
-        ),
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(-0.6, 0.2),
-            radius: 1.1,
-            colors: [
-              AppTheme.accentSecondary.withValues(alpha: 0.1),
-              Colors.transparent,
-            ],
-          ),
-        ),
-        child: const SizedBox.expand(),
       ),
     );
   }

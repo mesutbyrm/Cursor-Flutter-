@@ -1,6 +1,6 @@
 # Canlifal Social (Flutter)
 
-Modern, TikTok tarzı koyu arayüzlü sosyal medya istemcisi. **Clean Architecture** (domain / data / presentation), **Riverpod** ve **REST + JWT** ile çalışır.
+Modern, canlifal.com web arayüzüyle uyumlu **kozmik koyu tema**lı sosyal istemci. **Clean Architecture** (domain / data / presentation), **Riverpod** ve **REST + JWT** ile çalışır.
 
 ## Çalıştırma
 
@@ -11,6 +11,10 @@ flutter run --dart-define=API_BASE_URL=https://senin-api.example.com
 ```
 
 `API_BASE_URL` verilmezse varsayılan `https://canlifal.com` kullanılır (`lib/core/config/env.dart`; kendi backend adresinizle `--dart-define` verin).
+
+## Tema (canlifal.com ile uyum)
+
+Koyu **kozmik mor** zemin, hafif **yıldız** dokusu (`CosmicBackground`), bölüm başlıklarında web’deki gibi **kırmızı dikey çubuk** (`CosmicSectionHeader`), alt gezinmede ortada **pembe–mor gradient FAB** (Canlı sekmesi). Renk sabitleri: `lib/core/theme/app_theme.dart`.
 
 ## Mimari
 

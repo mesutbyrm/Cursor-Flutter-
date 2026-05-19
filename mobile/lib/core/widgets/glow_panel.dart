@@ -25,8 +25,8 @@ class GlowPanel extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.accent.withValues(alpha: 0.45),
-            AppTheme.accentSecondary.withValues(alpha: 0.35),
+            AppTheme.cosmicPurple.withValues(alpha: 0.55),
+            AppTheme.accent.withValues(alpha: 0.38),
           ],
         ),
         boxShadow: [
@@ -41,7 +41,7 @@ class GlowPanel extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(borderRadius - 1),
-          color: AppTheme.surface.withValues(alpha: 0.94),
+          color: AppTheme.surfaceElevated.withValues(alpha: 0.96),
         ),
         child: Padding(
           padding: padding,

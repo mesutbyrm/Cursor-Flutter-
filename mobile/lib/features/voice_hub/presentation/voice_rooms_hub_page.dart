@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../live/presentation/providers/live_providers.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/cosmic_background.dart';
+import '../../live/presentation/providers/live_providers.dart';
 import 'voice_rooms_body.dart';
 
 class VoiceRoomsHubPage extends ConsumerWidget {
@@ -14,8 +15,11 @@ class VoiceRoomsHubPage extends ConsumerWidget {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: ShaderMask(
-          shaderCallback: (b) => const LinearGradient(
-            colors: [AppTheme.accentSecondary, AppTheme.accent],
+          shaderCallback: (b) => LinearGradient(
+            colors: [
+              AppTheme.accentGold,
+              AppTheme.accent,
+            ],
           ).createShader(b),
           child: const Text(
             'Sohbet odaları',
@@ -34,47 +38,12 @@ class VoiceRoomsHubPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: Stack(
+      body: const Stack(
         fit: StackFit.expand,
         children: [
-          const _VoiceHubBackdrop(),
-          const VoiceRoomsBody(),
+          CosmicBackground(),
+          VoiceRoomsBody(),
         ],
-      ),
-    );
-  }
-}
-
-class _VoiceHubBackdrop extends StatelessWidget {
-  const _VoiceHubBackdrop();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppTheme.background,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF181028),
-            AppTheme.background,
-            const Color(0xFF081820),
-          ],
-        ),
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(0.2, -0.45),
-            radius: 0.9,
-            colors: [
-              AppTheme.accent.withValues(alpha: 0.14),
-              Colors.transparent,
-            ],
-          ),
-        ),
-        child: const SizedBox.expand(),
       ),
     );
   }
