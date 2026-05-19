@@ -38,6 +38,12 @@ class MainShellPage extends StatelessWidget {
                 label: 'Akış',
               ),
               NavigationDestination(
+                icon: Icon(Icons.forum_outlined),
+                selectedIcon:
+                    Icon(Icons.forum_rounded, color: AppTheme.accent),
+                label: 'Sosyal',
+              ),
+              NavigationDestination(
                 icon: Icon(Icons.live_tv_outlined),
                 selectedIcon:
                     Icon(Icons.live_tv_rounded, color: AppTheme.accentSecondary),

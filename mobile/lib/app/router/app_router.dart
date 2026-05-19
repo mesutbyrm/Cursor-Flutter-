@@ -8,6 +8,7 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
 import '../../features/live/presentation/pages/live_page.dart';
+import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/messages/presentation/pages/conversations_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
@@ -70,6 +71,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/feed',
                 builder: (context, state) => const FeedPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/social',
+                builder: (context, state) => const SocialPage(),
               ),
             ],
           ),

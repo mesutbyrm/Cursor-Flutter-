@@ -11,6 +11,9 @@ class PostEntity extends Equatable {
     this.likesCount = 0,
     this.commentsCount = 0,
     this.createdAt,
+    this.fortuneType,
+    this.viewCount = 0,
+    this.isAutoShare = false,
   });
 
   final String id;
@@ -20,8 +23,22 @@ class PostEntity extends Equatable {
   final int likesCount;
   final int commentsCount;
   final DateTime? createdAt;
+  /// Örn. `kahve-fali` — canlifal.com `/api/social/posts`.
+  final String? fortuneType;
+  final int viewCount;
+  final bool isAutoShare;
 
   @override
-  List<Object?> get props =>
-      [id, author, caption, mediaUrl, likesCount, commentsCount, createdAt];
+  List<Object?> get props => [
+        id,
+        author,
+        caption,
+        mediaUrl,
+        likesCount,
+        commentsCount,
+        createdAt,
+        fortuneType,
+        viewCount,
+        isAutoShare,
+      ];
 }

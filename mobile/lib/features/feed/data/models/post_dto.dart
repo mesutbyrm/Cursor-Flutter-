@@ -12,6 +12,9 @@ class PostDto {
     this.likesCount,
     this.commentsCount,
     this.createdAt,
+    this.fortuneType,
+    this.viewCount,
+    this.isAutoShare,
   });
 
   factory PostDto.fromJson(Map<String, dynamic> json) {
@@ -26,12 +29,23 @@ class PostDto {
         'avatarUrl': pick(json, ['avatarUrl', 'authorAvatar']) as String?,
       };
     }
+
+    var likes = asInt(pick(json, ['likesCount', 'likes', 'likeCount']));
+    var comments = asInt(pick(json, ['commentsCount', 'comments']));
+    final countRaw = json['_count'];
+    if (countRaw is Map) {
+      final cm = Map<String, dynamic>.from(countRaw);
+      if (cm.containsKey('likes')) likes = asInt(cm['likes']);
+      if (cm.containsKey('comments')) comments = asInt(cm['comments']);
+    }
+
     return PostDto(
       id: pick(json, ['id', '_id', 'postId', 'storyId', 'mediaId'])
               ?.toString() ??
           '',
       author: UserDto.fromJson(authorMap).toEntity(),
-      caption: pick(json, ['caption', 'text', 'description']) as String?,
+      caption: pick(json, ['caption', 'text', 'description', 'content'])
+          as String?,
       mediaUrl: pick(json, [
             'mediaUrl',
             'media_url',
@@ -40,9 +54,12 @@ class PostDto {
             'imageUrl',
           ])
           as String?,
-      likesCount: asInt(pick(json, ['likesCount', 'likes', 'likeCount'])),
-      commentsCount: asInt(pick(json, ['commentsCount', 'comments'])),
+      likesCount: likes,
+      commentsCount: comments,
       createdAt: _parseDate(pick(json, ['createdAt', 'created_at', 'timestamp'])),
+      fortuneType: pick(json, ['fortuneType', 'fortune_type'])?.toString(),
+      viewCount: asInt(pick(json, ['viewCount', 'views'])),
+      isAutoShare: json['isAuto'] == true,
     );
   }
 
@@ -53,6 +70,9 @@ class PostDto {
   final int? likesCount;
   final int? commentsCount;
   final DateTime? createdAt;
+  final String? fortuneType;
+  final int? viewCount;
+  final bool? isAutoShare;
 
   PostEntity toEntity() {
     return PostEntity(
@@ -63,6 +83,9 @@ class PostDto {
       likesCount: likesCount ?? 0,
       commentsCount: commentsCount ?? 0,
       createdAt: createdAt,
+      fortuneType: fortuneType,
+      viewCount: viewCount ?? 0,
+      isAutoShare: isAutoShare ?? false,
     );
   }
 

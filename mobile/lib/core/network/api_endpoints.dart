@@ -14,6 +14,8 @@ abstract final class ApiEndpoints {
 
   // --- Uygulama API (çerez veya Bearer) ---
   static const feed = '/api/stories';
+  /// canlifal.com sosyal akış (web `/sosyal` ile aynı veri).
+  static const socialPosts = '/api/social/posts';
   static const liveStreams = '/api/live';
 
   static String userProfile(String userId) => '/api/users/$userId';
