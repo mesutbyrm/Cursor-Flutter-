@@ -71,12 +71,12 @@ class _HeroLiveCarouselState extends State<HeroLiveCarousel> {
 class _HeroTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final base = GoogleFonts.plusJakartaSans(
-      fontSize: 17.5.sp,
+    final base = GoogleFonts.montserrat(
+      fontSize: 18.5.sp,
       fontWeight: FontWeight.w800,
-      height: 1.25,
+      height: 1.22,
       color: Colors.white,
-      letterSpacing: -0.3,
+      letterSpacing: -0.35,
     );
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 1.w),
@@ -94,10 +94,7 @@ class _HeroTitle extends StatelessWidget {
             ),
           ),
           Text('ortak ol! ', style: base),
-          Text(
-            '❤️',
-            style: base.copyWith(fontSize: 18.sp),
-          ),
+          Text('❤️', style: base.copyWith(fontSize: 20.sp)),
         ],
       ),
     );
@@ -112,31 +109,42 @@ class _HeroLiveCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = PremiumHomeLayout.cardRadius;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(PremiumHomeLayout.cardRadius),
+          borderRadius: BorderRadius.circular(r + 2),
           onTap: () {},
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(PremiumHomeLayout.cardRadius),
+              borderRadius: BorderRadius.circular(r + 2),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  PremiumLiveTheme.neonPink.withValues(alpha: 0.65),
+                  PremiumLiveTheme.neonPurple.withValues(alpha: 0.4),
+                  PremiumLiveTheme.primaryViolet.withValues(alpha: 0.35),
+                ],
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: PremiumLiveTheme.neonPink.withValues(alpha: 0.22),
-                  blurRadius: 28,
-                  offset: const Offset(0, 14),
+                  color: PremiumLiveTheme.neonPink.withValues(alpha: 0.28),
+                  blurRadius: 32,
+                  offset: const Offset(0, 16),
                 ),
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.55),
-                  blurRadius: 18,
-                  offset: const Offset(0, 10),
+                  color: Colors.black.withValues(alpha: 0.6),
+                  blurRadius: 22,
+                  offset: const Offset(0, 12),
                 ),
               ],
             ),
+            padding: const EdgeInsets.all(2),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(PremiumHomeLayout.cardRadius),
+              borderRadius: BorderRadius.circular(r),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -180,11 +188,11 @@ class _HeroLiveCard extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.black.withValues(alpha: 0.15),
-                            Colors.black.withValues(alpha: 0.05),
-                            Colors.black.withValues(alpha: 0.82),
+                            Colors.black.withValues(alpha: 0.12),
+                            Colors.black.withValues(alpha: 0.04),
+                            Colors.black.withValues(alpha: 0.88),
                           ],
-                          stops: const [0.0, 0.45, 1.0],
+                          stops: const [0.0, 0.42, 1.0],
                         ),
                       ),
                     ),
@@ -193,23 +201,23 @@ class _HeroLiveCard extends StatelessWidget {
                     top: 12,
                     left: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.redAccent.withValues(alpha: 0.95),
-                        borderRadius: BorderRadius.circular(8),
+                        color: const Color(0xFFE53935),
+                        borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.red.withValues(alpha: 0.45),
-                            blurRadius: 12,
+                            color: Colors.red.withValues(alpha: 0.55),
+                            blurRadius: 14,
                           ),
                         ],
                       ),
                       child: Text(
                         'LIVE',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 10.sp,
+                        style: GoogleFonts.montserrat(
+                          fontSize: 9.5.sp,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: 1,
+                          letterSpacing: 1.2,
                           color: Colors.white,
                         ),
                       ),
@@ -230,9 +238,9 @@ class _HeroLiveCard extends StatelessWidget {
                                 stream.streamerName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 17.sp,
-                                  fontWeight: FontWeight.w900,
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 17.5.sp,
+                                  fontWeight: FontWeight.w800,
                                   color: Colors.white,
                                 ),
                               ),
@@ -245,7 +253,7 @@ class _HeroLiveCard extends StatelessWidget {
                         SizedBox(height: 0.4.h),
                         Text(
                           stream.categoryLabel,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.montserrat(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w600,
                             color: Colors.white.withValues(alpha: 0.78),
@@ -260,7 +268,7 @@ class _HeroLiveCard extends StatelessWidget {
                             SizedBox(width: 1.w),
                             Text(
                               _formatViewers(stream.viewers),
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.montserrat(
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
@@ -272,7 +280,7 @@ class _HeroLiveCard extends StatelessWidget {
                               SizedBox(width: 1.6.w),
                               Text(
                                 '+${stream.extraAudienceCount}',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.montserrat(
                                   fontSize: 12.sp,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
