@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/cookie_jar_provider.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
@@ -15,6 +16,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepositoryImpl(
     ref.watch(authRemoteDataSourceProvider),
     ref.watch(tokenStorageProvider),
+    ref.watch(cookieJarProvider),
   );
 });
 

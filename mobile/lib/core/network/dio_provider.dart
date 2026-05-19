@@ -1,13 +1,27 @@
 import 'package:dio/dio.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/env.dart';
 import 'api_exception.dart';
 import 'api_endpoints.dart';
+import 'cookie_jar_provider.dart';
 import 'token_storage.dart';
+
+bool _isPublicAuthPath(String path) {
+  return path == ApiEndpoints.authLogin ||
+      path == ApiEndpoints.authRegister ||
+      path == ApiEndpoints.authRefresh ||
+      path == ApiEndpoints.authCsrf ||
+      path == ApiEndpoints.authCredentials ||
+      path == ApiEndpoints.authSession ||
+      path.startsWith('/api/auth/providers');
+}
 
 final dioProvider = Provider<Dio>((ref) {
   final tokenStorage = ref.watch(tokenStorageProvider);
+  final cookieJar = ref.watch(cookieJarProvider);
+
   final dio = Dio(
     BaseOptions(
       baseUrl: Env.apiBaseUrl,
@@ -17,16 +31,18 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
 
+  dio.interceptors.add(CookieManager(cookieJar));
+
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
         final path = options.path;
-        final public = path == ApiEndpoints.authLogin ||
-            path == ApiEndpoints.authRegister ||
-            path == ApiEndpoints.authRefresh;
+        final public = _isPublicAuthPath(path);
         if (!public) {
           final token = await tokenStorage.readAccess();
-          if (token != null && token.isNotEmpty) {
+          if (token != null &&
+              token.isNotEmpty &&
+              token != TokenStorage.sessionCookieMarker) {
             options.headers['Authorization'] = 'Bearer $token';
           }
         } else {
@@ -99,9 +115,15 @@ extension DioApi on Dio {
     String path, {
     Object? data,
     Map<String, dynamic>? query,
+    Options? options,
   }) async {
     try {
-      return await post<T>(path, data: data, queryParameters: query);
+      return await post<T>(
+        path,
+        data: data,
+        queryParameters: query,
+        options: options,
+      );
     } on DioException catch (e) {
       throw _mapDio(e);
     }
@@ -138,7 +160,11 @@ ApiException _mapDio(DioException e) {
     final m = body.cast<String, dynamic>();
     msg = (m['message'] ?? m['error'] ?? m['detail'] ?? msg).toString();
   } else if (body is String && body.isNotEmpty) {
-    msg = body;
+    if (body.startsWith('<!DOCTYPE') || body.startsWith('<html')) {
+      msg = 'Sunucu HTML döndürdü (muhtemelen yanlış uç veya oturum yok).';
+    } else {
+      msg = body;
+    }
   }
   return ApiException(msg, statusCode: code);
 }

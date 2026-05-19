@@ -33,4 +33,7 @@ class TokenStorage {
     await _storage.delete(key: _kAccess);
     await _storage.delete(key: _kRefresh);
   }
+
+  /// NextAuth modunda çerez oturumu varken [currentUser] bu değeri yazar.
+  static const sessionCookieMarker = '__session_cookie__';
 }

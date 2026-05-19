@@ -22,14 +22,25 @@ class UserDto {
     }
 
     final id = pick(['id', 'userId', '_id'])?.toString() ?? '';
-    final username =
-        pick(['username', 'userName', 'handle'])?.toString() ?? '';
+    var username = pick(['username', 'userName', 'handle'])?.toString() ?? '';
+    if (username.isEmpty) {
+      final email = pick(['email'])?.toString();
+      if (email != null && email.contains('@')) {
+        username = email.split('@').first;
+      }
+    }
     return UserDto(
       id: id,
       username: username.isEmpty ? 'user_$id' : username,
       displayName: pick(['displayName', 'display_name', 'name']) as String?,
-      avatarUrl:
-          pick(['avatarUrl', 'avatar_url', 'photoUrl', 'avatar']) as String?,
+      avatarUrl: pick([
+            'avatarUrl',
+            'avatar_url',
+            'photoUrl',
+            'avatar',
+            'image',
+          ])
+              as String?,
       bio: pick(['bio', 'about']) as String?,
       followersCount: _asInt(pick(['followersCount', 'followers'])),
       followingCount: _asInt(pick(['followingCount', 'following'])),

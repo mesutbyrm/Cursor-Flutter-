@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../providers/auth_providers.dart';
 
@@ -26,9 +28,21 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     super.dispose();
   }
 
+  Future<void> _openWebRegister() async {
+    final uri = Uri.parse('${Env.siteOrigin}/kayit');
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tarayıcı açılamadı')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
+    final nextAuth = Env.useNextAuth;
     ref.listen(authControllerProvider, (prev, next) {
       next.whenOrNull(
         error: (e, _) => ScaffoldMessenger.of(context).showSnackBar(
@@ -64,6 +78,21 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   'Canlı yayınlar, mesajlar ve coin ödülleri seni bekliyor.',
                   style: TextStyle(color: AppTheme.muted),
                 ),
+                if (nextAuth) ...[
+                  const SizedBox(height: 20),
+                  Material(
+                    color: AppTheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        'Hesap oluşturmak için canlifal.com sitesini kullanın; '
+                        'giriş yaptıktan sonra bu uygulamadan devam edebilirsiniz.',
+                        style: TextStyle(color: AppTheme.muted, height: 1.35),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: _name,
@@ -99,6 +128,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   onPressed: auth.isLoading
                       ? null
                       : () async {
+                          if (nextAuth) {
+                            await _openWebRegister();
+                            return;
+                          }
                           if (!_form.currentState!.validate()) return;
                           await ref
                               .read(authControllerProvider.notifier)
@@ -116,7 +149,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           width: 22,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Hesap oluştur'),
+                      : Text(nextAuth ? 'Web sitesinde kayıt ol' : 'Hesap oluştur'),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
