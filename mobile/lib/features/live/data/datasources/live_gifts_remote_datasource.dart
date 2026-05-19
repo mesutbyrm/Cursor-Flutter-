@@ -36,7 +36,6 @@ class LiveGiftsRemoteDataSource {
         .toList();
   }
 
-  /// Yayına düşen hediye kayıtları (izleyiciler için poll).
   Future<List<LiveGiftEvent>> fetchStreamGiftEvents({
     required String streamId,
     DateTime? since,
@@ -57,7 +56,6 @@ class LiveGiftsRemoteDataSource {
     return events;
   }
 
-  /// Site ile aynı gövde: `{ giftTypeId, quantity: 1 }`.
   Future<LiveGiftSendResult> sendGift({
     required String streamId,
     required String giftTypeId,
@@ -106,45 +104,49 @@ class LiveGiftsRemoteDataSource {
     Map<String, dynamic> json, {
     required String streamId,
   }) {
-    final id = pick(json, ['id', '_id', 'giftEventId'])?.toString();
-    if (id == null || id.isEmpty) return null;
-
-    final giftId = pick(json, [
-      'giftTypeId',
-      'giftId',
-      'giftType',
-      'type',
-    ])?.toString();
+    final giftId = _resolveGiftId(json);
     if (giftId == null || giftId.isEmpty) return null;
 
-    final sender = pick(json, [
-          'senderName',
-          'userName',
-          'username',
-          'fromUserName',
-          'sender',
-        ])?.toString() ??
-        'Kullanıcı';
-    final receiver = pick(json, [
-          'receiverName',
-          'streamerName',
-          'hostName',
-          'toUserName',
-        ])?.toString() ??
-        'Yayıncı';
-
-    final qtyRaw = asInt(pick(json, ['quantity', 'count', 'amount']));
-    final qty = qtyRaw > 0 ? qtyRaw : 1;
-    final price = asInt(pick(json, ['price', 'coinCost', 'totalCost']));
     final ts = DateTime.tryParse(
           pick(json, ['createdAt', 'created_at', 'timestamp'])?.toString() ??
               '',
         ) ??
         DateTime.now();
 
-    final giftName = pick(json, ['giftName', 'name'])?.toString() ??
-        LiveGiftCatalog.displayNameOverrides[giftId] ??
-        giftId;
+    var id = pick(json, ['id', '_id', 'giftEventId'])?.toString();
+    if (id == null || id.isEmpty) {
+      id = '$streamId-${ts.millisecondsSinceEpoch}-$giftId';
+    }
+
+    final sender = _resolvePersonName(
+      json,
+      flatKeys: const [
+        'senderName',
+        'userName',
+        'username',
+        'fromUserName',
+      ],
+      objectKeys: const ['sender', 'user', 'fromUser', 'from'],
+    );
+
+    final receiver = _resolvePersonName(
+      json,
+      flatKeys: const [
+        'receiverName',
+        'streamerName',
+        'hostName',
+        'toUserName',
+      ],
+      objectKeys: const ['receiver', 'streamer', 'host', 'toUser', 'to'],
+      fallback: 'Yayıncı',
+    );
+
+    final giftName = _resolveGiftName(json, giftId);
+    if (!_isValidLabel(giftName)) return null;
+
+    final qtyRaw = asInt(pick(json, ['quantity', 'count', 'amount']));
+    final qty = qtyRaw > 0 ? qtyRaw : 1;
+    final price = asInt(pick(json, ['price', 'coinCost', 'totalCost']));
     final comboRaw = asInt(pick(json, ['combo', 'comboCount']));
 
     final icon = pick(json, ['icon', 'iconUrl'])?.toString();
@@ -156,7 +158,7 @@ class LiveGiftsRemoteDataSource {
 
     return LiveGiftEvent(
       id: id,
-      senderId: pick(json, ['senderId', 'userId', 'fromUserId'])?.toString(),
+      senderId: _resolvePersonId(json),
       senderName: sender,
       receiverName: receiver,
       giftId: giftId,
@@ -168,5 +170,68 @@ class LiveGiftsRemoteDataSource {
       iconUrl: iconUrl,
       animationKey: pick(json, ['animation', 'animationKey'])?.toString(),
     );
+  }
+
+  String? _resolveGiftId(Map<String, dynamic> json) {
+    final nested = pick(json, ['giftType', 'gift']);
+    if (nested is Map) {
+      final m = asJsonMap(nested);
+      final id = pick(m, ['id', 'slug', 'giftTypeId'])?.toString();
+      if (id != null && id.isNotEmpty) return id;
+    }
+    return pick(json, ['giftTypeId', 'giftId', 'type'])?.toString();
+  }
+
+  String _resolveGiftName(Map<String, dynamic> json, String giftId) {
+    final nested = pick(json, ['giftType', 'gift']);
+    if (nested is Map) {
+      final fromType = jsonDisplayLabel(
+        nested,
+        keys: const ['nameTr', 'name', 'nameEn', 'label'],
+      );
+      if (fromType != null) return fromType;
+    }
+    final flat = jsonDisplayLabel(
+      pick(json, ['giftName', 'giftTypeName']),
+    );
+    if (flat != null) return flat;
+    return LiveGiftCatalog.displayNameOverrides[giftId] ?? giftId;
+  }
+
+  String _resolvePersonName(
+    Map<String, dynamic> json, {
+    required List<String> flatKeys,
+    required List<String> objectKeys,
+    String fallback = 'Kullanıcı',
+  }) {
+    for (final k in flatKeys) {
+      final label = jsonDisplayLabel(json[k]);
+      if (label != null) return label;
+    }
+    for (final k in objectKeys) {
+      final label = jsonDisplayLabel(json[k]);
+      if (label != null) return label;
+    }
+    return fallback;
+  }
+
+  String? _resolvePersonId(Map<String, dynamic> json) {
+    final flat = pick(json, ['senderId', 'userId', 'fromUserId'])?.toString();
+    if (flat != null && flat.isNotEmpty) return flat;
+    for (final k in ['sender', 'user', 'fromUser']) {
+      final o = json[k];
+      if (o is Map) {
+        final id = pick(asJsonMap(o), ['id', 'userId'])?.toString();
+        if (id != null && id.isNotEmpty) return id;
+      }
+    }
+    return null;
+  }
+
+  bool _isValidLabel(String s) {
+    if (s.isEmpty) return false;
+    if (s.startsWith('{')) return false;
+    if (s.contains('image:') || s.contains('https://')) return false;
+    return s.length <= 64;
   }
 }

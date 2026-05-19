@@ -144,6 +144,7 @@ class LiveGiftController extends ChangeNotifier {
   }
 
   void _onIncoming(LiveGiftEvent event) {
+    if (!_isDisplayable(event)) return;
     final enriched = _applyCombo(event);
     notifications.insert(0, enriched);
     if (notifications.length > 5) notifications.removeRange(5, notifications.length);
@@ -161,6 +162,12 @@ class LiveGiftController extends ChangeNotifier {
       notifications.removeWhere((e) => e.id == enriched.id);
       notifyListeners();
     });
+  }
+
+  bool _isDisplayable(LiveGiftEvent e) {
+    bool ok(String s) =>
+        s.isNotEmpty && !s.startsWith('{') && !s.contains('https://');
+    return ok(e.senderName) && ok(e.receiverName) && ok(e.giftName);
   }
 
   Future<void> _playGiftSound() async {

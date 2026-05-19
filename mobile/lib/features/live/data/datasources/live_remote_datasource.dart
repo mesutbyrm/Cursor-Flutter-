@@ -139,9 +139,21 @@ class LiveRemoteDataSource {
   VoiceRoomEntity _mapVoiceRoom(Map<String, dynamic> json) {
     final o = pick(json, ['owner']);
     String? ownerName;
+    String? ownerAvatar;
     if (o is Map) {
       final om = asJsonMap(o);
-      ownerName = pick(om, ['name', 'username'])?.toString();
+      ownerName = jsonDisplayLabel(om);
+      ownerAvatar = pick(om, ['image', 'avatar', 'avatarUrl'])?.toString();
+    }
+    final recent = <String>[];
+    final ru = json['recentUsers'];
+    if (ru is List) {
+      for (final u in ru) {
+        if (u is Map) {
+          final img = pick(asJsonMap(u), ['image', 'avatar'])?.toString();
+          if (img != null && img.isNotEmpty) recent.add(img);
+        }
+      }
     }
     return VoiceRoomEntity(
       id: pick(json, ['id'])?.toString() ?? '',
@@ -149,9 +161,12 @@ class LiveRemoteDataSource {
       nameTr: pick(json, ['nameTr', 'nameEn', 'name', 'slug'])?.toString() ?? 'Oda',
       descTr: pick(json, ['descTr', 'descEn', 'description']) as String?,
       icon: pick(json, ['icon']) as String?,
-      onlineCount: asInt(pick(json, ['onlineCount', 'userCount'])),
+      onlineCount: asInt(pick(json, ['onlineCount'])),
+      userCount: asInt(pick(json, ['userCount'])),
       backgroundImageUrl: pick(json, ['backgroundImage']) as String?,
       ownerName: ownerName,
+      ownerAvatarUrl: ownerAvatar,
+      recentUserAvatars: recent,
     );
   }
 }

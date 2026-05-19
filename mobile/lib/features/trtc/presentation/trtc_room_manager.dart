@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +17,7 @@ class TrtcRoomManager {
   TRTCCloud? _cloud;
   TXDeviceManager? _device;
   TRTCCloudListener? _listener;
+  Completer<int>? _enterRoomCompleter;
 
   bool _inRoom = false;
   bool _micOn = true;
@@ -84,11 +87,17 @@ class TrtcRoomManager {
     _cloud ??= await TRTCCloud.sharedInstance();
     _device ??= _cloud!.getDeviceManager();
 
-    _listener ??= TRTCCloudListener(
+    _enterRoomCompleter = Completer<int>();
+    if (_cloud != null && _listener != null) {
+      _cloud!.unRegisterListener(_listener!);
+    }
+    _listener = TRTCCloudListener(
       onError: (code, msg) => debugPrint('TRTC error $code: $msg'),
       onEnterRoom: (result) {
         _inRoom = result > 0;
         debugPrint('TRTC enterRoom: $result');
+        final c = _enterRoomCompleter;
+        if (c != null && !c.isCompleted) c.complete(result);
       },
       onRemoteUserEnterRoom: (userId) {
         debugPrint('TRTC remote enter: $userId');
@@ -116,23 +125,38 @@ class TrtcRoomManager {
         audioOnly ? TRTCAppScene.voiceChatRoom : TRTCAppScene.live;
     _cloud!.enterRoom(params, scene);
 
+    final enterResult = await _enterRoomCompleter!.future.timeout(
+      const Duration(seconds: 20),
+      onTimeout: () => -1,
+    );
+    _enterRoomCompleter = null;
+    if (enterResult <= 0) {
+      throw StateError(
+        'Canlı odaya bağlanılamadı (kod: $enterResult). İnterneti kontrol edin.',
+      );
+    }
+
     if (audioOnly) {
       _cloud!.startLocalAudio(TRTCAudioQuality.defaultMode);
       _device?.setAudioRoute(TXAudioRoute.speakerPhone);
       _micOn = true;
     } else if (isHost) {
       _cloud!.startLocalAudio(TRTCAudioQuality.defaultMode);
+      _cloud!.muteLocalVideo(TRTCVideoStreamType.big, false);
       _micOn = true;
     }
   }
 
   void startLocalPreview(int viewId) {
-    _cloud?.startLocalPreview(true, viewId);
+    if (_cloud == null || !_inRoom) return;
+    _cloud!.muteLocalVideo(TRTCVideoStreamType.big, false);
+    _cloud!.startLocalPreview(true, viewId);
     _cameraOn = true;
   }
 
   void stopLocalPreview() {
     _cloud?.stopLocalPreview();
+    _cloud?.muteLocalVideo(TRTCVideoStreamType.big, true);
     _cameraOn = false;
   }
 

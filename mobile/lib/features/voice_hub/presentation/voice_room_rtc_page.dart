@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,15 +7,14 @@ import 'package:go_router/go_router.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_design.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
-import '../../../core/widgets/user_avatar.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
-import '../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
 import '../../trtc/presentation/trtc_room_manager.dart';
+import 'widgets/voice_room_seat_grid.dart';
 
-/// Sesli sohbet odası — Tencent TRTC (mikrofon aktif).
+/// Sesli sohbet odası — web koltuk düzeni + Tencent TRTC ses.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
   const VoiceRoomRtcPage({super.key, required this.room});
 
@@ -30,7 +30,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _joined = false;
   String? _error;
   var _micOn = true;
-  var _speakerOn = true;
+  var _leaving = false;
 
   @override
   void initState() {
@@ -84,8 +84,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   }
 
   Future<void> _leave() async {
+    if (_leaving) return;
+    _leaving = true;
     await _trtc.leave();
-    if (mounted) context.pop();
+    if (mounted) context.go('/live');
   }
 
   @override
@@ -97,193 +99,123 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.paddingOf(context).top;
+    final bottom = MediaQuery.paddingOf(context).bottom;
     final room = widget.room;
+    final user = ref.watch(authControllerProvider).valueOrNull;
 
-    return Scaffold(
-      backgroundColor: AppDesign.bgBase,
-      body: DiscoverBackground(
-        child: Column(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await _leave();
+      },
+      child: Scaffold(
+        backgroundColor: AppDesign.bgBase,
+        body: Stack(
+          fit: StackFit.expand,
           children: [
-            SizedBox(height: top + 4),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Row(
-                children: [
-                  DiscoverIconButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onPressed: _leave,
-                  ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Text(
-                          room.nameTr,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 17,
-                          ),
-                        ),
-                        if (room.ownerName != null)
-                          Text(
-                            room.ownerName!,
-                            style: const TextStyle(
-                              color: AppDesign.textMuted,
-                              fontSize: 12,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (_joined)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppDesign.onlineGreen.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: AppDesign.onlineGreen.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(
-                            Icons.circle,
-                            size: 8,
-                            color: AppDesign.onlineGreen,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Ses açık',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
+            if (_joined)
+              VoiceRoomSeatGrid(
+                roomIcon: room.icon ?? '💬',
+                roomName: room.nameTr,
+                backgroundUrl: room.backgroundImageUrl,
+                centerAvatarUrl: user?.avatarUrl ?? room.ownerAvatarUrl,
+                recentAvatars: room.recentUserAvatars,
+                speakingUserIndex: _micOn ? 0 : null,
+              )
+            else if (_joining)
+              const Center(child: DiscoverAccentLoader())
+            else
+              Center(
+                child: DiscoverEmptyState(
+                  icon: Icons.headset_off_rounded,
+                  message: _error ?? 'Bağlantı kurulamadı',
+                  actionLabel: 'Tekrar dene',
+                  action: () {
+                    setState(() {
+                      _joining = true;
+                      _error = null;
+                    });
+                    _joinRoom();
+                  },
+                ),
               ),
-            ),
-            Expanded(
-              child: _joining
-                  ? const DiscoverAccentLoader()
-                  : _error != null
-                      ? DiscoverEmptyState(
-                          icon: Icons.headset_off_rounded,
-                          message: _error!,
-                          actionLabel: 'Tekrar dene',
-                          action: () {
-                            setState(() {
-                              _joining = true;
-                              _error = null;
-                            });
-                            _joinRoom();
-                          },
-                        )
-                      : Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            children: [
-                              ProfileGlass(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      room.icon ?? '💬',
-                                      style: const TextStyle(fontSize: 48),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    const Text(
-                                      'Sesli sohbete bağlandın',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      room.descTr ?? 'Mikrofonun açık; konuşmaya başlayabilirsin.',
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: AppDesign.textSecondary,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 20),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        UserAvatar(
-                                          url: null,
-                                          radius: 28,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '${room.onlineCount} çevrimiçi',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                            const Text(
-                                              'Tencent RTC ses odası',
-                                              style: TextStyle(
-                                                color: AppDesign.textMuted,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+            if (_joined)
+              SafeArea(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(8, top > 0 ? 4 : 8, 8, 0),
+                      child: _VoiceTopBar(
+                        room: room,
+                        onBack: _leave,
+                      ),
+                    ),
+                    const Spacer(),
+                    ClipRRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                        child: Container(
+                          padding: EdgeInsets.fromLTRB(
+                            16,
+                            12,
+                            16,
+                            bottom + 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.55),
+                            border: Border(
+                              top: BorderSide(
+                                color: AppDesign.accentPurple
+                                    .withValues(alpha: 0.35),
                               ),
-                              const Spacer(),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  _VoiceControl(
-                                    icon: _micOn
-                                        ? Icons.mic_rounded
-                                        : Icons.mic_off_rounded,
-                                    label: _micOn ? 'Mik açık' : 'Mik kapalı',
-                                    active: _micOn,
-                                    onTap: () {
-                                      final next = !_micOn;
-                                      _trtc.setMicEnabled(next);
-                                      setState(() => _micOn = next);
-                                    },
-                                  ),
-                                  _VoiceControl(
-                                    icon: Icons.volume_up_rounded,
-                                    label: 'Hoparlör',
-                                    active: _speakerOn,
-                                    onTap: () =>
-                                        setState(() => _speakerOn = !_speakerOn),
-                                  ),
-                                  _VoiceControl(
-                                    icon: Icons.call_end_rounded,
-                                    label: 'Ayrıl',
-                                    active: false,
-                                    color: AppDesign.liveRed,
-                                    onTap: _leave,
-                                  ),
-                                ],
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _VoiceFab(
+                                icon: _micOn
+                                    ? Icons.mic_rounded
+                                    : Icons.mic_off_rounded,
+                                label: _micOn ? 'Mik açık' : 'Kapalı',
+                                color: _micOn
+                                    ? AppDesign.accentPink
+                                    : AppDesign.textMuted,
+                                onTap: () {
+                                  final next = !_micOn;
+                                  _trtc.setMicEnabled(next);
+                                  setState(() => _micOn = next);
+                                },
+                              ),
+                              _VoiceFab(
+                                icon: Icons.chat_bubble_outline_rounded,
+                                label: 'Sohbet',
+                                color: AppDesign.accentCyan,
+                                onTap: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Oda sohbeti web ile senkron — yakında',
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              _VoiceFab(
+                                icon: Icons.call_end_rounded,
+                                label: 'Ayrıl',
+                                color: AppDesign.liveRed,
+                                onTap: _leave,
                               ),
                             ],
                           ),
                         ),
-            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
@@ -291,42 +223,109 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   }
 }
 
-class _VoiceControl extends StatelessWidget {
-  const _VoiceControl({
+class _VoiceTopBar extends StatelessWidget {
+  const _VoiceTopBar({required this.room, required this.onBack});
+
+  final VoiceRoomEntity room;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return ProfileGlass(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      borderRadius: 18,
+      blur: 12,
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: onBack,
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 8),
+          Text(room.icon ?? '💬', style: const TextStyle(fontSize: 22)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  room.nameTr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  '${room.displayOnline} çevrimiçi',
+                  style: const TextStyle(
+                    color: AppDesign.textMuted,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppDesign.onlineGreen.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.circle, size: 8, color: AppDesign.onlineGreen),
+                SizedBox(width: 4),
+                Text(
+                  'CANLI',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 9),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VoiceFab extends StatelessWidget {
+  const _VoiceFab({
     required this.icon,
     required this.label,
+    required this.color,
     required this.onTap,
-    this.active = true,
-    this.color,
   });
 
   final IconData icon;
   final String label;
+  final Color color;
   final VoidCallback onTap;
-  final bool active;
-  final Color? color;
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? (active ? AppDesign.accentPink : AppDesign.textMuted);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Material(
-          color: c.withValues(alpha: 0.2),
+          color: color.withValues(alpha: 0.22),
           shape: const CircleBorder(),
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: onTap,
             child: Padding(
               padding: const EdgeInsets.all(18),
-              child: Icon(icon, color: c, size: 28),
+              child: Icon(icon, color: color, size: 26),
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
           label,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
         ),
       ],
     );

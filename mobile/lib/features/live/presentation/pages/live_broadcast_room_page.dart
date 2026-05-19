@@ -55,6 +55,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   late Timer _timer;
   Duration _elapsed = Duration.zero;
   final _particlesKey = GlobalKey<FloatingGiftParticlesState>();
+  Key _localPreviewKey = UniqueKey();
+  var _leaving = false;
 
   bool _following = false;
 
@@ -116,6 +118,21 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     super.dispose();
   }
 
+  Future<void> _exitBroadcast(BuildContext context) async {
+    if (_leaving) return;
+    _leaving = true;
+    ref.read(liveGiftControllerProvider).detach();
+    await _trtc.leave();
+    final streamId = widget.session.streamId;
+    if (widget.session.isHost && streamId != null && streamId.isNotEmpty) {
+      try {
+        await ref.read(liveRepositoryProvider).endVideoStream(streamId);
+      } catch (_) {}
+    }
+    if (!context.mounted) return;
+    context.go('/live');
+  }
+
   Widget _videoLayer(LiveBroadcastSession s) {
     if (!_rtcReady) {
       return Stack(
@@ -138,7 +155,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     }
 
     if (s.isHost) {
-      return TrtcLocalVideoView(manager: _trtc);
+      return TrtcLocalVideoView(
+        key: _localPreviewKey,
+        manager: _trtc,
+      );
     }
 
     return ValueListenableBuilder<bool>(
@@ -176,7 +196,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       }
     });
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await _confirmEnd(context);
+      },
+      child: Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         fit: StackFit.expand,
@@ -256,6 +282,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                   chatController: _chat,
                   isHost: s.isHost,
                   trtc: s.isHost ? _trtc : null,
+                  onToggleCamera: s.isHost
+                      ? () {
+                          if (_trtc.cameraOn) {
+                            _trtc.stopLocalPreview();
+                          } else {
+                            setState(() => _localPreviewKey = UniqueKey());
+                          }
+                          setState(() {});
+                        }
+                      : null,
                   onGift: () => giftCtrl.setPanelOpen(true),
                   onSend: () {
                     final t = _chat.text.trim();
@@ -284,6 +320,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
             ),
         ],
       ),
+    ),
     );
   }
 
@@ -308,15 +345,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       ),
     );
     if (ok != true || !context.mounted) return;
-
-    await _trtc.leave();
-    final streamId = widget.session.streamId;
-    if (widget.session.isHost && streamId != null && streamId.isNotEmpty) {
-      try {
-        await ref.read(liveRepositoryProvider).endVideoStream(streamId);
-      } catch (_) {}
-    }
-    if (context.mounted) context.pop();
+    await _exitBroadcast(context);
   }
 }
 
@@ -657,6 +686,7 @@ class _BottomBar extends StatelessWidget {
     required this.isHost,
     this.trtc,
     this.onGift,
+    this.onToggleCamera,
   });
 
   final TextEditingController chatController;
@@ -665,6 +695,7 @@ class _BottomBar extends StatelessWidget {
   final bool isHost;
   final TrtcRoomManager? trtc;
   final VoidCallback? onGift;
+  final VoidCallback? onToggleCamera;
 
   @override
   Widget build(BuildContext context) {
@@ -691,11 +722,7 @@ class _BottomBar extends StatelessWidget {
                           ? Icons.videocam_rounded
                           : Icons.videocam_off_rounded,
                       label: 'Kam',
-                      onTap: () {
-                        if (trtc!.cameraOn) {
-                          trtc!.stopLocalPreview();
-                        }
-                      },
+                      onTap: onToggleCamera,
                     ),
                     _MiniControl(
                       icon: Icons.cameraswitch_rounded,
