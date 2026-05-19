@@ -276,6 +276,18 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         ),
                       ),
                     ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
+                      child: SelectableText(
+                        AppLinks.androidTestApk,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11,
+                          height: 1.35,
+                          color: AppTheme.muted.withValues(alpha: 0.88),
+                        ),
+                      ),
+                    ),
                     TextButton(
                       onPressed: () => context.pop(),
                       child: const Text('Zaten hesabım var'),

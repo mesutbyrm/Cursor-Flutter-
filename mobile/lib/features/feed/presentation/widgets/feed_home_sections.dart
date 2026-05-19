@@ -593,7 +593,6 @@ class FeedVoiceRoomsStrip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!Env.useNextAuth) return const SizedBox.shrink();
     final rooms = ref.watch(voiceRoomsProvider);
     return rooms.when(
       loading: () => const SizedBox(

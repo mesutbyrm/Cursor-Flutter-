@@ -273,6 +273,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ),
                           ),
                         ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
+                          child: SelectableText(
+                            AppLinks.androidTestApk,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 11,
+                              height: 1.35,
+                              color: AppTheme.muted.withValues(alpha: 0.88),
+                            ),
+                          ),
+                        ),
                         const SizedBox(height: 8),
                       ],
                     ),

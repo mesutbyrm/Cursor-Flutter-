@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/live_stream_entity.dart';
@@ -37,13 +38,21 @@ class LiveRemoteDataSource {
     return asJsonList(list).map(_mapStreamRow).where((s) => s.id.isNotEmpty).toList();
   }
 
-  /// canlifal.com `/api/chat/rooms` — site ile aynı oda kartları.
+  /// `/api/chat/rooms` — canlifal.com’da girişsiz de JSON liste döner; diğer ortamlarda yoksa boş döner.
   Future<List<VoiceRoomEntity>> fetchVoiceRooms() async {
-    if (!Env.useNextAuth) return const [];
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatRooms);
-    final body = res.data;
-    if (body is! List) return const [];
-    return asJsonList(body).map(_mapVoiceRoom).where((r) => r.id.isNotEmpty).toList();
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatRooms);
+      final body = res.data;
+      if (body is! List) return const [];
+      return asJsonList(body)
+          .map((e) => _mapVoiceRoom(asJsonMap(e)))
+          .where((r) => r.id.isNotEmpty && r.slug.isNotEmpty)
+          .toList();
+    } on ApiException catch (e) {
+      final code = e.statusCode;
+      if (code == 404 || code == 401 || code == 403) return const [];
+      rethrow;
+    }
   }
 
   LiveStreamEntity _mapStreamRow(Map<String, dynamic> json) {
@@ -52,7 +61,7 @@ class LiveRemoteDataSource {
         ? titleRaw.trim()
         : 'Canlı yayın';
 
-    final thumb = pick(json, [
+    var thumb = pick(json, [
           'thumbnailUrl',
           'thumbnail',
           'coverUrl',
@@ -61,6 +70,7 @@ class LiveRemoteDataSource {
           'backgroundUrl',
         ])
         as String?;
+    thumb = _absoluteSiteUrl(thumb);
 
     final status = pick(json, ['status'])?.toString().toLowerCase();
     final isLive = pick(json, ['isLive']) == true ||
@@ -89,17 +99,32 @@ class LiveRemoteDataSource {
     String? ownerName;
     if (o is Map) {
       final om = asJsonMap(o);
-      ownerName = pick(om, ['name', 'username'])?.toString();
+      ownerName = pick(om, ['name', 'username', 'displayName'])?.toString();
     }
+    var bg = pick(json, ['backgroundImage', 'backgroundUrl', 'coverImage'])
+        as String?;
+    bg = _absoluteSiteUrl(bg);
     return VoiceRoomEntity(
       id: pick(json, ['id'])?.toString() ?? '',
       slug: pick(json, ['slug'])?.toString() ?? '',
       nameTr: pick(json, ['nameTr', 'nameEn', 'name', 'slug'])?.toString() ?? 'Oda',
       descTr: pick(json, ['descTr', 'descEn', 'description']) as String?,
       icon: pick(json, ['icon']) as String?,
-      onlineCount: asInt(pick(json, ['onlineCount', 'userCount'])),
-      backgroundImageUrl: pick(json, ['backgroundImage']) as String?,
+      onlineCount: asInt(pick(json, ['onlineCount', 'userCount', 'listeners'])),
+      backgroundImageUrl: bg,
       ownerName: ownerName,
     );
+  }
+
+  /// Site göreli görsel yollarını (`/uploads/...`) tam HTTPS URL yapar.
+  static String? _absoluteSiteUrl(String? u) {
+    if (u == null || u.isEmpty) return u;
+    if (u.startsWith('http://') || u.startsWith('https://')) return u;
+    if (u.startsWith('//')) return 'https:$u';
+    if (u.startsWith('/')) {
+      final o = Env.siteOrigin.replaceAll(RegExp(r'/+$'), '');
+      return '$o$u';
+    }
+    return u;
   }
 }

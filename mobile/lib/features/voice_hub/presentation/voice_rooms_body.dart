@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../core/config/env.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/cosmic_section_header.dart';
 import '../../../core/widgets/glow_panel.dart';
@@ -14,27 +13,16 @@ import '../../live/presentation/providers/live_providers.dart';
 
 /// Sesli sohbet odaları — site `/api/chat/rooms` ile aynı liste; karta basınca uygulama içi WebView.
 class VoiceRoomsBody extends ConsumerWidget {
-  const VoiceRoomsBody({super.key});
+  const VoiceRoomsBody({
+    super.key,
+    /// [LivePage] sekmesinde üstte zaten AppBar olduğu için ekstra toolbar boşluğu ekleme.
+    this.embedInParentScaffold = false,
+  });
+
+  final bool embedInParentScaffold;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!Env.useNextAuth) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: GlowPanel(
-            child: Text(
-              'Bu özellik canlifal.com oturumu ile kullanılabilir.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppTheme.muted.withValues(alpha: 0.98),
-                height: 1.35,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
     final rooms = ref.watch(voiceRoomsProvider);
     return rooms.when(
       loading: () => Center(
@@ -65,6 +53,22 @@ class VoiceRoomsBody extends ConsumerWidget {
                   textAlign: TextAlign.center,
                   style: const TextStyle(height: 1.35),
                 ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () => ref.invalidate(voiceRoomsProvider),
+                  icon: const Icon(Icons.refresh_rounded, size: 20),
+                  label: const Text('Tekrar dene'),
+                ),
+                const SizedBox(height: 10),
+                TextButton(
+                  onPressed: () => context.push(
+                    CanlifalWebRoute.location(
+                      relativePath: '/sohbet',
+                      title: 'Sohbet odaları',
+                    ),
+                  ),
+                  child: const Text('Sitede odaları aç'),
+                ),
               ],
             ),
           ),
@@ -93,14 +97,26 @@ class VoiceRoomsBody extends ConsumerWidget {
                         height: 1.35,
                       ),
                     ),
+                    const SizedBox(height: 14),
+                    FilledButton.icon(
+                      onPressed: () => context.push(
+                        CanlifalWebRoute.location(
+                          relativePath: '/sohbet',
+                          title: 'Sohbet odaları',
+                        ),
+                      ),
+                      icon: const Icon(Icons.open_in_browser_rounded, size: 20),
+                      label: const Text('Web’de sohbet odaları'),
+                    ),
                   ],
                 ),
               ),
             ),
           );
         }
-        final topPad =
-            MediaQuery.paddingOf(context).top + kToolbarHeight + 8;
+        final topPad = embedInParentScaffold
+            ? 8.0
+            : MediaQuery.paddingOf(context).top + kToolbarHeight + 8;
         return RefreshIndicator(
           color: AppTheme.accent,
           onRefresh: () async => ref.invalidate(voiceRoomsProvider),
