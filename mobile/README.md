@@ -58,3 +58,7 @@ DTO’lar yaygın alan adı varyantlarını (`camelCase` / `snake_case`) okumaya
 ```bash
 cd mobile && flutter test
 ```
+
+## APK (telefonda dene)
+
+Bu ortamda Android SDK olmadan APK üretilemez. GitHub’da **Actions → Build release APK** iş akışını çalıştırıp artifact’tan indirin; ayrıntılar için depo kökündeki [`APK_DOWNLOAD.md`](../APK_DOWNLOAD.md).
