@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/glow_panel.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../providers/feed_providers.dart';
@@ -61,7 +62,11 @@ class _FeedPageState extends ConsumerState<FeedPage> {
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const _FeedBackdrop(),
+          RefreshIndicator(
         color: AppTheme.accent,
         onRefresh: _refreshHome,
         child: NotificationListener<ScrollNotification>(
@@ -80,9 +85,10 @@ class _FeedPageState extends ConsumerState<FeedPage> {
                 sliver: SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: const [
-                      FeedLiveStrip(),
-                      FeedVoiceRoomsStrip(),
+                    children: [
+                      const _FeedPeekHero(),
+                      const FeedLiveStrip(),
+                      const FeedVoiceRoomsStrip(),
                     ],
                   ),
                 ),
@@ -270,6 +276,94 @@ class _FeedPageState extends ConsumerState<FeedPage> {
                 ),
             ],
           ),
+        ),
+      ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeedBackdrop extends StatelessWidget {
+  const _FeedBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppTheme.background,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF151028),
+            AppTheme.background,
+            const Color(0xFF0A1418),
+          ],
+          stops: const [0.0, 0.55, 1.0],
+        ),
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: const Alignment(0.85, -0.35),
+            radius: 0.95,
+            colors: [
+              AppTheme.accent.withValues(alpha: 0.16),
+              Colors.transparent,
+            ],
+          ),
+        ),
+        child: const SizedBox.expand(),
+      ),
+    );
+  }
+}
+
+class _FeedPeekHero extends StatelessWidget {
+  const _FeedPeekHero();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: GlowPanel(
+        borderRadius: 18,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Icon(
+              Icons.auto_awesome_rounded,
+              color: AppTheme.accentSecondary.withValues(alpha: 0.95),
+              size: 22,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Senin için',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.muted.withValues(alpha: 0.95),
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Canlı yayınlar, sesli odalar ve hikâyeler',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

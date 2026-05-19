@@ -45,9 +45,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       }
 
       final authed = auth.valueOrNull != null;
-      final public = loc == '/login' || loc == '/register';
-      if (!authed && !public) return '/login';
-      if (authed && public) return '/feed';
+      final publicAuthPages = loc == '/login' || loc == '/register';
+      final canlifalWeb = loc == '/canlifal-web';
+      if (!authed && !publicAuthPages && !canlifalWeb) return '/login';
+      if (authed && publicAuthPages) return '/feed';
       return null;
     },
     routes: [

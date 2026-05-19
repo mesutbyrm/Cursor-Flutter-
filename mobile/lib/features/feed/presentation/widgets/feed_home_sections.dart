@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/glow_panel.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -31,45 +32,36 @@ class FeedLiveStrip extends ConsumerWidget {
       data: (streams) {
         final onAir = streams.where((s) => s.isLive).toList();
         if (onAir.isEmpty) return const SizedBox.shrink();
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-              child: Row(
-                children: [
-                  Icon(Icons.live_tv_rounded,
-                      color: AppTheme.accentSecondary, size: 20),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Canlı yayınlar',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () => context.go('/live'),
-                    child: const Text('Tümü'),
-                  ),
-                ],
+        return GlowPanel(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SectionTitleRow(
+                icon: Icons.live_tv_rounded,
+                title: 'Canlı yayınlar',
+                accent: AppTheme.accentSecondary,
+                trailing: TextButton(
+                  onPressed: () => context.go('/live'),
+                  child: const Text('Tümü'),
+                ),
               ),
-            ),
-            SizedBox(
-              height: 132,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.only(left: 4, right: 4, bottom: 4),
-                itemCount: onAir.length > 12 ? 12 : onAir.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 10),
-                itemBuilder: (ctx, i) {
-                  final s = onAir[i];
-                  return _LiveChip(stream: s);
-                },
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 138,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.zero,
+                  itemCount: onAir.length > 12 ? 12 : onAir.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 10),
+                  itemBuilder: (ctx, i) {
+                    final s = onAir[i];
+                    return _LiveChip(stream: s);
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -96,40 +88,74 @@ class _LiveChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppTheme.surfaceElevated,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
+      elevation: 0,
       child: InkWell(
         onTap: stream.isLive ? () => _open(context) : null,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: SizedBox(
-          width: 112,
+          width: 118,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
                 child: ClipRRect(
                   borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(14)),
-                  child: stream.thumbnailUrl != null &&
-                          stream.thumbnailUrl!.isNotEmpty
-                      ? Image.network(
-                          stream.thumbnailUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const ColoredBox(
-                            color: AppTheme.surface,
-                            child: Icon(Icons.live_tv_rounded,
-                                color: AppTheme.accent, size: 36),
+                      const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      stream.thumbnailUrl != null &&
+                              stream.thumbnailUrl!.isNotEmpty
+                          ? Image.network(
+                              stream.thumbnailUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const ColoredBox(
+                                color: AppTheme.surface,
+                                child: Icon(Icons.live_tv_rounded,
+                                    color: AppTheme.accent, size: 36),
+                              ),
+                            )
+                          : const ColoredBox(
+                              color: AppTheme.surface,
+                              child: Icon(Icons.live_tv_rounded,
+                                  color: AppTheme.accent, size: 36),
+                            ),
+                      if (stream.isLive)
+                        Positioned(
+                          top: 6,
+                          left: 6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppTheme.accent.withValues(alpha: 0.92),
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.35),
+                                  blurRadius: 6,
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'CANLI',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.6,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                        )
-                      : const ColoredBox(
-                          color: AppTheme.surface,
-                          child: Icon(Icons.live_tv_rounded,
-                              color: AppTheme.accent, size: 36),
                         ),
+                    ],
+                  ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
+                padding: const EdgeInsets.fromLTRB(8, 6, 8, 7),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -138,15 +164,16 @@ class _LiveChip extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w800,
                         fontSize: 11,
                       ),
                     ),
                     Text(
                       '${stream.viewerCount} izleyici',
-                      style: const TextStyle(
-                        color: AppTheme.muted,
+                      style: TextStyle(
+                        color: AppTheme.muted.withValues(alpha: 0.95),
                         fontSize: 10,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -182,43 +209,36 @@ class FeedVoiceRoomsStrip extends ConsumerWidget {
       error: (_, _) => const SizedBox.shrink(),
       data: (list) {
         if (list.isEmpty) return const SizedBox.shrink();
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
-              child: Row(
-                children: [
-                  const Icon(Icons.headset_mic_rounded,
-                      color: AppTheme.accent, size: 20),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Sohbet odaları',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  TextButton(
+        return Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: GlowPanel(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SectionTitleRow(
+                  icon: Icons.graphic_eq_rounded,
+                  title: 'Sesli sohbet odaları',
+                  accent: AppTheme.accent,
+                  trailing: TextButton(
                     onPressed: () => context.push('/voice-rooms'),
                     child: const Text('Tümü'),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 112,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.zero,
+                    itemCount: list.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 10),
+                    itemBuilder: (ctx, i) => _RoomChip(room: list[i]),
+                  ),
+                ),
+              ],
             ),
-            SizedBox(
-              height: 104,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.only(left: 4, right: 4, bottom: 8),
-                itemCount: list.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 10),
-                itemBuilder: (ctx, i) => _RoomChip(room: list[i]),
-              ),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -242,14 +262,28 @@ class _RoomChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppTheme.surfaceElevated,
-      borderRadius: BorderRadius.circular(14),
+      color: const Color(0xFF1E1E2A),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: () => _open(context),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          width: 118,
-          padding: const EdgeInsets.all(8),
+          width: 124,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppTheme.accent.withValues(alpha: 0.22),
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.accent.withValues(alpha: 0.08),
+                Colors.transparent,
+              ],
+            ),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

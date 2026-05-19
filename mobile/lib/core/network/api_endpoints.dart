@@ -3,6 +3,8 @@ abstract final class ApiEndpoints {
   // --- NextAuth (canlifal.com) ---
   static const authCsrf = '/api/auth/csrf';
   static const authCredentials = '/api/auth/callback/credentials';
+  /// NextAuth Google OAuth başlangıcı (canlifal.com `/api/auth/providers`).
+  static const authSignInGoogle = '/api/auth/signin/google';
   static const authSession = '/api/auth/session';
   static const authSignOut = '/api/auth/signout';
 

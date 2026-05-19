@@ -6,9 +6,11 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/network/cookie_jar_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/webview/canlifal_cookie_sync.dart';
+import '../../auth/presentation/providers/auth_providers.dart';
 import '../../live/presentation/widgets/live_gift_sheet.dart';
 
 /// canlifal.com sayfasını uygulama içinde açar; oturum çerezleri WebView’a kopyalanır
@@ -19,12 +21,16 @@ class CanlifalWebViewPage extends ConsumerStatefulWidget {
     required this.relativePath,
     required this.title,
     this.streamIdForGifts,
+    this.sessionImportMode = false,
   });
 
   /// Örn. `/sohbet/sohbet` veya `/sohbet/video?watch=...`
   final String relativePath;
   final String title;
   final String? streamIdForGifts;
+
+  /// Google OAuth sonrası WebView çerezlerini Dio kavanozuna aktarmak için araç çubuğu gösterir.
+  final bool sessionImportMode;
 
   @override
   ConsumerState<CanlifalWebViewPage> createState() => _CanlifalWebViewPageState();
@@ -35,12 +41,27 @@ class _CanlifalWebViewPageState extends ConsumerState<CanlifalWebViewPage> {
   WebUri? _webUri;
   double _progress = 0;
   InAppWebViewController? _controller;
+  var _importBusy = false;
   late final PullToRefreshController _pull;
 
   static String _fullUrl(String origin, String path) {
     final o = origin.trim().replaceAll(RegExp(r'/+$'), '');
     final p = path.startsWith('/') ? path : '/$path';
     return '$o$p';
+  }
+
+  static bool _allowInWebView(WebUri? uri) {
+    if (uri == null) return false;
+    final host = uri.host.toLowerCase();
+    if (host.isEmpty) return true;
+    if (host.contains('canlifal.com')) return true;
+    // Google OAuth zinciri WebView içinde kalmalı; aksi halde oturum çerezleri uygulamaya dönmez.
+    if (host.contains('google.com') ||
+        host.contains('gstatic.com') ||
+        host.contains('googleusercontent.com')) {
+      return true;
+    }
+    return false;
   }
 
   @override
@@ -69,6 +90,49 @@ class _CanlifalWebViewPageState extends ConsumerState<CanlifalWebViewPage> {
         _webUri = WebUri(url);
         _ready = true;
       });
+    }
+    if (widget.sessionImportMode && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Google ile giriş yaptıktan sonra üstteki «Oturumu aktar» ile uygulamaya dönün.',
+          ),
+          duration: Duration(seconds: 6),
+        ),
+      );
+    }
+  }
+
+  Future<void> _importSessionFromWebView() async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _importBusy = true);
+    try {
+      final jar = ref.read(cookieJarProvider);
+      await persistWebViewCookiesIntoJar(
+        jar,
+        Env.siteOrigin,
+        webViewController: _controller,
+      );
+      await ref.read(authControllerProvider.notifier).refreshMe();
+      if (!mounted) return;
+      final me = ref.read(authControllerProvider).valueOrNull;
+      if (me != null) {
+        context.go('/feed');
+      } else {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Oturum alınamadı. Google girişini tamamlayıp tekrar deneyin.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _importBusy = false);
     }
   }
 
@@ -100,6 +164,22 @@ class _CanlifalWebViewPageState extends ConsumerState<CanlifalWebViewPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        actions: [
+          if (widget.sessionImportMode)
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: TextButton(
+                onPressed: _importBusy ? null : _importSessionFromWebView,
+                child: _importBusy
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Oturumu aktar'),
+              ),
+            ),
+        ],
         bottom: _progress < 1 && _progress > 0
             ? PreferredSize(
                 preferredSize: const Size.fromHeight(2),
@@ -134,14 +214,12 @@ class _CanlifalWebViewPageState extends ConsumerState<CanlifalWebViewPage> {
                   },
                   shouldOverrideUrlLoading: (controller, action) async {
                     final uri = action.request.url;
-                    if (uri == null) {
-                      return NavigationActionPolicy.CANCEL;
-                    }
-                    final host = uri.host;
-                    if (host.contains('canlifal.com') || host.isEmpty) {
+                    if (_allowInWebView(uri)) {
                       return NavigationActionPolicy.ALLOW;
                     }
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    if (uri != null) {
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    }
                     return NavigationActionPolicy.CANCEL;
                   },
                 ),
@@ -166,12 +244,13 @@ class _CanlifalWebViewPageState extends ConsumerState<CanlifalWebViewPage> {
   }
 }
 
-/// `go_router` query: `path`, `title`, isteğe bağlı `streamId` (hediye paneli).
+/// `go_router` query: `path`, `title`, isteğe bağlı `streamId` (hediye paneli), `importSession`.
 class CanlifalWebRoute {
   static String location({
     required String relativePath,
     required String title,
     String? streamIdForGifts,
+    bool sessionImport = false,
   }) {
     return Uri(
       path: '/canlifal-web',
@@ -180,6 +259,7 @@ class CanlifalWebRoute {
         'title': title,
         if (streamIdForGifts != null && streamIdForGifts.isNotEmpty)
           'streamId': streamIdForGifts,
+        if (sessionImport) 'importSession': '1',
       },
     ).toString();
   }
@@ -188,10 +268,12 @@ class CanlifalWebRoute {
     final path = state.uri.queryParameters['path'] ?? '/';
     final title = state.uri.queryParameters['title'] ?? 'Canlifal';
     final sid = state.uri.queryParameters['streamId'];
+    final import = state.uri.queryParameters['importSession'] == '1';
     return CanlifalWebViewPage(
       relativePath: path.startsWith('/') ? path : '/$path',
       title: title,
       streamIdForGifts: sid,
+      sessionImportMode: import,
     );
   }
 }
