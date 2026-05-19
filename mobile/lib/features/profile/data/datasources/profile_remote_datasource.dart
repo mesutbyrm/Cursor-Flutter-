@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../auth/data/models/user_dto.dart';
@@ -21,6 +23,19 @@ class ProfileRemoteDataSource {
     return UserDto.fromJson(map).toEntity();
   }
 
+  /// canlifal.com oturumlu kullanıcı — takipçi, bio, avatar (NextAuth çerezi).
+  Future<UserEntity> mySiteProfile() async {
+    final res = await _dio.safeGet<Map<String, dynamic>>(
+      ApiEndpoints.userSiteProfile,
+    );
+    final body = res.data ?? {};
+    final err = body['error'];
+    if (err != null) {
+      throw ApiException(err.toString());
+    }
+    return UserDto.fromSiteProfileMap(body).toEntity();
+  }
+
   Future<void> follow(String userId) async {
     await _dio.safePost(ApiEndpoints.follow(userId));
   }
@@ -36,6 +51,26 @@ class WalletRemoteDataSource {
   final Dio _dio;
 
   Future<int> balance() async {
+    if (Env.useNextAuth) {
+      final res = await _dio.safeGet<Map<String, dynamic>>(
+        ApiEndpoints.userCredits,
+      );
+      final body = res.data ?? {};
+      final err = body['error'];
+      if (err != null) {
+        throw ApiException(err.toString());
+      }
+      return asInt(
+        pick(body, [
+          'credits',
+          'balance',
+          'coins',
+          'coinBalance',
+          'amount',
+          'credit',
+        ]),
+      );
+    }
     final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.wallet);
     final body = res.data ?? {};
     final v = pick(body, ['balance', 'coins', 'coinBalance', 'amount']);

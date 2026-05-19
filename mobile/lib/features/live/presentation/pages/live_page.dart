@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../providers/live_providers.dart';
 
@@ -23,7 +24,8 @@ class LivePage extends ConsumerWidget {
       ),
       body: live.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
+        error: (e, _) =>
+            Center(child: Text(ApiException.userMessage(e))),
         data: (streams) {
           if (streams.isEmpty) {
             return const Center(child: Text('Şu an canlı yayın yok'));

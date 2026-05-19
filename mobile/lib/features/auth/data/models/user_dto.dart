@@ -29,6 +29,20 @@ class UserDto {
         username = email.split('@').first;
       }
     }
+
+    var followers = _asInt(pick(['followersCount', 'followers', 'followerCount']));
+    var following = _asInt(pick(['followingCount', 'following']));
+    final countRaw = json['_count'];
+    if (countRaw is Map) {
+      final cm = Map<String, dynamic>.from(countRaw);
+      if (cm.containsKey('followers')) {
+        followers = _asInt(cm['followers']);
+      }
+      if (cm.containsKey('following')) {
+        following = _asInt(cm['following']);
+      }
+    }
+
     return UserDto(
       id: id,
       username: username.isEmpty ? 'user_$id' : username,
@@ -41,12 +55,32 @@ class UserDto {
             'image',
           ])
               as String?,
-      bio: pick(['bio', 'about']) as String?,
-      followersCount: _asInt(pick(['followersCount', 'followers'])),
-      followingCount: _asInt(pick(['followingCount', 'following'])),
+      bio: pick(['bio', 'about', 'aboutMe', 'description']) as String?,
+      followersCount: followers,
+      followingCount: following,
       isFollowing: pick(['isFollowing', 'following_me']) == true,
-      coinBalance: _asInt(pick(['coinBalance', 'coins', 'balance'])),
+      coinBalance: _asInt(pick(['coinBalance', 'coins', 'balance', 'credits'])),
     );
+  }
+
+  /// `/api/user/profile` gibi iç içe `user` / `profile` nesnelerini düzleştirir.
+  factory UserDto.fromSiteProfileMap(Map<String, dynamic> root) {
+    dynamic pickRoot(List<String> keys) {
+      for (final k in keys) {
+        if (root.containsKey(k) && root[k] != null) return root[k];
+      }
+      return null;
+    }
+
+    final nested = pickRoot(['user', 'profile', 'data']);
+    final merged = Map<String, dynamic>.from(root);
+    if (nested is Map) {
+      merged.addAll(Map<String, dynamic>.from(nested));
+    }
+    if (merged['displayName'] == null && merged['name'] != null) {
+      merged['displayName'] = merged['name'];
+    }
+    return UserDto.fromJson(merged);
   }
 
   final String id;

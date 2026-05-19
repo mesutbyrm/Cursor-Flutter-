@@ -16,6 +16,15 @@ abstract final class ApiEndpoints {
   static const feed = '/api/stories';
   /// canlifal.com sosyal akış (web `/sosyal` ile aynı veri).
   static const socialPosts = '/api/social/posts';
+  /// canlifal.com ana sayfa canlı yayın listesi (JSON dizi).
+  static const videoStreams = '/api/video-streams';
+  /// Sesli / metin sohbet odaları (web `/sohbet/{slug}`).
+  static const chatRooms = '/api/chat/rooms';
+  /// Oturumlu kullanıcı profili (takipçi, bio, görsel — NextAuth çerezi).
+  static const userSiteProfile = '/api/user/profile';
+  /// Jeton / kredi bakiyesi (NextAuth).
+  static const userCredits = '/api/user/credits';
+  /// Diğer ortamlar için genel canlı listesi.
   static const liveStreams = '/api/live';
 
   static String userProfile(String userId) => '/api/users/$userId';

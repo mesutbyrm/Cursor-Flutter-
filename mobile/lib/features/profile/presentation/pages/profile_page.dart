@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -35,7 +36,7 @@ class ProfilePage extends ConsumerWidget {
       ),
       body: auth.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
+        error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
         data: (user) {
           if (user == null) {
             return const Center(child: Text('Oturum yok'));
@@ -104,9 +105,9 @@ class ProfilePage extends ConsumerWidget {
                                 ),
                               ),
                               loading: () => const Text('...'),
-                              error: (_, __) => const Text(
-                                '—',
-                                style: TextStyle(color: AppTheme.muted),
+                              error: (e, _) => Text(
+                                ApiException.userMessage(e),
+                                style: const TextStyle(color: AppTheme.muted),
                               ),
                             ),
                           ],
