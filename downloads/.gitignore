@@ -1,0 +1,2 @@
+# Yerel veya CI’den kopyalanan APK’lar depoya eklenmez.
+*.apk
