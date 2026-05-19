@@ -20,33 +20,37 @@ class LiveGiftSocketBridge {
     required void Function(LiveGiftEvent event) onEvent,
   }) {
     _onEvent = onEvent;
-    try {
-      _socket?.dispose();
-      _socket = io.io(
-        Env.siteOrigin,
-        io.OptionBuilder()
-            .setTransports(['websocket', 'polling'])
-            .disableAutoConnect()
-            .build(),
-      );
-      _socket!
-        ..onConnect((_) => _socket?.emit('joinStream', {'streamId': streamId}))
-        ..on('gift', (data) {
-          if (data is! Map) return;
-          final map = Map<String, dynamic>.from(data);
-          final ev = _remote.parseGiftEvent(map, streamId: streamId);
-          if (ev != null) _onEvent?.call(ev);
-        })
-        ..on('giftSent', (data) {
-          if (data is! Map) return;
-          final map = Map<String, dynamic>.from(data);
-          final ev = _remote.parseGiftEvent(map, streamId: streamId);
-          if (ev != null) _onEvent?.call(ev);
-        })
-        ..connect();
-    } catch (e) {
-      debugPrint('Gift socket: $e');
-    }
+    // Socket yalnızca canlı oda açıldığında; hata uygulamayı düşürmez.
+    Future.microtask(() {
+      try {
+        _socket?.dispose();
+        _socket = io.io(
+          Env.siteOrigin,
+          io.OptionBuilder()
+              .setTransports(['websocket', 'polling'])
+              .disableAutoConnect()
+              .setTimeout(5000)
+              .build(),
+        );
+        _socket!
+          ..onConnect((_) => _socket?.emit('joinStream', {'streamId': streamId}))
+          ..on('gift', (data) {
+            if (data is! Map) return;
+            final map = Map<String, dynamic>.from(data);
+            final ev = _remote.parseGiftEvent(map, streamId: streamId);
+            if (ev != null) _onEvent?.call(ev);
+          })
+          ..on('giftSent', (data) {
+            if (data is! Map) return;
+            final map = Map<String, dynamic>.from(data);
+            final ev = _remote.parseGiftEvent(map, streamId: streamId);
+            if (ev != null) _onEvent?.call(ev);
+          })
+          ..connect();
+      } catch (e) {
+        debugPrint('Gift socket: $e');
+      }
+    });
   }
 
   void disconnect() {

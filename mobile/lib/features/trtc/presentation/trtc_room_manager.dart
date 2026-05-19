@@ -47,6 +47,14 @@ class TrtcRoomManager {
       throw StateError('TRTC yalnızca Android/iOS üzerinde desteklenir');
     }
 
+    try {
+      await TRTCCloud.sharedInstance();
+    } catch (e) {
+      throw StateError(
+        'Tencent RTC bu cihazda başlatılamadı. Lütfen uygulamayı yeniden başlatın.',
+      );
+    }
+
     final ok = await requestPermissions(video: !audioOnly && isHost);
     if (!ok) {
       throw StateError('Mikrofon veya kamera izni verilmedi');

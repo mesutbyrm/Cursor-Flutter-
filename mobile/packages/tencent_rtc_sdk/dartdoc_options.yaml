@@ -1,0 +1,18 @@
+dartdoc:
+  exclude: [ 'package:tencent_rtc_sdk/bindings/ffi_bindings.dart',
+     'package:tencent_rtc_sdk/bindings/load_dynamic_lib.dart',
+     'package:tencent_rtc_sdk/bindings/trtc_cloud_listener_native.dart',
+     'package:tencent_rtc_sdk/bindings/trtc_cloud_native.dart',
+     'package:tencent_rtc_sdk/bindings/trtc_cloud_struct.dart',
+     'package:tencent_rtc_sdk/bindings/tx_audio_effect_manager_native.dart',
+     'package:tencent_rtc_sdk/bindings/tx_beauty_manager_native.dart',
+     'package:tencent_rtc_sdk/bindings/tx_device_manager_native.dart',
+     'package:tencent_rtc_sdk/impl/trtc_cloud_impl.dart',
+     'package:tencent_rtc_sdk/impl/trtc_cloud_listener_prase.dart',
+     'package:tencent_rtc_sdk/impl/tx_audio_effect_manager_impl.dart',
+     'package:tencent_rtc_sdk/impl/tx_beauty_manager_impl.dart',
+     'package:tencent_rtc_sdk/impl/tx_device_manager_impl.dart',
+     'package:tencent_rtc_sdk/trtc_cloud_def.g.dart',
+     'package:tencent_rtc_sdk/tx_audio_effect_manager.g.dart',
+     'package:tencent_rtc_sdk/tx_device_manager.g.dart']
+

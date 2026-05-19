@@ -28,10 +28,18 @@ class AppTheme {
         onSurface: onBackground,
       ),
     );
-    final textTheme = GoogleFonts.plusJakartaSansTextTheme(base.textTheme).apply(
-      bodyColor: onBackground,
-      displayColor: onBackground,
-    );
+    TextTheme textTheme;
+    try {
+      textTheme = GoogleFonts.plusJakartaSansTextTheme(base.textTheme).apply(
+        bodyColor: onBackground,
+        displayColor: onBackground,
+      );
+    } catch (_) {
+      textTheme = base.textTheme.apply(
+        bodyColor: onBackground,
+        displayColor: onBackground,
+      );
+    }
     return base.copyWith(
       textTheme: textTheme,
       appBarTheme: const AppBarTheme(

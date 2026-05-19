@@ -1,0 +1,4 @@
+-keep class com.tencent.** { *; }
+-keep class com.tencent.trtc.** { *; }
+-keep class com.tencent.liteav.** { *; }
+-dontwarn com.tencent.**

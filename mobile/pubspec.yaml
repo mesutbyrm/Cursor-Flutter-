@@ -2,7 +2,7 @@ name: canlifal_social
 description: Canlifal — modern sosyal medya istemcisi (REST + JWT, Clean Architecture).
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.11.5
@@ -25,6 +25,10 @@ dependencies:
   flutter_inappwebview: ^6.1.5
   google_fonts: ^6.2.1
   tencent_rtc_sdk: ^13.2.2
+
+dependency_overrides:
+  tencent_rtc_sdk:
+    path: packages/tencent_rtc_sdk
   permission_handler: ^12.0.1
   lottie: ^3.3.1
   flutter_animate: ^4.5.2
