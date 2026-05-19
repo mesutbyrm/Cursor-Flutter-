@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
@@ -32,41 +34,51 @@ class PremiumHomeHeader extends StatelessWidget {
               .scale(begin: const Offset(0.92, 0.92), curve: Curves.easeOutCubic),
           SizedBox(width: 3.w),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  'Hoş geldin',
-                  style: PremiumLiveTheme.bodyMuted(context),
-                )
-                    .animate()
-                    .fadeIn(delay: 80.ms)
-                    .slideX(begin: -0.04, end: 0, curve: Curves.easeOut),
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: PremiumLiveTheme.displaySm(context).copyWith(
-                          fontSize: 19.sp,
-                        ),
+                Flexible(
+                  child: RichText(
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    text: TextSpan(
+                      style: GoogleFonts.montserrat(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                        color: Colors.white,
                       ),
+                      children: [
+                        TextSpan(
+                          text: 'Hoş geldin, ',
+                          style: PremiumLiveTheme.bodyMuted(context).copyWith(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        TextSpan(
+                          text: displayName,
+                          style: GoogleFonts.montserrat(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(width: 1.w),
-                    Icon(
-                      Icons.verified_rounded,
-                      color: PremiumLiveTheme.neonPurple,
-                      size: 20.sp,
-                    ),
-                  ],
-                )
-                    .animate()
-                    .fadeIn(delay: 120.ms)
-                    .slideX(begin: -0.06, end: 0, curve: Curves.easeOut),
+                  ),
+                ),
+                SizedBox(width: 1.w),
+                Icon(
+                  Icons.verified_rounded,
+                  color: PremiumLiveTheme.neonPurple,
+                  size: 21.sp,
+                ),
               ],
-            ),
+            )
+                .animate()
+                .fadeIn(delay: 80.ms)
+                .slideX(begin: -0.04, end: 0, curve: Curves.easeOut),
           ),
           NeonGlassPanel(
             borderRadius: 22,
@@ -160,10 +172,13 @@ class _AvatarGlow extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(2.2),
       child: ClipOval(
-        child: Image.network(
-          'https://i.pravatar.cc/200?u=cemre_premium',
+        child: CachedNetworkImage(
+          imageUrl: 'https://i.pravatar.cc/200?u=cemre_premium',
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => ColoredBox(
+          placeholder: (_, __) => ColoredBox(
+            color: PremiumLiveTheme.deepPurple,
+          ),
+          errorWidget: (_, __, ___) => ColoredBox(
             color: PremiumLiveTheme.deepPurple,
             child: Icon(Icons.person_rounded, color: Colors.white, size: 28.sp),
           ),

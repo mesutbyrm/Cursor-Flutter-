@@ -71,7 +71,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         branches: [
           StatefulShellBranch(
             routes: [
-              // Ana sayfa: yalnızca PremiumHomeScreen — başka widget bağlama.
+              // Ana sayfa (Keşfet): PremiumHomeScreen — mockup ile hizalı.
               GoRoute(
                 path: '/feed',
                 builder: (context, state) => const PremiumHomeScreen(),

@@ -16,17 +16,15 @@ flutter run --dart-define=API_BASE_URL=https://senin-api.example.com
 
 Koyu **kozmik mor** zemin, hafif **yıldız** dokusu (`CosmicBackground`), bölüm başlıklarında web’deki gibi **kırmızı dikey çubuk** (`CosmicSectionHeader`), alt gezinmede ortada **pembe–mor gradient FAB** (Canlı sekmesi). Renk sabitleri: `lib/core/theme/app_theme.dart`.
 
-## Premium ana sayfa (`/feed` — Ana Sayfa sekmesi)
+## Premium ana sayfa (`/feed` — Keşfet sekmesi)
 
 **Tek kaynak:** `lib/screens/premium_home/premium_home_screen.dart` ve `lib/widgets/premium_home/`. Router’da `/feed` yalnızca `PremiumHomeScreen` döner; eski `FeedPage` kullanılmaz (`@Deprecated`).
 
-Görsel mockup ile piksel eşleşme için tasarım export’u veya Figma bağlantısı eklenmelidir.
+Premium mockup: koyu gradient arka plan, neon hero carousel, çubuk gösterge, hızlı işlemler, ses küreleri, Fal & Tarot; alt barda cam blur, **Keşfet** (pusula), ortada gezegen FAB, **Mesajlar** pembe bildirim noktası.
 
 - `lib/screens/premium_home/` — ana ekran  
-- `lib/widgets/premium_home/` — başlık, hikâye şeridi, hero carousel, hızlı işlemler, sohbet küreleri, fal & tarot  
-- `lib/models/`, `lib/data/`, `lib/theme/premium_live_theme.dart`, `lib/constants/premium_home_layout.dart`
-
-## Mimari
+- `lib/widgets/premium_home/` — header, hero + `premium_carousel_bar_indicator`, hızlı işlemler, ses küreleri, fal, `premium_planet_fab_icon` (FAB)  
+- `lib/models/`, `lib/data/premium_home_dummy_data.dart`, `lib/theme/premium_live_theme.dart`, `lib/constants/premium_home_layout.dart`
 
 - **Domain:** entity + repository arayüzleri  
 - **Data:** `RemoteDataSource` (Dio), DTO’lar, repository implementasyonları  

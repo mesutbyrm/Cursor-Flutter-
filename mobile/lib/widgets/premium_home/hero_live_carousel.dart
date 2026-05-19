@@ -5,11 +5,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../../models/premium_live_stream.dart';
 import '../../theme/premium_live_theme.dart';
 import '../../constants/premium_home_layout.dart';
+import 'premium_carousel_bar_indicator.dart';
 
 class HeroLiveCarousel extends StatefulWidget {
   const HeroLiveCarousel({super.key, required this.streams});
@@ -52,16 +52,9 @@ class _HeroLiveCarouselState extends State<HeroLiveCarousel> {
         ),
         SizedBox(height: 1.4.h),
         Center(
-          child: AnimatedSmoothIndicator(
-            activeIndex: _active,
+          child: PremiumCarouselBarIndicator(
             count: widget.streams.length,
-            effect: WormEffect(
-              dotHeight: 7,
-              dotWidth: 7,
-              spacing: 7,
-              activeDotColor: PremiumLiveTheme.neonPink,
-              dotColor: Colors.white.withValues(alpha: 0.22),
-            ),
+            activeIndex: _active,
           ),
         ),
       ],
@@ -75,35 +68,29 @@ class _HeroTitle extends StatelessWidget {
     final base = GoogleFonts.montserrat(
       fontSize: 17.5.sp,
       fontWeight: FontWeight.w800,
-      height: 1.2,
+      height: 1.22,
       color: Colors.white,
       letterSpacing: -0.35,
     );
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 1.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 0,
+        runSpacing: 6,
         children: [
-          Text('Canlı yayınlara katıl,', style: base),
-          SizedBox(height: 0.25.h),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Flexible(
-                child: ShaderMask(
-                  blendMode: BlendMode.srcIn,
-                  shaderCallback: (b) =>
-                      PremiumLiveTheme.heroTitleGradient.createShader(b),
-                  child: Text(
-                    'eğlenceye ortak ol!',
-                    style: base.copyWith(color: Colors.white),
-                  ),
-                ),
-              ),
-              SizedBox(width: 1.2.w),
-              Text('❤️', style: base.copyWith(fontSize: 19.sp)),
-            ],
+          Text('Canlı yayınlara ', style: base),
+          ShaderMask(
+            blendMode: BlendMode.srcIn,
+            shaderCallback: (b) =>
+                PremiumLiveTheme.heroTitleGradient.createShader(b),
+            child: Text(
+              'katıl, eğlenceye',
+              style: base.copyWith(color: Colors.white),
+            ),
           ),
+          Text(' ortak ol! ', style: base),
+          Text('❤️', style: base.copyWith(fontSize: 19.sp)),
         ],
       ),
     );

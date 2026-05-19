@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../widgets/premium_home/premium_planet_fab_icon.dart';
 
-/// Web sitesindeki alt bara yakın: koyu cam zemin, ortada yükseltilmiş pembe/mor FAB (Canlı).
+/// Alt bar: cam blur, üst radius, ortada neon gezegen FAB (mockup).
 class MainShellPage extends StatelessWidget {
   const MainShellPage({super.key, required this.navigationShell});
 
@@ -35,10 +36,10 @@ class MainShellPage extends StatelessWidget {
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF12081E).withValues(alpha: 0.72),
+                    color: const Color(0xFF12081E).withValues(alpha: 0.76),
                     border: Border(
                       top: BorderSide(
                         color: AppTheme.cosmicPurple.withValues(alpha: 0.55),
@@ -46,9 +47,9 @@ class MainShellPage extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.accent.withValues(alpha: 0.18),
-                        blurRadius: 28,
-                        offset: const Offset(0, -6),
+                        color: AppTheme.accent.withValues(alpha: 0.22),
+                        blurRadius: 32,
+                        offset: const Offset(0, -8),
                       ),
                     ],
                   ),
@@ -60,9 +61,9 @@ class MainShellPage extends StatelessWidget {
                         children: [
                           Expanded(
                             child: _ShellNavItem(
-                              icon: Icons.home_outlined,
-                              selectedIcon: Icons.home_rounded,
-                              label: 'Ana Sayfa',
+                              icon: Icons.explore_outlined,
+                              selectedIcon: Icons.explore_rounded,
+                              label: 'Keşfet',
                               selected: idx == 0,
                               onTap: () => _goBranch(0),
                             ),
@@ -84,6 +85,7 @@ class MainShellPage extends StatelessWidget {
                               label: 'Mesajlar',
                               selected: idx == 3,
                               onTap: () => _goBranch(3),
+                              showBadge: true,
                             ),
                           ),
                           Expanded(
@@ -118,16 +120,19 @@ class MainShellPage extends StatelessWidget {
                     gradient: AppTheme.fabGradient,
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.accent.withValues(alpha: 0.55),
-                        blurRadius: 22,
-                        spreadRadius: 1,
+                        color: AppTheme.accent.withValues(alpha: 0.65),
+                        blurRadius: 28,
+                        spreadRadius: 2,
+                      ),
+                      BoxShadow(
+                        color: AppTheme.accentSecondary.withValues(alpha: 0.35),
+                        blurRadius: 18,
+                        spreadRadius: 0,
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.live_tv_rounded,
-                    color: Colors.white,
-                    size: 30,
+                  child: const Center(
+                    child: PremiumPlanetFabIcon(size: 30),
                   ),
                 ),
               ),
@@ -146,6 +151,7 @@ class _ShellNavItem extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.showBadge = false,
   });
 
   final IconData icon;
@@ -153,10 +159,14 @@ class _ShellNavItem extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final bool showBadge;
 
   @override
   Widget build(BuildContext context) {
-    final c = selected ? Colors.white : AppTheme.muted.withValues(alpha: 0.85);
+    final active = AppTheme.accentSecondary;
+    final idle = AppTheme.muted.withValues(alpha: 0.88);
+    final c = selected ? active : idle;
+
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -171,17 +181,39 @@ class _ShellNavItem extends StatelessWidget {
                 boxShadow: selected
                     ? [
                         BoxShadow(
-                          color: AppTheme.accent.withValues(alpha: 0.45),
-                          blurRadius: 14,
+                          color: AppTheme.accentSecondary.withValues(alpha: 0.55),
+                          blurRadius: 16,
                           spreadRadius: 0,
                         ),
                       ]
                     : null,
               ),
-              child: Icon(
-                selected ? selectedIcon : icon,
-                size: 24,
-                color: c,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    selected ? selectedIcon : icon,
+                    size: 24,
+                    color: c,
+                  ),
+                  if (showBadge)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        width: 9,
+                        height: 9,
+                        decoration: BoxDecoration(
+                          color: AppTheme.accent,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFF12081E),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 2),
@@ -191,7 +223,7 @@ class _ShellNavItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 10,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
                 color: c,
                 letterSpacing: -0.1,
               ),

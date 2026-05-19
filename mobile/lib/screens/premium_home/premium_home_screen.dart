@@ -11,15 +11,12 @@ import '../../widgets/premium_home/premium_cosmic_background.dart';
 import '../../widgets/premium_home/premium_home_header.dart';
 import '../../widgets/premium_home/quick_actions_section.dart';
 import '../../widgets/premium_home/section_title_row.dart';
-import '../../widgets/premium_home/stories_tray_section.dart';
 import '../../widgets/premium_home/voice_spheres_section.dart';
 
-/// **Uygulamanın ana sayfası** (giriş sonrası `/feed`, alt barda «Ana Sayfa»).
+/// **Uygulamanın ana sayfası** (giriş sonrası `/feed`, alt barda «Keşfet»).
 ///
 /// Tasarım tek kaynak: bu dosya + `lib/widgets/premium_home/*` +
-/// `lib/data/premium_home_dummy_data.dart`. Görsel referansla bire bir
-/// hizalamak için mockup/export veya Figma ölçüleri gerekir; metin ve
-/// bileşen sırası burada sabittir.
+/// `lib/data/premium_home_dummy_data.dart`.
 class PremiumHomeScreen extends StatelessWidget {
   const PremiumHomeScreen({super.key});
 
@@ -49,11 +46,7 @@ class PremiumHomeScreen extends StatelessWidget {
                       PremiumHomeHeader(
                         displayName: PremiumHomeDummyData.userName,
                       ),
-                      SizedBox(height: 1.2.h),
-                      StoriesTraySection(
-                        items: PremiumHomeDummyData.storyTrayItems,
-                      ),
-                      SizedBox(height: PremiumHomeLayout.sectionGap.h * 0.45),
+                      SizedBox(height: PremiumHomeLayout.sectionGap.h * 0.55),
                       HeroLiveCarousel(
                         streams: PremiumHomeDummyData.heroStreams,
                       ),

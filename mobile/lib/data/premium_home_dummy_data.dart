@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../models/premium_live_stream.dart';
 import '../models/premium_quick_action.dart';
-import '../models/premium_story_tray_item.dart';
 import '../models/premium_tarot_offer.dart';
 import '../models/premium_voice_room_sphere.dart';
 import '../theme/premium_live_theme.dart';
@@ -16,55 +15,6 @@ abstract final class PremiumHomeDummyData {
 
   static String _face(String seed) =>
       'https://i.pravatar.cc/150?u=$seed';
-
-  static List<PremiumStoryTrayItem> get storyTrayItems => [
-        const PremiumStoryTrayItem(
-          id: 'add',
-          label: 'Hikayen',
-          avatarUrl: '',
-          isAddStory: true,
-        ),
-        PremiumStoryTrayItem(
-          id: 's1',
-          label: 'Özge',
-          avatarUrl: _face('story_ozge'),
-          hasNew: true,
-          isLive: true,
-        ),
-        PremiumStoryTrayItem(
-          id: 's2',
-          label: 'Ela',
-          avatarUrl: _face('story_ela'),
-          hasNew: true,
-        ),
-        PremiumStoryTrayItem(
-          id: 's3',
-          label: 'Arda',
-          avatarUrl: _face('story_arda'),
-          isLive: true,
-        ),
-        PremiumStoryTrayItem(
-          id: 's4',
-          label: 'Defne',
-          avatarUrl: _face('story_defne'),
-          hasNew: true,
-        ),
-        PremiumStoryTrayItem(
-          id: 's5',
-          label: 'Kaan',
-          avatarUrl: _face('story_kaan'),
-        ),
-        PremiumStoryTrayItem(
-          id: 's6',
-          label: 'Melis',
-          avatarUrl: _face('story_melis'),
-        ),
-        PremiumStoryTrayItem(
-          id: 's7',
-          label: 'Burak',
-          avatarUrl: _face('story_burak'),
-        ),
-      ];
 
   static List<PremiumLiveStream> get heroStreams => [
         PremiumLiveStream(
