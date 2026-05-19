@@ -1,28 +1,31 @@
 # Canlifal — Android test APK
 
-Bu depoda APK **Git ile birlikte zorunlu taşınmaz**; aşağıdaki bağlantılardan birini kullanın.
+## Doğrudan indirme (sabit bağlantı)
 
-## Doğrudan indirme (GitHub Release)
+`main` dalında [Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml) iş akışı **en az bir kez başarıyla bittikten** sonra aşağıdaki bağlantı her zaman son `main` derlemesindeki APK’yı verir:
 
-**[Son sürüm — canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/latest/download/canlifal-mobile-release.apk)**
+**[canlifal-mobile-release.apk (apk-latest)](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk)**
 
-> Bu bağlantı, en az bir kez `v*` etiketiyle Release oluşturulup APK yüklendikten sonra çalışır. Şu an 404 alıyorsanız önce [GitHub Actions](#github-actions) ile bir build alın veya bakımçı `git tag v1.0.0 && git push origin v1.0.0` ile sürüm oluşturulsun.
+> Henüz 404 alıyorsanız: GitHub → **Actions** → **Build release APK** → **Run workflow** → dal olarak **`main`** seçin → işlem bitsin. İş akışı otomatik olarak **`apk-latest`** adlı sürümü oluşturur veya günceller.
 
-Belirli sürüm örneği:  
+`releases/latest/download/...` kullanmıyoruz; GitHub “latest” etiketini semver’a göre sıraladığı için `apk-latest` gibi **sabit etiket + dosya adı** daha güvenilir.
+
+## Sürüm etiketi (v1.0.0 gibi)
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
+
+İndirme örneği:  
 `https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/v1.0.0/canlifal-mobile-release.apk`
 
-## GitHub Actions {#github-actions}
+## GitHub Actions (ZIP artifact)
 
-1. **[Build release APK iş akışı](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml)** sayfasını açın  
-2. **Run workflow** → dal seçin (`main` veya Flutter kodunun olduğu dal) → çalıştırın  
-3. İşlem bitince **Artifacts** → **`canlifal-social-release-apk`** ZIP  
-4. ZIP içindeki **`canlifal-mobile-release.apk`** veya **`app-release.apk`** (iş akışı sürümüne göre) dosyasını kurun  
+1. **[Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml)**  
+2. **Run workflow** → istediğiniz dal  
+3. **Artifacts** → `canlifal-social-release-apk` → ZIP → `canlifal-mobile-release.apk`
 
-> “Bilinmeyen kaynak” izni gerekebilir; Play Store imzası yoktur, test içindir.
-
-## Kendi bilgisayarında derle
-
-[Flutter](https://docs.flutter.dev/get-started/install) ve Android SDK kurulu olmalı.
+## Yerelde derle
 
 ```bash
 cd mobile
@@ -32,12 +35,10 @@ flutter build apk --release
 
 Çıktı: `mobile/build/app/outputs/flutter-apk/app-release.apk`
 
-İsteğe bağlı API tabanı:
-
 ```bash
 flutter build apk --release --dart-define=API_BASE_URL=https://canlifal.com
 ```
 
 ## API
 
-Varsayılan taban: `mobile/lib/core/config/env.dart` (`API_BASE_URL`). Uçlar: `mobile/lib/core/network/api_endpoints.dart`.
+`mobile/lib/core/config/env.dart`, uçlar: `mobile/lib/core/network/api_endpoints.dart`.
