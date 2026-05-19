@@ -6,6 +6,7 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
 import '../../features/live/presentation/pages/live_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
@@ -15,12 +16,13 @@ import '../../features/notifications/presentation/pages/notifications_page.dart'
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/shell/presentation/main_shell_page.dart';
+import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
 
 class RouterRefresh extends ChangeNotifier {
   RouterRefresh(this._ref) {
     _ref.listen<AsyncValue<dynamic>>(
       authControllerProvider,
-      (_, __) => notifyListeners(),
+      (_, _) => notifyListeners(),
     );
   }
 
@@ -125,6 +127,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['id']!;
           return ChatPage(conversationId: id);
         },
+      ),
+      GoRoute(
+        path: '/canlifal-web',
+        builder: (context, state) => CanlifalWebRoute.fromState(state),
+      ),
+      GoRoute(
+        path: '/voice-rooms',
+        builder: (context, state) => const VoiceRoomsHubPage(),
       ),
     ],
   );

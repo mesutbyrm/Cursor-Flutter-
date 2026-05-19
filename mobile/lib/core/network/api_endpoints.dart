@@ -27,6 +27,12 @@ abstract final class ApiEndpoints {
   /// Diğer ortamlar için genel canlı listesi.
   static const liveStreams = '/api/live';
 
+  /// Canlı yayın hediye kataloğu (Tencent / site ile aynı liste).
+  static const videoStreamGiftsCatalog = '/api/video-streams/gifts';
+
+  static String videoStreamGifts(String streamId) =>
+      '/api/video-streams/$streamId/gifts';
+
   static String userProfile(String userId) => '/api/users/$userId';
   static String follow(String userId) => '/api/users/$userId/follow';
   static String followers(String userId) => '/api/users/$userId/followers';

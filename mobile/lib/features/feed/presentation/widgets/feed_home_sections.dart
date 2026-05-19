@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
@@ -27,7 +27,7 @@ class FeedLiveStrip extends ConsumerWidget {
           ),
         ),
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (streams) {
         final onAir = streams.where((s) => s.isLive).toList();
         if (onAir.isEmpty) return const SizedBox.shrink();
@@ -62,7 +62,7 @@ class FeedLiveStrip extends ConsumerWidget {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.only(left: 4, right: 4, bottom: 4),
                 itemCount: onAir.length > 12 ? 12 : onAir.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
                 itemBuilder: (ctx, i) {
                   final s = onAir[i];
                   return _LiveChip(stream: s);
@@ -81,11 +81,15 @@ class _LiveChip extends StatelessWidget {
 
   final LiveStreamEntity stream;
 
-  Future<void> _open() async {
-    final uri = Uri.parse('${Env.siteOrigin}/sohbet/video?watch=${stream.id}');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+  void _open(BuildContext context) {
+    if (!stream.isLive) return;
+    context.push(
+      CanlifalWebRoute.location(
+        relativePath: '/sohbet/video?watch=${stream.id}',
+        title: stream.title,
+        streamIdForGifts: stream.id,
+      ),
+    );
   }
 
   @override
@@ -94,7 +98,7 @@ class _LiveChip extends StatelessWidget {
       color: AppTheme.surfaceElevated,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        onTap: _open,
+        onTap: stream.isLive ? () => _open(context) : null,
         borderRadius: BorderRadius.circular(14),
         child: SizedBox(
           width: 112,
@@ -175,25 +179,31 @@ class FeedVoiceRoomsStrip extends ConsumerWidget {
           ),
         ),
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (list) {
         if (list.isEmpty) return const SizedBox.shrink();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(4, 12, 4, 8),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
               child: Row(
                 children: [
-                  Icon(Icons.headset_mic_rounded,
+                  const Icon(Icons.headset_mic_rounded,
                       color: AppTheme.accent, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'Sohbet odaları',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Sohbet odaları',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
                     ),
+                  ),
+                  TextButton(
+                    onPressed: () => context.push('/voice-rooms'),
+                    child: const Text('Tümü'),
                   ),
                 ],
               ),
@@ -204,7 +214,7 @@ class FeedVoiceRoomsStrip extends ConsumerWidget {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.only(left: 4, right: 4, bottom: 8),
                 itemCount: list.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
                 itemBuilder: (ctx, i) => _RoomChip(room: list[i]),
               ),
             ),
@@ -220,11 +230,13 @@ class _RoomChip extends StatelessWidget {
 
   final VoiceRoomEntity room;
 
-  Future<void> _open() async {
-    final uri = Uri.parse('${Env.siteOrigin}/sohbet/${room.slug}');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+  void _open(BuildContext context) {
+    context.push(
+      CanlifalWebRoute.location(
+        relativePath: '/sohbet/${room.slug}',
+        title: room.nameTr,
+      ),
+    );
   }
 
   @override
@@ -233,7 +245,7 @@ class _RoomChip extends StatelessWidget {
       color: AppTheme.surfaceElevated,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        onTap: _open,
+        onTap: () => _open(context),
         borderRadius: BorderRadius.circular(14),
         child: Container(
           width: 118,
