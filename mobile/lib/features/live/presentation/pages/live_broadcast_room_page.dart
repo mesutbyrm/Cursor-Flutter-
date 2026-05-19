@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -14,6 +13,13 @@ import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../domain/entities/live_broadcast_session.dart';
+import '../../domain/entities/live_gift_catalog.dart';
+import '../gifts/live_gift_controller.dart';
+import '../gifts/providers/live_gift_providers.dart';
+import '../gifts/widgets/floating_gift_particles.dart';
+import '../gifts/widgets/gift_fullscreen_overlay.dart';
+import '../gifts/widgets/gift_notification_stack.dart';
+import '../gifts/widgets/live_gift_panel.dart';
 import '../providers/live_providers.dart';
 
 /// Aktif canlı yayın — Tencent TRTC video + neon cam katmanlar.
@@ -27,8 +33,7 @@ class LiveBroadcastRoomPage extends ConsumerStatefulWidget {
       _LiveBroadcastRoomPageState();
 }
 
-class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
-    with TickerProviderStateMixin {
+class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   final _trtc = TrtcRoomManager();
   var _rtcReady = false;
   String? _rtcError;
@@ -49,9 +54,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
 
   late Timer _timer;
   Duration _elapsed = Duration.zero;
-  late AnimationController _floatCtrl;
-  final _floats = <_FloatingGift>[];
-  final _rand = Random();
+  final _particlesKey = GlobalKey<FloatingGiftParticlesState>();
 
   bool _following = false;
 
@@ -61,12 +64,22 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _elapsed += const Duration(seconds: 1));
     });
-    _floatCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat();
-    _spawnFloats();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _initTrtc());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initTrtc();
+      _initGifts();
+    });
+  }
+
+  void _initGifts() {
+    final streamId = widget.session.streamId;
+    if (streamId == null || streamId.isEmpty) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final gifts = ref.read(liveGiftControllerProvider);
+    gifts.attach(
+      streamId: streamId,
+      receiverName: widget.session.streamerName ?? 'Yayıncı',
+      initialCoins: user?.coinBalance,
+    );
   }
 
   Future<void> _initTrtc() async {
@@ -95,27 +108,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     }
   }
 
-  void _spawnFloats() {
-    Timer.periodic(const Duration(milliseconds: 1400), (t) {
-      if (!mounted) {
-        t.cancel();
-        return;
-      }
-      setState(() {
-        _floats.add(_FloatingGift(
-          id: _rand.nextInt(1 << 30),
-          emoji: _rand.nextBool() ? '💖' : '🌹',
-          left: 0.55 + _rand.nextDouble() * 0.35,
-        ));
-        if (_floats.length > 12) _floats.removeAt(0);
-      });
-    });
-  }
-
   @override
   void dispose() {
     _timer.cancel();
-    _floatCtrl.dispose();
     _chat.dispose();
     _trtc.dispose();
     super.dispose();
@@ -170,6 +165,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
     final s = widget.session;
     final top = MediaQuery.paddingOf(context).top;
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final giftCtrl = ref.watch(liveGiftControllerProvider);
+    final user = ref.watch(authControllerProvider).valueOrNull;
+
+    ref.listen<LiveGiftController>(liveGiftControllerProvider, (prev, next) {
+      final ev = next.activeFullscreen;
+      if (ev != null && ev != prev?.activeFullscreen) {
+        final emoji = LiveGiftCatalog.emojiById[ev.giftId] ?? '💖';
+        _particlesKey.currentState?.burst(emoji, count: 6 + ev.combo.clamp(0, 12).toInt());
+      }
+    });
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -177,11 +182,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
         fit: StackFit.expand,
         children: [
           Positioned.fill(child: _videoLayer(s)),
-          ..._floats.map((f) => _FloatingHeartWidget(
-                key: ValueKey(f.id),
-                gift: f,
-                controller: _floatCtrl,
-              )),
+          FloatingGiftParticles(key: _particlesKey),
+          GiftFullscreenOverlay(event: giftCtrl.activeFullscreen),
           SafeArea(
             child: Column(
               children: [
@@ -221,7 +223,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _GiftStack(),
+                            GiftNotificationStack(events: giftCtrl.notifications),
                             const SizedBox(height: 10),
                             SizedBox(
                               height: 160,
@@ -240,8 +242,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                       const SizedBox(width: 8),
                       _SideActions(
                         likes: '12.5K',
-                        gifts: '3.245',
+                        gifts: giftCtrl.streamerEarnings != null
+                            ? '${giftCtrl.streamerEarnings}'
+                            : '3.245',
                         shares: '1.245',
+                        onGift: () => giftCtrl.setPanelOpen(true),
                       ),
                     ],
                   ),
@@ -251,6 +256,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
                   chatController: _chat,
                   isHost: s.isHost,
                   trtc: s.isHost ? _trtc : null,
+                  onGift: () => giftCtrl.setPanelOpen(true),
                   onSend: () {
                     final t = _chat.text.trim();
                     if (t.isEmpty) return;
@@ -264,6 +270,18 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage>
               ],
             ),
           ),
+          if (giftCtrl.panelOpen && user != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: LiveGiftPanel(
+                controller: giftCtrl,
+                senderName: user.displayName ?? user.username,
+                senderId: user.id,
+                onClose: () => giftCtrl.setPanelOpen(false),
+              ),
+            ),
         ],
       ),
     );
@@ -503,66 +521,6 @@ class _BadgeChip extends StatelessWidget {
   }
 }
 
-class _GiftStack extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    const gifts = [
-      ('Ayşe', '🌹', 'x12'),
-      ('Mehmet', '💖', 'x23'),
-      ('Zeynep', '⭐', 'x8'),
-    ];
-    return Column(
-      children: [
-        for (final g in gifts) _GiftNotice(name: g.$1, emoji: g.$2, mult: g.$3),
-      ],
-    );
-  }
-}
-
-class _GiftNotice extends StatelessWidget {
-  const _GiftNotice({
-    required this.name,
-    required this.emoji,
-    required this.mult,
-  });
-
-  final String name;
-  final String emoji;
-  final String mult;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: ProfileGlass(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        borderRadius: 16,
-        blur: 10,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 18)),
-            const SizedBox(width: 8),
-            Text(
-              name,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              mult,
-              style: const TextStyle(
-                color: AppDesign.accentPink,
-                fontWeight: FontWeight.w900,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _ChatMsg {
   const _ChatMsg({
     required this.user,
@@ -629,11 +587,13 @@ class _SideActions extends StatelessWidget {
     required this.likes,
     required this.gifts,
     required this.shares,
+    this.onGift,
   });
 
   final String likes;
   final String gifts;
   final String shares;
+  final VoidCallback? onGift;
 
   @override
   Widget build(BuildContext context) {
@@ -641,7 +601,10 @@ class _SideActions extends StatelessWidget {
       children: [
         _SideButton(icon: Icons.favorite_rounded, label: likes),
         const SizedBox(height: 12),
-        _SideButton(icon: Icons.card_giftcard_rounded, label: gifts),
+        if (onGift != null)
+          LiveGiftSideButton(onTap: onGift!)
+        else
+          _SideButton(icon: Icons.card_giftcard_rounded, label: gifts),
         const SizedBox(height: 12),
         _SideButton(icon: Icons.share_rounded, label: shares),
         const SizedBox(height: 12),
@@ -693,6 +656,7 @@ class _BottomBar extends StatelessWidget {
     required this.onEnd,
     required this.isHost,
     this.trtc,
+    this.onGift,
   });
 
   final TextEditingController chatController;
@@ -700,6 +664,7 @@ class _BottomBar extends StatelessWidget {
   final VoidCallback onEnd;
   final bool isHost;
   final TrtcRoomManager? trtc;
+  final VoidCallback? onGift;
 
   @override
   Widget build(BuildContext context) {
@@ -777,6 +742,17 @@ class _BottomBar extends StatelessWidget {
                       backgroundColor: AppDesign.accentPink,
                     ),
                   ),
+                  if (!isHost && onGift != null) ...[
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: onGift,
+                      child: const _ActionPill(
+                        icon: Icons.card_giftcard_rounded,
+                        label: 'Hediye',
+                        color: AppDesign.accentPurple,
+                      ),
+                    ),
+                  ],
                   if (isHost) ...[
                     const SizedBox(width: 6),
                     _ActionPill(
@@ -890,43 +866,3 @@ class _ActionPill extends StatelessWidget {
   }
 }
 
-class _FloatingGift {
-  _FloatingGift({required this.id, required this.emoji, required this.left});
-
-  final int id;
-  final String emoji;
-  final double left;
-}
-
-class _FloatingHeartWidget extends StatelessWidget {
-  const _FloatingHeartWidget({
-    super.key,
-    required this.gift,
-    required this.controller,
-  });
-
-  final _FloatingGift gift;
-  final AnimationController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final h = MediaQuery.sizeOf(context).height;
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (ctx, child) {
-        final t = (controller.value + gift.id % 100 / 100) % 1.0;
-        return Positioned(
-          left: MediaQuery.sizeOf(context).width * gift.left,
-          bottom: h * 0.15 + t * h * 0.55,
-          child: Opacity(
-            opacity: (1 - t).clamp(0.0, 1.0),
-            child: Text(
-              gift.emoji,
-              style: TextStyle(fontSize: 20 + t * 12),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}

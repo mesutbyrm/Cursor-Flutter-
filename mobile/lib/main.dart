@@ -8,12 +8,18 @@ import 'core/network/cookie_jar_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final supportDir = await getApplicationSupportDirectory();
-  final jar = PersistCookieJar(
-    storage: FileStorage('${supportDir.path}/canlifal_cookies'),
-    persistSession: true,
-  );
-  await jar.forceInit();
+  PersistCookieJar? jar;
+  try {
+    final supportDir = await getApplicationSupportDirectory();
+    jar = PersistCookieJar(
+      storage: FileStorage('${supportDir.path}/canlifal_cookies'),
+      persistSession: true,
+    );
+    await jar.forceInit();
+  } catch (e) {
+    debugPrint('Cookie jar init failed: $e');
+    jar = PersistCookieJar();
+  }
 
   runApp(
     ProviderScope(

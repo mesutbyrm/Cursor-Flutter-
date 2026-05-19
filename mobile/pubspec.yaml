@@ -26,6 +26,9 @@ dependencies:
   google_fonts: ^6.2.1
   tencent_rtc_sdk: ^13.2.2
   permission_handler: ^12.0.1
+  lottie: ^3.3.1
+  flutter_animate: ^4.5.2
+  socket_io_client: ^3.1.2
 
 dev_dependencies:
   flutter_test:
@@ -34,3 +37,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/gifts/lottie/

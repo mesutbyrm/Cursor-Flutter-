@@ -146,10 +146,20 @@ class TrtcRoomManager {
 
   void dispose() {
     leave();
-    TRTCCloud.destroySharedInstance();
     _cloud = null;
     _device = null;
     _listener = null;
+    // destroySharedInstance() uygulama açılışında native çökme yapabiliyor;
+    // paylaşılan örneği yalnızca process sonunda bırakıyoruz.
+  }
+
+  /// Uygulama kapanırken (isteğe bağlı) çağrılabilir.
+  static void destroyEngine() {
+    try {
+      TRTCCloud.destroySharedInstance();
+    } catch (e) {
+      debugPrint('TRTC destroy: $e');
+    }
   }
 }
 
