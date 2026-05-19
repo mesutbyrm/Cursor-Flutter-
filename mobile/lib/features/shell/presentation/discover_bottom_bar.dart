@@ -160,5 +160,5 @@ class _CenterFab extends StatelessWidget {
 
 /// Orta FAB — canlı yayın sekmesine gider.
 void openLiveFromFab(BuildContext context) {
-  context.go('/live');
+  context.push('/live/prep');
 }

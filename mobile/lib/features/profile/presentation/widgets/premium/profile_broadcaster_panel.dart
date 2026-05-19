@@ -18,7 +18,7 @@ class ProfileBroadcasterPanel extends StatelessWidget {
       (
         icon: Icons.event_rounded,
         label: 'Yayın Planla',
-        onTap: () {},
+        onTap: () => context.push('/live/prep'),
       ),
       (
         icon: Icons.insights_rounded,
@@ -33,7 +33,7 @@ class ProfileBroadcasterPanel extends StatelessWidget {
       (
         icon: Icons.tune_rounded,
         label: 'Yayın Ayarları',
-        onTap: () {},
+        onTap: () => context.push('/live/prep'),
       ),
     ];
 

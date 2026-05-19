@@ -5,9 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_design.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
-import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../voice_hub/presentation/voice_rooms_body.dart';
+import '../../domain/entities/live_broadcast_session.dart';
 import '../providers/live_providers.dart';
 
 class LivePage extends ConsumerStatefulWidget {
@@ -53,6 +53,11 @@ class _LivePageState extends ConsumerState<LivePage>
               title: 'Canlı',
               subtitle: 'Yayınlar ve sesli sohbet odaları',
               actions: [
+                DiscoverIconButton(
+                  icon: Icons.videocam_rounded,
+                  tooltip: 'Yayına başla',
+                  onPressed: () => context.push('/live/prep'),
+                ),
                 DiscoverIconButton(
                   icon: Icons.refresh_rounded,
                   onPressed: _refresh,
@@ -113,11 +118,8 @@ class _LiveStreamsTab extends ConsumerWidget {
             return DiscoverGlassCard(
               onTap: s.isLive
                   ? () => context.push(
-                        CanlifalWebRoute.location(
-                          relativePath: '/sohbet/video?watch=${s.id}',
-                          title: s.title,
-                          streamIdForGifts: s.id,
-                        ),
+                        '/live/room',
+                        extra: LiveBroadcastSession.fromStream(s),
                       )
                   : null,
               padding: const EdgeInsets.all(12),

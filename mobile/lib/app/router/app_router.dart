@@ -8,6 +8,9 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
+import '../../features/live/domain/entities/live_broadcast_session.dart';
+import '../../features/live/presentation/pages/live_broadcast_prep_page.dart';
+import '../../features/live/presentation/pages/live_broadcast_room_page.dart';
 import '../../features/live/presentation/pages/live_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
@@ -110,6 +113,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/live/prep',
+        builder: (context, state) => const LiveBroadcastPrepPage(),
+      ),
+      GoRoute(
+        path: '/live/room',
+        builder: (context, state) {
+          final session = state.extra as LiveBroadcastSession?;
+          if (session == null) {
+            return const LiveBroadcastPrepPage();
+          }
+          return LiveBroadcastRoomPage(session: session);
+        },
       ),
       GoRoute(
         path: '/notifications',
