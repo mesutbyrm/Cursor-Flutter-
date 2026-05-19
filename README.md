@@ -1,83 +1,39 @@
-# Canlifal — Flutter Sosyal Medya Uygulaması
+# Canlifal
 
-Modern TikTok tarzı arayüzlü sosyal medya istemcisi. **Clean Architecture**, **Riverpod** state management ve **JWT** ile REST API entegrasyonu.
-
-## Özellikler
-
-| Özellik | Açıklama |
+| Klasör | Açıklama |
 |--------|----------|
-| Giriş / Kayıt | E-posta + şifre, JWT access/refresh token |
-| Ana akış | Dikey video feed (`trend-videos`) |
-| Profiller | Kullanıcı profili, avatar, bio, seviye |
-| Takip | `POST/DELETE /users/:id/follow` |
-| Canlı yayın | Yayın listesi ve izleme |
-| Mesajlaşma | Sohbet odaları ve mesaj geçmişi |
-| Bildirimler | Duyurular ve uygulama içi bildirim paneli |
-| Coin | Bakiye görüntüleme ve harcama |
-| Alt navigasyon | TikTok tarzı glassmorphism bottom bar |
+| [`mobile/`](mobile/) | **Ana Flutter istemcisi** — Clean Architecture, Riverpod, JWT, TikTok tarzı UI (CI/APK bu klasörden derlenir) |
+| [`api/`](api/) | İsteğe bağlı yerel JWT REST API (Node.js + Prisma + PostgreSQL) |
 
-## Mimari
+Test APK: [`APK_DOWNLOAD.md`](APK_DOWNLOAD.md)
 
-```
-lib/
-├── app/                 # MaterialApp, router, tema
-├── core/                # Config, network, storage, bootstrap
-├── domain/              # Entities + repository sözleşmeleri
-├── data/                # Datasources, repository implementasyonları
-└── presentation/        # Riverpod providers, ekranlar, widget'lar
-```
-
-## Kurulum
-
-### Flutter
+## Hızlı başlangıç (Flutter)
 
 ```bash
+cd mobile
 flutter pub get
 flutter analyze
-flutter run
+flutter test
+flutter run --dart-define=API_BASE_URL=https://canlifal.com
 ```
 
-### Üretim API (canlifal.com)
+Ayrıntılı mimari ve uç noktalar: [`mobile/README.md`](mobile/README.md)
 
-```bash
-flutter run \
-  --dart-define=CANLIFAL_API_URL=https://canlifal.com/api \
-  --dart-define=CANLIFAL_WS_URL=wss://canlifal.com/ws
-```
-
-### Yerel JWT API
+## Yerel JWT API (isteğe bağlı)
 
 ```bash
 docker compose up -d
 cp api/.env.example api/.env
-cd api && npm install && npx prisma migrate deploy && npm run dev
+cd api && npm ci && npx prisma migrate deploy && npm run dev
 ```
 
 ```bash
-flutter run \
-  --dart-define=CANLIFAL_API_URL=http://10.0.2.2:3000/api/v1 \
-  --dart-define=CANLIFAL_WS_URL=ws://10.0.2.2:3000/ws
+cd mobile
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1
 ```
 
-> Android emülatörde `localhost` yerine `10.0.2.2` kullanın. iOS simülatörde `http://127.0.0.1:3000/api/v1`.
+> Android emülatörde `localhost` yerine `10.0.2.2` kullanın.
 
-## JWT akışı
+## Cursor Cloud ortamı
 
-1. `POST /auth/login` veya `/auth/register` → `accessToken` + `refreshToken`
-2. Token'lar `flutter_secure_storage` içinde saklanır
-3. İsteklerde `Authorization: Bearer <accessToken>`
-4. 401 yanıtında otomatik `POST /auth/refresh`
-
-## API uç noktaları
-
-Üretim: `https://canlifal.com/api/...`  
-Yerel: `http://localhost:3000/api/v1/...`
-
-Detaylı JWT auth uçları için `api/README` bölümüne bakın. Sosyal uçlar (`trend-videos`, `video-streams`, `chat/rooms`, `coins`, `follow`) yerel API'de seed veri ile çalışır; üretimde canlifal.com public endpoint'leri kullanılır.
-
-## Teknoloji
-
-- Flutter 3.8+ / Dart 3.8+
-- Riverpod 3, GoRouter, Dio
-- Firebase Auth & FCM (isteğe bağlı)
-- LiveKit canlı yayın istemcisi
+Güncelleme betiği: `bash scripts/cursor-update.sh` — ayrıntılar [`AGENTS.md`](AGENTS.md)

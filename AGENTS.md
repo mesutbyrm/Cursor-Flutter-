@@ -1,48 +1,49 @@
-# Canlifal Mobile
+# Canlifal — Agent talimatları
 
 ## Cursor Cloud specific instructions
 
+### Proje düzeni
+
+- **Ana uygulama:** `mobile/` — `canlifal_social` Flutter paketi; tüm geliştirme ve CI komutları buradan çalıştırılır.
+- **Yerel API:** `api/` — Node.js + Express + Prisma JWT API (isteğe bağlı; üretimde `https://canlifal.com` kullanılabilir).
+- **Legacy kök Flutter:** repoda `lib/`, `android/`, `ios/` (kök) hâlâ bulunabilir; yeni işler için **`mobile/` kullanın** — CI yalnızca `mobile/` derler.
+
 ### Ortam
 
-- Flutter SDK: `/opt/flutter/bin` (PATH'te olmalı)
-- Node.js: `nvm` ile kurulu; API geliştirmesi için `api/` klasörü
-- Güncelleme betiği: `bash scripts/cursor-update.sh` (`.cursor/environment.json` içinden çağrılır)
-- **Prisma migrate** yalnızca `api/.env` içinde `DATABASE_URL` tanımlıysa çalışır; aksi halde atlanır (bu normaldir)
+- Flutter SDK: `/opt/flutter/bin` (v3.41.x)
+- Node.js: `nvm` — `api/` bağımlılıkları için
+- Güncelleme betiği: `bash scripts/cursor-update.sh` (`.cursor/environment.json`)
+- **Prisma migrate** yalnızca `api/.env` içinde `DATABASE_URL` varsa çalışır
 
-### Proje yapısı (Clean Architecture)
+### Android derleme (Cloud Agent)
 
-```
-lib/
-├── app/           # Router, tema
-├── core/          # ApiClient, JWT, storage
-├── domain/        # Entities, repository arayüzleri
-├── data/          # Datasources, repository impl
-└── presentation/  # Riverpod, ekranlar
-```
+- `ANDROID_HOME=/opt/android-sdk`; PATH'e `cmdline-tools/latest/bin` ve `platform-tools` ekleyin
+- Java 21 sistem JDK; proje Gradle'da Java 17 uyumluluğu
+- Emülatör yok — doğrulama: `cd mobile && flutter build apk --debug`
+- İlk Gradle derlemesi NDK/platform indirebilir (~3 dk)
 
-Ekranlar `lib/presentation/features/*/screens/` altındadır. Eski `lib/src/` yolu kullanılmaz.
+### Komutlar (`mobile/`)
 
-### Geliştirme komutları
+| Görev | Komut |
+|-------|--------|
+| Bağımlılık | `flutter pub get` |
+| Lint | `dart analyze` |
+| Test | `flutter test` |
+| Debug APK | `flutter build apk --debug` |
+| Özel API | `flutter run --dart-define=API_BASE_URL=https://your-api.example.com` |
 
-```bash
-flutter pub get
-flutter analyze
-flutter test
+### Web hedefi
 
-# Yerel JWT API (isteğe bağlı)
-docker compose up -d
-cp api/.env.example api/.env
-cd api && npm ci && npx prisma migrate deploy && npm run dev
+`path_provider` / `PersistCookieJar` nedeniyle web'de tam çalışmaz; mobil/APK doğrulaması tercih edin.
 
-flutter run --dart-define=CANLIFAL_API_URL=http://127.0.0.1:3000/api/v1
-```
+### API yapılandırması
 
-### Üretim API
-
-Varsayılan: `https://canlifal.com/api` — ek kurulum gerekmez.
+- Üretim varsayılanı: `https://canlifal.com` (`mobile/lib/core/config/env.dart`)
+- Uç noktalar: `mobile/lib/core/network/api_endpoints.dart`
+- Yerel JWT API: `API_BASE_URL=http://127.0.0.1:3000/api/v1` (emülatörde `10.0.2.2`)
 
 ### Dikkat
 
-- Firebase dosyaları (`google-services.json`) repoda yok; uygulama bunları try/catch ile tolere eder
-- `api/node_modules/` commit edilmez; güncelleme betiği `npm ci` çalıştırır
-- Android/iOS platform klasörleri repoda mevcuttur; `flutter create` yeniden çalıştırmayın
+- Firebase yapılandırma dosyaları repoda yok; uygulama eksikliği tolere eder
+- `api/node_modules/` commit edilmez
+- Kök `lib/` ile `mobile/lib/` **aynı uygulama değildir** — çift bakım yapmayın

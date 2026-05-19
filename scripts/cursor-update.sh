@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # Cursor Cloud Agent — idempotent ortam güncelleme betiği.
-# Başarısız opsiyonel adımlar uyarı verir; Flutter bağımlılıkları zorunludur.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -18,8 +17,16 @@ if ! command -v flutter >/dev/null 2>&1; then
   exit 1
 fi
 
-log "Flutter bağımlılıkları"
-flutter pub get
+if [ -f "$ROOT/mobile/pubspec.yaml" ]; then
+  log "Flutter bağımlılıkları (mobile/)"
+  (cd "$ROOT/mobile" && flutter pub get)
+elif [ -f "$ROOT/pubspec.yaml" ]; then
+  log "Flutter bağımlılıkları (kök — legacy)"
+  flutter pub get
+else
+  warn "pubspec.yaml bulunamadı"
+  exit 1
+fi
 
 if [ -f "$ROOT/api/package.json" ] && command -v npm >/dev/null 2>&1; then
   log "Node API bağımlılıkları"
@@ -30,19 +37,13 @@ if [ -f "$ROOT/api/package.json" ] && command -v npm >/dev/null 2>&1; then
     else
       npm install --no-audit --no-fund
     fi
-
-    log "Prisma client üretimi"
     npx prisma generate
-
     if [ -f .env ] && grep -q '^DATABASE_URL=' .env 2>/dev/null; then
-      log "Prisma migrate (DATABASE_URL mevcut)"
-      npx prisma migrate deploy || warn "Prisma migrate başarısız — PostgreSQL çalışıyor mu?"
+      npx prisma migrate deploy || warn "Prisma migrate başarısız"
     else
       log "Prisma migrate atlandı (.env veya DATABASE_URL yok)"
     fi
   )
-else
-  log "Node API atlandı (npm veya api/package.json yok)"
 fi
 
 log "Ortam güncellemesi tamamlandı"

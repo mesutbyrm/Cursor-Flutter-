@@ -1,5 +1,5 @@
 {
   "name": "Canlifal Flutter + API",
   "install": "bash scripts/cursor-update.sh",
-  "start": "cd api && test -f .env || cp .env.example .env; true"
+  "start": "cd api 2>/dev/null && test -f .env || cp .env.example .env; true"
 }

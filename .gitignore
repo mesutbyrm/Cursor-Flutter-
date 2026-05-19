@@ -1,13 +1,18 @@
-# Node API
+# Node API (yerel geliştirme)
 api/node_modules/
 api/.env
 
-# Flutter/Dart
+# Yerel CI/Android SDK kurulumu (depoya eklenmez)
+/android-sdk-ci/
+
+# Flutter/Dart — kök (legacy) ve mobile/
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
 build/
+mobile/.dart_tool/
+mobile/build/
 
 # Android Studio / IntelliJ
 .idea/
@@ -22,9 +27,17 @@ build/
 # Generated mobile build artifacts
 android/.gradle/
 android/app/build/
+mobile/android/.gradle/
+mobile/android/app/build/
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
 ios/Pods/
 ios/.symlinks/
 ios/Runner.xcworkspace/xcuserdata/
 ios/Runner.xcodeproj/xcuserdata/
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Runner.xcworkspace/xcuserdata/
+mobile/ios/Runner.xcodeproj/xcuserdata/
