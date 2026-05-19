@@ -3,6 +3,8 @@ abstract final class ApiEndpoints {
   // --- NextAuth (canlifal.com) ---
   static const authCsrf = '/api/auth/csrf';
   static const authCredentials = '/api/auth/callback/credentials';
+  /// NextAuth Google OAuth başlangıcı (canlifal.com `/api/auth/providers`).
+  static const authSignInGoogle = '/api/auth/signin/google';
   static const authSession = '/api/auth/session';
   static const authSignOut = '/api/auth/signout';
 
@@ -26,6 +28,12 @@ abstract final class ApiEndpoints {
   static const userCredits = '/api/user/credits';
   /// Diğer ortamlar için genel canlı listesi.
   static const liveStreams = '/api/live';
+
+  /// Canlı yayın hediye kataloğu (Tencent / site ile aynı liste).
+  static const videoStreamGiftsCatalog = '/api/video-streams/gifts';
+
+  static String videoStreamGifts(String streamId) =>
+      '/api/video-streams/$streamId/gifts';
 
   static String userProfile(String userId) => '/api/users/$userId';
   static String follow(String userId) => '/api/users/$userId/follow';

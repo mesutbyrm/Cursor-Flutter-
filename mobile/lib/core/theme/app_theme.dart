@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// TikTok tarzı koyu tema — yüksek kontrast, neon vurgular.
 class AppTheme {
@@ -27,7 +28,12 @@ class AppTheme {
         onSurface: onBackground,
       ),
     );
+    final textTheme = GoogleFonts.plusJakartaSansTextTheme(base.textTheme).apply(
+      bodyColor: onBackground,
+      displayColor: onBackground,
+    );
     return base.copyWith(
+      textTheme: textTheme,
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,

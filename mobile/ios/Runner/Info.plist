@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Sesli sohbet odaları ve canlı yayın için mikrofon erişimi gerekebilir.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Canlı yayın ve görüntülü özellikler için kamera erişimi gerekebilir.</string>
 </dict>
 </plist>
