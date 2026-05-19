@@ -15,6 +15,8 @@ abstract final class AppDesign {
   static const Color accentCyan = Color(0xFF25F4EE);
   static const Color liveRed = Color(0xFFFF3B5C);
   static const Color onlineGreen = Color(0xFF3DFF6E);
+  static const Color diamondBlue = Color(0xFF5B8CFF);
+  static const Color coinGold = Color(0xFFFFD54F);
 
   static const double radiusCard = 22;
   static const double radiusChip = 14;
