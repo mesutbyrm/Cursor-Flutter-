@@ -47,3 +47,11 @@
 
 - Firebase yapılandırma dosyaları repoda yok; uygulama eksikliği tolere eder
 - `api/node_modules/` commit edilmez
+
+### APK — her yanıtın sonunda (kullanıcı isteği)
+
+Kullanıcı mesajlarına cevap verirken **en sonda** şu sabit indirme bağlantısını ekle; sürümü `mobile/pubspec.yaml` → `version:` satırından yaz:
+
+- **İndir:** https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
+- **404 / eski build:** [Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml) → `main` → `apk-latest` güncellenir
+- Ayrıntı: [`APK_DOWNLOAD.md`](APK_DOWNLOAD.md)

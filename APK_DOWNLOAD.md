@@ -12,8 +12,9 @@ https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlif
 
 | Sürüm | İndirme |
 |-------|---------|
-| **apk-latest** (otomatik, **1.0.6+7**) | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
-| **v1.0.6** (ana sayfa + navbar) | `main` üzerinden workflow veya apk-latest |
+| **apk-latest** (otomatik, `main` son derleme) | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
+| **Kaynak sürüm (dal)** | `mobile/pubspec.yaml` → `version:` (ör. **1.0.7+8** sesli oda native) |
+| **v1.0.6** (ana sayfa + navbar) | [Releases](https://github.com/mesutbyrm/Cursor-Flutter-/releases) |
 | v1.0.5 | [Releases](https://github.com/mesutbyrm/Cursor-Flutter-/releases/tag/v1.0.5) |
 | v1.0.4 sesli oda (neon UI) | [canlifal-v104-voice-7009.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-v104-voice-7009/canlifal-v104-voice-7009.apk) |
 
