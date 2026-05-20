@@ -47,8 +47,8 @@ class _SocialPageState extends ConsumerState<SocialPage> {
     final social = ref.watch(socialNotifierProvider);
 
     return DiscoverTabScrollPage(
-      title: 'Abonelikler',
-      subtitle: 'Topluluk paylaşımları ve ünlü içerikler',
+      title: 'Sosyal',
+      subtitle: 'Topluluk paylaşımları ve güncel içerikler',
       scrollController: _scroll,
       onRefresh: () => ref.read(socialNotifierProvider.notifier).refresh(),
       actions: [

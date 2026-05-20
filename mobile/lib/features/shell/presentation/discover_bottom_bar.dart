@@ -46,9 +46,9 @@ class DiscoverBottomBar extends StatelessWidget {
                     onTap: () => onTap(0),
                   ),
                   _NavItem(
-                    icon: Icons.workspace_premium_outlined,
-                    selectedIcon: Icons.workspace_premium_rounded,
-                    label: 'Abonelikler',
+                    icon: Icons.groups_outlined,
+                    selectedIcon: Icons.groups_rounded,
+                    label: 'Sosyal',
                     selected: currentIndex == 1,
                     onTap: () => onTap(1),
                   ),
