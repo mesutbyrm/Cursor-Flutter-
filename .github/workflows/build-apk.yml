@@ -1,5 +1,6 @@
-# APK derleme (Flutter konteyner) + GitHub Release (ubuntu, gh CLI).
+# APK derleme (Flutter konteyner) + GitHub Release.
 # Sabit indirme: releases/download/apk-latest/canlifal-mobile-release.apk
+# Versiyonlu: releases/download/v1.1.0-build.42/canlifal-mobile-v1.1.0-build.42.apk
 # Ayrıntı: APK_DOWNLOAD.md
 
 name: Build release APK
@@ -27,10 +28,26 @@ jobs:
     defaults:
       run:
         working-directory: mobile
+    outputs:
+      app_version: ${{ steps.version.outputs.app_version }}
+      build_number: ${{ steps.version.outputs.build_number }}
+      full_version: ${{ steps.version.outputs.full_version }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Sürüm bilgisini oku
+        id: version
+        run: |
+          RAW=$(grep '^version:' pubspec.yaml | sed 's/version: //')
+          APP_VERSION=$(echo "$RAW" | cut -d'+' -f1)
+          BUILD_NUMBER=${{ github.run_number }}
+          FULL_VERSION="${APP_VERSION}-build.${BUILD_NUMBER}"
+          echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "build_number=${BUILD_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "full_version=${FULL_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "📦 Sürüm: ${FULL_VERSION}"
 
       - name: Flutter doctor
         run: flutter doctor -v
@@ -42,18 +59,24 @@ jobs:
         run: dart analyze
 
       - name: Build release APK
-        run: flutter build apk --release
-
-      - name: Stabil dağıtım dosya adı (repo kökü)
         run: |
-          cp build/app/outputs/flutter-apk/app-release.apk \
-            "${GITHUB_WORKSPACE}/canlifal-mobile-release.apk"
+          flutter build apk --release \
+            --build-number=${{ steps.version.outputs.build_number }} \
+            --build-name=${{ steps.version.outputs.app_version }}
+
+      - name: APK dosyalarını kopyala
+        run: |
+          APK_SRC="build/app/outputs/flutter-apk/app-release.apk"
+          cp "$APK_SRC" "${GITHUB_WORKSPACE}/canlifal-mobile-release.apk"
+          cp "$APK_SRC" "${GITHUB_WORKSPACE}/canlifal-mobile-v${{ steps.version.outputs.full_version }}.apk"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: canlifal-social-release-apk
-          path: canlifal-mobile-release.apk
+          path: |
+            canlifal-mobile-release.apk
+            canlifal-mobile-v${{ steps.version.outputs.full_version }}.apk
           if-no-files-found: error
 
   publish:
@@ -75,15 +98,68 @@ jobs:
           set -eux
           ls -la
           test -f canlifal-mobile-release.apk
-          gh release delete apk-latest -y --cleanup-tag --repo "${{ github.repository }}" 2>/dev/null || true
+
+          FULL_VER="${{ needs.build.outputs.full_version }}"
+          APP_VER="${{ needs.build.outputs.app_version }}"
+          BUILD_NUM="${{ needs.build.outputs.build_number }}"
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+
+          # ── 1) Sabit apk-latest sürümü (her zaman son APK) ──
+          gh release delete apk-latest -y --cleanup-tag \
+            --repo "${{ github.repository }}" 2>/dev/null || true
+
           gh release create apk-latest canlifal-mobile-release.apk \
             --repo "${{ github.repository }}" \
             --target "${{ github.sha }}" \
-            --title "Latest test APK" \
-            --notes "Otomatik derleme (main). İş akışı: ${{ github.run_id }}, commit: \`${{ github.sha }}\`."
+            --title "📱 Son APK — v${APP_VER} (Build #${BUILD_NUM})" \
+            --notes "$(cat <<EOF
+          ## Canlifal Mobile v${APP_VER} (Build #${BUILD_NUM})
+
+          **Sabit indirme linki (her zaman son sürüm):**
+          \`\`\`
+          https://github.com/${{ github.repository }}/releases/download/apk-latest/canlifal-mobile-release.apk
+          \`\`\`
+
+          | Bilgi | Değer |
+          |-------|-------|
+          | Sürüm | v${APP_VER} |
+          | Build | #${BUILD_NUM} |
+          | Commit | \`${SHORT_SHA}\` |
+          | İş akışı | [#${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
+          | Tarih | $(date -u '+%Y-%m-%d %H:%M UTC') |
+          EOF
+          )"
+
+          # ── 2) Versiyonlu sürüm (arşiv) ──
+          VERSIONED_TAG="v${FULL_VER}"
+          gh release delete "${VERSIONED_TAG}" -y --cleanup-tag \
+            --repo "${{ github.repository }}" 2>/dev/null || true
+
+          VERSIONED_APK="canlifal-mobile-v${FULL_VER}.apk"
+          gh release create "${VERSIONED_TAG}" "${VERSIONED_APK}" \
+            --repo "${{ github.repository }}" \
+            --target "${{ github.sha }}" \
+            --title "v${APP_VER} Build #${BUILD_NUM}" \
+            --notes "$(cat <<EOF
+          Otomatik derleme.
+
+          | Bilgi | Değer |
+          |-------|-------|
+          | Sürüm | v${APP_VER} |
+          | Build | #${BUILD_NUM} |
+          | Commit | \`${SHORT_SHA}\` |
+
+          **İndirme:**
+          \`\`\`
+          https://github.com/${{ github.repository }}/releases/download/${VERSIONED_TAG}/${VERSIONED_APK}
+          \`\`\`
+          EOF
+          )"
 
       - name: Sürüm etiketi (v*)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: canlifal-mobile-release.apk
+          files: |
+            canlifal-mobile-release.apk
+            canlifal-mobile-v${{ needs.build.outputs.full_version }}.apk
