@@ -2,11 +2,19 @@
 
 ## Doğrudan indirilebilir bağlantı
 
+### v1.0.5 (sabit sürüm)
+
+**https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/v1.0.5/canlifal-mobile-release.apk**
+
+Etiket ve CI tamamlanana kadar 404 alırsanız: [Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml) → **Run workflow** → ilgili dal veya etiket.
+
+### apk-latest (`main` son derleme)
+
 Aşağıdaki adresi tarayıcıda veya telefonda açarak **APK dosyasını** doğrudan indirebilirsiniz (GitHub Releases, `apk-latest` etiketi):
 
 **https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk**
 
-Uygulama içinde giriş / kayıt ekranında da aynı bağlantı metin olarak gösterilir ve kopyalanabilir.
+Uygulama içinde giriş / kayıt ekranında da `apk-latest` bağlantısı metin olarak gösterilir ve kopyalanabilir.
 
 ## Chrome’da indirme %100’de “İndiriliyor…” diye takılı kalıyorsa
 
