@@ -10,12 +10,14 @@ class ProfileWalletSection extends StatelessWidget {
     this.onTopUp,
     this.onEarnings,
     this.onTransactions,
+    this.onSubscriptions,
   });
 
   final int coinBalance;
   final VoidCallback? onTopUp;
   final VoidCallback? onEarnings;
   final VoidCallback? onTransactions;
+  final VoidCallback? onSubscriptions;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +107,12 @@ class ProfileWalletSection extends StatelessWidget {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 10),
+        _WalletAction(
+          icon: Icons.workspace_premium_rounded,
+          label: 'Abonelikler',
+          onTap: onSubscriptions,
         ),
       ],
     );

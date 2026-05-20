@@ -107,6 +107,7 @@ class ProfilePage extends ConsumerWidget {
                           onTransactions: () => ref.invalidate(
                             coinBalanceProvider,
                           ),
+                          onSubscriptions: () => context.go('/social'),
                         ),
                         const SizedBox(height: 22),
                         const ProfileBroadcasterPanel(),
