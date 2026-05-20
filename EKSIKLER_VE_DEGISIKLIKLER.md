@@ -33,6 +33,7 @@ Bu dosya proje durumunu özetler. **Güncel sürüm:** **v1.0.5** — aşağıda
 | 2026-05-20 01:41 | `aa6ea05` | Bu eksikler dosyası ve README bağlantıları. |
 | 2026-05-20 01:44 | `61aa1bc` | 19–20 Mayıs commit kronolojisinin ilk dokümantasyonu (önceki tablo biçimi). |
 | 2026-05-20 02:00 | `8deabe4` | Jeton/davet/shell hızlı işlemler + PR12 (live-voice premium) dalı **merge**. |
+| 2026-05-20 02:16 | `b05f291` | **v1.0.5** sürüm damgası: `pubspec` 1.0.5+1, birleşik saat kronolojisi ve indirme URL’leri (`AppLinks`, README, APK dokümanları). |
 
 **Not:** `main` üzerinde daha önce birleşmiş mobil commit’ler (ör. sosyal API, WebView, Android `INTERNET`, `apk-latest` CI şablonu) bu fark listesinde görünmez; tam geçmiş için `git log origin/main -- mobile/` kullanılabilir. Depo kökündeki örnek Actions şablonları (Clojure, Python, Azure vb.) Flutter davranışını değiştirmez.
 
