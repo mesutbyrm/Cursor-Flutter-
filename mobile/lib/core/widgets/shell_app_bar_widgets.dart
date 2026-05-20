@@ -6,6 +6,23 @@ import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart';
 import 'user_avatar.dart';
 
+/// Profil sekmesi gibi yerlerde: ana akışa (`/feed`) döner.
+class ShellFeedLeading extends StatelessWidget {
+  const ShellFeedLeading({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: IconButton(
+        tooltip: 'Ana akış',
+        onPressed: () => context.go('/feed'),
+        icon: const Icon(Icons.home_rounded),
+      ),
+    );
+  }
+}
+
 /// Alt shell’deki Profil sekmesine (`/profile`) gider.
 class ShellProfileLeading extends ConsumerWidget {
   const ShellProfileLeading({super.key});

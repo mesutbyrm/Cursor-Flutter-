@@ -13,7 +13,13 @@ import '../../live/presentation/providers/live_providers.dart';
 
 /// Sesli sohbet odaları — site `/api/chat/rooms` ile aynı liste; karta basınca uygulama içi WebView.
 class VoiceRoomsBody extends ConsumerWidget {
-  const VoiceRoomsBody({super.key});
+  const VoiceRoomsBody({
+    super.key,
+    this.embeddedInLiveShellTab = false,
+  });
+
+  /// [true] ise Canlı sekmesinde üstte ayrıca AppBar olduğundan grid üst boşluğu küçültülür.
+  final bool embeddedInLiveShellTab;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -105,7 +111,9 @@ class VoiceRoomsBody extends ConsumerWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.fromLTRB(
               16,
-              MediaQuery.paddingOf(context).top + kToolbarHeight + 10,
+              embeddedInLiveShellTab
+                  ? 8
+                  : MediaQuery.paddingOf(context).top + kToolbarHeight + 10,
               16,
               28,
             ),

@@ -64,7 +64,18 @@ class _LivePageState extends ConsumerState<LivePage>
         controller: _tab,
         children: [
           _LiveStreamsTab(),
-          VoiceRoomsBody(),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(14, 8, 14, 0),
+                child: LiveVoiceBranchQuickActions(),
+              ),
+              const Expanded(
+                child: VoiceRoomsBody(embeddedInLiveShellTab: true),
+              ),
+            ],
+          ),
         ],
       ),
     );

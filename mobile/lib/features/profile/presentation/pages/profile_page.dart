@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/shell_app_bar_widgets.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/profile_providers.dart';
 
@@ -18,13 +20,12 @@ class ProfilePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leadingWidth: 48,
+        leading: const ShellFeedLeading(),
         title: const Text('Profil'),
         actions: [
-          IconButton(
-            tooltip: 'Bildirimler',
-            onPressed: () => context.push('/notifications'),
-            icon: const Icon(Icons.notifications_none_rounded),
-          ),
+          const ShellNotificationsButton(),
+          const ShellCoinBalanceAction(),
           IconButton(
             tooltip: 'Çıkış',
             onPressed: () async {
@@ -74,6 +75,8 @@ class ProfilePage extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
+                const ProfileBranchQuickActions(),
+                const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
