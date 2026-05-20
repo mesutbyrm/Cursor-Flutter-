@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/pages/google_auth_web_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
@@ -53,7 +54,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       }
 
       final authed = auth.valueOrNull != null;
-      final publicAuthPages = loc == '/login' || loc == '/register';
+      final publicAuthPages =
+          loc == '/login' || loc == '/register' || loc == '/auth/google';
       final canlifalWeb = loc == '/canlifal-web';
       if (!authed && !publicAuthPages && !canlifalWeb) return '/login';
       if (authed && publicAuthPages) return '/feed';
@@ -71,6 +73,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterPage(),
+      ),
+      GoRoute(
+        path: '/auth/google',
+        builder: (context, state) => const GoogleAuthWebPage(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

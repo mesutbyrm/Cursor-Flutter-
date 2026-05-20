@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.10+11 (2026-05-20)
+
+### Giriş ve çıkış
+
+- Google girişi uygulama içi OAuth (site gezintisi yok, oturum otomatik)
+- Ana ekranda geri tuşu: «Çıkış yap» / «Uygulamayı kapat» / «İptal»
+
 ## 1.0.9+10 (2026-05-20)
 
 ### Canlı yayın TRTC

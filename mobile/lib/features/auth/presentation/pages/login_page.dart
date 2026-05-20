@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
-import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_design.dart';
-import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_shell.dart';
 import '../widgets/google_sign_in_button.dart';
@@ -31,13 +29,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   void _openGoogleOAuth() {
-    context.push(
-      CanlifalWebRoute.location(
-        relativePath: ApiEndpoints.authSignInGoogle,
-        title: 'Google ile giriş',
-        sessionImport: true,
-      ),
-    );
+    context.push('/auth/google');
   }
 
   @override
