@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.15+17 (2026-05-20)
+
+### Premium design system (temel)
+
+- Birleşik `AppColors` + `CanlifalTokens` (Material 3 ThemeExtension)
+- Açık/koyu tema (`themeModeProvider`, varsayılan koyu)
+- Yeniden kullanılabilir UI kit: `PremiumNavBar`, `PremiumCard`, `NeonButton`, `LiveBadge`, `GradientFab`
+- Alt bar: BackdropFilter kaldırıldı (performans)
+- Canlı carousel: `CachedNetworkImage` + `LiveBadge`
+- `DESIGN_SYSTEM.md` migrasyon rehberi
+
 ## 1.0.14+16 (2026-05-20)
 
 ### Keşfet
