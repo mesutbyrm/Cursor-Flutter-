@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.9+10 (2026-05-20)
+
+### Canlı yayın TRTC
+
+- İzleyici: otomatik ses/video alımı (`setDefaultStreamRecvMode`)
+- Uzak yayıncı sesi açık (`muteRemoteAudio` + hoparlör)
+- Oda kimliği tutarlılığı (usersig + `strRoomId`)
+- Yayıncı video/ses callback’leri iyileştirildi
+
 ## 1.0.8+9 (2026-05-20)
 
 ### Sesli sohbet listesi

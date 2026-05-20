@@ -22,9 +22,15 @@ class TrtcRoomManager {
   bool _inRoom = false;
   bool _micOn = true;
   bool _cameraOn = true;
+  bool _isHost = false;
 
   String? remoteAnchorUserId;
+  final ValueNotifier<String?> remoteAnchorUserIdNotifier =
+      ValueNotifier<String?>(null);
   final ValueNotifier<bool> remoteVideoAvailable = ValueNotifier(false);
+
+  int? _boundRemoteViewId;
+  String? _boundRemoteUserId;
 
   bool get isSupported => !kIsWeb;
   bool get inRoom => _inRoom;
@@ -71,6 +77,11 @@ class TrtcRoomManager {
       throw StateError('TRTC yalnızca Android/iOS üzerinde desteklenir');
     }
 
+    final roomId = credentials.roomId.trim();
+    if (roomId.isEmpty) {
+      throw StateError('TRTC oda kimliği boş — yayına bağlanılamadı');
+    }
+
     try {
       await TRTCCloud.sharedInstance();
     } catch (e) {
@@ -84,8 +95,13 @@ class TrtcRoomManager {
       throw StateError('Mikrofon veya kamera izni verilmedi');
     }
 
+    if (_inRoom) {
+      await leave();
+    }
+
     _cloud ??= await TRTCCloud.sharedInstance();
     _device ??= _cloud!.getDeviceManager();
+    _isHost = isHost;
 
     _enterRoomCompleter = Completer<int>();
     if (_cloud != null && _listener != null) {
@@ -95,29 +111,56 @@ class TrtcRoomManager {
       onError: (code, msg) => debugPrint('TRTC error $code: $msg'),
       onEnterRoom: (result) {
         _inRoom = result > 0;
-        debugPrint('TRTC enterRoom: $result');
+        debugPrint('TRTC enterRoom: $result room=$roomId host=$_isHost');
         final c = _enterRoomCompleter;
         if (c != null && !c.isCompleted) c.complete(result);
       },
       onRemoteUserEnterRoom: (userId) {
         debugPrint('TRTC remote enter: $userId');
+        if (!_isHost) {
+          _setRemoteAnchor(userId);
+        }
+      },
+      onRemoteUserLeaveRoom: (userId, _) {
+        if (remoteAnchorUserId == userId) {
+          _clearRemoteAnchor();
+        }
       },
       onUserVideoAvailable: (userId, available) {
-        if (available) {
-          remoteAnchorUserId = userId;
-          remoteVideoAvailable.value = true;
-        } else if (remoteAnchorUserId == userId) {
+        debugPrint('TRTC video $userId available=$available');
+        if (!_isHost && available) {
+          _setRemoteAnchor(userId);
+          _tryBindPendingRemoteView(userId);
+        } else if (remoteAnchorUserId == userId && !available) {
           remoteVideoAvailable.value = false;
+          stopRemoteView(userId);
+        }
+      },
+      onUserAudioAvailable: (userId, available) {
+        debugPrint('TRTC audio $userId available=$available');
+        if (!_isHost) {
+          if (available) {
+            _setRemoteAnchor(userId);
+            _cloud?.muteRemoteAudio(userId, false);
+          } else {
+            _cloud?.muteRemoteAudio(userId, true);
+          }
         }
       },
     );
     _cloud!.registerListener(_listener!);
 
+    // Canlı yayın izleyicisi: otomatik ses/video alımı (enterRoom öncesi).
+    if (!audioOnly) {
+      _cloud!.setDefaultStreamRecvMode(true, true);
+    }
+
     final params = TRTCParams(
       sdkAppId: credentials.sdkAppId,
       userId: credentials.userId,
       userSig: credentials.userSig,
-      strRoomId: credentials.roomId,
+      roomId: 0,
+      strRoomId: roomId,
       role: isHost ? TRTCRoleType.anchor : TRTCRoleType.audience,
     );
 
@@ -144,6 +187,30 @@ class TrtcRoomManager {
       _cloud!.startLocalAudio(TRTCAudioQuality.defaultMode);
       _cloud!.muteLocalVideo(TRTCVideoStreamType.big, false);
       _micOn = true;
+    } else {
+      _device?.setAudioRoute(TXAudioRoute.speakerPhone);
+    }
+  }
+
+  void _setRemoteAnchor(String userId) {
+    if (userId.isEmpty) return;
+    remoteAnchorUserId = userId;
+    remoteAnchorUserIdNotifier.value = userId;
+    remoteVideoAvailable.value = true;
+  }
+
+  void _clearRemoteAnchor() {
+    remoteAnchorUserId = null;
+    remoteAnchorUserIdNotifier.value = null;
+    remoteVideoAvailable.value = false;
+    _boundRemoteViewId = null;
+    _boundRemoteUserId = null;
+  }
+
+  void _tryBindPendingRemoteView(String userId) {
+    final viewId = _boundRemoteViewId;
+    if (viewId != null && _boundRemoteUserId == userId && _cloud != null) {
+      _cloud!.startRemoteView(userId, TRTCVideoStreamType.big, viewId);
     }
   }
 
@@ -161,11 +228,19 @@ class TrtcRoomManager {
   }
 
   void startRemoteView(String userId, int viewId) {
-    _cloud?.startRemoteView(userId, TRTCVideoStreamType.big, viewId);
+    if (_cloud == null || !_inRoom) return;
+    _boundRemoteUserId = userId;
+    _boundRemoteViewId = viewId;
+    _cloud!.startRemoteView(userId, TRTCVideoStreamType.big, viewId);
+    _cloud!.muteRemoteAudio(userId, false);
   }
 
   void stopRemoteView(String userId) {
     _cloud?.stopRemoteView(userId, TRTCVideoStreamType.big);
+    if (_boundRemoteUserId == userId) {
+      _boundRemoteViewId = null;
+      _boundRemoteUserId = null;
+    }
   }
 
   void setMicEnabled(bool enabled) {
@@ -183,7 +258,7 @@ class TrtcRoomManager {
 
   Future<void> leave() async {
     remoteVideoAvailable.value = false;
-    remoteAnchorUserId = null;
+    _clearRemoteAnchor();
     if (_cloud != null) {
       _cloud!.stopLocalPreview();
       _cloud!.stopLocalAudio();
@@ -193,6 +268,7 @@ class TrtcRoomManager {
       }
     }
     _inRoom = false;
+    _isHost = false;
     _micOn = false;
     _cameraOn = false;
   }
@@ -202,11 +278,8 @@ class TrtcRoomManager {
     _cloud = null;
     _device = null;
     _listener = null;
-    // destroySharedInstance() uygulama açılışında native çökme yapabiliyor;
-    // paylaşılan örneği yalnızca process sonunda bırakıyoruz.
   }
 
-  /// Uygulama kapanırken (isteğe bağlı) çağrılabilir.
   static void destroyEngine() {
     try {
       TRTCCloud.destroySharedInstance();
@@ -244,6 +317,7 @@ class TrtcRemoteVideoView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TRTCCloudVideoView(
+      key: ValueKey('remote-$userId'),
       onViewCreated: (viewId) => manager.startRemoteView(userId, viewId),
     );
   }

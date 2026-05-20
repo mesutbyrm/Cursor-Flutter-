@@ -89,16 +89,21 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     if (user == null || !_trtc.isSupported) return;
 
     try {
+      final roomId = widget.session.streamId?.trim();
+      if (roomId == null || roomId.isEmpty) {
+        throw StateError('Yayın odası kimliği eksik');
+      }
+
       var cred = widget.session.trtc;
-      final roomId = widget.session.streamId ?? widget.session.title;
-      final resolved = cred ??
-          await ref.read(trtcRemoteProvider).fetchUserSig(
-                userId: user.id,
-                roomId: roomId,
-              );
+      if (cred == null || !cred.matchesRoom(roomId)) {
+        cred = await ref.read(trtcRemoteProvider).fetchUserSig(
+              userId: user.id,
+              roomId: roomId,
+            );
+      }
 
       await _trtc.join(
-        credentials: resolved,
+        credentials: cred,
         isHost: widget.session.isHost,
         audioOnly: false,
       );
@@ -161,12 +166,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       );
     }
 
-    return ValueListenableBuilder<bool>(
-      valueListenable: _trtc.remoteVideoAvailable,
-      builder: (context, available, _) {
-        final anchor = _trtc.remoteAnchorUserId;
-        if (available && anchor != null && anchor.isNotEmpty) {
-          return TrtcRemoteVideoView(manager: _trtc, userId: anchor);
+    return ValueListenableBuilder<String?>(
+      valueListenable: _trtc.remoteAnchorUserIdNotifier,
+      builder: (context, anchor, _) {
+        if (anchor != null && anchor.isNotEmpty) {
+          return TrtcRemoteVideoView(
+            key: ValueKey(anchor),
+            manager: _trtc,
+            userId: anchor,
+          );
         }
         return _VideoBackground();
       },
