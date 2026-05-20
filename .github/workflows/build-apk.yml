@@ -62,10 +62,33 @@ jobs:
     runs-on: ubuntu-latest
     if: success()
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: İndir APK
         uses: actions/download-artifact@v4
         with:
           name: canlifal-social-release-apk
+
+      - name: Sürüm notları hazırla
+        id: notes
+        run: |
+          set -eux
+          VERSION=$(grep -E '^version:' mobile/pubspec.yaml | head -1 | sed 's/version:[[:space:]]*//')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          {
+            echo "# Canlifal APK ${VERSION}"
+            echo ""
+            echo "**İndir:** https://github.com/${{ github.repository }}/releases/download/apk-latest/canlifal-mobile-release.apk"
+            echo ""
+            echo "## Bu sürümde (CHANGELOG)"
+            echo ""
+            bash scripts/extract-changelog-head.sh
+            echo ""
+            echo "---"
+            echo "Commit: \`${{ github.sha }}\` · Run: ${{ github.run_id }}"
+          } > /tmp/release_notes.md
+          cat /tmp/release_notes.md
 
       - name: apk-latest sürekli sürüm (main)
         if: github.ref == 'refs/heads/main'
@@ -79,8 +102,38 @@ jobs:
           gh release create apk-latest canlifal-mobile-release.apk \
             --repo "${{ github.repository }}" \
             --target "${{ github.sha }}" \
-            --title "Latest test APK" \
-            --notes "Otomatik derleme (main). İş akışı: ${{ github.run_id }}, commit: \`${{ github.sha }}\`."
+            --title "Canlifal APK ${{ steps.notes.outputs.version }}" \
+            --notes-file /tmp/release_notes.md
+
+      - name: Bildirim dosyası (docs/LATEST_APK_BUILD.md)
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eux
+          mkdir -p docs
+          {
+            echo "# Son APK derlemesi"
+            echo ""
+            echo "| Alan | Değer |"
+            echo "|------|--------|"
+            echo "| Sürüm | \`${{ steps.notes.outputs.version }}\` |"
+            echo "| Tarih (UTC) | $(date -u +"%Y-%m-%d %H:%M") |"
+            echo "| Commit | [\`${{ github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) |"
+            echo "| İş akışı | [Run ${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) |"
+            echo "| APK | [canlifal-mobile-release.apk](https://github.com/${{ github.repository }}/releases/download/apk-latest/canlifal-mobile-release.apk) |"
+            echo ""
+            echo "## Özellikler"
+            echo ""
+            bash scripts/extract-changelog-head.sh
+            echo ""
+            echo "_Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._"
+          } > docs/LATEST_APK_BUILD.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/LATEST_APK_BUILD.md
+          git diff --staged --quiet || git commit -m "chore(docs): APK derleme bildirimi ${{ steps.notes.outputs.version }}"
+          git push
 
       - name: Sürüm etiketi (v*)
         if: startsWith(github.ref, 'refs/tags/v')

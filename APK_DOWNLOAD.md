@@ -20,6 +20,14 @@ https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlif
 
 Tüm sürümler: https://github.com/mesutbyrm/Cursor-Flutter-/releases
 
+## Bildirimler
+
+| Yöntem | Nasıl |
+|--------|--------|
+| **Bu dosya (otomatik)** | Her başarılı `main` derlemesinde [`docs/LATEST_APK_BUILD.md`](docs/LATEST_APK_BUILD.md) güncellenir (sürüm + özellikler). |
+| **GitHub e-posta** | Depoda **Watch → Custom → Releases** işaretleyin; `apk-latest` yenilendiğinde e-posta gelir. |
+| **Cursor Agent** | Oturum sonunda agent APK linki + CHANGELOG özeti verir (`scripts/print-build-status.sh`). |
+
 ## Kurulum
 
 1. APK’yı Android cihazınıza indirin.
