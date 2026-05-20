@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.8+9 (2026-05-20)
+
+### Sesli sohbet listesi
+
+- Tüm odalar tek ekranda; **4 sütunlu** kompakt grid karo
+- Büyük tek kart / boş “Tüm odalar” bölümü kaldırıldı
+- Benim oda grid’de ilk sırada altın çerçeve ile
+
 ## 1.0.7+8 (2026-05-20)
 
 ### Sesli sohbet

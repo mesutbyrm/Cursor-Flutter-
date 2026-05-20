@@ -8,9 +8,9 @@ import '../../../core/theme/app_design.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/presentation/providers/live_providers.dart';
-import 'widgets/voice_room_card.dart';
+import 'widgets/voice_room_grid_tile.dart';
 
-/// Sesli sohbet listesi — benim odam + responsive popüler odalar (native Flutter).
+/// Sesli sohbet — tüm odalar 4 sütunlu grid.
 class VoiceRoomsBody extends ConsumerWidget {
   const VoiceRoomsBody({
     super.key,
@@ -48,87 +48,63 @@ class VoiceRoomsBody extends ConsumerWidget {
           );
         }
 
-        final popular = _popularRooms(list, myRoom);
+        final ordered = _orderedRooms(list, myRoom);
+        final mq = MediaQuery.paddingOf(context);
+        final topPad = embeddedInLiveShellTab
+            ? 8.0
+            : mq.top + kToolbarHeight + 4;
 
         return RefreshIndicator(
           color: AppDesign.accentPink,
           backgroundColor: AppDesign.bgPurpleGlow,
           onRefresh: () async => ref.invalidate(voiceRoomsProvider),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final crossCount = width >= 520 ? 2 : 1;
-              final pad = embeddedInLiveShellTab ? 8.0 : 4.0;
-
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(12, topPad, 12, 8),
+                sliver: SliverToBoxAdapter(
+                  child: _RoomsHeader(count: ordered.length),
                 ),
-                padding: EdgeInsets.fromLTRB(16, pad, 16, 100),
-                children: [
-                  if (myRoom != null) ...[
-                    const _SectionTitle(
-                      title: 'Benim odam',
-                      subtitle: 'Kendi sesli sohbet odanıza doğrudan girin',
-                    ),
-                    const SizedBox(height: 12),
-                    VoiceRoomCard(
-                      room: myRoom,
-                      large: true,
-                      highlight: true,
-                      onTap: () => _openRoom(context, myRoom),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                  const _SectionTitle(
-                    title: 'Popüler odalar',
-                    subtitle: 'Canlı sesli sohbet — uygulama içi TRTC',
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(10, 0, 10, 100),
+                sliver: SliverGrid.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: VoiceRoomGridTile.crossAxisCount,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 0.78,
                   ),
-                  const SizedBox(height: 12),
-                  if (popular.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: Text(
-                          'Şu an listelenecek başka oda yok',
-                          style: TextStyle(color: AppDesign.textMuted, fontSize: 13),
-                        ),
-                      ),
-                    )
-                  else
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossCount,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: crossCount == 1 ? 1.55 : 0.92,
-                      ),
-                      itemCount: popular.length,
-                      itemBuilder: (context, i) {
-                        final r = popular[i];
-                        return VoiceRoomCard(
-                          room: r,
-                          onTap: () => _openRoom(context, r),
-                        );
-                      },
-                    ),
-                ],
-              );
-            },
+                  itemCount: ordered.length,
+                  itemBuilder: (context, i) {
+                    final r = ordered[i];
+                    final mine = myRoom != null && r.id == myRoom.id;
+                    return VoiceRoomGridTile(
+                      room: r,
+                      isMine: mine,
+                      onTap: () => _openRoom(context, r),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         );
       },
     );
   }
 
-  static List<VoiceRoomEntity> _popularRooms(
+  /// Benim oda en üstte, sonra diğer tüm odalar.
+  static List<VoiceRoomEntity> _orderedRooms(
     List<VoiceRoomEntity> all,
     VoiceRoomEntity? mine,
   ) {
-    if (mine == null) return all;
-    return all.where((r) => r.id != mine.id).toList();
+    if (mine == null) return List<VoiceRoomEntity>.from(all);
+    final rest = all.where((r) => r.id != mine.id).toList();
+    return [mine, ...rest];
   }
 
   static void _openRoom(BuildContext context, VoiceRoomEntity room) {
@@ -136,27 +112,60 @@ class VoiceRoomsBody extends ConsumerWidget {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.title, required this.subtitle});
+class _RoomsHeader extends StatelessWidget {
+  const _RoomsHeader({required this.count});
 
-  final String title;
-  final String subtitle;
+  final int count;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ShaderMask(
+                shaderCallback: (b) => const LinearGradient(
+                  colors: [AppDesign.accentCyan, AppDesign.accentPink],
+                ).createShader(b),
+                child: const Text(
+                  'Sesli sohbet odaları',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 17,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Tüm odalar · satırda 4 oda',
+                style: TextStyle(
+                  color: AppDesign.textMuted.withValues(alpha: 0.95),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: TextStyle(
-            color: AppDesign.textMuted.withValues(alpha: 0.95),
-            fontSize: 12,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppDesign.accentPurple.withValues(alpha: 0.25),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppDesign.accentPurple.withValues(alpha: 0.45),
+            ),
+          ),
+          child: Text(
+            '$count oda',
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 12,
+              color: AppDesign.accentCyan,
+            ),
           ),
         ),
       ],
