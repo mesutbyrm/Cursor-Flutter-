@@ -102,10 +102,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
             );
       }
 
+      final anchorHint = widget.session.isHost
+          ? cred.userId
+          : (widget.session.hostUserId?.trim().isNotEmpty == true
+              ? widget.session.hostUserId
+              : null);
+
       await _trtc.join(
         credentials: cred,
         isHost: widget.session.isHost,
         audioOnly: false,
+        expectedAnchorUserId: anchorHint,
       );
       if (mounted) setState(() => _rtcReady = true);
     } catch (e) {
@@ -132,10 +139,21 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     if (widget.session.isHost && streamId != null && streamId.isNotEmpty) {
       try {
         await ref.read(liveRepositoryProvider).endVideoStream(streamId);
-      } catch (_) {}
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Yayın sunucuda kapatılamadı: ${ApiException.userMessage(e)}',
+              ),
+            ),
+          );
+        }
+      }
     }
+    ref.invalidate(liveStreamsProvider);
     if (!context.mounted) return;
-    context.go('/live');
+    context.go('/feed');
   }
 
   Widget _videoLayer(LiveBroadcastSession s) {
@@ -231,22 +249,23 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                     onClose: () => _confirmEnd(context),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Row(
-                    children: [
-                      _BadgeChip(
-                        icon: Icons.emoji_events_rounded,
-                        label: 'Haftalık #12',
-                      ),
-                      const SizedBox(width: 8),
-                      _BadgeChip(
-                        icon: Icons.explore_rounded,
-                        label: 'Keşfet',
-                      ),
-                    ],
+                if (s.isHost)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      children: [
+                        _BadgeChip(
+                          icon: Icons.emoji_events_rounded,
+                          label: 'Haftalık #12',
+                        ),
+                        const SizedBox(width: 8),
+                        _BadgeChip(
+                          icon: Icons.explore_rounded,
+                          label: 'Keşfet',
+                        ),
+                      ],
+                    ),
                   ),
-                ),
                 const Spacer(),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),

@@ -15,6 +15,7 @@ class LiveBroadcastSession {
     this.avatarUrl,
     this.viewerCount = 0,
     this.trtc,
+    this.hostUserId,
   });
 
   final String title;
@@ -28,6 +29,7 @@ class LiveBroadcastSession {
   final String? avatarUrl;
   final int viewerCount;
   final TrtcCredentials? trtc;
+  final String? hostUserId;
 
   factory LiveBroadcastSession.fromStream(LiveStreamEntity stream) {
     return LiveBroadcastSession(
@@ -39,12 +41,14 @@ class LiveBroadcastSession {
       streamerHandle: 'yayinci',
       viewerCount: stream.viewerCount,
       trtc: null,
+      hostUserId: stream.hostUserId,
     );
   }
 
   LiveBroadcastSession copyWith({
     String? streamId,
     TrtcCredentials? trtc,
+    String? hostUserId,
   }) {
     return LiveBroadcastSession(
       title: title,
@@ -58,6 +62,7 @@ class LiveBroadcastSession {
       avatarUrl: avatarUrl,
       viewerCount: viewerCount,
       trtc: trtc ?? this.trtc,
+      hostUserId: hostUserId ?? this.hostUserId,
     );
   }
 

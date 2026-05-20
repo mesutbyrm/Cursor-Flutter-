@@ -71,25 +71,54 @@ class LiveRemoteDataSource {
         as String?;
 
     final status = pick(json, ['status'])?.toString().toLowerCase();
-    final isLive = pick(json, ['isLive']) == true ||
-        status == 'live' ||
-        (status == null && pick(json, ['endedAt']) == null);
+    final endedAt = pick(json, ['endedAt', 'ended_at']);
+    final isLiveFlag = pick(json, ['isLive']);
+    final isLive = _resolveIsLive(
+      isLiveFlag: isLiveFlag,
+      status: status,
+      endedAt: endedAt,
+    );
+
+    String? hostUserId;
+    String? streamerName;
+    final u = pick(json, ['user', 'streamer', 'host']);
+    if (u is Map) {
+      final m = asJsonMap(u);
+      hostUserId = pick(m, ['id', 'userId'])?.toString();
+      streamerName = pick(m, ['displayName', 'username', 'name'])?.toString();
+    }
+    streamerName ??=
+        pick(json, ['streamerName', 'hostName', 'username'])?.toString();
+    hostUserId ??= pick(json, ['userId', 'hostUserId', 'streamerId'])
+        ?.toString();
 
     return LiveStreamEntity(
       id: pick(json, ['id', '_id', 'streamId'])?.toString() ?? '',
       title: title,
-      streamerName: () {
-        final u = pick(json, ['user', 'streamer', 'host']);
-        if (u is Map) {
-          final m = asJsonMap(u);
-          return pick(m, ['displayName', 'username', 'name'])?.toString();
-        }
-        return pick(json, ['streamerName', 'hostName', 'username'])?.toString();
-      }(),
+      streamerName: streamerName,
       thumbnailUrl: thumb,
       viewerCount: asInt(pick(json, ['viewerCount', 'viewers', 'watching'])),
       isLive: isLive,
+      hostUserId: hostUserId,
     );
+  }
+
+  static bool _resolveIsLive({
+    required dynamic isLiveFlag,
+    required String? status,
+    required dynamic endedAt,
+  }) {
+    if (isLiveFlag == false) return false;
+    if (status == 'ended' ||
+        status == 'stopped' ||
+        status == 'offline' ||
+        endedAt != null) {
+      return false;
+    }
+    if (isLiveFlag == true || status == 'live' || status == 'active') {
+      return true;
+    }
+    return false;
   }
 
   Future<String> createVideoStream({

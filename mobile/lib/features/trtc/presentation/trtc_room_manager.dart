@@ -31,6 +31,7 @@ class TrtcRoomManager {
 
   int? _boundRemoteViewId;
   String? _boundRemoteUserId;
+  String? _expectedAnchorUserId;
 
   bool get isSupported => !kIsWeb;
   bool get inRoom => _inRoom;
@@ -72,6 +73,7 @@ class TrtcRoomManager {
     required TrtcCredentials credentials,
     required bool isHost,
     required bool audioOnly,
+    String? expectedAnchorUserId,
   }) async {
     if (!isSupported) {
       throw StateError('TRTC yalnızca Android/iOS üzerinde desteklenir');
@@ -102,6 +104,10 @@ class TrtcRoomManager {
     _cloud ??= await TRTCCloud.sharedInstance();
     _device ??= _cloud!.getDeviceManager();
     _isHost = isHost;
+    _expectedAnchorUserId =
+        expectedAnchorUserId?.trim().isNotEmpty == true
+            ? expectedAnchorUserId!.trim()
+            : null;
 
     _enterRoomCompleter = Completer<int>();
     if (_cloud != null && _listener != null) {
@@ -117,9 +123,6 @@ class TrtcRoomManager {
       },
       onRemoteUserEnterRoom: (userId) {
         debugPrint('TRTC remote enter: $userId');
-        if (!_isHost) {
-          _setRemoteAnchor(userId);
-        }
       },
       onRemoteUserLeaveRoom: (userId, _) {
         if (remoteAnchorUserId == userId) {
@@ -140,7 +143,6 @@ class TrtcRoomManager {
         debugPrint('TRTC audio $userId available=$available');
         if (!_isHost) {
           if (available) {
-            _setRemoteAnchor(userId);
             _cloud?.muteRemoteAudio(userId, false);
           } else {
             _cloud?.muteRemoteAudio(userId, true);
@@ -194,6 +196,9 @@ class TrtcRoomManager {
 
   void _setRemoteAnchor(String userId) {
     if (userId.isEmpty) return;
+    if (_expectedAnchorUserId != null && userId != _expectedAnchorUserId) {
+      return;
+    }
     remoteAnchorUserId = userId;
     remoteAnchorUserIdNotifier.value = userId;
     remoteVideoAvailable.value = true;
@@ -258,6 +263,7 @@ class TrtcRoomManager {
 
   Future<void> leave() async {
     remoteVideoAvailable.value = false;
+    _expectedAnchorUserId = null;
     _clearRemoteAnchor();
     if (_cloud != null) {
       _cloud!.stopLocalPreview();

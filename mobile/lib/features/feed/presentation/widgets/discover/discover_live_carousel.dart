@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_design.dart';
 import '../../../../../core/widgets/user_avatar.dart';
-import '../../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
+import '../../../../live/presentation/utils/open_live_stream.dart';
 import 'discover_section_header.dart';
 
 class DiscoverLiveCarousel extends ConsumerStatefulWidget {
@@ -45,6 +45,7 @@ class _DiscoverLiveCarouselState extends ConsumerState<DiscoverLiveCarousel> {
           streams: onAir,
           pageIndex: _page,
           onPageChanged: (i) => setState(() => _page = i),
+          ref: ref,
         );
       },
     );
@@ -56,11 +57,13 @@ class _LiveRowSection extends StatelessWidget {
     required this.streams,
     required this.pageIndex,
     required this.onPageChanged,
+    required this.ref,
   });
 
   final List<LiveStreamEntity> streams;
   final int pageIndex;
   final ValueChanged<int> onPageChanged;
+  final WidgetRef ref;
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +82,13 @@ class _LiveRowSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: streams.length,
             separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (ctx, i) => _LiveBroadcastCard(stream: streams[i]),
+            itemBuilder: (ctx, i) {
+              final stream = streams[i];
+              return _LiveBroadcastCard(
+                stream: stream,
+                onOpen: () => openLiveStreamNative(context, ref, stream),
+              );
+            },
           ),
         ),
         const SizedBox(height: 14),
@@ -168,24 +177,18 @@ class _DemoLive {
 }
 
 class _LiveBroadcastCard extends StatelessWidget {
-  const _LiveBroadcastCard({required this.stream});
+  const _LiveBroadcastCard({
+    required this.stream,
+    required this.onOpen,
+  });
 
   final LiveStreamEntity stream;
-
-  void _open(BuildContext context) {
-    context.push(
-      CanlifalWebRoute.location(
-        relativePath: '/sohbet/video?watch=${stream.id}',
-        title: stream.title,
-        streamIdForGifts: stream.id,
-      ),
-    );
-  }
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
     return _LiveCardShell(
-      onTap: () => _open(context),
+      onTap: onOpen,
       imageUrl: stream.thumbnailUrl,
       name: stream.streamerName ?? 'Yayıncı',
       category: stream.title,
