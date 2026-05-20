@@ -9,7 +9,6 @@ import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/social_providers.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
-import '../widgets/instagram/social_stories_rail.dart';
 
 /// Sosyal akış — Instagram tarzı UI, veri: canlifal.com API.
 class SocialPage extends ConsumerStatefulWidget {
@@ -44,11 +43,7 @@ class _SocialPageState extends ConsumerState<SocialPage> {
   }
 
   Future<void> _refresh() async {
-    ref.invalidate(socialStoryRingsProvider);
-    await Future.wait([
-      ref.read(socialNotifierProvider.notifier).refresh(),
-      ref.read(socialStoryRingsProvider.future),
-    ]);
+    await ref.read(socialNotifierProvider.notifier).refresh();
   }
 
   @override
@@ -74,12 +69,6 @@ class _SocialPageState extends ConsumerState<SocialPage> {
                     parent: BouncingScrollPhysics(),
                   ),
                   slivers: [
-                    const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 8, bottom: 4),
-                        child: SocialStoriesRail(),
-                      ),
-                    ),
                     social.when(
                       loading: () => const SliverFillRemaining(
                         child: Center(child: DiscoverAccentLoader()),

@@ -15,6 +15,8 @@ class PostDto {
     this.fortuneType,
     this.viewCount,
     this.isAutoShare,
+    this.fortuneCount,
+    this.postType,
   });
 
   factory PostDto.fromJson(Map<String, dynamic> json) {
@@ -52,6 +54,7 @@ class PostDto {
             'videoUrl',
             'thumbnailUrl',
             'imageUrl',
+            'image_url',
           ])
           as String?,
       likesCount: likes,
@@ -60,6 +63,8 @@ class PostDto {
       fortuneType: pick(json, ['fortuneType', 'fortune_type'])?.toString(),
       viewCount: asInt(pick(json, ['viewCount', 'views'])),
       isAutoShare: json['isAuto'] == true,
+      fortuneCount: asInt(pick(json, ['fortuneCount', 'fortune_count'])),
+      postType: pick(json, ['postType', 'post_type', 'type'])?.toString(),
     );
   }
 
@@ -73,6 +78,8 @@ class PostDto {
   final String? fortuneType;
   final int? viewCount;
   final bool? isAutoShare;
+  final int? fortuneCount;
+  final String? postType;
 
   PostEntity toEntity() {
     return PostEntity(
@@ -86,6 +93,8 @@ class PostDto {
       fortuneType: fortuneType,
       viewCount: viewCount ?? 0,
       isAutoShare: isAutoShare ?? false,
+      fortuneCount: fortuneCount ?? 0,
+      postType: postType,
     );
   }
 

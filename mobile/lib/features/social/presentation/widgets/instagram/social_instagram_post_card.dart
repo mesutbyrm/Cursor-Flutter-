@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/theme/app_design.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
+import 'social_post_caption.dart';
 
 /// Instagram akış kartı — `/api/social/posts` verisi.
 class SocialInstagramPostCard extends StatefulWidget {
@@ -85,28 +86,7 @@ class _SocialInstagramPostCardState extends State<SocialInstagramPostCard> {
               ),
             ),
           ),
-        if (post.caption != null && post.caption!.trim().isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
-            child: RichText(
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              text: TextSpan(
-                style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.35,
-                  color: AppDesign.textPrimary,
-                ),
-                children: [
-                  TextSpan(
-                    text: '${post.author.display} ',
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  TextSpan(text: post.caption!.trim()),
-                ],
-              ),
-            ),
-          ),
+        SocialPostCaption(post: post),
         if (post.commentsCount > 0)
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
