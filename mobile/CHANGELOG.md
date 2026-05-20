@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.14+16 (2026-05-20)
+
+### Keşfet
+
+- **Canlı Yayın Başlat:** tam yuvarlak tuş, kamera ikonu, nabız glow animasyonu
+
 ## 1.0.13+15 (2026-05-20)
 
 ### Derleme (CI)

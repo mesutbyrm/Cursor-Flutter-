@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/theme/app_design.dart';
 import 'discover_section_header.dart';
 
 class DiscoverQuickActions extends StatelessWidget {
   const DiscoverQuickActions({super.key});
 
-  static const _actions = <_QuickAction>[
-    _QuickAction(
-      icon: Icons.videocam_rounded,
-      label: 'Canlı Yayın\nBaşlat',
-      gradient: [Color(0xFFFF4EC8), Color(0xFFD52DFF)],
-    ),
+  static const _otherActions = <_QuickAction>[
     _QuickAction(
       icon: Icons.graphic_eq_rounded,
       label: 'Sesli Odaya\nGir',
@@ -46,21 +43,30 @@ class DiscoverQuickActions extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: List.generate(_actions.length, (i) {
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    left: i == 0 ? 0 : 4,
-                    right: i == _actions.length - 1 ? 0 : 4,
-                  ),
-                  child: _QuickActionTile(
-                    action: _actions[i],
-                    onTap: () => _handleTap(context, i),
-                  ),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _LiveBroadcastStartButton(
+                  onTap: () => context.push('/live/prep'),
                 ),
-              );
-            }),
+                const SizedBox(width: 6),
+                ...List.generate(_otherActions.length, (i) {
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        left: i == 0 ? 0 : 4,
+                        right: i == _otherActions.length - 1 ? 0 : 4,
+                      ),
+                      child: _QuickActionTile(
+                        action: _otherActions[i],
+                        onTap: () => _handleOtherTap(context, i),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -68,19 +74,112 @@ class DiscoverQuickActions extends StatelessWidget {
     );
   }
 
-  void _handleTap(BuildContext context, int index) {
+  void _handleOtherTap(BuildContext context, int index) {
     switch (index) {
       case 0:
-        context.push('/live/prep');
-      case 1:
         context.push('/voice-rooms');
-      case 2:
+      case 1:
         context.push('/invite-friends');
-      case 3:
+      case 2:
         context.go('/live');
-      case 4:
+      case 3:
         context.push('/jeton-store');
     }
+  }
+}
+
+/// Tam yuvarlak canlı yayın başlat — nabız glow + kamera ikonu.
+class _LiveBroadcastStartButton extends StatelessWidget {
+  const _LiveBroadcastStartButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  static const _size = 64.0;
+  static const _gradient = [Color(0xFFFF4EC8), Color(0xFFD52DFF)];
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 72,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          GestureDetector(
+            onTap: onTap,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: _size + 14,
+                  height: _size + 14,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: _gradient.first.withValues(alpha: 0.55),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .scale(
+                      begin: const Offset(0.92, 0.92),
+                      end: const Offset(1.12, 1.12),
+                      duration: 1400.ms,
+                      curve: Curves.easeInOut,
+                    )
+                    .fade(begin: 0.35, end: 0.85, duration: 1400.ms),
+                Container(
+                  width: _size,
+                  height: _size,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: _gradient,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0x66FF4EC8),
+                        blurRadius: 16,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.videocam_rounded,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .scale(
+                      begin: const Offset(1, 1),
+                      end: const Offset(1.06, 1.06),
+                      duration: 1200.ms,
+                      curve: Curves.easeInOut,
+                    ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Canlı Yayın\nBaşlat',
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            style: TextStyle(
+              color: AppDesign.textSecondary,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              height: 1.1,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
