@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../theme/app_design.dart';
+import '../theme/app_colors.dart';
 
 /// Ana ekranda geri tuşu — doğrudan kapanma yerine çıkış onayı.
 Future<ExitDialogAction?> showExitConfirmDialog(BuildContext context) {
   return showDialog<ExitDialogAction>(
     context: context,
     builder: (ctx) => AlertDialog(
-      backgroundColor: AppDesign.bgPurpleGlow,
+      backgroundColor: AppColors.bgPurpleGlow,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: const Text(
         'Çıkmak istiyor musunuz?',
@@ -16,7 +16,7 @@ Future<ExitDialogAction?> showExitConfirmDialog(BuildContext context) {
       ),
       content: const Text(
         'Hesabınızdan çıkış yapabilir veya uygulamada kalmaya devam edebilirsiniz.',
-        style: TextStyle(color: AppDesign.textMuted, height: 1.35),
+        style: TextStyle(color: AppColors.textMuted, height: 1.35),
       ),
       actions: [
         TextButton(
@@ -30,7 +30,7 @@ Future<ExitDialogAction?> showExitConfirmDialog(BuildContext context) {
         FilledButton(
           onPressed: () => Navigator.pop(ctx, ExitDialogAction.logout),
           style: FilledButton.styleFrom(
-            backgroundColor: AppDesign.liveRed,
+            backgroundColor: AppColors.liveRed,
           ),
           child: const Text('Çıkış yap'),
         ),

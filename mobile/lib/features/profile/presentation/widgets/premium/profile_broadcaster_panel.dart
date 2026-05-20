@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import 'profile_glass.dart';
 
 class ProfileBroadcasterPanel extends StatelessWidget {
@@ -83,12 +83,12 @@ class _BroadcasterTile extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: AppDesign.accentPurple.withValues(alpha: 0.2),
+              color: AppColors.accentPurple.withValues(alpha: 0.2),
             ),
             child: Icon(
               icon,
               size: 22,
-              color: AppDesign.accentPurple.withValues(alpha: 0.95),
+              color: AppColors.accentPurple.withValues(alpha: 0.95),
             ),
           ),
           const SizedBox(height: 8),
@@ -101,7 +101,7 @@ class _BroadcasterTile extends StatelessWidget {
               fontSize: 9,
               fontWeight: FontWeight.w700,
               height: 1.15,
-              color: AppDesign.textSecondary,
+              color: AppColors.textSecondary,
             ),
           ),
         ],

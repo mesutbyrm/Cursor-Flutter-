@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_shell.dart';
 import '../widgets/google_sign_in_button.dart';
@@ -90,7 +90,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             ],
             TextFormField(
               controller: _name,
-              style: const TextStyle(color: AppDesign.textPrimary),
+              style: const TextStyle(color: AppColors.textPrimary),
               decoration: authInputDecoration(
                 labelText: 'Görünen ad (isteğe bağlı)',
                 prefixIcon: Icons.badge_outlined,
@@ -100,7 +100,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             TextFormField(
               controller: _email,
               keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(color: AppDesign.textPrimary),
+              style: const TextStyle(color: AppColors.textPrimary),
               decoration: authInputDecoration(
                 labelText: 'E-posta',
                 prefixIcon: Icons.mail_outline_rounded,
@@ -112,7 +112,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             TextFormField(
               controller: _password,
               obscureText: true,
-              style: const TextStyle(color: AppDesign.textPrimary),
+              style: const TextStyle(color: AppColors.textPrimary),
               decoration: authInputDecoration(
                 labelText: 'Şifre',
                 prefixIcon: Icons.lock_outline_rounded,

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -33,11 +33,11 @@ class ProfilePage extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
+      backgroundColor: AppColors.background,
       body: DiscoverBackground(
         child: RefreshIndicator(
-          color: AppDesign.accentPink,
-          backgroundColor: AppDesign.bgPurpleGlow,
+          color: AppColors.accentPink,
+          backgroundColor: AppColors.bgPurpleGlow,
           onRefresh: refresh,
           child: auth.when(
             loading: () => const Center(child: DiscoverAccentLoader()),

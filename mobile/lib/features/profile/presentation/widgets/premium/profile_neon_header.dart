@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import 'profile_glass.dart';
 
@@ -83,7 +83,7 @@ class ProfileNeonHeader extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             ShaderMask(
-              shaderCallback: (b) => AppDesign.heroGradient.createShader(b),
+              shaderCallback: (b) => AppColors.brandGradient.createShader(b),
               child: const Icon(
                 Icons.verified_rounded,
                 color: Colors.white,
@@ -97,7 +97,7 @@ class ProfileNeonHeader extends StatelessWidget {
           '@$username',
           textAlign: TextAlign.center,
           style: const TextStyle(
-            color: AppDesign.textMuted,
+            color: AppColors.textMuted,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -140,7 +140,7 @@ class ProfileNeonHeader extends StatelessWidget {
             bio!,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: AppDesign.textSecondary,
+              color: AppColors.textSecondary,
               fontSize: 14,
               height: 1.45,
             ),
@@ -176,7 +176,7 @@ class _TopIconButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(10),
-          child: Icon(icon, size: 20, color: AppDesign.textSecondary),
+          child: Icon(icon, size: 20, color: AppColors.textSecondary),
         ),
       ),
     );
@@ -208,7 +208,7 @@ class _DiamondPill extends StatelessWidget {
                   const Color(0xFF3D6BFF).withValues(alpha: 0.9),
                 ],
               ),
-              boxShadow: AppDesign.glowShadow(
+              boxShadow: AppColors.glowShadow(
                 const Color(0xFF5B8CFF),
                 blur: 12,
               ),
@@ -231,7 +231,7 @@ class _DiamondPill extends StatelessWidget {
           Icon(
             Icons.add_circle_rounded,
             size: 16,
-            color: AppDesign.accentCyan.withValues(alpha: 0.9),
+            color: AppColors.accentCyan.withValues(alpha: 0.9),
           ),
         ],
       ),
@@ -250,15 +250,15 @@ class _NeonAvatar extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: AppDesign.heroGradient,
+        gradient: AppColors.brandGradient,
         boxShadow: [
           BoxShadow(
-            color: AppDesign.accentPink.withValues(alpha: 0.55),
+            color: AppColors.accentPink.withValues(alpha: 0.55),
             blurRadius: 32,
             spreadRadius: 2,
           ),
           BoxShadow(
-            color: AppDesign.accentPurple.withValues(alpha: 0.4),
+            color: AppColors.accentPurple.withValues(alpha: 0.4),
             blurRadius: 48,
           ),
         ],
@@ -267,7 +267,7 @@ class _NeonAvatar extends StatelessWidget {
         padding: const EdgeInsets.all(3),
         decoration: const BoxDecoration(
           shape: BoxShape.circle,
-          color: AppDesign.bgBase,
+          color: AppColors.background,
         ),
         child: Stack(
           clipBehavior: Clip.none,
@@ -280,8 +280,8 @@ class _NeonAvatar extends StatelessWidget {
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: AppDesign.heroGradient,
-                  border: Border.all(color: AppDesign.bgBase, width: 2),
+                  gradient: AppColors.brandGradient,
+                  border: Border.all(color: AppColors.background, width: 2),
                 ),
                 child: const Icon(
                   Icons.star_rounded,
@@ -321,7 +321,7 @@ class _StatColumn extends StatelessWidget {
           textAlign: TextAlign.center,
           maxLines: 2,
           style: const TextStyle(
-            color: AppDesign.textMuted,
+            color: AppColors.textMuted,
             fontSize: 10,
             fontWeight: FontWeight.w600,
             height: 1.2,

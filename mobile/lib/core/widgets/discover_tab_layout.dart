@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_design.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
 import 'discover_refresh.dart';
 import '../../features/feed/presentation/widgets/discover/discover_background.dart';
 
@@ -78,7 +79,7 @@ class DiscoverTabPage extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
+      backgroundColor: AppColors.background,
       body: DiscoverBackground(child: content),
     );
   }
@@ -143,7 +144,7 @@ class DiscoverTabScrollPage extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
+      backgroundColor: AppColors.background,
       body: DiscoverBackground(
         child: DiscoverRefresh.wrap(
           onRefresh: onRefresh ?? () async {},
@@ -243,7 +244,7 @@ class DiscoverSubPage extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
+      backgroundColor: AppColors.background,
       body: DiscoverBackground(child: content),
     );
   }
@@ -273,7 +274,7 @@ class DiscoverTabHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ShaderMask(
-                  shaderCallback: (b) => AppDesign.heroGradient.createShader(b),
+                  shaderCallback: (b) => AppColors.brandGradient.createShader(b),
                   child: Text(
                     title,
                     style: const TextStyle(
@@ -290,7 +291,7 @@ class DiscoverTabHeader extends StatelessWidget {
                     subtitle!,
                     style: const TextStyle(
                       fontSize: 14,
-                      color: AppDesign.textSecondary,
+                      color: AppColors.textSecondary,
                       height: 1.3,
                     ),
                   ),
@@ -325,7 +326,7 @@ class DiscoverIconButton extends StatelessWidget {
       child: IconButton(
         tooltip: tooltip,
         onPressed: onPressed,
-        icon: Icon(icon, color: AppDesign.textSecondary, size: 24),
+        icon: Icon(icon, color: AppColors.textSecondary, size: 24),
       ),
     );
   }
@@ -347,11 +348,11 @@ class DiscoverGlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final border = borderColor ?? AppDesign.accentPurple.withValues(alpha: 0.28);
+    final border = borderColor ?? AppColors.accentPurple.withValues(alpha: 0.28);
     final content = Container(
       padding: padding,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppDesign.radiusCard),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         color: const Color(0xFF16162A).withValues(alpha: 0.88),
         border: Border.all(color: border, width: 1),
         boxShadow: [
@@ -370,7 +371,7 @@ class DiscoverGlassCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDesign.radiusCard),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         child: content,
       ),
     );
@@ -399,13 +400,13 @@ class DiscoverEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 52, color: AppDesign.textMuted),
+            Icon(icon, size: 52, color: AppColors.textMuted),
             const SizedBox(height: 16),
             Text(
               message,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                color: AppDesign.textSecondary,
+                color: AppColors.textSecondary,
                 height: 1.4,
                 fontSize: 15,
               ),
@@ -415,7 +416,7 @@ class DiscoverEmptyState extends StatelessWidget {
               FilledButton(
                 onPressed: action,
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppDesign.accentPink,
+                  backgroundColor: AppColors.accentPink,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
@@ -446,7 +447,7 @@ class DiscoverAccentLoader extends StatelessWidget {
         height: 32,
         child: CircularProgressIndicator(
           strokeWidth: 2.5,
-          color: AppDesign.accentPink,
+          color: AppColors.accentPink,
         ),
       ),
     );
@@ -477,17 +478,17 @@ class DiscoverSegmentedTabs extends StatelessWidget implements PreferredSizeWidg
           color: Colors.white.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppDesign.accentPurple.withValues(alpha: 0.25),
+            color: AppColors.accentPurple.withValues(alpha: 0.25),
           ),
         ),
         child: TabBar(
           controller: controller,
           indicator: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            gradient: AppDesign.heroGradient,
+            gradient: AppColors.brandGradient,
           ),
           labelColor: Colors.white,
-          unselectedLabelColor: AppDesign.textMuted,
+          unselectedLabelColor: AppColors.textMuted,
           labelStyle: const TextStyle(
             fontWeight: FontWeight.w800,
             fontSize: 12,

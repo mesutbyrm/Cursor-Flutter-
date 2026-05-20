@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../providers/profile_providers.dart';
@@ -35,7 +35,7 @@ class UserProfilePage extends ConsumerWidget {
                       padding: const EdgeInsets.all(3),
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: AppDesign.heroGradient,
+                        gradient: AppColors.brandGradient,
                       ),
                       child: UserAvatar(url: user.avatarUrl, radius: 36),
                     ),
@@ -54,7 +54,7 @@ class UserProfilePage extends ConsumerWidget {
                           Text(
                             '@${user.username}',
                             style: const TextStyle(
-                              color: AppDesign.textMuted,
+                              color: AppColors.textMuted,
                               fontSize: 14,
                             ),
                           ),
@@ -94,7 +94,7 @@ class UserProfilePage extends ConsumerWidget {
                   minimumSize: const Size.fromHeight(52),
                   backgroundColor: user.isFollowing
                       ? Colors.white.withValues(alpha: 0.12)
-                      : AppDesign.accentPink,
+                      : AppColors.accentPink,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -111,7 +111,7 @@ class UserProfilePage extends ConsumerWidget {
                   child: Text(
                     user.bio!,
                     style: const TextStyle(
-                      color: AppDesign.textSecondary,
+                      color: AppColors.textSecondary,
                       height: 1.45,
                     ),
                   ),
@@ -145,7 +145,7 @@ class _Stat extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(color: AppDesign.textMuted, fontSize: 13),
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
         ),
       ],
     );

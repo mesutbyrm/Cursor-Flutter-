@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 
 class VoiceRoomBottomBar extends StatelessWidget {
   const VoiceRoomBottomBar({
@@ -42,7 +42,7 @@ class VoiceRoomBottomBar extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.65),
             border: Border(
-              top: BorderSide(color: AppDesign.accentPurple.withValues(alpha: 0.35)),
+              top: BorderSide(color: AppColors.accentPurple.withValues(alpha: 0.35)),
             ),
           ),
           child: Column(
@@ -54,7 +54,7 @@ class VoiceRoomBottomBar extends StatelessWidget {
                     onPressed: onMicToggle,
                     icon: Icon(
                       micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
-                      color: micOn ? AppDesign.accentPink : AppDesign.textMuted,
+                      color: micOn ? AppColors.accentPink : AppColors.textMuted,
                     ),
                   ),
                   Expanded(
@@ -64,7 +64,7 @@ class VoiceRoomBottomBar extends StatelessWidget {
                       decoration: InputDecoration(
                         hintText: 'Mesajınızı yazın...',
                         hintStyle: TextStyle(
-                          color: AppDesign.textMuted.withValues(alpha: 0.8),
+                          color: AppColors.textMuted.withValues(alpha: 0.8),
                           fontSize: 13,
                         ),
                         filled: true,
@@ -87,15 +87,15 @@ class VoiceRoomBottomBar extends StatelessWidget {
                     icon: Icon(
                       Icons.send_rounded,
                       color: sending
-                          ? AppDesign.textMuted
-                          : AppDesign.accentPurple,
+                          ? AppColors.textMuted
+                          : AppColors.accentPurple,
                     ),
                   ),
                   IconButton(
                     onPressed: onGiftTap,
                     icon: const Icon(
                       Icons.card_giftcard_rounded,
-                      color: AppDesign.coinGold,
+                      color: AppColors.coinGold,
                     ),
                   ),
                 ],
@@ -108,7 +108,7 @@ class VoiceRoomBottomBar extends StatelessWidget {
                     style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 12,
-                      color: AppDesign.diamondBlue,
+                      color: AppColors.diamondBlue,
                     ),
                   ),
                   const Spacer(),
@@ -123,7 +123,7 @@ class VoiceRoomBottomBar extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Material(
-                    color: AppDesign.accentPurple,
+                    color: AppColors.accentPurple,
                     borderRadius: BorderRadius.circular(20),
                     child: InkWell(
                       onTap: onTopUp,

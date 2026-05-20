@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
@@ -37,7 +37,7 @@ Future<void> showVoiceRoomGiftPicker(
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppDesign.bgPurpleGlow,
+    backgroundColor: AppColors.bgPurpleGlow,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -84,7 +84,7 @@ Future<void> showVoiceRoomGiftPicker(
                         padding: EdgeInsets.symmetric(horizontal: 20),
                         child: Text(
                           'Jeton bakiyenizden düşülür. Oda sohbetinde herkese görünür.',
-                          style: TextStyle(color: AppDesign.textMuted, fontSize: 12),
+                          style: TextStyle(color: AppColors.textMuted, fontSize: 12),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -184,7 +184,7 @@ class _GiftTile extends StatelessWidget {
               ),
               Text(
                 '${gift.price} jeton',
-                style: const TextStyle(fontSize: 10, color: AppDesign.textMuted),
+                style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
               ),
             ],
           ),

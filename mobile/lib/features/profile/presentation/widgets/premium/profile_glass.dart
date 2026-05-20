@@ -2,7 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 
 /// Cam efektli kart — profil sayfası bileşenleri için.
 class ProfileGlass extends StatelessWidget {
@@ -10,7 +11,7 @@ class ProfileGlass extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(16),
-    this.borderRadius = AppDesign.radiusCard,
+    this.borderRadius = AppSpacing.radiusLg,
     this.borderColor,
     this.gradient,
     this.onTap,
@@ -27,7 +28,7 @@ class ProfileGlass extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final border = borderColor ?? AppDesign.accentPurple.withValues(alpha: 0.28);
+    final border = borderColor ?? AppColors.accentPurple.withValues(alpha: 0.28);
 
     Widget content = ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
@@ -49,7 +50,7 @@ class ProfileGlass extends StatelessWidget {
             border: Border.all(color: border, width: 1),
             boxShadow: [
               BoxShadow(
-                color: AppDesign.accentPurple.withValues(alpha: 0.12),
+                color: AppColors.accentPurple.withValues(alpha: 0.12),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),

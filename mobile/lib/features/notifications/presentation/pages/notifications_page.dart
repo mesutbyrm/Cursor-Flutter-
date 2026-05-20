@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../providers/notifications_providers.dart';
 
@@ -54,7 +54,7 @@ class NotificationsPage extends ConsumerWidget {
                 },
                 borderColor: n.read
                     ? null
-                    : AppDesign.accentPink.withValues(alpha: 0.45),
+                    : AppColors.accentPink.withValues(alpha: 0.45),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 14,
@@ -68,7 +68,7 @@ class NotificationsPage extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(12),
                         gradient: n.read
                             ? null
-                            : AppDesign.heroGradient,
+                            : AppColors.brandGradient,
                         color: n.read
                             ? Colors.white.withValues(alpha: 0.06)
                             : null,
@@ -77,7 +77,7 @@ class NotificationsPage extends ConsumerWidget {
                         Icons.notifications_rounded,
                         size: 22,
                         color: n.read
-                            ? AppDesign.textMuted
+                            ? AppColors.textMuted
                             : Colors.white,
                       ),
                     ),
@@ -100,7 +100,7 @@ class NotificationsPage extends ConsumerWidget {
                             Text(
                               n.body!,
                               style: const TextStyle(
-                                color: AppDesign.textMuted,
+                                color: AppColors.textMuted,
                                 fontSize: 13,
                                 height: 1.35,
                               ),
@@ -113,7 +113,7 @@ class NotificationsPage extends ConsumerWidget {
                       Text(
                         fmt.format(n.createdAt!.toLocal()),
                         style: const TextStyle(
-                          color: AppDesign.textMuted,
+                          color: AppColors.textMuted,
                           fontSize: 11,
                         ),
                       ),

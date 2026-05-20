@@ -3,13 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../../../voice_hub/presentation/voice_rooms_body.dart';
 import '../providers/live_providers.dart';
 import '../utils/open_live_stream.dart';
+import '../widgets/live_stream_list_tile.dart';
 
 class LivePage extends ConsumerStatefulWidget {
   const LivePage({super.key});
@@ -44,7 +45,7 @@ class _LivePageState extends ConsumerState<LivePage>
     final top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
+      backgroundColor: AppColors.background,
       body: DiscoverBackground(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -145,80 +146,12 @@ class _LiveStreamsTab extends ConsumerWidget {
                 separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (ctx, i) {
                   final s = streams[i];
-                  return DiscoverGlassCard(
-                    onTap: s.isLive
-                        ? () => openLiveStreamNative(context, ref, s)
-                        : null,
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: SizedBox(
-                            width: 72,
-                            height: 88,
-                            child: s.thumbnailUrl != null &&
-                                    s.thumbnailUrl!.isNotEmpty
-                                ? Image.network(
-                                    s.thumbnailUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, _, _) => _thumbFallback(),
-                                  )
-                                : _thumbFallback(),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (s.isLive)
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 6),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppDesign.liveRed,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: const Text(
-                                    'LIVE',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              Text(
-                                s.title,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${s.streamerName ?? 'Yayıncı'} · ${s.viewerCount} izleyici',
-                                style: const TextStyle(
-                                  color: AppDesign.textMuted,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (s.isLive)
-                          Icon(
-                            Icons.play_circle_fill_rounded,
-                            color: AppDesign.accentPink.withValues(alpha: 0.9),
-                            size: 36,
-                          ),
-                      ],
+                  return RepaintBoundary(
+                    child: LiveStreamListTile(
+                      stream: s,
+                      onTap: s.isLive
+                          ? () => openLiveStreamNative(context, ref, s)
+                          : null,
                     ),
                   );
                 },
@@ -227,22 +160,6 @@ class _LiveStreamsTab extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  static Widget _thumbFallback() {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppDesign.accentPurple.withValues(alpha: 0.5),
-            AppDesign.bgBase,
-          ],
-        ),
-      ),
-      child: const Center(
-        child: Icon(Icons.live_tv_rounded, color: Colors.white54, size: 32),
-      ),
     );
   }
 }

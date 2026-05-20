@@ -48,9 +48,9 @@ Varsayılan: **dark**. `MaterialApp` hem `theme` hem `darkTheme` tanımlı.
 1. ✅ Shell / nav bar / section header
 2. ✅ Keşfet (`feed_page`, discover widgets)
 3. ✅ Sosyal (`social_page`, stories rail, instagram widgets)
-4. Canlı (`live_page`, broadcast, gifts)
-5. Sesli oda / TRTC
-6. Profil / auth / mesajlar
+4. ✅ Canlı (`live_page`, prep, room, gifts)
+5. ✅ Sesli oda / TRTC
+6. ✅ Profil / auth / mesajlar / bildirimler
 
 Her ekranda:
 

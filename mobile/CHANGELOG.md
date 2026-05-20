@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.17+19 (2026-05-20)
+
+### Premium UI — tüm modüller
+
+- Canlı: `LiveStreamListTile`, cache thumb, `LiveBadge`, `AppColors`
+- Sesli oda, profil, auth, mesajlar, bildirimler: `AppDesign` → `AppColors` birleşimi
+- `discover_tab_layout` token düzeltmeleri
+
 ## 1.0.16+18 (2026-05-20)
 
 ### Premium UI — Keşfet & Sosyal

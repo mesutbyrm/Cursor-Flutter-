@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../utils/voice_room_seat_layout.dart';
@@ -52,10 +52,10 @@ class VoiceRoomSeatsPanel extends StatelessWidget {
               children: [
                 Text(
                   'Oda ID: ${room.id.length > 14 ? '${room.id.substring(0, 14)}…' : room.id}',
-                  style: const TextStyle(fontSize: 10, color: AppDesign.textMuted),
+                  style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
                 ),
                 const SizedBox(width: 6),
-                const Icon(Icons.copy_rounded, size: 12, color: AppDesign.textMuted),
+                const Icon(Icons.copy_rounded, size: 12, color: AppColors.textMuted),
               ],
             ),
           ),
@@ -118,7 +118,7 @@ class _OwnerReservedSeat extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppDesign.coinGold.withValues(alpha: 0.55),
+                    color: AppColors.coinGold.withValues(alpha: 0.55),
                     width: 2,
                     strokeAlign: BorderSide.strokeAlignInside,
                   ),
@@ -136,10 +136,10 @@ class _OwnerReservedSeat extends StatelessWidget {
                           ),
                         )
                       : ColoredBox(
-                          color: AppDesign.bgPurpleGlow.withValues(alpha: 0.6),
+                          color: AppColors.bgPurpleGlow.withValues(alpha: 0.6),
                           child: Icon(
                             Icons.person_outline_rounded,
-                            color: AppDesign.coinGold.withValues(alpha: 0.7),
+                            color: AppColors.coinGold.withValues(alpha: 0.7),
                             size: 28,
                           ),
                         ),
@@ -160,7 +160,7 @@ class _OwnerReservedSeat extends StatelessWidget {
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w800,
-              color: AppDesign.coinGold.withValues(alpha: 0.85),
+              color: AppColors.coinGold.withValues(alpha: 0.85),
             ),
           ),
         ],
@@ -187,7 +187,7 @@ class _OccupiedSeat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderColor =
-        isOwner ? AppDesign.coinGold : (speaking ? AppDesign.accentPink : AppDesign.accentPurple);
+        isOwner ? AppColors.coinGold : (speaking ? AppColors.accentPink : AppColors.accentPurple);
 
     return SizedBox(
       width: 64,
@@ -203,14 +203,14 @@ class _OccupiedSeat extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: borderColor, width: isOwner ? 3 : 2),
                   boxShadow: speaking
-                      ? AppDesign.glowShadow(AppDesign.accentPink, blur: 12)
-                      : (isOwner ? AppDesign.glowShadow(AppDesign.coinGold, blur: 10) : null),
+                      ? AppColors.glowShadow(AppColors.accentPink, blur: 12)
+                      : (isOwner ? AppColors.glowShadow(AppColors.coinGold, blur: 10) : null),
                 ),
                 child: ClipOval(
                   child: avatarUrl != null && avatarUrl!.isNotEmpty
                       ? CachedNetworkImage(imageUrl: avatarUrl!, fit: BoxFit.cover)
                       : ColoredBox(
-                          color: AppDesign.bgPurpleGlow,
+                          color: AppColors.bgPurpleGlow,
                           child: Icon(Icons.person, color: Colors.white54, size: 28),
                         ),
                 ),
@@ -227,7 +227,7 @@ class _OccupiedSeat extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(3),
                   decoration: const BoxDecoration(
-                    color: AppDesign.onlineGreen,
+                    color: AppColors.onlineGreen,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.mic_rounded, size: 10, color: Colors.white),
@@ -243,7 +243,7 @@ class _OccupiedSeat extends StatelessWidget {
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w800,
-              color: isOwner ? AppDesign.coinGold : Colors.white,
+              color: isOwner ? AppColors.coinGold : Colors.white,
             ),
           ),
         ],

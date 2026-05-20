@@ -4,7 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../profile/presentation/widgets/premium/profile_glass.dart';
 
@@ -43,7 +43,7 @@ class VoiceRoomTopBar extends StatelessWidget {
             color: Colors.black.withValues(alpha: 0.45),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: AppDesign.accentPurple.withValues(alpha: 0.35),
+              color: AppColors.accentPurple.withValues(alpha: 0.35),
             ),
           ),
           child: Row(
@@ -80,10 +80,10 @@ class VoiceRoomTopBar extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppDesign.coinGold.withValues(alpha: 0.2),
+                            color: AppColors.coinGold.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: AppDesign.coinGold.withValues(alpha: 0.5),
+                              color: AppColors.coinGold.withValues(alpha: 0.5),
                             ),
                           ),
                           child: Text(
@@ -93,7 +93,7 @@ class VoiceRoomTopBar extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 7,
                               fontWeight: FontWeight.w900,
-                              color: AppDesign.coinGold,
+                              color: AppColors.coinGold,
                             ),
                           ),
                         ),
@@ -109,7 +109,7 @@ class VoiceRoomTopBar extends StatelessWidget {
                       child: Text(
                         'ID: $shortId',
                         style: const TextStyle(
-                          color: AppDesign.textMuted,
+                          color: AppColors.textMuted,
                           fontSize: 10,
                         ),
                       ),
@@ -122,7 +122,7 @@ class VoiceRoomTopBar extends StatelessWidget {
                 _HeaderIcon(icon: Icons.share_outlined, onTap: onShare!),
               _HeaderIcon(
                 icon: Icons.power_settings_new_rounded,
-                color: AppDesign.liveRed,
+                color: AppColors.liveRed,
                 onTap: onExit,
               ),
             ],
@@ -146,14 +146,14 @@ class _RoomAvatar extends StatelessWidget {
       height: 40,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppDesign.accentPink, width: 2),
-        boxShadow: AppDesign.glowShadow(AppDesign.accentPink, blur: 10),
+        border: Border.all(color: AppColors.accentPink, width: 2),
+        boxShadow: AppColors.glowShadow(AppColors.accentPink, blur: 10),
       ),
       child: ClipOval(
         child: url != null && url!.isNotEmpty
             ? CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover)
             : ColoredBox(
-                color: AppDesign.bgPurpleGlow,
+                color: AppColors.bgPurpleGlow,
                 child: Center(
                   child: Text(icon ?? '💬', style: const TextStyle(fontSize: 20)),
                 ),
@@ -178,7 +178,7 @@ class _OnlineChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.people_alt_rounded, size: 14, color: AppDesign.accentCyan),
+            const Icon(Icons.people_alt_rounded, size: 14, color: AppColors.accentCyan),
             const SizedBox(width: 4),
             Text(
               '$count',

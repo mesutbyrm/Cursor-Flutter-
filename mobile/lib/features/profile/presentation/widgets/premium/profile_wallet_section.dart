@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import 'profile_glass.dart';
 
 class ProfileWalletSection extends StatelessWidget {
@@ -63,7 +63,7 @@ class ProfileWalletSection extends StatelessWidget {
                     const Text(
                       'Coin Bakiyesi',
                       style: TextStyle(
-                        color: AppDesign.textMuted,
+                        color: AppColors.textMuted,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -144,12 +144,12 @@ class _WalletAction extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               gradient: LinearGradient(
                 colors: [
-                  AppDesign.accentPurple.withValues(alpha: 0.35),
-                  AppDesign.accentPink.withValues(alpha: 0.2),
+                  AppColors.accentPurple.withValues(alpha: 0.35),
+                  AppColors.accentPink.withValues(alpha: 0.2),
                 ],
               ),
             ),
-            child: Icon(icon, size: 18, color: AppDesign.accentCyan),
+            child: Icon(icon, size: 18, color: AppColors.accentCyan),
           ),
           const SizedBox(width: 8),
           Expanded(

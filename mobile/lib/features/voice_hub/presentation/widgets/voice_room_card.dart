@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 
@@ -25,8 +25,8 @@ class VoiceRoomCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = room.backgroundImageUrl;
     final borderColor = highlight
-        ? AppDesign.coinGold.withValues(alpha: 0.7)
-        : AppDesign.accentPurple.withValues(alpha: 0.45);
+        ? AppColors.coinGold.withValues(alpha: 0.7)
+        : AppColors.accentPurple.withValues(alpha: 0.45);
 
     return Material(
       color: Colors.transparent,
@@ -37,8 +37,8 @@ class VoiceRoomCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
             border: Border.all(color: borderColor, width: highlight ? 2 : 1),
-            boxShadow: AppDesign.glowShadow(
-              highlight ? AppDesign.coinGold : AppDesign.accentPink,
+            boxShadow: AppColors.glowShadow(
+              highlight ? AppColors.coinGold : AppColors.accentPink,
               blur: highlight ? 20 : 14,
             ),
           ),
@@ -99,10 +99,10 @@ class VoiceRoomCard extends StatelessWidget {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: AppDesign.coinGold.withValues(alpha: 0.25),
+                                color: AppColors.coinGold.withValues(alpha: 0.25),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: AppDesign.coinGold.withValues(alpha: 0.6),
+                                  color: AppColors.coinGold.withValues(alpha: 0.6),
                                 ),
                               ),
                               child: const Text(
@@ -110,7 +110,7 @@ class VoiceRoomCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w900,
-                                  color: AppDesign.coinGold,
+                                  color: AppColors.coinGold,
                                 ),
                               ),
                             ),
@@ -138,7 +138,7 @@ class VoiceRoomCard extends StatelessWidget {
                           maxLines: large ? 2 : 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: AppDesign.textMuted,
+                            color: AppColors.textMuted,
                             fontSize: 11,
                           ),
                         ),
@@ -183,13 +183,13 @@ class VoiceRoomCard extends StatelessWidget {
                                 Icon(
                                   Icons.headset_mic_rounded,
                                   size: 14,
-                                  color: AppDesign.accentCyan.withValues(alpha: 0.95),
+                                  color: AppColors.accentCyan.withValues(alpha: 0.95),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   'Katıl',
                                   style: TextStyle(
-                                    color: AppDesign.accentCyan.withValues(alpha: 0.95),
+                                    color: AppColors.accentCyan.withValues(alpha: 0.95),
                                     fontWeight: FontWeight.w800,
                                     fontSize: 11,
                                   ),
@@ -244,9 +244,9 @@ class _OnlinePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppDesign.onlineGreen.withValues(alpha: 0.22),
+        color: AppColors.onlineGreen.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppDesign.onlineGreen.withValues(alpha: 0.55)),
+        border: Border.all(color: AppColors.onlineGreen.withValues(alpha: 0.55)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -255,7 +255,7 @@ class _OnlinePill extends StatelessWidget {
             width: 6,
             height: 6,
             decoration: const BoxDecoration(
-              color: AppDesign.onlineGreen,
+              color: AppColors.onlineGreen,
               shape: BoxShape.circle,
             ),
           ),

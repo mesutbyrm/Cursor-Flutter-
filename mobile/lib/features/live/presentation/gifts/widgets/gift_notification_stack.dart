@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../domain/entities/live_gift_catalog.dart';
 import '../../../domain/entities/live_gift_event.dart';
@@ -47,7 +47,7 @@ class _GiftBanner extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          boxShadow: AppDesign.glowShadow(AppDesign.accentPink, blur: 18),
+          boxShadow: AppColors.glowShadow(AppColors.accentPink, blur: 18),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -63,12 +63,12 @@ class _GiftBanner extends StatelessWidget {
                       text: event.senderName,
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
-                        color: AppDesign.accentCyan,
+                        color: AppColors.accentCyan,
                       ),
                     ),
                     const TextSpan(
                       text: ' → ',
-                      style: TextStyle(color: AppDesign.textMuted),
+                      style: TextStyle(color: AppColors.textMuted),
                     ),
                     TextSpan(
                       text: event.receiverName,
@@ -81,7 +81,7 @@ class _GiftBanner extends StatelessWidget {
                       text: ' ${event.quantity > 1 ? '${event.quantity} ' : ''}${event.giftName}$combo',
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: AppDesign.accentPink,
+                        color: AppColors.accentPink,
                       ),
                     ),
                   ],

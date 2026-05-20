@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/messages_providers.dart';
@@ -60,7 +60,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     });
 
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
+      backgroundColor: AppColors.background,
       body: DiscoverBackground(
         child: Column(
           children: [
@@ -117,7 +117,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           ),
                           decoration: BoxDecoration(
                             gradient: m.isMine
-                                ? AppDesign.heroGradient
+                                ? AppColors.brandGradient
                                 : null,
                             color: m.isMine
                                 ? null
@@ -132,7 +132,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                             border: m.isMine
                                 ? null
                                 : Border.all(
-                                    color: AppDesign.accentPurple
+                                    color: AppColors.accentPurple
                                         .withValues(alpha: 0.25),
                                   ),
                           ),
@@ -141,7 +141,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                             style: TextStyle(
                               color: m.isMine
                                   ? Colors.white
-                                  : AppDesign.textPrimary,
+                                  : AppColors.textPrimary,
                               height: 1.35,
                             ),
                           ),
@@ -163,32 +163,32 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                         controller: _text,
                         minLines: 1,
                         maxLines: 4,
-                        style: const TextStyle(color: AppDesign.textPrimary),
+                        style: const TextStyle(color: AppColors.textPrimary),
                         decoration: InputDecoration(
                           hintText: 'Mesaj yaz...',
                           hintStyle: TextStyle(
-                            color: AppDesign.textMuted.withValues(alpha: 0.8),
+                            color: AppColors.textMuted.withValues(alpha: 0.8),
                           ),
                           filled: true,
                           fillColor: Colors.white.withValues(alpha: 0.06),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: AppDesign.accentPurple
+                              color: AppColors.accentPurple
                                   .withValues(alpha: 0.3),
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: AppDesign.accentPurple
+                              color: AppColors.accentPurple
                                   .withValues(alpha: 0.25),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: const BorderSide(
-                              color: AppDesign.accentPink,
+                              color: AppColors.accentPink,
                             ),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
@@ -210,7 +210,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           height: 52,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
-                            gradient: AppDesign.heroGradient,
+                            gradient: AppColors.brandGradient,
                           ),
                           child: Center(
                             child: _sending

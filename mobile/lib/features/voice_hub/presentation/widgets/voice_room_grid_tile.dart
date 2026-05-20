@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 
 /// Sesli oda listesi — 4 sütunlu grid için kompakt karo.
@@ -23,8 +23,8 @@ class VoiceRoomGridTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = room.backgroundImageUrl;
     final borderColor = isMine
-        ? AppDesign.coinGold
-        : AppDesign.accentPurple.withValues(alpha: 0.5);
+        ? AppColors.coinGold
+        : AppColors.accentPurple.withValues(alpha: 0.5);
 
     return Material(
       color: Colors.transparent,
@@ -40,7 +40,7 @@ class VoiceRoomGridTile extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: (isMine ? AppDesign.coinGold : AppDesign.accentPink)
+                color: (isMine ? AppColors.coinGold : AppColors.accentPink)
                     .withValues(alpha: 0.25),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
@@ -105,7 +105,7 @@ class VoiceRoomGridTile extends StatelessWidget {
                                   vertical: 1,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppDesign.coinGold.withValues(alpha: 0.3),
+                                  color: AppColors.coinGold.withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: const Text(
@@ -113,7 +113,7 @@ class VoiceRoomGridTile extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 6,
                                     fontWeight: FontWeight.w900,
-                                    color: AppDesign.coinGold,
+                                    color: AppColors.coinGold,
                                   ),
                                 ),
                               ),
@@ -150,7 +150,7 @@ class VoiceRoomGridTile extends StatelessWidget {
                             Icon(
                               Icons.headset_mic_rounded,
                               size: 11,
-                              color: AppDesign.accentCyan.withValues(alpha: 0.9),
+                              color: AppColors.accentCyan.withValues(alpha: 0.9),
                             ),
                           ],
                         ),
@@ -176,10 +176,10 @@ class _OnlineDot extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
-        color: AppDesign.onlineGreen.withValues(alpha: 0.25),
+        color: AppColors.onlineGreen.withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: AppDesign.onlineGreen.withValues(alpha: 0.6),
+          color: AppColors.onlineGreen.withValues(alpha: 0.6),
           width: 0.8,
         ),
       ),
@@ -188,7 +188,7 @@ class _OnlineDot extends StatelessWidget {
         style: const TextStyle(
           fontSize: 8,
           fontWeight: FontWeight.w900,
-          color: AppDesign.onlineGreen,
+          color: AppColors.onlineGreen,
         ),
       ),
     );
@@ -207,7 +207,7 @@ class _MiniAvatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: AppDesign.accentPink.withValues(alpha: 0.6),
+          color: AppColors.accentPink.withValues(alpha: 0.6),
           width: 1,
         ),
       ),
@@ -215,7 +215,7 @@ class _MiniAvatar extends StatelessWidget {
         child: url != null && url!.isNotEmpty
             ? CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover)
             : ColoredBox(
-                color: AppDesign.bgPurpleGlow,
+                color: AppColors.bgPurpleGlow,
                 child: Icon(
                   Icons.person,
                   size: 9,

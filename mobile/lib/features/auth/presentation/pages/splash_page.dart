@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 
 class SplashPage extends StatelessWidget {
@@ -9,7 +9,7 @@ class SplashPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
+      backgroundColor: AppColors.background,
       body: DiscoverBackground(
         child: Center(
           child: Column(
@@ -19,8 +19,8 @@ class SplashPage extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: AppDesign.heroGradient,
-                  boxShadow: AppDesign.glowShadow(AppDesign.accentPink),
+                  gradient: AppColors.brandGradient,
+                  boxShadow: AppColors.glowShadow(AppColors.accentPink),
                 ),
                 child: const Icon(
                   Icons.play_circle_fill_rounded,
@@ -30,7 +30,7 @@ class SplashPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               ShaderMask(
-                shaderCallback: (b) => AppDesign.heroGradient.createShader(b),
+                shaderCallback: (b) => AppColors.brandGradient.createShader(b),
                 child: const Text(
                   'Canlifal',
                   style: TextStyle(
@@ -45,7 +45,7 @@ class SplashPage extends StatelessWidget {
               const Text(
                 'Yükleniyor…',
                 style: TextStyle(
-                  color: AppDesign.textMuted,
+                  color: AppColors.textMuted,
                   fontSize: 14,
                 ),
               ),
@@ -55,7 +55,7 @@ class SplashPage extends StatelessWidget {
                 height: 32,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.5,
-                  color: AppDesign.accentPink,
+                  color: AppColors.accentPink,
                 ),
               ),
             ],

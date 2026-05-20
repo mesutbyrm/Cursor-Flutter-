@@ -8,7 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_design.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
@@ -160,7 +160,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         await _leave();
       },
       child: Scaffold(
-        backgroundColor: AppDesign.bgBase,
+        backgroundColor: AppColors.background,
         body: Stack(
           fit: StackFit.expand,
           children: [
@@ -294,7 +294,7 @@ class _RoomBackground extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [AppDesign.bgPurpleGlow, AppDesign.bgBase],
+              colors: [AppColors.bgPurpleGlow, AppColors.background],
             ),
           ),
         ),
@@ -315,7 +315,7 @@ class _RoomBackground extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.black.withValues(alpha: 0.2),
-                    AppDesign.bgBase.withValues(alpha: 0.92),
+                    AppColors.background.withValues(alpha: 0.92),
                   ],
                 ),
               ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lottie/lottie.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/live_gift_catalog.dart';
 import '../../../domain/entities/live_gift_event.dart';
 
@@ -53,7 +53,7 @@ class GiftFullscreenOverlay extends StatelessWidget {
                       fontSize: 36,
                       fontWeight: FontWeight.w900,
                       foreground: Paint()
-                        ..shader = AppDesign.heroGradient.createShader(
+                        ..shader = AppColors.brandGradient.createShader(
                           const Rect.fromLTWH(0, 0, 200, 40),
                         ),
                     ),

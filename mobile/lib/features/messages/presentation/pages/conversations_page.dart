@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../shell/presentation/widgets/branch_quick_actions.dart';
@@ -71,7 +71,7 @@ class ConversationsPage extends ConsumerWidget {
                             padding: const EdgeInsets.all(2),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              gradient: AppDesign.heroGradient,
+                              gradient: AppColors.brandGradient,
                             ),
                             child: UserAvatar(url: c.avatarUrl, radius: 26),
                           ),
@@ -95,7 +95,7 @@ class ConversationsPage extends ConsumerWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    color: AppDesign.textMuted,
+                                    color: AppColors.textMuted,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -109,7 +109,7 @@ class ConversationsPage extends ConsumerWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                gradient: AppDesign.heroGradient,
+                                gradient: AppColors.brandGradient,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -124,7 +124,7 @@ class ConversationsPage extends ConsumerWidget {
                           else
                             Icon(
                               Icons.chevron_right_rounded,
-                              color: AppDesign.textMuted.withValues(alpha: 0.6),
+                              color: AppColors.textMuted.withValues(alpha: 0.6),
                             ),
                         ],
                       ),

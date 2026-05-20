@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_design.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/presentation/providers/live_providers.dart';
@@ -55,8 +55,8 @@ class VoiceRoomsBody extends ConsumerWidget {
             : mq.top + kToolbarHeight + 4;
 
         return RefreshIndicator(
-          color: AppDesign.accentPink,
-          backgroundColor: AppDesign.bgPurpleGlow,
+          color: AppColors.accentPink,
+          backgroundColor: AppColors.bgPurpleGlow,
           onRefresh: () async => ref.invalidate(voiceRoomsProvider),
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(
@@ -128,7 +128,7 @@ class _RoomsHeader extends StatelessWidget {
             children: [
               ShaderMask(
                 shaderCallback: (b) => const LinearGradient(
-                  colors: [AppDesign.accentCyan, AppDesign.accentPink],
+                  colors: [AppColors.accentCyan, AppColors.accentPink],
                 ).createShader(b),
                 child: const Text(
                   'Sesli sohbet odaları',
@@ -143,7 +143,7 @@ class _RoomsHeader extends StatelessWidget {
               Text(
                 'Tüm odalar · satırda 4 oda',
                 style: TextStyle(
-                  color: AppDesign.textMuted.withValues(alpha: 0.95),
+                  color: AppColors.textMuted.withValues(alpha: 0.95),
                   fontSize: 12,
                 ),
               ),
@@ -153,10 +153,10 @@ class _RoomsHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: AppDesign.accentPurple.withValues(alpha: 0.25),
+            color: AppColors.accentPurple.withValues(alpha: 0.25),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppDesign.accentPurple.withValues(alpha: 0.45),
+              color: AppColors.accentPurple.withValues(alpha: 0.45),
             ),
           ),
           child: Text(
@@ -164,7 +164,7 @@ class _RoomsHeader extends StatelessWidget {
             style: const TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 12,
-              color: AppDesign.accentCyan,
+              color: AppColors.accentCyan,
             ),
           ),
         ),

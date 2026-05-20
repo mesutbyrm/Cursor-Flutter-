@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import 'profile_glass.dart';
 
 class ProfilePremiumBanner extends StatelessWidget {
@@ -22,7 +22,7 @@ class ProfilePremiumBanner extends StatelessWidget {
           Color(0xFF8E2DA8),
         ],
       ),
-      borderColor: AppDesign.accentPink.withValues(alpha: 0.4),
+      borderColor: AppColors.accentPink.withValues(alpha: 0.4),
       child: Row(
         children: [
           Container(
@@ -30,7 +30,7 @@ class ProfilePremiumBanner extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.12),
-              boxShadow: AppDesign.glowShadow(
+              boxShadow: AppColors.glowShadow(
                 const Color(0xFFFFD54F),
                 blur: 16,
               ),
@@ -58,7 +58,7 @@ class ProfilePremiumBanner extends StatelessWidget {
                 Text(
                   'Özel rozetler, öncelikli destek ve daha fazlası',
                   style: TextStyle(
-                    color: AppDesign.textSecondary,
+                    color: AppColors.textSecondary,
                     fontSize: 12,
                     height: 1.3,
                   ),
@@ -67,7 +67,7 @@ class ProfilePremiumBanner extends StatelessWidget {
             ),
           ),
           Material(
-            color: AppDesign.accentPink,
+            color: AppColors.accentPink,
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               onTap: onViewPrivileges,

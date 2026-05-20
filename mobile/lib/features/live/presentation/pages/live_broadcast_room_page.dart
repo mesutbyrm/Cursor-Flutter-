@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
@@ -169,7 +169,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                 child: Text(
                   _rtcError!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppDesign.textSecondary),
+                  style: const TextStyle(color: AppColors.textSecondary),
                 ),
               ),
             ),
@@ -365,7 +365,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: AppDesign.liveRed),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.liveRed),
             child: const Text('Bitir'),
           ),
         ],
@@ -448,7 +448,7 @@ class _TopBar extends StatelessWidget {
             color: Colors.black.withValues(alpha: 0.35),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppDesign.accentPurple.withValues(alpha: 0.3),
+              color: AppColors.accentPurple.withValues(alpha: 0.3),
             ),
           ),
           child: Row(
@@ -469,7 +469,7 @@ class _TopBar extends StatelessWidget {
                     const Text(
                       '12.5K beğeni',
                       style: TextStyle(
-                        color: AppDesign.textMuted,
+                        color: AppColors.textMuted,
                         fontSize: 10,
                       ),
                     ),
@@ -478,7 +478,7 @@ class _TopBar extends StatelessWidget {
               ),
               if (!session.isHost && !following)
                 Material(
-                  color: AppDesign.accentPink,
+                  color: AppColors.accentPink,
                   borderRadius: BorderRadius.circular(12),
                   child: InkWell(
                     onTap: onFollow,
@@ -499,7 +499,7 @@ class _TopBar extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppDesign.liveRed,
+                  color: AppColors.liveRed,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Text(
@@ -565,7 +565,7 @@ class _BadgeChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppDesign.accentCyan),
+          Icon(icon, size: 14, color: AppColors.accentCyan),
           const SizedBox(width: 6),
           Text(
             label,
@@ -602,7 +602,7 @@ class _ChatBubble extends StatelessWidget {
         child: Text(
           msg.text,
           style: TextStyle(
-            color: AppDesign.accentCyan.withValues(alpha: 0.95),
+            color: AppColors.accentCyan.withValues(alpha: 0.95),
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -623,12 +623,12 @@ class _ChatBubble extends StatelessWidget {
                 text: '${msg.user}: ',
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
-                  color: AppDesign.accentCyan,
+                  color: AppColors.accentCyan,
                 ),
               ),
               TextSpan(
                 text: msg.text,
-                style: const TextStyle(color: AppDesign.textPrimary),
+                style: const TextStyle(color: AppColors.textPrimary),
               ),
             ],
           ),
@@ -687,7 +687,7 @@ class _SideButton extends StatelessWidget {
             shape: BoxShape.circle,
             color: Colors.black.withValues(alpha: 0.4),
             border: Border.all(
-              color: AppDesign.accentPurple.withValues(alpha: 0.35),
+              color: AppColors.accentPurple.withValues(alpha: 0.35),
             ),
           ),
           child: Icon(icon, color: Colors.white, size: 24),
@@ -793,7 +793,7 @@ class _BottomBar extends StatelessWidget {
                     onPressed: onSend,
                     icon: const Icon(Icons.send_rounded, size: 20),
                     style: IconButton.styleFrom(
-                      backgroundColor: AppDesign.accentPink,
+                      backgroundColor: AppColors.accentPink,
                     ),
                   ),
                   if (!isHost && onGift != null) ...[
@@ -803,7 +803,7 @@ class _BottomBar extends StatelessWidget {
                       child: const _ActionPill(
                         icon: Icons.card_giftcard_rounded,
                         label: 'Hediye',
-                        color: AppDesign.accentPurple,
+                        color: AppColors.accentPurple,
                       ),
                     ),
                   ],
@@ -812,17 +812,17 @@ class _BottomBar extends StatelessWidget {
                     _ActionPill(
                       icon: Icons.card_giftcard_rounded,
                       label: 'Hediye',
-                      color: AppDesign.accentPurple,
+                      color: AppColors.accentPurple,
                     ),
                     const SizedBox(width: 6),
                     _ActionPill(
                       icon: Icons.person_add_rounded,
                       label: 'Davet',
-                      color: AppDesign.accentCyan,
+                      color: AppColors.accentCyan,
                     ),
                     const SizedBox(width: 6),
                     Material(
-                      color: AppDesign.liveRed,
+                      color: AppColors.liveRed,
                       borderRadius: BorderRadius.circular(14),
                       child: InkWell(
                         onTap: onEnd,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Google markasına yakın renklerle "G" rozeti + metin.
 class GoogleSignInButton extends StatelessWidget {
@@ -27,7 +27,7 @@ class GoogleSignInButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             color: const Color(0xFF16162A).withValues(alpha: 0.92),
             border: Border.all(
-              color: AppDesign.accentPurple.withValues(alpha: 0.35),
+              color: AppColors.accentPurple.withValues(alpha: 0.35),
             ),
           ),
           child: Padding(
@@ -41,7 +41,7 @@ class GoogleSignInButton extends StatelessWidget {
                     width: 22,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: AppDesign.accentPink,
+                      color: AppColors.accentPink,
                     ),
                   )
                 else ...[
@@ -55,7 +55,7 @@ class GoogleSignInButton extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                         letterSpacing: -0.2,
-                        color: AppDesign.textPrimary,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -128,7 +128,7 @@ class AuthOrDivider extends StatelessWidget {
       children: [
         Expanded(
           child: Divider(
-            color: AppDesign.accentPurple.withValues(alpha: 0.25),
+            color: AppColors.accentPurple.withValues(alpha: 0.25),
           ),
         ),
         const Padding(
@@ -136,7 +136,7 @@ class AuthOrDivider extends StatelessWidget {
           child: Text(
             'veya',
             style: TextStyle(
-              color: AppDesign.textMuted,
+              color: AppColors.textMuted,
               fontWeight: FontWeight.w600,
               fontSize: 13,
             ),
@@ -144,7 +144,7 @@ class AuthOrDivider extends StatelessWidget {
         ),
         Expanded(
           child: Divider(
-            color: AppDesign.accentPurple.withValues(alpha: 0.25),
+            color: AppColors.accentPurple.withValues(alpha: 0.25),
           ),
         ),
       ],

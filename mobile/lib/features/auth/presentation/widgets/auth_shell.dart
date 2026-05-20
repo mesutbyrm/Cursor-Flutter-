@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 
@@ -20,7 +20,7 @@ class AuthShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
+      backgroundColor: AppColors.background,
       body: DiscoverBackground(
         child: SafeArea(
           child: Column(
@@ -72,12 +72,12 @@ class AuthBrandHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DiscoverGlassCard(
-      borderColor: AppDesign.accentPurple.withValues(alpha: 0.35),
+      borderColor: AppColors.accentPurple.withValues(alpha: 0.35),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
       child: Column(
         children: [
           ShaderMask(
-            shaderCallback: (b) => AppDesign.heroGradient.createShader(b),
+            shaderCallback: (b) => AppColors.brandGradient.createShader(b),
             child: const Text(
               'Canlifal',
               textAlign: TextAlign.center,
@@ -94,7 +94,7 @@ class AuthBrandHeader extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: AppDesign.textSecondary,
+              color: AppColors.textSecondary,
               fontSize: 15,
               fontWeight: FontWeight.w600,
               height: 1.35,
@@ -106,7 +106,7 @@ class AuthBrandHeader extends StatelessWidget {
               subtitle!,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                color: AppDesign.textMuted,
+                color: AppColors.textMuted,
                 fontSize: 13,
                 height: 1.4,
               ),
@@ -134,7 +134,7 @@ class AuthSectionTitle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ShaderMask(
-          shaderCallback: (b) => AppDesign.heroGradient.createShader(b),
+          shaderCallback: (b) => AppColors.brandGradient.createShader(b),
           child: Text(
             title,
             style: const TextStyle(
@@ -150,7 +150,7 @@ class AuthSectionTitle extends StatelessWidget {
           Text(
             subtitle!,
             style: const TextStyle(
-              color: AppDesign.textSecondary,
+              color: AppColors.textSecondary,
               fontSize: 15,
               height: 1.4,
             ),
@@ -168,27 +168,27 @@ InputDecoration authInputDecoration({
   final border = OutlineInputBorder(
     borderRadius: BorderRadius.circular(16),
     borderSide: BorderSide(
-      color: AppDesign.accentPurple.withValues(alpha: 0.28),
+      color: AppColors.accentPurple.withValues(alpha: 0.28),
     ),
   );
 
   return InputDecoration(
     labelText: labelText,
-    labelStyle: const TextStyle(color: AppDesign.textMuted),
-    prefixIcon: Icon(prefixIcon, color: AppDesign.textMuted, size: 22),
+    labelStyle: const TextStyle(color: AppColors.textMuted),
+    prefixIcon: Icon(prefixIcon, color: AppColors.textMuted, size: 22),
     filled: true,
     fillColor: Colors.white.withValues(alpha: 0.05),
     enabledBorder: border,
     focusedBorder: border.copyWith(
-      borderSide: const BorderSide(color: AppDesign.accentPink, width: 1.5),
+      borderSide: const BorderSide(color: AppColors.accentPink, width: 1.5),
     ),
     errorBorder: border.copyWith(
       borderSide: BorderSide(
-        color: AppDesign.liveRed.withValues(alpha: 0.8),
+        color: AppColors.liveRed.withValues(alpha: 0.8),
       ),
     ),
     focusedErrorBorder: border.copyWith(
-      borderSide: const BorderSide(color: AppDesign.liveRed),
+      borderSide: const BorderSide(color: AppColors.liveRed),
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
   );
@@ -219,7 +219,7 @@ class AuthPrimaryButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             gradient: onPressed == null && !loading
                 ? null
-                : AppDesign.heroGradient,
+                : AppColors.brandGradient,
             color: onPressed == null && !loading
                 ? Colors.white.withValues(alpha: 0.08)
                 : null,
@@ -257,7 +257,7 @@ class AuthInfoBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DiscoverGlassCard(
-      borderColor: AppDesign.accentCyan.withValues(alpha: 0.3),
+      borderColor: AppColors.accentCyan.withValues(alpha: 0.3),
       padding: const EdgeInsets.all(14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,14 +265,14 @@ class AuthInfoBanner extends StatelessWidget {
           Icon(
             Icons.info_outline_rounded,
             size: 20,
-            color: AppDesign.accentCyan.withValues(alpha: 0.9),
+            color: AppColors.accentCyan.withValues(alpha: 0.9),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
               style: const TextStyle(
-                color: AppDesign.textSecondary,
+                color: AppColors.textSecondary,
                 height: 1.4,
                 fontSize: 13,
               ),
@@ -301,7 +301,7 @@ class AuthTextLink extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          color: AppDesign.accentCyan.withValues(alpha: 0.95),
+          color: AppColors.accentCyan.withValues(alpha: 0.95),
           fontWeight: FontWeight.w700,
         ),
       ),

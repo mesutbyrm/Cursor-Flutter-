@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import 'profile_glass.dart';
 
 class ProfileGiftsRow extends StatelessWidget {
@@ -26,7 +26,7 @@ class ProfileGiftsRow extends StatelessWidget {
           trailing: TextButton(
             onPressed: onViewAll,
             style: TextButton.styleFrom(
-              foregroundColor: AppDesign.accentCyan,
+              foregroundColor: AppColors.accentCyan,
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -111,9 +111,9 @@ class _GiftTile extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  gradient: AppDesign.heroGradient,
+                  gradient: AppColors.brandGradient,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppDesign.bgBase, width: 1.5),
+                  border: Border.all(color: AppColors.background, width: 1.5),
                 ),
                 child: Text(
                   'x$count',

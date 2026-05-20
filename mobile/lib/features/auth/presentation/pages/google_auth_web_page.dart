@@ -10,7 +10,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/cookie_jar_provider.dart';
 import '../../../../core/network/token_storage.dart';
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/webview/canlifal_cookie_sync.dart';
 import '../providers/auth_providers.dart';
 
@@ -243,7 +243,7 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
     }
 
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Google hesabını seç'),
         leading: IconButton(
@@ -307,7 +307,7 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(color: AppDesign.accentPink),
+                  CircularProgressIndicator(color: AppColors.accentPink),
                   SizedBox(height: 16),
                   Text('Güvenli tarayıcıda Google girişi açılıyor…'),
                 ],
@@ -320,7 +320,7 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(color: AppDesign.accentPink),
+                    CircularProgressIndicator(color: AppColors.accentPink),
                     SizedBox(height: 16),
                     Text(
                       'Hesabınıza bağlanılıyor…',

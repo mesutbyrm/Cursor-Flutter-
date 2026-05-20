@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 
 /// Duyuru kutusu — oda açıklaması (canlifal.com `descTr`).
 class VoiceRoomAnnouncement extends StatelessWidget {
@@ -27,19 +27,19 @@ class VoiceRoomAnnouncement extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppDesign.accentPurple.withValues(alpha: 0.35),
-                AppDesign.bgPurpleGlow.withValues(alpha: 0.55),
+                AppColors.accentPurple.withValues(alpha: 0.35),
+                AppColors.bgPurpleGlow.withValues(alpha: 0.55),
               ],
             ),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: AppDesign.accentPurple.withValues(alpha: 0.45),
+              color: AppColors.accentPurple.withValues(alpha: 0.45),
             ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.campaign_rounded, color: AppDesign.accentPink, size: 22),
+              const Icon(Icons.campaign_rounded, color: AppColors.accentPink, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -50,7 +50,7 @@ class VoiceRoomAnnouncement extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 12,
-                        color: AppDesign.accentPink,
+                        color: AppColors.accentPink,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -60,7 +60,7 @@ class VoiceRoomAnnouncement extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 11,
-                        color: AppDesign.textSecondary,
+                        color: AppColors.textSecondary,
                         height: 1.35,
                       ),
                     ),
@@ -69,14 +69,14 @@ class VoiceRoomAnnouncement extends StatelessWidget {
               ),
               IconButton(
                 onPressed: () {},
-                icon: const Icon(Icons.edit_outlined, size: 16, color: AppDesign.textMuted),
+                icon: const Icon(Icons.edit_outlined, size: 16, color: AppColors.textMuted),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
               ),
               if (onDismiss != null)
                 IconButton(
                   onPressed: onDismiss,
-                  icon: const Icon(Icons.close_rounded, size: 16, color: AppDesign.textMuted),
+                  icon: const Icon(Icons.close_rounded, size: 16, color: AppColors.textMuted),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 ),
@@ -110,7 +110,7 @@ class VoiceRoomSystemBanner extends StatelessWidget {
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
         textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 10, color: AppDesign.textSecondary),
+        style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
       ),
     );
   }
