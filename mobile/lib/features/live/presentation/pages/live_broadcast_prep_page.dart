@@ -97,7 +97,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         streamerName: user.display,
         streamerHandle: user.username,
         avatarUrl: user.avatarUrl,
-      ).copyWith(streamId: roomId, trtc: trtc);
+      ).copyWith(streamId: roomId, trtc: trtc, hostUserId: user.id);
 
       context.push('/live/room', extra: session);
     } catch (e) {

@@ -12,7 +12,7 @@ import '../../../../core/theme/app_design.dart';
 import '../../../../core/webview/canlifal_cookie_sync.dart';
 import '../providers/auth_providers.dart';
 
-/// Google OAuth — yalnızca hesap seçimi; site gezintisi yok, oturum otomatik aktarılır.
+/// Google OAuth — yalnızca `/api/auth/*` ve Google; site gezintisi engellenir.
 class GoogleAuthWebPage extends ConsumerStatefulWidget {
   const GoogleAuthWebPage({super.key});
 
@@ -33,27 +33,33 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
     return '$o${ApiEndpoints.authSignInGoogle}';
   }
 
+  static bool _isGoogleHost(String host) {
+    return host.contains('google.com') ||
+        host.contains('gstatic.com') ||
+        host.contains('googleusercontent.com') ||
+        host.contains('accounts.google.');
+  }
+
+  static bool _isCanlifalAuthPath(String path) {
+    return path.startsWith('/api/auth/');
+  }
+
   static bool _allowInWebView(WebUri? uri) {
     if (uri == null) return false;
     final host = uri.host.toLowerCase();
     if (host.isEmpty) return true;
-    if (host.contains('canlifal.com')) return true;
-    if (host.contains('google.com') ||
-        host.contains('gstatic.com') ||
-        host.contains('googleusercontent.com')) {
-      return true;
+    if (host.contains('canlifal.com')) {
+      return _isCanlifalAuthPath(uri.path);
     }
-    return false;
+    return _isGoogleHost(host);
   }
 
-  static bool _oauthFinished(Uri uri) {
+  /// Oturum yalnızca OAuth callback tamamlandığında alınır.
+  static bool _oauthCallbackReached(Uri uri) {
     final host = uri.host.toLowerCase();
     if (!host.contains('canlifal.com')) return false;
     final path = uri.path;
-    if (path.contains('/api/auth/signin')) return false;
-    if (path.contains('/api/auth/callback')) return true;
-    if (!path.contains('/api/auth/')) return true;
-    return false;
+    return path.contains('/api/auth/callback');
   }
 
   @override
@@ -114,8 +120,8 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
   void _onUrlMaybeComplete(WebUri? webUri) {
     if (_completed || webUri == null) return;
     final uri = Uri.tryParse(webUri.toString());
-    if (uri == null || !_oauthFinished(uri)) return;
-    Future.delayed(const Duration(milliseconds: 350), () {
+    if (uri == null || !_oauthCallbackReached(uri)) return;
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted && !_completed) _finishOAuth();
     });
   }
@@ -137,7 +143,7 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
     return Scaffold(
       backgroundColor: AppDesign.bgBase,
       appBar: AppBar(
-        title: const Text('Google ile giriş'),
+        title: const Text('Google hesabını seç'),
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
           onPressed: _busy ? null : () => context.pop(),
