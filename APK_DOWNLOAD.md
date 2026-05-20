@@ -54,6 +54,14 @@ GitHub → Settings → Danger Zone → Change visibility → Public
 
 ---
 
+## Kurulum
+
+1. APK'yı Android cihazınıza indirin.
+2. **Bilinmeyen kaynaklardan yükleme**ye izin verin.
+3. Uygulamayı açın ve **canlifal.com** ile giriş yapın (oturum API için gerekli).
+
+---
+
 ## Versiyon sistemi
 
 | Alan | Açıklama | Örnek |
@@ -66,27 +74,42 @@ Her `main` push'unda CI otomatik olarak:
 1. **`apk-latest`** release'ini günceller (her zaman son APK)
 2. **`v{version}-build.{N}`** versiyonlu release oluşturur (arşiv)
 
+### Öne çıkan sürümler
+
+| Sürüm | İndirme |
+|-------|---------|
+| **apk-latest** (otomatik) | [Releases](https://github.com/mesutbyrm/Cursor-Flutter-/releases/tag/apk-latest) |
+| v1.0.5 | [Releases](https://github.com/mesutbyrm/Cursor-Flutter-/releases/tag/v1.0.5) |
+| v1.0.4 sesli oda (neon UI) | [Releases](https://github.com/mesutbyrm/Cursor-Flutter-/releases/tag/apk-v104-voice-7009) |
+
 ### Versiyon geçmişi
 
 | Sürüm | Değişiklik |
 |-------|-----------|
 | 1.1.0 | Premium ana sayfa, cosmic tema, FAB navigasyon, hızlı işlemler, fal & tarot |
 | 1.0.5 | Saat kronolojisi, doküman düzenlemeleri |
+| 1.0.4 | Sesli sohbet odası (neon UI) |
 | 1.0.0 | İlk sürüm — giriş, akış, sosyal, canlı yayın, mesajlar, profil |
 
 ---
 
-## Yerelde derle
+## GitHub Actions (artifact)
+
+1. [Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml)
+2. **Run workflow** → dal seçin
+3. **Artifacts** → `canlifal-social-release-apk` → ZIP içindeki `canlifal-mobile-release.apk`
+
+## Yerelde derleme
 
 ```bash
 cd mobile
 flutter pub get
-flutter build apk --release
+flutter build apk --release --dart-define=API_BASE_URL=https://canlifal.com
 ```
 
 Çıktı: `mobile/build/app/outputs/flutter-apk/app-release.apk`
 
-Özel API:
-```bash
-flutter build apk --release --dart-define=API_BASE_URL=https://canlifal.com
-```
+## API yapılandırması
+
+- Varsayılan: `https://canlifal.com` — `mobile/lib/core/config/env.dart`
+- Uçlar: `mobile/lib/core/network/api_endpoints.dart`

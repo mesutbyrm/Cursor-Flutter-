@@ -22,15 +22,36 @@ abstract final class ApiEndpoints {
   static const videoStreams = '/api/video-streams';
   /// Sesli / metin sohbet odaları (web `/sohbet/{slug}`).
   static const chatRooms = '/api/chat/rooms';
+
+  static String chatRoomMessages(String roomId) =>
+      '/api/chat/rooms/$roomId/messages';
+
+  static String chatRoomPresence(String roomId) =>
+      '/api/chat/rooms/$roomId/presence';
+
+  static String chatRoomDj(String roomId) => '/api/chat/rooms/$roomId/dj';
+
+  static String chatRoomGifts(String roomId) => '/api/chat/rooms/$roomId/gifts';
   /// Oturumlu kullanıcı profili (takipçi, bio, görsel — NextAuth çerezi).
   static const userSiteProfile = '/api/user/profile';
   /// Jeton / kredi bakiyesi (NextAuth).
   static const userCredits = '/api/user/credits';
+
+  /// Jeton paketleri / fiyat listesi (oturum gerekir).
+  static const jetonCatalog = '/api/jeton';
+
+  /// Arkadaş daveti — bağlantı veya kod (oturum gerekir).
+  static const referral = '/api/referral';
   /// Diğer ortamlar için genel canlı listesi.
   static const liveStreams = '/api/live';
 
+  /// Tencent TRTC UserSig (POST: userId, roomId).
+  static const trtcUserSig = '/api/trtc/usersig';
+
   /// Canlı yayın hediye kataloğu (Tencent / site ile aynı liste).
   static const videoStreamGiftsCatalog = '/api/video-streams/gifts';
+
+  static String videoStreamEnd(String streamId) => '/api/video-streams/$streamId/end';
 
   static String videoStreamGifts(String streamId) =>
       '/api/video-streams/$streamId/gifts';

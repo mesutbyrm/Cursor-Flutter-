@@ -3,11 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/user_avatar.dart';
+import '../../../../core/theme/app_design.dart';
+import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/premium/profile_broadcaster_panel.dart';
+import '../widgets/premium/profile_gifts_row.dart';
+import '../widgets/premium/profile_neon_header.dart';
+import '../widgets/premium/profile_premium_banner.dart';
+import '../widgets/premium/profile_settings_menu.dart';
+import '../widgets/premium/profile_wallet_section.dart';
 
+/// Ultra premium neon profil — canlı yayın uygulaması.
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
 
@@ -15,159 +25,125 @@ class ProfilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
     final coins = ref.watch(coinBalanceProvider);
+    final top = MediaQuery.paddingOf(context).top;
+
+    Future<void> refresh() async {
+      await ref.read(authControllerProvider.notifier).refreshMe();
+      ref.invalidate(coinBalanceProvider);
+    }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil'),
-        actions: [
-          IconButton(
-            tooltip: 'Bildirimler',
-            onPressed: () => context.push('/notifications'),
-            icon: const Icon(Icons.notifications_none_rounded),
-          ),
-          IconButton(
-            tooltip: 'Çıkış',
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).logout();
-            },
-            icon: const Icon(Icons.logout_rounded),
-          ),
-        ],
-      ),
-      body: auth.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(ApiException.userMessage(e))),
-        data: (user) {
-          if (user == null) {
-            return const Center(child: Text('Oturum yok'));
-          }
-          return RefreshIndicator(
-            onRefresh: () async {
-              await ref.read(authControllerProvider.notifier).refreshMe();
-              ref.invalidate(coinBalanceProvider);
-            },
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                Row(
-                  children: [
-                    UserAvatar(url: user.avatarUrl, radius: 40),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user.display,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          Text(
-                            '@${user.username}',
-                            style: const TextStyle(color: AppTheme.muted),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF2A1838), Color(0xFF14141C)],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white10),
+      backgroundColor: AppDesign.bgBase,
+      body: DiscoverBackground(
+        child: RefreshIndicator(
+          color: AppDesign.accentPink,
+          backgroundColor: AppDesign.bgPurpleGlow,
+          onRefresh: refresh,
+          child: auth.when(
+            loading: () => const Center(child: DiscoverAccentLoader()),
+            error: (e, _) => Center(
+              child: DiscoverEmptyState(
+                icon: Icons.error_outline_rounded,
+                message: ApiException.userMessage(e),
+              ),
+            ),
+            data: (user) {
+              if (user == null) {
+                return const Center(
+                  child: DiscoverEmptyState(
+                    icon: Icons.person_off_outlined,
+                    message: 'Oturum bulunamadı',
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.monetization_on_rounded,
-                          color: Color(0xFFFFD54F), size: 36),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Coin bakiyesi',
-                              style: TextStyle(color: AppTheme.muted),
-                            ),
-                            coins.when(
-                              data: (c) => Text(
-                                '$c coin',
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              loading: () => const Text('...'),
-                              error: (e, _) => Text(
-                                ApiException.userMessage(e),
-                                style: const TextStyle(color: AppTheme.muted),
-                              ),
-                            ),
-                          ],
+                );
+              }
+              final balance = coins.maybeWhen(
+                data: (c) => c,
+                orElse: () => user.coinBalance,
+              );
+
+              return CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                slivers: [
+                  SliverToBoxAdapter(child: SizedBox(height: top + 8)),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        ProfileNeonHeader(
+                          displayName: user.display,
+                          username: user.username,
+                          avatarUrl: user.avatarUrl,
+                          followers: user.followersCount,
+                          following: user.followingCount,
+                          bio: user.bio ??
+                              '🎵 Müzik, sohbet ve eğlence dolu yayınlar…',
+                          diamondBalance: balance,
+                          onNotifications: () =>
+                              context.push('/notifications'),
+                          onLogout: () => ref
+                              .read(authControllerProvider.notifier)
+                              .logout(),
+                          onEdit: () => _openPublicProfile(context, user),
                         ),
-                      ),
-                      TextButton(
-                        onPressed: () => ref.invalidate(coinBalanceProvider),
-                        child: const Text('Yenile'),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _Stat(label: 'Takipçi', value: '${user.followersCount}'),
-                    _Stat(label: 'Takip', value: '${user.followingCount}'),
-                  ],
-                ),
-                if (user.bio != null && user.bio!.isNotEmpty) ...[
-                  const SizedBox(height: 24),
-                  Text(
-                    user.bio!,
-                    style: const TextStyle(
-                      color: AppTheme.onBackground,
-                      height: 1.4,
+                        const SizedBox(height: 16),
+                        const ProfileBranchQuickActions(),
+                        const SizedBox(height: 20),
+                        ProfilePremiumBanner(
+                          onViewPrivileges: () => _showSnack(
+                            context,
+                            'Premium ayrıcalıkları yakında',
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        ProfileWalletSection(
+                          coinBalance: balance,
+                          onTopUp: () => context.push('/jeton-store'),
+                          onEarnings: () => _showSnack(
+                            context,
+                            'Kazançlar yakında',
+                          ),
+                          onTransactions: () => ref.invalidate(
+                            coinBalanceProvider,
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        const ProfileBroadcasterPanel(),
+                        const SizedBox(height: 22),
+                        ProfileGiftsRow(
+                          onViewAll: () => _showSnack(
+                            context,
+                            'Hediye koleksiyonu yakında',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ProfileSettingsMenu(
+                          onEditProfile: () =>
+                              _openPublicProfile(context, user),
+                          onNotifications: () =>
+                              context.push('/notifications'),
+                        ),
+                        const SizedBox(height: 120),
+                      ]),
                     ),
                   ),
                 ],
-                const SizedBox(height: 32),
-                FilledButton.tonal(
-                  onPressed: () => context.push('/user/${user.id}'),
-                  child: const Text('Profilimi herkese aç'),
-                ),
-              ],
-            ),
-          );
-        },
+              );
+            },
+          ),
+        ),
       ),
     );
   }
-}
 
-class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value});
+  static void _openPublicProfile(BuildContext context, UserEntity user) {
+    context.push('/user/${user.id}');
+  }
 
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-        ),
-        Text(label, style: const TextStyle(color: AppTheme.muted)),
-      ],
+  static void _showSnack(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 }

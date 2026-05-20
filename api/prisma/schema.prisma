@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Paylaşılan veritabanı: web ve Flutter aynı Prisma şeması / tabloları kullanır.
+model User {
+  id              String         @id @default(cuid())
+  email           String         @unique
+  passwordHash    String
+  displayName     String?
+  username        String?        @unique
+  bio             String?
+  avatarUrl       String?
+  coverUrl        String?
+  coins           Int            @default(500)
+  followerCount   Int            @default(0)
+  followingCount  Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  refreshTokens   RefreshToken[]
+  followers       Follow[]       @relation("UserFollowers")
+  following       Follow[]       @relation("UserFollowing")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+}
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}

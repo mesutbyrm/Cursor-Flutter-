@@ -4,25 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/network/dio_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../data/datasources/live_gifts_remote_datasource.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_type.dart';
-
-final _liveGiftsRemoteProvider = Provider<LiveGiftsRemoteDataSource>((ref) {
-  return LiveGiftsRemoteDataSource(ref.watch(dioProvider));
-});
-
-final liveGiftTypesProvider =
-    FutureProvider.autoDispose<List<LiveVideoGiftType>>((ref) async {
-  return ref.watch(_liveGiftsRemoteProvider).fetchGiftTypes();
-});
+import '../gifts/providers/live_gift_providers.dart';
 
 Future<void> showLiveGiftPicker(
   BuildContext context,
   WidgetRef ref, {
   required String streamId,
+  String receiverName = 'Yayıncı',
 }) async {
   await showModalBottomSheet<void>(
     context: context,
@@ -95,19 +88,26 @@ Future<void> showLiveGiftPicker(
                             return _GiftTile(
                               gift: g,
                               onTap: () async {
+                                final user = ref.read(authControllerProvider).valueOrNull;
+                                final sender = user?.displayName ?? user?.username ?? 'Kullanıcı';
                                 try {
-                                  await ref
-                                      .read(_liveGiftsRemoteProvider)
-                                      .sendGift(
+                                  await ref.read(liveGiftsRemoteProvider).sendGift(
                                         streamId: streamId,
                                         giftTypeId: g.id,
+                                        senderName: sender,
+                                        receiverName: receiverName,
+                                        giftName: LiveGiftCatalog.displayName(g),
+                                        unitPrice: g.price,
+                                        senderId: user?.id,
                                       );
                                   if (context.mounted) {
                                     ref.invalidate(coinBalanceProvider);
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('${g.name} gönderildi'),
+                                        content: Text(
+                                          '${LiveGiftCatalog.displayName(g)} gönderildi',
+                                        ),
                                       ),
                                     );
                                   }

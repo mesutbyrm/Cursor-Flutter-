@@ -5,6 +5,9 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   flutter_inappwebview_windows
   flutter_secure_storage_windows
+  permission_handler_windows
+  share_plus
+  tencent_rtc_sdk
   url_launcher_windows
 )
 

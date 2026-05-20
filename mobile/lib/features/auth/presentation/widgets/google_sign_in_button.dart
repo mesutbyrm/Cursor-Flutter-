@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_design.dart';
 
 /// Google markasına yakın renklerle "G" rozeti + metin.
 class GoogleSignInButton extends StatelessWidget {
@@ -25,9 +25,9 @@ class GoogleSignInButton extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            color: const Color(0xFF1A1A22),
+            color: const Color(0xFF16162A).withValues(alpha: 0.92),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.12),
+              color: AppDesign.accentPurple.withValues(alpha: 0.35),
             ),
           ),
           child: Padding(
@@ -39,10 +39,13 @@ class GoogleSignInButton extends StatelessWidget {
                   const SizedBox(
                     height: 22,
                     width: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppDesign.accentPink,
+                    ),
                   )
                 else ...[
-                  _GoogleGlyph(),
+                  const _GoogleGlyph(),
                   const SizedBox(width: 12),
                   Flexible(
                     child: Text(
@@ -52,6 +55,7 @@ class GoogleSignInButton extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                         letterSpacing: -0.2,
+                        color: AppDesign.textPrimary,
                       ),
                     ),
                   ),
@@ -66,6 +70,8 @@ class GoogleSignInButton extends StatelessWidget {
 }
 
 class _GoogleGlyph extends StatelessWidget {
+  const _GoogleGlyph();
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -120,19 +126,27 @@ class AuthOrDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.08))),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+        Expanded(
+          child: Divider(
+            color: AppDesign.accentPurple.withValues(alpha: 0.25),
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14),
           child: Text(
             'veya',
             style: TextStyle(
-              color: AppTheme.muted.withValues(alpha: 0.95),
+              color: AppDesign.textMuted,
               fontWeight: FontWeight.w600,
               fontSize: 13,
             ),
           ),
         ),
-        Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.08))),
+        Expanded(
+          child: Divider(
+            color: AppDesign.accentPurple.withValues(alpha: 0.25),
+          ),
+        ),
       ],
     );
   }

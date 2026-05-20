@@ -1,28 +1,48 @@
-# AGENTS.md
+# Canlifal — Agent talimatları
 
 ## Cursor Cloud specific instructions
 
-### Project overview
+### Proje düzeni
 
-Flutter mobile client (Android/iOS) for **Canlifal Social**, a Turkish social media / live-streaming platform. All source lives under `mobile/`. There is no backend code in this repo — the app connects to `https://canlifal.com` by default.
+- **Ana uygulama:** `mobile/` — `canlifal_social` Flutter paketi; tüm geliştirme ve CI komutları buradan çalıştırılır.
+- **Yerel API:** `api/` — Node.js + Express + Prisma JWT API (isteğe bağlı; üretimde `https://canlifal.com` kullanılabilir).
 
-### Key commands (run from `mobile/`)
+### Ortam
 
-| Task | Command |
-|------|---------|
-| Install deps | `flutter pub get` |
+- Flutter SDK: `/opt/flutter/bin` (v3.41.x)
+- Node.js: `nvm` — `api/` bağımlılıkları için
+- Güncelleme betiği: `bash scripts/cursor-update.sh` (`.cursor/environment.json`) — Flutter/npm eksikse uyarı verir, **exit 0** (Cursor “Update script failed” önlenir)
+- Başlangıç: `bash scripts/cursor-start.sh` (api `.env` kopyası, isteğe bağlı)
+- **Prisma migrate** yalnızca `api/.env` içinde `DATABASE_URL` varsa çalışır
+
+### Android derleme (Cloud Agent)
+
+- `ANDROID_HOME=/opt/android-sdk`; PATH'e `cmdline-tools/latest/bin` ve `platform-tools` ekleyin
+- Java 21 sistem JDK; proje Gradle'da Java 17 uyumluluğu
+- Emülatör yok — doğrulama: `cd mobile && flutter build apk --debug`
+- İlk Gradle derlemesi NDK/platform indirebilir (~3 dk)
+
+### Komutlar (`mobile/`)
+
+| Görev | Komut |
+|-------|--------|
+| Bağımlılık | `flutter pub get` |
 | Lint | `dart analyze` |
 | Test | `flutter test` |
 | Debug APK | `flutter build apk --debug` |
-| Release APK | `flutter build apk --release` |
-| Custom backend | `flutter run --dart-define=API_BASE_URL=https://your-api.example.com` |
+| Özel API | `flutter run --dart-define=API_BASE_URL=https://your-api.example.com` |
 
-### Environment notes
+### Web hedefi
 
-- **Flutter SDK** is at `/opt/flutter` (v3.41.9 stable, Dart 3.11.5).
-- **Android SDK** is at `/opt/android-sdk`. You must export `ANDROID_HOME=/opt/android-sdk` and add `$ANDROID_HOME/cmdline-tools/latest/bin` and `$ANDROID_HOME/platform-tools` to `PATH` before running Gradle-based builds.
-- **Java 21** is the system JDK; the project targets Java 17 compatibility in Gradle — this works fine.
-- **Web target** does not render correctly because the app uses `path_provider` / `PersistCookieJar` (filesystem-based), which are mobile-only. `flutter build web` compiles but the app fails at runtime on web. Use Android APK builds for verification.
-- **No Android emulator** is available in Cloud Agent VMs, so you cannot `flutter run` on device. Build verification (`flutter build apk`) is the primary validation path.
-- The first Gradle build downloads NDK 28.2, CMake 3.22.1, and Android Platform 34 automatically — this can take ~3 minutes.
-- API endpoints are defined in `lib/core/network/api_endpoints.dart`; configuration in `lib/core/config/env.dart`.
+`path_provider` / `PersistCookieJar` nedeniyle web'de tam çalışmaz; mobil/APK doğrulaması tercih edin.
+
+### API yapılandırması
+
+- Üretim varsayılanı: `https://canlifal.com` (`mobile/lib/core/config/env.dart`)
+- Uç noktalar: `mobile/lib/core/network/api_endpoints.dart`
+- Yerel JWT API: `API_BASE_URL=http://127.0.0.1:3000/api/v1` (emülatörde `10.0.2.2`)
+
+### Dikkat
+
+- Firebase yapılandırma dosyaları repoda yok; uygulama eksikliği tolere eder
+- `api/node_modules/` commit edilmez

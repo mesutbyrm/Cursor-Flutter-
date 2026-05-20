@@ -24,3 +24,35 @@ int asInt(dynamic v) {
 }
 
 bool asBool(dynamic v) => v == true || v == 1 || v == 'true';
+
+/// API bazen `{name, image}` gibi nesne döner; ekranda ham Map metni göstermeyin.
+String? jsonDisplayLabel(
+  dynamic value, {
+  List<String> keys = const [
+    'name',
+    'displayName',
+    'username',
+    'nameTr',
+    'title',
+    'label',
+  ],
+}) {
+  if (value == null) return null;
+  if (value is String) {
+    final s = value.trim();
+    if (s.isEmpty || s.startsWith('{') || s.contains('image:')) return null;
+    if (s.length > 80) return null;
+    return s;
+  }
+  if (value is Map) {
+    final m = asJsonMap(value);
+    for (final k in keys) {
+      final label = jsonDisplayLabel(m[k], keys: keys);
+      if (label != null) return label;
+    }
+  }
+  return null;
+}
+
+String jsonDisplayLabelOr(dynamic value, String fallback) =>
+    jsonDisplayLabel(value) ?? fallback;

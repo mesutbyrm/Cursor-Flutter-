@@ -8,14 +8,22 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
+import '../../features/live/domain/entities/live_broadcast_session.dart';
+import '../../features/live/presentation/pages/live_broadcast_prep_page.dart';
+import '../../features/live/presentation/pages/live_broadcast_room_page.dart';
 import '../../features/live/presentation/pages/live_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/messages/presentation/pages/conversations_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/profile/presentation/pages/invite_friends_page.dart';
+import '../../features/profile/presentation/pages/jeton_purchase_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/shell/presentation/main_shell_page.dart';
+import '../../features/live/domain/entities/voice_room_entity.dart';
+import '../../features/voice_hub/presentation/voice_room_route_page.dart';
+import '../../features/voice_hub/presentation/voice_room_rtc_page.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
 
 class RouterRefresh extends ChangeNotifier {
@@ -112,8 +120,30 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
+        path: '/live/prep',
+        builder: (context, state) => const LiveBroadcastPrepPage(),
+      ),
+      GoRoute(
+        path: '/live/room',
+        builder: (context, state) {
+          final session = state.extra as LiveBroadcastSession?;
+          if (session == null) {
+            return const LiveBroadcastPrepPage();
+          }
+          return LiveBroadcastRoomPage(session: session);
+        },
+      ),
+      GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsPage(),
+      ),
+      GoRoute(
+        path: '/jeton-store',
+        builder: (context, state) => const JetonPurchasePage(),
+      ),
+      GoRoute(
+        path: '/invite-friends',
+        builder: (context, state) => const InviteFriendsPage(),
       ),
       GoRoute(
         path: '/user/:id',
@@ -136,6 +166,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/voice-rooms',
         builder: (context, state) => const VoiceRoomsHubPage(),
+      ),
+      GoRoute(
+        path: '/voice-room/:id',
+        builder: (context, state) {
+          final room = state.extra as VoiceRoomEntity?;
+          if (room != null) {
+            return VoiceRoomRtcPage(room: room);
+          }
+          final id = state.pathParameters['id'] ?? '';
+          return VoiceRoomRoutePage(roomId: id);
+        },
       ),
     ],
   );

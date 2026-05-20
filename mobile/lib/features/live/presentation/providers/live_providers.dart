@@ -22,3 +22,8 @@ final liveStreamsProvider = FutureProvider<List<LiveStreamEntity>>((ref) async {
 final voiceRoomsProvider = FutureProvider<List<VoiceRoomEntity>>((ref) async {
   return ref.watch(liveRepositoryProvider).fetchVoiceRooms();
 });
+
+final voiceRoomByIdProvider =
+    FutureProvider.autoDispose.family<VoiceRoomEntity?, String>((ref, id) async {
+  return ref.watch(liveRepositoryProvider).fetchVoiceRoomById(id);
+});
