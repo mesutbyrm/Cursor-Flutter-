@@ -4,6 +4,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../../data/datasources/social_remote_datasource.dart';
 import '../../data/repositories/social_repository_impl.dart';
+import '../../domain/entities/social_story_ring_entity.dart';
 import '../../domain/repositories/social_repository.dart';
 
 final socialRemoteProvider = Provider<SocialRemoteDataSource>((ref) {
@@ -64,3 +65,9 @@ class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
 
 final socialNotifierProvider =
     AsyncNotifierProvider<SocialNotifier, List<PostEntity>>(SocialNotifier.new);
+
+/// Üst hikâye şeridi — canlifal.com `/api/stories`.
+final socialStoryRingsProvider =
+    FutureProvider<List<SocialStoryRingEntity>>((ref) async {
+  return ref.read(socialRemoteProvider).fetchStoryRings();
+});
