@@ -10,6 +10,118 @@ import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 
+/// Ana sayfa hızlı işlemler (davet, jeton).
+class FeedQuickActions extends StatelessWidget {
+  const FeedQuickActions({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: GlowPanel(
+        borderRadius: 18,
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SectionTitleRow(
+              icon: Icons.bolt_rounded,
+              title: 'Hızlı işlemler',
+              accent: AppTheme.accentSecondary,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _QuickTile(
+                    icon: Icons.person_add_alt_1_rounded,
+                    label: 'Arkadaşlarını\ndavet et',
+                    gradient: [
+                      AppTheme.accent.withValues(alpha: 0.45),
+                      AppTheme.accentSecondary.withValues(alpha: 0.3),
+                    ],
+                    onTap: () => context.push('/invite-friends'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _QuickTile(
+                    icon: Icons.monetization_on_rounded,
+                    label: 'Jeton\nyükle',
+                    gradient: [
+                      const Color(0xFF5C4020).withValues(alpha: 0.85),
+                      const Color(0xFF2A1C10).withValues(alpha: 0.9),
+                    ],
+                    onTap: () => context.push('/jeton-store'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickTile extends StatelessWidget {
+  const _QuickTile({
+    required this.icon,
+    required this.label,
+    required this.gradient,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final List<Color> gradient;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: gradient,
+            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          child: Row(
+            children: [
+              Icon(icon, size: 28, color: Colors.white.withValues(alpha: 0.95)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Ana sayfa (Akış) üstünde canlifal.com canlı yayın şeridi.
 class FeedLiveStrip extends ConsumerWidget {
   const FeedLiveStrip({super.key});

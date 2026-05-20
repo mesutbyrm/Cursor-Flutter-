@@ -120,6 +120,12 @@ class ProfilePage extends ConsumerWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () => context.push('/jeton-store'),
+                  icon: const Icon(Icons.add_shopping_cart_rounded),
+                  label: const Text('Jeton yükle / satın al'),
+                ),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
