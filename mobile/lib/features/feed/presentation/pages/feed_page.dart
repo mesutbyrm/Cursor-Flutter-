@@ -6,6 +6,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
+import '../../../../core/widgets/shell_app_bar_widgets.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../providers/feed_providers.dart';
@@ -41,6 +42,8 @@ class _FeedPageState extends ConsumerState<FeedPage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        leadingWidth: 48,
+        leading: const ShellProfileLeading(),
         title: ShaderMask(
           shaderCallback: (b) => const LinearGradient(
             colors: [AppTheme.accentSecondary, AppTheme.accent],
@@ -55,6 +58,8 @@ class _FeedPageState extends ConsumerState<FeedPage> {
           ),
         ),
         actions: [
+          const ShellNotificationsButton(),
+          const ShellCoinBalanceAction(),
           IconButton(
             tooltip: 'Yenile',
             onPressed: _refreshHome,
@@ -87,6 +92,7 @@ class _FeedPageState extends ConsumerState<FeedPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const _FeedPeekHero(),
+                      const FeedQuickActions(),
                       const FeedLiveStrip(),
                       const FeedVoiceRoomsStrip(),
                     ],
