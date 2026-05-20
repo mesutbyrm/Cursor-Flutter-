@@ -28,8 +28,6 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
   var _busy = false;
   var _completed = false;
   var _useSecureBrowser = false;
-  double _progress = 0;
-  WebUri? _startUri;
 
   /// Google, gömülü WebView user-agent'ını engeller (403 disallowed_useragent).
   static const _chromeMobileUserAgent =
@@ -78,10 +76,7 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
     final jar = ref.read(cookieJarProvider);
     await applyPersistCookiesToWebView(jar, Env.siteOrigin);
     if (!mounted) return;
-    setState(() {
-      _startUri = WebUri(_oauthStartUrl());
-      _ready = true;
-    });
+    setState(() => _ready = true);
     // Google OAuth WebView’da 403 verir; doğrudan güvenli tarayıcı (Custom Tab).
     await _oauthViaSecureBrowser();
   }
@@ -233,15 +228,6 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
     }
   }
 
-  void _onReceivedError(WebUri? uri, String? description) {
-    final d = (description ?? '').toLowerCase();
-    final u = uri?.toString().toLowerCase() ?? '';
-    if (d.contains('disallowed_useragent') ||
-        u.contains('accounts.google.com') && d.contains('403')) {
-      _oauthViaSecureBrowser();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     if (kIsWeb) {
@@ -270,15 +256,6 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
             child: const Text('Tarayıcı'),
           ),
         ],
-        bottom: _progress > 0 && _progress < 1
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(2),
-                child: LinearProgressIndicator(
-                  value: _progress,
-                  color: AppDesign.accentPink,
-                ),
-              )
-            : null,
       ),
       body: Stack(
         children: [

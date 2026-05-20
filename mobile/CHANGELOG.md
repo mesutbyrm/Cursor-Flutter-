@@ -2,6 +2,12 @@
 
 ## 1.0.13+15 (2026-05-20)
 
+### Derleme (CI)
+
+- Dart SDK `^3.8.0` (Actions ile uyumlu; `^3.11.5` kırılıyordu)
+- `pubspec.lock` güncellendi (`flutter_web_auth_2`)
+- `glow_panel` null-aware liste sözdizimi düzeltildi
+
 ### Google giriş düzeltmeleri
 
 - **403 disallowed_useragent:** Chrome Mobile user-agent + güvenli tarayıcı (Custom Tab) yedek

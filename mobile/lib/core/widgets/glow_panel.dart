@@ -90,7 +90,7 @@ class SectionTitleRow extends StatelessWidget {
             ),
           ),
         ),
-        ?trailing,
+        if (trailing != null) trailing!,
       ],
     );
   }

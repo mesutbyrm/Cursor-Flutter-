@@ -8,7 +8,6 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../../../voice_hub/presentation/voice_rooms_body.dart';
-import '../../domain/entities/live_stream_entity.dart';
 import '../providers/live_providers.dart';
 import '../utils/open_live_stream.dart';
 
