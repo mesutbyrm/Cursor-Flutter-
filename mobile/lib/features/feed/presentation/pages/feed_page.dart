@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_refresh.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../providers/feed_providers.dart';
@@ -13,7 +13,7 @@ import '../widgets/discover/discover_live_carousel.dart';
 import '../widgets/discover/discover_quick_actions.dart';
 import '../widgets/discover/discover_voice_orbs.dart';
 
-/// Keşfet ana sayfa — pixel tasarım (canlı yayın, hızlı işlemler, odalar, fal).
+/// Keşfet ana sayfa — premium discover layout.
 class FeedPage extends ConsumerStatefulWidget {
   const FeedPage({super.key});
 
@@ -32,10 +32,10 @@ class _FeedPageState extends ConsumerState<FeedPage> {
 
   @override
   Widget build(BuildContext context) {
-    final top = MediaQuery.paddingOf(context).top;
+    final bottom = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
+      backgroundColor: AppColors.background,
       body: DiscoverBackground(
         child: DiscoverRefresh.wrap(
           onRefresh: _refresh,
@@ -44,16 +44,19 @@ class _FeedPageState extends ConsumerState<FeedPage> {
               parent: BouncingScrollPhysics(),
             ),
             slivers: [
-              SliverToBoxAdapter(child: SizedBox(height: top)),
-              const SliverToBoxAdapter(child: DiscoverHeader()),
-              const SliverToBoxAdapter(child: DiscoverHeroHeadline()),
-              const SliverToBoxAdapter(child: DiscoverLiveCarousel()),
-              const SliverToBoxAdapter(child: DiscoverQuickActions()),
-              const SliverToBoxAdapter(child: DiscoverVoiceOrbs()),
-              const SliverToBoxAdapter(child: DiscoverFortuneTarot()),
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: MediaQuery.paddingOf(context).bottom + 100,
+              SliverSafeArea(
+                top: true,
+                bottom: false,
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    const RepaintBoundary(child: DiscoverHeader()),
+                    const RepaintBoundary(child: DiscoverHeroHeadline()),
+                    const RepaintBoundary(child: DiscoverLiveCarousel()),
+                    const RepaintBoundary(child: DiscoverQuickActions()),
+                    const RepaintBoundary(child: DiscoverVoiceOrbs()),
+                    const RepaintBoundary(child: DiscoverFortuneTarot()),
+                    SizedBox(height: bottom + 100),
+                  ]),
                 ),
               ),
             ],

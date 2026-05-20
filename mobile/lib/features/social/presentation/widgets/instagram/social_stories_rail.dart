@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/domain/entities/user_entity.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
@@ -87,9 +87,9 @@ class _OwnStoryChip extends StatelessWidget {
               width: 22,
               height: 22,
               decoration: BoxDecoration(
-                color: AppDesign.accentCyan,
+                color: AppColors.accentCyan,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppDesign.bgBase, width: 2),
+                border: Border.all(color: AppColors.background, width: 2),
               ),
               child: const Icon(Icons.add, size: 14, color: Colors.black),
             ),
@@ -152,7 +152,7 @@ class _StoryRingFrame extends StatelessWidget {
                           Colors.white.withValues(alpha: 0.15),
                         ],
                       )
-                    : AppDesign.heroGradient,
+                    : AppColors.brandGradient,
               ),
               child: child,
             ),
@@ -165,7 +165,7 @@ class _StoryRingFrame extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppDesign.textPrimary,
+                color: AppColors.textPrimary,
               ),
             ),
           ],
@@ -211,7 +211,7 @@ class _AvatarPlaceholder extends StatelessWidget {
     return Container(
       color: const Color(0xFF1E1E2E),
       child: const Center(
-        child: Icon(Icons.person, color: AppDesign.textMuted),
+        child: Icon(Icons.person, color: AppColors.textMuted),
       ),
     );
   }

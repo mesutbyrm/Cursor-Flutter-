@@ -1,64 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/canlifal_tokens.dart';
+import '../../../../../core/ui/premium/premium_icon_button.dart';
 
-/// Instagram tarzı üst çubuk — site renkleri (pembe/mor gradyan logo).
+/// Instagram tarzı üst çubuk — gradyan logo, cam aksiyonlar.
 class SocialInstagramAppBar extends StatelessWidget {
   const SocialInstagramAppBar({super.key});
 
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.paddingOf(context).top;
+    final tokens = context.tokens;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(16, top + 8, 12, 10),
+      padding: EdgeInsets.fromLTRB(16, top + 8, 8, 10),
       decoration: BoxDecoration(
-        color: AppDesign.bgBase.withValues(alpha: 0.98),
+        color: AppColors.background.withValues(alpha: 0.98),
         border: Border(
-          bottom: BorderSide(
-            color: Colors.white.withValues(alpha: 0.06),
-          ),
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
         ),
       ),
       child: Row(
         children: [
           ShaderMask(
-            shaderCallback: (bounds) =>
-                AppDesign.heroGradient.createShader(bounds),
-            child: const Text(
+            shaderCallback: (b) => tokens.brandGradient.createShader(b),
+            child: Text(
               'Canlifal',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.8,
-                color: Colors.white,
-                fontStyle: FontStyle.italic,
-              ),
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.8,
+                    color: Colors.white,
+                    fontStyle: FontStyle.italic,
+                  ),
             ),
           ),
           const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.add_box_outlined, size: 26),
-            color: AppDesign.textPrimary,
-            tooltip: 'Yeni paylaşım',
-            onPressed: () {
+          PremiumIconButton(
+            icon: Icons.add_box_outlined,
+            size: 40,
+            onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Paylaşım yakında')),
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.favorite_border_rounded, size: 26),
-            color: AppDesign.textPrimary,
-            tooltip: 'Bildirimler',
-            onPressed: () => context.push('/notifications'),
+          const SizedBox(width: 4),
+          PremiumIconButton(
+            icon: Icons.favorite_border_rounded,
+            size: 40,
+            onTap: () => context.push('/notifications'),
           ),
-          IconButton(
-            icon: const Icon(Icons.send_outlined, size: 24),
-            color: AppDesign.textPrimary,
-            tooltip: 'Mesajlar',
-            onPressed: () => context.go('/messages'),
+          const SizedBox(width: 4),
+          PremiumIconButton(
+            icon: Icons.send_outlined,
+            size: 40,
+            onTap: () => context.go('/messages'),
           ),
         ],
       ),
