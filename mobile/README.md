@@ -63,6 +63,16 @@ DTO’lar yaygın alan adı varyantlarını (`camelCase` / `snake_case`) okumaya
 - Ana sayfa ve **Sosyal / Canlı (yayınlar) / Mesajlar / Profil** için tema uyumlu **Hızlı işlemler**; Canlı **Sohbet** sekmesinde ek panel + odalar ızgarasında üst boşluk düzeltmesi
 - Dikey kart akışı, **canlifal.com sosyal** listesi, canlı yayın listesi, konuşmalar ve sohbet, bildirimler, profil + takip, coin bakiyesi  
 
+## Sürüm
+
+| Sürüm | Build | Özet |
+|-------|-------|------|
+| **1.0.6** | 7 | Ana sayfa: jeton→mağaza, profil→profil; 3 canlı; tüm hızlı işlemler ve sohbet odaları; 14 fal (5’li grid); hızlı yenileme |
+| 1.0.5 | 6 | Sesli oda neon UI, TRTC, hediye, shell jeton/davet |
+| 1.0.4 | 5 | Sesli oda API, hediye/çıkış düzeltmeleri |
+
+Güncel: `pubspec.yaml` → `version: 1.0.6+7`
+
 ## Test
 
 ```bash
