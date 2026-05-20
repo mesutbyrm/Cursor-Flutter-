@@ -15,18 +15,23 @@ class VoiceRoomTopBar extends StatelessWidget {
     required this.onlineCount,
     required this.onBack,
     required this.onExit,
+    this.onShare,
+    this.isCurrentUserOwner = false,
   });
 
   final VoiceRoomEntity room;
   final int onlineCount;
   final VoidCallback onBack;
   final VoidCallback onExit;
+  final VoidCallback? onShare;
+  final bool isCurrentUserOwner;
 
   @override
   Widget build(BuildContext context) {
-    final shortId = room.id.length > 12
-        ? room.id.substring(0, 12)
-        : room.id;
+    final shortId = room.id.length > 12 ? room.id.substring(0, 12) : room.id;
+    final ownerLabel = room.ownerName?.trim().isNotEmpty == true
+        ? room.ownerName!.trim()
+        : 'Oda sahibi';
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
@@ -75,16 +80,18 @@ class VoiceRoomTopBar extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppDesign.coinGold.withValues(alpha: 0.25),
+                            color: AppDesign.coinGold.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: AppDesign.coinGold.withValues(alpha: 0.6),
+                              color: AppDesign.coinGold.withValues(alpha: 0.5),
                             ),
                           ),
-                          child: const Text(
-                            'ADMIN',
-                            style: TextStyle(
-                              fontSize: 8,
+                          child: Text(
+                            isCurrentUserOwner ? 'BENİM ODAM' : 'Sahip · $ownerLabel',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 7,
                               fontWeight: FontWeight.w900,
                               color: AppDesign.coinGold,
                             ),
@@ -111,9 +118,8 @@ class VoiceRoomTopBar extends StatelessWidget {
                 ),
               ),
               _OnlineChip(count: onlineCount),
-              _HeaderIcon(icon: Icons.photo_library_outlined, onTap: () {}),
-              _HeaderIcon(icon: Icons.settings_outlined, onTap: () {}),
-              _HeaderIcon(icon: Icons.bar_chart_rounded, onTap: () {}),
+              if (onShare != null)
+                _HeaderIcon(icon: Icons.share_outlined, onTap: onShare!),
               _HeaderIcon(
                 icon: Icons.power_settings_new_rounded,
                 color: AppDesign.liveRed,

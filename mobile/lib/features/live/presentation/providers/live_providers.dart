@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/entities/voice_room_entity.dart';
 import '../../domain/repositories/live_repository.dart';
@@ -26,4 +27,22 @@ final voiceRoomsProvider = FutureProvider<List<VoiceRoomEntity>>((ref) async {
 final voiceRoomByIdProvider =
     FutureProvider.autoDispose.family<VoiceRoomEntity?, String>((ref, id) async {
   return ref.watch(liveRepositoryProvider).fetchVoiceRoomById(id);
+});
+
+/// Giriş yapan kullanıcının sahip olduğu sesli oda (ownerId veya slug = username).
+final myVoiceRoomProvider = Provider<VoiceRoomEntity?>((ref) {
+  final user = ref.watch(authControllerProvider).valueOrNull;
+  final rooms = ref.watch(voiceRoomsProvider).valueOrNull;
+  if (user == null || rooms == null || rooms.isEmpty) return null;
+
+  for (final r in rooms) {
+    final oid = r.ownerId;
+    if (oid != null && oid.isNotEmpty && oid == user.id) return r;
+  }
+  final uname = user.username.trim().toLowerCase();
+  if (uname.isEmpty) return null;
+  for (final r in rooms) {
+    if (r.slug.trim().toLowerCase() == uname) return r;
+  }
+  return null;
 });

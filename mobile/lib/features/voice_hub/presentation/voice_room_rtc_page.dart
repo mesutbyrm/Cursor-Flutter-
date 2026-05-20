@@ -11,7 +11,6 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_design.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
-import '../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../profile/presentation/providers/profile_providers.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
@@ -24,6 +23,7 @@ import 'widgets/voice_room/voice_room_bottom_bar.dart';
 import 'widgets/voice_room/voice_room_chat_panel.dart';
 import 'widgets/voice_room/voice_room_seats_panel.dart';
 import 'widgets/voice_room/voice_room_top_bar.dart';
+import 'widgets/voice_room_gift_sheet.dart';
 
 /// Sesli sohbet odası — web neon düzeni + TRTC ses + canlifal.com API.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
@@ -81,9 +81,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             userId: user.id,
             roomId: widget.room.id,
           );
+      final isOwner = _isRoomOwner(user.id, user.username);
       await _trtc.join(
         credentials: cred,
-        isHost: false,
+        isHost: isOwner,
         audioOnly: true,
       );
       if (mounted) {
@@ -110,6 +111,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     if (mounted) context.go('/voice-rooms');
   }
 
+  bool _isRoomOwner(String userId, String username) {
+    final room = widget.room;
+    final oid = room.ownerId;
+    if (oid != null && oid.isNotEmpty && oid == userId) return true;
+    final uname = username.trim().toLowerCase();
+    final slug = room.slug.trim().toLowerCase();
+    return uname.isNotEmpty && slug == uname;
+  }
+
   void _shareRoom() {
     final slug = widget.room.slug;
     final url = '${Env.siteOrigin}/sohbet/$slug';
@@ -125,8 +135,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         return messages[i].content;
       }
     }
-    final owner = widget.room.ownerName ?? 'Admin';
-    return '$owner Sohbet sesli odasına katıldı! 🎤';
+    final owner = widget.room.ownerName ?? 'Oda sahibi';
+    return '$owner sohbet odasına katıldı! 🎤';
   }
 
   @override
@@ -140,6 +150,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         ? live.presence.length
         : room.displayOnline;
     final user = ref.watch(authControllerProvider).valueOrNull;
+    final isOwner = user != null && _isRoomOwner(user.id, user.username);
     final speakingId = _micOn ? user?.id : null;
 
     return PopScope(
@@ -180,8 +191,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       child: VoiceRoomTopBar(
                         room: room,
                         onlineCount: online,
+                        isCurrentUserOwner: isOwner,
                         onBack: _leave,
                         onExit: _leave,
+                        onShare: _shareRoom,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -215,11 +228,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             VoiceRoomActionRow(
                               dj: live.dj,
                               onMusicTap: () {
-                                context.push(
-                                  CanlifalWebRoute.location(
-                                    relativePath: '/sohbet/${room.slug}',
-                                    title: room.displayTitle,
-                                  ),
+                                final msg = live.dj.canPlayMusic
+                                    ? 'DJ müziği odada çalıyor'
+                                    : 'Müzik DJ sırasına bağlı — DJ paneli yakında';
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(msg)),
                                 );
                               },
                             ),
@@ -253,22 +266,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       onRefresh: () =>
                           ref.read(voiceRoomLiveProvider(room).notifier).refresh(),
                       onShare: _shareRoom,
-                      onTopUp: () {
-                        context.push(
-                          CanlifalWebRoute.location(
-                            relativePath: '/cuzdan',
-                            title: 'Jeton Yükle',
-                          ),
-                        );
-                      },
-                      onGiftTap: () {
-                        context.push(
-                          CanlifalWebRoute.location(
-                            relativePath: '/sohbet/${room.slug}',
-                            title: 'Hediye Gönder',
-                          ),
-                        );
-                      },
+                      onTopUp: () => context.push('/jeton-store'),
+                      onGiftTap: () => showVoiceRoomGiftPicker(context, ref, room: room),
                     ),
                   ],
                 ),

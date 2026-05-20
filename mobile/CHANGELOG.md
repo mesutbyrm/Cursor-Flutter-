@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.7+8 (2026-05-20)
+
+### Sesli sohbet
+
+- Odalar tamamen **native Flutter + TRTC** (WebView yok)
+- **Benim odam** bölümü; popüler odalar responsive grid (1–2 sütun)
+- Koltuk 1 yalnızca **oda sahibi** için (yoksa rezerve boş koltuk)
+- Üst bar: genel ADMIN yerine sahip bilgisi / “Benim odam”
+- Hediye ve jeton yükleme native (`/api/chat/rooms/.../gifts`, jeton mağazası)
+- Oda sahibi TRTC’de `isHost: true`
+
 ## 1.0.6+7 (2026-05-20)
 
 ### Ana sayfa (Keşfet)

@@ -6,84 +6,128 @@ import '../../../../core/theme/app_design.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 
-/// Web `/chat` odalarına benzer neon kart.
-class VoiceRoomWebCard extends StatelessWidget {
-  const VoiceRoomWebCard({
+/// Sesli oda listesi kartı — tamamen Flutter neon arayüz.
+class VoiceRoomCard extends StatelessWidget {
+  const VoiceRoomCard({
     super.key,
     required this.room,
     required this.onTap,
     this.large = false,
+    this.highlight = false,
   });
 
   final VoiceRoomEntity room;
   final VoidCallback onTap;
   final bool large;
+  final bool highlight;
 
   @override
   Widget build(BuildContext context) {
     final bg = room.backgroundImageUrl;
+    final borderColor = highlight
+        ? AppDesign.coinGold.withValues(alpha: 0.7)
+        : AppDesign.accentPurple.withValues(alpha: 0.45);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(22),
         child: Ink(
-          height: large ? 200 : null,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: AppDesign.accentPurple.withValues(alpha: 0.45),
+            border: Border.all(color: borderColor, width: highlight ? 2 : 1),
+            boxShadow: AppDesign.glowShadow(
+              highlight ? AppDesign.coinGold : AppDesign.accentPink,
+              blur: highlight ? 20 : 14,
             ),
-            boxShadow: AppDesign.glowShadow(AppDesign.accentPink, blur: 16),
           ),
-          child: ClipRRect(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: large ? 168 : 132,
+            ),
+            child: ClipRRect(
             borderRadius: BorderRadius.circular(21),
             child: Stack(
-              fit: StackFit.expand,
+              fit: StackFit.passthrough,
               children: [
                 if (bg != null && bg.isNotEmpty)
-                  CachedNetworkImage(imageUrl: bg, fit: BoxFit.cover)
+                  Positioned.fill(
+                    child: CachedNetworkImage(imageUrl: bg, fit: BoxFit.cover),
+                  )
                 else
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF3A1F5E), Color(0xFF120A1C)],
+                  const Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF3A1F5E), Color(0xFF120A1C)],
+                        ),
                       ),
                     ),
                   ),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.15),
-                        Colors.black.withValues(alpha: 0.88),
-                      ],
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.12),
+                          Colors.black.withValues(alpha: 0.9),
+                        ],
+                      ),
                     ),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(14),
+                  padding: EdgeInsets.all(large ? 16 : 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Row(
                         children: [
-                          Text(room.icon ?? '💬',
-                              style: TextStyle(fontSize: large ? 32 : 24)),
+                          Text(
+                            room.icon ?? '💬',
+                            style: TextStyle(fontSize: large ? 28 : 22),
+                          ),
+                          if (highlight) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppDesign.coinGold.withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppDesign.coinGold.withValues(alpha: 0.6),
+                                ),
+                              ),
+                              child: const Text(
+                                'BENİM ODAM',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppDesign.coinGold,
+                                ),
+                              ),
+                            ),
+                          ],
                           const Spacer(),
-                          if (room.displayOnline > 0) _OnlinePill(count: room.displayOnline),
+                          if (room.displayOnline > 0)
+                            _OnlinePill(count: room.displayOnline),
                         ],
                       ),
-                      const Spacer(),
+                      SizedBox(height: large ? 20 : 12),
                       Text(
-                        room.nameTr,
+                        room.displayTitle,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
-                          fontSize: large ? 20 : 16,
+                          fontSize: large ? 18 : 15,
                           height: 1.1,
                         ),
                       ),
@@ -91,7 +135,7 @@ class VoiceRoomWebCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           room.descTr!,
-                          maxLines: 2,
+                          maxLines: large ? 2 : 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: AppDesign.textMuted,
@@ -104,29 +148,29 @@ class VoiceRoomWebCard extends StatelessWidget {
                         children: [
                           if (room.ownerAvatarUrl != null)
                             CircleAvatar(
-                              radius: 14,
+                              radius: large ? 16 : 13,
                               backgroundImage:
                                   CachedNetworkImageProvider(room.ownerAvatarUrl!),
                             )
                           else
-                            const CircleAvatar(
-                              radius: 14,
-                              child: Icon(Icons.person, size: 16),
+                            CircleAvatar(
+                              radius: large ? 16 : 13,
+                              child: Icon(Icons.person, size: large ? 18 : 14),
                             ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              room.ownerName ?? 'Moderatör',
+                              room.ownerName ?? 'Oda sahibi',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 12,
+                                fontSize: large ? 12 : 11,
                               ),
                             ),
                           ),
                           ..._avatarStack(room.recentUserAvatars),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           ProfileGlass(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
@@ -139,15 +183,13 @@ class VoiceRoomWebCard extends StatelessWidget {
                                 Icon(
                                   Icons.headset_mic_rounded,
                                   size: 14,
-                                  color: AppDesign.accentCyan
-                                      .withValues(alpha: 0.95),
+                                  color: AppDesign.accentCyan.withValues(alpha: 0.95),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'Gir',
+                                  'Katıl',
                                   style: TextStyle(
-                                    color: AppDesign.accentCyan
-                                        .withValues(alpha: 0.95),
+                                    color: AppDesign.accentCyan.withValues(alpha: 0.95),
                                     fontWeight: FontWeight.w800,
                                     fontSize: 11,
                                   ),
@@ -163,9 +205,10 @@ class VoiceRoomWebCard extends StatelessWidget {
               ],
             ),
           ),
+          ),
         ),
       ),
-    ).animate().fadeIn(duration: 280.ms).slideY(begin: 0.06, end: 0);
+    ).animate().fadeIn(duration: 280.ms).slideY(begin: 0.05, end: 0);
   }
 
   List<Widget> _avatarStack(List<String> urls) {

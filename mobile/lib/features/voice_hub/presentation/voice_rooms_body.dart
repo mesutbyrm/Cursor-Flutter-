@@ -8,16 +8,15 @@ import '../../../core/theme/app_design.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/presentation/providers/live_providers.dart';
-import 'widgets/voice_room_web_card.dart';
+import 'widgets/voice_room_card.dart';
 
-/// Sesli sohbet listesi — canlifal.com web arayüzüne yakın neon düzen.
+/// Sesli sohbet listesi — benim odam + responsive popüler odalar (native Flutter).
 class VoiceRoomsBody extends ConsumerWidget {
   const VoiceRoomsBody({
     super.key,
     this.embeddedInLiveShellTab = false,
   });
 
-  /// [true] ise Canlı sekmesinde üstte ayrıca AppBar olduğundan grid üst boşluğu küçültülür.
   final bool embeddedInLiveShellTab;
 
   @override
@@ -31,6 +30,8 @@ class VoiceRoomsBody extends ConsumerWidget {
     }
 
     final rooms = ref.watch(voiceRoomsProvider);
+    final myRoom = ref.watch(myVoiceRoomProvider);
+
     return rooms.when(
       loading: () => const DiscoverAccentLoader(),
       error: (e, _) => DiscoverEmptyState(
@@ -46,69 +47,119 @@ class VoiceRoomsBody extends ConsumerWidget {
             message: 'Henüz oda yok.\nYeni sesli sohbet odaları burada görünecek.',
           );
         }
-        final featured = list.first;
-        final rest = list.length > 1 ? list.sublist(1) : <VoiceRoomEntity>[];
+
+        final popular = _popularRooms(list, myRoom);
 
         return RefreshIndicator(
           color: AppDesign.accentPink,
           backgroundColor: AppDesign.bgPurpleGlow,
           onRefresh: () async => ref.invalidate(voiceRoomsProvider),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            padding: EdgeInsets.fromLTRB(
-              16,
-              embeddedInLiveShellTab ? 8 : 4,
-              16,
-              100,
-            ),
-            children: [
-              const Text(
-                'Popüler odalar',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final crossCount = width >= 520 ? 2 : 1;
+              final pad = embeddedInLiveShellTab ? 8.0 : 4.0;
+
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Web’deki gibi neon sesli sohbet odalarına katıl',
-                style: TextStyle(
-                  color: AppDesign.textMuted.withValues(alpha: 0.95),
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 14),
-              VoiceRoomWebCard(
-                room: featured,
-                large: true,
-                onTap: () => context.push('/voice-room/${featured.id}', extra: featured),
-              ),
-              if (rest.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                const Text(
-                  'Tüm odalar',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ...rest.map(
-                  (r) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: VoiceRoomWebCard(
-                      room: r,
-                      onTap: () => context.push('/voice-room/${r.id}', extra: r),
+                padding: EdgeInsets.fromLTRB(16, pad, 16, 100),
+                children: [
+                  if (myRoom != null) ...[
+                    const _SectionTitle(
+                      title: 'Benim odam',
+                      subtitle: 'Kendi sesli sohbet odanıza doğrudan girin',
                     ),
+                    const SizedBox(height: 12),
+                    VoiceRoomCard(
+                      room: myRoom,
+                      large: true,
+                      highlight: true,
+                      onTap: () => _openRoom(context, myRoom),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                  const _SectionTitle(
+                    title: 'Popüler odalar',
+                    subtitle: 'Canlı sesli sohbet — uygulama içi TRTC',
                   ),
-                ),
-              ],
-            ],
+                  const SizedBox(height: 12),
+                  if (popular.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          'Şu an listelenecek başka oda yok',
+                          style: TextStyle(color: AppDesign.textMuted, fontSize: 13),
+                        ),
+                      ),
+                    )
+                  else
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossCount,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: crossCount == 1 ? 1.55 : 0.92,
+                      ),
+                      itemCount: popular.length,
+                      itemBuilder: (context, i) {
+                        final r = popular[i];
+                        return VoiceRoomCard(
+                          room: r,
+                          onTap: () => _openRoom(context, r),
+                        );
+                      },
+                    ),
+                ],
+              );
+            },
           ),
         );
       },
+    );
+  }
+
+  static List<VoiceRoomEntity> _popularRooms(
+    List<VoiceRoomEntity> all,
+    VoiceRoomEntity? mine,
+  ) {
+    if (mine == null) return all;
+    return all.where((r) => r.id != mine.id).toList();
+  }
+
+  static void _openRoom(BuildContext context, VoiceRoomEntity room) {
+    context.push('/voice-room/${room.id}', extra: room);
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: TextStyle(
+            color: AppDesign.textMuted.withValues(alpha: 0.95),
+            fontSize: 12,
+          ),
+        ),
+      ],
     );
   }
 }
