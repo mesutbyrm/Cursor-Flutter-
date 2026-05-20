@@ -59,6 +59,8 @@ DTO’lar yaygın alan adı varyantlarını (`camelCase` / `snake_case`) okumaya
 ## Özellikler
 
 - Giriş / kayıt, korumalı shell, alt gezinme (Akış, Sosyal, Canlı, Mesaj, Profil)  
+- **Tüm shell sekmelerinde** üst çubukta profil (→ Profil sekmesi), bildirimler ve jeton bakiyesi (→ jeton mağazası)  
+- Ana sayfa ve **Sosyal / Canlı (yayınlar) / Mesajlar** için tema uyumlu **Hızlı işlemler** (davet, jeton, akış, web sohbet vb.)
 - Dikey kart akışı, **canlifal.com sosyal** listesi, canlı yayın listesi, konuşmalar ve sohbet, bildirimler, profil + takip, coin bakiyesi  
 
 ## Test

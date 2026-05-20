@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/shell_app_bar_widgets.dart';
+import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../../voice_hub/presentation/voice_rooms_body.dart';
 import '../providers/live_providers.dart';
@@ -35,8 +37,12 @@ class _LivePageState extends ConsumerState<LivePage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leadingWidth: 48,
+        leading: const ShellProfileLeading(),
         title: const Text('Canlı & odalar'),
         actions: [
+          const ShellNotificationsButton(),
+          const ShellCoinBalanceAction(),
           IconButton(
             tooltip: 'Yenile',
             onPressed: () {
@@ -71,112 +77,128 @@ class _LiveStreamsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final live = ref.watch(liveStreamsProvider);
-    return live.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) =>
-          Center(child: Text(ApiException.userMessage(e))),
-      data: (streams) {
-        if (streams.isEmpty) {
-          return const Center(child: Text('Şu an canlı yayın yok'));
-        }
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: streams.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemBuilder: (ctx, i) {
-            final s = streams[i];
-            return Material(
-              color: AppTheme.surfaceElevated,
-              borderRadius: BorderRadius.circular(16),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: s.isLive
-                    ? () => context.push(
-                          CanlifalWebRoute.location(
-                            relativePath: '/sohbet/video?watch=${s.id}',
-                            title: s.title,
-                            streamIdForGifts: s.id,
-                          ),
-                        )
-                    : null,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: SizedBox(
-                          width: 64,
-                          height: 64,
-                          child: s.thumbnailUrl != null &&
-                                  s.thumbnailUrl!.isNotEmpty
-                              ? Image.network(
-                                  s.thumbnailUrl!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const ColoredBox(
-                                    color: AppTheme.surface,
-                                    child: Icon(Icons.live_tv_rounded,
-                                        color: AppTheme.accent),
-                                  ),
-                                )
-                              : const ColoredBox(
-                                  color: AppTheme.surface,
-                                  child: Icon(Icons.live_tv_rounded,
-                                      color: AppTheme.accent),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(14, 8, 14, 0),
+          child: LiveStreamsBranchQuickActions(),
+        ),
+        Expanded(
+          child: live.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) =>
+                Center(child: Text(ApiException.userMessage(e))),
+            data: (streams) {
+              if (streams.isEmpty) {
+                return const Center(child: Text('Şu an canlı yayın yok'));
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: streams.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
+                itemBuilder: (ctx, i) {
+                  final s = streams[i];
+                  return Material(
+                    color: AppTheme.surfaceElevated,
+                    borderRadius: BorderRadius.circular(16),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: s.isLive
+                          ? () => context.push(
+                                CanlifalWebRoute.location(
+                                  relativePath: '/sohbet/video?watch=${s.id}',
+                                  title: s.title,
+                                  streamIdForGifts: s.id,
                                 ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                              )
+                          : null,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
                           children: [
-                            Text(
-                              s.title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: SizedBox(
+                                width: 64,
+                                height: 64,
+                                child: s.thumbnailUrl != null &&
+                                        s.thumbnailUrl!.isNotEmpty
+                                    ? Image.network(
+                                        s.thumbnailUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                const ColoredBox(
+                                          color: AppTheme.surface,
+                                          child: Icon(Icons.live_tv_rounded,
+                                              color: AppTheme.accent),
+                                        ),
+                                      )
+                                    : const ColoredBox(
+                                        color: AppTheme.surface,
+                                        child: Icon(Icons.live_tv_rounded,
+                                            color: AppTheme.accent),
+                                      ),
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${s.streamerName ?? 'Yayıncı'} · ${s.viewerCount} izleyici',
-                              style: const TextStyle(color: AppTheme.muted),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    s.title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${s.streamerName ?? 'Yayıncı'} · ${s.viewerCount} izleyici',
+                                    style:
+                                        const TextStyle(color: AppTheme.muted),
+                                  ),
+                                ],
+                              ),
                             ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: s.isLive
+                                    ? AppTheme.accent.withValues(alpha: 0.2)
+                                    : AppTheme.muted.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                s.isLive ? 'CANLI' : 'BİTTİ',
+                                style: TextStyle(
+                                  color: s.isLive
+                                      ? AppTheme.accent
+                                      : AppTheme.muted,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                            if (s.isLive) ...[
+                              const SizedBox(width: 4),
+                              const Icon(Icons.chevron_right,
+                                  color: AppTheme.muted),
+                            ],
                           ],
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: s.isLive
-                              ? AppTheme.accent.withValues(alpha: 0.2)
-                              : AppTheme.muted.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          s.isLive ? 'CANLI' : 'BİTTİ',
-                          style: TextStyle(
-                            color:
-                                s.isLive ? AppTheme.accent : AppTheme.muted,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                      if (s.isLive) ...[
-                        const SizedBox(width: 4),
-                        const Icon(Icons.chevron_right, color: AppTheme.muted),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

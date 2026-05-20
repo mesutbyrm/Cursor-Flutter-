@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
+import '../../../../core/widgets/quick_action_tile.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -30,10 +31,10 @@ class FeedQuickActions extends StatelessWidget {
               accent: AppTheme.accentSecondary,
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _QuickTile(
+            QuickActionGrid(
+              rows: [
+                [
+                  QuickActionTile(
                     icon: Icons.person_add_alt_1_rounded,
                     label: 'Arkadaşlarını\ndavet et',
                     gradient: [
@@ -42,10 +43,7 @@ class FeedQuickActions extends StatelessWidget {
                     ],
                     onTap: () => context.push('/invite-friends'),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _QuickTile(
+                  QuickActionTile(
                     icon: Icons.monetization_on_rounded,
                     label: 'Jeton\nyükle',
                     gradient: [
@@ -54,68 +52,10 @@ class FeedQuickActions extends StatelessWidget {
                     ],
                     onTap: () => context.push('/jeton-store'),
                   ),
-                ),
+                ],
               ],
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickTile extends StatelessWidget {
-  const _QuickTile({
-    required this.icon,
-    required this.label,
-    required this.gradient,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final List<Color> gradient;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: gradient,
-            ),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-          child: Row(
-            children: [
-              Icon(icon, size: 28, color: Colors.white.withValues(alpha: 0.95)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    height: 1.2,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: Colors.white.withValues(alpha: 0.5),
-              ),
-            ],
-          ),
         ),
       ),
     );

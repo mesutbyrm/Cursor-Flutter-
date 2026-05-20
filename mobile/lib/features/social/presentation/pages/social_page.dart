@@ -6,8 +6,10 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
+import '../../../../core/widgets/shell_app_bar_widgets.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../feed/domain/entities/post_entity.dart';
+import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../providers/social_providers.dart';
 
 class SocialPage extends ConsumerStatefulWidget {
@@ -40,6 +42,8 @@ class _SocialPageState extends ConsumerState<SocialPage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        leadingWidth: 48,
+        leading: const ShellProfileLeading(),
         title: ShaderMask(
           shaderCallback: (b) => const LinearGradient(
             colors: [AppTheme.accentSecondary, AppTheme.accent],
@@ -54,6 +58,8 @@ class _SocialPageState extends ConsumerState<SocialPage> {
           ),
         ),
         actions: [
+          const ShellNotificationsButton(),
+          const ShellCoinBalanceAction(),
           IconButton(
             tooltip: 'Yenile',
             onPressed: () =>
@@ -145,52 +151,60 @@ class _SocialPageState extends ConsumerState<SocialPage> {
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: EdgeInsets.fromLTRB(14, _topInset, 14, 12),
-                          child: GlowPanel(
-                            borderRadius: 20,
-                            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(14),
-                                    color: AppTheme.accentSecondary
-                                        .withValues(alpha: 0.12),
-                                  ),
-                                  child: Icon(
-                                    Icons.public_rounded,
-                                    color: AppTheme.accentSecondary
-                                        .withValues(alpha: 0.95),
-                                    size: 26,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Topluluk akışı',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 16,
-                                          letterSpacing: -0.2,
-                                        ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              GlowPanel(
+                                borderRadius: 20,
+                                padding: const EdgeInsets.fromLTRB(
+                                    14, 14, 14, 12),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(14),
+                                        color: AppTheme.accentSecondary
+                                            .withValues(alpha: 0.12),
                                       ),
-                                      SizedBox(height: 2),
-                                      Text(
-                                        'canlifal.com ile aynı paylaşımlar',
-                                        style: TextStyle(
-                                          color: AppTheme.muted,
-                                          fontSize: 12,
-                                          height: 1.25,
-                                        ),
+                                      child: Icon(
+                                        Icons.public_rounded,
+                                        color: AppTheme.accentSecondary
+                                            .withValues(alpha: 0.95),
+                                        size: 26,
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Topluluk akışı',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 16,
+                                              letterSpacing: -0.2,
+                                            ),
+                                          ),
+                                          SizedBox(height: 2),
+                                          Text(
+                                            'canlifal.com ile aynı paylaşımlar',
+                                            style: TextStyle(
+                                              color: AppTheme.muted,
+                                              fontSize: 12,
+                                              height: 1.25,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              ),
+                              const SocialBranchQuickActions(),
+                            ],
                           ),
                         ),
                       ),

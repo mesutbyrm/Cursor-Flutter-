@@ -6,10 +6,9 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
+import '../../../../core/widgets/shell_app_bar_widgets.dart';
 import '../../../../core/widgets/user_avatar.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/presentation/providers/live_providers.dart';
-import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/feed_providers.dart';
 import '../widgets/feed_home_sections.dart';
 
@@ -44,7 +43,7 @@ class _FeedPageState extends ConsumerState<FeedPage> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         leadingWidth: 48,
-        leading: const _FeedProfileLeading(),
+        leading: const ShellProfileLeading(),
         title: ShaderMask(
           shaderCallback: (b) => const LinearGradient(
             colors: [AppTheme.accentSecondary, AppTheme.accent],
@@ -59,12 +58,8 @@ class _FeedPageState extends ConsumerState<FeedPage> {
           ),
         ),
         actions: [
-          IconButton(
-            tooltip: 'Bildirimler',
-            onPressed: () => context.push('/notifications'),
-            icon: const Icon(Icons.notifications_none_rounded),
-          ),
-          const _FeedCoinAction(),
+          const ShellNotificationsButton(),
+          const ShellCoinBalanceAction(),
           IconButton(
             tooltip: 'Yenile',
             onPressed: _refreshHome,
@@ -290,97 +285,6 @@ class _FeedPageState extends ConsumerState<FeedPage> {
         ),
       ),
         ],
-      ),
-    );
-  }
-}
-
-class _FeedProfileLeading extends ConsumerWidget {
-  const _FeedProfileLeading();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final auth = ref.watch(authControllerProvider);
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: auth.when(
-        data: (user) {
-          if (user == null) {
-            return IconButton(
-              tooltip: 'Profil',
-              onPressed: () => context.go('/profile'),
-              icon: const Icon(Icons.person_rounded),
-            );
-          }
-          return IconButton(
-            tooltip: 'Profilim',
-            padding: EdgeInsets.zero,
-            onPressed: () => context.go('/profile'),
-            icon: UserAvatar(url: user.avatarUrl, radius: 18),
-          );
-        },
-        loading: () => IconButton(
-          tooltip: 'Profil',
-          onPressed: () => context.go('/profile'),
-          icon: const SizedBox(
-            width: 22,
-            height: 22,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-        error: (e, s) => IconButton(
-          tooltip: 'Profil',
-          onPressed: () => context.go('/profile'),
-          icon: const Icon(Icons.person_rounded),
-        ),
-      ),
-    );
-  }
-}
-
-class _FeedCoinAction extends ConsumerWidget {
-  const _FeedCoinAction();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final coins = ref.watch(coinBalanceProvider);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: Tooltip(
-        message: 'Jeton yükle',
-        child: InkWell(
-          onTap: () => context.push('/jeton-store'),
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.monetization_on_rounded,
-                    size: 20, color: Color(0xFFFFD54F)),
-                const SizedBox(width: 4),
-                coins.when(
-                  data: (c) => Text(
-                    '$c',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 14,
-                    ),
-                  ),
-                  loading: () => const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  error: (_, _) => const Text(
-                    '—',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
