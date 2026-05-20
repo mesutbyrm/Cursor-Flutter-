@@ -1,8 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/ui/premium/live_badge.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
@@ -260,10 +262,11 @@ class _LiveCardShell extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   if (imageUrl != null && imageUrl!.isNotEmpty)
-                    Image.network(
-                      imageUrl!,
+                    CachedNetworkImage(
+                      imageUrl: imageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _placeholder(),
+                      memCacheWidth: 480,
+                      errorWidget: (_, _, _) => _placeholder(),
                     )
                   else
                     _placeholder(),
@@ -279,28 +282,10 @@ class _LiveCardShell extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Positioned(
+                  const Positioned(
                     top: 10,
                     left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppDesign.liveRed,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'LIVE',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.8,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                    child: LiveBadge(compact: true),
                   ),
                   Positioned(
                     right: 10,
