@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.13+15 (2026-05-20)
+
+### Google giriş düzeltmeleri
+
+- **403 disallowed_useragent:** Chrome Mobile user-agent + güvenli tarayıcı (Custom Tab) yedek
+- Oturum çerezleri uygulamaya aktarılıyor (`sessionCookieMarker` + yeniden deneme)
+- Site ana sayfası / onboarding WebView’da açılmıyor (yalnızca `/api/auth/*`)
+
+### Ana sayfa ve canlı (1.0.12+14)
+
+- Sesli odalar: 4 sütun grid, gerçek `/api/chat/rooms` verisi
+- Canlı izleme native TRTC (WebView yok); yayın bitince liste yenilenir
+- TRTC izleyici video düzeltmesi (`hostUserId`)
+
 ## 1.0.10+11 (2026-05-20)
 
 ### Giriş ve çıkış
