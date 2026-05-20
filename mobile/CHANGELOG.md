@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.16+18 (2026-05-20)
+
+### Premium UI — Keşfet & Sosyal
+
+- Keşfet: `AppColors`, RepaintBoundary, premium header/coin/ikon, `GradientFab` hızlı işlem
+- Sosyal: stories rail aktif, `DiscoverRefresh`, premium app bar, liste performansı
+- Yeni bileşenler: `PremiumCoinCapsule`, `PremiumIconButton`, `PremiumQuickActionTile`, `PremiumEmptyHint`
+
 ## 1.0.15+17 (2026-05-20)
 
 ### Premium design system (temel)

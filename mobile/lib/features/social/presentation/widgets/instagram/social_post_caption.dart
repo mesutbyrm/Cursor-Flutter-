@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
 
 const _previewWordLimit = 300;
@@ -44,7 +44,7 @@ class _SocialPostCaptionState extends State<SocialPostCaption> {
                 style: const TextStyle(
                   fontSize: 14,
                   height: 1.4,
-                  color: AppDesign.textPrimary,
+                  color: AppColors.textPrimary,
                 ),
                 children: [
                   TextSpan(
@@ -62,7 +62,7 @@ class _SocialPostCaptionState extends State<SocialPostCaption> {
               child: const Text(
                 'daha fazla',
                 style: TextStyle(
-                  color: AppDesign.accentCyan,
+                  color: AppColors.accentCyan,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
                 ),
@@ -78,7 +78,7 @@ class _SocialPostCaptionState extends State<SocialPostCaption> {
               child: Text(
                 'devamını oku',
                 style: TextStyle(
-                  color: AppDesign.textMuted.withValues(alpha: 0.95),
+                  color: AppColors.textMuted.withValues(alpha: 0.95),
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -90,7 +90,7 @@ class _SocialPostCaptionState extends State<SocialPostCaption> {
             Text(
               _coViewersLine(post),
               style: TextStyle(
-                color: AppDesign.accentPurple.withValues(alpha: 0.95),
+                color: AppColors.accentPurple.withValues(alpha: 0.95),
                 fontSize: 13,
                 height: 1.35,
                 fontWeight: FontWeight.w600,
@@ -104,7 +104,7 @@ class _SocialPostCaptionState extends State<SocialPostCaption> {
               child: const Text(
                 'daha az',
                 style: TextStyle(
-                  color: AppDesign.textMuted,
+                  color: AppColors.textMuted,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),

@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
 import 'social_post_caption.dart';
@@ -47,7 +47,7 @@ class _SocialInstagramPostCardState extends State<SocialInstagramPostCard> {
                 icon: _liked
                     ? Icons.favorite_rounded
                     : Icons.favorite_border_rounded,
-                color: _liked ? AppDesign.accentPink : AppDesign.textPrimary,
+                color: _liked ? AppColors.accentPink : AppColors.textPrimary,
                 onTap: () => setState(() => _liked = !_liked),
               ),
               const SizedBox(width: 16),
@@ -69,7 +69,7 @@ class _SocialInstagramPostCardState extends State<SocialInstagramPostCard> {
                 icon: _saved
                     ? Icons.bookmark_rounded
                     : Icons.bookmark_border_rounded,
-                color: _saved ? AppDesign.accentCyan : AppDesign.textPrimary,
+                color: _saved ? AppColors.accentCyan : AppColors.textPrimary,
                 onTap: () => setState(() => _saved = !_saved),
               ),
             ],
@@ -95,7 +95,7 @@ class _SocialInstagramPostCardState extends State<SocialInstagramPostCard> {
               child: Text(
                 '${post.commentsCount} yorumun tümünü gör',
                 style: TextStyle(
-                  color: AppDesign.textMuted.withValues(alpha: 0.95),
+                  color: AppColors.textMuted.withValues(alpha: 0.95),
                   fontSize: 13,
                 ),
               ),
@@ -107,7 +107,7 @@ class _SocialInstagramPostCardState extends State<SocialInstagramPostCard> {
             child: Text(
               _formatTime(post.createdAt!),
               style: TextStyle(
-                color: AppDesign.textMuted.withValues(alpha: 0.85),
+                color: AppColors.textMuted.withValues(alpha: 0.85),
                 fontSize: 11,
                 letterSpacing: 0.2,
               ),
@@ -166,7 +166,7 @@ class _PostHeader extends StatelessWidget {
               padding: const EdgeInsets.all(2),
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: AppDesign.heroGradient,
+                gradient: AppColors.brandGradient,
               ),
               child: UserAvatar(url: post.author.avatarUrl, radius: 18),
             ),
@@ -190,7 +190,7 @@ class _PostHeader extends StatelessWidget {
                     Text(
                       _fortuneLabel(post.fortuneType!),
                       style: const TextStyle(
-                        color: AppDesign.textMuted,
+                        color: AppColors.textMuted,
                         fontSize: 12,
                       ),
                     ),
@@ -200,7 +200,7 @@ class _PostHeader extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.more_horiz_rounded, size: 26),
-            color: AppDesign.textPrimary,
+            color: AppColors.textPrimary,
             onPressed: () {},
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -243,7 +243,7 @@ class _PostMedia extends StatelessWidget {
           color: const Color(0xFF14141C),
           child: const Icon(
             Icons.broken_image_outlined,
-            color: AppDesign.textMuted,
+            color: AppColors.textMuted,
             size: 48,
           ),
         ),
@@ -266,7 +266,7 @@ class _TextOnlyPlaceholder extends StatelessWidget {
         child: const Icon(
           Icons.article_outlined,
           size: 56,
-          color: AppDesign.textMuted,
+          color: AppColors.textMuted,
         ),
       ),
     );
@@ -277,7 +277,7 @@ class _ActionIcon extends StatelessWidget {
   const _ActionIcon({
     required this.icon,
     this.onTap,
-    this.color = AppDesign.textPrimary,
+    this.color = AppColors.textPrimary,
   });
 
   final IconData icon;

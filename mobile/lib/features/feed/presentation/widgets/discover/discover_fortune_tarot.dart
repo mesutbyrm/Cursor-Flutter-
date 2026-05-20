@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/config/env.dart';
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import 'discover_section_header.dart';
 
@@ -112,10 +113,10 @@ class _FortuneTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
             border: Border.all(
               color: card.border.withValues(alpha: 0.55),
               width: 1.1,
@@ -125,7 +126,7 @@ class _FortuneTile extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 card.border.withValues(alpha: 0.22),
-                AppDesign.bgPurpleGlow.withValues(alpha: 0.85),
+                AppColors.bgPurpleGlow.withValues(alpha: 0.85),
               ],
             ),
           ),
@@ -144,7 +145,7 @@ class _FortuneTile extends StatelessWidget {
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 10,
-                    color: AppDesign.textPrimary,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 Text(
@@ -154,7 +155,7 @@ class _FortuneTile extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 8,
-                    color: AppDesign.textMuted,
+                    color: AppColors.textMuted,
                   ),
                 ),
               ],

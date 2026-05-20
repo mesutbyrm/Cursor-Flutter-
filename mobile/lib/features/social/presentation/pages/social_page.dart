@@ -3,14 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/discover_refresh.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/social_providers.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
+import '../widgets/instagram/social_stories_rail.dart';
 
-/// Sosyal akış — Instagram tarzı UI, veri: canlifal.com API.
+/// Sosyal akış — Instagram tarzı premium UI.
 class SocialPage extends ConsumerStatefulWidget {
   const SocialPage({super.key});
 
@@ -43,7 +45,10 @@ class _SocialPageState extends ConsumerState<SocialPage> {
   }
 
   Future<void> _refresh() async {
-    await ref.read(socialNotifierProvider.notifier).refresh();
+    await Future.wait([
+      ref.read(socialNotifierProvider.notifier).refresh(),
+      ref.refresh(socialStoryRingsProvider.future),
+    ]);
   }
 
   @override
@@ -52,16 +57,15 @@ class _SocialPageState extends ConsumerState<SocialPage> {
     final bottom = MediaQuery.paddingOf(context).bottom + 88;
 
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
+      backgroundColor: AppColors.background,
       body: DiscoverBackground(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SocialInstagramAppBar(),
+            const RepaintBoundary(child: SocialStoriesRail()),
             Expanded(
-              child: RefreshIndicator(
-                color: AppDesign.accentPink,
-                backgroundColor: AppDesign.bgPurpleGlow,
+              child: DiscoverRefresh.wrap(
                 onRefresh: _refresh,
                 child: CustomScrollView(
                   controller: _scroll,
@@ -97,8 +101,10 @@ class _SocialPageState extends ConsumerState<SocialPage> {
                         }
                         return SliverList(
                           delegate: SliverChildBuilderDelegate(
-                            (ctx, i) => SocialInstagramPostCard(
-                              post: posts[i],
+                            (ctx, i) => RepaintBoundary(
+                              child: SocialInstagramPostCard(
+                                post: posts[i],
+                              ),
                             ),
                             childCount: posts.length,
                           ),

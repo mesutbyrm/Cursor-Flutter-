@@ -4,48 +4,82 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/config/env.dart';
 import '../../../../../core/network/api_exception.dart';
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/ui/premium/premium.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
 import '../../../../voice_hub/presentation/widgets/voice_room_grid_tile.dart';
 import 'discover_section_header.dart';
 
-/// Ana sayfa sesli odalar — site API, tam genişlik 4 sütun.
+/// Ana sayfa sesli odalar — API, tam genişlik 4 sütun.
 class DiscoverVoiceOrbs extends ConsumerWidget {
   const DiscoverVoiceOrbs({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!Env.useNextAuth) {
-      return const _VoiceRoomsEmpty(
-        message: 'Sesli odalar için canlifal.com oturumu gerekir.',
+      return const _VoiceRoomsSection(
+        child: PremiumEmptyHint(
+          message: 'Sesli odalar için canlifal.com oturumu gerekir.',
+        ),
       );
     }
 
     final rooms = ref.watch(voiceRoomsProvider);
     return rooms.when(
-      loading: () => const SizedBox(
-        height: 160,
-        child: Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
+      loading: () => const _VoiceRoomsSection(
+        child: SizedBox(
+          height: 160,
+          child: Center(
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.accentPink,
+              ),
+            ),
           ),
         ),
       ),
-      error: (e, _) => _VoiceRoomsEmpty(
-        message: ApiException.userMessage(e),
-        onRetry: () => ref.invalidate(voiceRoomsProvider),
+      error: (e, _) => _VoiceRoomsSection(
+        child: PremiumEmptyHint(
+          message: ApiException.userMessage(e),
+          onRetry: () => ref.invalidate(voiceRoomsProvider),
+        ),
       ),
       data: (list) {
         if (list.isEmpty) {
-          return const _VoiceRoomsEmpty(
-            message: 'Şu an açık sohbet odası yok.',
+          return const _VoiceRoomsSection(
+            child: PremiumEmptyHint(
+              message: 'Şu an açık sohbet odası yok.',
+            ),
           );
         }
         return _VoiceRoomsGrid(rooms: list);
       },
+    );
+  }
+}
+
+class _VoiceRoomsSection extends StatelessWidget {
+  const _VoiceRoomsSection({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DiscoverSectionHeader(
+          title: 'Sohbet Odaları',
+          actionLabel: 'Tüm Odalar',
+          onAction: () => context.push('/voice-rooms'),
+        ),
+        child,
+        const SizedBox(height: 12),
+      ],
     );
   }
 }
@@ -108,41 +142,6 @@ class _VoiceRoomsGrid extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-      ],
-    );
-  }
-}
-
-class _VoiceRoomsEmpty extends StatelessWidget {
-  const _VoiceRoomsEmpty({required this.message, this.onRetry});
-
-  final String message;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        DiscoverSectionHeader(
-          title: 'Sohbet Odaları',
-          actionLabel: 'Tüm Odalar',
-          onAction: () => context.push('/voice-rooms'),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppDesign.textMuted,
-              fontSize: 13,
-              height: 1.35,
-            ),
-          ),
-        ),
-        if (onRetry != null)
-          TextButton(onPressed: onRetry, child: const Text('Tekrar dene')),
-        const SizedBox(height: 8),
       ],
     );
   }

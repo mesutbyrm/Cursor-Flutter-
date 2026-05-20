@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/ui/premium/live_badge.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
@@ -27,13 +28,16 @@ class _DiscoverLiveCarouselState extends ConsumerState<DiscoverLiveCarousel> {
     final live = ref.watch(liveStreamsProvider);
 
     return live.when(
-      loading: () => const SizedBox(
-        height: AppDesign.liveCardHeight + 48,
-        child: Center(
+      loading: () => SizedBox(
+        height: AppSpacing.liveCardHeight + 48,
+        child: const Center(
           child: SizedBox(
             width: 28,
             height: 28,
-            child: CircularProgressIndicator(strokeWidth: 2.5),
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: AppColors.accentPink,
+            ),
           ),
         ),
       ),
@@ -78,7 +82,7 @@ class _LiveRowSection extends StatelessWidget {
           onAction: () => context.go('/live'),
         ),
         SizedBox(
-          height: AppDesign.liveCardHeight,
+          height: AppSpacing.liveCardHeight,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -145,7 +149,7 @@ class _DemoLiveSection extends StatelessWidget {
           onAction: () => context.go('/live'),
         ),
         SizedBox(
-          height: AppDesign.liveCardHeight,
+          height: AppSpacing.liveCardHeight,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -238,26 +242,26 @@ class _LiveCardShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: AppDesign.liveCardWidth,
-      height: AppDesign.liveCardHeight,
+      width: AppSpacing.liveCardWidth,
+      height: AppSpacing.liveCardHeight,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppDesign.radiusCard),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppDesign.radiusCard),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
               boxShadow: [
                 BoxShadow(
-                  color: AppDesign.accentPink.withValues(alpha: 0.2),
+                  color: AppColors.accentPink.withValues(alpha: 0.2),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppDesign.radiusCard),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -314,7 +318,7 @@ class _LiveCardShell extends StatelessWidget {
                             Icon(
                               Icons.verified_rounded,
                               size: 16,
-                              color: AppDesign.accentCyan.withValues(alpha: 0.9),
+                              color: AppColors.accentCyan.withValues(alpha: 0.9),
                             ),
                           ],
                         ),
@@ -368,8 +372,8 @@ class _LiveCardShell extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppDesign.accentPurple.withValues(alpha: 0.5),
-            AppDesign.bgBase,
+AppColors.accentPurple.withValues(alpha: 0.5),
+AppColors.background,
           ],
         ),
       ),
@@ -402,7 +406,7 @@ class _AvatarStack extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: AppDesign.bgBase, width: 1.5),
+                border: Border.all(color: AppColors.background, width: 1.5),
               ),
               child: UserAvatar(
                 radius: 11,
@@ -450,9 +454,9 @@ class _AudioVisualizer extends StatelessWidget {
       width: 4,
       height: h,
       decoration: BoxDecoration(
-        color: AppDesign.accentPink,
+        color: AppColors.accentPink,
         borderRadius: BorderRadius.circular(2),
-        boxShadow: AppDesign.glowShadow(AppDesign.accentPink, blur: 8),
+        boxShadow: AppColors.glowShadow(AppColors.accentPink, blur: 8),
       ),
     );
   }
@@ -478,7 +482,7 @@ class _PageDots extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(4),
             color: active
-                ? AppDesign.accentPink
+                ? AppColors.accentPink
                 : Colors.white.withValues(alpha: 0.18),
           ),
         );
