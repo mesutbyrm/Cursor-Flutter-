@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_design.dart';
 import 'discover_section_header.dart';
 
 class DiscoverQuickActions extends StatelessWidget {
@@ -45,20 +44,23 @@ class DiscoverQuickActions extends StatelessWidget {
           actionLabel: 'Tümünü gör',
           onAction: () => context.go('/live'),
         ),
-        SizedBox(
-          height: AppDesign.quickActionSize + 36,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: _actions.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (ctx, i) {
-              final a = _actions[i];
-              return _QuickActionTile(
-                action: a,
-                onTap: () => _handleTap(context, i),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: List.generate(_actions.length, (i) {
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: i == 0 ? 0 : 4,
+                    right: i == _actions.length - 1 ? 0 : 4,
+                  ),
+                  child: _QuickActionTile(
+                    action: _actions[i],
+                    onTap: () => _handleTap(context, i),
+                  ),
+                ),
               );
-            },
+            }),
           ),
         ),
         const SizedBox(height: 8),
@@ -69,15 +71,15 @@ class DiscoverQuickActions extends StatelessWidget {
   void _handleTap(BuildContext context, int index) {
     switch (index) {
       case 0:
-        context.go('/live');
+        context.push('/live/prep');
       case 1:
         context.push('/voice-rooms');
       case 2:
-        context.go('/profile');
+        context.push('/invite-friends');
       case 3:
         context.go('/live');
       case 4:
-        context.go('/profile');
+        context.push('/jeton-store');
     }
   }
 }
@@ -105,16 +107,16 @@ class _QuickActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: AppDesign.quickActionSize,
+    return AspectRatio(
+      aspectRatio: 0.82,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -122,27 +124,28 @@ class _QuickActionTile extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: action.gradient.first.withValues(alpha: 0.35),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
+                  color: action.gradient.first.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(action.icon, color: Colors.white, size: 28),
-                  const SizedBox(height: 10),
+                  Icon(action.icon, color: Colors.white, size: 22),
+                  const SizedBox(height: 6),
                   Text(
                     action.label,
                     textAlign: TextAlign.center,
+                    maxLines: 2,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 11,
+                      fontSize: 9,
                       fontWeight: FontWeight.w800,
-                      height: 1.15,
+                      height: 1.1,
                     ),
                   ),
                 ],

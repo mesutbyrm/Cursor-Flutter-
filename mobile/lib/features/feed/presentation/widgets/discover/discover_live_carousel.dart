@@ -18,14 +18,7 @@ class DiscoverLiveCarousel extends ConsumerStatefulWidget {
 }
 
 class _DiscoverLiveCarouselState extends ConsumerState<DiscoverLiveCarousel> {
-  final _controller = PageController(viewportFraction: 0.44);
   int _page = 0;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,40 +37,55 @@ class _DiscoverLiveCarouselState extends ConsumerState<DiscoverLiveCarousel> {
       ),
       error: (_, _) => _DemoLiveSection(onPage: (i) => setState(() => _page = i)),
       data: (streams) {
-        final onAir = streams.where((s) => s.isLive).toList();
+        final onAir = streams.where((s) => s.isLive).take(3).toList();
         if (onAir.isEmpty) {
           return _DemoLiveSection(onPage: (i) => setState(() => _page = i));
         }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            DiscoverSectionHeader(
-              title: 'Canlı Yayınlar',
-              actionLabel: 'Tümünü gör',
-              onAction: () => context.go('/live'),
-            ),
-            SizedBox(
-              height: AppDesign.liveCardHeight,
-              child: PageView.builder(
-                controller: _controller,
-                padEnds: false,
-                itemCount: onAir.length,
-                onPageChanged: (i) => setState(() => _page = i),
-                itemBuilder: (ctx, i) => Padding(
-                  padding: EdgeInsets.only(
-                    left: i == 0 ? 20 : 8,
-                    right: 8,
-                  ),
-                  child: _LiveBroadcastCard(stream: onAir[i]),
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            _PageDots(count: onAir.length.clamp(1, 8), index: _page),
-            const SizedBox(height: 8),
-          ],
+        return _LiveRowSection(
+          streams: onAir,
+          pageIndex: _page,
+          onPageChanged: (i) => setState(() => _page = i),
         );
       },
+    );
+  }
+}
+
+class _LiveRowSection extends StatelessWidget {
+  const _LiveRowSection({
+    required this.streams,
+    required this.pageIndex,
+    required this.onPageChanged,
+  });
+
+  final List<LiveStreamEntity> streams;
+  final int pageIndex;
+  final ValueChanged<int> onPageChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DiscoverSectionHeader(
+          title: 'Canlı Yayınlar',
+          actionLabel: 'Tümünü gör',
+          onAction: () => context.go('/live'),
+        ),
+        SizedBox(
+          height: AppDesign.liveCardHeight,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: streams.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (ctx, i) => _LiveBroadcastCard(stream: streams[i]),
+          ),
+        ),
+        const SizedBox(height: 14),
+        _PageDots(count: streams.length, index: pageIndex),
+        const SizedBox(height: 8),
+      ],
     );
   }
 }
@@ -86,6 +94,8 @@ class _DemoLiveSection extends StatelessWidget {
   const _DemoLiveSection({required this.onPage});
 
   final ValueChanged<int> onPage;
+
+  static const _homeLiveCount = 3;
 
   static final _demos = <_DemoLive>[
     _DemoLive(
@@ -128,13 +138,13 @@ class _DemoLiveSection extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: _demos.length,
+            itemCount: _homeLiveCount,
             separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (ctx, i) => _DemoLiveCard(demo: _demos[i]),
           ),
         ),
         const SizedBox(height: 14),
-        _PageDots(count: _demos.length, index: 0),
+        _PageDots(count: _homeLiveCount, index: 0),
         const SizedBox(height: 8),
       ],
     );

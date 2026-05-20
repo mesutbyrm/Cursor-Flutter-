@@ -1,40 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../../core/config/env.dart';
 import '../../../../../core/theme/app_design.dart';
+import '../../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import 'discover_section_header.dart';
 
+/// canlifal.com ana sayfadaki gibi 14 fal türü — satırda 5 kart.
 class DiscoverFortuneTarot extends StatelessWidget {
   const DiscoverFortuneTarot({super.key});
 
   static const _cards = <_FortuneCard>[
-    _FortuneCard(
-      title: 'Tarot',
-      subtitle: 'Kartların sırrını keşfet',
-      border: Color(0xFFB832FF),
-      emoji: '🃏',
-      gradient: [Color(0xFF2E1064), Color(0xFF1E1B4B)],
-    ),
-    _FortuneCard(
-      title: 'Aşk Falı',
-      subtitle: 'Kalbinin sesini dinle',
-      border: Color(0xFFFF4EC8),
-      emoji: '💜',
-      gradient: [Color(0xFF4A044E), Color(0xFF1E1B4B)],
-    ),
-    _FortuneCard(
-      title: 'Kahve Falı',
-      subtitle: 'Fincanındaki işaretler',
-      border: Color(0xFFD97706),
-      emoji: '☕',
-      gradient: [Color(0xFF451A03), Color(0xFF1C1917)],
-    ),
-    _FortuneCard(
-      title: 'Yıldız Haritası',
-      subtitle: 'Burcunun mesajı',
-      border: Color(0xFF38BDF8),
-      emoji: '✨',
-      gradient: [Color(0xFF0C4A6E), Color(0xFF1E1B4B)],
-    ),
+    _FortuneCard(title: 'Tarot', subtitle: 'Kartların sırrı', border: Color(0xFFB832FF), emoji: '🃏', slug: 'tarot'),
+    _FortuneCard(title: 'Aşk Falı', subtitle: 'Kalbinin sesi', border: Color(0xFFFF4EC8), emoji: '💜', slug: 'ask-fali'),
+    _FortuneCard(title: 'Kahve Falı', subtitle: 'Fincan yorumu', border: Color(0xFFD97706), emoji: '☕', slug: 'kahve-fali'),
+    _FortuneCard(title: 'Yıldız', subtitle: 'Burç haritası', border: Color(0xFF38BDF8), emoji: '✨', slug: 'yildiz-haritasi'),
+    _FortuneCard(title: 'El Falı', subtitle: 'Çizgilerin dili', border: Color(0xFFF472B6), emoji: '🖐️', slug: 'el-fali'),
+    _FortuneCard(title: 'Katina', subtitle: 'Aşk kartları', border: Color(0xFFA855F7), emoji: '🎴', slug: 'katina'),
+    _FortuneCard(title: 'İskambil', subtitle: 'Klasik fal', border: Color(0xFF6366F1), emoji: '🂡', slug: 'iskambil'),
+    _FortuneCard(title: 'Melek', subtitle: 'Melek kartları', border: Color(0xFF67E8F9), emoji: '👼', slug: 'melek-kartlari'),
+    _FortuneCard(title: 'Numeroloji', subtitle: 'Sayıların gücü', border: Color(0xFF34D399), emoji: '🔢', slug: 'numeroloji'),
+    _FortuneCard(title: 'Rüya', subtitle: 'Rüya tabiri', border: Color(0xFF818CF8), emoji: '🌙', slug: 'ruya-tabiri'),
+    _FortuneCard(title: 'Çin Falı', subtitle: 'I-Ching', border: Color(0xFFEF4444), emoji: '🏮', slug: 'cin-fali'),
+    _FortuneCard(title: 'Pendül', subtitle: 'Enerji dengesi', border: Color(0xFF14B8A6), emoji: '🔮', slug: 'pendul'),
+    _FortuneCard(title: 'Runik', subtitle: 'Kadim semboller', border: Color(0xFF94A3B8), emoji: 'ᚠ', slug: 'runik'),
+    _FortuneCard(title: 'Evet / Hayır', subtitle: 'Hızlı cevap', border: Color(0xFFFBBF24), emoji: '❓', slug: 'evet-hayir'),
   ];
 
   @override
@@ -42,22 +32,55 @@ class DiscoverFortuneTarot extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const DiscoverSectionHeader(
+        DiscoverSectionHeader(
           title: 'Fal & Tarot',
           actionLabel: 'Tüm Falcılar',
+          onAction: () {
+            context.push(
+              CanlifalWebRoute.location(
+                relativePath: '/fal',
+                title: 'Fal & Tarot',
+              ),
+            );
+          },
         ),
-        SizedBox(
-          height: 168,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-            itemCount: _cards.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (ctx, i) => _FortuneTile(card: _cards[i]),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              const cols = 5;
+              const spacing = 8.0;
+              final cellW = (constraints.maxWidth - spacing * (cols - 1)) / cols;
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  for (final card in _cards)
+                    SizedBox(
+                      width: cellW,
+                      child: _FortuneTile(
+                        card: card,
+                        onTap: () => _openFortune(context, card),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ),
       ],
     );
+  }
+
+  void _openFortune(BuildContext context, _FortuneCard card) {
+    if (Env.useNextAuth) {
+      context.push(
+        CanlifalWebRoute.location(
+          relativePath: '/fal/${card.slug}',
+          title: card.title,
+        ),
+      );
+    }
   }
 }
 
@@ -67,70 +90,76 @@ class _FortuneCard {
     required this.subtitle,
     required this.border,
     required this.emoji,
-    required this.gradient,
+    required this.slug,
   });
 
   final String title;
   final String subtitle;
   final Color border;
   final String emoji;
-  final List<Color> gradient;
+  final String slug;
 }
 
 class _FortuneTile extends StatelessWidget {
-  const _FortuneTile({required this.card});
+  const _FortuneTile({required this.card, required this.onTap});
 
   final _FortuneCard card;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 132,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppDesign.radiusCard),
-        border: Border.all(
-          color: card.border.withValues(alpha: 0.65),
-          width: 1.2,
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: card.gradient,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: card.border.withValues(alpha: 0.25),
-            blurRadius: 18,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: card.border.withValues(alpha: 0.55),
+              width: 1.1,
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                card.border.withValues(alpha: 0.22),
+                AppDesign.bgPurpleGlow.withValues(alpha: 0.85),
+              ],
+            ),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 16, 12, 14),
-        child: Column(
-          children: [
-            Text(card.emoji, style: const TextStyle(fontSize: 42)),
-            const Spacer(),
-            Text(
-              card.title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 14,
-                color: AppDesign.textPrimary,
-              ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(card.emoji, style: const TextStyle(fontSize: 26)),
+                const SizedBox(height: 6),
+                Text(
+                  card.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 10,
+                    color: AppDesign.textPrimary,
+                  ),
+                ),
+                Text(
+                  card.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 8,
+                    color: AppDesign.textMuted,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              card.subtitle,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 11,
-                height: 1.2,
-                color: AppDesign.textMuted,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

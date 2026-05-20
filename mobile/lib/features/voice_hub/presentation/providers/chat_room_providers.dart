@@ -62,7 +62,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       _poll?.cancel();
     });
     Future.microtask(refresh);
-    _poll = Timer.periodic(const Duration(seconds: 3), (_) => refresh());
+    _poll = Timer.periodic(const Duration(seconds: 2), (_) => refresh());
     return const VoiceRoomLiveState();
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_design.dart';
+import '../../../../core/widgets/discover_refresh.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../providers/feed_providers.dart';
 import '../widgets/discover/discover_background.dart';
@@ -22,9 +23,11 @@ class FeedPage extends ConsumerStatefulWidget {
 
 class _FeedPageState extends ConsumerState<FeedPage> {
   Future<void> _refresh() async {
-    ref.invalidate(liveStreamsProvider);
-    ref.invalidate(voiceRoomsProvider);
-    await ref.read(feedNotifierProvider.notifier).refresh();
+    await Future.wait([
+      ref.refresh(liveStreamsProvider.future),
+      ref.refresh(voiceRoomsProvider.future),
+      ref.read(feedNotifierProvider.notifier).refresh(),
+    ]);
   }
 
   @override
@@ -34,9 +37,7 @@ class _FeedPageState extends ConsumerState<FeedPage> {
     return Scaffold(
       backgroundColor: AppDesign.bgBase,
       body: DiscoverBackground(
-        child: RefreshIndicator(
-          color: AppDesign.accentPink,
-          backgroundColor: AppDesign.bgPurpleGlow,
+        child: DiscoverRefresh.wrap(
           onRefresh: _refresh,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(

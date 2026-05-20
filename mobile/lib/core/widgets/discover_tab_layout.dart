@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_design.dart';
+import 'discover_refresh.dart';
 import '../../features/feed/presentation/widgets/discover/discover_background.dart';
 
 /// Sekme sayfaları için ortak iskelet (keşfet ile aynı görsel dil).
@@ -48,9 +49,7 @@ class DiscoverTabPage extends StatelessWidget {
     );
 
     if (onRefresh != null) {
-      content = RefreshIndicator(
-        color: AppDesign.accentPink,
-        backgroundColor: AppDesign.bgPurpleGlow,
+      content = DiscoverRefresh.wrap(
         onRefresh: onRefresh!,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(
@@ -146,9 +145,7 @@ class DiscoverTabScrollPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppDesign.bgBase,
       body: DiscoverBackground(
-        child: RefreshIndicator(
-          color: AppDesign.accentPink,
-          backgroundColor: AppDesign.bgPurpleGlow,
+        child: DiscoverRefresh.wrap(
           onRefresh: onRefresh ?? () async {},
           child: scrollView,
         ),
@@ -206,9 +203,7 @@ class DiscoverSubPage extends StatelessWidget {
     );
 
     if (onRefresh != null) {
-      content = RefreshIndicator(
-        color: AppDesign.accentPink,
-        backgroundColor: AppDesign.bgPurpleGlow,
+      content = DiscoverRefresh.wrap(
         onRefresh: onRefresh!,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(
