@@ -13,6 +13,28 @@ class AppTheme {
   static const Color onBackground = Color(0xFFF5F5F7);
   static const Color muted = Color(0xFF8E8E93);
 
+  static const Color cosmicPurple = Color(0xFF7B2FBE);
+  static const Color cosmicPink = Color(0xFFE040FB);
+  static const Color accentGold = Color(0xFFFFD54F);
+  static const Color sectionBar = Color(0xFFFE2C55);
+
+  static const LinearGradient fabGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFE040FB), Color(0xFFFE2C55)],
+  );
+
+  static LinearGradient get cosmicBackdropGradient => const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF1A0A2E),
+          Color(0xFF0D0D1A),
+          Color(0xFF0B0B0F),
+        ],
+        stops: [0.0, 0.5, 1.0],
+      );
+
   static ThemeData dark() {
     final base = ThemeData(
       useMaterial3: true,
