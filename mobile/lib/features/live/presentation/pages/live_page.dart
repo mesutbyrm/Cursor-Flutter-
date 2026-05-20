@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/widgets/cosmic_background.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/cosmic_background.dart';
 import '../../../../core/widgets/glow_panel.dart';
+import '../../../../core/widgets/shell_app_bar_widgets.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
+import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../../../voice_hub/presentation/voice_rooms_body.dart';
 import '../providers/live_providers.dart';
 
@@ -38,6 +40,8 @@ class _LivePageState extends ConsumerState<LivePage>
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        leadingWidth: 48,
+        leading: const ShellProfileLeading(),
         title: ShaderMask(
           shaderCallback: (b) => LinearGradient(
             colors: [
@@ -55,6 +59,8 @@ class _LivePageState extends ConsumerState<LivePage>
           ),
         ),
         actions: [
+          const ShellNotificationsButton(),
+          const ShellCoinBalanceAction(),
           IconButton(
             tooltip: 'Yenile',
             onPressed: () {
@@ -83,8 +89,28 @@ class _LivePageState extends ConsumerState<LivePage>
           TabBarView(
             controller: _tab,
             children: [
-              const _LiveStreamsTab(),
-              VoiceRoomsBody(embedInParentScaffold: true),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(14, 8, 14, 0),
+                    child: LiveStreamsBranchQuickActions(),
+                  ),
+                  const Expanded(child: _LiveStreamsTab()),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(14, 8, 14, 0),
+                    child: LiveVoiceBranchQuickActions(),
+                  ),
+                  const Expanded(
+                    child: VoiceRoomsBody(embedInParentScaffold: true),
+                  ),
+                ],
+              ),
             ],
           ),
         ],

@@ -8,6 +8,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/cosmic_section_header.dart';
 import '../../../../core/widgets/glow_panel.dart';
+import '../../../../core/widgets/quick_action_tile.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
@@ -313,6 +314,42 @@ class _StoryAuthorBubble extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Davet ve jeton kısayolları (Keşfet / eski akış).
+class FeedQuickActions extends StatelessWidget {
+  const FeedQuickActions({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return QuickActionsSection(
+      sectionIcon: Icons.bolt_rounded,
+      sectionTitle: 'Hızlı işlemler',
+      accent: AppTheme.accentSecondary,
+      rows: [
+        [
+          QuickActionTile(
+            icon: Icons.person_add_alt_1_rounded,
+            label: 'Arkadaşlarını\ndavet et',
+            gradient: [
+              AppTheme.accent.withValues(alpha: 0.45),
+              AppTheme.accentSecondary.withValues(alpha: 0.3),
+            ],
+            onTap: () => context.push('/invite-friends'),
+          ),
+          QuickActionTile(
+            icon: Icons.monetization_on_rounded,
+            label: 'Jeton\nyükle',
+            gradient: [
+              const Color(0xFF5C4020).withValues(alpha: 0.85),
+              const Color(0xFF2A1C10).withValues(alpha: 0.9),
+            ],
+            onTap: () => context.push('/jeton-store'),
+          ),
+        ],
+      ],
     );
   }
 }
