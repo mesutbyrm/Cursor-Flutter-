@@ -9,9 +9,16 @@ import 'package:path_provider/path_provider.dart';
 
 import 'app/app.dart';
 import 'core/network/cookie_jar_provider.dart';
+import 'core/storage/local_cache.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await LocalCache.init();
+  } catch (e) {
+    debugPrint('LocalCache init failed: $e');
+  }
 
   // Ağ yokken font indirme bazı cihazlarda açılışta çökme yapabiliyor.
   GoogleFonts.config.allowRuntimeFetching = false;

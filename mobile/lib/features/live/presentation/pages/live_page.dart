@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../shell/presentation/widgets/branch_quick_actions.dart';
@@ -125,7 +126,14 @@ class _LiveStreamsTab extends ConsumerWidget {
         ),
         Expanded(
           child: live.when(
-            loading: () => const DiscoverAccentLoader(),
+            loading: () => ListView.separated(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+              itemCount: 4,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (_, _) => const RepaintBoundary(
+                child: PremiumLiveCardSkeleton(),
+              ),
+            ),
             error: (e, _) => DiscoverEmptyState(
               icon: Icons.live_tv_outlined,
               message: ApiException.userMessage(e),

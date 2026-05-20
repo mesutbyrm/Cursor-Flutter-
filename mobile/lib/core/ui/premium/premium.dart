@@ -12,3 +12,6 @@ export 'premium_nav_bar.dart';
 export 'premium_quick_action_tile.dart';
 export 'premium_scaffold.dart';
 export 'premium_section_header.dart';
+export 'premium_skeleton.dart';
+export 'premium_glass_surface.dart';
+export 'premium_bottom_sheet.dart';

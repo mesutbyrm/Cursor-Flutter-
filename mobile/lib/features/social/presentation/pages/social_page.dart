@@ -5,6 +5,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_refresh.dart';
+import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/social_providers.dart';
@@ -74,8 +75,13 @@ class _SocialPageState extends ConsumerState<SocialPage> {
                   ),
                   slivers: [
                     social.when(
-                      loading: () => const SliverFillRemaining(
-                        child: Center(child: DiscoverAccentLoader()),
+                      loading: () => SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (_, i) => const RepaintBoundary(
+                            child: PremiumPostSkeleton(),
+                          ),
+                          childCount: 3,
+                        ),
                       ),
                       error: (e, _) => SliverFillRemaining(
                         child: DiscoverEmptyState(

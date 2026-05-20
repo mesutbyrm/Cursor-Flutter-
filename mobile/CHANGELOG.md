@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.18+20 (2026-05-20)
+
+### Production mimari
+
+- `ARCHITECTURE.md` — Clean Architecture, yol haritası (Freezed, Firebase, moderasyon)
+- Canlı oda modüler: `widgets/broadcast_room/*` (~900 → ~400 satır orchestrator)
+- Premium: skeleton loading, glass surface, bottom sheet, sayfa geçişleri
+- Hive `LocalCache`, `hive_flutter` + codegen bağımlılıkları hazır
+
 ## 1.0.17+19 (2026-05-20)
 
 ### Premium UI — tüm modüller

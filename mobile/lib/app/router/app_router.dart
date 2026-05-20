@@ -26,6 +26,7 @@ import '../../features/live/domain/entities/voice_room_entity.dart';
 import '../../features/voice_hub/presentation/voice_room_route_page.dart';
 import '../../features/voice_hub/presentation/voice_room_rtc_page.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
+import '../../core/navigation/app_page_transitions.dart';
 
 class RouterRefresh extends ChangeNotifier {
   RouterRefresh(this._ref) {
@@ -127,16 +128,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/live/prep',
-        builder: (context, state) => const LiveBroadcastPrepPage(),
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const LiveBroadcastPrepPage(),
+        ),
       ),
       GoRoute(
         path: '/live/room',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final session = state.extra as LiveBroadcastSession?;
-          if (session == null) {
-            return const LiveBroadcastPrepPage();
-          }
-          return LiveBroadcastRoomPage(session: session);
+          final child = session == null
+              ? const LiveBroadcastPrepPage()
+              : LiveBroadcastRoomPage(session: session);
+          return AppPageTransitions.fadeSlide(
+            key: state.pageKey,
+            child: child,
+          );
         },
       ),
       GoRoute(

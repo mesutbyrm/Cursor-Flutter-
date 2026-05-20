@@ -34,6 +34,9 @@ import 'package:canlifal_social/core/ui/premium/premium.dart';
 | `GradientFab` | Orta alt FAB |
 | `PremiumNavBar` | Alt navigasyon (blur yok) |
 | `PremiumSectionHeader` | Bölüm başlığı |
+| `PremiumSkeleton` / `PremiumLiveCardSkeleton` | Shimmer yükleme |
+| `PremiumGlassSurface` | Glassmorphism (blur opsiyonel) |
+| `showPremiumBottomSheet` | Modal bottom sheet |
 
 ## Tema modu
 
