@@ -1,26 +1,56 @@
 # Canlifal — Android APK İndirme
 
-## 📱 Sabit indirme linki (her zaman son sürüm)
+## ⚠️ Önemli: Private Repo
 
-Aşağıdaki link **her zaman** `main` dalındaki en son başarılı derlemeyi gösterir:
-
-**[⬇️ canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk)**
-
-> 404 alıyorsanız: GitHub → **Actions** → **Build release APK** → **Run workflow** → `main` seçin → bitsin.
+Bu repo **private** olduğu için `releases/download/...` linkleri doğrudan tarayıcıdan **çalışmaz** (404 verir). İndirmek için aşağıdaki yöntemlerden birini kullanın.
 
 ---
 
-## 🏷️ Versiyonlu sürümler
+## 📱 Yöntem 1: GitHub Actions Artifact (Önerilen)
 
-Her başarılı build otomatik olarak versiyonlu bir release oluşturur:
+En kolay yöntem — GitHub'a giriş yaptıktan sonra:
+
+1. **[Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml)** sayfasına gidin
+2. En son **başarılı** (✅) çalışmaya tıklayın
+3. Sayfanın altındaki **Artifacts** bölümünden `canlifal-social-release-apk` ZIP'i indirin
+4. ZIP'i açın → `canlifal-mobile-release.apk`
+
+> İlk kez mi? **Run workflow** → `main` dalını seçin → çalışmasını bekleyin.
+
+---
+
+## 📱 Yöntem 2: GitHub Releases (Giriş yapılı)
+
+GitHub'a giriş yaptıysanız release sayfasından indirebilirsiniz:
+
+**[Releases sayfası](https://github.com/mesutbyrm/Cursor-Flutter-/releases)**
+
+- **apk-latest** → her zaman son `main` derlemesi
+- **v1.1.0-build.{N}** → versiyonlu arşiv sürümleri
+
+---
+
+## 📱 Yöntem 3: gh CLI ile indirme
+
+```bash
+# Son sürümü indir
+gh release download apk-latest --repo mesutbyrm/Cursor-Flutter- --pattern "*.apk"
+
+# Belirli sürümü indir
+gh release download v1.0.5 --repo mesutbyrm/Cursor-Flutter- --pattern "*.apk"
+```
+
+---
+
+## 📱 Yöntem 4: Repo'yu public yap
+
+Repo'yu public yaparsanız indirme linkleri doğrudan çalışır:
 
 ```
-https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/v1.1.0-build.{N}/canlifal-mobile-v1.1.0-build.{N}.apk
+https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
 ```
 
-`{N}` = GitHub Actions build numarası (her çalışmada +1 artar).
-
-**Tüm sürümler:** [Releases sayfası](https://github.com/mesutbyrm/Cursor-Flutter-/releases)
+GitHub → Settings → Danger Zone → Change visibility → Public
 
 ---
 
@@ -32,35 +62,17 @@ https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/v1.1.0-build.{N}/
 | `build_number` | GitHub Actions run_number (otomatik artan) | `42` |
 | `full_version` | `{version}-build.{build_number}` | `1.1.0-build.42` |
 
-- `pubspec.yaml` içindeki `version:` alanı manuel güncellenir (yeni özellik = minor bump, büyük değişiklik = major bump)
-- Build numarası CI'da otomatik artar, her commit'te yeni numara alır
-- APK dosya adı: `canlifal-mobile-v{full_version}.apk`
+Her `main` push'unda CI otomatik olarak:
+1. **`apk-latest`** release'ini günceller (her zaman son APK)
+2. **`v{version}-build.{N}`** versiyonlu release oluşturur (arşiv)
 
 ### Versiyon geçmişi
 
 | Sürüm | Değişiklik |
 |-------|-----------|
 | 1.1.0 | Premium ana sayfa, cosmic tema, FAB navigasyon, hızlı işlemler, fal & tarot |
+| 1.0.5 | Saat kronolojisi, doküman düzenlemeleri |
 | 1.0.0 | İlk sürüm — giriş, akış, sosyal, canlı yayın, mesajlar, profil |
-
----
-
-## Manuel etiketli sürüm
-
-```bash
-git tag v1.1.0 && git push origin v1.1.0
-```
-
-İndirme:
-`https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/v1.1.0/canlifal-mobile-release.apk`
-
----
-
-## GitHub Actions artifact (ZIP)
-
-1. [Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml)
-2. **Run workflow** → dal seçin
-3. **Artifacts** → `canlifal-social-release-apk` → ZIP içinden APK
 
 ---
 
@@ -78,7 +90,3 @@ flutter build apk --release
 ```bash
 flutter build apk --release --dart-define=API_BASE_URL=https://canlifal.com
 ```
-
-## API
-
-`mobile/lib/core/config/env.dart`, uçlar: `mobile/lib/core/network/api_endpoints.dart`.

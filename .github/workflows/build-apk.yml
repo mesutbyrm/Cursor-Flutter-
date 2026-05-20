@@ -1,6 +1,6 @@
-# APK derleme (Flutter konteyner) + GitHub Release.
-# Sabit indirme: releases/download/apk-latest/canlifal-mobile-release.apk
-# Versiyonlu: releases/download/v1.1.0-build.42/canlifal-mobile-v1.1.0-build.42.apk
+# APK derleme + GitHub Release + Actions summary.
+# Private repo'da releases/download linkleri 404 verir.
+# Artifact indirme: Actions → son çalışma → Artifacts → canlifal-social-release-apk
 # Ayrıntı: APK_DOWNLOAD.md
 
 name: Build release APK
@@ -78,6 +78,27 @@ jobs:
             canlifal-mobile-release.apk
             canlifal-mobile-v${{ steps.version.outputs.full_version }}.apk
           if-no-files-found: error
+
+      - name: Build summary
+        run: |
+          APK_SIZE=$(du -h "${GITHUB_WORKSPACE}/canlifal-mobile-release.apk" | cut -f1)
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## 📱 Canlifal APK — v${{ steps.version.outputs.full_version }}
+
+          | Bilgi | Değer |
+          |-------|-------|
+          | Sürüm | v${{ steps.version.outputs.app_version }} |
+          | Build | #${{ steps.version.outputs.build_number }} |
+          | Boyut | ${APK_SIZE} |
+          | Commit | \`${GITHUB_SHA:0:7}\` |
+
+          ### ⬇️ İndirme
+
+          Bu sayfanın altındaki **Artifacts** bölümünden \`canlifal-social-release-apk\` ZIP dosyasını indirin.
+
+          > ⚠️ Repo private olduğu için Releases sayfasındaki indirme linkleri doğrudan çalışmaz.
+          > \`gh release download apk-latest --pattern "*.apk"\` komutu ile de indirebilirsiniz.
+          EOF
 
   publish:
     name: Publish GitHub Release
