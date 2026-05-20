@@ -1,39 +1,27 @@
 # Canlifal
 
+Flutter sosyal medya ve canlı yayın istemcisi — **https://canlifal.com** API ile çalışır.
+
 | Klasör | Açıklama |
 |--------|----------|
-| [`mobile/`](mobile/) | **Ana Flutter istemcisi** — Clean Architecture, Riverpod, JWT, TikTok tarzı UI (CI/APK bu klasörden derlenir) |
-| [`api/`](api/) | İsteğe bağlı yerel JWT REST API (Node.js + Prisma + PostgreSQL) |
+| [`mobile/`](mobile/) | Ana Flutter uygulaması (APK buradan derlenir) |
+| [`api/`](api/) | İsteğe bağlı yerel JWT REST API (Node.js + Prisma) |
 
-Test APK: [`APK_DOWNLOAD.md`](APK_DOWNLOAD.md)
+## Android APK indir
 
-## Hızlı başlangıç (Flutter)
+| Bağlantı | Açıklama |
+|----------|----------|
+| **[canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk)** | Her zaman son `main` derlemesi (`apk-latest`) |
+| **[Sürüm arşivi](https://github.com/mesutbyrm/Cursor-Flutter-/releases)** | Tüm test APK’ları (v1.0.4 sesli oda, v1.0.5, …) |
+
+Ayrıntılar: [`APK_DOWNLOAD.md`](APK_DOWNLOAD.md)
+
+## Hızlı başlangıç
 
 ```bash
 cd mobile
 flutter pub get
-flutter analyze
-flutter test
 flutter run --dart-define=API_BASE_URL=https://canlifal.com
 ```
 
-Ayrıntılı mimari ve uç noktalar: [`mobile/README.md`](mobile/README.md)
-
-## Yerel JWT API (isteğe bağlı)
-
-```bash
-docker compose up -d
-cp api/.env.example api/.env
-cd api && npm ci && npx prisma migrate deploy && npm run dev
-```
-
-```bash
-cd mobile
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1
-```
-
-> Android emülatörde `localhost` yerine `10.0.2.2` kullanın.
-
-## Cursor Cloud ortamı
-
-Güncelleme betiği: `bash scripts/cursor-update.sh` — ayrıntılar [`AGENTS.md`](AGENTS.md)
+Mimari ve uç noktalar: [`mobile/README.md`](mobile/README.md) · Cursor ortamı: [`AGENTS.md`](AGENTS.md)

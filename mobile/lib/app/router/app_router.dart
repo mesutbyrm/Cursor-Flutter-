@@ -16,6 +16,8 @@ import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/messages/presentation/pages/conversations_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/profile/presentation/pages/invite_friends_page.dart';
+import '../../features/profile/presentation/pages/jeton_purchase_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/shell/presentation/main_shell_page.dart';
@@ -134,6 +136,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsPage(),
+      ),
+      GoRoute(
+        path: '/jeton-store',
+        builder: (context, state) => const JetonPurchasePage(),
+      ),
+      GoRoute(
+        path: '/invite-friends',
+        builder: (context, state) => const InviteFriendsPage(),
       ),
       GoRoute(
         path: '/user/:id',

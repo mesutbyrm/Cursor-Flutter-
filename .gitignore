@@ -39,3 +39,4 @@ mobile/ios/.symlinks/
 mobile/ios/Runner.xcworkspace/xcuserdata/
 mobile/ios/Runner.xcodeproj/xcuserdata/
 dist/
+*.apk

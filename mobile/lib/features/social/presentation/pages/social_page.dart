@@ -8,6 +8,7 @@ import '../../../../core/theme/app_design.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../feed/domain/entities/post_entity.dart';
+import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../providers/social_providers.dart';
 
 class SocialPage extends ConsumerStatefulWidget {
@@ -58,6 +59,12 @@ class _SocialPageState extends ConsumerState<SocialPage> {
         ),
       ],
       slivers: [
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: SocialBranchQuickActions(),
+          ),
+        ),
         social.when(
           loading: () => const SliverFillRemaining(
             child: DiscoverAccentLoader(),

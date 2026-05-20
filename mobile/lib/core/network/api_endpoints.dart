@@ -36,6 +36,12 @@ abstract final class ApiEndpoints {
   static const userSiteProfile = '/api/user/profile';
   /// Jeton / kredi bakiyesi (NextAuth).
   static const userCredits = '/api/user/credits';
+
+  /// Jeton paketleri / fiyat listesi (oturum gerekir).
+  static const jetonCatalog = '/api/jeton';
+
+  /// Arkadaş daveti — bağlantı veya kod (oturum gerekir).
+  static const referral = '/api/referral';
   /// Diğer ortamlar için genel canlı listesi.
   static const liveStreams = '/api/live';
 

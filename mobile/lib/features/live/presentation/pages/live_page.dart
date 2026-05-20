@@ -5,10 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_design.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
-import '../../../feed/presentation/widgets/discover/discover_background.dart';
-import '../../../voice_hub/presentation/voice_rooms_body.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
+import '../../../voice_hub/presentation/voice_rooms_body.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../providers/live_providers.dart';
@@ -79,13 +80,33 @@ class _LivePageState extends ConsumerState<LivePage>
                 controller: _tab,
                 children: const [
                   _LiveStreamsTab(),
-                  VoiceRoomsBody(),
+                  _VoiceTab(),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _VoiceTab extends StatelessWidget {
+  const _VoiceTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: LiveVoiceBranchQuickActions(),
+        ),
+        Expanded(
+          child: VoiceRoomsBody(embeddedInLiveShellTab: true),
+        ),
+      ],
     );
   }
 }
@@ -97,106 +118,118 @@ class _LiveStreamsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final live = ref.watch(liveStreamsProvider);
 
-    return live.when(
-      loading: () => const DiscoverAccentLoader(),
-      error: (e, _) => DiscoverEmptyState(
-        icon: Icons.live_tv_outlined,
-        message: ApiException.userMessage(e),
-        actionLabel: 'Yenile',
-        action: () => ref.invalidate(liveStreamsProvider),
-      ),
-      data: (streams) {
-        if (streams.isEmpty) {
-          return const DiscoverEmptyState(
-            icon: Icons.videocam_off_outlined,
-            message: 'Şu an canlı yayın yok.\nYeni yayınlar burada görünecek.',
-          );
-        }
-        return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-          itemCount: streams.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
-          itemBuilder: (ctx, i) {
-            final s = streams[i];
-            return DiscoverGlassCard(
-              onTap: s.isLive
-                  ? () => _openLiveStream(context, ref, s)
-                  : null,
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: SizedBox(
-                      width: 72,
-                      height: 88,
-                      child: s.thumbnailUrl != null &&
-                              s.thumbnailUrl!.isNotEmpty
-                          ? Image.network(
-                              s.thumbnailUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => _thumbFallback(),
-                            )
-                          : _thumbFallback(),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: LiveStreamsBranchQuickActions(),
+        ),
+        Expanded(
+          child: live.when(
+            loading: () => const DiscoverAccentLoader(),
+            error: (e, _) => DiscoverEmptyState(
+              icon: Icons.live_tv_outlined,
+              message: ApiException.userMessage(e),
+              actionLabel: 'Yenile',
+              action: () => ref.invalidate(liveStreamsProvider),
+            ),
+            data: (streams) {
+              if (streams.isEmpty) {
+                return const DiscoverEmptyState(
+                  icon: Icons.videocam_off_outlined,
+                  message:
+                      'Şu an canlı yayın yok.\nYeni yayınlar burada görünecek.',
+                );
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+                itemCount: streams.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                itemBuilder: (ctx, i) {
+                  final s = streams[i];
+                  return DiscoverGlassCard(
+                    onTap: s.isLive
+                        ? () => _openLiveStream(context, ref, s)
+                        : null,
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
                       children: [
-                        if (s.isLive)
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 6),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppDesign.liveRed,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'LIVE',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: SizedBox(
+                            width: 72,
+                            height: 88,
+                            child: s.thumbnailUrl != null &&
+                                    s.thumbnailUrl!.isNotEmpty
+                                ? Image.network(
+                                    s.thumbnailUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, _, _) => _thumbFallback(),
+                                  )
+                                : _thumbFallback(),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (s.isLive)
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppDesign.liveRed,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'LIVE',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              Text(
+                                s.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                ),
                               ),
-                            ),
-                          ),
-                        Text(
-                          s.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${s.streamerName ?? 'Yayıncı'} · ${s.viewerCount} izleyici',
-                          style: const TextStyle(
-                            color: AppDesign.textMuted,
-                            fontSize: 12,
+                              const SizedBox(height: 4),
+                              Text(
+                                '${s.streamerName ?? 'Yayıncı'} · ${s.viewerCount} izleyici',
+                                style: const TextStyle(
+                                  color: AppDesign.textMuted,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                        if (s.isLive)
+                          Icon(
+                            Icons.play_circle_fill_rounded,
+                            color: AppDesign.accentPink.withValues(alpha: 0.9),
+                            size: 36,
+                          ),
                       ],
                     ),
-                  ),
-                  if (s.isLive)
-                    Icon(
-                      Icons.play_circle_fill_rounded,
-                      color: AppDesign.accentPink.withValues(alpha: 0.9),
-                      size: 36,
-                    ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

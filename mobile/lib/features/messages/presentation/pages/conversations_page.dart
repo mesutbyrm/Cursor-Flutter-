@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_design.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../providers/messages_providers.dart';
 
 class ConversationsPage extends ConsumerWidget {
@@ -25,6 +26,12 @@ class ConversationsPage extends ConsumerWidget {
         ),
       ],
       slivers: [
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: MessagesBranchQuickActions(),
+          ),
+        ),
         list.when(
           loading: () => const SliverFillRemaining(
             child: DiscoverAccentLoader(),

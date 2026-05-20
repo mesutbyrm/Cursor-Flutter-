@@ -12,7 +12,13 @@ import 'widgets/voice_room_web_card.dart';
 
 /// Sesli sohbet listesi — canlifal.com web arayüzüne yakın neon düzen.
 class VoiceRoomsBody extends ConsumerWidget {
-  const VoiceRoomsBody({super.key});
+  const VoiceRoomsBody({
+    super.key,
+    this.embeddedInLiveShellTab = false,
+  });
+
+  /// [true] ise Canlı sekmesinde üstte ayrıca AppBar olduğundan grid üst boşluğu küçültülür.
+  final bool embeddedInLiveShellTab;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -51,7 +57,12 @@ class VoiceRoomsBody extends ConsumerWidget {
             physics: const AlwaysScrollableScrollPhysics(
               parent: BouncingScrollPhysics(),
             ),
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              embeddedInLiveShellTab ? 8 : 4,
+              16,
+              100,
+            ),
             children: [
               const Text(
                 'Popüler odalar',

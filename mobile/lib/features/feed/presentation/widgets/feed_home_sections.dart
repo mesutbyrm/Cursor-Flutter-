@@ -5,10 +5,62 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
+import '../../../../core/widgets/quick_action_tile.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+
+/// Ana sayfa hızlı işlemler (davet, jeton).
+class FeedQuickActions extends StatelessWidget {
+  const FeedQuickActions({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: GlowPanel(
+        borderRadius: 18,
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SectionTitleRow(
+              icon: Icons.bolt_rounded,
+              title: 'Hızlı işlemler',
+              accent: AppTheme.accentSecondary,
+            ),
+            const SizedBox(height: 12),
+            QuickActionGrid(
+              rows: [
+                [
+                  QuickActionTile(
+                    icon: Icons.person_add_alt_1_rounded,
+                    label: 'Arkadaşlarını\ndavet et',
+                    gradient: [
+                      AppTheme.accent.withValues(alpha: 0.45),
+                      AppTheme.accentSecondary.withValues(alpha: 0.3),
+                    ],
+                    onTap: () => context.push('/invite-friends'),
+                  ),
+                  QuickActionTile(
+                    icon: Icons.monetization_on_rounded,
+                    label: 'Jeton\nyükle',
+                    gradient: [
+                      const Color(0xFF5C4020).withValues(alpha: 0.85),
+                      const Color(0xFF2A1C10).withValues(alpha: 0.9),
+                    ],
+                    onTap: () => context.push('/jeton-store'),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 /// Ana sayfa (Akış) üstünde canlifal.com canlı yayın şeridi.
 class FeedLiveStrip extends ConsumerWidget {

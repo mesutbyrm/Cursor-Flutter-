@@ -8,6 +8,7 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_broadcaster_panel.dart';
 import '../widgets/premium/profile_gifts_row.dart';
@@ -86,6 +87,8 @@ class ProfilePage extends ConsumerWidget {
                               .logout(),
                           onEdit: () => _openPublicProfile(context, user),
                         ),
+                        const SizedBox(height: 16),
+                        const ProfileBranchQuickActions(),
                         const SizedBox(height: 20),
                         ProfilePremiumBanner(
                           onViewPrivileges: () => _showSnack(
@@ -96,10 +99,7 @@ class ProfilePage extends ConsumerWidget {
                         const SizedBox(height: 22),
                         ProfileWalletSection(
                           coinBalance: balance,
-                          onTopUp: () => _showSnack(
-                            context,
-                            'Coin yükleme yakında',
-                          ),
+                          onTopUp: () => context.push('/jeton-store'),
                           onEarnings: () => _showSnack(
                             context,
                             'Kazançlar yakında',
