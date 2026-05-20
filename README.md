@@ -2,7 +2,7 @@
 
 Kaynak kod: [`mobile/`](mobile/) — Flutter sosyal medya / canlı yayın istemcisi (REST, JWT, Riverpod, Clean Architecture).
 
-**Eksikler ve yapılan değişiklikler (güncellenen liste):** [`EKSIKLER_VE_DEGISIKLIKLER.md`](EKSIKLER_VE_DEGISIKLIKLER.md)
+**Eksikler, yapılanlar ve 19–20 Mayıs kronolojisi:** [`EKSIKLER_VE_DEGISIKLIKLER.md`](EKSIKLER_VE_DEGISIKLIKLER.md)
 
 ## Android APK (doğrudan indir)
 

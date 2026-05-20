@@ -2,7 +2,7 @@
 
 Modern, canlifal.com web arayüzüyle uyumlu **kozmik koyu tema**lı sosyal istemci. **Clean Architecture** (domain / data / presentation), **Riverpod** ve **REST + JWT** ile çalışır.
 
-**Durum özeti (eksikler + yapılanlar):** depo kökünde [`EKSIKLER_VE_DEGISIKLIKLER.md`](../EKSIKLER_VE_DEGISIKLIKLER.md) — kendi notlarını da oraya ekleyebilirsin.
+**Durum + dün/bugün kronolojisi:** depo kökünde [`EKSIKLER_VE_DEGISIKLIKLER.md`](../EKSIKLER_VE_DEGISIKLIKLER.md) *(19–20 Mayıs commit tablosu; kendi notlarını da oraya ekleyebilirsin).*
 
 ## Çalıştırma
 
