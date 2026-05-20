@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Ortam başlangıcı — hata verse bile agent çalışmaya devam etsin.
 set +e
+set +u
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT" 2>/dev/null || exit 0
 
 if [ -d "$ROOT/api" ]; then
   cd "$ROOT/api" || exit 0

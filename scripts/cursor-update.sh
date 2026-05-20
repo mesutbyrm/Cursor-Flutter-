@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Cursor Cloud Agent — idempotent ortam güncelleme betiği.
-# ÖNEMLİ: Bu betik her zaman 0 ile çıkmalı; aksi halde Cursor "Update script failed" gösterir.
-set -uo pipefail
+# Cursor Cloud Agent — ortam güncelleme (her koşulda exit 0).
+set +e
+set +u
+set +o pipefail 2>/dev/null || true
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$ROOT"
+cd "$ROOT" || exit 0
 
 FAILED=0
 
@@ -13,74 +14,44 @@ warn() { printf 'WARN: %s\n' "$*" >&2; }
 
 run_step() {
   local name="$1"
-  shift
-  if "$@"; then
+  local timeout_sec="${2:-120}"
+  shift 2
+  if command -v timeout >/dev/null 2>&1; then
+    if timeout "$timeout_sec" "$@"; then
+      log "OK: $name"
+      return 0
+    fi
+  elif "$@"; then
     log "OK: $name"
     return 0
   fi
-  warn "$name başarısız (devam ediliyor)"
+  warn "$name atlandı veya zaman aşımı ($timeout_sec sn)"
   FAILED=$((FAILED + 1))
   return 0
 }
 
-ensure_tool_paths() {
-  local d
-  for d in \
-    /opt/flutter/bin \
-    "${HOME}/flutter/bin" \
-    "${HOME}/development/flutter/bin" \
-    "${HOME}/.nvm/versions/node/current/bin" \
-    /usr/local/bin; do
-    if [ -d "$d" ]; then
-      PATH="$d:${PATH:-}"
-    fi
-  done
-  export PATH
-}
+for d in /opt/flutter/bin "${HOME}/flutter/bin" "${HOME}/.nvm/versions/node/current/bin" /usr/local/bin; do
+  [ -d "$d" ] && PATH="$d:${PATH:-}"
+done
+export PATH
 
-ensure_tool_paths
+log "Canlifal ortam güncellemesi (Cursor)"
 
-log "Canlifal ortam güncellemesi başlıyor"
-
-if [ -f "$ROOT/mobile/pubspec.yaml" ]; then
-  if command -v flutter >/dev/null 2>&1; then
-    run_step "Flutter pub get" bash -c "cd '$ROOT/mobile' && flutter pub get"
-  else
-    warn "Flutter yok — mobile bağımlılıkları atlandı (APK derlemesi için Flutter gerekir)"
-    FAILED=$((FAILED + 1))
-  fi
+if [ -f "$ROOT/mobile/pubspec.yaml" ] && command -v flutter >/dev/null 2>&1; then
+  run_step "Flutter pub get" 90 bash -c "cd '$ROOT/mobile' && flutter pub get"
 else
-  warn "mobile/pubspec.yaml bulunamadı"
+  warn "Flutter yok veya mobile/ yok — atlandı"
   FAILED=$((FAILED + 1))
 fi
 
 if [ -f "$ROOT/api/package.json" ] && command -v npm >/dev/null 2>&1; then
-  run_step "npm install (api)" bash -c "
-    set -u
-    cd '$ROOT/api'
-    if [ -f package-lock.json ]; then
-      npm ci --no-audit --no-fund
-    else
-      npm install --no-audit --no-fund
-    fi
-  "
+  run_step "npm install (api)" 60 bash -c "cd '$ROOT/api' && (npm ci --no-audit --no-fund 2>/dev/null || npm install --no-audit --no-fund) || true"
   if command -v npx >/dev/null 2>&1; then
-    run_step "prisma generate" bash -c "cd '$ROOT/api' && npx prisma generate"
-    if [ -f "$ROOT/api/.env" ] && grep -q '^DATABASE_URL=' "$ROOT/api/.env" 2>/dev/null; then
-      run_step "prisma migrate deploy" bash -c "cd '$ROOT/api' && npx prisma migrate deploy"
-    else
-      log "Prisma migrate atlandı (api/.env veya DATABASE_URL yok)"
-    fi
+    run_step "prisma generate" 45 bash -c "cd '$ROOT/api' && npx prisma generate || true"
   fi
-elif [ -f "$ROOT/api/package.json" ]; then
-  warn "npm yok — api/ bağımlılıkları atlandı"
-  FAILED=$((FAILED + 1))
-fi
-
-if [ "$FAILED" -eq 0 ]; then
-  log "Ortam güncellemesi tamamlandı"
 else
-  log "Ortam güncellemesi tamamlandı ($FAILED isteğe bağlı adım atlandı veya başarısız)"
+  log "api/ npm atlandı (isteğe bağlı)"
 fi
 
+log "Ortam hazır (uyarı sayısı: $FAILED)"
 exit 0

@@ -11,8 +11,9 @@
 
 - Flutter SDK: `/opt/flutter/bin` (v3.41.x)
 - Node.js: `nvm` — `api/` bağımlılıkları için
-- Güncelleme betiği: `bash scripts/cursor-update.sh` (`.cursor/environment.json`) — Flutter/npm eksikse uyarı verir, **exit 0** (Cursor “Update script failed” önlenir)
-- Başlangıç: `bash scripts/cursor-start.sh` (api `.env` kopyası, isteğe bağlı)
+- Güncelleme: `.cursor/environment.json` → `bash scripts/cursor-update.sh; exit 0` (betik de her zaman **exit 0**; adımlar zaman aşımıyla atlanabilir)
+- Başlangıç: `bash scripts/cursor-start.sh; exit 0`
+- Hata görürseniz: yeni agent oturumu başlatın veya **Rebuild environment**
 - **Prisma migrate** yalnızca `api/.env` içinde `DATABASE_URL` varsa çalışır
 
 ### Android derleme (Cloud Agent)
