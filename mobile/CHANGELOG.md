@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.23+25 (2026-05-21)
+
+### Fal & Tarot — premium mistik hub
+
+- Tam sayfa `/fortune`: hero, 14 fal grid (Keşfet), günlük fal kartı, Premium upsell
+- Oturum ekranları: Tarot, aşk, kahve, yıldız, el, rüya, evet/hayır, pendül, runik…
+- Sonuç + paylaşım (Instagram / WhatsApp / Telegram / kaydet)
+- Keşfet önizlemesi → native hub
+
 ## 1.0.22+24 (2026-05-21)
 
 ### Sosyal paylaşım (Instagram + Facebook)

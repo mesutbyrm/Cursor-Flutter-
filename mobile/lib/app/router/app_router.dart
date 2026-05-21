@@ -11,6 +11,11 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
+import '../../features/fortune/domain/entities/fortune_type_entity.dart';
+import '../../features/fortune/presentation/data/fortune_catalog.dart';
+import '../../features/fortune/presentation/pages/fortune_result_page.dart';
+import '../../features/fortune/presentation/pages/fortune_session_page.dart';
+import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
 import '../../features/live/domain/entities/live_broadcast_session.dart';
 import '../../features/live/presentation/pages/live_broadcast_prep_page.dart';
 import '../../features/live/presentation/pages/live_broadcast_room_page.dart';
@@ -180,6 +185,44 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             child: child,
           );
         },
+      ),
+      GoRoute(
+        path: '/fortune',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const FortuneTarotHubPage(),
+        ),
+        routes: [
+          GoRoute(
+            path: ':slug',
+            pageBuilder: (context, state) {
+              final slug = state.pathParameters['slug']!;
+              final type = FortuneCatalog.bySlug(slug);
+              final child = type == null
+                  ? const FortuneTarotHubPage()
+                  : FortuneSessionPage(type: type);
+              return AppPageTransitions.fadeSlide(
+                key: state.pageKey,
+                child: child,
+              );
+            },
+            routes: [
+              GoRoute(
+                path: 'result',
+                pageBuilder: (context, state) {
+                  final result = state.extra as FortuneReadingResult?;
+                  final child = result == null
+                      ? const FortuneTarotHubPage()
+                      : FortuneResultPage(result: result);
+                  return AppPageTransitions.fadeSlide(
+                    key: state.pageKey,
+                    child: child,
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: '/notifications',
