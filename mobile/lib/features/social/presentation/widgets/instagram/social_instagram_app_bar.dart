@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/canlifal_tokens.dart';
 import '../../../../../core/ui/premium/premium_icon_button.dart';
+import '../../utils/open_social_create_post.dart';
 
 /// Instagram tarzı üst çubuk — gradyan logo, cam aksiyonlar.
 class SocialInstagramAppBar extends StatelessWidget {
@@ -40,11 +41,7 @@ class SocialInstagramAppBar extends StatelessWidget {
           PremiumIconButton(
             icon: Icons.add_box_outlined,
             size: 40,
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Paylaşım yakında')),
-              );
-            },
+            onTap: () => openSocialCreatePost(context),
           ),
           const SizedBox(width: 4),
           PremiumIconButton(

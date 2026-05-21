@@ -15,6 +15,7 @@ import '../../features/live/domain/entities/live_broadcast_session.dart';
 import '../../features/live/presentation/pages/live_broadcast_prep_page.dart';
 import '../../features/live/presentation/pages/live_broadcast_room_page.dart';
 import '../../features/live/presentation/pages/live_page.dart';
+import '../../features/social/presentation/pages/social_create_post_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/messages/presentation/pages/conversations_page.dart';
@@ -120,6 +121,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/social',
                 builder: (context, state) => const SocialPage(),
+                routes: [
+                  GoRoute(
+                    path: 'create',
+                    pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+                      key: state.pageKey,
+                      child: SocialCreatePostPage(
+                        initialCaption: state.extra as String?,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

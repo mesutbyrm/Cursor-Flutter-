@@ -1,3 +1,5 @@
+import '../../../feed/domain/entities/post_entity.dart';
+import '../../domain/entities/create_social_post_input.dart';
 import '../../domain/repositories/social_repository.dart';
 import '../datasources/social_remote_datasource.dart';
 
@@ -13,5 +15,11 @@ class SocialRepositoryImpl implements SocialRepository {
       posts: r.posts.map((e) => e.toEntity()).toList(),
       hasMore: r.hasMore,
     );
+  }
+
+  @override
+  Future<PostEntity> createPost(CreateSocialPostInput input) async {
+    final dto = await _remote.createPost(input);
+    return dto.toEntity();
   }
 }

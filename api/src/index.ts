@@ -6,6 +6,7 @@ import helmet from "helmet";
 import { authRouter } from "./routes/auth";
 import { usersRouter } from "./routes/users";
 import { socialRouter } from "./routes/social";
+import { socialPostsRouter } from "./routes/socialPosts";
 import { fail } from "./lib/response";
 
 const app = express();
@@ -22,6 +23,7 @@ v1.use("/users", usersRouter);
 v1.use("/", socialRouter);
 
 app.use("/api/v1", v1);
+app.use("/api/social", socialPostsRouter);
 
 app.use((_req, res) => {
   return fail(res, 404, "NOT_FOUND", "Endpoint bulunamadı");

@@ -1,4 +1,5 @@
 import '../../../feed/domain/entities/post_entity.dart';
+import '../entities/create_social_post_input.dart';
 
 /// Tek sayfa sonucu — sunucu `pagination.totalPages` ile sınırlama.
 class SocialFeedPage {
@@ -10,4 +11,7 @@ class SocialFeedPage {
 
 abstract class SocialRepository {
   Future<SocialFeedPage> fetchPage({int page});
+
+  /// Instagram / Facebook tarzı yeni paylaşım.
+  Future<PostEntity> createPost(CreateSocialPostInput input);
 }

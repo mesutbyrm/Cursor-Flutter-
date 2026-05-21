@@ -1,10 +1,12 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../auth/data/models/user_dto.dart';
 import '../../../feed/data/models/post_dto.dart';
+import '../../domain/entities/create_social_post_input.dart';
 import '../../domain/entities/social_story_ring_entity.dart';
 
 class SocialRemoteDataSource {
@@ -18,11 +20,10 @@ class SocialRemoteDataSource {
       ApiEndpoints.socialPosts,
       query: {'page': page, 'limit': 20},
     );
-    final body = res.data;
-    if (body is! Map) {
+    final m = _unwrapBody(res.data);
+    if (m == null) {
       return (posts: const <PostDto>[], hasMore: false);
     }
-    final m = Map<String, dynamic>.from(body);
     final rawPosts = m['posts'];
     if (rawPosts is! List) {
       return (posts: const <PostDto>[], hasMore: false);
@@ -45,6 +46,74 @@ class SocialRemoteDataSource {
     }
 
     return (posts: posts, hasMore: hasMore);
+  }
+
+  /// POST `/api/social/posts` — metin veya görsel paylaşım (multipart / JSON).
+  Future<PostDto> createPost(CreateSocialPostInput input) async {
+    final caption = input.caption.trim();
+    final type = input.hasMedia ? 'image' : 'text';
+
+    Response<dynamic> res;
+    if (input.hasMedia) {
+      final path = input.imagePath!;
+      final form = FormData.fromMap({
+        'caption': caption,
+        'text': caption,
+        'content': caption,
+        'description': caption,
+        'postType': type,
+        'type': type,
+        'image': await MultipartFile.fromFile(
+          path,
+          filename: 'post_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        ),
+      });
+      res = await _dio.safePost<dynamic>(
+        ApiEndpoints.socialPosts,
+        data: form,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+    } else {
+      res = await _dio.safePost<dynamic>(
+        ApiEndpoints.socialPosts,
+        data: {
+          'caption': caption,
+          'text': caption,
+          'content': caption,
+          'postType': type,
+          'type': type,
+        },
+      );
+    }
+
+    return _parseCreatedPost(res.data, caption: caption, type: type);
+  }
+
+  PostDto _parseCreatedPost(
+    dynamic body, {
+    required String caption,
+    required String type,
+  }) {
+    final m = _unwrapBody(body);
+    if (m != null) {
+      final postRaw = pick(m, ['post', 'item', 'result']) ?? m;
+      if (postRaw is Map) {
+        return PostDto.fromApiMap(asJsonMap(postRaw));
+      }
+      if (m.containsKey('id')) {
+        return PostDto.fromApiMap(m);
+      }
+    }
+    throw ApiException('Sunucu paylaşım yanıtı okunamadı.');
+  }
+
+  Map<String, dynamic>? _unwrapBody(dynamic body) {
+    if (body is! Map) return null;
+    final m = Map<String, dynamic>.from(body);
+    if (m['success'] == true && m['data'] is Map) {
+      return Map<String, dynamic>.from(m['data']);
+    }
+    return m;
   }
 
   /// GET `/api/stories` — `storyGroups` hikâye halkaları (web ana akış ile aynı).

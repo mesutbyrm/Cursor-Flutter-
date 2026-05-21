@@ -11,6 +11,8 @@ import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/social_providers.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
+import '../utils/open_social_create_post.dart';
+import '../widgets/instagram/social_feed_composer.dart';
 import '../widgets/instagram/social_stories_rail.dart';
 
 /// Sosyal akış — Instagram tarzı premium UI.
@@ -65,6 +67,7 @@ class _SocialPageState extends ConsumerState<SocialPage> {
           children: [
             const SocialInstagramAppBar(),
             const RepaintBoundary(child: SocialStoriesRail()),
+            const RepaintBoundary(child: SocialFeedComposer()),
             Expanded(
               child: DiscoverRefresh.wrap(
                 onRefresh: _refresh,
@@ -100,8 +103,10 @@ class _SocialPageState extends ConsumerState<SocialPage> {
                             child: DiscoverEmptyState(
                               icon: Icons.photo_camera_outlined,
                               message: Env.useNextAuth
-                                  ? 'Henüz paylaşım yok.\nGiriş yaptıysanız canlifal.com ile aynı oturumu kullanın.'
-                                  : 'Henüz paylaşım yok.',
+                                  ? 'Henüz paylaşım yok.\nİlk gönderini paylaş veya canlifal.com oturumunu kontrol et.'
+                                  : 'Henüz paylaşım yok.\nİlk gönderini şimdi paylaş.',
+                              actionLabel: 'Paylaşım oluştur',
+                              action: () => openSocialCreatePost(context),
                             ),
                           );
                         }
