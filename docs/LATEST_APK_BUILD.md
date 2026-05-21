@@ -2,23 +2,25 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.24+26` |
-| Tarih (UTC) | 2026-05-21 03:01 |
-| Commit | [`260d6fb1e8fb15a6260571f6ada957b6101eea9e`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/260d6fb1e8fb15a6260571f6ada957b6101eea9e) |
-| İş akışı | [Run 26202505736](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26202505736) |
+| Sürüm | `1.0.26+28` |
+| Tarih (UTC) | 2026-05-21 14:43 |
+| Commit | [`525640af1034a68d7d02e01ded69616efecaa73a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/525640af1034a68d7d02e01ded69616efecaa73a) |
+| İş akışı | [Run 26231933409](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26231933409) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.24+26 (2026-05-21)
+## 1.0.26+28 (2026-05-21)
 
-### CanlıFal Sosyal — premium mistik akış
+### Cüzdan, ödeme, bildirim ve yönetim
 
-- Başlık: **CanlıFal Sosyal** (yıldız ikonu, bildirim noktaları)
-- Hikâye şeridi: «Hikayen», mor halka, mistik dekor kartı
-- Composer: «Ne düşünüyorsun, Canlıfal?» — mor çerçeve, renkli aksiyonlar
-- Gönderi kartı: doğrulanmış rozet, zaman + herkese açık, metin → görsel, **Falına Bak** CTA
-- Etkileşim sayıları ikon yanında; **Aktif Odalar** yatay şerit (canlı / ses / demo)
+- **Jeton + CFC** çift bakiye (profil, shell, jeton mağazası)
+- Bildirime tıklayınca ilgili sayfaya yönlendirme
+- Jeton yükleme: WhatsApp, Papara, Havale/EFT — uygulama içi (web’siz)
+- Ödeme talebi → admin + site bildirim paneli
+- Profilde **Yönetim** bölümü (admin, yönetici, moderatör, destek, yardım)
+- Premium açılış ekranı + CanlıFal logo
+- `/gift-send` native hediye alanı
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
