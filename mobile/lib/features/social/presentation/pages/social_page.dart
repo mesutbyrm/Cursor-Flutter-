@@ -65,7 +65,7 @@ class _SocialPageState extends ConsumerState<SocialPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SocialInstagramAppBar(),
+            const RepaintBoundary(child: SocialInstagramAppBar()),
             const RepaintBoundary(child: SocialStoriesRail()),
             const RepaintBoundary(child: SocialFeedComposer()),
             Expanded(
@@ -106,7 +106,7 @@ class _SocialPageState extends ConsumerState<SocialPage> {
                                   ? 'Henüz paylaşım yok.\nİlk gönderini paylaş veya canlifal.com oturumunu kontrol et.'
                                   : 'Henüz paylaşım yok.\nİlk gönderini şimdi paylaş.',
                               actionLabel: 'Paylaşım oluştur',
-                              action: () => openSocialCreatePost(context),
+                              action: () => openSocialCreatePost(context, ref),
                             ),
                           );
                         }

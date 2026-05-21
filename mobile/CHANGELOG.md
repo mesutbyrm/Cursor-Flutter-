@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.22+24 (2026-05-21)
+
+### Sosyal paylaşım (Instagram + Facebook)
+
+- Facebook tarzı «Ne düşünüyorsun?» composer (fotoğraf / video / duygu)
+- Instagram tarzı tam ekran gönderi oluşturma (galeri, kamera, açıklama)
+- `POST /api/social/posts` — metin veya multipart görsel
+- Freezed DTO’lar, moderasyon, Firebase (isteğe bağlı), discover widget bölünmesi
+
 ## 1.0.19+21 (2026-05-20)
 
 ### Auth & mesajlaşma premium

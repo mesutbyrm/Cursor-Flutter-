@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_colors.dart';
@@ -7,11 +8,11 @@ import '../../../../../core/ui/premium/premium_icon_button.dart';
 import '../../utils/open_social_create_post.dart';
 
 /// Instagram tarzı üst çubuk — gradyan logo, cam aksiyonlar.
-class SocialInstagramAppBar extends StatelessWidget {
+class SocialInstagramAppBar extends ConsumerWidget {
   const SocialInstagramAppBar({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final top = MediaQuery.paddingOf(context).top;
     final tokens = context.tokens;
 
@@ -41,7 +42,7 @@ class SocialInstagramAppBar extends StatelessWidget {
           PremiumIconButton(
             icon: Icons.add_box_outlined,
             size: 40,
-            onTap: () => openSocialCreatePost(context),
+            onTap: () => openSocialCreatePost(context, ref),
           ),
           const SizedBox(width: 4),
           PremiumIconButton(

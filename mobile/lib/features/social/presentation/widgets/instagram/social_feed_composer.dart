@@ -29,7 +29,7 @@ class SocialFeedComposer extends ConsumerWidget {
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => openSocialCreatePost(context),
+                onTap: () => openSocialCreatePost(context, ref),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16),
                 ),
@@ -67,7 +67,7 @@ class SocialFeedComposer extends ConsumerWidget {
                     icon: Icons.photo_library_rounded,
                     label: 'Fotoğraf',
                     color: const Color(0xFF45BD62),
-                    onTap: () => openSocialCreatePost(context),
+                    onTap: () => openSocialCreatePost(context, ref),
                   ),
                   _ComposerAction(
                     icon: Icons.videocam_rounded,
@@ -87,6 +87,7 @@ class SocialFeedComposer extends ConsumerWidget {
                     color: const Color(0xFFF7B928),
                     onTap: () => openSocialCreatePost(
                       context,
+                      ref,
                       initialCaption: '😊 ',
                     ),
                   ),
