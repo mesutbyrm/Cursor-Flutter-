@@ -7,7 +7,7 @@ import '../../../../../core/theme/canlifal_tokens.dart';
 import '../../../../../core/ui/premium/premium_icon_button.dart';
 import '../../utils/open_social_create_post.dart';
 
-/// Instagram tarzı üst çubuk — gradyan logo, cam aksiyonlar.
+/// CanlıFal Sosyal üst çubuk — gradyan başlık, bildirim noktaları.
 class SocialInstagramAppBar extends ConsumerWidget {
   const SocialInstagramAppBar({super.key});
 
@@ -26,15 +26,20 @@ class SocialInstagramAppBar extends ConsumerWidget {
       ),
       child: Row(
         children: [
+          Icon(
+            Icons.auto_awesome_rounded,
+            size: 22,
+            color: AppColors.accentPurple.withValues(alpha: 0.95),
+          ),
+          const SizedBox(width: 8),
           ShaderMask(
             shaderCallback: (b) => tokens.brandGradient.createShader(b),
             child: Text(
-              'Canlifal',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              'CanlıFal Sosyal',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w900,
-                    letterSpacing: -0.8,
+                    letterSpacing: -0.5,
                     color: Colors.white,
-                    fontStyle: FontStyle.italic,
                   ),
             ),
           ),
@@ -45,19 +50,59 @@ class SocialInstagramAppBar extends ConsumerWidget {
             onTap: () => openSocialCreatePost(context, ref),
           ),
           const SizedBox(width: 4),
-          PremiumIconButton(
+          _NotifyIconButton(
             icon: Icons.favorite_border_rounded,
-            size: 40,
+            showDot: true,
             onTap: () => context.push('/notifications'),
           ),
           const SizedBox(width: 4),
-          PremiumIconButton(
+          _NotifyIconButton(
             icon: Icons.send_outlined,
-            size: 40,
+            showDot: true,
             onTap: () => context.go('/messages'),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _NotifyIconButton extends StatelessWidget {
+  const _NotifyIconButton({
+    required this.icon,
+    required this.onTap,
+    this.showDot = false,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool showDot;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        PremiumIconButton(icon: icon, size: 40, onTap: onTap),
+        if (showDot)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: AppColors.accentPink,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.background, width: 1.5),
+                boxShadow: AppColors.glowShadow(
+                  AppColors.accentPink,
+                  blur: 8,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
