@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.31+33 (2026-05-21)
+
+### Jeton mağazası — paket listesi düzeltmesi
+
+- `/api/jeton` boş veya hatalı yanıtta **varsayılan paketler** (100–5000 jeton, mockup 1000/₺500 dahil)
+- Geliştirilmiş JSON ayrıştırma; 401 için net oturum mesajı
+
 ## 1.0.30+32 (2026-05-21)
 
 ### Jeton yükleme — site + mobil (mockup)

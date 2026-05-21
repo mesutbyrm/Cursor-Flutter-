@@ -20,10 +20,9 @@ Aynı oturum (NextAuth çerezi) ile çalışmalı:
 | Metot | Yol | Açıklama |
 |-------|-----|----------|
 | GET | `/api/user/credits` | `{ jeton, cfc, cfcBalance, role, coins, credits }` |
-| GET | `/api/jeton` | Jeton paket listesi |
+| GET | `/api/jeton` | Oturumlu: `{ "packages": [{ "id", "title", "coins", "priceTry" }] }` — boş/eksikse uygulama varsayılan paket gösterir |
 | GET | `/api/payment/config` | WhatsApp, Papara, IBAN bilgileri |
 | POST | `/api/payment/requests` | CFC (`amount`) veya **jeton** (`requestType: "jeton"`, `coins`, `packageId`, `packageTitle`, `priceTry`, `method`) |
-| GET | `/api/jeton` | Jeton paket listesi |
 | GET | `/api/notifications` | Kullanıcı bildirimleri |
 | PATCH | `/api/notifications/:id/read` | Okundu işaretle |
 | GET | `/api/social/posts` | Sosyal akış (`fortuneType`, `isAutoShare`, `fortuneCount`, `viewCount`) |

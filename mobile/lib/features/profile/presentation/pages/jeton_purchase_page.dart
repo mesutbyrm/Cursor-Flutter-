@@ -134,7 +134,8 @@ class JetonPurchasePage extends ConsumerWidget {
                       const SizedBox(height: 18),
                       Text(
                         'WhatsApp, Papara veya Havale/EFT ile ödeme yapın. '
-                        'Talebiniz admin ve site bildirim paneline düşer — web’e gerek yok.',
+                        'Talebiniz admin ve site bildirim paneline düşer. '
+                        'Liste sunucudan gelmezse varsayılan paketler gösterilir.',
                         style: TextStyle(
                           color: AppTheme.muted.withValues(alpha: 0.95),
                           height: 1.35,

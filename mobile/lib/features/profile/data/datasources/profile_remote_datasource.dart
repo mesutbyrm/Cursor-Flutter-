@@ -9,6 +9,7 @@ import '../../../auth/data/models/user_dto.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
+import '../jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
@@ -108,19 +109,50 @@ class WalletRemoteDataSource {
 
   /// canlifal.com jeton paketleri / fiyatlar.
   Future<List<JetonPackageEntity>> jetonPackages() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.jetonCatalog);
-    final data = res.data;
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.jetonCatalog);
+      final parsed = _parseJetonResponse(res.data);
+      if (parsed.isNotEmpty) return parsed;
+    } on ApiException catch (e) {
+      if (e.statusCode == 401) {
+        throw ApiException(
+          'Jeton paketleri için oturum gerekli. Çıkış yapıp tekrar giriş yapın.',
+          statusCode: 401,
+        );
+      }
+      // Ağ / 404 / sunucu: varsayılan paketlerle devam et
+    } catch (_) {
+      // Beklenmeyen yanıt
+    }
+    return List<JetonPackageEntity>.from(kFallbackJetonPackages);
+  }
+
+  List<JetonPackageEntity> _parseJetonResponse(dynamic data) {
+    if (data is String) {
+      if (data.contains('<!DOCTYPE') || data.contains('<html')) {
+        return const [];
+      }
+      return const [];
+    }
     if (data is List) {
       return _parseJetonPackages({'packages': data});
     }
-    if (data is Map && data['success'] == true && data['data'] != null) {
-      final inner = data['data'];
+    if (data is! Map) return const [];
+
+    final map = asJsonMap(data);
+    final err = map['error'] ?? map['message'];
+    if (err != null && err.toString().trim().isNotEmpty) {
+      return const [];
+    }
+
+    if (map['success'] == true && map['data'] != null) {
+      final inner = map['data'];
       if (inner is List) {
         return _parseJetonPackages({'packages': inner});
       }
       if (inner is Map) return _parseJetonPackages(asJsonMap(inner));
     }
-    return _parseJetonPackages(data is Map ? asJsonMap(data) : {});
+    return _parseJetonPackages(map);
   }
 
   /// Davet bağlantısı veya kod.
@@ -152,13 +184,29 @@ List<JetonPackageEntity> _parseJetonPackages(Map<String, dynamic> body) {
         'coins',
         'credits',
         'jeton',
+        'jetonAmount',
         'amount',
         'coinAmount',
         'miktar',
         'balance',
+        'value',
+        'quantity',
       ]),
     );
-    if (coins <= 0 && pick(m, ['price', 'fiyat', 'tl']) == null) {
+    final priceTry = _asDouble(
+      pick(m, [
+        'priceTry',
+        'price',
+        'try',
+        'tl',
+        'amountTry',
+        'fiyat',
+        'cost',
+        'tutar',
+        'priceTl',
+      ]),
+    );
+    if (coins <= 0 && priceTry == null && pick(m, ['priceLabel', 'fiyatMetni']) == null) {
       i++;
       continue;
     }
@@ -171,19 +219,8 @@ List<JetonPackageEntity> _parseJetonPackages(Map<String, dynamic> body) {
       'priceText',
       'displayPrice',
       'fiyatMetni',
+      'formattedPrice',
     ])?.toString();
-    final priceTry = _asDouble(
-      pick(m, [
-        'priceTry',
-        'price',
-        'try',
-        'tl',
-        'amountTry',
-        'fiyat',
-        'cost',
-        'tutar',
-      ]),
-    );
     final badge = pick(m, ['badge', 'bonus', 'etiket', 'tag'])?.toString();
     out.add(
       JetonPackageEntity(
@@ -209,8 +246,11 @@ List<Map<String, dynamic>> _jetonListRoot(Map<String, dynamic> body) {
     'options',
     'paketler',
     'jetonlar',
+    'jetonPackages',
     'products',
     'bundles',
+    'catalog',
+    'list',
   ]);
   if (direct is List) return asJsonList(direct);
   if (direct is Map) {
