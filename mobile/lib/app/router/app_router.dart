@@ -18,6 +18,8 @@ import '../../features/live/presentation/pages/live_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/messages/presentation/pages/conversations_page.dart';
+import '../../features/moderation/domain/entities/report_target.dart';
+import '../../features/moderation/presentation/pages/report_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/profile/presentation/pages/invite_friends_page.dart';
 import '../../features/profile/presentation/pages/jeton_purchase_page.dart';
@@ -191,6 +193,25 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return ChatPage(conversationId: id);
+        },
+      ),
+      GoRoute(
+        path: '/report',
+        pageBuilder: (context, state) {
+          final target = state.extra as ReportTarget?;
+          final child = target == null
+              ? const ReportPage(
+                  target: ReportTarget(
+                    type: ReportTargetType.user,
+                    targetId: '',
+                    displayTitle: 'Bilinmeyen',
+                  ),
+                )
+              : ReportPage(target: target);
+          return AppPageTransitions.fadeSlide(
+            key: state.pageKey,
+            child: child,
+          );
         },
       ),
       GoRoute(

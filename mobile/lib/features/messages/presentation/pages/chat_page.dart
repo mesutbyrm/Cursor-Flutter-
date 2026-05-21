@@ -6,7 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
-import '../../domain/entities/message_entities.dart';
+import '../../../moderation/domain/entities/report_target.dart';
+import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../providers/messages_providers.dart';
 import '../widgets/chat_composer.dart';
 import '../widgets/chat_message_bubble.dart';
@@ -97,10 +98,24 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     icon: Icons.arrow_back_ios_new_rounded,
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: DiscoverTabHeader(
                       title: 'Sohbet',
                       subtitle: 'Çevrimiçi',
+                      actions: [
+                        DiscoverIconButton(
+                          icon: Icons.flag_outlined,
+                          tooltip: 'Sohbeti bildir',
+                          onPressed: () => openReportFlow(
+                            context,
+                            ReportTarget(
+                              type: ReportTargetType.conversation,
+                              targetId: widget.conversationId,
+                              displayTitle: 'Sohbet',
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

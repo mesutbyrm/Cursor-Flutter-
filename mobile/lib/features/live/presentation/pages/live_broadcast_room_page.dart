@@ -10,6 +10,8 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
+import '../../../moderation/domain/entities/report_target.dart';
+import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../gifts/live_gift_controller.dart';
@@ -290,6 +292,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                               : '3.245',
                           shares: '1.245',
                           onGift: () => giftCtrl.setPanelOpen(true),
+                          onReport: s.streamId != null && s.streamId!.isNotEmpty
+                              ? () => openReportFlow(
+                                    context,
+                                    ReportTarget(
+                                      type: ReportTargetType.liveStream,
+                                      targetId: s.streamId!,
+                                      displayTitle: s.streamerName ?? 'Canlı yayın',
+                                    ),
+                                  )
+                              : null,
                         ),
                       ],
                     ),

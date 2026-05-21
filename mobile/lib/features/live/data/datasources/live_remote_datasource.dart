@@ -58,24 +58,6 @@ class LiveRemoteDataSource {
     return null;
   }
 
-  static bool _resolveIsLive({
-    required dynamic isLiveFlag,
-    required String? status,
-    required dynamic endedAt,
-  }) {
-    if (isLiveFlag == false) return false;
-    if (status == 'ended' ||
-        status == 'stopped' ||
-        status == 'offline' ||
-        endedAt != null) {
-      return false;
-    }
-    if (isLiveFlag == true || status == 'live' || status == 'active') {
-      return true;
-    }
-    return false;
-  }
-
   Future<String> createVideoStream({
     required String title,
     String? description,

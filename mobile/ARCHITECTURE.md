@@ -51,8 +51,9 @@ lib/
 
 ## Firebase (mağaza öncesi)
 
-- `firebase_core`, `firebase_messaging`, `firebase_analytics` — ayrı flavor; `google-services.json` / `GoogleService-Info.plist` gerekir
-- Şu an: REST + Socket.IO; push için backend webhook planı ARCHITECTURE altında
+- `firebase_core`, `firebase_messaging`, `firebase_analytics` — `FirebaseBootstrap.init()` (dart-define veya `google-services.json`)
+- CI: Firebase atlanır; üretimde `FIREBASE_PROJECT_ID` vb. veya `flutterfire configure`
+- `core/widgets/discover/` — `DiscoverTabPage`, header, glass card, … modüler
 
 ## Özellik modülleri
 
@@ -68,9 +69,9 @@ lib/
 | Bildirimler | ✅ (liste) |
 | OTP / şifre sıfırlama | ✅ UI (`/auth/forgot-password`, `/auth/otp-verify`) |
 | Mesaj okundu / yazıyor | ✅ Chat bubble + typing indicator |
-| Moderasyon / rapor | 🔜 |
-| Freezed DTO | ✅ `LiveStreamDto`, `PostDto`, `ConversationDto`, `MessageDto` — `scripts/codegen.sh` |
-| Firebase push | 🔜 `google-services.json` gerekir |
+| Moderasyon / rapor | ✅ `/report` + `POST /api/reports` |
+| Freezed DTO | ✅ + `UserDto` — `scripts/codegen.sh` |
+| Firebase push | ✅ isteğe bağlı (`docs/FIREBASE_SETUP.md`, dart-define) |
 
 ## Performans kuralları
 

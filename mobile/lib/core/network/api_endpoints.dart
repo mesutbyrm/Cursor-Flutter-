@@ -69,4 +69,7 @@ abstract final class ApiEndpoints {
   static String notificationRead(String id) => '/api/notifications/$id/read';
 
   static const wallet = '/api/wallet';
+
+  /// İçerik / kullanıcı şikayeti (canlifal moderasyon API).
+  static const reports = '/api/reports';
 }

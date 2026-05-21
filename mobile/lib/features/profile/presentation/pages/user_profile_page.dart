@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../moderation/domain/entities/report_target.dart';
+import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../providers/profile_providers.dart';
 
 class UserProfilePage extends ConsumerWidget {
@@ -18,6 +20,20 @@ class UserProfilePage extends ConsumerWidget {
     return DiscoverSubPage(
       title: 'Kullanıcı',
       subtitle: 'Profil detayı',
+      actions: [
+        DiscoverIconButton(
+          icon: Icons.flag_outlined,
+          tooltip: 'Bildir',
+          onPressed: () => openReportFlow(
+            context,
+            ReportTarget(
+              type: ReportTargetType.user,
+              targetId: userId,
+              displayTitle: 'Kullanıcı profili',
+            ),
+          ),
+        ),
+      ],
       body: userAsync.when(
         loading: () => const DiscoverAccentLoader(),
         error: (e, _) => DiscoverEmptyState(

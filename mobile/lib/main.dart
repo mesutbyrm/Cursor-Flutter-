@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app/app.dart';
+import 'core/firebase/firebase_bootstrap.dart';
 import 'core/network/cookie_jar_provider.dart';
 import 'core/storage/local_cache.dart';
 
@@ -19,6 +20,8 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('LocalCache init failed: $e');
   }
+
+  await FirebaseBootstrap.init();
 
   // Ağ yokken font indirme bazı cihazlarda açılışta çökme yapabiliyor.
   GoogleFonts.config.allowRuntimeFetching = false;
