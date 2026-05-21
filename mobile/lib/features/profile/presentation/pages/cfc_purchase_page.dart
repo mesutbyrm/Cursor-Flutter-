@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
-import '../../../../core/widgets/dual_balance_chips.dart';
+import '../../../wallet/presentation/widgets/wallet_balance_header.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../providers/profile_providers.dart';
@@ -46,7 +46,12 @@ class CfcPurchasePage extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
               children: [
                 wallet.when(
-                  data: (b) => DualBalanceChips(jeton: b.jeton, cfc: b.cfc),
+                  data: (b) => WalletBalanceHeader(
+                    jeton: b.jeton,
+                    cfc: b.cfc,
+                    membership: b.membership,
+                    daysRemaining: b.membershipDaysRemaining,
+                  ),
                   loading: () => const SizedBox.shrink(),
                   error: (_, _) => const SizedBox.shrink(),
                 ),

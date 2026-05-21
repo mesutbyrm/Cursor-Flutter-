@@ -1,378 +1,269 @@
 # CFC (CanlıFal Coin) ÖDEME SİSTEMİ API DOKÜMANTASYONU
 
-Bu belge **canlifal.com** üretim sitesi ve **Flutter mobil uygulama** için ortak cüzdan / ödeme API sözleşmesini tanımlar. Referans uygulama: bu repodaki `api/src/routes/wallet.ts`.
+**Base URL:** `https://canlifal.com`  
+**Kimlik doğrulama:** Oturum açık kullanıcı — `Authorization: Bearer <token>` veya site çerezi (NextAuth).
+
+Mobil uygulama ve yerel `api/` bu sözleşmeyi uygular.
 
 ---
 
-## 1. Kavramlar
+## 1) GET `/api/user/credits`
 
-| Birim | Açıklama | Kullanım |
-|-------|----------|----------|
-| **Jeton** | Ana uygulama parası (`User.coins`) | Hediye, canlı yayın, ses odası, genel harcama |
-| **CFC** | CanlıFal Coin (`User.cfcBalance`) | Premium içerik, özel özellikler |
-| **Ödeme talebi** | Kullanıcının manuel ödeme bildirimi | WhatsApp / Papara / Havale sonrası admin onayı |
+Kullanıcının kredi, jeton ve CFC bakiyeleri.
 
-Mobil uygulama her iki bakiyeyi birlikte gösterir. **Jeton yükleme** akışı ödeme talebi oluşturur (`coins` alanı jeton miktarıdır). CFC artışı bu talepten otomatik yapılmaz; admin onayı sonrası ayrı işlenir.
+| | |
+|---|---|
+| **Auth** | Gerekli |
 
----
-
-## 2. Kimlik doğrulama
-
-**Üretim (canlifal.com):** NextAuth oturum çerezi (`credentials` / Google). İsteklerde oturum çerezi gönderilir; sunucu `req.userId` çözer.
-
-**Yerel API / JWT:** `Authorization: Bearer <access_token>`.
-
-| Uç | Oturum |
-|----|--------|
-| `GET /api/user/credits` | Opsiyonel (misafir → sıfır bakiye) |
-| `GET /api/jeton`, `GET /api/payment/config` | Gerekmez |
-| `POST /api/payment/requests` | Opsiyonel (misafir talep açabilir) |
-| `GET /api/notifications` | Opsiyonel |
-| `GET /api/admin/*` | Zorunlu + staff rolü |
-
-### Staff rolleri
-
-`admin`, `yonetici`, `moderator`, `destek`, `yardim` — küçük harf, Türkçe.
-
----
-
-## 3. Yanıt zarfı (envelope)
-
-Başarılı (çoğu uç):
+**200 OK:**
 
 ```json
 {
-  "success": true,
-  "data": { }
-}
-```
-
-Hata:
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Geçersiz ödeme yöntemi"
-  }
-}
-```
-
-Bazı liste uçları (`/api/jeton`, `/api/notifications`) doğrudan `{ "packages": [...] }` veya `{ "items": [...] }` da dönebilir; mobil istemci her iki biçimi okur.
-
----
-
-## 4. Bakiye uçları
-
-### `GET /api/user/credits`
-
-Kullanıcının **jeton + CFC + rol** bilgisi.
-
-**Yanıt `data`:**
-
-```json
-{
-  "credits": 500,
-  "coins": 500,
-  "jeton": 500,
-  "cfc": 120,
-  "cfcBalance": 120,
-  "balance": 500,
-  "role": "user"
+  "credits": 50,
+  "jetonBalance": 100,
+  "cfcBalance": 0,
+  "jetonTlRate": 0.5,
+  "withdrawalLimit": 0,
+  "membership": "basic",
+  "membershipExpiresAt": null
 }
 ```
 
 | Alan | Tip | Açıklama |
 |------|-----|----------|
-| `jeton`, `coins`, `credits`, `balance` | number | Aynı değer (jeton bakiyesi) |
-| `cfc`, `cfcBalance` | number | CFC bakiyesi |
-| `role` | string | Kullanıcı rolü |
+| `credits` | int | Kredi bakiyesi |
+| `jetonBalance` | int | Jeton bakiyesi |
+| `cfcBalance` | int | CFC bakiyesi |
+| `jetonTlRate` | float | 1 Jeton = X TL |
+| `withdrawalLimit` | int | Çekim limiti |
+| `membership` | string | `basic` \| `premium` \| `gold` |
+| `membershipExpiresAt` | string \| null | ISO tarih |
 
-Misafir: tüm sayısal alanlar `0`, `role` yok.
-
-### `GET /api/wallet` (alternatif)
-
-```json
-{
-  "balance": 500,
-  "jeton": 500,
-  "cfc": 120,
-  "role": "user"
-}
-```
+**Hatalar:** `401` `{ "error": "Oturum açmanız gerekiyor" }` · `404` `{ "error": "Kullanıcı bulunamadı" }`
 
 ---
 
-## 5. Jeton paketleri
+## 2) GET `/api/payment/config`
 
-### `GET /api/jeton`
+CFC yükleme ödeme bilgileri (WhatsApp, Papara, banka).
 
-Mağaza paket listesi (oturum gerekmez).
+| | |
+|---|---|
+| **Auth** | Gerekli |
 
-**Örnek yanıt:**
-
-```json
-{
-  "packages": [
-    {
-      "id": "p100",
-      "title": "100 Jeton",
-      "coins": 100,
-      "priceTry": 29.9,
-      "badge": "Popüler"
-    }
-  ],
-  "items": [ ],
-  "data": [ ]
-}
-```
-
-| Alan | Tip | Zorunlu |
-|------|-----|---------|
-| `id` | string | Evet |
-| `title` | string | Evet |
-| `coins` | number | Evet |
-| `priceTry` | number | Hayır |
-| `badge` | string | Hayır |
-
----
-
-## 6. Ödeme yapılandırması
-
-### `GET /api/payment/config`
-
-Sitede tanımlı ödeme kanalları. İlk istekte kayıt yoksa varsayılan oluşturulabilir (yerel API).
-
-**Yanıt `data`:**
+**200 OK:**
 
 ```json
 {
-  "id": "default",
-  "whatsappNumber": "905551234567",
-  "paparaAddress": "canlifal@papara.com",
-  "bankIban": "TR00 0000 0000 0000 0000 0000 00",
+  "whatsappNumber": "+905xxxxxxxxx",
+  "paparaAddress": "1234567890",
   "bankName": "Ziraat Bankası",
-  "accountHolder": "CanlıFal",
-  "updatedAt": "2026-05-21T12:00:00.000Z"
+  "bankIban": "TR00 0000 0000 0000 0000 0000",
+  "bankAccountHolder": "Ad Soyad",
+  "cfcRate": 1.0,
+  "minCfcAmount": 10
 }
 ```
 
-Mobil istemci alternatif anahtarlar: `whatsapp`, `papara`, `iban`, `holder`.
+**NOT:** Admin ayarlamadıysa alanlar `""` olabilir.
 
-**canlifal.com ortam değişkenleri (örnek):**
-
-| Değişken | Açıklama |
-|----------|----------|
-| `PAYMENT_WHATSAPP` | WhatsApp numarası (ülke kodu ile) |
-| `PAYMENT_PAPARA` | Papara no / adres |
-| `PAYMENT_IBAN` | Havale IBAN |
-| `PAYMENT_BANK` | Banka adı |
-| `PAYMENT_HOLDER` | Hesap sahibi |
+**401:** `{ "error": "Oturum açmanız gerekiyor" }`
 
 ---
 
-## 7. Ödeme talebi
+## 3) POST `/api/payment/requests`
 
-### `POST /api/payment/requests`
+Yeni **CFC yükleme** talebi.
 
-Kullanıcı ödemeyi yaptıktan sonra talep açar. **Admin** ve **site bildirim paneli** bilgilendirilir.
+| | |
+|---|---|
+| **Auth** | Gerekli |
+| **Content-Type** | `application/json` |
 
-**İstek gövdesi (JSON):**
+**Body:**
 
 ```json
 {
-  "method": "whatsapp",
-  "packageId": "p500",
-  "packageTitle": "500 Jeton",
-  "coins": 500,
-  "amountTry": 129.9,
-  "userName": "Ahmet",
-  "note": "Dekont yüklendi"
+  "amount": 100,
+  "method": "papara",
+  "senderInfo": "Ali Yılmaz",
+  "notes": "Papara ile gönderdim"
 }
 ```
 
 | Alan | Tip | Zorunlu | Açıklama |
 |------|-----|---------|----------|
-| `method` | string | Evet | `whatsapp` \| `papara` \| `havale` |
-| `packageId` | string | Hayır | Paket kimliği |
-| `packageTitle` | string | Hayır | Görünen başlık |
-| `coins` | number | Hayır | Yüklenecek jeton (varsayılan 0) |
-| `amountTry` | number | Hayır | TL tutarı |
-| `userName` | string | Hayır | Bildirimde görünen ad |
-| `note` | string | Hayır | Max 500 karakter |
+| `amount` | int | Evet | CFC miktarı, min 1 |
+| `method` | string | Evet | `whatsapp` \| `papara` \| `bank_transfer` |
+| `senderInfo` | string | Hayır | Gönderen ad/telefon |
+| `notes` | string | Hayır | Ek not |
 
-**Başarı `201` — `data` (PaymentRequest):**
+**201:** Oluşturulan `CfcPaymentRequest` (`status: pending`, `reviewedBy`/`reviewNote`: null).
 
-```json
-{
-  "id": "clx…",
-  "userId": "user_abc",
-  "userName": "Ahmet",
-  "method": "papara",
-  "packageId": "p500",
-  "packageTitle": "500 Jeton",
-  "amountTry": 129.9,
-  "coins": 500,
-  "status": "pending",
-  "note": null,
-  "createdAt": "2026-05-21T14:00:00.000Z",
-  "updatedAt": "2026-05-21T14:00:00.000Z"
-}
-```
+**400:** `Geçersiz miktar` · `Geçersiz ödeme yöntemi` · `Zaten bekleyen bir ödeme talebiniz var`
 
-### Bildirim akışı (otomatik)
-
-1. **Kullanıcıya:** `type: payment`, `targetPath: /jeton-store`, `targetId: <talep id>`
-2. **Her staff kullanıcıya:** `type: admin_payment`, `targetPath: /admin/payments`, `targetId: <talep id>`
-
-### `status` değerleri (öneri)
-
-| Değer | Anlam |
-|-------|--------|
-| `pending` | Bekliyor (varsayılan) |
-| `approved` | Onaylandı, jeton/CFC yüklendi |
-| `rejected` | Reddedildi |
-
-Onay sonrası sunucuda: `User.coins += coins` ve/veya `User.cfcBalance += …` (iş kuralınıza göre).
+**NOT:** Kullanıcıda aynı anda yalnızca bir `pending` talep. Talep oluşunca admin/yönetici/moderatör/destek/yardım rollerine bildirim gider.
 
 ---
 
-## 8. Bildirimler
+## 4) GET `/api/payment/requests`
 
-### `GET /api/notifications`
+Kullanıcının kendi talepleri (son 50).
 
-**Yanıt:**
+| | |
+|---|---|
+| **Auth** | Gerekli |
+
+**200:** JSON dizi — her öğe 3. maddedeki yapı + `status`: `pending` \| `approved` \| `rejected`.
+
+---
+
+## 5) GET `/api/admin/cfc-payment-requests`
+
+Admin paneli — tüm CFC talepleri.
+
+| | |
+|---|---|
+| **Auth** | Staff: `admin`, `yonetici`, `moderator`, `destek`, `yardim` |
+
+**Query:** `status` (`all` \| `pending` \| `approved` \| `rejected`, varsayılan `all`) · `page` (varsayılan 1) · `limit` (varsayılan 20)
+
+**200:**
 
 ```json
 {
-  "items": [
+  "requests": [
     {
-      "id": "…",
-      "title": "Ödeme talebi alındı",
-      "body": "Ahmet — Papara · 500 Jeton",
-      "message": "…",
-      "type": "payment",
-      "targetPath": "/jeton-store",
-      "targetId": "clx…",
-      "actionUrl": "/jeton-store",
-      "read": false,
-      "isRead": false,
-      "createdAt": "2026-05-21T14:00:00.000Z"
+      "id": "clx…",
+      "userId": "clx…",
+      "amount": 100,
+      "method": "papara",
+      "senderInfo": "Ali Yılmaz",
+      "notes": null,
+      "status": "pending",
+      "reviewedBy": null,
+      "reviewNote": null,
+      "createdAt": "2026-05-21T15:00:00.000Z",
+      "updatedAt": "2026-05-21T15:00:00.000Z",
+      "user": {
+        "id": "clx…",
+        "name": "Ali Yılmaz",
+        "username": "aliyilmaz",
+        "email": "ali@example.com",
+        "image": "https://…"
+      }
     }
-  ]
+  ],
+  "total": 45,
+  "page": 1,
+  "totalPages": 3
 }
 ```
 
-Mobil: `targetPath` veya `type` ile yönlendirme (`notification_action.dart`).
-
-### `PATCH /api/notifications/:id/read`
-
-```json
-{ "success": true, "data": { "read": true } }
-```
-
-### Bildirim `type` değerleri
-
-| type | Mobil yönlendirme |
-|------|-------------------|
-| `payment`, `jeton` | `/jeton-store` |
-| `admin_payment`, `admin` | `/admin` |
-| `gift`, `live` | `/live` |
-| `message`, `chat` | `/messages` |
-| `social` | `/social` |
+**403:** `{ "error": "Yetkiniz yok" }`
 
 ---
 
-## 9. Admin uçları (staff)
+## 6) PATCH `/api/admin/cfc-payment-requests`
 
-### `GET /api/admin/payment-requests`
+Talebi onayla veya reddet.
 
-**Query:** `?status=pending` (opsiyonel)
-
-**Yanıt:**
+**Body:**
 
 ```json
 {
-  "success": true,
-  "data": {
-    "requests": [ { /* PaymentRequest */ } ]
-  }
+  "requestId": "clxxxxxxxxxxxxxxxxxxxx",
+  "action": "approve",
+  "reviewNote": "Ödeme alındı"
 }
 ```
 
-### `GET /api/admin/notifications`
+| `action` | Davranış |
+|----------|----------|
+| `approve` | `status → approved`, `user.cfcBalance += amount`, kullanıcıya **CFC Yükleme Onaylandı** bildirimi |
+| `reject` | `status → rejected`, **CFC Yükleme Reddedildi** (+ `reviewNote` sebep) |
 
-Son 100 bildirim (panel senkronu).
+**200:** Güncellenmiş talep.  
+**400:** `Geçersiz istek` · `Bu talep zaten işlenmiş`  
+**404:** `Talep bulunamadı`
 
 ---
 
-## 10. Veritabanı (Prisma referansı)
+## 7) GET `/api/admin/cfc-settings`
 
-```prisma
-model User {
-  coins       Int    @default(500)   // Jeton
-  cfcBalance  Int    @default(0)     // CFC
-  role        String @default("user")
+**200:**
+
+```json
+{
+  "cfc_whatsapp_number": "+905xxxxxxxxx",
+  "cfc_papara_address": "1234567890",
+  "cfc_bank_name": "Ziraat Bankası",
+  "cfc_bank_iban": "TR00 0000 0000 0000 0000",
+  "cfc_bank_account_holder": "Ad Soyad",
+  "cfc_tl_rate": "1",
+  "cfc_min_amount": "10"
 }
-
-model PaymentConfig { … }
-model PaymentRequest { … }
-model AppNotification { … }
 ```
 
 ---
 
-## 11. Mobil uygulama eşlemesi
+## 8) POST `/api/admin/cfc-settings`
 
-| Özellik | Dosya / uç |
-|---------|------------|
-| Çift bakiye UI | `DualBalanceChips`, `GET /api/user/credits` |
-| Jeton mağazası | `JetonPurchasePage`, `GET /api/jeton` |
-| Ödeme checkout | `JetonNativeCheckout`, `POST /api/payment/requests` |
-| Bildirim tıklama | `navigateFromNotification`, `GET /api/notifications` |
-| Admin panel | `AdminHubPage`, `GET /api/admin/payment-requests` |
+Toplu güncelleme — gönderilen alanlar güncellenir (hepsi opsiyonel).
 
-Varsayılan API tabanı: `https://canlifal.com` (`Env.apiBaseUrl`).
+**200:** `{ "success": true }`
 
 ---
 
-## 12. canlifal.com kontrol listesi
+## Veritabanı
 
-- [ ] `User.cfcBalance` + `User.role` alanları
-- [ ] `GET /api/user/credits` → jeton + cfc + role
-- [ ] `GET /api/payment/config` → WhatsApp, Papara, IBAN
-- [ ] `POST /api/payment/requests` → kayıt + bildirimler
-- [ ] `GET /api/notifications` + `PATCH …/read`
-- [ ] Staff için `GET /api/admin/payment-requests`
-- [ ] Admin panelinde talep onayında jeton/CFC yükleme
+**User:** `cfcBalance Int @default(0)`
 
-Kısa kurulum özeti: [CANLIFAL_COM_KURULUM.md](./CANLIFAL_COM_KURULUM.md)
+**CfcPaymentRequest:** `id`, `userId`, `amount`, `method`, `senderInfo?`, `notes?`, `status`, `reviewedBy?`, `reviewNote?`, `createdAt`, `updatedAt`
+
+**CfcSettings:** `cfc_whatsapp_number`, `cfc_papara_address`, `cfc_bank_*`, `cfc_tl_rate`, `cfc_min_amount`
 
 ---
 
-## 13. Örnek akış (sıra)
+## Bildirim tipleri (`/api/notifications`)
 
-```mermaid
-sequenceDiagram
-  participant App as Mobil uygulama
-  participant API as canlifal.com API
-  participant Admin as Admin / panel
+| type | Alıcı |
+|------|--------|
+| `cfc_payment_request` | Admin staff (yeni talep) |
+| `cfc_payment_approved` | Kullanıcı |
+| `cfc_payment_rejected` | Kullanıcı |
 
-  App->>API: GET /api/user/credits
-  API-->>App: jeton + cfc
-  App->>API: GET /api/jeton
-  API-->>App: paketler
-  App->>API: GET /api/payment/config
-  API-->>App: WhatsApp / Papara / IBAN
-  Note over App: Kullanıcı ödemeyi yapar
-  App->>API: POST /api/payment/requests
-  API-->>App: pending talep
-  API->>Admin: admin_payment bildirimi
-  Admin->>API: Onay (site içi işlem)
-  Note over API: coins / cfcBalance güncelle
-```
+**data (JSON string):** `{ "paymentRequestId", "amount", "method" }`
 
 ---
 
-*Sürüm: mobil 1.0.26+28 · Son güncelleme: 2026-05-21*
+## Rol sistemi
+
+**Yönetim:** `admin`, `yonetici`, `moderator`, `destek`, `yardim`  
+**Kullanıcı (`user`):** credits, config, talep oluşturma, kendi talepleri listesi
+
+---
+
+## Premium üyelik
+
+### `GET /api/membership/packages`
+
+**200:** `packages`, `currentMembership`, `daysRemaining`, `jetonBalance`, `cfcBalance`
+
+### `POST /api/membership/purchase`
+
+**Body:** `{ "tierId": "gold" }` — jeton düşer, bonus jeton eklenir, üyelik süresi uzar.
+
+---
+
+## Mobil uygulama
+
+| Ekran | Route |
+|-------|--------|
+| Cüzdan merkezi | `/wallet` |
+| CFC yükle | `/cfc-store` |
+| Jeton mağazası | `/jeton-store` |
+| Gold / Premium üyelik | `/premium-membership` |
+| Admin | `/admin` |
+
+Sürüm: **1.0.28+30**

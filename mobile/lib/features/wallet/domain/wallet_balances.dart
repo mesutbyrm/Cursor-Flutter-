@@ -50,6 +50,17 @@ class WalletBalances extends Equatable {
   final String? membership;
   final String? membershipExpiresAt;
 
+  /// Kalan üyelik günü (`membershipExpiresAt` ISO).
+  int? get membershipDaysRemaining {
+    final raw = membershipExpiresAt;
+    if (raw == null || raw.isEmpty) return null;
+    final exp = DateTime.tryParse(raw);
+    if (exp == null) return null;
+    final diff = exp.difference(DateTime.now());
+    if (diff.isNegative) return 0;
+    return diff.inDays + (diff.inHours % 24 > 0 ? 1 : 0);
+  }
+
   bool get isStaff {
     final r = role?.toLowerCase().trim() ?? '';
     return const {

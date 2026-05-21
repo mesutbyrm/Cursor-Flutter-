@@ -40,6 +40,9 @@ abstract final class ApiEndpoints {
   /// Jeton paketleri / fiyat listesi (oturum gerekir).
   static const jetonCatalog = '/api/jeton';
 
+  static const membershipPackages = '/api/membership/packages';
+  static const membershipPurchase = '/api/membership/purchase';
+
   static const paymentConfig = '/api/payment/config';
   static const paymentRequests = '/api/payment/requests';
   static const adminCfcPaymentRequests = '/api/admin/cfc-payment-requests';

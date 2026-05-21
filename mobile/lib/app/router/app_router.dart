@@ -30,8 +30,10 @@ import '../../features/moderation/domain/entities/report_target.dart';
 import '../../features/moderation/presentation/pages/report_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/profile/presentation/pages/invite_friends_page.dart';
+import '../../features/membership/presentation/pages/premium_membership_page.dart';
 import '../../features/profile/presentation/pages/cfc_purchase_page.dart';
 import '../../features/profile/presentation/pages/jeton_purchase_page.dart';
+import '../../features/wallet/presentation/pages/wallet_center_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/shell/presentation/main_shell_page.dart';
@@ -238,6 +240,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/cfc-store',
         builder: (context, state) => const CfcPurchasePage(),
+      ),
+      GoRoute(
+        path: '/wallet',
+        builder: (context, state) => const WalletCenterPage(),
+      ),
+      GoRoute(
+        path: '/premium-membership',
+        builder: (context, state) => const PremiumMembershipPage(),
       ),
       GoRoute(
         path: '/admin',
