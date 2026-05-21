@@ -8,7 +8,7 @@ import '../../../../core/widgets/glow_panel.dart';
 import '../../../../core/widgets/dual_balance_chips.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../providers/profile_providers.dart';
-import '../widgets/jeton_native_checkout.dart';
+import '../widgets/jeton_checkout_flow.dart';
 
 /// Ana sayfadan veya profilden açılır; paketleri `/api/jeton` üzerinden okur.
 class JetonPurchasePage extends ConsumerWidget {
@@ -20,26 +20,15 @@ class JetonPurchasePage extends ConsumerWidget {
     JetonPackageEntity package,
     String priceText,
   ) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppTheme.surface,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          MediaQuery.paddingOf(ctx).bottom + 16,
-        ),
-        child: JetonNativeCheckout(
-          package: package,
-          priceText: priceText,
-          onSubmitted: () {
-            ref.invalidate(walletBalancesProvider);
-            ref.invalidate(jetonPackagesProvider);
-          },
-        ),
-      ),
+    openJetonCheckoutFlow(
+      context,
+      ref,
+      package: package,
+      priceText: priceText,
+      onDone: () {
+        ref.invalidate(walletBalancesProvider);
+        ref.invalidate(jetonPackagesProvider);
+      },
     );
   }
 

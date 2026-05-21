@@ -24,6 +24,11 @@ void navigateFromNotification(GoRouter router, AppNotificationEntity n) {
     case 'cfc_payment_rejected':
       router.push('/cfc-store');
       return;
+    case 'jeton_payment_request':
+    case 'jeton_payment_approved':
+    case 'jeton_payment_rejected':
+      router.push('/jeton-store');
+      return;
     case 'payment':
     case 'jeton':
       router.push('/jeton-store');

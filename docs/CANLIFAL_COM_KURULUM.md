@@ -22,7 +22,8 @@ Aynı oturum (NextAuth çerezi) ile çalışmalı:
 | GET | `/api/user/credits` | `{ jeton, cfc, cfcBalance, role, coins, credits }` |
 | GET | `/api/jeton` | Jeton paket listesi |
 | GET | `/api/payment/config` | WhatsApp, Papara, IBAN bilgileri |
-| POST | `/api/payment/requests` | Ödeme talebi (body: `method`, `packageId`, `packageTitle`, `coins`, `priceTry`) |
+| POST | `/api/payment/requests` | CFC (`amount`) veya **jeton** (`requestType: "jeton"`, `coins`, `packageId`, `packageTitle`, `priceTry`, `method`) |
+| GET | `/api/jeton` | Jeton paket listesi |
 | GET | `/api/notifications` | Kullanıcı bildirimleri |
 | PATCH | `/api/notifications/:id/read` | Okundu işaretle |
 | GET | `/api/social/posts` | Sosyal akış (`fortuneType`, `isAutoShare`, `fortuneCount`, `viewCount`) |
@@ -56,7 +57,11 @@ Profilde **Yönetim** bölümünün çıkması için kullanıcının `role` alan
 
 **[CFC_ODEME_API.md](./CFC_ODEME_API.md)** — CFC (CanlıFal Coin) ödeme sistemi: tüm uçlar, JSON örnekleri, bildirim akışı.
 
-## 6. Bu repodaki referans
+## 6. Jeton yükleme web arayüzü
+
+Hazır sayfalar: **`site/jeton/`** (mağaza, ödeme yöntemi, WhatsApp, Papara, Havale). Kurulum: **`docs/SITE_JETON_KURULUM.md`**.
+
+## 7. Bu repodaki referans
 
 Yerel/test için aynı mantık: `api/src/routes/wallet.ts`, `api/src/routes/notifications.ts`, `api/prisma/schema.prisma`.
 
