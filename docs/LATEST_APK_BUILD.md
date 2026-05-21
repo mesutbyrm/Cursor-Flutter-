@@ -2,22 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.18+20` |
-| Tarih (UTC) | 2026-05-21 00:06 |
-| Commit | [`b15206ee22291973e77c02a168c8be7b92dd2aa0`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b15206ee22291973e77c02a168c8be7b92dd2aa0) |
-| İş akışı | [Run 26196908874](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26196908874) |
+| Sürüm | `1.0.22+24` |
+| Tarih (UTC) | 2026-05-21 01:37 |
+| Commit | [`960f9e4c9925ac310ddc338bc841436f54d99703`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/960f9e4c9925ac310ddc338bc841436f54d99703) |
+| İş akışı | [Run 26199867392](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26199867392) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.18+20 (2026-05-20)
+## 1.0.22+24 (2026-05-21)
 
-### Production mimari
+### Sosyal paylaşım (Instagram + Facebook)
 
-- `ARCHITECTURE.md` — Clean Architecture, yol haritası (Freezed, Firebase, moderasyon)
-- Canlı oda modüler: `widgets/broadcast_room/*` (~900 → ~400 satır orchestrator)
-- Premium: skeleton loading, glass surface, bottom sheet, sayfa geçişleri
-- Hive `LocalCache`, `hive_flutter` + codegen bağımlılıkları hazır
+- Facebook tarzı «Ne düşünüyorsun?» composer (fotoğraf / video / duygu)
+- Instagram tarzı tam ekran gönderi oluşturma (galeri, kamera, açıklama)
+- `POST /api/social/posts` — metin veya multipart görsel
+- Freezed DTO’lar, moderasyon, Firebase (isteğe bağlı), discover widget bölünmesi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
