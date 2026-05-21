@@ -18,6 +18,8 @@ abstract final class ApiEndpoints {
   static const feed = '/api/stories';
   /// canlifal.com sosyal akış (web `/sosyal` ile aynı veri).
   static const socialPosts = '/api/social/posts';
+  static const socialPostsAutoFortune = '/api/social/posts/auto-fortune';
+  static String socialPostDelete(String id) => '/api/social/posts/$id';
   /// canlifal.com ana sayfa canlı yayın listesi (JSON dizi).
   static const videoStreams = '/api/video-streams';
   /// Sesli / metin sohbet odaları (web `/sohbet/{slug}`).

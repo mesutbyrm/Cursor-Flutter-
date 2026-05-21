@@ -1,51 +1,75 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/canlifal_tokens.dart';
 import '../../../../../core/widgets/user_avatar.dart';
+import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
+import '../../providers/social_providers.dart';
 import 'social_post_caption.dart';
 
-/// CanlıFal Sosyal akış kartı — doğrulanmış başlık, metin, CTA, etkileşim sayıları.
-class SocialInstagramPostCard extends StatefulWidget {
+/// CanlıFal Sosyal akış kartı — fal rozeti, otomatik paylaşım, etkileşim.
+class SocialInstagramPostCard extends ConsumerStatefulWidget {
   const SocialInstagramPostCard({super.key, required this.post});
 
   final PostEntity post;
 
   @override
-  State<SocialInstagramPostCard> createState() =>
+  ConsumerState<SocialInstagramPostCard> createState() =>
       _SocialInstagramPostCardState();
 }
 
-class _SocialInstagramPostCardState extends State<SocialInstagramPostCard> {
+class _SocialInstagramPostCardState
+    extends ConsumerState<SocialInstagramPostCard> {
   var _liked = false;
 
   PostEntity get post => widget.post;
 
-  /// Sosyal akışta fal CTA her zaman görünür (tasarım).
-  bool get _showFortuneCta => true;
+  bool get _isFortunePost =>
+      post.postType == 'fortune' ||
+      post.isAutoShare ||
+      (post.fortuneType != null && post.fortuneType!.isNotEmpty);
+
+  bool get _hasMedia =>
+      post.mediaUrl != null && post.mediaUrl!.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
+    final me = ref.watch(authControllerProvider).valueOrNull;
+    final isMine = me != null && me.id == post.author.id;
     final likeCount = post.likesCount + (_liked ? 1 : 0);
-    final shareCount = post.viewCount > 0 ? post.viewCount : 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _PostHeader(
           post: post,
+          isMine: isMine,
           onProfile: () => context.push('/user/${post.author.id}'),
+          onDelete: isMine ? () => _deletePost(context) : null,
         ),
         if ((post.caption?.trim().isNotEmpty ?? false))
           SocialPostCaption(post: post, inlineBodyOnly: true),
-        _PostMediaBlock(
-          post: post,
-          showFortuneCta: _showFortuneCta,
-          onFortuneTap: () => _openFortune(context),
-        ),
+        if (post.isAutoShare || post.fortuneCount > 0)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (post.isAutoShare) const _AutoShareBadge(),
+                if (post.fortuneCount > 0)
+                  _CoViewersBadge(count: post.fortuneCount),
+              ],
+            ),
+          ),
+        if (_hasMedia)
+          _PostMediaBlock(
+            post: post,
+            onFortuneTap: () => _openFortune(context),
+          ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
           child: Row(
@@ -58,23 +82,42 @@ class _SocialInstagramPostCardState extends State<SocialInstagramPostCard> {
                 count: likeCount,
                 onTap: () => setState(() => _liked = !_liked),
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 16),
               _ActionWithCount(
                 icon: Icons.mode_comment_outlined,
                 count: post.commentsCount,
                 onTap: () => _showCommentsHint(context),
               ),
-              const Spacer(),
+              const SizedBox(width: 16),
               _ActionWithCount(
-                icon: Icons.ios_share_rounded,
-                count: shareCount,
+                icon: Icons.visibility_outlined,
+                count: post.viewCount,
                 hideZeroCount: true,
+                onTap: () {},
+              ),
+              const SizedBox(width: 16),
+              _ActionIcon(
+                icon: Icons.ios_share_rounded,
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Paylaşım yakında')),
                   );
                 },
               ),
+              const Spacer(),
+              if (_isFortunePost) ...[
+                _TextAction(
+                  label: 'Kart',
+                  icon: Icons.palette_outlined,
+                  onTap: () => _openFortune(context),
+                ),
+                const SizedBox(width: 12),
+                _TextAction(
+                  label: 'Detay',
+                  icon: Icons.open_in_new_rounded,
+                  onTap: () => _openFortune(context),
+                ),
+              ],
             ],
           ),
         ),
@@ -102,6 +145,44 @@ class _SocialInstagramPostCardState extends State<SocialInstagramPostCard> {
     );
   }
 
+  Future<void> _deletePost(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0B2E),
+        title: const Text('Gönderiyi sil'),
+        content: const Text('Bu paylaşımı kaldırmak istediğinize emin misiniz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Vazgeç'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sil', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+
+    try {
+      await ref.read(socialRepositoryProvider).deletePost(post.id);
+      await ref.read(socialNotifierProvider.notifier).refresh();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gönderi silindi')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Silinemedi: $e')),
+        );
+      }
+    }
+  }
+
   void _openFortune(BuildContext context) {
     final slug = post.fortuneType;
     if (slug != null && slug.isNotEmpty) {
@@ -119,36 +200,33 @@ class _SocialInstagramPostCardState extends State<SocialInstagramPostCard> {
 }
 
 class _PostHeader extends StatelessWidget {
-  const _PostHeader({required this.post, required this.onProfile});
+  const _PostHeader({
+    required this.post,
+    required this.isMine,
+    required this.onProfile,
+    this.onDelete,
+  });
 
   final PostEntity post;
+  final bool isMine;
   final VoidCallback onProfile;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
-    final verified = _isVerifiedAuthor(post);
     final timeLabel = post.createdAt != null
         ? _formatTimeShort(post.createdAt!)
         : null;
+    final fortuneLabel = _fortuneTypeLabel(post.fortuneType, post.postType);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GestureDetector(
             onTap: onProfile,
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: AppColors.brandGradient,
-                boxShadow: AppColors.glowShadow(
-                  AppColors.accentPurple,
-                  blur: 12,
-                ),
-              ),
-              child: UserAvatar(url: post.author.avatarUrl, radius: 18),
-            ),
+            child: UserAvatar(url: post.author.avatarUrl, radius: 20),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -171,180 +249,185 @@ class _PostHeader extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (verified) ...[
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.verified_rounded,
-                          size: 16,
-                          color: AppColors.diamondBlue.withValues(alpha: 0.95),
+                      if (timeLabel != null) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          '· $timeLabel',
+                          style: TextStyle(
+                            color: AppColors.textMuted.withValues(alpha: 0.85),
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ],
                   ),
-                  if (timeLabel != null)
+                  if (fortuneLabel != null) ...[
+                    const SizedBox(height: 4),
                     Row(
                       children: [
                         Text(
-                          timeLabel,
-                          style: TextStyle(
-                            color: AppColors.textMuted.withValues(alpha: 0.9),
-                            fontSize: 12,
-                          ),
+                          _fortuneEmoji(post.fortuneType),
+                          style: const TextStyle(fontSize: 14),
                         ),
                         const SizedBox(width: 4),
-                        Icon(
-                          Icons.public_rounded,
-                          size: 12,
-                          color: AppColors.textMuted.withValues(alpha: 0.75),
+                        Text(
+                          fortuneLabel,
+                          style: TextStyle(
+                            color: AppColors.accentPurple.withValues(alpha: 0.95),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ],
                     ),
+                  ],
                 ],
               ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.more_horiz_rounded, size: 26),
-            color: AppColors.textPrimary,
-            onPressed: () {},
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-          ),
+          if (onDelete != null)
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded, size: 22),
+              color: AppColors.textMuted.withValues(alpha: 0.9),
+              onPressed: onDelete,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            ),
         ],
       ),
     );
   }
 
-  static bool _isVerifiedAuthor(PostEntity post) {
-    final u = post.author.username.toLowerCase();
-    final d = post.author.display.toLowerCase();
-    return u.contains('admin') ||
-        d.contains('admin') ||
-        d.contains('canlıfal') ||
-        d.contains('canlifal');
+  static String? _fortuneTypeLabel(String? type, String? postType) {
+    if (type == null || type.isEmpty) {
+      return postType == 'fortune' ? 'Fal' : null;
+    }
+    return switch (type) {
+      'el-fali' || 'palm' => 'El Falı',
+      'kahve-fali' || 'coffee' => 'Kahve Falı',
+      'tarot' || 'gunluk-tarot' => 'Tarot',
+      'yildiz-haritasi' || 'astroloji' => 'Yıldız Falı',
+      'ask-fali' || 'love' => 'Aşk Falı',
+      'ruya-tabiri' || 'ruya-yorumu' => 'Rüya Tabiri',
+      'melek-kartlari' || 'angel' => 'Melek Kartları',
+      'evet-hayir' || 'yesno' => 'Evet / Hayır',
+      'katina' => 'Katina',
+      'numeroloji' => 'Numeroloji',
+      'iskambil' => 'İskambil',
+      'pendul' => 'Pendül',
+      'runik' => 'Runik',
+      'cin-fali' => 'Cin Falı',
+      _ => type.replaceAll('-', ' '),
+    };
+  }
+
+  static String _fortuneEmoji(String? type) {
+    return switch (type) {
+      'el-fali' || 'palm' => '✋',
+      'kahve-fali' => '☕',
+      'tarot' => '🃏',
+      'yildiz-haritasi' => '🔮',
+      'ask-fali' => '💕',
+      'ruya-tabiri' => '🌙',
+      _ => '✨',
+    };
   }
 
   static String _formatTimeShort(DateTime t) {
     final d = DateTime.now().difference(t);
     if (d.inMinutes < 1) return 'az önce';
-    if (d.inHours < 1) return '${d.inMinutes} dk önce';
-    if (d.inHours < 24) return '${d.inHours} sa önce';
-    if (d.inDays < 7) return '${d.inDays} gün önce';
+    if (d.inHours < 1) return '${d.inMinutes} dk';
+    if (d.inHours < 24) return '${d.inHours} sa';
+    if (d.inDays < 7) return '${d.inDays} gün';
     return '${t.day}.${t.month}.${t.year}';
   }
 }
 
-class _PostMediaBlock extends StatelessWidget {
-  const _PostMediaBlock({
-    required this.post,
-    required this.showFortuneCta,
-    required this.onFortuneTap,
-  });
-
-  final PostEntity post;
-  final bool showFortuneCta;
-  final VoidCallback onFortuneTap;
+class _AutoShareBadge extends StatelessWidget {
+  const _AutoShareBadge();
 
   @override
   Widget build(BuildContext context) {
-    final hasMedia = post.mediaUrl != null && post.mediaUrl!.isNotEmpty;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0),
-      child: ClipRRect(
-        borderRadius: BorderRadius.zero,
-        child: AspectRatio(
-          aspectRatio: 4 / 5,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (hasMedia)
-                CachedNetworkImage(
-                  imageUrl: post.mediaUrl!,
-                  fit: BoxFit.cover,
-                  placeholder: (_, _) => const _MysticMediaPlaceholder(),
-                  errorWidget: (_, _, _) => const _MysticMediaPlaceholder(),
-                )
-              else
-                const _MysticMediaPlaceholder(),
-              if (showFortuneCta)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.75),
-                        ],
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
-                      child: Center(
-                        child: _FortuneCtaButton(onTap: onFortuneTap),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.accentPurple.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.accentPurple.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.auto_awesome_rounded,
+            size: 14,
+            color: AppColors.accentPink.withValues(alpha: 0.95),
           ),
+          const SizedBox(width: 5),
+          const Text(
+            'Otomatik paylaşıldı',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CoViewersBadge extends StatelessWidget {
+  const _CoViewersBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFFF8C42).withValues(alpha: 0.85),
+          width: 1.2,
+        ),
+      ),
+      child: Text(
+        'Bu kullanıcı ile birlikte $count kişi bu fala baktırdı',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFFFFB366).withValues(alpha: 0.95),
         ),
       ),
     );
   }
 }
 
-class _FortuneCtaButton extends StatelessWidget {
-  const _FortuneCtaButton({required this.onTap});
+class _PostMediaBlock extends StatelessWidget {
+  const _PostMediaBlock({
+    required this.post,
+    required this.onFortuneTap,
+  });
 
-  final VoidCallback onTap;
+  final PostEntity post;
+  final VoidCallback onFortuneTap;
 
   @override
   Widget build(BuildContext context) {
-    final tokens = context.tokens;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            gradient: tokens.brandGradient,
-            boxShadow: AppColors.glowShadow(AppColors.accentPurple, blur: 18),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text('🃏', style: TextStyle(fontSize: 18)),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Falına Bak',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    color: Colors.white,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: AspectRatio(
+        aspectRatio: 4 / 5,
+        child: CachedNetworkImage(
+          imageUrl: post.mediaUrl!,
+          fit: BoxFit.cover,
+          placeholder: (_, _) => const _MysticMediaPlaceholder(),
+          errorWidget: (_, _, _) => const _MysticMediaPlaceholder(),
         ),
       ),
     );
@@ -368,15 +451,8 @@ class _MysticMediaPlaceholder extends StatelessWidget {
           ],
         ),
       ),
-      child: const Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('🔮', style: TextStyle(fontSize: 56)),
-          SizedBox(height: 8),
-          Text('🕯️', style: TextStyle(fontSize: 28)),
-          SizedBox(height: 4),
-          Text('🃏', style: TextStyle(fontSize: 32)),
-        ],
+      child: const Center(
+        child: Text('🔮', style: TextStyle(fontSize: 48)),
       ),
     );
   }
@@ -405,18 +481,18 @@ class _ActionWithCount extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 26, color: color),
+            Icon(icon, size: 24, color: color),
             if (showCount && count > 0) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: 5),
               Text(
                 _formatCount(count),
                 style: const TextStyle(
                   fontWeight: FontWeight.w700,
-                  fontSize: 14,
+                  fontSize: 13,
                   color: AppColors.textSecondary,
                 ),
               ),
@@ -431,5 +507,62 @@ class _ActionWithCount extends StatelessWidget {
     if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
     if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
     return '$n';
+  }
+}
+
+class _ActionIcon extends StatelessWidget {
+  const _ActionIcon({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Icon(icon, size: 24, color: AppColors.textPrimary),
+      ),
+    );
+  }
+}
+
+class _TextAction extends StatelessWidget {
+  const _TextAction({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: AppColors.accentPurple),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: AppColors.accentPurple.withValues(alpha: 0.95),
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

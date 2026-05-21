@@ -1,5 +1,6 @@
 import '../../../feed/domain/entities/post_entity.dart';
 import '../../domain/entities/create_social_post_input.dart';
+import '../../domain/entities/share_fortune_input.dart';
 import '../../domain/repositories/social_repository.dart';
 import '../datasources/social_remote_datasource.dart';
 
@@ -21,5 +22,16 @@ class SocialRepositoryImpl implements SocialRepository {
   Future<PostEntity> createPost(CreateSocialPostInput input) async {
     final dto = await _remote.createPost(input);
     return dto.toEntity();
+  }
+
+  @override
+  Future<PostEntity> shareFortuneAuto(ShareFortuneInput input) async {
+    final dto = await _remote.shareFortuneAuto(input);
+    return dto.toEntity();
+  }
+
+  @override
+  Future<void> deletePost(String postId) async {
+    await _remote.deletePost(postId);
   }
 }

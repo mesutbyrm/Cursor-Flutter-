@@ -29,15 +29,14 @@ class _SocialPostCaptionState extends State<SocialPostCaption> {
   @override
   Widget build(BuildContext context) {
     final text = post.caption?.trim() ?? '';
-    if (text.isEmpty && post.fortuneCount <= 0) return const SizedBox.shrink();
+    if (text.isEmpty) return const SizedBox.shrink();
 
     final words = _splitWords(text);
     final hasOverflow = words.length > _previewWordLimit;
     final preview = hasOverflow && !_expanded
         ? words.take(_previewWordLimit).join(' ')
         : text;
-    final showCoViewers = post.fortuneCount > 0;
-    final showReadMore = showCoViewers || (hasOverflow && !_expanded);
+    final showReadMore = hasOverflow && !_expanded;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
@@ -100,18 +99,6 @@ class _SocialPostCaptionState extends State<SocialPostCaption> {
               ),
             ),
           ],
-          if (showCoViewers) ...[
-            const SizedBox(height: 4),
-            Text(
-              _coViewersLine(post),
-              style: TextStyle(
-                color: AppColors.accentPurple.withValues(alpha: 0.95),
-                fontSize: 13,
-                height: 1.35,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
           if (hasOverflow && _expanded) ...[
             const SizedBox(height: 4),
             GestureDetector(
@@ -133,36 +120,5 @@ class _SocialPostCaptionState extends State<SocialPostCaption> {
 
   static List<String> _splitWords(String text) {
     return text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
-  }
-
-  static String _coViewersLine(PostEntity post) {
-    final n = post.fortuneCount;
-    final label = _shareSubjectLabel(post);
-    return 'Bu kullanıcı ile birlikte $n kişi $label baktı';
-  }
-
-  static String _shareSubjectLabel(PostEntity post) {
-    if (post.fortuneType != null && post.fortuneType!.isNotEmpty) {
-      return 'bu ${_fortuneLabel(post.fortuneType!)} falına';
-    }
-    if (post.postType == 'fortune') return 'bu fala';
-    if (post.postType == 'text') return 'bu paylaşıma';
-    return 'buna';
-  }
-
-  static String _fortuneLabel(String type) {
-    return switch (type) {
-      'kahve-fali' || 'coffee' => 'kahve',
-      'tarot' || 'gunluk-tarot' => 'tarot',
-      'ruya-yorumu' => 'rüya yorumu',
-      'palm' => 'el',
-      'love' => 'aşk',
-      'angel' => 'melek',
-      'katina' => 'katina',
-      'yesno' || 'evet-hayir' => 'evet/hayır',
-      'istikhara' => 'istihare',
-      'astroloji' => 'astroloji',
-      _ => type.replaceAll('-', ' '),
-    };
   }
 }

@@ -7,6 +7,7 @@ import '../../../../core/util/json_util.dart';
 import '../../../auth/data/models/user_dto.dart';
 import '../../../feed/data/models/post_dto.dart';
 import '../../domain/entities/create_social_post_input.dart';
+import '../../domain/entities/share_fortune_input.dart';
 import '../../domain/entities/social_story_ring_entity.dart';
 
 class SocialRemoteDataSource {
@@ -114,6 +115,25 @@ class SocialRemoteDataSource {
       return Map<String, dynamic>.from(m['data']);
     }
     return m;
+  }
+
+  /// POST `/api/social/posts/auto-fortune`
+  Future<PostDto> shareFortuneAuto(ShareFortuneInput input) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.socialPostsAutoFortune,
+      data: {
+        'fortuneSlug': input.fortuneSlug,
+        'fortuneType': input.fortuneType ?? input.fortuneSlug,
+        'summary': input.summary,
+        if (input.detail != null && input.detail!.isNotEmpty)
+          'detail': input.detail,
+      },
+    );
+    return _parseCreatedPost(res.data, caption: input.summary, type: 'fortune');
+  }
+
+  Future<void> deletePost(String postId) async {
+    await _dio.safeDelete(ApiEndpoints.socialPostDelete(postId));
   }
 
   /// GET `/api/stories` — `storyGroups` hikâye halkaları (web ana akış ile aynı).

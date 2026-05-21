@@ -9,7 +9,6 @@ import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/social_providers.dart';
-import '../widgets/instagram/social_active_rooms.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
 import '../utils/open_social_create_post.dart';
@@ -111,32 +110,13 @@ class _SocialPageState extends ConsumerState<SocialPage> {
                             ),
                           );
                         }
-                        return SliverMainAxisGroup(
-                          slivers: [
-                            SliverToBoxAdapter(
-                              child: RepaintBoundary(
-                                child: SocialInstagramPostCard(
-                                  post: posts.first,
-                                ),
-                              ),
+                        return SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (_, i) => RepaintBoundary(
+                              child: SocialInstagramPostCard(post: posts[i]),
                             ),
-                            const SliverToBoxAdapter(
-                              child: RepaintBoundary(
-                                child: SocialActiveRooms(),
-                              ),
-                            ),
-                            if (posts.length > 1)
-                              SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  (ctx, i) => RepaintBoundary(
-                                    child: SocialInstagramPostCard(
-                                      post: posts[i + 1],
-                                    ),
-                                  ),
-                                  childCount: posts.length - 1,
-                                ),
-                              ),
-                          ],
+                            childCount: posts.length,
+                          ),
                         );
                       },
                     ),

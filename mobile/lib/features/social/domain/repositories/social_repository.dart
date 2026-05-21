@@ -1,5 +1,6 @@
 import '../../../feed/domain/entities/post_entity.dart';
 import '../entities/create_social_post_input.dart';
+import '../entities/share_fortune_input.dart';
 
 /// Tek sayfa sonucu — sunucu `pagination.totalPages` ile sınırlama.
 class SocialFeedPage {
@@ -14,4 +15,9 @@ abstract class SocialRepository {
 
   /// Instagram / Facebook tarzı yeni paylaşım.
   Future<PostEntity> createPost(CreateSocialPostInput input);
+
+  /// Fal baktırıldığında otomatik sosyal gönderi.
+  Future<PostEntity> shareFortuneAuto(ShareFortuneInput input);
+
+  Future<void> deletePost(String postId);
 }

@@ -9,6 +9,10 @@ function postPayload(p: {
   caption: string | null;
   mediaUrl: string | null;
   postType: string;
+  fortuneType: string | null;
+  isAutoShare: boolean;
+  fortuneCount: number;
+  viewCount: number;
   likesCount: number;
   commentsCount: number;
   createdAt: Date;
@@ -28,6 +32,11 @@ function postPayload(p: {
     mediaUrl: p.mediaUrl,
     imageUrl: p.mediaUrl,
     postType: p.postType,
+    fortuneType: p.fortuneType ?? undefined,
+    isAutoShare: p.isAutoShare,
+    isAuto: p.isAutoShare,
+    fortuneCount: p.fortuneCount,
+    viewCount: p.viewCount,
     likesCount: p.likesCount,
     commentsCount: p.commentsCount,
     createdAt: p.createdAt.toISOString(),
@@ -106,4 +115,58 @@ socialPostsRouter.post("/posts", requireAuth, async (req, res) => {
   });
 
   return ok(res, { post: postPayload(created) }, 201);
+});
+
+const autoFortuneSchema = z.object({
+  fortuneSlug: z.string().min(1).max(64),
+  fortuneType: z.string().max(64).optional(),
+  summary: z.string().min(1).max(800),
+  detail: z.string().max(4000).optional(),
+});
+
+/** POST /api/social/posts/auto-fortune — fal sonucu otomatik sosyal paylaşım */
+socialPostsRouter.post("/posts/auto-fortune", requireAuth, async (req, res) => {
+  const parsed = autoFortuneSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return fail(res, 400, "VALIDATION_ERROR", "Geçersiz fal paylaşımı");
+  }
+
+  const author = await prisma.user.findUnique({ where: { id: req.userId! } });
+  if (!author) return fail(res, 404, "NOT_FOUND", "Kullanıcı bulunamadı");
+
+  const slug = parsed.data.fortuneSlug;
+  const summary = parsed.data.summary.trim();
+  const detail = (parsed.data.detail ?? "").trim();
+  const caption =
+    detail.length > 0
+      ? `${summary}\n\n${detail}`.slice(0, 2200)
+      : summary;
+
+  const created = await prisma.socialPost.create({
+    data: {
+      authorId: author.id,
+      caption,
+      postType: "fortune",
+      fortuneType: parsed.data.fortuneType ?? slug,
+      isAutoShare: true,
+      fortuneCount: 1,
+      viewCount: 0,
+    },
+    include: { author: true },
+  });
+
+  return ok(res, { post: postPayload(created) }, 201);
+});
+
+/** DELETE /api/social/posts/:id — yazar veya admin */
+socialPostsRouter.delete("/posts/:id", requireAuth, async (req, res) => {
+  const post = await prisma.socialPost.findUnique({ where: { id: req.params.id } });
+  if (!post) return fail(res, 404, "NOT_FOUND", "Gönderi bulunamadı");
+  if (post.authorId !== req.userId) {
+    const user = await prisma.user.findUnique({ where: { id: req.userId! } });
+    const staff = user && ["admin", "yonetici", "moderator"].includes(user.role);
+    if (!staff) return fail(res, 403, "FORBIDDEN", "Yetkiniz yok");
+  }
+  await prisma.socialPost.delete({ where: { id: post.id } });
+  return ok(res, { deleted: true });
 });
