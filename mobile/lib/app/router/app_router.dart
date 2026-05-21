@@ -15,7 +15,9 @@ import '../../features/fortune/domain/entities/fortune_type_entity.dart';
 import '../../features/fortune/presentation/data/fortune_catalog.dart';
 import '../../features/fortune/presentation/pages/fortune_result_page.dart';
 import '../../features/fortune/presentation/pages/fortune_session_page.dart';
+import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
+import '../../features/gifts/presentation/pages/gift_send_page.dart';
 import '../../features/live/domain/entities/live_broadcast_session.dart';
 import '../../features/live/presentation/pages/live_broadcast_prep_page.dart';
 import '../../features/live/presentation/pages/live_broadcast_room_page.dart';
@@ -231,6 +233,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/jeton-store',
         builder: (context, state) => const JetonPurchasePage(),
+      ),
+      GoRoute(
+        path: '/admin',
+        builder: (context, state) => const AdminHubPage(),
+      ),
+      GoRoute(
+        path: '/gift-send',
+        builder: (context, state) {
+          final q = state.uri.queryParameters;
+          return GiftSendPage(
+            streamId: q['streamId'],
+            roomId: q['roomId'],
+            receiverName: q['receiver'] ?? 'Yayıncı',
+          );
+        },
       ),
       GoRoute(
         path: '/invite-friends',

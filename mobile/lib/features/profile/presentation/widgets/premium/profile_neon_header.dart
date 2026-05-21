@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/widgets/dual_balance_chips.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import 'profile_glass.dart';
 
@@ -16,6 +17,7 @@ class ProfileNeonHeader extends StatelessWidget {
     this.liveStreams = 0,
     this.likes = 0,
     this.diamondBalance,
+    this.cfcBalance = 0,
     this.onSettings,
     this.onEdit,
     this.onNotifications,
@@ -31,6 +33,7 @@ class ProfileNeonHeader extends StatelessWidget {
   final int liveStreams;
   final int likes;
   final int? diamondBalance;
+  final int cfcBalance;
   final VoidCallback? onSettings;
   final VoidCallback? onEdit;
   final VoidCallback? onNotifications;
@@ -48,7 +51,12 @@ class ProfileNeonHeader extends StatelessWidget {
               onPressed: onSettings,
             ),
             const Spacer(),
-            if (diamondBalance != null) _DiamondPill(balance: diamondBalance!),
+            if (diamondBalance != null)
+              DualBalanceChips(
+                jeton: diamondBalance!,
+                cfc: cfcBalance,
+                compact: true,
+              ),
             const SizedBox(width: 8),
             _TopIconButton(icon: Icons.edit_rounded, onPressed: onEdit),
             if (onNotifications != null) ...[
@@ -178,62 +186,6 @@ class _TopIconButton extends StatelessWidget {
           padding: const EdgeInsets.all(10),
           child: Icon(icon, size: 20, color: AppColors.textSecondary),
         ),
-      ),
-    );
-  }
-}
-
-class _DiamondPill extends StatelessWidget {
-  const _DiamondPill({required this.balance});
-
-  final int balance;
-
-  @override
-  Widget build(BuildContext context) {
-    return ProfileGlass(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      borderRadius: 20,
-      borderColor: const Color(0xFF5B8CFF).withValues(alpha: 0.45),
-      blur: 8,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF6EB5FF).withValues(alpha: 0.9),
-                  const Color(0xFF3D6BFF).withValues(alpha: 0.9),
-                ],
-              ),
-              boxShadow: AppColors.glowShadow(
-                const Color(0xFF5B8CFF),
-                blur: 12,
-              ),
-            ),
-            child: const Icon(
-              Icons.diamond_rounded,
-              size: 14,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            profileFormatCoins(balance),
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Icon(
-            Icons.add_circle_rounded,
-            size: 16,
-            color: AppColors.accentCyan.withValues(alpha: 0.9),
-          ),
-        ],
       ),
     );
   }

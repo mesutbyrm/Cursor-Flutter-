@@ -8,8 +8,9 @@ import { authRouter } from "./routes/auth";
 import { usersRouter } from "./routes/users";
 import { socialRouter } from "./routes/social";
 import { socialPostsRouter } from "./routes/socialPosts";
-import { giftsRouter } from "./routes/gifts";
-import { videoStreamGiftsRouter } from "./routes/gifts";
+import { giftsRouter, videoStreamGiftsRouter } from "./routes/gifts";
+import { walletRouter } from "./routes/wallet";
+import { notificationsRouter } from "./routes/notifications";
 import { fail } from "./lib/response";
 import { initGiftSocket } from "./socket/giftHub";
 
@@ -30,6 +31,8 @@ app.use("/api/v1", v1);
 app.use("/api/social", socialPostsRouter);
 app.use("/api/gifts", giftsRouter);
 app.use("/api/video-streams", videoStreamGiftsRouter);
+app.use("/api", walletRouter);
+app.use("/api/notifications", notificationsRouter);
 
 app.use((_req, res) => {
   return fail(res, 404, "NOT_FOUND", "Endpoint bulunamadı");

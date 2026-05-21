@@ -23,7 +23,6 @@ import 'widgets/voice_room/voice_room_bottom_bar.dart';
 import 'widgets/voice_room/voice_room_chat_panel.dart';
 import 'widgets/voice_room/voice_room_seats_panel.dart';
 import 'widgets/voice_room/voice_room_top_bar.dart';
-import 'widgets/voice_room_gift_sheet.dart';
 
 /// Sesli sohbet odası — web neon düzeni + TRTC ses + canlifal.com API.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
@@ -267,7 +266,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ref.read(voiceRoomLiveProvider(room).notifier).refresh(),
                       onShare: _shareRoom,
                       onTopUp: () => context.push('/jeton-store'),
-                      onGiftTap: () => showVoiceRoomGiftPicker(context, ref, room: room),
+                      onGiftTap: () => context.push(
+                            '/gift-send?roomId=${Uri.encodeComponent(room.id)}',
+                          ),
                     ),
                   ],
                 ),

@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/widgets/dual_balance_chips.dart';
 import 'profile_glass.dart';
 
 class ProfileWalletSection extends StatelessWidget {
   const ProfileWalletSection({
     super.key,
-    required this.coinBalance,
+    required this.jeton,
+    required this.cfc,
     this.onTopUp,
     this.onEarnings,
     this.onTransactions,
     this.onSubscriptions,
   });
 
-  final int coinBalance;
+  final int jeton;
+  final int cfc;
   final VoidCallback? onTopUp;
   final VoidCallback? onEarnings;
   final VoidCallback? onTransactions;
@@ -25,94 +28,72 @@ class ProfileWalletSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const ProfileSectionTitle(title: 'Cüzdanım'),
+        ProfileGlass(
+          padding: const EdgeInsets.all(16),
+          borderColor: AppColors.accentPurple.withValues(alpha: 0.35),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Bakiyeler',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 12),
+              DualBalanceChips(jeton: jeton, cfc: cfc, onTap: onTopUp),
+              const SizedBox(height: 8),
+              Text(
+                'Jeton: hediye ve ödemeler · CFC: premium içerik',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted.withValues(alpha: 0.9),
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              flex: 5,
-              child: ProfileGlass(
-                padding: const EdgeInsets.all(18),
-                borderColor: const Color(0xFFFFD54F).withValues(alpha: 0.35),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF3D2A10),
-                            Color(0xFF2A1F08),
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFFFD54F).withValues(alpha: 0.25),
-                            blurRadius: 16,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.monetization_on_rounded,
-                        color: Color(0xFFFFD54F),
-                        size: 32,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      'Coin Bakiyesi',
-                      style: TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      profileFormatCoins(coinBalance),
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
-                ),
+              child: _WalletAction(
+                icon: Icons.add_card_rounded,
+                label: 'Jeton Yükle',
+                onTap: onTopUp,
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              flex: 4,
-              child: Column(
-                children: [
-                  _WalletAction(
-                    icon: Icons.add_card_rounded,
-                    label: 'Coin Yükle',
-                    onTap: onTopUp,
-                  ),
-                  const SizedBox(height: 10),
-                  _WalletAction(
-                    icon: Icons.account_balance_wallet_rounded,
-                    label: 'Kazançlarım',
-                    onTap: onEarnings,
-                  ),
-                  const SizedBox(height: 10),
-                  _WalletAction(
-                    icon: Icons.receipt_long_rounded,
-                    label: 'İşlemler',
-                    onTap: onTransactions,
-                  ),
-                ],
+              child: _WalletAction(
+                icon: Icons.account_balance_wallet_rounded,
+                label: 'Kazançlarım',
+                onTap: onEarnings,
               ),
             ),
           ],
         ),
         const SizedBox(height: 10),
-        _WalletAction(
-          icon: Icons.workspace_premium_rounded,
-          label: 'Abonelikler',
-          onTap: onSubscriptions,
+        Row(
+          children: [
+            Expanded(
+              child: _WalletAction(
+                icon: Icons.receipt_long_rounded,
+                label: 'İşlemler',
+                onTap: onTransactions,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _WalletAction(
+                icon: Icons.workspace_premium_rounded,
+                label: 'Abonelikler',
+                onTap: onSubscriptions,
+              ),
+            ),
+          ],
         ),
       ],
     );

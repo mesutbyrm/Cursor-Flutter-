@@ -1,5 +1,7 @@
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../wallet/domain/wallet_balances.dart';
 import '../entities/jeton_package_entity.dart';
+import '../entities/payment_config_entity.dart';
 import '../entities/referral_info_entity.dart';
 
 abstract class ProfileRepository {
@@ -10,10 +12,9 @@ abstract class ProfileRepository {
 
 abstract class WalletRepository {
   Future<int> coinBalance();
-
-  /// Site `/api/jeton` — paket listesi (şekil değişirse parser genişletilir).
+  Future<WalletBalances> balances();
   Future<List<JetonPackageEntity>> jetonPackages();
-
-  /// Site `/api/referral` — paylaşılacak bağlantı / kod.
+  Future<PaymentConfigEntity> paymentConfig();
+  Future<void> submitPaymentRequest(Map<String, dynamic> body);
   Future<ReferralInfoEntity> referralInfo();
 }

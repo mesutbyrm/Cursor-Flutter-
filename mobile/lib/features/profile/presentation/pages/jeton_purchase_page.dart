@@ -1,19 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
-import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
+import '../../../../core/widgets/dual_balance_chips.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/jeton_native_checkout.dart';
 
 /// Ana sayfadan veya profilden açılır; paketleri `/api/jeton` üzerinden okur.
 class JetonPurchasePage extends ConsumerWidget {
   const JetonPurchasePage({super.key});
+
+  void _openCheckout(
+    BuildContext context,
+    WidgetRef ref,
+    JetonPackageEntity package,
+    String priceText,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          MediaQuery.paddingOf(ctx).bottom + 16,
+        ),
+        child: JetonNativeCheckout(
+          package: package,
+          priceText: priceText,
+          onSubmitted: () {
+            ref.invalidate(walletBalancesProvider);
+            ref.invalidate(jetonPackagesProvider);
+          },
+        ),
+      ),
+    );
+  }
 
   String _formatPrice(JetonPackageEntity p) {
     if (p.priceLabel != null && p.priceLabel!.trim().isNotEmpty) {
@@ -32,7 +60,7 @@ class JetonPurchasePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final packages = ref.watch(jetonPackagesProvider);
-    final balance = ref.watch(coinBalanceProvider);
+    final wallet = ref.watch(walletBalancesProvider);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -59,7 +87,7 @@ class JetonPurchasePage extends ConsumerWidget {
             color: AppTheme.accent,
             onRefresh: () async {
               ref.invalidate(jetonPackagesProvider);
-              ref.invalidate(coinBalanceProvider);
+              ref.invalidate(walletBalancesProvider);
               await ref.read(jetonPackagesProvider.future);
             },
             child: CustomScrollView(
@@ -95,19 +123,17 @@ class JetonPurchasePage extends ConsumerWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  balance.when(
-                                    data: (c) => Text(
-                                      '$c jeton',
-                                      style: const TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w900,
-                                      ),
+                                  wallet.when(
+                                    data: (b) => DualBalanceChips(
+                                      jeton: b.jeton,
+                                      cfc: b.cfc,
                                     ),
                                     loading: () => const Text('…'),
                                     error: (e, _) => Text(
                                       ApiException.userMessage(e),
                                       style: const TextStyle(
-                                          color: AppTheme.muted),
+                                        color: AppTheme.muted,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -118,25 +144,13 @@ class JetonPurchasePage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 18),
                       Text(
-                        Env.useNextAuth
-                            ? 'Paketler ve fiyatlar canlifal.com API’sinden gelir. Ödeme, hediye ve kampanyalar web ile aynı akışta tamamlanır.'
-                            : 'Bu API adresi için jeton kataloğu yapılandırılmamış olabilir; ödeme sayfasını web üzerinden açın.',
+                        'WhatsApp, Papara veya Havale/EFT ile ödeme yapın. '
+                        'Talebiniz admin ve site bildirim paneline düşer — web’e gerek yok.',
                         style: TextStyle(
                           color: AppTheme.muted.withValues(alpha: 0.95),
                           height: 1.35,
                           fontSize: 13,
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton.icon(
-                        onPressed: () => context.push(
-                          CanlifalWebRoute.location(
-                            relativePath: '/jeton',
-                            title: 'Jeton al',
-                          ),
-                        ),
-                        icon: const Icon(Icons.open_in_browser_rounded),
-                        label: const Text('Web’de jeton sayfasını aç'),
                       ),
                       const SizedBox(height: 28),
                       const Text(
@@ -201,9 +215,7 @@ class JetonPurchasePage extends ConsumerWidget {
                                       AppTheme.muted.withValues(alpha: 0.8)),
                               const SizedBox(height: 12),
                               Text(
-                                Env.useNextAuth
-                                    ? 'API’den paket listesi alınamadı veya boş döndü. Ödeme için web sayfasını kullanın.'
-                                    : 'Bu ortam için paket listesi yok.',
+                                'Paket listesi alınamadı. API ve oturum ayarlarını kontrol edin.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color:
@@ -227,18 +239,12 @@ class JetonPurchasePage extends ConsumerWidget {
                               child: _JetonPackageCard(
                                 package: p,
                                 priceText: _formatPrice(p),
-                                onBuy: () {
-                                  final q = p.id.isNotEmpty &&
-                                          !p.id.startsWith('pkg_')
-                                      ? '?paket=${Uri.encodeQueryComponent(p.id)}'
-                                      : '';
-                                  context.push(
-                                    CanlifalWebRoute.location(
-                                      relativePath: '/jeton$q',
-                                      title: 'Jeton al',
-                                    ),
-                                  );
-                                },
+                                onBuy: () => _openCheckout(
+                                  context,
+                                  ref,
+                                  p,
+                                  _formatPrice(p),
+                                ),
                               ),
                             );
                           },

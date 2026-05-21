@@ -7,7 +7,9 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../auth/data/models/user_dto.dart';
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../wallet/domain/wallet_balances.dart';
 import '../../domain/entities/jeton_package_entity.dart';
+import '../../domain/entities/payment_config_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 
 class ProfileRemoteDataSource {
@@ -53,44 +55,59 @@ class WalletRemoteDataSource {
   final Dio _dio;
 
   Future<int> balance() async {
+    final b = await balances();
+    return b.jeton;
+  }
+
+  Future<WalletBalances> balances() async {
     if (Env.useNextAuth) {
       final res = await _dio.safeGet<Map<String, dynamic>>(
         ApiEndpoints.userCredits,
       );
-      final body = res.data ?? {};
+      final body = _unwrap(res.data);
       final err = body['error'];
       if (err != null) {
         throw ApiException(err.toString());
       }
-      return asInt(
-        pick(body, [
-          'credits',
-          'balance',
-          'coins',
-          'coinBalance',
-          'amount',
-          'credit',
-        ]),
-      );
+      return WalletBalances.fromJson(body);
     }
     final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.wallet);
-    final body = res.data ?? {};
-    final v = pick(body, ['balance', 'coins', 'coinBalance', 'amount']);
-    return asInt(v);
+    return WalletBalances.fromJson(_unwrap(res.data));
+  }
+
+  Future<PaymentConfigEntity> paymentConfig() async {
+    final res = await _dio.safeGet<Map<String, dynamic>>(
+      ApiEndpoints.paymentConfig,
+    );
+    return PaymentConfigEntity.fromJson(_unwrap(res.data));
+  }
+
+  Future<void> submitPaymentRequest(Map<String, dynamic> body) async {
+    await _dio.safePost(ApiEndpoints.paymentRequests, data: body);
+  }
+
+  Map<String, dynamic> _unwrap(dynamic data) {
+    if (data is Map && data['success'] == true && data['data'] is Map) {
+      return asJsonMap(data['data']);
+    }
+    return data is Map ? asJsonMap(data) : {};
   }
 
   /// canlifal.com jeton paketleri / fiyatlar.
   Future<List<JetonPackageEntity>> jetonPackages() async {
-    if (!Env.useNextAuth) return const [];
-    final res = await _dio.safeGet<Map<String, dynamic>>(
-      ApiEndpoints.jetonCatalog,
-    );
-    final body = res.data ?? {};
-    final err = body['error'];
-    if (err != null) {
-      throw ApiException(err.toString());
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.jetonCatalog);
+    final data = res.data;
+    if (data is List) {
+      return _parseJetonPackages({'packages': data});
     }
-    return _parseJetonPackages(body);
+    if (data is Map && data['success'] == true && data['data'] != null) {
+      final inner = data['data'];
+      if (inner is List) {
+        return _parseJetonPackages({'packages': inner});
+      }
+      if (inner is Map) return _parseJetonPackages(asJsonMap(inner));
+    }
+    return _parseJetonPackages(data is Map ? asJsonMap(data) : {});
   }
 
   /// Davet bağlantısı veya kod.

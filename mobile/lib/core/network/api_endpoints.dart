@@ -40,6 +40,11 @@ abstract final class ApiEndpoints {
   /// Jeton paketleri / fiyat listesi (oturum gerekir).
   static const jetonCatalog = '/api/jeton';
 
+  static const paymentConfig = '/api/payment/config';
+  static const paymentRequests = '/api/payment/requests';
+  static const adminPaymentRequests = '/api/admin/payment-requests';
+  static const adminNotifications = '/api/admin/notifications';
+
   /// Arkadaş daveti — bağlantı veya kod (oturum gerekir).
   static const referral = '/api/referral';
   /// Diğer ortamlar için genel canlı listesi.

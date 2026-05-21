@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../domain/notification_action.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../providers/notifications_providers.dart';
 
@@ -12,6 +14,7 @@ class NotificationsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final list = ref.watch(notificationsListProvider);
+    final router = ref.watch(goRouterProvider);
     final fmt = DateFormat('HH:mm');
 
     return DiscoverSubPage(
@@ -51,6 +54,7 @@ class NotificationsPage extends ConsumerWidget {
                         .markRead(n.id);
                     ref.invalidate(notificationsListProvider);
                   }
+                  navigateFromNotification(router, n);
                 },
                 borderColor: n.read
                     ? null

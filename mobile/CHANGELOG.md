@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.26+28 (2026-05-21)
+
+### Cüzdan, ödeme, bildirim ve yönetim
+
+- **Jeton + CFC** çift bakiye (profil, shell, jeton mağazası)
+- Bildirime tıklayınca ilgili sayfaya yönlendirme
+- Jeton yükleme: WhatsApp, Papara, Havale/EFT — uygulama içi (web’siz)
+- Ödeme talebi → admin + site bildirim paneli
+- Profilde **Yönetim** bölümü (admin, yönetici, moderatör, destek, yardım)
+- Premium açılış ekranı + CanlıFal logo
+- `/gift-send` native hediye alanı
+
 ## 1.0.25+27 (2026-05-21)
 
 ### TikTok tarzı gelişmiş hediye sistemi

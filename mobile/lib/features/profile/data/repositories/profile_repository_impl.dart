@@ -1,5 +1,7 @@
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../wallet/domain/wallet_balances.dart';
 import '../../domain/entities/jeton_package_entity.dart';
+import '../../domain/entities/payment_config_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../datasources/profile_remote_datasource.dart';
@@ -28,7 +30,17 @@ class WalletRepositoryImpl implements WalletRepository {
   Future<int> coinBalance() => _remote.balance();
 
   @override
+  Future<WalletBalances> balances() => _remote.balances();
+
+  @override
   Future<List<JetonPackageEntity>> jetonPackages() => _remote.jetonPackages();
+
+  @override
+  Future<PaymentConfigEntity> paymentConfig() => _remote.paymentConfig();
+
+  @override
+  Future<void> submitPaymentRequest(Map<String, dynamic> body) =>
+      _remote.submitPaymentRequest(body);
 
   @override
   Future<ReferralInfoEntity> referralInfo() => _remote.referralInfo();

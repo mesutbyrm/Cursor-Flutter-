@@ -18,6 +18,8 @@ model User {
   avatarUrl       String?
   coverUrl        String?
   coins           Int            @default(500)
+  cfcBalance      Int            @default(0)
+  role            String         @default("user")
   followerCount   Int            @default(0)
   followingCount  Int            @default(0)
   createdAt       DateTime       @default(now())
@@ -110,4 +112,50 @@ model GiftEvent {
   @@index([roomId, createdAt])
   @@index([senderId, createdAt])
   @@index([receiverId, createdAt])
+}
+
+/// Ödeme yöntemi bilgileri (WhatsApp, Papara, havale).
+model PaymentConfig {
+  id              String   @id @default("default")
+  whatsappNumber  String   @default("")
+  paparaAddress   String   @default("")
+  bankIban        String   @default("")
+  bankName        String?
+  accountHolder   String?
+  updatedAt       DateTime @updatedAt
+}
+
+/// Kullanıcı ödeme bildirimi / talebi.
+model PaymentRequest {
+  id            String   @id @default(cuid())
+  userId        String?
+  userName      String
+  method        String
+  packageId     String?
+  packageTitle  String?
+  amountTry     Float?
+  coins         Int      @default(0)
+  status        String   @default("pending")
+  note          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([userId])
+}
+
+/// Uygulama / site bildirimleri.
+model AppNotification {
+  id         String   @id @default(cuid())
+  userId     String?
+  title      String
+  body       String?
+  type       String   @default("system")
+  targetPath String?
+  targetId   String?
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([userId, read, createdAt])
+  @@index([createdAt])
 }

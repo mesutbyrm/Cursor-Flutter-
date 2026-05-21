@@ -25,12 +25,18 @@ class NotificationsRemoteDataSource {
   AppNotificationEntity _row(Map<String, dynamic> json) {
     return AppNotificationEntity(
       id: pick(json, ['id', '_id'])?.toString() ?? '',
-      title: pick(json, ['title', 'type', 'subject'])?.toString() ?? 'Bildirim',
+      title: pick(json, ['title', 'subject'])?.toString() ??
+          pick(json, ['type'])?.toString() ??
+          'Bildirim',
       body: pick(json, ['body', 'message', 'text', 'description']) as String?,
       read: asBool(pick(json, ['read', 'isRead', 'seen'])),
       createdAt: DateTime.tryParse(
         pick(json, ['createdAt', 'created_at', 'timestamp'])?.toString() ?? '',
       ),
+      type: pick(json, ['type', 'category'])?.toString(),
+      targetPath: pick(json, ['targetPath', 'actionUrl', 'link', 'href'])
+          ?.toString(),
+      targetId: pick(json, ['targetId', 'entityId', 'refId'])?.toString(),
     );
   }
 

@@ -10,6 +10,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/premium/profile_admin_section.dart';
 import '../widgets/premium/profile_broadcaster_panel.dart';
 import '../widgets/premium/profile_gifts_row.dart';
 import '../widgets/premium/profile_neon_header.dart';
@@ -24,11 +25,12 @@ class ProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
-    final coins = ref.watch(coinBalanceProvider);
+    final wallet = ref.watch(walletBalancesProvider);
     final top = MediaQuery.paddingOf(context).top;
 
     Future<void> refresh() async {
       await ref.read(authControllerProvider.notifier).refreshMe();
+      ref.invalidate(walletBalancesProvider);
       ref.invalidate(coinBalanceProvider);
     }
 
@@ -56,10 +58,13 @@ class ProfilePage extends ConsumerWidget {
                   ),
                 );
               }
-              final balance = coins.maybeWhen(
-                data: (c) => c,
-                orElse: () => user.coinBalance,
+              final balances = wallet.maybeWhen(
+                data: (b) => b,
+                orElse: () => null,
               );
+              final jeton = balances?.jeton ?? user.coinBalance;
+              final cfc = balances?.cfc ?? 0;
+              final role = balances?.role ?? '';
 
               return CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(
@@ -79,7 +84,8 @@ class ProfilePage extends ConsumerWidget {
                           following: user.followingCount,
                           bio: user.bio ??
                               '🎵 Müzik, sohbet ve eğlence dolu yayınlar…',
-                          diamondBalance: balance,
+                          diamondBalance: jeton,
+                          cfcBalance: cfc,
                           onNotifications: () =>
                               context.push('/notifications'),
                           onLogout: () => ref
@@ -98,18 +104,20 @@ class ProfilePage extends ConsumerWidget {
                         ),
                         const SizedBox(height: 22),
                         ProfileWalletSection(
-                          coinBalance: balance,
+                          jeton: jeton,
+                          cfc: cfc,
                           onTopUp: () => context.push('/jeton-store'),
                           onEarnings: () => _showSnack(
                             context,
                             'Kazançlar yakında',
                           ),
                           onTransactions: () => ref.invalidate(
-                            coinBalanceProvider,
+                            walletBalancesProvider,
                           ),
                           onSubscriptions: () => context.go('/social'),
                         ),
                         const SizedBox(height: 22),
+                        ProfileAdminSection(role: role),
                         const ProfileBroadcasterPanel(),
                         const SizedBox(height: 22),
                         ProfileGiftsRow(
