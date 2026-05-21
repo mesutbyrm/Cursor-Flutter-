@@ -29,7 +29,7 @@ class SocialRemoteDataSource {
     }
 
     final posts = asJsonList(rawPosts)
-        .map(PostDto.fromJson)
+        .map(PostDto.fromApiMap)
         .where((p) => p.id.isNotEmpty)
         .toList();
 

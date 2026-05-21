@@ -4,6 +4,8 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/message_entities.dart';
+import '../models/conversation_dto.dart';
+import '../models/message_dto.dart';
 
 class MessagesRemoteDataSource {
   MessagesRemoteDataSource(this._dio);
@@ -19,22 +21,10 @@ class MessagesRemoteDataSource {
     } else {
       list = body;
     }
-    return asJsonList(list).map(_conv).toList();
-  }
-
-  ConversationEntity _conv(Map<String, dynamic> json) {
-    final peer = pick(json, ['peer', 'user', 'participant']);
-    final peerMap = peer is Map ? asJsonMap(peer) : <String, dynamic>{};
-    return ConversationEntity(
-      id: pick(json, ['id', '_id', 'conversationId'])?.toString() ?? '',
-      title: pick(json, ['title', 'name'])?.toString() ??
-          pick(peerMap, ['displayName', 'username'])?.toString() ??
-          'Sohbet',
-      subtitle: pick(json, ['lastMessage', 'preview', 'subtitle'])?.toString(),
-      avatarUrl: pick(peerMap, ['avatarUrl', 'avatar_url', 'photoUrl'])
-          as String?,
-      unreadCount: asInt(pick(json, ['unreadCount', 'unread', 'badge'])),
-    );
+    return asJsonList(list)
+        .map(ConversationDto.fromApiMap)
+        .map((d) => d.toEntity())
+        .toList();
   }
 
   Future<List<MessageEntity>> messages(String id) async {
@@ -48,31 +38,10 @@ class MessagesRemoteDataSource {
     } else {
       list = body;
     }
-    return asJsonList(list).map(_msg).toList();
-  }
-
-  MessageEntity _msg(Map<String, dynamic> json) {
-    final readAt = pick(json, ['readAt', 'read_at', 'seenAt']);
-    final deliveredAt = pick(json, ['deliveredAt', 'delivered_at']);
-    final statusRaw = pick(json, ['status', 'deliveryStatus'])?.toString();
-
-    var delivery = MessageDeliveryStatus.sent;
-    if (readAt != null || statusRaw == 'read') {
-      delivery = MessageDeliveryStatus.read;
-    } else if (deliveredAt != null || statusRaw == 'delivered') {
-      delivery = MessageDeliveryStatus.delivered;
-    }
-
-    return MessageEntity(
-      id: pick(json, ['id', '_id'])?.toString() ?? '',
-      text: pick(json, ['text', 'body', 'content'])?.toString() ?? '',
-      isMine: asBool(pick(json, ['isMine', 'mine', 'fromMe'])),
-      createdAt: DateTime.tryParse(
-        pick(json, ['createdAt', 'created_at', 'timestamp'])?.toString() ??
-            '',
-      ),
-      deliveryStatus: delivery,
-    );
+    return asJsonList(list)
+        .map(MessageDto.fromApiMap)
+        .map((d) => d.toEntity())
+        .toList();
   }
 
   Future<void> send(String id, String text) async {

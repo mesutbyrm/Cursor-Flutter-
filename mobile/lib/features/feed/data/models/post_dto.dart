@@ -1,25 +1,33 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
 import '../../../../core/util/json_util.dart';
 import '../../../auth/data/models/user_dto.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../domain/entities/post_entity.dart';
 
-class PostDto {
-  PostDto({
-    required this.id,
-    required this.author,
-    this.caption,
-    this.mediaUrl,
-    this.likesCount,
-    this.commentsCount,
-    this.createdAt,
-    this.fortuneType,
-    this.viewCount,
-    this.isAutoShare,
-    this.fortuneCount,
-    this.postType,
-  });
+part 'post_dto.freezed.dart';
 
-  factory PostDto.fromJson(Map<String, dynamic> json) {
+/// API satırı — esnek alan adları `fromApiMap` ile çözülür.
+@freezed
+abstract class PostDto with _$PostDto {
+  const factory PostDto({
+    required String id,
+    required UserEntity author,
+    String? caption,
+    String? mediaUrl,
+    @Default(0) int likesCount,
+    @Default(0) int commentsCount,
+    DateTime? createdAt,
+    String? fortuneType,
+    @Default(0) int viewCount,
+    @Default(false) bool isAutoShare,
+    @Default(0) int fortuneCount,
+    String? postType,
+  }) = _PostDto;
+
+  const PostDto._();
+
+  factory PostDto.fromApiMap(Map<String, dynamic> json) {
     final authorRaw = pick(json, ['author', 'user', 'creator']);
     Map<String, dynamic> authorMap =
         authorRaw is Map ? asJsonMap(authorRaw) : <String, dynamic>{};
@@ -49,14 +57,13 @@ class PostDto {
       caption: pick(json, ['caption', 'text', 'description', 'content'])
           as String?,
       mediaUrl: pick(json, [
-            'mediaUrl',
-            'media_url',
-            'videoUrl',
-            'thumbnailUrl',
-            'imageUrl',
-            'image_url',
-          ])
-          as String?,
+        'mediaUrl',
+        'media_url',
+        'videoUrl',
+        'thumbnailUrl',
+        'imageUrl',
+        'image_url',
+      ]) as String?,
       likesCount: likes,
       commentsCount: comments,
       createdAt: _parseDate(pick(json, ['createdAt', 'created_at', 'timestamp'])),
@@ -68,35 +75,20 @@ class PostDto {
     );
   }
 
-  final String id;
-  final UserEntity author;
-  final String? caption;
-  final String? mediaUrl;
-  final int? likesCount;
-  final int? commentsCount;
-  final DateTime? createdAt;
-  final String? fortuneType;
-  final int? viewCount;
-  final bool? isAutoShare;
-  final int? fortuneCount;
-  final String? postType;
-
-  PostEntity toEntity() {
-    return PostEntity(
-      id: id,
-      author: author,
-      caption: caption,
-      mediaUrl: mediaUrl,
-      likesCount: likesCount ?? 0,
-      commentsCount: commentsCount ?? 0,
-      createdAt: createdAt,
-      fortuneType: fortuneType,
-      viewCount: viewCount ?? 0,
-      isAutoShare: isAutoShare ?? false,
-      fortuneCount: fortuneCount ?? 0,
-      postType: postType,
-    );
-  }
+  PostEntity toEntity() => PostEntity(
+        id: id,
+        author: author,
+        caption: caption,
+        mediaUrl: mediaUrl,
+        likesCount: likesCount,
+        commentsCount: commentsCount,
+        createdAt: createdAt,
+        fortuneType: fortuneType,
+        viewCount: viewCount,
+        isAutoShare: isAutoShare,
+        fortuneCount: fortuneCount,
+        postType: postType,
+      );
 
   static DateTime? _parseDate(dynamic v) {
     if (v == null) return null;
