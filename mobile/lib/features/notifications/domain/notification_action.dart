@@ -39,6 +39,9 @@ void navigateFromNotification(GoRouter router, AppNotificationEntity n) {
     case 'social':
       router.go('/social');
       return;
+    case 'membership':
+      router.push('/premium-membership');
+      return;
     case 'admin_payment':
     case 'admin':
       router.push('/admin');

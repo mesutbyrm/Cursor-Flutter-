@@ -108,8 +108,8 @@ walletRouter.get("/user/credits", requireAuth, async (req, res) => {
     cfcBalance: user.cfcBalance,
     jetonTlRate: Number(process.env.JETON_TL_RATE ?? "0.5") || 0.5,
     withdrawalLimit: 0,
-    membership: "basic",
-    membershipExpiresAt: null,
+    membership: user.membership,
+    membershipExpiresAt: user.membershipExpiresAt?.toISOString() ?? null,
     role: user.role,
     jeton: user.coins,
     cfc: user.cfcBalance,
@@ -439,6 +439,138 @@ walletRouter.get("/admin/notifications", requireAuth, requireStaff, async (_req,
       read: n.read,
       createdAt: n.createdAt.toISOString(),
     })),
+  });
+});
+
+const MEMBERSHIP_PACKAGES = [
+  {
+    id: "basic",
+    title: "Basic",
+    durationDays: 30,
+    priceJeton: 100,
+    bonusJeton: 100,
+    falDiscountPercent: 10,
+    tierOrder: 1,
+  },
+  {
+    id: "premium",
+    title: "Premium",
+    durationDays: 30,
+    priceJeton: 250,
+    bonusJeton: 250,
+    falDiscountPercent: 20,
+    tierOrder: 2,
+  },
+  {
+    id: "gold",
+    title: "Gold",
+    durationDays: 30,
+    priceJeton: 500,
+    bonusJeton: 500,
+    falDiscountPercent: 30,
+    tierOrder: 3,
+  },
+  {
+    id: "diamond",
+    title: "Diamond",
+    durationDays: 30,
+    priceJeton: 1000,
+    bonusJeton: 1000,
+    falDiscountPercent: 40,
+    tierOrder: 4,
+  },
+] as const;
+
+function membershipDaysLeft(expiresAt: Date | null): number | null {
+  if (!expiresAt) return null;
+  const ms = expiresAt.getTime() - Date.now();
+  if (ms <= 0) return 0;
+  return Math.ceil(ms / (24 * 60 * 60 * 1000));
+}
+
+/** GET /api/membership/packages */
+walletRouter.get("/membership/packages", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.userId! } });
+  if (!user) return jsonError(res, 404, "Kullanıcı bulunamadı");
+
+  const daysLeft = membershipDaysLeft(user.membershipExpiresAt);
+  const activeTier =
+    daysLeft != null && daysLeft > 0 ? user.membership : "basic";
+
+  return res.status(200).json({
+    packages: MEMBERSHIP_PACKAGES.map((p) => ({
+      ...p,
+      isActive: p.id === activeTier,
+      daysRemaining: p.id === activeTier ? daysLeft : null,
+    })),
+    currentMembership: activeTier,
+    daysRemaining: daysLeft,
+    jetonBalance: user.coins,
+    cfcBalance: user.cfcBalance,
+    features: [
+      { id: "bonus", title: "Bonus Jeton", subtitle: "Her paketle bonus jeton" },
+      { id: "badge", title: "Özel Rozet", subtitle: "Üyelik rozeti profilde" },
+      { id: "support", title: "Öncelikli Destek", subtitle: "7/24 öncelikli destek" },
+      { id: "fal", title: "İndirimli Fal", subtitle: "Fal bakımlarında indirim" },
+    ],
+  });
+});
+
+/** POST /api/membership/purchase */
+walletRouter.post("/membership/purchase", requireAuth, async (req, res) => {
+  const tierId = String(req.body?.tierId ?? req.body?.packageId ?? "").toLowerCase();
+  const pkg = MEMBERSHIP_PACKAGES.find((p) => p.id === tierId);
+  if (!pkg) return jsonError(res, 400, "Geçersiz paket");
+
+  const user = await prisma.user.findUnique({ where: { id: req.userId! } });
+  if (!user) return jsonError(res, 404, "Kullanıcı bulunamadı");
+
+  if (user.coins < pkg.priceJeton) {
+    return jsonError(res, 400, "Yetersiz jeton bakiyesi");
+  }
+
+  const now = new Date();
+  const base =
+    user.membership === pkg.id &&
+    user.membershipExpiresAt &&
+    user.membershipExpiresAt > now
+      ? user.membershipExpiresAt
+      : now;
+  const expires = new Date(base);
+  expires.setDate(expires.getDate() + pkg.durationDays);
+
+  const newCoins = user.coins - pkg.priceJeton + pkg.bonusJeton;
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      coins: newCoins,
+      membership: pkg.id,
+      membershipExpiresAt: expires,
+    },
+  });
+
+  const isExtend =
+    user.membership === pkg.id &&
+    user.membershipExpiresAt != null &&
+    user.membershipExpiresAt > now;
+
+  await createNotification({
+    userId: user.id,
+    title: isExtend ? "Üyelik uzatıldı" : "Premium üyelik aktif",
+    body: `${pkg.title} · ${pkg.durationDays} gün`,
+    type: "membership",
+    targetPath: "/premium-membership",
+    targetId: pkg.id,
+  });
+
+  return res.status(200).json({
+    success: true,
+    membership: updated.membership,
+    membershipExpiresAt: updated.membershipExpiresAt?.toISOString() ?? null,
+    daysRemaining: membershipDaysLeft(updated.membershipExpiresAt),
+    jetonBalance: updated.coins,
+    cfcBalance: updated.cfcBalance,
+    bonusJetonGranted: pkg.bonusJeton,
   });
 });
 

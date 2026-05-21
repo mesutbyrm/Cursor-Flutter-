@@ -97,10 +97,8 @@ class ProfilePage extends ConsumerWidget {
                         const ProfileBranchQuickActions(),
                         const SizedBox(height: 20),
                         ProfilePremiumBanner(
-                          onViewPrivileges: () => _showSnack(
-                            context,
-                            'Premium ayrıcalıkları yakında',
-                          ),
+                          onViewPrivileges: () =>
+                              context.push('/premium-membership'),
                         ),
                         const SizedBox(height: 22),
                         ProfileWalletSection(
@@ -115,7 +113,7 @@ class ProfilePage extends ConsumerWidget {
                           onTransactions: () => ref.invalidate(
                             walletBalancesProvider,
                           ),
-                          onSubscriptions: () => context.go('/social'),
+                          onSubscriptions: () => context.push('/wallet'),
                         ),
                         const SizedBox(height: 22),
                         ProfileAdminSection(role: role),

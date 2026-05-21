@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.28+30 (2026-05-21)
+
+### Cüzdan + CFC + Gold Üyelik (birleşik)
+
+- `/wallet` cüzdan merkezi (Jeton, CFC, Premium)
+- `/premium-membership` Gold üyelik sayfası (mockup: 4 paket, karşılaştırma tablosu)
+- CFC yükleme ile ortak bakiye başlığı ve Gold üye şeridi
+- API: `GET/POST /api/membership/*`, kullanıcı `membership` alanları
+
 ## 1.0.27+29 (2026-05-21)
 
 ### CFC ödeme API (canlifal.com dokümantasyonu)

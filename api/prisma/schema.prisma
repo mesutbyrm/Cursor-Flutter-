@@ -19,6 +19,8 @@ model User {
   coverUrl        String?
   coins           Int            @default(500)
   cfcBalance      Int            @default(0)
+  membership      String         @default("basic")
+  membershipExpiresAt DateTime?
   role            String         @default("user")
   followerCount   Int            @default(0)
   followingCount  Int            @default(0)
