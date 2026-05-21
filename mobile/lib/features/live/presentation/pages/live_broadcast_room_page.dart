@@ -19,7 +19,7 @@ import '../gifts/providers/live_gift_providers.dart';
 import '../gifts/widgets/floating_gift_particles.dart';
 import '../gifts/widgets/gift_fullscreen_overlay.dart';
 import '../gifts/widgets/gift_notification_stack.dart';
-import '../gifts/widgets/live_gift_panel.dart';
+import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../providers/live_providers.dart';
 import '../widgets/broadcast_room/live_room_bottom_bar.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
@@ -340,8 +340,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                child: LiveGiftPanel(
+                child: PremiumGiftPanel(
                   controller: giftCtrl,
+                  streamId: widget.session.streamId ?? '',
                   senderName: user.displayName ?? user.username,
                   senderId: user.id,
                   onClose: () => giftCtrl.setPanelOpen(false),

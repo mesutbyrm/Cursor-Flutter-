@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 
+import '../../../gifts/data/gift_sound_service.dart';
 import '../../data/datasources/live_gifts_remote_datasource.dart';
 import '../../data/services/live_gift_realtime_service.dart';
 import '../../domain/entities/live_gift_catalog.dart';
@@ -27,13 +27,16 @@ class LiveGiftController extends ChangeNotifier {
   LiveGiftController({
     required LiveGiftsRemoteDataSource remote,
     required LiveGiftRealtimeService realtime,
+    GiftSoundService? sound,
   })  : _remote = remote,
-        _realtime = realtime {
+        _realtime = realtime,
+        _sound = sound {
     _sub = _realtime.events.listen(_onIncoming);
   }
 
   final LiveGiftsRemoteDataSource _remote;
   final LiveGiftRealtimeService _realtime;
+  final GiftSoundService? _sound;
   StreamSubscription<LiveGiftEvent>? _sub;
 
   final List<LiveGiftEvent> notifications = [];
@@ -75,7 +78,8 @@ class LiveGiftController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<List<LiveVideoGiftType>> loadCatalog() => _remote.fetchGiftTypes();
+  Future<List<LiveVideoGiftType>> loadCatalog() =>
+      _remote.fetchGiftTypes();
 
   Future<void> send({
     required LiveVideoGiftType gift,
@@ -108,9 +112,27 @@ class LiveGiftController extends ChangeNotifier {
       }
 
       final base = result.event!;
-      final enriched = _applyCombo(base);
+      final enriched = _applyCombo(
+        LiveGiftEvent(
+          id: base.id,
+          senderId: base.senderId ?? senderId,
+          senderName: base.senderName,
+          receiverName: base.receiverName,
+          giftId: base.giftId,
+          giftName: base.giftName,
+          quantity: base.quantity,
+          coinCost: base.coinCost,
+          combo: base.combo,
+          timestamp: base.timestamp,
+          iconUrl: base.iconUrl ?? gift.iconPath,
+          animationKey: base.animationKey ?? gift.animationRef,
+          rarity: gift.rarity,
+          animationKind: gift.animationKind,
+          soundKey: base.soundKey ?? gift.soundKey,
+        ),
+      );
       _realtime.publishLocal(enriched);
-      _playGiftSound();
+      await _sound?.playFor(gift.toEntity());
     } finally {
       sending = false;
       notifyListeners();
@@ -124,20 +146,7 @@ class LiveGiftController extends ChangeNotifier {
     if (state != null && now.difference(state.lastAt).inSeconds <= 4) {
       state.count += event.quantity;
       state.lastAt = now;
-      return LiveGiftEvent(
-        id: event.id,
-        senderId: event.senderId,
-        senderName: event.senderName,
-        receiverName: event.receiverName,
-        giftId: event.giftId,
-        giftName: event.giftName,
-        quantity: event.quantity,
-        coinCost: event.coinCost,
-        combo: state.count,
-        timestamp: event.timestamp,
-        iconUrl: event.iconUrl,
-        animationKey: event.animationKey,
-      );
+      return event.copyWithCombo(state.count);
     }
     _combo[key] = _ComboState(event.quantity, now);
     return event.copyWithCombo(1);
@@ -147,11 +156,14 @@ class LiveGiftController extends ChangeNotifier {
     if (!_isDisplayable(event)) return;
     final enriched = _applyCombo(event);
     notifications.insert(0, enriched);
-    if (notifications.length > 5) notifications.removeRange(5, notifications.length);
+    if (notifications.length > 5) {
+      notifications.removeRange(5, notifications.length);
+    }
     activeFullscreen = enriched;
     notifyListeners();
 
-    Future.delayed(const Duration(seconds: 3), () {
+    final duration = enriched.rarity.fullscreenDuration;
+    Future.delayed(duration, () {
       if (activeFullscreen?.id == enriched.id) {
         activeFullscreen = null;
         notifyListeners();
@@ -170,13 +182,6 @@ class LiveGiftController extends ChangeNotifier {
     return ok(e.senderName) && ok(e.receiverName) && ok(e.giftName);
   }
 
-  Future<void> _playGiftSound() async {
-    try {
-      await SystemSound.play(SystemSoundType.click);
-    } catch (_) {}
-    HapticFeedback.mediumImpact();
-  }
-
   @override
   void dispose() {
     _sub?.cancel();
@@ -191,7 +196,7 @@ class _ComboState {
   DateTime lastAt;
 }
 
-extension on LiveGiftEvent {
+extension _LiveGiftEventCopy on LiveGiftEvent {
   LiveGiftEvent copyWithCombo(int c) {
     return LiveGiftEvent(
       id: id,
@@ -206,6 +211,9 @@ extension on LiveGiftEvent {
       timestamp: timestamp,
       iconUrl: iconUrl,
       animationKey: animationKey,
+      rarity: rarity,
+      animationKind: animationKind,
+      soundKey: soundKey,
     );
   }
 }

@@ -56,6 +56,11 @@ abstract final class ApiEndpoints {
   static String videoStreamGifts(String streamId) =>
       '/api/video-streams/$streamId/gifts';
 
+  static String videoStreamGiftLeaderboard(String streamId) =>
+      '/api/video-streams/$streamId/gifts/leaderboard';
+
+  static const giftsCatalog = '/api/gifts';
+
   static String userProfile(String userId) => '/api/users/$userId';
   static String follow(String userId) => '/api/users/$userId/follow';
   static String followers(String userId) => '/api/users/$userId/followers';

@@ -66,3 +66,48 @@ model RefreshToken {
 
   @@index([userId])
 }
+
+/// Hediye kataloğu — platform (mobile/web/all) ve rarity ile filtrelenir.
+model Gift {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  name          String
+  icon          String
+  animation     String?
+  animationType String   @default("lottie")
+  price         Int
+  rarity        String   @default("common")
+  platform      String   @default("all")
+  sound         String?
+  sortOrder     Int      @default(0)
+  enabled       Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  events        GiftEvent[]
+
+  @@index([platform, enabled, sortOrder])
+  @@index([rarity])
+}
+
+/// Canlı yayın / oda hediye işlemleri.
+model GiftEvent {
+  id           String   @id @default(cuid())
+  giftId       String
+  gift         Gift     @relation(fields: [giftId], references: [id], onDelete: Restrict)
+  senderId     String?
+  senderName   String
+  receiverId   String?
+  receiverName String
+  streamId     String?
+  roomId       String?
+  quantity     Int      @default(1)
+  coinCost     Int
+  combo        Int      @default(1)
+  platform     String   @default("mobile")
+  createdAt    DateTime @default(now())
+
+  @@index([streamId, createdAt])
+  @@index([roomId, createdAt])
+  @@index([senderId, createdAt])
+  @@index([receiverId, createdAt])
+}
