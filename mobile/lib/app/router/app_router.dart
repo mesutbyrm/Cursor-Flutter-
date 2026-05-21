@@ -2,8 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/google_auth_web_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/otp_verify_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
@@ -55,8 +57,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       }
 
       final authed = auth.valueOrNull != null;
-      final publicAuthPages =
-          loc == '/login' || loc == '/register' || loc == '/auth/google';
+      final publicAuthPages = loc == '/login' ||
+          loc == '/register' ||
+          loc == '/auth/google' ||
+          loc.startsWith('/auth/forgot-password') ||
+          loc == '/auth/otp-verify';
       final canlifalWeb = loc == '/canlifal-web';
       if (!authed && !publicAuthPages && !canlifalWeb) return '/login';
       if (authed && publicAuthPages) return '/feed';
@@ -78,6 +83,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/auth/google',
         builder: (context, state) => const GoogleAuthWebPage(),
+      ),
+      GoRoute(
+        path: '/auth/forgot-password',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const ForgotPasswordPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/auth/otp-verify',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: OtpVerifyPage(
+            email: state.extra as String?,
+          ),
+        ),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

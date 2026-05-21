@@ -52,6 +52,17 @@ class MessagesRemoteDataSource {
   }
 
   MessageEntity _msg(Map<String, dynamic> json) {
+    final readAt = pick(json, ['readAt', 'read_at', 'seenAt']);
+    final deliveredAt = pick(json, ['deliveredAt', 'delivered_at']);
+    final statusRaw = pick(json, ['status', 'deliveryStatus'])?.toString();
+
+    var delivery = MessageDeliveryStatus.sent;
+    if (readAt != null || statusRaw == 'read') {
+      delivery = MessageDeliveryStatus.read;
+    } else if (deliveredAt != null || statusRaw == 'delivered') {
+      delivery = MessageDeliveryStatus.delivered;
+    }
+
     return MessageEntity(
       id: pick(json, ['id', '_id'])?.toString() ?? '',
       text: pick(json, ['text', 'body', 'content'])?.toString() ?? '',
@@ -60,6 +71,7 @@ class MessagesRemoteDataSource {
         pick(json, ['createdAt', 'created_at', 'timestamp'])?.toString() ??
             '',
       ),
+      deliveryStatus: delivery,
     );
   }
 

@@ -83,7 +83,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               validator: (v) =>
                   v != null && v.length >= 6 ? null : 'En az 6 karakter',
             ),
-            const SizedBox(height: 26),
+            Align(
+              alignment: Alignment.centerRight,
+              child: AuthTextLink(
+                label: 'Şifremi unuttum',
+                onPressed: () => context.push('/auth/forgot-password'),
+              ),
+            ),
+            const SizedBox(height: 12),
             AuthPrimaryButton(
               label: 'Giriş yap',
               loading: auth.isLoading,

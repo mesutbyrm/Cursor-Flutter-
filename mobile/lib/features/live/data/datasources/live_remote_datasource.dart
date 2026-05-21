@@ -4,6 +4,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../models/live_stream_dto.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/entities/voice_room_entity.dart';
 
@@ -34,7 +35,10 @@ class LiveRemoteDataSource {
     } else {
       list = body;
     }
-    return asJsonList(list).map(_mapStreamRow).where((s) => s.id.isNotEmpty).toList();
+    return asJsonList(list)
+        .map((j) => LiveStreamDto.fromApiMap(j).toEntity())
+        .where((s) => s.id.isNotEmpty)
+        .toList();
   }
 
   /// canlifal.com `/api/chat/rooms` — site ile aynı oda kartları.
@@ -52,55 +56,6 @@ class LiveRemoteDataSource {
       if (r.id == id || r.slug == id) return r;
     }
     return null;
-  }
-
-  LiveStreamEntity _mapStreamRow(Map<String, dynamic> json) {
-    final titleRaw = pick(json, ['title', 'name', 'description'])?.toString();
-    final title = (titleRaw != null && titleRaw.trim().isNotEmpty)
-        ? titleRaw.trim()
-        : 'Canlı yayın';
-
-    final thumb = pick(json, [
-          'thumbnailUrl',
-          'thumbnail',
-          'coverUrl',
-          'imageUrl',
-          'broadcastImage',
-          'backgroundUrl',
-        ])
-        as String?;
-
-    final status = pick(json, ['status'])?.toString().toLowerCase();
-    final endedAt = pick(json, ['endedAt', 'ended_at']);
-    final isLiveFlag = pick(json, ['isLive']);
-    final isLive = _resolveIsLive(
-      isLiveFlag: isLiveFlag,
-      status: status,
-      endedAt: endedAt,
-    );
-
-    String? hostUserId;
-    String? streamerName;
-    final u = pick(json, ['user', 'streamer', 'host']);
-    if (u is Map) {
-      final m = asJsonMap(u);
-      hostUserId = pick(m, ['id', 'userId'])?.toString();
-      streamerName = pick(m, ['displayName', 'username', 'name'])?.toString();
-    }
-    streamerName ??=
-        pick(json, ['streamerName', 'hostName', 'username'])?.toString();
-    hostUserId ??= pick(json, ['userId', 'hostUserId', 'streamerId'])
-        ?.toString();
-
-    return LiveStreamEntity(
-      id: pick(json, ['id', '_id', 'streamId'])?.toString() ?? '',
-      title: title,
-      streamerName: streamerName,
-      thumbnailUrl: thumb,
-      viewerCount: asInt(pick(json, ['viewerCount', 'viewers', 'watching'])),
-      isLive: isLive,
-      hostUserId: hostUserId,
-    );
   }
 
   static bool _resolveIsLive({
