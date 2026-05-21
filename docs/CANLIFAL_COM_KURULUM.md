@@ -48,7 +48,11 @@ Kullanıcı uygulamadan talep açınca:
 
 Profilde **Yönetim** bölümünün çıkması için kullanıcının `role` alanı yukarıdaki rollerden biri olmalı (küçük harf, Türkçe isimler: `yonetici`, `moderator`, `destek`, `yardim`).
 
-## 5. Bu repodaki referans
+## 5. Tam API dokümantasyonu
+
+**[CFC_ODEME_API.md](./CFC_ODEME_API.md)** — CFC (CanlıFal Coin) ödeme sistemi: tüm uçlar, JSON örnekleri, bildirim akışı.
+
+## 6. Bu repodaki referans
 
 Yerel/test için aynı mantık: `api/src/routes/wallet.ts`, `api/src/routes/notifications.ts`, `api/prisma/schema.prisma`.
 
