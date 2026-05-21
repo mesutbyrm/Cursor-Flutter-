@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
-import { optionalAuth, requireAuth } from "../middleware/optionalAuth";
+import { optionalAuth } from "../middleware/optionalAuth";
+import { requireAuth } from "../middleware/requireAuth";
 import { requireStaff } from "../middleware/requireStaff";
 import { createNotification } from "../lib/notifications";
 
