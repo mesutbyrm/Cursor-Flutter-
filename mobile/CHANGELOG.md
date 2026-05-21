@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.32+34 (2026-05-21)
+
+### Jeton mağazası — boş liste asla gösterilmez
+
+- UI katmanında da varsayılan paketler (API boş dönse bile)
+- 401 dahil tüm API hatalarında satın alma akışı varsayılan paketlerle devam eder
+
 ## 1.0.31+33 (2026-05-21)
 
 ### Jeton mağazası — paket listesi düzeltmesi

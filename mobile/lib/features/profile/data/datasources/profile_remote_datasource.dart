@@ -113,14 +113,8 @@ class WalletRemoteDataSource {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.jetonCatalog);
       final parsed = _parseJetonResponse(res.data);
       if (parsed.isNotEmpty) return parsed;
-    } on ApiException catch (e) {
-      if (e.statusCode == 401) {
-        throw ApiException(
-          'Jeton paketleri için oturum gerekli. Çıkış yapıp tekrar giriş yapın.',
-          statusCode: 401,
-        );
-      }
-      // Ağ / 404 / sunucu: varsayılan paketlerle devam et
+    } on ApiException catch (_) {
+      // 401 / ağ / 404 / sunucu: varsayılan paketlerle devam et
     } catch (_) {
       // Beklenmeyen yanıt
     }

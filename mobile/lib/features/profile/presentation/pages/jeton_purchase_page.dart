@@ -6,6 +6,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
 import '../../../../core/widgets/dual_balance_chips.dart';
+import '../../data/jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/jeton_checkout_flow.dart';
@@ -191,39 +192,29 @@ class JetonPurchasePage extends ConsumerWidget {
                     ),
                   ),
                   data: (list) {
-                    if (list.isEmpty) {
-                      return SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.inventory_2_outlined,
-                                  size: 48,
-                                  color:
-                                      AppTheme.muted.withValues(alpha: 0.8)),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Paket listesi alınamadı. API ve oturum ayarlarını kontrol edin.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color:
-                                      AppTheme.muted.withValues(alpha: 0.95),
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
+                    final usingFallback = list.isEmpty;
+                    final display = usingFallback
+                        ? List<JetonPackageEntity>.from(kFallbackJetonPackages)
+                        : list;
                     return SliverPadding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
                       sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (ctx, i) {
-                            final p = list[i];
+                        delegate: SliverChildListDelegate([
+                          if (usingFallback)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text(
+                                'Sunucu paket listesi göndermedi; varsayılan paketler gösteriliyor. '
+                                'Ödeme talebi yine admin paneline düşer.',
+                                style: TextStyle(
+                                  color: AppTheme.muted.withValues(alpha: 0.95),
+                                  fontSize: 12,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ...List.generate(display.length, (i) {
+                            final p = display[i];
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: _JetonPackageCard(
@@ -237,9 +228,8 @@ class JetonPurchasePage extends ConsumerWidget {
                                 ),
                               ),
                             );
-                          },
-                          childCount: list.length,
-                        ),
+                          }),
+                        ]),
                       ),
                     );
                   },
