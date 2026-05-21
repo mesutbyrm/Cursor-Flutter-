@@ -69,7 +69,7 @@ lib/
 | OTP / şifre sıfırlama | ✅ UI (`/auth/forgot-password`, `/auth/otp-verify`) |
 | Mesaj okundu / yazıyor | ✅ Chat bubble + typing indicator |
 | Moderasyon / rapor | 🔜 |
-| Freezed DTO | ✅ `LiveStreamDto` (örnek); `dart run build_runner build` |
+| Freezed DTO | ✅ `LiveStreamDto`, `PostDto`, `ConversationDto`, `MessageDto` — `scripts/codegen.sh` |
 | Firebase push | 🔜 `google-services.json` gerekir |
 
 ## Performans kuralları
