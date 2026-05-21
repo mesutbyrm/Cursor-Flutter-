@@ -2,22 +2,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.23+25` |
-| Tarih (UTC) | 2026-05-21 02:13 |
-| Commit | [`7f2638fb58487c7a8811d131b1cf999ae2591662`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/7f2638fb58487c7a8811d131b1cf999ae2591662) |
-| İş akışı | [Run 26201009101](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26201009101) |
+| Sürüm | `1.0.24+26` |
+| Tarih (UTC) | 2026-05-21 02:45 |
+| Commit | [`5d7379f7a64d4cbeff3bd14b586ea3b206267281`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/5d7379f7a64d4cbeff3bd14b586ea3b206267281) |
+| İş akışı | [Run 26202006463](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26202006463) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.23+25 (2026-05-21)
+## 1.0.24+26 (2026-05-21)
 
-### Fal & Tarot — premium mistik hub
+### CanlıFal Sosyal — premium mistik akış
 
-- Tam sayfa `/fortune`: hero, 14 fal grid (Keşfet), günlük fal kartı, Premium upsell
-- Oturum ekranları: Tarot, aşk, kahve, yıldız, el, rüya, evet/hayır, pendül, runik…
-- Sonuç + paylaşım (Instagram / WhatsApp / Telegram / kaydet)
-- Keşfet önizlemesi → native hub
+- Başlık: **CanlıFal Sosyal** (yıldız ikonu, bildirim noktaları)
+- Hikâye şeridi: «Hikayen», mor halka, mistik dekor kartı
+- Composer: «Ne düşünüyorsun, Canlıfal?» — mor çerçeve, renkli aksiyonlar
+- Gönderi kartı: doğrulanmış rozet, zaman + herkese açık, metin → görsel, **Falına Bak** CTA
+- Etkileşim sayıları ikon yanında; **Aktif Odalar** yatay şerit (canlı / ses / demo)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
