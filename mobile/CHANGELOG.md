@@ -1,5 +1,23 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.30+32 (2026-05-21)
+
+### Jeton yükleme — site + mobil (mockup)
+
+- Web: `site/jeton/` — paket listesi, ödeme yöntemi, WhatsApp, Papara, Havale/IBAN
+- Mobil: `/jeton-store` mockup checkout akışı + ödeme talebi
+- API: `POST /api/payment/requests` `requestType: jeton`, admin onayda `coins` artışı
+- Bildirimler: `jeton_payment_*` tipleri
+- Kurulum: `docs/SITE_JETON_KURULUM.md`
+
+## 1.0.29+31 (2026-05-21)
+
+### CanlıFal Sosyal — otomatik fal paylaşımı
+
+- Fal sonucu otomatik sosyal akış paylaşımı (`POST /api/social/posts/auto-fortune`)
+- Akış kartı: Otomatik paylaşıldı rozeti, birlikte bakanlar, Kart/Detay
+- `DELETE /api/social/posts/:id`
+
 ## 1.0.28+30 (2026-05-21)
 
 ### Cüzdan + CFC + Gold Üyelik (birleşik)
