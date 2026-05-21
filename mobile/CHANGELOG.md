@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.19+21 (2026-05-20)
+
+### Auth & mesajlaşma premium
+
+- Şifremi unuttum + 6 haneli OTP ekranları
+- Sohbet: okundu tikleri, yazıyor animasyonu, modüler composer
+- `LiveStreamDto` Freezed + `scripts/codegen.sh`
+- Sekme hızlı işlemler `AppColors` birleşimi
+
 ## 1.0.18+20 (2026-05-20)
 
 ### Production mimari

@@ -66,9 +66,11 @@ lib/
 | Profil + jeton | ✅ |
 | Mesajlar | ✅ (temel) |
 | Bildirimler | ✅ (liste) |
-| OTP / şifre sıfırlama | 🔜 API hazır olunca |
+| OTP / şifre sıfırlama | ✅ UI (`/auth/forgot-password`, `/auth/otp-verify`) |
+| Mesaj okundu / yazıyor | ✅ Chat bubble + typing indicator |
 | Moderasyon / rapor | 🔜 |
-| Freezed DTO migrasyonu | 🔜 |
+| Freezed DTO | ✅ `LiveStreamDto` (örnek); `dart run build_runner build` |
+| Firebase push | 🔜 `google-services.json` gerekir |
 
 ## Performans kuralları
 
