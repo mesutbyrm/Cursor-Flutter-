@@ -125,6 +125,7 @@ jobs:
 
       - name: Bildirim dosyası (docs/LATEST_APK_BUILD.md)
         if: github.ref == 'refs/heads/main'
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
