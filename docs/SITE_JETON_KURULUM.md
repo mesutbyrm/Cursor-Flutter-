@@ -1,6 +1,11 @@
 # canlifal.com — Jeton yükleme sayfaları
 
-Mobil uygulamadaki jeton ödeme ekranlarının web karşılığı bu repoda hazır: **`site/jeton/`**
+Mobil uygulamadaki jeton ödeme ekranlarının web karşılığı:
+
+- **Önerilen (canlifal.com Next.js):** `site/canlifal-jeton-web/` — mockup ile birebir React sayfaları
+- **Yedek (statik):** `site/jeton/`
+
+**Önemli:** Bunlar canlifal.com’a otomatik yüklenmez. `docs/CANLIFAL_SITE_NEDEN_GORUNMUYOR.md`
 
 ## Dosyalar
 
