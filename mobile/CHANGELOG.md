@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.27+29 (2026-05-21)
+
+### CFC ödeme API (canlifal.com dokümantasyonu)
+
+- `GET /api/user/credits` — jetonBalance, cfcBalance, üyelik alanları
+- CFC yükleme: `/cfc-store` (amount, bank_transfer, talep geçmişi)
+- Admin: onay/red `PATCH /api/admin/cfc-payment-requests`
+- Bildirimler: `cfc_payment_*` tipleri
+- API dokümantasyonu: `docs/CFC_ODEME_API.md`
+
 ## 1.0.26+28 (2026-05-21)
 
 ### Cüzdan, ödeme, bildirim ve yönetim

@@ -10,6 +10,7 @@ class ProfileWalletSection extends StatelessWidget {
     required this.jeton,
     required this.cfc,
     this.onTopUp,
+    this.onCfcTopUp,
     this.onEarnings,
     this.onTransactions,
     this.onSubscriptions,
@@ -18,6 +19,7 @@ class ProfileWalletSection extends StatelessWidget {
   final int jeton;
   final int cfc;
   final VoidCallback? onTopUp;
+  final VoidCallback? onCfcTopUp;
   final VoidCallback? onEarnings;
   final VoidCallback? onTransactions;
   final VoidCallback? onSubscriptions;
@@ -68,11 +70,26 @@ class ProfileWalletSection extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: _WalletAction(
+                icon: Icons.diamond_rounded,
+                label: 'CFC Yükle',
+                onTap: onCfcTopUp,
+                accent: AppColors.diamondBlue,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _WalletAction(
                 icon: Icons.account_balance_wallet_rounded,
                 label: 'Kazançlarım',
                 onTap: onEarnings,
               ),
             ),
+            const SizedBox(width: 10),
+            const Expanded(child: SizedBox()),
           ],
         ),
         const SizedBox(height: 10),
@@ -105,11 +122,13 @@ class _WalletAction extends StatelessWidget {
     required this.icon,
     required this.label,
     this.onTap,
+    this.accent,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback? onTap;
+  final Color? accent;
 
   @override
   Widget build(BuildContext context) {
@@ -130,7 +149,7 @@ class _WalletAction extends StatelessWidget {
                 ],
               ),
             ),
-            child: Icon(icon, size: 18, color: AppColors.accentCyan),
+            child: Icon(icon, size: 18, color: accent ?? AppColors.accentCyan),
           ),
           const SizedBox(width: 8),
           Expanded(

@@ -27,7 +27,8 @@ model User {
   refreshTokens   RefreshToken[]
   followers       Follow[]       @relation("UserFollowers")
   following       Follow[]       @relation("UserFollowing")
-  socialPosts     SocialPost[]
+  socialPosts         SocialPost[]
+  cfcPaymentRequests  CfcPaymentRequest[]
 }
 
 model SocialPost {
@@ -114,34 +115,36 @@ model GiftEvent {
   @@index([receiverId, createdAt])
 }
 
-/// Ödeme yöntemi bilgileri (WhatsApp, Papara, havale).
-model PaymentConfig {
-  id              String   @id @default("default")
-  whatsappNumber  String   @default("")
-  paparaAddress   String   @default("")
-  bankIban        String   @default("")
-  bankName        String?
-  accountHolder   String?
-  updatedAt       DateTime @updatedAt
+/// CFC ödeme ayarları (admin paneli).
+model CfcSettings {
+  id                   String   @id @default("default")
+  cfcWhatsappNumber    String   @default("")
+  cfcPaparaAddress     String   @default("")
+  cfcBankName          String?
+  cfcBankIban          String   @default("")
+  cfcBankAccountHolder String?
+  cfcTlRate            Float    @default(1)
+  cfcMinAmount         Int      @default(10)
+  updatedAt            DateTime @updatedAt
 }
 
-/// Kullanıcı ödeme bildirimi / talebi.
-model PaymentRequest {
-  id            String   @id @default(cuid())
-  userId        String?
-  userName      String
-  method        String
-  packageId     String?
-  packageTitle  String?
-  amountTry     Float?
-  coins         Int      @default(0)
-  status        String   @default("pending")
-  note          String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+/// CFC yükleme talebi.
+model CfcPaymentRequest {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount     Int
+  method     String
+  senderInfo String?
+  notes      String?
+  status     String   @default("pending")
+  reviewedBy String?
+  reviewNote String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
+  @@index([userId, status])
   @@index([status, createdAt])
-  @@index([userId])
 }
 
 /// Uygulama / site bildirimleri.
@@ -151,6 +154,7 @@ model AppNotification {
   title      String
   body       String?
   type       String   @default("system")
+  data       String?
   targetPath String?
   targetId   String?
   read       Boolean  @default(false)

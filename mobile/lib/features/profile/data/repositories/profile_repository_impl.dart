@@ -1,4 +1,5 @@
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
@@ -41,6 +42,10 @@ class WalletRepositoryImpl implements WalletRepository {
   @override
   Future<void> submitPaymentRequest(Map<String, dynamic> body) =>
       _remote.submitPaymentRequest(body);
+
+  @override
+  Future<List<CfcPaymentRequestEntity>> myPaymentRequests() =>
+      _remote.myPaymentRequests();
 
   @override
   Future<ReferralInfoEntity> referralInfo() => _remote.referralInfo();

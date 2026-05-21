@@ -42,6 +42,10 @@ abstract final class ApiEndpoints {
 
   static const paymentConfig = '/api/payment/config';
   static const paymentRequests = '/api/payment/requests';
+  static const adminCfcPaymentRequests = '/api/admin/cfc-payment-requests';
+  static const adminCfcPaymentPatch = '/api/admin/cfc-payment-requests';
+  static const adminCfcSettings = '/api/admin/cfc-settings';
+  /// Geriye dönük
   static const adminPaymentRequests = '/api/admin/payment-requests';
   static const adminNotifications = '/api/admin/notifications';
 

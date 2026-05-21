@@ -107,6 +107,7 @@ class ProfilePage extends ConsumerWidget {
                           jeton: jeton,
                           cfc: cfc,
                           onTopUp: () => context.push('/jeton-store'),
+                          onCfcTopUp: () => context.push('/cfc-store'),
                           onEarnings: () => _showSnack(
                             context,
                             'Kazançlar yakında',

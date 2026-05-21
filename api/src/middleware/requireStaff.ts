@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
-import { fail } from "../lib/response";
+import { jsonError } from "../lib/jsonError";
 
 const STAFF_ROLES = new Set([
   "admin",
@@ -18,14 +18,14 @@ export async function requireStaff(
 ) {
   const userId = req.userId;
   if (!userId) {
-    return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+    return jsonError(res, 401, "Oturum açmanız gerekiyor");
   }
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { role: true },
   });
   if (!user || !STAFF_ROLES.has(user.role.toLowerCase())) {
-    return fail(res, 403, "FORBIDDEN", "Bu alan yalnızca yetkili personel içindir");
+    return jsonError(res, 403, "Yetkiniz yok");
   }
   return next();
 }

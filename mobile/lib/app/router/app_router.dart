@@ -30,6 +30,7 @@ import '../../features/moderation/domain/entities/report_target.dart';
 import '../../features/moderation/presentation/pages/report_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/profile/presentation/pages/invite_friends_page.dart';
+import '../../features/profile/presentation/pages/cfc_purchase_page.dart';
 import '../../features/profile/presentation/pages/jeton_purchase_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
@@ -233,6 +234,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/jeton-store',
         builder: (context, state) => const JetonPurchasePage(),
+      ),
+      GoRoute(
+        path: '/cfc-store',
+        builder: (context, state) => const CfcPurchasePage(),
       ),
       GoRoute(
         path: '/admin',

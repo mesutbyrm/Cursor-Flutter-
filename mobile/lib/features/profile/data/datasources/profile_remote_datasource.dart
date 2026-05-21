@@ -7,6 +7,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../auth/data/models/user_dto.dart';
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
@@ -84,6 +85,18 @@ class WalletRemoteDataSource {
 
   Future<void> submitPaymentRequest(Map<String, dynamic> body) async {
     await _dio.safePost(ApiEndpoints.paymentRequests, data: body);
+  }
+
+  Future<List<CfcPaymentRequestEntity>> myPaymentRequests() async {
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.paymentRequests);
+    dynamic data = res.data;
+    if (data is Map && data['success'] == true) data = data['data'];
+    if (data is List) {
+      return data
+          .map((e) => CfcPaymentRequestEntity.fromJson(asJsonMap(e)))
+          .toList();
+    }
+    return const [];
   }
 
   Map<String, dynamic> _unwrap(dynamic data) {

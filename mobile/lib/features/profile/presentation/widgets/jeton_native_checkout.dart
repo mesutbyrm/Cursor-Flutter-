@@ -12,7 +12,7 @@ import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../providers/profile_providers.dart';
 
-enum PaymentMethodKind { whatsapp, papara, havale }
+enum PaymentMethodKind { whatsapp, papara, bank_transfer }
 
 /// Site tarzı ödeme — WhatsApp, Papara, Havale/EFT (web’e gitmeden).
 class JetonNativeCheckout extends ConsumerStatefulWidget {
@@ -74,8 +74,8 @@ class _JetonNativeCheckoutState extends ConsumerState<JetonNativeCheckout> {
             icon: Icons.account_balance_rounded,
             label: 'Havale / EFT',
             subtitle: cfg.bankIban,
-            selected: _method == PaymentMethodKind.havale,
-            onTap: () => setState(() => _method = PaymentMethodKind.havale),
+            selected: _method == PaymentMethodKind.bank_transfer,
+            onTap: () => setState(() => _method = PaymentMethodKind.bank_transfer),
           ),
           const SizedBox(height: 16),
           GlowPanel(
@@ -96,14 +96,14 @@ class _JetonNativeCheckoutState extends ConsumerState<JetonNativeCheckout> {
                     color: AppColors.accentCyan,
                   ),
                 ),
-                if (_method == PaymentMethodKind.havale) ...[
+                if (_method == PaymentMethodKind.bank_transfer) ...[
                   if (cfg.bankName != null) ...[
                     const SizedBox(height: 6),
                     Text(cfg.bankName!, style: const TextStyle(fontSize: 12)),
                   ],
-                  if (cfg.accountHolder != null)
+                  if (cfg.bankAccountHolder.isNotEmpty)
                     Text(
-                      cfg.accountHolder!,
+                      cfg.bankAccountHolder,
                       style: const TextStyle(fontSize: 12),
                     ),
                 ],
@@ -158,7 +158,7 @@ class _JetonNativeCheckoutState extends ConsumerState<JetonNativeCheckout> {
                     ),
                   )
                 : const Text(
-                    'Ödeme talebi gönder',
+                    'Ödeme bilgisi / WhatsApp',
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
           ),
@@ -171,7 +171,7 @@ class _JetonNativeCheckoutState extends ConsumerState<JetonNativeCheckout> {
     return switch (_method) {
       PaymentMethodKind.whatsapp => 'WhatsApp numarası',
       PaymentMethodKind.papara => 'Papara adresi',
-      PaymentMethodKind.havale => 'IBAN',
+      PaymentMethodKind.bank_transfer => 'IBAN',
     };
   }
 
@@ -179,7 +179,7 @@ class _JetonNativeCheckoutState extends ConsumerState<JetonNativeCheckout> {
     return switch (_method) {
       PaymentMethodKind.whatsapp => cfg.whatsappNumber,
       PaymentMethodKind.papara => cfg.paparaAddress,
-      PaymentMethodKind.havale => cfg.bankIban,
+      PaymentMethodKind.bank_transfer => cfg.bankIban,
     };
   }
 
@@ -206,40 +206,22 @@ class _JetonNativeCheckoutState extends ConsumerState<JetonNativeCheckout> {
   }
 
   Future<void> _submit(PaymentConfigEntity cfg) async {
-    setState(() => _submitting = true);
-    try {
-      final user = ref.read(authControllerProvider).valueOrNull;
-      await ref.read(walletRepositoryProvider).submitPaymentRequest({
-        'method': _method.name,
-        'packageId': widget.package.id,
-        'packageTitle': widget.package.title,
-        'coins': widget.package.coins,
-        'amountTry': widget.package.priceTry,
-        'userName': user?.display ?? user?.username ?? 'Kullanıcı',
-      });
-      if (_method == PaymentMethodKind.whatsapp) {
-        await _openWhatsApp(cfg);
-      }
-      widget.onSubmitted();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Talebin alındı. Onay sonrası jetonlar yüklenecek.',
-            ),
-          ),
-        );
-        Navigator.of(context).pop();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _submitting = false);
+    if (_method == PaymentMethodKind.whatsapp) {
+      await _openWhatsApp(cfg);
+    } else {
+      await _copyDetail(cfg);
     }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Jeton paketi için ödemeyi yaptıktan sonra destek onayı gerekir. '
+          'CFC yüklemek için Profil → CFC Yükle.',
+        ),
+      ),
+    );
+    widget.onSubmitted();
+    Navigator.of(context).pop();
   }
 }
 

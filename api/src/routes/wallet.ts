@@ -1,47 +1,136 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma";
-import { fail, ok } from "../lib/response";
-import { optionalAuth } from "../middleware/optionalAuth";
-import { requireAuth } from "../middleware/requireAuth";
-import { requireStaff } from "../middleware/requireStaff";
+import { jsonError } from "../lib/jsonError";
 import { createNotification } from "../lib/notifications";
+import { requireAuth } from "../middleware/requireAuth";
+import { requireStaff, isStaffRole } from "../middleware/requireStaff";
 
 export const walletRouter = Router();
 
-/** GET /api/user/credits — jeton + CFC (canlifal.com uyumlu) */
-walletRouter.get("/user/credits", optionalAuth, async (req, res) => {
-  if (!req.userId) {
-    return ok(res, { credits: 0, coins: 0, jeton: 0, cfc: 0, balance: 0 });
-  }
-  const user = await prisma.user.findUnique({ where: { id: req.userId } });
-  if (!user) return fail(res, 404, "NOT_FOUND", "Kullanıcı bulunamadı");
-  const jeton = user.coins;
-  const cfc = user.cfcBalance;
-  return ok(res, {
-    credits: jeton,
-    coins: jeton,
-    jeton,
-    cfc,
-    cfcBalance: cfc,
-    balance: jeton,
-    role: user.role,
-  });
-});
+const PAYMENT_METHODS = new Set(["whatsapp", "papara", "bank_transfer"]);
 
-/** GET /api/wallet — alternatif */
-walletRouter.get("/wallet", optionalAuth, async (req, res) => {
-  if (!req.userId) return ok(res, { balance: 0, jeton: 0, cfc: 0 });
-  const user = await prisma.user.findUnique({ where: { id: req.userId } });
-  if (!user) return fail(res, 404, "NOT_FOUND", "Kullanıcı bulunamadı");
-  return ok(res, {
-    balance: user.coins,
+async function getOrCreateCfcSettings() {
+  return prisma.cfcSettings.upsert({
+    where: { id: "default" },
+    create: {
+      id: "default",
+      cfcWhatsappNumber: process.env.CFC_WHATSAPP ?? process.env.PAYMENT_WHATSAPP ?? "",
+      cfcPaparaAddress: process.env.CFC_PAPARA ?? process.env.PAYMENT_PAPARA ?? "",
+      cfcBankName: process.env.CFC_BANK ?? process.env.PAYMENT_BANK ?? "",
+      cfcBankIban: process.env.CFC_IBAN ?? process.env.PAYMENT_IBAN ?? "",
+      cfcBankAccountHolder: process.env.CFC_HOLDER ?? process.env.PAYMENT_HOLDER ?? "",
+      cfcTlRate: Number(process.env.CFC_TL_RATE ?? "1") || 1,
+      cfcMinAmount: Number(process.env.CFC_MIN_AMOUNT ?? "10") || 10,
+    },
+    update: {},
+  });
+}
+
+function paymentConfigPayload(s: Awaited<ReturnType<typeof getOrCreateCfcSettings>>) {
+  return {
+    whatsappNumber: s.cfcWhatsappNumber,
+    paparaAddress: s.cfcPaparaAddress,
+    bankName: s.cfcBankName ?? "",
+    bankIban: s.cfcBankIban,
+    bankAccountHolder: s.cfcBankAccountHolder ?? "",
+    accountHolder: s.cfcBankAccountHolder ?? "",
+    cfcRate: s.cfcTlRate,
+    minCfcAmount: s.cfcMinAmount,
+  };
+}
+
+function cfcSettingsPayload(s: Awaited<ReturnType<typeof getOrCreateCfcSettings>>) {
+  return {
+    cfc_whatsapp_number: s.cfcWhatsappNumber,
+    cfc_papara_address: s.cfcPaparaAddress,
+    cfc_bank_name: s.cfcBankName ?? "",
+    cfc_bank_iban: s.cfcBankIban,
+    cfc_bank_account_holder: s.cfcBankAccountHolder ?? "",
+    cfc_tl_rate: String(s.cfcTlRate),
+    cfc_min_amount: String(s.cfcMinAmount),
+  };
+}
+
+function requestPayload(row: {
+  id: string;
+  userId: string;
+  amount: number;
+  method: string;
+  senderInfo: string | null;
+  notes: string | null;
+  status: string;
+  reviewedBy: string | null;
+  reviewNote: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  user?: {
+    id: string;
+    displayName: string | null;
+    username: string | null;
+    email: string;
+    avatarUrl: string | null;
+  };
+}) {
+  return {
+    id: row.id,
+    userId: row.userId,
+    amount: row.amount,
+    method: row.method,
+    senderInfo: row.senderInfo,
+    notes: row.notes,
+    status: row.status,
+    reviewedBy: row.reviewedBy,
+    reviewNote: row.reviewNote,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    ...(row.user
+      ? {
+          user: {
+            id: row.user.id,
+            name: row.user.displayName ?? row.user.username ?? "Kullanıcı",
+            username: row.user.username,
+            email: row.user.email,
+            image: row.user.avatarUrl,
+          },
+        }
+      : {}),
+  };
+}
+
+/** GET /api/user/credits */
+walletRouter.get("/user/credits", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.userId! } });
+  if (!user) return jsonError(res, 404, "Kullanıcı bulunamadı");
+
+  return res.status(200).json({
+    credits: user.coins,
+    jetonBalance: user.coins,
+    cfcBalance: user.cfcBalance,
+    jetonTlRate: Number(process.env.JETON_TL_RATE ?? "0.5") || 0.5,
+    withdrawalLimit: 0,
+    membership: "basic",
+    membershipExpiresAt: null,
+    role: user.role,
     jeton: user.coins,
     cfc: user.cfcBalance,
+  });
+});
+
+/** GET /api/wallet — geriye dönük */
+walletRouter.get("/wallet", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.userId! } });
+  if (!user) return jsonError(res, 404, "Kullanıcı bulunamadı");
+  return res.status(200).json({
+    balance: user.coins,
+    jeton: user.coins,
+    jetonBalance: user.coins,
+    cfc: user.cfcBalance,
+    cfcBalance: user.cfcBalance,
     role: user.role,
   });
 });
 
-/** GET /api/jeton — paket listesi */
+/** GET /api/jeton — jeton paketleri (ayrı akış) */
 walletRouter.get("/jeton", async (_req, res) => {
   const packages = [
     { id: "p100", title: "100 Jeton", coins: 100, priceTry: 29.9, badge: "Popüler" },
@@ -52,60 +141,60 @@ walletRouter.get("/jeton", async (_req, res) => {
   return res.status(200).json({ packages, items: packages, data: packages });
 });
 
-/** GET /api/payment/config */
-walletRouter.get("/payment/config", async (_req, res) => {
-  const cfg = await prisma.paymentConfig.upsert({
-    where: { id: "default" },
-    create: {
-      id: "default",
-      whatsappNumber: process.env.PAYMENT_WHATSAPP ?? "905551234567",
-      paparaAddress: process.env.PAYMENT_PAPARA ?? "canlifal@papara.com",
-      bankIban: process.env.PAYMENT_IBAN ?? "TR00 0000 0000 0000 0000 0000 00",
-      bankName: process.env.PAYMENT_BANK ?? "Ziraat Bankası",
-      accountHolder: process.env.PAYMENT_HOLDER ?? "CanlıFal",
-    },
-    update: {},
-  });
-  return ok(res, cfg);
+/** GET /api/payment/config — CFC yükleme bilgileri */
+walletRouter.get("/payment/config", requireAuth, async (_req, res) => {
+  const s = await getOrCreateCfcSettings();
+  return res.status(200).json(paymentConfigPayload(s));
 });
 
-const paymentRequestSchema = {
-  method: ["whatsapp", "papara", "havale"] as const,
-};
-
-/** POST /api/payment/requests */
-walletRouter.post("/payment/requests", optionalAuth, async (req, res) => {
-  const method = String(req.body?.method ?? "").toLowerCase();
-  if (!paymentRequestSchema.method.includes(method as (typeof paymentRequestSchema.method)[number])) {
-    return fail(res, 400, "VALIDATION_ERROR", "Geçersiz ödeme yöntemi");
+/** POST /api/payment/requests — CFC yükleme talebi */
+walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
+  const userId = req.userId!;
+  const amount = Number(req.body?.amount);
+  if (!Number.isFinite(amount) || amount < 1) {
+    return jsonError(res, 400, "Geçersiz miktar");
   }
 
-  const userName =
-    String(req.body?.userName ?? req.body?.displayName ?? "Kullanıcı").slice(0, 64) ||
-    "Kullanıcı";
+  const method = String(req.body?.method ?? "").toLowerCase();
+  if (!PAYMENT_METHODS.has(method)) {
+    return jsonError(res, 400, "Geçersiz ödeme yöntemi");
+  }
 
-  const row = await prisma.paymentRequest.create({
+  const settings = await getOrCreateCfcSettings();
+  if (amount < settings.cfcMinAmount) {
+    return jsonError(res, 400, `Minimum ${settings.cfcMinAmount} CFC yüklenebilir`);
+  }
+
+  const pending = await prisma.cfcPaymentRequest.findFirst({
+    where: { userId, status: "pending" },
+  });
+  if (pending) {
+    return jsonError(res, 400, "Zaten bekleyen bir ödeme talebiniz var");
+  }
+
+  const row = await prisma.cfcPaymentRequest.create({
     data: {
-      userId: req.userId ?? null,
-      userName,
+      userId,
+      amount: Math.floor(amount),
       method,
-      packageId: req.body?.packageId?.toString(),
-      packageTitle: req.body?.packageTitle?.toString(),
-      amountTry: req.body?.amountTry != null ? Number(req.body.amountTry) : null,
-      coins: Number(req.body?.coins ?? 0) || 0,
-      note: req.body?.note?.toString()?.slice(0, 500),
+      senderInfo: req.body?.senderInfo?.toString()?.slice(0, 128) ?? null,
+      notes: req.body?.notes?.toString()?.slice(0, 500) ?? null,
     },
   });
 
-  const methodLabel =
-    method === "whatsapp" ? "WhatsApp" : method === "papara" ? "Papara" : "Havale/EFT";
+  const notifData = {
+    paymentRequestId: row.id,
+    amount: row.amount,
+    method: row.method,
+  };
 
   await createNotification({
-    userId: req.userId ?? undefined,
-    title: "Ödeme talebi alındı",
-    body: `${userName} — ${methodLabel} · ${row.packageTitle ?? row.coins + " jeton"}`,
-    type: "payment",
-    targetPath: "/jeton-store",
+    userId,
+    title: "CFC yükleme talebi alındı",
+    body: `${row.amount} CFC · ${method}`,
+    type: "cfc_payment_request",
+    data: notifData,
+    targetPath: "/cfc-store",
     targetId: row.id,
   });
 
@@ -116,54 +205,241 @@ walletRouter.post("/payment/requests", optionalAuth, async (req, res) => {
   for (const s of staff) {
     await createNotification({
       userId: s.id,
-      title: "Yeni ödeme talebi",
-      body: `${userName} · ${methodLabel} · ${row.packageTitle ?? ""}`,
-      type: "admin_payment",
-      targetPath: "/admin/payments",
+      title: "Yeni CFC ödeme talebi",
+      body: `${row.amount} CFC · ${method}`,
+      type: "cfc_payment_request",
+      data: notifData,
+      targetPath: "/admin",
       targetId: row.id,
     });
   }
 
-  return ok(res, row, 201);
+  return res.status(201).json(requestPayload(row));
 });
 
-/** GET /api/admin/notifications */
-walletRouter.get(
-  "/admin/notifications",
-  requireAuth,
-  requireStaff,
-  async (_req, res) => {
-    const rows = await prisma.appNotification.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    });
-    return ok(res, {
-      items: rows.map((n) => ({
-        id: n.id,
-        title: n.title,
-        body: n.body,
-        type: n.type,
-        targetPath: n.targetPath,
-        targetId: n.targetId,
-        read: n.read,
-        createdAt: n.createdAt.toISOString(),
-      })),
-    });
-  },
-);
+/** GET /api/payment/requests — kullanıcının talepleri */
+walletRouter.get("/payment/requests", requireAuth, async (req, res) => {
+  const rows = await prisma.cfcPaymentRequest.findMany({
+    where: { userId: req.userId! },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+  return res.status(200).json(rows.map((r) => requestPayload(r)));
+});
 
-/** GET /api/admin/payment-requests — personel */
+/** GET /api/admin/cfc-payment-requests */
 walletRouter.get(
-  "/admin/payment-requests",
+  "/admin/cfc-payment-requests",
   requireAuth,
   requireStaff,
   async (req, res) => {
-    const status = req.query.status as string | undefined;
-    const rows = await prisma.paymentRequest.findMany({
-      where: status ? { status } : undefined,
-      orderBy: { createdAt: "desc" },
-      take: 50,
+    const statusQ = String(req.query.status ?? "all");
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const where =
+      statusQ === "all" || !statusQ
+        ? undefined
+        : { status: statusQ };
+
+    const [total, rows] = await Promise.all([
+      prisma.cfcPaymentRequest.count({ where }),
+      prisma.cfcPaymentRequest.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              displayName: true,
+              username: true,
+              email: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return res.status(200).json({
+      requests: rows.map((r) => requestPayload(r)),
+      total,
+      page,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
     });
-    return ok(res, { requests: rows });
   },
 );
+
+/** PATCH /api/admin/cfc-payment-requests */
+walletRouter.patch(
+  "/admin/cfc-payment-requests",
+  requireAuth,
+  requireStaff,
+  async (req, res) => {
+    const requestId = req.body?.requestId?.toString();
+    const action = req.body?.action?.toString();
+    const reviewNote = req.body?.reviewNote?.toString()?.slice(0, 500);
+
+    if (!requestId || !action) {
+      return jsonError(res, 400, "Geçersiz istek");
+    }
+
+    const row = await prisma.cfcPaymentRequest.findUnique({
+      where: { id: requestId },
+    });
+    if (!row) return jsonError(res, 404, "Talep bulunamadı");
+    if (row.status !== "pending") {
+      return jsonError(res, 400, "Bu talep zaten işlenmiş");
+    }
+
+    if (action === "approve") {
+      await prisma.$transaction([
+        prisma.cfcPaymentRequest.update({
+          where: { id: requestId },
+          data: {
+            status: "approved",
+            reviewedBy: req.userId!,
+            reviewNote: reviewNote ?? "Onaylandı",
+          },
+        }),
+        prisma.user.update({
+          where: { id: row.userId },
+          data: { cfcBalance: { increment: row.amount } },
+        }),
+      ]);
+
+      await createNotification({
+        userId: row.userId,
+        title: "CFC Yükleme Onaylandı",
+        body: `${row.amount} CFC hesabınıza eklendi.`,
+        type: "cfc_payment_approved",
+        data: { paymentRequestId: row.id, amount: row.amount, method: row.method },
+        targetPath: "/cfc-store",
+        targetId: row.id,
+      });
+    } else if (action === "reject") {
+      await prisma.cfcPaymentRequest.update({
+        where: { id: requestId },
+        data: {
+          status: "rejected",
+          reviewedBy: req.userId!,
+          reviewNote: reviewNote ?? null,
+        },
+      });
+
+      await createNotification({
+        userId: row.userId,
+        title: "CFC Yükleme Reddedildi",
+        body: reviewNote ?? "Talebiniz reddedildi.",
+        type: "cfc_payment_rejected",
+        data: { paymentRequestId: row.id, amount: row.amount, method: row.method },
+        targetPath: "/cfc-store",
+        targetId: row.id,
+      });
+    } else {
+      return jsonError(res, 400, "Geçersiz istek");
+    }
+
+    const updated = await prisma.cfcPaymentRequest.findUnique({
+      where: { id: requestId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            displayName: true,
+            username: true,
+            email: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+    return res.status(200).json(requestPayload(updated!));
+  },
+);
+
+/** GET /api/admin/cfc-settings */
+walletRouter.get("/admin/cfc-settings", requireAuth, requireStaff, async (_req, res) => {
+  const s = await getOrCreateCfcSettings();
+  return res.status(200).json(cfcSettingsPayload(s));
+});
+
+/** POST /api/admin/cfc-settings */
+walletRouter.post("/admin/cfc-settings", requireAuth, requireStaff, async (req, res) => {
+  const b = req.body ?? {};
+  await prisma.cfcSettings.upsert({
+    where: { id: "default" },
+    create: { id: "default" },
+    update: {
+      ...(b.cfc_whatsapp_number != null
+        ? { cfcWhatsappNumber: String(b.cfc_whatsapp_number) }
+        : {}),
+      ...(b.cfc_papara_address != null
+        ? { cfcPaparaAddress: String(b.cfc_papara_address) }
+        : {}),
+      ...(b.cfc_bank_name != null ? { cfcBankName: String(b.cfc_bank_name) } : {}),
+      ...(b.cfc_bank_iban != null ? { cfcBankIban: String(b.cfc_bank_iban) } : {}),
+      ...(b.cfc_bank_account_holder != null
+        ? { cfcBankAccountHolder: String(b.cfc_bank_account_holder) }
+        : {}),
+      ...(b.cfc_tl_rate != null
+        ? { cfcTlRate: Number(b.cfc_tl_rate) || 1 }
+        : {}),
+      ...(b.cfc_min_amount != null
+        ? { cfcMinAmount: Number(b.cfc_min_amount) || 10 }
+        : {}),
+    },
+  });
+  return res.status(200).json({ success: true });
+});
+
+/** GET /api/admin/payment-requests — eski yol (uyumluluk) */
+walletRouter.get("/admin/payment-requests", requireAuth, requireStaff, async (req, res) => {
+  const statusQ = String(req.query.status ?? "pending");
+  const rows = await prisma.cfcPaymentRequest.findMany({
+    where: statusQ === "all" ? undefined : { status: statusQ },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    include: {
+      user: {
+        select: {
+          id: true,
+          displayName: true,
+          username: true,
+          email: true,
+          avatarUrl: true,
+        },
+      },
+    },
+  });
+  return res.status(200).json({
+    success: true,
+    data: { requests: rows.map((r) => requestPayload(r)) },
+  });
+});
+
+/** GET /api/admin/notifications */
+walletRouter.get("/admin/notifications", requireAuth, requireStaff, async (_req, res) => {
+  const rows = await prisma.appNotification.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
+  return res.status(200).json({
+    items: rows.map((n) => ({
+      id: n.id,
+      title: n.title,
+      body: n.body,
+      type: n.type,
+      data: n.data,
+      targetPath: n.targetPath,
+      targetId: n.targetId,
+      read: n.read,
+      createdAt: n.createdAt.toISOString(),
+    })),
+  });
+});
+
+export { isStaffRole };

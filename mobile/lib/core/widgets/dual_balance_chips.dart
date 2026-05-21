@@ -3,46 +3,49 @@ import 'package:go_router/go_router.dart';
 
 import '../theme/app_colors.dart';
 
-/// Jeton + CFC yan yana — shell ve profil.
+/// Jeton + CFC yan yana — ayrı tıklama: jeton mağazası / CFC yükle.
 class DualBalanceChips extends StatelessWidget {
   const DualBalanceChips({
     super.key,
     required this.jeton,
     required this.cfc,
     this.compact = false,
+    this.onJetonTap,
+    this.onCfcTap,
     this.onTap,
   });
 
   final int jeton;
   final int cfc;
   final bool compact;
+  final VoidCallback? onJetonTap;
+  final VoidCallback? onCfcTap;
+  /// Geriye dönük: her iki chip jeton mağazasına gider.
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap ?? () => context.push('/jeton-store'),
-      borderRadius: BorderRadius.circular(20),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _Chip(
-            label: 'Jeton',
-            value: jeton,
-            icon: Icons.monetization_on_rounded,
-            color: AppColors.coinGold,
-            compact: compact,
-          ),
-          SizedBox(width: compact ? 4 : 6),
-          _Chip(
-            label: 'CFC',
-            value: cfc,
-            icon: Icons.diamond_rounded,
-            color: AppColors.diamondBlue,
-            compact: compact,
-          ),
-        ],
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _Chip(
+          label: 'Jeton',
+          value: jeton,
+          icon: Icons.monetization_on_rounded,
+          color: AppColors.coinGold,
+          compact: compact,
+          onTap: onJetonTap ?? onTap ?? () => context.push('/jeton-store'),
+        ),
+        SizedBox(width: compact ? 4 : 6),
+        _Chip(
+          label: 'CFC',
+          value: cfc,
+          icon: Icons.diamond_rounded,
+          color: AppColors.diamondBlue,
+          compact: compact,
+          onTap: onCfcTap ?? () => context.push('/cfc-store'),
+        ),
+      ],
     );
   }
 }
@@ -54,6 +57,7 @@ class _Chip extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.compact,
+    required this.onTap,
   });
 
   final String label;
@@ -61,54 +65,59 @@ class _Chip extends StatelessWidget {
   final IconData icon;
   final Color color;
   final bool compact;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 10,
-        vertical: compact ? 5 : 6,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [
-            color.withValues(alpha: 0.22),
-            Colors.black.withValues(alpha: 0.35),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 8 : 10,
+          vertical: compact ? 5 : 6,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [
+              color.withValues(alpha: 0.22),
+              Colors.black.withValues(alpha: 0.35),
+            ],
+          ),
+          border: Border.all(color: color.withValues(alpha: 0.45)),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.2),
+              blurRadius: 8,
+            ),
           ],
         ),
-        border: Border.all(color: color.withValues(alpha: 0.45)),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.2),
-            blurRadius: 8,
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: compact ? 14 : 16, color: color),
-          const SizedBox(width: 4),
-          if (!compact)
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: compact ? 14 : 16, color: color),
+            const SizedBox(width: 4),
+            if (!compact)
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: color.withValues(alpha: 0.95),
+                ),
+              ),
+            if (!compact) const SizedBox(width: 4),
             Text(
-              label,
+              _fmt(value),
               style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: color.withValues(alpha: 0.95),
+                fontSize: compact ? 12 : 13,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textPrimary,
               ),
             ),
-          if (!compact) const SizedBox(width: 4),
-          Text(
-            _fmt(value),
-            style: TextStyle(
-              fontSize: compact ? 12 : 13,
-              fontWeight: FontWeight.w900,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
