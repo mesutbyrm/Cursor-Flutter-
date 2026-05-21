@@ -1,5 +1,8 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../gifts/domain/gift_animation_kind.dart';
+import '../../../gifts/domain/gift_rarity.dart';
+
 /// Canlı yayında görünen hediye olayı (API poll veya yerel yayın).
 class LiveGiftEvent extends Equatable {
   const LiveGiftEvent({
@@ -15,6 +18,9 @@ class LiveGiftEvent extends Equatable {
     this.combo = 1,
     this.iconUrl,
     this.animationKey,
+    this.rarity = GiftRarity.common,
+    this.animationKind = GiftAnimationKind.lottie,
+    this.soundKey,
   });
 
   final String id;
@@ -29,6 +35,9 @@ class LiveGiftEvent extends Equatable {
   final DateTime timestamp;
   final String? iconUrl;
   final String? animationKey;
+  final GiftRarity rarity;
+  final GiftAnimationKind animationKind;
+  final String? soundKey;
 
   String get notificationText {
     final q = quantity > 1 ? '$quantity ' : '';
@@ -47,5 +56,10 @@ class LiveGiftEvent extends Equatable {
         coinCost,
         combo,
         timestamp,
+        iconUrl,
+        animationKey,
+        rarity,
+        animationKind,
+        soundKey,
       ];
 }

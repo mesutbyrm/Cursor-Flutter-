@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.25+27 (2026-05-21)
+
+### TikTok tarzı gelişmiş hediye sistemi
+
+- Backend: `Gift` + `GiftEvent`, platform (`mobile`/`web`), rarity, Socket.IO
+- Flutter: premium hediye paneli (blur, neon, yatay liste), top gifters
+- Lottie + Rive + SVGA fallback, fullscreen animasyon, combo, ses (audioplayers)
+- Animasyon önbelleği (`GiftCacheService`), lazy loading
+
 ## 1.0.24+26 (2026-05-21)
 
 ### CanlıFal Sosyal — premium mistik akış
