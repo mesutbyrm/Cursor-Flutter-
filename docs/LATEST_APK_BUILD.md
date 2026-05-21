@@ -2,24 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.15+17` |
-| Tarih (UTC) | 2026-05-20 23:37 |
-| Commit | [`1c45423f7f7174e5f8aaeeb616465e44fb36fa5c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1c45423f7f7174e5f8aaeeb616465e44fb36fa5c) |
-| İş akışı | [Run 26195869261](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26195869261) |
+| Sürüm | `1.0.18+20` |
+| Tarih (UTC) | 2026-05-21 00:06 |
+| Commit | [`b15206ee22291973e77c02a168c8be7b92dd2aa0`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b15206ee22291973e77c02a168c8be7b92dd2aa0) |
+| İş akışı | [Run 26196908874](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26196908874) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.15+17 (2026-05-20)
+## 1.0.18+20 (2026-05-20)
 
-### Premium design system (temel)
+### Production mimari
 
-- Birleşik `AppColors` + `CanlifalTokens` (Material 3 ThemeExtension)
-- Açık/koyu tema (`themeModeProvider`, varsayılan koyu)
-- Yeniden kullanılabilir UI kit: `PremiumNavBar`, `PremiumCard`, `NeonButton`, `LiveBadge`, `GradientFab`
-- Alt bar: BackdropFilter kaldırıldı (performans)
-- Canlı carousel: `CachedNetworkImage` + `LiveBadge`
-- `DESIGN_SYSTEM.md` migrasyon rehberi
+- `ARCHITECTURE.md` — Clean Architecture, yol haritası (Freezed, Firebase, moderasyon)
+- Canlı oda modüler: `widgets/broadcast_room/*` (~900 → ~400 satır orchestrator)
+- Premium: skeleton loading, glass surface, bottom sheet, sayfa geçişleri
+- Hive `LocalCache`, `hive_flutter` + codegen bağımlılıkları hazır
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
