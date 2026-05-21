@@ -40,6 +40,10 @@ model SocialPost {
   caption        String?
   mediaUrl       String?
   postType       String   @default("text")
+  fortuneType    String?
+  isAutoShare    Boolean  @default(false)
+  fortuneCount   Int      @default(0)
+  viewCount      Int      @default(0)
   likesCount     Int      @default(0)
   commentsCount  Int      @default(0)
   createdAt      DateTime @default(now())
@@ -47,6 +51,7 @@ model SocialPost {
 
   @@index([authorId])
   @@index([createdAt])
+  @@index([postType, createdAt])
 }
 
 model Follow {

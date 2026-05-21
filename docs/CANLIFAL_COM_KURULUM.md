@@ -25,6 +25,10 @@ Aynı oturum (NextAuth çerezi) ile çalışmalı:
 | POST | `/api/payment/requests` | Ödeme talebi (body: `method`, `packageId`, `packageTitle`, `coins`, `priceTry`) |
 | GET | `/api/notifications` | Kullanıcı bildirimleri |
 | PATCH | `/api/notifications/:id/read` | Okundu işaretle |
+| GET | `/api/social/posts` | Sosyal akış (`fortuneType`, `isAutoShare`, `fortuneCount`, `viewCount`) |
+| POST | `/api/social/posts` | Manuel paylaşım |
+| POST | `/api/social/posts/auto-fortune` | Fal sonucu otomatik paylaşım (`fortuneSlug`, `summary`, `detail?`) |
+| DELETE | `/api/social/posts/:id` | Gönderi sil (yazar veya admin) |
 | GET | `/api/admin/payment-requests` | Sadece yetkili roller |
 | GET | `/api/admin/notifications` | Sadece yetkili roller |
 

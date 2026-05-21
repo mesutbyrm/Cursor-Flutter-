@@ -69,7 +69,10 @@ abstract class PostDto with _$PostDto {
       createdAt: _parseDate(pick(json, ['createdAt', 'created_at', 'timestamp'])),
       fortuneType: pick(json, ['fortuneType', 'fortune_type'])?.toString(),
       viewCount: asInt(pick(json, ['viewCount', 'views'])),
-      isAutoShare: json['isAuto'] == true,
+      isAutoShare: json['isAutoShare'] == true ||
+          json['isAuto'] == true ||
+          json['is_auto_share'] == true ||
+          json['autoShared'] == true,
       fortuneCount: asInt(pick(json, ['fortuneCount', 'fortune_count'])),
       postType: pick(json, ['postType', 'post_type', 'type'])?.toString(),
     );
