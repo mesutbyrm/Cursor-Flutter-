@@ -135,23 +135,29 @@ model CfcSettings {
   updatedAt            DateTime @updatedAt
 }
 
-/// CFC yükleme talebi.
+/// CFC veya jeton yükleme talebi.
 model CfcPaymentRequest {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount     Int
-  method     String
-  senderInfo String?
-  notes      String?
-  status     String   @default("pending")
-  reviewedBy String?
-  reviewNote String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestType   String   @default("cfc")
+  amount        Int
+  method        String
+  packageId     String?
+  packageTitle  String?
+  coins         Int?
+  priceTry      Float?
+  senderInfo    String?
+  notes         String?
+  status        String   @default("pending")
+  reviewedBy    String?
+  reviewNote    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([userId, status])
   @@index([status, createdAt])
+  @@index([requestType, status])
 }
 
 /// Uygulama / site bildirimleri.

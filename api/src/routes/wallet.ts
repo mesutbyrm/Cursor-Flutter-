@@ -54,8 +54,13 @@ function cfcSettingsPayload(s: Awaited<ReturnType<typeof getOrCreateCfcSettings>
 function requestPayload(row: {
   id: string;
   userId: string;
+  requestType: string;
   amount: number;
   method: string;
+  packageId: string | null;
+  packageTitle: string | null;
+  coins: number | null;
+  priceTry: number | null;
   senderInfo: string | null;
   notes: string | null;
   status: string;
@@ -74,8 +79,13 @@ function requestPayload(row: {
   return {
     id: row.id,
     userId: row.userId,
+    requestType: row.requestType,
     amount: row.amount,
     method: row.method,
+    packageId: row.packageId ?? undefined,
+    packageTitle: row.packageTitle ?? undefined,
+    coins: row.coins ?? undefined,
+    priceTry: row.priceTry ?? undefined,
     senderInfo: row.senderInfo,
     notes: row.notes,
     status: row.status,
@@ -147,22 +157,48 @@ walletRouter.get("/payment/config", requireAuth, async (_req, res) => {
   return res.status(200).json(paymentConfigPayload(s));
 });
 
-/** POST /api/payment/requests — CFC yükleme talebi */
+/** POST /api/payment/requests — CFC veya jeton yükleme talebi */
 walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
   const userId = req.userId!;
-  const amount = Number(req.body?.amount);
-  if (!Number.isFinite(amount) || amount < 1) {
-    return jsonError(res, 400, "Geçersiz miktar");
-  }
-
   const method = String(req.body?.method ?? "").toLowerCase();
   if (!PAYMENT_METHODS.has(method)) {
     return jsonError(res, 400, "Geçersiz ödeme yöntemi");
   }
 
-  const settings = await getOrCreateCfcSettings();
-  if (amount < settings.cfcMinAmount) {
-    return jsonError(res, 400, `Minimum ${settings.cfcMinAmount} CFC yüklenebilir`);
+  const isJeton =
+    req.body?.requestType === "jeton" ||
+    req.body?.packageId != null ||
+    req.body?.coins != null;
+
+  let amount: number;
+  let requestType = "cfc";
+  let packageId: string | null = null;
+  let packageTitle: string | null = null;
+  let coins: number | null = null;
+  let priceTry: number | null = null;
+
+  if (isJeton) {
+    requestType = "jeton";
+    coins = Math.floor(Number(req.body?.coins ?? req.body?.amount));
+    if (!Number.isFinite(coins) || coins < 1) {
+      return jsonError(res, 400, "Geçersiz jeton miktarı");
+    }
+    amount = coins;
+    packageId = req.body?.packageId?.toString()?.slice(0, 64) ?? null;
+    packageTitle =
+      req.body?.packageTitle?.toString()?.slice(0, 128) ??
+      (coins > 0 ? `${coins} Jeton` : null);
+    const pt = Number(req.body?.priceTry);
+    priceTry = Number.isFinite(pt) ? pt : null;
+  } else {
+    amount = Math.floor(Number(req.body?.amount));
+    if (!Number.isFinite(amount) || amount < 1) {
+      return jsonError(res, 400, "Geçersiz miktar");
+    }
+    const settings = await getOrCreateCfcSettings();
+    if (amount < settings.cfcMinAmount) {
+      return jsonError(res, 400, `Minimum ${settings.cfcMinAmount} CFC yüklenebilir`);
+    }
   }
 
   const pending = await prisma.cfcPaymentRequest.findFirst({
@@ -175,8 +211,13 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
   const row = await prisma.cfcPaymentRequest.create({
     data: {
       userId,
-      amount: Math.floor(amount),
+      requestType,
+      amount,
       method,
+      packageId,
+      packageTitle,
+      coins,
+      priceTry,
       senderInfo: req.body?.senderInfo?.toString()?.slice(0, 128) ?? null,
       notes: req.body?.notes?.toString()?.slice(0, 500) ?? null,
     },
@@ -186,15 +227,30 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
     paymentRequestId: row.id,
     amount: row.amount,
     method: row.method,
+    requestType: row.requestType,
+    packageId: row.packageId,
+    coins: row.coins,
   };
+
+  const userTitle =
+    requestType === "jeton"
+      ? "Jeton yükleme talebi alındı"
+      : "CFC yükleme talebi alındı";
+  const userBody =
+    requestType === "jeton"
+      ? `${row.packageTitle ?? row.amount + " jeton"} · ${method}`
+      : `${row.amount} CFC · ${method}`;
+  const userPath = requestType === "jeton" ? "/jeton-yukle" : "/cfc-store";
+  const notifType =
+    requestType === "jeton" ? "jeton_payment_request" : "cfc_payment_request";
 
   await createNotification({
     userId,
-    title: "CFC yükleme talebi alındı",
-    body: `${row.amount} CFC · ${method}`,
-    type: "cfc_payment_request",
+    title: userTitle,
+    body: userBody,
+    type: notifType,
     data: notifData,
-    targetPath: "/cfc-store",
+    targetPath: userPath,
     targetId: row.id,
   });
 
@@ -202,12 +258,14 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
     where: { role: { in: ["admin", "yonetici", "moderator", "destek", "yardim"] } },
     select: { id: true },
   });
+  const staffTitle =
+    requestType === "jeton" ? "Yeni jeton ödeme talebi" : "Yeni CFC ödeme talebi";
   for (const s of staff) {
     await createNotification({
       userId: s.id,
-      title: "Yeni CFC ödeme talebi",
-      body: `${row.amount} CFC · ${method}`,
-      type: "cfc_payment_request",
+      title: staffTitle,
+      body: userBody,
+      type: notifType,
       data: notifData,
       targetPath: "/admin",
       targetId: row.id,
@@ -295,6 +353,8 @@ walletRouter.patch(
       return jsonError(res, 400, "Bu talep zaten işlenmiş");
     }
 
+    const isJeton = row.requestType === "jeton";
+
     if (action === "approve") {
       await prisma.$transaction([
         prisma.cfcPaymentRequest.update({
@@ -307,17 +367,21 @@ walletRouter.patch(
         }),
         prisma.user.update({
           where: { id: row.userId },
-          data: { cfcBalance: { increment: row.amount } },
+          data: isJeton
+            ? { coins: { increment: row.coins ?? row.amount } }
+            : { cfcBalance: { increment: row.amount } },
         }),
       ]);
 
       await createNotification({
         userId: row.userId,
-        title: "CFC Yükleme Onaylandı",
-        body: `${row.amount} CFC hesabınıza eklendi.`,
-        type: "cfc_payment_approved",
+        title: isJeton ? "Jeton Yükleme Onaylandı" : "CFC Yükleme Onaylandı",
+        body: isJeton
+          ? `${row.coins ?? row.amount} jeton hesabınıza eklendi.`
+          : `${row.amount} CFC hesabınıza eklendi.`,
+        type: isJeton ? "jeton_payment_approved" : "cfc_payment_approved",
         data: { paymentRequestId: row.id, amount: row.amount, method: row.method },
-        targetPath: "/cfc-store",
+        targetPath: isJeton ? "/jeton-yukle" : "/cfc-store",
         targetId: row.id,
       });
     } else if (action === "reject") {
@@ -332,11 +396,11 @@ walletRouter.patch(
 
       await createNotification({
         userId: row.userId,
-        title: "CFC Yükleme Reddedildi",
+        title: isJeton ? "Jeton Yükleme Reddedildi" : "CFC Yükleme Reddedildi",
         body: reviewNote ?? "Talebiniz reddedildi.",
-        type: "cfc_payment_rejected",
+        type: isJeton ? "jeton_payment_rejected" : "cfc_payment_rejected",
         data: { paymentRequestId: row.id, amount: row.amount, method: row.method },
-        targetPath: "/cfc-store",
+        targetPath: isJeton ? "/jeton-yukle" : "/cfc-store",
         targetId: row.id,
       });
     } else {
