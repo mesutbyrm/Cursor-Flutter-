@@ -4,13 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/canlifal_tokens.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/domain/entities/user_entity.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../domain/entities/social_story_ring_entity.dart';
 import '../../providers/social_providers.dart';
 
-/// Instagram tarzı yatay hikâye şeridi (`/api/stories`).
+/// Yatay hikâye şeridi — «Hikayen», mistik dekor, diğer halkalar.
 class SocialStoriesRail extends ConsumerWidget {
   const SocialStoriesRail({super.key});
 
@@ -20,7 +21,7 @@ class SocialStoriesRail extends ConsumerWidget {
     final me = ref.watch(authControllerProvider).valueOrNull;
 
     return SizedBox(
-      height: 108,
+      height: 112,
       child: ringsAsync.when(
         loading: () => const Center(
           child: SizedBox(
@@ -29,33 +30,98 @@ class SocialStoriesRail extends ConsumerWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
-        error: (_, _) => ListView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          children: [_OwnStoryChip(user: me)],
+        error: (_, _) => _StoriesList(
+          me: me,
+          rings: const [],
         ),
-        data: (rings) {
-          final items = <Widget>[
-            _OwnStoryChip(user: me),
-            ...rings
-                .where((r) => r.user.id != me?.id)
-                .map((r) => _StoryRingChip(ring: r)),
-          ];
-          if (items.length == 1 && rings.isEmpty) {
-            return ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              children: items,
-            );
-          }
-          return ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 14),
-            itemBuilder: (_, i) => items[i],
-          );
-        },
+        data: (rings) => _StoriesList(me: me, rings: rings),
+      ),
+    );
+  }
+}
+
+class _StoriesList extends StatelessWidget {
+  const _StoriesList({required this.me, required this.rings});
+
+  final UserEntity? me;
+  final List<SocialStoryRingEntity> rings;
+
+  @override
+  Widget build(BuildContext context) {
+    final others = rings.where((r) => r.user.id != me?.id).toList();
+
+    return ListView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      children: [
+        _OwnStoryChip(user: me),
+        const SizedBox(width: 14),
+        const _MysticStoryDeco(),
+        ...others.map(
+          (r) => Padding(
+            padding: const EdgeInsets.only(left: 14),
+            child: _StoryRingChip(ring: r),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MysticStoryDeco extends StatelessWidget {
+  const _MysticStoryDeco();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    return SizedBox(
+      width: 88,
+      child: Column(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.bgPurpleGlow,
+                  tokens.brandGradient.colors.last.withValues(alpha: 0.5),
+                ],
+              ),
+              border: Border.all(
+                color: AppColors.accentPurple.withValues(alpha: 0.45),
+              ),
+              boxShadow: AppColors.glowShadow(
+                AppColors.accentPurple,
+                blur: 16,
+              ),
+            ),
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('🔮', style: TextStyle(fontSize: 26)),
+                SizedBox(height: 2),
+                Text('🃏', style: TextStyle(fontSize: 14)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Fal hikâyeleri',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary.withValues(alpha: 0.9),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -69,7 +135,7 @@ class _OwnStoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _StoryRingFrame(
-      label: 'Hikâyen',
+      label: 'Hikayen',
       isOwn: true,
       onTap: () {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -87,11 +153,12 @@ class _OwnStoryChip extends StatelessWidget {
               width: 22,
               height: 22,
               decoration: BoxDecoration(
-                color: AppColors.accentCyan,
+                gradient: AppColors.fabGradient,
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.background, width: 2),
+                boxShadow: AppColors.glowShadow(AppColors.accentPink, blur: 10),
               ),
-              child: const Icon(Icons.add, size: 14, color: Colors.black),
+              child: const Icon(Icons.add, size: 14, color: Colors.white),
             ),
           ),
         ],
@@ -146,15 +213,24 @@ class _StoryRingFrame extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: isOwn
-                    ? LinearGradient(
+                    ? const LinearGradient(
                         colors: [
-                          Colors.white.withValues(alpha: 0.35),
-                          Colors.white.withValues(alpha: 0.15),
+                          Color(0xFFB832FF),
+                          Color(0xFFFE2C55),
                         ],
                       )
                     : AppColors.brandGradient,
+                boxShadow: isOwn
+                    ? AppColors.glowShadow(AppColors.accentPurple, blur: 14)
+                    : null,
               ),
-              child: child,
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.background,
+                ),
+                child: child,
+              ),
             ),
             const SizedBox(height: 6),
             Text(

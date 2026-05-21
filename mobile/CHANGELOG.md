@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.24+26 (2026-05-21)
+
+### CanlıFal Sosyal — premium mistik akış
+
+- Başlık: **CanlıFal Sosyal** (yıldız ikonu, bildirim noktaları)
+- Hikâye şeridi: «Hikayen», mor halka, mistik dekor kartı
+- Composer: «Ne düşünüyorsun, Canlıfal?» — mor çerçeve, renkli aksiyonlar
+- Gönderi kartı: doğrulanmış rozet, zaman + herkese açık, metin → görsel, **Falına Bak** CTA
+- Etkileşim sayıları ikon yanında; **Aktif Odalar** yatay şerit (canlı / ses / demo)
+
 ## 1.0.23+25 (2026-05-21)
 
 ### Fal & Tarot — premium mistik hub

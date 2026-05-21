@@ -7,9 +7,15 @@ const _previewWordLimit = 300;
 
 /// Gönderi metni: 300 kelime önizleme, «daha fazla», «devamını oku», birlikte bakanlar.
 class SocialPostCaption extends StatefulWidget {
-  const SocialPostCaption({super.key, required this.post});
+  const SocialPostCaption({
+    super.key,
+    required this.post,
+    this.inlineBodyOnly = false,
+  });
 
   final PostEntity post;
+  /// Akışta yalnızca gövde metni (kullanıcı adı başlıkta).
+  final bool inlineBodyOnly;
 
   @override
   State<SocialPostCaption> createState() => _SocialPostCaptionState();
@@ -39,22 +45,31 @@ class _SocialPostCaptionState extends State<SocialPostCaption> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (text.isNotEmpty)
-            RichText(
-              text: TextSpan(
-                style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.4,
-                  color: AppColors.textPrimary,
-                ),
-                children: [
-                  TextSpan(
-                    text: '${post.author.display} ',
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+            widget.inlineBodyOnly
+                ? Text(
+                    preview,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      height: 1.45,
+                      color: AppColors.textPrimary,
+                    ),
+                  )
+                : RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        fontSize: 14,
+                        height: 1.4,
+                        color: AppColors.textPrimary,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: '${post.author.display} ',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        TextSpan(text: preview),
+                      ],
+                    ),
                   ),
-                  TextSpan(text: preview),
-                ],
-              ),
-            ),
           if (hasOverflow && !_expanded) ...[
             const SizedBox(height: 4),
             GestureDetector(

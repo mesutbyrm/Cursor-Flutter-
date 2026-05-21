@@ -6,7 +6,7 @@ import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../utils/open_social_create_post.dart';
 
-/// Facebook tarzı «Ne düşünüyorsun?» paylaşım şeridi — hikâyelerin altında.
+/// «Ne düşünüyorsun, Canlıfal?» — mor çerçeveli paylaşım kartı.
 class SocialFeedComposer extends ConsumerWidget {
   const SocialFeedComposer({super.key});
 
@@ -18,11 +18,19 @@ class SocialFeedComposer extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: const Color(0xFF16162A).withValues(alpha: 0.92),
+          color: const Color(0xFF12122A).withValues(alpha: 0.95),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.08),
+            color: AppColors.accentPurple.withValues(alpha: 0.38),
+            width: 1.2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.accentPurple.withValues(alpha: 0.12),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -41,7 +49,7 @@ class SocialFeedComposer extends ConsumerWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Ne düşünüyorsun, ${me?.display ?? 'dostum'}?',
+                          'Ne düşünüyorsun, Canlıfal?',
                           style: TextStyle(
                             color: AppColors.textMuted.withValues(alpha: 0.95),
                             fontSize: 15,
@@ -66,7 +74,7 @@ class SocialFeedComposer extends ConsumerWidget {
                   _ComposerAction(
                     icon: Icons.photo_library_rounded,
                     label: 'Fotoğraf',
-                    color: const Color(0xFF45BD62),
+                    color: AppColors.accentPink,
                     onTap: () => openSocialCreatePost(context, ref),
                   ),
                   _ComposerAction(
