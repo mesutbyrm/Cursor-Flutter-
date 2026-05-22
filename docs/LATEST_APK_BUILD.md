@@ -2,20 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.32+34` |
-| Tarih (UTC) | 2026-05-21 23:07 |
-| Commit | [`116f4ad967d5c1e90b976b7546f8815e5066d692`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/116f4ad967d5c1e90b976b7546f8815e5066d692) |
-| İş akışı | [Run 26257769312](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26257769312) |
+| Sürüm | `1.0.33+35` |
+| Tarih (UTC) | 2026-05-22 00:20 |
+| Commit | [`e2cb0b34dbf97dd3e52f25569c2296dc09edc6e8`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/e2cb0b34dbf97dd3e52f25569c2296dc09edc6e8) |
+| İş akışı | [Run 26260442231](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26260442231) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.32+34 (2026-05-21)
+## 1.0.33+35 (2026-05-22)
 
-### Jeton mağazası — boş liste asla gösterilmez
+### Giriş / Kayıt — mockup tasarım
 
-- UI katmanında da varsayılan paketler (API boş dönse bile)
-- 401 dahil tüm API hatalarında satın alma akışı varsayılan paketlerle devam eder
+- Şeffaf marka PNG’leri (`assets/brand/`) — kristal küre logo + uygulama ikonu
+- Koyu mor arka plan, cam form kartı, mor **Giriş Yap** / **Kayıt Ol** butonları
+- Kayıt: Ad Soyad, telefon, şifre tekrar alanları
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
