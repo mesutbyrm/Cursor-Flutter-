@@ -78,21 +78,26 @@ class WalletRemoteDataSource {
     return WalletBalances.fromJson(_unwrap(res.data));
   }
 
+  /// Site ödeme ayarları — API dolu alanları korur, yalnız boş alanları tamamlar.
   Future<PaymentConfigEntity> paymentConfig() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.paymentConfig);
-      final data = res.data;
-      if (data is String &&
-          (data.contains('<!DOCTYPE') || data.contains('<html'))) {
-        return PaymentDefaults.config;
-      }
-      if (data is Map) {
-        return PaymentDefaults.merge(
-          PaymentConfigEntity.fromJson(_unwrap(data)),
-        );
-      }
-    } catch (_) {}
-    return PaymentDefaults.config;
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.paymentConfig);
+    final data = res.data;
+    if (data is String &&
+        (data.contains('<!DOCTYPE') || data.contains('<html'))) {
+      throw const ApiException(
+        'Ödeme ayarları alınamadı (sunucu HTML döndürdü). Oturumu kontrol edin.',
+      );
+    }
+    if (data is! Map) {
+      throw const ApiException('Ödeme ayarları okunamadı');
+    }
+    final remote = PaymentConfigEntity.fromJson(_unwrap(data));
+    if (remote.whatsappNumber.trim().isEmpty &&
+        remote.paparaAddress.trim().isEmpty &&
+        remote.bankIban.trim().isEmpty) {
+      throw const ApiException('Ödeme bilgileri sitede tanımlı değil');
+    }
+    return PaymentDefaults.merge(remote);
   }
 
   Future<void> submitPaymentRequest(Map<String, dynamic> body) async {

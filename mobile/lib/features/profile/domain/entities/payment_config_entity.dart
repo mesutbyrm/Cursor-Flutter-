@@ -22,14 +22,29 @@ class PaymentConfigEntity {
       bankName: pick(json, ['bankName'])?.toString(),
       bankAccountHolder: (pick(json, [
             'bankAccountHolder',
+            'bankAccountHolderName',
             'accountHolder',
             'holder',
+            'recipient',
+            'alıcı',
           ]) ??
           '')
           .toString(),
-      cfcRate: (pick(json, ['cfcRate', 'cfc_rate']) as num?)?.toDouble() ?? 1,
+      cfcRate: (pick(json, [
+            'cfcRate',
+            'cfc_rate',
+            'cfcTlRate',
+            'rate',
+          ]) as num?)
+              ?.toDouble() ??
+          1,
       minCfcAmount: () {
-        final m = asInt(pick(json, ['minCfcAmount', 'min_cfc_amount']));
+        final m = asInt(pick(json, [
+          'minCfcAmount',
+          'min_cfc_amount',
+          'minCfc',
+          'minAmount',
+        ]));
         return m > 0 ? m : 10;
       }(),
     );

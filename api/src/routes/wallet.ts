@@ -174,10 +174,14 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
     return jsonError(res, 400, "Geçersiz ödeme yöntemi");
   }
 
+  const reqType = String(req.body?.requestType ?? req.body?.type ?? "")
+    .toLowerCase()
+    .trim();
   const isJeton =
-    req.body?.requestType === "jeton" ||
+    reqType === "jeton" ||
     req.body?.packageId != null ||
-    req.body?.coins != null;
+    req.body?.coins != null ||
+    (reqType === "jeton" && req.body?.amount != null);
 
   let amount: number;
   let requestType = "cfc";
@@ -188,7 +192,7 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
 
   if (isJeton) {
     requestType = "jeton";
-    coins = Math.floor(Number(req.body?.coins ?? req.body?.amount));
+    coins = Math.floor(Number(req.body?.coins ?? req.body?.amount ?? 0));
     if (!Number.isFinite(coins) || coins < 1) {
       return jsonError(res, 400, "Geçersiz jeton miktarı");
     }

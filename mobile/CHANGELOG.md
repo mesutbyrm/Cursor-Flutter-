@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.38+40 (2026-05-22)
+
+### Jeton ödeme + CFC verisi
+
+- Jeton talebi: `amount` + `coins` (canlifal.com eski API uyumu) — **Geçersiz miktar** düzeltmesi
+- CFC ödeme ayarları yalnız siteden (`/api/payment/config`); bakiye metni API CFC
+- Jeton paket grid: aralıklar kaldırıldı (bitişik kartlar)
+
 ## 1.0.37+39 (2026-05-22)
 
 ### Gold Üyelik + ödeme bilgileri

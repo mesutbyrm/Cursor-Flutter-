@@ -245,17 +245,18 @@ class JetonPackageTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.zero,
         child: Ink(
           padding: EdgeInsets.symmetric(
-            horizontal: fullWidth ? 18 : 14,
-            vertical: fullWidth ? 16 : 14,
+            horizontal: fullWidth ? 16 : 12,
+            vertical: fullWidth ? 14 : 12,
           ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.zero,
             color: const Color(0xFF1A1030).withValues(alpha: 0.85),
             border: Border.all(
               color: const Color(0xFF7C3AED).withValues(alpha: 0.45),
+              width: 0.5,
             ),
           ),
           child: Stack(

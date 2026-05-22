@@ -46,14 +46,30 @@ class CfcPurchasePage extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
               children: [
                 wallet.when(
-                  data: (b) => WalletBalanceHeader(
-                    jeton: b.jeton,
-                    cfc: b.cfc,
-                    membership: b.membership,
-                    daysRemaining: b.membershipDaysRemaining,
+                  data: (b) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      WalletBalanceHeader(
+                        jeton: b.jeton,
+                        cfc: b.cfc,
+                        membership: b.membership,
+                        daysRemaining: b.membershipDaysRemaining,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Bakiye canlifal.com hesabınızdan · CFC: ${b.cfc}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textMuted.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ],
                   ),
                   loading: () => const SizedBox.shrink(),
-                  error: (_, _) => const SizedBox.shrink(),
+                  error: (e, _) => Text(
+                    ApiException.userMessage(e),
+                    style: const TextStyle(color: AppColors.textMuted),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 CfcNativeCheckout(

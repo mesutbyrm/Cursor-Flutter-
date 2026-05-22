@@ -169,7 +169,7 @@ class JetonPurchasePage extends ConsumerWidget {
                                   ),
                                 ),
                               if (hero != null) ...[
-                                const SizedBox(height: 10),
+                            const SizedBox(height: 0),
                                 JetonPackageTile(
                                   package: hero,
                                   priceText: formatJetonPrice(hero),
@@ -278,24 +278,27 @@ class _ResponsivePackageGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final cols = ResponsiveLayout.gridColumns(constraints.maxWidth);
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: cols,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: ResponsiveLayout.gridAspectRatio(cols),
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: cols,
+              mainAxisSpacing: 0,
+              crossAxisSpacing: 0,
+              childAspectRatio: ResponsiveLayout.gridAspectRatio(cols),
+            ),
+            itemCount: packages.length,
+            itemBuilder: (context, i) {
+              final p = packages[i];
+              return JetonPackageTile(
+                package: p,
+                priceText: formatJetonPrice(p),
+                onTap: () => onTap(p),
+              );
+            },
           ),
-          itemCount: packages.length,
-          itemBuilder: (context, i) {
-            final p = packages[i];
-            return JetonPackageTile(
-              package: p,
-              priceText: formatJetonPrice(p),
-              onTap: () => onTap(p),
-            );
-          },
         );
       },
     );

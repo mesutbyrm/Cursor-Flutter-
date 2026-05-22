@@ -7,6 +7,7 @@ import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../data/jeton_payment_request.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../pages/cfc_purchase_page.dart';
@@ -116,9 +117,10 @@ class _JetonPaymentMethodPage extends ConsumerWidget {
   }
 
   void _openDetail(BuildContext context, WidgetRef ref, _JetonPayMethod method) {
-    final config = PaymentDefaults.merge(
-      ref.read(paymentConfigProvider).valueOrNull,
-    );
+    final remote = ref.read(paymentConfigProvider).valueOrNull;
+    final config = remote != null
+        ? PaymentDefaults.merge(remote)
+        : PaymentDefaults.config;
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (ctx) => _JetonPaymentDetailPage(
@@ -318,15 +320,13 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
   }
 
   Future<void> _submitRequest() async {
-    await ref.read(walletRepositoryProvider).submitPaymentRequest({
-      'requestType': 'jeton',
-      'method': _methodApi,
-      'packageId': widget.package.id,
-      'packageTitle': widget.package.title,
-      'coins': widget.package.coins,
-      if (widget.package.priceTry != null) 'priceTry': widget.package.priceTry,
-      'notes': widget.paymentNotes ?? 'Jeton yükleme · $_methodApi',
-    });
+    await ref.read(walletRepositoryProvider).submitPaymentRequest(
+      buildJetonPaymentRequest(
+        package: widget.package,
+        method: _methodApi,
+        notes: widget.paymentNotes,
+      ),
+    );
     ref.invalidate(walletBalancesProvider);
     ref.invalidate(cfcPaymentRequestsProvider);
   }
