@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
+import '../onesignal/onesignal_bootstrap.dart';
 import '../push/push_notification_service.dart';
 import 'firebase_options.dart';
 
@@ -45,7 +46,7 @@ class FirebaseBootstrap {
 
       await PushNotificationService.instance.init();
 
-      if (!kIsWeb) {
+      if (!kIsWeb && !OneSignalBootstrap.isReady) {
         await PushNotificationService.instance.requestSystemPermission();
         final token = await messaging!.getToken();
         if (token != null) {
@@ -56,7 +57,10 @@ class FirebaseBootstrap {
         });
       }
 
-      await PushNotificationService.instance.bindForegroundFcm(messaging!);
+      // OneSignal aktifken ön planda çift bildirim olmasın diye FCM dinleyicisi atlanır.
+      if (!OneSignalBootstrap.isReady) {
+        await PushNotificationService.instance.bindForegroundFcm(messaging!);
+      }
 
       _ready = true;
       await analytics!.logAppOpen();

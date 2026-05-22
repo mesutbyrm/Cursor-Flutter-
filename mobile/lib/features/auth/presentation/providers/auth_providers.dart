@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/onesignal/onesignal_bootstrap.dart';
 import '../../../../core/network/cookie_jar_provider.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/token_storage.dart';
@@ -71,6 +72,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   }
 
   Future<void> logout() async {
+    await OneSignalBootstrap.logout();
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncValue.data(null);
   }

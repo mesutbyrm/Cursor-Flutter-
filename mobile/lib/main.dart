@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'app/app.dart';
 import 'core/firebase/firebase_bootstrap.dart';
 import 'core/network/cookie_jar_provider.dart';
+import 'core/onesignal/onesignal_bootstrap.dart';
 import 'core/storage/local_cache.dart';
 
 Future<void> main() async {
@@ -21,6 +22,7 @@ Future<void> main() async {
     debugPrint('LocalCache init failed: $e');
   }
 
+  await OneSignalBootstrap.init();
   await FirebaseBootstrap.init();
 
   // Ağ yokken font indirme bazı cihazlarda açılışta çökme yapabiliyor.
