@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/content/currency_usage_info.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../../admin/presentation/providers/admin_providers.dart';
+import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../pages/cfc_purchase_page.dart';
 import '../providers/profile_providers.dart';
 
@@ -48,17 +50,43 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
   Widget build(BuildContext context) {
     final cfg = widget.config;
     final min = cfg.minCfcAmount;
-    final rate = cfg.cfcRate;
+    final rate = cfg.cfcRate > 0 ? cfg.cfcRate : CurrencyUsageInfo.cfcTlPerCoin;
+    final amount = int.tryParse(_amountCtrl.text.trim()) ?? 0;
+    final tl = CurrencyUsageInfo.tlForCfc(amount);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          '1 CFC = ${rate.toStringAsFixed(rate == rate.roundToDouble() ? 0 : 1)} TL · min $min CFC',
+          '${CurrencyUsageInfo.cfcPriceHint} · 1 CFC = ${rate.toStringAsFixed(2)} TL · min $min CFC',
           style: TextStyle(
             fontSize: 12,
             color: AppTheme.muted.withValues(alpha: 0.95),
           ),
+        ),
+        if (amount > 0) ...[
+          const SizedBox(height: 6),
+          Text(
+            'Ödenecek tutar: ${tl.toStringAsFixed(tl == tl.roundToDouble() ? 0 : 2)} TL',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.diamondBlue,
+            ),
+          ),
+        ],
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [100, 200, 500].map((cfc) {
+            return ActionChip(
+              label: Text('$cfc CFC (${CurrencyUsageInfo.tlForCfc(cfc).toStringAsFixed(0)} TL)'),
+              onPressed: () {
+                setState(() => _amountCtrl.text = '$cfc');
+              },
+            );
+          }).toList(),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -66,10 +94,11 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: InputDecoration(
-            labelText: 'CFC miktarı',
+            labelText: 'CFC (CanlıFal Coin) miktarı',
             hintText: 'Örn. 100',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           ),
+          onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -224,16 +253,20 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
     try {
       await ref.read(walletRepositoryProvider).submitPaymentRequest({
         'requestType': 'cfc',
+        'type': 'cfc',
         'amount': amount,
         'method': _method.name,
         'senderInfo': _senderCtrl.text.trim().isEmpty ? null : _senderCtrl.text.trim(),
-        'notes': _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
+        'notes': _notesCtrl.text.trim().isEmpty
+            ? 'CFC yükleme · ${_method.name}'
+            : _notesCtrl.text.trim(),
       });
       if (!mounted) return;
       ref.invalidate(walletBalancesProvider);
       ref.invalidate(cfcPaymentRequestsProvider);
       ref.invalidate(adminPaymentRequestsProvider);
       ref.invalidate(adminPaymentNotificationsProvider);
+      ref.invalidate(notificationsListProvider);
       widget.onSubmitted();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

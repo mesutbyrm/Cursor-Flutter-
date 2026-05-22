@@ -47,7 +47,7 @@ class ProfileWalletSection extends StatelessWidget {
               DualBalanceChips(jeton: jeton, cfc: cfc, onTap: onTopUp),
               const SizedBox(height: 8),
               Text(
-                'Jeton: hediye ve ödemeler · CFC: premium içerik',
+                'Jeton: canlı yayın, sohbet, hediye · CFC (CanlıFal Coin): oyun ve fal',
                 style: TextStyle(
                   fontSize: 11,
                   color: AppColors.textMuted.withValues(alpha: 0.9),

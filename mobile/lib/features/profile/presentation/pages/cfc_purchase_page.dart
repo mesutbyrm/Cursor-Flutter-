@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/content/currency_usage_info.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
-import '../../../wallet/presentation/widgets/wallet_balance_header.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/cfc_balance_header.dart';
 import '../widgets/cfc_native_checkout.dart';
+import '../widgets/currency_usage_card.dart';
 
 final cfcPaymentRequestsProvider =
     FutureProvider.autoDispose<List<CfcPaymentRequestEntity>>((ref) async {
-  return ref.watch(walletRepositoryProvider).myPaymentRequests();
+  final all = await ref.watch(walletRepositoryProvider).myPaymentRequests();
+  return all.where((r) => r.isCfc).toList();
 });
 
-/// CFC (CanlıFal Coin) yükleme — site API ile aynı akış.
+/// CFC (CanlıFal Coin) yükleme — yalnızca CFC, jeton değil.
 class CfcPurchasePage extends ConsumerWidget {
   const CfcPurchasePage({super.key});
 
@@ -30,7 +33,7 @@ class CfcPurchasePage extends ConsumerWidget {
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'CFC Yükle',
-          subtitle: 'CanlıFal Coin · WhatsApp, Papara, Havale',
+          subtitle: 'CFC (CanlıFal Coin) · ${CurrencyUsageInfo.cfcPriceHint}',
           onRefresh: () async {
             ref.invalidate(paymentConfigProvider);
             ref.invalidate(walletBalancesProvider);
@@ -46,31 +49,15 @@ class CfcPurchasePage extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
               children: [
                 wallet.when(
-                  data: (b) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      WalletBalanceHeader(
-                        jeton: b.jeton,
-                        cfc: b.cfc,
-                        membership: b.membership,
-                        daysRemaining: b.membershipDaysRemaining,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Bakiye canlifal.com hesabınızdan · CFC: ${b.cfc}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textMuted.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    ],
-                  ),
+                  data: (b) => CfcBalanceHeader(cfc: b.cfc),
                   loading: () => const SizedBox.shrink(),
                   error: (e, _) => Text(
                     ApiException.userMessage(e),
                     style: const TextStyle(color: AppColors.textMuted),
                   ),
                 ),
+                const SizedBox(height: 16),
+                const CurrencyUsageCard.cfc(),
                 const SizedBox(height: 20),
                 CfcNativeCheckout(
                   config: cfg,
@@ -81,7 +68,7 @@ class CfcPurchasePage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 28),
                 const Text(
-                  'Son talepleriniz',
+                  'CFC yükleme talepleriniz',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                 ),
                 const SizedBox(height: 10),
@@ -94,8 +81,10 @@ class CfcPurchasePage extends ConsumerWidget {
                   data: (rows) {
                     if (rows.isEmpty) {
                       return Text(
-                        'Henüz talep yok.',
-                        style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.9)),
+                        'Henüz CFC talebi yok.',
+                        style: TextStyle(
+                          color: AppColors.textMuted.withValues(alpha: 0.9),
+                        ),
                       );
                     }
                     return Column(
@@ -108,17 +97,21 @@ class CfcPurchasePage extends ConsumerWidget {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        '${r.amount} CFC · ${_methodTr(r.method)}',
-                                        style: const TextStyle(fontWeight: FontWeight.w700),
+                                        r.displayLine,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                       ),
                                       Text(
                                         _statusTr(r.status),
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: AppColors.accentCyan.withValues(alpha: 0.9),
+                                          color: AppColors.diamondBlue
+                                              .withValues(alpha: 0.9),
                                         ),
                                       ),
                                     ],
@@ -145,18 +138,10 @@ class CfcPurchasePage extends ConsumerWidget {
     );
   }
 
-  static String _methodTr(String m) => switch (m) {
-        'whatsapp' => 'WhatsApp',
-        'papara' => 'Papara',
-        'bank_transfer' => 'Havale/EFT',
-        'havale' => 'Havale/EFT',
-        _ => m,
-      };
-
   static String _statusTr(String s) => switch (s) {
-        'approved' => 'Onaylandı',
+        'approved' => 'Onaylandı — CFC yansıdı',
         'rejected' => 'Reddedildi',
-        _ => 'Bekliyor',
+        _ => 'Onay bekliyor',
       };
 
   static IconData _statusIcon(String s) => switch (s) {
@@ -168,6 +153,6 @@ class CfcPurchasePage extends ConsumerWidget {
   static Color _statusColor(String s) => switch (s) {
         'approved' => AppColors.accentCyan,
         'rejected' => AppColors.liveRed,
-        _ => AppColors.coinGold,
+        _ => AppColors.diamondBlue,
       };
 }

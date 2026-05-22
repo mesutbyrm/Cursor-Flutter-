@@ -8,6 +8,7 @@ import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../data/jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/currency_usage_card.dart';
 import '../widgets/jeton_checkout_flow.dart';
 import '../widgets/jeton_store_widgets.dart';
 
@@ -64,6 +65,8 @@ class JetonPurchasePage extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _JetonStoreHeader(onBack: () => context.pop()),
+                          const SizedBox(height: 16),
+                          const CurrencyUsageCard.jeton(),
                           const SizedBox(height: 20),
                           wallet.when(
                             data: (b) => Column(

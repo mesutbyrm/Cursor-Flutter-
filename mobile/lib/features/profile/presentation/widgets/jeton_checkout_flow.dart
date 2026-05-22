@@ -11,6 +11,7 @@ import '../../data/jeton_payment_request.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../../admin/presentation/providers/admin_providers.dart';
+import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../pages/cfc_purchase_page.dart';
 import '../providers/profile_providers.dart';
 
@@ -332,6 +333,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     ref.invalidate(cfcPaymentRequestsProvider);
     ref.invalidate(adminPaymentRequestsProvider);
     ref.invalidate(adminPaymentNotificationsProvider);
+    ref.invalidate(notificationsListProvider);
   }
 
   Future<void> _whatsappOrder() async {
@@ -371,7 +373,12 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
       await _submitRequest();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Talebiniz alındı. Onay sonrası jeton yüklenir.')),
+          const SnackBar(
+            content: Text(
+              'Ödeme bildirimi gönderildi. Onay sonrası jeton bakiyenize yansır; '
+              'Bildirimler sekmesinden takip edebilirsiniz.',
+            ),
+          ),
         );
         widget.onDone();
         Navigator.of(context).popUntil((r) => r.isFirst);
