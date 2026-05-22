@@ -4,12 +4,27 @@ import '../../../../../core/theme/app_colors.dart';
 import 'profile_glass.dart';
 
 class ProfilePremiumBanner extends StatelessWidget {
-  const ProfilePremiumBanner({super.key, this.onViewPrivileges});
+  const ProfilePremiumBanner({
+    super.key,
+    this.onViewPrivileges,
+    this.membership,
+    this.daysRemaining,
+  });
 
   final VoidCallback? onViewPrivileges;
+  final String? membership;
+  final int? daysRemaining;
 
   @override
   Widget build(BuildContext context) {
+    final tier = membership?.toLowerCase() ?? 'basic';
+    final days = daysRemaining ?? 0;
+    final isGold = tier == 'gold' && days > 0;
+    final subtitle = isGold
+        ? 'Gold üyesiniz · $days gün kaldı'
+        : 'Özel rozetler, öncelikli destek ve daha fazlası';
+    final cta = isGold ? 'Uzat' : 'Ayrıcalıkları Gör';
+
     return ProfileGlass(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       borderRadius: 20,
@@ -42,7 +57,7 @@ class ProfilePremiumBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -56,11 +71,14 @@ class ProfilePremiumBanner extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'Özel rozetler, öncelikli destek ve daha fazlası',
+                  subtitle,
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: isGold
+                        ? const Color(0xFFFFD54F).withValues(alpha: 0.95)
+                        : AppColors.textSecondary,
                     fontSize: 12,
                     height: 1.3,
+                    fontWeight: isGold ? FontWeight.w700 : FontWeight.w400,
                   ),
                 ),
               ],
@@ -72,10 +90,10 @@ class ProfilePremiumBanner extends StatelessWidget {
             child: InkWell(
               onTap: onViewPrivileges,
               borderRadius: BorderRadius.circular(14),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 child: Text(
-                  'Ayrıcalıkları Gör',
+                  cta,
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 12,

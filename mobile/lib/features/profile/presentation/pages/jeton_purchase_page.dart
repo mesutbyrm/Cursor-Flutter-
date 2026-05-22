@@ -4,13 +4,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../data/jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/jeton_checkout_flow.dart';
 import '../widgets/jeton_store_widgets.dart';
 
-/// Jeton mağazası — mockup: paket grid, Gold banner, özel miktar (`/api/jeton`).
+/// Jeton mağazası — responsive mockup (`/api/jeton`, `/api/user/credits`).
 class JetonPurchasePage extends ConsumerWidget {
   const JetonPurchasePage({super.key});
 
@@ -36,6 +37,7 @@ class JetonPurchasePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final packages = ref.watch(jetonPackagesProvider);
     final wallet = ref.watch(walletBalancesProvider);
+    final top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0B0618),
@@ -53,44 +55,50 @@ class JetonPurchasePage extends ConsumerWidget {
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                    16,
-                    MediaQuery.paddingOf(context).top + 8,
-                    16,
-                    32,
-                  ),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      _JetonStoreHeader(onBack: () => context.pop()),
-                      const SizedBox(height: 20),
-                      wallet.when(
-                        data: (b) => Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            JetonStoreBalanceRow(jeton: b.jeton, cfc: b.cfc),
-                            if (_isGoldMember(b.membership, b.membershipDaysRemaining)) ...[
-                              const SizedBox(height: 12),
-                              JetonGoldMemberBanner(
-                                onTap: () =>
-                                    context.push('/premium-membership'),
+                SliverToBoxAdapter(child: SizedBox(height: top + 8)),
+                SliverToBoxAdapter(
+                  child: ResponsiveConstrained(
+                    child: Padding(
+                      padding: ResponsiveLayout.pagePadding(context),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _JetonStoreHeader(onBack: () => context.pop()),
+                          const SizedBox(height: 20),
+                          wallet.when(
+                            data: (b) => Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                JetonStoreBalanceRow(
+                                  jeton: b.jeton,
+                                  cfc: b.cfc,
+                                ),
+                                if (_isGoldMember(
+                                  b.membership,
+                                  b.membershipDaysRemaining,
+                                )) ...[
+                                  const SizedBox(height: 12),
+                                  JetonGoldMemberBanner(
+                                    onTap: () =>
+                                        context.push('/premium-membership'),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            loading: () => const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(24),
+                                child: CircularProgressIndicator(strokeWidth: 2),
                               ),
-                            ],
-                          ],
-                        ),
-                        loading: () => const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(24),
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            error: (e, _) => Text(
+                              ApiException.userMessage(e),
+                              style: const TextStyle(color: AppColors.textMuted),
+                            ),
                           ),
-                        ),
-                        error: (e, _) => Text(
-                          ApiException.userMessage(e),
-                          style: const TextStyle(color: AppColors.textMuted),
-                        ),
+                        ],
                       ),
-                      const SizedBox(height: 20),
-                    ]),
+                    ),
                   ),
                 ),
                 packages.when(
@@ -106,26 +114,28 @@ class JetonPurchasePage extends ConsumerWidget {
                   ),
                   error: (e, _) => SliverFillRemaining(
                     hasScrollBody: false,
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.cloud_off_rounded,
-                              size: 48,
-                              color: AppColors.textMuted.withValues(alpha: 0.8)),
-                          const SizedBox(height: 12),
-                          Text(
-                            ApiException.userMessage(e),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          FilledButton(
-                            onPressed: () =>
-                                ref.invalidate(jetonPackagesProvider),
-                            child: const Text('Tekrar dene'),
-                          ),
-                        ],
+                    child: ResponsiveConstrained(
+                      child: Padding(
+                        padding: ResponsiveLayout.pagePadding(context),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.cloud_off_rounded,
+                                size: 48,
+                                color: AppColors.textMuted.withValues(alpha: 0.8)),
+                            const SizedBox(height: 12),
+                            Text(
+                              ApiException.userMessage(e),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            FilledButton(
+                              onPressed: () =>
+                                  ref.invalidate(jetonPackagesProvider),
+                              child: const Text('Tekrar dene'),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -135,44 +145,52 @@ class JetonPurchasePage extends ConsumerWidget {
                         : list;
                     final grid = jetonGridPackages(display);
                     final hero = jetonHeroPackage(display);
-                    final rate = wallet.valueOrNull?.jetonTlRate ??
-                        kDefaultJetonTlRate;
+                    final rate =
+                        wallet.valueOrNull?.jetonTlRate ?? kDefaultJetonTlRate;
 
-                    return SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      sliver: SliverList(
-                        delegate: SliverChildListDelegate([
-                          if (grid.isNotEmpty) _PackageGrid(
-                            packages: grid,
-                            onTap: (p) => _openCheckout(
-                              context,
-                              ref,
-                              p,
-                              formatJetonPrice(p),
-                            ),
+                    return SliverToBoxAdapter(
+                      child: ResponsiveConstrained(
+                        child: Padding(
+                          padding: ResponsiveLayout.pagePadding(
+                            context,
+                            bottom: 32,
                           ),
-                          if (hero != null) ...[
-                            const SizedBox(height: 10),
-                            JetonPackageTile(
-                              package: hero,
-                              priceText: formatJetonPrice(hero),
-                              fullWidth: true,
-                              onTap: () => _openCheckout(
-                                context,
-                                ref,
-                                hero,
-                                formatJetonPrice(hero),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (grid.isNotEmpty)
+                                _ResponsivePackageGrid(
+                                  packages: grid,
+                                  onTap: (p) => _openCheckout(
+                                    context,
+                                    ref,
+                                    p,
+                                    formatJetonPrice(p),
+                                  ),
+                                ),
+                              if (hero != null) ...[
+                                const SizedBox(height: 10),
+                                JetonPackageTile(
+                                  package: hero,
+                                  priceText: formatJetonPrice(hero),
+                                  fullWidth: true,
+                                  onTap: () => _openCheckout(
+                                    context,
+                                    ref,
+                                    hero,
+                                    formatJetonPrice(hero),
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 24),
+                              JetonCustomAmountSection(
+                                tlRate: rate,
+                                onPurchase: (p, price) =>
+                                    _openCheckout(context, ref, p, price),
                               ),
-                            ),
-                          ],
-                          const SizedBox(height: 24),
-                          JetonCustomAmountSection(
-                            tlRate: rate,
-                            onPurchase: (p, price) =>
-                                _openCheckout(context, ref, p, price),
+                            ],
                           ),
-                          const SizedBox(height: 24),
-                        ]),
+                        ),
                       ),
                     );
                   },
@@ -200,17 +218,16 @@ class _JetonStoreHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Row(
-          children: [
-            Material(
-              color: Colors.white.withValues(alpha: 0.08),
-              shape: const CircleBorder(),
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                onPressed: onBack,
-              ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Material(
+            color: Colors.white.withValues(alpha: 0.08),
+            shape: const CircleBorder(),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+              onPressed: onBack,
             ),
-          ],
+          ),
         ),
         const SizedBox(height: 16),
         Container(
@@ -234,6 +251,7 @@ class _JetonStoreHeader extends StatelessWidget {
         const SizedBox(height: 14),
         const Text(
           'Jeton Satın Al',
+          textAlign: TextAlign.center,
           style: TextStyle(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w900,
@@ -246,8 +264,8 @@ class _JetonStoreHeader extends StatelessWidget {
   }
 }
 
-class _PackageGrid extends StatelessWidget {
-  const _PackageGrid({
+class _ResponsivePackageGrid extends StatelessWidget {
+  const _ResponsivePackageGrid({
     required this.packages,
     required this.onTap,
   });
@@ -257,22 +275,27 @@ class _PackageGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 1.35,
-      ),
-      itemCount: packages.length,
-      itemBuilder: (context, i) {
-        final p = packages[i];
-        return JetonPackageTile(
-          package: p,
-          priceText: formatJetonPrice(p),
-          onTap: () => onTap(p),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cols = ResponsiveLayout.gridColumns(constraints.maxWidth);
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: cols,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: ResponsiveLayout.gridAspectRatio(cols),
+          ),
+          itemCount: packages.length,
+          itemBuilder: (context, i) {
+            final p = packages[i];
+            return JetonPackageTile(
+              package: p,
+              priceText: formatJetonPrice(p),
+              onTap: () => onTap(p),
+            );
+          },
         );
       },
     );

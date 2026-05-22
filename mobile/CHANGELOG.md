@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.36+38 (2026-05-22)
+
+### Profil, Jeton, Premium — responsive + mockup
+
+- `ResponsiveLayout`: tablet/desktop ortalanmış içerik (max 560px), adaptif grid
+- **Premium Üyelik:** mockup dikey kartlar (Basic/Premium/Gold/Diamond), özellik grid, Gold durum
+- **Profil / Jeton yükle:** responsive padding ve geniş ekran düzeni
+
 ## 1.0.35+37 (2026-05-22)
 
 ### Jeton Satın Al — mockup mağaza
