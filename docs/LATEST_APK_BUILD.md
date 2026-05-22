@@ -2,18 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.46+48` |
-| Tarih (UTC) | 2026-05-22 22:28 |
-| Commit | [`5e3aba16d4151a2a31988550654f3c0d91541450`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/5e3aba16d4151a2a31988550654f3c0d91541450) |
-| İş akışı | [Run 26314532621](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26314532621) |
+| Sürüm | `1.0.47+49` |
+| Tarih (UTC) | 2026-05-22 22:48 |
+| Commit | [`281d95ff6d7beffc758c20b5c68c454cfda9b8f3`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/281d95ff6d7beffc758c20b5c68c454cfda9b8f3) |
+| İş akışı | [Run 26315152445](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26315152445) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
-## Bu sürümde
+## Özellikler
 
-## 1.0.46+48 (2026-05-22)
+## 1.0.47+49 (2026-05-22)
 
-### Yayın (CI)
+### Anlık push bildirimleri
 
-- `apk-latest` GitHub Release yayını düzeltildi (sürekli sürüm akışı)
+- Mesaj, ödeme (admin onayı), canlı yayın → OneSignal yüksek öncelik
+- Bildirime tıklayınca doğru ekrana yönlendirme
+- API: `push_events`, `POST /api/video-streams/.../live-started`
+
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
