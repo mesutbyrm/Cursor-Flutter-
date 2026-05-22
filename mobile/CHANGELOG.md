@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.35+37 (2026-05-22)
+
+### Jeton Satın Al — mockup mağaza
+
+- 2×2 paket grid (50–500 jeton) + tam genişlik 1000 jeton
+- Gold üye banner, özel miktar (jeton / ₺), `jetonTlRate` API
+- Varsayılan paketler: 1 Jeton = ₺0,50
+
 ## 1.0.34+36 (2026-05-22)
 
 ### Logo ve uygulama ikonu

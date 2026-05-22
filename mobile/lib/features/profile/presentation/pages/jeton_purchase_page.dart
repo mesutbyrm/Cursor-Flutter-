@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/glow_panel.dart';
-import '../../../../core/widgets/dual_balance_chips.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../data/jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/jeton_checkout_flow.dart';
+import '../widgets/jeton_store_widgets.dart';
 
-/// Ana sayfadan veya profilden açılır; paketleri `/api/jeton` üzerinden okur.
+/// Jeton mağazası — mockup: paket grid, Gold banner, özel miktar (`/api/jeton`).
 class JetonPurchasePage extends ConsumerWidget {
   const JetonPurchasePage({super.key});
 
@@ -33,48 +32,19 @@ class JetonPurchasePage extends ConsumerWidget {
     );
   }
 
-  String _formatPrice(JetonPackageEntity p) {
-    if (p.priceLabel != null && p.priceLabel!.trim().isNotEmpty) {
-      return p.priceLabel!.trim();
-    }
-    if (p.priceTry != null) {
-      return NumberFormat.currency(
-        locale: 'tr_TR',
-        symbol: '₺',
-        decimalDigits: 2,
-      ).format(p.priceTry);
-    }
-    return '—';
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final packages = ref.watch(jetonPackagesProvider);
     final wallet = ref.watch(walletBalancesProvider);
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: ShaderMask(
-          shaderCallback: (b) => const LinearGradient(
-            colors: [Color(0xFFFFD54F), AppTheme.accentSecondary],
-          ).createShader(b),
-          child: const Text(
-            'Jeton yükle',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 20,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ),
+      backgroundColor: const Color(0xFF0B0618),
       body: Stack(
         fit: StackFit.expand,
         children: [
-          const _JetonBackdrop(),
+          const JetonStoreBackdrop(),
           RefreshIndicator(
-            color: AppTheme.accent,
+            color: AppColors.accentPurple,
             onRefresh: () async {
               ref.invalidate(jetonPackagesProvider);
               ref.invalidate(walletBalancesProvider);
@@ -86,72 +56,40 @@ class JetonPurchasePage extends ConsumerWidget {
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(
                     16,
-                    MediaQuery.paddingOf(context).top + kToolbarHeight + 12,
+                    MediaQuery.paddingOf(context).top + 8,
                     16,
                     32,
                   ),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
-                      GlowPanel(
-                        borderRadius: 20,
-                        padding: const EdgeInsets.all(18),
-                        child: Row(
+                      _JetonStoreHeader(onBack: () => context.pop()),
+                      const SizedBox(height: 20),
+                      wallet.when(
+                        data: (b) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Icon(Icons.monetization_on_rounded,
-                                color: Color(0xFFFFD54F), size: 40),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Mevcut bakiye',
-                                    style: TextStyle(
-                                      color: AppTheme.muted
-                                          .withValues(alpha: 0.95),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  wallet.when(
-                                    data: (b) => DualBalanceChips(
-                                      jeton: b.jeton,
-                                      cfc: b.cfc,
-                                    ),
-                                    loading: () => const Text('…'),
-                                    error: (e, _) => Text(
-                                      ApiException.userMessage(e),
-                                      style: const TextStyle(
-                                        color: AppTheme.muted,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                            JetonStoreBalanceRow(jeton: b.jeton, cfc: b.cfc),
+                            if (_isGoldMember(b.membership, b.membershipDaysRemaining)) ...[
+                              const SizedBox(height: 12),
+                              JetonGoldMemberBanner(
+                                onTap: () =>
+                                    context.push('/premium-membership'),
                               ),
-                            ),
+                            ],
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 18),
-                      Text(
-                        'WhatsApp, Papara veya Havale/EFT ile ödeme yapın. '
-                        'Talebiniz admin ve site bildirim paneline düşer. '
-                        'Liste sunucudan gelmezse varsayılan paketler gösterilir.',
-                        style: TextStyle(
-                          color: AppTheme.muted.withValues(alpha: 0.95),
-                          height: 1.35,
-                          fontSize: 13,
+                        loading: () => const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24),
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                        error: (e, _) => Text(
+                          ApiException.userMessage(e),
+                          style: const TextStyle(color: AppColors.textMuted),
                         ),
                       ),
-                      const SizedBox(height: 28),
-                      const Text(
-                        'Paketler',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 18,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 20),
                     ]),
                   ),
                 ),
@@ -175,7 +113,7 @@ class JetonPurchasePage extends ConsumerWidget {
                         children: [
                           Icon(Icons.cloud_off_rounded,
                               size: 48,
-                              color: AppTheme.muted.withValues(alpha: 0.8)),
+                              color: AppColors.textMuted.withValues(alpha: 0.8)),
                           const SizedBox(height: 12),
                           Text(
                             ApiException.userMessage(e),
@@ -192,43 +130,48 @@ class JetonPurchasePage extends ConsumerWidget {
                     ),
                   ),
                   data: (list) {
-                    final usingFallback = list.isEmpty;
-                    final display = usingFallback
+                    final display = list.isEmpty
                         ? List<JetonPackageEntity>.from(kFallbackJetonPackages)
                         : list;
+                    final grid = jetonGridPackages(display);
+                    final hero = jetonHeroPackage(display);
+                    final rate = wallet.valueOrNull?.jetonTlRate ??
+                        kDefaultJetonTlRate;
+
                     return SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
-                          if (usingFallback)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Text(
-                                'Sunucu paket listesi göndermedi; varsayılan paketler gösteriliyor. '
-                                'Ödeme talebi yine admin paneline düşer.',
-                                style: TextStyle(
-                                  color: AppTheme.muted.withValues(alpha: 0.95),
-                                  fontSize: 12,
-                                  height: 1.35,
-                                ),
+                          if (grid.isNotEmpty) _PackageGrid(
+                            packages: grid,
+                            onTap: (p) => _openCheckout(
+                              context,
+                              ref,
+                              p,
+                              formatJetonPrice(p),
+                            ),
+                          ),
+                          if (hero != null) ...[
+                            const SizedBox(height: 10),
+                            JetonPackageTile(
+                              package: hero,
+                              priceText: formatJetonPrice(hero),
+                              fullWidth: true,
+                              onTap: () => _openCheckout(
+                                context,
+                                ref,
+                                hero,
+                                formatJetonPrice(hero),
                               ),
                             ),
-                          ...List.generate(display.length, (i) {
-                            final p = display[i];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _JetonPackageCard(
-                                package: p,
-                                priceText: _formatPrice(p),
-                                onBuy: () => _openCheckout(
-                                  context,
-                                  ref,
-                                  p,
-                                  _formatPrice(p),
-                                ),
-                              ),
-                            );
-                          }),
+                          ],
+                          const SizedBox(height: 24),
+                          JetonCustomAmountSection(
+                            tlRate: rate,
+                            onPurchase: (p, price) =>
+                                _openCheckout(context, ref, p, price),
+                          ),
+                          const SizedBox(height: 24),
                         ]),
                       ),
                     );
@@ -241,127 +184,97 @@ class JetonPurchasePage extends ConsumerWidget {
       ),
     );
   }
+
+  static bool _isGoldMember(String? membership, int? days) {
+    if (membership?.toLowerCase() != 'gold') return false;
+    return (days ?? 0) > 0;
+  }
 }
 
-class _JetonBackdrop extends StatelessWidget {
-  const _JetonBackdrop();
+class _JetonStoreHeader extends StatelessWidget {
+  const _JetonStoreHeader({required this.onBack});
+
+  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppTheme.background,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF2A1C10),
-            AppTheme.background,
-            const Color(0xFF101820),
+    return Column(
+      children: [
+        Row(
+          children: [
+            Material(
+              color: Colors.white.withValues(alpha: 0.08),
+              shape: const CircleBorder(),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                onPressed: onBack,
+              ),
+            ),
           ],
-          stops: const [0.0, 0.5, 1.0],
         ),
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(-0.6, -0.4),
-            radius: 1.1,
-            colors: [
-              const Color(0xFFFFD54F).withValues(alpha: 0.12),
-              Colors.transparent,
-            ],
+        const SizedBox(height: 16),
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.coinGold.withValues(alpha: 0.2),
+            border: Border.all(
+              color: AppColors.coinGold.withValues(alpha: 0.55),
+              width: 2,
+            ),
+            boxShadow: AppColors.glowShadow(AppColors.coinGold, blur: 18),
+          ),
+          child: const Icon(
+            Icons.monetization_on_rounded,
+            color: AppColors.coinGold,
+            size: 36,
           ),
         ),
-        child: const SizedBox.expand(),
-      ),
+        const SizedBox(height: 14),
+        const Text(
+          'Jeton Satın Al',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w900,
+            fontSize: 24,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _JetonPackageCard extends StatelessWidget {
-  const _JetonPackageCard({
-    required this.package,
-    required this.priceText,
-    required this.onBuy,
+class _PackageGrid extends StatelessWidget {
+  const _PackageGrid({
+    required this.packages,
+    required this.onTap,
   });
 
-  final JetonPackageEntity package;
-  final String priceText;
-  final VoidCallback onBuy;
+  final List<JetonPackageEntity> packages;
+  final void Function(JetonPackageEntity) onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GlowPanel(
-      borderRadius: 18,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.accent.withValues(alpha: 0.35),
-                  AppTheme.accentSecondary.withValues(alpha: 0.25),
-                ],
-              ),
-            ),
-            child: Text(
-              package.coins > 0 ? '${package.coins}' : '★',
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  package.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                  ),
-                ),
-                if (package.badge != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    package.badge!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.accentSecondary.withValues(alpha: 0.95),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 6),
-                Text(
-                  priceText,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.muted.withValues(alpha: 0.95),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          FilledButton(
-            onPressed: onBuy,
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            child: const Text('Satın al'),
-          ),
-        ],
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 1.35,
       ),
+      itemCount: packages.length,
+      itemBuilder: (context, i) {
+        final p = packages[i];
+        return JetonPackageTile(
+          package: p,
+          priceText: formatJetonPrice(p),
+          onTap: () => onTap(p),
+        );
+      },
     );
   }
 }

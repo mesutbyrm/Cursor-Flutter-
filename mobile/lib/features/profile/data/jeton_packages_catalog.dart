@@ -1,32 +1,39 @@
 import '../domain/entities/jeton_package_entity.dart';
 
-/// canlifal.com `/api/jeton` yanıt vermezse veya boş dönerse — mockup ile uyumlu varsayılan paketler.
+/// canlifal.com `/api/jeton` yanıt vermezse — mockup paketleri (1 Jeton = ₺0,50).
+const double kDefaultJetonTlRate = 0.5;
+
 const List<JetonPackageEntity> kFallbackJetonPackages = [
+  JetonPackageEntity(
+    id: 'p50',
+    title: '50 Jeton',
+    coins: 50,
+    priceTry: 25,
+  ),
   JetonPackageEntity(
     id: 'p100',
     title: '100 Jeton',
     coins: 100,
-    priceTry: 29.9,
+    priceTry: 50,
     badge: 'Popüler',
+  ),
+  JetonPackageEntity(
+    id: 'p250',
+    title: '250 Jeton',
+    coins: 250,
+    priceTry: 125,
   ),
   JetonPackageEntity(
     id: 'p500',
     title: '500 Jeton',
     coins: 500,
-    priceTry: 129.9,
-    badge: 'En iyi değer',
+    priceTry: 250,
+    badge: 'Popüler',
   ),
   JetonPackageEntity(
     id: 'p1000',
     title: '1000 Jeton',
     coins: 1000,
     priceTry: 500,
-  ),
-  JetonPackageEntity(
-    id: 'p5000',
-    title: '5000 Jeton',
-    coins: 5000,
-    priceTry: 999.9,
-    badge: 'VIP',
   ),
 ];
