@@ -5,8 +5,10 @@ import 'package:intl/intl.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/notification_action.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../providers/notifications_providers.dart';
+import '../widgets/notification_permission_banner.dart';
 
 class NotificationsPage extends ConsumerWidget {
   const NotificationsPage({super.key});
@@ -27,11 +29,18 @@ class NotificationsPage extends ConsumerWidget {
           onPressed: () => ref.invalidate(notificationsListProvider),
         ),
       ],
-      body: list.when(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const NotificationPermissionBanner(),
+          Expanded(
+            child: list.when(
         loading: () => const DiscoverAccentLoader(),
         error: (e, _) => DiscoverEmptyState(
           icon: Icons.notifications_off_outlined,
-          message: e.toString(),
+          message: ApiException.userMessage(e),
+          actionLabel: 'Yenile',
+          action: () => ref.invalidate(notificationsListProvider),
         ),
         data: (items) {
           if (items.isEmpty) {
@@ -127,6 +136,9 @@ class NotificationsPage extends ConsumerWidget {
             },
           );
         },
+            ),
+          ),
+        ],
       ),
     );
   }

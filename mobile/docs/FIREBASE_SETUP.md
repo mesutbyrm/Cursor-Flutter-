@@ -32,7 +32,7 @@ Uygulama Firebase’i **isteğe bağlı** başlatır. `google-services.json` vey
 
 ## Backend
 
-FCM cihaz token’ını sunucuya kaydetmek için ileride `POST /api/devices/fcm` eklenebilir; şu an token yalnızca debug log’a yazılır.
+Oturum açıldığında uygulama `POST /api/devices/fcm` ile token kaydı dener (canlifal.com’da uç yoksa sessizce atlanır). Self-hosted API bu uçu destekler.
 
 ## Analytics
 

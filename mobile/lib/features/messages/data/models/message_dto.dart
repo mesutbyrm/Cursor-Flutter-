@@ -17,10 +17,20 @@ abstract class MessageDto with _$MessageDto {
 
   const MessageDto._();
 
-  factory MessageDto.fromApiMap(Map<String, dynamic> json) {
+  factory MessageDto.fromApiMap(
+    Map<String, dynamic> json, {
+    String? currentUserId,
+  }) {
     final readAt = pick(json, ['readAt', 'read_at', 'seenAt']);
     final deliveredAt = pick(json, ['deliveredAt', 'delivered_at']);
     final statusRaw = pick(json, ['status', 'deliveryStatus'])?.toString();
+    final senderId = pick(json, [
+      'senderId',
+      'sender_id',
+      'fromUserId',
+      'fromId',
+      'userId',
+    ])?.toString();
 
     var delivery = MessageDeliveryStatus.sent;
     if (readAt != null || statusRaw == 'read') {
@@ -29,10 +39,19 @@ abstract class MessageDto with _$MessageDto {
       delivery = MessageDeliveryStatus.delivered;
     }
 
+    var isMine = asBool(pick(json, ['isMine', 'mine', 'fromMe', 'is_mine']));
+    if (!isMine &&
+        currentUserId != null &&
+        currentUserId.isNotEmpty &&
+        senderId != null &&
+        senderId.isNotEmpty) {
+      isMine = senderId == currentUserId;
+    }
+
     return MessageDto(
       id: pick(json, ['id', '_id'])?.toString() ?? '',
       text: pick(json, ['text', 'body', 'content'])?.toString() ?? '',
-      isMine: asBool(pick(json, ['isMine', 'mine', 'fromMe'])),
+      isMine: isMine,
       createdAt: DateTime.tryParse(
         pick(json, ['createdAt', 'created_at', 'timestamp'])?.toString() ?? '',
       ),

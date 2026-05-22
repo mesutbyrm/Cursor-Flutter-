@@ -29,9 +29,20 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   var _peerTyping = false;
   Timer? _typingHideTimer;
   Timer? _typingEmitTimer;
+  Timer? _poll;
+
+  @override
+  void initState() {
+    super.initState();
+    _poll = Timer.periodic(const Duration(seconds: 8), (_) {
+      if (!mounted) return;
+      ref.invalidate(chatMessagesProvider(widget.conversationId));
+    });
+  }
 
   @override
   void dispose() {
+    _poll?.cancel();
     _typingHideTimer?.cancel();
     _typingEmitTimer?.cancel();
     _text.dispose();

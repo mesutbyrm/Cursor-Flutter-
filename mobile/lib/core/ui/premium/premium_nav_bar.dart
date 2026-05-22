@@ -13,12 +13,14 @@ class PremiumNavBar extends StatelessWidget {
     required this.onTap,
     required this.onFabTap,
     this.fabIcon = Icons.videocam_rounded,
+    this.messagesBadgeCount = 0,
   });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
   final VoidCallback onFabTap;
   final IconData fabIcon;
+  final int messagesBadgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +58,7 @@ class PremiumNavBar extends StatelessWidget {
                   selectedIcon: Icons.chat_bubble_rounded,
                   label: 'Mesajlar',
                   selected: currentIndex == 3,
+                  badgeCount: messagesBadgeCount,
                   onTap: () => onTap(3),
                 ),
                 _NavSlot(
@@ -81,6 +84,7 @@ class _NavSlot extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   final IconData icon;
@@ -88,6 +92,7 @@ class _NavSlot extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -99,21 +104,50 @@ class _NavSlot extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: SizedBox(
         width: 64,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
           children: [
-            Icon(selected ? selectedIcon : icon, color: color, size: 26),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                color: color,
-              ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(selected ? selectedIcon : icon, color: color, size: 26),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+              ],
             ),
+            if (badgeCount > 0)
+              Positioned(
+                top: 2,
+                right: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  constraints: const BoxConstraints(minWidth: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.liveRed,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.background, width: 1),
+                  ),
+                  child: Text(
+                    badgeCount > 99 ? '99+' : '$badgeCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w800,
+                      height: 1.1,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
