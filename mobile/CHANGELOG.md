@@ -1,5 +1,11 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.46+48 (2026-05-22)
+
+### Yayın (CI)
+
+- `apk-latest` GitHub Release yayını düzeltildi (sürekli sürüm akışı)
+
 ## 1.0.45+47 (2026-05-19)
 
 ### OneSignal push
