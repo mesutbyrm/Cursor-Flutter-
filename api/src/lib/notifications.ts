@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { sendOneSignalToUser } from "./onesignal";
 
 export async function createNotification(input: {
   userId?: string;
@@ -15,7 +16,7 @@ export async function createNotification(input: {
       : typeof input.data === "string"
         ? input.data
         : JSON.stringify(input.data);
-  return prisma.appNotification.create({
+  const row = await prisma.appNotification.create({
     data: {
       userId: input.userId ?? null,
       title: input.title,
@@ -26,4 +27,19 @@ export async function createNotification(input: {
       targetId: input.targetId,
     },
   });
+
+  if (input.userId) {
+    const extra: Record<string, string> = {};
+    if (input.targetPath) extra.targetPath = input.targetPath;
+    if (input.targetId) extra.targetId = input.targetId;
+    if (input.type) extra.type = input.type;
+    void sendOneSignalToUser({
+      userId: input.userId,
+      title: input.title,
+      body: input.body,
+      data: Object.keys(extra).length ? extra : undefined,
+    });
+  }
+
+  return row;
 }
