@@ -61,7 +61,8 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
 
     return AuthShell(
       showBack: true,
-      child: Column(
+      child: AuthFormCard(
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AuthBrandHeader(
@@ -126,6 +127,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
             },
           ),
         ],
+        ),
       ),
     );
   }
