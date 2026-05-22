@@ -48,7 +48,7 @@ abstract final class DefaultFirebaseOptions {
           projectId: _projectId,
           iosBundleId: const String.fromEnvironment(
             'FIREBASE_IOS_BUNDLE_ID',
-            defaultValue: 'com.canlifal.canlifalSocial',
+            defaultValue: 'com.mesutbyrm.canlifal',
           ),
         );
       default:

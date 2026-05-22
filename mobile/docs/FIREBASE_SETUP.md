@@ -4,7 +4,7 @@ Uygulama Firebase’i **isteğe bağlı** başlatır. `google-services.json` vey
 
 ## Hızlı etkinleştirme
 
-1. [Firebase Console](https://console.firebase.google.com/) → proje oluştur → Android uygulaması ekle (`com.canlifal.canlifal_social`).
+1. [Firebase Console](https://console.firebase.google.com/) → proje oluştur → Android uygulaması ekle (`com.mesutbyrm.canlifal`).
 2. `google-services.json` dosyasını `mobile/android/app/` altına kopyalayın.
 3. FlutterFire (önerilen):
 
