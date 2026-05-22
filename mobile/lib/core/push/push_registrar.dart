@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../firebase/firebase_bootstrap.dart';
+import '../onesignal/onesignal_bootstrap.dart';
 import '../network/api_endpoints.dart';
 import '../network/api_exception.dart';
 import '../network/dio_provider.dart';
@@ -16,10 +17,9 @@ class PushRegistrar {
   String? _lastSentToken;
 
   Future<void> registerIfPossible() async {
-    if (!FirebaseBootstrap.isReady) return;
-
     await PushNotificationService.instance.init();
-    final token = await PushNotificationService.instance.currentFcmToken();
+
+    final token = await _resolvePushToken();
     if (token == null || token.isEmpty) return;
     if (token == _lastSentToken) return;
 
@@ -29,11 +29,12 @@ class PushRegistrar {
         data: {
           'token': token,
           'fcmToken': token,
-          'platform': defaultTargetPlatform.name,
+          'platform': _platformLabel(),
+          if (OneSignalBootstrap.isReady) 'provider': 'onesignal',
         },
       );
       _lastSentToken = token;
-      debugPrint('FCM token registered');
+      debugPrint('Push token registered (${OneSignalBootstrap.isReady ? 'OneSignal' : 'FCM'})');
     } on ApiException catch (e) {
       if (e.statusCode == 404) {
         debugPrint('FCM register endpoint not deployed yet');
@@ -44,6 +45,26 @@ class PushRegistrar {
       debugPrint('FCM register failed: $e');
     }
   }
+
+  Future<String?> _resolvePushToken() async {
+    if (OneSignalBootstrap.isReady) {
+      final osToken = OneSignalBootstrap.pushToken;
+      if (osToken != null && osToken.isNotEmpty) return osToken;
+    }
+    if (!FirebaseBootstrap.isReady) return null;
+    return PushNotificationService.instance.currentFcmToken();
+  }
+
+  String _platformLabel() {
+    if (OneSignalBootstrap.isReady) {
+      return 'onesignal_${defaultTargetPlatform.name}';
+    }
+    return defaultTargetPlatform.name;
+  }
+}
+
+void bindPushRegistrarTokenRefresh(void Function() register) {
+  OneSignalBootstrap.onPushTokenChanged = register;
 }
 
 final pushRegistrarProvider = Provider<PushRegistrar>((ref) {

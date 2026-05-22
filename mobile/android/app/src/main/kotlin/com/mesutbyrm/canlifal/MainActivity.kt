@@ -1,4 +1,4 @@
-package com.canlifal.canlifal_social
+package com.mesutbyrm.canlifal
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
