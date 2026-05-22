@@ -83,4 +83,20 @@ class MembershipCatalogEntity {
     }
     return null;
   }
+
+  MembershipCatalogEntity copyWith({
+    List<MembershipPackageEntity>? packages,
+    String? currentMembership,
+    int? jetonBalance,
+    int? cfcBalance,
+    int? daysRemaining,
+  }) {
+    return MembershipCatalogEntity(
+      packages: packages ?? this.packages,
+      currentMembership: currentMembership ?? this.currentMembership,
+      jetonBalance: jetonBalance ?? this.jetonBalance,
+      cfcBalance: cfcBalance ?? this.cfcBalance,
+      daysRemaining: daysRemaining ?? this.daysRemaining,
+    );
+  }
 }

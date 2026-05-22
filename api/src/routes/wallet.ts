@@ -14,11 +14,20 @@ async function getOrCreateCfcSettings() {
     where: { id: "default" },
     create: {
       id: "default",
-      cfcWhatsappNumber: process.env.CFC_WHATSAPP ?? process.env.PAYMENT_WHATSAPP ?? "",
-      cfcPaparaAddress: process.env.CFC_PAPARA ?? process.env.PAYMENT_PAPARA ?? "",
-      cfcBankName: process.env.CFC_BANK ?? process.env.PAYMENT_BANK ?? "",
-      cfcBankIban: process.env.CFC_IBAN ?? process.env.PAYMENT_IBAN ?? "",
-      cfcBankAccountHolder: process.env.CFC_HOLDER ?? process.env.PAYMENT_HOLDER ?? "",
+      cfcWhatsappNumber:
+        process.env.CFC_WHATSAPP ??
+        process.env.PAYMENT_WHATSAPP ??
+        "05327170173",
+      cfcPaparaAddress:
+        process.env.CFC_PAPARA ?? process.env.PAYMENT_PAPARA ?? "1555517633",
+      cfcBankName:
+        process.env.CFC_BANK ?? process.env.PAYMENT_BANK ?? "Garanti Bankası",
+      cfcBankIban:
+        process.env.CFC_IBAN ??
+        process.env.PAYMENT_IBAN ??
+        "TR94 0006 2000 0010 0006 8126 92",
+      cfcBankAccountHolder:
+        process.env.CFC_HOLDER ?? process.env.PAYMENT_HOLDER ?? "Mesut bayram",
       cfcTlRate: Number(process.env.CFC_TL_RATE ?? "1") || 1,
       cfcMinAmount: Number(process.env.CFC_MIN_AMOUNT ?? "10") || 10,
     },

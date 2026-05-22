@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -18,6 +19,7 @@ void openJetonCheckoutFlow(
   required JetonPackageEntity package,
   required String priceText,
   required VoidCallback onDone,
+  String? paymentNotes,
 }) {
   Navigator.of(context).push(
     MaterialPageRoute<void>(
@@ -25,6 +27,7 @@ void openJetonCheckoutFlow(
       builder: (ctx) => _JetonPaymentMethodPage(
         package: package,
         priceText: priceText,
+        paymentNotes: paymentNotes,
         onDone: () {
           onDone();
           Navigator.of(ctx).pop();
@@ -39,11 +42,13 @@ class _JetonPaymentMethodPage extends ConsumerWidget {
     required this.package,
     required this.priceText,
     required this.onDone,
+    this.paymentNotes,
   });
 
   final JetonPackageEntity package;
   final String priceText;
   final VoidCallback onDone;
+  final String? paymentNotes;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -111,14 +116,9 @@ class _JetonPaymentMethodPage extends ConsumerWidget {
   }
 
   void _openDetail(BuildContext context, WidgetRef ref, _JetonPayMethod method) {
-    final config = ref.read(paymentConfigProvider).valueOrNull;
-    if (config == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ödeme bilgileri yükleniyor, tekrar deneyin')),
-      );
-      ref.invalidate(paymentConfigProvider);
-      return;
-    }
+    final config = PaymentDefaults.merge(
+      ref.read(paymentConfigProvider).valueOrNull,
+    );
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (ctx) => _JetonPaymentDetailPage(
@@ -126,6 +126,7 @@ class _JetonPaymentMethodPage extends ConsumerWidget {
           package: package,
           priceText: priceText,
           config: config,
+          paymentNotes: paymentNotes,
           onDone: onDone,
         ),
       ),
@@ -142,6 +143,7 @@ class _JetonPaymentDetailPage extends ConsumerStatefulWidget {
     required this.priceText,
     required this.config,
     required this.onDone,
+    this.paymentNotes,
   });
 
   final _JetonPayMethod method;
@@ -149,6 +151,7 @@ class _JetonPaymentDetailPage extends ConsumerStatefulWidget {
   final String priceText;
   final PaymentConfigEntity config;
   final VoidCallback onDone;
+  final String? paymentNotes;
 
   @override
   ConsumerState<_JetonPaymentDetailPage> createState() =>
@@ -322,7 +325,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
       'packageTitle': widget.package.title,
       'coins': widget.package.coins,
       if (widget.package.priceTry != null) 'priceTry': widget.package.priceTry,
-      'notes': 'Jeton yükleme · $_methodApi',
+      'notes': widget.paymentNotes ?? 'Jeton yükleme · $_methodApi',
     });
     ref.invalidate(walletBalancesProvider);
     ref.invalidate(cfcPaymentRequestsProvider);

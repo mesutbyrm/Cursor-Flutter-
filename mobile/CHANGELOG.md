@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.37+39 (2026-05-22)
+
+### Gold Üyelik + ödeme bilgileri
+
+- Premium sayfa API/HTML hatasında varsayılan paketler (artık boş ekran yok)
+- Üyelik satın alma: API yoksa WhatsApp/Papara/Havale ödeme akışı
+- Varsayılan ödeme: WhatsApp 05327170173, Papara 1555517633, Garanti IBAN (Mesut bayram)
+
 ## 1.0.36+38 (2026-05-22)
 
 ### Profil, Jeton, Premium — responsive + mockup

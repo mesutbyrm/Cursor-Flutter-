@@ -24,9 +24,16 @@ class PremiumMembershipScaffold extends StatelessWidget {
 }
 
 class PremiumMembershipHeader extends StatelessWidget {
-  const PremiumMembershipHeader({super.key, required this.onBack});
+  const PremiumMembershipHeader({
+    super.key,
+    required this.onBack,
+    this.title = 'Gold Üyelik',
+    this.subtitle = 'Sınırsız erişim, özel ayrıcalıklar ve VIP deneyim',
+  });
 
   final VoidCallback onBack;
+  final String title;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -59,10 +66,10 @@ class PremiumMembershipHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        const Text(
-          'Premium Üyelik',
+        Text(
+          title,
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 26,
             letterSpacing: -0.5,
@@ -70,7 +77,7 @@ class PremiumMembershipHeader extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Sınırsız erişim, özel ayrıcalıklar ve VIP deneyim',
+          subtitle,
           textAlign: TextAlign.center,
           style: TextStyle(
             color: AppColors.textMuted.withValues(alpha: 0.95),

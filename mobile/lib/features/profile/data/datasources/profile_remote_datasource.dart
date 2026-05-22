@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -78,10 +79,20 @@ class WalletRemoteDataSource {
   }
 
   Future<PaymentConfigEntity> paymentConfig() async {
-    final res = await _dio.safeGet<Map<String, dynamic>>(
-      ApiEndpoints.paymentConfig,
-    );
-    return PaymentConfigEntity.fromJson(_unwrap(res.data));
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.paymentConfig);
+      final data = res.data;
+      if (data is String &&
+          (data.contains('<!DOCTYPE') || data.contains('<html'))) {
+        return PaymentDefaults.config;
+      }
+      if (data is Map) {
+        return PaymentDefaults.merge(
+          PaymentConfigEntity.fromJson(_unwrap(data)),
+        );
+      }
+    } catch (_) {}
+    return PaymentDefaults.config;
   }
 
   Future<void> submitPaymentRequest(Map<String, dynamic> body) async {
