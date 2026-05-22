@@ -2,21 +2,27 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.43+45` |
-| Tarih (UTC) | 2026-05-22 15:40 |
-| Commit | [`9af0c39fdeb0ee627213da3f833cecacea17d6bf`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/9af0c39fdeb0ee627213da3f833cecacea17d6bf) |
-| İş akışı | [Run 26296457168](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26296457168) |
+| Sürüm | `1.0.45+47` |
+| Tarih (UTC) | 2026-05-22 20:12 |
+| Commit | [`793b46f4bf109730e61b9981ff5b8717e6cbb66b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/793b46f4bf109730e61b9981ff5b8717e6cbb66b) |
+| İş akışı | [Run 26307382876](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26307382876) (derleme OK, yayın manuel) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.38+40 (2026-05-22)
+## 1.0.45+47 (2026-05-19)
 
-### Jeton ödeme + CFC verisi
+### OneSignal push
 
-- Jeton talebi: `amount` + `coins` (canlifal.com eski API uyumu) — **Geçersiz miktar** düzeltmesi
-- CFC ödeme ayarları yalnız siteden (`/api/payment/config`); bakiye metni API CFC
-- Jeton paket grid: aralıklar kaldırıldı (bitişik kartlar)
+- SDK entegrasyonu; App ID: `578518ed-7b16-46a9-a1e6-7692d3ba55d8`
+- Girişte `OneSignal.login(userId)`; token `POST /api/devices/fcm`
+- Kurulum: `docs/ONESIGNAL_SETUP.md`
 
+## 1.0.44+46 (2026-05-19)
 
-_Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
+### Android paket kimliği
+
+- `applicationId` / Firebase paket adı: **`com.mesutbyrm.canlifal`**
+- iOS/macOS bundle ID hizalandı
+
+_Bu dosya Build release APK iş akışı veya manuel yayın ile güncellenir._
