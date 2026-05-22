@@ -498,9 +498,25 @@ walletRouter.get("/admin/payment-requests", requireAuth, requireStaff, async (re
   });
 });
 
-/** GET /api/admin/notifications */
-walletRouter.get("/admin/notifications", requireAuth, requireStaff, async (_req, res) => {
+const PAYMENT_NOTIF_TYPES = [
+  "cfc_payment_request",
+  "jeton_payment_request",
+  "cfc_payment_approved",
+  "cfc_payment_rejected",
+  "jeton_payment_approved",
+  "jeton_payment_rejected",
+] as const;
+
+/** GET /api/admin/notifications — staff hesabına düşen bildirimler */
+walletRouter.get("/admin/notifications", requireAuth, requireStaff, async (req, res) => {
+  const userId = req.userId!;
+  const paymentOnly =
+    req.query.payment === "1" || req.query.type === "payment";
+
   const rows = await prisma.appNotification.findMany({
+    where: paymentOnly
+      ? { userId, type: { in: [...PAYMENT_NOTIF_TYPES] } }
+      : { userId },
     orderBy: { createdAt: "desc" },
     take: 100,
   });
@@ -513,6 +529,14 @@ walletRouter.get("/admin/notifications", requireAuth, requireStaff, async (_req,
       data: n.data,
       targetPath: n.targetPath,
       targetId: n.targetId,
+      read: n.read,
+      createdAt: n.createdAt.toISOString(),
+    })),
+    notifications: rows.map((n) => ({
+      id: n.id,
+      title: n.title,
+      body: n.body,
+      type: n.type,
       read: n.read,
       createdAt: n.createdAt.toISOString(),
     })),

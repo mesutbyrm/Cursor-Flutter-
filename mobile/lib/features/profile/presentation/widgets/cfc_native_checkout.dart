@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
 import '../../domain/entities/payment_config_entity.dart';
+import '../../../admin/presentation/providers/admin_providers.dart';
 import '../pages/cfc_purchase_page.dart';
 import '../providers/profile_providers.dart';
 
@@ -222,6 +223,7 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
     setState(() => _submitting = true);
     try {
       await ref.read(walletRepositoryProvider).submitPaymentRequest({
+        'requestType': 'cfc',
         'amount': amount,
         'method': _method.name,
         'senderInfo': _senderCtrl.text.trim().isEmpty ? null : _senderCtrl.text.trim(),
@@ -230,9 +232,15 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
       if (!mounted) return;
       ref.invalidate(walletBalancesProvider);
       ref.invalidate(cfcPaymentRequestsProvider);
+      ref.invalidate(adminCfcPaymentRequestsProvider);
+      ref.invalidate(adminPaymentNotificationsProvider);
       widget.onSubmitted();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Talep gönderildi. Onay sonrası CFC yansır.')),
+        const SnackBar(
+          content: Text(
+            'Talep gönderildi. Yönetim paneline bildirim düştü; onay sonrası CFC yansır.',
+          ),
+        ),
       );
     } catch (e) {
       if (mounted) {

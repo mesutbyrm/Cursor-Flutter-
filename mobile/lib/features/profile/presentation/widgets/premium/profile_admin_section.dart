@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/auth/staff_roles.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../admin/presentation/providers/admin_providers.dart';
 import 'profile_glass.dart';
 
-class ProfileAdminSection extends StatelessWidget {
+class ProfileAdminSection extends ConsumerWidget {
   const ProfileAdminSection({required this.role, super.key});
 
   final String role;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (!StaffRoles.isStaff(role)) return const SizedBox.shrink();
+
+    final pending = ref.watch(adminPendingPaymentsCountProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -66,7 +70,24 @@ class ProfileAdminSection extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded),
+              if (pending > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.liveRed,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    pending > 99 ? '99+' : '$pending',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                )
+              else
+                const Icon(Icons.chevron_right_rounded),
             ],
           ),
         ),

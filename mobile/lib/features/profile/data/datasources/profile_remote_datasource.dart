@@ -89,14 +89,9 @@ class WalletRemoteDataSource {
       );
     }
     if (data is! Map) {
-      throw const ApiException('Ödeme ayarları okunamadı');
+      return PaymentDefaults.config;
     }
     final remote = PaymentConfigEntity.fromJson(_unwrap(data));
-    if (remote.whatsappNumber.trim().isEmpty &&
-        remote.paparaAddress.trim().isEmpty &&
-        remote.bankIban.trim().isEmpty) {
-      throw const ApiException('Ödeme bilgileri sitede tanımlı değil');
-    }
     return PaymentDefaults.merge(remote);
   }
 
