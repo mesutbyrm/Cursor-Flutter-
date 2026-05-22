@@ -2,27 +2,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.45+47` |
-| Tarih (UTC) | 2026-05-22 20:12 |
-| Commit | [`793b46f4bf109730e61b9981ff5b8717e6cbb66b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/793b46f4bf109730e61b9981ff5b8717e6cbb66b) |
-| İş akışı | [Run 26307382876](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26307382876) (derleme OK, yayın manuel) |
+| Sürüm | `1.0.46+48` |
+| Tarih (UTC) | 2026-05-22 21:06 |
+| Commit | [`c28096ae4e22234b97e90002820f43391ed48e04`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/c28096ae4e22234b97e90002820f43391ed48e04) |
+| İş akışı | [Run 26311328361](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26311328361) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.45+47 (2026-05-19)
+## 1.0.46+48 (2026-05-22)
 
-### OneSignal push
+### Yayın (CI)
 
-- SDK entegrasyonu; App ID: `578518ed-7b16-46a9-a1e6-7692d3ba55d8`
-- Girişte `OneSignal.login(userId)`; token `POST /api/devices/fcm`
-- Kurulum: `docs/ONESIGNAL_SETUP.md`
+- `apk-latest` GitHub Release yayını düzeltildi (sürekli sürüm akışı)
 
-## 1.0.44+46 (2026-05-19)
 
-### Android paket kimliği
-
-- `applicationId` / Firebase paket adı: **`com.mesutbyrm.canlifal`**
-- iOS/macOS bundle ID hizalandı
-
-_Bu dosya Build release APK iş akışı veya manuel yayın ile güncellenir._
+_Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
