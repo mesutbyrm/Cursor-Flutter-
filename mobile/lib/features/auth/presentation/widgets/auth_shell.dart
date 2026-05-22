@@ -56,10 +56,9 @@ class AuthShell extends StatelessWidget {
                         constraints: const BoxConstraints(maxWidth: 400),
                         child: Column(
                           children: [
-                            if (useAppIcon)
-                              const CanlifalBrandLogo.appIcon(size: 88)
-                            else
-                              const CanlifalBrandLogo.horizontal(height: 108),
+                            CanlifalBrandLogo.appIcon(
+                              size: useAppIcon ? 96 : 112,
+                            ),
                             const SizedBox(height: 28),
                             child,
                           ],
