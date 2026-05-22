@@ -12,6 +12,7 @@ class PushNotificationService {
   static final PushNotificationService instance = PushNotificationService._();
 
   static const _channelId = 'canlifal_default';
+  static const _urgentChannelId = 'canlifal_urgent';
   static const _channelName = 'Canlifal';
 
   final FlutterLocalNotificationsPlugin _local =
@@ -46,6 +47,17 @@ class PushNotificationService {
               _channelName,
               description: 'Canlifal bildirimleri',
               importance: Importance.high,
+            ),
+          );
+      await _local
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(
+            const AndroidNotificationChannel(
+              _urgentChannelId,
+              'Canlifal — Acil',
+              description: 'Mesaj, ödeme ve canlı yayın bildirimleri',
+              importance: Importance.max,
             ),
           );
     }

@@ -41,6 +41,14 @@ Push token sunucuya `POST /api/devices/fcm` ile kaydedilir (`provider: onesignal
 
 `api/.env.example` dosyasını kopyalayıp anahtarları doldurun; API’yi yeniden başlatın.
 
+## Anlık bildirimler (kapalı uygulama)
+
+Sunucu olayları push tetikler: **mesaj**, **ödeme (admin + kullanıcı)**, **canlı yayın** (takipçiler).
+
+- Uygulama kapalıyken: OneSignal + FCM
+- Bildirime tıklayınca ilgili sayfa açılır (`/chat/…`, `/admin`, `/live`, …)
+- canlifal.com için: [CANLIFAL_COM_PUSH.md](../../docs/CANLIFAL_COM_PUSH.md)
+
 ## Test
 
 1. Uygulamayı fiziksel cihazda açın, bildirim izni verin, giriş yapın

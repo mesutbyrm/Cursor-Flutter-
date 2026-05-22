@@ -39,6 +39,10 @@ void navigateFromNotification(GoRouter router, AppNotificationEntity n) {
       return;
     case 'message':
     case 'chat':
+      if (n.targetId != null && n.targetId!.isNotEmpty) {
+        router.push('/chat/${n.targetId}');
+        return;
+      }
       router.go('/messages');
       return;
     case 'social':

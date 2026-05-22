@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.47+49 (2026-05-22)
+
+### Anlık push bildirimleri
+
+- Mesaj, ödeme (admin onayı), canlı yayın → OneSignal yüksek öncelik
+- Bildirime tıklayınca doğru ekrana yönlendirme
+- API: `push_events`, `POST /api/video-streams/.../live-started`
+
 ## 1.0.46+48 (2026-05-22)
 
 ### Yayın (CI)

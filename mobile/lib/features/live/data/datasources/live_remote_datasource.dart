@@ -99,7 +99,16 @@ class LiveRemoteDataSource {
         message: 'Yayın oluşturuldu ancak oda kimliği alınamadı',
       );
     }
-    return id.toString();
+    final streamId = id.toString();
+    try {
+      await _dio.safePost<dynamic>(
+        '/api/video-streams/$streamId/live-started',
+        data: {'title': title},
+      );
+    } catch (_) {
+      // Site uç yoksa sessiz; push canlifal.com backend'inde tetiklenmeli
+    }
+    return streamId;
   }
 
   Future<void> endVideoStream(String streamId) async {

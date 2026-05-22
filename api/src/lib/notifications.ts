@@ -9,6 +9,8 @@ export async function createNotification(input: {
   data?: string | Record<string, unknown>;
   targetPath?: string;
   targetId?: string;
+  /** true → OneSignal yüksek öncelik (mesaj, ödeme, canlı) */
+  urgent?: boolean;
 }) {
   const dataStr =
     input.data == null
@@ -29,7 +31,10 @@ export async function createNotification(input: {
   });
 
   if (input.userId) {
-    const extra: Record<string, string> = {};
+    const extra: Record<string, string> = {
+      title: input.title,
+    };
+    if (input.body) extra.body = input.body;
     if (input.targetPath) extra.targetPath = input.targetPath;
     if (input.targetId) extra.targetId = input.targetId;
     if (input.type) extra.type = input.type;
@@ -37,9 +42,23 @@ export async function createNotification(input: {
       userId: input.userId,
       title: input.title,
       body: input.body,
-      data: Object.keys(extra).length ? extra : undefined,
+      data: extra,
+      urgent: input.urgent ?? isUrgentNotificationType(input.type),
     });
   }
 
   return row;
+}
+
+function isUrgentNotificationType(type?: string): boolean {
+  if (!type) return false;
+  const t = type.toLowerCase();
+  return (
+    t === "message" ||
+    t === "live" ||
+    t.includes("payment") ||
+    t.includes("jeton") ||
+    t.includes("cfc") ||
+    t.startsWith("admin")
+  );
 }

@@ -22,11 +22,13 @@ export async function sendOneSignalToUser(input: {
   title: string;
   body?: string;
   data?: Record<string, string>;
+  /** Ödeme onayı, mesaj vb. — kapalıyken bile hızlı teslim */
+  urgent?: boolean;
 }): Promise<boolean> {
   const cfg = config();
   if (!cfg || !input.userId.trim()) return false;
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     app_id: cfg.appId,
     target_channel: "push",
     include_aliases: { external_id: [input.userId.trim()] },
@@ -37,6 +39,11 @@ export async function sendOneSignalToUser(input: {
     },
     data: input.data ?? {},
   };
+  if (input.urgent) {
+    payload.priority = 10;
+    payload.android_channel_id = "canlifal_urgent";
+    payload.ios_interruption_level = "active";
+  }
 
   try {
     const res = await fetch(ONESIGNAL_API, {

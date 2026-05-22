@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
+import '../push/push_navigation_handler.dart';
 import 'onesignal_config.dart';
 
 typedef OneSignalTokenRefreshCallback = void Function();
@@ -33,7 +34,14 @@ class OneSignalBootstrap {
       });
 
       OneSignal.Notifications.addClickListener((event) {
-        debugPrint('OneSignal notification click: ${event.notification.additionalData}');
+        PushNavigationHandler.handleAdditionalData(
+          event.notification.additionalData,
+        );
+      });
+
+      OneSignal.Notifications.addForegroundWillDisplayListener((event) {
+        event.notification.display();
+        PushNavigationHandler.onPushReceived?.call();
       });
 
       _ready = true;

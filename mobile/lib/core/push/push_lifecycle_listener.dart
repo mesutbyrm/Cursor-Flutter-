@@ -3,8 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/admin/presentation/providers/admin_providers.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../../features/messages/presentation/providers/messages_providers.dart';
+import '../../features/notifications/presentation/providers/notifications_providers.dart';
+import '../../app/router/app_router.dart';
 import '../onesignal/onesignal_bootstrap.dart';
+import 'push_navigation_handler.dart';
 import 'push_notification_service.dart';
 import 'push_registrar.dart';
 
@@ -29,6 +34,21 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
       if (!mounted) return;
       ref.read(pushRegistrarProvider).registerIfPossible();
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      PushNavigationHandler.install(
+        ref.read(goRouterProvider),
+        onReceived: _onPushReceived,
+      );
+    });
+  }
+
+  void _onPushReceived() {
+    if (!mounted) return;
+    ref.invalidate(notificationsListProvider);
+    ref.invalidate(conversationsProvider);
+    ref.invalidate(adminPaymentNotificationsProvider);
+    ref.invalidate(adminPaymentRequestsProvider);
   }
 
   @override

@@ -8,13 +8,12 @@
 | İş akışı | [Run 26314532621](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26314532621) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
-## Özellikler
+## Bu sürümde
 
 ## 1.0.46+48 (2026-05-22)
 
 ### Yayın (CI)
 
 - `apk-latest` GitHub Release yayını düzeltildi (sürekli sürüm akışı)
-
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma";
+import { notifyDirectMessage } from "../lib/push_events";
 import { ok } from "../lib/response";
 import { requireAuth } from "../middleware/requireAuth";
 
@@ -111,6 +112,10 @@ messagesRouter.post("/conversations/:id/messages", requireAuth, async (req, res)
       id: req.params.id,
       OR: [{ userAId: userId }, { userBId: userId }],
     },
+    include: {
+      userA: { select: { id: true, displayName: true, username: true } },
+      userB: { select: { id: true, displayName: true, username: true } },
+    },
   });
   if (!conv) {
     return res.status(404).json({ success: false, error: "Sohbet bulunamadı" });
@@ -133,6 +138,20 @@ messagesRouter.post("/conversations/:id/messages", requireAuth, async (req, res)
         ? { unreadForB: { increment: 1 } }
         : { unreadForA: { increment: 1 } }),
     },
+  });
+
+  const recipientId =
+    conv.userAId === userId ? conv.userBId : conv.userAId;
+  const sender = conv.userAId === userId ? conv.userA : conv.userB;
+  const senderLabel =
+    sender.displayName ?? sender.username ?? "Bir kullanıcı";
+
+  void notifyDirectMessage({
+    conversationId: conv.id,
+    senderId: userId,
+    recipientId,
+    preview: text.trim(),
+    senderLabel,
   });
 
   return ok(res, {

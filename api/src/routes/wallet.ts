@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma";
 import { jsonError } from "../lib/jsonError";
 import { createNotification } from "../lib/notifications";
+import { notifyStaffPaymentPending } from "../lib/push_events";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireStaff, isStaffRole } from "../middleware/requireStaff";
 
@@ -262,27 +263,15 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
     data: notifData,
     targetPath: userPath,
     targetId: row.id,
+    urgent: true,
   });
 
-  const staff = await prisma.user.findMany({
-    where: { role: { in: ["admin", "yonetici", "moderator", "destek", "yardim"] } },
-    select: { id: true },
+  void notifyStaffPaymentPending({
+    paymentRequestId: row.id,
+    requestType: requestType as "jeton" | "cfc",
+    amountLabel: userBody,
+    method,
   });
-  const staffTitle =
-    requestType === "jeton"
-      ? "Ödeme yapıldı — Jeton yükleme talebi"
-      : "Ödeme yapıldı — CFC yükleme talebi";
-  for (const s of staff) {
-    await createNotification({
-      userId: s.id,
-      title: staffTitle,
-      body: userBody,
-      type: notifType,
-      data: notifData,
-      targetPath: "/admin",
-      targetId: row.id,
-    });
-  }
 
   return res.status(201).json(requestPayload(row));
 });
@@ -398,6 +387,7 @@ walletRouter.patch(
         data: { paymentRequestId: row.id, amount: row.amount, method: row.method },
         targetPath: isJeton ? "/jeton-yukle" : "/cfc-store",
         targetId: row.id,
+        urgent: true,
       });
     } else if (action === "reject") {
       await prisma.cfcPaymentRequest.update({
@@ -417,6 +407,7 @@ walletRouter.patch(
         data: { paymentRequestId: row.id, amount: row.amount, method: row.method },
         targetPath: isJeton ? "/jeton-yukle" : "/cfc-store",
         targetId: row.id,
+        urgent: true,
       });
     } else {
       return jsonError(res, 400, "Geçersiz istek");
