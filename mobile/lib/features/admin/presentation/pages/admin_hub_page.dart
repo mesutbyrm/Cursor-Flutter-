@@ -11,8 +11,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/admin_providers.dart';
+import '../providers/staff_access_provider.dart';
 
-/// Admin — bekleyen ödemeler ve ödeme bildirimleri.
+/// Admin / yönetici — site ödeme istekleri ve bildirimler.
 class AdminHubPage extends ConsumerStatefulWidget {
   const AdminHubPage({super.key});
 
@@ -31,7 +32,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
     _tabs = TabController(length: 2, vsync: this);
     _poll = Timer.periodic(const Duration(seconds: 25), (_) {
       if (!mounted) return;
-      ref.invalidate(adminCfcPaymentRequestsProvider);
+      ref.invalidate(adminPaymentRequestsProvider);
       ref.invalidate(adminPaymentNotificationsProvider);
     });
   }
@@ -44,14 +45,34 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
   }
 
   void _refreshAll() {
-    ref.invalidate(adminCfcPaymentRequestsProvider);
-    ref.invalidate(adminPaymentNotificationsProvider);
+      ref.invalidate(adminPaymentRequestsProvider);
+      ref.invalidate(adminPaymentNotificationsProvider);
+      ref.invalidate(adminSitePaymentSettingsProvider);
   }
 
   @override
   Widget build(BuildContext context) {
-    final pending = ref.watch(adminCfcPaymentRequestsProvider);
+    final access = ref.watch(staffAccessProvider);
+    if (!access.canManagePayments) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: DiscoverBackground(
+          child: Center(
+            child: DiscoverEmptyState(
+              icon: Icons.lock_outline_rounded,
+              message:
+                  'Bu alan yalnızca admin veya yönetici hesapları içindir.',
+              actionLabel: 'Geri',
+              action: () => Navigator.of(context).maybePop(),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final pending = ref.watch(adminPaymentRequestsProvider);
     final notifs = ref.watch(adminPaymentNotificationsProvider);
+    final siteSettings = ref.watch(adminSitePaymentSettingsProvider);
     final pendingCount = ref.watch(adminPendingPaymentsCountProvider);
 
     return Scaffold(
@@ -70,8 +91,8 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                   ),
                   const Expanded(
                     child: DiscoverTabHeader(
-                      title: 'Yönetim',
-                      subtitle: 'Ödeme talepleri ve bildirimler',
+                      title: 'Ödeme istekleri',
+                      subtitle: 'canlifal.com · jeton ve CFC talepleri',
                     ),
                   ),
                   DiscoverIconButton(
@@ -125,6 +146,43 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                   ),
                 ],
               ),
+            ),
+            siteSettings.when(
+              data: (cfg) {
+                if (cfg.values.every((v) => v == '—' || v.isEmpty)) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                  child: DiscoverGlassCard(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Site ödeme bilgileri',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        for (final e in cfg.entries)
+                          if (e.value != '—')
+                            Text(
+                              '${e.key}: ${e.value}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             ),
             Expanded(
               child: TabBarView(

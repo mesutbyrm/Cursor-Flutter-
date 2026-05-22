@@ -76,6 +76,10 @@ abstract class UserDto with _$UserDto {
     if (merged['displayName'] == null && merged['name'] != null) {
       merged['displayName'] = merged['name'];
     }
+    final role = pick(root, ['role']) ?? pick(merged, ['role', 'tier']);
+    if (role != null) {
+      merged['role'] = role;
+    }
     return UserDto.fromApiMap(merged);
   }
 

@@ -330,7 +330,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     );
     ref.invalidate(walletBalancesProvider);
     ref.invalidate(cfcPaymentRequestsProvider);
-    ref.invalidate(adminCfcPaymentRequestsProvider);
+    ref.invalidate(adminPaymentRequestsProvider);
     ref.invalidate(adminPaymentNotificationsProvider);
   }
 
