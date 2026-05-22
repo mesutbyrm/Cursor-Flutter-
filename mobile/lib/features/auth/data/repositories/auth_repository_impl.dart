@@ -6,12 +6,19 @@ import '../../../../core/network/token_storage.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
+import '../datasources/native_auth_datasource.dart';
 import '../models/user_dto.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  AuthRepositoryImpl(this._remote, this._tokens, this._cookieJar);
+  AuthRepositoryImpl(
+    this._remote,
+    this._native,
+    this._tokens,
+    this._cookieJar,
+  );
 
   final AuthRemoteDataSource _remote;
+  final NativeAuthDataSource _native;
   final TokenStorage _tokens;
   final CookieJar _cookieJar;
 
@@ -53,40 +60,64 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    if (Env.useNextAuth) {
-      await _remote.login(email: email, password: password);
-      await _tokens.writeTokens(
-        access: TokenStorage.sessionCookieMarker,
-        refresh: null,
-      );
-      final s = await _remote.session();
-      final u = _userMap(s);
-      if (u == null) {
-        throw const ApiException('Oturum oluşturulamadı');
+    try {
+      final body = await _remote.login(email: email, password: password);
+      if (body.containsKey('ok') && Env.useNextAuth) {
+        await _tokens.writeTokens(
+          access: TokenStorage.sessionCookieMarker,
+          refresh: null,
+        );
+        final s = await _remote.session();
+        final u = _userMap(s);
+        if (u == null) throw const ApiException('Oturum oluşturulamadı');
+        return UserDto.fromJson(u).toEntity();
       }
-      return UserDto.fromJson(u).toEntity();
+      return _persistAndMap(body);
+    } on ApiException {
+      rethrow;
     }
-    final body = await _remote.login(email: email, password: password);
-    return _persistAndMap(body);
   }
 
   @override
   Future<UserEntity> register({
     required String email,
     required String password,
-    String? displayName,
+    required String displayName,
+    required String username,
+    String? phone,
+    String? birthDate,
+    String? birthTime,
+    String language = 'tr',
   }) async {
     final body = await _remote.register(
       email: email,
       password: password,
       displayName: displayName,
+      username: username,
+      phone: phone,
+      birthDate: birthDate,
+      birthTime: birthTime,
+      language: language,
     );
     return _persistAndMap(body);
   }
 
   @override
+  Future<UserEntity> loginWithGoogle() async {
+    final body = await _native.signInWithGoogle();
+    return _persistAndMap(body);
+  }
+
+  @override
+  Future<UserEntity> loginWithTikTok() async {
+    final body = await _native.signInWithTikTok();
+    return _persistAndMap(body);
+  }
+
+  @override
   Future<UserEntity?> currentUser() async {
-    if (Env.useNextAuth) {
+    final access = await _tokens.readAccess();
+    if (access == TokenStorage.sessionCookieMarker) {
       try {
         final s = await _remote.session();
         final u = s['user'];
@@ -99,11 +130,10 @@ class AuthRepositoryImpl implements AuthRepository {
         return null;
       }
     }
-    final token = await _tokens.readAccess();
-    if (token == null || token.isEmpty) return null;
+    if (access == null || access.isEmpty) return null;
     try {
       final me = await _remote.me();
-      final um = AuthRepositoryImpl._userMap(me) ?? me;
+      final um = _userMap(me) ?? me;
       return UserDto.fromJson(um).toEntity();
     } catch (_) {
       await _tokens.clear();
@@ -116,9 +146,7 @@ class AuthRepositoryImpl implements AuthRepository {
     if (Env.useNextAuth) {
       try {
         await _remote.signOutNextAuth();
-      } catch (_) {
-        // Oturum zaten kapalı olabilir
-      }
+      } catch (_) {}
       await _cookieJar.deleteAll();
     }
     await _tokens.clear();

@@ -31,6 +31,7 @@ v1.use("/users", usersRouter);
 v1.use("/", socialRouter);
 
 app.use("/api/v1", v1);
+app.use("/api/auth", authRouter);
 app.use("/api/social", socialPostsRouter);
 app.use("/api/gifts", giftsRouter);
 app.use("/api/video-streams", videoStreamsRouter);

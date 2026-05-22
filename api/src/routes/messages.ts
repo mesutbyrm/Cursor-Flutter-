@@ -23,6 +23,51 @@ function conversationPayload(c: {
   };
 }
 
+/** POST /api/messages/conversations — yeni sohbet veya mevcut thread */
+messagesRouter.post("/conversations", requireAuth, async (req, res) => {
+  const userId = req.userId!;
+  const recipientId =
+    (req.body?.recipientId as string | undefined) ??
+    (req.body?.userId as string | undefined);
+  if (!recipientId?.trim() || recipientId === userId) {
+    return res.status(400).json({
+      success: false,
+      error: "Geçersiz alıcı",
+    });
+  }
+
+  const recipient = await prisma.user.findUnique({
+    where: { id: recipientId.trim() },
+    select: { id: true, displayName: true, username: true, avatarUrl: true },
+  });
+  if (!recipient) {
+    return res.status(404).json({ success: false, error: "Kullanıcı bulunamadı" });
+  }
+
+  const [userAId, userBId] =
+    userId < recipient.id
+      ? [userId, recipient.id]
+      : [recipient.id, userId];
+
+  let conv = await prisma.conversation.findFirst({
+    where: { userAId, userBId },
+  });
+
+  if (!conv) {
+    conv = await prisma.conversation.create({
+      data: { userAId, userBId },
+    });
+  }
+
+  return res.status(200).json({
+    id: conv.id,
+    conversationId: conv.id,
+    title: recipient.displayName ?? recipient.username ?? "Sohbet",
+    peer: { avatarUrl: recipient.avatarUrl },
+    unreadCount: conv.userAId === userId ? conv.unreadForA : conv.unreadForB,
+  });
+});
+
 /** GET /api/messages/conversations */
 messagesRouter.get("/conversations", requireAuth, async (req, res) => {
   const userId = req.userId!;

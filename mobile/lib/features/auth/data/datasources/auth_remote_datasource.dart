@@ -14,14 +14,25 @@ class AuthRemoteDataSource {
     required String email,
     required String password,
   }) async {
-    if (Env.useNextAuth) {
-      return _loginNextAuth(email: email, password: password);
+    try {
+      return await _loginJwt(email: email, password: password);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 && Env.useNextAuth) {
+        return _loginNextAuth(email: email, password: password);
+      }
+      rethrow;
     }
+  }
+
+  Future<Map<String, dynamic>> _loginJwt({
+    required String email,
+    required String password,
+  }) async {
     final res = await _dio.safePost<Map<String, dynamic>>(
       ApiEndpoints.authLogin,
       data: {'email': email, 'password': password},
     );
-    return res.data ?? {};
+    return _unwrap(res.data);
   }
 
   Future<Map<String, dynamic>> _loginNextAuth({
@@ -69,31 +80,32 @@ class AuthRemoteDataSource {
   Future<Map<String, dynamic>> register({
     required String email,
     required String password,
-    String? displayName,
+    required String displayName,
+    required String username,
+    String? phone,
+    String? birthDate,
+    String? birthTime,
+    String language = 'tr',
   }) async {
-    if (Env.useNextAuth) {
-      throw const ApiException(
-        'Kayıt şu an yalnızca canlifal.com web sitesinden yapılabilir.',
-      );
-    }
     final res = await _dio.safePost<Map<String, dynamic>>(
       ApiEndpoints.authRegister,
       data: {
         'email': email,
         'password': password,
-        if (displayName != null && displayName.isNotEmpty)
-          'displayName': displayName,
+        'displayName': displayName,
+        'username': username,
+        if (phone != null && phone.isNotEmpty) 'phone': phone,
+        if (birthDate != null && birthDate.isNotEmpty) 'birthDate': birthDate,
+        if (birthTime != null && birthTime.isNotEmpty) 'birthTime': birthTime,
+        'language': language,
       },
     );
-    return res.data ?? {};
+    return _unwrap(res.data);
   }
 
   Future<Map<String, dynamic>> me() async {
-    if (Env.useNextAuth) {
-      return session();
-    }
     final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.authMe);
-    return res.data ?? {};
+    return _unwrap(res.data);
   }
 
   Future<Map<String, dynamic>> session() async {
@@ -111,5 +123,13 @@ class AuthRemoteDataSource {
       data: {'csrfToken': csrf, 'json': 'true'},
       options: Options(contentType: Headers.formUrlEncodedContentType),
     );
+  }
+
+  Map<String, dynamic> _unwrap(Map<String, dynamic>? body) {
+    if (body == null) return {};
+    final data = body['data'];
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return body;
   }
 }

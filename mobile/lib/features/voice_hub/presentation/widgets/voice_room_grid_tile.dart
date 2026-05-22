@@ -17,7 +17,10 @@ class VoiceRoomGridTile extends StatelessWidget {
   final VoidCallback onTap;
   final bool isMine;
 
-  static const crossAxisCount = 4;
+  static const crossAxisCount = 3;
+
+  /// Daha büyük karo (ana sayfa + tüm odalar).
+  static const tileAspectRatio = 0.92;
 
   @override
   Widget build(BuildContext context) {
@@ -50,10 +53,16 @@ class VoiceRoomGridTile extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(13),
             child: AspectRatio(
-              aspectRatio: 0.78,
+              aspectRatio: VoiceRoomGridTile.tileAspectRatio,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
+                  if (room.displayOnline > 0)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: _OnlineBadge(count: room.displayOnline),
+                    ),
                   if (bg != null && bg.isNotEmpty)
                     CachedNetworkImage(imageUrl: bg, fit: BoxFit.cover)
                   else
@@ -79,20 +88,16 @@ class VoiceRoomGridTile extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(6, 6, 6, 5),
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          children: [
-                            Text(
-                              room.icon ?? '💬',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            const Spacer(),
-                            if (room.displayOnline > 0)
-                              _OnlineDot(count: room.displayOnline),
-                          ],
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            room.icon ?? '💬',
+                            style: const TextStyle(fontSize: 20),
+                          ),
                         ),
                         if (isMine)
                           Padding(
@@ -126,8 +131,8 @@ class VoiceRoomGridTile extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
-                            fontSize: 9,
-                            height: 1.05,
+                            fontSize: 11,
+                            height: 1.1,
                           ),
                         ),
                         const SizedBox(height: 3),
@@ -167,28 +172,35 @@ class VoiceRoomGridTile extends StatelessWidget {
   }
 }
 
-class _OnlineDot extends StatelessWidget {
-  const _OnlineDot({required this.count});
+class _OnlineBadge extends StatelessWidget {
+  const _OnlineBadge({required this.count});
   final int count;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      constraints: const BoxConstraints(minWidth: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.onlineGreen.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppColors.onlineGreen.withValues(alpha: 0.6),
-          width: 0.8,
-        ),
+        color: const Color(0xFFE53935),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE53935).withValues(alpha: 0.55),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Text(
         '$count',
+        textAlign: TextAlign.center,
         style: const TextStyle(
-          fontSize: 8,
+          fontSize: 11,
           fontWeight: FontWeight.w900,
-          color: AppColors.onlineGreen,
+          color: Colors.white,
+          height: 1,
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/auth_providers.dart';
@@ -28,8 +29,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.dispose();
   }
 
-  void _openGoogleOAuth() {
-    context.push('/auth/google');
+  Future<void> _googleLogin() async {
+    await ref.read(authControllerProvider.notifier).loginWithGoogle();
+  }
+
+  Future<void> _tiktokLogin() async {
+    await ref.read(authControllerProvider.notifier).loginWithTikTok();
   }
 
   @override
@@ -55,15 +60,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 subtitle: 'Hesabına giriş yap ve fal dünyasına dön.',
               ),
               const SizedBox(height: 24),
-              if (Env.useNextAuth) ...[
-                GoogleSignInButton(
-                  label: 'Google ile devam et',
-                  onPressed: _openGoogleOAuth,
+              GoogleSignInButton(
+                label: 'Google ile Giriş yap',
+                onPressed: auth.isLoading ? null : _googleLogin,
+              ),
+              if (Env.hasTikTokLogin) ...[
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: auth.isLoading ? null : _tiktokLogin,
+                  icon: const Icon(Icons.music_note_rounded, size: 20),
+                  label: const Text('TikTok ile Giriş yap'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.35),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                 ),
-                const SizedBox(height: 20),
-                const AuthOrDivider(),
-                const SizedBox(height: 20),
               ],
+              const SizedBox(height: 20),
+              const AuthOrDivider(),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: _email,
                 keyboardType: TextInputType.emailAddress,

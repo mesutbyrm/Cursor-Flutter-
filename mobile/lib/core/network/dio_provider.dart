@@ -11,6 +11,8 @@ import 'token_storage.dart';
 bool _isPublicAuthPath(String path) {
   return path == ApiEndpoints.authLogin ||
       path == ApiEndpoints.authRegister ||
+      path == ApiEndpoints.authGoogle ||
+      path == ApiEndpoints.authTiktok ||
       path == ApiEndpoints.authRefresh ||
       path == ApiEndpoints.authCsrf ||
       path == ApiEndpoints.authCredentials ||
