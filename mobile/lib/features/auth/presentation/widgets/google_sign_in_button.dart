@@ -117,37 +117,3 @@ class _GoogleGlyph extends StatelessWidget {
     );
   }
 }
-
-/// İnce ayırıcı + "veya" etiketi.
-class AuthOrDivider extends StatelessWidget {
-  const AuthOrDivider({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Divider(
-            color: AppColors.accentPurple.withValues(alpha: 0.25),
-          ),
-        ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14),
-          child: Text(
-            'veya',
-            style: TextStyle(
-              color: AppColors.textMuted,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Divider(
-            color: AppColors.accentPurple.withValues(alpha: 0.25),
-          ),
-        ),
-      ],
-    );
-  }
-}

@@ -44,37 +44,39 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return AuthShell(
       showBack: true,
-      child: Form(
-        key: _form,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const AuthBrandHeader(
-              title: 'Şifreni sıfırla',
-              subtitle: 'E-postana doğrulama kodu göndereceğiz.',
-            ),
-            const SizedBox(height: 28),
-            TextFormField(
-              controller: _email,
-              keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(color: AppColors.textPrimary),
-              decoration: authInputDecoration(
-                labelText: 'E-posta',
-                prefixIcon: Icons.mail_outline_rounded,
+      child: AuthFormCard(
+        child: Form(
+          key: _form,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const AuthBrandHeader(
+                title: 'Şifreni sıfırla',
+                subtitle: 'E-postana doğrulama kodu göndereceğiz.',
               ),
-              validator: (v) =>
-                  v != null && v.contains('@') ? null : 'Geçerli e-posta girin',
-            ),
-            const SizedBox(height: 26),
-            AuthPrimaryButton(
-              label: 'Kod gönder',
-              onPressed: _continue,
-            ),
-            AuthTextLink(
-              label: 'Girişe dön',
-              onPressed: () => context.go('/login'),
-            ),
-          ],
+              const SizedBox(height: 24),
+              TextFormField(
+                controller: _email,
+                keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: authInputDecoration(
+                  labelText: 'E-posta',
+                  prefixIcon: Icons.mail_outline_rounded,
+                ),
+                validator: (v) =>
+                    v != null && v.contains('@') ? null : 'Geçerli e-posta girin',
+              ),
+              const SizedBox(height: 22),
+              AuthPrimaryButton(
+                label: 'Kod gönder',
+                onPressed: _continue,
+              ),
+              AuthTextLink(
+                label: 'Girişe dön',
+                onPressed: () => context.go('/login'),
+              ),
+            ],
+          ),
         ),
       ),
     );

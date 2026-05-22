@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.33+35 (2026-05-22)
+
+### Giriş / Kayıt — mockup tasarım
+
+- Şeffaf marka PNG’leri (`assets/brand/`) — kristal küre logo + uygulama ikonu
+- Koyu mor arka plan, cam form kartı, mor **Giriş Yap** / **Kayıt Ol** butonları
+- Kayıt: Ad Soyad, telefon, şifre tekrar alanları
+
 ## 1.0.32+34 (2026-05-21)
 
 ### Jeton mağazası — boş liste asla gösterilmez
