@@ -10,6 +10,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/admin_providers.dart';
 import '../providers/staff_access_provider.dart';
 
@@ -30,7 +31,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
   void initState() {
     super.initState();
     _tabs = TabController(length: 2, vsync: this);
-    _poll = Timer.periodic(const Duration(seconds: 25), (_) {
+    _poll = Timer.periodic(const Duration(seconds: 12), (_) {
       if (!mounted) return;
       ref.invalidate(adminPaymentRequestsProvider);
       ref.invalidate(adminPaymentNotificationsProvider);
@@ -222,11 +223,16 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
         },
       );
       _refreshAll();
+      await ref.read(adminPaymentRequestsProvider.future);
+      await ref.read(adminPaymentNotificationsProvider.future);
+      ref.invalidate(walletBalancesProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              action == 'approve' ? 'Talep onaylandı' : 'Talep reddedildi',
+              action == 'approve'
+                  ? 'Onaylandı — liste güncellendi (jeton → jeton, CFC → CFC)'
+                  : 'Talep reddedildi',
             ),
           ),
         );

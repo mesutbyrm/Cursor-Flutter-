@@ -8,7 +8,7 @@ class PaymentConfigEntity {
     required this.bankIban,
     this.bankName,
     this.bankAccountHolder = '',
-    this.cfcRate = 1,
+    this.cfcRate = 0.25,
     this.minCfcAmount = 10,
   });
 
@@ -37,7 +37,7 @@ class PaymentConfigEntity {
             'rate',
           ]) as num?)
               ?.toDouble() ??
-          1,
+          0.25,
       minCfcAmount: () {
         final m = asInt(pick(json, [
           'minCfcAmount',

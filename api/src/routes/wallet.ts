@@ -28,7 +28,7 @@ async function getOrCreateCfcSettings() {
         "TR94 0006 2000 0010 0006 8126 92",
       cfcBankAccountHolder:
         process.env.CFC_HOLDER ?? process.env.PAYMENT_HOLDER ?? "Mesut bayram",
-      cfcTlRate: Number(process.env.CFC_TL_RATE ?? "1") || 1,
+      cfcTlRate: Number(process.env.CFC_TL_RATE ?? "0.25") || 0.25,
       cfcMinAmount: Number(process.env.CFC_MIN_AMOUNT ?? "10") || 10,
     },
     update: {},
@@ -178,10 +178,7 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
     .toLowerCase()
     .trim();
   const isJeton =
-    reqType === "jeton" ||
-    req.body?.packageId != null ||
-    req.body?.coins != null ||
-    (reqType === "jeton" && req.body?.amount != null);
+    reqType === "cfc" ? false : reqType === "jeton" || req.body?.packageId != null;
 
   let amount: number;
   let requestType = "cfc";
@@ -368,9 +365,12 @@ walletRouter.patch(
       return jsonError(res, 400, "Bu talep zaten işlenmiş");
     }
 
-    const isJeton = row.requestType === "jeton";
+    const isJeton = row.requestType === "jeton" || row.packageId != null;
 
     if (action === "approve") {
+      const jetonCredit = isJeton ? row.coins ?? row.amount : 0;
+      const cfcCredit = isJeton ? 0 : row.amount;
+
       await prisma.$transaction([
         prisma.cfcPaymentRequest.update({
           where: { id: requestId },
@@ -383,8 +383,8 @@ walletRouter.patch(
         prisma.user.update({
           where: { id: row.userId },
           data: isJeton
-            ? { coins: { increment: row.coins ?? row.amount } }
-            : { cfcBalance: { increment: row.amount } },
+            ? { coins: { increment: jetonCredit } }
+            : { cfcBalance: { increment: cfcCredit } },
         }),
       ]);
 
