@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.34+36 (2026-05-22)
+
+### Logo ve uygulama ikonu
+
+- Gönderilen **CanlıFal** ikon tasarımı: `assets/brand/` + Android `ic_launcher` + web favicon
+- Giriş ve kayıt ekranında aynı kare marka ikonu
+
 ## 1.0.33+35 (2026-05-22)
 
 ### Giriş / Kayıt — mockup tasarım
