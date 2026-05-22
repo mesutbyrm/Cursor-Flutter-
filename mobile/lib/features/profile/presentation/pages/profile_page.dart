@@ -68,7 +68,6 @@ class ProfilePage extends ConsumerWidget {
               );
               final jeton = balances?.jeton ?? user.coinBalance;
               final cfc = balances?.cfc ?? 0;
-              final role = balances?.role ?? '';
               final membership = balances?.membership;
               final membershipDays = balances?.membershipDaysRemaining;
 
@@ -130,7 +129,7 @@ class ProfilePage extends ConsumerWidget {
                               onSubscriptions: () => context.push('/wallet'),
                             ),
                             const SizedBox(height: 22),
-                            ProfileAdminSection(role: role),
+                            const ProfileAdminSection(),
                             const ProfileBroadcasterPanel(),
                             const SizedBox(height: 22),
                             ProfileGiftsRow(

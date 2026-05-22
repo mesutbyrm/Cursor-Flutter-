@@ -232,7 +232,7 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
       if (!mounted) return;
       ref.invalidate(walletBalancesProvider);
       ref.invalidate(cfcPaymentRequestsProvider);
-      ref.invalidate(adminCfcPaymentRequestsProvider);
+      ref.invalidate(adminPaymentRequestsProvider);
       ref.invalidate(adminPaymentNotificationsProvider);
       widget.onSubmitted();
       ScaffoldMessenger.of(context).showSnackBar(

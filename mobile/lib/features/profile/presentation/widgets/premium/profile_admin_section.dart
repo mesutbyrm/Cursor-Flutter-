@@ -2,27 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/auth/staff_roles.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../admin/presentation/providers/admin_providers.dart';
+import '../../../../admin/presentation/providers/staff_access_provider.dart';
 import 'profile_glass.dart';
 
+/// Admin / yönetici — site ödeme istekleri ve yönetim paneli.
 class ProfileAdminSection extends ConsumerWidget {
-  const ProfileAdminSection({required this.role, super.key});
-
-  final String role;
+  const ProfileAdminSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!StaffRoles.isStaff(role)) return const SizedBox.shrink();
+    final access = ref.watch(staffAccessProvider);
+    if (!access.canManagePayments) return const SizedBox.shrink();
 
     final pending = ref.watch(adminPendingPaymentsCountProvider);
+
+    ref.listen<StaffAccess>(staffAccessProvider, (prev, next) {
+      if (next.canManagePayments && prev?.canManagePayments != true) {
+        ref.invalidate(adminPaymentRequestsProvider);
+        ref.invalidate(adminPaymentNotificationsProvider);
+        ref.invalidate(adminSitePaymentSettingsProvider);
+      }
+    });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ProfileSectionTitle(
-          title: 'Admin — ${StaffRoles.labelTr(role)}',
+          title: 'Yönetim paneli — ${access.roleLabel}',
         ),
         ProfileGlass(
           onTap: () => context.push('/admin'),
@@ -42,7 +50,7 @@ class ProfileAdminSection extends ConsumerWidget {
                   ),
                 ),
                 child: const Icon(
-                  Icons.admin_panel_settings_rounded,
+                  Icons.payments_rounded,
                   color: Colors.white,
                   size: 28,
                 ),
@@ -53,7 +61,7 @@ class ProfileAdminSection extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Yönetim paneli',
+                      'Ödeme istekleri',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 16,
@@ -61,7 +69,7 @@ class ProfileAdminSection extends ConsumerWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Ödeme talepleri, bildirimler, site ayarları',
+                      'Jeton/CFC talepleri canlifal.com’dan · onay ve bildirimler',
                       style: TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 12,
@@ -72,7 +80,8 @@ class ProfileAdminSection extends ConsumerWidget {
               ),
               if (pending > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.liveRed,
                     borderRadius: BorderRadius.circular(10),

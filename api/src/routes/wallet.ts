@@ -272,7 +272,9 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
     select: { id: true },
   });
   const staffTitle =
-    requestType === "jeton" ? "Yeni jeton ödeme talebi" : "Yeni CFC ödeme talebi";
+    requestType === "jeton"
+      ? "Ödeme yapıldı — Jeton yükleme talebi"
+      : "Ödeme yapıldı — CFC yükleme talebi";
   for (const s of staff) {
     await createNotification({
       userId: s.id,
