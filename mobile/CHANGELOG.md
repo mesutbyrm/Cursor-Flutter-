@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.44+46 (2026-05-19)
+
+### Android paket kimliği
+
+- `applicationId` / Firebase paket adı: **`com.mesutbyrm.canlifal`** (önceki: `com.canlifal.canlifal_social`)
+- iOS/macOS bundle ID aynı değere hizalandı
+- Firebase Console’da yeni paket adıyla `google-services.json` indirilmeli
+
 ## 1.0.38+40 (2026-05-22)
 
 ### Jeton ödeme + CFC verisi

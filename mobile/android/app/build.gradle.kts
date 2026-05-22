@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.canlifal.canlifal_social"
+    namespace = "com.mesutbyrm.canlifal"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.canlifal.canlifal_social"
+        applicationId = "com.mesutbyrm.canlifal"
         minSdk = maxOf(flutter.minSdkVersion, 23)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
