@@ -31,6 +31,8 @@ model User {
   following       Follow[]       @relation("UserFollowing")
   socialPosts         SocialPost[]
   cfcPaymentRequests  CfcPaymentRequest[]
+  conversationsA      Conversation[] @relation("ConversationUserA")
+  conversationsB      Conversation[] @relation("ConversationUserB")
 }
 
 model SocialPost {
@@ -158,6 +160,47 @@ model CfcPaymentRequest {
   @@index([userId, status])
   @@index([status, createdAt])
   @@index([requestType, status])
+}
+
+/// FCM push token (mobil).
+model DevicePushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  String   @default("unknown")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+/// İki kullanıcı arası DM sohbeti.
+model Conversation {
+  id          String   @id @default(cuid())
+  userAId     String
+  userBId     String
+  lastMessage String?
+  unreadForA  Int      @default(0)
+  unreadForB  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userA       User     @relation("ConversationUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB       User     @relation("ConversationUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  messages    DirectMessage[]
+
+  @@unique([userAId, userBId])
+  @@index([updatedAt])
+}
+
+model DirectMessage {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  text           String
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
 }
 
 /// Uygulama / site bildirimleri.

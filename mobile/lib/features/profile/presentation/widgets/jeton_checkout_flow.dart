@@ -10,6 +10,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/jeton_payment_request.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
+import '../../../admin/presentation/providers/admin_providers.dart';
 import '../pages/cfc_purchase_page.dart';
 import '../providers/profile_providers.dart';
 
@@ -329,6 +330,8 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     );
     ref.invalidate(walletBalancesProvider);
     ref.invalidate(cfcPaymentRequestsProvider);
+    ref.invalidate(adminCfcPaymentRequestsProvider);
+    ref.invalidate(adminPaymentNotificationsProvider);
   }
 
   Future<void> _whatsappOrder() async {

@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/exit_confirm_dialog.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../messages/presentation/providers/messages_providers.dart';
+import '../../notifications/presentation/providers/notifications_providers.dart';
 import 'discover_bottom_bar.dart';
 
 class MainShellPage extends ConsumerWidget {
@@ -21,6 +23,15 @@ class MainShellPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final messagesUnread = ref.watch(messagesUnreadCountProvider);
+
+    ref.listen<AsyncValue<dynamic>>(authControllerProvider, (prev, next) {
+      if (next.valueOrNull != null && prev?.valueOrNull == null) {
+        ref.invalidate(conversationsProvider);
+        ref.invalidate(notificationsListProvider);
+      }
+    });
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
@@ -45,6 +56,7 @@ class MainShellPage extends ConsumerWidget {
           currentIndex: navigationShell.currentIndex,
           onTap: _goBranch,
           onFabTap: () => openLiveFromFab(context),
+          messagesBadgeCount: messagesUnread,
         ),
       ),
     );

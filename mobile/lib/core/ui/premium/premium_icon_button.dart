@@ -9,12 +9,14 @@ class PremiumIconButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.showBadge = false,
+    this.badgeCount = 0,
     this.size = 44,
   });
 
   final IconData icon;
   final VoidCallback onTap;
   final bool showBadge;
+  final int badgeCount;
   final double size;
 
   @override
@@ -36,22 +38,48 @@ class PremiumIconButton extends StatelessWidget {
                 color: AppColors.textSecondary.withValues(alpha: 0.95),
                 size: size * 0.58,
               ),
-              if (showBadge)
+              if (showBadge || badgeCount > 0)
                 Positioned(
-                  top: size * 0.22,
-                  right: size * 0.22,
-                  child: Container(
-                    width: 9,
-                    height: 9,
-                    decoration: BoxDecoration(
-                      color: AppColors.liveRed,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.background,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
+                  top: size * 0.14,
+                  right: size * 0.12,
+                  child: badgeCount > 0
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 2,
+                          ),
+                          constraints: const BoxConstraints(minWidth: 16),
+                          decoration: BoxDecoration(
+                            color: AppColors.liveRed,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AppColors.background,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Text(
+                            badgeCount > 99 ? '99+' : '$badgeCount',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              height: 1.1,
+                            ),
+                          ),
+                        )
+                      : Container(
+                          width: 9,
+                          height: 9,
+                          decoration: BoxDecoration(
+                            color: AppColors.liveRed,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.background,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
                 ),
             ],
           ),

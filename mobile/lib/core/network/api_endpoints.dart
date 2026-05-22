@@ -87,6 +87,9 @@ abstract final class ApiEndpoints {
   static const notifications = '/api/notifications';
   static String notificationRead(String id) => '/api/notifications/$id/read';
 
+  /// FCM cihaz token kaydı (canlifal.com veya self-hosted API).
+  static const registerFcmDevice = '/api/devices/fcm';
+
   static const wallet = '/api/wallet';
 
   /// İçerik / kullanıcı şikayeti (canlifal moderasyon API).

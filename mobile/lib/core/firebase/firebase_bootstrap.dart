@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
+import '../push/push_notification_service.dart';
 import 'firebase_options.dart';
 
 /// Arka planda gelen FCM (uygulama kapalıyken).
@@ -42,21 +43,20 @@ class FirebaseBootstrap {
       analytics = FirebaseAnalytics.instance;
       messaging = FirebaseMessaging.instance;
 
+      await PushNotificationService.instance.init();
+
       if (!kIsWeb) {
-        await messaging!.requestPermission(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+        await PushNotificationService.instance.requestSystemPermission();
         final token = await messaging!.getToken();
         if (token != null) {
           debugPrint('FCM token: ${token.substring(0, 12)}…');
         }
+        messaging!.onTokenRefresh.listen((token) {
+          debugPrint('FCM token refreshed: ${token.substring(0, 12)}…');
+        });
       }
 
-      FirebaseMessaging.onMessage.listen((msg) {
-        debugPrint('FCM foreground: ${msg.notification?.title}');
-      });
+      await PushNotificationService.instance.bindForegroundFcm(messaging!);
 
       _ready = true;
       await analytics!.logAppOpen();
