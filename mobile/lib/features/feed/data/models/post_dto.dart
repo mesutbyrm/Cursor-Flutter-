@@ -11,6 +11,8 @@ class PostDto {
     this.mediaUrl,
     this.likesCount,
     this.commentsCount,
+    this.viewsCount,
+    this.isLiked,
     this.createdAt,
   });
 
@@ -42,6 +44,15 @@ class PostDto {
           as String?,
       likesCount: asInt(pick(json, ['likesCount', 'likes', 'likeCount'])),
       commentsCount: asInt(pick(json, ['commentsCount', 'comments'])),
+      viewsCount: asInt(pick(json, [
+        'viewsCount',
+        'views',
+        'viewCount',
+        'plays',
+        'playCount',
+      ])),
+      isLiked: pick(json, ['isLiked', 'liked', 'hasLiked']) == true ||
+          pick(json, ['isLiked', 'liked', 'hasLiked']) == 1,
       createdAt: _parseDate(pick(json, ['createdAt', 'created_at', 'timestamp'])),
     );
   }
@@ -52,6 +63,8 @@ class PostDto {
   final String? mediaUrl;
   final int? likesCount;
   final int? commentsCount;
+  final int? viewsCount;
+  final bool? isLiked;
   final DateTime? createdAt;
 
   PostEntity toEntity() {
@@ -62,6 +75,8 @@ class PostDto {
       mediaUrl: mediaUrl,
       likesCount: likesCount ?? 0,
       commentsCount: commentsCount ?? 0,
+      viewsCount: viewsCount ?? 0,
+      isLiked: isLiked ?? false,
       createdAt: createdAt,
     );
   }
