@@ -97,8 +97,6 @@ class ProfilePage extends ConsumerWidget {
                                   '🎵 Müzik, sohbet ve eğlence dolu yayınlar…',
                               diamondBalance: jeton,
                               cfcBalance: cfc,
-                              onNotifications: () =>
-                                  context.push('/notifications'),
                               onLogout: () => ref
                                   .read(authControllerProvider.notifier)
                                   .logout(),

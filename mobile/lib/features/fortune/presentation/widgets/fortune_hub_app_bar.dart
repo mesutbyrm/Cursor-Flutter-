@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/ui/premium/premium_icon_button.dart';
-import '../../../messages/presentation/providers/messages_providers.dart';
-import '../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../../core/widgets/messages_notifications_actions.dart';
 
 /// Fal & Tarot sekmesi üst çubuk — menü, başlık, mesajlar, bildirimler.
 class FortuneHubAppBar extends ConsumerWidget {
@@ -14,8 +12,6 @@ class FortuneHubAppBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final top = MediaQuery.paddingOf(context).top;
-    final messagesUnread = ref.watch(messagesUnreadCountProvider);
-    final notificationsUnread = ref.watch(notificationsUnreadCountProvider);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(8, top + 4, 12, 8),
@@ -46,21 +42,7 @@ class FortuneHubAppBar extends ConsumerWidget {
             ),
           ),
           const Icon(Icons.auto_awesome, size: 14, color: Color(0xFFE9C46A)),
-          PremiumIconButton(
-            icon: Icons.chat_bubble_outline_rounded,
-            size: 40,
-            showBadge: messagesUnread > 0,
-            badgeCount: messagesUnread,
-            onTap: () => context.push('/messages'),
-          ),
-          const SizedBox(width: 4),
-          PremiumIconButton(
-            icon: Icons.notifications_none_rounded,
-            size: 40,
-            showBadge: notificationsUnread > 0,
-            badgeCount: notificationsUnread,
-            onTap: () => context.push('/notifications'),
-          ),
+          const MessagesNotificationsActions(spacing: 4),
         ],
       ),
     );
