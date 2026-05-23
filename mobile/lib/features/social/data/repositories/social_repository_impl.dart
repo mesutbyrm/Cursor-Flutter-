@@ -19,6 +19,19 @@ class SocialRepositoryImpl implements SocialRepository {
   }
 
   @override
+  Future<List<PostEntity>> fetchPostsByUser(String userId, {int page = 1}) async {
+    final r = await _remote.fetch(page: page, authorId: userId);
+    final posts = r.posts.map((e) => e.toEntity()).toList();
+    if (posts.isNotEmpty) return posts;
+    if (page > 1) return posts;
+    final fallback = await _remote.fetch(page: page);
+    return fallback.posts
+        .map((e) => e.toEntity())
+        .where((p) => p.author.id == userId)
+        .toList();
+  }
+
+  @override
   Future<PostEntity> createPost(CreateSocialPostInput input) async {
     final dto = await _remote.createPost(input);
     return dto.toEntity();

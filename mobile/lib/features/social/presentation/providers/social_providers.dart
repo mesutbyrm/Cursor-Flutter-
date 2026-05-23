@@ -71,3 +71,9 @@ final socialStoryRingsProvider =
     FutureProvider<List<SocialStoryRingEntity>>((ref) async {
   return ref.read(socialRemoteProvider).fetchStoryRings();
 });
+
+/// Profil sayfası — kullanıcının paylaşımları (TikTok ızgara).
+final userSocialPostsProvider =
+    FutureProvider.family<List<PostEntity>, String>((ref, userId) async {
+  return ref.read(socialRepositoryProvider).fetchPostsByUser(userId);
+});

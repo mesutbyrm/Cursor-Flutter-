@@ -9,6 +9,7 @@ import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/social_providers.dart';
+import '../utils/social_feed_layout.dart';
 import '../widgets/instagram/social_active_rooms.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
@@ -68,7 +69,6 @@ class _SocialPageState extends ConsumerState<SocialPage> {
           children: [
             const RepaintBoundary(child: SocialInstagramAppBar()),
             const RepaintBoundary(child: SocialStoriesRail()),
-            const RepaintBoundary(child: SocialActiveRooms()),
             const RepaintBoundary(child: SocialFeedComposer()),
             Expanded(
               child: DiscoverRefresh.wrap(
@@ -112,12 +112,24 @@ class _SocialPageState extends ConsumerState<SocialPage> {
                             ),
                           );
                         }
+                        final feedCount = SocialFeedLayout.itemCount(posts.length);
                         return SliverList(
                           delegate: SliverChildBuilderDelegate(
-                            (_, i) => RepaintBoundary(
-                              child: SocialInstagramPostCard(post: posts[i]),
-                            ),
-                            childCount: posts.length,
+                            (context, i) {
+                              final postIdx =
+                                  SocialFeedLayout.postIndexAt(i, posts.length);
+                              if (postIdx != null) {
+                                return RepaintBoundary(
+                                  child: SocialInstagramPostCard(
+                                    post: posts[postIdx],
+                                  ),
+                                );
+                              }
+                              return const RepaintBoundary(
+                                child: SocialActiveRooms(embeddedInFeed: true),
+                              );
+                            },
+                            childCount: feedCount,
                           ),
                         );
                       },

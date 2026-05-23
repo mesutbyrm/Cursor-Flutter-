@@ -16,10 +16,17 @@ class SocialRemoteDataSource {
   final Dio _dio;
 
   /// GET `/api/social/posts` — canlifal.com web `/sosyal` ile aynı JSON.
-  Future<({List<PostDto> posts, bool hasMore})> fetch({int page = 1}) async {
+  Future<({List<PostDto> posts, bool hasMore})> fetch({
+    int page = 1,
+    String? authorId,
+  }) async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.socialPosts,
-      query: {'page': page, 'limit': 20},
+      query: {
+        'page': page,
+        'limit': 20,
+        if (authorId != null && authorId.isNotEmpty) 'authorId': authorId,
+      },
     );
     final body = res.data;
     if (body is List) {
