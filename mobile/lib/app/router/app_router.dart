@@ -150,8 +150,39 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/messages',
-                builder: (context, state) => const ConversationsPage(),
+                path: '/fortune',
+                builder: (context, state) => const FortuneTarotHubPage(),
+                routes: [
+                  GoRoute(
+                    path: ':slug',
+                    pageBuilder: (context, state) {
+                      final slug = state.pathParameters['slug']!;
+                      final type = FortuneCatalog.bySlug(slug);
+                      final child = type == null
+                          ? const FortuneTarotHubPage()
+                          : FortuneSessionPage(type: type);
+                      return AppPageTransitions.fadeSlide(
+                        key: state.pageKey,
+                        child: child,
+                      );
+                    },
+                    routes: [
+                      GoRoute(
+                        path: 'result',
+                        pageBuilder: (context, state) {
+                          final result = state.extra as FortuneReadingResult?;
+                          final child = result == null
+                              ? const FortuneTarotHubPage()
+                              : FortuneResultPage(result: result);
+                          return AppPageTransitions.fadeSlide(
+                            key: state.pageKey,
+                            child: child,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
@@ -186,42 +217,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/fortune',
+        path: '/messages',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
-          child: const FortuneTarotHubPage(),
+          child: const ConversationsPage(),
         ),
-        routes: [
-          GoRoute(
-            path: ':slug',
-            pageBuilder: (context, state) {
-              final slug = state.pathParameters['slug']!;
-              final type = FortuneCatalog.bySlug(slug);
-              final child = type == null
-                  ? const FortuneTarotHubPage()
-                  : FortuneSessionPage(type: type);
-              return AppPageTransitions.fadeSlide(
-                key: state.pageKey,
-                child: child,
-              );
-            },
-            routes: [
-              GoRoute(
-                path: 'result',
-                pageBuilder: (context, state) {
-                  final result = state.extra as FortuneReadingResult?;
-                  final child = result == null
-                      ? const FortuneTarotHubPage()
-                      : FortuneResultPage(result: result);
-                  return AppPageTransitions.fadeSlide(
-                    key: state.pageKey,
-                    child: child,
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
       ),
       GoRoute(
         path: '/notifications',
