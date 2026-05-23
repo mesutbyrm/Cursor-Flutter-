@@ -3,6 +3,8 @@ api/node_modules/
 site/canlifal-jeton-web/node_modules/
 site/canlifal-jeton-web/.next/
 api/.env
+api/canlifal-firebase-adminsdk.json
+mobile/android/app/google-services.json
 
 # Yerel CI/Android SDK kurulumu (depoya eklenmez)
 /android-sdk-ci/

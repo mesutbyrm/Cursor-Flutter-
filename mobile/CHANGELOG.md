@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.63+65 (2026-05-19)
+
+### Firebase / canlifal.com yapılandırması
+
+- `scripts/sync-canlifal-config.sh` — resmi URL’lerden google-services, Admin SDK, API docs
+- `google-services.json` → otomatik `FirebaseOptionsGenerated` + CI `GOOGLE_SERVICES_JSON_BASE64`
+- Dokümantasyon: `docs/CANLIFAL_OFFICIAL_CONFIG.md`
+
 ## 1.0.62+64 (2026-05-19)
 
 ### Açılış, bildirimler ve sosyal

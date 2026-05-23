@@ -2,10 +2,11 @@ import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
-/// Firebase yapılandırması — `flutterfire configure` veya dart-define ile doldurulur.
+import 'firebase_options_generated.dart';
+
+/// Firebase yapılandırması — dart-define, `google-services.json` veya ikisi.
 ///
-/// CI / yerel geliştirme (dosya yok): `enabled == false` → init atlanır.
-/// Üretim: `flutter run --dart-define=FIREBASE_PROJECT_ID=your-project-id` ve gerçek anahtarlar.
+/// CI / yerel (yapılandırma yok): `enabled == false` → init atlanır.
 abstract final class DefaultFirebaseOptions {
   static const String _projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
   static const String _apiKey = String.fromEnvironment('FIREBASE_API_KEY');
@@ -13,15 +14,21 @@ abstract final class DefaultFirebaseOptions {
   static const String _messagingSenderId =
       String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID');
 
-  static bool get enabled =>
+  static bool get _fromDartDefine =>
       _projectId.isNotEmpty && _apiKey.isNotEmpty && _appId.isNotEmpty;
+
+  static bool get enabled =>
+      _fromDartDefine || FirebaseOptionsGenerated.isConfigured;
 
   static FirebaseOptions get currentPlatform {
     if (!enabled) {
       throw StateError(
-        'Firebase not configured. Set FIREBASE_PROJECT_ID, FIREBASE_API_KEY, '
-        'FIREBASE_APP_ID (and optional FIREBASE_MESSAGING_SENDER_ID) via --dart-define.',
+        'Firebase not configured. google-services.json + generate script, '
+        'veya --dart-define=FIREBASE_PROJECT_ID=... FIREBASE_API_KEY=... FIREBASE_APP_ID=...',
       );
+    }
+    if (!_fromDartDefine && FirebaseOptionsGenerated.isConfigured) {
+      return FirebaseOptionsGenerated.currentPlatform;
     }
     if (kIsWeb) {
       return FirebaseOptions(
