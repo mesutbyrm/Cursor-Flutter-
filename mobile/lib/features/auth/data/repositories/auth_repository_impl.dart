@@ -67,10 +67,8 @@ class AuthRepositoryImpl implements AuthRepository {
           access: TokenStorage.sessionCookieMarker,
           refresh: null,
         );
-        final s = await _remote.session();
-        final u = _userMap(s);
-        if (u == null) throw const ApiException('Oturum oluşturulamadı');
-        return UserDto.fromJson(u).toEntity();
+        final u = await _remote.resolveNextAuthUser();
+        return UserDto.fromSiteProfileMap(u).toEntity();
       }
       return _persistAndMap(body);
     } on ApiException {
@@ -119,12 +117,8 @@ class AuthRepositoryImpl implements AuthRepository {
     final access = await _tokens.readAccess();
     if (access == TokenStorage.sessionCookieMarker) {
       try {
-        final s = await _remote.session();
-        final u = s['user'];
-        if (u is Map) {
-          return UserDto.fromJson(Map<String, dynamic>.from(u)).toEntity();
-        }
-        return null;
+        final u = await _remote.resolveNextAuthUser();
+        return UserDto.fromSiteProfileMap(u).toEntity();
       } catch (_) {
         await logout();
         return null;

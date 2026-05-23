@@ -22,7 +22,7 @@ abstract class UserDto with _$UserDto {
   const UserDto._();
 
   factory UserDto.fromApiMap(Map<String, dynamic> json) {
-    final id = pick(json, ['id', 'userId', '_id'])?.toString() ?? '';
+    final id = pick(json, ['id', 'userId', '_id', 'sub'])?.toString() ?? '';
     var username =
         pick(json, ['username', 'userName', 'handle'])?.toString() ?? '';
     if (username.isEmpty) {

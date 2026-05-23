@@ -68,6 +68,9 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _prime());
   }
 
+  String get _origin =>
+      Env.siteOrigin.trim().replaceAll(RegExp(r'/+$'), '');
+
   Future<void> _prime() async {
     if (kIsWeb) {
       if (mounted) setState(() => _ready = true);
@@ -77,8 +80,7 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
     await applyPersistCookiesToWebView(jar, Env.siteOrigin);
     if (!mounted) return;
     setState(() => _ready = true);
-    // Google OAuth WebView’da 403 verir; doğrudan güvenli tarayıcı (Custom Tab).
-    await _oauthViaSecureBrowser();
+    // OAuth WebView içinde (çerezler Dio jar’a aktarılır). 403 olursa «Tarayıcı».
   }
 
   Future<bool> _hasNextAuthSessionCookie() async {
@@ -101,7 +103,7 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
       final jar = ref.read(cookieJarProvider);
       final storage = ref.read(tokenStorageProvider);
 
-      for (var attempt = 0; attempt < 4; attempt++) {
+      for (var attempt = 0; attempt < 5; attempt++) {
         await persistWebViewCookiesIntoJar(
           jar,
           Env.siteOrigin,
@@ -118,8 +120,13 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
           context.go('/feed');
           return;
         }
-        if (attempt < 3) {
-          await Future.delayed(Duration(milliseconds: 350 * (attempt + 1)));
+        if (_controller != null) {
+          await _controller!.loadUrl(
+            urlRequest: URLRequest(
+              url: WebUri('$_origin/api/auth/session'),
+            ),
+          );
+          await Future.delayed(Duration(milliseconds: 400 * (attempt + 1)));
         }
       }
 
@@ -190,20 +197,18 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
       if (mounted) {
         setState(() => _useSecureBrowser = false);
       }
-      if (_controller != null && resultUrl.startsWith('https')) {
+      final loadUrl = resultUrl.startsWith('https')
+          ? resultUrl
+          : '$_origin/api/auth/session';
+      if (_controller != null) {
         await _controller!.loadUrl(
-          urlRequest: URLRequest(url: WebUri(resultUrl)),
+          urlRequest: URLRequest(url: WebUri(loadUrl)),
         );
-        await Future.delayed(const Duration(milliseconds: 900));
-      } else if (_controller != null) {
+        await Future.delayed(const Duration(milliseconds: 1200));
         await _controller!.loadUrl(
-          urlRequest: URLRequest(
-            url: WebUri(
-              '${Env.siteOrigin.trim().replaceAll(RegExp(r'/+$'), '')}/api/auth/session',
-            ),
-          ),
+          urlRequest: URLRequest(url: WebUri('$_origin/api/auth/session')),
         );
-        await Future.delayed(const Duration(milliseconds: 900));
+        await Future.delayed(const Duration(milliseconds: 800));
       }
       await _finishOAuth(allowWhileBusy: true);
     } on Exception catch (e) {
@@ -259,48 +264,52 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
       ),
       body: Stack(
         children: [
-          if (_ready)
-            Positioned(
-              left: 0,
-              top: 0,
-              width: 1,
-              height: 1,
-              child: Opacity(
-                opacity: 0.01,
-                child: InAppWebView(
-                  initialUrlRequest: URLRequest(
-                    url: WebUri(
-                      '${Env.siteOrigin.trim().replaceAll(RegExp(r'/+$'), '')}/api/auth/session',
-                    ),
-                  ),
-                  initialSettings: InAppWebViewSettings(
-                    userAgent: _chromeMobileUserAgent,
-                    javaScriptEnabled: true,
-                    thirdPartyCookiesEnabled: true,
-                    useShouldOverrideUrlLoading: true,
-                  ),
-                  onWebViewCreated: (c) => _controller = c,
-                  onLoadStop: (_, uri) => _onUrlMaybeComplete(uri),
-                  shouldOverrideUrlLoading: (_, action) async {
-                    final uri = action.request.url;
-                    if (uri == null) return NavigationActionPolicy.CANCEL;
-                    final u = Uri.tryParse(uri.toString());
-                    if (u == null) return NavigationActionPolicy.CANCEL;
-                    final host = u.host.toLowerCase();
-                    if (_isGoogleHost(host)) {
-                      return NavigationActionPolicy.ALLOW;
-                    }
-                    if (host.contains('canlifal.com')) {
-                      if (_isCanlifalAuthPath(u.path)) {
-                        return NavigationActionPolicy.ALLOW;
-                      }
-                      _scheduleFinish();
-                      return NavigationActionPolicy.CANCEL;
-                    }
-                    return NavigationActionPolicy.CANCEL;
-                  },
-                ),
+          if (_ready && !_useSecureBrowser)
+            InAppWebView(
+              initialUrlRequest: URLRequest(
+                url: WebUri(_oauthStartUrl()),
               ),
+              initialSettings: InAppWebViewSettings(
+                userAgent: _chromeMobileUserAgent,
+                javaScriptEnabled: true,
+                thirdPartyCookiesEnabled: true,
+                useShouldOverrideUrlLoading: true,
+                sharedCookiesEnabled: true,
+              ),
+              onWebViewCreated: (c) => _controller = c,
+              onLoadStop: (_, uri) => _onUrlMaybeComplete(uri),
+              onReceivedHttpError: (_, req, error) {
+                final host = req.url.host.toLowerCase();
+                if (_isGoogleHost(host) && error.statusCode == 403) {
+                  if (mounted && !_busy) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Google WebView engelledi — sağ üstten «Tarayıcı» ile deneyin.',
+                        ),
+                      ),
+                    );
+                  }
+                }
+              },
+              shouldOverrideUrlLoading: (_, action) async {
+                final uri = action.request.url;
+                if (uri == null) return NavigationActionPolicy.CANCEL;
+                final u = Uri.tryParse(uri.toString());
+                if (u == null) return NavigationActionPolicy.CANCEL;
+                final host = u.host.toLowerCase();
+                if (_isGoogleHost(host)) {
+                  return NavigationActionPolicy.ALLOW;
+                }
+                if (host.contains('canlifal.com')) {
+                  if (_isCanlifalAuthPath(u.path)) {
+                    return NavigationActionPolicy.ALLOW;
+                  }
+                  _scheduleFinish();
+                  return NavigationActionPolicy.CANCEL;
+                }
+                return NavigationActionPolicy.CANCEL;
+              },
             ),
           if (_useSecureBrowser || !_ready)
             const Center(
@@ -309,7 +318,7 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
                 children: [
                   CircularProgressIndicator(color: AppColors.accentPink),
                   SizedBox(height: 16),
-                  Text('Güvenli tarayıcıda Google girişi açılıyor…'),
+                  Text('Google girişi hazırlanıyor…'),
                 ],
               ),
             ),

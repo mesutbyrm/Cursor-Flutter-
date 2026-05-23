@@ -4,6 +4,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
+import 'next_auth_session.dart';
 
 class AuthRemoteDataSource {
   AuthRemoteDataSource(this._dio);
@@ -65,7 +66,8 @@ class AuthRemoteDataSource {
       },
       options: Options(
         contentType: Headers.formUrlEncodedContentType,
-        followRedirects: false,
+        followRedirects: true,
+        maxRedirects: 8,
         validateStatus: (s) => s != null && s < 500,
       ),
     );
@@ -74,13 +76,8 @@ class AuthRemoteDataSource {
       throw const ApiException('E-posta veya şifre hatalı', statusCode: 401);
     }
     final data = res.data;
-    if (data is Map) {
-      final url = data['url']?.toString() ?? '';
-      if (url.contains('/api/auth/signin') ||
-          url.contains('csrf=true') ||
-          url.contains('error=')) {
-        throw const ApiException('E-posta veya şifre hatalı', statusCode: 401);
-      }
+    if (NextAuthSessionResolver.isCredentialsFailure(data)) {
+      throw const ApiException('E-posta veya şifre hatalı', statusCode: 401);
     }
     if (code >= 400) {
       throw ApiException(
@@ -144,6 +141,10 @@ class AuthRemoteDataSource {
     if (d is Map) return Map<String, dynamic>.from(d);
     return {};
   }
+
+  /// Oturum çerezi sonrası kullanıcı (session veya `/api/user/profile`).
+  Future<Map<String, dynamic>> resolveNextAuthUser() =>
+      NextAuthSessionResolver(_dio).resolveUser();
 
   Future<void> signOutNextAuth() async {
     final csrf = await _fetchCsrf();
