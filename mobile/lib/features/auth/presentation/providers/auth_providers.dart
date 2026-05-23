@@ -34,7 +34,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
       ref.read(authRepositoryProvider).currentUser();
 
   Future<UserEntity?> _withSiteProfile(UserEntity? base) async {
-    if (base == null || !Env.useNextAuth) return base;
+    if (base == null) return null;
+    if (Env.useMobileAuth) return base;
+    if (!Env.useNextAuth) return base;
     try {
       return await ref.read(profileRemoteProvider).mySiteProfile();
     } catch (_) {

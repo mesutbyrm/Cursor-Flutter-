@@ -58,8 +58,13 @@ abstract class UserDto with _$UserDto {
       followersCount: followers,
       followingCount: following,
       isFollowing: pick(json, ['isFollowing', 'following_me']) == true,
-      coinBalance:
-          asInt(pick(json, ['coinBalance', 'coins', 'balance', 'credits'])),
+      coinBalance: asInt(pick(json, [
+        'jetonBalance',
+        'coinBalance',
+        'coins',
+        'balance',
+        'credits',
+      ])),
     );
   }
 

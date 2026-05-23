@@ -29,12 +29,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _googleLogin() async {
-    // canlifal.com: NextAuth Google OAuth (/api/auth/signin/google), SQL POST yok.
-    if (Env.useNextAuth) {
-      if (!mounted) return;
-      context.push('/auth/google');
-      return;
-    }
     await ref.read(authControllerProvider.notifier).loginWithGoogle();
   }
 

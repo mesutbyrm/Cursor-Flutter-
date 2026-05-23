@@ -1,14 +1,14 @@
 /// canlifal.com ile uyumlu uçlar. Özel backend için `API_BASE_URL` ve bu dosyayı güncelleyin.
 abstract final class ApiEndpoints {
-  // --- NextAuth (canlifal.com) ---
-  static const authCsrf = '/api/auth/csrf';
-  static const authCredentials = '/api/auth/callback/credentials';
-  /// NextAuth Google OAuth başlangıcı (canlifal.com `/api/auth/providers`).
-  static const authSignInGoogle = '/api/auth/signin/google';
-  static const authSession = '/api/auth/session';
-  static const authSignOut = '/api/auth/signout';
+  // --- canlifal.com mobil JWT (SQL, WebView yok) ---
+  static const authMobileRegister = '/api/auth/mobile-register';
+  static const authMobileLogin = '/api/auth/mobile-login';
+  static const authMobileGoogle = '/api/auth/mobile-google';
+  static const authMobileTiktok = '/api/auth/mobile-tiktok';
+  static const authMobileRefresh = '/api/auth/mobile-refresh';
+  static const me = '/api/me';
 
-  // --- SQL + JWT (native Google/TikTok/kayıt) ---
+  // --- Eski / self-hosted (geriye dönük) ---
   static const authLogin = '/api/auth/login';
   static const authRegister = '/api/auth/register';
   static const authRefresh = '/api/auth/refresh';
@@ -16,6 +16,12 @@ abstract final class ApiEndpoints {
   static const authGoogle = '/api/auth/google';
   static const authTiktok = '/api/auth/tiktok';
 
+  /// DM sohbet listesi (Bearer).
+  static const messages = '/api/messages';
+  static String messagesWithUser(String userId) => '/api/messages/$userId';
+  static const messagesRequest = '/api/messages/request';
+
+  /// Eski konuşma API (self-hosted).
   static const messagesConversations = '/api/messages/conversations';
 
   // --- Uygulama API (çerez veya Bearer) ---
@@ -84,7 +90,7 @@ abstract final class ApiEndpoints {
   static String followers(String userId) => '/api/users/$userId/followers';
   static String following(String userId) => '/api/users/$userId/following';
 
-  static const conversations = messagesConversations;
+  static const conversations = messages;
   static String conversationMessages(String id) =>
       '/api/messages/conversations/$id/messages';
 
