@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/l10n/app_localizations_config.dart';
 import '../core/providers/theme_mode_provider.dart';
 import '../core/push/push_lifecycle_listener.dart';
 import '../core/theme/app_theme.dart';
@@ -18,6 +19,9 @@ class CanlifalApp extends ConsumerWidget {
       child: MaterialApp.router(
         title: 'Canlifal',
         debugShowCheckedModeBanner: false,
+        locale: AppLocalizationsConfig.locale,
+        supportedLocales: AppLocalizationsConfig.supportedLocales,
+        localizationsDelegates: AppLocalizationsConfig.delegates,
         theme: AppTheme.light(),
         darkTheme: AppTheme.dark(),
         themeMode: themeMode,

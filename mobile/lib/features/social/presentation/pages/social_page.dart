@@ -9,6 +9,7 @@ import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/social_providers.dart';
+import '../widgets/instagram/social_active_rooms.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
 import '../utils/open_social_create_post.dart';
@@ -67,6 +68,7 @@ class _SocialPageState extends ConsumerState<SocialPage> {
           children: [
             const RepaintBoundary(child: SocialInstagramAppBar()),
             const RepaintBoundary(child: SocialStoriesRail()),
+            const RepaintBoundary(child: SocialActiveRooms()),
             const RepaintBoundary(child: SocialFeedComposer()),
             Expanded(
               child: DiscoverRefresh.wrap(

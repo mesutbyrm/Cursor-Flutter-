@@ -50,8 +50,10 @@ class _SocialInstagramPostCardState
           onProfile: () => context.push('/user/${post.author.id}'),
           onDelete: isMine ? () => _deletePost(context) : null,
         ),
-        if ((post.caption?.trim().isNotEmpty ?? false))
+        if ((post.caption?.trim().isNotEmpty ?? false) && _hasMedia)
           SocialPostCaption(post: post, inlineBodyOnly: true),
+        if (!_hasMedia && (post.caption?.trim().isNotEmpty ?? false))
+          _TextOnlyPostBody(caption: post.caption!.trim()),
         if (post.isAutoShare || post.fortuneCount > 0)
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
@@ -340,6 +342,45 @@ class _PostHeader extends StatelessWidget {
     if (d.inHours < 24) return '${d.inHours} sa';
     if (d.inDays < 7) return '${d.inDays} gün';
     return '${t.day}.${t.month}.${t.year}';
+  }
+}
+
+/// Görsel olmayan fal / metin gönderileri için okunaklı gövde.
+class _TextOnlyPostBody extends StatelessWidget {
+  const _TextOnlyPostBody({required this.caption});
+
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF2A1548), Color(0xFF14102A)],
+          ),
+          border: Border.all(
+            color: AppColors.accentPurple.withValues(alpha: 0.35),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            caption,
+            style: const TextStyle(
+              fontSize: 15,
+              height: 1.45,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

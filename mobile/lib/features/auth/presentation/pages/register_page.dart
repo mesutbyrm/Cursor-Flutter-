@@ -8,6 +8,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/auth_providers.dart';
+import '../widgets/auth_date_pickers.dart';
 import '../widgets/auth_shell.dart';
 import '../widgets/google_sign_in_button.dart';
 
@@ -40,21 +41,17 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   }
 
   Future<void> _pickBirthDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _birthDate ?? DateTime(now.year - 25),
-      firstDate: DateTime(1920),
-      lastDate: now,
-      locale: const Locale('tr'),
+    final picked = await showAuthBirthDatePicker(
+      context,
+      initial: _birthDate,
     );
     if (picked != null) setState(() => _birthDate = picked);
   }
 
   Future<void> _pickBirthTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _birthTime ?? const TimeOfDay(hour: 12, minute: 0),
+    final picked = await showAuthBirthTimePicker(
+      context,
+      initial: _birthTime,
     );
     if (picked != null) setState(() => _birthTime = picked);
   }
@@ -184,7 +181,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       child: Text(
                         _birthDate == null
                             ? 'Doğum tarihi'
-                            : DateFormat('dd.MM.yyyy').format(_birthDate!),
+                            : formatBirthDate(_birthDate!),
                         style: const TextStyle(fontSize: 12),
                       ),
                     ),

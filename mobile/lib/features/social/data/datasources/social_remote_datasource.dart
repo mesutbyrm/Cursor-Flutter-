@@ -21,11 +21,22 @@ class SocialRemoteDataSource {
       ApiEndpoints.socialPosts,
       query: {'page': page, 'limit': 20},
     );
-    final m = _unwrapBody(res.data);
+    final body = res.data;
+    if (body is List) {
+      final posts = asJsonList(body)
+          .map(PostDto.fromApiMap)
+          .where((p) => p.id.isNotEmpty)
+          .toList();
+      return (posts: posts, hasMore: posts.length >= 20);
+    }
+    final m = _unwrapBody(body);
     if (m == null) {
       return (posts: const <PostDto>[], hasMore: false);
     }
-    final rawPosts = m['posts'];
+    var rawPosts = m['posts'];
+    if (rawPosts is! List && body is List) {
+      rawPosts = body;
+    }
     if (rawPosts is! List) {
       return (posts: const <PostDto>[], hasMore: false);
     }

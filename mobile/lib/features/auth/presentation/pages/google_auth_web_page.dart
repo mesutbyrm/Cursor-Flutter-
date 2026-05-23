@@ -14,7 +14,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/webview/canlifal_cookie_sync.dart';
 import '../providers/auth_providers.dart';
 
-/// Google OAuth — güvenli tarayıcı (403 önleme) + oturum çerezlerini uygulamaya aktarma.
+/// Google OAuth — önce güvenli tarayıcı; çerezler gizli WebView + Dio ile senkron.
 class GoogleAuthWebPage extends ConsumerStatefulWidget {
   const GoogleAuthWebPage({super.key});
 
@@ -23,15 +23,16 @@ class GoogleAuthWebPage extends ConsumerStatefulWidget {
 }
 
 class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
-  InAppWebViewController? _controller;
-  var _ready = false;
+  InAppWebViewController? _bridgeController;
+  var _bridgeReady = false;
   var _busy = false;
   var _completed = false;
-  var _useSecureBrowser = false;
 
-  /// Google, gömülü WebView user-agent'ını engeller (403 disallowed_useragent).
   static const _chromeMobileUserAgent =
       'Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36';
+
+  String get _origin =>
+      Env.siteOrigin.trim().replaceAll(RegExp(r'/+$'), '');
 
   static String _oauthStartUrl({String? callbackUrl}) {
     final o = Env.siteOrigin.trim().replaceAll(RegExp(r'/+$'), '');
@@ -40,64 +41,22 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
     return '$base?callbackUrl=${Uri.encodeComponent(callbackUrl)}';
   }
 
-  static bool _isGoogleHost(String host) {
-    return host.contains('google.com') ||
-        host.contains('gstatic.com') ||
-        host.contains('googleusercontent.com') ||
-        host.contains('accounts.google.');
-  }
-
-  static bool _isCanlifalAuthPath(String path) {
-    return path.startsWith('/api/auth/');
-  }
-
-  static bool _oauthCallbackReached(Uri uri) {
-    final host = uri.host.toLowerCase();
-    if (!host.contains('canlifal.com')) return false;
-    final path = uri.path;
-    if (path.contains('/api/auth/callback')) return true;
-    if (path == '/api/auth/session' || path.endsWith('/api/auth/session')) {
-      return true;
-    }
-    return false;
-  }
-
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _prime());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startOAuth());
   }
 
-  String get _origin =>
-      Env.siteOrigin.trim().replaceAll(RegExp(r'/+$'), '');
-
-  Future<void> _prime() async {
-    if (kIsWeb) {
-      if (mounted) setState(() => _ready = true);
-      return;
-    }
+  Future<void> _startOAuth() async {
+    if (kIsWeb || _busy || _completed) return;
     final jar = ref.read(cookieJarProvider);
     await applyPersistCookiesToWebView(jar, Env.siteOrigin);
     if (!mounted) return;
-    setState(() => _ready = true);
-    // OAuth WebView içinde (çerezler Dio jar’a aktarılır). 403 olursa «Tarayıcı».
+    setState(() => _bridgeReady = true);
   }
 
-  Future<bool> _hasNextAuthSessionCookie() async {
-    final cookies = await CookieManager.instance().getCookies(
-      url: WebUri(Env.siteOrigin),
-      webViewController: _controller,
-    );
-    return cookies.any(
-      (c) =>
-          c.name.contains('session-token') ||
-          c.name == 'next-auth.session-token' ||
-          c.name.startsWith('__Secure-next-auth'),
-    );
-  }
-
-  Future<void> _finishOAuth({bool allowWhileBusy = false}) async {
-    if (_completed || (_busy && !allowWhileBusy)) return;
+  Future<void> _finishOAuth() async {
+    if (_completed || _busy) return;
     setState(() => _busy = true);
     try {
       final jar = ref.read(cookieJarProvider);
@@ -107,7 +66,7 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
         await persistWebViewCookiesIntoJar(
           jar,
           Env.siteOrigin,
-          webViewController: _controller,
+          webViewController: _bridgeController,
         );
         await storage.writeTokens(
           access: TokenStorage.sessionCookieMarker,
@@ -120,14 +79,7 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
           context.go('/feed');
           return;
         }
-        if (_controller != null) {
-          await _controller!.loadUrl(
-            urlRequest: URLRequest(
-              url: WebUri('$_origin/api/auth/session'),
-            ),
-          );
-          await Future.delayed(Duration(milliseconds: 400 * (attempt + 1)));
-        }
+        await Future.delayed(Duration(milliseconds: 450 * (attempt + 1)));
       }
 
       if (mounted) {
@@ -150,40 +102,12 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
     }
   }
 
-  void _scheduleFinish() {
-    if (_completed) return;
-    Future.delayed(const Duration(milliseconds: 450), () async {
-      if (!mounted || _completed) return;
-      if (await _hasNextAuthSessionCookie()) {
-        await _finishOAuth();
-      }
-    });
-  }
-
-  void _onUrlMaybeComplete(WebUri? webUri) {
-    if (_completed || webUri == null) return;
-    final uri = Uri.tryParse(webUri.toString());
-    if (uri == null) return;
-    if (_oauthCallbackReached(uri)) {
-      _scheduleFinish();
-      return;
-    }
-    if (uri.host.toLowerCase().contains('canlifal.com') &&
-        !_isCanlifalAuthPath(uri.path)) {
-      _scheduleFinish();
-    }
-  }
-
-  /// Sistem tarayıcısı (Chrome Custom Tab) — Google 403 için yedek.
+  /// Chrome Custom Tab — Google OAuth (WebView boş `{}` veya 403 göstermesin).
   Future<void> _oauthViaSecureBrowser() async {
     if (_busy || _completed) return;
-    setState(() {
-      _busy = true;
-      _useSecureBrowser = true;
-    });
+    setState(() => _busy = true);
     try {
-      final returnTo =
-          '${Env.siteOrigin.trim().replaceAll(RegExp(r'/+$'), '')}/api/auth/session';
+      final returnTo = '$_origin/api/auth/session';
       final startUrl = _oauthStartUrl(callbackUrl: returnTo);
 
       final resultUrl = await FlutterWebAuth2.authenticate(
@@ -194,23 +118,26 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
         ),
       );
 
-      if (mounted) {
-        setState(() => _useSecureBrowser = false);
-      }
-      final loadUrl = resultUrl.startsWith('https')
-          ? resultUrl
-          : '$_origin/api/auth/session';
-      if (_controller != null) {
-        await _controller!.loadUrl(
-          urlRequest: URLRequest(url: WebUri(loadUrl)),
+      if (_bridgeController != null) {
+        final loadUrl =
+            resultUrl.startsWith('https') ? resultUrl : returnTo;
+        await _bridgeController!.loadUrl(
+          urlRequest: URLRequest(
+            url: WebUri(loadUrl),
+            headers: const {'Accept': 'text/html'},
+          ),
         );
-        await Future.delayed(const Duration(milliseconds: 1200));
-        await _controller!.loadUrl(
-          urlRequest: URLRequest(url: WebUri('$_origin/api/auth/session')),
+        await Future.delayed(const Duration(milliseconds: 900));
+        await _bridgeController!.loadUrl(
+          urlRequest: URLRequest(
+            url: WebUri(returnTo),
+            headers: const {'Accept': 'application/json'},
+          ),
         );
-        await Future.delayed(const Duration(milliseconds: 800));
+        await Future.delayed(const Duration(milliseconds: 600));
       }
-      await _finishOAuth(allowWhileBusy: true);
+
+      await _finishOAuth();
     } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -218,18 +145,13 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
             content: Text(
               e.toString().contains('CANCELED')
                   ? 'Google girişi iptal edildi.'
-                  : 'Güvenli tarayıcı ile giriş başarısız: $e',
+                  : 'Google girişi başarısız. Tekrar deneyin.',
             ),
           ),
         );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _busy = false;
-          _useSecureBrowser = false;
-        });
-      }
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -250,7 +172,7 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Google hesabını seç'),
+        title: const Text('Google ile giriş'),
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
           onPressed: _busy ? null : () => context.pop(),
@@ -258,87 +180,81 @@ class _GoogleAuthWebPageState extends ConsumerState<GoogleAuthWebPage> {
         actions: [
           TextButton(
             onPressed: _busy ? null : _oauthViaSecureBrowser,
-            child: const Text('Tarayıcı'),
+            child: const Text('Yenile'),
           ),
         ],
       ),
       body: Stack(
         children: [
-          if (_ready && !_useSecureBrowser)
-            InAppWebView(
-              initialUrlRequest: URLRequest(
-                url: WebUri(_oauthStartUrl()),
-              ),
-              initialSettings: InAppWebViewSettings(
-                userAgent: _chromeMobileUserAgent,
-                javaScriptEnabled: true,
-                thirdPartyCookiesEnabled: true,
-                useShouldOverrideUrlLoading: true,
-                sharedCookiesEnabled: true,
-              ),
-              onWebViewCreated: (c) => _controller = c,
-              onLoadStop: (_, uri) => _onUrlMaybeComplete(uri),
-              onReceivedHttpError: (_, req, error) {
-                final host = req.url.host.toLowerCase();
-                if (_isGoogleHost(host) && error.statusCode == 403) {
-                  if (mounted && !_busy) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Google WebView engelledi — sağ üstten «Tarayıcı» ile deneyin.',
-                        ),
-                      ),
-                    );
-                  }
-                }
-              },
-              shouldOverrideUrlLoading: (_, action) async {
-                final uri = action.request.url;
-                if (uri == null) return NavigationActionPolicy.CANCEL;
-                final u = Uri.tryParse(uri.toString());
-                if (u == null) return NavigationActionPolicy.CANCEL;
-                final host = u.host.toLowerCase();
-                if (_isGoogleHost(host)) {
-                  return NavigationActionPolicy.ALLOW;
-                }
-                if (host.contains('canlifal.com')) {
-                  if (_isCanlifalAuthPath(u.path)) {
-                    return NavigationActionPolicy.ALLOW;
-                  }
-                  _scheduleFinish();
-                  return NavigationActionPolicy.CANCEL;
-                }
-                return NavigationActionPolicy.CANCEL;
-              },
-            ),
-          if (_useSecureBrowser || !_ready)
-            const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(color: AppColors.accentPink),
-                  SizedBox(height: 16),
-                  Text('Google girişi hazırlanıyor…'),
-                ],
-              ),
-            ),
-          if (_busy)
-            Container(
-              color: Colors.black54,
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: AppColors.accentPink),
-                    SizedBox(height: 16),
-                    Text(
-                      'Hesabınıza bağlanılıyor…',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ],
+          if (_bridgeReady)
+            Positioned(
+              left: 0,
+              top: 0,
+              width: 1,
+              height: 1,
+              child: Opacity(
+                opacity: 0.01,
+                child: InAppWebView(
+                  initialUrlRequest: URLRequest(
+                    url: WebUri('$_origin/'),
+                    headers: const {'Accept': 'text/html'},
+                  ),
+                  initialSettings: InAppWebViewSettings(
+                    userAgent: _chromeMobileUserAgent,
+                    javaScriptEnabled: true,
+                    thirdPartyCookiesEnabled: true,
+                    sharedCookiesEnabled: true,
+                  ),
+                  onWebViewCreated: (c) {
+                    _bridgeController = c;
+                    if (!_busy && !_completed) {
+                      _oauthViaSecureBrowser();
+                    }
+                  },
                 ),
               ),
             ),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.account_circle_rounded,
+                    size: 72,
+                    color: AppColors.accentPink,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    _busy
+                        ? 'Google hesabınıza bağlanılıyor…'
+                        : 'Güvenli tarayıcıda Google girişi açılacak',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Hesabınızı seçtikten sonra uygulamaya otomatik dönersiniz.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textMuted.withValues(alpha: 0.95),
+                      height: 1.4,
+                    ),
+                  ),
+                  if (_busy) ...[
+                    const SizedBox(height: 24),
+                    const CircularProgressIndicator(
+                      color: AppColors.accentPink,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
