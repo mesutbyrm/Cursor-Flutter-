@@ -14,14 +14,28 @@ class AuthRemoteDataSource {
     required String email,
     required String password,
   }) async {
+    // canlifal.com: /api/auth/login NextAuth tarafından 400 döner — doğrudan credentials.
+    if (Env.useNextAuth) {
+      return _loginNextAuth(email: email, password: password);
+    }
     try {
       return await _loginJwt(email: email, password: password);
     } on ApiException catch (e) {
-      if (e.statusCode == 404 && Env.useNextAuth) {
+      if (_shouldFallbackToNextAuth(e)) {
         return _loginNextAuth(email: email, password: password);
       }
       rethrow;
     }
+  }
+
+  /// SQL JWT uçları yok veya NextAuth ile çakışıyor.
+  static bool _shouldFallbackToNextAuth(ApiException e) {
+    final code = e.statusCode;
+    if (code != 404 && code != 400 && code != 405) return false;
+    final m = e.message.toLowerCase();
+    return m.contains('nextauth') ||
+        m.contains('not supported') ||
+        code == 404;
   }
 
   Future<Map<String, dynamic>> _loginJwt({
@@ -51,6 +65,7 @@ class AuthRemoteDataSource {
       },
       options: Options(
         contentType: Headers.formUrlEncodedContentType,
+        followRedirects: false,
         validateStatus: (s) => s != null && s < 500,
       ),
     );
@@ -61,9 +76,17 @@ class AuthRemoteDataSource {
     final data = res.data;
     if (data is Map) {
       final url = data['url']?.toString() ?? '';
-      if (url.contains('/api/auth/signin')) {
+      if (url.contains('/api/auth/signin') ||
+          url.contains('csrf=true') ||
+          url.contains('error=')) {
         throw const ApiException('E-posta veya şifre hatalı', statusCode: 401);
       }
+    }
+    if (code >= 400) {
+      throw ApiException(
+        'Giriş başarısız (${code})',
+        statusCode: code,
+      );
     }
     return {'ok': true};
   }

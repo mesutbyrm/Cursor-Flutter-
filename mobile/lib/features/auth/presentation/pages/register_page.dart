@@ -114,9 +114,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 label: 'Google ile Kayıt ol',
                 onPressed: auth.isLoading
                     ? null
-                    : () => ref
-                        .read(authControllerProvider.notifier)
-                        .loginWithGoogle(),
+                    : () {
+                        if (Env.useNextAuth) {
+                          context.push('/auth/google');
+                          return;
+                        }
+                        ref
+                            .read(authControllerProvider.notifier)
+                            .loginWithGoogle();
+                      },
               ),
               if (Env.hasTikTokLogin) ...[
                 const SizedBox(height: 10),

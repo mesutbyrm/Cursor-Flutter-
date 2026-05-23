@@ -11,6 +11,7 @@ class Env {
   );
 
   /// canlifal.com üretim sitesi NextAuth (çerez) + `/api/*` JSON uçları kullanır.
+  /// E-posta/Google girişi SQL JWT değil NextAuth credentials / signin/google ile yapılır.
   static bool get useNextAuth {
     final u = apiBaseUrl.toLowerCase();
     return u.contains('canlifal.com') && !u.contains('.local');
