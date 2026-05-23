@@ -1,44 +1,56 @@
-# Canlifal — Android test APK
+# Canlifal — Android APK indirme
 
-## Doğrudan indirme (sabit bağlantı)
+## Doğrudan indirme (önerilen)
 
-`main` dalında [Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml) iş akışı **en az bir kez başarıyla bittikten** sonra aşağıdaki bağlantı her zaman son `main` derlemesindeki APK’yı verir:
+**Son `main` derlemesi (sabit bağlantı):**
 
-**[canlifal-mobile-release.apk (apk-latest)](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk)**
+https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
 
-> Henüz 404 alıyorsanız: GitHub → **Actions** → **Build release APK** → **Run workflow** → dal olarak **`main`** seçin → işlem bitsin. İş akışı otomatik olarak **`apk-latest`** adlı sürümü oluşturur veya günceller.
+> 404 alırsanız: [Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml) → **Run workflow** → dal **`main`** → işlem bitince `apk-latest` güncellenir.
 
-`releases/latest/download/...` kullanmıyoruz; GitHub “latest” etiketini semver’a göre sıraladığı için `apk-latest` gibi **sabit etiket + dosya adı** daha güvenilir.
+## Öne çıkan sürümler
 
-## Sürüm etiketi (v1.0.0 gibi)
+| Sürüm | İndirme |
+|-------|---------|
+| **apk-latest** (otomatik, `main` son derleme) | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
+| **Kaynak sürüm (dal)** | `mobile/pubspec.yaml` → `version:` (**1.0.24+26** — CanlıFal Sosyal premium akış) |
+| **v1.0.6** (ana sayfa + navbar) | [Releases](https://github.com/mesutbyrm/Cursor-Flutter-/releases) |
+| v1.0.5 | [Releases](https://github.com/mesutbyrm/Cursor-Flutter-/releases/tag/v1.0.5) |
+| v1.0.4 sesli oda (neon UI) | [canlifal-v104-voice-7009.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-v104-voice-7009/canlifal-v104-voice-7009.apk) |
 
-```bash
-git tag v1.0.0 && git push origin v1.0.0
-```
+Tüm sürümler: https://github.com/mesutbyrm/Cursor-Flutter-/releases
 
-İndirme örneği:  
-`https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/v1.0.0/canlifal-mobile-release.apk`
+## Bildirimler
 
-## GitHub Actions (ZIP artifact)
+| Yöntem | Nasıl |
+|--------|--------|
+| **Bu dosya (otomatik)** | Her başarılı `main` derlemesinde [`docs/LATEST_APK_BUILD.md`](docs/LATEST_APK_BUILD.md) güncellenir (sürüm + özellikler). |
+| **GitHub e-posta** | Depoda **Watch → Custom → Releases** işaretleyin; `apk-latest` yenilendiğinde e-posta gelir. |
+| **Cursor Agent** | Oturum sonunda agent APK linki + CHANGELOG özeti verir (`scripts/print-build-status.sh`). |
 
-1. **[Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml)**  
-2. **Run workflow** → istediğiniz dal  
-3. **Artifacts** → `canlifal-social-release-apk` → ZIP → `canlifal-mobile-release.apk`
+## Kurulum
 
-## Yerelde derle
+1. APK’yı Android cihazınıza indirin.
+2. **Bilinmeyen kaynaklardan yükleme**ye izin verin.
+3. Uygulamayı açın ve **canlifal.com** ile giriş yapın (oturum API için gerekli).
+
+## GitHub Actions (artifact)
+
+1. [Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml)
+2. **Run workflow** → dal seçin
+3. **Artifacts** → `canlifal-social-release-apk` → ZIP içindeki `canlifal-mobile-release.apk`
+
+## Yerelde derleme
 
 ```bash
 cd mobile
 flutter pub get
-flutter build apk --release
+flutter build apk --release --dart-define=API_BASE_URL=https://canlifal.com
 ```
 
 Çıktı: `mobile/build/app/outputs/flutter-apk/app-release.apk`
 
-```bash
-flutter build apk --release --dart-define=API_BASE_URL=https://canlifal.com
-```
+## API yapılandırması
 
-## API
-
-`mobile/lib/core/config/env.dart`, uçlar: `mobile/lib/core/network/api_endpoints.dart`.
+- Varsayılan: `https://canlifal.com` — `mobile/lib/core/config/env.dart`
+- Uçlar: `mobile/lib/core/network/api_endpoints.dart`

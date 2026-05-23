@@ -14,14 +14,39 @@ class AuthRemoteDataSource {
     required String email,
     required String password,
   }) async {
+    // canlifal.com: /api/auth/login NextAuth tarafından 400 döner — doğrudan credentials.
     if (Env.useNextAuth) {
       return _loginNextAuth(email: email, password: password);
     }
+    try {
+      return await _loginJwt(email: email, password: password);
+    } on ApiException catch (e) {
+      if (_shouldFallbackToNextAuth(e)) {
+        return _loginNextAuth(email: email, password: password);
+      }
+      rethrow;
+    }
+  }
+
+  /// SQL JWT uçları yok veya NextAuth ile çakışıyor.
+  static bool _shouldFallbackToNextAuth(ApiException e) {
+    final code = e.statusCode;
+    if (code != 404 && code != 400 && code != 405) return false;
+    final m = e.message.toLowerCase();
+    return m.contains('nextauth') ||
+        m.contains('not supported') ||
+        code == 404;
+  }
+
+  Future<Map<String, dynamic>> _loginJwt({
+    required String email,
+    required String password,
+  }) async {
     final res = await _dio.safePost<Map<String, dynamic>>(
       ApiEndpoints.authLogin,
       data: {'email': email, 'password': password},
     );
-    return res.data ?? {};
+    return _unwrap(res.data);
   }
 
   Future<Map<String, dynamic>> _loginNextAuth({
@@ -40,6 +65,7 @@ class AuthRemoteDataSource {
       },
       options: Options(
         contentType: Headers.formUrlEncodedContentType,
+        followRedirects: false,
         validateStatus: (s) => s != null && s < 500,
       ),
     );
@@ -50,9 +76,17 @@ class AuthRemoteDataSource {
     final data = res.data;
     if (data is Map) {
       final url = data['url']?.toString() ?? '';
-      if (url.contains('/api/auth/signin')) {
+      if (url.contains('/api/auth/signin') ||
+          url.contains('csrf=true') ||
+          url.contains('error=')) {
         throw const ApiException('E-posta veya şifre hatalı', statusCode: 401);
       }
+    }
+    if (code >= 400) {
+      throw ApiException(
+        'Giriş başarısız (${code})',
+        statusCode: code,
+      );
     }
     return {'ok': true};
   }
@@ -69,11 +103,17 @@ class AuthRemoteDataSource {
   Future<Map<String, dynamic>> register({
     required String email,
     required String password,
-    String? displayName,
+    required String displayName,
+    required String username,
+    String? phone,
+    String? birthDate,
+    String? birthTime,
+    String language = 'tr',
   }) async {
     if (Env.useNextAuth) {
       throw const ApiException(
-        'Kayıt şu an yalnızca canlifal.com web sitesinden yapılabilir.',
+        'E-posta ile kayıt bu sunucuda henüz desteklenmiyor. '
+        'Google ile kayıt olun veya canlifal.com üzerinden hesap oluşturun.',
       );
     }
     final res = await _dio.safePost<Map<String, dynamic>>(
@@ -81,19 +121,20 @@ class AuthRemoteDataSource {
       data: {
         'email': email,
         'password': password,
-        if (displayName != null && displayName.isNotEmpty)
-          'displayName': displayName,
+        'displayName': displayName,
+        'username': username,
+        if (phone != null && phone.isNotEmpty) 'phone': phone,
+        if (birthDate != null && birthDate.isNotEmpty) 'birthDate': birthDate,
+        if (birthTime != null && birthTime.isNotEmpty) 'birthTime': birthTime,
+        'language': language,
       },
     );
-    return res.data ?? {};
+    return _unwrap(res.data);
   }
 
   Future<Map<String, dynamic>> me() async {
-    if (Env.useNextAuth) {
-      return session();
-    }
     final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.authMe);
-    return res.data ?? {};
+    return _unwrap(res.data);
   }
 
   Future<Map<String, dynamic>> session() async {
@@ -111,5 +152,13 @@ class AuthRemoteDataSource {
       data: {'csrfToken': csrf, 'json': 'true'},
       options: Options(contentType: Headers.formUrlEncodedContentType),
     );
+  }
+
+  Map<String, dynamic> _unwrap(Map<String, dynamic>? body) {
+    if (body == null) return {};
+    final data = body['data'];
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return body;
   }
 }

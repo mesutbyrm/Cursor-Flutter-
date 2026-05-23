@@ -1,22 +1,35 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
 import '../../../../core/util/json_util.dart';
 import '../../../auth/data/models/user_dto.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../domain/entities/post_entity.dart';
 
-class PostDto {
-  PostDto({
-    required this.id,
-    required this.author,
-    this.caption,
-    this.mediaUrl,
-    this.likesCount,
-    this.commentsCount,
-    this.viewsCount,
-    this.isLiked,
-    this.createdAt,
-  });
+part 'post_dto.freezed.dart';
 
-  factory PostDto.fromJson(Map<String, dynamic> json) {
+/// API satırı — esnek alan adları `fromApiMap` ile çözülür.
+@freezed
+abstract class PostDto with _$PostDto {
+  const factory PostDto({
+    required String id,
+    required UserEntity author,
+    String? caption,
+    String? mediaUrl,
+    @Default(0) int likesCount,
+    @Default(0) int commentsCount,
+    DateTime? createdAt,
+    String? fortuneType,
+    @Default(0) int viewCount,
+    @Default(0) int viewsCount,
+    @Default(false) bool isLiked,
+    @Default(false) bool isAutoShare,
+    @Default(0) int fortuneCount,
+    String? postType,
+  }) = _PostDto;
+
+  const PostDto._();
+
+  factory PostDto.fromApiMap(Map<String, dynamic> json) {
     final authorRaw = pick(json, ['author', 'user', 'creator']);
     Map<String, dynamic> authorMap =
         authorRaw is Map ? asJsonMap(authorRaw) : <String, dynamic>{};
@@ -28,58 +41,74 @@ class PostDto {
         'avatarUrl': pick(json, ['avatarUrl', 'authorAvatar']) as String?,
       };
     }
+
+    var likes = asInt(pick(json, ['likesCount', 'likes', 'likeCount']));
+    var comments = asInt(pick(json, ['commentsCount', 'comments']));
+    final countRaw = json['_count'];
+    if (countRaw is Map) {
+      final cm = Map<String, dynamic>.from(countRaw);
+      if (cm.containsKey('likes')) likes = asInt(cm['likes']);
+      if (cm.containsKey('comments')) comments = asInt(cm['comments']);
+    }
+
+    final vc = asInt(pick(json, ['viewCount', 'views']));
+    final displayViews = asInt(pick(json, [
+      'viewsCount',
+      'views',
+      'viewCount',
+      'plays',
+      'playCount',
+    ])).clamp(0, 999999999);
+    final viewsForUi = displayViews > 0 ? displayViews : vc;
+
     return PostDto(
       id: pick(json, ['id', '_id', 'postId', 'storyId', 'mediaId'])
               ?.toString() ??
           '',
       author: UserDto.fromJson(authorMap).toEntity(),
-      caption: pick(json, ['caption', 'text', 'description']) as String?,
-      mediaUrl: pick(json, [
-            'mediaUrl',
-            'media_url',
-            'videoUrl',
-            'thumbnailUrl',
-            'imageUrl',
-          ])
+      caption: pick(json, ['caption', 'text', 'description', 'content'])
           as String?,
-      likesCount: asInt(pick(json, ['likesCount', 'likes', 'likeCount'])),
-      commentsCount: asInt(pick(json, ['commentsCount', 'comments'])),
-      viewsCount: asInt(pick(json, [
-        'viewsCount',
-        'views',
-        'viewCount',
-        'plays',
-        'playCount',
-      ])),
+      mediaUrl: pick(json, [
+        'mediaUrl',
+        'media_url',
+        'videoUrl',
+        'thumbnailUrl',
+        'imageUrl',
+        'image_url',
+      ]) as String?,
+      likesCount: likes,
+      commentsCount: comments,
+      createdAt: _parseDate(pick(json, ['createdAt', 'created_at', 'timestamp'])),
+      fortuneType: pick(json, ['fortuneType', 'fortune_type'])?.toString(),
+      viewCount: vc,
+      viewsCount: viewsForUi,
       isLiked: pick(json, ['isLiked', 'liked', 'hasLiked']) == true ||
           pick(json, ['isLiked', 'liked', 'hasLiked']) == 1,
-      createdAt: _parseDate(pick(json, ['createdAt', 'created_at', 'timestamp'])),
+      isAutoShare: json['isAutoShare'] == true ||
+          json['isAuto'] == true ||
+          json['is_auto_share'] == true ||
+          json['autoShared'] == true,
+      fortuneCount: asInt(pick(json, ['fortuneCount', 'fortune_count'])),
+      postType: pick(json, ['postType', 'post_type', 'type'])?.toString(),
     );
   }
 
-  final String id;
-  final UserEntity author;
-  final String? caption;
-  final String? mediaUrl;
-  final int? likesCount;
-  final int? commentsCount;
-  final int? viewsCount;
-  final bool? isLiked;
-  final DateTime? createdAt;
-
-  PostEntity toEntity() {
-    return PostEntity(
-      id: id,
-      author: author,
-      caption: caption,
-      mediaUrl: mediaUrl,
-      likesCount: likesCount ?? 0,
-      commentsCount: commentsCount ?? 0,
-      viewsCount: viewsCount ?? 0,
-      isLiked: isLiked ?? false,
-      createdAt: createdAt,
-    );
-  }
+  PostEntity toEntity() => PostEntity(
+        id: id,
+        author: author,
+        caption: caption,
+        mediaUrl: mediaUrl,
+        likesCount: likesCount,
+        commentsCount: commentsCount,
+        viewsCount: viewsCount,
+        isLiked: isLiked,
+        createdAt: createdAt,
+        fortuneType: fortuneType,
+        viewCount: viewCount,
+        isAutoShare: isAutoShare,
+        fortuneCount: fortuneCount,
+        postType: postType,
+      );
 
   static DateTime? _parseDate(dynamic v) {
     if (v == null) return null;

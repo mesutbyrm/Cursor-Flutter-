@@ -1,2 +1,44 @@
+# Node API (yerel geliştirme)
+api/node_modules/
+site/canlifal-jeton-web/node_modules/
+site/canlifal-jeton-web/.next/
+api/.env
+
 # Yerel CI/Android SDK kurulumu (depoya eklenmez)
 /android-sdk-ci/
+
+# Flutter/Dart artefaktları (kök veya mobile/)
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+
+# Flutter/Dart (mobile/)
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Generated mobile build artifacts
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Runner.xcworkspace/xcuserdata/
+mobile/ios/Runner.xcodeproj/xcuserdata/
+dist/
+*.apk

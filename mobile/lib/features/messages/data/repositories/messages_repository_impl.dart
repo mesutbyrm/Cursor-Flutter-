@@ -12,10 +12,17 @@ class MessagesRepositoryImpl implements MessagesRepository {
       _remote.conversations();
 
   @override
-  Future<List<MessageEntity>> messages(String conversationId) =>
-      _remote.messages(conversationId);
+  Future<List<MessageEntity>> messages(
+    String conversationId, {
+    String? currentUserId,
+  }) =>
+      _remote.messages(conversationId, currentUserId: currentUserId);
 
   @override
   Future<void> sendMessage(String conversationId, String text) =>
       _remote.send(conversationId, text);
+
+  @override
+  Future<ConversationEntity> startConversation(String recipientId) =>
+      _remote.startConversation(recipientId);
 }

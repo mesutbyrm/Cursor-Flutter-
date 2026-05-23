@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/exit_confirm_dialog.dart';
+import '../../auth/presentation/providers/auth_providers.dart';
+import '../../messages/presentation/providers/messages_providers.dart';
+import '../../notifications/presentation/providers/notifications_providers.dart';
+import 'discover_bottom_bar.dart';
 
-class MainShellPage extends StatelessWidget {
+class MainShellPage extends ConsumerWidget {
   const MainShellPage({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
@@ -16,47 +22,41 @@ class MainShellPage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppTheme.surface,
-          border: Border(top: BorderSide(color: Colors.white10)),
-        ),
-        child: SafeArea(
-          child: NavigationBar(
-            height: 64,
-            backgroundColor: Colors.transparent,
-            indicatorColor: AppTheme.accent.withValues(alpha: 0.15),
-            selectedIndex: navigationShell.currentIndex,
-            onDestinationSelected: _goBranch,
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home_rounded, color: AppTheme.accent),
-                label: 'Akış',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.live_tv_outlined),
-                selectedIcon:
-                    Icon(Icons.live_tv_rounded, color: AppTheme.accentSecondary),
-                label: 'Canlı',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.chat_bubble_outline_rounded),
-                selectedIcon:
-                    Icon(Icons.chat_bubble_rounded, color: AppTheme.accent),
-                label: 'Mesaj',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.person_outline_rounded),
-                selectedIcon:
-                    Icon(Icons.person_rounded, color: AppTheme.accent),
-                label: 'Profil',
-              ),
-            ],
-          ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final messagesUnread = ref.watch(messagesUnreadCountProvider);
+
+    ref.listen<AsyncValue<dynamic>>(authControllerProvider, (prev, next) {
+      if (next.valueOrNull != null && prev?.valueOrNull == null) {
+        ref.invalidate(conversationsProvider);
+        ref.invalidate(notificationsListProvider);
+      }
+    });
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        if (GoRouter.of(context).canPop()) {
+          context.pop();
+          return;
+        }
+        await handleShellBackPress(
+          context,
+          onLogout: () async {
+            await ref.read(authControllerProvider.notifier).logout();
+            if (context.mounted) context.go('/login');
+          },
+        );
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: navigationShell,
+        extendBody: true,
+        bottomNavigationBar: DiscoverBottomBar(
+          currentIndex: navigationShell.currentIndex,
+          onTap: _goBranch,
+          onFabTap: () => openLiveFromFab(context),
+          messagesBadgeCount: messagesUnread,
         ),
       ),
     );

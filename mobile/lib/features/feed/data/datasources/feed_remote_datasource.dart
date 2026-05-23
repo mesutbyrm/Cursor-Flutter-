@@ -31,7 +31,7 @@ class FeedRemoteDataSource {
 
     if (body is List) {
       return asJsonList(body)
-          .map(PostDto.fromJson)
+          .map(PostDto.fromApiMap)
           .where((p) => p.id.isNotEmpty)
           .toList();
     }
@@ -45,7 +45,7 @@ class FeedRemoteDataSource {
 
     final list = pick(m, ['items', 'data', 'posts', 'results', 'feed', 'reels']);
     return asJsonList(list)
-        .map(PostDto.fromJson)
+        .map(PostDto.fromApiMap)
         .where((p) => p.id.isNotEmpty)
         .toList();
   }
@@ -75,7 +75,7 @@ class FeedRemoteDataSource {
               : asJsonMap(pick(sm, ['user', 'author', 'owner'])),
         );
 
-        final p = PostDto.fromJson(merged);
+        final p = PostDto.fromApiMap(merged);
         if (p.id.isNotEmpty) out.add(p);
       }
     }

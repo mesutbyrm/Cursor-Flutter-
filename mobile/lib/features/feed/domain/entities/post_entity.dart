@@ -13,6 +13,11 @@ class PostEntity extends Equatable {
     this.viewsCount = 0,
     this.isLiked = false,
     this.createdAt,
+    this.fortuneType,
+    this.viewCount = 0,
+    this.isAutoShare = false,
+    this.fortuneCount = 0,
+    this.postType,
   });
 
   final String id;
@@ -21,10 +26,18 @@ class PostEntity extends Equatable {
   final String? mediaUrl;
   final int likesCount;
   final int commentsCount;
-  /// İzlenme / görüntülenme (yerel + sunucu).
+  /// Görüntülenme (UI + yerel sayaç; akış kartında kullanılır).
   final int viewsCount;
   final bool isLiked;
   final DateTime? createdAt;
+  /// Örn. `kahve-fali` — canlifal.com `/api/social/posts`.
+  final String? fortuneType;
+  final int viewCount;
+  final bool isAutoShare;
+  /// Aynı fal / paylaşımı gören kişi sayısı (canlifal `fortuneCount`).
+  final int fortuneCount;
+  /// Örn. `fortune`, `text` — canlifal `postType`.
+  final String? postType;
 
   /// Fal / tarot içeriklerini hikâye şeridinde göstermemek için.
   bool get isFortuneContent {
@@ -45,6 +58,11 @@ class PostEntity extends Equatable {
     int? viewsCount,
     bool? isLiked,
     DateTime? createdAt,
+    String? fortuneType,
+    int? viewCount,
+    bool? isAutoShare,
+    int? fortuneCount,
+    String? postType,
   }) {
     return PostEntity(
       id: id ?? this.id,
@@ -56,6 +74,11 @@ class PostEntity extends Equatable {
       viewsCount: viewsCount ?? this.viewsCount,
       isLiked: isLiked ?? this.isLiked,
       createdAt: createdAt ?? this.createdAt,
+      fortuneType: fortuneType ?? this.fortuneType,
+      viewCount: viewCount ?? this.viewCount,
+      isAutoShare: isAutoShare ?? this.isAutoShare,
+      fortuneCount: fortuneCount ?? this.fortuneCount,
+      postType: postType ?? this.postType,
     );
   }
 
@@ -70,5 +93,10 @@ class PostEntity extends Equatable {
         viewsCount,
         isLiked,
         createdAt,
+        fortuneType,
+        viewCount,
+        isAutoShare,
+        fortuneCount,
+        postType,
       ];
 }

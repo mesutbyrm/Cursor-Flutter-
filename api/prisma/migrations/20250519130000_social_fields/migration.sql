@@ -1,0 +1,25 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "username" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "bio" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "avatarUrl" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "coverUrl" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "coins" INTEGER NOT NULL DEFAULT 500;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "followerCount" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "followingCount" INTEGER NOT NULL DEFAULT 0;
+
+-- CreateTable
+CREATE TABLE IF NOT EXISTS "Follow" (
+    "id" TEXT NOT NULL,
+    "followerId" TEXT NOT NULL,
+    "followingId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Follow_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "Follow_followerId_followingId_key" ON "Follow"("followerId", "followingId");
+CREATE INDEX IF NOT EXISTS "Follow_followingId_idx" ON "Follow"("followingId");
+CREATE UNIQUE INDEX IF NOT EXISTS "User_username_key" ON "User"("username");
+
+ALTER TABLE "Follow" ADD CONSTRAINT "Follow_followerId_fkey" FOREIGN KEY ("followerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Follow" ADD CONSTRAINT "Follow_followingId_fkey" FOREIGN KEY ("followingId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

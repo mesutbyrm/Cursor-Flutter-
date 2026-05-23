@@ -3,30 +3,99 @@ abstract final class ApiEndpoints {
   // --- NextAuth (canlifal.com) ---
   static const authCsrf = '/api/auth/csrf';
   static const authCredentials = '/api/auth/callback/credentials';
+  /// NextAuth Google OAuth başlangıcı (canlifal.com `/api/auth/providers`).
+  static const authSignInGoogle = '/api/auth/signin/google';
   static const authSession = '/api/auth/session';
   static const authSignOut = '/api/auth/signout';
 
-  // --- Klasik JWT REST (diğer ortamlar) ---
-  static const authLogin = '/auth/login';
-  static const authRegister = '/auth/register';
-  static const authRefresh = '/auth/refresh';
-  static const authMe = '/auth/me';
+  // --- SQL + JWT (native Google/TikTok/kayıt) ---
+  static const authLogin = '/api/auth/login';
+  static const authRegister = '/api/auth/register';
+  static const authRefresh = '/api/auth/refresh';
+  static const authMe = '/api/auth/me';
+  static const authGoogle = '/api/auth/google';
+  static const authTiktok = '/api/auth/tiktok';
+
+  static const messagesConversations = '/api/messages/conversations';
 
   // --- Uygulama API (çerez veya Bearer) ---
   static const feed = '/api/stories';
+  /// canlifal.com sosyal akış (web `/sosyal` ile aynı veri).
+  static const socialPosts = '/api/social/posts';
+  static const socialPostsAutoFortune = '/api/social/posts/auto-fortune';
+  static String socialPostDelete(String id) => '/api/social/posts/$id';
+  /// canlifal.com ana sayfa canlı yayın listesi (JSON dizi).
+  static const videoStreams = '/api/video-streams';
+  /// Sesli / metin sohbet odaları (web `/sohbet/{slug}`).
+  static const chatRooms = '/api/chat/rooms';
+
+  static String chatRoomMessages(String roomId) =>
+      '/api/chat/rooms/$roomId/messages';
+
+  static String chatRoomPresence(String roomId) =>
+      '/api/chat/rooms/$roomId/presence';
+
+  static String chatRoomDj(String roomId) => '/api/chat/rooms/$roomId/dj';
+
+  static String chatRoomGifts(String roomId) => '/api/chat/rooms/$roomId/gifts';
+  /// Oturumlu kullanıcı profili (takipçi, bio, görsel — NextAuth çerezi).
+  static const userSiteProfile = '/api/user/profile';
+  /// Jeton / kredi bakiyesi (NextAuth).
+  static const userCredits = '/api/user/credits';
+
+  /// Jeton paketleri / fiyat listesi (oturum gerekir).
+  static const jetonCatalog = '/api/jeton';
+
+  static const membershipPackages = '/api/membership/packages';
+  static const membershipPurchase = '/api/membership/purchase';
+
+  static const paymentConfig = '/api/payment/config';
+  static const paymentRequests = '/api/payment/requests';
+  static const adminCfcPaymentRequests = '/api/admin/cfc-payment-requests';
+  static const adminCfcPaymentPatch = '/api/admin/cfc-payment-requests';
+  static const adminCfcSettings = '/api/admin/cfc-settings';
+  /// Geriye dönük
+  static const adminPaymentRequests = '/api/admin/payment-requests';
+  static const adminNotifications = '/api/admin/notifications';
+
+  /// Arkadaş daveti — bağlantı veya kod (oturum gerekir).
+  static const referral = '/api/referral';
+  /// Diğer ortamlar için genel canlı listesi.
   static const liveStreams = '/api/live';
+
+  /// Tencent TRTC UserSig (POST: userId, roomId).
+  static const trtcUserSig = '/api/trtc/usersig';
+
+  /// Canlı yayın hediye kataloğu (Tencent / site ile aynı liste).
+  static const videoStreamGiftsCatalog = '/api/video-streams/gifts';
+
+  static String videoStreamEnd(String streamId) => '/api/video-streams/$streamId/end';
+
+  static String videoStreamGifts(String streamId) =>
+      '/api/video-streams/$streamId/gifts';
+
+  static String videoStreamGiftLeaderboard(String streamId) =>
+      '/api/video-streams/$streamId/gifts/leaderboard';
+
+  static const giftsCatalog = '/api/gifts';
 
   static String userProfile(String userId) => '/api/users/$userId';
   static String follow(String userId) => '/api/users/$userId/follow';
   static String followers(String userId) => '/api/users/$userId/followers';
   static String following(String userId) => '/api/users/$userId/following';
 
-  static const conversations = '/api/messages/conversations';
+  static const conversations = messagesConversations;
   static String conversationMessages(String id) =>
       '/api/messages/conversations/$id/messages';
 
   static const notifications = '/api/notifications';
   static String notificationRead(String id) => '/api/notifications/$id/read';
 
+  /// FCM cihaz token kaydı (canlifal.com veya self-hosted API).
+  static const registerFcmDevice = '/api/devices/fcm';
+
   static const wallet = '/api/wallet';
+
+  /// İçerik / kullanıcı şikayeti (canlifal moderasyon API).
+  static const reports = '/api/reports';
 }

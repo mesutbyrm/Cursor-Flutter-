@@ -28,10 +28,21 @@ class _FakeAuthRepository implements AuthRepository {
   Future<UserEntity> register({
     required String email,
     required String password,
-    String? displayName,
+    required String displayName,
+    required String username,
+    String? phone,
+    String? birthDate,
+    String? birthTime,
+    String language = 'tr',
   }) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<UserEntity> loginWithGoogle() => throw UnimplementedError();
+
+  @override
+  Future<UserEntity> loginWithTikTok() => throw UnimplementedError();
 }
 
 void main() {
@@ -46,6 +57,8 @@ void main() {
       ),
     );
     await tester.pump();
+    // flutter_animate / splash timers — tüketmeden test invariant’ı düşer.
+    await tester.pump(const Duration(seconds: 2));
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

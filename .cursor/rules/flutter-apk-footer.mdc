@@ -1,0 +1,23 @@
+---
+description: Her kullanıcı yanıtının sonunda Flutter APK indirme bağlantısı ver
+alwaysApply: true
+---
+
+# APK indirme — yanıt sonu (zorunlu)
+
+Kullanıcıya **her** yanıtın **en sonunda** (kısa bir bölüm olarak) şu bilgiyi ekle:
+
+## 📲 Canlifal APK
+
+- **Sürüm:** `mobile/pubspec.yaml` içindeki `version:` satırını oku (ör. `1.0.7+8`). Okuyamazsan `APK_DOWNLOAD.md` veya `main` dalındaki sürümü kullan.
+- **İndirme (sabit, önerilen):** https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
+- **404 ise:** https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml → Run workflow → dal `main` → bitince `apk-latest` güncellenir.
+- **Tüm sürümler:** https://github.com/mesutbyrm/Cursor-Flutter-/releases
+
+Biçim örneği:
+
+---
+**📲 Canlifal APK (Flutter `X.Y.Z+build`)**  
+İndir: https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
+
+Kullanıcı yalnızca APK istemediyse bile bu footer’ı ekle; tek istisnak tamamen APK/link sorusuna tek satırlık cevap verildiğinde footer yine eklenebilir (link tekrarı kabul edilebilir).

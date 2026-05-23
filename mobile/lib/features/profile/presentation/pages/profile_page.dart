@@ -2,180 +2,170 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/social_refresh_indicator.dart';
-import '../../../../core/widgets/user_avatar.dart';
+import '../../../../core/network/api_exception.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/responsive/responsive_layout.dart';
+import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/premium/profile_admin_section.dart';
+import '../widgets/premium/profile_broadcaster_panel.dart';
+import '../widgets/premium/profile_gifts_row.dart';
+import '../widgets/premium/profile_neon_header.dart';
+import '../widgets/premium/profile_premium_banner.dart';
+import '../widgets/premium/profile_settings_menu.dart';
+import '../widgets/premium/profile_wallet_section.dart';
 
+/// Profil — responsive ortalanmış içerik, premium neon düzen.
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
-    final coins = ref.watch(coinBalanceProvider);
+    final wallet = ref.watch(walletBalancesProvider);
+    final top = MediaQuery.paddingOf(context).top;
+
+    Future<void> refresh() async {
+      await ref.read(authControllerProvider.notifier).refreshMe();
+      ref.invalidate(walletBalancesProvider);
+      ref.invalidate(coinBalanceProvider);
+    }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil'),
-        actions: [
-          IconButton(
-            tooltip: 'Bildirimler',
-            onPressed: () => context.push('/notifications'),
-            icon: const Icon(Icons.notifications_none_rounded),
-          ),
-          IconButton(
-            tooltip: 'Çıkış',
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).logout();
-            },
-            icon: const Icon(Icons.logout_rounded),
-          ),
-        ],
-      ),
-      body: auth.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
-        data: (user) {
-          if (user == null) {
-            return const Center(child: Text('Oturum yok'));
-          }
-          final refreshEdge =
-              MediaQuery.paddingOf(context).top + kToolbarHeight + 4;
-          return SocialRefreshIndicator(
-            edgeOffset: refreshEdge,
-            onRefresh: () async {
-              await ref.read(authControllerProvider.notifier).refreshMe();
-              ref.invalidate(coinBalanceProvider);
-              await ref.read(coinBalanceProvider.future);
-            },
-            child: ListView(
-              cacheExtent: 600,
-              padding: const EdgeInsets.all(20),
-              children: [
-                Row(
-                  children: [
-                    UserAvatar(url: user.avatarUrl, radius: 40),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user.display,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          Text(
-                            '@${user.username}',
-                            style: const TextStyle(color: AppTheme.muted),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+      backgroundColor: AppColors.background,
+      body: DiscoverBackground(
+        child: RefreshIndicator(
+          color: AppColors.accentPink,
+          backgroundColor: AppColors.bgPurpleGlow,
+          onRefresh: refresh,
+          child: auth.when(
+            loading: () => const Center(child: DiscoverAccentLoader()),
+            error: (e, _) => Center(
+              child: Padding(
+                padding: ResponsiveLayout.pagePadding(context),
+                child: DiscoverEmptyState(
+                  icon: Icons.error_outline_rounded,
+                  message: ApiException.userMessage(e),
                 ),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF2A1838), Color(0xFF14141C)],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white10),
+              ),
+            ),
+            data: (user) {
+              if (user == null) {
+                return const Center(
+                  child: DiscoverEmptyState(
+                    icon: Icons.person_off_outlined,
+                    message: 'Oturum bulunamadı',
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.monetization_on_rounded,
-                        color: Color(0xFFFFD54F),
-                        size: 36,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
+                );
+              }
+              final balances = wallet.maybeWhen(
+                data: (b) => b,
+                orElse: () => null,
+              );
+              final jeton = balances?.jeton ?? user.coinBalance;
+              final cfc = balances?.cfc ?? 0;
+              final membership = balances?.membership;
+              final membershipDays = balances?.membershipDaysRemaining;
+
+              return CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                slivers: [
+                  SliverToBoxAdapter(child: SizedBox(height: top + 8)),
+                  SliverToBoxAdapter(
+                    child: ResponsiveConstrained(
+                      child: Padding(
+                        padding: ResponsiveLayout.pagePadding(
+                          context,
+                          bottom: 120,
+                        ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Text(
-                              'Coin bakiyesi',
-                              style: TextStyle(color: AppTheme.muted),
+                            ProfileNeonHeader(
+                              displayName: user.display,
+                              username: user.username,
+                              avatarUrl: user.avatarUrl,
+                              followers: user.followersCount,
+                              following: user.followingCount,
+                              bio: user.bio ??
+                                  '🎵 Müzik, sohbet ve eğlence dolu yayınlar…',
+                              diamondBalance: jeton,
+                              cfcBalance: cfc,
+                              onNotifications: () =>
+                                  context.push('/notifications'),
+                              onLogout: () => ref
+                                  .read(authControllerProvider.notifier)
+                                  .logout(),
+                              onEdit: () => _openPublicProfile(context, user),
                             ),
-                            coins.when(
-                              data: (c) => Text(
-                                '$c coin',
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                            const SizedBox(height: 16),
+                            const ProfileBranchQuickActions(),
+                            const SizedBox(height: 20),
+                            ProfilePremiumBanner(
+                              membership: membership,
+                              daysRemaining: membershipDays,
+                              onViewPrivileges: () =>
+                                  context.push('/premium-membership'),
+                            ),
+                            const SizedBox(height: 22),
+                            ProfileWalletSection(
+                              jeton: jeton,
+                              cfc: cfc,
+                              onTopUp: () => context.push('/jeton-store'),
+                              onCfcTopUp: () => context.push('/cfc-store'),
+                              onEarnings: () => _showSnack(
+                                context,
+                                'Kazançlar yakında',
                               ),
-                              loading: () => const Text('...'),
-                              error: (_, __) => const Text(
-                                '—',
-                                style: TextStyle(color: AppTheme.muted),
+                              onTransactions: () => ref.invalidate(
+                                walletBalancesProvider,
                               ),
+                              onSubscriptions: () => context.push('/wallet'),
+                            ),
+                            const SizedBox(height: 22),
+                            const ProfileAdminSection(),
+                            const ProfileBroadcasterPanel(),
+                            const SizedBox(height: 22),
+                            ProfileGiftsRow(
+                              onViewAll: () => _showSnack(
+                                context,
+                                'Hediye koleksiyonu yakında',
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ProfileSettingsMenu(
+                              onEditProfile: () =>
+                                  _openPublicProfile(context, user),
+                              onNotifications: () =>
+                                  context.push('/notifications'),
                             ),
                           ],
                         ),
                       ),
-                      TextButton(
-                        onPressed: () => ref.invalidate(coinBalanceProvider),
-                        child: const Text('Yenile'),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _Stat(label: 'Takipçi', value: '${user.followersCount}'),
-                    _Stat(label: 'Takip', value: '${user.followingCount}'),
-                  ],
-                ),
-                if (user.bio != null && user.bio!.isNotEmpty) ...[
-                  const SizedBox(height: 24),
-                  Text(
-                    user.bio!,
-                    style: const TextStyle(
-                      color: AppTheme.onBackground,
-                      height: 1.4,
                     ),
                   ),
                 ],
-                const SizedBox(height: 32),
-                FilledButton.tonal(
-                  onPressed: () => context.push('/user/${user.id}'),
-                  child: const Text('Profilimi herkese aç'),
-                ),
-              ],
-            ),
-          );
-        },
+              );
+            },
+          ),
+        ),
       ),
     );
   }
-}
 
-class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value});
+  static void _openPublicProfile(BuildContext context, UserEntity user) {
+    context.push('/user/${user.id}');
+  }
 
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-        ),
-        Text(label, style: const TextStyle(color: AppTheme.muted)),
-      ],
+  static void _showSnack(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 }

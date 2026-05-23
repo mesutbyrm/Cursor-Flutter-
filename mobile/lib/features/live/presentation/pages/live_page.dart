@@ -1,137 +1,173 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/social_refresh_indicator.dart';
+import '../../../../core/network/api_exception.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/premium/premium_skeleton.dart';
+import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../shell/presentation/widgets/branch_quick_actions.dart';
+import '../../../voice_hub/presentation/voice_rooms_body.dart';
 import '../providers/live_providers.dart';
+import '../utils/open_live_stream.dart';
+import '../widgets/live_stream_list_tile.dart';
 
-class LivePage extends ConsumerWidget {
+class LivePage extends ConsumerStatefulWidget {
   const LivePage({super.key});
+
+  @override
+  ConsumerState<LivePage> createState() => _LivePageState();
+}
+
+class _LivePageState extends ConsumerState<LivePage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tab;
+
+  @override
+  void initState() {
+    super.initState();
+    _tab = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tab.dispose();
+    super.dispose();
+  }
+
+  void _refresh() {
+    ref.invalidate(liveStreamsProvider);
+    ref.invalidate(voiceRoomsProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final top = MediaQuery.paddingOf(context).top;
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: DiscoverBackground(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(height: top + 8),
+            DiscoverTabHeader(
+              title: 'Canlı',
+              subtitle: 'Yayınlar ve sesli sohbet odaları',
+              actions: [
+                DiscoverIconButton(
+                  icon: Icons.videocam_rounded,
+                  tooltip: 'Yayına başla',
+                  onPressed: () => context.push('/live/prep'),
+                ),
+                DiscoverIconButton(
+                  icon: Icons.refresh_rounded,
+                  onPressed: _refresh,
+                ),
+              ],
+            ),
+            DiscoverSegmentedTabs(
+              controller: _tab,
+              tabs: const [
+                (label: 'Yayınlar', icon: Icons.live_tv_rounded),
+                (label: 'Sohbet', icon: Icons.headset_mic_rounded),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tab,
+                children: const [
+                  _LiveStreamsTab(),
+                  _VoiceTab(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VoiceTab extends StatelessWidget {
+  const _VoiceTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: LiveVoiceBranchQuickActions(),
+        ),
+        Expanded(
+          child: VoiceRoomsBody(embeddedInLiveShellTab: true),
+        ),
+      ],
+    );
+  }
+}
+
+class _LiveStreamsTab extends ConsumerWidget {
+  const _LiveStreamsTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final live = ref.watch(liveStreamsProvider);
-    final refreshEdge = MediaQuery.paddingOf(context).top + kToolbarHeight + 4;
 
-    Future<void> onPullRefresh() async {
-      ref.invalidate(liveStreamsProvider);
-      await ref.read(liveStreamsProvider.future);
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Canlı yayınlar'),
-        actions: [
-          IconButton(
-            onPressed: () => ref.invalidate(liveStreamsProvider),
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
-      ),
-      body: live.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
-        data: (streams) {
-          if (streams.isEmpty) {
-            return SocialRefreshIndicator(
-              edgeOffset: refreshEdge,
-              onRefresh: onPullRefresh,
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Text(
-                        'Şu an canlı yayın yok',
-                        style: TextStyle(color: AppTheme.muted),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-          return SocialRefreshIndicator(
-            edgeOffset: refreshEdge,
-            onRefresh: onPullRefresh,
-            child: ListView.separated(
-              cacheExtent: 600,
-              padding: const EdgeInsets.all(16),
-              itemCount: streams.length,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: LiveStreamsBranchQuickActions(),
+        ),
+        Expanded(
+          child: live.when(
+            loading: () => ListView.separated(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+              itemCount: 4,
               separatorBuilder: (_, _) => const SizedBox(height: 12),
-              itemBuilder: (ctx, i) {
-                final s = streams[i];
-                return Container(
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceElevated,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white10),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(12),
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: SizedBox(
-                        width: 64,
-                        height: 64,
-                        child:
-                            s.thumbnailUrl != null && s.thumbnailUrl!.isNotEmpty
-                            ? Image.network(
-                                s.thumbnailUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => const ColoredBox(
-                                  color: AppTheme.surface,
-                                  child: Icon(
-                                    Icons.live_tv_rounded,
-                                    color: AppTheme.accent,
-                                  ),
-                                ),
-                              )
-                            : const ColoredBox(
-                                color: AppTheme.surface,
-                                child: Icon(
-                                  Icons.live_tv_rounded,
-                                  color: AppTheme.accent,
-                                ),
-                              ),
-                      ),
-                    ),
-                    title: Text(
-                      s.title,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    subtitle: Text(
-                      '${s.streamerName ?? 'Yayıncı'} · ${s.viewerCount} izleyici',
-                      style: const TextStyle(color: AppTheme.muted),
-                    ),
-                    trailing: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: s.isLive
-                            ? AppTheme.accent.withValues(alpha: 0.2)
-                            : AppTheme.muted.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        s.isLive ? 'CANLI' : 'BİTTİ',
-                        style: TextStyle(
-                          color: s.isLive ? AppTheme.accent : AppTheme.muted,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
+              itemBuilder: (_, _) => const RepaintBoundary(
+                child: PremiumLiveCardSkeleton(),
+              ),
             ),
-          );
-        },
-      ),
+            error: (e, _) => DiscoverEmptyState(
+              icon: Icons.live_tv_outlined,
+              message: ApiException.userMessage(e),
+              actionLabel: 'Yenile',
+              action: () => ref.invalidate(liveStreamsProvider),
+            ),
+            data: (streams) {
+              if (streams.isEmpty) {
+                return const DiscoverEmptyState(
+                  icon: Icons.videocam_off_outlined,
+                  message:
+                      'Şu an canlı yayın yok.\nYeni yayınlar burada görünecek.',
+                );
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+                itemCount: streams.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                itemBuilder: (ctx, i) {
+                  final s = streams[i];
+                  return RepaintBoundary(
+                    child: LiveStreamListTile(
+                      stream: s,
+                      onTap: s.isLive
+                          ? () => openLiveStreamNative(context, ref, s)
+                          : null,
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

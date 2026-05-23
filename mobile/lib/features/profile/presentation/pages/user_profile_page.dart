@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/social_refresh_indicator.dart';
+import '../../../../core/network/api_exception.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../messages/presentation/providers/messages_providers.dart';
+import '../../../moderation/domain/entities/report_target.dart';
+import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../providers/profile_providers.dart';
 
 class UserProfilePage extends ConsumerWidget {
@@ -15,34 +20,47 @@ class UserProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(userProfileProvider(userId));
+    final me = ref.watch(authControllerProvider).valueOrNull;
+    final isSelf = me != null && me.id == userId;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => context.pop(),
+    return DiscoverSubPage(
+      title: 'Kullanıcı',
+      subtitle: 'Profil detayı',
+      actions: [
+        DiscoverIconButton(
+          icon: Icons.flag_outlined,
+          tooltip: 'Bildir',
+          onPressed: () => openReportFlow(
+            context,
+            ReportTarget(
+              type: ReportTargetType.user,
+              targetId: userId,
+              displayTitle: 'Kullanıcı profili',
+            ),
+          ),
         ),
-        title: const Text('Profil'),
-      ),
+      ],
       body: userAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
+        loading: () => const DiscoverAccentLoader(),
+        error: (e, _) => DiscoverEmptyState(
+          icon: Icons.person_off_outlined,
+          message: e.toString(),
+        ),
         data: (user) {
-          final refreshEdge =
-              MediaQuery.paddingOf(context).top + kToolbarHeight + 4;
-          return SocialRefreshIndicator(
-            edgeOffset: refreshEdge,
-            onRefresh: () async {
-              ref.invalidate(userProfileProvider(userId));
-              await ref.read(userProfileProvider(userId).future);
-            },
-            child: ListView(
-              cacheExtent: 600,
-              padding: const EdgeInsets.all(20),
-              children: [
-                Row(
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+            children: [
+              DiscoverGlassCard(
+                child: Row(
                   children: [
-                    UserAvatar(url: user.avatarUrl, radius: 40),
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: AppColors.brandGradient,
+                      ),
+                      child: UserAvatar(url: user.avatarUrl, radius: 36),
+                    ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
@@ -52,49 +70,138 @@ class UserProfilePage extends ConsumerWidget {
                             user.display,
                             style: const TextStyle(
                               fontSize: 20,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
                           Text(
                             '@${user.username}',
-                            style: const TextStyle(color: AppTheme.muted),
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 14,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Row(
+              ),
+              const SizedBox(height: 14),
+              DiscoverGlassCard(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _Stat(label: 'Takipçi', value: '${user.followersCount}'),
+                    Container(
+                      width: 1,
+                      height: 40,
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
                     _Stat(label: 'Takip', value: '${user.followingCount}'),
                   ],
                 ),
-                const SizedBox(height: 20),
-                FilledButton(
-                  onPressed: () async {
-                    final repo = ref.read(profileRepositoryProvider);
-                    if (user.isFollowing) {
-                      await repo.unfollow(user.id);
-                    } else {
-                      await repo.follow(user.id);
-                    }
-                    ref.invalidate(userProfileProvider(userId));
-                  },
-                  child: Text(user.isFollowing ? 'Takipten çık' : 'Takip et'),
+              ),
+              const SizedBox(height: 20),
+              if (!isSelf) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () async {
+                          final repo = ref.read(profileRepositoryProvider);
+                          if (user.isFollowing) {
+                            await repo.unfollow(user.id);
+                          } else {
+                            await repo.follow(user.id);
+                          }
+                          ref.invalidate(userProfileProvider(userId));
+                        },
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(52),
+                          backgroundColor: user.isFollowing
+                              ? Colors.white.withValues(alpha: 0.12)
+                              : AppColors.accentPink,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          user.isFollowing ? 'Takipten çık' : 'Takip et',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => _openDirectMessage(context, ref),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(52),
+                          foregroundColor: AppColors.accentCyan,
+                          side: BorderSide(
+                            color: AppColors.accentCyan.withValues(alpha: 0.65),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text(
+                          'Mesaj',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                if (user.bio != null && user.bio!.isNotEmpty) ...[
-                  const SizedBox(height: 24),
-                  Text(user.bio!, style: const TextStyle(height: 1.4)),
-                ],
+              ] else
+                FilledButton(
+                  onPressed: null,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    disabledBackgroundColor:
+                        Colors.white.withValues(alpha: 0.08),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'Bu sizin profiliniz',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              if (user.bio != null && user.bio!.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                DiscoverGlassCard(
+                  child: Text(
+                    user.bio!,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      height: 1.45,
+                    ),
+                  ),
+                ),
               ],
-            ),
+            ],
           );
         },
       ),
     );
+  }
+
+  Future<void> _openDirectMessage(BuildContext context, WidgetRef ref) async {
+    try {
+      final conv = await ref
+          .read(messagesRepositoryProvider)
+          .startConversation(userId);
+      if (!context.mounted) return;
+      context.push('/chat/${conv.id}');
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
   }
 }
 
@@ -110,9 +217,16 @@ class _Stat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+          ),
         ),
-        Text(label, style: const TextStyle(color: AppTheme.muted)),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+        ),
       ],
     );
   }

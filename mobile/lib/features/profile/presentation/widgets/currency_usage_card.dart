@@ -1,0 +1,101 @@
+import 'package:flutter/material.dart';
+
+import '../../../../core/content/currency_usage_info.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/discover_tab_layout.dart';
+
+/// CFC veya Jeton kullanım alanları kartı.
+class CurrencyUsageCard extends StatelessWidget {
+  const CurrencyUsageCard.cfc({super.key}) : isCfc = true;
+
+  const CurrencyUsageCard.jeton({super.key}) : isCfc = false;
+
+  final bool isCfc;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = isCfc ? CurrencyUsageInfo.cfcTitle : CurrencyUsageInfo.jetonTitle;
+    final items =
+        isCfc ? CurrencyUsageInfo.cfcUsageItems : CurrencyUsageInfo.jetonUsageItems;
+
+    return DiscoverGlassCard(
+      borderColor: isCfc
+          ? AppColors.diamondBlue.withValues(alpha: 0.35)
+          : AppColors.coinGold.withValues(alpha: 0.35),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$title — nerelerde kullanılır?',
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+          ),
+          if (isCfc) ...[
+            const SizedBox(height: 8),
+            Text(
+              CurrencyUsageInfo.cfcPriceHint,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.diamondBlue.withValues(alpha: 0.95),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.liveRed.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.liveRed.withValues(alpha: 0.35),
+                ),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline_rounded,
+                      size: 18, color: AppColors.liveRed),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      CurrencyUsageInfo.cfcNotConvertible,
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.35,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          for (var i = 0; i < items.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${i + 1}.',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      items[i],
+                      style: const TextStyle(fontSize: 13, height: 1.35),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
