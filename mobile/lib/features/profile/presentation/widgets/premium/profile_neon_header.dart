@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../../../core/widgets/dual_balance_chips.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import 'profile_glass.dart';
 
-class ProfileNeonHeader extends StatelessWidget {
+class ProfileNeonHeader extends ConsumerWidget {
   const ProfileNeonHeader({
     super.key,
     required this.displayName,
@@ -20,7 +22,6 @@ class ProfileNeonHeader extends StatelessWidget {
     this.cfcBalance = 0,
     this.onSettings,
     this.onEdit,
-    this.onNotifications,
     this.onLogout,
   });
 
@@ -36,11 +37,10 @@ class ProfileNeonHeader extends StatelessWidget {
   final int cfcBalance;
   final VoidCallback? onSettings;
   final VoidCallback? onEdit;
-  final VoidCallback? onNotifications;
   final VoidCallback? onLogout;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -59,13 +59,8 @@ class ProfileNeonHeader extends StatelessWidget {
               ),
             const SizedBox(width: 8),
             _TopIconButton(icon: Icons.edit_rounded, onPressed: onEdit),
-            if (onNotifications != null) ...[
-              const SizedBox(width: 4),
-              _TopIconButton(
-                icon: Icons.notifications_none_rounded,
-                onPressed: onNotifications,
-              ),
-            ],
+            const SizedBox(width: 4),
+            const MessagesNotificationsActions(spacing: 4, iconSize: 36),
             if (onLogout != null) ...[
               const SizedBox(width: 4),
               _TopIconButton(

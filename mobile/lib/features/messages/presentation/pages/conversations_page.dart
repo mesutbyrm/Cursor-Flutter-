@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../providers/messages_providers.dart';
@@ -45,6 +46,7 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
       subtitle: 'Sohbetlerin ve grup mesajların',
       onRefresh: () async => ref.invalidate(conversationsProvider),
       actions: [
+        const MessagesNotificationsActions(spacing: 4),
         DiscoverIconButton(
           icon: Icons.refresh_rounded,
           onPressed: () => ref.invalidate(conversationsProvider),
