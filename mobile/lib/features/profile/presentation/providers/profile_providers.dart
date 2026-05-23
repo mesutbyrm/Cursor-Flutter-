@@ -32,6 +32,7 @@ final userProfileProvider =
 });
 
 final walletBalancesProvider = FutureProvider<WalletBalances>((ref) async {
+  ref.keepAlive();
   return ref.watch(walletRepositoryProvider).balances();
 });
 
@@ -46,6 +47,7 @@ final paymentConfigProvider = FutureProvider<PaymentConfigEntity>((ref) async {
 
 final jetonPackagesProvider =
     FutureProvider<List<JetonPackageEntity>>((ref) async {
+  ref.keepAlive();
   return ref.watch(walletRepositoryProvider).jetonPackages();
 });
 

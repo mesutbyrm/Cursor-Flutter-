@@ -54,10 +54,16 @@ class FirebaseBootstrap {
         }
         messaging!.onTokenRefresh.listen((token) {
           debugPrint('FCM token refreshed: ${token.substring(0, 12)}…');
+          OneSignalBootstrap.onPushTokenChanged?.call();
         });
+      } else if (messaging != null) {
+        messaging!.onTokenRefresh.listen((token) {
+          debugPrint('FCM token refreshed: ${token.substring(0, 12)}…');
+          OneSignalBootstrap.onPushTokenChanged?.call();
+        });
+        await PushNotificationService.instance.bindOpenedAppHandlers(messaging!);
       }
 
-      // OneSignal aktifken ön planda çift bildirim olmasın diye FCM dinleyicisi atlanır.
       if (!OneSignalBootstrap.isReady) {
         await PushNotificationService.instance.bindForegroundFcm(messaging!);
       }

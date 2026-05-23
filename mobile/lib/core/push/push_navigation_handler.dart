@@ -16,6 +16,17 @@ class PushNavigationHandler {
     onPushReceived = onReceived;
   }
 
+  static void navigateToPath(String path) {
+    final router = _router;
+    if (router == null || path.isEmpty) return;
+    final normalized = path.startsWith('/') ? path : '/$path';
+    try {
+      router.go(normalized);
+    } catch (e, st) {
+      debugPrint('Push path navigation failed: $e\n$st');
+    }
+  }
+
   static void handleAdditionalData(Map<String, dynamic>? data) {
     onPushReceived?.call();
     final router = _router;
