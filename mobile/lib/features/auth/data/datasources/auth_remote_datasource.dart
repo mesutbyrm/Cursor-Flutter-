@@ -110,6 +110,12 @@ class AuthRemoteDataSource {
     String? birthTime,
     String language = 'tr',
   }) async {
+    if (Env.useNextAuth) {
+      throw const ApiException(
+        'E-posta ile kayıt bu sunucuda henüz desteklenmiyor. '
+        'Google ile kayıt olun veya canlifal.com üzerinden hesap oluşturun.',
+      );
+    }
     final res = await _dio.safePost<Map<String, dynamic>>(
       ApiEndpoints.authRegister,
       data: {
