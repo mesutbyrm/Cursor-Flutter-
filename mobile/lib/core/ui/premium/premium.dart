@@ -4,6 +4,7 @@ library;
 export 'gradient_fab.dart';
 export 'live_badge.dart';
 export 'neon_button.dart';
+export 'neon_quick_action_card.dart';
 export 'premium_card.dart';
 export 'premium_coin_capsule.dart';
 export 'premium_empty_hint.dart';
