@@ -1,27 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/onesignal/onesignal_bootstrap.dart';
 import '../../../../core/push/push_notification_service.dart';
+import '../../../../core/push/push_registrar.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 
 /// Sistem bildirim izni kapalıysa etkinleştirme çağrısı.
-class NotificationPermissionBanner extends StatefulWidget {
+class NotificationPermissionBanner extends ConsumerStatefulWidget {
   const NotificationPermissionBanner({super.key});
 
   @override
-  State<NotificationPermissionBanner> createState() =>
+  ConsumerState<NotificationPermissionBanner> createState() =>
       _NotificationPermissionBannerState();
 }
 
 class _NotificationPermissionBannerState
-    extends State<NotificationPermissionBanner> {
-  var _granted = PushNotificationService.instance.permissionGranted;
+    extends ConsumerState<NotificationPermissionBanner> {
+  var _granted = false;
   var _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncGranted();
+  }
+
+  void _syncGranted() {
+    _granted = OneSignalBootstrap.isReady
+        ? OneSignalBootstrap.permissionGranted
+        : PushNotificationService.instance.permissionGranted;
+  }
 
   Future<void> _enable() async {
     setState(() => _loading = true);
-    final ok =
-        await PushNotificationService.instance.requestSystemPermission();
+    var ok = false;
+    if (OneSignalBootstrap.isReady) {
+      ok = await OneSignalBootstrap.requestPermission();
+      if (ok) {
+        await ref.read(pushRegistrarProvider).registerIfPossible();
+      }
+    } else {
+      ok = await PushNotificationService.instance.requestSystemPermission();
+    }
     if (mounted) {
       setState(() {
         _granted = ok;

@@ -18,6 +18,7 @@ final notificationsRepositoryProvider =
 
 final notificationsListProvider =
     FutureProvider<List<AppNotificationEntity>>((ref) async {
+  ref.keepAlive();
   return ref.watch(notificationsRepositoryProvider).fetch();
 });
 

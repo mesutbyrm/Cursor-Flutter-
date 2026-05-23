@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.62+64 (2026-05-19)
+
+### Açılış, bildirimler ve sosyal
+
+- Splash görseli ekrana sığdırılır (`BoxFit.contain`); Android native splash arka planı koyu tema
+- Push: OneSignal/FCM tıklama yönlendirmesi, izin banner’ı ve token kaydı iyileştirmeleri
+- Bildirimler ve jeton mağazası: kabukta ön yükleme, `keepAlive`, jeton sayfasında anında yedek paketler
+- Sosyal: «Fal hikayeleri» kaldırıldı; paylaşım kartında profil + beğeni/yorum/izlenme tek kutuda
+
 ## 1.0.53+55 (2026-05-19)
 
 ### Açılış ve sosyal UX

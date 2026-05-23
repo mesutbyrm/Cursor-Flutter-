@@ -79,6 +79,11 @@ class OneSignalBootstrap {
     return token;
   }
 
+  static bool get permissionGranted {
+    if (!_ready) return false;
+    return OneSignal.Notifications.permission;
+  }
+
   static Future<bool> requestPermission({bool fallbackToSettings = false}) async {
     if (!_ready || kIsWeb) return false;
     try {
