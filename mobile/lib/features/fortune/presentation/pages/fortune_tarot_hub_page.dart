@@ -351,13 +351,11 @@ class _PremiumBanner extends StatelessWidget {
 class _SectionTitleRow extends StatelessWidget {
   const _SectionTitleRow({
     required this.title,
-    this.icon,
     this.onSeeAll,
     this.seeAllLabel = 'Tümünü Gör >',
   });
 
   final String title;
-  final IconData? icon;
   final VoidCallback? onSeeAll;
   final String seeAllLabel;
 
@@ -365,10 +363,6 @@ class _SectionTitleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        if (icon != null) ...[
-          Icon(icon, size: 18, color: AppColors.accentPink),
-          const SizedBox(width: 6),
-        ],
         Text(
           title,
           style: const TextStyle(
