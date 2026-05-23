@@ -27,9 +27,14 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   }
 
   void _scrollToEnd() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!_scroll.hasClients) return;
-      _scroll.jumpTo(_scroll.position.maxScrollExtent);
+      final max = _scroll.position.maxScrollExtent;
+      await _scroll.animateTo(
+        max,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
     });
   }
 
@@ -70,8 +75,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         children: [
           Expanded(
             child: msgs.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text(e.toString())),
               data: (rows) {
                 if (rows.isEmpty) {
@@ -84,6 +88,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                 }
                 return ListView.builder(
                   controller: _scroll,
+                  cacheExtent: 400,
                   padding: const EdgeInsets.all(12),
                   itemCount: rows.length,
                   itemBuilder: (ctx, i) {
@@ -91,16 +96,18 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     final align = m.isMine
                         ? Alignment.centerRight
                         : Alignment.centerLeft;
-                    final bg =
-                        m.isMine ? AppTheme.accent : AppTheme.surfaceElevated;
-                    final fg =
-                        m.isMine ? Colors.white : AppTheme.onBackground;
+                    final bg = m.isMine
+                        ? AppTheme.accent
+                        : AppTheme.surfaceElevated;
+                    final fg = m.isMine ? Colors.white : AppTheme.onBackground;
                     return Align(
                       alignment: align,
                       child: Container(
                         margin: const EdgeInsets.symmetric(vertical: 4),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: bg,
                           borderRadius: BorderRadius.circular(16),

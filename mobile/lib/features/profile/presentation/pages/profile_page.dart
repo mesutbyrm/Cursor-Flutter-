@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/social_refresh_indicator.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/profile_providers.dart';
@@ -40,12 +41,17 @@ class ProfilePage extends ConsumerWidget {
           if (user == null) {
             return const Center(child: Text('Oturum yok'));
           }
-          return RefreshIndicator(
+          final refreshEdge =
+              MediaQuery.paddingOf(context).top + kToolbarHeight + 4;
+          return SocialRefreshIndicator(
+            edgeOffset: refreshEdge,
             onRefresh: () async {
               await ref.read(authControllerProvider.notifier).refreshMe();
               ref.invalidate(coinBalanceProvider);
+              await ref.read(coinBalanceProvider.future);
             },
             child: ListView(
+              cacheExtent: 600,
               padding: const EdgeInsets.all(20),
               children: [
                 Row(
@@ -84,8 +90,11 @@ class ProfilePage extends ConsumerWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.monetization_on_rounded,
-                          color: Color(0xFFFFD54F), size: 36),
+                      const Icon(
+                        Icons.monetization_on_rounded,
+                        color: Color(0xFFFFD54F),
+                        size: 36,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(

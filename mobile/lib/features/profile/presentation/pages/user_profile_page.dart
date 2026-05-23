@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/social_refresh_indicator.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../providers/profile_providers.dart';
 
@@ -27,62 +28,69 @@ class UserProfilePage extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(e.toString())),
         data: (user) {
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Row(
-                children: [
-                  UserAvatar(url: user.avatarUrl, radius: 40),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user.display,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
+          final refreshEdge =
+              MediaQuery.paddingOf(context).top + kToolbarHeight + 4;
+          return SocialRefreshIndicator(
+            edgeOffset: refreshEdge,
+            onRefresh: () async {
+              ref.invalidate(userProfileProvider(userId));
+              await ref.read(userProfileProvider(userId).future);
+            },
+            child: ListView(
+              cacheExtent: 600,
+              padding: const EdgeInsets.all(20),
+              children: [
+                Row(
+                  children: [
+                    UserAvatar(url: user.avatarUrl, radius: 40),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user.display,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                        ),
-                        Text(
-                          '@${user.username}',
-                          style: const TextStyle(color: AppTheme.muted),
-                        ),
-                      ],
+                          Text(
+                            '@${user.username}',
+                            style: const TextStyle(color: AppTheme.muted),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _Stat(label: 'Takipçi', value: '${user.followersCount}'),
-                  _Stat(label: 'Takip', value: '${user.followingCount}'),
-                ],
-              ),
-              const SizedBox(height: 20),
-              FilledButton(
-                onPressed: () async {
-                  final repo = ref.read(profileRepositoryProvider);
-                  if (user.isFollowing) {
-                    await repo.unfollow(user.id);
-                  } else {
-                    await repo.follow(user.id);
-                  }
-                  ref.invalidate(userProfileProvider(userId));
-                },
-                child: Text(user.isFollowing ? 'Takipten çık' : 'Takip et'),
-              ),
-              if (user.bio != null && user.bio!.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                Text(
-                  user.bio!,
-                  style: const TextStyle(height: 1.4),
+                  ],
                 ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _Stat(label: 'Takipçi', value: '${user.followersCount}'),
+                    _Stat(label: 'Takip', value: '${user.followingCount}'),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () async {
+                    final repo = ref.read(profileRepositoryProvider);
+                    if (user.isFollowing) {
+                      await repo.unfollow(user.id);
+                    } else {
+                      await repo.follow(user.id);
+                    }
+                    ref.invalidate(userProfileProvider(userId));
+                  },
+                  child: Text(user.isFollowing ? 'Takipten çık' : 'Takip et'),
+                ),
+                if (user.bio != null && user.bio!.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  Text(user.bio!, style: const TextStyle(height: 1.4)),
+                ],
               ],
-            ],
+            ),
           );
         },
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/social_refresh_indicator.dart';
 import '../providers/live_providers.dart';
 
 class LivePage extends ConsumerWidget {
@@ -10,6 +11,12 @@ class LivePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final live = ref.watch(liveStreamsProvider);
+    final refreshEdge = MediaQuery.paddingOf(context).top + kToolbarHeight + 4;
+
+    Future<void> onPullRefresh() async {
+      ref.invalidate(liveStreamsProvider);
+      await ref.read(liveStreamsProvider.future);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -26,75 +33,102 @@ class LivePage extends ConsumerWidget {
         error: (e, _) => Center(child: Text(e.toString())),
         data: (streams) {
           if (streams.isEmpty) {
-            return const Center(child: Text('Şu an canlı yayın yok'));
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: streams.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (ctx, i) {
-              final s = streams[i];
-              return Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceElevated,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(12),
-                  leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(
-                      width: 64,
-                      height: 64,
-                      child: s.thumbnailUrl != null &&
-                              s.thumbnailUrl!.isNotEmpty
-                          ? Image.network(
-                              s.thumbnailUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  const ColoredBox(
-                                color: AppTheme.surface,
-                                child: Icon(Icons.live_tv_rounded,
-                                    color: AppTheme.accent),
-                              ),
-                            )
-                          : const ColoredBox(
-                              color: AppTheme.surface,
-                              child: Icon(Icons.live_tv_rounded,
-                                  color: AppTheme.accent),
-                            ),
-                    ),
-                  ),
-                  title: Text(
-                    s.title,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  subtitle: Text(
-                    '${s.streamerName ?? 'Yayıncı'} · ${s.viewerCount} izleyici',
-                    style: const TextStyle(color: AppTheme.muted),
-                  ),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: s.isLive
-                          ? AppTheme.accent.withValues(alpha: 0.2)
-                          : AppTheme.muted.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      s.isLive ? 'CANLI' : 'BİTTİ',
-                      style: TextStyle(
-                        color: s.isLive ? AppTheme.accent : AppTheme.muted,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 11,
+            return SocialRefreshIndicator(
+              edgeOffset: refreshEdge,
+              onRefresh: onPullRefresh,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Text(
+                        'Şu an canlı yayın yok',
+                        style: TextStyle(color: AppTheme.muted),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
+                ],
+              ),
+            );
+          }
+          return SocialRefreshIndicator(
+            edgeOffset: refreshEdge,
+            onRefresh: onPullRefresh,
+            child: ListView.separated(
+              cacheExtent: 600,
+              padding: const EdgeInsets.all(16),
+              itemCount: streams.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (ctx, i) {
+                final s = streams[i];
+                return Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceElevated,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(12),
+                    leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        width: 64,
+                        height: 64,
+                        child:
+                            s.thumbnailUrl != null && s.thumbnailUrl!.isNotEmpty
+                            ? Image.network(
+                                s.thumbnailUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => const ColoredBox(
+                                  color: AppTheme.surface,
+                                  child: Icon(
+                                    Icons.live_tv_rounded,
+                                    color: AppTheme.accent,
+                                  ),
+                                ),
+                              )
+                            : const ColoredBox(
+                                color: AppTheme.surface,
+                                child: Icon(
+                                  Icons.live_tv_rounded,
+                                  color: AppTheme.accent,
+                                ),
+                              ),
+                      ),
+                    ),
+                    title: Text(
+                      s.title,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: Text(
+                      '${s.streamerName ?? 'Yayıncı'} · ${s.viewerCount} izleyici',
+                      style: const TextStyle(color: AppTheme.muted),
+                    ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: s.isLive
+                            ? AppTheme.accent.withValues(alpha: 0.2)
+                            : AppTheme.muted.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        s.isLive ? 'CANLI' : 'BİTTİ',
+                        style: TextStyle(
+                          color: s.isLive ? AppTheme.accent : AppTheme.muted,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           );
         },
       ),

@@ -77,6 +77,7 @@ class FeedVoiceRoomStrip extends StatelessWidget {
             height: 108,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
+              cacheExtent: 400,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               itemCount: _rooms.length,
               separatorBuilder: (_, __) => const SizedBox(width: 14),
@@ -120,7 +121,10 @@ class FeedVoiceRoomStrip extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: Colors.lightGreenAccent.shade400,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 1.2),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 1.2,
+                                ),
                               ),
                             ),
                           ),

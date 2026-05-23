@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/social_refresh_indicator.dart';
 import '../../domain/entities/post_entity.dart';
 import '../providers/feed_providers.dart';
 import '../providers/feed_unread_providers.dart';
@@ -102,18 +103,16 @@ class _FeedPageState extends ConsumerState<FeedPage> {
           ),
         ),
         data: (posts) {
+          final refreshEdge =
+              MediaQuery.paddingOf(context).top + kToolbarHeight + 4;
           if (posts.isEmpty) {
-            return RefreshIndicator(
-              color: AppTheme.accent,
+            return SocialRefreshIndicator(
+              edgeOffset: refreshEdge,
               onRefresh: () =>
                   ref.read(feedNotifierProvider.notifier).refresh(),
               child: ListView(
-                padding: EdgeInsets.fromLTRB(
-                  12,
-                  MediaQuery.paddingOf(context).top + kToolbarHeight + 8,
-                  12,
-                  100,
-                ),
+                cacheExtent: 800,
+                padding: EdgeInsets.fromLTRB(12, refreshEdge, 12, 100),
                 children: [
                   ..._contentSlots(posts),
                   const SizedBox(height: 24),
@@ -123,13 +122,16 @@ class _FeedPageState extends ConsumerState<FeedPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.auto_stories_outlined,
-                              size: 56, color: AppTheme.muted),
+                          const Icon(
+                            Icons.auto_stories_outlined,
+                            size: 56,
+                            color: AppTheme.muted,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             Env.useNextAuth
                                 ? 'Henüz gönderi yok.\n'
-                                    'İçerik sunucudan geldikçe listelenir; canlifal.com ile aynı hesaptan giriş yaptığınızdan emin olun.'
+                                      'İçerik sunucudan geldikçe listelenir; canlifal.com ile aynı hesaptan giriş yaptığınızdan emin olun.'
                                 : 'Henüz gönderi yok.',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
@@ -145,10 +147,9 @@ class _FeedPageState extends ConsumerState<FeedPage> {
               ),
             );
           }
-          return RefreshIndicator(
-            color: AppTheme.accent,
-            onRefresh: () =>
-                ref.read(feedNotifierProvider.notifier).refresh(),
+          return SocialRefreshIndicator(
+            edgeOffset: refreshEdge,
+            onRefresh: () => ref.read(feedNotifierProvider.notifier).refresh(),
             child: NotificationListener<ScrollNotification>(
               onNotification: (n) {
                 if (n.metrics.pixels > n.metrics.maxScrollExtent - 500) {
@@ -158,12 +159,8 @@ class _FeedPageState extends ConsumerState<FeedPage> {
               },
               child: ListView(
                 controller: _scroll,
-                padding: EdgeInsets.fromLTRB(
-                  0,
-                  MediaQuery.paddingOf(context).top + kToolbarHeight + 4,
-                  0,
-                  100,
-                ),
+                cacheExtent: 800,
+                padding: EdgeInsets.fromLTRB(0, refreshEdge, 0, 100),
                 children: _contentSlots(posts),
               ),
             ),
@@ -203,10 +200,7 @@ class _BadgeIcon extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppTheme.accent,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppTheme.background,
-                    width: 1.5,
-                  ),
+                  border: Border.all(color: AppTheme.background, width: 1.5),
                 ),
               ),
             ),

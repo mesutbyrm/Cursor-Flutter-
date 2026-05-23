@@ -36,6 +36,7 @@ class FeedStoryStrip extends StatelessWidget {
       height: 100,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        cacheExtent: 400,
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
         itemCount: users.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
