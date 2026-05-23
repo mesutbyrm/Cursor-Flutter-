@@ -16,6 +16,7 @@ import '../../features/fortune/presentation/pages/fortune_result_page.dart';
 import '../../features/fortune/presentation/pages/fortune_session_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
+import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
 import '../../features/gifts/presentation/pages/gift_send_page.dart';
 import '../../features/live/domain/entities/live_broadcast_session.dart';
 import '../../features/live/presentation/pages/live_broadcast_prep_page.dart';
@@ -153,6 +154,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 path: '/fortune',
                 builder: (context, state) => const FortuneTarotHubPage(),
                 routes: [
+                  GoRoute(
+                    path: 'types',
+                    pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+                      key: state.pageKey,
+                      child: const FortuneTypesAllPage(),
+                    ),
+                  ),
                   GoRoute(
                     path: ':slug',
                     pageBuilder: (context, state) {

@@ -7,14 +7,11 @@ import '../../../../core/widgets/discover_refresh.dart';
 import '../data/fortune_catalog.dart';
 import '../widgets/fortune_hub_app_bar.dart';
 import '../widgets/fortune_mystic_background.dart';
-import '../widgets/fortune_type_grid_card.dart';
-import '../../domain/entities/fortune_type_entity.dart';
+import '../widgets/fortune_hub_type_card.dart';
 
 /// Fal & Tarot ana sekme — mockup: enerji, türler, son fallar, AI, premium.
 class FortuneTarotHubPage extends ConsumerWidget {
   const FortuneTarotHubPage({super.key});
-
-  static final _hubTypes = FortuneCatalog.types.take(8).toList();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -41,17 +38,19 @@ class FortuneTarotHubPage extends ConsumerWidget {
                     crossAxisCount: 2,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    childAspectRatio: 0.88,
+                    childAspectRatio: 1.02,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, i) {
-                      final type = _hubTypes[i];
-                      return _HubFortuneTypeCard(
-                        type: type,
-                        onTap: () => context.push('/fortune/${type.slug}'),
+                      final entry = FortuneCatalog.hubFortuneTypes[i];
+                      return FortuneHubTypeCard(
+                        type: entry.type,
+                        subtitle: entry.subtitle,
+                        onTap: () =>
+                            context.push('/fortune/${entry.type.slug}'),
                       );
                     },
-                    childCount: _hubTypes.length,
+                    childCount: FortuneCatalog.hubFortuneTypes.length,
                   ),
                 ),
               ),
@@ -317,21 +316,10 @@ class _FortuneTypesHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: _SectionTitleRow(
         title: 'FAL TÜRLERİ',
-        onSeeAll: () => context.push('/fortune/tarot'),
+        seeAllLabel: 'Tüm Fal Türleri >',
+        onSeeAll: () => context.push('/fortune/types'),
       ),
     );
-  }
-}
-
-class _HubFortuneTypeCard extends StatelessWidget {
-  const _HubFortuneTypeCard({required this.type, required this.onTap});
-
-  final FortuneTypeEntity type;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return FortuneTypeGridCard(type: type, onExplore: onTap);
   }
 }
 
@@ -606,11 +594,13 @@ class _SectionTitleRow extends StatelessWidget {
     required this.title,
     this.icon,
     this.onSeeAll,
+    this.seeAllLabel = 'Tümünü Gör >',
   });
 
   final String title;
   final IconData? icon;
   final VoidCallback? onSeeAll;
+  final String seeAllLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -638,7 +628,7 @@ class _SectionTitleRow extends StatelessWidget {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: Text(
-              'Tümünü Gör >',
+              seeAllLabel,
               style: TextStyle(
                 color: AppColors.accentCyan.withValues(alpha: 0.95),
                 fontWeight: FontWeight.w700,
