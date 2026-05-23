@@ -12,6 +12,8 @@ import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
 import '../../features/fortune/domain/entities/fortune_type_entity.dart';
 import '../../features/fortune/presentation/data/fortune_catalog.dart';
+import '../../features/fortune/presentation/pages/daily_fortune_open_page.dart';
+import '../../features/fortune/presentation/pages/daily_fortune_result_page.dart';
 import '../../features/fortune/presentation/pages/fortune_result_page.dart';
 import '../../features/fortune/presentation/pages/fortune_session_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
@@ -168,7 +170,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       final type = FortuneCatalog.bySlug(slug);
                       final child = type == null
                           ? const FortuneTarotHubPage()
-                          : FortuneSessionPage(type: type);
+                          : type.isDaily
+                              ? DailyFortuneOpenPage(type: type)
+                              : FortuneSessionPage(type: type);
                       return AppPageTransitions.fadeSlide(
                         key: state.pageKey,
                         child: child,
@@ -181,7 +185,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                           final result = state.extra as FortuneReadingResult?;
                           final child = result == null
                               ? const FortuneTarotHubPage()
-                              : FortuneResultPage(result: result);
+                              : result.type.isDaily
+                                  ? DailyFortuneResultPage(result: result)
+                                  : FortuneResultPage(result: result);
                           return AppPageTransitions.fadeSlide(
                             key: state.pageKey,
                             child: child,
