@@ -59,7 +59,7 @@ class SocialInstagramAppBar extends ConsumerWidget {
           _NotifyIconButton(
             icon: Icons.send_outlined,
             showDot: true,
-            onTap: () => context.go('/messages'),
+            onTap: () => context.push('/messages'),
           ),
         ],
       ),

@@ -13,14 +13,12 @@ class PremiumNavBar extends StatelessWidget {
     required this.onTap,
     required this.onFabTap,
     this.fabIcon = Icons.videocam_rounded,
-    this.messagesBadgeCount = 0,
   });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
   final VoidCallback onFabTap;
   final IconData fabIcon;
-  final int messagesBadgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -54,11 +52,10 @@ class PremiumNavBar extends StatelessWidget {
                 ),
                 GradientFab(icon: fabIcon, onTap: onFabTap),
                 _NavSlot(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  selectedIcon: Icons.chat_bubble_rounded,
-                  label: 'Mesajlar',
+                  icon: Icons.auto_awesome_outlined,
+                  selectedIcon: Icons.auto_awesome_rounded,
+                  label: 'Fal&Tarot',
                   selected: currentIndex == 3,
-                  badgeCount: messagesBadgeCount,
                   onTap: () => onTap(3),
                 ),
                 _NavSlot(

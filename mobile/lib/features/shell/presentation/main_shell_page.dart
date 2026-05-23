@@ -23,8 +23,6 @@ class MainShellPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final messagesUnread = ref.watch(messagesUnreadCountProvider);
-
     ref.listen<AsyncValue<dynamic>>(authControllerProvider, (prev, next) {
       if (next.valueOrNull != null && prev?.valueOrNull == null) {
         ref.invalidate(conversationsProvider);
@@ -56,7 +54,6 @@ class MainShellPage extends ConsumerWidget {
           currentIndex: navigationShell.currentIndex,
           onTap: _goBranch,
           onFabTap: () => openLiveFromFab(context),
-          messagesBadgeCount: messagesUnread,
         ),
       ),
     );
