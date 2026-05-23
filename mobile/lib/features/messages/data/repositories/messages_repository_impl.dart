@@ -21,4 +21,8 @@ class MessagesRepositoryImpl implements MessagesRepository {
   @override
   Future<void> sendMessage(String conversationId, String text) =>
       _remote.send(conversationId, text);
+
+  @override
+  Future<ConversationEntity> startConversation(String recipientId) =>
+      _remote.startConversation(recipientId);
 }

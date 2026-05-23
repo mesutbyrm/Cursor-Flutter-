@@ -7,4 +7,5 @@ abstract class MessagesRepository {
     String? currentUserId,
   });
   Future<void> sendMessage(String conversationId, String text);
+  Future<ConversationEntity> startConversation(String recipientId);
 }

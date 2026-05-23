@@ -7,6 +7,7 @@ import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/ui/premium/premium.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
+import '../../../../live/domain/entities/voice_room_sort.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
 import '../../../../voice_hub/presentation/widgets/voice_room_grid_tile.dart';
 import 'discover_section_header.dart';
@@ -56,7 +57,7 @@ class DiscoverVoiceOrbs extends ConsumerWidget {
             ),
           );
         }
-        return _VoiceRoomsGrid(rooms: list);
+        return _VoiceRoomsGrid(rooms: sortVoiceRoomsByPopularity(list));
       },
     );
   }
@@ -93,7 +94,7 @@ class _VoiceRoomsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     const crossCount = VoiceRoomGridTile.crossAxisCount;
     const spacing = 10.0;
-    const aspect = 0.78;
+    const aspect = VoiceRoomGridTile.tileAspectRatio;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -7,6 +7,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
+import '../../live/domain/entities/voice_room_sort.dart';
 import '../../live/presentation/providers/live_providers.dart';
 import 'widgets/voice_room_grid_tile.dart';
 
@@ -76,7 +77,7 @@ class VoiceRoomsBody extends ConsumerWidget {
                     crossAxisCount: VoiceRoomGridTile.crossAxisCount,
                     mainAxisSpacing: 10,
                     crossAxisSpacing: 10,
-                    childAspectRatio: 0.78,
+                    childAspectRatio: VoiceRoomGridTile.tileAspectRatio,
                   ),
                   itemCount: ordered.length,
                   itemBuilder: (context, i) {
@@ -97,13 +98,14 @@ class VoiceRoomsBody extends ConsumerWidget {
     );
   }
 
-  /// Benim oda en üstte, sonra diğer tüm odalar.
+  /// En kalabalık odalar önce; kullanıcının kendi odası varsa en üstte.
   static List<VoiceRoomEntity> _orderedRooms(
     List<VoiceRoomEntity> all,
     VoiceRoomEntity? mine,
   ) {
-    if (mine == null) return List<VoiceRoomEntity>.from(all);
-    final rest = all.where((r) => r.id != mine.id).toList();
+    final sorted = sortVoiceRoomsByPopularity(all);
+    if (mine == null) return sorted;
+    final rest = sorted.where((r) => r.id != mine.id).toList();
     return [mine, ...rest];
   }
 
@@ -141,7 +143,7 @@ class _RoomsHeader extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Tüm odalar · satırda 4 oda',
+                'Tüm odalar · en kalabalık önce',
                 style: TextStyle(
                   color: AppColors.textMuted.withValues(alpha: 0.95),
                   fontSize: 12,

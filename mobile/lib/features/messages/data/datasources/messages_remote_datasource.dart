@@ -134,4 +134,23 @@ class MessagesRemoteDataSource {
       data: {'text': text, 'content': text},
     );
   }
+
+  /// Yeni DM veya mevcut konuşma kimliği.
+  Future<ConversationEntity> startConversation(String recipientId) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.messagesConversations,
+      data: {'recipientId': recipientId},
+    );
+    final body = res.data;
+    if (body is Map) {
+      final map = asJsonMap(body);
+      if (map['success'] == true && map['data'] is Map) {
+        final dto = ConversationDto.fromApiMap(asJsonMap(map['data']));
+        if (dto.id.isNotEmpty) return dto.toEntity();
+      }
+      final dto = ConversationDto.fromApiMap(map);
+      if (dto.id.isNotEmpty) return dto.toEntity();
+    }
+    throw const ApiException('Sohbet başlatılamadı');
+  }
 }
