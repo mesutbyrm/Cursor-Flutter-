@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
-import '../../features/auth/presentation/pages/google_auth_web_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/otp_verify_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
@@ -72,7 +71,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final authed = auth.valueOrNull != null;
       final publicAuthPages = loc == '/login' ||
           loc == '/register' ||
-          loc == '/auth/google' ||
           loc.startsWith('/auth/forgot-password') ||
           loc == '/auth/otp-verify';
       final canlifalWeb = loc == '/canlifal-web';
@@ -92,10 +90,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterPage(),
-      ),
-      GoRoute(
-        path: '/auth/google',
-        builder: (context, state) => const GoogleAuthWebPage(),
       ),
       GoRoute(
         path: '/auth/forgot-password',

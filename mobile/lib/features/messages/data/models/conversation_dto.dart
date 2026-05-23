@@ -19,18 +19,31 @@ abstract class ConversationDto with _$ConversationDto {
   const ConversationDto._();
 
   factory ConversationDto.fromApiMap(Map<String, dynamic> json) {
-    final peer = pick(json, ['peer', 'user', 'participant']);
+    final peer = pick(json, ['otherUser', 'peer', 'user', 'participant']);
     final peerMap = peer is Map ? asJsonMap(peer) : <String, dynamic>{};
+    final peerId = pick(peerMap, ['id', 'userId'])?.toString() ?? '';
+
+    var subtitle = pick(json, ['lastMessage', 'preview', 'subtitle'])?.toString();
+    final lastMsg = pick(json, ['lastMessage']);
+    if (lastMsg is Map) {
+      subtitle = pick(asJsonMap(lastMsg), ['content', 'text'])?.toString() ??
+          subtitle;
+    }
 
     return ConversationDto(
-      id: pick(json, ['id', '_id', 'conversationId'])?.toString() ?? '',
-      title: pick(json, ['title', 'name'])?.toString() ??
-          pick(peerMap, ['displayName', 'username'])?.toString() ??
+      id: peerId.isNotEmpty
+          ? peerId
+          : pick(json, ['id', '_id', 'conversationId'])?.toString() ?? '',
+      title: pick(peerMap, ['name', 'displayName', 'username'])?.toString() ??
+          pick(json, ['title', 'name'])?.toString() ??
           'Sohbet',
-      subtitle:
-          pick(json, ['lastMessage', 'preview', 'subtitle'])?.toString(),
-      avatarUrl: pick(peerMap, ['avatarUrl', 'avatar_url', 'photoUrl'])
-          as String?,
+      subtitle: subtitle,
+      avatarUrl: pick(peerMap, [
+        'image',
+        'avatarUrl',
+        'avatar_url',
+        'photoUrl',
+      ]) as String?,
       unreadCount: asInt(pick(json, ['unreadCount', 'unread', 'badge'])),
       isOnline: asBool(pick(json, ['isOnline', 'online', 'is_online'])),
     );

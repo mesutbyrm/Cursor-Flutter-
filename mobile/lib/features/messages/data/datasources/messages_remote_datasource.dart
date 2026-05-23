@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -15,7 +16,9 @@ class MessagesRemoteDataSource {
 
   Future<List<ConversationEntity>> conversations() async {
     try {
-      final res = await _dio.safeGet<dynamic>(ApiEndpoints.conversations);
+      final path =
+          Env.useMobileAuth ? ApiEndpoints.messages : ApiEndpoints.messagesConversations;
+      final res = await _dio.safeGet<dynamic>(path);
       final parsed = _parseConversations(res.data);
       if (parsed != null) return parsed;
     } on ApiException catch (e) {
@@ -67,13 +70,14 @@ class MessagesRemoteDataSource {
   }
 
   Future<List<MessageEntity>> messages(
-    String id, {
+    String peerUserId, {
     String? currentUserId,
   }) async {
     try {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.conversationMessages(id),
-      );
+      final path = Env.useMobileAuth
+          ? ApiEndpoints.messagesWithUser(peerUserId)
+          : ApiEndpoints.conversationMessages(peerUserId);
+      final res = await _dio.safeGet<dynamic>(path);
       final parsed = _parseMessages(res.data, currentUserId: currentUserId);
       if (parsed != null) return parsed;
     } on ApiException catch (e) {
@@ -128,15 +132,28 @@ class MessagesRemoteDataSource {
     return null;
   }
 
-  Future<void> send(String id, String text) async {
+  Future<void> send(String peerUserId, String text) async {
+    if (Env.useMobileAuth) {
+      await _dio.safePost(
+        ApiEndpoints.messagesWithUser(peerUserId),
+        data: {'content': text},
+      );
+      return;
+    }
     await _dio.safePost(
-      ApiEndpoints.conversationMessages(id),
+      ApiEndpoints.conversationMessages(peerUserId),
       data: {'text': text, 'content': text},
     );
   }
 
-  /// Yeni DM veya mevcut konuşma kimliği.
+  /// Profilden sohbet — mobil API doğrudan userId ile çalışır.
   Future<ConversationEntity> startConversation(String recipientId) async {
+    if (Env.useMobileAuth) {
+      return ConversationEntity(
+        id: recipientId,
+        title: 'Sohbet',
+      );
+    }
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.messagesConversations,
       data: {'recipientId': recipientId},

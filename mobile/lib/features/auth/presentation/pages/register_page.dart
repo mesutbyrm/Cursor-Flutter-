@@ -63,12 +63,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   Future<void> _submitRegister() async {
     if (!_form.currentState!.validate()) return;
-    final birthDateStr = _birthDate != null
-        ? DateFormat('yyyy-MM-dd').format(_birthDate!)
-        : null;
-    final birthTimeStr = _birthTime != null
-        ? '${_birthTime!.hour.toString().padLeft(2, '0')}:${_birthTime!.minute.toString().padLeft(2, '0')}'
-        : null;
+    if (_birthDate == null || _birthTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Doğum tarihi ve doğum saati zorunludur')),
+      );
+      return;
+    }
+    final birthDateStr = DateFormat('yyyy-MM-dd').format(_birthDate!);
+    final birthTimeStr =
+        '${_birthTime!.hour.toString().padLeft(2, '0')}:${_birthTime!.minute.toString().padLeft(2, '0')}';
 
     await ref.read(authControllerProvider.notifier).register(
           email: _email.text.trim(),
@@ -111,15 +114,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 label: 'Google ile Kayıt ol',
                 onPressed: auth.isLoading
                     ? null
-                    : () {
-                        if (Env.useNextAuth) {
-                          context.push('/auth/google');
-                          return;
-                        }
-                        ref
-                            .read(authControllerProvider.notifier)
-                            .loginWithGoogle();
-                      },
+                    : () => ref
+                        .read(authControllerProvider.notifier)
+                        .loginWithGoogle(),
               ),
               if (Env.hasTikTokLogin) ...[
                 const SizedBox(height: 10),

@@ -28,8 +28,23 @@ class _FakeAuthRepository implements AuthRepository {
   Future<UserEntity> register({
     required String email,
     required String password,
-    String? displayName,
+    required String displayName,
+    required String username,
+    String? phone,
+    String? birthDate,
+    String? birthTime,
+    String language = 'tr',
   }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<UserEntity> loginWithGoogle() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<UserEntity> loginWithTikTok() {
     throw UnimplementedError();
   }
 }

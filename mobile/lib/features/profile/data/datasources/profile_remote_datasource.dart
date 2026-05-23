@@ -63,11 +63,9 @@ class WalletRemoteDataSource {
   }
 
   Future<WalletBalances> balances() async {
-    if (Env.useNextAuth) {
-      final res = await _dio.safeGet<Map<String, dynamic>>(
-        ApiEndpoints.userCredits,
-      );
-      final body = _unwrap(res.data);
+    if (Env.useMobileAuth) {
+      final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.me);
+      final body = res.data ?? {};
       final err = body['error'];
       if (err != null) {
         throw ApiException(err.toString());
@@ -162,6 +160,24 @@ class WalletRemoteDataSource {
 
   /// Davet bağlantısı veya kod.
   Future<ReferralInfoEntity> referralInfo() async {
+    if (Env.useMobileAuth) {
+      final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.me);
+      final body = res.data ?? {};
+      final err = body['error'];
+      if (err != null) {
+        throw ApiException(err.toString());
+      }
+      final merged = Map<String, dynamic>.from(body);
+      final code = pick(body, ['referralCode', 'referral_code'])?.toString();
+      if (code != null && code.trim().isNotEmpty) {
+        merged['code'] = code.trim();
+      }
+      final invited = asInt(
+        pick(body, ['referralCreditsEarned', 'referral_credits_earned']),
+      );
+      if (invited > 0) merged['invitedCount'] = invited;
+      return _parseReferral(merged);
+    }
     if (!Env.useNextAuth) {
       return ReferralInfoEntity(shareUrl: '${Env.siteOrigin}/davet');
     }

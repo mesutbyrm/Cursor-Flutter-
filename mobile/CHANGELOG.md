@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.52+54 (2026-05-19)
+
+### canlifal.com mobil JWT API
+
+- Oturum: `POST /api/auth/mobile-register|login|google|tiktok|refresh`
+- Profil ve bakiye: `GET /api/me` (Bearer)
+- DM: `GET/POST /api/messages`, `GET/POST /api/messages/{userId}`
+- Dio: 401 → `mobile-refresh`; WebView Google OAuth kaldırıldı
+- Kayıt: `name`, `birthDate`, `birthTime`, `preferredLanguage`
+
 ## 1.0.47+49 (2026-05-22)
 
 ### Anlık push bildirimleri

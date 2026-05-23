@@ -8,13 +8,13 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 
-/// Google / TikTok — WebView yok, SQL API (`/api/auth/google`, `/api/auth/tiktok`).
+/// Google / TikTok — native SDK + mobil JWT API.
 class NativeAuthDataSource {
   NativeAuthDataSource(this._dio);
 
   final Dio _dio;
 
-  Future<Map<String, dynamic>> signInWithGoogle() async {
+  Future<Map<String, dynamic>> signInWithGoogle({String? referralCode}) async {
     final serverId = Env.googleServerClientId.trim();
     final googleSignIn = GoogleSignIn(
       scopes: const ['email', 'profile'],
@@ -40,14 +40,21 @@ class NativeAuthDataSource {
       );
     }
 
+    final path = Env.useMobileAuth
+        ? ApiEndpoints.authMobileGoogle
+        : ApiEndpoints.authGoogle;
     final res = await _dio.safePost<Map<String, dynamic>>(
-      ApiEndpoints.authGoogle,
-      data: {'idToken': idToken},
+      path,
+      data: {
+        'idToken': idToken,
+        if (referralCode != null && referralCode.isNotEmpty)
+          'referralCode': referralCode,
+      },
     );
     return _unwrap(res.data);
   }
 
-  Future<Map<String, dynamic>> signInWithTikTok() async {
+  Future<Map<String, dynamic>> signInWithTikTok({String? referralCode}) async {
     final clientKey = Env.tiktokClientKey.trim();
     if (clientKey.isEmpty) {
       throw const ApiException('TikTok girişi yapılandırılmamış');
@@ -71,9 +78,17 @@ class NativeAuthDataSource {
       throw const ApiException('TikTok yetkilendirme kodu alınamadı');
     }
 
+    final path = Env.useMobileAuth
+        ? ApiEndpoints.authMobileTiktok
+        : ApiEndpoints.authTiktok;
     final res = await _dio.safePost<Map<String, dynamic>>(
-      ApiEndpoints.authTiktok,
-      data: {'code': code, 'redirectUri': redirect},
+      path,
+      data: {
+        'code': code,
+        if (!Env.useMobileAuth) 'redirectUri': redirect,
+        if (referralCode != null && referralCode.isNotEmpty)
+          'referralCode': referralCode,
+      },
     );
     return _unwrap(res.data);
   }

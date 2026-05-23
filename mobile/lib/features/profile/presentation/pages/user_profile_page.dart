@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../messages/presentation/providers/messages_providers.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../providers/profile_providers.dart';
@@ -190,18 +188,7 @@ class UserProfilePage extends ConsumerWidget {
   }
 
   Future<void> _openDirectMessage(BuildContext context, WidgetRef ref) async {
-    try {
-      final conv = await ref
-          .read(messagesRepositoryProvider)
-          .startConversation(userId);
-      if (!context.mounted) return;
-      context.push('/chat/${conv.id}');
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiException.userMessage(e))),
-      );
-    }
+    context.push('/chat/$userId');
   }
 }
 
