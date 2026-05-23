@@ -237,7 +237,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   labelText: 'Dil tercihi',
                   prefixIcon: Icons.language_rounded,
                 ),
-                dropdownColor: AppColors.bgCard,
+                dropdownColor: AppColors.surfaceElevated,
                 items: const [
                   DropdownMenuItem(value: 'tr', child: Text('Türkçe')),
                   DropdownMenuItem(value: 'en', child: Text('English')),
