@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.53+55 (2026-05-19)
+
+### Açılış ve sosyal UX
+
+- Mistik splash görseli tam ekran açılış
+- Sosyal akış: her 2 gönderi arasında sesli sohbet odaları
+- Paylaşım metni 250 karakter + «daha fazla»
+- Profil üstüne tıklayınca paylaşan profili
+- Kullanıcı profilinde TikTok tarzı paylaşım ızgarası
+
 ## 1.0.52+54 (2026-05-19)
 
 ### canlifal.com mobil JWT API

@@ -53,7 +53,26 @@ class _SocialInstagramPostCardState
         if ((post.caption?.trim().isNotEmpty ?? false) && _hasMedia)
           SocialPostCaption(post: post, inlineBodyOnly: true),
         if (!_hasMedia && (post.caption?.trim().isNotEmpty ?? false))
-          _TextOnlyPostBody(caption: post.caption!.trim()),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF2A1548), Color(0xFF14102A)],
+                ),
+                border: Border.all(
+                  color: AppColors.accentPurple.withValues(alpha: 0.35),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: SocialPostTextPreview(text: post.caption!.trim()),
+              ),
+            ),
+          ),
         if (post.isAutoShare || post.fortuneCount > 0)
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
@@ -226,64 +245,76 @@ class _PostHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GestureDetector(
-            onTap: onProfile,
-            child: UserAvatar(url: post.author.avatarUrl, radius: 20),
-          ),
-          const SizedBox(width: 10),
           Expanded(
-            child: GestureDetector(
-              onTap: onProfile,
-              behavior: HitTestBehavior.opaque,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onProfile,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Flexible(
-                        child: Text(
-                          post.author.display,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 14,
-                          ),
+                      UserAvatar(url: post.author.avatarUrl, radius: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    post.author.display,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                                if (timeLabel != null) ...[
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '· $timeLabel',
+                                    style: TextStyle(
+                                      color: AppColors.textMuted
+                                          .withValues(alpha: 0.85),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            if (fortuneLabel != null) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Text(
+                                    _fortuneEmoji(post.fortuneType),
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    fortuneLabel,
+                                    style: TextStyle(
+                                      color: AppColors.accentPurple
+                                          .withValues(alpha: 0.95),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
                         ),
                       ),
-                      if (timeLabel != null) ...[
-                        const SizedBox(width: 6),
-                        Text(
-                          '· $timeLabel',
-                          style: TextStyle(
-                            color: AppColors.textMuted.withValues(alpha: 0.85),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
                     ],
                   ),
-                  if (fortuneLabel != null) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          _fortuneEmoji(post.fortuneType),
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          fortuneLabel,
-                          style: TextStyle(
-                            color: AppColors.accentPurple.withValues(alpha: 0.95),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           ),
@@ -342,45 +373,6 @@ class _PostHeader extends StatelessWidget {
     if (d.inHours < 24) return '${d.inHours} sa';
     if (d.inDays < 7) return '${d.inDays} gün';
     return '${t.day}.${t.month}.${t.year}';
-  }
-}
-
-/// Görsel olmayan fal / metin gönderileri için okunaklı gövde.
-class _TextOnlyPostBody extends StatelessWidget {
-  const _TextOnlyPostBody({required this.caption});
-
-  final String caption;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF2A1548), Color(0xFF14102A)],
-          ),
-          border: Border.all(
-            color: AppColors.accentPurple.withValues(alpha: 0.35),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            caption,
-            style: const TextStyle(
-              fontSize: 15,
-              height: 1.45,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 

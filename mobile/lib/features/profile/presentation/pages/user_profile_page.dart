@@ -9,6 +9,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/user_posts_tiktok_grid.dart';
 
 class UserProfilePage extends ConsumerWidget {
   const UserProfilePage({super.key, required this.userId});
@@ -180,6 +181,21 @@ class UserProfilePage extends ConsumerWidget {
                   ),
                 ),
               ],
+              const SizedBox(height: 20),
+              const Row(
+                children: [
+                  Icon(Icons.grid_on_rounded, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Paylaşımlar',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              UserPostsTikTokGrid(userId: userId),
             ],
           );
         },
