@@ -2,21 +2,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.50+52` |
-| Tarih (UTC) | 2026-05-23 14:00 |
-| Commit | [`72bebc6185c895226f76875216e823aad4fbfbc1`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/72bebc6185c895226f76875216e823aad4fbfbc1) |
-| İş akışı | [Run 26334293089](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26334293089) |
+| Sürüm | `1.0.52+54` |
+| Tarih (UTC) | 2026-05-23 14:55 |
+| Commit | [`87d11d738c88bf8d12438b475946286c20948428`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/87d11d738c88bf8d12438b475946286c20948428) |
+| İş akışı | [Run 26335504816](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26335504816) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.47+49 (2026-05-22)
+## 1.0.52+54 (2026-05-19)
 
-### Anlık push bildirimleri
+### canlifal.com mobil JWT API
 
-- Mesaj, ödeme (admin onayı), canlı yayın → OneSignal yüksek öncelik
-- Bildirime tıklayınca doğru ekrana yönlendirme
-- API: `push_events`, `POST /api/video-streams/.../live-started`
+- Oturum: `POST /api/auth/mobile-register|login|google|tiktok|refresh`
+- Profil ve bakiye: `GET /api/me` (Bearer)
+- DM: `GET/POST /api/messages`, `GET/POST /api/messages/{userId}`
+- Dio: 401 → `mobile-refresh`; WebView Google OAuth kaldırıldı
+- Kayıt: `name`, `birthDate`, `birthTime`, `preferredLanguage`
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
