@@ -14,6 +14,7 @@ import '../../features/fortune/domain/entities/fortune_type_entity.dart';
 import '../../features/fortune/presentation/data/fortune_catalog.dart';
 import '../../features/fortune/presentation/pages/daily_fortune_open_page.dart';
 import '../../features/fortune/presentation/pages/daily_fortune_result_page.dart';
+import '../../features/fortune/presentation/pages/fortune_type_intro_page.dart';
 import '../../features/fortune/presentation/pages/fortune_result_page.dart';
 import '../../features/fortune/presentation/pages/fortune_session_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
@@ -172,13 +173,27 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                           ? const FortuneTarotHubPage()
                           : type.isDaily
                               ? DailyFortuneOpenPage(type: type)
-                              : FortuneSessionPage(type: type);
+                              : FortuneTypeIntroPage(type: type);
                       return AppPageTransitions.fadeSlide(
                         key: state.pageKey,
                         child: child,
                       );
                     },
                     routes: [
+                      GoRoute(
+                        path: 'session',
+                        pageBuilder: (context, state) {
+                          final slug = state.pathParameters['slug']!;
+                          final type = FortuneCatalog.bySlug(slug);
+                          final child = type == null
+                              ? const FortuneTarotHubPage()
+                              : FortuneSessionPage(type: type);
+                          return AppPageTransitions.fadeSlide(
+                            key: state.pageKey,
+                            child: child,
+                          );
+                        },
+                      ),
                       GoRoute(
                         path: 'result',
                         pageBuilder: (context, state) {

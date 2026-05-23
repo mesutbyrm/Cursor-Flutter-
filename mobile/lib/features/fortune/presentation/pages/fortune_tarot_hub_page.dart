@@ -4,12 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_refresh.dart';
-import '../data/fortune_catalog.dart';
 import '../widgets/fortune_hub_app_bar.dart';
 import '../widgets/fortune_hub_daily_energy.dart';
 import '../widgets/fortune_hub_hero_banner.dart';
 import '../widgets/fortune_mystic_background.dart';
-import '../widgets/fortune_hub_type_card.dart';
+import '../data/fortune_type_showcase.dart';
+import '../widgets/fortune_type_showcase_card.dart';
 
 /// Fal & Tarot ana sekme — mockup: enerji, türler, son fallar, AI, premium.
 class FortuneTarotHubPage extends ConsumerWidget {
@@ -34,25 +34,26 @@ class FortuneTarotHubPage extends ConsumerWidget {
               const SliverToBoxAdapter(child: FortuneHubDailyEnergy()),
               SliverToBoxAdapter(child: _FortuneTypesHeader()),
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.02,
-                  ),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, i) {
-                      final entry = FortuneCatalog.hubFortuneTypes[i];
-                      return FortuneHubTypeCard(
-                        type: entry.type,
-                        subtitle: entry.subtitle,
-                        onTap: () =>
-                            context.push('/fortune/${entry.type.slug}'),
+                      final showcase = FortuneTypeShowcase.hubShowcases[i];
+                      final slug = showcase.type.slug;
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: i < FortuneTypeShowcase.hubShowcases.length - 1
+                              ? 14
+                              : 0,
+                        ),
+                        child: FortuneTypeShowcaseCard(
+                          showcase: showcase,
+                          compact: true,
+                          onOpenFortune: () => context.push('/fortune/$slug'),
+                        ),
                       );
                     },
-                    childCount: FortuneCatalog.hubFortuneTypes.length,
+                    childCount: FortuneTypeShowcase.hubShowcases.length,
                   ),
                 ),
               ),
