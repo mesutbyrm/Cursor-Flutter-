@@ -6,15 +6,14 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_refresh.dart';
 import '../data/fortune_catalog.dart';
 import '../widgets/fortune_hub_app_bar.dart';
+import '../widgets/fortune_hub_daily_energy.dart';
+import '../widgets/fortune_hub_hero_banner.dart';
 import '../widgets/fortune_mystic_background.dart';
-import '../widgets/fortune_type_grid_card.dart';
-import '../../domain/entities/fortune_type_entity.dart';
+import '../widgets/fortune_hub_type_card.dart';
 
 /// Fal & Tarot ana sekme — mockup: enerji, türler, son fallar, AI, premium.
 class FortuneTarotHubPage extends ConsumerWidget {
   const FortuneTarotHubPage({super.key});
-
-  static final _hubTypes = FortuneCatalog.types.take(8).toList();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,8 +30,8 @@ class FortuneTarotHubPage extends ConsumerWidget {
             ),
             slivers: [
               const SliverToBoxAdapter(child: FortuneHubAppBar()),
-              SliverToBoxAdapter(child: _HeroBanner()),
-              SliverToBoxAdapter(child: _DailyEnergySection()),
+              const SliverToBoxAdapter(child: FortuneHubHeroBanner()),
+              const SliverToBoxAdapter(child: FortuneHubDailyEnergy()),
               SliverToBoxAdapter(child: _FortuneTypesHeader()),
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
@@ -41,17 +40,19 @@ class FortuneTarotHubPage extends ConsumerWidget {
                     crossAxisCount: 2,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    childAspectRatio: 0.88,
+                    childAspectRatio: 1.02,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, i) {
-                      final type = _hubTypes[i];
-                      return _HubFortuneTypeCard(
-                        type: type,
-                        onTap: () => context.push('/fortune/${type.slug}'),
+                      final entry = FortuneCatalog.hubFortuneTypes[i];
+                      return FortuneHubTypeCard(
+                        type: entry.type,
+                        subtitle: entry.subtitle,
+                        onTap: () =>
+                            context.push('/fortune/${entry.type.slug}'),
                       );
                     },
-                    childCount: _hubTypes.length,
+                    childCount: FortuneCatalog.hubFortuneTypes.length,
                   ),
                 ),
               ),
@@ -67,249 +68,6 @@ class FortuneTarotHubPage extends ConsumerWidget {
   }
 }
 
-class _HeroBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          children: [
-            Container(
-              height: 168,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF2D1B4E), Color(0xFF0F0A1E)],
-                ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    right: -10,
-                    top: 10,
-                    child: Icon(
-                      Icons.blur_circular_rounded,
-                      size: 120,
-                      color: AppColors.accentPurple.withValues(alpha: 0.35),
-                    ),
-                  ),
-                  Positioned(
-                    right: 24,
-                    bottom: 20,
-                    child: Text(
-                      '🕯️',
-                      style: TextStyle(
-                        fontSize: 28,
-                        shadows: [
-                          Shadow(
-                            color: AppColors.accentPurple.withValues(alpha: 0.8),
-                            blurRadius: 16,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  RichText(
-                    text: const TextSpan(
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        height: 1.25,
-                        color: Colors.white,
-                      ),
-                      children: [
-                        TextSpan(text: 'Kendini keşfet, geleceğini '),
-                        TextSpan(
-                          text: 'aydınlat',
-                          style: TextStyle(
-                            color: Color(0xFFC084FC),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Fal ve tarotun mistik dünyasına hoş geldin.',
-                    style: TextStyle(
-                      color: AppColors.textSecondary.withValues(alpha: 0.95),
-                      fontSize: 13,
-                      height: 1.35,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  FilledButton.icon(
-                    onPressed: () => context.push(
-                      '/fortune/${FortuneCatalog.dailyFortune.slug}',
-                    ),
-                    icon: const Icon(Icons.auto_awesome, size: 18),
-                    label: const Text('FALINI AÇ'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF7C3AED),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DailyEnergySection extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _SectionTitleRow(
-            title: 'GÜNLÜK ENERJİN',
-            icon: Icons.star_rounded,
-            onSeeAll: () => context.push(
-              '/fortune/${FortuneCatalog.dailyFortune.slug}',
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 108,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              children: const [
-                _EnergyChip(
-                  label: 'ENERJİ',
-                  value: 'Yüksek',
-                  icon: Icons.bolt_rounded,
-                  progress: 0.85,
-                  color: Color(0xFFFBBF24),
-                ),
-                SizedBox(width: 10),
-                _EnergyChip(
-                  label: 'ŞANSLI SAYI',
-                  value: '7',
-                  icon: Icons.eco_rounded,
-                  color: Color(0xFF4ADE80),
-                ),
-                SizedBox(width: 10),
-                _EnergyChip(
-                  label: 'ŞANSLI RENK',
-                  value: 'Mor',
-                  icon: Icons.diamond_rounded,
-                  color: Color(0xFFE879F9),
-                ),
-                SizedBox(width: 10),
-                _EnergyChip(
-                  label: 'AY ETKİSİ',
-                  value: 'Güçlü',
-                  icon: Icons.nightlight_round,
-                  color: Color(0xFF93C5FD),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Bugün sezgilerin güçlü, iç sesini dinlemeyi unutma.',
-            style: TextStyle(
-              color: AppColors.textMuted.withValues(alpha: 0.95),
-              fontSize: 13,
-              height: 1.35,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EnergyChip extends StatelessWidget {
-  const _EnergyChip({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-    this.progress,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  final double? progress;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 118,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: Colors.white.withValues(alpha: 0.06),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 20),
-          const Spacer(),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-              color: AppColors.textMuted.withValues(alpha: 0.9),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 15,
-            ),
-          ),
-          if (progress != null) ...[
-            const SizedBox(height: 6),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 4,
-                backgroundColor: Colors.white.withValues(alpha: 0.1),
-                color: color,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
 class _FortuneTypesHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -317,21 +75,10 @@ class _FortuneTypesHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: _SectionTitleRow(
         title: 'FAL TÜRLERİ',
-        onSeeAll: () => context.push('/fortune/tarot'),
+        seeAllLabel: 'Tüm Fal Türleri >',
+        onSeeAll: () => context.push('/fortune/types'),
       ),
     );
-  }
-}
-
-class _HubFortuneTypeCard extends StatelessWidget {
-  const _HubFortuneTypeCard({required this.type, required this.onTap});
-
-  final FortuneTypeEntity type;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return FortuneTypeGridCard(type: type, onExplore: onTap);
   }
 }
 
@@ -606,11 +353,13 @@ class _SectionTitleRow extends StatelessWidget {
     required this.title,
     this.icon,
     this.onSeeAll,
+    this.seeAllLabel = 'Tümünü Gör >',
   });
 
   final String title;
   final IconData? icon;
   final VoidCallback? onSeeAll;
+  final String seeAllLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -638,7 +387,7 @@ class _SectionTitleRow extends StatelessWidget {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: Text(
-              'Tümünü Gör >',
+              seeAllLabel,
               style: TextStyle(
                 color: AppColors.accentCyan.withValues(alpha: 0.95),
                 fontWeight: FontWeight.w700,

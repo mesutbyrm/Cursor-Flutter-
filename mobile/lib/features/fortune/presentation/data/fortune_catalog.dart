@@ -175,6 +175,29 @@ abstract final class FortuneCatalog {
     ),
   ];
 
+  /// Fal & Tarot hub 2×4 grid — mockup sırası ve kısa alt metinler.
+  static const hubFortuneEntries = <({String slug, String subtitle})>[
+    (slug: 'tarot', subtitle: 'Kartların mesajını keşfet'),
+    (slug: 'kahve-fali', subtitle: 'Fincandaki işaretleri çöz'),
+    (slug: 'ask-fali', subtitle: 'Kalbinin sesini dinle'),
+    (slug: 'yildiz-haritasi', subtitle: 'Burç haritan ve gökyüzü rehberin'),
+    (slug: 'el-fali', subtitle: 'Avuç içindeki sırları keşfet'),
+    (slug: 'katina', subtitle: 'Aşk ve ilişki kartlarıyla bakış'),
+    (slug: 'melek-kartlari', subtitle: 'Meleklerden rehberlik al'),
+    (slug: 'numeroloji', subtitle: 'Sayıların enerjisini öğren'),
+  ];
+
+  static List<({FortuneTypeEntity type, String subtitle})> get hubFortuneTypes {
+    final out = <({FortuneTypeEntity type, String subtitle})>[];
+    for (final entry in hubFortuneEntries) {
+      final type = bySlug(entry.slug);
+      if (type != null) {
+        out.add((type: type, subtitle: entry.subtitle));
+      }
+    }
+    return out;
+  }
+
   static FortuneTypeEntity? bySlug(String slug) {
     if (dailyFortune.slug == slug) return dailyFortune;
     for (final t in types) {
