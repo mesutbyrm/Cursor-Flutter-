@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,15 +25,16 @@ import 'providers/voice_room_audio_providers.dart';
 import 'providers/voice_room_ui_provider.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'theme/voice_room_tokens.dart';
+import 'utils/voice_room_permissions.dart';
 import 'widgets/premium/voice_gift_flight_overlay.dart';
 import 'widgets/premium/voice_glass.dart';
-import 'widgets/premium/voice_premium_chat.dart';
-import 'widgets/premium/voice_premium_controls.dart';
-import 'widgets/premium/voice_premium_header.dart';
-import 'widgets/premium/voice_premium_stage.dart';
+import 'widgets/premium_2026/voice_cosmic_background.dart';
+import 'widgets/premium_2026/voice_half_circle_stage.dart';
+import 'widgets/premium_2026/voice_live_bottom_bar_2026.dart';
+import 'widgets/premium_2026/voice_live_chat_dock.dart';
+import 'widgets/premium_2026/voice_live_header_2026.dart';
 import 'widgets/voice_room/voice_room_rules_ticker.dart';
 import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
-import 'utils/voice_room_permissions.dart';
 
 /// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
@@ -60,6 +59,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   VoiceAudioEngineKind? _engineKind;
   LiveGiftEvent? _fullscreenGift;
   var _typingMessage = false;
+  var _followingRoom = false;
 
   @override
   void initState() {
@@ -278,6 +278,83 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
   }
 
+  void _openMoreMenu(
+    BuildContext context, {
+    required VoiceRoomEntity room,
+    required VoiceRoomLiveState live,
+    required VoiceRoomPermissions perms,
+    required bool isOwner,
+    required VoiceRoomUiState ui,
+  }) {
+    showVoiceMoreMenuSheet(
+      context,
+      ref: ref,
+      room: room,
+      live: live,
+      perms: perms,
+      onSettings: () => showVoiceRoomSettingsSheet(
+        context,
+        ref,
+        room: room,
+        isOwner: isOwner,
+        perms: perms,
+        presence: live.presence,
+        onUserTap: _openUser,
+      ),
+      onSpeakers: () => showVoiceSpeakerListSheet(
+        context,
+        presence: live.presence,
+        room: room,
+        onUserTap: _openUser,
+      ),
+      onShare: _shareRoom,
+      onBackgroundMusic: () async {
+        final enabled = !ui.backgroundMusicEnabled;
+        ref.read(voiceRoomUiProvider.notifier).toggleBackgroundMusic();
+        final err = await ref
+            .read(voiceRoomLiveProvider(room).notifier)
+            .toggleBackgroundMusic(enabled);
+        if (context.mounted && err != null) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        }
+      },
+      onPickBackground: perms.canChangeBackground
+          ? () => _pickBackground(context, room)
+          : null,
+    );
+  }
+
+  Future<void> _requestSpeakFromSeat(
+    BuildContext context,
+    VoiceRoomEntity room,
+    VoiceRoomUiState ui,
+  ) async {
+    final liveCtrl = ref.read(voiceRoomLiveProvider(room).notifier);
+    final err = ui.requestSpeakPending
+        ? await liveCtrl.cancelSpeakRequest()
+        : await liveCtrl.requestSpeak();
+    if (!context.mounted) return;
+    if (err != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      return;
+    }
+    showVoiceRequestSpeakSheet(
+      context,
+      ref,
+      pending: ref.read(voiceRoomUiProvider).requestSpeakPending,
+      onPrimary: () async {
+        final ctrl = ref.read(voiceRoomLiveProvider(room).notifier);
+        final pendingNow = ref.read(voiceRoomUiProvider).requestSpeakPending;
+        final e = pendingNow
+            ? await ctrl.cancelSpeakRequest()
+            : await ctrl.requestSpeak();
+        if (context.mounted && e != null) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e)));
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final room = widget.room;
@@ -312,10 +389,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       },
       child: Scaffold(
         backgroundColor: VoiceRoomTokens.bgDeep,
+        extendBodyBehindAppBar: true,
         body: Stack(
           fit: StackFit.expand,
           children: [
-            _RoomBackground(url: bgUrl),
+            VoiceCosmicBackground(imageUrl: bgUrl),
             if (_loginError != null)
               Center(
                 child: DiscoverEmptyState(
@@ -376,220 +454,140 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-                      child: VoicePremiumHeader(
+                    VoiceLiveHeader2026(
+                      room: room,
+                      onlineCount: online,
+                      coinBalance: coins,
+                      hostAvatarUrl:
+                          room.ownerAvatarUrl ?? user?.avatarUrl,
+                      following: _followingRoom,
+                      onBack: _leave,
+                      onExit: _leave,
+                      onFollow: isOwner
+                          ? null
+                          : () => setState(() => _followingRoom = !_followingRoom),
+                      onShare: _shareRoom,
+                      onAudience: () => showVoiceSpeakerListSheet(
+                        context,
+                        presence: live.presence,
                         room: room,
-                        onlineCount: online,
+                        onUserTap: _openUser,
+                      ),
+                      onMore: () => _openMoreMenu(
+                        context,
+                        room: room,
+                        live: live,
+                        perms: perms,
                         isOwner: isOwner,
-                        onBack: _leave,
-                        onExit: _leave,
-                        onShare: _shareRoom,
-                        onAudience: () => showVoiceSpeakerListSheet(
-                          context,
-                          presence: live.presence,
-                          room: room,
-                          onUserTap: _openUser,
-                        ),
+                        ui: ui,
                       ),
                     ),
                     if (_engineKind != null)
                       Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          'Ses: $engineLabel',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: AppColors.textMuted.withValues(alpha: 0.85),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Ses motoru: $engineLabel',
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: AppColors.textMuted.withValues(alpha: 0.8),
+                            ),
                           ),
                         ),
                       ),
                     VoiceStaffEntranceMarquee(message: staffBanner),
-                    const SizedBox(height: 4),
                     Expanded(
-                      flex: 5,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: VoicePremiumStage(
-                          room: room,
-                          presence: live.presence,
-                          speakingUserId: speakingId,
-                          onUserTap: _openUser,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 4,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                        child: VoicePremiumChat(
-                          messages: live.messages,
-                          onUserTap: (id, name) {
-                            ChatRoomPresence? p;
-                            for (final e in live.presence) {
-                              if (e.id == id) {
-                                p = e;
-                                break;
-                              }
-                            }
-                            if (p != null) _openUser(p);
-                          },
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: VoicePremiumMessageBar(
-                        controller: _messageCtrl,
-                        sending: live.sending,
-                        onSend: () {
-                          final text = _messageCtrl.text;
-                          _messageCtrl.clear();
-                          ref
-                              .read(voiceRoomLiveProvider(room).notifier)
-                              .sendMessage(text);
-                        },
-                        onGift: () =>
-                            showPremiumVoiceGiftShop(context, ref, room: room),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: VoicePremiumControls(
-                        micOn: _micOn,
-                        headphonesOn: ui.headphonesOn,
-                        onMic: () {
-                          if (!_audioReady) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Mikrofon için önce ses bağlantısı kurulmalı',
-                                ),
-                              ),
-                            );
-                            return;
-                          }
-                          final next = !_micOn;
-                          _audio?.setMicEnabled(next);
-                          setState(() => _micOn = next);
-                        },
-                        onHeadphones: () {
-                          final next = !ui.headphonesOn;
-                          ref
-                              .read(voiceRoomUiProvider.notifier)
-                              .toggleHeadphones();
-                          _audio?.setHeadphonesOn(next);
-                        },
-                        onRequestSpeak: () async {
-                          final liveCtrl =
-                              ref.read(voiceRoomLiveProvider(room).notifier);
-                          String? err;
-                          if (ui.requestSpeakPending) {
-                            err = await liveCtrl.cancelSpeakRequest();
-                          } else {
-                            err = await liveCtrl.requestSpeak();
-                          }
-                          if (!context.mounted) return;
-                          if (err != null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(err)),
-                            );
-                            return;
-                          }
-                          showVoiceRequestSpeakSheet(
-                            context,
-                            ref,
-                            pending: ref
-                                .read(voiceRoomUiProvider)
-                                .requestSpeakPending,
-                            onPrimary: () async {
-                              final ctrl = ref.read(
-                                voiceRoomLiveProvider(room).notifier,
-                              );
-                              final pendingNow = ref
-                                  .read(voiceRoomUiProvider)
-                                  .requestSpeakPending;
-                              final err = pendingNow
-                                  ? await ctrl.cancelSpeakRequest()
-                                  : await ctrl.requestSpeak();
-                              if (context.mounted && err != null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(err)),
-                                );
-                              }
-                            },
-                          );
-                        },
-                        onEffects: () => showVoiceEffectsSheet(context, ref),
-                        onMore: () => showVoiceMoreMenuSheet(
-                          context,
-                          ref: ref,
-                          room: room,
-                          live: live,
-                          perms: perms,
-                          onSettings: () => showVoiceRoomSettingsSheet(
-                            context,
-                            ref,
-                            room: room,
-                            isOwner: isOwner,
-                            perms: perms,
-                            presence: live.presence,
-                            onUserTap: _openUser,
-                          ),
-                          onSpeakers: () => showVoiceSpeakerListSheet(
-                            context,
-                            presence: live.presence,
-                            room: room,
-                            onUserTap: _openUser,
-                          ),
-                          onShare: _shareRoom,
-                          onBackgroundMusic: () async {
-                            final enabled = !ui.backgroundMusicEnabled;
-                            ref
-                                .read(voiceRoomUiProvider.notifier)
-                                .toggleBackgroundMusic();
-                            final err = await ref
-                                .read(voiceRoomLiveProvider(room).notifier)
-                                .toggleBackgroundMusic(enabled);
-                            if (context.mounted && err != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(err)),
-                              );
-                            }
-                          },
-                          onPickBackground: perms.canChangeBackground
-                              ? () => _pickBackground(context, room)
-                              : null,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(16, 6, 16, bottom + 8),
-                      child: Row(
+                      child: Column(
                         children: [
-                          Text(
-                            '💎 $coins jeton',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 12,
-                              color: AppColors.diamondBlue,
+                          Flexible(
+                            flex: 5,
+                            child: VoiceHalfCircleStage(
+                              room: room,
+                              presence: live.presence,
+                              speakingUserId: speakingId,
+                              onUserTap: _openUser,
+                              onEmptySeatTap: () => _requestSpeakFromSeat(context, room, ui),
                             ),
                           ),
-                          const Spacer(),
-                          TextButton(
-                            onPressed: () => context.push('/jeton-store'),
-                            child: const Text('Jeton yükle'),
-                          ),
-                          TextButton(
-                            onPressed: () => ref
-                                .read(voiceRoomLiveProvider(room).notifier)
-                                .refresh(),
-                            child: const Text('Yenile'),
+                          Flexible(
+                            flex: 3,
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                12,
+                                0,
+                                12,
+                                MediaQuery.sizeOf(context).height < 700 ? 2 : 4,
+                              ),
+                              child: VoiceLiveChatDock(
+                                messages: live.messages,
+                                controller: _messageCtrl,
+                                sending: live.sending,
+                                maxHeight: 140,
+                                onSend: () {
+                                  final text = _messageCtrl.text;
+                                  _messageCtrl.clear();
+                                  ref
+                                      .read(voiceRoomLiveProvider(room).notifier)
+                                      .sendMessage(text);
+                                },
+                                onGift: () => showPremiumVoiceGiftShop(
+                                  context,
+                                  ref,
+                                  room: room,
+                                ),
+                                onUserTap: (id, _) {
+                                  for (final e in live.presence) {
+                                    if (e.id == id) {
+                                      _openUser(e);
+                                      break;
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
+                    VoiceLiveBottomBar2026(
+                      micOn: _micOn,
+                      micEnabled: _audioReady,
+                      onChat: () => _messageCtrl.selection = TextSelection.fromPosition(
+                        TextPosition(offset: _messageCtrl.text.length),
+                      ),
+                      onInvite: _shareRoom,
+                      onMic: () {
+                        if (!_audioReady) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Mikrofon için ses bağlantısı gerekli — söz iste ile katılabilirsiniz',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        final next = !_micOn;
+                        _audio?.setMicEnabled(next);
+                        setState(() => _micOn = next);
+                      },
+                      onMusic: () async {
+                        final enabled = !ui.backgroundMusicEnabled;
+                        ref.read(voiceRoomUiProvider.notifier).toggleBackgroundMusic();
+                        final err = await ref
+                            .read(voiceRoomLiveProvider(room).notifier)
+                            .toggleBackgroundMusic(enabled);
+                        if (context.mounted && err != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(err)),
+                          );
+                        }
+                      },
+                      onGift: () =>
+                          showPremiumVoiceGiftShop(context, ref, room: room),
+                    ),
+                    SizedBox(height: bottom > 0 ? 0 : 4),
                   ],
                 ),
               ),
@@ -603,46 +601,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _RoomBackground extends StatelessWidget {
-  const _RoomBackground({this.url});
-
-  final String? url;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const DecoratedBox(decoration: BoxDecoration(gradient: VoiceRoomTokens.roomGradient)),
-        if (url != null && url!.isNotEmpty)
-          CachedNetworkImage(
-            imageUrl: url!,
-            fit: BoxFit.cover,
-            color: Colors.black.withValues(alpha: 0.6),
-            colorBlendMode: BlendMode.darken,
-          ),
-        ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    VoiceRoomTokens.neonPurple.withValues(alpha: 0.12),
-                    VoiceRoomTokens.bgDeep.withValues(alpha: 0.95),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

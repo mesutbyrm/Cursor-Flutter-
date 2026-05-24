@@ -5,14 +5,17 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/env.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/premium_2026/premium_immersive_background.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/domain/entities/voice_room_sort.dart';
 import '../../live/presentation/providers/live_providers.dart';
-import 'widgets/premium/voice_discover_header.dart';
+import 'theme/voice_room_tokens.dart';
+import 'widgets/premium_2026/voice_discover_2026.dart';
+import 'widgets/premium/voice_glass.dart';
 import 'widgets/voice_room_grid_tile.dart';
 
-/// Sesli sohbet keşfet — arama, kategoriler, oda grid.
+/// Sesli sohbet keşfet — Premium 2026 kategoriler + öne çıkan + grid.
 class VoiceRoomsBody extends ConsumerStatefulWidget {
   const VoiceRoomsBody({
     super.key,
@@ -27,7 +30,7 @@ class VoiceRoomsBody extends ConsumerStatefulWidget {
 
 class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
   final _searchCtrl = TextEditingController();
-  var _category = 'Tümü';
+  String? _categoryId;
 
   @override
   void dispose() {
@@ -48,36 +51,29 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
           )
           .toList();
     }
-    switch (_category) {
-      case 'Popüler':
-        out = [...out]..sort((a, b) => b.displayOnline.compareTo(a.displayOnline));
-      case 'Müzik':
-        out = out
-            .where((r) {
-              final t = _tags(r);
-              return t.contains('müzik') || t.contains('music');
-            })
-            .toList();
-      case 'Oyun':
-        out = out
-            .where((r) {
-              final t = _tags(r);
-              return t.contains('oyun') || t.contains('game');
-            })
-            .toList();
-      case 'Sohbet':
-        out = out
-            .where((r) {
-              final t = _tags(r);
-              return t.contains('sohbet') || t.contains('chat');
-            })
-            .toList();
+    if (_categoryId != null) {
+      out = out.where((r) => _matchesCategory(r, _categoryId!)).toList();
     }
     return out;
   }
 
-  String _tags(VoiceRoomEntity r) {
-    return '${r.nameTr} ${r.descTr ?? ''} ${r.slug}'.toLowerCase();
+  bool _matchesCategory(VoiceRoomEntity r, String catId) {
+    final t = '${r.nameTr} ${r.descTr ?? ''} ${r.slug}'.toLowerCase();
+    switch (catId) {
+      case 'fortune':
+        return t.contains('fal') || t.contains('tarot') || t.contains('spirit');
+      case 'game':
+        return t.contains('oyun') || t.contains('game');
+      case 'pk':
+        return t.contains('pk') || t.contains('savaş');
+      case 'vip':
+        return t.contains('vip') || t.contains('gold');
+      case 'social':
+        return t.contains('sohbet') || t.contains('topluluk');
+      case 'entertainment':
+      default:
+        return true;
+    }
   }
 
   @override
@@ -116,59 +112,99 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
             ? 8.0
             : mq.top + kToolbarHeight + 4;
 
-        return RefreshIndicator(
-          color: AppColors.accentPink,
-          backgroundColor: AppColors.bgPurpleGlow,
-          onRefresh: () async => ref.invalidate(voiceRoomsProvider),
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            slivers: [
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(12, topPad, 12, 8),
-                sliver: SliverToBoxAdapter(
-                  child: VoiceDiscoverHeader(
-                    searchController: _searchCtrl,
-                    selectedCategory: _category,
-                    onCategory: (c) => setState(() => _category = c),
-                    onSearchChanged: (_) => setState(() {}),
-                    roomCount: filtered.length,
-                  ),
-                ),
+        return PremiumImmersiveBackground(
+          child: RefreshIndicator(
+            color: VoiceRoomTokens.neonPink,
+            backgroundColor: VoiceRoomTokens.bgCosmic,
+            onRefresh: () async => ref.invalidate(voiceRoomsProvider),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
               ),
-              if (filtered.isEmpty)
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: DiscoverEmptyState(
-                    icon: Icons.search_off_rounded,
-                    message: 'Aramanıza uygun oda bulunamadı.',
-                  ),
-                )
-              else
+              slivers: [
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 100),
-                  sliver: SliverGrid.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: VoiceRoomGridTile.crossAxisCount,
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                      childAspectRatio: VoiceRoomGridTile.tileAspectRatio,
+                  padding: EdgeInsets.fromLTRB(16, topPad, 16, 8),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        VoiceGlass(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          borderRadius: VoiceRoomTokens.radiusCard,
+                          child: TextField(
+                            controller: _searchCtrl,
+                            onChanged: (_) => setState(() {}),
+                            style: const TextStyle(fontSize: 14),
+                            decoration: InputDecoration(
+                              hintText: 'Oda veya kullanıcı ara…',
+                              hintStyle: TextStyle(
+                                color: AppColors.textMuted.withValues(alpha: 0.9),
+                              ),
+                              border: InputBorder.none,
+                              icon: Icon(
+                                Icons.search_rounded,
+                                color: VoiceRoomTokens.neonBlue.withValues(alpha: 0.9),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        VoiceDiscoverCategories2026(
+                          selectedId: _categoryId,
+                          onCategoryTap: (id) => setState(() {
+                            _categoryId = _categoryId == id ? null : id;
+                          }),
+                        ),
+                        VoiceFeaturedRooms2026(
+                          rooms: ordered,
+                          onRoomTap: (r) => _openRoom(context, r),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Tüm odalar · ${filtered.length}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textMuted.withValues(alpha: 0.95),
+                          ),
+                        ),
+                      ],
                     ),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, i) {
-                      final r = filtered[i];
-                      final mine = myRoom != null && r.id == myRoom.id;
-                      return VoiceRoomGridTile(
-                        room: r,
-                        isMine: mine,
-                        onTap: () => _openRoom(context, r),
-                      );
-                    },
                   ),
                 ),
-            ],
+                if (filtered.isEmpty)
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: DiscoverEmptyState(
+                      icon: Icons.search_off_rounded,
+                      message: 'Aramanıza uygun oda bulunamadı.',
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 100),
+                    sliver: SliverGrid.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: VoiceRoomGridTile.crossAxisCount,
+                        mainAxisSpacing: 10,
+                        crossAxisSpacing: 10,
+                        childAspectRatio: VoiceRoomGridTile.tileAspectRatio,
+                      ),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, i) {
+                        final r = filtered[i];
+                        final mine = myRoom != null && r.id == myRoom.id;
+                        return VoiceRoomGridTile(
+                          room: r,
+                          isMine: mine,
+                          onTap: () => _openRoom(context, r),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
           ),
         );
       },
@@ -186,6 +222,6 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
   }
 
   static void _openRoom(BuildContext context, VoiceRoomEntity room) {
-    context.push('/voice-room/${room.id}', extra: room);
+    context.push('/voice-room/${room.apiRoomKey}', extra: room);
   }
 }
