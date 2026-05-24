@@ -33,7 +33,6 @@ import 'widgets/premium/voice_premium_chat.dart';
 import 'widgets/premium/voice_premium_controls.dart';
 import 'widgets/premium/voice_premium_header.dart';
 import 'widgets/premium/voice_premium_stage.dart';
-import 'widgets/voice_room/voice_room_announcement.dart';
 import 'widgets/voice_room/voice_room_rules_ticker.dart';
 import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
 import 'utils/voice_room_permissions.dart';

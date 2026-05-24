@@ -55,7 +55,10 @@ class _StoriesError extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Hikâyeler yüklenemedi',
+              message.length > 80 ? 'Hikâyeler yüklenemedi' : message,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: AppColors.textMuted.withValues(alpha: 0.9),
                 fontSize: 12,
