@@ -15,6 +15,7 @@ import '../../auth/presentation/providers/auth_providers.dart';
 import '../../live/domain/entities/live_gift_event.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/presentation/gifts/widgets/gift_fullscreen_overlay.dart';
+import '../../auth/domain/entities/user_entity.dart';
 import '../../profile/presentation/providers/profile_providers.dart';
 import '../domain/entities/chat_room_presence.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
@@ -27,10 +28,13 @@ import 'providers/voice_room_ui_provider.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'theme/voice_room_tokens.dart';
 import 'widgets/premium/voice_gift_flight_overlay.dart';
+import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium/voice_premium_chat.dart';
 import 'widgets/premium/voice_premium_controls.dart';
 import 'widgets/premium/voice_premium_header.dart';
 import 'widgets/premium/voice_premium_stage.dart';
+import 'widgets/voice_room/voice_room_announcement.dart';
+import 'utils/voice_room_permissions.dart';
 
 /// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
@@ -112,13 +116,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
 
     try {
+      final perms = VoiceRoomPermissions.forUser(user: user, room: widget.room);
       _engineKind = await _audio!.join(
         roomId: widget.room.id,
         userId: user.id,
-        isHost: _isRoomOwner(user.id, user.username),
+        isHost: _isRoomOwner(user.id, user.username) || perms.isSiteAdmin,
         liveKitRemote: ref.read(liveKitRemoteProvider),
         trtcRemote: ref.read(trtcRemoteProvider),
       );
+      if (perms.isSiteAdmin) {
+        _audio?.setMicEnabled(true);
+      }
       if (mounted) {
         setState(() {
           _joining = false;
@@ -126,6 +134,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _micOn = _audio!.micOn;
         });
         _startGiftRealtime();
+        _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
       }
     } catch (e) {
       if (mounted) {
@@ -145,6 +154,26 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     if (mounted) context.go('/voice-rooms');
   }
 
+  VoiceRoomPermissions _perms(
+    UserEntity? user,
+    List<ChatRoomPresence> presence,
+  ) {
+    ChatRoomPresence? self;
+    if (user != null) {
+      for (final p in presence) {
+        if (p.id == user.id) {
+          self = p;
+          break;
+        }
+      }
+    }
+    return VoiceRoomPermissions.forUser(
+      user: user,
+      room: widget.room,
+      selfPresence: self,
+    );
+  }
+
   bool _isRoomOwner(String userId, String username) {
     final room = widget.room;
     final oid = room.ownerId;
@@ -160,6 +189,57 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     Clipboard.setData(ClipboardData(text: url));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Paylaşım linki kopyalandı: $url')),
+    );
+  }
+
+  Future<void> _pickBackground(BuildContext context, VoiceRoomEntity room) async {
+    final urls =
+        await ref.read(voiceRoomLiveProvider(room).notifier).fetchBackgrounds();
+    if (!context.mounted || urls.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Arka plan listesi alınamadı')),
+      );
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => VoiceGlass(
+        borderRadius: 24,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Oda arka planı',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+            ...urls.map(
+              (url) => ListTile(
+                leading: const Icon(Icons.image_rounded),
+                title: Text(
+                  url.split('/').last,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await ref
+                      .read(voiceRoomLiveProvider(room).notifier)
+                      .setRoomBackground(url);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Arka plan güncellendi')),
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -187,8 +267,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         ? live.presence.length
         : room.displayOnline;
     final user = ref.watch(authControllerProvider).valueOrNull;
-    final isOwner = user != null && _isRoomOwner(user.id, user.username);
+    final perms = _perms(user, live.presence);
+    final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
     final speakingId = _micOn ? user?.id : null;
+    final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
+    final rules = room.descTr?.trim();
     final bottom = MediaQuery.paddingOf(context).bottom;
     final engineLabel = _engineKind == VoiceAudioEngineKind.livekit
         ? 'LiveKit'
@@ -205,7 +288,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            _RoomBackground(url: room.backgroundImageUrl),
+            _RoomBackground(url: bgUrl),
             if (_joining)
               const Center(child: DiscoverAccentLoader())
             else if (!_joined)
@@ -227,6 +310,29 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               SafeArea(
                 child: Column(
                   children: [
+                    if (live.enterBanner != null && live.enterBanner!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                        child: VoiceRoomSystemBanner(message: live.enterBanner!),
+                      ),
+                    if (rules != null && rules.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                        child: VoiceRoomAnnouncement(text: rules),
+                      ),
+                    if (live.error != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          live.error!,
+                          style: const TextStyle(
+                            color: AppColors.liveRed,
+                            fontSize: 11,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
                       child: VoicePremiumHeader(
@@ -314,21 +420,44 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           _audio?.setMicEnabled(next);
                           setState(() => _micOn = next);
                         },
-                        onHeadphones: () => ref
-                            .read(voiceRoomUiProvider.notifier)
-                            .toggleHeadphones(),
-                        onRequestSpeak: () => showVoiceRequestSpeakSheet(
-                          context,
-                          ref,
-                          pending: ui.requestSpeakPending,
-                        ),
+                        onHeadphones: () {
+                          final next = !ui.headphonesOn;
+                          ref
+                              .read(voiceRoomUiProvider.notifier)
+                              .toggleHeadphones();
+                          _audio?.setHeadphonesOn(next);
+                        },
+                        onRequestSpeak: () async {
+                          final liveCtrl =
+                              ref.read(voiceRoomLiveProvider(room).notifier);
+                          if (ui.requestSpeakPending) {
+                            await liveCtrl.cancelSpeakRequest();
+                          } else {
+                            await liveCtrl.requestSpeak();
+                          }
+                          if (context.mounted) {
+                            showVoiceRequestSpeakSheet(
+                              context,
+                              ref,
+                              pending: ref.read(voiceRoomUiProvider).requestSpeakPending,
+                            );
+                          }
+                        },
                         onEffects: () => showVoiceEffectsSheet(context, ref),
                         onMore: () => showVoiceMoreMenuSheet(
                           context,
+                          ref: ref,
+                          room: room,
+                          live: live,
+                          perms: perms,
                           onSettings: () => showVoiceRoomSettingsSheet(
                             context,
                             ref,
+                            room: room,
                             isOwner: isOwner,
+                            perms: perms,
+                            presence: live.presence,
+                            onUserTap: _openUser,
                           ),
                           onSpeakers: () => showVoiceSpeakerListSheet(
                             context,
@@ -337,6 +466,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             onUserTap: _openUser,
                           ),
                           onShare: _shareRoom,
+                          onBackgroundMusic: () async {
+                            final enabled = !ui.backgroundMusicEnabled;
+                            ref
+                                .read(voiceRoomUiProvider.notifier)
+                                .toggleBackgroundMusic();
+                            await ref
+                                .read(voiceRoomLiveProvider(room).notifier)
+                                .toggleBackgroundMusic(enabled);
+                          },
+                          onPickBackground: perms.canChangeBackground
+                              ? () => _pickBackground(context, room)
+                              : null,
                         ),
                       ),
                     ),

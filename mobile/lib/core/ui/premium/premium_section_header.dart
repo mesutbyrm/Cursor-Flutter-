@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Bölüm başlığı — tema tipografisi, düşük widget ağacı.
+import '../premium_2026/premium_typography.dart';
+
+/// Bölüm başlığı — 2026 premium tipografi.
 class PremiumSectionHeader extends StatelessWidget {
   const PremiumSectionHeader({
     super.key,
@@ -23,10 +25,7 @@ class PremiumSectionHeader extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.2,
-              ),
+              style: PremiumTypography.headline(context),
             ),
           ),
           if (onAction != null)

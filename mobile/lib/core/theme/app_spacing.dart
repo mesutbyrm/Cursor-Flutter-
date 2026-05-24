@@ -11,6 +11,7 @@ abstract final class AppSpacing {
   static const double radiusMd = 16;
   static const double radiusLg = 22;
   static const double radiusXl = 28;
+  static const double radiusXxl = 32;
 
   static const double liveCardWidth = 160;
   static const double liveCardHeight = 220;

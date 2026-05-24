@@ -53,3 +53,13 @@ export function emitGiftRoomEvent(roomId: string, payload: Record<string, unknow
   io.to(voiceRoom(roomId)).emit("gift", payload);
   io.to(voiceRoom(roomId)).emit("giftSent", payload);
 }
+
+export function emitChatRoomMessage(
+  roomId: string,
+  payload: Record<string, unknown>,
+) {
+  if (!io) return;
+  io.to(voiceRoom(roomId)).emit("chatMessage", payload);
+  io.to(voiceRoom(roomId)).emit("message", payload);
+  io.to(voiceRoom(roomId)).emit("roomMessage", payload);
+}

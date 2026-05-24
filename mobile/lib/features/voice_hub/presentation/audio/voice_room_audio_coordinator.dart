@@ -82,6 +82,15 @@ class VoiceRoomAudioCoordinator {
     }
   }
 
+  void setHeadphonesOn(bool on) {
+    final muted = !on;
+    if (_engine == VoiceAudioEngineKind.livekit) {
+      _liveKit.setRemoteAudioMuted(muted);
+    } else if (_engine != null) {
+      _trtc.setAllRemoteAudioMuted(muted);
+    }
+  }
+
   Future<void> leave() async {
     await _liveKit.leave();
     await _trtc.leave();

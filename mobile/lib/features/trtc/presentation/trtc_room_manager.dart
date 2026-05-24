@@ -257,6 +257,10 @@ class TrtcRoomManager {
     _micOn = enabled;
   }
 
+  void setAllRemoteAudioMuted(bool mute) {
+    _cloud?.muteAllRemoteAudio(mute);
+  }
+
   void switchCamera() {
     _device?.switchCamera(_cameraOn);
   }

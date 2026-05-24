@@ -72,6 +72,9 @@ class VoiceRoomUiNotifier extends Notifier<VoiceRoomUiState> {
   void toggleRequestSpeak() =>
       state = state.copyWith(requestSpeakPending: !state.requestSpeakPending);
 
+  void setRequestSpeakPending(bool pending) =>
+      state = state.copyWith(requestSpeakPending: pending);
+
   void toggleListenerMessages() => state = state.copyWith(
         listenerMessagesEnabled: !state.listenerMessagesEnabled,
       );

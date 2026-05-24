@@ -14,11 +14,33 @@ import 'discover_section_header.dart';
 import 'discover_voice_room_carousel_item.dart';
 
 /// Ana sayfa sohbet odaları — tek sıra, yatay kaydırma + alt avatar şeridi.
-class DiscoverVoiceOrbs extends ConsumerWidget {
+class DiscoverVoiceOrbs extends ConsumerStatefulWidget {
   const DiscoverVoiceOrbs({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DiscoverVoiceOrbs> createState() => _DiscoverVoiceOrbsState();
+}
+
+class _DiscoverVoiceOrbsState extends ConsumerState<DiscoverVoiceOrbs> {
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.delayed(Duration.zero, () {
+      if (!mounted) return;
+      _scheduleRefresh();
+    });
+  }
+
+  void _scheduleRefresh() {
+    Future.delayed(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      ref.invalidate(voiceRoomsProvider);
+      _scheduleRefresh();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     if (!Env.useNextAuth) {
       return const _VoiceRoomsSection(
         child: PremiumEmptyHint(

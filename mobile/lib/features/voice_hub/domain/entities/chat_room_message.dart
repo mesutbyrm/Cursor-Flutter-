@@ -61,11 +61,16 @@ class ChatRoomMessage extends Equatable {
   });
 
   factory ChatRoomMessage.fromJson(Map<String, dynamic> json) {
-    final content = json['content']?.toString() ?? '';
-    final userJson = json['user'];
+    final content =
+        json['content']?.toString() ?? json['body']?.toString() ?? '';
+    final userJson = json['user'] ?? json['sender'];
     ChatRoomUserRef? user;
     if (userJson is Map) {
-      user = ChatRoomUserRef.fromJson(Map<String, dynamic>.from(userJson));
+      final um = Map<String, dynamic>.from(userJson);
+      if (um['name'] == null && um['displayName'] != null) {
+        um['name'] = um['displayName'];
+      }
+      user = ChatRoomUserRef.fromJson(um);
     }
 
     var kind = ChatMessageKind.text;
@@ -84,10 +89,17 @@ class ChatRoomMessage extends Equatable {
       giftCount = m != null ? int.tryParse(m.group(1)!) : 1;
     }
 
+    final id = json['id']?.toString() ??
+        '${json['createdAt'] ?? json['sentAt']}_${content.hashCode}';
+
     return ChatRoomMessage(
-      id: json['id']?.toString() ?? '',
+      id: id,
       content: _displayContent(content, kind),
-      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+      createdAt: DateTime.tryParse(
+            json['createdAt']?.toString() ??
+                json['sentAt']?.toString() ??
+                '',
+          ) ??
           DateTime.now(),
       user: user,
       kind: kind,

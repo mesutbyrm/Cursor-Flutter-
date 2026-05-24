@@ -6,6 +6,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_refresh.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
+import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/social_providers.dart';
@@ -70,9 +71,7 @@ class _SocialPageState extends ConsumerState<SocialPage> {
                 onRefresh: _refresh,
                 child: CustomScrollView(
                   controller: _scroll,
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
-                  ),
+                  physics: PremiumMotion.listPhysics,
                   slivers: [
                     social.when(
                       loading: () => SliverList(

@@ -46,8 +46,17 @@ class LiveRemoteDataSource {
     if (!Env.useNextAuth) return const [];
     final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatRooms);
     final body = res.data;
-    if (body is! List) return const [];
-    return asJsonList(body).map(_mapVoiceRoom).where((r) => r.id.isNotEmpty).toList();
+    dynamic list = body;
+    if (body is Map<String, dynamic>) {
+      if (body['success'] == true && body['data'] != null) {
+        final data = body['data'];
+        list = data is Map ? pick(asJsonMap(data), ['rooms']) : data;
+      } else {
+        list = pick(body, ['rooms', 'items', 'data']) ?? body;
+      }
+    }
+    if (list is! List) return const [];
+    return asJsonList(list).map(_mapVoiceRoom).where((r) => r.id.isNotEmpty).toList();
   }
 
   Future<VoiceRoomEntity?> fetchVoiceRoomById(String id) async {

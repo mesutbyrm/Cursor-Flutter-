@@ -7,6 +7,8 @@ class ChatRoomDjState {
     this.ownerPresent = false,
     this.canPlayMusic = false,
     this.isOwner = false,
+    this.musicUrl,
+    this.playing = false,
   });
 
   factory ChatRoomDjState.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,8 @@ class ChatRoomDjState {
       ownerPresent: json['ownerPresent'] == true,
       canPlayMusic: json['canPlayMusic'] == true,
       isOwner: json['isOwner'] == true,
+      musicUrl: json['musicUrl']?.toString(),
+      playing: json['playing'] == true,
     );
   }
 
@@ -33,6 +37,8 @@ class ChatRoomDjState {
   final bool ownerPresent;
   final bool canPlayMusic;
   final bool isOwner;
+  final String? musicUrl;
+  final bool playing;
 
   int get djCount => djUsers.length;
 }

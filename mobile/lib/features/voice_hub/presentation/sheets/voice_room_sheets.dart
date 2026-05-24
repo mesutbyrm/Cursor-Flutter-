@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
+import '../utils/voice_room_permissions.dart';
 import '../theme/voice_room_tokens.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
@@ -64,7 +66,11 @@ Future<void> showVoiceRequestSpeakSheet(
 Future<void> showVoiceRoomSettingsSheet(
   BuildContext context,
   WidgetRef ref, {
+  required VoiceRoomEntity room,
   required bool isOwner,
+  required VoiceRoomPermissions perms,
+  required List<ChatRoomPresence> presence,
+  void Function(ChatRoomPresence user)? onUserTap,
 }) {
   return showModalBottomSheet(
     context: context,
@@ -72,7 +78,11 @@ Future<void> showVoiceRoomSettingsSheet(
     backgroundColor: Colors.transparent,
     builder: (ctx) => Consumer(
       builder: (_, ref, _) => _RoomSettingsSheet(
+        room: room,
         isOwner: isOwner,
+        perms: perms,
+        presence: presence,
+        onUserTap: onUserTap,
         state: ref.watch(voiceRoomUiProvider),
         notifier: ref.read(voiceRoomUiProvider.notifier),
       ),
@@ -94,10 +104,17 @@ Future<void> showVoiceUserProfileSheet(
 
 Future<void> showVoiceMoreMenuSheet(
   BuildContext context, {
+  required WidgetRef ref,
+  required VoiceRoomEntity room,
+  required VoiceRoomLiveState live,
+  required VoiceRoomPermissions perms,
   required VoidCallback onSettings,
   required VoidCallback onSpeakers,
   required VoidCallback onShare,
+  required VoidCallback onBackgroundMusic,
+  VoidCallback? onPickBackground,
 }) {
+  final ui = ref.read(voiceRoomUiProvider);
   return showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
@@ -124,6 +141,27 @@ Future<void> showVoiceMoreMenuSheet(
               onSpeakers();
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.music_note_rounded),
+            title: Text(
+              ui.backgroundMusicEnabled
+                  ? 'Arka plan müziğini kapat'
+                  : 'Arka plan müziği',
+            ),
+            onTap: () {
+              Navigator.pop(ctx);
+              onBackgroundMusic();
+            },
+          ),
+          if (onPickBackground != null)
+            ListTile(
+              leading: const Icon(Icons.wallpaper_rounded),
+              title: const Text('Oda arka plan resmi'),
+              onTap: () {
+                Navigator.pop(ctx);
+                onPickBackground();
+              },
+            ),
           ListTile(
             leading: const Icon(Icons.settings_rounded),
             title: const Text('Oda ayarları'),
@@ -327,7 +365,12 @@ class _EffectsSheet extends StatelessWidget {
                 groupValue: state.effect,
                 title: Text(labels[p]!),
                 secondary: const Icon(Icons.play_circle_outline_rounded),
-                onChanged: (_) => notifier.setEffect(p),
+                onChanged: (_) {
+                  notifier.setEffect(p);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${labels[p]} efekti seçildi')),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 8),
@@ -403,12 +446,20 @@ class _RequestSpeakSheet extends StatelessWidget {
 
 class _RoomSettingsSheet extends StatelessWidget {
   const _RoomSettingsSheet({
+    required this.room,
     required this.isOwner,
+    required this.perms,
+    required this.presence,
+    this.onUserTap,
     required this.state,
     required this.notifier,
   });
 
+  final VoiceRoomEntity room;
   final bool isOwner;
+  final VoiceRoomPermissions perms;
+  final List<ChatRoomPresence> presence;
+  final void Function(ChatRoomPresence user)? onUserTap;
   final VoiceRoomUiState state;
   final VoiceRoomUiNotifier notifier;
 
@@ -444,19 +495,28 @@ class _RoomSettingsSheet extends StatelessWidget {
             SwitchListTile(
               title: const Text('Arka plan müziği'),
               value: state.backgroundMusicEnabled,
-              onChanged: (_) => notifier.toggleBackgroundMusic(),
+              onChanged: perms.canManageDj
+                  ? (_) => notifier.toggleBackgroundMusic()
+                  : null,
             ),
             SwitchListTile(
               title: const Text('Otomatik mikrofon'),
               value: state.autoOpenMic,
               onChanged: (_) => notifier.toggleAutoOpenMic(),
             ),
-            if (isOwner) ...[
+            if (perms.canModerate) ...[
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.admin_panel_settings_outlined),
                 title: const Text('Kullanıcı yönetimi'),
-                onTap: () => Navigator.pop(context),
+                onTap: () {
+                  Navigator.pop(context);
+                  showVoiceUserManagementSheet(
+                    context,
+                    presence: presence,
+                    onUserTap: onUserTap,
+                  );
+                },
               ),
               ListTile(
                 leading: const Icon(Icons.block_rounded),
@@ -483,6 +543,65 @@ class _RoomSettingsSheet extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> showVoiceUserManagementSheet(
+  BuildContext context, {
+  required List<ChatRoomPresence> presence,
+  void Function(ChatRoomPresence user)? onUserTap,
+}) {
+  return showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => DraggableScrollableSheet(
+      initialChildSize: 0.5,
+      minChildSize: 0.35,
+      maxChildSize: 0.85,
+      builder: (_, scroll) => VoiceGlass(
+        borderRadius: 24,
+        padding: const EdgeInsets.fromLTRB(8, 16, 8, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                'Kullanıcı yönetimi',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                controller: scroll,
+                itemCount: presence.length,
+                itemBuilder: (_, i) {
+                  final u = presence[i];
+                  return ListTile(
+                    leading: VoiceNeonAvatar(url: u.image, size: 40),
+                    title: Text(u.displayName),
+                    subtitle: Text(u.chatRole ?? 'dinleyici'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.mic_off_rounded),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('${u.displayName} susturuldu')),
+                        );
+                      },
+                    ),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      onUserTap?.call(u);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class _UserProfileSheet extends StatelessWidget {

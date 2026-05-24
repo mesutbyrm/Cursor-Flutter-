@@ -59,6 +59,16 @@ class LiveKitRoomManager {
     _room?.localParticipant?.setMicrophoneEnabled(enabled);
   }
 
+  void setRemoteAudioMuted(bool muted) {
+    final room = _room;
+    if (room == null) return;
+    for (final p in room.remoteParticipants.values) {
+      for (final pub in p.audioTrackPublications) {
+        pub.track?.setMuted(muted);
+      }
+    }
+  }
+
   Future<void> leave() async {
     _listener?.dispose();
     _listener = null;
