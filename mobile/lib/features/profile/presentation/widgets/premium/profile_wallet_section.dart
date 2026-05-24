@@ -13,6 +13,7 @@ class ProfileWalletSection extends StatelessWidget {
     this.onCfcTopUp,
     this.onEarnings,
     this.onTransactions,
+    this.onPaymentNotice,
     this.onSubscriptions,
   });
 
@@ -22,6 +23,7 @@ class ProfileWalletSection extends StatelessWidget {
   final VoidCallback? onCfcTopUp;
   final VoidCallback? onEarnings;
   final VoidCallback? onTransactions;
+  final VoidCallback? onPaymentNotice;
   final VoidCallback? onSubscriptions;
 
   @override
@@ -91,6 +93,13 @@ class ProfileWalletSection extends StatelessWidget {
             const SizedBox(width: 10),
             const Expanded(child: SizedBox()),
           ],
+        ),
+        const SizedBox(height: 10),
+        _WalletAction(
+          icon: Icons.payment_rounded,
+          label: 'Ödeme Bildirimi',
+          onTap: onPaymentNotice,
+          accent: AppColors.accentPink,
         ),
         const SizedBox(height: 10),
         Row(

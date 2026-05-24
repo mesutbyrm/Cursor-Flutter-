@@ -7,6 +7,10 @@ abstract final class ApiEndpoints {
   static const authMobileTiktok = '/api/auth/mobile-tiktok';
   static const authMobileRefresh = '/api/auth/mobile-refresh';
   static const me = '/api/me';
+  static const meStats = '/api/users/me/stats';
+  static const meGiftsReceived = '/api/users/me/gifts-received';
+  static const meBroadcastHistory = '/api/users/me/broadcast-history';
+  static const meActivity = '/api/users/me/activity';
 
   // --- Eski / self-hosted (geriye dönük) ---
   static const authLogin = '/api/auth/login';
@@ -74,6 +78,7 @@ abstract final class ApiEndpoints {
 
   /// Tencent TRTC UserSig (POST: userId, roomId).
   static const trtcUserSig = '/api/trtc/usersig';
+  static const livekitToken = '/api/livekit/token';
 
   /// Canlı yayın hediye kataloğu (Tencent / site ile aynı liste).
   static const videoStreamGiftsCatalog = '/api/video-streams/gifts';
@@ -89,6 +94,8 @@ abstract final class ApiEndpoints {
   static const giftsCatalog = '/api/gifts';
 
   static String userProfile(String userId) => '/api/users/$userId';
+  static String userLookup(String username) =>
+      '/api/users/lookup/${Uri.encodeComponent(username)}';
   static String follow(String userId) => '/api/users/$userId/follow';
   static String followers(String userId) => '/api/users/$userId/followers';
   static String following(String userId) => '/api/users/$userId/following';

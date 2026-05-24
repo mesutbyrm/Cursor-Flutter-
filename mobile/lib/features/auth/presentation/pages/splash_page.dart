@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/canlifal_brand_logo.dart';
 
-/// CanlıFal açılış — splash görseli ekrana sığdırılır (contain).
+/// CanlıFal açılış — görsel tam ekrana sığdırılır (contain, kesilmeden).
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
 
@@ -13,12 +13,7 @@ class SplashPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: _bg,
-      body: DecoratedBox(
-        decoration: BoxDecoration(color: _bg),
-        child: SafeArea(
-          child: _SplashImage(),
-        ),
-      ),
+      body: _SplashImage(),
     );
   }
 }
@@ -28,28 +23,25 @@ class _SplashImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Center(
-          child: FittedBox(
+    final size = MediaQuery.sizeOf(context);
+    return ColoredBox(
+      color: SplashPage._bg,
+      child: SizedBox(
+        width: size.width,
+        height: size.height,
+        child: FittedBox(
+          fit: BoxFit.contain,
+          alignment: Alignment.center,
+          child: Image.asset(
+            SplashPage._asset,
             fit: BoxFit.contain,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: constraints.maxWidth,
-                maxHeight: constraints.maxHeight,
-              ),
-              child: Image.asset(
-                SplashPage._asset,
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.high,
-                errorBuilder: (_, _, _) => CanlifalBrandLogo.horizontal(
-                  height: (constraints.maxHeight * 0.22).clamp(72.0, 140.0),
-                ),
-              ),
+            filterQuality: FilterQuality.high,
+            errorBuilder: (_, _, _) => CanlifalBrandLogo.horizontal(
+              height: (size.height * 0.22).clamp(72.0, 140.0),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

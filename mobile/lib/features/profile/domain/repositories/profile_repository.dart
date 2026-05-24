@@ -1,5 +1,6 @@
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
+import '../entities/profile_stats_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../entities/jeton_package_entity.dart';
 import '../entities/payment_config_entity.dart';
@@ -9,6 +10,20 @@ abstract class ProfileRepository {
   Future<UserEntity> getUser(String id);
   Future<void> follow(String id);
   Future<void> unfollow(String id);
+  Future<UserEntity> updateMe({
+    String? displayName,
+    String? bio,
+    String? avatarUrl,
+    String? username,
+    String? currentPassword,
+    String? newPassword,
+  });
+  Future<ProfileStatsEntity> myStats();
+  Future<List<GiftReceivedSummaryEntity>> giftsReceivedSummary();
+  Future<List<BroadcastHistoryItemEntity>> broadcastHistory();
+  Future<List<ProfileActivityItemEntity>> myActivity();
+  Future<List<UserEntity>> followers(String userId);
+  Future<List<UserEntity>> following(String userId);
 }
 
 abstract class WalletRepository {

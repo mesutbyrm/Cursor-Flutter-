@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../live/presentation/providers/live_providers.dart';
-import '../../../core/theme/app_theme.dart';
+import 'theme/voice_room_tokens.dart';
 import 'voice_rooms_body.dart';
 
+/// Sesli sohbet odaları — keşfet ekranı.
 class VoiceRoomsHubPage extends ConsumerWidget {
   const VoiceRoomsHubPage({super.key});
 
@@ -12,16 +13,17 @@ class VoiceRoomsHubPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       extendBodyBehindAppBar: true,
+      backgroundColor: VoiceRoomTokens.bgDeep,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: ShaderMask(
-          shaderCallback: (b) => const LinearGradient(
-            colors: [AppTheme.accentSecondary, AppTheme.accent],
-          ).createShader(b),
+          shaderCallback: (b) => VoiceRoomTokens.neonRing.createShader(b),
           child: const Text(
-            'Sohbet odaları',
+            'Sesli Sohbet',
             style: TextStyle(
               fontWeight: FontWeight.w900,
-              fontSize: 20,
+              fontSize: 22,
               color: Colors.white,
             ),
           ),
@@ -34,47 +36,12 @@ class VoiceRoomsHubPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: Stack(
+      body: const Stack(
         fit: StackFit.expand,
         children: [
-          const _VoiceHubBackdrop(),
-          const VoiceRoomsBody(),
+          DecoratedBox(decoration: BoxDecoration(gradient: VoiceRoomTokens.roomGradient)),
+          VoiceRoomsBody(),
         ],
-      ),
-    );
-  }
-}
-
-class _VoiceHubBackdrop extends StatelessWidget {
-  const _VoiceHubBackdrop();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppTheme.background,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF181028),
-            AppTheme.background,
-            const Color(0xFF081820),
-          ],
-        ),
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(0.2, -0.45),
-            radius: 0.9,
-            colors: [
-              AppTheme.accent.withValues(alpha: 0.14),
-              Colors.transparent,
-            ],
-          ),
-        ),
-        child: const SizedBox.expand(),
       ),
     );
   }
