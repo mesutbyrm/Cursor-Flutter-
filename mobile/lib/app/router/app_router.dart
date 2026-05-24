@@ -53,6 +53,7 @@ import '../../features/profile/presentation/pages/profile_transactions_page.dart
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/shell/presentation/main_shell_page.dart';
 import '../../features/live/domain/entities/voice_room_entity.dart';
+import '../../features/voice_hub/presentation/pages/voice_pk_battle_page.dart';
 import '../../features/voice_hub/presentation/voice_room_route_page.dart';
 import '../../features/voice_hub/presentation/voice_room_rtc_page.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
@@ -421,6 +422,19 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['id'] ?? '';
           return VoiceRoomRoutePage(roomId: id);
         },
+        routes: [
+          GoRoute(
+            path: 'pk',
+            builder: (context, state) {
+              final room = state.extra as VoiceRoomEntity?;
+              if (room != null) {
+                return VoicePkBattlePage(room: room);
+              }
+              final id = state.pathParameters['id'] ?? '';
+              return VoiceRoomRoutePage(roomId: id);
+            },
+          ),
+        ],
       ),
     ],
   );
