@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 import '../data/fortune_type_showcase.dart';
 import '../widgets/fortune_mystic_background.dart';
@@ -30,7 +31,7 @@ class FortuneTypeIntroPage extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: FortuneMysticBackground(
         child: Column(
           children: [
@@ -44,6 +45,7 @@ class FortuneTypeIntroPage extends StatelessWidget {
             ),
             Expanded(
               child: SingleChildScrollView(
+                physics: PremiumMotion.listPhysics,
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                 child: FortuneTypeShowcaseCard(
                   showcase: showcase,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -83,9 +84,7 @@ class ProfilePage extends ConsumerWidget {
               final following = statData?.following ?? user.followingCount;
 
               return CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
+                physics: PremiumMotion.listPhysics,
                 slivers: [
                   SliverToBoxAdapter(child: SizedBox(height: top + 8)),
                   SliverToBoxAdapter(

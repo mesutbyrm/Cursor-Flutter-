@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/widgets/discover_refresh.dart';
+import '../widgets/fortune_glass_card.dart';
 import '../widgets/fortune_hub_app_bar.dart';
 import '../widgets/fortune_hub_daily_energy.dart';
 import '../widgets/fortune_hub_hero_banner.dart';
@@ -20,14 +22,12 @@ class FortuneTarotHubPage extends ConsumerWidget {
     final bottom = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.transparent,
       body: FortuneMysticBackground(
         child: DiscoverRefresh.wrap(
           onRefresh: () async {},
           child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
+            physics: PremiumMotion.listPhysics,
             slivers: [
               const SliverToBoxAdapter(child: FortuneHubAppBar()),
               const SliverToBoxAdapter(child: FortuneHubHeroBanner()),
@@ -106,18 +106,11 @@ class _RecentReadingsSection extends StatelessWidget {
               separatorBuilder: (_, _) => const SizedBox(width: 12),
               itemBuilder: (context, i) {
                 final item = _items[i];
-                return GestureDetector(
-                  onTap: () => context.push('/fortune/tarot'),
-                  child: Container(
-                    width: 140,
+                return SizedBox(
+                  width: 148,
+                  child: FortuneGlassCard(
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: Colors.white.withValues(alpha: 0.06),
-                      border: Border.all(
-                        color: AppColors.accentPurple.withValues(alpha: 0.25),
-                      ),
-                    ),
+                    onTap: () => context.push('/fortune/tarot'),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -127,15 +120,13 @@ class _RecentReadingsSection extends StatelessWidget {
                           item.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
+                          style: PremiumTypography.title(context).copyWith(
                             fontSize: 13,
                           ),
                         ),
                         Text(
                           '${item.type} · ${item.date}',
-                          style: TextStyle(
-                            color: AppColors.textMuted.withValues(alpha: 0.9),
+                          style: PremiumTypography.label(context).copyWith(
                             fontSize: 11,
                           ),
                         ),
@@ -165,19 +156,23 @@ class _AiSuggestionBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          gradient: const LinearGradient(
-            colors: [Color(0xFF6D28D9), Color(0xFF4C1D95)],
+      child: FortuneGlassCard(
+        elevated: true,
+        accent: AppColors.accentPurple,
+        onTap: () => context.push('/fortune/tarot'),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF6D28D9).withValues(alpha: 0.55),
+                const Color(0xFF4C1D95).withValues(alpha: 0.35),
+              ],
+            ),
           ),
-          boxShadow: AppColors.glowShadow(
-            AppColors.accentPurple,
-            blur: 16,
-          ),
-        ),
-        child: Row(
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Row(
           children: [
             Container(
               width: 48,
@@ -194,12 +189,11 @@ class _AiSuggestionBanner extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'AI ÖNERİSİ',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
+                    style: PremiumTypography.label(context).copyWith(
                       letterSpacing: 0.8,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -228,6 +222,8 @@ class _AiSuggestionBanner extends StatelessWidget {
               ),
             ),
           ],
+            ),
+          ),
         ),
       ),
     );
@@ -239,20 +235,10 @@ class _PremiumBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          gradient: LinearGradient(
-            colors: [
-              const Color(0xFF3D2E0A).withValues(alpha: 0.95),
-              const Color(0xFF1A1408),
-            ],
-          ),
-          border: Border.all(
-            color: AppColors.coinGold.withValues(alpha: 0.45),
-          ),
-        ),
+      child: FortuneGlassCard(
+        elevated: true,
+        accent: AppColors.coinGold,
+        onTap: () => context.push('/premium-membership'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -271,23 +257,20 @@ class _PremiumBanner extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         "PREMIUM'A GEÇ",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
+                        style: PremiumTypography.title(context).copyWith(
                           color: AppColors.coinGold,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         'Sınırsız fal, reklamsız deneyim ve özel yorumlar.',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
+                        style: PremiumTypography.body(context).copyWith(
                           fontSize: 12,
                           height: 1.3,
                         ),
@@ -365,9 +348,9 @@ class _SectionTitleRow extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w900,
+          style: PremiumTypography.label(context).copyWith(
             fontSize: 14,
+            fontWeight: FontWeight.w900,
             letterSpacing: 0.6,
           ),
         ),

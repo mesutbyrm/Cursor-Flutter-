@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 import '../data/fortune_catalog.dart';
@@ -75,6 +76,7 @@ class _DailyFortuneOpenPageState extends State<DailyFortuneOpenPage> {
             ),
             Expanded(
               child: SingleChildScrollView(
+                physics: PremiumMotion.listPhysics,
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                 child: Column(
                   children: [
