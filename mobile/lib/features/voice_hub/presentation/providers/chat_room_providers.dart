@@ -248,19 +248,64 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   Future<void> sendMessage(String text) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty || state.sending || _roomKey.isEmpty) return;
-    state = state.copyWith(sending: true);
+
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final optimisticId = 'local-${DateTime.now().millisecondsSinceEpoch}';
+    if (user != null) {
+      final optimistic = ChatRoomMessage(
+        id: optimisticId,
+        content: trimmed,
+        createdAt: DateTime.now(),
+        user: ChatRoomUserRef(
+          id: user.id,
+          name: user.display,
+          nickname: user.username,
+          image: user.avatarUrl,
+        ),
+      );
+      state = state.copyWith(
+        messages: [...state.messages, optimistic],
+        sending: true,
+        clearError: true,
+      );
+    } else {
+      state = state.copyWith(sending: true, clearError: true);
+    }
+
     try {
       final sent = await ref.read(chatRoomRemoteProvider).sendMessage(
             roomKey: _roomKey,
             alternateKey: _altRoomKey,
             content: trimmed,
           );
-      if (sent != null && !state.messages.any((m) => m.id == sent.id)) {
-        state = state.copyWith(messages: [...state.messages, sent]);
+      var list = [...state.messages];
+      list.removeWhere((m) => m.id == optimisticId);
+      if (sent != null) {
+        if (!list.any((m) => m.id == sent.id)) {
+          list.add(sent);
+        }
+      } else if (user != null) {
+        list.add(
+          ChatRoomMessage(
+            id: optimisticId,
+            content: trimmed,
+            createdAt: DateTime.now(),
+            user: ChatRoomUserRef(
+              id: user.id,
+              name: user.display,
+              nickname: user.username,
+              image: user.avatarUrl,
+            ),
+          ),
+        );
       }
+      state = state.copyWith(messages: list);
       await refresh();
     } catch (e) {
-      state = state.copyWith(error: ApiException.userMessage(e));
+      state = state.copyWith(
+        messages: state.messages.where((m) => m.id != optimisticId).toList(),
+        error: ApiException.userMessage(e),
+      );
     } finally {
       state = state.copyWith(sending: false);
     }

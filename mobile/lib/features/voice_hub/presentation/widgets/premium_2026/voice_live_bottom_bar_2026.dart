@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../theme/voice_room_tokens.dart';
 
-/// Alt aksiyon çubuğu — Sohbet, Davet, Mikrofon, Müzik, Hediye.
+/// Alt aksiyon çubuğu — Sohbet, Davet, Mikrofon, Müzik, Jeton Al.
 class VoiceLiveBottomBar2026 extends StatelessWidget {
   const VoiceLiveBottomBar2026({
     super.key,
@@ -14,7 +14,7 @@ class VoiceLiveBottomBar2026 extends StatelessWidget {
     required this.onInvite,
     required this.onMic,
     required this.onMusic,
-    required this.onGift,
+    required this.onJetonStore,
     this.onEffects,
     this.onSettings,
     this.micEnabled = true,
@@ -26,7 +26,7 @@ class VoiceLiveBottomBar2026 extends StatelessWidget {
   final VoidCallback onInvite;
   final VoidCallback onMic;
   final VoidCallback onMusic;
-  final VoidCallback onGift;
+  final VoidCallback onJetonStore;
   final VoidCallback? onEffects;
   final VoidCallback? onSettings;
 
@@ -74,10 +74,10 @@ class VoiceLiveBottomBar2026 extends StatelessWidget {
                   onTap: onMusic,
                 ),
                 _SideAction(
-                  icon: Icons.card_giftcard_rounded,
-                  label: 'Hediye',
-                  color: AppColors.liveRed,
-                  onTap: onGift,
+                  icon: Icons.diamond_rounded,
+                  label: 'Jeton Al',
+                  color: AppColors.diamondBlue,
+                  onTap: onJetonStore,
                 ),
               ],
             ),
