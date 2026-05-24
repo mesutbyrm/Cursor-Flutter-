@@ -53,15 +53,24 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
         out = [...out]..sort((a, b) => b.displayOnline.compareTo(a.displayOnline));
       case 'Müzik':
         out = out
-            .where((r) => _tags(r).any((t) => t.contains('müzik') || t.contains('music')))
+            .where((r) {
+              final t = _tags(r);
+              return t.contains('müzik') || t.contains('music');
+            })
             .toList();
       case 'Oyun':
         out = out
-            .where((r) => _tags(r).any((t) => t.contains('oyun') || t.contains('game')))
+            .where((r) {
+              final t = _tags(r);
+              return t.contains('oyun') || t.contains('game');
+            })
             .toList();
       case 'Sohbet':
         out = out
-            .where((r) => _tags(r).any((t) => t.contains('sohbet') || t.contains('chat')))
+            .where((r) {
+              final t = _tags(r);
+              return t.contains('sohbet') || t.contains('chat');
+            })
             .toList();
     }
     return out;

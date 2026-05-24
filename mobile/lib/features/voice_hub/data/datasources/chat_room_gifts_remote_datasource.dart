@@ -35,7 +35,7 @@ class ChatRoomGiftsRemoteDataSource {
   }) async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.chatRoomGifts(roomId),
-      queryParameters: since != null
+      query: since != null
           ? {'since': since.toUtc().toIso8601String()}
           : null,
     );
