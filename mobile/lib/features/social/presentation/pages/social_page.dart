@@ -15,7 +15,6 @@ import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
 import '../utils/open_social_create_post.dart';
 import '../widgets/instagram/social_feed_composer.dart';
-import '../widgets/instagram/social_stories_rail.dart';
 
 /// CanlıFal Sosyal — premium mistik akış.
 class SocialPage extends ConsumerStatefulWidget {
@@ -50,10 +49,7 @@ class _SocialPageState extends ConsumerState<SocialPage> {
   }
 
   Future<void> _refresh() async {
-    await Future.wait([
-      ref.read(socialNotifierProvider.notifier).refresh(),
-      ref.refresh(socialStoryRingsProvider.future),
-    ]);
+    await ref.read(socialNotifierProvider.notifier).refresh();
   }
 
   @override
@@ -68,7 +64,6 @@ class _SocialPageState extends ConsumerState<SocialPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const RepaintBoundary(child: SocialInstagramAppBar()),
-            const RepaintBoundary(child: SocialStoriesRail()),
             const RepaintBoundary(child: SocialFeedComposer()),
             Expanded(
               child: DiscoverRefresh.wrap(

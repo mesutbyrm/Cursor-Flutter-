@@ -3,17 +3,22 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../data/fortune_type_showcase.dart';
+import '../data/fortune_catalog.dart';
 import '../widgets/fortune_mystic_background.dart';
-import '../widgets/fortune_type_showcase_card.dart';
+import '../widgets/fortune_hub_type_card.dart';
 
-/// Tüm fal türleri — mockup vitrin kartları (14 tür).
+/// Tüm fal türleri — 3 sütunlu grid.
 class FortuneTypesAllPage extends StatelessWidget {
   const FortuneTypesAllPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final showcases = FortuneTypeShowcase.all;
+    final types = FortuneCatalog.types
+        .where((t) => !t.isDaily)
+        .toList();
+    final subtitles = {
+      for (final e in FortuneCatalog.hubFortuneEntries) e.slug: e.subtitle,
+    };
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -33,17 +38,23 @@ class FortuneTypesAllPage extends StatelessWidget {
         ),
       ),
       body: FortuneMysticBackground(
-        child: ListView.separated(
+        child: GridView.builder(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           physics: const BouncingScrollPhysics(),
-          itemCount: showcases.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 14),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 0.72,
+          ),
+          itemCount: types.length,
           itemBuilder: (context, i) {
-            final showcase = showcases[i];
-            final slug = showcase.type.slug;
-            return FortuneTypeShowcaseCard(
-              showcase: showcase,
-              onOpenFortune: () => context.push('/fortune/$slug'),
+            final type = types[i];
+            final subtitle = subtitles[type.slug] ?? type.description;
+            return FortuneHubTypeCard(
+              type: type,
+              subtitle: subtitle,
+              onTap: () => context.push('/fortune/${type.slug}'),
             );
           },
         ),

@@ -52,11 +52,27 @@ jobs:
       - name: Dependencies
         run: flutter pub get
 
+      - name: Firebase google-services.json (secret)
+        if: secrets.GOOGLE_SERVICES_JSON_BASE64 != ''
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -eux
+          echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 -d > mobile/android/app/google-services.json
+          bash scripts/generate-firebase-options.sh
+
       - name: Analyze
         run: dart analyze lib
 
       - name: Build release APK
-        run: flutter build apk --release
+        working-directory: mobile
+        run: |
+          set -eux
+          DEFINES=""
+          if [[ -f android/app/google-services.json ]]; then
+            DEFINES=$(bash ../scripts/print-firebase-dart-defines.sh || true)
+          fi
+          # shellcheck disable=SC2086
+          flutter build apk --release $DEFINES
         env:
           GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Xmx3g
 
