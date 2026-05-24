@@ -44,7 +44,7 @@ class VoiceRoomAudioCoordinator {
     TrtcRemoteDataSource? trtcRemote,
   }) async {
     final lkRemote = liveKitRemote ?? _liveKitRemote;
-    final trtcRemote = trtcRemote ?? _trtcRemote;
+    final trtcDs = trtcRemote ?? _trtcRemote;
 
     if (!Env.forceTrtc && Env.preferLiveKit && lkRemote != null && _liveKit.isSupported) {
       try {
@@ -61,11 +61,11 @@ class VoiceRoomAudioCoordinator {
     if (!_trtc.isSupported) {
       throw StateError('Sesli oda bu platformda desteklenmiyor');
     }
-    if (trtcRemote == null) {
+    if (trtcDs == null) {
       throw StateError('TRTC yapılandırması eksik');
     }
 
-    final cred = await trtcRemote.fetchUserSig(userId: userId, roomId: roomId);
+    final cred = await trtcDs.fetchUserSig(userId: userId, roomId: roomId);
     await _trtc.join(
       credentials: cred,
       isHost: isHost,
