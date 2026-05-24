@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../utils/voice_room_seat_layout.dart';
@@ -23,21 +24,60 @@ class VoicePremiumStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final seats = VoiceRoomSeatLayout(room: room, presence: presence).build();
-    final owner = seats[1];
+    final ownerFromSeat = seats[1];
+    final owner = ownerFromSeat ??
+        (presence.isEmpty && room.ownerName != null
+            ? ChatRoomPresence(
+                id: room.ownerId ?? 'owner',
+                name: room.ownerName!,
+                image: room.ownerAvatarUrl,
+                chatRole: 'owner',
+                seatIndex: 1,
+              )
+            : null);
+
     final speakers = <ChatRoomPresence>[];
     for (var i = 2; i <= 6; i++) {
       final u = seats[i];
       if (u != null) speakers.add(u);
     }
+    if (speakers.isEmpty && presence.length > 1) {
+      for (final u in presence) {
+        if (owner != null && u.id == owner.id) continue;
+        if (u.isSpeaking ||
+            u.chatRole == 'owner' ||
+            u.chatRole == 'admin' ||
+            u.chatRole == 'dj' ||
+            room.djUserIds.contains(u.id)) {
+          speakers.add(u);
+        }
+        if (speakers.length >= 5) break;
+      }
+    }
+
     final listeners = <ChatRoomPresence>[];
     for (var i = 7; i <= 10; i++) {
       final u = seats[i];
       if (u != null) listeners.add(u);
     }
+    final speakerIds = speakers.map((s) => s.id).toSet();
+    if (owner != null) speakerIds.add(owner.id);
     final extraListeners = presence
-        .where((p) => !speakers.any((s) => s.id == p.id) && p.id != owner?.id)
-        .take(6)
+        .where((p) => !speakerIds.contains(p.id))
+        .take(8)
         .toList();
+
+    final allVisible = [
+      if (owner != null) owner,
+      ...speakers,
+      ...listeners,
+      ...extraListeners,
+    ];
+    final unique = <String, ChatRoomPresence>{};
+    for (final u in allVisible) {
+      unique.putIfAbsent(u.id, () => u);
+    }
+    final totalOnline = presence.isNotEmpty ? presence.length : unique.length;
 
     return Column(
       children: [
@@ -65,13 +105,44 @@ class VoicePremiumStage extends StatelessWidget {
                 onTap: () => onUserTap?.call(u),
               );
             }).toList(),
+          )
+        else if (presence.length > 1)
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 14,
+            runSpacing: 12,
+            children: presence
+                .where((p) => owner == null || p.id != owner.id)
+                .take(5)
+                .map(
+                  (u) => VoiceNeonAvatar(
+                    url: u.image,
+                    size: 58,
+                    speaking: speakingUserId == u.id || u.isSpeaking,
+                    roleLabel: u.displayName,
+                    onTap: () => onUserTap?.call(u),
+                  ),
+                )
+                .toList(),
           ),
         const SizedBox(height: 14),
         _ListenerRow(
           users: [...listeners, ...extraListeners],
-          totalOnline: presence.length,
+          totalOnline: totalOnline,
           onUserTap: onUserTap,
         ),
+        if (totalOnline == 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Henüz kimse görünmüyor — sohbet ve liste birkaç saniye içinde güncellenir',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.textMuted.withValues(alpha: 0.9),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -118,6 +189,15 @@ class _ListenerRow extends StatelessWidget {
             child: Text(
               '+$overflow',
               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11),
+            ),
+          ),
+        if (show.isEmpty && totalOnline > 0)
+          Text(
+            '$totalOnline kişi çevrimiçi',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textMuted.withValues(alpha: 0.95),
             ),
           ),
       ],

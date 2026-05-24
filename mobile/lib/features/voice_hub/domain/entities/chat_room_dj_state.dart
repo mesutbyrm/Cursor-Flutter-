@@ -21,14 +21,17 @@ class ChatRoomDjState {
         }
       }
     }
+    final canPlay = json['canPlayMusic'] == true ||
+        json['canControlMusic'] == true ||
+        json['canDj'] == true;
     return ChatRoomDjState(
       djUsers: users,
-      activeDjId: json['activeDjId']?.toString(),
+      activeDjId: json['activeDjId']?.toString() ?? json['djId']?.toString(),
       ownerPresent: json['ownerPresent'] == true,
-      canPlayMusic: json['canPlayMusic'] == true,
+      canPlayMusic: canPlay,
       isOwner: json['isOwner'] == true,
-      musicUrl: json['musicUrl']?.toString(),
-      playing: json['playing'] == true,
+      musicUrl: json['musicUrl']?.toString() ?? json['url']?.toString(),
+      playing: json['playing'] == true || json['isPlaying'] == true,
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
@@ -40,6 +41,7 @@ class VoiceRoomLiveState {
     this.sending = false,
     this.enterBanner,
     this.backgroundUrl,
+    this.selfInRoom = false,
   });
 
   final List<ChatRoomMessage> messages;
@@ -50,8 +52,13 @@ class VoiceRoomLiveState {
   final bool sending;
   final String? enterBanner;
   final String? backgroundUrl;
+  final bool selfInRoom;
 
-  int get onlineCount => presence.isNotEmpty ? presence.length : 0;
+  int onlineCountFor(VoiceRoomEntity room) {
+    if (presence.isNotEmpty) return presence.length;
+    if (room.displayOnline > 0) return room.displayOnline;
+    return selfInRoom ? 1 : 0;
+  }
 
   VoiceRoomLiveState copyWith({
     List<ChatRoomMessage>? messages,
@@ -63,16 +70,19 @@ class VoiceRoomLiveState {
     String? enterBanner,
     bool clearEnterBanner = false,
     String? backgroundUrl,
+    bool? selfInRoom,
+    bool clearError = false,
   }) {
     return VoiceRoomLiveState(
       messages: messages ?? this.messages,
       presence: presence ?? this.presence,
       dj: dj ?? this.dj,
       loading: loading ?? this.loading,
-      error: error,
+      error: clearError ? null : (error ?? this.error),
       sending: sending ?? this.sending,
       enterBanner: clearEnterBanner ? null : (enterBanner ?? this.enterBanner),
       backgroundUrl: backgroundUrl ?? this.backgroundUrl,
+      selfInRoom: selfInRoom ?? this.selfInRoom,
     );
   }
 }
@@ -80,6 +90,15 @@ class VoiceRoomLiveState {
 class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     VoiceRoomLiveState, VoiceRoomEntity> {
   Timer? _poll;
+
+  String get _roomKey => arg.apiRoomKey;
+
+  String? get _altRoomKey {
+    final id = arg.id.trim();
+    final slug = arg.slug.trim();
+    if (id.isNotEmpty && slug.isNotEmpty && id != slug) return slug;
+    return null;
+  }
 
   @override
   VoiceRoomLiveState build(VoiceRoomEntity room) {
@@ -92,15 +111,52 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     Future.microtask(() async {
       await _joinPresence();
       await refresh();
-      _startSocket(room.id);
+      _startSocket(_roomKey);
     });
     _poll = Timer.periodic(const Duration(seconds: 2), (_) => refresh());
-    return VoiceRoomLiveState(backgroundUrl: room.backgroundImageUrl);
+    return VoiceRoomLiveState(
+      backgroundUrl: room.backgroundImageUrl?.trim().isNotEmpty == true
+          ? room.backgroundImageUrl
+          : null,
+    );
+  }
+
+  List<ChatRoomPresence> _mergeSelf(List<ChatRoomPresence> list) {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return list;
+    if (list.any((p) => p.id == user.id)) return list;
+    return [
+      ...list,
+      ChatRoomPresence(
+        id: user.id,
+        name: user.display,
+        nickname: user.username,
+        image: user.avatarUrl,
+        chatRole: 'listener',
+      ),
+    ];
   }
 
   Future<void> _joinPresence() async {
+    if (_roomKey.isEmpty) {
+      state = state.copyWith(
+        loading: false,
+        error: 'Geçersiz oda kimliği',
+      );
+      return;
+    }
     try {
-      await ref.read(chatRoomRemoteProvider).joinPresence(arg.id);
+      final joined = await ref.read(chatRoomRemoteProvider).joinPresence(
+            _roomKey,
+            alternateKey: _altRoomKey,
+          );
+      final merged = _mergeSelf(joined);
+      state = state.copyWith(
+        presence: merged,
+        selfInRoom: true,
+        loading: false,
+        clearError: true,
+      );
     } on Object catch (e) {
       final msg = ApiException.userMessage(e);
       if (msg.toLowerCase().contains('yasak') ||
@@ -110,13 +166,19 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
           loading: false,
           error: 'Bu odadan yasaklandınız',
         );
+        return;
       }
+      state = state.copyWith(loading: false, error: msg);
     }
   }
 
   Future<void> _leavePresence() async {
+    if (_roomKey.isEmpty) return;
     try {
-      await ref.read(chatRoomRemoteProvider).leavePresence(arg.id);
+      await ref.read(chatRoomRemoteProvider).leavePresence(
+            _roomKey,
+            alternateKey: _altRoomKey,
+          );
     } catch (_) {}
   }
 
@@ -140,47 +202,57 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
             state = state.copyWith(clearEnterBanner: true);
           });
         }
+        refresh();
       },
     );
   }
 
   Future<void> refresh() async {
+    if (_roomKey.isEmpty) return;
     final room = arg;
     final remote = ref.read(chatRoomRemoteProvider);
     try {
       final results = await Future.wait([
-        remote.fetchMessages(room.id),
-        remote.fetchPresence(room.id),
-        remote.fetchDj(room.id),
+        remote.fetchMessages(_roomKey, alternateKey: _altRoomKey),
+        remote.fetchPresence(_roomKey, alternateKey: _altRoomKey),
+        remote.fetchDj(_roomKey, alternateKey: _altRoomKey),
       ]);
       final dj = results[2] as ChatRoomDjState;
       final ui = ref.read(voiceRoomUiProvider);
-      if (ui.backgroundMusicEnabled && dj.playing) {
+      if (ui.backgroundMusicEnabled && dj.playing && dj.musicUrl != null) {
         await ref.read(voiceRoomDjPlayerProvider).sync(
               musicUrl: dj.musicUrl,
               playing: true,
             );
       }
+      final presence = _mergeSelf(results[1] as List<ChatRoomPresence>);
       state = state.copyWith(
         messages: results[0] as List<ChatRoomMessage>,
-        presence: results[1] as List<ChatRoomPresence>,
+        presence: presence,
         dj: dj,
         loading: false,
-        error: null,
-        backgroundUrl: state.backgroundUrl ?? room.backgroundImageUrl,
+        clearError: true,
+        backgroundUrl: (state.backgroundUrl?.isNotEmpty == true)
+            ? state.backgroundUrl
+            : room.backgroundImageUrl,
+        selfInRoom: state.selfInRoom || presence.isNotEmpty,
       );
     } catch (e) {
-      state = state.copyWith(loading: false, error: e.toString());
+      state = state.copyWith(
+        loading: false,
+        error: ApiException.userMessage(e),
+      );
     }
   }
 
   Future<void> sendMessage(String text) async {
     final trimmed = text.trim();
-    if (trimmed.isEmpty || state.sending) return;
+    if (trimmed.isEmpty || state.sending || _roomKey.isEmpty) return;
     state = state.copyWith(sending: true);
     try {
       final sent = await ref.read(chatRoomRemoteProvider).sendMessage(
-            roomId: arg.id,
+            roomKey: _roomKey,
+            alternateKey: _altRoomKey,
             content: trimmed,
           );
       if (sent != null && !state.messages.any((m) => m.id == sent.id)) {
@@ -188,49 +260,78 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       }
       await refresh();
     } catch (e) {
-      state = state.copyWith(error: e.toString());
+      state = state.copyWith(error: ApiException.userMessage(e));
     } finally {
       state = state.copyWith(sending: false);
     }
   }
 
-  Future<void> requestSpeak() async {
-    await ref.read(chatRoomRemoteProvider).requestSpeak(arg.id);
-    ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(true);
-  }
-
-  Future<void> cancelSpeakRequest() async {
-    await ref.read(chatRoomRemoteProvider).cancelSpeakRequest(arg.id);
-    ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
-  }
-
-  Future<void> toggleBackgroundMusic(bool enabled) async {
-    final dj = state.dj;
-    if (enabled && dj.canPlayMusic) {
-      await ref.read(chatRoomRemoteProvider).updateDj(
-            roomId: arg.id,
-            musicUrl: dj.musicUrl ??
-                'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-            playing: true,
+  Future<String?> requestSpeak() async {
+    try {
+      await ref.read(chatRoomRemoteProvider).requestSpeak(
+            _roomKey,
+            alternateKey: _altRoomKey,
           );
-    } else {
-      await ref.read(chatRoomRemoteProvider).updateDj(
-            roomId: arg.id,
-            musicUrl: dj.musicUrl,
-            playing: false,
-          );
-      await ref.read(voiceRoomDjPlayerProvider).stop();
+      ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(true);
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
     }
-    await refresh();
   }
 
-  Future<void> setRoomBackground(String url) async {
-    await ref.read(chatRoomRemoteProvider).setRoomBackground(
-          roomId: arg.id,
-          backgroundImage: url,
-        );
-    state = state.copyWith(backgroundUrl: url);
-    ref.invalidate(voiceRoomsProvider);
+  Future<String?> cancelSpeakRequest() async {
+    try {
+      await ref.read(chatRoomRemoteProvider).cancelSpeakRequest(
+            _roomKey,
+            alternateKey: _altRoomKey,
+          );
+      ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> toggleBackgroundMusic(bool enabled) async {
+    final dj = state.dj;
+    try {
+      if (enabled) {
+        await ref.read(chatRoomRemoteProvider).updateDj(
+              roomKey: _roomKey,
+              alternateKey: _altRoomKey,
+              musicUrl: dj.musicUrl ??
+                  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+              playing: true,
+            );
+      } else {
+        await ref.read(chatRoomRemoteProvider).updateDj(
+              roomKey: _roomKey,
+              alternateKey: _altRoomKey,
+              musicUrl: dj.musicUrl,
+              playing: false,
+            );
+        await ref.read(voiceRoomDjPlayerProvider).stop();
+      }
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> setRoomBackground(String url) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).setRoomBackground(
+            roomKey: _roomKey,
+            alternateKey: _altRoomKey,
+            backgroundImage: url,
+          );
+      state = state.copyWith(backgroundUrl: url);
+      ref.invalidate(voiceRoomsProvider);
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
   }
 
   Future<List<String>> fetchBackgrounds() =>

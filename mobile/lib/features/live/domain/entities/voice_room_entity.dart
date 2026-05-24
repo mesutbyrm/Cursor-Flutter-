@@ -38,6 +38,13 @@ class VoiceRoomEntity extends Equatable {
 
   int get displayOnline => onlineCount > 0 ? onlineCount : userCount;
 
+  /// Chat / presence / DJ API yolu — id yoksa slug kullanılır.
+  String get apiRoomKey {
+    if (id.trim().isNotEmpty) return id.trim();
+    if (slug.trim().isNotEmpty) return slug.trim();
+    return '';
+  }
+
   String get displayTitle => nameTr.trim().isEmpty ? 'Sohbet Odası' : nameTr.trim();
 
   @override

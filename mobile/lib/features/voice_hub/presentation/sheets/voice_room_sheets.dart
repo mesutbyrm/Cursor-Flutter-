@@ -49,15 +49,16 @@ Future<void> showVoiceRequestSpeakSheet(
   BuildContext context,
   WidgetRef ref, {
   required bool pending,
+  required Future<void> Function() onPrimary,
 }) {
   return showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
     builder: (ctx) => _RequestSpeakSheet(
       pending: pending,
-      onToggle: () {
-        ref.read(voiceRoomUiProvider.notifier).toggleRequestSpeak();
-        Navigator.pop(ctx);
+      onPrimary: () async {
+        await onPrimary();
+        if (ctx.mounted) Navigator.pop(ctx);
       },
     ),
   );
@@ -210,6 +211,23 @@ class _SpeakerListSheetState extends State<_SpeakerListSheet>
     _tab = TabController(length: 3, vsync: this);
   }
 
+  List<ChatRoomPresence> get _allPresence {
+    if (widget.presence.isNotEmpty) return widget.presence;
+    final ownerId = widget.room.ownerId;
+    if (widget.room.ownerName != null) {
+      return [
+        ChatRoomPresence(
+          id: ownerId ?? 'owner',
+          name: widget.room.ownerName!,
+          image: widget.room.ownerAvatarUrl,
+          chatRole: 'owner',
+          seatIndex: 1,
+        ),
+      ];
+    }
+    return widget.presence;
+  }
+
   @override
   void dispose() {
     _tab.dispose();
@@ -218,21 +236,23 @@ class _SpeakerListSheetState extends State<_SpeakerListSheet>
 
   List<ChatRoomPresence> _filter(int index) {
     final ownerId = widget.room.ownerId;
+    final list = _allPresence;
     switch (index) {
       case 1:
-        return widget.presence
+        return list
             .where(
               (p) =>
                   (p.seatIndex != null && p.seatIndex! <= 6) ||
-                  widget.room.djUserIds.contains(p.id),
+                  widget.room.djUserIds.contains(p.id) ||
+                  p.isSpeaking,
             )
             .toList();
       case 2:
-        return widget.presence
+        return list
             .where((p) => p.id != ownerId && (p.seatIndex == null || p.seatIndex! > 6))
             .toList();
       default:
-        return widget.presence;
+        return list;
     }
   }
 
@@ -266,6 +286,20 @@ class _SpeakerListSheetState extends State<_SpeakerListSheet>
                   controller: _tab,
                   children: List.generate(3, (tabIndex) {
                     final list = _filter(tabIndex);
+                    if (list.isEmpty) {
+                      return ListView(
+                        controller: scroll,
+                        padding: const EdgeInsets.all(24),
+                        children: const [
+                          Center(
+                            child: Text(
+                              'Henüz liste boş — birkaç saniye sonra yenileyin',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      );
+                    }
                     return ListView.builder(
                       controller: scroll,
                       padding: const EdgeInsets.all(12),
@@ -394,11 +428,11 @@ class _EffectsSheet extends StatelessWidget {
 class _RequestSpeakSheet extends StatelessWidget {
   const _RequestSpeakSheet({
     required this.pending,
-    required this.onToggle,
+    required this.onPrimary,
   });
 
   final bool pending;
-  final VoidCallback onToggle;
+  final Future<void> Function() onPrimary;
 
   @override
   Widget build(BuildContext context) {
@@ -433,7 +467,7 @@ class _RequestSpeakSheet extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             FilledButton(
-              onPressed: onToggle,
+              onPressed: onPrimary,
               child: Text(
                 pending ? 'İsteği geri çek' : 'Söz hakkı iste',
               ),
@@ -499,7 +533,18 @@ class _RoomSettingsSheet extends StatelessWidget {
               title: const Text('Arka plan müziği'),
               value: state.backgroundMusicEnabled,
               onChanged: perms.canManageDj
-                  ? (_) => notifier.toggleBackgroundMusic()
+                  ? (_) async {
+                      final enabled = !state.backgroundMusicEnabled;
+                      notifier.toggleBackgroundMusic();
+                      final err = await ref
+                          .read(voiceRoomLiveProvider(room).notifier)
+                          .toggleBackgroundMusic(enabled);
+                      if (context.mounted && err != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(err)),
+                        );
+                      }
+                    }
                   : null,
             ),
             SwitchListTile(
@@ -517,7 +562,7 @@ class _RoomSettingsSheet extends StatelessWidget {
                   showVoiceUserManagementSheet(
                     context,
                     ref: ref,
-                    roomId: room.id,
+                    roomId: room.apiRoomKey,
                     presence: presence,
                     onUserTap: onUserTap,
                   );
@@ -597,7 +642,7 @@ Future<void> showVoiceUserManagementSheet(
                           onPressed: () async {
                             try {
                               await ref.read(chatRoomRemoteProvider).banUser(
-                                    roomId: roomId,
+                                    roomKey: roomId,
                                     userId: u.id,
                                     reason: 'Oda moderasyonu',
                                   );

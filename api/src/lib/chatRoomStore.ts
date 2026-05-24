@@ -93,13 +93,44 @@ const djByRoom = new Map<
   { activeDjId: string | null; musicUrl: string | null; playing: boolean }
 >();
 
-function roomMap(roomId: string) {
+function roomMap(roomIdOrSlug: string) {
+  const roomId = resolveRoomId(roomIdOrSlug);
   let m = presence.get(roomId);
   if (!m) {
     m = new Map();
     presence.set(roomId, m);
   }
   return m;
+}
+
+function messageList(roomIdOrSlug: string) {
+  const roomId = resolveRoomId(roomIdOrSlug);
+  let list = messages.get(roomId);
+  if (!list) {
+    list = [];
+    messages.set(roomId, list);
+  }
+  return list;
+}
+
+function speakSet(roomIdOrSlug: string) {
+  const roomId = resolveRoomId(roomIdOrSlug);
+  let set = speakRequests.get(roomId);
+  if (!set) {
+    set = new Set();
+    speakRequests.set(roomId, set);
+  }
+  return set;
+}
+
+function banSet(roomIdOrSlug: string) {
+  const roomId = resolveRoomId(roomIdOrSlug);
+  let set = roomBans.get(roomId);
+  if (!set) {
+    set = new Set();
+    roomBans.set(roomId, set);
+  }
+  return set;
 }
 
 export function listSiteBackgrounds() {
@@ -127,8 +158,14 @@ export function getChatRoom(roomId: string) {
   return listChatRooms().find((r) => r.id === roomId || r.slug === roomId);
 }
 
+/** slug ve id karışıklığını önler — tüm haritalar canonical id ile çalışır */
+export function resolveRoomId(roomIdOrSlug: string): string {
+  const room = getChatRoom(roomIdOrSlug);
+  return room?.id ?? roomIdOrSlug;
+}
+
 export function listMessages(roomId: string, since?: string) {
-  const all = messages.get(roomId) ?? [];
+  const all = messageList(roomId);
   if (!since) return all.slice(-120);
   const t = Date.parse(since);
   if (Number.isNaN(t)) return all.slice(-120);
@@ -136,10 +173,9 @@ export function listMessages(roomId: string, since?: string) {
 }
 
 function pushMessage(roomId: string, row: ChatRoomMessageRow) {
-  const list = messages.get(roomId) ?? [];
+  const list = messageList(roomId);
   list.push(row);
   if (list.length > 200) list.splice(0, list.length - 200);
-  messages.set(roomId, list);
   return row;
 }
 
@@ -208,11 +244,11 @@ export function toChatUser(user: User, chatRole?: string): ChatRoomUser {
 }
 
 export function isRoomBanned(roomId: string, userId: string) {
-  return roomBans.get(roomId)?.has(userId) ?? false;
+  return banSet(roomId).has(userId);
 }
 
 export function listRoomBans(roomId: string) {
-  return [...(roomBans.get(roomId) ?? [])];
+  return [...banSet(roomId)];
 }
 
 export function banRoomUser(
@@ -225,12 +261,7 @@ export function banRoomUser(
   if (!room) return { ok: false as const, error: "Oda bulunamadı" };
   const priv = roomPrivileges(actor, room);
   if (!priv.canModerate) return { ok: false as const, error: "Yetki yok" };
-  let set = roomBans.get(roomId);
-  if (!set) {
-    set = new Set();
-    roomBans.set(roomId, set);
-  }
-  set.add(targetUserId);
+  banSet(roomId).add(targetUserId);
   roomMap(roomId).delete(targetUserId);
   const row = pushMessage(roomId, {
     id: randomUUID(),
@@ -246,7 +277,7 @@ export function unbanRoomUser(roomId: string, actor: User, targetUserId: string)
   if (!room) return { ok: false as const, error: "Oda bulunamadı" };
   const priv = roomPrivileges(actor, room);
   if (!priv.canModerate) return { ok: false as const, error: "Yetki yok" };
-  roomBans.get(roomId)?.delete(targetUserId);
+  banSet(roomId).delete(targetUserId);
   return { ok: true as const };
 }
 
@@ -328,26 +359,22 @@ export async function addTextMessage(roomId: string, user: User, content: string
 }
 
 export function requestSpeak(roomId: string, userId: string) {
-  let set = speakRequests.get(roomId);
-  if (!set) {
-    set = new Set();
-    speakRequests.set(roomId, set);
-  }
+  const set = speakSet(roomId);
   set.add(userId);
   return [...set];
 }
 
 export function cancelSpeakRequest(roomId: string, userId: string) {
-  speakRequests.get(roomId)?.delete(userId);
-  return [...(speakRequests.get(roomId) ?? [])];
+  speakSet(roomId).delete(userId);
+  return [...speakSet(roomId)];
 }
 
 export function listSpeakRequests(roomId: string) {
-  return [...(speakRequests.get(roomId) ?? [])];
+  return [...speakSet(roomId)];
 }
 
 export function approveSpeak(roomId: string, userId: string) {
-  speakRequests.get(roomId)?.delete(userId);
+  speakSet(roomId).delete(userId);
   const p = roomMap(roomId).get(userId);
   if (p) {
     p.seatIndex = 2;
@@ -359,7 +386,8 @@ export function approveSpeak(roomId: string, userId: string) {
 
 export function getDjState(roomId: string, user: User | null) {
   const room = getChatRoom(roomId);
-  const dj = djByRoom.get(roomId) ?? {
+  const key = resolveRoomId(roomId);
+  const dj = djByRoom.get(key) ?? {
     activeDjId: room?.activeDjId ?? null,
     musicUrl: null,
     playing: false,
@@ -395,12 +423,13 @@ export function setDjMusic(roomId: string, user: User, musicUrl: string | null, 
     musicUrl,
     playing: playing && Boolean(musicUrl),
   };
-  djByRoom.set(roomId, next);
+  const key = resolveRoomId(roomId);
+  djByRoom.set(key, next);
   return next;
 }
 
 export function setRoomBackground(roomId: string, user: User, url: string) {
-  const room = rooms.find((r) => r.id === roomId);
+  const room = getChatRoom(roomId);
   if (!room) return null;
   const priv = roomPrivileges(user, room);
   if (!priv.owner && !priv.canModerate) return null;

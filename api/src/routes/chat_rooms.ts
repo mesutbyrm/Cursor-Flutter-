@@ -19,6 +19,7 @@ import {
   listSpeakRequests,
   loadUser,
   requestSpeak,
+  resolveRoomId,
   roomPrivileges,
   setDjMusic,
   setRoomBackground,
@@ -64,7 +65,7 @@ chatRoomsRouter.post("/rooms/:roomId/messages", requireAuth, async (req, res) =>
             : "";
   const row = await addTextMessage(roomId, user, content);
   if (!row) return fail(res, 400, "BAD_REQUEST", "Mesaj gönderilemedi");
-  emitChatRoomMessage(roomId, row);
+  emitChatRoomMessage(resolveRoomId(roomId), row);
   return res.status(200).json({ message: row, success: true });
 });
 
@@ -85,7 +86,7 @@ chatRoomsRouter.post("/rooms/:roomId/presence", requireAuth, async (req, res) =>
   if ("banned" in result && result.banned) {
     return fail(res, 403, "FORBIDDEN", "Bu odadan yasaklandınız");
   }
-  if (result.systemMsg) emitChatRoomMessage(roomId, result.systemMsg);
+  if (result.systemMsg) emitChatRoomMessage(resolveRoomId(roomId), result.systemMsg);
   return res.status(200).json({ users: result.presence });
 });
 
@@ -93,7 +94,7 @@ chatRoomsRouter.delete("/rooms/:roomId/presence", requireAuth, async (req, res) 
   const roomId = req.params.roomId;
   const userId = req.userId!;
   const result = leavePresence(roomId, userId);
-  if (result.systemMsg) emitChatRoomMessage(roomId, result.systemMsg);
+  if (result.systemMsg) emitChatRoomMessage(resolveRoomId(roomId), result.systemMsg);
   return res.status(200).json({ users: result.presence });
 });
 
@@ -176,7 +177,7 @@ chatRoomsRouter.post("/rooms/:roomId/bans/:targetUserId", requireAuth, async (re
     typeof req.body?.reason === "string" ? req.body.reason.slice(0, 200) : undefined;
   const result = banRoomUser(roomId, user, req.params.targetUserId, reason);
   if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error);
-  if (result.message) emitChatRoomMessage(roomId, result.message);
+  if (result.message) emitChatRoomMessage(resolveRoomId(roomId), result.message);
   return ok(res, { banned: true });
 });
 
