@@ -354,7 +354,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
           const SnackBar(content: Text('Talebiniz alındı')),
         );
         widget.onDone();
-        Navigator.of(context).popUntil((r) => r.isFirst);
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -381,7 +381,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
           ),
         );
         widget.onDone();
-        Navigator.of(context).popUntil((r) => r.isFirst);
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {

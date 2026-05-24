@@ -202,7 +202,12 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
                   height: 22,
                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
-              : const Text('CFC yükleme talebi gönder', style: TextStyle(fontWeight: FontWeight.w900)),
+              : Text(
+                  _method == CfcPaymentMethod.whatsapp
+                      ? 'Ödemeyi yaptım — talep gönder'
+                      : 'CFC yükleme talebi gönder',
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
         ),
       ],
     );
@@ -268,6 +273,10 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
       ref.invalidate(adminPaymentNotificationsProvider);
       ref.invalidate(notificationsListProvider);
       widget.onSubmitted();
+      if (_method == CfcPaymentMethod.whatsapp) {
+        await _openWa(cfg);
+      }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(

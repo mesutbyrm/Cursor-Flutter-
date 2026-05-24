@@ -77,14 +77,15 @@ Future<void> showVoiceRoomSettingsSheet(
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (ctx) => Consumer(
-      builder: (_, ref, _) => _RoomSettingsSheet(
+      builder: (_, sheetRef, _) => _RoomSettingsSheet(
+        ref: sheetRef,
         room: room,
         isOwner: isOwner,
         perms: perms,
         presence: presence,
         onUserTap: onUserTap,
-        state: ref.watch(voiceRoomUiProvider),
-        notifier: ref.read(voiceRoomUiProvider.notifier),
+        state: sheetRef.watch(voiceRoomUiProvider),
+        notifier: sheetRef.read(voiceRoomUiProvider.notifier),
       ),
     ),
   );
@@ -446,6 +447,7 @@ class _RequestSpeakSheet extends StatelessWidget {
 
 class _RoomSettingsSheet extends StatelessWidget {
   const _RoomSettingsSheet({
+    required this.ref,
     required this.room,
     required this.isOwner,
     required this.perms,
@@ -455,6 +457,7 @@ class _RoomSettingsSheet extends StatelessWidget {
     required this.notifier,
   });
 
+  final WidgetRef ref;
   final VoiceRoomEntity room;
   final bool isOwner;
   final VoiceRoomPermissions perms;
@@ -513,6 +516,8 @@ class _RoomSettingsSheet extends StatelessWidget {
                   Navigator.pop(context);
                   showVoiceUserManagementSheet(
                     context,
+                    ref: ref,
+                    roomId: room.id,
                     presence: presence,
                     onUserTap: onUserTap,
                   );
@@ -547,6 +552,8 @@ class _RoomSettingsSheet extends StatelessWidget {
 
 Future<void> showVoiceUserManagementSheet(
   BuildContext context, {
+  required WidgetRef ref,
+  required String roomId,
   required List<ChatRoomPresence> presence,
   void Function(ChatRoomPresence user)? onUserTap,
 }) {
@@ -581,13 +588,46 @@ Future<void> showVoiceUserManagementSheet(
                     leading: VoiceNeonAvatar(url: u.image, size: 40),
                     title: Text(u.displayName),
                     subtitle: Text(u.chatRole ?? 'dinleyici'),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.mic_off_rounded),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('${u.displayName} susturuldu')),
-                        );
-                      },
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.block_rounded, color: AppColors.liveRed),
+                          tooltip: 'Yasakla',
+                          onPressed: () async {
+                            try {
+                              await ref.read(chatRoomRemoteProvider).banUser(
+                                    roomId: roomId,
+                                    userId: u.id,
+                                    reason: 'Oda moderasyonu',
+                                  );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('${u.displayName} yasaklandı'),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString())),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.mic_off_rounded),
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${u.displayName} susturuldu (yerel)'),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                     onTap: () {
                       Navigator.pop(ctx);

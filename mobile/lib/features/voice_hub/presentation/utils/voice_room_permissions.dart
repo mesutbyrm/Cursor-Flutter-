@@ -1,3 +1,4 @@
+import '../../../../core/auth/voice_staff_rank.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
@@ -35,30 +36,37 @@ class VoiceRoomPermissions {
       );
     }
 
-    final uname = user.username.trim().toLowerCase();
-    final role = (user.role ?? '').toLowerCase();
-    final isSiteAdmin = role == 'admin' ||
-        role == 'superadmin' ||
-        role == 'moderator' ||
-        uname == 'admin' ||
-        uname == 'destek' ||
-        uname == 'moderator' ||
+    final rank = VoiceStaffRankParser.resolve(
+      username: user.username,
+      role: user.role,
+      chatRole: selfPresence?.chatRole,
+    );
+    final staffPower = VoiceStaffRankParser.powerLevel(rank);
+    final isSiteAdmin = staffPower >= VoiceStaffRankParser.powerLevel(VoiceStaffRank.admin) ||
         selfPresence?.chatRole == 'admin' ||
-        selfPresence?.chatRole == 'superadmin';
+        selfPresence?.chatRole == 'founder' ||
+        selfPresence?.chatRole == 'sop';
 
+    final uname = user.username.trim().toLowerCase();
     final isRoomOwner = isSiteAdmin ||
+        staffPower >= VoiceStaffRankParser.powerLevel(VoiceStaffRank.founder) ||
         (room.ownerId != null && room.ownerId == user.id) ||
         room.slug.trim().toLowerCase() == uname;
 
     final isDj = room.djUserIds.contains(user.id) ||
-        selfPresence?.chatRole == 'dj';
+        selfPresence?.chatRole == 'dj' ||
+        VoiceStaffRankParser.canModerate(rank);
+
+    final canModerate = isSiteAdmin ||
+        isRoomOwner ||
+        VoiceStaffRankParser.canModerate(rank);
 
     return VoiceRoomPermissions(
       isSiteAdmin: isSiteAdmin,
       isRoomOwner: isRoomOwner,
-      canModerate: isSiteAdmin || isRoomOwner,
+      canModerate: canModerate,
       canManageDj: isSiteAdmin || isRoomOwner || isDj,
-      canChangeBackground: isSiteAdmin || isRoomOwner,
+      canChangeBackground: isSiteAdmin || isRoomOwner || canModerate,
     );
   }
 }

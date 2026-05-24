@@ -8,6 +8,7 @@ import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/domain/entities/user_entity.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../domain/entities/social_story_ring_entity.dart';
+import '../../pages/story_viewer_page.dart';
 import '../../providers/social_providers.dart';
 
 /// Yatay hikâye şeridi — «Hikayen» ve diğer kullanıcı halkaları.
@@ -29,11 +30,41 @@ class SocialStoriesRail extends ConsumerWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
-        error: (_, _) => _StoriesList(
-          me: me,
-          rings: const [],
+        error: (e, _) => _StoriesError(
+          message: e.toString(),
+          onRetry: () => ref.invalidate(socialStoryRingsProvider),
         ),
         data: (rings) => _StoriesList(me: me, rings: rings),
+      ),
+    );
+  }
+}
+
+class _StoriesError extends StatelessWidget {
+  const _StoriesError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Hikâyeler yüklenemedi',
+              style: TextStyle(
+                color: AppColors.textMuted.withValues(alpha: 0.9),
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextButton(onPressed: onRetry, child: const Text('Tekrar dene')),
+          ],
+        ),
       ),
     );
   }
@@ -114,7 +145,17 @@ class _StoryRingChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return _StoryRingFrame(
       label: ring.user.display,
-      onTap: () => context.push('/user/${ring.user.id}'),
+      onTap: () {
+        if (ring.previewUrl != null && ring.previewUrl!.isNotEmpty) {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => StoryViewerPage(ring: ring),
+            ),
+          );
+        } else {
+          context.push('/user/${ring.user.id}');
+        }
+      },
       child: _RingAvatar(
         avatarUrl: ring.user.avatarUrl,
         previewUrl: ring.previewUrl,

@@ -38,9 +38,23 @@ class VoiceRoomChatSocket {
   }
 
   void _handle(dynamic data) {
-    if (data is! Map) return;
+    Map<String, dynamic>? map;
+    if (data is Map) {
+      map = Map<String, dynamic>.from(data);
+      if (map['message'] is Map) {
+        map = Map<String, dynamic>.from(map['message'] as Map);
+      } else if (map['data'] is Map) {
+        final inner = map['data'] as Map;
+        if (inner['message'] is Map) {
+          map = Map<String, dynamic>.from(inner['message'] as Map);
+        } else {
+          map = Map<String, dynamic>.from(inner);
+        }
+      }
+    }
+    if (map == null) return;
     try {
-      final msg = ChatRoomMessage.fromJson(Map<String, dynamic>.from(data));
+      final msg = ChatRoomMessage.fromJson(map);
       if (msg.content.isNotEmpty) _onMessage?.call(msg);
     } catch (e) {
       debugPrint('Voice chat parse: $e');

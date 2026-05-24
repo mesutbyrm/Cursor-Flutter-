@@ -213,10 +213,15 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
   }
 
   const pending = await prisma.cfcPaymentRequest.findFirst({
-    where: { userId, status: "pending" },
+    where: { userId, status: "pending", requestType },
   });
   if (pending) {
-    return jsonError(res, 400, "Zaten bekleyen bir ödeme talebiniz var");
+    const label = requestType === "jeton" ? "jeton" : "CFC";
+    return jsonError(
+      res,
+      400,
+      `Zaten bekleyen bir ${label} ödeme talebiniz var. Onaylanmasını bekleyin veya destek ile iletişime geçin.`,
+    );
   }
 
   const row = await prisma.cfcPaymentRequest.create({

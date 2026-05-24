@@ -163,7 +163,7 @@ class _MessageBubble extends StatelessWidget {
     }
 
     final user = message.user;
-    final name = user?.displayName ?? 'Kullanıcı';
+    final name = user?.displayWithPrefix ?? 'Kullanıcı';
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: GestureDetector(

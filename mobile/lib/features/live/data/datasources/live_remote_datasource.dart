@@ -172,6 +172,7 @@ class LiveRemoteDataSource {
       slug: pick(json, ['slug'])?.toString() ?? '',
       nameTr: pick(json, ['nameTr', 'nameEn', 'name', 'slug'])?.toString() ?? 'Oda',
       descTr: pick(json, ['descTr', 'descEn', 'description']) as String?,
+      rulesTr: pick(json, ['rules', 'rulesTr', 'roomRules']) as String?,
       icon: pick(json, ['icon']) as String?,
       onlineCount: asInt(pick(json, ['onlineCount'])),
       userCount: asInt(pick(json, ['userCount'])),

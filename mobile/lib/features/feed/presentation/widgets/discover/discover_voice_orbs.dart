@@ -41,15 +41,15 @@ class _DiscoverVoiceOrbsState extends ConsumerState<DiscoverVoiceOrbs> {
 
   @override
   Widget build(BuildContext context) {
+    final rooms = ref.watch(voiceRoomsProvider);
     if (!Env.useNextAuth) {
-      return const _VoiceRoomsSection(
+      return _VoiceRoomsSection(
         child: PremiumEmptyHint(
-          message: 'Sesli odalar için canlifal.com oturumu gerekir.',
+          message: 'Sesli odalar için giriş yapın.',
+          onRetry: () => context.push('/login'),
         ),
       );
     }
-
-    final rooms = ref.watch(voiceRoomsProvider);
     return rooms.when(
       loading: () => const _VoiceRoomsSection(
         child: SizedBox(
