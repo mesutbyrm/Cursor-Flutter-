@@ -8,7 +8,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../theme/voice_room_tokens.dart';
 
-/// TikTok Live tarzı üst bar — oda, takip, jeton, sıralama.
+/// Üst bar — yayıncı profili en üstte, tek satır kompakt.
 class VoiceLiveHeader2026 extends StatelessWidget {
   const VoiceLiveHeader2026({
     super.key,
@@ -21,6 +21,7 @@ class VoiceLiveHeader2026 extends StatelessWidget {
     this.onShare,
     this.onAudience,
     this.onMore,
+    this.onCoinsTap,
     this.hostAvatarUrl,
     this.following = false,
   });
@@ -34,6 +35,7 @@ class VoiceLiveHeader2026 extends StatelessWidget {
   final VoidCallback? onShare;
   final VoidCallback? onAudience;
   final VoidCallback? onMore;
+  final VoidCallback? onCoinsTap;
   final String? hostAvatarUrl;
   final bool following;
 
@@ -45,81 +47,38 @@ class VoiceLiveHeader2026 extends StatelessWidget {
     final onlineLabel = _formatCount(onlineCount);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+      padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               IconButton(
+                visualDensity: VisualDensity.compact,
                 onPressed: onBack,
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
               ),
-              Expanded(child: _roomGlass(shortId, onlineLabel)),
-              _coinPill(),
-              IconButton(
-                onPressed: onMore ?? onShare,
-                icon: const Icon(Icons.more_horiz_rounded, color: Colors.white),
-              ),
-              IconButton(
-                onPressed: onExit,
-                icon: const Icon(
-                  Icons.power_settings_new_rounded,
-                  color: AppColors.liveRed,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _badge('🔥 Popüler No. 1', VoiceRoomTokens.followGradient),
-              const SizedBox(width: 8),
-              _badge('👑 Saatlik Sıralama', VoiceRoomTokens.goldRing),
-              const Spacer(),
               GestureDetector(
                 onTap: onAudience,
-                child: _badge('👥 $onlineLabel', const LinearGradient(
-                  colors: [Color(0xFF5B7CFF), Color(0xFF9B4DFF)],
-                )),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _roomGlass(String shortId, String onlineLabel) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(VoiceRoomTokens.radiusCard),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: VoiceRoomTokens.glassCard(radius: VoiceRoomTokens.radiusCard),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.white12,
-                backgroundImage: hostAvatarUrl != null && hostAvatarUrl!.isNotEmpty
-                    ? CachedNetworkImageProvider(hostAvatarUrl!)
-                    : null,
-                child: hostAvatarUrl == null || hostAvatarUrl!.isEmpty
-                    ? Text(room.icon ?? '🎤', style: const TextStyle(fontSize: 18))
-                    : null,
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundColor: Colors.white12,
+                  backgroundImage: hostAvatarUrl != null && hostAvatarUrl!.isNotEmpty
+                      ? CachedNetworkImageProvider(hostAvatarUrl!)
+                      : null,
+                  child: hostAvatarUrl == null || hostAvatarUrl!.isEmpty
+                      ? Text(room.icon ?? '🎤', style: const TextStyle(fontSize: 20))
+                      : null,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ShaderMask(
-                      shaderCallback: (b) =>
-                          VoiceRoomTokens.titleGradient.createShader(b),
-                      child: Text(
+                child: GestureDetector(
+                  onTap: () => Clipboard.setData(ClipboardData(text: room.apiRoomKey)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
                         room.displayTitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -129,15 +88,8 @@ class VoiceLiveHeader2026 extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Clipboard.setData(
-                          ClipboardData(text: room.apiRoomKey),
-                        );
-                      },
-                      child: Text(
-                        'ID: $shortId · $onlineLabel çevrimiçi',
+                      Text(
+                        'ID $shortId · $onlineLabel çevrimiçi',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -146,38 +98,53 @@ class VoiceLiveHeader2026 extends StatelessWidget {
                               : AppColors.textMuted,
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-              if (onFollow != null) ...[
-                const SizedBox(width: 6),
-                _followButton(),
-              ],
+              if (onFollow != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: _miniFollow(),
+                ),
+              GestureDetector(
+                onTap: onCoinsTap,
+                child: _coinPill(),
+              ),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                onPressed: onMore ?? onShare,
+                icon: const Icon(Icons.more_horiz_rounded, color: Colors.white, size: 22),
+              ),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                onPressed: onExit,
+                icon: const Icon(Icons.power_settings_new_rounded,
+                    color: AppColors.liveRed, size: 22),
+              ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _followButton() {
+  Widget _miniFollow() {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onFollow,
-        borderRadius: BorderRadius.circular(VoiceRoomTokens.radiusPill),
+        borderRadius: BorderRadius.circular(16),
         child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             gradient: following ? null : VoiceRoomTokens.followGradient,
             color: following ? Colors.white12 : null,
-            borderRadius: BorderRadius.circular(VoiceRoomTokens.radiusPill),
-            boxShadow: following ? null : VoiceRoomTokens.neonGlow(VoiceRoomTokens.neonPink, blur: 12),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Text(
-            following ? 'Takipte' : 'Takip Et',
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+            following ? '✓' : 'Takip',
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
           ),
         ),
       ),
@@ -186,42 +153,26 @@ class VoiceLiveHeader2026 extends StatelessWidget {
 
   Widget _coinPill() {
     return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.diamondBlue.withValues(alpha: 0.5)),
+        color: Colors.black.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.diamondBlue.withValues(alpha: 0.45)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('💎', style: TextStyle(fontSize: 12)),
-          const SizedBox(width: 4),
+          const Text('💎', style: TextStyle(fontSize: 11)),
+          const SizedBox(width: 3),
           Text(
             _formatCount(coinBalance),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
-              fontSize: 11,
+              fontSize: 10,
               color: AppColors.diamondBlue,
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _badge(String text, Gradient gradient) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: VoiceRoomTokens.neonGlow(VoiceRoomTokens.neonPurple, blur: 8),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900),
       ),
     );
   }
