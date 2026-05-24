@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
-import '../../theme/app_spacing.dart';
-
 /// Material 3 + Liquid Glass — 2026 premium token seti.
 @immutable
 class Premium2026Tokens extends ThemeExtension<Premium2026Tokens> {

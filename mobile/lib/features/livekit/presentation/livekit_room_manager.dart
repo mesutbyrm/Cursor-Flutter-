@@ -59,12 +59,19 @@ class LiveKitRoomManager {
     _room?.localParticipant?.setMicrophoneEnabled(enabled);
   }
 
+  /// Kulaklık kapalıyken uzak sesleri yerelde susturur (TRTC muteAllRemoteAudio ile aynı).
   void setRemoteAudioMuted(bool muted) {
     final room = _room;
     if (room == null) return;
     for (final p in room.remoteParticipants.values) {
       for (final pub in p.audioTrackPublications) {
-        pub.track?.setMuted(muted);
+        final track = pub.track;
+        if (track == null) continue;
+        if (muted) {
+          track.stop();
+        } else {
+          track.start();
+        }
       }
     }
   }
