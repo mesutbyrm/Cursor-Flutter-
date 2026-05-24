@@ -3,16 +3,22 @@
 | Alan | Değer |
 |------|--------|
 | Sürüm | `1.0.67+69` |
-| Tarih (UTC) | 2026-05-24 10:02 |
-| Commit | Yerel derleme + [PR #54](https://github.com/mesutbyrm/Cursor-Flutter-/pull/54) |
+| Tarih (UTC) | 2026-05-24 10:55 |
+| Commit | [`d051558f521e7dbb327a417aee5b0860bab3c35a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d051558f521e7dbb327a417aee5b0860bab3c35a) |
+| İş akışı | [Run 26358836391](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26358836391) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
-## Özellikler (1.0.67+69)
+## Özellikler
 
-- Profil: düzenleme, kazançlar, işlemler, yayıncı paneli, ödeme bildirimi
-- Premium sesli sohbet odası arayüzü
-- Uçan hediye animasyonu + LiveKit ses (TRTC yedek)
-- Ana sayfa istatistikler, hikâyeler, fal grid
-- Splash tam ekran uyumu
+## 1.0.64+66 (2026-05-19)
 
-_Bu dosya manuel güncellendi; CI APK iş akışı şu an başarısız — düzeltme PR #54._
+### Ana sayfa ve Fal & Tarot düzeni
+
+- Hikâyeler keşfet ana sayfaya taşındı; sosyal sekmesinden kaldırıldı
+- «Canlı yayınlara katıl…» başlığı kaldırıldı
+- Fal & Tarot altında canlı istatistikler + son 5 giriş
+- Sohbet odaları tek sıra kaydırmalı; odadaki kullanıcı avatarları altta
+- Fal & Tarot: fal türleri 3 sütunlu grid
+
+
+_Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
