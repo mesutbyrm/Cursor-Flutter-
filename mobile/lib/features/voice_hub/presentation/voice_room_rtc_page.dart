@@ -23,6 +23,7 @@ import 'providers/chat_room_providers.dart';
 import 'providers/voice_gift_providers.dart';
 import 'providers/voice_room_audio_providers.dart';
 import 'providers/voice_room_ui_provider.dart';
+import 'pages/voice_gold_vip_page.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
@@ -321,6 +322,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       onPickBackground: perms.canChangeBackground
           ? () => _pickBackground(context, room)
           : null,
+      onPkBattle: () => context.push(
+        '/voice-room/${room.apiRoomKey}/pk',
+        extra: room,
+      ),
+      onGoldVip: () => VoiceGoldVipPage.show(
+        context,
+        room: room,
+        onJoinRoom: () {},
+      ),
     );
   }
 

@@ -11,6 +11,7 @@ import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/domain/entities/voice_room_sort.dart';
 import '../../live/presentation/providers/live_providers.dart';
 import 'theme/voice_room_tokens.dart';
+import 'pages/voice_gold_vip_page.dart';
 import 'widgets/premium_2026/voice_discover_2026.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/voice_room_grid_tile.dart';
@@ -151,9 +152,16 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
                         const SizedBox(height: 16),
                         VoiceDiscoverCategories2026(
                           selectedId: _categoryId,
-                          onCategoryTap: (id) => setState(() {
-                            _categoryId = _categoryId == id ? null : id;
-                          }),
+                          onCategoryTap: (id) {
+                            if (id == 'pk' && ordered.isNotEmpty) {
+                              final r = ordered.first;
+                              context.push('/voice-room/${r.apiRoomKey}/pk', extra: r);
+                              return;
+                            }
+                            setState(() {
+                              _categoryId = _categoryId == id ? null : id;
+                            });
+                          },
                         ),
                         VoiceFeaturedRooms2026(
                           rooms: ordered,
@@ -222,6 +230,22 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
   }
 
   static void _openRoom(BuildContext context, VoiceRoomEntity room) {
+    if (_isVipRoom(room)) {
+      VoiceGoldVipPage.show(
+        context,
+        room: room,
+        onJoinRoom: () => context.push(
+          '/voice-room/${room.apiRoomKey}',
+          extra: room,
+        ),
+      );
+      return;
+    }
     context.push('/voice-room/${room.apiRoomKey}', extra: room);
+  }
+
+  static bool _isVipRoom(VoiceRoomEntity room) {
+    final t = '${room.nameTr} ${room.slug} ${room.descTr ?? ''}'.toLowerCase();
+    return t.contains('vip') || t.contains('gold');
   }
 }

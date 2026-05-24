@@ -115,6 +115,8 @@ Future<void> showVoiceMoreMenuSheet(
   required VoidCallback onShare,
   required VoidCallback onBackgroundMusic,
   VoidCallback? onPickBackground,
+  VoidCallback? onPkBattle,
+  VoidCallback? onGoldVip,
 }) {
   final ui = ref.read(voiceRoomUiProvider);
   return showModalBottomSheet(
@@ -180,6 +182,25 @@ Future<void> showVoiceMoreMenuSheet(
               onShare();
             },
           ),
+          if (onPkBattle != null)
+            ListTile(
+              leading: const Icon(Icons.flash_on_rounded, color: AppColors.accentPink),
+              title: const Text('PK Savaşı'),
+              onTap: () {
+                Navigator.pop(ctx);
+                onPkBattle();
+              },
+            ),
+          if (onGoldVip != null)
+            ListTile(
+              leading: const Icon(Icons.workspace_premium_rounded,
+                  color: AppColors.coinGold),
+              title: const Text('Gold VIP odası'),
+              onTap: () {
+                Navigator.pop(ctx);
+                onGoldVip();
+              },
+            ),
         ],
       ),
     ),
