@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/providers/platform_stats_providers.dart';
@@ -15,7 +14,6 @@ class ProfileBroadcasterStatsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final platform = ref.watch(platformStatsProvider);
     final mine = ref.watch(profileStatsProvider);
 
     return Scaffold(
