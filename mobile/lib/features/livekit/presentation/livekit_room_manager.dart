@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import '../../trtc/presentation/trtc_room_manager.dart';
 import '../domain/entities/livekit_credentials.dart';

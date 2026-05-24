@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../datasources/chat_room_gifts_remote_datasource.dart';
 import 'voice_room_gift_socket.dart';
