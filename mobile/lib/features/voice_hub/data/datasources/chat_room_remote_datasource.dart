@@ -129,13 +129,40 @@ class ChatRoomRemoteDataSource {
     await _dio.safeDelete<dynamic>(speakRequestPath(roomId));
   }
 
+  static String banPath(String roomId, String userId) =>
+      '/api/chat/rooms/$roomId/bans/$userId';
+
+  Future<void> banUser({
+    required String roomId,
+    required String userId,
+    String? reason,
+  }) async {
+    await _dio.safePost<dynamic>(
+      banPath(roomId, userId),
+      data: jsonEncode({if (reason != null) 'reason': reason}),
+      options: Options(contentType: 'application/json'),
+    );
+  }
+
+  Future<void> unbanUser({
+    required String roomId,
+    required String userId,
+  }) async {
+    await _dio.safeDelete<dynamic>(banPath(roomId, userId));
+  }
+
   Future<ChatRoomMessage?> sendMessage({
     required String roomId,
     required String content,
   }) async {
     final res = await _dio.safePost<dynamic>(
       messagesPath(roomId),
-      data: jsonEncode({'content': content}),
+      data: jsonEncode({
+        'content': content,
+        'body': content,
+        'message': content,
+        'text': content,
+      }),
       options: Options(contentType: 'application/json'),
     );
     final map = _unwrapMap(res.data) ?? asJsonMap(res.data);

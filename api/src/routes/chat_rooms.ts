@@ -5,6 +5,7 @@ import { fail, ok } from "../lib/response";
 import {
   addTextMessage,
   approveSpeak,
+  banRoomUser,
   cancelSpeakRequest,
   getChatRoom,
   getDjState,
@@ -13,6 +14,7 @@ import {
   listChatRooms,
   listMessages,
   listPresence,
+  listRoomBans,
   listSiteBackgrounds,
   listSpeakRequests,
   loadUser,
@@ -20,6 +22,7 @@ import {
   roomPrivileges,
   setDjMusic,
   setRoomBackground,
+  unbanRoomUser,
 } from "../lib/chatRoomStore";
 import { emitChatRoomMessage } from "../socket/giftHub";
 import { listRoomGiftEvents, sendRoomGift } from "./gifts";
@@ -54,7 +57,11 @@ chatRoomsRouter.post("/rooms/:roomId/messages", requireAuth, async (req, res) =>
       ? req.body.content
       : typeof req.body?.body === "string"
         ? req.body.body
-        : "";
+        : typeof req.body?.message === "string"
+          ? req.body.message
+          : typeof req.body?.text === "string"
+            ? req.body.text
+            : "";
   const row = await addTextMessage(roomId, user, content);
   if (!row) return fail(res, 400, "BAD_REQUEST", "Mesaj gönderilemedi");
   emitChatRoomMessage(roomId, row);
@@ -75,6 +82,9 @@ chatRoomsRouter.post("/rooms/:roomId/presence", requireAuth, async (req, res) =>
   if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
   const result = await joinPresence(roomId, user);
   if (!result) return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+  if ("banned" in result && result.banned) {
+    return fail(res, 403, "FORBIDDEN", "Bu odadan yasaklandınız");
+  }
   if (result.systemMsg) emitChatRoomMessage(roomId, result.systemMsg);
   return res.status(200).json({ users: result.presence });
 });
@@ -145,6 +155,41 @@ chatRoomsRouter.post(
     if (!priv.canModerate) return fail(res, 403, "FORBIDDEN", "Yetki yok");
     approveSpeak(roomId, req.params.targetUserId);
     return ok(res, { approved: true });
+  },
+);
+
+chatRoomsRouter.get("/rooms/:roomId/bans", requireAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  const user = await loadUser(req.userId);
+  const room = getChatRoom(roomId);
+  if (!room || !user) return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+  const priv = roomPrivileges(user, room);
+  if (!priv.canModerate) return fail(res, 403, "FORBIDDEN", "Yetki yok");
+  return ok(res, { userIds: listRoomBans(roomId) });
+});
+
+chatRoomsRouter.post("/rooms/:roomId/bans/:targetUserId", requireAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+  const reason =
+    typeof req.body?.reason === "string" ? req.body.reason.slice(0, 200) : undefined;
+  const result = banRoomUser(roomId, user, req.params.targetUserId, reason);
+  if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error);
+  if (result.message) emitChatRoomMessage(roomId, result.message);
+  return ok(res, { banned: true });
+});
+
+chatRoomsRouter.delete(
+  "/rooms/:roomId/bans/:targetUserId",
+  requireAuth,
+  async (req, res) => {
+    const roomId = req.params.roomId;
+    const user = await loadUser(req.userId);
+    if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+    const result = unbanRoomUser(roomId, user, req.params.targetUserId);
+    if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error);
+    return ok(res, { unbanned: true });
   },
 );
 

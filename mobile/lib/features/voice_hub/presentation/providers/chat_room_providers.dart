@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
@@ -100,7 +101,17 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   Future<void> _joinPresence() async {
     try {
       await ref.read(chatRoomRemoteProvider).joinPresence(arg.id);
-    } catch (_) {}
+    } on Object catch (e) {
+      final msg = ApiException.userMessage(e);
+      if (msg.toLowerCase().contains('yasak') ||
+          msg.contains('403') ||
+          msg.toLowerCase().contains('forbidden')) {
+        state = state.copyWith(
+          loading: false,
+          error: 'Bu odadan yasaklandınız',
+        );
+      }
+    }
   }
 
   Future<void> _leavePresence() async {
@@ -118,7 +129,10 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         final list = [...state.messages, msg];
         var banner = state.enterBanner;
         if (msg.kind == ChatMessageKind.systemJoin) {
-          banner = msg.content;
+          final raw = msg.content;
+          if (raw.contains('STAFF') || raw.contains('VIP')) {
+            banner = raw;
+          }
         }
         state = state.copyWith(messages: list, enterBanner: banner);
         if (msg.kind == ChatMessageKind.systemJoin) {

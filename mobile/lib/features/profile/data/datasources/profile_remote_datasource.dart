@@ -207,7 +207,23 @@ class WalletRemoteDataSource {
   }
 
   Future<void> submitPaymentRequest(Map<String, dynamic> body) async {
-    await _dio.safePost(ApiEndpoints.paymentRequests, data: body);
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.paymentRequests,
+      data: body,
+    );
+    final data = res.data;
+    if (data is Map) {
+      final m = Map<String, dynamic>.from(data);
+      if (m['success'] == false) {
+        throw ApiException(
+          (m['error'] ?? m['message'] ?? 'Talep gönderilemedi').toString(),
+        );
+      }
+      final err = m['error'];
+      if (err != null && err.toString().isNotEmpty) {
+        throw ApiException(err.toString());
+      }
+    }
   }
 
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests() async {

@@ -1,6 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { User } from "@prisma/client";
 import { prisma } from "./prisma";
+import {
+  canModerateRank,
+  fullControlRank,
+  parseStaffRank,
+  rankPower,
+  rankSymbol,
+  type VoiceStaffRank,
+} from "./voiceStaffRank";
 
 export type ChatRoomUser = {
   id: string;
@@ -45,6 +53,13 @@ export type ChatRoomRow = {
 const SITE_BACKGROUNDS = [
   "https://canlifal.com/images/voice-bg-1.jpg",
   "https://canlifal.com/images/voice-bg-2.jpg",
+  "https://canlifal.com/images/voice-bg-3.jpg",
+  "https://canlifal.com/images/voice-bg-4.jpg",
+  "https://canlifal.com/images/voice-bg-5.jpg",
+  "https://canlifal.com/images/voice-bg-6.jpg",
+  "https://canlifal.com/images/chat-bg-1.jpg",
+  "https://canlifal.com/images/chat-bg-2.jpg",
+  "https://canlifal.com/uploads/voice-bg/default.jpg",
   "https://canlifal.com/apple-touch-icon.png",
 ];
 
@@ -72,6 +87,7 @@ const rooms: ChatRoomRow[] = [
 const messages = new Map<string, ChatRoomMessageRow[]>();
 const presence = new Map<string, Map<string, ChatPresenceRow>>();
 const speakRequests = new Map<string, Set<string>>();
+const roomBans = new Map<string, Set<string>>();
 const djByRoom = new Map<
   string,
   { activeDjId: string | null; musicUrl: string | null; playing: boolean }
@@ -127,46 +143,119 @@ function pushMessage(roomId: string, row: ChatRoomMessageRow) {
   return row;
 }
 
+export function staffRankForUser(
+  user: Pick<User, "username" | "role"> | null,
+): VoiceStaffRank {
+  if (!user) return "none";
+  return parseStaffRank(user.username, user.role);
+}
+
 export function isSiteAdmin(user: Pick<User, "username" | "role"> | null) {
-  if (!user) return false;
-  const role = (user.role ?? "").toLowerCase();
-  if (role === "admin" || role === "superadmin" || role === "moderator") return true;
-  const uname = (user.username ?? "").trim().toLowerCase();
-  return uname === "admin" || uname === "destek" || uname === "moderator";
+  return fullControlRank(staffRankForUser(user));
 }
 
 export function roomPrivileges(
   user: Pick<User, "id" | "username" | "role"> | null,
   room: ChatRoomRow,
 ) {
-  const admin = isSiteAdmin(user);
+  const rank = staffRankForUser(user);
+  const staffPower = rankPower(rank);
+  const admin = staffPower >= rankPower("admin");
+  const founderControl = staffPower >= rankPower("founder");
+  const canModerateStaff = canModerateRank(rank);
   const owner =
     admin ||
+    founderControl ||
     (user != null &&
       (room.ownerId === user.id ||
         room.slug.toLowerCase() === (user.username ?? "").toLowerCase()));
   const dj =
     owner ||
+    canModerateStaff ||
     (user != null && room.djUserIds.includes(user.id));
-  return { admin, owner, dj, canModerate: admin || owner };
+  return {
+    admin,
+    owner,
+    dj,
+    canModerate: admin || owner || canModerateStaff,
+    rank,
+    staffPower,
+  };
 }
 
 export function toChatUser(user: User, chatRole?: string): ChatRoomUser {
-  const admin = isSiteAdmin(user);
+  const rank = staffRankForUser(user);
+  const sym = rankSymbol(rank);
+  const role =
+    rank === "founder"
+      ? "founder"
+      : rank === "sop"
+        ? "sop"
+        : rank === "op"
+          ? "op"
+          : rank === "admin"
+            ? "admin"
+            : chatRole ?? "listener";
   return {
     id: user.id,
     name: user.displayName ?? user.username ?? "Kullanıcı",
     nickname: user.username,
     image: user.avatarUrl,
-    chatRole: admin ? "admin" : chatRole ?? "listener",
-    roleSymbol: admin ? "👑" : null,
+    chatRole: role,
+    roleSymbol: sym ?? (role === "admin" ? "👑" : null),
     membership: user.membership,
   };
+}
+
+export function isRoomBanned(roomId: string, userId: string) {
+  return roomBans.get(roomId)?.has(userId) ?? false;
+}
+
+export function listRoomBans(roomId: string) {
+  return [...(roomBans.get(roomId) ?? [])];
+}
+
+export function banRoomUser(
+  roomId: string,
+  actor: User,
+  targetUserId: string,
+  reason?: string,
+) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  const priv = roomPrivileges(actor, room);
+  if (!priv.canModerate) return { ok: false as const, error: "Yetki yok" };
+  let set = roomBans.get(roomId);
+  if (!set) {
+    set = new Set();
+    roomBans.set(roomId, set);
+  }
+  set.add(targetUserId);
+  roomMap(roomId).delete(targetUserId);
+  const row = pushMessage(roomId, {
+    id: randomUUID(),
+    content: `[SYSTEM_BAN]${targetUserId}:${reason ?? "Yasaklandı"}`,
+    createdAt: new Date().toISOString(),
+    user: toChatUser(actor, "admin"),
+  });
+  return { ok: true as const, message: row };
+}
+
+export function unbanRoomUser(roomId: string, actor: User, targetUserId: string) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  const priv = roomPrivileges(actor, room);
+  if (!priv.canModerate) return { ok: false as const, error: "Yetki yok" };
+  roomBans.get(roomId)?.delete(targetUserId);
+  return { ok: true as const };
 }
 
 export async function joinPresence(roomId: string, user: User) {
   const room = getChatRoom(roomId);
   if (!room) return null;
+  if (isRoomBanned(roomId, user.id)) {
+    return { banned: true as const, presence: [] as ChatPresenceRow[] };
+  }
   const priv = roomPrivileges(user, room);
   const chatRole = priv.admin
     ? "admin"
@@ -186,16 +275,18 @@ export async function joinPresence(roomId: string, user: User) {
 
   let systemMsg: ChatRoomMessageRow | null = null;
   if (!wasIn) {
-    const vip = priv.admin || priv.owner || chatRole === "dj";
-    const tag = vip ? "VIP" : "USER";
+    const staff = rankPower(priv.rank) >= rankPower("admin");
+    const vip = staff || priv.admin || priv.owner || chatRole === "dj";
+    const tag = staff ? "STAFF" : vip ? "VIP" : "USER";
+    const sym = rankSymbol(priv.rank) ?? "";
     systemMsg = pushMessage(roomId, {
       id: randomUUID(),
-      content: `[SYSTEM_VIP_JOIN:${tag}:${row.name}]`,
+      content: `[SYSTEM_VIP_JOIN:${tag}:${sym}${row.name}]`,
       createdAt: new Date().toISOString(),
       user: row,
     });
   }
-  return { presence: [...roomMap(roomId).values()], systemMsg };
+  return { presence: [...roomMap(roomId).values()], systemMsg, banned: false as const };
 }
 
 export function leavePresence(roomId: string, userId: string) {
@@ -220,6 +311,7 @@ export function listPresence(roomId: string) {
 export async function addTextMessage(roomId: string, user: User, content: string) {
   const trimmed = content.trim();
   if (!trimmed) return null;
+  if (isRoomBanned(roomId, user.id)) return null;
   const room = getChatRoom(roomId);
   if (!room) return null;
   const priv = roomPrivileges(user, room);
@@ -311,8 +403,12 @@ export function setRoomBackground(roomId: string, user: User, url: string) {
   const room = rooms.find((r) => r.id === roomId);
   if (!room) return null;
   const priv = roomPrivileges(user, room);
-  if (!priv.owner && !priv.admin) return null;
-  if (!SITE_BACKGROUNDS.includes(url)) return null;
+  if (!priv.owner && !priv.canModerate) return null;
+  const allowed =
+    SITE_BACKGROUNDS.includes(url) ||
+    url.startsWith("https://canlifal.com/") ||
+    url.startsWith("https://www.canlifal.com/");
+  if (!allowed) return null;
   room.backgroundImage = url;
   return room;
 }

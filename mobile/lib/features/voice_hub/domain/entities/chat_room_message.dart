@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/auth/voice_staff_rank.dart';
+
 class ChatRoomUserRef extends Equatable {
   const ChatRoomUserRef({
     required this.id,
@@ -37,9 +39,26 @@ class ChatRoomUserRef extends Equatable {
 
   bool get isBroadcaster =>
       chatRole == 'superadmin' ||
+      chatRole == 'founder' ||
+      chatRole == 'sop' ||
+      chatRole == 'op' ||
       chatRole == 'admin' ||
       chatRole == 'owner' ||
       chatRole == 'broadcaster';
+
+  VoiceStaffRank get staffRank => VoiceStaffRankParser.resolve(
+        username: nickname ?? name,
+        chatRole: chatRole,
+      );
+
+  String get displayWithPrefix {
+    final sym = roleSymbol ?? VoiceStaffRankParser.prefixSymbol(staffRank);
+    final n = displayName;
+    if (sym != null && sym.isNotEmpty && !n.startsWith(sym)) {
+      return '$sym$n';
+    }
+    return n;
+  }
 
   @override
   List<Object?> get props =>
@@ -61,8 +80,11 @@ class ChatRoomMessage extends Equatable {
   });
 
   factory ChatRoomMessage.fromJson(Map<String, dynamic> json) {
-    final content =
-        json['content']?.toString() ?? json['body']?.toString() ?? '';
+    final content = json['content']?.toString() ??
+        json['body']?.toString() ??
+        json['message']?.toString() ??
+        json['text']?.toString() ??
+        '';
     final userJson = json['user'] ?? json['sender'];
     ChatRoomUserRef? user;
     if (userJson is Map) {
@@ -80,6 +102,8 @@ class ChatRoomMessage extends Equatable {
 
     if (content.startsWith('[SYSTEM_VIP_JOIN:')) {
       kind = ChatMessageKind.systemJoin;
+    } else if (content.startsWith('[SYSTEM_BAN]')) {
+      kind = ChatMessageKind.systemLeave;
     } else if (content.startsWith('[SYSTEM_LEAVE]')) {
       kind = ChatMessageKind.systemLeave;
     } else if (content.contains('gönderdi') || content.contains('Gül')) {

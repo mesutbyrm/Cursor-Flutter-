@@ -160,13 +160,34 @@ class SocialRemoteDataSource {
       ApiEndpoints.feed,
       query: {'page': 1, 'limit': 30},
     );
-    return _parseStoryRings(res.data);
+    var rings = _parseStoryRings(res.data);
+    if (rings.isEmpty) {
+      try {
+        final alt = await _dio.safeGet<dynamic>(
+          ApiEndpoints.socialStories,
+          query: {'page': 1, 'limit': 30},
+        );
+        rings = _parseStoryRings(alt.data);
+      } catch (_) {}
+    }
+    return rings;
   }
 
   List<SocialStoryRingEntity> _parseStoryRings(dynamic body) {
+    if (body is String) {
+      final t = body.trimLeft();
+      if (t.startsWith('<!DOCTYPE') || t.toLowerCase().startsWith('<html')) {
+        return const [];
+      }
+      return const [];
+    }
     if (body is! Map) return const [];
-    final m = Map<String, dynamic>.from(body);
-    final sg = m['storyGroups'];
+    var m = Map<String, dynamic>.from(body);
+    if (m['success'] == true && m['data'] != null) {
+      final data = m['data'];
+      if (data is Map) m = Map<String, dynamic>.from(data);
+    }
+    final sg = m['storyGroups'] ?? m['groups'] ?? m['rings'];
     if (sg is! List || sg.isEmpty) return const [];
 
     final rings = <SocialStoryRingEntity>[];

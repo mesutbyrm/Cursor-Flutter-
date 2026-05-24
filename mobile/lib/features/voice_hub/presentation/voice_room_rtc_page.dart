@@ -34,6 +34,8 @@ import 'widgets/premium/voice_premium_controls.dart';
 import 'widgets/premium/voice_premium_header.dart';
 import 'widgets/premium/voice_premium_stage.dart';
 import 'widgets/voice_room/voice_room_announcement.dart';
+import 'widgets/voice_room/voice_room_rules_ticker.dart';
+import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
 import 'utils/voice_room_permissions.dart';
 
 /// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
@@ -57,16 +59,26 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _leaving = false;
   VoiceAudioEngineKind? _engineKind;
   LiveGiftEvent? _fullscreenGift;
+  var _typingMessage = false;
 
   @override
   void initState() {
     super.initState();
+    _messageCtrl.addListener(_onMessageTyping);
     WidgetsBinding.instance.addPostFrameCallback((_) => _joinRoom());
+  }
+
+  void _onMessageTyping() {
+    final typing = _messageCtrl.text.isNotEmpty;
+    if (typing != _typingMessage) {
+      setState(() => _typingMessage = typing);
+    }
   }
 
   @override
   void dispose() {
     _giftSub?.cancel();
+    _messageCtrl.removeListener(_onMessageTyping);
     _messageCtrl.dispose();
     _audio?.dispose();
     super.dispose();
@@ -271,7 +283,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
     final speakingId = _micOn ? user?.id : null;
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
-    final rules = room.descTr?.trim();
+    final rules = (room.rulesTr ?? room.descTr)?.trim();
+    final staffBanner = live.enterBanner != null &&
+            (live.enterBanner!.contains('STAFF') ||
+                live.enterBanner!.contains('VIP'))
+        ? live.enterBanner
+        : null;
     final bottom = MediaQuery.paddingOf(context).bottom;
     final engineLabel = _engineKind == VoiceAudioEngineKind.livekit
         ? 'LiveKit'
@@ -310,15 +327,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               SafeArea(
                 child: Column(
                   children: [
-                    if (live.enterBanner != null && live.enterBanner!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-                        child: VoiceRoomSystemBanner(message: live.enterBanner!),
-                      ),
                     if (rules != null && rules.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-                        child: VoiceRoomAnnouncement(text: rules),
+                      VoiceRoomRulesTicker(
+                        rules: rules,
+                        typing: _typingMessage,
                       ),
                     if (live.error != null)
                       Padding(
@@ -361,6 +373,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ),
                         ),
                       ),
+                    VoiceStaffEntranceMarquee(message: staffBanner),
                     const SizedBox(height: 4),
                     Expanded(
                       flex: 5,
