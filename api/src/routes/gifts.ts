@@ -154,12 +154,26 @@ export async function sendStreamGift(
 
   const combo = await resolveCombo(streamId, userId, gift.id, quantity);
 
+  let receiverId: string | null = null;
+  if (receiverName && receiverName !== "Yayıncı") {
+    const recv = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username: receiverName.replace(/^@/, "") },
+          { displayName: receiverName },
+        ],
+      },
+      select: { id: true },
+    });
+    receiverId = recv?.id ?? null;
+  }
+
   const event = await prisma.giftEvent.create({
     data: {
       giftId: gift.id,
       senderId: userId ?? null,
       senderName: senderName ?? "Misafir",
-      receiverId: null,
+      receiverId,
       receiverName: receiverName ?? "Yayıncı",
       streamId,
       quantity,

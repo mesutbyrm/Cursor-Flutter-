@@ -37,7 +37,19 @@ import '../../features/membership/presentation/pages/premium_membership_page.dar
 import '../../features/profile/presentation/pages/cfc_purchase_page.dart';
 import '../../features/profile/presentation/pages/jeton_purchase_page.dart';
 import '../../features/wallet/presentation/pages/wallet_center_page.dart';
+import '../../features/profile/presentation/pages/profile_about_page.dart';
+import '../../features/profile/presentation/pages/profile_account_security_page.dart';
+import '../../features/profile/presentation/pages/profile_broadcast_history_page.dart';
+import '../../features/profile/presentation/pages/profile_broadcaster_stats_page.dart';
+import '../../features/profile/presentation/pages/profile_earnings_page.dart';
+import '../../features/profile/presentation/pages/profile_edit_page.dart';
+import '../../features/profile/presentation/pages/profile_equipment_page.dart';
+import '../../features/profile/presentation/pages/profile_follow_list_page.dart';
+import '../../features/profile/presentation/pages/profile_gifts_page.dart';
+import '../../features/profile/presentation/pages/profile_help_support_page.dart';
+import '../../features/profile/presentation/pages/profile_payment_notice_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/profile/presentation/pages/profile_transactions_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/shell/presentation/main_shell_page.dart';
 import '../../features/live/domain/entities/voice_room_entity.dart';
@@ -290,6 +302,73 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/invite-friends',
         builder: (context, state) => const InviteFriendsPage(),
+      ),
+      GoRoute(
+        path: '/profile/edit',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const ProfileEditPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/profile/earnings',
+        builder: (context, state) => const ProfileEarningsPage(),
+      ),
+      GoRoute(
+        path: '/profile/transactions',
+        builder: (context, state) => const ProfileTransactionsPage(),
+      ),
+      GoRoute(
+        path: '/profile/payment-notice',
+        builder: (context, state) => const ProfilePaymentNoticePage(),
+      ),
+      GoRoute(
+        path: '/profile/broadcast-history',
+        builder: (context, state) => const ProfileBroadcastHistoryPage(),
+      ),
+      GoRoute(
+        path: '/profile/broadcaster-stats',
+        builder: (context, state) => const ProfileBroadcasterStatsPage(),
+      ),
+      GoRoute(
+        path: '/profile/equipment',
+        builder: (context, state) => const ProfileEquipmentPage(),
+      ),
+      GoRoute(
+        path: '/profile/gifts',
+        builder: (context, state) => const ProfileGiftsPage(),
+      ),
+      GoRoute(
+        path: '/profile/security',
+        builder: (context, state) => const ProfileAccountSecurityPage(),
+      ),
+      GoRoute(
+        path: '/profile/help',
+        builder: (context, state) => const ProfileHelpSupportPage(),
+      ),
+      GoRoute(
+        path: '/profile/about',
+        builder: (context, state) => const ProfileAboutPage(),
+      ),
+      GoRoute(
+        path: '/profile/followers',
+        builder: (context, state) {
+          final userId = state.uri.queryParameters['userId'] ?? '';
+          return ProfileFollowListPage(
+            userId: userId,
+            tab: ProfileFollowTab.followers,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/profile/following',
+        builder: (context, state) {
+          final userId = state.uri.queryParameters['userId'] ?? '';
+          return ProfileFollowListPage(
+            userId: userId,
+            tab: ProfileFollowTab.following,
+          );
+        },
       ),
       GoRoute(
         path: '/user/:id',

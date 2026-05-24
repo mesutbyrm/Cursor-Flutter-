@@ -27,12 +27,15 @@ class ProfilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
     final wallet = ref.watch(walletBalancesProvider);
+    final stats = ref.watch(profileStatsProvider);
     final top = MediaQuery.paddingOf(context).top;
 
     Future<void> refresh() async {
       await ref.read(authControllerProvider.notifier).refreshMe();
       ref.invalidate(walletBalancesProvider);
       ref.invalidate(coinBalanceProvider);
+      ref.invalidate(profileStatsProvider);
+      ref.invalidate(giftsReceivedSummaryProvider);
     }
 
     return Scaffold(
@@ -71,6 +74,15 @@ class ProfilePage extends ConsumerWidget {
               final membership = balances?.membership;
               final membershipDays = balances?.membershipDaysRemaining;
 
+              final statData = stats.maybeWhen(
+                data: (s) => s,
+                orElse: () => null,
+              );
+              final liveStreams = statData?.liveStreams ?? 0;
+              final likes = statData?.likes ?? 0;
+              final followers = statData?.followers ?? user.followersCount;
+              final following = statData?.following ?? user.followingCount;
+
               return CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: BouncingScrollPhysics(),
@@ -91,8 +103,10 @@ class ProfilePage extends ConsumerWidget {
                               displayName: user.display,
                               username: user.username,
                               avatarUrl: user.avatarUrl,
-                              followers: user.followersCount,
-                              following: user.followingCount,
+                              followers: followers,
+                              following: following,
+                              liveStreams: liveStreams,
+                              likes: likes,
                               bio: user.bio ??
                                   '🎵 Müzik, sohbet ve eğlence dolu yayınlar…',
                               diamondBalance: jeton,
@@ -100,7 +114,14 @@ class ProfilePage extends ConsumerWidget {
                               onLogout: () => ref
                                   .read(authControllerProvider.notifier)
                                   .logout(),
-                              onEdit: () => _openPublicProfile(context, user),
+                              onEdit: () => context.push('/profile/edit'),
+                              onAvatarTap: () => context.push('/profile/edit'),
+                              onFollowersTap: () => context.push(
+                                '/profile/followers?userId=${user.id}',
+                              ),
+                              onFollowingTap: () => context.push(
+                                '/profile/following?userId=${user.id}',
+                              ),
                             ),
                             const SizedBox(height: 16),
                             const ProfileBranchQuickActions(),
@@ -117,31 +138,39 @@ class ProfilePage extends ConsumerWidget {
                               cfc: cfc,
                               onTopUp: () => context.push('/jeton-store'),
                               onCfcTopUp: () => context.push('/cfc-store'),
-                              onEarnings: () => _showSnack(
-                                context,
-                                'Kazançlar yakında',
-                              ),
-                              onTransactions: () => ref.invalidate(
-                                walletBalancesProvider,
-                              ),
+                              onEarnings: () =>
+                                  context.push('/profile/earnings'),
+                              onTransactions: () =>
+                                  context.push('/profile/transactions'),
+                              onPaymentNotice: () =>
+                                  context.push('/profile/payment-notice'),
                               onSubscriptions: () => context.push('/wallet'),
                             ),
                             const SizedBox(height: 22),
                             const ProfileAdminSection(),
-                            const ProfileBroadcasterPanel(),
+                            ProfileBroadcasterPanel(
+                              onHistory: () =>
+                                  context.push('/profile/broadcast-history'),
+                              onSchedule: () => context.push('/live/prep'),
+                              onStats: () =>
+                                  context.push('/profile/broadcaster-stats'),
+                              onEquipment: () =>
+                                  context.push('/profile/equipment'),
+                              onSettings: () => context.push('/live/prep'),
+                            ),
                             const SizedBox(height: 22),
                             ProfileGiftsRow(
-                              onViewAll: () => _showSnack(
-                                context,
-                                'Hediye koleksiyonu yakında',
-                              ),
+                              onViewAll: () => context.push('/profile/gifts'),
                             ),
                             const SizedBox(height: 16),
                             ProfileSettingsMenu(
-                              onEditProfile: () =>
-                                  _openPublicProfile(context, user),
+                              onEditProfile: () => context.push('/profile/edit'),
+                              onSecurity: () =>
+                                  context.push('/profile/security'),
                               onNotifications: () =>
                                   context.push('/notifications'),
+                              onHelp: () => context.push('/profile/help'),
+                              onAbout: () => context.push('/profile/about'),
                             ),
                           ],
                         ),
@@ -154,16 +183,6 @@ class ProfilePage extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-
-  static void _openPublicProfile(BuildContext context, UserEntity user) {
-    context.push('/user/${user.id}');
-  }
-
-  static void _showSnack(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
     );
   }
 }

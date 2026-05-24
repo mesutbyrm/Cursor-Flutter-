@@ -22,6 +22,9 @@ class ProfileNeonHeader extends ConsumerWidget {
     this.cfcBalance = 0,
     this.onSettings,
     this.onEdit,
+    this.onAvatarTap,
+    this.onFollowersTap,
+    this.onFollowingTap,
     this.onLogout,
   });
 
@@ -37,6 +40,9 @@ class ProfileNeonHeader extends ConsumerWidget {
   final int cfcBalance;
   final VoidCallback? onSettings;
   final VoidCallback? onEdit;
+  final VoidCallback? onAvatarTap;
+  final VoidCallback? onFollowersTap;
+  final VoidCallback? onFollowingTap;
   final VoidCallback? onLogout;
 
   @override
@@ -71,7 +77,12 @@ class ProfileNeonHeader extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 20),
-        Center(child: _NeonAvatar(url: avatarUrl)),
+        Center(
+          child: GestureDetector(
+            onTap: onAvatarTap ?? onEdit,
+            child: _NeonAvatar(url: avatarUrl),
+          ),
+        ),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -119,6 +130,7 @@ class ProfileNeonHeader extends ConsumerWidget {
               child: _StatColumn(
                 value: profileFormatCount(followers),
                 label: 'Takipçi',
+                onTap: onFollowersTap,
               ),
             ),
             _statDivider(),
@@ -126,6 +138,7 @@ class ProfileNeonHeader extends ConsumerWidget {
               child: _StatColumn(
                 value: profileFormatCount(following),
                 label: 'Takip',
+                onTap: onFollowingTap,
               ),
             ),
             _statDivider(),
@@ -245,36 +258,51 @@ class _NeonAvatar extends StatelessWidget {
 }
 
 class _StatColumn extends StatelessWidget {
-  const _StatColumn({required this.value, required this.label});
+  const _StatColumn({
+    required this.value,
+    required this.label,
+    this.onTap,
+  });
 
   final String value;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.3,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          style: const TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            height: 1.2,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

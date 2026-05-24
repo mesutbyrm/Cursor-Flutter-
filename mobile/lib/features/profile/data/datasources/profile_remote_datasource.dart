@@ -13,6 +13,7 @@ import '../../../wallet/domain/wallet_balances.dart';
 import '../jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
+import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 
 class ProfileRemoteDataSource {
@@ -49,6 +50,118 @@ class ProfileRemoteDataSource {
 
   Future<void> unfollow(String userId) async {
     await _dio.safeDelete(ApiEndpoints.follow(userId));
+  }
+
+  Future<UserEntity> updateMe({
+    String? displayName,
+    String? bio,
+    String? avatarUrl,
+    String? username,
+    String? currentPassword,
+    String? newPassword,
+  }) async {
+    final res = await _dio.safePatch<Map<String, dynamic>>(
+      ApiEndpoints.me,
+      data: {
+        if (displayName != null) 'displayName': displayName,
+        if (bio != null) 'bio': bio,
+        if (avatarUrl != null) 'avatarUrl': avatarUrl,
+        if (username != null) 'username': username,
+        if (currentPassword != null) 'currentPassword': currentPassword,
+        if (newPassword != null) 'newPassword': newPassword,
+      },
+    );
+    final body = res.data ?? {};
+    final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+    return UserDto.fromApiMap(data).toEntity();
+  }
+
+  Future<ProfileStatsEntity> myStats() async {
+    try {
+      final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.meStats);
+      return ProfileStatsEntity.fromJson(res.data ?? {});
+    } catch (_) {
+      return const ProfileStatsEntity();
+    }
+  }
+
+  Future<List<GiftReceivedSummaryEntity>> giftsReceivedSummary() async {
+    try {
+      final res =
+          await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.meGiftsReceived);
+      final body = res.data ?? {};
+      final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+      final raw = data['summary'];
+      if (raw is! List) return const [];
+      return raw
+          .map((e) => GiftReceivedSummaryEntity.fromJson(asJsonMap(e)))
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<List<BroadcastHistoryItemEntity>> broadcastHistory() async {
+    try {
+      final res = await _dio.safeGet<Map<String, dynamic>>(
+        ApiEndpoints.meBroadcastHistory,
+      );
+      final body = res.data ?? {};
+      final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+      final raw = data['items'];
+      if (raw is! List) return const [];
+      return raw
+          .map((e) => BroadcastHistoryItemEntity.fromJson(asJsonMap(e)))
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<List<ProfileActivityItemEntity>> myActivity() async {
+    try {
+      final res =
+          await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.meActivity);
+      final body = res.data ?? {};
+      final data = body['data'] is Map ? asJsonMap(body['data']) : body;
+      final raw = data['items'];
+      if (raw is! List) return const [];
+      return raw
+          .map((e) => ProfileActivityItemEntity.fromJson(asJsonMap(e)))
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<List<UserEntity>> followers(String userId) async {
+    try {
+      final res = await _dio.safeGet<Map<String, dynamic>>(
+        ApiEndpoints.followers(userId),
+      );
+      return _parseUserList(res.data);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<List<UserEntity>> following(String userId) async {
+    try {
+      final res = await _dio.safeGet<Map<String, dynamic>>(
+        ApiEndpoints.following(userId),
+      );
+      return _parseUserList(res.data);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  List<UserEntity> _parseUserList(dynamic body) {
+    if (body is! Map) return const [];
+    final data = body['data'] is Map ? asJsonMap(body['data']) : asJsonMap(body);
+    final raw = data['users'] ?? data['items'];
+    if (raw is! List) return const [];
+    return raw.map((e) => UserDto.fromApiMap(asJsonMap(e)).toEntity()).toList();
   }
 }
 
