@@ -15,10 +15,20 @@ class ChatRoomUserRef extends Equatable {
 
   factory ChatRoomUserRef.fromJson(Map<String, dynamic> json) {
     return ChatRoomUserRef(
-      id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? json['nickname']?.toString() ?? 'Kullanıcı',
-      nickname: json['nickname']?.toString(),
-      image: json['image']?.toString(),
+      id: json['id']?.toString() ??
+          json['userId']?.toString() ??
+          json['_id']?.toString() ??
+          '',
+      name: json['name']?.toString() ??
+          json['displayName']?.toString() ??
+          json['nickname']?.toString() ??
+          json['username']?.toString() ??
+          'Kullanıcı',
+      nickname: json['nickname']?.toString() ?? json['username']?.toString(),
+      image: json['image']?.toString() ??
+          json['avatar']?.toString() ??
+          json['avatarUrl']?.toString() ??
+          json['profileImage']?.toString(),
       chatRole: json['chatRole']?.toString(),
       roleSymbol: json['roleSymbol']?.toString(),
       membership: json['membership']?.toString(),

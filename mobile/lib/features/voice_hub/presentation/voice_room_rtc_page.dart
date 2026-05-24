@@ -51,9 +51,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   VoiceRoomAudioCoordinator? _audio;
   StreamSubscription<LiveGiftEvent>? _giftSub;
   final _messageCtrl = TextEditingController();
-  var _joining = true;
-  var _joined = false;
-  String? _error;
+  var _audioJoining = true;
+  var _audioReady = false;
+  String? _audioError;
+  String? _loginError;
   var _micOn = true;
   var _leaving = false;
   VoiceAudioEngineKind? _engineKind;
@@ -111,25 +112,33 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) {
       setState(() {
-        _joining = false;
-        _error = 'Odaya girmek için giriş yapın';
+        _audioJoining = false;
+        _loginError = 'Odaya girmek için giriş yapın';
       });
       return;
     }
 
+    setState(() {
+      _audioJoining = true;
+      _audioError = null;
+      _loginError = null;
+    });
+
     _audio = ref.read(voiceRoomAudioCoordinatorProvider);
     if (!_audio!.isSupported) {
       setState(() {
-        _joining = false;
-        _error = 'Sesli oda bu platformda desteklenmiyor';
+        _audioJoining = false;
+        _audioError = 'Ses bağlantısı bu cihazda desteklenmiyor; sohbet çalışır';
       });
+      _startGiftRealtime();
       return;
     }
 
     try {
       final perms = VoiceRoomPermissions.forUser(user: user, room: widget.room);
+      final roomKey = widget.room.apiRoomKey;
       _engineKind = await _audio!.join(
-        roomId: widget.room.id,
+        roomId: roomKey.isNotEmpty ? roomKey : widget.room.id,
         userId: user.id,
         isHost: _isRoomOwner(user.id, user.username) || perms.isSiteAdmin,
         liveKitRemote: ref.read(liveKitRemoteProvider),
@@ -140,8 +149,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       }
       if (mounted) {
         setState(() {
-          _joining = false;
-          _joined = true;
+          _audioJoining = false;
+          _audioReady = true;
           _micOn = _audio!.micOn;
         });
         _startGiftRealtime();
@@ -150,9 +159,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _joining = false;
-          _error = ApiException.userMessage(e);
+          _audioJoining = false;
+          _audioError = ApiException.userMessage(e);
         });
+        _startGiftRealtime();
       }
     }
   }
@@ -237,14 +247,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 ),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  await ref
+                  final err = await ref
                       .read(voiceRoomLiveProvider(room).notifier)
                       .setRoomBackground(url);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Arka plan güncellendi')),
-                    );
-                  }
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        err ?? 'Arka plan güncellendi',
+                      ),
+                    ),
+                  );
                 },
               ),
             ),
@@ -274,9 +287,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final coins = ref.watch(coinBalanceProvider).valueOrNull ??
         ref.watch(authControllerProvider).valueOrNull?.coinBalance ??
         0;
-    final online = live.presence.isNotEmpty
-        ? live.presence.length
-        : room.displayOnline;
+    final online = live.onlineCountFor(room);
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _perms(user, live.presence);
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
@@ -305,27 +316,48 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           fit: StackFit.expand,
           children: [
             _RoomBackground(url: bgUrl),
-            if (_joining)
-              const Center(child: DiscoverAccentLoader())
-            else if (!_joined)
+            if (_loginError != null)
               Center(
                 child: DiscoverEmptyState(
-                  icon: Icons.headset_off_rounded,
-                  message: _error ?? 'Bağlantı kurulamadı',
-                  actionLabel: 'Tekrar dene',
-                  action: () {
-                    setState(() {
-                      _joining = true;
-                      _error = null;
-                    });
-                    _joinRoom();
-                  },
+                  icon: Icons.login_rounded,
+                  message: _loginError!,
+                  actionLabel: 'Giriş',
+                  action: () => context.push('/login'),
                 ),
               )
             else
               SafeArea(
                 child: Column(
                   children: [
+                    if (_audioJoining)
+                      const LinearProgressIndicator(
+                        minHeight: 2,
+                        color: VoiceRoomTokens.neonPurple,
+                      ),
+                    if (_audioError != null)
+                      Material(
+                        color: AppColors.liveRed.withValues(alpha: 0.15),
+                        child: ListTile(
+                          dense: true,
+                          leading: const Icon(
+                            Icons.headset_off_rounded,
+                            color: AppColors.liveRed,
+                            size: 20,
+                          ),
+                          title: Text(
+                            _audioReady
+                                ? 'Ses: $_audioError'
+                                : 'Ses bağlanamadı — sohbet aktif',
+                            style: const TextStyle(fontSize: 11),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          trailing: TextButton(
+                            onPressed: _joinRoom,
+                            child: const Text('Tekrar'),
+                          ),
+                        ),
+                      ),
                     if (rules != null && rules.isNotEmpty)
                       VoiceRoomRulesTicker(
                         rules: rules,
@@ -428,6 +460,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         micOn: _micOn,
                         headphonesOn: ui.headphonesOn,
                         onMic: () {
+                          if (!_audioReady) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Mikrofon için önce ses bağlantısı kurulmalı',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
                           final next = !_micOn;
                           _audio?.setMicEnabled(next);
                           setState(() => _micOn = next);
@@ -442,18 +484,42 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         onRequestSpeak: () async {
                           final liveCtrl =
                               ref.read(voiceRoomLiveProvider(room).notifier);
+                          String? err;
                           if (ui.requestSpeakPending) {
-                            await liveCtrl.cancelSpeakRequest();
+                            err = await liveCtrl.cancelSpeakRequest();
                           } else {
-                            await liveCtrl.requestSpeak();
+                            err = await liveCtrl.requestSpeak();
                           }
-                          if (context.mounted) {
-                            showVoiceRequestSpeakSheet(
-                              context,
-                              ref,
-                              pending: ref.read(voiceRoomUiProvider).requestSpeakPending,
+                          if (!context.mounted) return;
+                          if (err != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(err)),
                             );
+                            return;
                           }
+                          showVoiceRequestSpeakSheet(
+                            context,
+                            ref,
+                            pending: ref
+                                .read(voiceRoomUiProvider)
+                                .requestSpeakPending,
+                            onPrimary: () async {
+                              final ctrl = ref.read(
+                                voiceRoomLiveProvider(room).notifier,
+                              );
+                              final pendingNow = ref
+                                  .read(voiceRoomUiProvider)
+                                  .requestSpeakPending;
+                              final err = pendingNow
+                                  ? await ctrl.cancelSpeakRequest()
+                                  : await ctrl.requestSpeak();
+                              if (context.mounted && err != null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(err)),
+                                );
+                              }
+                            },
+                          );
                         },
                         onEffects: () => showVoiceEffectsSheet(context, ref),
                         onMore: () => showVoiceMoreMenuSheet(
@@ -483,9 +549,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             ref
                                 .read(voiceRoomUiProvider.notifier)
                                 .toggleBackgroundMusic();
-                            await ref
+                            final err = await ref
                                 .read(voiceRoomLiveProvider(room).notifier)
                                 .toggleBackgroundMusic(enabled);
+                            if (context.mounted && err != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(err)),
+                              );
+                            }
                           },
                           onPickBackground: perms.canChangeBackground
                               ? () => _pickBackground(context, room)

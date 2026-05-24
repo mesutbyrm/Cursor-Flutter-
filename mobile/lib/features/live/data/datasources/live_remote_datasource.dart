@@ -56,7 +56,10 @@ class LiveRemoteDataSource {
       }
     }
     if (list is! List) return const [];
-    return asJsonList(list).map(_mapVoiceRoom).where((r) => r.id.isNotEmpty).toList();
+    return asJsonList(list)
+        .map(_mapVoiceRoom)
+        .where((r) => r.apiRoomKey.isNotEmpty)
+        .toList();
   }
 
   Future<VoiceRoomEntity?> fetchVoiceRoomById(String id) async {
@@ -167,9 +170,11 @@ class LiveRemoteDataSource {
         }
       } catch (_) {}
     }
+    final slug = pick(json, ['slug'])?.toString() ?? '';
+    final rawId = pick(json, ['id', '_id', 'roomId'])?.toString() ?? '';
     return VoiceRoomEntity(
-      id: pick(json, ['id'])?.toString() ?? '',
-      slug: pick(json, ['slug'])?.toString() ?? '',
+      id: rawId.isNotEmpty ? rawId : slug,
+      slug: slug,
       nameTr: pick(json, ['nameTr', 'nameEn', 'name', 'slug'])?.toString() ?? 'Oda',
       descTr: pick(json, ['descTr', 'descEn', 'description']) as String?,
       rulesTr: pick(json, ['rules', 'rulesTr', 'roomRules']) as String?,

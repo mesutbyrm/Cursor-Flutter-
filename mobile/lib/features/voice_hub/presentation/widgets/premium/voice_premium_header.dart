@@ -68,10 +68,17 @@ class VoicePremiumHeader extends StatelessWidget {
                           );
                         },
                         child: Text(
-                          'ID $shortId · $onlineCount çevrimiçi',
-                          style: const TextStyle(
+                          onlineCount > 0
+                              ? '$onlineCount kişi odada · ID $shortId'
+                              : 'ID $shortId · çevrimiçi bekleniyor',
+                          style: TextStyle(
                             fontSize: 10,
-                            color: AppColors.textMuted,
+                            color: onlineCount > 0
+                                ? AppColors.onlineGreen
+                                : AppColors.textMuted,
+                            fontWeight: onlineCount > 0
+                                ? FontWeight.w800
+                                : FontWeight.normal,
                           ),
                         ),
                       ),
