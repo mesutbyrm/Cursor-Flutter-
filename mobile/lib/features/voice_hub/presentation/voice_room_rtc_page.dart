@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -11,22 +12,27 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../live/domain/entities/live_gift_event.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
+import '../../live/presentation/gifts/widgets/gift_fullscreen_overlay.dart';
 import '../../profile/presentation/providers/profile_providers.dart';
-import '../../trtc/presentation/providers/trtc_providers.dart';
-import '../../trtc/presentation/trtc_room_manager.dart';
-import '../domain/entities/chat_room_message.dart';
 import '../domain/entities/chat_room_presence.dart';
+import '../../trtc/presentation/providers/trtc_providers.dart';
+import '../domain/entities/voice_audio_engine.dart';
+import 'audio/voice_room_audio_coordinator.dart';
 import 'providers/chat_room_providers.dart';
+import 'providers/voice_gift_providers.dart';
+import 'providers/voice_room_audio_providers.dart';
 import 'providers/voice_room_ui_provider.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'theme/voice_room_tokens.dart';
+import 'widgets/premium/voice_gift_flight_overlay.dart';
 import 'widgets/premium/voice_premium_chat.dart';
 import 'widgets/premium/voice_premium_controls.dart';
 import 'widgets/premium/voice_premium_header.dart';
 import 'widgets/premium/voice_premium_stage.dart';
 
-/// Premium sesli sohbet odası — TRTC + canlifal API + Clubhouse/Discord düzeni.
+/// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
   const VoiceRoomRtcPage({super.key, required this.room});
 
@@ -37,13 +43,16 @@ class VoiceRoomRtcPage extends ConsumerStatefulWidget {
 }
 
 class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
-  final _trtc = TrtcRoomManager();
+  VoiceRoomAudioCoordinator? _audio;
+  StreamSubscription<LiveGiftEvent>? _giftSub;
   final _messageCtrl = TextEditingController();
   var _joining = true;
   var _joined = false;
   String? _error;
   var _micOn = true;
   var _leaving = false;
+  VoiceAudioEngineKind? _engineKind;
+  LiveGiftEvent? _fullscreenGift;
 
   @override
   void initState() {
@@ -53,9 +62,34 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   @override
   void dispose() {
+    _giftSub?.cancel();
     _messageCtrl.dispose();
-    _trtc.dispose();
+    _audio?.dispose();
     super.dispose();
+  }
+
+  void _startGiftRealtime() {
+    final service = ref.read(voiceRoomGiftRealtimeProvider);
+    service.start(widget.room.id);
+    _giftSub?.cancel();
+    _giftSub = service.events.listen(_onGiftEvent);
+  }
+
+  void _onGiftEvent(LiveGiftEvent event) {
+    if (!mounted) return;
+    final ui = ref.read(voiceRoomUiProvider);
+    if (!ui.giftAnimationsEnabled) return;
+
+    ref.read(voiceGiftFlightQueueProvider.notifier).enqueue(event);
+
+    if (event.coinCost >= 100 || event.combo >= 5) {
+      setState(() => _fullscreenGift = event);
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted && _fullscreenGift?.id == event.id) {
+          setState(() => _fullscreenGift = null);
+        }
+      });
+    }
   }
 
   Future<void> _joinRoom() async {
@@ -68,7 +102,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       return;
     }
 
-    if (!_trtc.isSupported) {
+    _audio = ref.read(voiceRoomAudioCoordinatorProvider);
+    if (!_audio!.isSupported) {
       setState(() {
         _joining = false;
         _error = 'Sesli oda bu platformda desteklenmiyor';
@@ -77,22 +112,20 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
 
     try {
-      final cred = await ref.read(trtcRemoteProvider).fetchUserSig(
-            userId: user.id,
-            roomId: widget.room.id,
-          );
-      final isOwner = _isRoomOwner(user.id, user.username);
-      await _trtc.join(
-        credentials: cred,
-        isHost: isOwner,
-        audioOnly: true,
+      _engineKind = await _audio!.join(
+        roomId: widget.room.id,
+        userId: user.id,
+        isHost: _isRoomOwner(user.id, user.username),
+        liveKitRemote: ref.read(liveKitRemoteProvider),
+        trtcRemote: ref.read(trtcRemoteProvider),
       );
       if (mounted) {
         setState(() {
           _joining = false;
           _joined = true;
-          _micOn = _trtc.micOn;
+          _micOn = _audio!.micOn;
         });
+        _startGiftRealtime();
       }
     } catch (e) {
       if (mounted) {
@@ -107,7 +140,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   Future<void> _leave() async {
     if (_leaving) return;
     _leaving = true;
-    await _trtc.leave();
+    ref.read(voiceRoomGiftRealtimeProvider).stop();
+    await _audio?.leave();
     if (mounted) context.go('/voice-rooms');
   }
 
@@ -145,6 +179,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final room = widget.room;
     final live = ref.watch(voiceRoomLiveProvider(room));
     final ui = ref.watch(voiceRoomUiProvider);
+    final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
     final coins = ref.watch(coinBalanceProvider).valueOrNull ??
         ref.watch(authControllerProvider).valueOrNull?.coinBalance ??
         0;
@@ -155,6 +190,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final isOwner = user != null && _isRoomOwner(user.id, user.username);
     final speakingId = _micOn ? user?.id : null;
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final engineLabel = _engineKind == VoiceAudioEngineKind.livekit
+        ? 'LiveKit'
+        : 'TRTC';
 
     return PopScope(
       canPop: false,
@@ -206,7 +244,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    if (_engineKind != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Ses: $engineLabel',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textMuted.withValues(alpha: 0.85),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 4),
                     Expanded(
                       flex: 5,
                       child: SingleChildScrollView(
@@ -233,9 +282,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 break;
                               }
                             }
-                            if (p != null) {
-                              _openUser(p);
-                            }
+                            if (p != null) _openUser(p);
                           },
                         ),
                       ),
@@ -264,7 +311,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         headphonesOn: ui.headphonesOn,
                         onMic: () {
                           final next = !_micOn;
-                          _trtc.setMicEnabled(next);
+                          _audio?.setMicEnabled(next);
                           setState(() => _micOn = next);
                         },
                         onHeadphones: () => ref
@@ -322,6 +369,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ],
                 ),
               ),
+            VoiceGiftFlightOverlay(
+              events: flightQueue,
+              enabled: ui.giftAnimationsEnabled,
+              onFinished: (id) =>
+                  ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
+            ),
+            GiftFullscreenOverlay(event: _fullscreenGift),
           ],
         ),
       ),

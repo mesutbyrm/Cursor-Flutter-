@@ -10,9 +10,12 @@ import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/chat_room_gifts_remote_datasource.dart';
+import '../../../live/domain/entities/live_gift_event.dart';
 import '../providers/chat_room_providers.dart';
+import '../providers/voice_gift_providers.dart';
 
 final chatRoomGiftsRemoteProvider = Provider<ChatRoomGiftsRemoteDataSource>((ref) {
   return ChatRoomGiftsRemoteDataSource(
@@ -110,6 +113,24 @@ Future<void> showVoiceRoomGiftPicker(
                                         roomId: room.id,
                                         giftTypeId: g.id,
                                       );
+                                  final user = ref
+                                      .read(authControllerProvider)
+                                      .valueOrNull;
+                                  final local = LiveGiftEvent(
+                                    id: 'local-${DateTime.now().microsecondsSinceEpoch}',
+                                    senderId: user?.id,
+                                    senderName: user?.display ?? 'Sen',
+                                    receiverName:
+                                        room.ownerName ?? 'Oda sahibi',
+                                    giftId: g.id,
+                                    giftName: LiveGiftCatalog.displayName(g),
+                                    quantity: 1,
+                                    coinCost: g.price,
+                                    timestamp: DateTime.now(),
+                                  );
+                                  ref
+                                      .read(voiceRoomGiftRealtimeProvider)
+                                      .publishLocal(local);
                                   if (context.mounted) {
                                     ref.invalidate(coinBalanceProvider);
                                     ref

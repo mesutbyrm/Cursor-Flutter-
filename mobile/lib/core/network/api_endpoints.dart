@@ -78,6 +78,7 @@ abstract final class ApiEndpoints {
 
   /// Tencent TRTC UserSig (POST: userId, roomId).
   static const trtcUserSig = '/api/trtc/usersig';
+  static const livekitToken = '/api/livekit/token';
 
   /// Canlı yayın hediye kataloğu (Tencent / site ile aynı liste).
   static const videoStreamGiftsCatalog = '/api/video-streams/gifts';

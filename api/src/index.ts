@@ -15,6 +15,8 @@ import { walletRouter } from "./routes/wallet";
 import { notificationsRouter } from "./routes/notifications";
 import { devicesRouter } from "./routes/devices";
 import { messagesRouter } from "./routes/messages";
+import { chatRoomsRouter } from "./routes/chat_rooms";
+import { livekitRouter } from "./routes/livekit";
 import { fail } from "./lib/response";
 import { initGiftSocket } from "./socket/giftHub";
 
@@ -44,6 +46,8 @@ app.use("/api/users", profileExtrasRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/devices", devicesRouter);
 app.use("/api/messages", messagesRouter);
+app.use("/api/chat", chatRoomsRouter);
+app.use("/api/livekit", livekitRouter);
 
 app.use((_req, res) => {
   return fail(res, 404, "NOT_FOUND", "Endpoint bulunamadı");
