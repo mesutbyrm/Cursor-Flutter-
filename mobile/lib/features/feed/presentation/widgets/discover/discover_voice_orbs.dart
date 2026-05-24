@@ -11,8 +11,9 @@ import '../../../../live/domain/entities/voice_room_sort.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
 import '../../../../voice_hub/presentation/widgets/voice_room_grid_tile.dart';
 import 'discover_section_header.dart';
+import 'discover_voice_room_carousel_item.dart';
 
-/// Ana sayfa sesli odalar — API, tam genişlik 4 sütun.
+/// Ana sayfa sohbet odaları — tek sıra, yatay kaydırma + alt avatar şeridi.
 class DiscoverVoiceOrbs extends ConsumerWidget {
   const DiscoverVoiceOrbs({super.key});
 
@@ -30,7 +31,7 @@ class DiscoverVoiceOrbs extends ConsumerWidget {
     return rooms.when(
       loading: () => const _VoiceRoomsSection(
         child: SizedBox(
-          height: 160,
+          height: 220,
           child: Center(
             child: SizedBox(
               width: 24,
@@ -57,7 +58,9 @@ class DiscoverVoiceOrbs extends ConsumerWidget {
             ),
           );
         }
-        return _VoiceRoomsGrid(rooms: sortVoiceRoomsByPopularity(list));
+        return _VoiceRoomsCarousel(
+          rooms: sortVoiceRoomsByPopularity(list),
+        );
       },
     );
   }
@@ -85,16 +88,18 @@ class _VoiceRoomsSection extends StatelessWidget {
   }
 }
 
-class _VoiceRoomsGrid extends StatelessWidget {
-  const _VoiceRoomsGrid({required this.rooms});
+class _VoiceRoomsCarousel extends StatelessWidget {
+  const _VoiceRoomsCarousel({required this.rooms});
 
   final List<VoiceRoomEntity> rooms;
 
   @override
   Widget build(BuildContext context) {
-    const crossCount = VoiceRoomGridTile.crossAxisCount;
-    const spacing = 10.0;
-    const aspect = VoiceRoomGridTile.tileAspectRatio;
+    const tileH =
+        DiscoverVoiceRoomCarouselItem.tileWidth /
+            VoiceRoomGridTile.tileAspectRatio +
+        6 +
+        28;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -104,39 +109,20 @@ class _VoiceRoomsGrid extends StatelessWidget {
           actionLabel: 'Tüm Odalar',
           onAction: () => context.push('/voice-rooms'),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final tileWidth =
-                  (width - spacing * (crossCount - 1)) / crossCount;
-              final tileHeight = tileWidth / aspect;
-              final rows = (rooms.length / crossCount).ceil();
-              final gridHeight =
-                  rows * tileHeight + (rows > 1 ? (rows - 1) * spacing : 0);
-
-              return SizedBox(
-                height: gridHeight,
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossCount,
-                    mainAxisSpacing: spacing,
-                    crossAxisSpacing: spacing,
-                    childAspectRatio: aspect,
-                  ),
-                  itemCount: rooms.length,
-                  itemBuilder: (ctx, i) {
-                    final room = rooms[i];
-                    return VoiceRoomGridTile(
-                      room: room,
-                      onTap: () => context.push(
-                        '/voice-room/${room.id}',
-                        extra: room,
-                      ),
-                    );
-                  },
+        SizedBox(
+          height: tileH,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: rooms.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, i) {
+              final room = rooms[i];
+              return DiscoverVoiceRoomCarouselItem(
+                room: room,
+                onTap: () => context.push(
+                  '/voice-room/${room.id}',
+                  extra: room,
                 ),
               );
             },

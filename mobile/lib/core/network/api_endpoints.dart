@@ -28,6 +28,9 @@ abstract final class ApiEndpoints {
   static const feed = '/api/stories';
   /// canlifal.com sosyal akış (web `/sosyal` ile aynı veri).
   static const socialPosts = '/api/social/posts';
+
+  /// Site geneli istatistikler (mobil ana sayfa).
+  static const socialPublicStats = '/api/social/public-stats';
   static const socialPostsAutoFortune = '/api/social/posts/auto-fortune';
   static String socialPostDelete(String id) => '/api/social/posts/$id';
   /// canlifal.com ana sayfa canlı yayın listesi (JSON dizi).

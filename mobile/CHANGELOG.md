@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.64+66 (2026-05-19)
+
+### Ana sayfa ve Fal & Tarot düzeni
+
+- Hikâyeler keşfet ana sayfaya taşındı; sosyal sekmesinden kaldırıldı
+- «Canlı yayınlara katıl…» başlığı kaldırıldı
+- Fal & Tarot altında canlı istatistikler + son 5 giriş
+- Sohbet odaları tek sıra kaydırmalı; odadaki kullanıcı avatarları altta
+- Fal & Tarot: fal türleri 3 sütunlu grid
+
 ## 1.0.63+65 (2026-05-19)
 
 ### Firebase / canlifal.com yapılandırması

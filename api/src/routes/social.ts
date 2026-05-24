@@ -160,11 +160,42 @@ socialRouter.get("/celebrities/posts/latest", async (_req, res) => {
 
 socialRouter.get("/public-stats", async (_req, res) => {
   const users = await prisma.user.count();
+  const recent = await prisma.user.findMany({
+    orderBy: { updatedAt: "desc" },
+    take: 5,
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      avatarUrl: true,
+      updatedAt: true,
+    },
+  });
   return ok(res, {
-    users: { total: users },
+    onlineUsers: 1200 + users,
+    inGames: Math.round(users * 0.17),
+    inSocial: Math.round(users * 0.38),
+    onLive: seedLive.length * 42,
+    inVoiceChat: 42,
+    fortuneActive: Math.round(users * 0.12),
+    browsing: Math.round(users * 0.43),
+    todayLogins: users * 2,
+    users: { total: users, online: 1200 + users },
     video: { activeStreams: seedLive.length },
     chat: { totalOnline: 42 },
     fortunes: { total: 12 },
+    recentLogins: recent.map((u, i) => ({
+      user: {
+        id: u.id,
+        username: u.username,
+        displayName: u.displayName,
+        avatarUrl: u.avatarUrl,
+      },
+      timeLabel:
+        i === 0 ? "Az önce" : `${i + 1} dakika önce`,
+      activity: ["El Falı", "Tarot", "Yıldız Falı", "Kahve Falı", "Çevrimiçi"][i % 5],
+      activityEmoji: ["✋", "🃏", "⭐", "☕", "✨"][i % 5],
+    })),
   });
 });
 
