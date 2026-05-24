@@ -14,6 +14,7 @@ import '../widgets/discover/discover_live_carousel.dart';
 import '../widgets/discover/discover_platform_stats.dart';
 import '../widgets/discover/discover_quick_actions.dart';
 import '../widgets/discover/discover_voice_orbs.dart';
+import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../social/presentation/widgets/instagram/social_stories_rail.dart';
 
 /// Keşfet ana sayfa — premium discover layout.
@@ -45,9 +46,7 @@ class _FeedPageState extends ConsumerState<FeedPage> {
         child: DiscoverRefresh.wrap(
           onRefresh: _refresh,
           child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
+            physics: PremiumMotion.listPhysics,
             slivers: [
               SliverSafeArea(
                 top: true,
