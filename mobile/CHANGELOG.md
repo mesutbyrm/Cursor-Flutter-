@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.75+77 (2026-05-19)
+
+### Sesli sohbet — Premium 2026
+
+- Kozmik arka plan, yarım daire 8 mikrofon sahnesi, cam efektli üst/alt bar
+- Sohbet klavyeye yapışık; mesajlar ses (LiveKit/TRTC) bağlanmasa da çalışır
+- Keşfet: kategoriler + öne çıkan odalar; PK savaş ekranı (`/voice-room/:id/pk`)
+- Gold VIP kapısı; alt barda **Jeton Al**; hediye şeridi
+- API: oda `id`/`slug` tek kanonik anahtar (`resolveRoomId`) — presence, mesaj, socket
+
 ## 1.0.64+66 (2026-05-19)
 
 ### Ana sayfa ve Fal & Tarot düzeni
