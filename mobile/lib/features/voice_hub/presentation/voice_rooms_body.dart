@@ -9,10 +9,11 @@ import '../../../core/widgets/discover_tab_layout.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/domain/entities/voice_room_sort.dart';
 import '../../live/presentation/providers/live_providers.dart';
+import 'widgets/premium/voice_discover_header.dart';
 import 'widgets/voice_room_grid_tile.dart';
 
-/// Sesli sohbet — tüm odalar 4 sütunlu grid.
-class VoiceRoomsBody extends ConsumerWidget {
+/// Sesli sohbet keşfet — arama, kategoriler, oda grid.
+class VoiceRoomsBody extends ConsumerStatefulWidget {
   const VoiceRoomsBody({
     super.key,
     this.embeddedInLiveShellTab = false,
@@ -21,7 +22,57 @@ class VoiceRoomsBody extends ConsumerWidget {
   final bool embeddedInLiveShellTab;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VoiceRoomsBody> createState() => _VoiceRoomsBodyState();
+}
+
+class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
+  final _searchCtrl = TextEditingController();
+  var _category = 'Tümü';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  List<VoiceRoomEntity> _filter(List<VoiceRoomEntity> rooms) {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    var out = rooms;
+    if (q.isNotEmpty) {
+      out = out
+          .where(
+            (r) =>
+                r.displayTitle.toLowerCase().contains(q) ||
+                r.slug.toLowerCase().contains(q) ||
+                (r.ownerName?.toLowerCase().contains(q) ?? false),
+          )
+          .toList();
+    }
+    switch (_category) {
+      case 'Popüler':
+        out = [...out]..sort((a, b) => b.displayOnline.compareTo(a.displayOnline));
+      case 'Müzik':
+        out = out
+            .where((r) => _tags(r).any((t) => t.contains('müzik') || t.contains('music')))
+            .toList();
+      case 'Oyun':
+        out = out
+            .where((r) => _tags(r).any((t) => t.contains('oyun') || t.contains('game')))
+            .toList();
+      case 'Sohbet':
+        out = out
+            .where((r) => _tags(r).any((t) => t.contains('sohbet') || t.contains('chat')))
+            .toList();
+    }
+    return out;
+  }
+
+  String _tags(VoiceRoomEntity r) {
+    return '${r.nameTr} ${r.descTr ?? ''} ${r.slug}'.toLowerCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     if (!Env.useNextAuth) {
       return const DiscoverEmptyState(
         icon: Icons.headset_mic_outlined,
@@ -50,8 +101,9 @@ class VoiceRoomsBody extends ConsumerWidget {
         }
 
         final ordered = _orderedRooms(list, myRoom);
+        final filtered = _filter(ordered);
         final mq = MediaQuery.paddingOf(context);
-        final topPad = embeddedInLiveShellTab
+        final topPad = widget.embeddedInLiveShellTab
             ? 8.0
             : mq.top + kToolbarHeight + 4;
 
@@ -67,30 +119,46 @@ class VoiceRoomsBody extends ConsumerWidget {
               SliverPadding(
                 padding: EdgeInsets.fromLTRB(12, topPad, 12, 8),
                 sliver: SliverToBoxAdapter(
-                  child: _RoomsHeader(count: ordered.length),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 100),
-                sliver: SliverGrid.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: VoiceRoomGridTile.crossAxisCount,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: VoiceRoomGridTile.tileAspectRatio,
+                  child: VoiceDiscoverHeader(
+                    searchController: _searchCtrl,
+                    selectedCategory: _category,
+                    onCategory: (c) => setState(() => _category = c),
+                    onSearchChanged: (_) => setState(() {}),
+                    roomCount: filtered.length,
                   ),
-                  itemCount: ordered.length,
-                  itemBuilder: (context, i) {
-                    final r = ordered[i];
-                    final mine = myRoom != null && r.id == myRoom.id;
-                    return VoiceRoomGridTile(
-                      room: r,
-                      isMine: mine,
-                      onTap: () => _openRoom(context, r),
-                    );
-                  },
                 ),
               ),
+              if (filtered.isEmpty)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: DiscoverEmptyState(
+                    icon: Icons.search_off_rounded,
+                    message: 'Aramanıza uygun oda bulunamadı.',
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 100),
+                  sliver: SliverGrid.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: VoiceRoomGridTile.crossAxisCount,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: VoiceRoomGridTile.tileAspectRatio,
+                    ),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, i) {
+                      final r = filtered[i];
+                      final mine = myRoom != null && r.id == myRoom.id;
+                      return VoiceRoomGridTile(
+                        room: r,
+                        isMine: mine,
+                        onTap: () => _openRoom(context, r),
+                      );
+                    },
+                  ),
+                ),
             ],
           ),
         );
@@ -98,7 +166,6 @@ class VoiceRoomsBody extends ConsumerWidget {
     );
   }
 
-  /// En kalabalık odalar önce; kullanıcının kendi odası varsa en üstte.
   static List<VoiceRoomEntity> _orderedRooms(
     List<VoiceRoomEntity> all,
     VoiceRoomEntity? mine,
@@ -111,66 +178,5 @@ class VoiceRoomsBody extends ConsumerWidget {
 
   static void _openRoom(BuildContext context, VoiceRoomEntity room) {
     context.push('/voice-room/${room.id}', extra: room);
-  }
-}
-
-class _RoomsHeader extends StatelessWidget {
-  const _RoomsHeader({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ShaderMask(
-                shaderCallback: (b) => const LinearGradient(
-                  colors: [AppColors.accentCyan, AppColors.accentPink],
-                ).createShader(b),
-                child: const Text(
-                  'Sesli sohbet odaları',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 17,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Tüm odalar · en kalabalık önce',
-                style: TextStyle(
-                  color: AppColors.textMuted.withValues(alpha: 0.95),
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.accentPurple.withValues(alpha: 0.25),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.accentPurple.withValues(alpha: 0.45),
-            ),
-          ),
-          child: Text(
-            '$count oda',
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
-              color: AppColors.accentCyan,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }

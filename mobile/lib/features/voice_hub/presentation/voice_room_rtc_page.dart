@@ -16,15 +16,17 @@ import '../../profile/presentation/providers/profile_providers.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
 import '../../trtc/presentation/trtc_room_manager.dart';
 import '../domain/entities/chat_room_message.dart';
+import '../domain/entities/chat_room_presence.dart';
 import 'providers/chat_room_providers.dart';
-import 'widgets/voice_room/voice_room_action_row.dart';
-import 'widgets/voice_room/voice_room_announcement.dart';
-import 'widgets/voice_room/voice_room_bottom_bar.dart';
-import 'widgets/voice_room/voice_room_chat_panel.dart';
-import 'widgets/voice_room/voice_room_seats_panel.dart';
-import 'widgets/voice_room/voice_room_top_bar.dart';
+import 'providers/voice_room_ui_provider.dart';
+import 'sheets/voice_room_sheets.dart';
+import 'theme/voice_room_tokens.dart';
+import 'widgets/premium/voice_premium_chat.dart';
+import 'widgets/premium/voice_premium_controls.dart';
+import 'widgets/premium/voice_premium_header.dart';
+import 'widgets/premium/voice_premium_stage.dart';
 
-/// Sesli sohbet odası — web neon düzeni + TRTC ses + canlifal.com API.
+/// Premium sesli sohbet odası — TRTC + canlifal API + Clubhouse/Discord düzeni.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
   const VoiceRoomRtcPage({super.key, required this.room});
 
@@ -42,7 +44,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   String? _error;
   var _micOn = true;
   var _leaving = false;
-  var _announcementVisible = true;
 
   @override
   void initState() {
@@ -128,20 +129,22 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
   }
 
-  String _latestSystemJoin(List<ChatRoomMessage> messages) {
-    for (var i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].kind == ChatMessageKind.systemJoin) {
-        return messages[i].content;
-      }
-    }
-    final owner = widget.room.ownerName ?? 'Oda sahibi';
-    return '$owner sohbet odasına katıldı! 🎤';
+  void _openUser(ChatRoomPresence user) {
+    showVoiceUserProfileSheet(
+      context,
+      user: user,
+      isOwner: _isRoomOwner(
+        ref.read(authControllerProvider).valueOrNull?.id ?? '',
+        ref.read(authControllerProvider).valueOrNull?.username ?? '',
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final room = widget.room;
     final live = ref.watch(voiceRoomLiveProvider(room));
+    final ui = ref.watch(voiceRoomUiProvider);
     final coins = ref.watch(coinBalanceProvider).valueOrNull ??
         ref.watch(authControllerProvider).valueOrNull?.coinBalance ??
         0;
@@ -151,6 +154,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final user = ref.watch(authControllerProvider).valueOrNull;
     final isOwner = user != null && _isRoomOwner(user.id, user.username);
     final speakingId = _micOn ? user?.id : null;
+    final bottom = MediaQuery.paddingOf(context).bottom;
 
     return PopScope(
       canPop: false,
@@ -159,7 +163,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         await _leave();
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: VoiceRoomTokens.bgDeep,
         body: Stack(
           fit: StackFit.expand,
           children: [
@@ -186,89 +190,134 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 6, 10, 0),
-                      child: VoiceRoomTopBar(
+                      padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                      child: VoicePremiumHeader(
                         room: room,
                         onlineCount: online,
-                        isCurrentUserOwner: isOwner,
+                        isOwner: isOwner,
                         onBack: _leave,
                         onExit: _leave,
                         onShare: _shareRoom,
+                        onAudience: () => showVoiceSpeakerListSheet(
+                          context,
+                          presence: live.presence,
+                          room: room,
+                          onUserTap: _openUser,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      flex: 5,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: VoicePremiumStage(
+                          room: room,
+                          presence: live.presence,
+                          speakingUserId: speakingId,
+                          onUserTap: _openUser,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 4,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                        child: VoicePremiumChat(
+                          messages: live.messages,
+                          onUserTap: (id, name) {
+                            ChatRoomPresence? p;
+                            for (final e in live.presence) {
+                              if (e.id == id) {
+                                p = e;
+                                break;
+                              }
+                            }
+                            if (p != null) {
+                              _openUser(p);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: VoicePremiumMessageBar(
+                        controller: _messageCtrl,
+                        sending: live.sending,
+                        onSend: () {
+                          final text = _messageCtrl.text;
+                          _messageCtrl.clear();
+                          ref
+                              .read(voiceRoomLiveProvider(room).notifier)
+                              .sendMessage(text);
+                        },
+                        onGift: () =>
+                            showPremiumVoiceGiftShop(context, ref, room: room),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: VoiceRoomSeatsPanel(
-                        room: room,
-                        presence: live.presence,
-                        speakingUserId: speakingId,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Column(
-                          children: [
-                            if (_announcementVisible)
-                              VoiceRoomAnnouncement(
-                                text: room.descTr?.trim().isNotEmpty == true
-                                    ? room.descTr!.trim()
-                                    : 'Sohbet odasına hoş geldiniz...',
-                                onDismiss: () =>
-                                    setState(() => _announcementVisible = false),
-                              ),
-                            if (_announcementVisible) const SizedBox(height: 6),
-                            VoiceRoomSystemBanner(
-                              message: _latestSystemJoin(live.messages),
-                            ),
-                            const SizedBox(height: 8),
-                            VoiceRoomActionRow(
-                              dj: live.dj,
-                              onMusicTap: () {
-                                final msg = live.dj.canPlayMusic
-                                    ? 'DJ müziği odada çalıyor'
-                                    : 'Müzik DJ sırasına bağlı — DJ paneli yakında';
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(msg)),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 8),
-                            Expanded(
-                              child: VoiceRoomChatPanel(
-                                messages: live.messages,
-                              ),
-                            ),
-                          ],
+                      child: VoicePremiumControls(
+                        micOn: _micOn,
+                        headphonesOn: ui.headphonesOn,
+                        onMic: () {
+                          final next = !_micOn;
+                          _trtc.setMicEnabled(next);
+                          setState(() => _micOn = next);
+                        },
+                        onHeadphones: () => ref
+                            .read(voiceRoomUiProvider.notifier)
+                            .toggleHeadphones(),
+                        onRequestSpeak: () => showVoiceRequestSpeakSheet(
+                          context,
+                          ref,
+                          pending: ui.requestSpeakPending,
+                        ),
+                        onEffects: () => showVoiceEffectsSheet(context, ref),
+                        onMore: () => showVoiceMoreMenuSheet(
+                          context,
+                          onSettings: () => showVoiceRoomSettingsSheet(
+                            context,
+                            ref,
+                            isOwner: isOwner,
+                          ),
+                          onSpeakers: () => showVoiceSpeakerListSheet(
+                            context,
+                            presence: live.presence,
+                            room: room,
+                            onUserTap: _openUser,
+                          ),
+                          onShare: _shareRoom,
                         ),
                       ),
                     ),
-                    VoiceRoomBottomBar(
-                      controller: _messageCtrl,
-                      coinBalance: coins,
-                      micOn: _micOn,
-                      sending: live.sending,
-                      onMicToggle: () {
-                        final next = !_micOn;
-                        _trtc.setMicEnabled(next);
-                        setState(() => _micOn = next);
-                      },
-                      onSend: () {
-                        final text = _messageCtrl.text;
-                        _messageCtrl.clear();
-                        ref
-                            .read(voiceRoomLiveProvider(room).notifier)
-                            .sendMessage(text);
-                      },
-                      onRefresh: () =>
-                          ref.read(voiceRoomLiveProvider(room).notifier).refresh(),
-                      onShare: _shareRoom,
-                      onTopUp: () => context.push('/jeton-store'),
-                      onGiftTap: () => context.push(
-                            '/gift-send?roomId=${Uri.encodeComponent(room.id)}',
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16, 6, 16, bottom + 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            '💎 $coins jeton',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12,
+                              color: AppColors.diamondBlue,
+                            ),
                           ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () => context.push('/jeton-store'),
+                            child: const Text('Jeton yükle'),
+                          ),
+                          TextButton(
+                            onPressed: () => ref
+                                .read(voiceRoomLiveProvider(room).notifier)
+                                .refresh(),
+                            child: const Text('Yenile'),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -290,33 +339,25 @@ class _RoomBackground extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        const DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [AppColors.bgPurpleGlow, AppColors.background],
-            ),
-          ),
-        ),
+        const DecoratedBox(decoration: BoxDecoration(gradient: VoiceRoomTokens.roomGradient)),
         if (url != null && url!.isNotEmpty)
           CachedNetworkImage(
             imageUrl: url!,
             fit: BoxFit.cover,
-            color: Colors.black.withValues(alpha: 0.55),
+            color: Colors.black.withValues(alpha: 0.6),
             colorBlendMode: BlendMode.darken,
           ),
         ClipRect(
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-            child: Container(
+            filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+            child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.2),
-                    AppColors.background.withValues(alpha: 0.92),
+                    VoiceRoomTokens.neonPurple.withValues(alpha: 0.12),
+                    VoiceRoomTokens.bgDeep.withValues(alpha: 0.95),
                   ],
                 ),
               ),
