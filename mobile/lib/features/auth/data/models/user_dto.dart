@@ -68,6 +68,9 @@ abstract class UserDto with _$UserDto {
     );
   }
 
+  String? roleFrom(Map<String, dynamic> json) =>
+      pick(json, ['role', 'tier'])?.toString();
+
   /// Geriye dönük uyumluluk.
   factory UserDto.fromJson(Map<String, dynamic> json) => UserDto.fromApiMap(json);
 
@@ -88,12 +91,13 @@ abstract class UserDto with _$UserDto {
     return UserDto.fromApiMap(merged);
   }
 
-  UserEntity toEntity() => UserEntity(
+  UserEntity toEntity({String? role}) => UserEntity(
         id: id,
         username: username,
         displayName: displayName,
         avatarUrl: avatarUrl,
         bio: bio,
+        role: role,
         followersCount: followersCount,
         followingCount: followingCount,
         isFollowing: isFollowing,

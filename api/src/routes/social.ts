@@ -66,18 +66,6 @@ const seedLive = [
   },
 ];
 
-const seedRooms = [
-  {
-    id: "room-1",
-    nameTr: "Genel Sohbet",
-    descTr: "Herkes hoş geldin",
-    onlineCount: 42,
-    unreadCount: 3,
-    isVoice: true,
-    owner: { displayName: "Moderatör", image: "https://canlifal.com/favicon.ico" },
-  },
-];
-
 const seedNotifications = [
   {
     id: "n-1",
@@ -104,24 +92,6 @@ socialRouter.get("/trend-videos", async (req, res) => {
 
 socialRouter.get("/video-streams", async (_req, res) => {
   return ok(res, { items: seedLive });
-});
-
-socialRouter.get("/chat/rooms", async (_req, res) => {
-  return ok(res, { rooms: seedRooms });
-});
-
-socialRouter.get("/chat/rooms/:roomId/messages", requireAuth, async (req, res) => {
-  const roomId = req.params.roomId;
-  return ok(res, {
-    items: [
-      {
-        id: "m-1",
-        body: "Merhaba! $roomId odasına hoş geldin.",
-        sentAt: new Date().toISOString(),
-        sender: { displayName: "Sistem", username: "system" },
-      },
-    ],
-  });
 });
 
 socialRouter.get("/announcements", async (_req, res) => {

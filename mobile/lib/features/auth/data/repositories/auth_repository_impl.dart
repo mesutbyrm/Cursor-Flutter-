@@ -46,11 +46,13 @@ class AuthRepositoryImpl implements AuthRepository {
     }
     final um = _userMap(body);
     if (um != null) {
-      return UserDto.fromJson(um).toEntity();
+      final dto = UserDto.fromJson(um);
+      return dto.toEntity(role: dto.roleFrom(um));
     }
     final me = await _remote.me();
     final um2 = _userMap(me) ?? me;
-    return UserDto.fromJson(um2).toEntity();
+    final dto = UserDto.fromJson(um2);
+    return dto.toEntity(role: dto.roleFrom(um2));
   }
 
   @override
@@ -109,7 +111,8 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final me = await _remote.me();
       final um = _userMap(me) ?? me;
-      return UserDto.fromJson(um).toEntity();
+      final dto = UserDto.fromJson(um);
+      return dto.toEntity(role: dto.roleFrom(um));
     } catch (_) {
       await _tokens.clear();
       return null;

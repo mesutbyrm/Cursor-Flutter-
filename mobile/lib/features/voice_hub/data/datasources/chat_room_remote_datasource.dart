@@ -21,29 +21,48 @@ class ChatRoomRemoteDataSource {
 
   static String djPath(String roomId) => '/api/chat/rooms/$roomId/dj';
 
+  static String backgroundsPath() => '/api/chat/rooms/backgrounds';
+
+  static String speakRequestPath(String roomId) =>
+      '/api/chat/rooms/$roomId/speak-request';
+
+  static String roomBackgroundPath(String roomId) =>
+      '/api/chat/rooms/$roomId/background';
+
+  Map<String, dynamic>? _unwrapMap(dynamic body) {
+    if (body is Map<String, dynamic>) {
+      if (body['success'] == true && body['data'] != null) {
+        final data = body['data'];
+        if (data is Map<String, dynamic>) return data;
+        if (data is Map) return Map<String, dynamic>.from(data);
+      }
+      return body;
+    }
+    if (body is Map) return Map<String, dynamic>.from(body);
+    return null;
+  }
+
+  List<Map<String, dynamic>> _messageList(dynamic body) {
+    final map = _unwrapMap(body) ?? (body is Map ? asJsonMap(body) : null);
+    if (map != null) {
+      final list = map['messages'] ?? map['items'];
+      return asJsonList(list);
+    }
+    if (body is List) return asJsonList(body);
+    return const [];
+  }
+
   Future<List<ChatRoomMessage>> fetchMessages(String roomId) async {
     final res = await _dio.safeGet<dynamic>(messagesPath(roomId));
-    final body = res.data;
-    Map<String, dynamic>? map;
-    if (body is Map<String, dynamic>) {
-      map = body;
-    } else if (body is Map) {
-      map = Map<String, dynamic>.from(body);
-    }
-    if (map == null) return const [];
-    final list = map['messages'] ?? map['items'];
-    if (list is! List) return const [];
-    return list
-        .map((e) => ChatRoomMessage.fromJson(asJsonMap(e)))
-        .where((m) => m.id.isNotEmpty)
+    return _messageList(res.data)
+        .map(ChatRoomMessage.fromJson)
+        .where((m) => m.id.isNotEmpty || m.content.isNotEmpty)
         .toList();
   }
 
   Future<List<ChatRoomPresence>> fetchPresence(String roomId) async {
     final res = await _dio.safeGet<dynamic>(presencePath(roomId));
-    final body = res.data;
-    if (body is! Map) return const [];
-    final map = Map<String, dynamic>.from(body);
+    final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
     final users = map['users'];
     if (users is! List) return const [];
     return users
@@ -52,11 +71,62 @@ class ChatRoomRemoteDataSource {
         .toList();
   }
 
+  Future<void> joinPresence(String roomId) async {
+    await _dio.safePost<dynamic>(presencePath(roomId));
+  }
+
+  Future<void> leavePresence(String roomId) async {
+    await _dio.safeDelete<dynamic>(presencePath(roomId));
+  }
+
   Future<ChatRoomDjState> fetchDj(String roomId) async {
     final res = await _dio.safeGet<dynamic>(djPath(roomId));
-    final body = res.data;
-    if (body is! Map) return const ChatRoomDjState();
-    return ChatRoomDjState.fromJson(Map<String, dynamic>.from(body));
+    final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+    if (map.isEmpty) return const ChatRoomDjState();
+    return ChatRoomDjState.fromJson(map);
+  }
+
+  Future<ChatRoomDjState> updateDj({
+    required String roomId,
+    String? musicUrl,
+    required bool playing,
+  }) async {
+    final res = await _dio.safePost<dynamic>(
+      djPath(roomId),
+      data: jsonEncode({
+        if (musicUrl != null) 'musicUrl': musicUrl,
+        'playing': playing,
+      }),
+      options: Options(contentType: 'application/json'),
+    );
+    final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+    return ChatRoomDjState.fromJson(map);
+  }
+
+  Future<List<String>> fetchBackgrounds() async {
+    final res = await _dio.safeGet<dynamic>(backgroundsPath());
+    final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+    final raw = map['backgrounds'];
+    if (raw is! List) return const [];
+    return raw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+  }
+
+  Future<void> setRoomBackground({
+    required String roomId,
+    required String backgroundImage,
+  }) async {
+    await _dio.safePatch<dynamic>(
+      roomBackgroundPath(roomId),
+      data: jsonEncode({'backgroundImage': backgroundImage}),
+    );
+  }
+
+  Future<void> requestSpeak(String roomId) async {
+    await _dio.safePost<dynamic>(speakRequestPath(roomId));
+  }
+
+  Future<void> cancelSpeakRequest(String roomId) async {
+    await _dio.safeDelete<dynamic>(speakRequestPath(roomId));
   }
 
   Future<ChatRoomMessage?> sendMessage({
@@ -68,12 +138,10 @@ class ChatRoomRemoteDataSource {
       data: jsonEncode({'content': content}),
       options: Options(contentType: 'application/json'),
     );
-    final body = res.data;
-    if (body is Map) {
-      final msg = body['message'] ?? body;
-      if (msg is Map) {
-        return ChatRoomMessage.fromJson(Map<String, dynamic>.from(msg));
-      }
+    final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+    final msg = map['message'] ?? map;
+    if (msg is Map) {
+      return ChatRoomMessage.fromJson(Map<String, dynamic>.from(msg));
     }
     return null;
   }
