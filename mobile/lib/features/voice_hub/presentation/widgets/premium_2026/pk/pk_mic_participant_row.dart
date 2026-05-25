@@ -37,7 +37,7 @@ class PkMicParticipantRow extends StatelessWidget {
             Expanded(
               child: Center(
                 child: seats[i].displayName.isEmpty
-                    ? _EmptyMicSlot(index: i + 1)
+                    ? _EmptyMicSeat(index: i + 1)
                     : VoiceMicSeat(
                         user: seats[i],
                         seatIndex: i + 1,
