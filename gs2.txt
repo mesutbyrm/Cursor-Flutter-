@@ -1,0 +1,20 @@
+## main...origin/main [ahead 1, behind 1]
+?? .agent-build-apk.sh
+?? .agent-ci-check.sh
+?? .agent-gh-release.sh
+?? .agent-git-branch.sh
+?? .agent-git-commit.sh
+?? .agent-git-commit2.sh
+?? .agent-git-status.sh
+?? .agent-log.sh
+?? .agent-push-auth-fix.sh
+?? .agent-push-fix.sh
+?? .agent-test-nextauth.sh
+?? .agent-trigger-build.sh
+?? analyze-out.txt
+?? api-build-out.txt
+?? api-build.txt
+?? apk-build-status.txt
+?? apk-check.txt
+?? apk-dl-list.txt
+?? auth-analyze.txt

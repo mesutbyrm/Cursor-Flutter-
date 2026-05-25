@@ -116,7 +116,7 @@ class ChatRoomMessage extends Equatable {
       kind = ChatMessageKind.systemLeave;
     } else if (content.startsWith('[SYSTEM_LEAVE]')) {
       kind = ChatMessageKind.systemLeave;
-    } else if (content.contains('gönderdi') || content.contains('Gül')) {
+    } else if (_looksLikeGiftMessage(content)) {
       kind = ChatMessageKind.gift;
       giftEmoji = '🌹';
       final m = RegExp(r'x(\d+)').firstMatch(content);
@@ -141,6 +141,12 @@ class ChatRoomMessage extends Equatable {
       giftCount: giftCount,
       giftTargetName: giftTarget,
     );
+  }
+
+  static bool _looksLikeGiftMessage(String content) {
+    final lower = content.toLowerCase();
+    if (!lower.contains('gönderdi') && !lower.contains('hediye')) return false;
+    return RegExp(r'[🌹🎁💎✨🎉]|x\d+', caseSensitive: false).hasMatch(content);
   }
 
   static String _displayContent(String raw, ChatMessageKind kind) {

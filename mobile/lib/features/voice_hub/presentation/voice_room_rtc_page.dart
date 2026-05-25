@@ -27,14 +27,14 @@ import 'providers/voice_room_audio_providers.dart';
 import 'providers/voice_room_ui_provider.dart';
 import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
-import 'pages/voice_gold_vip_page.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
 import 'widgets/premium/voice_gift_flight_overlay.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
-import 'widgets/premium_2026/voice_half_circle_stage.dart';
+import 'widgets/premium_2026/voice_grid_stage.dart';
+import 'widgets/premium_2026/voice_room_audience_strip.dart';
 import 'widgets/premium_2026/voice_live_bottom_bar_2026.dart';
 import 'widgets/premium_2026/voice_live_chat_dock.dart' show VoiceLiveChatFeed, VoiceLiveMessageInput;
 import 'widgets/premium_2026/voice_live_header_2026.dart';
@@ -92,11 +92,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     super.dispose();
   }
 
-  void _sendChatMessage(VoiceRoomEntity room) {
+  Future<void> _sendChatMessage(VoiceRoomEntity room) async {
     final text = _messageCtrl.text;
     if (text.trim().isEmpty) return;
     _messageCtrl.clear();
-    ref.read(voiceRoomLiveProvider(room).notifier).sendMessage(text);
+    await ref.read(voiceRoomLiveProvider(room).notifier).sendMessage(text);
+    if (!mounted) return;
+    final err = ref.read(voiceRoomLiveProvider(room)).error;
+    if (err != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+    }
   }
 
   void _startGiftRealtime() {
@@ -418,6 +423,19 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         : null;
     final viewInsets = MediaQuery.viewInsetsOf(context);
     final keyboardOpen = viewInsets.bottom > 0;
+    final mq = MediaQuery.sizeOf(context);
+    final audience = voiceAudienceOffStage(presence: live.presence, room: room);
+    final chatMaxH = keyboardOpen
+        ? (mq.height * 0.22).clamp(100.0, 160.0)
+        : (mq.height * 0.28).clamp(120.0, 220.0);
+
+    ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(room), (prev, next) {
+      if (prev?.error != next.error && next.error != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.error!)),
+        );
+      }
+    });
 
     return PopScope(
       canPop: false,
@@ -534,26 +552,29 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     ),
                   ),
                   Expanded(
-                    child: Stack(
-                      clipBehavior: Clip.none,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Positioned.fill(
-                          child: VoiceHalfCircleStage(
-                            room: room,
-                            presence: live.presence,
-                            speakingUserId: speakingId,
-                            onUserTap: _openUser,
-                            onEmptySeatTap: () =>
-                                _requestSpeakFromSeat(context, room, ui),
-                          ),
+                        VoiceGridStage(
+                          room: room,
+                          presence: live.presence,
+                          speakingUserId: speakingId,
+                          onUserTap: _openUser,
+                          onEmptySeatTap: () =>
+                              _requestSpeakFromSeat(context, room, ui),
                         ),
-                        Positioned(
-                          left: 12,
-                          right: 12,
-                          bottom: 8,
+                        if (!keyboardOpen)
+                          VoiceRoomAudienceStrip(
+                            audience: audience,
+                            totalOnline: online,
+                            onUserTap: _openUser,
+                          ),
+                        const Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                           child: VoiceLiveChatFeed(
                             messages: live.messages,
-                            maxHeight: keyboardOpen ? 120 : 200,
+                            maxHeight: chatMaxH,
                             onUserTap: (id, _) {
                               for (final e in live.presence) {
                                 if (e.id == id) {
@@ -599,7 +620,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       controller: _messageCtrl,
                       focusNode: _messageFocus,
                       sending: live.sending,
-                      onSend: () => _sendChatMessage(room),
+                      onSend: () => unawaited(_sendChatMessage(room)),
                     ),
                     if (!keyboardOpen)
                       VoiceLiveBottomBar2026(

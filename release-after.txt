@@ -1,0 +1,5 @@
+title:	Canlifal APK 1.0.46+48
+tag:	apk-latest
+draft:	false
+prerelease:	false
+author:	github-actions[bot]
