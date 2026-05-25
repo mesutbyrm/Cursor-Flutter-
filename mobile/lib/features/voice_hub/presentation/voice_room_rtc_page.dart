@@ -46,7 +46,6 @@ import 'widgets/voice_room/voice_room_action_row.dart';
 import 'widgets/voice_room/voice_room_announcement.dart'
     show VoiceRoomSystemBanner;
 import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
-import 'widgets/voice_room_gift_sheet.dart';
 
 /// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
@@ -394,57 +393,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       perms: perms,
       isOwner: isOwner,
       onUserTap: _openUser,
-    );
-  }
-
-  void _openMoreMenu(
-    BuildContext context, {
-    required VoiceRoomEntity room,
-    required VoiceRoomLiveState live,
-    required VoiceRoomPermissions perms,
-    required bool isOwner,
-    required VoiceRoomUiState ui,
-  }) {
-    showVoiceMoreMenuSheet(
-      context,
-      ref: ref,
-      room: room,
-      live: live,
-      perms: perms,
-      onSettings: () => showVoiceRoomSettingsSheet(
-        context,
-        ref,
-        room: room,
-        isOwner: isOwner,
-        perms: perms,
-        presence: live.presence,
-        onUserTap: _openUser,
-      ),
-      onSpeakers: () => showVoiceSpeakerListSheet(
-        context,
-        presence: live.presence,
-        room: room,
-        onUserTap: _openUser,
-      ),
-      onShare: _shareRoom,
-      onBackgroundMusic: () async {
-        final enabled = !ui.backgroundMusicEnabled;
-        ref.read(voiceRoomUiProvider.notifier).toggleBackgroundMusic();
-        final err = await ref
-            .read(voiceRoomLiveProvider(room).notifier)
-            .toggleBackgroundMusic(enabled);
-        if (context.mounted && err != null) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-        }
-      },
-      onPickBackground: perms.canChangeBackground
-          ? () => _pickBackground(context, room)
-          : null,
-      onPkBattle: () => context.push(
-        '/voice-room/${room.apiRoomKey}/pk',
-        extra: room,
-      ),
-      onGoldVip: () => context.push('/vip-gold'),
     );
   }
 
