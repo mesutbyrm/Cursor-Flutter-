@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/chat_room_presence.dart';
-import '../../../vip_gold/domain/vip_tier.dart';
-import '../../../vip_gold/presentation/widgets/vip_badge.dart';
+import '../../../../vip_gold/domain/vip_tier.dart';
+import '../../../../vip_gold/presentation/widgets/vip_badge.dart';
 import '../../theme/voice_room_tokens.dart';
 import '../premium/voice_neon_avatar.dart';
 import 'voice_audio_wave_ring.dart';

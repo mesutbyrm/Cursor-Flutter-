@@ -50,6 +50,6 @@ class LiveRoomInteractionNotifier extends Notifier<LiveRoomInteractionState> {
 }
 
 final liveRoomInteractionProvider =
-    NotifierProvider.autoDispose<LiveRoomInteractionNotifier, LiveRoomInteractionState>(
+    NotifierProvider<LiveRoomInteractionNotifier, LiveRoomInteractionState>(
   LiveRoomInteractionNotifier.new,
 );

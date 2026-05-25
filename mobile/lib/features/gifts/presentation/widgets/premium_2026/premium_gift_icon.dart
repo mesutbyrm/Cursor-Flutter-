@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/premium_gift_catalog_2026.dart';
 
 /// Lottie/Rive yokken TikTok kalitesinde 3D-benzeri hediye illüstrasyonu.
@@ -24,7 +24,7 @@ class PremiumGiftIcon extends StatelessWidget {
     final rarity = PremiumGiftCatalog2026.rarity(giftId);
     final glow = rarity.glowColor;
 
-    Widget painter;
+    CustomPainter? painter;
     switch (id) {
       case 'roket':
         painter = _RocketPainter(glow: glow);

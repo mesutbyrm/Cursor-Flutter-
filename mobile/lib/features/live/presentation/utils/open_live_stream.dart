@@ -74,7 +74,7 @@ Future<void> openLiveStreamSwipe(
   LiveStreamEntity stream,
 ) async {
   final all = ref.read(liveStreamsProvider).valueOrNull ?? [stream];
-  final live = all.where((s) => s.isLive).toList();
+  var live = all.where((s) => s.isLive).toList();
   if (live.isEmpty) live.add(stream);
 
   var index = live.indexWhere((s) => s.id == stream.id);

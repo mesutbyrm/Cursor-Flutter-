@@ -27,7 +27,7 @@ class VipUnlockedRooms extends Notifier<Set<String>> {
 }
 
 final vipUnlockedRoomsProvider =
-    NotifierProvider.autoDispose<VipUnlockedRooms, Set<String>>(
+    NotifierProvider<VipUnlockedRooms, Set<String>>(
   VipUnlockedRooms.new,
 );
 

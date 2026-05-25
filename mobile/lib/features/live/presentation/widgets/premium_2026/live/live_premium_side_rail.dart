@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../../../core/theme/app_colors.dart';
 
 /// Sağ dikey aksiyon şeridi — beğeni, hediye, paylaş.
 class LivePremiumSideRail extends StatelessWidget {

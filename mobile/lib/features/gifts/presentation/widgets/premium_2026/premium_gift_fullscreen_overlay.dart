@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/premium_gift_catalog_2026.dart';
 import '../../../../live/domain/entities/live_gift_event.dart';
 import '../../../../live/presentation/gifts/widgets/floating_gift_particles.dart';

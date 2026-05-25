@@ -221,7 +221,6 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
 
 }
 
-final pkBattleProvider =
-    NotifierProvider.autoDispose<PkBattleNotifier, PkBattleState>(
+final pkBattleProvider = NotifierProvider<PkBattleNotifier, PkBattleState>(
   PkBattleNotifier.new,
 );

@@ -24,7 +24,7 @@ abstract final class VipGoldTokens {
     ],
   );
 
-  static const LinearGradient goldRadial = RadialGradient(
+  static const RadialGradient goldRadial = RadialGradient(
     colors: [
       Color(0x66FFD54F),
       Color(0x22FFD54F),

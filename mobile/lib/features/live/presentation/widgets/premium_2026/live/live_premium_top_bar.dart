@@ -3,10 +3,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/ui/premium/live_badge.dart';
-import '../../../../../core/widgets/user_avatar.dart';
-import '../../../domain/entities/live_broadcast_session.dart';
+import '../../../../../../core/theme/app_colors.dart';
+import '../../../../../../core/ui/premium/live_badge.dart';
+import '../../../../../../core/widgets/user_avatar.dart';
+import '../../../../domain/entities/live_broadcast_session.dart';
 
 /// TikTok tarzı üst bar — blur, takip, izleyici, neon.
 class LivePremiumTopBar extends StatelessWidget {

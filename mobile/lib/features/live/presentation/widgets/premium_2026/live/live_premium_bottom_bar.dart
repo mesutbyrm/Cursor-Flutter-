@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../trtc/presentation/trtc_room_manager.dart';
+import '../../../../../../core/theme/app_colors.dart';
+import '../../../../../trtc/presentation/trtc_room_manager.dart';
 
 /// Alt cam giriş çubuğu + yayıncı kontrolleri.
 class LivePremiumBottomBar extends StatelessWidget {
