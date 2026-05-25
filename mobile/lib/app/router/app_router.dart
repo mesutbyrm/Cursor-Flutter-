@@ -23,8 +23,10 @@ import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
 import '../../features/gifts/presentation/pages/gift_send_page.dart';
 import '../../features/live/domain/entities/live_broadcast_session.dart';
 import '../../features/live/presentation/pages/live_broadcast_prep_page.dart';
+import '../../features/live/domain/entities/live_swipe_feed_args.dart';
 import '../../features/live/presentation/pages/live_broadcast_room_page.dart';
 import '../../features/live/presentation/pages/live_page.dart';
+import '../../features/live/presentation/pages/live_swipe_viewer_page.dart';
 import '../../features/social/presentation/pages/social_create_post_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
@@ -252,6 +254,19 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final child = session == null
               ? const LiveBroadcastPrepPage()
               : LiveBroadcastRoomPage(session: session);
+          return AppPageTransitions.fadeSlide(
+            key: state.pageKey,
+            child: child,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/live/swipe',
+        pageBuilder: (context, state) {
+          final args = state.extra as LiveSwipeFeedArgs?;
+          final child = args == null || args.streams.isEmpty
+              ? const LivePage()
+              : LiveSwipeViewerPage(args: args);
           return AppPageTransitions.fadeSlide(
             key: state.pageKey,
             child: child,

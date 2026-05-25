@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.81+83 (2026-05-19)
+
+### PART 6 — Premium canlı yayın (TikTok tarzı)
+
+- Immersive fullscreen: gradient scrim, blur üst/alt overlay
+- Canlı yorumlar: cam baloncuklu `LivePremiumChatFeed`
+- Çift dokunuş kalpleri + yüzen heart parçacıkları
+- Premium top bar: takip API, izleyici, süre, neon glow
+- Sağ rail: beğeni / hediye / paylaş; hediye fullscreen + bildirimler
+- Dikey swipe: `/live/swipe` — yayınlar arası TikTok geçişi
+- Varsayılan açılış swipe modunda (`openLiveStreamNative`)
+
 ## 1.0.80+82 (2026-05-19)
 
 ### PART 5 — Premium PK savaş sistemi

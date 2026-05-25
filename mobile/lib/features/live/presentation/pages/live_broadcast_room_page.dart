@@ -7,11 +7,13 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
+import '../../../moderation/domain/entities/report_target.dart';
+import '../../../moderation/presentation/utils/open_report_flow.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
-import '../../../moderation/domain/entities/report_target.dart';
-import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../gifts/live_gift_controller.dart';
@@ -19,20 +21,24 @@ import '../gifts/providers/live_gift_providers.dart';
 import '../gifts/widgets/floating_gift_particles.dart';
 import '../gifts/widgets/gift_fullscreen_overlay.dart';
 import '../gifts/widgets/gift_notification_stack.dart';
-import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../providers/live_providers.dart';
-import '../widgets/broadcast_room/live_room_bottom_bar.dart';
+import '../providers/live_room_interaction_provider.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
-import '../widgets/broadcast_room/live_room_chat_panel.dart';
-import '../widgets/broadcast_room/live_room_side_actions.dart';
-import '../widgets/broadcast_room/live_room_top_bar.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
+import '../widgets/premium_2026/live_premium_2026.dart';
 
-/// Aktif canlı yayın — TRTC + modüler premium katmanlar.
+/// Premium 2026 canlı yayın — TRTC + immersive overlay + hediye + kalpler.
 class LiveBroadcastRoomPage extends ConsumerStatefulWidget {
-  const LiveBroadcastRoomPage({super.key, required this.session});
+  const LiveBroadcastRoomPage({
+    super.key,
+    required this.session,
+    this.embeddedInSwipe = false,
+    this.onSwipeClose,
+  });
 
   final LiveBroadcastSession session;
+  final bool embeddedInSwipe;
+  final VoidCallback? onSwipeClose;
 
   @override
   ConsumerState<LiveBroadcastRoomPage> createState() =>
@@ -49,16 +55,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       user: 'Ayşe',
       text: 'Merhaba! Yayına hoş geldin 💜',
     ),
-    const LiveRoomChatMessage(user: 'Sistem', text: 'Berk katıldı', isSystem: true),
-    const LiveRoomChatMessage(user: 'Mehmet', text: 'Harika görünüyorsun!'),
+    const LiveRoomChatMessage(
+      user: 'Sistem',
+      text: 'Canlı yayına hoş geldin',
+      isSystem: true,
+    ),
   ];
 
   late Timer _timer;
   Duration _elapsed = Duration.zero;
   final _particlesKey = GlobalKey<FloatingGiftParticlesState>();
+  final _heartsKey = GlobalKey<LiveFloatingHeartsOverlayState>();
   Key _localPreviewKey = UniqueKey();
   var _leaving = false;
-  var _following = false;
 
   @override
   void initState() {
@@ -67,6 +76,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       if (mounted) setState(() => _elapsed += const Duration(seconds: 1));
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(liveRoomInteractionProvider.notifier).reset(initialLikes: 12500);
       _initTrtc();
       _initGifts();
     });
@@ -76,12 +86,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     final streamId = widget.session.streamId;
     if (streamId == null || streamId.isEmpty) return;
     final user = ref.read(authControllerProvider).valueOrNull;
-    final gifts = ref.read(liveGiftControllerProvider);
-    gifts.attach(
-      streamId: streamId,
-      receiverName: widget.session.streamerName ?? 'Yayıncı',
-      initialCoins: user?.coinBalance,
-    );
+    ref.read(liveGiftControllerProvider).attach(
+          streamId: streamId,
+          receiverName: widget.session.streamerName ?? 'Yayıncı',
+          initialCoins: user?.coinBalance,
+        );
   }
 
   Future<void> _initTrtc() async {
@@ -153,7 +162,43 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     }
     ref.invalidate(liveStreamsProvider);
     if (!context.mounted) return;
-    context.go('/feed');
+    if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+      widget.onSwipeClose!();
+    } else {
+      context.go('/feed');
+    }
+  }
+
+  Future<void> _onFollow() async {
+    final hostId = widget.session.hostUserId;
+    if (hostId == null || hostId.isEmpty) {
+      ref.read(liveRoomInteractionProvider.notifier).setFollowing(true);
+      return;
+    }
+    final notifier = ref.read(liveRoomInteractionProvider.notifier);
+    notifier.setFollowLoading(true);
+    try {
+      await ref.read(profileRepositoryProvider).follow(hostId);
+      notifier.setFollowing(true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    } finally {
+      notifier.setFollowLoading(false);
+    }
+  }
+
+  void _onDoubleTapHeart() {
+    ref.read(liveRoomInteractionProvider.notifier).burstHearts(likes: 3);
+  }
+
+  String _fmtLikes(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return '$n';
   }
 
   Widget _videoLayer(LiveBroadcastSession s) {
@@ -207,9 +252,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   Widget build(BuildContext context) {
     final s = widget.session;
     final top = MediaQuery.paddingOf(context).top;
-    final bottom = MediaQuery.paddingOf(context).bottom;
     final giftCtrl = ref.watch(liveGiftControllerProvider);
     final user = ref.watch(authControllerProvider).valueOrNull;
+    final interaction = ref.watch(liveRoomInteractionProvider);
 
     ref.listen<LiveGiftController>(liveGiftControllerProvider, (prev, next) {
       final ev = next.activeFullscreen;
@@ -219,21 +264,29 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           emoji,
           count: 6 + ev.combo.clamp(0, 12).toInt(),
         );
+        ref.read(liveRoomInteractionProvider.notifier).burstHearts(likes: 2);
       }
     });
 
     return PopScope(
-      canPop: false,
+      canPop: widget.embeddedInSwipe,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
         await _confirmEnd(context);
       },
       child: Scaffold(
         backgroundColor: Colors.black,
+        extendBodyBehindAppBar: true,
         body: Stack(
           fit: StackFit.expand,
           children: [
             Positioned.fill(child: _videoLayer(s)),
+            const LiveImmersiveScrim(),
+            LiveFloatingHeartsOverlay(
+              key: _heartsKey,
+              burstToken: interaction.heartBurstToken,
+              onDoubleTap: _onDoubleTapHeart,
+            ),
             FloatingGiftParticles(key: _particlesKey),
             GiftFullscreenOverlay(event: giftCtrl.activeFullscreen),
             SafeArea(
@@ -241,17 +294,21 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                 children: [
                   Padding(
                     padding: EdgeInsets.fromLTRB(12, top > 0 ? 4 : 12, 12, 0),
-                    child: LiveRoomTopBar(
+                    child: LivePremiumTopBar(
                       session: s,
                       time: _timeLabel,
-                      following: _following,
-                      onFollow: () => setState(() => _following = true),
+                      following: interaction.following,
+                      followLoading: interaction.followLoading,
+                      onFollow: _onFollow,
                       onClose: () => _confirmEnd(context),
+                      onBack: widget.embeddedInSwipe
+                          ? () => widget.onSwipeClose?.call()
+                          : null,
                     ),
                   ),
                   if (s.isHost)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                       child: Row(
                         children: [
                           _HostBadge(
@@ -279,18 +336,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                               GiftNotificationStack(
                                 events: giftCtrl.notifications,
                               ),
-                              const SizedBox(height: 10),
-                              LiveRoomChatPanel(messages: _messages),
+                              const SizedBox(height: 8),
+                              LivePremiumChatFeed(messages: _messages),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        LiveRoomSideActions(
-                          likes: '12.5K',
-                          gifts: giftCtrl.streamerEarnings != null
+                        const SizedBox(width: 10),
+                        LivePremiumSideRail(
+                          likeLabel: _fmtLikes(interaction.likeCount),
+                          giftLabel: giftCtrl.streamerEarnings != null
                               ? '${giftCtrl.streamerEarnings}'
-                              : '3.245',
-                          shares: '1.245',
+                              : 'Hediye',
+                          shareLabel: 'Paylaş',
+                          onLike: _onDoubleTapHeart,
                           onGift: () => giftCtrl.setPanelOpen(true),
                           onReport: s.streamId != null && s.streamId!.isNotEmpty
                               ? () => openReportFlow(
@@ -298,7 +356,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                                     ReportTarget(
                                       type: ReportTargetType.liveStream,
                                       targetId: s.streamId!,
-                                      displayTitle: s.streamerName ?? 'Canlı yayın',
+                                      displayTitle:
+                                          s.streamerName ?? 'Canlı yayın',
                                     ),
                                   )
                               : null,
@@ -306,8 +365,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                       ],
                     ),
                   ),
-                  SizedBox(height: bottom + 8),
-                  LiveRoomBottomBar(
+                  const SizedBox(height: 8),
+                  LivePremiumBottomBar(
                     chatController: _chat,
                     isHost: s.isHost,
                     trtc: s.isHost ? _trtc : null,
@@ -330,7 +389,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                         _chat.clear();
                       });
                     },
-                    onEnd: () => _confirmEnd(context),
+                    onEnd: s.isHost ? () => _confirmEnd(context) : null,
                   ),
                 ],
               ),
@@ -343,7 +402,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                 child: PremiumGiftPanel(
                   controller: giftCtrl,
                   streamId: widget.session.streamId ?? '',
-                  senderName: user.displayName ?? user.username,
+                  senderName: user.display,
                   senderId: user.id,
                   onClose: () => giftCtrl.setPanelOpen(false),
                 ),
@@ -355,6 +414,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   }
 
   Future<void> _confirmEnd(BuildContext context) async {
+    if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+      widget.onSwipeClose!();
+      return;
+    }
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
