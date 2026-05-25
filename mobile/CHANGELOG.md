@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.84+86 (2026-05-19)
+
+### Sesli oda — sohbet, düzen, katılımcılar
+
+- Sohbet mesajları birleştirilerek kaybolma / gönderim yarışı giderildi
+- Mikrofon: 4 üst + 4 alt ızgara; dinleyici şeridi ve katılım satırları
+- Responsive sohbet alanı, boş sohbet ipucu, hata SnackBar
+
 ## 1.0.83+85 (2026-05-19)
 
 ### Premium 2026 — Keşfet / PK / Hediye (referans UI)

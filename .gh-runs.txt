@@ -1,0 +1,8 @@
+completed	failure	Merge pull request #53 from mesutbyrm/cursor/voice-gift-livekit-7009	.github/workflows/build-apk.yml	main	push	26349795009	0s	2026-05-24T02:34:11Z
+completed	failure	Merge pull request #53 from mesutbyrm/cursor/voice-gift-livekit-7009	.github/workflows/build-apk.yml	main	push	26349721824	0s	2026-05-24T02:30:09Z
+completed	failure	feat(voice): uçan hediye animasyonu ve LiveKit ses motoru	.github/workflows/build-apk.yml	cursor/voice-gift-livekit-7009	push	26349303268	0s	2026-05-24T02:08:49Z
+completed	failure	feat(voice): premium sesli sohbet odası UI	.github/workflows/build-apk.yml	cursor/voice-room-premium-ui-7009	push	26349059505	0s	2026-05-24T01:56:04Z
+completed	failure	feat(profile): enable profile edit, earnings, transactions, broadcast…	.github/workflows/build-apk.yml	cursor/profile-overhaul-7009	push	26348138112	0s	2026-05-24T01:05:34Z
+completed	failure	Merge pull request #50 from mesutbyrm/cursor/home-stats-stories-grid-…	.github/workflows/build-apk.yml	main	push	26347545646	0s	2026-05-24T00:32:59Z
+completed	failure	feat(mobile): home stats, stories on feed, 3-col fortune, voice carousel	.github/workflows/build-apk.yml	cursor/home-stats-stories-grid-7009	push	26347157793	0s	2026-05-24T00:11:26Z
+completed	failure	feat: canlifal.com Firebase config sync and CI google-services	.github/workflows/build-apk.yml	cursor/canlifal-official-config-7009	push	26346449966	0s	2026-05-23T23:32:38Z

@@ -37,7 +37,25 @@ class VoiceLiveChatFeed extends StatelessWidget {
         : textOnly;
 
     if (visible.isEmpty) {
-      return const SizedBox.shrink();
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.28),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          ),
+          child: Text(
+            'Sohbet başlatın — mesajlar burada görünür',
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.textMuted.withValues(alpha: 0.85),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+      );
     }
 
     return Column(

@@ -1,0 +1,4 @@
+[main 83f9115] fix(auth): canlifal.com e-posta kaydı için açıklayıcı mesaj
+ 1 file changed, 6 insertions(+)
+To https://github.com/mesutbyrm/Cursor-Flutter-
+   4979693..83f9115  main -> main

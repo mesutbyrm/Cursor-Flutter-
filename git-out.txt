@@ -1,0 +1,9 @@
+cursor/daily-fortune-flow-7009
+ M mobile/lib/app/router/app_router.dart
+ M mobile/lib/features/fortune/presentation/services/fortune_reading_service.dart
+ M mobile/pubspec.yaml
+?? mobile/lib/features/fortune/presentation/pages/daily_fortune_open_page.dart
+?? mobile/lib/features/fortune/presentation/pages/daily_fortune_result_page.dart
+?? mobile/lib/features/fortune/presentation/widgets/daily_fortune_gift_illustration.dart
+?? mobile/lib/features/fortune/presentation/widgets/fortune_mystic_bar_button.dart
+?? mobile/lib/features/fortune/presentation/widgets/fortune_mystic_title_bar.dart

@@ -1,0 +1,9 @@
+[main 72bebc6] fix: Google OAuth CCT, doğum tarihi TR locale, sosyal akış UI
+ 10 files changed, 265 insertions(+), 197 deletions(-)
+ create mode 100644 mobile/lib/core/l10n/app_localizations_config.dart
+ create mode 100644 mobile/lib/features/auth/presentation/widgets/auth_date_pickers.dart
+From https://github.com/mesutbyrm/Cursor-Flutter-
+ * branch            main       -> FETCH_HEAD
+Current branch main is up to date.
+To https://github.com/mesutbyrm/Cursor-Flutter-
+   89cf559..72bebc6  main -> main

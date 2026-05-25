@@ -1,0 +1,40 @@
+=== BRANCH ===
+cursor/vip-gold-premium-2026-7009
+=== LOG ===
+ce79452 feat(mobile): PART 7 VIP/Gold premium system
+150ed7b feat(mobile): PART 6 premium TikTok-style live streaming
+be7f9d0 feat(mobile): PART 5 premium PK battle system
+3b563f0 feat(mobile): PART 4 premium TikTok-level gift system
+91951a5 chore(docs): APK derleme bildirimi 1.0.75+77
+8f01b11 docs: APK 1.0.75+77 sürüm notları ve indirme bağlantıları
+8a43334 fix(voice-room): chat layout, keyboard pin, compact header, jeton CTA
+4ecca74 feat(voice): PK battle screen and Gold VIP full-screen modal
+=== MAIN vs HEAD pubspec ===
+name: canlifal_social
+description: Canlifal — modern sosyal medya istemcisi (REST + JWT, Clean Architecture).
+publish_to: 'none'
+
+version: 1.0.75+77
+
+name: canlifal_social
+description: Canlifal — modern sosyal medya istemcisi (REST + JWT, Clean Architecture).
+publish_to: 'none'
+
+version: 1.0.82+84
+
+=== REMOTE BRANCHES (cursor) ===
+  origin/cursor/social-page-redesign-7009
+  origin/cursor/social-splash-ux-7009
+  origin/cursor/social-tab-763b
+  origin/cursor/v105-changelog-ad85
+  origin/cursor/vip-gold-premium-2026-7009
+  origin/cursor/voice-gift-livekit-7009
+  origin/cursor/voice-live-webview-763b
+  origin/cursor/voice-premium-2026-ui-7009
+  origin/cursor/voice-room-features-7009
+  origin/cursor/voice-room-live-fixes-7009
+  origin/cursor/voice-room-native-7009
+  origin/cursor/voice-room-premium-part3-7009
+  origin/cursor/voice-room-premium-ui-7009
+  origin/cursor/wallet-membership-unified-7009
+  origin/cursor/wallet-notifications-payments-7009

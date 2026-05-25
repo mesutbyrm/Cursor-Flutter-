@@ -1,0 +1,1 @@
+-rw-r--r-- 1 ubuntu ubuntu 99933356 May 25 02:16 /opt/cursor/artifacts/canlifal-mobile-1.0.82+84-release.apk

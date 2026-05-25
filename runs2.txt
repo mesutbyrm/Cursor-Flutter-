@@ -1,0 +1,8 @@
+completed	success	Build release APK	Build release APK	main	workflow_dispatch	26311458272	15m51s	2026-05-22T20:53:50Z
+completed	success	Build release APK	Build release APK	main	workflow_dispatch	26311453265	15m34s	2026-05-22T20:53:43Z
+completed	success	Build release APK	Build release APK	main	workflow_dispatch	26311328361	16m13s	2026-05-22T20:50:39Z
+completed	success	fix(ci): apk-latest yayını + sürüm 1.0.46+48	Build release APK	main	push	26308742271	15m16s	2026-05-22T20:51:07Z
+completed	success	Merge pull request #34 from mesutbyrm/cursor/onesignal-integration-7009	Build release APK	main	push	26307382876	21s	2026-05-22T20:50:49Z
+completed	success	Merge branch 'cursor/cfc-jeton-split-7009'	Build release APK	main	push	26296457168	16m48s	2026-05-22T15:23:38Z
+completed	success	feat(admin): ödeme istekleri paneli admin/yönetici için — site verisi	Build release APK	main	push	26293239084	16m32s	2026-05-22T14:20:22Z
+completed	success	fix(android): core library desugaring for flutter_local_notifications…	Build release APK	main	push	26289569682	26m58s	2026-05-22T13:06:56Z

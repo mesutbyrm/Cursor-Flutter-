@@ -1,0 +1,4 @@
+total 73932
+drwxr-xr-x  2 ubuntu ubuntu     4096 May 22 21:12 .
+drwxr-xr-x 12 ubuntu ubuntu     4096 May 22 21:12 ..
+-rw-r--r--  1 ubuntu ubuntu 75694532 May 22 21:12 canlifal-mobile-release.apk

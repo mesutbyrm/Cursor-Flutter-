@@ -100,6 +100,56 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     return null;
   }
 
+  List<ChatRoomMessage> _mergeMessages(
+    List<ChatRoomMessage> current,
+    List<ChatRoomMessage> fetched,
+  ) {
+    final byId = <String, ChatRoomMessage>{};
+    for (final m in fetched) {
+      byId[m.id] = m;
+    }
+    for (final m in current) {
+      if (m.id.startsWith('local-')) {
+        if (!byId.containsKey(m.id)) byId[m.id] = m;
+        continue;
+      }
+      byId.putIfAbsent(m.id, () => m);
+    }
+    final merged = byId.values.toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return merged;
+  }
+
+  List<ChatRoomMessage> _joinMessagesForNewPresence(
+    List<ChatRoomPresence> previous,
+    List<ChatRoomPresence> next,
+  ) {
+    if (previous.isEmpty) return const [];
+    final known = previous.map((p) => p.id).toSet();
+    final out = <ChatRoomMessage>[];
+    for (final p in next) {
+      if (known.contains(p.id)) continue;
+      out.add(
+        ChatRoomMessage(
+          id: 'join-${p.id}-${DateTime.now().microsecondsSinceEpoch}',
+          content: '${p.displayName} odaya katıldı',
+          createdAt: DateTime.now(),
+          user: ChatRoomUserRef(
+            id: p.id,
+            name: p.name,
+            nickname: p.nickname,
+            image: p.image,
+            chatRole: p.chatRole,
+            roleSymbol: p.roleSymbol,
+            membership: p.membership,
+          ),
+          kind: ChatMessageKind.systemJoin,
+        ),
+      );
+    }
+    return out;
+  }
+
   @override
   VoiceRoomLiveState build(VoiceRoomEntity room) {
     ref.onDispose(() {
@@ -202,7 +252,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
             state = state.copyWith(clearEnterBanner: true);
           });
         }
-        refresh();
       },
     );
   }
@@ -225,9 +274,16 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
               playing: true,
             );
       }
+      final fetchedMsgs = results[0] as List<ChatRoomMessage>;
+      final prevPresence = state.presence;
       final presence = _mergeSelf(results[1] as List<ChatRoomPresence>);
+      var messages = _mergeMessages(state.messages, fetchedMsgs);
+      final joins = _joinMessagesForNewPresence(prevPresence, presence);
+      if (joins.isNotEmpty) {
+        messages = _mergeMessages(messages, joins);
+      }
       state = state.copyWith(
-        messages: results[0] as List<ChatRoomMessage>,
+        messages: messages,
         presence: presence,
         dj: dj,
         loading: false,
@@ -300,7 +356,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         );
       }
       state = state.copyWith(messages: list);
-      await refresh();
     } catch (e) {
       state = state.copyWith(
         messages: state.messages.where((m) => m.id != optimisticId).toList(),
