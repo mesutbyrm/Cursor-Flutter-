@@ -107,6 +107,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
           title: hit.title,
           youtubeUrl: hit.url,
           thumbUrl: hit.thumbUrl,
+          videoId: hit.videoId,
         );
     if (!mounted) return;
     setState(() => _submitting = false);

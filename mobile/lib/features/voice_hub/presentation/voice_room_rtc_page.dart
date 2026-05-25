@@ -448,6 +448,118 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
   }
 
+  Future<void> _onSeatTap(
+    BuildContext context, {
+    required VoiceRoomEntity room,
+    required VoiceRoomLiveState live,
+    required VoiceRoomPermissions perms,
+    required int internalSeatIndex,
+    ChatRoomPresence? occupant,
+  }) async {
+    if (occupant != null) {
+      _openUser(occupant);
+      return;
+    }
+    if (perms.canAssignSeats) {
+      await _showAssignSeatSheet(
+        context,
+        room: room,
+        live: live,
+        seatIndex: internalSeatIndex,
+      );
+      return;
+    }
+    if (perms.canTakeSeat) {
+      final err = await ref
+          .read(voiceRoomLiveProvider(room).notifier)
+          .assignSeat(seatIndex: internalSeatIndex);
+      if (!context.mounted) return;
+      if (err != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      }
+      return;
+    }
+    await _requestSpeakFromSeat(
+      context,
+      room,
+      ref.read(voiceRoomUiProvider),
+    );
+  }
+
+  Future<void> _showAssignSeatSheet(
+    BuildContext context, {
+    required VoiceRoomEntity room,
+    required VoiceRoomLiveState live,
+    required int seatIndex,
+  }) async {
+    final self = ref.read(authControllerProvider).valueOrNull;
+    final onStage = voiceWebOnStageIds(room: room, presence: live.presence);
+    final candidates = live.presence
+        .where((p) => !onStage.contains(p.id) || p.seatIndex == seatIndex)
+        .toList();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => VoiceGlass(
+        borderRadius: 24,
+        padding: const EdgeInsets.fromLTRB(12, 16, 12, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Koltuk $seatIndex',
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            if (self != null)
+              ListTile(
+                leading: const Icon(Icons.event_seat_rounded),
+                title: const Text('Bu koltuğa otur'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final err = await ref
+                      .read(voiceRoomLiveProvider(room).notifier)
+                      .assignSeat(seatIndex: seatIndex);
+                  if (context.mounted && err != null) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(err)));
+                  }
+                },
+              ),
+            ...candidates.map(
+              (p) => ListTile(
+                leading: CircleAvatar(
+                  backgroundImage: p.image != null && p.image!.isNotEmpty
+                      ? NetworkImage(p.image!)
+                      : null,
+                  child: p.image == null || p.image!.isEmpty
+                      ? const Icon(Icons.person)
+                      : null,
+                ),
+                title: Text(p.displayName),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final err = await ref
+                      .read(voiceRoomLiveProvider(room).notifier)
+                      .assignSeat(
+                        seatIndex: seatIndex,
+                        userId: p.id,
+                      );
+                  if (context.mounted && err != null) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(err)));
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _requestSpeakFromSeat(
     BuildContext context,
     VoiceRoomEntity room,
@@ -636,8 +748,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           presence: live.presence,
                           speakingUserId: speakingId,
                           onUserTap: _openUser,
-                          onEmptySeatTap: () =>
-                              _requestSpeakFromSeat(context, room, ui),
+                          onSeatTap: (seatIndex, user) => unawaited(
+                            _onSeatTap(
+                              context,
+                              room: room,
+                              live: live,
+                              perms: perms,
+                              internalSeatIndex: seatIndex,
+                              occupant: user,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 4),
                         VoiceWebRoomInfoPill(

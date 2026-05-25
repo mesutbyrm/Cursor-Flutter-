@@ -272,18 +272,33 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     if (_roomKey.isEmpty) return;
     final room = arg;
     final remote = ref.read(chatRoomRemoteProvider);
+    Object? refreshError;
     try {
       final since = _lastMessageAt?.toUtc().toIso8601String();
-      final results = await Future.wait([
-        remote.fetchMessages(
+      List<ChatRoomMessage> fetchedMsgs = state.messages;
+      List<ChatRoomPresence> presence = state.presence;
+      ChatRoomDjState dj = state.dj;
+
+      try {
+        fetchedMsgs = await remote.fetchMessages(
           _roomKey,
           alternateKey: _altRoomKey,
           since: since,
-        ),
-        remote.fetchPresence(_roomKey, alternateKey: _altRoomKey),
-        remote.fetchDj(_roomKey, alternateKey: _altRoomKey),
-      ]);
-      final dj = results[2] as ChatRoomDjState;
+        );
+      } catch (e) {
+        refreshError ??= e;
+      }
+      try {
+        presence = await remote.fetchPresence(
+          _roomKey,
+          alternateKey: _altRoomKey,
+        );
+      } catch (e) {
+        refreshError ??= e;
+      }
+      try {
+        dj = await remote.fetchDj(_roomKey, alternateKey: _altRoomKey);
+      } catch (_) {}
       final ui = ref.read(voiceRoomUiProvider);
       if (ui.backgroundMusicEnabled && dj.playing && dj.musicUrl != null) {
         await ref.read(voiceRoomDjPlayerProvider).sync(
@@ -291,9 +306,8 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
               playing: true,
             );
       }
-      final fetchedMsgs = results[0] as List<ChatRoomMessage>;
       final prevPresence = state.presence;
-      final presence = _mergeSelf(results[1] as List<ChatRoomPresence>);
+      presence = _mergeSelf(presence);
       var messages = _mergeMessages(state.messages, fetchedMsgs);
       final joins = _joinMessagesForNewPresence(prevPresence, presence);
       if (joins.isNotEmpty) {
@@ -304,7 +318,10 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         presence: presence,
         dj: dj,
         loading: false,
-        clearError: true,
+        error: refreshError != null
+            ? ApiException.userMessage(refreshError!)
+            : null,
+        clearError: refreshError == null,
         backgroundUrl: (state.backgroundUrl?.isNotEmpty == true)
             ? state.backgroundUrl
             : room.backgroundImageUrl,
@@ -347,15 +364,27 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       clearError: true,
     );
 
+    Future<ChatRoomMessage?> post(String key, {String? alt}) => ref
+        .read(chatRoomRemoteProvider)
+        .sendMessage(
+          roomKey: key,
+          alternateKey: alt,
+          content: trimmed,
+        )
+        .timeout(const Duration(seconds: 25));
+
     try {
-      final sent = await ref
-          .read(chatRoomRemoteProvider)
-          .sendMessage(
-            roomKey: _roomKey,
-            alternateKey: _altRoomKey,
-            content: trimmed,
-          )
-          .timeout(const Duration(seconds: 18));
+      ChatRoomMessage? sent;
+      try {
+        sent = await post(_roomKey, alt: _altRoomKey);
+      } on TimeoutException {
+        final alt = _altRoomKey;
+        if (alt != null && alt.isNotEmpty && alt != _roomKey) {
+          sent = await post(alt, alt: _roomKey);
+        } else {
+          rethrow;
+        }
+      }
 
       var list = [...state.messages];
       if (optimistic != null) {
@@ -473,10 +502,29 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
             alternateKey: _altRoomKey,
           );
 
+  Future<String?> assignSeat({
+    required int seatIndex,
+    String? userId,
+  }) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).assignSeat(
+            roomKey: _roomKey,
+            alternateKey: _altRoomKey,
+            seatIndex: seatIndex,
+            userId: userId,
+          );
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
   Future<String?> requestMusic({
     required String title,
     required String youtubeUrl,
     String? thumbUrl,
+    String? videoId,
   }) async {
     try {
       final result = await ref.read(chatRoomRemoteProvider).requestMusic(
@@ -485,6 +533,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
             title: title,
             youtubeUrl: youtubeUrl,
             thumbUrl: thumbUrl,
+            videoId: videoId,
           );
       if (result.newBalance != null) {
         ref.invalidate(coinBalanceProvider);

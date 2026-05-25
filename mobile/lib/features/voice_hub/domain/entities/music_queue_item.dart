@@ -18,10 +18,16 @@ class MusicQueueItem extends Equatable {
     if (u is Map) {
       user = ChatRoomUserRef.fromJson(Map<String, dynamic>.from(u));
     }
+    final videoId = json['videoId']?.toString();
+    final url = json['youtubeUrl']?.toString() ??
+        json['url']?.toString() ??
+        (videoId != null && videoId.isNotEmpty
+            ? 'https://www.youtube.com/watch?v=$videoId'
+            : '');
     return MusicQueueItem(
-      id: json['id']?.toString() ?? '',
+      id: json['id']?.toString() ?? videoId ?? '',
       title: json['title']?.toString() ?? 'Şarkı',
-      youtubeUrl: json['youtubeUrl']?.toString() ?? json['url']?.toString() ?? '',
+      youtubeUrl: url,
       thumbUrl: json['thumbUrl']?.toString(),
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.now(),
@@ -50,10 +56,15 @@ class YoutubeSearchHit extends Equatable {
   });
 
   factory YoutubeSearchHit.fromJson(Map<String, dynamic> json) {
+    final vid = json['videoId']?.toString() ?? json['id']?.toString() ?? '';
     return YoutubeSearchHit(
-      videoId: json['videoId']?.toString() ?? '',
+      videoId: vid,
       title: json['title']?.toString() ?? 'Video',
-      url: json['url']?.toString() ?? '',
+      url: json['url']?.toString().isNotEmpty == true
+          ? json['url']!.toString()
+          : (vid.isNotEmpty
+              ? 'https://www.youtube.com/watch?v=$vid'
+              : ''),
       thumbUrl: json['thumbUrl']?.toString(),
       uploader: json['uploader']?.toString(),
     );

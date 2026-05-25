@@ -38,20 +38,20 @@ class VoiceRoomEntity extends Equatable {
 
   int get displayOnline => onlineCount > 0 ? onlineCount : userCount;
 
-  /// Chat / presence / DJ — web `/sohbet/{slug}` ile uyumlu: önce slug, sonra id.
+  /// Chat / presence / DJ — canlifal.com API önce Prisma `id` ile çalışır (slug `ilhamperisi-` gibi).
   String get apiRoomKey {
-    final s = slug.trim();
     final i = id.trim();
-    if (s.isNotEmpty) return s;
+    final s = slug.trim();
     if (i.isNotEmpty) return i;
+    if (s.isNotEmpty) return s;
     return '';
   }
 
-  /// İkinci deneme anahtarı (slug/id farklıysa).
+  /// İkinci deneme anahtarı (id/slug farklıysa).
   String? get apiRoomAlternateKey {
     final s = slug.trim();
     final i = id.trim();
-    if (s.isNotEmpty && i.isNotEmpty && s != i) return i;
+    if (s.isNotEmpty && i.isNotEmpty && s != i) return s;
     return null;
   }
 

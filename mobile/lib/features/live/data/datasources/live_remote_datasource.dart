@@ -64,8 +64,19 @@ class LiveRemoteDataSource {
 
   Future<VoiceRoomEntity?> fetchVoiceRoomById(String id) async {
     final rooms = await fetchVoiceRooms();
+    final needle = id.trim().toLowerCase();
+    if (needle.isEmpty) return null;
+    String norm(String s) =>
+        s.trim().toLowerCase().replaceAll(RegExp(r'-+$'), '');
     for (final r in rooms) {
-      if (r.id == id || r.slug == id) return r;
+      if (r.id == id ||
+          r.slug == id ||
+          r.id.toLowerCase() == needle ||
+          r.slug.toLowerCase() == needle ||
+          norm(r.slug) == norm(id) ||
+          norm(r.id) == norm(id)) {
+        return r;
+      }
     }
     return null;
   }
