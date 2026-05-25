@@ -93,11 +93,13 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
 
   String get _roomKey => arg.apiRoomKey;
 
-  String? get _altRoomKey {
-    final id = arg.id.trim();
-    final slug = arg.slug.trim();
-    if (id.isNotEmpty && slug.isNotEmpty && id != slug) return slug;
-    return null;
+  String? get _altRoomKey => arg.apiRoomAlternateKey;
+
+  DateTime? get _lastMessageAt {
+    if (state.messages.isEmpty) return null;
+    return state.messages.map((m) => m.createdAt).reduce(
+          (a, b) => a.isAfter(b) ? a : b,
+        );
   }
 
   List<ChatRoomMessage> _mergeMessages(
@@ -105,15 +107,20 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     List<ChatRoomMessage> fetched,
   ) {
     final byId = <String, ChatRoomMessage>{};
-    for (final m in fetched) {
+    for (final m in current) {
       byId[m.id] = m;
     }
-    for (final m in current) {
-      if (m.id.startsWith('local-')) {
-        if (!byId.containsKey(m.id)) byId[m.id] = m;
-        continue;
+    for (final m in fetched) {
+      final dup = byId.entries.where(
+        (e) =>
+            e.key.startsWith('local-') &&
+            e.value.content == m.content &&
+            e.value.user?.id == m.user?.id,
+      );
+      for (final d in dup) {
+        byId.remove(d.key);
       }
-      byId.putIfAbsent(m.id, () => m);
+      byId[m.id] = m;
     }
     final merged = byId.values.toList()
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
@@ -152,6 +159,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
 
   @override
   VoiceRoomLiveState build(VoiceRoomEntity room) {
+    ref.keepAlive();
     ref.onDispose(() {
       _poll?.cancel();
       _leavePresence();
@@ -163,7 +171,9 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       await refresh();
       _startSocket(_roomKey);
     });
-    _poll = Timer.periodic(const Duration(seconds: 2), (_) => refresh());
+    _poll = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (!state.sending) refresh();
+    });
     return VoiceRoomLiveState(
       backgroundUrl: room.backgroundImageUrl?.trim().isNotEmpty == true
           ? room.backgroundImageUrl
@@ -261,8 +271,13 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     final room = arg;
     final remote = ref.read(chatRoomRemoteProvider);
     try {
+      final since = _lastMessageAt?.toUtc().toIso8601String();
       final results = await Future.wait([
-        remote.fetchMessages(_roomKey, alternateKey: _altRoomKey),
+        remote.fetchMessages(
+          _roomKey,
+          alternateKey: _altRoomKey,
+          since: since,
+        ),
         remote.fetchPresence(_roomKey, alternateKey: _altRoomKey),
         remote.fetchDj(_roomKey, alternateKey: _altRoomKey),
       ]);
@@ -303,46 +318,13 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
 
   Future<void> sendMessage(String text) async {
     final trimmed = text.trim();
-    if (trimmed.isEmpty || state.sending || _roomKey.isEmpty) return;
+    if (trimmed.isEmpty || _roomKey.isEmpty) return;
+    if (state.sending) return;
 
     final user = ref.read(authControllerProvider).valueOrNull;
     final optimisticId = 'local-${DateTime.now().millisecondsSinceEpoch}';
-    if (user != null) {
-      final optimistic = ChatRoomMessage(
-        id: optimisticId,
-        content: trimmed,
-        createdAt: DateTime.now(),
-        user: ChatRoomUserRef(
-          id: user.id,
-          name: user.display,
-          nickname: user.username,
-          image: user.avatarUrl,
-        ),
-      );
-      state = state.copyWith(
-        messages: [...state.messages, optimistic],
-        sending: true,
-        clearError: true,
-      );
-    } else {
-      state = state.copyWith(sending: true, clearError: true);
-    }
-
-    try {
-      final sent = await ref.read(chatRoomRemoteProvider).sendMessage(
-            roomKey: _roomKey,
-            alternateKey: _altRoomKey,
-            content: trimmed,
-          );
-      var list = [...state.messages];
-      list.removeWhere((m) => m.id == optimisticId);
-      if (sent != null) {
-        if (!list.any((m) => m.id == sent.id)) {
-          list.add(sent);
-        }
-      } else if (user != null) {
-        list.add(
-          ChatRoomMessage(
+    final optimistic = user != null
+        ? ChatRoomMessage(
             id: optimisticId,
             content: trimmed,
             createdAt: DateTime.now(),
@@ -352,13 +334,56 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
               nickname: user.username,
               image: user.avatarUrl,
             ),
-          ),
-        );
+          )
+        : null;
+
+    state = state.copyWith(
+      messages: optimistic != null
+          ? [...state.messages, optimistic]
+          : state.messages,
+      sending: true,
+      clearError: true,
+    );
+
+    try {
+      final sent = await ref
+          .read(chatRoomRemoteProvider)
+          .sendMessage(
+            roomKey: _roomKey,
+            alternateKey: _altRoomKey,
+            content: trimmed,
+          )
+          .timeout(const Duration(seconds: 18));
+
+      var list = [...state.messages];
+      if (optimistic != null) {
+        list.removeWhere((m) => m.id == optimisticId);
       }
+      if (sent != null) {
+        final idx = list.indexWhere(
+          (m) =>
+              m.id == sent.id ||
+              (m.id.startsWith('local-') && m.content == sent.content),
+        );
+        if (idx >= 0) {
+          list[idx] = sent;
+        } else {
+          list.add(sent);
+        }
+      } else if (optimistic != null) {
+        list.add(optimistic);
+      }
+      list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
       state = state.copyWith(messages: list);
+    } on TimeoutException {
+      state = state.copyWith(
+        error: 'Mesaj gönderimi zaman aşımına uğradı. Tekrar deneyin.',
+      );
     } catch (e) {
       state = state.copyWith(
-        messages: state.messages.where((m) => m.id != optimisticId).toList(),
+        messages: optimistic != null
+            ? state.messages.where((m) => m.id != optimisticId).toList()
+            : state.messages,
         error: ApiException.userMessage(e),
       );
     } finally {

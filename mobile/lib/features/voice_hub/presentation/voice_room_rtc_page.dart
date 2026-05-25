@@ -12,12 +12,13 @@ import '../../../core/widgets/discover_tab_layout.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../live/domain/entities/live_gift_event.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
+import '../../live/presentation/providers/live_providers.dart';
+import '../domain/entities/chat_room_message.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import 'providers/voice_gift_combo_tracker.dart';
 import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
-import '../../profile/presentation/providers/profile_providers.dart';
 import '../domain/entities/chat_room_presence.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
 import 'audio/voice_room_audio_coordinator.dart';
@@ -39,7 +40,8 @@ import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_action_row.dart';
-import 'widgets/voice_room/voice_room_announcement.dart';
+import 'widgets/voice_room/voice_room_announcement.dart'
+    show VoiceRoomAnnouncement, VoiceRoomSystemBanner;
 import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
 import 'widgets/voice_room_gift_sheet.dart';
 
@@ -66,12 +68,30 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   LiveGiftEvent? _fullscreenGift;
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
+  var _chatOutbound = false;
   final _messageFocus = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _joinRoom());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(voiceRoomsProvider);
+      _joinRoom();
+    });
+  }
+
+  VoiceRoomEntity _roomSynced(List<VoiceRoomEntity>? rooms) {
+    final w = widget.room;
+    if (rooms == null) return w;
+    for (final r in rooms) {
+      if (r.id == w.id ||
+          r.slug == w.slug ||
+          r.apiRoomKey == w.apiRoomKey ||
+          (w.slug.isNotEmpty && r.slug == w.slug)) {
+        return r;
+      }
+    }
+    return w;
   }
 
   @override
@@ -84,14 +104,19 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   }
 
   Future<void> _sendChatMessage(VoiceRoomEntity room) async {
-    final text = _messageCtrl.text;
-    if (text.trim().isEmpty) return;
+    final text = _messageCtrl.text.trim();
+    if (text.isEmpty || _chatOutbound) return;
+    _chatOutbound = true;
     _messageCtrl.clear();
-    await ref.read(voiceRoomLiveProvider(room).notifier).sendMessage(text);
-    if (!mounted) return;
-    final err = ref.read(voiceRoomLiveProvider(room)).error;
-    if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+    try {
+      await ref.read(voiceRoomLiveProvider(room).notifier).sendMessage(text);
+      if (!mounted) return;
+      final err = ref.read(voiceRoomLiveProvider(room)).error;
+      if (err != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      }
+    } finally {
+      _chatOutbound = false;
     }
   }
 
@@ -393,7 +418,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   @override
   Widget build(BuildContext context) {
-    final room = widget.room;
+    final room = _roomSynced(ref.watch(voiceRoomsProvider).valueOrNull);
     final live = ref.watch(voiceRoomLiveProvider(room));
     final ui = ref.watch(voiceRoomUiProvider);
     final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
@@ -427,6 +452,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
     final ownerName = ownerPresence?.displayName ?? room.ownerName;
     final ownerAvatar = ownerPresence?.image ?? room.ownerAvatarUrl;
+    final headerAvatar = ownerAvatar ?? room.ownerAvatarUrl;
+    String? lastJoinBanner;
+    for (var i = live.messages.length - 1; i >= 0; i--) {
+      final m = live.messages[i];
+      if (m.kind == ChatMessageKind.systemJoin) {
+        lastJoinBanner = m.content;
+        break;
+      }
+    }
 
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(room), (prev, next) {
       if (prev?.error != next.error && next.error != null && mounted) {
@@ -499,6 +533,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         VoiceWebRoomHeader(
                           room: room,
                           onlineCount: online,
+                          roomAvatarUrl: headerAvatar,
                           onBack: _leave,
                           onExit: _leave,
                           onAudience: () => showVoiceSpeakerListSheet(
@@ -607,6 +642,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                   totalOnline: online,
                                   onUserTap: _openUser,
                                 ),
+                                if (lastJoinBanner != null) ...[
+                                  const SizedBox(height: 6),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
+                                    child: VoiceRoomSystemBanner(
+                                      message: lastJoinBanner,
+                                    ),
+                                  ),
+                                ],
                               ],
                             ],
                           ),

@@ -38,11 +38,21 @@ class VoiceRoomEntity extends Equatable {
 
   int get displayOnline => onlineCount > 0 ? onlineCount : userCount;
 
-  /// Chat / presence / DJ API yolu — id yoksa slug kullanılır.
+  /// Chat / presence / DJ — web `/sohbet/{slug}` ile uyumlu: önce slug, sonra id.
   String get apiRoomKey {
-    if (id.trim().isNotEmpty) return id.trim();
-    if (slug.trim().isNotEmpty) return slug.trim();
+    final s = slug.trim();
+    final i = id.trim();
+    if (s.isNotEmpty) return s;
+    if (i.isNotEmpty) return i;
     return '';
+  }
+
+  /// İkinci deneme anahtarı (slug/id farklıysa).
+  String? get apiRoomAlternateKey {
+    final s = slug.trim();
+    final i = id.trim();
+    if (s.isNotEmpty && i.isNotEmpty && s != i) return i;
+    return null;
   }
 
   String get displayTitle => nameTr.trim().isEmpty ? 'Sohbet Odası' : nameTr.trim();

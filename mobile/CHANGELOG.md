@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.86+88 (2026-05-19)
+
+### Sesli oda — web görsel + sohbet + canlifal.com verisi
+
+- Sahne: sol Admin + sağda 2×5 (10) koltuk; üst barda oda avatarı (mor halka)
+- Sohbet: gönder düğmesi takılması giderildi (timeout, poll çakışması, birleştirme)
+- API: önce `slug` anahtarı, `since` ile artımlı mesaj, canlifal oda listesi senkronu
+
 ## 1.0.85+87 (2026-05-19)
 
 ### Sesli oda — web referans UI (Premium)

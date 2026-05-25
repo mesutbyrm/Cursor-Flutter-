@@ -19,6 +19,7 @@ class VoiceWebRoomHeader extends StatelessWidget {
     this.onAudience,
     this.onGallery,
     this.onSettings,
+    this.roomAvatarUrl,
     this.verified = true,
   });
 
@@ -29,6 +30,7 @@ class VoiceWebRoomHeader extends StatelessWidget {
   final VoidCallback? onAudience;
   final VoidCallback? onGallery;
   final VoidCallback? onSettings;
+  final String? roomAvatarUrl;
   final bool verified;
 
   @override
@@ -58,7 +60,12 @@ class VoiceWebRoomHeader extends StatelessWidget {
                 icon: Icons.arrow_back_ios_new_rounded,
                 onTap: onBack,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
+              _RoomAvatarRing(
+                url: roomAvatarUrl,
+                fallback: room.icon ?? '🎤',
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: GestureDetector(
                   onTap: () =>
@@ -179,6 +186,35 @@ class _OnlineChip extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _RoomAvatarRing extends StatelessWidget {
+  const _RoomAvatarRing({this.url, required this.fallback});
+
+  final String? url;
+  final String fallback;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(2.5),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: VoiceRoomTokens.neonRing,
+        boxShadow: VoiceRoomTokens.neonGlow(VoiceRoomTokens.neonPurple, blur: 14),
+      ),
+      child: CircleAvatar(
+        radius: 22,
+        backgroundColor: Colors.black54,
+        backgroundImage: url != null && url!.isNotEmpty
+            ? CachedNetworkImageProvider(url!)
+            : null,
+        child: url == null || url!.isEmpty
+            ? Text(fallback, style: const TextStyle(fontSize: 18))
+            : null,
       ),
     );
   }

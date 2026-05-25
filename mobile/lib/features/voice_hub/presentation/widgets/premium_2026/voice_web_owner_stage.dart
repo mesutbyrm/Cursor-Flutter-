@@ -6,7 +6,7 @@ import '../../../domain/entities/chat_room_presence.dart';
 import '../../utils/voice_room_seat_layout.dart';
 import 'voice_mic_seat.dart';
 
-/// Web düzeni: solda büyük oda sahibi, sağda 4+4 mikrofon ızgarası.
+/// Web referans: solda büyük Admin, sağda 2×5 (10) mikrofon koltuğu.
 class VoiceWebOwnerStage extends StatelessWidget {
   const VoiceWebOwnerStage({
     super.key,
@@ -23,8 +23,6 @@ class VoiceWebOwnerStage extends StatelessWidget {
   final void Function(ChatRoomPresence user)? onUserTap;
   final VoidCallback? onEmptySeatTap;
 
-  static const _guestSeatStart = 2;
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -32,20 +30,20 @@ class VoiceWebOwnerStage extends StatelessWidget {
         final w = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width;
-        final ownerSize = (w * 0.22).clamp(72.0, 96.0);
-        final gridW = w - ownerSize - 28;
-        final gap = 6.0;
-        final cell = ((gridW - gap * 3) / 4).clamp(44.0, 64.0);
-        final rowH = cell + 26;
+        final ownerSize = (w * 0.2).clamp(76.0, 100.0);
+        final gridW = w - ownerSize - 24;
+        final gap = 5.0;
+        final cell = ((gridW - gap * 4) / 5).clamp(40.0, 58.0);
+        final rowH = cell + 22;
         final gridH = rowH * 2 + gap;
 
         final seats = VoiceRoomSeatLayout(room: room, presence: presence).build();
         final owner = _resolveOwner(seats);
 
         return SizedBox(
-          height: gridH.clamp(130.0, 200.0),
+          height: gridH.clamp(140.0, 210.0),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -63,33 +61,43 @@ class VoiceWebOwnerStage extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      owner != null ? 'Oda Sahibi' : 'Admin',
+                      owner?.displayName ?? 'Admin',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
                         color: AppColors.coinGold.withValues(alpha: 0.95),
                       ),
                     ),
+                    Text(
+                      'Oda Sahibi',
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: AppColors.textMuted.withValues(alpha: 0.85),
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _guestRow(
+                      _seatRow(
                         seats: seats,
                         displayStart: 1,
-                        seatStart: _guestSeatStart,
+                        internalStart: 2,
                         size: cell,
+                        gap: gap,
                       ),
                       SizedBox(height: gap),
-                      _guestRow(
+                      _seatRow(
                         seats: seats,
-                        displayStart: 5,
-                        seatStart: _guestSeatStart + 4,
+                        displayStart: 6,
+                        internalStart: 7,
                         size: cell,
-                        lockFromDisplay: 7,
+                        gap: gap,
                       ),
                     ],
                   ),
@@ -111,10 +119,10 @@ class VoiceWebOwnerStage extends StatelessWidget {
         if (p.id == ownerId) return p;
       }
     }
-    if (room.ownerName != null) {
+    if (room.ownerName != null || room.ownerAvatarUrl != null) {
       return ChatRoomPresence(
         id: ownerId ?? 'owner',
-        name: room.ownerName!,
+        name: room.ownerName ?? 'Admin',
         image: room.ownerAvatarUrl,
         chatRole: 'owner',
         seatIndex: 1,
@@ -123,25 +131,24 @@ class VoiceWebOwnerStage extends StatelessWidget {
     return null;
   }
 
-  Widget _guestRow({
+  Widget _seatRow({
     required Map<int, ChatRoomPresence> seats,
     required int displayStart,
-    required int seatStart,
+    required int internalStart,
     required double size,
-    int lockFromDisplay = 99,
+    required double gap,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: List.generate(4, (col) {
-        final seatIndex = seatStart + col;
+      children: List.generate(5, (col) {
+        final internal = internalStart + col;
         final displayNum = displayStart + col;
-        final user = seats[seatIndex];
+        final user = seats[internal];
         return VoiceMicSeat(
           user: user,
           seatIndex: displayNum,
           size: size,
           speaking: speakingUserId == user?.id || user?.isSpeaking == true,
-          locked: user == null && displayNum >= lockFromDisplay,
           onTap: user != null
               ? () => onUserTap?.call(user)
               : onEmptySeatTap,
@@ -151,7 +158,6 @@ class VoiceWebOwnerStage extends StatelessWidget {
   }
 }
 
-/// Web sahnesindeki 8 misafir koltuğu + sahip.
 Set<String> voiceWebOnStageIds({
   required VoiceRoomEntity room,
   required List<ChatRoomPresence> presence,
