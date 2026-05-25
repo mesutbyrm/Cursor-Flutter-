@@ -613,8 +613,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final mq = MediaQuery.sizeOf(context);
     final audience = voiceWebAudienceOffStage(presence: live.presence, room: room);
     final chatMaxH = keyboardOpen
-        ? (mq.height * 0.26).clamp(110.0, 180.0)
-        : (mq.height * 0.32).clamp(140.0, 260.0);
+        ? (mq.height * 0.22).clamp(96.0, 160.0)
+        : (mq.height * 0.28).clamp(120.0, 220.0);
     final duyuru = (room.descTr ?? room.rulesTr)?.trim();
     ChatRoomPresence? ownerPresence;
     if (room.ownerId != null) {
@@ -759,7 +759,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         VoiceWebRoomInfoPill(
                           room: room,
                           ownerName: ownerName,
@@ -789,7 +789,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           VoiceRoomAudienceStrip(
                             audience: audience,
                             totalOnline: online,

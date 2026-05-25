@@ -15,9 +15,11 @@ final platformStatsRemoteProvider = Provider<PlatformStatsRemoteDataSource>(
 
 final platformStatsProvider = FutureProvider<PlatformStatsEntity>((ref) async {
   final remote = await ref.watch(platformStatsRemoteProvider).fetch();
-  if (remote != null && remote.onlineUsers > 0) {
-    if (remote.recentLogins.isNotEmpty) return remote;
-    final recent = await _recentFromStories(ref);
+  if (remote != null) {
+    var recent = remote.recentLogins;
+    if (recent.isEmpty) {
+      recent = await _recentFromStories(ref);
+    }
     return PlatformStatsEntity(
       onlineUsers: remote.onlineUsers,
       inGames: remote.inGames,
@@ -27,7 +29,7 @@ final platformStatsProvider = FutureProvider<PlatformStatsEntity>((ref) async {
       fortuneActive: remote.fortuneActive,
       browsing: remote.browsing,
       todayLogins: remote.todayLogins,
-      recentLogins: recent.isNotEmpty ? recent : remote.recentLogins,
+      recentLogins: recent,
     );
   }
 

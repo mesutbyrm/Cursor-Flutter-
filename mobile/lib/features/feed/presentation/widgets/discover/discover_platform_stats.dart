@@ -6,6 +6,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../domain/entities/platform_stats_entity.dart';
 import '../../providers/platform_stats_providers.dart';
+import 'discover_section_header.dart';
 
 /// Ana sayfa — canlı istatistik kartları + son girişler (mockup).
 class DiscoverPlatformStats extends ConsumerWidget {
@@ -21,6 +22,11 @@ class DiscoverPlatformStats extends ConsumerWidget {
       data: (data) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const DiscoverSectionHeader(
+            title: 'Canlı İstatistikler',
+            actionLabel: '',
+            onAction: null,
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: _StatsGrid(stats: data),
@@ -102,8 +108,10 @@ class _StatsGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        const spacing = 10.0;
-        final tileW = (constraints.maxWidth - spacing) / 2;
+        const spacing = 8.0;
+        const cols = 4;
+        final tileW =
+            (constraints.maxWidth - spacing * (cols - 1)) / cols;
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
@@ -162,7 +170,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: const Color(0xFF140A24).withValues(alpha: 0.92),
@@ -181,40 +189,42 @@ class _StatCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: item.color, width: 1.5),
                   color: item.color.withValues(alpha: 0.12),
                 ),
-                child: Icon(item.icon, color: item.color, size: 18),
+                child: Icon(item.icon, color: item.color, size: 15),
               ),
               const Spacer(),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           Text(
             _formatCount(item.value),
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 17,
               fontWeight: FontWeight.w900,
               color: item.color,
               height: 1,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             item.title,
             style: const TextStyle(
               fontWeight: FontWeight.w800,
-              fontSize: 13,
+              fontSize: 10,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           Text(
             item.subtitle,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 8,
               color: AppColors.textMuted.withValues(alpha: 0.9),
               height: 1.2,
             ),

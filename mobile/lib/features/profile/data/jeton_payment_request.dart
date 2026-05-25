@@ -20,3 +20,23 @@ Map<String, dynamic> buildJetonPaymentRequest({
     'notes': notes ?? 'Jeton yükleme · $method',
   };
 }
+
+/// Gold üyelik uzatma — site `POST /api/payment/requests` (jeton talebi).
+Map<String, dynamic> buildMembershipPaymentRequest({
+  required JetonPackageEntity package,
+  required String method,
+  String? notes,
+}) {
+  final coins = package.coins > 0 ? package.coins : 1;
+  return {
+    'requestType': 'jeton',
+    'type': 'jeton',
+    'method': method,
+    'packageId': package.id,
+    'packageTitle': package.title,
+    'coins': coins,
+    'amount': coins,
+    if (package.priceTry != null) 'priceTry': package.priceTry,
+    'notes': notes ?? 'Gold üyelik uzatma · $method',
+  };
+}

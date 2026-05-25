@@ -31,20 +31,20 @@ class VoiceWebOwnerStage extends StatelessWidget {
         final w = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width;
-        final ownerSize = (w * 0.2).clamp(76.0, 100.0);
-        final gridW = w - ownerSize - 24;
-        final gap = 5.0;
-        final cell = ((gridW - gap * 4) / 5).clamp(40.0, 58.0);
-        final rowH = cell + 22;
+        final ownerSize = (w * 0.18).clamp(68.0, 88.0);
+        final gridW = w - ownerSize - 16;
+        final gap = 4.0;
+        final cell = ((gridW - gap * 4) / 5).clamp(36.0, 52.0);
+        final rowH = cell + 18;
         final gridH = rowH * 2 + gap;
 
         final seats = VoiceRoomSeatLayout(room: room, presence: presence).build();
         final owner = _resolveOwner(seats);
 
         return SizedBox(
-          height: gridH.clamp(140.0, 210.0),
+          height: gridH.clamp(108.0, 168.0),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [

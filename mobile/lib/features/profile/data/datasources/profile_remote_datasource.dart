@@ -211,7 +211,29 @@ class WalletRemoteDataSource {
       ApiEndpoints.paymentRequests,
       data: body,
     );
+    final code = res.statusCode ?? 0;
+    if (code < 200 || code >= 300) {
+      throw ApiException(
+        'Talep gönderilemedi (HTTP $code). Oturumu kontrol edip tekrar deneyin.',
+        statusCode: code,
+      );
+    }
+
     final data = res.data;
+    if (data is String) {
+      final s = data.trim();
+      if (s.contains('<!DOCTYPE') || s.contains('<html')) {
+        throw const ApiException(
+          'Ödeme talebi gönderilemedi — sunucu oturum sayfası döndürdü. '
+          'Çıkış yapıp tekrar giriş yapın.',
+        );
+      }
+      if (s.isNotEmpty) {
+        throw ApiException(s);
+      }
+      return;
+    }
+
     if (data is Map) {
       final m = Map<String, dynamic>.from(data);
       if (m['success'] == false) {
@@ -223,6 +245,14 @@ class WalletRemoteDataSource {
       if (err != null && err.toString().isNotEmpty) {
         throw ApiException(err.toString());
       }
+      final nested = m['data'];
+      if (nested is Map) {
+        final inner = Map<String, dynamic>.from(nested);
+        final id = inner['id'] ?? inner['paymentRequestId'];
+        if (id != null && id.toString().isNotEmpty) return;
+      }
+      if (m['id'] != null || m['paymentRequestId'] != null) return;
+      if (m['success'] == true) return;
     }
   }
 

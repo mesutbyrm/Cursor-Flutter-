@@ -9,11 +9,11 @@ import '../../../../../core/ui/premium/premium.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/domain/entities/voice_room_sort.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
+import '../../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../../../../voice_hub/presentation/widgets/voice_room_grid_tile.dart';
 import 'discover_section_header.dart';
-import 'discover_voice_room_carousel_item.dart';
 
-/// Ana sayfa sohbet odaları — tek sıra, yatay kaydırma + alt avatar şeridi.
+/// Ana sayfa sohbet odaları — 4 sütunlu grid (canlifal.com ana sayfa).
 class DiscoverVoiceOrbs extends ConsumerStatefulWidget {
   const DiscoverVoiceOrbs({super.key});
 
@@ -53,7 +53,7 @@ class _DiscoverVoiceOrbsState extends ConsumerState<DiscoverVoiceOrbs> {
     return rooms.when(
       loading: () => const _VoiceRoomsSection(
         child: SizedBox(
-          height: 220,
+          height: 200,
           child: Center(
             child: SizedBox(
               width: 24,
@@ -80,7 +80,7 @@ class _DiscoverVoiceOrbsState extends ConsumerState<DiscoverVoiceOrbs> {
             ),
           );
         }
-        return _VoiceRoomsCarousel(
+        return _VoiceRoomsGrid(
           rooms: sortVoiceRoomsByPopularity(list),
         );
       },
@@ -103,25 +103,24 @@ class _VoiceRoomsSection extends StatelessWidget {
           actionLabel: 'Tüm Odalar',
           onAction: () => context.push('/voice-rooms'),
         ),
-        child,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: child,
+        ),
         const SizedBox(height: 12),
       ],
     );
   }
 }
 
-class _VoiceRoomsCarousel extends StatelessWidget {
-  const _VoiceRoomsCarousel({required this.rooms});
+class _VoiceRoomsGrid extends ConsumerWidget {
+  const _VoiceRoomsGrid({required this.rooms});
 
   final List<VoiceRoomEntity> rooms;
 
   @override
-  Widget build(BuildContext context) {
-    const tileH =
-        DiscoverVoiceRoomCarouselItem.tileWidth /
-            VoiceRoomGridTile.tileAspectRatio +
-        6 +
-        28;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final preview = rooms.take(8).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -131,21 +130,34 @@ class _VoiceRoomsCarousel extends StatelessWidget {
           actionLabel: 'Tüm Odalar',
           onAction: () => context.push('/voice-rooms'),
         ),
-        SizedBox(
-          height: tileH,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: rooms.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (context, i) {
-              final room = rooms[i];
-              return DiscoverVoiceRoomCarouselItem(
-                room: room,
-                onTap: () => context.push(
-                  '/voice-room/${room.id}',
-                  extra: room,
-                ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              const cols = VoiceRoomGridTile.crossAxisCount;
+              const spacing = 8.0;
+              final tileW =
+                  (constraints.maxWidth - spacing * (cols - 1)) / cols;
+              final tileH = tileW / VoiceRoomGridTile.tileAspectRatio;
+
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  for (final room in preview)
+                    SizedBox(
+                      width: tileW,
+                      height: tileH,
+                      child: VoiceRoomGridTile(
+                        room: room,
+                        onTap: () => openVoiceRoomWithVipGate(
+                          context,
+                          ref,
+                          room,
+                        ),
+                      ),
+                    ),
+                ],
               );
             },
           ),

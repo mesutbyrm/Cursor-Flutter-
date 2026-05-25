@@ -11,6 +11,7 @@ import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../../../vip_gold/domain/voice_room_access.dart';
 import '../../../../vip_gold/presentation/theme/vip_gold_tokens.dart';
 import '../../../../live/presentation/utils/open_live_stream.dart';
+import '../../utils/open_voice_chat_room_flow.dart';
 import '../../theme/voice_room_tokens.dart';
 import 'voice_discover_2026.dart';
 
@@ -166,7 +167,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
         const SizedBox(height: 14),
         _LiveStoriesRow(
           live: live,
-          onOpenRoom: () => context.push('/live/prep'),
+          onOpenRoom: () => showOpenVoiceChatRoomFlow(context, ref),
           onStreamTap: (s) => openLiveFromDiscover(context, ref, s),
         ),
         Expanded(
