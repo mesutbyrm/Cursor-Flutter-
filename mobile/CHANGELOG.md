@@ -1,5 +1,24 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.86+88 (2026-05-19)
+
+### Sesli oda — web görsel + sohbet + canlifal.com verisi
+
+- Sahne: sol Admin + sağda 2×5 (10) koltuk; üst barda oda avatarı (mor halka)
+- Sohbet: gönder düğmesi takılması giderildi (timeout, poll çakışması, birleştirme)
+- API: önce `slug` anahtarı, `since` ile artımlı mesaj, canlifal oda listesi senkronu
+
+## 1.0.85+87 (2026-05-19)
+
+### Sesli oda — web referans UI (Premium)
+
+- Üst bar: doğrulanmış oda adı, ID, çevrimiçi, galeri, ayarlar, çıkış
+- Sahne: solda büyük oda sahibi (altın taç), sağda 4+4 mikrofon ızgarası
+- Duyuru kutusu, Müzik Aç / DJ satırı, dinleyici şeridi
+- Şeffaf sohbet akışı, web giriş çubuğu (mikrofon + hediye)
+- Alt nav: Ana Sayfa, Hoparlör, merkez mikrofon, Jeton Yükle, Hediye At
+- Sağ yüzen kısayollar; daha açık arka plan görünümü
+
 ## 1.0.84+86 (2026-05-19)
 
 ### Sesli oda — sohbet, düzen, katılımcılar

@@ -1,7 +1,7 @@
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 
-/// 8 koltuk: 1 = oda sahibi (yalnızca presence’teyse dolu), 2–8 diğer kullanıcılar.
+/// 11 koltuk: 1 = oda sahibi, 2–11 misafir (web: 10’lu ızgara + sol admin).
 class VoiceRoomSeatLayout {
   VoiceRoomSeatLayout({
     required this.room,
@@ -11,7 +11,7 @@ class VoiceRoomSeatLayout {
   final VoiceRoomEntity room;
   final List<ChatRoomPresence> presence;
 
-  static const seatCount = 8;
+  static const seatCount = 11;
 
   /// Koltuk numarası → kullanıcı; boş koltuklar map’te yok.
   Map<int, ChatRoomPresence> build() {
@@ -66,7 +66,7 @@ class VoiceRoomSeatLayout {
       }
     }
 
-    // Kalan kullanıcıları 2–10’a doldur (sahip hariç).
+    // Kalan kullanıcıları 2–11’e doldur (sahip hariç).
     var next = 2;
     void place(ChatRoomPresence u) {
       if (ownerId != null && u.id == ownerId) return;

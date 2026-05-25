@@ -64,26 +64,27 @@ class VoiceMicSeat extends StatelessWidget {
                 right: 0,
                 child: Center(child: VipBadge(tier: vipTier, compact: true)),
               ),
-            Positioned(
-              top: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white24),
-                ),
-                child: Text(
-                  '$seatIndex',
-                  style: const TextStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
+            if (!isHost && seatIndex > 0)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: Text(
+                    '$seatIndex',
+                    style: const TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
         const SizedBox(height: 4),
@@ -136,14 +137,22 @@ class _EmptySeat extends StatelessWidget {
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.06),
+              color: Colors.white.withValues(alpha: 0.04),
               border: Border.all(
                 color: locked
                     ? AppColors.textMuted.withValues(alpha: 0.35)
-                    : VoiceRoomTokens.neonPurple.withValues(alpha: 0.45),
-                width: 1.5,
+                    : VoiceRoomTokens.neonPurple.withValues(alpha: 0.55),
+                width: 1.8,
                 strokeAlign: BorderSide.strokeAlignInside,
               ),
+              boxShadow: locked
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.15),
+                        blurRadius: 10,
+                      ),
+                    ],
             ),
             child: Icon(
               locked ? Icons.lock_rounded : Icons.add_rounded,
@@ -151,13 +160,15 @@ class _EmptySeat extends StatelessWidget {
               size: size * 0.32,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
-            locked ? 'Kilit' : 'Boş',
+            locked ? 'Kilit' : '$seatIndex',
             style: TextStyle(
-              fontSize: size > 50 ? 10 : 8,
+              fontSize: size > 50 ? 10 : 9,
               fontWeight: FontWeight.w700,
-              color: AppColors.textMuted.withValues(alpha: 0.9),
+              color: locked
+                  ? AppColors.textMuted.withValues(alpha: 0.7)
+                  : Colors.white.withValues(alpha: 0.38),
             ),
           ),
         ],

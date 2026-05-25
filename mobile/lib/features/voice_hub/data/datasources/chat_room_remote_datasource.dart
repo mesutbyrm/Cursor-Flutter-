@@ -97,9 +97,13 @@ class ChatRoomRemoteDataSource {
   Future<List<ChatRoomMessage>> fetchMessages(
     String roomKey, {
     String? alternateKey,
+    String? since,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final res = await _dio.safeGet<dynamic>(messagesPath(key));
+      final res = await _dio.safeGet<dynamic>(
+        messagesPath(key),
+        query: since != null && since.isNotEmpty ? {'since': since} : null,
+      );
       return _messageList(res.data)
           .map(ChatRoomMessage.fromJson)
           .where((m) => m.id.isNotEmpty || m.content.isNotEmpty)
@@ -251,10 +255,19 @@ class ChatRoomRemoteDataSource {
         }),
         options: Options(contentType: 'application/json'),
       );
-      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
-      final msg = map['message'] ?? map;
-      if (msg is Map) {
-        return ChatRoomMessage.fromJson(Map<String, dynamic>.from(msg));
+      final body = res.data;
+      if (body is Map) {
+        final map = _unwrapMap(body) ?? asJsonMap(body);
+        final msg = map['message'];
+        if (msg is Map) {
+          return ChatRoomMessage.fromJson(Map<String, dynamic>.from(msg));
+        }
+        if (map['id'] != null &&
+            (map['content'] != null ||
+                map['body'] != null ||
+                map['text'] != null)) {
+          return ChatRoomMessage.fromJson(map);
+        }
       }
       return null;
     });

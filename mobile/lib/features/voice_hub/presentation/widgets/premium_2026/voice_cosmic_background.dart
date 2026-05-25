@@ -47,7 +47,7 @@ class _VoiceCosmicBackgroundState extends State<VoiceCosmicBackground>
           CachedNetworkImage(
             imageUrl: widget.imageUrl!,
             fit: BoxFit.cover,
-            color: Colors.black.withValues(alpha: 0.55),
+            color: Colors.black.withValues(alpha: 0.42),
             colorBlendMode: BlendMode.darken,
           ),
         Positioned(
@@ -81,10 +81,10 @@ class _VoiceCosmicBackgroundState extends State<VoiceCosmicBackground>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.15),
-                    VoiceRoomTokens.bgDeep.withValues(alpha: 0.92),
+                    Colors.black.withValues(alpha: 0.08),
+                    VoiceRoomTokens.bgDeep.withValues(alpha: 0.78),
                   ],
-                  stops: const [0.0, 0.85],
+                  stops: const [0.0, 0.92],
                 ),
               ),
             ),
