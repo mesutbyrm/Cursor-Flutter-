@@ -1,7 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../membership/data/membership_remote_datasource.dart';
-import '../../../membership/domain/membership_package_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/vip_tier.dart';
 

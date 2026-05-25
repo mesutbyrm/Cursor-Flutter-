@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.90+92 (2026-05-19)
+
+### Ana sayfa, oda aç, Gold & derleme düzeltmeleri
+
+- Keşfet: 4 sütun sohbet odaları; Canlı Falcılar altında hızlı işlemler; 4×2 canlı istatistikler
+- Sesli oda aç: `POST /api/chat/rooms/create` — 100 jeton (Gold+ VIP oda)
+- Gold: aktif üyelik metni ve uzatma; ödeme talebi HTML/oturum hataları düzgün gösterilir
+- RTC sahne boşlukları sıkılaştırıldı; `dart analyze` derleme hataları giderildi
+
 ## 1.0.88+90 (2026-05-19)
 
 ### Sesli oda — canlifal.com API uyumu (oda id, YouTube, koltuk)

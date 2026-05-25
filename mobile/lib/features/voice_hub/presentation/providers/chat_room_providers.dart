@@ -319,7 +319,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         dj: dj,
         loading: false,
         error: refreshError != null
-            ? ApiException.userMessage(refreshError!)
+            ? ApiException.userMessage(refreshError)
             : null,
         clearError: refreshError == null,
         backgroundUrl: (state.backgroundUrl?.isNotEmpty == true)
@@ -391,10 +391,11 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         list.removeWhere((m) => m.id == optimisticId);
       }
       if (sent != null) {
+        final delivered = sent;
         final idx = list.indexWhere(
           (m) =>
-              m.id == sent.id ||
-              (m.id.startsWith('local-') && m.content == sent.content),
+              m.id == delivered.id ||
+              (m.id.startsWith('local-') && m.content == delivered.content),
         );
         if (idx >= 0) {
           list[idx] = sent;
