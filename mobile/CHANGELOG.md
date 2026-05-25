@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.88+90 (2026-05-19)
+
+### Sesli oda — canlifal.com API uyumu (oda id, YouTube, koltuk)
+
+- Oda API anahtarı: önce Prisma `id` (slug ile DJ/mesaj 404 düzeltmesi)
+- YouTube arama: `/api/youtube/search`; şarkı sırası: `/song-request` (10 jeton)
+- Koltuk: yetkili boş koltuğa oturur; oda sahibi kullanıcıyı koltuğa atayabilir
+- Mesaj gönderimi: zaman aşımında yedek anahtar; DJ hatası sohbeti kilitlemez
+- Arka plan listesi: sitedeki oda `backgroundImage` görsellerinden
+
 ## 1.0.87+89 (2026-05-19)
 
 ### Sesli oda — ayarlar, müzik sırası, YouTube isteği

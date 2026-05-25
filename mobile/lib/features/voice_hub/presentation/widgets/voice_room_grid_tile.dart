@@ -19,7 +19,7 @@ class VoiceRoomGridTile extends StatelessWidget {
   final VoidCallback onTap;
   final bool isMine;
 
-  static const crossAxisCount = 3;
+  static const crossAxisCount = 4;
 
   /// Daha büyük karo (ana sayfa + tüm odalar).
   static const tileAspectRatio = 0.92;

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
@@ -30,13 +31,13 @@ class ChatRoomRemoteDataSource {
   static String roomBackgroundPath(String roomId) =>
       '/api/chat/rooms/$roomId/background';
 
-  static String youtubeSearchPath() => '/api/chat/youtube-search';
+  /// canlifal.com üretim ucu (mobil JWT ile).
+  static String youtubeSearchPath() => '/api/youtube/search';
 
-  static String musicQueuePath(String roomId) =>
-      '/api/chat/rooms/$roomId/music-queue';
+  static String songRequestPath(String roomId) =>
+      '/api/chat/rooms/$roomId/song-request';
 
-  static String roomDjUserPath(String roomId, String userId) =>
-      '/api/chat/rooms/$roomId/dj/$userId';
+  static String seatsPath(String roomId) => '/api/chat/rooms/$roomId/seats';
 
   Map<String, dynamic>? _unwrapMap(dynamic body) {
     if (body is Map<String, dynamic>) {
@@ -84,6 +85,25 @@ class ChatRoomRemoteDataSource {
         .toList();
   }
 
+  bool _shouldTryAlternateKey(Object error, String primary, String? alternate) {
+    final alt = alternate?.trim();
+    if (alt == null || alt.isEmpty || alt == primary) return false;
+    if (error is DioException) {
+      final code = error.response?.statusCode;
+      if (code == 404) return true;
+      final data = error.response?.data;
+      if (data is Map) {
+        final msg = (data['error'] ?? data['message'] ?? '').toString();
+        if (msg.contains('Oda bulunamadı')) return true;
+      }
+    }
+    if (error is ApiException) {
+      if (error.statusCode == 404) return true;
+      if (error.message.contains('Oda bulunamadı')) return true;
+    }
+    return false;
+  }
+
   Future<T> _withRoomKeyFallback<T>(
     String primaryKey,
     String? alternateKey,
@@ -91,15 +111,9 @@ class ChatRoomRemoteDataSource {
   ) async {
     try {
       return await run(primaryKey);
-    } on DioException catch (e) {
-      final alt = alternateKey?.trim();
-      if (alt == null ||
-          alt.isEmpty ||
-          alt == primaryKey ||
-          e.response?.statusCode != 404) {
-        rethrow;
-      }
-      return await run(alt);
+    } catch (e) {
+      if (!_shouldTryAlternateKey(e, primaryKey, alternateKey)) rethrow;
+      return await run(alternateKey!.trim());
     }
   }
 
@@ -182,11 +196,35 @@ class ChatRoomRemoteDataSource {
   }
 
   Future<List<String>> fetchBackgrounds() async {
-    final res = await _dio.safeGet<dynamic>(backgroundsPath());
-    final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
-    final raw = map['backgrounds'] ?? map['items'];
-    if (raw is! List) return const [];
-    return raw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+    final urls = <String>{};
+    try {
+      final res = await _dio.safeGet<dynamic>(backgroundsPath());
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['backgrounds'] ?? map['items'];
+      if (raw is List) {
+        for (final e in raw) {
+          final s = e.toString();
+          if (s.isNotEmpty) urls.add(s);
+        }
+      }
+    } catch (_) {}
+    try {
+      final roomsRes = await _dio.safeGet<dynamic>('/api/chat/rooms');
+      dynamic list = roomsRes.data;
+      if (list is Map) {
+        list = list['rooms'] ?? list['data'] ?? list['items'];
+        if (list is Map) list = list['rooms'];
+      }
+      if (list is List) {
+        for (final row in list) {
+          if (row is! Map) continue;
+          final m = Map<String, dynamic>.from(row);
+          final bg = m['backgroundImage']?.toString();
+          if (bg != null && bg.isNotEmpty) urls.add(bg);
+        }
+      }
+    } catch (_) {}
+    return urls.toList();
   }
 
   Future<void> setRoomBackground({
@@ -248,27 +286,50 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  List<YoutubeSearchHit> _parseYoutubeHits(dynamic body) {
+    dynamic raw;
+    if (body is Map) {
+      raw = body['items'] ??
+          body['videos'] ??
+          body['results'] ??
+          body['data'];
+      if (raw is Map) {
+        raw = raw['items'] ?? raw['videos'] ?? raw['results'];
+      }
+    } else if (body is List) {
+      raw = body;
+    }
+    if (raw is! List) return const [];
+    final out = <YoutubeSearchHit>[];
+    for (final e in raw) {
+      if (e is! Map) continue;
+      final m = Map<String, dynamic>.from(e);
+      final vid = m['videoId']?.toString() ?? m['id']?.toString() ?? '';
+      if (vid.isEmpty) continue;
+      final url = m['url']?.toString() ??
+          'https://www.youtube.com/watch?v=$vid';
+      out.add(
+        YoutubeSearchHit(
+          videoId: vid,
+          title: m['title']?.toString() ?? 'Video',
+          url: url,
+          thumbUrl: m['thumbUrl']?.toString() ??
+              m['thumbnail']?.toString(),
+          uploader: m['uploader']?.toString() ?? m['channel']?.toString(),
+        ),
+      );
+    }
+    return out;
+  }
+
   Future<List<YoutubeSearchHit>> searchYoutube(String query) async {
     final q = query.trim();
     if (q.length < 2) return const [];
     final res = await _dio.safeGet<dynamic>(
       youtubeSearchPath(),
-      query: {'q': q},
+      query: {'q': q, 'query': q},
     );
-    final body = res.data;
-    dynamic raw;
-    if (body is Map) {
-      raw = body['items'] ?? body['data'];
-      if (raw == null && body['success'] == true) {
-        final data = body['data'];
-        if (data is Map) raw = data['items'];
-      }
-    }
-    if (raw is! List) return const [];
-    return raw
-        .map((e) => YoutubeSearchHit.fromJson(asJsonMap(e)))
-        .where((h) => h.videoId.isNotEmpty)
-        .toList();
+    return _parseYoutubeHits(res.data);
   }
 
   Future<({List<MusicQueueItem> queue, int cost})> fetchMusicQueue(
@@ -276,7 +337,7 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final res = await _dio.safeGet<dynamic>(musicQueuePath(key));
+      final res = await _dio.safeGet<dynamic>(songRequestPath(key));
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['queue'] ?? map['items'];
       final queue = <MusicQueueItem>[];
@@ -287,7 +348,9 @@ class ChatRoomRemoteDataSource {
           }
         }
       }
-      final cost = map['cost'] as int? ?? 10;
+      final cost = map['cost'] as int? ??
+          map['musicRequestCost'] as int? ??
+          10;
       return (queue: queue, cost: cost);
     });
   }
@@ -299,13 +362,18 @@ class ChatRoomRemoteDataSource {
     required String title,
     required String youtubeUrl,
     String? thumbUrl,
+    String? videoId,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final vid = videoId?.trim().isNotEmpty == true
+          ? videoId!.trim()
+          : _extractYoutubeId(youtubeUrl);
       final res = await _dio.safePost<dynamic>(
-        musicQueuePath(key),
+        songRequestPath(key),
         data: jsonEncode({
           'title': title,
           'youtubeUrl': youtubeUrl,
+          if (vid != null) 'videoId': vid,
           if (thumbUrl != null) 'thumbUrl': thumbUrl,
         }),
         options: Options(contentType: 'application/json'),
@@ -330,13 +398,38 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  Future<void> assignSeat({
+    required String roomKey,
+    String? alternateKey,
+    required int seatIndex,
+    String? userId,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        seatsPath(key),
+        data: jsonEncode({
+          'seatIndex': seatIndex,
+          if (userId != null && userId.isNotEmpty) 'userId': userId,
+        }),
+        options: Options(contentType: 'application/json'),
+      );
+    });
+  }
+
   Future<List<String>> addRoomDj({
     required String roomKey,
     String? alternateKey,
     required String targetUserId,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final res = await _dio.safePost<dynamic>(roomDjUserPath(key, targetUserId));
+      final res = await _dio.safePost<dynamic>(
+        djPath(key),
+        data: jsonEncode({
+          'userId': targetUserId,
+          'action': 'add',
+        }),
+        options: Options(contentType: 'application/json'),
+      );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['djUserIds'];
       if (raw is List) return raw.map((e) => e.toString()).toList();
@@ -350,13 +443,27 @@ class ChatRoomRemoteDataSource {
     required String targetUserId,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final res =
-          await _dio.safeDelete<dynamic>(roomDjUserPath(key, targetUserId));
+      final res = await _dio.safePost<dynamic>(
+        djPath(key),
+        data: jsonEncode({
+          'userId': targetUserId,
+          'action': 'remove',
+        }),
+        options: Options(contentType: 'application/json'),
+      );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['djUserIds'];
       if (raw is List) return raw.map((e) => e.toString()).toList();
       return const [];
     });
+  }
+
+  String? _extractYoutubeId(String url) {
+    final u = url.trim();
+    if (u.isEmpty) return null;
+    final short = RegExp(r'youtu\.be/([A-Za-z0-9_-]{6,})');
+    final watch = RegExp(r'[?&]v=([A-Za-z0-9_-]{6,})');
+    return short.firstMatch(u)?.group(1) ?? watch.firstMatch(u)?.group(1);
   }
 
   Future<ChatRoomMessage?> sendMessage({

@@ -62,10 +62,84 @@ class LiveRemoteDataSource {
         .toList();
   }
 
+  static const int voiceRoomOpenJetonCost = 100;
+
+  /// canlifal.com `POST /api/chat/rooms/create` — 100 jeton, isteğe bağlı VIP oda.
+  Future<VoiceRoomEntity> createVoiceChatRoom({bool vip = false}) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.chatRoomCreate,
+      data: {
+        'cost': voiceRoomOpenJetonCost,
+        'jeton': voiceRoomOpenJetonCost,
+        'coins': voiceRoomOpenJetonCost,
+        'isVip': vip,
+        if (vip) 'vip': true,
+      },
+    );
+    final body = res.data;
+    if (body is String &&
+        (body.contains('<!DOCTYPE') || body.contains('<html'))) {
+      throw DioException(
+        requestOptions: res.requestOptions,
+        message: 'Oda açılamadı — oturum gerekli',
+      );
+    }
+    Map<String, dynamic>? map;
+    if (body is Map<String, dynamic>) {
+      map = body;
+    } else if (body is Map) {
+      map = Map<String, dynamic>.from(body);
+    }
+    if (map == null) {
+      throw DioException(
+        requestOptions: res.requestOptions,
+        message: 'Geçersiz oda oluşturma yanıtı',
+      );
+    }
+    if (map['success'] == false) {
+      throw DioException(
+        requestOptions: res.requestOptions,
+        message: (map['error'] ?? map['message'] ?? 'Oda açılamadı').toString(),
+      );
+    }
+    final err = map['error'];
+    if (err != null && err.toString().isNotEmpty && map['success'] != true) {
+      throw DioException(
+        requestOptions: res.requestOptions,
+        message: err.toString(),
+      );
+    }
+    dynamic roomRaw = map['room'] ?? map['data'];
+    if (roomRaw is Map && roomRaw['room'] is Map) {
+      roomRaw = roomRaw['room'];
+    }
+    if (roomRaw is Map) {
+      return _mapVoiceRoom(asJsonMap(roomRaw));
+    }
+    if (map.containsKey('id') || map.containsKey('slug')) {
+      return _mapVoiceRoom(map);
+    }
+    throw DioException(
+      requestOptions: res.requestOptions,
+      message: 'Oda oluşturuldu ancak oda bilgisi alınamadı',
+    );
+  }
+
   Future<VoiceRoomEntity?> fetchVoiceRoomById(String id) async {
     final rooms = await fetchVoiceRooms();
+    final needle = id.trim().toLowerCase();
+    if (needle.isEmpty) return null;
+    String norm(String s) =>
+        s.trim().toLowerCase().replaceAll(RegExp(r'-+$'), '');
     for (final r in rooms) {
-      if (r.id == id || r.slug == id) return r;
+      if (r.id == id ||
+          r.slug == id ||
+          r.id.toLowerCase() == needle ||
+          r.slug.toLowerCase() == needle ||
+          norm(r.slug) == norm(id) ||
+          norm(r.id) == norm(id)) {
+        return r;
+      }
     }
     return null;
   }

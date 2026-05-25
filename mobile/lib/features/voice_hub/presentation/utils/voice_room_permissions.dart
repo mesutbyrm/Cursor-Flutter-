@@ -21,6 +21,12 @@ class VoiceRoomPermissions {
 
   bool get hasFullAdmin => isSiteAdmin || isRoomOwner;
 
+  /// Boş koltuğa oturma (moderatör, DJ, oda sahibi).
+  bool get canTakeSeat => canModerate || isRoomOwner || canManageDj;
+
+  /// Başkasını koltuğa oturtma (oda sahibi / moderasyon).
+  bool get canAssignSeats => isRoomOwner || canModerate;
+
   static VoiceRoomPermissions forUser({
     required UserEntity? user,
     required VoiceRoomEntity room,

@@ -202,6 +202,7 @@ class PremiumMembershipPage extends ConsumerWidget {
       onDone: () {
         ref.invalidate(membershipCatalogProvider);
         ref.invalidate(walletBalancesProvider);
+        ref.invalidate(allPaymentRequestsProvider);
       },
     );
   }

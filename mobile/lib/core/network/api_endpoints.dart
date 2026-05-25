@@ -43,6 +43,9 @@ abstract final class ApiEndpoints {
   /// Sesli / metin sohbet odaları (web `/sohbet/{slug}`).
   static const chatRooms = '/api/chat/rooms';
 
+  /// Sesli sohbet odası aç — canlifal.com 100 jeton.
+  static const chatRoomCreate = '/api/chat/rooms/create';
+
   static String chatRoomMessages(String roomId) =>
       '/api/chat/rooms/$roomId/messages';
 

@@ -104,7 +104,7 @@ class PlatformStatsRemoteDataSource {
           timeLabel: pick(m, ['timeLabel', 'timeAgo', 'ago'])?.toString() ??
               'Az önce',
           activityLabel:
-              pick(m, ['activity', 'activityLabel', 'fortuneType'])
+              pick(m, ['activityLabel', 'activity', 'fortuneType'])
                       ?.toString() ??
                   'Çevrimiçi',
           activityEmoji:
