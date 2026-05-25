@@ -4,10 +4,27 @@ import 'live_gift_type.dart';
 class LiveGiftCatalog {
   LiveGiftCatalog._();
 
-  static const featuredIds = ['gul', 'kalp', 'yildiz', 'tac', 'roket'];
+  static const featuredIds = [
+    'roket',
+    'galaksi',
+    'aslan',
+    'araba',
+    'elmas',
+    'kalp',
+    'tac',
+    'yat',
+    'gul',
+    'yildiz',
+  ];
 
   static const displayNameOverrides = <String, String>{
-    'roket': 'Araba',
+    'roket': 'Roket',
+    'gul': 'Gül',
+    'yildiz': 'Yıldız',
+    'araba': 'Spor araba',
+    'galaksi': 'Galaxy',
+    'aslan': 'Aslan',
+    'yat': 'Yat',
   };
 
   static const lottieAssetById = <String, String>{

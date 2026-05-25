@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../../live/domain/entities/live_gift_event.dart';
 import '../../theme/voice_room_tokens.dart';
 
@@ -185,17 +186,8 @@ class _GiftFlightBubble extends StatelessWidget {
     );
   }
 
-  String _emojiFor(LiveGiftEvent e) {
-    final n = e.giftName.toLowerCase();
-    if (n.contains('gül') || n.contains('rose')) return '🌹';
-    if (n.contains('kalp') || n.contains('heart')) return '💖';
-    if (n.contains('yıldız') || n.contains('star')) return '⭐';
-    if (n.contains('taç') || n.contains('crown')) return '👑';
-    if (n.contains('araba') || n.contains('car')) return '🏎️';
-    if (n.contains('yat') || n.contains('yacht')) return '🛥️';
-    if (n.contains('kale') || n.contains('castle')) return '🏰';
-    return '🎁';
-  }
+  String _emojiFor(LiveGiftEvent e) =>
+      PremiumGiftCatalog2026.emoji(e.giftId);
 }
 
 class _FlightItem {

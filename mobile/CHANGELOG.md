@@ -1,5 +1,39 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.81+83 (2026-05-19)
+
+### PART 6 — Premium canlı yayın (TikTok tarzı)
+
+- Immersive fullscreen: gradient scrim, blur üst/alt overlay
+- Canlı yorumlar: cam baloncuklu `LivePremiumChatFeed`
+- Çift dokunuş kalpleri + yüzen heart parçacıkları
+- Premium top bar: takip API, izleyici, süre, neon glow
+- Sağ rail: beğeni / hediye / paylaş; hediye fullscreen + bildirimler
+- Dikey swipe: `/live/swipe` — yayınlar arası TikTok geçişi
+- Varsayılan açılış swipe modunda (`openLiveStreamNative`)
+
+## 1.0.80+82 (2026-05-19)
+
+### PART 5 — Premium PK savaş sistemi
+
+- **1v1** ve **takım** modu; canlı mod geçişi
+- Realtime skor çubuğu (animasyonlu gradient), countdown, win streak rozetleri
+- Büyük glitch **VS** amblemi, cyber HUD oyuncu çerçeveleri
+- Hediye gücü: oda hediyeleri skora eklenir + neon patlama + yüzen tepkiler
+- Kazanan ekranı: konfeti, taç, tekrar PK
+- Sesli oda menüsü / keşfet PK kategorisi → `/voice-room/:id/pk`
+
+## 1.0.79+81 (2026-05-19)
+
+### PART 4 — Premium hediye sistemi (TikTok Live seviyesi)
+
+- 8 hediye: Roket, Galaxy, Aslan, Spor araba, Elmas, Kalp, Taç, Yat
+- Tam ekran animasyon: neon vignette, glow ring, combo rozeti, jeton burst, yüzen parçacıklar
+- Combo birleştirme (8 sn pencere), oturum hediye sıralaması
+- Sesli oda: cam blur hediye paneli, yatay premium kartlar, x1/x5/x10/x99
+- CustomPainter 3D-benzeri ikonlar (Lottie/Rive eksik asset’lerde)
+- Canlı yayın `GiftFullscreenOverlay` → premium overlay
+
 ## 1.0.75+77 (2026-05-19)
 
 ### Sesli sohbet — Premium 2026
