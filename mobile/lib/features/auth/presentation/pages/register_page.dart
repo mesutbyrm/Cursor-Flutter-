@@ -9,8 +9,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_date_pickers.dart';
-import '../widgets/auth_shell.dart';
-import '../widgets/google_sign_in_button.dart';
+import '../widgets/premium_auth_2026/premium_auth_2026.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
@@ -19,7 +18,8 @@ class RegisterPage extends ConsumerStatefulWidget {
   ConsumerState<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _RegisterPageState extends ConsumerState<RegisterPage> {
+class _RegisterPageState extends ConsumerState<RegisterPage>
+    with SingleTickerProviderStateMixin {
   final _form = GlobalKey<FormState>();
   final _displayName = TextEditingController();
   final _username = TextEditingController();
@@ -30,8 +30,23 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   TimeOfDay? _birthTime;
   String _language = 'tr';
 
+  late final AnimationController _enterCtrl;
+  late final Animation<double> _enterFade;
+
+  @override
+  void initState() {
+    super.initState();
+    _enterCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 520),
+    );
+    _enterFade = CurvedAnimation(parent: _enterCtrl, curve: Curves.easeOutCubic);
+    _enterCtrl.forward();
+  }
+
   @override
   void dispose() {
+    _enterCtrl.dispose();
     _displayName.dispose();
     _username.dispose();
     _email.dispose();
@@ -41,24 +56,24 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   }
 
   Future<void> _pickBirthDate() async {
-    final picked = await showAuthBirthDatePicker(
-      context,
-      initial: _birthDate,
-    );
+    final picked = await showAuthBirthDatePicker(context, initial: _birthDate);
     if (picked != null) setState(() => _birthDate = picked);
   }
 
   Future<void> _pickBirthTime() async {
-    final picked = await showAuthBirthTimePicker(
-      context,
-      initial: _birthTime,
-    );
+    final picked = await showAuthBirthTimePicker(context, initial: _birthTime);
     if (picked != null) setState(() => _birthTime = picked);
   }
 
   Future<void> _openLegal(String path) async {
     final uri = Uri.parse('${Env.siteOrigin}$path');
     await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  void _soon(String label) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$label yakında aktif olacak.')),
+    );
   }
 
   Future<void> _submitRegister() async {
@@ -89,76 +104,62 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     final auth = ref.watch(authControllerProvider);
     ref.listen(authControllerProvider, (prev, next) {
       next.whenOrNull(
+        data: (user) {
+          if (user != null) {
+            ref.read(guestModeProvider.notifier).state = false;
+          }
+        },
         error: (e, _) => ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),
         ),
       );
     });
 
-    return AuthShell(
-      showBack: true,
-      onBack: () => context.pop(),
-      useAppIcon: true,
-      child: AuthFormCard(
+    return FadeTransition(
+      opacity: _enterFade,
+      child: AuthPremiumShell(
+        showBack: true,
+        onBack: () => context.pop(),
+        topTitle: 'Hesap oluştur',
+        topSubtitle: 'Dakikalar içinde topluluğa katıl.',
         child: Form(
           key: _form,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const AuthBrandHeader(
-                title: 'Kayıt Ol',
-                subtitle: 'Hesabını oluştur; fal ve sosyal dünyaya katıl.',
-              ),
-              const SizedBox(height: 16),
-              GoogleSignInButton(
-                label: 'Google ile Kayıt ol',
-                onPressed: auth.isLoading
+              AuthSocialSection(
+                busy: auth.isLoading,
+                googleLabel: 'Google ile Kayıt ol',
+                onGoogle: auth.isLoading
                     ? null
                     : () => ref
                         .read(authControllerProvider.notifier)
                         .loginWithGoogle(),
+                onTikTok: auth.isLoading
+                    ? null
+                    : () => ref
+                        .read(authControllerProvider.notifier)
+                        .loginWithTikTok(),
+                onApple: () => _soon('Apple girişi'),
               ),
-              if (Env.hasTikTokLogin) ...[
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: auth.isLoading
-                      ? null
-                      : () => ref
-                          .read(authControllerProvider.notifier)
-                          .loginWithTikTok(),
-                  icon: const Icon(Icons.music_note_rounded, size: 20),
-                  label: const Text('TikTok ile Kayıt ol'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.35),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 16),
-              const AuthOrDivider(),
-              const SizedBox(height: 16),
-              TextFormField(
+              const SizedBox(height: 18),
+              const AuthOrDividerPremium(),
+              const SizedBox(height: 18),
+              AuthFloatingField(
                 controller: _displayName,
+                label: 'Adınız',
+                hint: 'Ad Soyad',
+                prefixIcon: Icons.person_outline_rounded,
                 textCapitalization: TextCapitalization.words,
-                decoration: authInputDecoration(
-                  labelText: 'Adınız',
-                  hintText: 'Ad Soyad',
-                  prefixIcon: Icons.person_outline_rounded,
-                ),
                 validator: (v) =>
                     v != null && v.trim().length >= 2 ? null : 'Adınızı girin',
               ),
-              const SizedBox(height: 10),
-              TextFormField(
+              const SizedBox(height: 12),
+              AuthFloatingField(
                 controller: _username,
-                decoration: authInputDecoration(
-                  labelText: 'Kullanıcı adı',
-                  hintText: 'ornek_kullanici',
-                  prefixIcon: Icons.alternate_email_rounded,
-                ),
+                label: 'Kullanıcı adı',
+                hint: 'ornek_kullanici',
+                prefixIcon: Icons.alternate_email_rounded,
                 validator: (v) {
                   if (v == null || v.trim().length < 3) {
                     return 'En az 3 karakter';
@@ -169,75 +170,70 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _pickBirthDate,
-                      child: Text(
-                        _birthDate == null
-                            ? 'Doğum tarihi'
-                            : formatBirthDate(_birthDate!),
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _pickBirthTime,
-                      child: Text(
-                        _birthTime == null
-                            ? 'Doğum saati'
-                            : _birthTime!.format(context),
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  ),
+                  Expanded(child: _BirthChip(
+                    label: _birthDate == null
+                        ? 'Doğum tarihi'
+                        : formatBirthDate(_birthDate!),
+                    onTap: _pickBirthDate,
+                  )),
+                  const SizedBox(width: 10),
+                  Expanded(child: _BirthChip(
+                    label: _birthTime == null
+                        ? 'Doğum saati'
+                        : _birthTime!.format(context),
+                    onTap: _pickBirthTime,
+                  )),
                 ],
               ),
-              const SizedBox(height: 10),
-              TextFormField(
+              const SizedBox(height: 12),
+              AuthFloatingField(
                 controller: _email,
+                label: 'E-posta',
+                prefixIcon: Icons.mail_outline_rounded,
                 keyboardType: TextInputType.emailAddress,
-                decoration: authInputDecoration(
-                  labelText: 'E-posta',
-                  prefixIcon: Icons.mail_outline_rounded,
-                ),
                 validator: (v) =>
                     v != null && v.contains('@') ? null : 'Geçerli e-posta',
               ),
-              const SizedBox(height: 10),
-              TextFormField(
+              const SizedBox(height: 12),
+              AuthFloatingField(
                 controller: _password,
+                label: 'Şifre',
+                prefixIcon: Icons.lock_outline_rounded,
                 obscureText: true,
-                decoration: authInputDecoration(
-                  labelText: 'Şifre',
-                  prefixIcon: Icons.lock_outline_rounded,
-                ),
                 validator: (v) =>
                     v != null && v.length >= 8 ? null : 'En az 8 karakter',
               ),
-              const SizedBox(height: 10),
-              TextFormField(
+              const SizedBox(height: 12),
+              AuthFloatingField(
                 controller: _password2,
+                label: 'Şifre tekrar',
+                prefixIcon: Icons.lock_reset_rounded,
                 obscureText: true,
-                decoration: authInputDecoration(
-                  labelText: 'Şifre tekrar',
-                  prefixIcon: Icons.lock_reset_rounded,
-                ),
                 validator: (v) =>
                     v == _password.text ? null : 'Şifreler eşleşmiyor',
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: _language,
-                decoration: authInputDecoration(
-                  labelText: 'Dil tercihi',
-                  prefixIcon: Icons.language_rounded,
+                dropdownColor: const Color(0xFF1A1030),
+                decoration: InputDecoration(
+                  labelText: 'Dil',
+                  labelStyle: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFF140A28).withValues(alpha: 0.72),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.14),
+                    ),
+                  ),
                 ),
-                dropdownColor: AppColors.surfaceElevated,
                 items: const [
                   DropdownMenuItem(value: 'tr', child: Text('Türkçe')),
                   DropdownMenuItem(value: 'en', child: Text('English')),
@@ -247,27 +243,26 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 },
               ),
               const SizedBox(height: 20),
-              AuthPrimaryButton(
+              AuthNeonButton(
                 label: 'Kayıt ol',
                 loading: auth.isLoading,
                 onPressed: auth.isLoading ? null : _submitRegister,
               ),
-              const SizedBox(height: 8),
-              AuthTextLink(
-                label: 'Zaten hesabınız var mı? Giriş yap',
+              AuthTextLinkPremium(
+                label: 'Zaten hesabın var mı? Giriş yap',
                 onPressed: () => context.pop(),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
                     child: TextButton(
                       onPressed: () => _openLegal('/gizlilik-politikasi'),
                       child: Text(
-                        'Gizlilik Politikası',
+                        'Gizlilik',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.55),
+                          color: Colors.white.withValues(alpha: 0.45),
                         ),
                       ),
                     ),
@@ -276,11 +271,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     child: TextButton(
                       onPressed: () => _openLegal('/kullanim-sartlari'),
                       child: Text(
-                        'Kullanım Şartları',
+                        'Şartlar',
                         textAlign: TextAlign.end,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.55),
+                          color: Colors.white.withValues(alpha: 0.45),
                         ),
                       ),
                     ),
@@ -288,6 +283,43 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 ],
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BirthChip extends StatelessWidget {
+  const _BirthChip({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFF140A28).withValues(alpha: 0.72),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary.withValues(alpha: 0.95),
+            ),
           ),
         ),
       ),

@@ -1,6 +1,7 @@
 /// Premium 2026 UI — Material 3 + Liquid Glass design system.
 library;
 
+export 'cosmic_galaxy_background.dart';
 export 'liquid_glass.dart';
 export 'premium_2026_tokens.dart';
 export 'premium_floating_card.dart';
