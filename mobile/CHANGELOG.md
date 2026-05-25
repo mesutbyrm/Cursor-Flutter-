@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.83+85 (2026-05-19)
+
+### Premium 2026 — Keşfet / PK / Hediye (referans UI)
+
+- **Keşfet hub:** profil selamı, jeton, sekmeler, LIVE hikaye şeridi, gece banner, popüler odalar, canlı yayınlar, 8’li kategori grid, VIP odalar
+- **PK Savaşı:** LIVE sayaç, VS + skor çubuğu, mikrofon şeridi, cam hediye akışı, Destekle / Hediye / Sohbet alt bar
+- **Hediye Gönder:** Tümü / Popüler / Özel / VIP sekmeleri, 3 sütun grid, adet +/- , tam genişlik Gönder
+
 ## 1.0.82+84 (2026-05-19)
 
 ### PART 7 — VIP / Gold premium sistemi

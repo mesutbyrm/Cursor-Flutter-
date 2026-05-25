@@ -8,6 +8,12 @@ import '../../../../domain/entities/chat_room_presence.dart';
 import '../../../theme/voice_room_tokens.dart';
 
 /// Cyber HUD oyuncu çerçevesi — 1v1 veya takım lideri.
+String _fmtScore(int n) {
+  if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+  if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+  return '$n';
+}
+
 class PkPlayerHudFrame extends StatelessWidget {
   const PkPlayerHudFrame({
     super.key,
@@ -16,6 +22,7 @@ class PkPlayerHudFrame extends StatelessWidget {
     required this.label,
     this.isLeading = false,
     this.onFollow,
+    this.score = 0,
   });
 
   final ChatRoomPresence? user;
@@ -23,6 +30,7 @@ class PkPlayerHudFrame extends StatelessWidget {
   final String label;
   final bool isLeading;
   final VoidCallback? onFollow;
+  final int score;
 
   @override
   Widget build(BuildContext context) {
@@ -82,14 +90,37 @@ class PkPlayerHudFrame extends StatelessWidget {
                   color: accent.withValues(alpha: 0.9),
                 ),
               ),
-              Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.star_rounded,
+                      size: 14, color: VoiceRoomTokens.gold),
+                  const SizedBox(width: 4),
+                  Text(
+                    _fmtScore(score),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
               if (onFollow != null) ...[
                 const SizedBox(height: 10),

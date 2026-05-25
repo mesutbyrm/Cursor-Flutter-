@@ -53,8 +53,8 @@ class PkAnimatedScoreBar extends StatelessWidget {
                           decoration: const BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                Color(0xFFFF2D7A),
-                                Color(0xFFB832FF),
+                                Color(0xFF00D2FF),
+                                Color(0xFF1565C0),
                               ],
                             ),
                           ),
@@ -73,8 +73,8 @@ class PkAnimatedScoreBar extends StatelessWidget {
                             decoration: const BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  Color(0xFF00D2FF),
-                                  Color(0xFF1565C0),
+                                  Color(0xFFFF2D7A),
+                                  Color(0xFFB832FF),
                                 ],
                               ),
                             ),

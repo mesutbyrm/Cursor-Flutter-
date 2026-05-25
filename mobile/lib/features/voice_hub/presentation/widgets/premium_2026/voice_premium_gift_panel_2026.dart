@@ -12,14 +12,12 @@ import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../gifts/domain/gift_rarity.dart';
 import '../../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../../gifts/presentation/widgets/premium_2026/premium_gift_icon.dart';
-import '../../../../gifts/presentation/widgets/top_gifters_leaderboard.dart';
 import '../../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../../live/domain/entities/live_gift_event.dart';
 import '../../../../live/domain/entities/live_gift_type.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../providers/chat_room_providers.dart';
-import '../../providers/voice_gift_leaderboard_provider.dart';
 import '../voice_room_gift_sheet.dart';
 
 /// TikTok Live — blur panel, 8 premium hediye, combo, sıralama.
@@ -40,35 +38,38 @@ class VoicePremiumGiftPanel2026 extends ConsumerStatefulWidget {
       _VoicePremiumGiftPanel2026State();
 }
 
+enum _GiftCategory { all, popular, special, vip }
+
 class _VoicePremiumGiftPanel2026State
-    extends ConsumerState<VoicePremiumGiftPanel2026>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
+    extends ConsumerState<VoicePremiumGiftPanel2026> {
   LiveVideoGiftType? _selected;
   int _qty = 1;
   bool _sending = false;
+  _GiftCategory _category = _GiftCategory.all;
 
-  @override
-  void initState() {
-    super.initState();
-    _tabs = TabController(length: 2, vsync: this);
+  List<LiveVideoGiftType> _filterGifts(List<LiveVideoGiftType> list) {
+    return switch (_category) {
+      _GiftCategory.popular =>
+        list.where((g) => g.price >= 50 && g.price <= 2000).toList(),
+      _GiftCategory.special =>
+        list.where((g) {
+          final r = PremiumGiftCatalog2026.rarity(g.id);
+          return r == GiftRarity.epic ||
+              r == GiftRarity.legendary ||
+              r == GiftRarity.mythic;
+        }).toList(),
+      _GiftCategory.vip =>
+        list.where((g) {
+          final r = PremiumGiftCatalog2026.rarity(g.id);
+          return g.price >= 1000 || r == GiftRarity.mythic;
+        }).toList(),
+      _ => list,
+    };
   }
-
-  @override
-  void dispose() {
-    _tabs.dispose();
-    super.dispose();
-  }
-
-  String get _receiver =>
-      widget.room.ownerName?.trim().isNotEmpty == true
-          ? widget.room.ownerName!.trim()
-          : 'Oda sahibi';
 
   @override
   Widget build(BuildContext context) {
     final gifts = ref.watch(voiceRoomGiftTypesProvider);
-    final leaderboard = ref.watch(voiceSessionGiftLeaderboardProvider);
     final coins = ref.watch(coinBalanceProvider).valueOrNull ?? 0;
 
     return ClipRRect(
@@ -76,7 +77,7 @@ class _VoicePremiumGiftPanel2026State
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
         child: Container(
-          height: MediaQuery.sizeOf(context).height * 0.58,
+          height: MediaQuery.sizeOf(context).height * 0.72,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -117,18 +118,11 @@ class _VoicePremiumGiftPanel2026State
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Premium Hediyeler',
+                            'Hediye Gönder',
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 20,
                               letterSpacing: -0.3,
-                            ),
-                          ),
-                          Text(
-                            '→ $_receiver',
-                            style: TextStyle(
-                              color: AppColors.textMuted.withValues(alpha: 0.95),
-                              fontSize: 12,
                             ),
                           ),
                         ],
@@ -137,53 +131,60 @@ class _VoicePremiumGiftPanel2026State
                     _CoinChip(coins: coins),
                     IconButton(
                       onPressed: widget.onClose,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                      icon: const Icon(Icons.close_rounded, size: 22),
                     ),
                   ],
                 ),
               ),
-              TabBar(
-                controller: _tabs,
-                indicatorColor: AppColors.accentPink,
-                labelColor: AppColors.textPrimary,
-                unselectedLabelColor: AppColors.textMuted,
-                tabs: const [
-                  Tab(text: 'Hediyeler'),
-                  Tab(text: 'Sıralama'),
-                ],
-              ),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabs,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
                   children: [
-                    gifts.when(
-                      loading: () => const Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.accentPink,
+                    for (final c in _GiftCategory.values)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: _CategoryChip(
+                          label: switch (c) {
+                            _GiftCategory.all => 'Tümü',
+                            _GiftCategory.popular => 'Popüler',
+                            _GiftCategory.special => 'Özel',
+                            _GiftCategory.vip => 'VIP',
+                          },
+                          selected: _category == c,
+                          onTap: () => setState(() => _category = c),
                         ),
                       ),
-                      error: (e, _) => Center(
-                        child: Text(ApiException.userMessage(e)),
-                      ),
-                      data: (list) => _GiftsTab(
-                        gifts: PremiumGiftCatalog2026.sortCatalog(
-                          list,
-                          (g) => g.id,
-                        ),
-                        selected: _selected,
-                        qty: _qty,
-                        sending: _sending,
-                        onSelect: (g) => setState(() => _selected = g),
-                        onQty: (q) => setState(() => _qty = q),
-                        onSend: () => _send(list),
-                      ),
-                    ),
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: TopGiftersLeaderboard(entries: leaderboard),
-                    ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: gifts.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.accentPink,
+                    ),
+                  ),
+                  error: (e, _) => Center(
+                    child: Text(ApiException.userMessage(e)),
+                  ),
+                  data: (list) {
+                    final sorted = PremiumGiftCatalog2026.sortCatalog(
+                      list,
+                      (g) => g.id,
+                    );
+                    final filtered = _filterGifts(sorted);
+                    return _GiftsTab(
+                      gifts: filtered,
+                      selected: _selected,
+                      qty: _qty,
+                      sending: _sending,
+                      onSelect: (g) => setState(() => _selected = g),
+                      onQty: (q) => setState(() => _qty = q),
+                      onSend: () => _send(list),
+                    );
+                  },
                 ),
               ),
             ],
@@ -243,6 +244,45 @@ class _VoicePremiumGiftPanel2026State
   }
 }
 
+class _CategoryChip extends StatelessWidget {
+  const _CategoryChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: selected ? AppColors.brandGradient : null,
+            color: selected ? null : Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 12,
+              color: selected ? Colors.white : AppColors.textMuted,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _GiftsTab extends StatelessWidget {
   const _GiftsTab({
     required this.gifts,
@@ -276,22 +316,31 @@ class _GiftsTab extends StatelessWidget {
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            cacheExtent: 480,
+          child: GridView.builder(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.78,
+            ),
             itemCount: gifts.length,
             itemBuilder: (ctx, i) {
               final g = gifts[i];
-              return Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: _PremiumGiftTile(
-                  gift: g,
-                  selected: (selected ?? initial).id == g.id,
-                  onTap: () => onSelect(g),
-                ),
+              return _PremiumGiftTile(
+                gift: g,
+                selected: (selected ?? initial).id == g.id,
+                onTap: () => onSelect(g),
               );
             },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: _QtyBar(
+            qty: qty,
+            onMinus: () => onQty(qty > 1 ? qty - 1 : 1),
+            onPlus: () => onQty(qty + 1),
           ),
         ),
         Padding(
@@ -301,24 +350,7 @@ class _GiftsTab extends StatelessWidget {
             16,
             MediaQuery.paddingOf(context).bottom + 12,
           ),
-          child: Row(
-            children: [
-              for (final q in [1, 5, 10, 99])
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text('x$q'),
-                    selected: qty == q,
-                    onSelected: (_) => onQty(q),
-                    selectedColor: AppColors.accentPink.withValues(alpha: 0.45),
-                    backgroundColor: Colors.white10,
-                    labelStyle: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                ),
-              const Spacer(),
-              _SendButton(loading: sending, onPressed: onSend),
-            ],
-          ),
+          child: _SendButton(loading: sending, onPressed: onSend, fullWidth: true),
         ),
       ],
     );
@@ -351,8 +383,7 @@ class _PremiumGiftTile extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: 220.ms,
-        width: 92,
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
           gradient: selected
@@ -374,9 +405,10 @@ class _PremiumGiftTile extends StatelessWidget {
           children: [
             _RarityBadge(rarity: rarity),
             const SizedBox(height: 4),
-            Expanded(
+            SizedBox(
+              height: 52,
               child: url.isEmpty
-                  ? PremiumGiftIcon(giftId: canonical, size: 52, animate: selected)
+                  ? PremiumGiftIcon(giftId: canonical, size: 48, animate: selected)
                   : CachedNetworkImage(imageUrl: url, fit: BoxFit.contain),
             ),
             Text(
@@ -458,41 +490,94 @@ class _CoinChip extends StatelessWidget {
   }
 }
 
-class _SendButton extends StatelessWidget {
-  const _SendButton({required this.onPressed, required this.loading});
+class _QtyBar extends StatelessWidget {
+  const _QtyBar({
+    required this.qty,
+    required this.onMinus,
+    required this.onPlus,
+  });
 
-  final VoidCallback onPressed;
-  final bool loading;
+  final int qty;
+  final VoidCallback onMinus;
+  final VoidCallback onPlus;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.card_giftcard_rounded, color: Colors.white54, size: 20),
+          const Spacer(),
+          IconButton(
+            onPressed: onMinus,
+            icon: const Icon(Icons.remove_rounded, size: 20),
+            visualDensity: VisualDensity.compact,
+          ),
+          Text(
+            '$qty',
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+          ),
+          IconButton(
+            onPressed: onPlus,
+            icon: const Icon(Icons.add_rounded, size: 20),
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SendButton extends StatelessWidget {
+  const _SendButton({
+    required this.onPressed,
+    required this.loading,
+    this.fullWidth = false,
+  });
+
+  final VoidCallback onPressed;
+  final bool loading;
+  final bool fullWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final btn = Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: loading ? null : onPressed,
         borderRadius: BorderRadius.circular(22),
         child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 12),
+          width: fullWidth ? double.infinity : null,
+          padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             gradient: AppColors.brandGradient,
             borderRadius: BorderRadius.circular(22),
             boxShadow: AppColors.glowShadow(AppColors.accentPink),
           ),
-          child: loading
-              ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
+          child: Center(
+            child: loading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    'Gönder',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
                   ),
-                )
-              : const Text(
-                  'Gönder',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
-                ),
+          ),
         ),
       ),
     );
+    return fullWidth ? btn : btn;
   }
 }

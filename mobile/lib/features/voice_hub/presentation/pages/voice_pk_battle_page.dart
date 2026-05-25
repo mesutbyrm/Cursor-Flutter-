@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
@@ -15,10 +16,12 @@ import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_providers.dart';
 import '../theme/voice_room_tokens.dart';
 import '../widgets/premium_2026/voice_cosmic_background.dart';
-import '../widgets/premium_2026/voice_live_chat_dock.dart';
+import '../widgets/premium_2026/pk/pk_action_bottom_bar.dart';
 import '../widgets/premium_2026/pk/pk_animated_score_bar.dart';
 import '../widgets/premium_2026/pk/pk_floating_reactions.dart';
 import '../widgets/premium_2026/pk/pk_gift_explosion_flash.dart';
+import '../widgets/premium_2026/pk/pk_gift_feed_panel.dart';
+import '../widgets/premium_2026/pk/pk_mic_participant_row.dart';
 import '../widgets/premium_2026/pk/pk_mode_switcher.dart';
 import '../widgets/premium_2026/pk/pk_player_hud_frame.dart';
 import '../widgets/premium_2026/pk/pk_team_battle_strip.dart';
@@ -44,9 +47,9 @@ class VoicePkBattlePage extends ConsumerStatefulWidget {
 }
 
 class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
-  final _messageCtrl = TextEditingController();
   StreamSubscription<LiveGiftEvent>? _giftSub;
   var _lastGiftSideLeft = true;
+  var _chatOpen = false;
 
   @override
   void initState() {
@@ -84,7 +87,6 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   void dispose() {
     _giftSub?.cancel();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
-    _messageCtrl.dispose();
     super.dispose();
   }
 
@@ -113,18 +115,15 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
               children: [
                 _PkHeader(
                   timer: pk.timerLabel,
-                  mode: pk.mode,
                   phase: pk.phase,
-                  onClose: () => context.pop(),
+                  onBack: () => context.pop(),
                   onMode: pk.isActive
                       ? (m) => ref.read(pkBattleProvider.notifier).setMode(m)
                       : null,
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-                  child: PkAnimatedScoreBar(state: pk, compact: true),
+                  mode: pk.mode,
                 ),
                 Expanded(
+                  flex: 3,
                   child: pk.mode == PkBattleMode.team
                       ? _TeamBattleBody(
                           state: pk,
@@ -135,35 +134,40 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                           leadingLeft: leadingLeft,
                         ),
                 ),
-                if (pk.mode == PkBattleMode.team)
-                  PkTeamBattleStrip(state: pk),
+                if (pk.mode == PkBattleMode.team) PkTeamBattleStrip(state: pk),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-                  child: VoiceLiveChatDock(
-                    messages: live.messages,
-                    controller: _messageCtrl,
-                    maxHeight: 88,
-                    onSend: () {
-                      final t = _messageCtrl.text;
-                      _messageCtrl.clear();
-                      ref
-                          .read(voiceRoomLiveProvider(widget.room).notifier)
-                          .sendMessage(t);
-                    },
-                    onGift: () => showVoiceRoomGiftPicker(
-                      context,
-                      ref,
-                      room: widget.room,
-                    ),
-                  ),
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                  child: PkAnimatedScoreBar(state: pk, compact: true),
                 ),
-                _PkBottomBar(
+                PkMicParticipantRow(presence: live.presence),
+                Expanded(
+                  flex: 2,
+                  child: PkGiftFeedPanel(messages: live.messages),
+                ),
+                PkActionBottomBar(
+                  onSupport: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Destek skora eklendi!')),
+                    );
+                  },
                   onGift: () => showVoiceRoomGiftPicker(
                     context,
                     ref,
                     room: widget.room,
                   ),
+                  onChat: () => setState(() => _chatOpen = !_chatOpen),
                 ),
+                if (_chatOpen)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                    child: SizedBox(
+                      height: 44,
+                      child: _PkQuickChat(
+                        room: widget.room,
+                        onSent: () => setState(() => _chatOpen = false),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -183,61 +187,142 @@ class _PkHeader extends StatelessWidget {
     required this.timer,
     required this.mode,
     required this.phase,
-    required this.onClose,
+    required this.onBack,
     required this.onMode,
   });
 
   final String timer;
   final PkBattleMode mode;
   final PkBattlePhase phase;
-  final VoidCallback onClose;
+  final VoidCallback onBack;
   final ValueChanged<PkBattleMode>? onMode;
 
   @override
   Widget build(BuildContext context) {
+    final liveLabel = phase == PkBattlePhase.finished ? 'BİTTİ' : timer;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 4, 8, 0),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
+      child: Column(
         children: [
-          IconButton(
-            onPressed: onClose,
-            icon: const Icon(Icons.close_rounded, color: Colors.white70),
+          Row(
+            children: [
+              IconButton(
+                onPressed: onBack,
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+              ),
+              const Expanded(
+                child: Text(
+                  'PK Savaşı',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                ),
+              ),
+              if (onMode != null)
+                PkModeSwitcher(mode: mode, onChanged: onMode!)
+              else
+                const SizedBox(width: 48),
+            ],
           ),
-          Expanded(
-            child: Column(
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white24),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                ShaderMask(
-                  shaderCallback: (b) => const LinearGradient(
-                    colors: [VoiceRoomTokens.gold, Color(0xFFFFE082)],
-                  ).createShader(b),
-                  child: const Text(
-                    'PK SAVAŞI',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 17,
-                      color: Colors.white,
-                      letterSpacing: 1.2,
+                if (phase != PkBattlePhase.finished) ...[
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: AppColors.liveRed,
+                      shape: BoxShape.circle,
                     ),
                   ),
-                ),
-                const SizedBox(height: 6),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'LIVE',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 11,
+                      color: AppColors.liveRed,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                ],
                 Text(
-                  phase == PkBattlePhase.finished ? 'BİTTİ' : timer,
+                  liveLabel,
                   style: const TextStyle(
                     fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                    color: VoiceRoomTokens.gold,
+                    fontSize: 15,
+                    fontFeatures: [FontFeature.tabularFigures()],
                   ),
                 ),
               ],
             ),
           ),
-          if (onMode != null)
-            PkModeSwitcher(mode: mode, onChanged: onMode!)
-          else
-            const SizedBox(width: 88),
         ],
       ),
+    );
+  }
+}
+
+class _PkQuickChat extends ConsumerStatefulWidget {
+  const _PkQuickChat({required this.room, required this.onSent});
+
+  final VoiceRoomEntity room;
+  final VoidCallback onSent;
+
+  @override
+  ConsumerState<_PkQuickChat> createState() => _PkQuickChatState();
+}
+
+class _PkQuickChatState extends ConsumerState<_PkQuickChat> {
+  final _ctrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _ctrl,
+            style: const TextStyle(fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'Mesaj yaz…',
+              filled: true,
+              fillColor: Colors.white10,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton.filled(
+          onPressed: () async {
+            final t = _ctrl.text;
+            if (t.trim().isEmpty) return;
+            _ctrl.clear();
+            await ref
+                .read(voiceRoomLiveProvider(widget.room).notifier)
+                .sendMessage(t);
+            widget.onSent();
+          },
+          icon: const Icon(Icons.send_rounded),
+        ),
+      ],
     );
   }
 }
@@ -273,8 +358,9 @@ class _OneVsOneBody extends StatelessWidget {
                 ),
                 child: PkPlayerHudFrame(
                   user: state.left.leader,
-                  accent: VoiceRoomTokens.neonPink,
-                  label: 'PLAYER 01',
+                  accent: VoiceRoomTokens.neonPurple,
+                  label: state.left.leader?.displayName ?? 'PLAYER 01',
+                  score: state.left.total,
                   isLeading: leadingLeft && state.isActive,
                 ),
               ),
@@ -294,7 +380,8 @@ class _OneVsOneBody extends StatelessWidget {
                 child: PkPlayerHudFrame(
                   user: state.right.leader,
                   accent: VoiceRoomTokens.neonBlue,
-                  label: 'PLAYER 02',
+                  label: state.right.leader?.displayName ?? 'PLAYER 02',
+                  score: state.right.total,
                   isLeading: !leadingLeft && state.isActive,
                 ),
               ),
@@ -383,54 +470,3 @@ class _TeamSidePanel extends StatelessWidget {
   }
 }
 
-class _PkBottomBar extends StatelessWidget {
-  const _PkBottomBar({required this.onGift});
-
-  final VoidCallback onGift;
-
-  @override
-  Widget build(BuildContext context) {
-    final bottom = MediaQuery.paddingOf(context).bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12, 8, 12, bottom + 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              height: 44,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                gradient: VoiceRoomTokens.followGradient,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: VoiceRoomTokens.neonGlow(VoiceRoomTokens.neonPink),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: onGift,
-                  borderRadius: BorderRadius.circular(24),
-                  child: const Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.card_giftcard_rounded, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text(
-                          'Hediye · Skor gücü',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
