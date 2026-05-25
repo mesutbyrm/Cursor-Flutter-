@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import '../../theme/voice_room_tokens.dart';
 import 'voice_floating_gifts_strip.dart';
@@ -242,8 +243,8 @@ class _Bubble extends StatelessWidget {
 
     final user = message.user;
     final name = user?.displayWithPrefix ?? 'Kullanıcı';
-    final vip = user?.isBroadcaster == true ||
-        user?.membership?.toLowerCase().contains('vip') == true;
+    final tier = VipTier.fromMembership(user?.membership);
+    final vip = user?.isBroadcaster == true || tier.index >= VipTier.gold.index;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
