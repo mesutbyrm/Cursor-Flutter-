@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.80+82 (2026-05-19)
+
+### PART 5 — Premium PK savaş sistemi
+
+- **1v1** ve **takım** modu; canlı mod geçişi
+- Realtime skor çubuğu (animasyonlu gradient), countdown, win streak rozetleri
+- Büyük glitch **VS** amblemi, cyber HUD oyuncu çerçeveleri
+- Hediye gücü: oda hediyeleri skora eklenir + neon patlama + yüzen tepkiler
+- Kazanan ekranı: konfeti, taç, tekrar PK
+- Sesli oda menüsü / keşfet PK kategorisi → `/voice-room/:id/pk`
+
 ## 1.0.79+81 (2026-05-19)
 
 ### PART 4 — Premium hediye sistemi (TikTok Live seviyesi)
