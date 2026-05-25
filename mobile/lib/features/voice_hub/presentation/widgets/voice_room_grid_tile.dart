@@ -57,12 +57,11 @@ class VoiceRoomGridTile extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (room.displayOnline > 0)
-                    Positioned(
-                      top: 6,
-                      right: 6,
-                      child: _OnlineBadge(count: room.displayOnline),
-                    ),
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: _OnlineBadge(count: room.displayOnline),
+                  ),
                   if (bg != null && bg.isNotEmpty)
                     CachedNetworkImage(imageUrl: bg, fit: BoxFit.cover)
                   else

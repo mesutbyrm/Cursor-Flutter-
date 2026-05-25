@@ -1,5 +1,23 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.77+79 (2026-05-19)
+
+### PART 2 — Premium keşfet / ana sayfa
+
+- Galaksi arka plan, blur üst bar, cam arama
+- 8 kategori (Gece, Oyun, Fal, Müzik, PK, VIP, Eğlence, Flört)
+- Trend / Sesli / Canlı sekmeleri, neon oda kartları, online göstergesi
+- Hikâye şeridi, VIP & trend odalar, canlı yayın carousel
+
+## 1.0.76+78 (2026-05-19)
+
+### PART 1 — Premium splash & auth (2026)
+
+- Splash: galaksi gradient, neon glow, logo pulse, parçacıklar, Hero logo
+- Giriş / kayıt: liquid glass kart, floating label input, neon CTA
+- Google giriş; TikTok / Apple placeholder (yakında); misafir modu
+- Paylaşılan `CosmicGalaxyBackground` (core premium_2026)
+
 ## 1.0.75+77 (2026-05-19)
 
 ### Sesli sohbet — Premium 2026

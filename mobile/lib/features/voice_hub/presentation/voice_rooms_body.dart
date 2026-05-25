@@ -61,17 +61,36 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
   bool _matchesCategory(VoiceRoomEntity r, String catId) {
     final t = '${r.nameTr} ${r.descTr ?? ''} ${r.slug}'.toLowerCase();
     switch (catId) {
-      case 'fortune':
-        return t.contains('fal') || t.contains('tarot') || t.contains('spirit');
+      case 'night':
+        return t.contains('gece') ||
+            t.contains('night') ||
+            t.contains('muhabbet') ||
+            t.contains('sohbet');
       case 'game':
         return t.contains('oyun') || t.contains('game');
+      case 'fortune':
+        return t.contains('fal') ||
+            t.contains('tarot') ||
+            t.contains('spirit') ||
+            t.contains('mistik');
+      case 'music':
+        return t.contains('müzik') ||
+            t.contains('muzik') ||
+            t.contains('music') ||
+            t.contains('dj');
       case 'pk':
-        return t.contains('pk') || t.contains('savaş');
+        return t.contains('pk') || t.contains('savaş') || t.contains('battle');
       case 'vip':
-        return t.contains('vip') || t.contains('gold');
-      case 'social':
-        return t.contains('sohbet') || t.contains('topluluk');
+        return t.contains('vip') || t.contains('gold') || t.contains('premium');
+      case 'flirt':
+        return t.contains('flört') ||
+            t.contains('flort') ||
+            t.contains('flirt') ||
+            t.contains('dating');
       case 'entertainment':
+        return t.contains('eğlence') ||
+            t.contains('eglence') ||
+            t.contains('party');
       default:
         return true;
     }
