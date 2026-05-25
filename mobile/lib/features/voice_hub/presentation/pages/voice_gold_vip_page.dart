@@ -1,15 +1,16 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_colors.dart';
+
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../vip_gold/presentation/theme/vip_gold_tokens.dart';
+import '../../../vip_gold/presentation/widgets/vip_luxury_card.dart';
+import '../../../vip_gold/presentation/widgets/vip_privilege_grid.dart';
 import '../../domain/entities/chat_room_presence.dart';
-import '../theme/voice_room_tokens.dart';
+import '../../../vip_gold/domain/vip_tier.dart';
 import '../widgets/premium_2026/voice_cosmic_background.dart';
 import '../widgets/premium_2026/voice_mic_seat.dart';
 
-/// Gold VIP odası — tam ekran premium giriş / üyelik.
+/// Gold VIP oda kapısı — luxury giriş + üyelik CTA.
 class VoiceGoldVipPage extends StatelessWidget {
   const VoiceGoldVipPage({
     super.key,
@@ -37,8 +38,8 @@ class VoiceGoldVipPage extends StatelessWidget {
           return FadeTransition(
             opacity: CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
             child: ScaleTransition(
-              scale: Tween<double>(begin: 0.94, end: 1).animate(
-                CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
+              scale: Tween<double>(begin: 0.92, end: 1).animate(
+                CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
               ),
               child: child,
             ),
@@ -57,16 +58,6 @@ class VoiceGoldVipPage extends StatelessWidget {
       chatRole: 'owner',
       membership: 'gold',
     );
-    final guests = List.generate(
-      6,
-      (i) => ChatRoomPresence(
-        id: 'vip-$i',
-        name: ['Elif', 'Kaan', 'Zeynep', 'Mert', 'Selin', 'Deniz'][i],
-        chatRole: 'vip',
-        membership: 'gold',
-        seatIndex: i + 2,
-      ),
-    );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -74,10 +65,13 @@ class VoiceGoldVipPage extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           const VoiceCosmicBackground(),
+          const DecoratedBox(
+            decoration: BoxDecoration(gradient: VipGoldTokens.goldRadial),
+          ),
           DecoratedBox(
             decoration: BoxDecoration(
               border: Border.all(
-                color: VoiceRoomTokens.gold.withValues(alpha: 0.45),
+                color: VipGoldTokens.goldMid.withValues(alpha: 0.5),
                 width: 2,
               ),
             ),
@@ -85,60 +79,46 @@ class VoiceGoldVipPage extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                _GoldHeader(
+                _Header(
                   roomId: room.apiRoomKey,
                   onClose: () => Navigator.of(context).pop(),
                 ),
-                const SizedBox(height: 8),
-                const Icon(
-                  Icons.workspace_premium_rounded,
-                  color: VoiceRoomTokens.gold,
-                  size: 36,
-                ),
+                const SizedBox(height: 12),
                 ShaderMask(
-                  shaderCallback: (b) => VoiceRoomTokens.goldRing.createShader(b),
+                  shaderCallback: (b) => VipGoldTokens.goldLuxury.createShader(b),
                   child: const Text(
                     'GOLD VIP ODASI',
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
-                      fontSize: 22,
-                      letterSpacing: 1.5,
+                      fontSize: 24,
+                      letterSpacing: 2,
                       color: Colors.white,
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 8),
+                Text(
+                  room.displayTitle,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.75),
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
                       children: [
-                        _WingsEmblem(child: VoiceMicSeat(
+                        VoiceMicSeat(
                           user: host,
                           seatIndex: 1,
-                          size: 88,
+                          size: 96,
                           isHost: true,
                           speaking: true,
-                        )),
-                        const SizedBox(height: 16),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: [
-                            for (var i = 0; i < guests.length; i++)
-                              SizedBox(
-                                width: 72,
-                                child: VoiceMicSeat(
-                                  user: guests[i],
-                                  seatIndex: i + 2,
-                                  size: 52,
-                                ),
-                              ),
-                          ],
                         ),
-                        const SizedBox(height: 24),
-                        _PerksCard(),
+                        const SizedBox(height: 20),
+                        const VipPrivilegeGrid(tier: VipTier.gold),
                       ],
                     ),
                   ),
@@ -150,15 +130,31 @@ class VoiceGoldVipPage extends StatelessWidget {
                     20,
                     MediaQuery.paddingOf(context).bottom + 16,
                   ),
-                  child: _GoldCta(
-                    onPressed: () {
+                  child: VipLuxuryCard(
+                    highlighted: true,
+                    onTap: () {
                       Navigator.of(context).pop();
                       if (onJoinRoom != null) {
                         onJoinRoom!();
                       } else {
-                        context.push('/premium-membership');
+                        context.push('/vip-gold');
                       }
                     },
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.diamond_rounded, color: Colors.black87),
+                        SizedBox(width: 8),
+                        Text(
+                          'Gold Üye Ol · Odaya Gir',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -170,8 +166,8 @@ class VoiceGoldVipPage extends StatelessWidget {
   }
 }
 
-class _GoldHeader extends StatelessWidget {
-  const _GoldHeader({required this.roomId, required this.onClose});
+class _Header extends StatelessWidget {
+  const _Header({required this.roomId, required this.onClose});
 
   final String roomId;
   final VoidCallback onClose;
@@ -185,17 +181,17 @@ class _GoldHeader extends StatelessWidget {
         children: [
           IconButton(
             onPressed: onClose,
-            icon: const Icon(Icons.close_rounded, color: VoiceRoomTokens.gold),
+            icon: const Icon(Icons.close_rounded, color: VipGoldTokens.goldMid),
           ),
           const Spacer(),
           Column(
             children: [
-              const Icon(Icons.lock_rounded, color: VoiceRoomTokens.gold, size: 20),
+              const Icon(Icons.lock_rounded, color: VipGoldTokens.goldMid, size: 22),
               Text(
                 'ID: $short',
                 style: TextStyle(
                   fontSize: 10,
-                  color: AppColors.textMuted.withValues(alpha: 0.9),
+                  color: Colors.white.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -203,138 +199,6 @@ class _GoldHeader extends StatelessWidget {
           const Spacer(),
           const SizedBox(width: 48),
         ],
-      ),
-    );
-  }
-}
-
-class _WingsEmblem extends StatelessWidget {
-  const _WingsEmblem({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      clipBehavior: Clip.none,
-      children: [
-        Icon(
-          Icons.auto_awesome,
-          size: 200,
-          color: VoiceRoomTokens.gold.withValues(alpha: 0.15),
-        ),
-        Positioned(
-          left: -20,
-          child: Icon(
-            Icons.flutter_dash,
-            size: 48,
-            color: VoiceRoomTokens.gold.withValues(alpha: 0.35),
-          ),
-        ),
-        Positioned(
-          right: -20,
-          child: Icon(
-            Icons.flutter_dash,
-            size: 48,
-            color: VoiceRoomTokens.gold.withValues(alpha: 0.35),
-          ),
-        ),
-        child,
-      ],
-    );
-  }
-}
-
-class _PerksCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    const perks = [
-      (Icons.stars_rounded, 'Özel Rozet'),
-      (Icons.auto_fix_high_rounded, 'Özel Efekt'),
-      (Icons.mic_rounded, 'Öncelikli Mikrofon'),
-      (Icons.block_flipped, 'Reklamsız'),
-    ];
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(VoiceRoomTokens.radiusCard),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
-          decoration: VoiceRoomTokens.glassCard(),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              for (final p in perks)
-                Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: VoiceRoomTokens.goldRing,
-                        boxShadow: VoiceRoomTokens.goldGlow(blur: 10),
-                      ),
-                      child: Icon(p.$1, color: Colors.black87, size: 22),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      p.$2,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: VoiceRoomTokens.gold,
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GoldCta extends StatelessWidget {
-  const _GoldCta({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(28),
-        child: Ink(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFFFE082), Color(0xFFFF8F00), Color(0xFFE65100)],
-            ),
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: VoiceRoomTokens.goldGlow(blur: 20),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.diamond_rounded, color: Colors.white, size: 22),
-              SizedBox(width: 8),
-              Text(
-                'Gold Üye Ol',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

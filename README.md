@@ -12,7 +12,7 @@ Flutter sosyal medya ve canlı yayın istemcisi — **https://canlifal.com** API
 | Bağlantı | Açıklama |
 |----------|----------|
 | **[canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk)** | Her zaman son `main` derlemesi (`apk-latest`) |
-| **[Sürüm arşivi](https://github.com/mesutbyrm/Cursor-Flutter-/releases)** | Tüm test APK’ları (**güncel: 1.0.75+77**, `apk-latest`) |
+| **[Sürüm arşivi](https://github.com/mesutbyrm/Cursor-Flutter-/releases)** | Tüm test APK’ları (**güncel: 1.0.82+84**, `apk-latest`) |
 
 Ayrıntılar: [`APK_DOWNLOAD.md`](APK_DOWNLOAD.md)
 

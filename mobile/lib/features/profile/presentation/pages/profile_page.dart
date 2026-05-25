@@ -128,8 +128,7 @@ class ProfilePage extends ConsumerWidget {
                             ProfilePremiumBanner(
                               membership: membership,
                               daysRemaining: membershipDays,
-                              onViewPrivileges: () =>
-                                  context.push('/premium-membership'),
+                              onViewPrivileges: () => context.push('/vip-gold'),
                             ),
                             const SizedBox(height: 22),
                             ProfileWalletSection(

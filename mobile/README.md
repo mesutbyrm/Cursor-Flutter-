@@ -72,7 +72,7 @@ DTO’lar yaygın alan adı varyantlarını (`camelCase` / `snake_case`) okumaya
 | 1.0.5 | 6 | Sesli oda neon UI, TRTC, hediye, shell jeton/davet |
 | 1.0.4 | 5 | Sesli oda API, hediye/çıkış düzeltmeleri |
 
-Güncel: `pubspec.yaml` → `version: 1.0.75+77`
+Güncel: `pubspec.yaml` → `version: 1.0.82+84` (PART 4–7: hediye, PK, canlı, VIP/Gold)
 
 ## Test
 

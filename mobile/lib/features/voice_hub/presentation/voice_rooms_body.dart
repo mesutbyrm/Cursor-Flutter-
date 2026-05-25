@@ -11,7 +11,7 @@ import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/domain/entities/voice_room_sort.dart';
 import '../../live/presentation/providers/live_providers.dart';
 import 'theme/voice_room_tokens.dart';
-import 'pages/voice_gold_vip_page.dart';
+import '../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import 'widgets/premium_2026/voice_discover_2026.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/voice_room_grid_tile.dart';
@@ -158,6 +158,11 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
                               context.push('/voice-room/${r.apiRoomKey}/pk', extra: r);
                               return;
                             }
+                            if (id == 'vip') {
+                              context.push('/vip-gold');
+                              setState(() => _categoryId = 'vip');
+                              return;
+                            }
                             setState(() {
                               _categoryId = _categoryId == id ? null : id;
                             });
@@ -165,7 +170,7 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
                         ),
                         VoiceFeaturedRooms2026(
                           rooms: ordered,
-                          onRoomTap: (r) => _openRoom(context, r),
+                          onRoomTap: (r) => openVoiceRoomWithVipGate(context, ref, r),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -206,7 +211,7 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
                         return VoiceRoomGridTile(
                           room: r,
                           isMine: mine,
-                          onTap: () => _openRoom(context, r),
+                          onTap: () => openVoiceRoomWithVipGate(context, ref, r),
                         );
                       },
                     ),
@@ -229,23 +234,4 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
     return [mine, ...rest];
   }
 
-  static void _openRoom(BuildContext context, VoiceRoomEntity room) {
-    if (_isVipRoom(room)) {
-      VoiceGoldVipPage.show(
-        context,
-        room: room,
-        onJoinRoom: () => context.push(
-          '/voice-room/${room.apiRoomKey}',
-          extra: room,
-        ),
-      );
-      return;
-    }
-    context.push('/voice-room/${room.apiRoomKey}', extra: room);
-  }
-
-  static bool _isVipRoom(VoiceRoomEntity room) {
-    final t = '${room.nameTr} ${room.slug} ${room.descTr ?? ''}'.toLowerCase();
-    return t.contains('vip') || t.contains('gold');
-  }
 }
