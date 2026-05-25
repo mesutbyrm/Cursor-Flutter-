@@ -24,6 +24,12 @@ import {
   setDjMusic,
   setRoomBackground,
   unbanRoomUser,
+  listMusicQueue,
+  requestMusicQueue,
+  searchYoutube,
+  addRoomDj,
+  removeRoomDj,
+  MUSIC_REQUEST_JETON,
 } from "../lib/chatRoomStore";
 import { emitChatRoomMessage } from "../socket/giftHub";
 import { listRoomGiftEvents, sendRoomGift } from "./gifts";
@@ -37,6 +43,64 @@ chatRoomsRouter.get("/rooms", async (_req, res) => {
 
 chatRoomsRouter.get("/rooms/backgrounds", async (_req, res) => {
   return ok(res, { backgrounds: listSiteBackgrounds() });
+});
+
+chatRoomsRouter.get("/youtube-search", optionalAuth, async (req, res) => {
+  const q = String(req.query.q ?? req.query.query ?? "");
+  const items = await searchYoutube(q);
+  return res.status(200).json({ items });
+});
+
+chatRoomsRouter.get("/rooms/:roomId/music-queue", optionalAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  if (!getChatRoom(roomId)) {
+    return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+  }
+  return res.status(200).json({ queue: listMusicQueue(roomId), cost: MUSIC_REQUEST_JETON });
+});
+
+chatRoomsRouter.post("/rooms/:roomId/music-queue", requireAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+  const title = typeof req.body?.title === "string" ? req.body.title : "";
+  const youtubeUrl =
+    typeof req.body?.youtubeUrl === "string"
+      ? req.body.youtubeUrl
+      : typeof req.body?.url === "string"
+        ? req.body.url
+        : "";
+  const thumbUrl =
+    typeof req.body?.thumbUrl === "string" ? req.body.thumbUrl : null;
+  const result = await requestMusicQueue(roomId, user, { title, youtubeUrl, thumbUrl });
+  if (!result.ok) {
+    const code = result.error?.includes("jeton") ? 402 : 400;
+    return fail(res, code, "BAD_REQUEST", result.error ?? "İstek başarısız");
+  }
+  return res.status(200).json({
+    success: true,
+    item: result.item,
+    queue: result.queue,
+    newBalance: result.newBalance,
+    coinBalance: result.newBalance,
+    cost: MUSIC_REQUEST_JETON,
+  });
+});
+
+chatRoomsRouter.post("/rooms/:roomId/dj/:targetUserId", requireAuth, async (req, res) => {
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+  const result = addRoomDj(req.params.roomId, user, req.params.targetUserId);
+  if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error ?? "Yetki yok");
+  return ok(res, { djUserIds: result.djUserIds });
+});
+
+chatRoomsRouter.delete("/rooms/:roomId/dj/:targetUserId", requireAuth, async (req, res) => {
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+  const result = removeRoomDj(req.params.roomId, user, req.params.targetUserId);
+  if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error ?? "Yetki yok");
+  return ok(res, { djUserIds: result.djUserIds });
 });
 
 chatRoomsRouter.get("/rooms/:roomId/messages", optionalAuth, async (req, res) => {

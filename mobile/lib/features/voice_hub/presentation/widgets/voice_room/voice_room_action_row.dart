@@ -46,8 +46,20 @@ class VoiceRoomActionRow extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
+                      const SizedBox(height: 2),
+                      Text(
+                        dj.musicQueue.isEmpty
+                            ? '${dj.musicRequestCost} jeton · sıra boş'
+                            : 'Sıra: ${dj.musicQueue.length} · ${dj.musicRequestCost} jeton',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: Colors.white.withValues(alpha: 0.82),
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      _WaveBars(active: dj.canPlayMusic),
+                      _WaveBars(active: dj.musicQueue.isNotEmpty || dj.playing),
                     ],
                   ),
                 ),

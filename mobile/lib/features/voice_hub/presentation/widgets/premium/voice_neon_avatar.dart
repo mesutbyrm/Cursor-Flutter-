@@ -64,7 +64,8 @@ class _VoiceNeonAvatarState extends State<VoiceNeonAvatar>
 
   @override
   Widget build(BuildContext context) {
-    final inner = widget.size - 8;
+    const ring = 2.0;
+    final inner = widget.size - ring * 2;
     final avatar = GestureDetector(
       onTap: widget.onTap,
       child: AnimatedBuilder(
@@ -74,7 +75,7 @@ class _VoiceNeonAvatarState extends State<VoiceNeonAvatar>
           return Container(
             width: widget.size,
             height: widget.size,
-            padding: const EdgeInsets.all(3),
+            padding: const EdgeInsets.all(ring),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: widget.speaking
@@ -95,12 +96,10 @@ class _VoiceNeonAvatarState extends State<VoiceNeonAvatar>
             child: child,
           );
         },
-        child: Container(
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: VoiceRoomTokens.bgDeep,
-          ),
-          child: ClipOval(
+        child: ClipOval(
+          child: SizedBox(
+            width: inner,
+            height: inner,
             child: widget.url != null && widget.url!.isNotEmpty
                 ? CachedNetworkImage(
                     imageUrl: widget.url!,
