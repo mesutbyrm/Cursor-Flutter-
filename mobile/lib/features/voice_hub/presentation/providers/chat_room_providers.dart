@@ -12,6 +12,8 @@ import '../../data/services/voice_room_chat_socket.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../../domain/entities/music_queue_item.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../services/voice_room_dj_player.dart';
 import 'voice_room_ui_provider.dart';
 
@@ -461,6 +463,80 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
 
   Future<List<String>> fetchBackgrounds() =>
       ref.read(chatRoomRemoteProvider).fetchBackgrounds();
+
+  Future<List<YoutubeSearchHit>> searchYoutube(String query) =>
+      ref.read(chatRoomRemoteProvider).searchYoutube(query);
+
+  Future<({List<MusicQueueItem> queue, int cost})> fetchMusicQueue() =>
+      ref.read(chatRoomRemoteProvider).fetchMusicQueue(
+            _roomKey,
+            alternateKey: _altRoomKey,
+          );
+
+  Future<String?> requestMusic({
+    required String title,
+    required String youtubeUrl,
+    String? thumbUrl,
+  }) async {
+    try {
+      final result = await ref.read(chatRoomRemoteProvider).requestMusic(
+            roomKey: _roomKey,
+            alternateKey: _altRoomKey,
+            title: title,
+            youtubeUrl: youtubeUrl,
+            thumbUrl: thumbUrl,
+          );
+      if (result.newBalance != null) {
+        ref.invalidate(coinBalanceProvider);
+      }
+      state = state.copyWith(
+        dj: ChatRoomDjState(
+          djUsers: state.dj.djUsers,
+          activeDjId: state.dj.activeDjId,
+          ownerPresent: state.dj.ownerPresent,
+          canPlayMusic: state.dj.canPlayMusic,
+          isOwner: state.dj.isOwner,
+          musicUrl: state.dj.musicUrl,
+          playing: state.dj.playing,
+          musicQueue: result.queue,
+          musicRequestCost: state.dj.musicRequestCost,
+          maxDj: state.dj.maxDj,
+        ),
+      );
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> addRoomDj(String targetUserId) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).addRoomDj(
+            roomKey: _roomKey,
+            alternateKey: _altRoomKey,
+            targetUserId: targetUserId,
+          );
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> removeRoomDj(String targetUserId) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).removeRoomDj(
+            roomKey: _roomKey,
+            alternateKey: _altRoomKey,
+            targetUserId: targetUserId,
+          );
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
 }
 
 final voiceRoomLiveProvider = NotifierProvider.autoDispose

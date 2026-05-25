@@ -410,6 +410,9 @@ export function getDjState(roomId: string, user: User | null) {
       : false,
     canPlayMusic: Boolean(priv?.owner || priv?.admin || priv?.dj),
     isOwner: Boolean(priv?.owner),
+    musicQueue: listMusicQueue(roomId),
+    musicRequestCost: MUSIC_REQUEST_JETON,
+    maxDj: 5,
   };
 }
 
@@ -445,4 +448,182 @@ export function setRoomBackground(roomId: string, user: User, url: string) {
 export async function loadUser(userId: string | undefined) {
   if (!userId) return null;
   return prisma.user.findUnique({ where: { id: userId } });
+}
+
+export const MUSIC_REQUEST_JETON = 10;
+
+export type MusicQueueItem = {
+  id: string;
+  title: string;
+  youtubeUrl: string;
+  thumbUrl?: string | null;
+  requestedBy: ChatRoomUser;
+  createdAt: string;
+};
+
+const musicQueues = new Map<string, MusicQueueItem[]>();
+
+function musicQueueList(roomIdOrSlug: string) {
+  const key = resolveRoomId(roomIdOrSlug);
+  let list = musicQueues.get(key);
+  if (!list) {
+    list = [];
+    musicQueues.set(key, list);
+  }
+  return list;
+}
+
+export function listMusicQueue(roomId: string) {
+  return [...musicQueueList(roomId)];
+}
+
+export async function requestMusicQueue(
+  roomId: string,
+  user: User,
+  input: { title: string; youtubeUrl: string; thumbUrl?: string | null },
+) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  const url = input.youtubeUrl.trim();
+  if (!url) return { ok: false as const, error: "YouTube bağlantısı gerekli" };
+  const dbUser = await loadUser(user.id);
+  if (!dbUser) return { ok: false as const, error: "Oturum gerekli" };
+  if (dbUser.coins < MUSIC_REQUEST_JETON) {
+    return { ok: false as const, error: `Yetersiz jeton (${MUSIC_REQUEST_JETON} gerekli)` };
+  }
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data: { coins: { decrement: MUSIC_REQUEST_JETON } },
+  });
+  const item: MusicQueueItem = {
+    id: randomUUID(),
+    title: input.title.trim() || "Şarkı",
+    youtubeUrl: url,
+    thumbUrl: input.thumbUrl ?? null,
+    requestedBy: toChatUser(user, "listener"),
+    createdAt: new Date().toISOString(),
+  };
+  const list = musicQueueList(roomId);
+  list.push(item);
+  if (list.length > 50) list.splice(0, list.length - 50);
+  const canonical = resolveRoomId(roomId);
+  pushMessage(canonical, {
+    id: randomUUID(),
+    content: `🎵 ${item.requestedBy.name} sıraya ekledi: ${item.title} (−${MUSIC_REQUEST_JETON} jeton)`,
+    createdAt: new Date().toISOString(),
+    user: item.requestedBy,
+  });
+  return {
+    ok: true as const,
+    item,
+    queue: [...list],
+    newBalance: updated.coins,
+  };
+}
+
+export function addRoomDj(roomId: string, actor: User, targetUserId: string) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  const priv = roomPrivileges(actor, room);
+  if (!priv.owner && !priv.admin) return { ok: false as const, error: "Yetki yok" };
+  if (room.djUserIds.length >= 5 && !room.djUserIds.includes(targetUserId)) {
+    return { ok: false as const, error: "En fazla 5 DJ" };
+  }
+  if (!room.djUserIds.includes(targetUserId)) {
+    room.djUserIds.push(targetUserId);
+  }
+  const p = roomMap(roomId).get(targetUserId);
+  if (p) {
+    p.chatRole = "dj";
+    roomMap(roomId).set(targetUserId, p);
+  }
+  return { ok: true as const, djUserIds: [...room.djUserIds] };
+}
+
+export function removeRoomDj(roomId: string, actor: User, targetUserId: string) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  const priv = roomPrivileges(actor, room);
+  if (!priv.owner && !priv.admin) return { ok: false as const, error: "Yetki yok" };
+  room.djUserIds = room.djUserIds.filter((id) => id !== targetUserId);
+  const p = roomMap(roomId).get(targetUserId);
+  if (p && p.chatRole === "dj") {
+    p.chatRole = "listener";
+    roomMap(roomId).set(targetUserId, p);
+  }
+  return { ok: true as const, djUserIds: [...room.djUserIds] };
+}
+
+export type YoutubeSearchHit = {
+  videoId: string;
+  title: string;
+  url: string;
+  thumbUrl?: string;
+  uploader?: string;
+};
+
+export async function searchYoutube(query: string): Promise<YoutubeSearchHit[]> {
+  const q = query.trim();
+  if (q.length < 2) return [];
+  if (/youtube\.com|youtu\.be/i.test(q)) {
+    const id = extractYoutubeId(q);
+    if (!id) return [];
+    return [
+      {
+        videoId: id,
+        title: "YouTube bağlantısı",
+        url: `https://www.youtube.com/watch?v=${id}`,
+        thumbUrl: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+      },
+    ];
+  }
+  try {
+    const res = await fetch(
+      `https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(q)}&filter=music_songs`,
+      { headers: { Accept: "application/json" } },
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as { items?: Array<Record<string, unknown>> };
+    const items = data.items ?? [];
+    return items.slice(0, 12).flatMap((row) => {
+      const rawUrl = String(row.url ?? "");
+      let id = "";
+      const vMatch = rawUrl.match(/[?&]v=([a-zA-Z0-9_-]{6,})/);
+      if (vMatch) id = vMatch[1];
+      else if (rawUrl.startsWith("/")) {
+        const parts = rawUrl.split("/").filter(Boolean);
+        id = parts[parts.length - 1] ?? "";
+      } else {
+        id = String(row.id ?? "");
+      }
+      id = id.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 11);
+      if (id.length < 6) return [];
+      return [
+        {
+          videoId: id,
+          title: String(row.title ?? "Video"),
+          url: `https://www.youtube.com/watch?v=${id}`,
+          thumbUrl: row.thumbnail
+            ? String((row.thumbnail as string) ?? "")
+            : `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+          uploader: row.uploaderName ? String(row.uploaderName) : undefined,
+        },
+      ];
+    });
+  } catch {
+    return [];
+  }
+}
+
+function extractYoutubeId(raw: string) {
+  try {
+    const u = new URL(raw.trim());
+    if (u.hostname.includes("youtu.be")) {
+      return u.pathname.replace("/", "").slice(0, 11);
+    }
+    return u.searchParams.get("v")?.slice(0, 11) ?? null;
+  } catch {
+    const m = raw.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
+    return m?.[1] ?? null;
+  }
 }

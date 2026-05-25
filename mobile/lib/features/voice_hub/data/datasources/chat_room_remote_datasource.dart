@@ -7,6 +7,7 @@ import '../../../../core/util/json_util.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../../domain/entities/music_queue_item.dart';
 
 class ChatRoomRemoteDataSource {
   ChatRoomRemoteDataSource(this._dio);
@@ -28,6 +29,14 @@ class ChatRoomRemoteDataSource {
 
   static String roomBackgroundPath(String roomId) =>
       '/api/chat/rooms/$roomId/background';
+
+  static String youtubeSearchPath() => '/api/chat/youtube-search';
+
+  static String musicQueuePath(String roomId) =>
+      '/api/chat/rooms/$roomId/music-queue';
+
+  static String roomDjUserPath(String roomId, String userId) =>
+      '/api/chat/rooms/$roomId/dj/$userId';
 
   Map<String, dynamic>? _unwrapMap(dynamic body) {
     if (body is Map<String, dynamic>) {
@@ -236,6 +245,117 @@ class ChatRoomRemoteDataSource {
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safeDelete<dynamic>(banPath(key, userId));
+    });
+  }
+
+  Future<List<YoutubeSearchHit>> searchYoutube(String query) async {
+    final q = query.trim();
+    if (q.length < 2) return const [];
+    final res = await _dio.safeGet<dynamic>(
+      youtubeSearchPath(),
+      query: {'q': q},
+    );
+    final body = res.data;
+    dynamic raw;
+    if (body is Map) {
+      raw = body['items'] ?? body['data'];
+      if (raw == null && body['success'] == true) {
+        final data = body['data'];
+        if (data is Map) raw = data['items'];
+      }
+    }
+    if (raw is! List) return const [];
+    return raw
+        .map((e) => YoutubeSearchHit.fromJson(asJsonMap(e)))
+        .where((h) => h.videoId.isNotEmpty)
+        .toList();
+  }
+
+  Future<({List<MusicQueueItem> queue, int cost})> fetchMusicQueue(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(musicQueuePath(key));
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['queue'] ?? map['items'];
+      final queue = <MusicQueueItem>[];
+      if (raw is List) {
+        for (final e in raw) {
+          if (e is Map) {
+            queue.add(MusicQueueItem.fromJson(Map<String, dynamic>.from(e)));
+          }
+        }
+      }
+      final cost = map['cost'] as int? ?? 10;
+      return (queue: queue, cost: cost);
+    });
+  }
+
+  Future<({MusicQueueItem? item, List<MusicQueueItem> queue, int? newBalance})>
+      requestMusic({
+    required String roomKey,
+    String? alternateKey,
+    required String title,
+    required String youtubeUrl,
+    String? thumbUrl,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safePost<dynamic>(
+        musicQueuePath(key),
+        data: jsonEncode({
+          'title': title,
+          'youtubeUrl': youtubeUrl,
+          if (thumbUrl != null) 'thumbUrl': thumbUrl,
+        }),
+        options: Options(contentType: 'application/json'),
+      );
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      MusicQueueItem? item;
+      final itemRaw = map['item'];
+      if (itemRaw is Map) {
+        item = MusicQueueItem.fromJson(Map<String, dynamic>.from(itemRaw));
+      }
+      final queueRaw = map['queue'];
+      final queue = <MusicQueueItem>[];
+      if (queueRaw is List) {
+        for (final e in queueRaw) {
+          if (e is Map) {
+            queue.add(MusicQueueItem.fromJson(Map<String, dynamic>.from(e)));
+          }
+        }
+      }
+      final balance = map['newBalance'] as int? ?? map['coinBalance'] as int?;
+      return (item: item, queue: queue, newBalance: balance);
+    });
+  }
+
+  Future<List<String>> addRoomDj({
+    required String roomKey,
+    String? alternateKey,
+    required String targetUserId,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safePost<dynamic>(roomDjUserPath(key, targetUserId));
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['djUserIds'];
+      if (raw is List) return raw.map((e) => e.toString()).toList();
+      return const [];
+    });
+  }
+
+  Future<List<String>> removeRoomDj({
+    required String roomKey,
+    String? alternateKey,
+    required String targetUserId,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res =
+          await _dio.safeDelete<dynamic>(roomDjUserPath(key, targetUserId));
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['djUserIds'];
+      if (raw is List) return raw.map((e) => e.toString()).toList();
+      return const [];
     });
   }
 

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../theme/voice_room_tokens.dart';
 
-/// Web alt navigasyon — Ana Sayfa, Hoparlör, merkez mikrofon, Jeton, Hediye.
+/// Web alt navigasyon — Ana Sayfa, Hoparlör, merkez mikrofon, Jeton, Ayarlar.
 class VoiceWebBottomNav extends StatelessWidget {
   const VoiceWebBottomNav({
     super.key,
@@ -15,7 +15,7 @@ class VoiceWebBottomNav extends StatelessWidget {
     required this.onSpeaker,
     required this.onMic,
     required this.onCoins,
-    required this.onGift,
+    required this.onSettings,
     this.headphonesOn = false,
   });
 
@@ -26,7 +26,7 @@ class VoiceWebBottomNav extends StatelessWidget {
   final VoidCallback onSpeaker;
   final VoidCallback onMic;
   final VoidCallback onCoins;
-  final VoidCallback onGift;
+  final VoidCallback onSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -74,10 +74,10 @@ class VoiceWebBottomNav extends StatelessWidget {
                 onTap: onCoins,
               ),
               _NavItem(
-                icon: Icons.redeem_rounded,
-                label: 'Hediye At',
-                color: AppColors.coinGold,
-                onTap: onGift,
+                icon: Icons.settings_rounded,
+                label: 'Ayarlar',
+                color: VoiceRoomTokens.neonBlue,
+                onTap: onSettings,
               ),
             ],
           ),

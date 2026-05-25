@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.87+89 (2026-05-19)
+
+### Sesli oda — ayarlar, müzik sırası, YouTube isteği
+
+- Profil/sahne üstte sabit; avatar halkaları tam oturacak şekilde düzeltildi
+- Mesaj çubuğu: çift mikrofon ve hediye kaldırıldı; çok satırlı yazım
+- Duyuru 15 sn gösterim + kapatınca kayıt (Hive)
+- Müzik Aç → YouTube şarkı arama, istek başına 10 jeton, sıraya ekleme
+- DJ ekle/çıkar (API); alt barda Hediye → Ayarlar (oda ayarları, komutlar, arka plan, şarkı isteği)
+- Sağ yüzen şerit kaldırıldı; navbar galeri siteden arka plan grid
+
 ## 1.0.86+88 (2026-05-19)
 
 ### Sesli oda — web görsel + sohbet + canlifal.com verisi

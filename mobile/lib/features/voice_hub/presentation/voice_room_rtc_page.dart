@@ -28,7 +28,9 @@ import 'providers/voice_room_audio_providers.dart';
 import 'providers/voice_room_ui_provider.dart';
 import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
+import 'sheets/voice_room_hub_settings.dart';
 import 'sheets/voice_room_sheets.dart';
+import 'sheets/voice_youtube_song_sheet.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
 import 'widgets/premium/voice_gift_flight_overlay.dart';
@@ -37,11 +39,12 @@ import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/premium_2026/voice_room_audience_strip.dart';
 import 'widgets/premium_2026/voice_web_bottom_nav.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
+import 'widgets/premium_2026/voice_timed_duyuru.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_action_row.dart';
 import 'widgets/voice_room/voice_room_announcement.dart'
-    show VoiceRoomAnnouncement, VoiceRoomSystemBanner;
+    show VoiceRoomSystemBanner;
 import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
 import 'widgets/voice_room_gift_sheet.dart';
 
@@ -280,44 +283,86 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => VoiceGlass(
-        borderRadius: 24,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Oda arka planı',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-            ...urls.map(
-              (url) => ListTile(
-                leading: const Icon(Icons.image_rounded),
-                title: Text(
-                  url.split('/').last,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  final err = await ref
-                      .read(voiceRoomLiveProvider(room).notifier)
-                      .setRoomBackground(url);
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        err ?? 'Arka plan güncellendi',
-                      ),
-                    ),
-                  );
-                },
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        minChildSize: 0.35,
+        maxChildSize: 0.85,
+        builder: (_, scroll) => VoiceGlass(
+          borderRadius: 24,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Oda arka planı',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                'canlifal.com görselleri',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted.withValues(alpha: 0.9),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: GridView.builder(
+                  controller: scroll,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 1.35,
+                  ),
+                  itemCount: urls.length,
+                  itemBuilder: (_, i) {
+                    final url = urls[i];
+                    return GestureDetector(
+                      onTap: () async {
+                        Navigator.pop(ctx);
+                        final err = await ref
+                            .read(voiceRoomLiveProvider(room).notifier)
+                            .setRoomBackground(url);
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(err ?? 'Arka plan güncellendi'),
+                          ),
+                        );
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.network(url, fit: BoxFit.cover),
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                color: Colors.black54,
+                                child: Text(
+                                  url.split('/').last,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 9),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -331,6 +376,24 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         ref.read(authControllerProvider).valueOrNull?.id ?? '',
         ref.read(authControllerProvider).valueOrNull?.username ?? '',
       ),
+    );
+  }
+
+  void _openHubSettings(
+    BuildContext context, {
+    required VoiceRoomEntity room,
+    required VoiceRoomLiveState live,
+    required VoiceRoomPermissions perms,
+    required bool isOwner,
+  }) {
+    showVoiceRoomHubSettingsSheet(
+      context,
+      ref,
+      room: room,
+      live: live,
+      perms: perms,
+      isOwner: isOwner,
+      onUserTap: _openUser,
     );
   }
 
@@ -545,13 +608,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           onGallery: perms.canChangeBackground
                               ? () => _pickBackground(context, room)
                               : null,
-                          onSettings: () => _openMoreMenu(
+                          onSettings: () => _openHubSettings(
                             context,
                             room: room,
                             live: live,
                             perms: perms,
                             isOwner: isOwner,
-                            ui: ui,
                           ),
                         ),
                         if (live.error != null)
@@ -569,134 +631,78 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ),
                         if (!keyboardOpen)
                           VoiceStaffEntranceMarquee(message: staffBanner),
+                        VoiceWebOwnerStage(
+                          room: room,
+                          presence: live.presence,
+                          speakingUserId: speakingId,
+                          onUserTap: _openUser,
+                          onEmptySeatTap: () =>
+                              _requestSpeakFromSeat(context, room, ui),
+                        ),
+                        const SizedBox(height: 4),
+                        VoiceWebRoomInfoPill(
+                          room: room,
+                          ownerName: ownerName,
+                          ownerAvatarUrl: ownerAvatar,
+                        ),
+                        if (!keyboardOpen) ...[
+                          if (duyuru?.isNotEmpty == true)
+                            VoiceTimedDuyuru(
+                              roomKey: room.apiRoomKey,
+                              text: duyuru!,
+                            ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: VoiceRoomActionRow(
+                              dj: live.dj,
+                              onMusicTap: () => showVoiceYoutubeSongSheet(
+                                context,
+                                ref,
+                                room: room,
+                              ),
+                              onDjTap: () => _openHubSettings(
+                                context,
+                                room: room,
+                                live: live,
+                                perms: perms,
+                                isOwner: isOwner,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          VoiceRoomAudienceStrip(
+                            audience: audience,
+                            totalOnline: online,
+                            onUserTap: _openUser,
+                          ),
+                          if (lastJoinBanner != null) ...[
+                            const SizedBox(height: 4),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: VoiceRoomSystemBanner(
+                                message: lastJoinBanner,
+                              ),
+                            ),
+                          ],
+                        ],
                       ],
                     ),
                   ),
                   Expanded(
-                    child: Stack(
-                      children: [
-                        SingleChildScrollView(
-                          physics: keyboardOpen
-                              ? const ClampingScrollPhysics()
-                              : const NeverScrollableScrollPhysics(),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              VoiceWebOwnerStage(
-                                room: room,
-                                presence: live.presence,
-                                speakingUserId: speakingId,
-                                onUserTap: _openUser,
-                                onEmptySeatTap: () =>
-                                    _requestSpeakFromSeat(context, room, ui),
-                              ),
-                              const SizedBox(height: 6),
-                              VoiceWebRoomInfoPill(
-                                room: room,
-                                ownerName: ownerName,
-                                ownerAvatarUrl: ownerAvatar,
-                              ),
-                              if (!keyboardOpen) ...[
-                                const SizedBox(height: 10),
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 12),
-                                  child: VoiceRoomAnnouncement(
-                                    text: duyuru?.isNotEmpty == true
-                                        ? duyuru!
-                                        : 'Sohbet odasına hoş geldiniz. Kurallara uyun, saygılı olun.',
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 12),
-                                  child: VoiceRoomActionRow(
-                                    dj: live.dj,
-                                    onMusicTap: () async {
-                                      final enabled = !ui.backgroundMusicEnabled;
-                                      ref
-                                          .read(voiceRoomUiProvider.notifier)
-                                          .toggleBackgroundMusic();
-                                      final err = await ref
-                                          .read(
-                                            voiceRoomLiveProvider(room).notifier,
-                                          )
-                                          .toggleBackgroundMusic(enabled);
-                                      if (context.mounted && err != null) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(SnackBar(content: Text(err)));
-                                      }
-                                    },
-                                    onDjTap: () => showVoiceSpeakerListSheet(
-                                      context,
-                                      presence: live.presence,
-                                      room: room,
-                                      onUserTap: _openUser,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                VoiceRoomAudienceStrip(
-                                  audience: audience,
-                                  totalOnline: online,
-                                  onUserTap: _openUser,
-                                ),
-                                if (lastJoinBanner != null) ...[
-                                  const SizedBox(height: 6),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                    ),
-                                    child: VoiceRoomSystemBanner(
-                                      message: lastJoinBanner,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ],
-                          ),
-                        ),
-                        Positioned(
-                          left: 0,
-                          right: 52,
-                          bottom: 0,
-                          child: VoiceWebChatOverlay(
-                            messages: live.messages,
-                            maxHeight: chatMaxH,
-                            onUserTap: (id, _) {
-                              for (final e in live.presence) {
-                                if (e.id == id) {
-                                  _openUser(e);
-                                  break;
-                                }
-                              }
-                            },
-                          ),
-                        ),
-                        if (!keyboardOpen)
-                          Positioned(
-                            right: 8,
-                            top: mq.height * 0.22,
-                            child: VoiceWebFloatingRail(
-                              onAudience: () => showVoiceSpeakerListSheet(
-                                context,
-                                presence: live.presence,
-                                room: room,
-                                onUserTap: _openUser,
-                              ),
-                              onMusic: () async {
-                                final enabled = !ui.backgroundMusicEnabled;
-                                ref
-                                    .read(voiceRoomUiProvider.notifier)
-                                    .toggleBackgroundMusic();
-                                await ref
-                                    .read(voiceRoomLiveProvider(room).notifier)
-                                    .toggleBackgroundMusic(enabled);
-                              },
-                            ),
-                          ),
-                      ],
+                    child: Align(
+                      alignment: Alignment.bottomLeft,
+                      child: VoiceWebChatOverlay(
+                        messages: live.messages,
+                        maxHeight: chatMaxH,
+                        onUserTap: (id, _) {
+                          for (final e in live.presence) {
+                            if (e.id == id) {
+                              _openUser(e);
+                              break;
+                            }
+                          }
+                        },
+                      ),
                     ),
                   ),
                 ],
@@ -731,29 +737,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       controller: _messageCtrl,
                       focusNode: _messageFocus,
                       sending: live.sending,
-                      micOn: _micOn,
-                      micEnabled: _audioReady,
                       onSend: () => unawaited(_sendChatMessage(room)),
-                      onMicToggle: () {
-                        if (!_audioReady) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Mikrofon için ses bağlantısı gerekli',
-                              ),
-                            ),
-                          );
-                          return;
-                        }
-                        final next = !_micOn;
-                        _audio?.setMicEnabled(next);
-                        setState(() => _micOn = next);
-                      },
-                      onGift: () => showVoiceRoomGiftPicker(
-                        context,
-                        ref,
-                        room: room,
-                      ),
                     ),
                     if (!keyboardOpen)
                       VoiceWebBottomNav(
@@ -783,10 +767,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           setState(() => _micOn = next);
                         },
                         onCoins: () => context.push('/jeton-store'),
-                        onGift: () => showVoiceRoomGiftPicker(
+                        onSettings: () => _openHubSettings(
                           context,
-                          ref,
                           room: room,
+                          live: live,
+                          perms: perms,
+                          isOwner: isOwner,
                         ),
                       ),
                   ],
