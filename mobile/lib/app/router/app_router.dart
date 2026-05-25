@@ -59,6 +59,7 @@ import '../../features/voice_hub/presentation/pages/voice_pk_battle_page.dart';
 import '../../features/voice_hub/presentation/voice_room_route_page.dart';
 import '../../features/voice_hub/presentation/voice_room_rtc_page.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
+import '../../features/vip_gold/presentation/pages/vip_gold_hub_page.dart';
 import '../../core/navigation/app_page_transitions.dart';
 
 class RouterRefresh extends ChangeNotifier {
@@ -422,6 +423,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/canlifal-web',
         builder: (context, state) => CanlifalWebRoute.fromState(state),
+      ),
+      GoRoute(
+        path: '/vip-gold',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const VipGoldHubPage(),
+        ),
       ),
       GoRoute(
         path: '/voice-rooms',

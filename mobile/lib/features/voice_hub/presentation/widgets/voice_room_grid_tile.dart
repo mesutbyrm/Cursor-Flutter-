@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../vip_gold/domain/voice_room_access.dart';
+import '../../../vip_gold/presentation/theme/vip_gold_tokens.dart';
 
 /// Sesli oda listesi — 4 sütunlu grid için kompakt karo.
 class VoiceRoomGridTile extends StatelessWidget {
@@ -25,9 +27,13 @@ class VoiceRoomGridTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = room.backgroundImageUrl;
+    final isVip = room.isVipGoldRoom;
+    final isLocked = room.isPasswordLockedRoom;
     final borderColor = isMine
         ? AppColors.coinGold
-        : AppColors.accentPurple.withValues(alpha: 0.5);
+        : isVip
+            ? VipGoldTokens.goldMid
+            : AppColors.accentPurple.withValues(alpha: 0.5);
 
     return Material(
       color: Colors.transparent,
@@ -57,6 +63,20 @@ class VoiceRoomGridTile extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
+                  if (isVip || isLocked)
+                    Positioned(
+                      top: 6,
+                      left: 6,
+                      child: Row(
+                        children: [
+                          if (isVip) const _TagChip(label: 'VIP', gold: true),
+                          if (isLocked) ...[
+                            if (isVip) const SizedBox(width: 4),
+                            const _TagChip(label: '🔒', gold: false),
+                          ],
+                        ],
+                      ),
+                    ),
                   if (room.displayOnline > 0)
                     Positioned(
                       top: 6,
@@ -166,6 +186,36 @@ class VoiceRoomGridTile extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TagChip extends StatelessWidget {
+  const _TagChip({required this.label, required this.gold});
+
+  final String label;
+  final bool gold;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        gradient: gold ? VipGoldTokens.goldLuxury : null,
+        color: gold ? null : Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: gold ? VipGoldTokens.goldLight : Colors.white24,
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 8,
+          fontWeight: FontWeight.w900,
+          color: gold ? Colors.black87 : Colors.white,
         ),
       ),
     );

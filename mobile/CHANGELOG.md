@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.82+84 (2026-05-19)
+
+### PART 7 — VIP / Gold premium sistemi
+
+- VIP rozetleri, Gold üyelik kademeleri (Premium → SVIP)
+- Özel giriş animasyonu (odaya katılımda tam ekran FX)
+- Premium avatar çerçeveleri, luxury kartlar, glassmorphism hub
+- VIP odalar ve şifreli odalar — tek kapı: `openVoiceRoomWithVipGate`
+- `/vip-gold` merkezi, keşfet VIP kategorisi, profil banner
+- Oda grid: VIP / kilit etiketleri; mikrofon koltuğunda rozet
+
 ## 1.0.81+83 (2026-05-19)
 
 ### PART 6 — Premium canlı yayın (TikTok tarzı)

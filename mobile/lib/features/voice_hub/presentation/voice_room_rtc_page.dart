@@ -25,6 +25,8 @@ import 'providers/chat_room_providers.dart';
 import 'providers/voice_gift_providers.dart';
 import 'providers/voice_room_audio_providers.dart';
 import 'providers/voice_room_ui_provider.dart';
+import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
+import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'pages/voice_gold_vip_page.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'theme/voice_room_tokens.dart';
@@ -62,6 +64,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   LiveGiftEvent? _fullscreenGift;
   var _typingMessage = false;
   var _followingRoom = false;
+  var _showVipEntrance = false;
+  var _vipEntrancePlayed = false;
   final _messageFocus = FocusNode();
 
   @override
@@ -151,6 +155,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         _audioError = 'Ses bağlantısı bu cihazda desteklenmiyor; sohbet çalışır';
       });
       _startGiftRealtime();
+      _maybeShowVipEntrance(user);
       return;
     }
 
@@ -175,6 +180,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         });
         _startGiftRealtime();
         _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
+        _maybeShowVipEntrance(user);
       }
     } catch (e) {
       if (mounted) {
@@ -183,8 +189,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _audioError = ApiException.userMessage(e);
         });
         _startGiftRealtime();
+        _maybeShowVipEntrance(user);
       }
     }
+  }
+
+  void _maybeShowVipEntrance(UserEntity user) {
+    if (_vipEntrancePlayed || !mounted) return;
+    final tier = ref.read(vipTierProvider);
+    if (!tier.hasEntranceFx) return;
+    _vipEntrancePlayed = true;
+    setState(() => _showVipEntrance = true);
   }
 
   Future<void> _leave() async {
@@ -345,11 +360,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         '/voice-room/${room.apiRoomKey}/pk',
         extra: room,
       ),
-      onGoldVip: () => VoiceGoldVipPage.show(
-        context,
-        room: room,
-        onJoinRoom: () {},
-      ),
+      onGoldVip: () => context.push('/vip-gold'),
     );
   }
 
@@ -565,6 +576,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
             ),
             PremiumGiftFullscreenOverlay(event: _fullscreenGift),
+            if (_showVipEntrance && user != null)
+              VipEntranceOverlay(
+                tier: ref.watch(vipTierProvider),
+                userName: user.displayName?.trim().isNotEmpty == true
+                    ? user.displayName!.trim()
+                    : user.username,
+                onFinished: () {
+                  if (mounted) setState(() => _showVipEntrance = false);
+                },
+              ),
           ],
         ),
         bottomNavigationBar: _loginError != null

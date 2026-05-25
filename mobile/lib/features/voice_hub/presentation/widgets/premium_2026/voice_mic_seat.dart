@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/chat_room_presence.dart';
+import '../../../vip_gold/domain/vip_tier.dart';
+import '../../../vip_gold/presentation/widgets/vip_badge.dart';
 import '../../theme/voice_room_tokens.dart';
 import '../premium/voice_neon_avatar.dart';
 import 'voice_audio_wave_ring.dart';
@@ -38,8 +40,8 @@ class VoiceMicSeat extends StatelessWidget {
       );
     }
 
-    final vip = user!.membership?.toLowerCase().contains('vip') == true ||
-        user!.membership?.toLowerCase().contains('gold') == true;
+    final vipTier = VipTier.fromMembership(user!.membership);
+    final vip = vipTier.isVip;
 
     final avatar = Column(
       mainAxisSize: MainAxisSize.min,
@@ -60,23 +62,7 @@ class VoiceMicSeat extends StatelessWidget {
                 bottom: -2,
                 left: 0,
                 right: 0,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      gradient: VoiceRoomTokens.goldRing,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      'VIP',
-                      style: TextStyle(
-                        fontSize: 7,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                ),
+                child: Center(child: VipBadge(tier: vipTier, compact: true)),
               ),
             Positioned(
               top: 0,
