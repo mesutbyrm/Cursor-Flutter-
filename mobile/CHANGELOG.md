@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.85+87 (2026-05-19)
+
+### Sesli oda — web referans UI (Premium)
+
+- Üst bar: doğrulanmış oda adı, ID, çevrimiçi, galeri, ayarlar, çıkış
+- Sahne: solda büyük oda sahibi (altın taç), sağda 4+4 mikrofon ızgarası
+- Duyuru kutusu, Müzik Aç / DJ satırı, dinleyici şeridi
+- Şeffaf sohbet akışı, web giriş çubuğu (mikrofon + hediye)
+- Alt nav: Ana Sayfa, Hoparlör, merkez mikrofon, Jeton Yükle, Hediye At
+- Sağ yüzen kısayollar; daha açık arka plan görünümü
+
 ## 1.0.84+86 (2026-05-19)
 
 ### Sesli oda — sohbet, düzen, katılımcılar
