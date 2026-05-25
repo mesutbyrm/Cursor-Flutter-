@@ -9,7 +9,6 @@ import '../../../../live/domain/entities/live_gift_event.dart';
 import '../../../../live/presentation/gifts/widgets/floating_gift_particles.dart';
 import '../gift_animation_player.dart';
 import 'gift_coin_burst_overlay.dart';
-import 'premium_gift_icon.dart';
 
 /// TikTok Live — tam ekran hediye + combo + neon + parçacık + jeton.
 class PremiumGiftFullscreenOverlay extends StatefulWidget {

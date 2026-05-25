@@ -1,8 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-
 import '../../domain/vip_tier.dart';
 import '../theme/vip_gold_tokens.dart';
 import 'vip_badge.dart';
