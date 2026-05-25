@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.78+80 (2026-05-19)
+
+### PART 3 — Premium sesli sohbet odası
+
+- Responsive yarım daire 8 mikrofon + merkez host (`VoiceRoomResponsiveStage`)
+- Konuşma glow + CustomPainter ses dalgası halkası
+- VIP çerçeve, level rozeti, blur üst bar (oda adı, ID, online, takip, jeton)
+- Blur sohbet + gradient mesajlar + hediye banner + emoji seçici
+- Alt bar: büyük mikrofon, hediye, müzik, efekt, davet, ayarlar
+- Yüzen parçacıklar + RepaintBoundary optimizasyonu
+
 ## 1.0.77+79 (2026-05-19)
 
 ### PART 2 — Premium keşfet / ana sayfa

@@ -83,7 +83,7 @@ class VoiceLiveMessageInput extends StatelessWidget {
     required this.focusNode,
     required this.onSend,
     this.sending = false,
-    this.hintText = 'Mesaj yaz…',
+    this.hintText = 'Bir şeyler yaz…',
   });
 
   final TextEditingController controller;
@@ -115,7 +115,7 @@ class VoiceLiveMessageInput extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.emoji_emotions_outlined,
                         color: Colors.white54, size: 22),
-                    onPressed: () {},
+                    onPressed: () => _showEmojiPicker(context, controller),
                   ),
                   Expanded(
                     child: TextField(
@@ -203,6 +203,39 @@ class VoiceLiveChatDock extends StatelessWidget {
   }
 }
 
+void _showEmojiPicker(BuildContext context, TextEditingController controller) {
+  const emojis = [
+    '😀', '😂', '❤️', '🔥', '👏', '🎉', '💎', '🎤',
+    '🙏', '✨', '💜', '😍', '🤣', '👋', '🌙', '⭐',
+  ];
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF14101F).withValues(alpha: 0.96),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: emojis
+            .map(
+              (e) => InkWell(
+                onTap: () {
+                  controller.text = '${controller.text}$e';
+                  Navigator.pop(ctx);
+                },
+                child: Text(e, style: const TextStyle(fontSize: 28)),
+              ),
+            )
+            .toList(),
+      ),
+    ),
+  );
+}
+
 class _Bubble extends StatelessWidget {
   const _Bubble({required this.message, this.onUserTap});
 
@@ -229,12 +262,36 @@ class _Bubble extends StatelessWidget {
     if (message.kind == ChatMessageKind.gift) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Text(
-          message.content,
-          style: const TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 12,
-            color: VoiceRoomTokens.gold,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: LinearGradient(
+              colors: [
+                VoiceRoomTokens.gold.withValues(alpha: 0.35),
+                VoiceRoomTokens.neonPink.withValues(alpha: 0.2),
+              ],
+            ),
+            border: Border.all(color: VoiceRoomTokens.gold.withValues(alpha: 0.5)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                const Icon(Icons.card_giftcard_rounded,
+                    color: VoiceRoomTokens.gold, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    message.content,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                      color: VoiceRoomTokens.gold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -249,19 +306,42 @@ class _Bubble extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 5),
       child: GestureDetector(
         onTap: user != null ? () => onUserTap?.call(user.id, name) : null,
-        child: RichText(
-          text: TextSpan(
-            style: const TextStyle(fontSize: 13, height: 1.35, color: Colors.white),
-            children: [
-              TextSpan(
-                text: '$name: ',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: vip ? VoiceRoomTokens.gold : VoiceRoomTokens.neonPink,
-                ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            gradient: LinearGradient(
+              colors: [
+                (vip ? VoiceRoomTokens.gold : VoiceRoomTokens.neonPurple)
+                    .withValues(alpha: 0.22),
+                Colors.black.withValues(alpha: 0.35),
+              ],
+            ),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.08),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            child: RichText(
+              text: TextSpan(
+                style:
+                    const TextStyle(fontSize: 13, height: 1.35, color: Colors.white),
+                children: [
+                  TextSpan(
+                    text: '$name: ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      foreground: Paint()
+                        ..shader = (vip
+                                ? VoiceRoomTokens.goldRing
+                                : VoiceRoomTokens.neonRing)
+                            .createShader(const Rect.fromLTWH(0, 0, 120, 16)),
+                    ),
+                  ),
+                  TextSpan(text: message.content),
+                ],
               ),
-              TextSpan(text: message.content),
-            ],
+            ),
           ),
         ),
       ),

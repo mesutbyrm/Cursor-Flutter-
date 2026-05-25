@@ -39,6 +39,12 @@ class VoiceLiveHeader2026 extends StatelessWidget {
   final String? hostAvatarUrl;
   final bool following;
 
+  bool get _roomIsVip {
+    final t =
+        '${room.nameTr} ${room.descTr ?? ''} ${room.slug}'.toLowerCase();
+    return t.contains('vip') || t.contains('gold');
+  }
+
   @override
   Widget build(BuildContext context) {
     final shortId = room.apiRoomKey.length > 8
@@ -46,12 +52,18 @@ class VoiceLiveHeader2026 extends StatelessWidget {
         : room.apiRoomKey;
     final onlineLabel = _formatCount(onlineCount);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(4, 2, 4, 8),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.28),
+            border: Border(
+              bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+            ),
+          ),
+          child: Row(
             children: [
               IconButton(
                 visualDensity: VisualDensity.compact,
@@ -78,15 +90,25 @@ class VoiceLiveHeader2026 extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        room.displayTitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
-                          color: Colors.white,
-                        ),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              room.displayTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          if (_roomIsVip) ...[
+                            const SizedBox(width: 6),
+                            _vipChip(),
+                          ],
+                        ],
                       ),
                       Text(
                         'ID $shortId · $onlineLabel çevrimiçi',
@@ -124,7 +146,25 @@ class VoiceLiveHeader2026 extends StatelessWidget {
               ),
             ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _vipChip() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        gradient: VoiceRoomTokens.goldRing,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Text(
+        'VIP',
+        style: TextStyle(
+          fontSize: 8,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF3E2723),
+        ),
       ),
     );
   }

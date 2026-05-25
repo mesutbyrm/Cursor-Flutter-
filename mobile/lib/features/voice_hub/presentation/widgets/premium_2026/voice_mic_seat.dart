@@ -40,6 +40,7 @@ class VoiceMicSeat extends StatelessWidget {
 
     final vip = user!.membership?.toLowerCase().contains('vip') == true ||
         user!.membership?.toLowerCase().contains('gold') == true;
+    final levelLabel = _levelLabel(user!);
 
     final avatar = Column(
       mainAxisSize: MainAxisSize.min,
@@ -74,6 +75,26 @@ class VoiceMicSeat extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                         color: Colors.black87,
                       ),
+                    ),
+                  ),
+                ),
+              ),
+            if (levelLabel != null)
+              Positioned(
+                top: -2,
+                left: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    gradient: VoiceRoomTokens.neonRing,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    levelLabel,
+                    style: const TextStyle(
+                      fontSize: 7,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -123,6 +144,15 @@ class VoiceMicSeat extends StatelessWidget {
       child: avatar,
     );
   }
+}
+
+String? _levelLabel(ChatRoomPresence user) {
+  final sym = user.roleSymbol?.trim();
+  if (sym != null && sym.isNotEmpty && sym.length <= 6) return sym;
+  if (user.isBroadcaster) return 'MOD';
+  final seat = user.seatIndex;
+  if (seat != null && seat > 1) return 'Lv$seat';
+  return null;
 }
 
 class _EmptySeat extends StatelessWidget {

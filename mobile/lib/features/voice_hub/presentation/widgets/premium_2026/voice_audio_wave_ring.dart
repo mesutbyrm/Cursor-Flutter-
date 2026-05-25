@@ -120,12 +120,11 @@ class _WaveRingPainter extends CustomPainter {
       canvas.drawCircle(center, baseR + expand, paint);
     }
 
-    // Ses dalgası çubukları (alt yay)
-    final barCount = 12;
+    // Ses dalgası çubukları — tam halka
+    final barCount = 16;
     for (var i = 0; i < barCount; i++) {
-      final t = i / (barCount - 1);
-      final angle = math.pi * 0.85 + t * math.pi * 0.3;
-      final amp = 4 + math.sin((progress * math.pi * 2) + i) * 6;
+      final angle = (i / barCount) * math.pi * 2;
+      final amp = 3 + math.sin((progress * math.pi * 2) + i * 0.5) * 7;
       final inner = baseR - 2;
       final outer = inner + amp;
       final p1 = Offset(

@@ -29,10 +29,12 @@ import 'utils/voice_room_permissions.dart';
 import 'widgets/premium/voice_gift_flight_overlay.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
-import 'widgets/premium_2026/voice_half_circle_stage.dart';
-import 'widgets/premium_2026/voice_live_bottom_bar_2026.dart';
+import 'widgets/premium_2026/voice_live_action_bar_2026.dart';
 import 'widgets/premium_2026/voice_live_chat_dock.dart' show VoiceLiveChatFeed, VoiceLiveMessageInput;
 import 'widgets/premium_2026/voice_live_header_2026.dart';
+import 'widgets/premium_2026/voice_room_particles.dart';
+import 'widgets/premium_2026/voice_room_responsive_stage.dart';
+import 'widgets/voice_room_gift_sheet.dart';
 import 'widgets/voice_room/voice_room_rules_ticker.dart';
 import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
 
@@ -385,7 +387,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _perms(user, live.presence);
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
-    final speakingId = _micOn ? user?.id : null;
+    final speakingIds = <String>{
+      for (final p in live.presence)
+        if (p.isSpeaking) p.id,
+    };
+    if (_micOn && user != null) speakingIds.add(user.id);
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
     final rules = (room.rulesTr ?? room.descTr)?.trim();
     final staffBanner = live.enterBanner != null &&
@@ -511,37 +517,46 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     ),
                   ),
                   Expanded(
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Positioned.fill(
-                          child: VoiceHalfCircleStage(
-                            room: room,
-                            presence: live.presence,
-                            speakingUserId: speakingId,
-                            onUserTap: _openUser,
-                            onEmptySeatTap: () =>
-                                _requestSpeakFromSeat(context, room, ui),
-                          ),
-                        ),
-                        Positioned(
-                          left: 12,
-                          right: 12,
-                          bottom: 8,
-                          child: VoiceLiveChatFeed(
-                            messages: live.messages,
-                            maxHeight: keyboardOpen ? 120 : 200,
-                            onUserTap: (id, _) {
-                              for (final e in live.presence) {
-                                if (e.id == id) {
-                                  _openUser(e);
-                                  break;
-                                }
-                              }
-                            },
-                          ),
-                        ),
-                      ],
+                    child: LayoutBuilder(
+                      builder: (context, stageConstraints) {
+                        final chatMaxH = (stageConstraints.maxHeight * 0.32)
+                            .clamp(88.0, keyboardOpen ? 100.0 : 168.0);
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            const Positioned.fill(child: VoiceRoomParticles()),
+                            Positioned.fill(
+                              child: VoiceRoomResponsiveStage(
+                                room: room,
+                                presence: live.presence,
+                                speakingUserIds: speakingIds,
+                                onUserTap: _openUser,
+                                onEmptySeatTap: () =>
+                                    _requestSpeakFromSeat(context, room, ui),
+                              ),
+                            ),
+                            Positioned(
+                              left: 10,
+                              right: 10,
+                              bottom: 4,
+                              child: RepaintBoundary(
+                                child: VoiceLiveChatFeed(
+                                  messages: live.messages,
+                                  maxHeight: chatMaxH,
+                                  onUserTap: (id, _) {
+                                    for (final e in live.presence) {
+                                      if (e.id == id) {
+                                        _openUser(e);
+                                        break;
+                                      }
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -569,13 +584,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       onSend: () => _sendChatMessage(room),
                     ),
                     if (!keyboardOpen)
-                      VoiceLiveBottomBar2026(
+                      VoiceLiveActionBar2026(
                         micOn: _micOn,
                         micEnabled: _audioReady,
-                        onChat: () {
-                          _messageFocus.requestFocus();
-                        },
-                        onInvite: _shareRoom,
                         onMic: () {
                           if (!_audioReady) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -591,6 +602,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           _audio?.setMicEnabled(next);
                           setState(() => _micOn = next);
                         },
+                        onGift: () => showVoiceRoomGiftPicker(
+                          context,
+                          ref,
+                          room: room,
+                        ),
                         onMusic: () async {
                           final enabled = !ui.backgroundMusicEnabled;
                           ref
@@ -605,7 +621,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             );
                           }
                         },
-                        onJetonStore: () => context.push('/jeton-store'),
+                        onEffects: () => showVoiceEffectsSheet(context, ref),
+                        onInvite: _shareRoom,
+                        onSettings: () => _openMoreMenu(
+                          context,
+                          room: room,
+                          live: live,
+                          perms: perms,
+                          isOwner: isOwner,
+                          ui: ui,
+                        ),
                       ),
                   ],
                 ),
