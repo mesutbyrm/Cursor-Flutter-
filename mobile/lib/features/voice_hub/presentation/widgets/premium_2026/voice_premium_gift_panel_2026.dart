@@ -458,6 +458,19 @@ class _RarityBadge extends StatelessWidget {
   }
 }
 
+String _formatCoins(int n) {
+  if (n >= 1000) {
+    final s = n.toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
+    }
+    return buf.toString();
+  }
+  return '$n';
+}
+
 class _CoinChip extends StatelessWidget {
   const _CoinChip({required this.coins});
   final int coins;
@@ -477,7 +490,7 @@ class _CoinChip extends StatelessWidget {
           const Icon(Icons.monetization_on_rounded, size: 16, color: Colors.black87),
           const SizedBox(width: 4),
           Text(
-            '$coins',
+            _formatCoins(coins),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 13,
