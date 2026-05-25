@@ -3,26 +3,23 @@
 | Alan | Değer |
 |------|--------|
 | Sürüm | `1.0.82+84` |
-| Tarih (UTC) | 2026-05-19 |
-| Dal | `main` (PART 4–7 birleşik) |
+| Tarih (UTC) | 2026-05-25 02:40 |
+| Commit | [`15892eb1bed05753b5c32af1dcaf60bb2bcded00`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/15892eb1bed05753b5c32af1dcaf60bb2bcded00) |
+| İş akışı | [Run 26379743150](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26379743150) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
-## Özellikler (1.0.82+84 — Premium 2026 paketi)
+## Özellikler
 
-### PART 7 — VIP / Gold
-- VIP rozetleri, Gold üyelik, `/vip-gold` hub
-- Özel giriş animasyonu, VIP / şifreli oda kapısı
+## 1.0.82+84 (2026-05-19)
 
-### PART 6 — Canlı yayın
-- TikTok tarzı tam ekran, swipe `/live/swipe`, premium chat, çift dokunuş kalpleri
+### PART 7 — VIP / Gold premium sistemi
 
-### PART 5 — PK savaş
-- 1v1 / takım, animasyonlu skor, VS, hediye gücü, kazanan ekranı
+- VIP rozetleri, Gold üyelik kademeleri (Premium → SVIP)
+- Özel giriş animasyonu (odaya katılımda tam ekran FX)
+- Premium avatar çerçeveleri, luxury kartlar, glassmorphism hub
+- VIP odalar ve şifreli odalar — tek kapı: `openVoiceRoomWithVipGate`
+- `/vip-gold` merkezi, keşfet VIP kategorisi, profil banner
+- Oda grid: VIP / kilit etiketleri; mikrofon koltuğunda rozet
 
-### PART 4 — Hediye
-- 8 premium hediye, fullscreen FX, combo, sesli oda hediye paneli
-
-### PART 3 — Sesli sohbet (1.0.75+77)
-- Kozmik oda, 8 mikrofon, LiveKit/TRTC, keşfet kategorileri
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
