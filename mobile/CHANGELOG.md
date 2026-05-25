@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.79+81 (2026-05-19)
+
+### PART 4 — Premium hediye sistemi (TikTok Live seviyesi)
+
+- 8 hediye: Roket, Galaxy, Aslan, Spor araba, Elmas, Kalp, Taç, Yat
+- Tam ekran animasyon: neon vignette, glow ring, combo rozeti, jeton burst, yüzen parçacıklar
+- Combo birleştirme (8 sn pencere), oturum hediye sıralaması
+- Sesli oda: cam blur hediye paneli, yatay premium kartlar, x1/x5/x10/x99
+- CustomPainter 3D-benzeri ikonlar (Lottie/Rive eksik asset’lerde)
+- Canlı yayın `GiftFullscreenOverlay` → premium overlay
+
 ## 1.0.75+77 (2026-05-19)
 
 ### Sesli sohbet — Premium 2026

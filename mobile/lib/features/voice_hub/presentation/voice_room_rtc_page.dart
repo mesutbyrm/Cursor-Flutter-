@@ -12,7 +12,10 @@ import '../../../core/widgets/discover_tab_layout.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../live/domain/entities/live_gift_event.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
-import '../../live/presentation/gifts/widgets/gift_fullscreen_overlay.dart';
+import '../../gifts/domain/premium_gift_catalog_2026.dart';
+import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
+import 'providers/voice_gift_combo_tracker.dart';
+import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
 import '../../profile/presentation/providers/profile_providers.dart';
 import '../domain/entities/chat_room_presence.dart';
@@ -99,16 +102,25 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _giftSub = service.events.listen(_onGiftEvent);
   }
 
-  void _onGiftEvent(LiveGiftEvent event) {
+  void _onGiftEvent(LiveGiftEvent raw) {
     if (!mounted) return;
     final ui = ref.read(voiceRoomUiProvider);
     if (!ui.giftAnimationsEnabled) return;
 
+    final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
+    ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
     ref.read(voiceGiftFlightQueueProvider.notifier).enqueue(event);
 
-    if (event.coinCost >= 100 || event.combo >= 5) {
+    final showFullscreen = PremiumGiftCatalog2026.triggersFullscreen(
+      giftId: event.giftId,
+      coinCost: event.coinCost,
+      combo: event.combo,
+    );
+    if (showFullscreen) {
+      final rarity = PremiumGiftCatalog2026.rarity(event.giftId);
+      final duration = rarity.fullscreenDuration;
       setState(() => _fullscreenGift = event);
-      Future.delayed(const Duration(seconds: 3), () {
+      Future.delayed(duration, () {
         if (mounted && _fullscreenGift?.id == event.id) {
           setState(() => _fullscreenGift = null);
         }
@@ -552,7 +564,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               onFinished: (id) =>
                   ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
             ),
-            GiftFullscreenOverlay(event: _fullscreenGift),
+            PremiumGiftFullscreenOverlay(event: _fullscreenGift),
           ],
         ),
         bottomNavigationBar: _loginError != null
