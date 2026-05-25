@@ -172,6 +172,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       await _joinPresence();
       await refresh();
       _startSocket(_roomKey);
+      _warmBackgrounds();
     });
     _poll = Timer.periodic(const Duration(seconds: 2), (_) {
       if (!state.sending) refresh();
@@ -335,6 +336,18 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     }
   }
 
+  Future<void> _warmBackgrounds() async {
+    try {
+      final urls = await ref.read(chatRoomRemoteProvider).fetchBackgrounds();
+      if (urls.isEmpty) return;
+      state = state.copyWith(
+        backgroundUrl: state.backgroundUrl?.isNotEmpty == true
+            ? state.backgroundUrl
+            : urls.first,
+      );
+    } catch (_) {}
+  }
+
   Future<void> sendMessage(String text) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty || _roomKey.isEmpty) return;
@@ -374,39 +387,41 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         .timeout(const Duration(seconds: 25));
 
     try {
-      ChatRoomMessage? sent;
-      try {
-        sent = await post(_roomKey, alt: _altRoomKey);
-      } on TimeoutException {
-        final alt = _altRoomKey;
-        if (alt != null && alt.isNotEmpty && alt != _roomKey) {
-          sent = await post(alt, alt: _roomKey);
-        } else {
-          rethrow;
+      await () async {
+        ChatRoomMessage? sent;
+        try {
+          sent = await post(_roomKey, alt: _altRoomKey);
+        } on TimeoutException {
+          final alt = _altRoomKey;
+          if (alt != null && alt.isNotEmpty && alt != _roomKey) {
+            sent = await post(alt, alt: _roomKey);
+          } else {
+            rethrow;
+          }
         }
-      }
 
-      var list = [...state.messages];
-      if (optimistic != null) {
-        list.removeWhere((m) => m.id == optimisticId);
-      }
-      if (sent != null) {
-        final delivered = sent;
-        final idx = list.indexWhere(
-          (m) =>
-              m.id == delivered.id ||
-              (m.id.startsWith('local-') && m.content == delivered.content),
-        );
-        if (idx >= 0) {
-          list[idx] = sent;
-        } else {
-          list.add(sent);
+        var list = [...state.messages];
+        if (optimistic != null) {
+          list.removeWhere((m) => m.id == optimisticId);
         }
-      } else if (optimistic != null) {
-        list.add(optimistic);
-      }
-      list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-      state = state.copyWith(messages: list);
+        if (sent != null) {
+          final delivered = sent;
+          final idx = list.indexWhere(
+            (m) =>
+                m.id == delivered.id ||
+                (m.id.startsWith('local-') && m.content == delivered.content),
+          );
+          if (idx >= 0) {
+            list[idx] = sent;
+          } else {
+            list.add(sent);
+          }
+        } else if (optimistic != null) {
+          list.add(optimistic);
+        }
+        list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+        state = state.copyWith(messages: list, clearError: true);
+      }().timeout(const Duration(seconds: 22));
     } on TimeoutException {
       state = state.copyWith(
         error: 'Mesaj gönderimi zaman aşımına uğradı. Tekrar deneyin.',
@@ -494,8 +509,13 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   Future<List<String>> fetchBackgrounds() =>
       ref.read(chatRoomRemoteProvider).fetchBackgrounds();
 
-  Future<List<YoutubeSearchHit>> searchYoutube(String query) =>
-      ref.read(chatRoomRemoteProvider).searchYoutube(query);
+  Future<List<YoutubeSearchHit>> searchYoutube(String query) => ref
+      .read(chatRoomRemoteProvider)
+      .searchYoutube(query)
+      .timeout(
+        const Duration(seconds: 18),
+        onTimeout: () => throw TimeoutException('YouTube araması zaman aşımı'),
+      );
 
   Future<({List<MusicQueueItem> queue, int cost})> fetchMusicQueue() =>
       ref.read(chatRoomRemoteProvider).fetchMusicQueue(
@@ -528,13 +548,19 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     String? videoId,
   }) async {
     try {
-      final result = await ref.read(chatRoomRemoteProvider).requestMusic(
+      final result = await ref
+          .read(chatRoomRemoteProvider)
+          .requestMusic(
             roomKey: _roomKey,
             alternateKey: _altRoomKey,
             title: title,
             youtubeUrl: youtubeUrl,
             thumbUrl: thumbUrl,
             videoId: videoId,
+          )
+          .timeout(
+            const Duration(seconds: 22),
+            onTimeout: () => throw TimeoutException('Şarkı isteği zaman aşımı'),
           );
       if (result.newBalance != null) {
         ref.invalidate(coinBalanceProvider);

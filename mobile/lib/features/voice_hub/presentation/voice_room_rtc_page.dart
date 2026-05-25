@@ -23,6 +23,7 @@ import '../domain/entities/chat_room_presence.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
 import 'audio/voice_room_audio_coordinator.dart';
 import 'providers/chat_room_providers.dart';
+import 'utils/voice_room_image_prefetch.dart';
 import 'providers/voice_gift_providers.dart';
 import 'providers/voice_room_audio_providers.dart';
 import 'providers/voice_room_ui_provider.dart';
@@ -79,6 +80,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.invalidate(voiceRoomsProvider);
       _joinRoom();
+      _prefetchRoomImages();
     });
   }
 
@@ -103,6 +105,28 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _messageFocus.dispose();
     _audio?.dispose();
     super.dispose();
+  }
+
+  Future<void> _prefetchRoomImages() async {
+    if (!mounted) return;
+    final room = widget.room;
+    try {
+      final urls = await ref
+          .read(voiceRoomLiveProvider(room).notifier)
+          .fetchBackgrounds();
+      if (!mounted) return;
+      await prefetchVoiceRoomImages(
+        context,
+        primaryUrl: room.backgroundImageUrl,
+        extraUrls: urls,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      await prefetchVoiceRoomImages(
+        context,
+        primaryUrl: room.backgroundImageUrl,
+      );
+    }
   }
 
   Future<void> _sendChatMessage(VoiceRoomEntity room) async {
@@ -796,17 +820,23 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         ),
         bottomNavigationBar: _loginError != null
             ? null
-            : Material(
-                color: Colors.transparent,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    VoiceWebChatInputBar(
-                      controller: _messageCtrl,
-                      focusNode: _messageFocus,
-                      sending: live.sending,
-                      onSend: () => unawaited(_sendChatMessage(room)),
-                    ),
+            : AnimatedPadding(
+                duration: const Duration(milliseconds: 100),
+                curve: Curves.easeOutCubic,
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.viewInsetsOf(context).bottom,
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      VoiceWebChatInputBar(
+                        controller: _messageCtrl,
+                        focusNode: _messageFocus,
+                        sending: live.sending || _chatOutbound,
+                        onSend: () => unawaited(_sendChatMessage(room)),
+                      ),
                     if (!keyboardOpen)
                       VoiceWebBottomNav(
                         micOn: _micOn,
@@ -843,7 +873,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           isOwner: isOwner,
                         ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
       ),

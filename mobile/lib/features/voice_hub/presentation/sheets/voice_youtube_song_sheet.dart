@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -67,7 +68,16 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
 
   void _onQueryChanged(String value) {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 450), () => _search(value));
+    final trimmed = value.trim();
+    if (trimmed.length < 2) {
+      setState(() {
+        _hits = const [];
+        _searching = false;
+        _error = null;
+      });
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 450), () => _search(trimmed));
   }
 
   Future<void> _search(String q) async {
@@ -94,8 +104,12 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
       if (mounted) {
         setState(() {
           _searching = false;
-          _error = e.toString();
+          _error = ApiException.userMessage(e);
         });
+      }
+    } finally {
+      if (mounted && _searching) {
+        setState(() => _searching = false);
       }
     }
   }
@@ -103,14 +117,20 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
   Future<void> _request(YoutubeSearchHit hit) async {
     if (_submitting) return;
     setState(() => _submitting = true);
-    final err = await ref.read(voiceRoomLiveProvider(widget.room).notifier).requestMusic(
-          title: hit.title,
-          youtubeUrl: hit.url,
-          thumbUrl: hit.thumbUrl,
-          videoId: hit.videoId,
-        );
+    String? err;
+    try {
+      err = await ref.read(voiceRoomLiveProvider(widget.room).notifier).requestMusic(
+            title: hit.title,
+            youtubeUrl: hit.url,
+            thumbUrl: hit.thumbUrl,
+            videoId: hit.videoId,
+          );
+    } catch (e) {
+      err = ApiException.userMessage(e);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
     if (!mounted) return;
-    setState(() => _submitting = false);
     if (err != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
       return;

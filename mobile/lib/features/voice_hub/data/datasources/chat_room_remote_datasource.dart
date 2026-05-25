@@ -328,8 +328,15 @@ class ChatRoomRemoteDataSource {
     final res = await _dio.safeGet<dynamic>(
       youtubeSearchPath(),
       query: {'q': q, 'query': q},
-    );
-    return _parseYoutubeHits(res.data);
+    ).timeout(const Duration(seconds: 18));
+    final data = res.data;
+    if (data is String &&
+        (data.contains('<!DOCTYPE') || data.contains('<html'))) {
+      throw const ApiException(
+        'YouTube araması yapılamadı (oturum veya sunucu yanıtı).',
+      );
+    }
+    return _parseYoutubeHits(data);
   }
 
   Future<({List<MusicQueueItem> queue, int cost})> fetchMusicQueue(
@@ -481,20 +488,32 @@ class ChatRoomRemoteDataSource {
           'text': content,
         }),
         options: Options(contentType: 'application/json'),
-      );
-      final body = res.data;
-      if (body is Map) {
-        final map = _unwrapMap(body) ?? asJsonMap(body);
-        final msg = map['message'];
-        if (msg is Map) {
-          return ChatRoomMessage.fromJson(Map<String, dynamic>.from(msg));
+      ).timeout(const Duration(seconds: 20));
+      final code = res.statusCode ?? 0;
+      if (code >= 200 && code < 300) {
+        final body = res.data;
+        if (body is String &&
+            (body.contains('<!DOCTYPE') || body.contains('<html'))) {
+          throw const ApiException('Mesaj gönderilemedi (oturum gerekli).');
         }
-        if (map['id'] != null &&
-            (map['content'] != null ||
-                map['body'] != null ||
-                map['text'] != null)) {
-          return ChatRoomMessage.fromJson(map);
+        if (body is Map) {
+          final map = _unwrapMap(body) ?? asJsonMap(body);
+          final msg = map['message'];
+          if (msg is Map) {
+            return ChatRoomMessage.fromJson(Map<String, dynamic>.from(msg));
+          }
+          if (map['id'] != null &&
+              (map['content'] != null ||
+                  map['body'] != null ||
+                  map['text'] != null)) {
+            return ChatRoomMessage.fromJson(map);
+          }
         }
+        return ChatRoomMessage(
+          id: 'srv-${DateTime.now().millisecondsSinceEpoch}',
+          content: content,
+          createdAt: DateTime.now(),
+        );
       }
       return null;
     });

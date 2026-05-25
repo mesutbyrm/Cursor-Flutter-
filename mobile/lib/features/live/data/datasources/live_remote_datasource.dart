@@ -62,18 +62,26 @@ class LiveRemoteDataSource {
         .toList();
   }
 
-  static const int voiceRoomOpenJetonCost = 100;
+  static const int voiceRoomNormalOpenJetonCost = 200;
+  static const int voiceRoomVipOpenJetonCost = 5000;
 
-  /// canlifal.com `POST /api/chat/rooms/create` — 100 jeton, isteğe bağlı VIP oda.
+  static int openRoomJetonCost({required bool vip}) =>
+      vip ? voiceRoomVipOpenJetonCost : voiceRoomNormalOpenJetonCost;
+
+  /// canlifal.com `POST /api/chat/rooms/create`
   Future<VoiceRoomEntity> createVoiceChatRoom({bool vip = false}) async {
+    final cost = openRoomJetonCost(vip: vip);
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.chatRoomCreate,
       data: {
-        'cost': voiceRoomOpenJetonCost,
-        'jeton': voiceRoomOpenJetonCost,
-        'coins': voiceRoomOpenJetonCost,
+        'cost': cost,
+        'jeton': cost,
+        'coins': cost,
+        'amount': cost,
         'isVip': vip,
         if (vip) 'vip': true,
+        'roomType': vip ? 'vip' : 'normal',
+        'type': vip ? 'vip' : 'normal',
       },
     );
     final body = res.data;
@@ -99,15 +107,17 @@ class LiveRemoteDataSource {
     if (map['success'] == false) {
       throw DioException(
         requestOptions: res.requestOptions,
-        message: (map['error'] ?? map['message'] ?? 'Oda açılamadı').toString(),
+        message: _formatCreateRoomError(map),
       );
     }
-    final err = map['error'];
-    if (err != null && err.toString().isNotEmpty && map['success'] != true) {
-      throw DioException(
-        requestOptions: res.requestOptions,
-        message: err.toString(),
-      );
+    if (map['success'] != true) {
+      final err = (map['error'] ?? map['message'])?.toString().trim();
+      if (err != null && err.isNotEmpty) {
+        throw DioException(
+          requestOptions: res.requestOptions,
+          message: err,
+        );
+      }
     }
     dynamic roomRaw = map['room'] ?? map['data'];
     if (roomRaw is Map && roomRaw['room'] is Map) {
@@ -123,6 +133,13 @@ class LiveRemoteDataSource {
       requestOptions: res.requestOptions,
       message: 'Oda oluşturuldu ancak oda bilgisi alınamadı',
     );
+  }
+
+  static String _formatCreateRoomError(Map<String, dynamic> map) {
+    final raw = map['error'] ?? map['message'] ?? map['detail'];
+    final msg = raw?.toString().trim();
+    if (msg != null && msg.isNotEmpty) return msg;
+    return 'Oda açılamadı. Jeton bakiyenizi ve oturumunuzu kontrol edin.';
   }
 
   Future<VoiceRoomEntity?> fetchVoiceRoomById(String id) async {

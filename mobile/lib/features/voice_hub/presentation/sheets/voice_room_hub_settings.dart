@@ -61,6 +61,12 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
   List<String> _backgrounds = const [];
   var _loadingBg = false;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadBackgrounds());
+  }
+
   Future<void> _loadBackgrounds() async {
     if (_loadingBg || _backgrounds.isNotEmpty) return;
     setState(() => _loadingBg = true);

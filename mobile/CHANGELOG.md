@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.91+93 (2026-05-19)
+
+### Sesli oda — mesaj, YouTube, klavye, oda aç
+
+- Gönder düğmesi: zaman aşımı + `sending` her durumda sıfırlanır; boş API yanıtında mesaj yine eklenir
+- YouTube şarkı arama/istek: 18–22 sn zaman aşımı; arama spinner takılması düzeltildi
+- Mesaj çubuğu klavyenin üstünde sabitlenir (`viewInsets`)
+- Oda aç: normal **200** jeton, VIP **5000** jeton (Gold şartı kaldırıldı)
+- Arka plan görselleri odaya girince önbelleğe alınır
+
 ## 1.0.90+92 (2026-05-19)
 
 ### Ana sayfa, oda aç, Gold & derleme düzeltmeleri

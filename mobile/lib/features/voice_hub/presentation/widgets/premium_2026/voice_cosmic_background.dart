@@ -47,6 +47,12 @@ class _VoiceCosmicBackgroundState extends State<VoiceCosmicBackground>
           CachedNetworkImage(
             imageUrl: widget.imageUrl!,
             fit: BoxFit.cover,
+            fadeInDuration: Duration.zero,
+            fadeOutDuration: Duration.zero,
+            placeholder: (_, _) => const DecoratedBox(
+              decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
+            ),
+            errorWidget: (_, _, _) => const SizedBox.shrink(),
             color: Colors.black.withValues(alpha: 0.42),
             colorBlendMode: BlendMode.darken,
           ),

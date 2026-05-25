@@ -7,15 +7,13 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../live/data/datasources/live_remote_datasource.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 
-/// canlifal.com — sesli sohbet odası aç (100 jeton); Gold+ VIP oda seçeneği.
+/// canlifal.com — sesli sohbet odası aç (normal 200 / VIP 5000 jeton).
 Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) async {
-  final tier = ref.read(vipTierProvider);
-  final canVip = canEnterVipRoom(tier);
+  const normalCost = LiveRemoteDataSource.voiceRoomNormalOpenJetonCost;
+  const vipCost = LiveRemoteDataSource.voiceRoomVipOpenJetonCost;
   final balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ?? 0;
-  const cost = LiveRemoteDataSource.voiceRoomOpenJetonCost;
 
   final choice = await showModalBottomSheet<_OpenRoomChoice>(
     context: context,
@@ -36,7 +34,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
             ),
             const SizedBox(height: 8),
             Text(
-              'canlifal.com ile aynı: $cost jeton karşılığında kendi odanızı açın.',
+              'Normal oda $normalCost jeton · VIP oda $vipCost jeton',
               style: TextStyle(
                 color: AppColors.textMuted.withValues(alpha: 0.95),
                 fontSize: 13,
@@ -47,7 +45,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
             Text(
               'Bakiyeniz: $balance jeton',
               style: TextStyle(
-                color: balance >= cost
+                color: balance >= normalCost
                     ? AppColors.accentCyan
                     : AppColors.liveRed,
                 fontWeight: FontWeight.w700,
@@ -58,35 +56,23 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
             FilledButton.icon(
               onPressed: () => Navigator.pop(ctx, _OpenRoomChoice.standard),
               icon: const Icon(Icons.mic_rounded),
-              label: Text('Sesli oda aç · $cost jeton'),
+              label: Text('Sesli oda aç · $normalCost jeton'),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.accentPurple,
                 minimumSize: const Size.fromHeight(48),
               ),
             ),
-            if (canVip) ...[
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: () => Navigator.pop(ctx, _OpenRoomChoice.vip),
-                icon: const Icon(Icons.workspace_premium_rounded),
-                label: Text('VIP oda aç · $cost jeton'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.coinGold,
-                  side: const BorderSide(color: AppColors.coinGold),
-                  minimumSize: const Size.fromHeight(48),
-                ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.pop(ctx, _OpenRoomChoice.vip),
+              icon: const Icon(Icons.workspace_premium_rounded),
+              label: Text('VIP oda aç · $vipCost jeton'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.coinGold,
+                side: const BorderSide(color: AppColors.coinGold),
+                minimumSize: const Size.fromHeight(48),
               ),
-            ] else ...[
-              const SizedBox(height: 10),
-              Text(
-                'VIP oda açmak için Gold üyelik gerekir.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textMuted.withValues(alpha: 0.85),
-                ),
-              ),
-            ],
+            ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => Navigator.pop(ctx),
@@ -100,6 +86,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
 
   if (choice == null || !context.mounted) return;
 
+  final cost = choice == _OpenRoomChoice.vip ? vipCost : normalCost;
   if (balance < cost) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -132,8 +119,14 @@ Future<void> _createAndEnter(
   );
 
   try {
-    final room = await ref.read(liveRepositoryProvider).createVoiceChatRoom(
-          vip: vip,
+    final room = await ref
+        .read(liveRepositoryProvider)
+        .createVoiceChatRoom(vip: vip)
+        .timeout(
+          const Duration(seconds: 30),
+          onTimeout: () => throw Exception(
+            'Oda açma zaman aşımı. İnternet bağlantınızı kontrol edin.',
+          ),
         );
     ref.invalidate(voiceRoomsProvider);
     ref.invalidate(walletBalancesProvider);
