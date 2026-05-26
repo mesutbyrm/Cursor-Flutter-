@@ -45,7 +45,6 @@ import 'widgets/premium_2026/voice_timed_duyuru.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_action_row.dart';
-import 'widgets/voice_room/voice_room_announcement.dart'
 import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
 
 /// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
