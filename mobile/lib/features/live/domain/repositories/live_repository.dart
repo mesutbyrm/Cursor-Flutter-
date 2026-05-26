@@ -8,8 +8,11 @@ abstract class LiveRepository {
 
   Future<VoiceRoomEntity?> fetchVoiceRoomById(String id);
 
-  /// canlifal.com — normal 200 / VIP 5000 jeton ile sesli sohbet odası aç.
-  Future<VoiceRoomEntity> createVoiceChatRoom({bool vip = false});
+  /// canlifal.com — normal 100 / VIP 5000 jeton ile sesli sohbet odası aç.
+  Future<VoiceRoomEntity> createVoiceChatRoom({
+    bool vip = false,
+    String? roomName,
+  });
 
   Future<String> createVideoStream({
     required String title,

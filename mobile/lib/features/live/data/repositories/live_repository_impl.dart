@@ -20,8 +20,11 @@ class LiveRepositoryImpl implements LiveRepository {
       _remote.fetchVoiceRoomById(id);
 
   @override
-  Future<VoiceRoomEntity> createVoiceChatRoom({bool vip = false}) =>
-      _remote.createVoiceChatRoom(vip: vip);
+  Future<VoiceRoomEntity> createVoiceChatRoom({
+    bool vip = false,
+    String? roomName,
+  }) =>
+      _remote.createVoiceChatRoom(vip: vip, roomName: roomName);
 
   @override
   Future<String> createVideoStream({

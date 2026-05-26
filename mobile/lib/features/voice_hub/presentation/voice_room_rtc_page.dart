@@ -14,6 +14,7 @@ import '../../live/domain/entities/live_gift_event.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/presentation/providers/live_providers.dart';
 import '../domain/entities/chat_room_message.dart';
+import '../domain/voice_official_join.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
 import 'providers/voice_gift_combo_tracker.dart';
@@ -45,7 +46,6 @@ import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_action_row.dart';
 import 'widgets/voice_room/voice_room_announcement.dart'
-    show VoiceRoomSystemBanner;
 import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
 
 /// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
@@ -130,7 +130,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   }
 
   Future<void> _sendChatMessage(VoiceRoomEntity room) async {
-    final text = _messageCtrl.text.trim();
+    final text = VoiceOfficialJoin.normalizeCommandInput(
+      _messageCtrl.text.trim(),
+    );
     if (text.isEmpty || _chatOutbound) return;
     _chatOutbound = true;
     _messageCtrl.clear();
@@ -575,11 +577,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
     final speakingId = _micOn ? user?.id : null;
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
-    final staffBanner = live.enterBanner != null &&
-            (live.enterBanner!.contains('STAFF') ||
-                live.enterBanner!.contains('VIP'))
-        ? live.enterBanner
-        : null;
+    final staffBanner = live.enterBanner;
     final viewInsets = MediaQuery.viewInsetsOf(context);
     final keyboardOpen = viewInsets.bottom > 0;
     final mq = MediaQuery.sizeOf(context);
@@ -600,15 +598,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final ownerName = ownerPresence?.displayName ?? room.ownerName;
     final ownerAvatar = ownerPresence?.image ?? room.ownerAvatarUrl;
     final headerAvatar = ownerAvatar ?? room.ownerAvatarUrl;
-    String? lastJoinBanner;
-    for (var i = live.messages.length - 1; i >= 0; i--) {
-      final m = live.messages[i];
-      if (m.kind == ChatMessageKind.systemJoin) {
-        lastJoinBanner = m.content;
-        break;
-      }
-    }
-
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(room), (prev, next) {
       if (prev?.error != next.error && next.error != null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -767,15 +756,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             totalOnline: online,
                             onUserTap: _openUser,
                           ),
-                          if (lastJoinBanner != null) ...[
-                            const SizedBox(height: 4),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              child: VoiceRoomSystemBanner(
-                                message: lastJoinBanner,
-                              ),
-                            ),
-                          ],
                         ],
                       ],
                     ),
@@ -785,6 +765,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       alignment: Alignment.bottomLeft,
                       child: VoiceWebChatOverlay(
                         messages: live.messages,
+                        hideOfficialJoinInChat: staffBanner != null,
                         maxHeight: chatMaxH,
                         onUserTap: (id, _) {
                           for (final e in live.presence) {

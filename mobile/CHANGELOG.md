@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.92+94 (2026-05-19)
+
+### Sesli oda — oda aç, müzik, mesaj, giriş şeridi, komutlar
+
+- Oda aç: normal **100** jeton; istek gövdesine oda adı alanları eklendi
+- Müzik Aç: `/song-request` yoksa `/music-queue` yedek ucu; YouTube arama yedek `/api/chat/youtube-search`
+- Mesaj: gönderim sırasında poll duraklatılır; çift zaman aşımı kaldırıldı
+- Yetkili girişi: sağdan sola kayan şerit (MODERATOR/VIP/STAFF); sohbette tekrar gösterilmez
+- Oda komutları (`/temizle`, `!temizle` vb.) sohbete gönderilir; API’de işlenir
+- Arka plan önbelleği 48 görsele kadar genişletildi
+
 ## 1.0.91+93 (2026-05-19)
 
 ### Sesli oda — mesaj, YouTube, klavye, oda aç
