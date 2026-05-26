@@ -1,0 +1,36 @@
+Running Gradle task 'assembleRelease'...                        
+Your project is configured with Android NDK 26.3.11579264, but the following plugin(s) depend on a different Android NDK version:
+- audioplayers_android requires Android NDK 27.0.12077973
+- connectivity_plus requires Android NDK 27.0.12077973
+- device_info_plus requires Android NDK 27.0.12077973
+- firebase_analytics requires Android NDK 27.0.12077973
+- firebase_core requires Android NDK 27.0.12077973
+- firebase_messaging requires Android NDK 27.0.12077973
+- flutter_inappwebview_android requires Android NDK 27.0.12077973
+- flutter_local_notifications requires Android NDK 27.0.12077973
+- flutter_plugin_android_lifecycle requires Android NDK 27.0.12077973
+- flutter_secure_storage requires Android NDK 27.0.12077973
+- flutter_web_auth_2 requires Android NDK 27.0.12077973
+- flutter_webrtc requires Android NDK 27.0.12077973
+- google_sign_in_android requires Android NDK 27.0.12077973
+- image_picker_android requires Android NDK 27.0.12077973
+- livekit_client requires Android NDK 27.0.12077973
+- onesignal_flutter requires Android NDK 27.0.12077973
+- path_provider_android requires Android NDK 27.0.12077973
+- permission_handler_android requires Android NDK 27.0.12077973
+- rive_common requires Android NDK 25.1.8937393
+- share_plus requires Android NDK 27.0.12077973
+- sqflite_android requires Android NDK 27.0.12077973
+- tencent_rtc_sdk requires Android NDK 21.4.7075529
+- url_launcher_android requires Android NDK 27.0.12077973
+Fix this issue by using the highest Android NDK version (they are backward compatible).
+Add the following to /workspace/mobile/android/app/build.gradle.kts:
+
+    android {
+        ndkVersion = "27.0.12077973"
+        ...
+    }
+Font asset "CupertinoIcons.ttf" was tree-shaken, reducing it from 257628 to 848 bytes (99.7% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 36432 bytes (97.8% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+Running Gradle task 'assembleRelease'...                           51.6s
+✓ Built build/app/outputs/flutter-apk/app-release.apk (100.0MB)

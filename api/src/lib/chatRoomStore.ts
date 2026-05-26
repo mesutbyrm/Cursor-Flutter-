@@ -339,6 +339,112 @@ export function listPresence(roomId: string) {
   return [...roomMap(roomId).values()];
 }
 
+export function clearRoomMessages(roomId: string) {
+  messageList(roomId).splice(0, messageList(roomId).length);
+}
+
+function tryHandleRoomCommand(
+  room: ChatRoomRow,
+  actor: User,
+  roomId: string,
+  raw: string,
+): ChatRoomMessageRow | null {
+  let cmd = raw.trim();
+  if (cmd.startsWith("!")) cmd = `/${cmd.slice(1)}`;
+  if (!cmd.startsWith("/")) return null;
+  const priv = roomPrivileges(actor, room);
+  const parts = cmd.split(/\s+/).filter(Boolean);
+  const head = (parts[0] ?? "").toLowerCase();
+
+  const system = (content: string) =>
+    pushMessage(roomId, {
+      id: randomUUID(),
+      content,
+      createdAt: new Date().toISOString(),
+      user: toChatUser(actor, priv.admin ? "admin" : "listener"),
+    });
+
+  if (head === "/temizle") {
+    if (!priv.canModerate && !priv.owner) {
+      return system("⚠️ Sohbeti temizlemek için yetkiniz yok.");
+    }
+    clearRoomMessages(roomId);
+    return system("🧹 Sohbet akışı temizlendi.");
+  }
+
+  if (head === "/duyuru") {
+    const text = parts.slice(1).join(" ").trim();
+    if (!priv.canModerate && !priv.owner) {
+      return system("⚠️ Duyuru yayınlamak için yetkiniz yok.");
+    }
+    if (!text) return system("⚠️ Kullanım: /duyuru mesajınız");
+    return system(`📢 DUYURU: ${text}`);
+  }
+
+  if (head === "/muzik" || head === "/music") {
+    return system("🎵 Müzik kuyruğu «Müzik Aç» veya DJ ayarlarından yönetilir.");
+  }
+
+  return null;
+}
+
+export const VOICE_ROOM_NORMAL_COST = 100;
+export const VOICE_ROOM_VIP_COST = 5000;
+
+export async function createVoiceChatRoom(
+  user: User,
+  input: { vip?: boolean; cost?: number; name?: string },
+) {
+  const vip = input.vip === true;
+  const cost = input.cost ?? (vip ? VOICE_ROOM_VIP_COST : VOICE_ROOM_NORMAL_COST);
+  const dbUser = await loadUser(user.id);
+  if (!dbUser) return { ok: false as const, error: "Oturum gerekli" };
+  if (dbUser.coins < cost) {
+    return {
+      ok: false as const,
+      error: `Yetersiz jeton (${cost} gerekli, ${dbUser.coins} mevcut)`,
+    };
+  }
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { coins: { decrement: cost } },
+  });
+  const baseName =
+    (input.name?.trim() || dbUser.displayName || dbUser.username || "Sohbet").slice(
+      0,
+      40,
+    );
+  const slugBase = baseName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 24);
+  const slug = `${slugBase || "oda"}-${Date.now().toString(36).slice(-6)}`;
+  const id = `room-${randomUUID().slice(0, 12)}`;
+  const row: ChatRoomRow = {
+    id,
+    slug,
+    nameTr: baseName,
+    descTr: vip ? "VIP sesli sohbet odası" : "Sesli sohbet odası",
+    icon: vip ? "⭐" : "🎤",
+    onlineCount: 0,
+    userCount: 0,
+    backgroundImage: SITE_BACKGROUNDS[0],
+    ownerId: user.id,
+    owner: {
+      id: user.id,
+      displayName: dbUser.displayName ?? dbUser.username,
+      image: dbUser.avatarUrl,
+    },
+    activeDjId: null,
+    djUserIds: [],
+    recentUsers: [],
+    rules: "Saygılı olun, spam yapmayın.",
+  };
+  rooms.push(row);
+  return { ok: true as const, room: row, newBalance: dbUser.coins - cost };
+}
+
 export async function addTextMessage(roomId: string, user: User, content: string) {
   const trimmed = content.trim();
   if (!trimmed) return null;
@@ -346,6 +452,8 @@ export async function addTextMessage(roomId: string, user: User, content: string
   const room = getChatRoom(roomId);
   if (!room) return null;
   const priv = roomPrivileges(user, room);
+  const commandRow = tryHandleRoomCommand(room, user, roomId, trimmed);
+  if (commandRow) return commandRow;
   const row = pushMessage(roomId, {
     id: randomUUID(),
     content: trimmed,

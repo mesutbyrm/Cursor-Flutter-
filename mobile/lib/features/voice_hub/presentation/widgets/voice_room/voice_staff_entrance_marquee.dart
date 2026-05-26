@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/auth/voice_staff_rank.dart';
+import '../../../domain/voice_official_join.dart';
 import '../../../../../core/theme/app_colors.dart';
 
 /// Yetkili girişi — sesli bölüm altında sağdan sola şerit.
@@ -46,11 +47,7 @@ class _VoiceStaffEntranceMarqueeState extends State<VoiceStaffEntranceMarquee> {
     final raw = widget.message?.trim() ?? '';
     if (raw.isEmpty) return const SizedBox.shrink();
 
-    final parsed = _parseStaffJoin(raw);
-    final label = parsed.$1;
-    final name = parsed.$2;
-    final rank = parsed.$3;
-    final sym = VoiceStaffRankParser.prefixSymbol(rank) ?? '★';
+    final marqueeText = _marqueeLine(raw);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
@@ -68,12 +65,24 @@ class _VoiceStaffEntranceMarqueeState extends State<VoiceStaffEntranceMarquee> {
             ),
             boxShadow: AppColors.glowShadow(AppColors.coinGold, blur: 12),
           ),
-          child: _MarqueeText(
-            text: '$sym $label $name odaya katıldı',
-          ),
+          child: _MarqueeText(text: marqueeText),
         ),
       ),
     );
+  }
+
+  String _marqueeLine(String raw) {
+    if (VoiceOfficialJoin.isOfficialEntrance(raw) &&
+        !raw.startsWith('[SYSTEM_VIP_JOIN:')) {
+      final line = raw.contains('📣') ? raw : '📣 $raw';
+      return line.endsWith('🎤') ? line : '$line 🎤';
+    }
+    final parsed = _parseStaffJoin(raw);
+    final label = parsed.$1;
+    final name = parsed.$2;
+    final rank = parsed.$3;
+    final sym = VoiceStaffRankParser.prefixSymbol(rank) ?? '★';
+    return '$sym $label $name odaya katıldı! 🎤';
   }
 
   (String, String, VoiceStaffRank) _parseStaffJoin(String raw) {
@@ -112,8 +121,18 @@ class _MarqueeTextState extends State<_MarqueeText>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 10),
+      duration: const Duration(seconds: 14),
     )..repeat();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MarqueeText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text) {
+      _ctrl
+        ..reset()
+        ..repeat();
+    }
   }
 
   @override
@@ -130,15 +149,13 @@ class _MarqueeTextState extends State<_MarqueeText>
         return LayoutBuilder(
           builder: (context, constraints) {
             final w = constraints.maxWidth;
-            final offset = _ctrl.value * (w + 120);
-            return Stack(
-              alignment: Alignment.centerLeft,
-              children: [
-                Transform.translate(
-                  offset: Offset(w - offset, 0),
-                  child: child,
-                ),
-              ],
+            final textW = w + 280;
+            final offset = _ctrl.value * textW;
+            return ClipRect(
+              child: Transform.translate(
+                offset: Offset(w - offset, 0),
+                child: child,
+              ),
             );
           },
         );

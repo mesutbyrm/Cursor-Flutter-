@@ -4,12 +4,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/data/datasources/live_remote_datasource.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 
-/// canlifal.com — sesli sohbet odası aç (normal 200 / VIP 5000 jeton).
+/// canlifal.com — sesli sohbet odası aç (normal 100 / VIP 5000 jeton).
 Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) async {
   const normalCost = LiveRemoteDataSource.voiceRoomNormalOpenJetonCost;
   const vipCost = LiveRemoteDataSource.voiceRoomVipOpenJetonCost;
@@ -119,9 +120,13 @@ Future<void> _createAndEnter(
   );
 
   try {
+    final user = ref.read(authControllerProvider).valueOrNull;
     final room = await ref
         .read(liveRepositoryProvider)
-        .createVoiceChatRoom(vip: vip)
+        .createVoiceChatRoom(
+          vip: vip,
+          roomName: user?.display ?? user?.username,
+        )
         .timeout(
           const Duration(seconds: 30),
           onTimeout: () => throw Exception(

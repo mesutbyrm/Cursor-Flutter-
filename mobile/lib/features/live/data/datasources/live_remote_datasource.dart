@@ -62,26 +62,37 @@ class LiveRemoteDataSource {
         .toList();
   }
 
-  static const int voiceRoomNormalOpenJetonCost = 200;
+  static const int voiceRoomNormalOpenJetonCost = 100;
   static const int voiceRoomVipOpenJetonCost = 5000;
 
   static int openRoomJetonCost({required bool vip}) =>
       vip ? voiceRoomVipOpenJetonCost : voiceRoomNormalOpenJetonCost;
 
   /// canlifal.com `POST /api/chat/rooms/create`
-  Future<VoiceRoomEntity> createVoiceChatRoom({bool vip = false}) async {
+  Future<VoiceRoomEntity> createVoiceChatRoom({
+    bool vip = false,
+    String? roomName,
+  }) async {
     final cost = openRoomJetonCost(vip: vip);
+    final name = roomName?.trim();
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.chatRoomCreate,
       data: {
         'cost': cost,
         'jeton': cost,
+        'jetonCost': cost,
         'coins': cost,
         'amount': cost,
         'isVip': vip,
         if (vip) 'vip': true,
         'roomType': vip ? 'vip' : 'normal',
         'type': vip ? 'vip' : 'normal',
+        if (name != null && name.isNotEmpty) ...{
+          'name': name,
+          'nameTr': name,
+          'title': name,
+          'roomName': name,
+        },
       },
     );
     final body = res.data;

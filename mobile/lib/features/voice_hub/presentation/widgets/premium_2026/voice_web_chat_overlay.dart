@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../vip_gold/domain/vip_tier.dart';
 import '../../../domain/entities/chat_room_message.dart';
+import '../../../domain/voice_official_join.dart';
 import '../../theme/voice_room_tokens.dart';
 
 /// Web tarzı şeffaf sohbet — arka plan üzerinde yüzen mesajlar.
@@ -13,24 +14,28 @@ class VoiceWebChatOverlay extends StatelessWidget {
     super.key,
     required this.messages,
     this.onUserTap,
+    this.hideOfficialJoinInChat = false,
     this.maxHeight = 220,
   });
 
   final List<ChatRoomMessage> messages;
   final void Function(String userId, String name)? onUserTap;
+  final bool hideOfficialJoinInChat;
   final double maxHeight;
 
   @override
   Widget build(BuildContext context) {
-    final visible = messages
-        .where(
-          (m) =>
-              m.kind == ChatMessageKind.text ||
-              m.kind == ChatMessageKind.gift ||
-              m.kind == ChatMessageKind.systemJoin ||
-              m.kind == ChatMessageKind.systemLeave,
-        )
-        .toList();
+    final visible = messages.where((m) {
+      if (hideOfficialJoinInChat &&
+          m.kind == ChatMessageKind.systemJoin &&
+          VoiceOfficialJoin.isOfficialEntrance(m.content)) {
+        return false;
+      }
+      return m.kind == ChatMessageKind.text ||
+          m.kind == ChatMessageKind.gift ||
+          m.kind == ChatMessageKind.systemJoin ||
+          m.kind == ChatMessageKind.systemLeave;
+    }).toList();
     final slice = visible.length > 40
         ? visible.sublist(visible.length - 40)
         : visible;

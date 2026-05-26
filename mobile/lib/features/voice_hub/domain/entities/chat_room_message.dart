@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../../core/auth/voice_staff_rank.dart';
+import '../voice_official_join.dart';
 
 class ChatRoomUserRef extends Equatable {
   const ChatRoomUserRef({
@@ -110,7 +111,8 @@ class ChatRoomMessage extends Equatable {
     int? giftCount;
     String? giftTarget;
 
-    if (content.startsWith('[SYSTEM_VIP_JOIN:')) {
+    if (content.startsWith('[SYSTEM_VIP_JOIN:') ||
+        VoiceOfficialJoin.isOfficialEntrance(content)) {
       kind = ChatMessageKind.systemJoin;
     } else if (content.startsWith('[SYSTEM_BAN]')) {
       kind = ChatMessageKind.systemLeave;
@@ -151,10 +153,17 @@ class ChatRoomMessage extends Equatable {
 
   static String _displayContent(String raw, ChatMessageKind kind) {
     if (kind == ChatMessageKind.systemJoin) {
-      final name = raw.replaceFirst('[SYSTEM_VIP_JOIN:', '').replaceAll(']', '');
-      final parts = name.split(':');
-      final who = parts.length > 1 ? parts.last : name;
-      return '$who Sohbet sesli odasına katıldı! 🎤';
+      if (raw.startsWith('[SYSTEM_VIP_JOIN:')) {
+        final name =
+            raw.replaceFirst('[SYSTEM_VIP_JOIN:', '').replaceAll(']', '');
+        final parts = name.split(':');
+        final who = parts.length > 1 ? parts.last : name;
+        return '$who Sohbet sesli odasına katıldı! 🎤';
+      }
+      if (!raw.contains('katıldı') && !raw.toUpperCase().contains('JOINED')) {
+        return '$raw Sohbet sesli odasına katıldı! 🎤';
+      }
+      return raw;
     }
     if (kind == ChatMessageKind.systemLeave) {
       final who = raw.replaceFirst('[SYSTEM_LEAVE]', '');

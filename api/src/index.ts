@@ -16,6 +16,7 @@ import { notificationsRouter } from "./routes/notifications";
 import { devicesRouter } from "./routes/devices";
 import { messagesRouter } from "./routes/messages";
 import { chatRoomsRouter } from "./routes/chat_rooms";
+import { searchYoutube } from "./lib/chatRoomStore";
 import { livekitRouter } from "./routes/livekit";
 import { fail } from "./lib/response";
 import { initGiftSocket } from "./socket/giftHub";
@@ -47,6 +48,11 @@ app.use("/api/notifications", notificationsRouter);
 app.use("/api/devices", devicesRouter);
 app.use("/api/messages", messagesRouter);
 app.use("/api/chat", chatRoomsRouter);
+app.get("/api/youtube/search", async (req, res) => {
+  const q = String(req.query.q ?? req.query.query ?? "");
+  const items = await searchYoutube(q);
+  return res.status(200).json({ items });
+});
 app.use("/api/livekit", livekitRouter);
 
 app.use((_req, res) => {

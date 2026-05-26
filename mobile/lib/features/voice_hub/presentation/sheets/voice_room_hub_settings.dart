@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -129,11 +128,23 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                 leading: Icon(c.$2, color: VoiceRoomTokens.neonBlue, size: 20),
                 title: Text(c.$1, style: const TextStyle(fontWeight: FontWeight.w800)),
                 subtitle: Text(c.$3, style: const TextStyle(fontSize: 11)),
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: c.$1));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${c.$1} kopyalandı')),
-                  );
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await ref
+                      .read(voiceRoomLiveProvider(widget.room).notifier)
+                      .sendMessage(c.$1);
+                  if (!context.mounted) return;
+                  final liveErr =
+                      ref.read(voiceRoomLiveProvider(widget.room)).error;
+                  if (liveErr != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(liveErr)),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${c.$1} gönderildi')),
+                    );
+                  }
                 },
               ),
             ),

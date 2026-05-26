@@ -325,10 +325,22 @@ class ChatRoomRemoteDataSource {
   Future<List<YoutubeSearchHit>> searchYoutube(String query) async {
     final q = query.trim();
     if (q.length < 2) return const [];
-    final res = await _dio.safeGet<dynamic>(
-      youtubeSearchPath(),
-      query: {'q': q, 'query': q},
-    ).timeout(const Duration(seconds: 18));
+    Response<dynamic> res;
+    try {
+      res = await _dio
+          .safeGet<dynamic>(
+            youtubeSearchPath(),
+            query: {'q': q, 'query': q},
+          )
+          .timeout(const Duration(seconds: 18));
+    } on Object {
+      res = await _dio
+          .safeGet<dynamic>(
+            '/api/chat/youtube-search',
+            query: {'q': q, 'query': q},
+          )
+          .timeout(const Duration(seconds: 18));
+    }
     final data = res.data;
     if (data is String &&
         (data.contains('<!DOCTYPE') || data.contains('<html'))) {
@@ -344,7 +356,12 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final res = await _dio.safeGet<dynamic>(songRequestPath(key));
+      Response<dynamic> res;
+      try {
+        res = await _dio.safeGet<dynamic>(songRequestPath(key));
+      } on Object {
+        res = await _dio.safeGet<dynamic>('/api/chat/rooms/$key/music-queue');
+      }
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['queue'] ?? map['items'];
       final queue = <MusicQueueItem>[];
@@ -375,16 +392,27 @@ class ChatRoomRemoteDataSource {
       final vid = videoId?.trim().isNotEmpty == true
           ? videoId!.trim()
           : _extractYoutubeId(youtubeUrl);
-      final res = await _dio.safePost<dynamic>(
-        songRequestPath(key),
-        data: jsonEncode({
-          'title': title,
-          'youtubeUrl': youtubeUrl,
-          if (vid != null) 'videoId': vid,
-          if (thumbUrl != null) 'thumbUrl': thumbUrl,
-        }),
-        options: Options(contentType: 'application/json'),
-      );
+      final body = jsonEncode({
+        'title': title,
+        'youtubeUrl': youtubeUrl,
+        if (vid != null) 'videoId': vid,
+        if (thumbUrl != null) 'thumbUrl': thumbUrl,
+      });
+      final opts = Options(contentType: 'application/json');
+      Response<dynamic> res;
+      try {
+        res = await _dio.safePost<dynamic>(
+          songRequestPath(key),
+          data: body,
+          options: opts,
+        );
+      } on Object {
+        res = await _dio.safePost<dynamic>(
+          '/api/chat/rooms/$key/music-queue',
+          data: body,
+          options: opts,
+        );
+      }
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       MusicQueueItem? item;
       final itemRaw = map['item'];
@@ -488,7 +516,7 @@ class ChatRoomRemoteDataSource {
           'text': content,
         }),
         options: Options(contentType: 'application/json'),
-      ).timeout(const Duration(seconds: 20));
+      ).timeout(const Duration(seconds: 15));
       final code = res.statusCode ?? 0;
       if (code >= 200 && code < 300) {
         final body = res.data;
