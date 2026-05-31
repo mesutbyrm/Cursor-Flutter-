@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.93+95 (2026-05-31)
+
+### Hata düzeltmeleri
+
+- `dart analyze`: `safePatch` için `options` parametresi; Flutter API `markAllRead` PATCH
+- VIP Gold import yolları (`package:canlifal_social/...`) — derleme hataları giderildi
+- CI: `permissions`, API `npm run build` zorunlu
+
 ## 1.0.92+94 (2026-05-19)
 
 ### Sesli oda — oda aç, müzik, mesaj, giriş şeridi, komutlar
