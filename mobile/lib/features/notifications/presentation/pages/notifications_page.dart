@@ -26,7 +26,7 @@ class NotificationsPage extends ConsumerWidget {
       subtitle: 'Son aktiviteler ve uyarılar',
       onRefresh: () async => ref.invalidate(notificationsListProvider),
       actions: [
-        if (Env.useNextAuth)
+        if (Env.useMobileAuth)
           TextButton(
             onPressed: () async {
               await ref.read(notificationsRepositoryProvider).markAllRead();

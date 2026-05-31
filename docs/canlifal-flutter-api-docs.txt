@@ -1,0 +1,97 @@
+Canlifal — Flutter mobil uygulama API dokümantasyonu
+====================================================
+Taban URL: https://canlifal.com
+
+Tüm korumalı isteklerde başlıklar:
+  Authorization: Bearer <access_token>
+  Content-Type: application/json
+
+Mobil giriş uçları (JWT):
+  POST /api/auth/mobile-register
+  POST /api/auth/mobile-login
+  POST /api/auth/mobile-google
+  POST /api/auth/mobile-tiktok
+  POST /api/auth/mobile-refresh
+  GET  /api/me
+
+----------------------------------------------------------------------
+1) Kullanıcı adı ile profil arama
+----------------------------------------------------------------------
+GET /api/users/lookup/{username}
+
+Örnek:
+  GET https://canlifal.com/api/users/lookup/mesut_byrm
+
+Başarılı yanıt (JSON):
+  { "user": { "id", "username", "displayName", "avatarUrl", ... } }
+
+Hata:
+  404 — kullanıcı bulunamadı
+  401 — oturum / token gerekli (ortama göre)
+
+----------------------------------------------------------------------
+2) Yayın geçmişi
+----------------------------------------------------------------------
+GET /api/user/broadcast-history?page=1&limit=20&status=ended
+
+Sorgu parametreleri:
+  page   — sayfa (varsayılan 1)
+  limit  — sayfa boyutu (varsayılan 20)
+  status — örn. ended (bitmiş yayınlar)
+
+Örnek:
+  GET https://canlifal.com/api/user/broadcast-history?page=1&limit=20&status=ended
+
+Yedek yol (bazı ortamlar):
+  GET /api/users/me/broadcast-history?page=1&limit=20&status=ended
+
+Başarılı yanıt:
+  { "items": [ { "id", "title", "streamId", "startedAt", ... } ] }
+
+----------------------------------------------------------------------
+3) Kullanıcı aktivitesi / bildirimler
+----------------------------------------------------------------------
+GET /api/user/activity
+GET /api/user/activity?unread=true
+
+unread=true — yalnızca okunmamış kayıtlar (destekleniyorsa)
+
+Örnek:
+  GET https://canlifal.com/api/user/activity?unread=true
+
+Yedek yol:
+  GET /api/users/me/activity
+
+Başarılı yanıt:
+  { "items": [ { "id", "type", "title", "subtitle", "status", "read", "createdAt" } ] }
+
+----------------------------------------------------------------------
+4) Tüm aktiviteleri okundu işaretle
+----------------------------------------------------------------------
+PATCH /api/user/activity
+Content-Type: application/json
+
+Gövde:
+  { "markAllRead": true }
+
+Örnek:
+  PATCH https://canlifal.com/api/user/activity
+  Body: {"markAllRead":true}
+
+Başarılı yanıt:
+  { "success": true } veya { "markAllRead": true }
+
+----------------------------------------------------------------------
+Flutter kod eşlemesi (bu repo)
+----------------------------------------------------------------------
+  mobile/lib/core/network/api_endpoints.dart
+  mobile/lib/core/network/dio_provider.dart
+  mobile/lib/features/profile/data/datasources/canlifal_user_api_datasource.dart
+  mobile/lib/features/notifications/data/repositories/notifications_repository_impl.dart
+
+Site kökünde bu dosya:
+  https://canlifal.com/canlifal-flutter-api-docs.txt
+Next.js kullanıyorsanız dosyayı public/canlifal-flutter-api-docs.txt olarak yayınlayın;
+aksi halde URL HTML 404 sayfası döner.
+
+Son güncelleme: 2026-05-31

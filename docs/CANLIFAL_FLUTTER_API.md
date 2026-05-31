@@ -45,8 +45,12 @@ Site dokümanı yolları (`/api/user/...`) başarısız olursa uygulama `/api/us
 
 ## Güncel doküman
 
-Resmi metin: `https://canlifal.com/canlifal-flutter-api-docs.txt`  
-(Not: Tarayıcıda bazen HTML dönebilir; API uçları yukarıdaki gibi JSON ile çalışır.)
+| Kaynak | Konum |
+|--------|--------|
+| Repo (önerilen) | `docs/canlifal-flutter-api-docs.txt` |
+| Site (statik yayın gerekir) | https://canlifal.com/canlifal-flutter-api-docs.txt |
+
+Site kökündeki `.txt` URL’si Next.js’te `[customSlug]` yüzünden **404 HTML** dönebilir. Dosyayı canlifal.com projesinde `public/canlifal-flutter-api-docs.txt` olarak ekleyin. API uçları (`/api/user/...`, `/api/users/lookup/...`) JSON ile çalışır; 401 oturum, 404 kullanıcı yok anlamına gelir.
 
 ## Uyarı
 

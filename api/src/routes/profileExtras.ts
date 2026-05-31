@@ -3,6 +3,11 @@ import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
 import { requireAuth } from "../middleware/requireAuth";
 import { publicUserPayload } from "../lib/auth_user";
+import {
+  getActivity,
+  getBroadcastHistory,
+  patchActivityMarkAllRead,
+} from "../lib/userProfileApiHandlers";
 
 export const profileExtrasRouter = Router();
 
@@ -115,107 +120,9 @@ profileExtrasRouter.get("/me/gifts-received", requireAuth, async (req, res) => {
   });
 });
 
-profileExtrasRouter.get("/me/broadcast-history", requireAuth, async (req, res) => {
-  const userId = req.userId!;
-  const events = await prisma.giftEvent.findMany({
-    where: {
-      streamId: { not: null },
-      OR: [{ receiverId: userId }, { senderId: userId }],
-    },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-    select: {
-      streamId: true,
-      createdAt: true,
-      coinCost: true,
-      quantity: true,
-    },
-  });
-
-  const byStream = new Map<
-    string,
-    { streamId: string; startedAt: string; giftCount: number; coins: number }
-  >();
-  for (const e of events) {
-    const sid = e.streamId!;
-    const prev = byStream.get(sid);
-    if (prev) {
-      prev.giftCount += e.quantity;
-      prev.coins += e.coinCost;
-      if (e.createdAt.toISOString() < prev.startedAt) {
-        prev.startedAt = e.createdAt.toISOString();
-      }
-    } else {
-      byStream.set(sid, {
-        streamId: sid,
-        startedAt: e.createdAt.toISOString(),
-        giftCount: e.quantity,
-        coins: e.coinCost,
-      });
-    }
-  }
-
-  const items = [...byStream.values()]
-    .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
-    .slice(0, 40)
-    .map((s, i) => ({
-      id: s.streamId,
-      title: `Canlı yayın #${40 - i}`,
-      streamId: s.streamId,
-      startedAt: s.startedAt,
-      giftCount: s.giftCount,
-      coinsEarned: s.coins,
-    }));
-
-  return ok(res, { items });
-});
-
-profileExtrasRouter.get("/me/activity", requireAuth, async (req, res) => {
-  const userId = req.userId!;
-  const payments = await prisma.cfcPaymentRequest.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    take: 40,
-  });
-
-  const gifts = await prisma.giftEvent.findMany({
-    where: {
-      OR: [{ senderId: userId }, { receiverId: userId }],
-    },
-    orderBy: { createdAt: "desc" },
-    take: 40,
-    include: { gift: true },
-  });
-
-  const items = [
-    ...payments.map((p) => ({
-      id: `pay-${p.id}`,
-      type: p.requestType === "jeton" ? "jeton_payment" : "cfc_payment",
-      title:
-        p.requestType === "jeton"
-          ? `Jeton yükleme (${p.amount})`
-          : `CFC yükleme (${p.amount})`,
-      subtitle: p.method,
-      status: p.status,
-      amount: p.amount,
-      createdAt: p.createdAt.toISOString(),
-    })),
-    ...gifts.map((g) => ({
-      id: `gift-${g.id}`,
-      type: g.senderId === userId ? "gift_sent" : "gift_received",
-      title:
-        g.senderId === userId
-          ? `Hediye gönderildi: ${g.gift.name}`
-          : `Hediye alındı: ${g.gift.name}`,
-      subtitle: g.streamId ? `Yayın ${g.streamId}` : g.roomId ? `Oda ${g.roomId}` : "",
-      status: "completed",
-      amount: g.coinCost,
-      createdAt: g.createdAt.toISOString(),
-    })),
-  ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-
-  return ok(res, { items: items.slice(0, 60) });
-});
+profileExtrasRouter.get("/me/broadcast-history", requireAuth, getBroadcastHistory);
+profileExtrasRouter.get("/me/activity", requireAuth, getActivity);
+profileExtrasRouter.patch("/me/activity", requireAuth, patchActivityMarkAllRead);
 
 profileExtrasRouter.get("/:userId/followers", async (req, res) => {
   const rows = await prisma.follow.findMany({
