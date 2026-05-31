@@ -1,4 +1,13 @@
 /// canlifal.com ile uyumlu uçlar. Özel backend için `API_BASE_URL` ve bu dosyayı güncelleyin.
+///
+/// Flutter istekleri (canlifal.com dokümanı):
+/// ```dart
+/// headers: {
+///   'Authorization': 'Bearer $accessToken',
+///   'Content-Type': 'application/json',
+/// }
+/// ```
+/// `dio_provider` Bearer + JSON başlıklarını otomatik ekler.
 abstract final class ApiEndpoints {
   // --- NextAuth (canlifal.com) ---
   static const authCsrf = '/api/auth/csrf';
@@ -57,6 +66,17 @@ abstract final class ApiEndpoints {
       '/api/video-streams/$streamId/gifts';
 
   static String userProfile(String userId) => '/api/users/$userId';
+
+  /// Kullanıcı adı ile profil (`GET /api/users/lookup/{username}`).
+  static String userLookup(String username) =>
+      '/api/users/lookup/${Uri.encodeComponent(username.trim())}';
+
+  /// Yayın geçmişi (`GET ?page=&limit=&status=ended`).
+  static const userBroadcastHistory = '/api/user/broadcast-history';
+
+  /// Aktivite / bildirimler (`GET ?unread=true`, `PATCH {"markAllRead": true}`).
+  static const userActivity = '/api/user/activity';
+
   static String follow(String userId) => '/api/users/$userId/follow';
   static String followers(String userId) => '/api/users/$userId/followers';
   static String following(String userId) => '/api/users/$userId/following';

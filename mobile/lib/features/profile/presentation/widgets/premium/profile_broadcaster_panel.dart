@@ -13,7 +13,7 @@ class ProfileBroadcasterPanel extends StatelessWidget {
       (
         icon: Icons.history_rounded,
         label: 'Yayın Geçmişi',
-        onTap: () => context.push('/live'),
+        onTap: () => context.push('/live/broadcast-history'),
       ),
       (
         icon: Icons.event_rounded,

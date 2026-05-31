@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/theme/app_design.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../providers/notifications_providers.dart';
@@ -19,6 +20,14 @@ class NotificationsPage extends ConsumerWidget {
       subtitle: 'Son aktiviteler ve uyarılar',
       onRefresh: () async => ref.invalidate(notificationsListProvider),
       actions: [
+        if (Env.useNextAuth)
+          TextButton(
+            onPressed: () async {
+              await ref.read(notificationsRepositoryProvider).markAllRead();
+              ref.invalidate(notificationsListProvider);
+            },
+            child: const Text('Tümünü oku'),
+          ),
         DiscoverIconButton(
           icon: Icons.refresh_rounded,
           onPressed: () => ref.invalidate(notificationsListProvider),

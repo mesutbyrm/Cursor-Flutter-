@@ -25,6 +25,13 @@ class ProfileRemoteDataSource {
     return UserDto.fromJson(map).toEntity();
   }
 
+  static bool looksLikeUsernameKey(String id) {
+    final s = id.trim();
+    if (s.isEmpty || s.length > 64) return false;
+    if (s.startsWith('cm') && s.length > 20) return false;
+    return RegExp(r'^[a-zA-Z0-9_.-]+$').hasMatch(s);
+  }
+
   /// canlifal.com oturumlu kullanıcı — takipçi, bio, avatar (NextAuth çerezi).
   Future<UserEntity> mySiteProfile() async {
     final res = await _dio.safeGet<Map<String, dynamic>>(

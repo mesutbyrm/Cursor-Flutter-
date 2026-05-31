@@ -5,11 +5,18 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
+import '../../data/datasources/canlifal_user_api_datasource.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
 import '../../data/repositories/profile_repository_impl.dart';
+import '../../domain/entities/broadcast_history_item.dart';
+import '../../domain/entities/user_activity_item.dart';
 
 final profileRemoteProvider = Provider<ProfileRemoteDataSource>((ref) {
   return ProfileRemoteDataSource(ref.watch(dioProvider));
+});
+
+final canlifalUserApiProvider = Provider<CanlifalUserApiDataSource>((ref) {
+  return CanlifalUserApiDataSource(ref.watch(dioProvider));
 });
 
 final walletRemoteProvider = Provider<WalletRemoteDataSource>((ref) {
@@ -17,7 +24,10 @@ final walletRemoteProvider = Provider<WalletRemoteDataSource>((ref) {
 });
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
-  return ProfileRepositoryImpl(ref.watch(profileRemoteProvider));
+  return ProfileRepositoryImpl(
+    ref.watch(profileRemoteProvider),
+    ref.watch(canlifalUserApiProvider),
+  );
 });
 
 final walletRepositoryProvider = Provider<WalletRepository>((ref) {
@@ -40,4 +50,13 @@ final jetonPackagesProvider =
 
 final referralInfoProvider = FutureProvider<ReferralInfoEntity>((ref) async {
   return ref.watch(walletRepositoryProvider).referralInfo();
+});
+
+final broadcastHistoryProvider =
+    FutureProvider<List<BroadcastHistoryItem>>((ref) async {
+  return ref.watch(profileRepositoryProvider).broadcastHistory();
+});
+
+final userActivityProvider = FutureProvider<List<UserActivityItem>>((ref) async {
+  return ref.watch(profileRepositoryProvider).fetchActivity();
 });
