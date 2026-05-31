@@ -1,8 +1,10 @@
 import '../../../auth/domain/entities/user_entity.dart';
-import '../../domain/entities/broadcast_history_item.dart';
+import '../../../wallet/domain/cfc_payment_request_entity.dart';
+import '../../../wallet/domain/wallet_balances.dart';
 import '../../domain/entities/jeton_package_entity.dart';
+import '../../domain/entities/profile_stats_entity.dart';
+import '../../domain/entities/payment_config_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
-import '../../domain/entities/user_activity_item.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../datasources/canlifal_user_api_datasource.dart';
 import '../datasources/profile_remote_datasource.dart';
@@ -18,37 +20,70 @@ class ProfileRepositoryImpl implements ProfileRepository {
     if (ProfileRemoteDataSource.looksLikeUsernameKey(id)) {
       try {
         return await _canlifal.lookupByUsername(id);
-      } catch (_) {
-        // Yedek: doğrudan id ile dene
-      }
+      } catch (_) {}
     }
     return _remote.user(id);
   }
-
-  @override
-  Future<UserEntity> lookupByUsername(String username) =>
-      _canlifal.lookupByUsername(username);
-
-  @override
-  Future<List<BroadcastHistoryItem>> broadcastHistory({
-    int page = 1,
-    int limit = 20,
-    String status = 'ended',
-  }) =>
-      _canlifal.broadcastHistory(page: page, limit: limit, status: status);
-
-  @override
-  Future<List<UserActivityItem>> fetchActivity({bool unreadOnly = false}) =>
-      _canlifal.fetchActivity(unreadOnly: unreadOnly);
-
-  @override
-  Future<void> markAllActivityRead() => _canlifal.markAllActivityRead();
 
   @override
   Future<void> follow(String id) => _remote.follow(id);
 
   @override
   Future<void> unfollow(String id) => _remote.unfollow(id);
+
+  @override
+  Future<UserEntity> updateMe({
+    String? displayName,
+    String? bio,
+    String? avatarUrl,
+    String? username,
+    String? currentPassword,
+    String? newPassword,
+  }) =>
+      _remote.updateMe(
+        displayName: displayName,
+        bio: bio,
+        avatarUrl: avatarUrl,
+        username: username,
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+
+  @override
+  Future<ProfileStatsEntity> myStats() => _remote.myStats();
+
+  @override
+  Future<List<GiftReceivedSummaryEntity>> giftsReceivedSummary() =>
+      _remote.giftsReceivedSummary();
+
+  @override
+  Future<List<BroadcastHistoryItemEntity>> broadcastHistory() async {
+    try {
+      final site = await _canlifal.broadcastHistory();
+      if (site.isNotEmpty) return site;
+    } catch (_) {}
+    return _remote.broadcastHistory();
+  }
+
+  @override
+  Future<List<ProfileActivityItemEntity>> myActivity() async {
+    try {
+      final site = await _canlifal.fetchActivity();
+      if (site.isNotEmpty) return site;
+    } catch (_) {}
+    return _remote.myActivity();
+  }
+
+  @override
+  Future<void> markAllActivityRead() => _canlifal.markAllActivityRead();
+
+  @override
+  Future<List<UserEntity>> followers(String userId) =>
+      _remote.followers(userId);
+
+  @override
+  Future<List<UserEntity>> following(String userId) =>
+      _remote.following(userId);
 }
 
 class WalletRepositoryImpl implements WalletRepository {
@@ -60,7 +95,21 @@ class WalletRepositoryImpl implements WalletRepository {
   Future<int> coinBalance() => _remote.balance();
 
   @override
+  Future<WalletBalances> balances() => _remote.balances();
+
+  @override
   Future<List<JetonPackageEntity>> jetonPackages() => _remote.jetonPackages();
+
+  @override
+  Future<PaymentConfigEntity> paymentConfig() => _remote.paymentConfig();
+
+  @override
+  Future<void> submitPaymentRequest(Map<String, dynamic> body) =>
+      _remote.submitPaymentRequest(body);
+
+  @override
+  Future<List<CfcPaymentRequestEntity>> myPaymentRequests() =>
+      _remote.myPaymentRequests();
 
   @override
   Future<ReferralInfoEntity> referralInfo() => _remote.referralInfo();

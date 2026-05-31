@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import 'profile_glass.dart';
 
 class ProfileSettingsMenu extends StatelessWidget {
@@ -100,7 +100,7 @@ class _SettingsTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              Icon(icon, size: 22, color: AppDesign.textSecondary),
+              Icon(icon, size: 22, color: AppColors.textSecondary),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
@@ -113,7 +113,7 @@ class _SettingsTile extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right_rounded,
-                color: AppDesign.textMuted.withValues(alpha: 0.7),
+                color: AppColors.textMuted.withValues(alpha: 0.7),
               ),
             ],
           ),

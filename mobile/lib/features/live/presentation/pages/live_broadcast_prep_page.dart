@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -97,7 +97,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         streamerName: user.display,
         streamerHandle: user.username,
         avatarUrl: user.avatarUrl,
-      ).copyWith(streamId: roomId, trtc: trtc);
+      ).copyWith(streamId: roomId, trtc: trtc, hostUserId: user.id);
 
       context.push('/live/room', extra: session);
     } catch (e) {
@@ -117,7 +117,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
     final top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
+      backgroundColor: AppColors.background,
       body: DiscoverBackground(
         child: Column(
           children: [
@@ -175,7 +175,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                           TextField(
                             controller: _title,
                             style: const TextStyle(
-                              color: AppDesign.textPrimary,
+                              color: AppColors.textPrimary,
                               fontWeight: FontWeight.w600,
                             ),
                             decoration: authLikeDecoration('Yayın başlığı'),
@@ -199,7 +199,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                                     size: 16,
                                     color: selected
                                         ? Colors.white
-                                        : AppDesign.textMuted,
+                                        : AppColors.textMuted,
                                   ),
                                   label: Text(c.$1),
                                   labelStyle: TextStyle(
@@ -207,15 +207,15 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                                     fontSize: 12,
                                     color: selected
                                         ? Colors.white
-                                        : AppDesign.textSecondary,
+                                        : AppColors.textSecondary,
                                   ),
-                                  selectedColor: AppDesign.accentPink,
+                                  selectedColor: AppColors.accentPink,
                                   backgroundColor:
                                       Colors.white.withValues(alpha: 0.06),
                                   side: BorderSide(
                                     color: selected
-                                        ? AppDesign.accentPink
-                                        : AppDesign.accentPurple
+                                        ? AppColors.accentPink
+                                        : AppColors.accentPurple
                                             .withValues(alpha: 0.3),
                                   ),
                                   onSelected: (_) =>
@@ -236,7 +236,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                                   onDeleted: () =>
                                       setState(() => _tags.remove(t)),
                                   backgroundColor:
-                                      AppDesign.accentPurple.withValues(
+                                      AppColors.accentPurple.withValues(
                                     alpha: 0.2,
                                   ),
                                   side: BorderSide.none,
@@ -264,7 +264,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                             maxLines: 3,
                             maxLength: 200,
                             style: const TextStyle(
-                              color: AppDesign.textPrimary,
+                              color: AppColors.textPrimary,
                               fontSize: 14,
                             ),
                             decoration: authLikeDecoration(
@@ -332,26 +332,26 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
 InputDecoration authLikeDecoration(String label, {String? counter}) {
   return InputDecoration(
     labelText: label,
-    labelStyle: const TextStyle(color: AppDesign.textMuted),
+    labelStyle: const TextStyle(color: AppColors.textMuted),
     counterText: counter,
-    counterStyle: const TextStyle(color: AppDesign.textMuted, fontSize: 11),
+    counterStyle: const TextStyle(color: AppColors.textMuted, fontSize: 11),
     filled: true,
     fillColor: Colors.white.withValues(alpha: 0.04),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
       borderSide: BorderSide(
-        color: AppDesign.accentPurple.withValues(alpha: 0.25),
+        color: AppColors.accentPurple.withValues(alpha: 0.25),
       ),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
       borderSide: BorderSide(
-        color: AppDesign.accentPurple.withValues(alpha: 0.2),
+        color: AppColors.accentPurple.withValues(alpha: 0.2),
       ),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: AppDesign.accentPink),
+      borderSide: const BorderSide(color: AppColors.accentPink),
     ),
   );
 }
@@ -397,12 +397,12 @@ class _PreviewCardState extends State<_PreviewCard>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: AppDesign.accentPink.withValues(alpha: 0.55),
+          color: AppColors.accentPink.withValues(alpha: 0.55),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppDesign.accentPurple.withValues(alpha: 0.35),
+            color: AppColors.accentPurple.withValues(alpha: 0.35),
             blurRadius: 28,
           ),
         ],
@@ -459,14 +459,14 @@ class _PreviewCardState extends State<_PreviewCard>
                                 const Icon(
                                   Icons.verified_rounded,
                                   size: 14,
-                                  color: AppDesign.diamondBlue,
+                                  color: AppColors.diamondBlue,
                                 ),
                               ],
                             ),
                             Text(
                               '@${widget.username}',
                               style: const TextStyle(
-                                color: AppDesign.textMuted,
+                                color: AppColors.textMuted,
                                 fontSize: 11,
                               ),
                             ),
@@ -479,7 +479,7 @@ class _PreviewCardState extends State<_PreviewCard>
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppDesign.liveRed,
+                          color: AppColors.liveRed,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
@@ -499,7 +499,7 @@ class _PreviewCardState extends State<_PreviewCard>
                         width: 8,
                         height: 8,
                         decoration: const BoxDecoration(
-                          color: AppDesign.onlineGreen,
+                          color: AppColors.onlineGreen,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -518,7 +518,7 @@ class _PreviewCardState extends State<_PreviewCard>
                             Text(
                               'Bağlantı stabil · Ses testi tamam',
                               style: TextStyle(
-                                color: AppDesign.textMuted,
+                                color: AppColors.textMuted,
                                 fontSize: 11,
                               ),
                             ),
@@ -559,7 +559,7 @@ class _AudioBars extends StatelessWidget {
           margin: const EdgeInsets.only(left: 3),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(2),
-            gradient: AppDesign.heroGradient,
+            gradient: AppColors.brandGradient,
           ),
         );
       }),
@@ -591,7 +591,7 @@ class _SettingTile extends StatelessWidget {
         children: [
           Icon(
             icon,
-            color: enabled ? AppDesign.accentCyan : AppDesign.textMuted,
+            color: enabled ? AppColors.accentCyan : AppColors.textMuted,
             size: 24,
           ),
           const SizedBox(height: 6),
@@ -609,7 +609,7 @@ class _SettingTile extends StatelessWidget {
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w800,
-              color: enabled ? AppDesign.onlineGreen : AppDesign.liveRed,
+              color: enabled ? AppColors.onlineGreen : AppColors.liveRed,
             ),
           ),
         ],
@@ -637,13 +637,13 @@ class _StartLiveButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             gradient: onPressed == null && !loading
                 ? null
-                : AppDesign.heroGradient,
+                : AppColors.brandGradient,
             color: onPressed == null && !loading
                 ? Colors.white.withValues(alpha: 0.1)
                 : null,
             boxShadow: onPressed == null
                 ? null
-                : AppDesign.glowShadow(AppDesign.accentPink, blur: 28),
+                : AppColors.glowShadow(AppColors.accentPink, blur: 28),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,

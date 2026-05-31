@@ -1,40 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import 'profile_glass.dart';
 
 class ProfileBroadcasterPanel extends StatelessWidget {
-  const ProfileBroadcasterPanel({super.key});
+  const ProfileBroadcasterPanel({
+    super.key,
+    this.onHistory,
+    this.onSchedule,
+    this.onStats,
+    this.onEquipment,
+    this.onSettings,
+  });
+
+  final VoidCallback? onHistory;
+  final VoidCallback? onSchedule;
+  final VoidCallback? onStats;
+  final VoidCallback? onEquipment;
+  final VoidCallback? onSettings;
 
   @override
   Widget build(BuildContext context) {
     final items = [
-      (
-        icon: Icons.history_rounded,
-        label: 'Yayın Geçmişi',
-        onTap: () => context.push('/live/broadcast-history'),
-      ),
-      (
-        icon: Icons.event_rounded,
-        label: 'Yayın Planla',
-        onTap: () => context.push('/live/prep'),
-      ),
-      (
-        icon: Icons.insights_rounded,
-        label: 'İstatistikler',
-        onTap: () {},
-      ),
+      (icon: Icons.history_rounded, label: 'Yayın Geçmişi', onTap: onHistory),
+      (icon: Icons.event_rounded, label: 'Yayın Planla', onTap: onSchedule),
+      (icon: Icons.insights_rounded, label: 'İstatistikler', onTap: onStats),
       (
         icon: Icons.mic_external_on_rounded,
         label: 'Ekipmanım',
-        onTap: () {},
+        onTap: onEquipment,
       ),
-      (
-        icon: Icons.tune_rounded,
-        label: 'Yayın Ayarları',
-        onTap: () => context.push('/live/prep'),
-      ),
+      (icon: Icons.tune_rounded, label: 'Yayın Ayarları', onTap: onSettings),
     ];
 
     return Column(
@@ -64,12 +60,12 @@ class _BroadcasterTile extends StatelessWidget {
   const _BroadcasterTile({
     required this.icon,
     required this.label,
-    required this.onTap,
+    this.onTap,
   });
 
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -83,12 +79,12 @@ class _BroadcasterTile extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: AppDesign.accentPurple.withValues(alpha: 0.2),
+              color: AppColors.accentPurple.withValues(alpha: 0.2),
             ),
             child: Icon(
               icon,
               size: 22,
-              color: AppDesign.accentPurple.withValues(alpha: 0.95),
+              color: AppColors.accentPurple.withValues(alpha: 0.95),
             ),
           ),
           const SizedBox(height: 8),
@@ -101,7 +97,7 @@ class _BroadcasterTile extends StatelessWidget {
               fontSize: 9,
               fontWeight: FontWeight.w700,
               height: 1.15,
-              color: AppDesign.textSecondary,
+              color: AppColors.textSecondary,
             ),
           ),
         ],

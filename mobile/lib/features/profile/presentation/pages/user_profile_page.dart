@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../moderation/domain/entities/report_target.dart';
+import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/user_posts_tiktok_grid.dart';
 
 class UserProfilePage extends ConsumerWidget {
   const UserProfilePage({super.key, required this.userId});
@@ -14,10 +19,26 @@ class UserProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(userProfileProvider(userId));
+    final me = ref.watch(authControllerProvider).valueOrNull;
+    final isSelf = me != null && me.id == userId;
 
     return DiscoverSubPage(
       title: 'Kullanıcı',
       subtitle: 'Profil detayı',
+      actions: [
+        DiscoverIconButton(
+          icon: Icons.flag_outlined,
+          tooltip: 'Bildir',
+          onPressed: () => openReportFlow(
+            context,
+            ReportTarget(
+              type: ReportTargetType.user,
+              targetId: userId,
+              displayTitle: 'Kullanıcı profili',
+            ),
+          ),
+        ),
+      ],
       body: userAsync.when(
         loading: () => const DiscoverAccentLoader(),
         error: (e, _) => DiscoverEmptyState(
@@ -35,7 +56,7 @@ class UserProfilePage extends ConsumerWidget {
                       padding: const EdgeInsets.all(3),
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: AppDesign.heroGradient,
+                        gradient: AppColors.brandGradient,
                       ),
                       child: UserAvatar(url: user.avatarUrl, radius: 36),
                     ),
@@ -54,7 +75,7 @@ class UserProfilePage extends ConsumerWidget {
                           Text(
                             '@${user.username}',
                             style: const TextStyle(
-                              color: AppDesign.textMuted,
+                              color: AppColors.textMuted,
                               fontSize: 14,
                             ),
                           ),
@@ -80,48 +101,110 @@ class UserProfilePage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              FilledButton(
-                onPressed: () async {
-                  final repo = ref.read(profileRepositoryProvider);
-                  if (user.isFollowing) {
-                    await repo.unfollow(user.id);
-                  } else {
-                    await repo.follow(user.id);
-                  }
-                  ref.invalidate(userProfileProvider(userId));
-                },
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  backgroundColor: user.isFollowing
-                      ? Colors.white.withValues(alpha: 0.12)
-                      : AppDesign.accentPink,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+              if (!isSelf) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () async {
+                          final repo = ref.read(profileRepositoryProvider);
+                          if (user.isFollowing) {
+                            await repo.unfollow(user.id);
+                          } else {
+                            await repo.follow(user.id);
+                          }
+                          ref.invalidate(userProfileProvider(userId));
+                        },
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(52),
+                          backgroundColor: user.isFollowing
+                              ? Colors.white.withValues(alpha: 0.12)
+                              : AppColors.accentPink,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          user.isFollowing ? 'Takipten çık' : 'Takip et',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => _openDirectMessage(context, ref),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(52),
+                          foregroundColor: AppColors.accentCyan,
+                          side: BorderSide(
+                            color: AppColors.accentCyan.withValues(alpha: 0.65),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text(
+                          'Mesaj',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ] else
+                FilledButton(
+                  onPressed: null,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    disabledBackgroundColor:
+                        Colors.white.withValues(alpha: 0.08),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'Bu sizin profiliniz',
+                    style: TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
-                child: Text(
-                  user.isFollowing ? 'Takipten çık' : 'Takip et',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
               if (user.bio != null && user.bio!.isNotEmpty) ...[
                 const SizedBox(height: 14),
                 DiscoverGlassCard(
                   child: Text(
                     user.bio!,
                     style: const TextStyle(
-                      color: AppDesign.textSecondary,
+                      color: AppColors.textSecondary,
                       height: 1.45,
                     ),
                   ),
                 ),
               ],
+              const SizedBox(height: 20),
+              const Row(
+                children: [
+                  Icon(Icons.grid_on_rounded, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Paylaşımlar',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              UserPostsTikTokGrid(userId: userId),
             ],
           );
         },
       ),
     );
+  }
+
+  Future<void> _openDirectMessage(BuildContext context, WidgetRef ref) async {
+    context.push('/chat/$userId');
   }
 }
 
@@ -145,7 +228,7 @@ class _Stat extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(color: AppDesign.textMuted, fontSize: 13),
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
         ),
       ],
     );

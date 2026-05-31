@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/quick_action_tile.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 
@@ -14,15 +14,15 @@ class SocialBranchQuickActions extends StatelessWidget {
     return QuickActionsSection(
       sectionIcon: Icons.bolt_rounded,
       sectionTitle: 'Hızlı işlemler',
-      accent: AppTheme.accentSecondary,
+      accent: AppColors.accentCyan,
       rows: [
         [
           QuickActionTile(
             icon: Icons.person_add_alt_1_rounded,
             label: 'Arkadaşlarını\ndavet et',
             gradient: [
-              AppTheme.accent.withValues(alpha: 0.45),
-              AppTheme.accentSecondary.withValues(alpha: 0.3),
+              AppColors.accentPink.withValues(alpha: 0.45),
+              AppColors.accentCyan.withValues(alpha: 0.3),
             ],
             onTap: () => context.push('/invite-friends'),
           ),
@@ -41,8 +41,8 @@ class SocialBranchQuickActions extends StatelessWidget {
             icon: Icons.home_rounded,
             label: 'Ana\nakış',
             gradient: [
-              AppTheme.accentSecondary.withValues(alpha: 0.35),
-              AppTheme.accent.withValues(alpha: 0.22),
+              AppColors.accentCyan.withValues(alpha: 0.35),
+              AppColors.accentPink.withValues(alpha: 0.22),
             ],
             onTap: () => context.go('/feed'),
           ),
@@ -70,7 +70,7 @@ class LiveStreamsBranchQuickActions extends StatelessWidget {
     return QuickActionsSection(
       sectionIcon: Icons.live_tv_rounded,
       sectionTitle: 'Hızlı işlemler',
-      accent: AppTheme.accentSecondary,
+      accent: AppColors.accentCyan,
       rows: [
         [
           QuickActionTile(
@@ -86,8 +86,8 @@ class LiveStreamsBranchQuickActions extends StatelessWidget {
             icon: Icons.card_giftcard_rounded,
             label: 'Davet\npaylaş',
             gradient: [
-              AppTheme.accent.withValues(alpha: 0.45),
-              AppTheme.accentSecondary.withValues(alpha: 0.3),
+              AppColors.accentPink.withValues(alpha: 0.45),
+              AppColors.accentCyan.withValues(alpha: 0.3),
             ],
             onTap: () => context.push('/invite-friends'),
           ),
@@ -106,8 +106,8 @@ class LiveStreamsBranchQuickActions extends StatelessWidget {
             icon: Icons.home_rounded,
             label: 'Hikâye\nakışı',
             gradient: [
-              AppTheme.accentSecondary.withValues(alpha: 0.32),
-              AppTheme.accent.withValues(alpha: 0.2),
+              AppColors.accentCyan.withValues(alpha: 0.32),
+              AppColors.accentPink.withValues(alpha: 0.2),
             ],
             onTap: () => context.go('/feed'),
           ),
@@ -126,15 +126,15 @@ class MessagesBranchQuickActions extends StatelessWidget {
     return QuickActionsSection(
       sectionIcon: Icons.chat_rounded,
       sectionTitle: 'Hızlı işlemler',
-      accent: AppTheme.accent,
+      accent: AppColors.accentPink,
       rows: [
         [
           QuickActionTile(
             icon: Icons.person_add_alt_1_rounded,
             label: 'Arkadaşlarını\ndavet et',
             gradient: [
-              AppTheme.accent.withValues(alpha: 0.45),
-              AppTheme.accentSecondary.withValues(alpha: 0.3),
+              AppColors.accentPink.withValues(alpha: 0.45),
+              AppColors.accentCyan.withValues(alpha: 0.3),
             ],
             onTap: () => context.push('/invite-friends'),
           ),
@@ -167,8 +167,8 @@ class MessagesBranchQuickActions extends StatelessWidget {
             icon: Icons.home_rounded,
             label: 'Ana\nakış',
             gradient: [
-              AppTheme.accentSecondary.withValues(alpha: 0.35),
-              AppTheme.accent.withValues(alpha: 0.22),
+              AppColors.accentCyan.withValues(alpha: 0.35),
+              AppColors.accentPink.withValues(alpha: 0.22),
             ],
             onTap: () => context.go('/feed'),
           ),
@@ -187,7 +187,7 @@ class LiveVoiceBranchQuickActions extends StatelessWidget {
     return QuickActionsSection(
       sectionIcon: Icons.headset_mic_rounded,
       sectionTitle: 'Hızlı işlemler',
-      accent: AppTheme.accent,
+      accent: AppColors.accentPink,
       rows: [
         [
           QuickActionTile(
@@ -203,8 +203,8 @@ class LiveVoiceBranchQuickActions extends StatelessWidget {
             icon: Icons.card_giftcard_rounded,
             label: 'Davet\npaylaş',
             gradient: [
-              AppTheme.accent.withValues(alpha: 0.45),
-              AppTheme.accentSecondary.withValues(alpha: 0.3),
+              AppColors.accentPink.withValues(alpha: 0.45),
+              AppColors.accentCyan.withValues(alpha: 0.3),
             ],
             onTap: () => context.push('/invite-friends'),
           ),
@@ -214,8 +214,8 @@ class LiveVoiceBranchQuickActions extends StatelessWidget {
             icon: Icons.home_rounded,
             label: 'Ana\nakış',
             gradient: [
-              AppTheme.accentSecondary.withValues(alpha: 0.35),
-              AppTheme.accent.withValues(alpha: 0.22),
+              AppColors.accentCyan.withValues(alpha: 0.35),
+              AppColors.accentPink.withValues(alpha: 0.22),
             ],
             onTap: () => context.go('/feed'),
           ),
@@ -240,13 +240,13 @@ class LiveVoiceBranchQuickActions extends StatelessWidget {
             onTap: () => context.push('/voice-rooms'),
           ),
           QuickActionTile(
-            icon: Icons.chat_bubble_rounded,
-            label: 'Mesaj\nlar',
+            icon: Icons.auto_awesome_rounded,
+            label: 'Fal&\nTarot',
             gradient: [
-              const Color(0xFF243040).withValues(alpha: 0.95),
-              const Color(0xFF101820).withValues(alpha: 0.95),
+              AppColors.accentPurple.withValues(alpha: 0.5),
+              const Color(0xFF312E81).withValues(alpha: 0.95),
             ],
-            onTap: () => context.go('/messages'),
+            onTap: () => context.go('/fortune'),
           ),
         ],
       ],
@@ -263,15 +263,15 @@ class ProfileBranchQuickActions extends StatelessWidget {
     return QuickActionsSection(
       sectionIcon: Icons.bolt_rounded,
       sectionTitle: 'Hızlı işlemler',
-      accent: AppTheme.accentSecondary,
+      accent: AppColors.accentCyan,
       rows: [
         [
           QuickActionTile(
             icon: Icons.person_add_alt_1_rounded,
             label: 'Arkadaşlarını\ndavet et',
             gradient: [
-              AppTheme.accent.withValues(alpha: 0.45),
-              AppTheme.accentSecondary.withValues(alpha: 0.3),
+              AppColors.accentPink.withValues(alpha: 0.45),
+              AppColors.accentCyan.withValues(alpha: 0.3),
             ],
             onTap: () => context.push('/invite-friends'),
           ),
@@ -290,8 +290,8 @@ class ProfileBranchQuickActions extends StatelessWidget {
             icon: Icons.home_rounded,
             label: 'Ana\nakış',
             gradient: [
-              AppTheme.accentSecondary.withValues(alpha: 0.35),
-              AppTheme.accent.withValues(alpha: 0.22),
+              AppColors.accentCyan.withValues(alpha: 0.35),
+              AppColors.accentPink.withValues(alpha: 0.22),
             ],
             onTap: () => context.go('/feed'),
           ),
@@ -307,13 +307,13 @@ class ProfileBranchQuickActions extends StatelessWidget {
         ],
         [
           QuickActionTile(
-            icon: Icons.chat_bubble_outline_rounded,
-            label: 'Mesaj\nlar',
+            icon: Icons.auto_awesome_rounded,
+            label: 'Fal&\nTarot',
             gradient: [
-              const Color(0xFF243040).withValues(alpha: 0.95),
-              const Color(0xFF101820).withValues(alpha: 0.95),
+              AppColors.accentPurple.withValues(alpha: 0.5),
+              const Color(0xFF312E81).withValues(alpha: 0.95),
             ],
-            onTap: () => context.go('/messages'),
+            onTap: () => context.go('/fortune'),
           ),
           QuickActionTile(
             icon: Icons.graphic_eq_rounded,

@@ -1,64 +1,44 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_design.dart';
-import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../../core/widgets/canlifal_brand_logo.dart';
 
+/// CanlıFal açılış — görsel tam ekrana sığdırılır (contain, kesilmeden).
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
 
+  static const _asset = 'assets/splash/splash_screen.png';
+  static const _bg = Color(0xFF0A0618);
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppDesign.bgBase,
-      body: DiscoverBackground(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: AppDesign.heroGradient,
-                  boxShadow: AppDesign.glowShadow(AppDesign.accentPink),
-                ),
-                child: const Icon(
-                  Icons.play_circle_fill_rounded,
-                  size: 56,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 24),
-              ShaderMask(
-                shaderCallback: (b) => AppDesign.heroGradient.createShader(b),
-                child: const Text(
-                  'Canlifal',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.6,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Yükleniyor…',
-                style: TextStyle(
-                  color: AppDesign.textMuted,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 28),
-              const SizedBox(
-                width: 32,
-                height: 32,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: AppDesign.accentPink,
-                ),
-              ),
-            ],
+    return const Scaffold(
+      backgroundColor: _bg,
+      body: _SplashImage(),
+    );
+  }
+}
+
+class _SplashImage extends StatelessWidget {
+  const _SplashImage();
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    return ColoredBox(
+      color: SplashPage._bg,
+      child: SizedBox(
+        width: size.width,
+        height: size.height,
+        child: FittedBox(
+          fit: BoxFit.contain,
+          alignment: Alignment.center,
+          child: Image.asset(
+            SplashPage._asset,
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.high,
+            errorBuilder: (_, _, _) => CanlifalBrandLogo.horizontal(
+              height: (size.height * 0.22).clamp(72.0, 140.0),
+            ),
           ),
         ),
       ),

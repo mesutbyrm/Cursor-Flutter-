@@ -14,6 +14,8 @@ class PostEntity extends Equatable {
     this.fortuneType,
     this.viewCount = 0,
     this.isAutoShare = false,
+    this.fortuneCount = 0,
+    this.postType,
   });
 
   final String id;
@@ -27,6 +29,10 @@ class PostEntity extends Equatable {
   final String? fortuneType;
   final int viewCount;
   final bool isAutoShare;
+  /// Aynı fal / paylaşımı gören kişi sayısı (canlifal `fortuneCount`).
+  final int fortuneCount;
+  /// Örn. `fortune`, `text` — canlifal `postType`.
+  final String? postType;
 
   @override
   List<Object?> get props => [
@@ -40,5 +46,7 @@ class PostEntity extends Equatable {
         fortuneType,
         viewCount,
         isAutoShare,
+        fortuneCount,
+        postType,
       ];
 }

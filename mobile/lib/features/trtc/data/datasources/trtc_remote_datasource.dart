@@ -24,6 +24,13 @@ class TrtcRemoteDataSource {
         message: 'Geçersiz TRTC yanıtı',
       );
     }
-    return TrtcCredentials.fromJson(body);
+    final cred = TrtcCredentials.fromJson(body, requestedRoomId: roomId);
+    if (cred.roomId.isEmpty) {
+      throw DioException(
+        requestOptions: res.requestOptions,
+        message: 'TRTC oda kimliği alınamadı',
+      );
+    }
+    return cred;
   }
 }

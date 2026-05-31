@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/env.dart';
-import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_design.dart';
-import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../providers/auth_providers.dart';
+import '../widgets/auth_date_pickers.dart';
 import '../widgets/auth_shell.dart';
 import '../widgets/google_sign_in_button.dart';
 
@@ -20,44 +20,73 @@ class RegisterPage extends ConsumerStatefulWidget {
 }
 
 class _RegisterPageState extends ConsumerState<RegisterPage> {
+  final _form = GlobalKey<FormState>();
+  final _displayName = TextEditingController();
+  final _username = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  final _name = TextEditingController();
-  final _form = GlobalKey<FormState>();
+  final _password2 = TextEditingController();
+  DateTime? _birthDate;
+  TimeOfDay? _birthTime;
+  String _language = 'tr';
 
   @override
   void dispose() {
+    _displayName.dispose();
+    _username.dispose();
     _email.dispose();
     _password.dispose();
-    _name.dispose();
+    _password2.dispose();
     super.dispose();
   }
 
-  Future<void> _openWebRegister() async {
-    final uri = Uri.parse('${Env.siteOrigin}/kayit');
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!mounted) return;
-    if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tarayıcı açılamadı')),
-      );
-    }
+  Future<void> _pickBirthDate() async {
+    final picked = await showAuthBirthDatePicker(
+      context,
+      initial: _birthDate,
+    );
+    if (picked != null) setState(() => _birthDate = picked);
   }
 
-  void _openGoogleOAuth() {
-    context.push(
-      CanlifalWebRoute.location(
-        relativePath: ApiEndpoints.authSignInGoogle,
-        title: 'Google ile kayıt / giriş',
-        sessionImport: true,
-      ),
+  Future<void> _pickBirthTime() async {
+    final picked = await showAuthBirthTimePicker(
+      context,
+      initial: _birthTime,
     );
+    if (picked != null) setState(() => _birthTime = picked);
+  }
+
+  Future<void> _openLegal(String path) async {
+    final uri = Uri.parse('${Env.siteOrigin}$path');
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _submitRegister() async {
+    if (!_form.currentState!.validate()) return;
+    if (_birthDate == null || _birthTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Doğum tarihi ve doğum saati zorunludur')),
+      );
+      return;
+    }
+    final birthDateStr = DateFormat('yyyy-MM-dd').format(_birthDate!);
+    final birthTimeStr =
+        '${_birthTime!.hour.toString().padLeft(2, '0')}:${_birthTime!.minute.toString().padLeft(2, '0')}';
+
+    await ref.read(authControllerProvider.notifier).register(
+          email: _email.text.trim(),
+          password: _password.text,
+          displayName: _displayName.text.trim(),
+          username: _username.text.trim(),
+          birthDate: birthDateStr,
+          birthTime: birthTimeStr,
+          language: _language,
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
-    final nextAuth = Env.useNextAuth;
     ref.listen(authControllerProvider, (prev, next) {
       next.whenOrNull(
         error: (e, _) => ScaffoldMessenger.of(context).showSnackBar(
@@ -69,92 +98,197 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return AuthShell(
       showBack: true,
       onBack: () => context.pop(),
-      child: Form(
-        key: _form,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const AuthSectionTitle(
-              title: 'Topluluğa katıl',
-              subtitle: 'Canlı yayınlar, sesli odalar ve coin ödülleri.',
-            ),
-            if (nextAuth) ...[
-              const SizedBox(height: 18),
-              const AuthInfoBanner(
-                text:
-                    'E-posta ile kayıt için web sitemizi kullanabilir veya Google ile '
-                    'hemen bu uygulamadan devam edebilirsiniz.',
+      useAppIcon: true,
+      child: AuthFormCard(
+        child: Form(
+          key: _form,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const AuthBrandHeader(
+                title: 'Kayıt Ol',
+                subtitle: 'Hesabını oluştur; fal ve sosyal dünyaya katıl.',
               ),
-            ],
-            const SizedBox(height: 24),
-            if (nextAuth) ...[
+              const SizedBox(height: 16),
               GoogleSignInButton(
-                label: 'Google ile kayıt ol / giriş yap',
-                onPressed: _openGoogleOAuth,
+                label: 'Google ile Kayıt ol',
+                onPressed: auth.isLoading
+                    ? null
+                    : () => ref
+                        .read(authControllerProvider.notifier)
+                        .loginWithGoogle(),
               ),
-              const SizedBox(height: 20),
+              if (Env.hasTikTokLogin) ...[
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: auth.isLoading
+                      ? null
+                      : () => ref
+                          .read(authControllerProvider.notifier)
+                          .loginWithTikTok(),
+                  icon: const Icon(Icons.music_note_rounded, size: 20),
+                  label: const Text('TikTok ile Kayıt ol'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.35),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
               const AuthOrDivider(),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _displayName,
+                textCapitalization: TextCapitalization.words,
+                decoration: authInputDecoration(
+                  labelText: 'Adınız',
+                  hintText: 'Ad Soyad',
+                  prefixIcon: Icons.person_outline_rounded,
+                ),
+                validator: (v) =>
+                    v != null && v.trim().length >= 2 ? null : 'Adınızı girin',
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _username,
+                decoration: authInputDecoration(
+                  labelText: 'Kullanıcı adı',
+                  hintText: 'ornek_kullanici',
+                  prefixIcon: Icons.alternate_email_rounded,
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().length < 3) {
+                    return 'En az 3 karakter';
+                  }
+                  if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(v.trim())) {
+                    return 'Yalnızca harf, rakam ve _';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _pickBirthDate,
+                      child: Text(
+                        _birthDate == null
+                            ? 'Doğum tarihi'
+                            : formatBirthDate(_birthDate!),
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _pickBirthTime,
+                      child: Text(
+                        _birthTime == null
+                            ? 'Doğum saati'
+                            : _birthTime!.format(context),
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _email,
+                keyboardType: TextInputType.emailAddress,
+                decoration: authInputDecoration(
+                  labelText: 'E-posta',
+                  prefixIcon: Icons.mail_outline_rounded,
+                ),
+                validator: (v) =>
+                    v != null && v.contains('@') ? null : 'Geçerli e-posta',
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _password,
+                obscureText: true,
+                decoration: authInputDecoration(
+                  labelText: 'Şifre',
+                  prefixIcon: Icons.lock_outline_rounded,
+                ),
+                validator: (v) =>
+                    v != null && v.length >= 8 ? null : 'En az 8 karakter',
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _password2,
+                obscureText: true,
+                decoration: authInputDecoration(
+                  labelText: 'Şifre tekrar',
+                  prefixIcon: Icons.lock_reset_rounded,
+                ),
+                validator: (v) =>
+                    v == _password.text ? null : 'Şifreler eşleşmiyor',
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: _language,
+                decoration: authInputDecoration(
+                  labelText: 'Dil tercihi',
+                  prefixIcon: Icons.language_rounded,
+                ),
+                dropdownColor: AppColors.surfaceElevated,
+                items: const [
+                  DropdownMenuItem(value: 'tr', child: Text('Türkçe')),
+                  DropdownMenuItem(value: 'en', child: Text('English')),
+                ],
+                onChanged: (v) {
+                  if (v != null) setState(() => _language = v);
+                },
+              ),
               const SizedBox(height: 20),
+              AuthPrimaryButton(
+                label: 'Kayıt ol',
+                loading: auth.isLoading,
+                onPressed: auth.isLoading ? null : _submitRegister,
+              ),
+              const SizedBox(height: 8),
+              AuthTextLink(
+                label: 'Zaten hesabınız var mı? Giriş yap',
+                onPressed: () => context.pop(),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => _openLegal('/gizlilik-politikasi'),
+                      child: Text(
+                        'Gizlilik Politikası',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withValues(alpha: 0.55),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => _openLegal('/kullanim-sartlari'),
+                      child: Text(
+                        'Kullanım Şartları',
+                        textAlign: TextAlign.end,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withValues(alpha: 0.55),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
-            TextFormField(
-              controller: _name,
-              style: const TextStyle(color: AppDesign.textPrimary),
-              decoration: authInputDecoration(
-                labelText: 'Görünen ad (isteğe bağlı)',
-                prefixIcon: Icons.badge_outlined,
-              ),
-            ),
-            const SizedBox(height: 14),
-            TextFormField(
-              controller: _email,
-              keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(color: AppDesign.textPrimary),
-              decoration: authInputDecoration(
-                labelText: 'E-posta',
-                prefixIcon: Icons.mail_outline_rounded,
-              ),
-              validator: (v) =>
-                  v != null && v.contains('@') ? null : 'Geçerli e-posta girin',
-            ),
-            const SizedBox(height: 14),
-            TextFormField(
-              controller: _password,
-              obscureText: true,
-              style: const TextStyle(color: AppDesign.textPrimary),
-              decoration: authInputDecoration(
-                labelText: 'Şifre',
-                prefixIcon: Icons.lock_outline_rounded,
-              ),
-              validator: (v) =>
-                  v != null && v.length >= 6 ? null : 'En az 6 karakter',
-            ),
-            const SizedBox(height: 26),
-            AuthPrimaryButton(
-              label: nextAuth ? 'Web sitesinde kayıt ol' : 'Hesap oluştur',
-              loading: auth.isLoading,
-              onPressed: auth.isLoading
-                  ? null
-                  : () async {
-                      if (nextAuth) {
-                        await _openWebRegister();
-                        return;
-                      }
-                      if (!_form.currentState!.validate()) return;
-                      await ref.read(authControllerProvider.notifier).register(
-                            _email.text.trim(),
-                            _password.text,
-                            displayName: _name.text.trim().isEmpty
-                                ? null
-                                : _name.text.trim(),
-                          );
-                    },
-            ),
-            AuthTextLink(
-              label: 'Zaten hesabım var',
-              onPressed: () => context.pop(),
-            ),
-            const SizedBox(height: 24),
-          ],
+          ),
         ),
       ),
     );

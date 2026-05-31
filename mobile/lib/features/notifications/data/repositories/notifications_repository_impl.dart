@@ -1,5 +1,6 @@
 import '../../../../core/config/env.dart';
 import '../../../profile/data/datasources/canlifal_user_api_datasource.dart';
+import '../../../profile/domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/app_notification_entity.dart';
 import '../../domain/repositories/notifications_repository.dart';
 import '../datasources/notifications_remote_datasource.dart';
@@ -12,25 +13,27 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
 
   @override
   Future<List<AppNotificationEntity>> fetch() async {
-    if (Env.useNextAuth) {
+    if (Env.useMobileAuth) {
       try {
         final items = await _canlifal.fetchActivity();
         if (items.isNotEmpty) {
-          return items
-              .map(
-                (a) => AppNotificationEntity(
-                  id: a.id,
-                  title: a.title,
-                  body: a.body,
-                  read: a.read,
-                  createdAt: a.createdAt,
-                ),
-              )
-              .toList();
+          return items.map(_activityToNotification).toList();
         }
       } catch (_) {}
     }
     return _remote.list();
+  }
+
+  AppNotificationEntity _activityToNotification(ProfileActivityItemEntity a) {
+    final read = a.status.toLowerCase() == 'read' ||
+        a.status.toLowerCase() == 'seen';
+    return AppNotificationEntity(
+      id: a.id,
+      title: a.title,
+      body: a.subtitle,
+      read: read,
+      createdAt: DateTime.tryParse(a.createdAt ?? ''),
+    );
   }
 
   @override
@@ -42,9 +45,8 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
 
   @override
   Future<void> markAllRead() async {
-    if (Env.useNextAuth) {
+    if (Env.useMobileAuth) {
       await _canlifal.markAllActivityRead();
-      return;
     }
   }
 }

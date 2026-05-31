@@ -22,5 +22,15 @@ final notificationsRepositoryProvider =
 
 final notificationsListProvider =
     FutureProvider<List<AppNotificationEntity>>((ref) async {
+  ref.keepAlive();
   return ref.watch(notificationsRepositoryProvider).fetch();
+});
+
+/// Okunmamış bildirim sayısı (üst bar rozeti).
+final notificationsUnreadCountProvider = Provider<int>((ref) {
+  final list = ref.watch(notificationsListProvider);
+  return list.maybeWhen(
+    data: (items) => items.where((n) => !n.read).length,
+    orElse: () => 0,
+  );
 });

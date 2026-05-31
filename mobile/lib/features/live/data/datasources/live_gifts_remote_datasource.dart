@@ -4,6 +4,10 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../../gifts/domain/gift_animation_kind.dart';
+import '../../../gifts/domain/gift_entity.dart';
+import '../../../gifts/domain/gift_platform.dart';
+import '../../../gifts/domain/gift_rarity.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_gift_type.dart';
@@ -25,13 +29,20 @@ class LiveGiftsRemoteDataSource {
 
   final Dio _dio;
 
-  Future<List<LiveVideoGiftType>> fetchGiftTypes() async {
-    final res =
-        await _dio.safeGet<dynamic>(ApiEndpoints.videoStreamGiftsCatalog);
-    final data = res.data;
+  Future<List<LiveVideoGiftType>> fetchGiftTypes({
+    GiftPlatform platform = GiftPlatform.mobile,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.videoStreamGiftsCatalog,
+      query: {'platform': platform.queryValue},
+    );
+    final data = _unwrap(res.data);
     if (data is! List) return const [];
     return data
-        .map((e) => LiveVideoGiftType.fromJson(asJsonMap(e)))
+        .map((e) => LiveVideoGiftType.fromGift(GiftEntity.fromJson(
+              asJsonMap(e),
+              siteOrigin: Env.siteOrigin,
+            )))
         .where((g) => g.id.isNotEmpty)
         .toList();
   }
@@ -43,7 +54,7 @@ class LiveGiftsRemoteDataSource {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.videoStreamGifts(streamId),
     );
-    final data = res.data;
+    final data = _unwrap(res.data);
     if (data is! List) return const [];
     final events = <LiveGiftEvent>[];
     for (final raw in data) {
@@ -66,11 +77,16 @@ class LiveGiftsRemoteDataSource {
     int quantity = 1,
     String? senderId,
   }) async {
-    final res = await _dio.safePost<Map<String, dynamic>>(
+    final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamGifts(streamId),
-      data: {'giftTypeId': giftTypeId, 'quantity': quantity},
+      data: {
+        'giftTypeId': giftTypeId,
+        'quantity': quantity,
+        'platform': GiftPlatform.mobile.queryValue,
+      },
     );
-    final b = res.data ?? {};
+    final raw = _unwrap(res.data);
+    final b = raw is Map ? asJsonMap(raw) : <String, dynamic>{};
     final event = parseGiftEvent(b, streamId: streamId) ??
         LiveGiftEvent(
           id: 'local-${DateTime.now().microsecondsSinceEpoch}',
@@ -156,6 +172,11 @@ class LiveGiftsRemoteDataSource {
             ? icon
             : '${Env.siteOrigin}${icon.startsWith('/') ? icon : '/$icon'}';
 
+    final animKey = pick(json, ['animation', 'animationKey'])?.toString();
+    final animType = GiftAnimationKind.parse(
+      pick(json, ['animationType', 'animationKind'])?.toString(),
+    );
+
     return LiveGiftEvent(
       id: id,
       senderId: _resolvePersonId(json),
@@ -168,8 +189,18 @@ class LiveGiftsRemoteDataSource {
       combo: comboRaw > 0 ? comboRaw : 1,
       timestamp: ts,
       iconUrl: iconUrl,
-      animationKey: pick(json, ['animation', 'animationKey'])?.toString(),
+      animationKey: animKey,
+      rarity: GiftRarity.parse(pick(json, ['rarity'])?.toString()),
+      animationKind: animType,
+      soundKey: pick(json, ['sound'])?.toString(),
     );
+  }
+
+  dynamic _unwrap(dynamic data) {
+    if (data is Map && data['success'] == true && data['data'] != null) {
+      return data['data'];
+    }
+    return data;
   }
 
   String? _resolveGiftId(Map<String, dynamic> json) {

@@ -7,6 +7,7 @@ class VoiceRoomEntity extends Equatable {
     required this.slug,
     required this.nameTr,
     this.descTr,
+    this.rulesTr,
     this.icon,
     this.onlineCount = 0,
     this.userCount = 0,
@@ -23,6 +24,7 @@ class VoiceRoomEntity extends Equatable {
   final String slug;
   final String nameTr;
   final String? descTr;
+  final String? rulesTr;
   final String? icon;
   final int onlineCount;
   final int userCount;
@@ -36,6 +38,23 @@ class VoiceRoomEntity extends Equatable {
 
   int get displayOnline => onlineCount > 0 ? onlineCount : userCount;
 
+  /// Chat / presence / DJ — canlifal.com API önce Prisma `id` ile çalışır (slug `ilhamperisi-` gibi).
+  String get apiRoomKey {
+    final i = id.trim();
+    final s = slug.trim();
+    if (i.isNotEmpty) return i;
+    if (s.isNotEmpty) return s;
+    return '';
+  }
+
+  /// İkinci deneme anahtarı (id/slug farklıysa).
+  String? get apiRoomAlternateKey {
+    final s = slug.trim();
+    final i = id.trim();
+    if (s.isNotEmpty && i.isNotEmpty && s != i) return s;
+    return null;
+  }
+
   String get displayTitle => nameTr.trim().isEmpty ? 'Sohbet Odası' : nameTr.trim();
 
   @override
@@ -44,6 +63,7 @@ class VoiceRoomEntity extends Equatable {
         slug,
         nameTr,
         descTr,
+        rulesTr,
         icon,
         onlineCount,
         userCount,

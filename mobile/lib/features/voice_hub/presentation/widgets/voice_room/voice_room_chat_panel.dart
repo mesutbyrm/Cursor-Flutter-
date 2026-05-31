@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/chat_room_message.dart';
 
 class VoiceRoomChatPanel extends StatelessWidget {
@@ -47,7 +47,7 @@ class _ChatRow extends StatelessWidget {
               message.content,
               style: const TextStyle(
                 fontSize: 10,
-                color: AppDesign.textMuted,
+                color: AppColors.textMuted,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -70,10 +70,10 @@ class _TextRow extends StatelessWidget {
   final ChatRoomMessage message;
 
   Color _nameColor(ChatRoomUserRef? u) {
-    if (u?.isBroadcaster == true) return AppDesign.coinGold;
+    if (u?.isBroadcaster == true) return AppColors.coinGold;
     final role = u?.chatRole;
-    if (role == 'vip') return AppDesign.accentCyan;
-    return AppDesign.accentPink;
+    if (role == 'vip') return AppColors.accentCyan;
+    return AppColors.accentPink;
   }
 
   @override
@@ -105,7 +105,7 @@ class _TextRow extends StatelessWidget {
                         margin: const EdgeInsets.only(left: 6),
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                         decoration: BoxDecoration(
-                          color: AppDesign.accentPurple.withValues(alpha: 0.4),
+                          color: AppColors.accentPurple.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
@@ -117,7 +117,7 @@ class _TextRow extends StatelessWidget {
                   const TextSpan(text: '  '),
                   TextSpan(
                     text: message.content,
-                    style: const TextStyle(color: AppDesign.textSecondary),
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
                 ],
               ),
@@ -149,7 +149,7 @@ class _GiftRow extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: AppDesign.accentPink,
+                color: AppColors.accentPink,
               ),
             ),
           ),
@@ -175,13 +175,13 @@ class _Avatar extends StatelessWidget {
       height: 28,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppDesign.accentPurple.withValues(alpha: 0.5)),
+        border: Border.all(color: AppColors.accentPurple.withValues(alpha: 0.5)),
       ),
       child: ClipOval(
         child: url != null && url!.isNotEmpty
             ? CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover)
             : const ColoredBox(
-                color: AppDesign.bgPurpleGlow,
+                color: AppColors.bgPurpleGlow,
                 child: Icon(Icons.person, size: 16, color: Colors.white54),
               ),
       ),

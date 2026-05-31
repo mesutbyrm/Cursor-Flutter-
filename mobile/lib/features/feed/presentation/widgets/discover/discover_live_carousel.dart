@@ -1,12 +1,15 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/ui/premium/live_badge.dart';
 import '../../../../../core/widgets/user_avatar.dart';
-import '../../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
+import '../../../../live/presentation/utils/open_live_stream.dart';
 import 'discover_section_header.dart';
 
 class DiscoverLiveCarousel extends ConsumerStatefulWidget {
@@ -18,66 +21,86 @@ class DiscoverLiveCarousel extends ConsumerStatefulWidget {
 }
 
 class _DiscoverLiveCarouselState extends ConsumerState<DiscoverLiveCarousel> {
-  final _controller = PageController(viewportFraction: 0.44);
   int _page = 0;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final live = ref.watch(liveStreamsProvider);
 
     return live.when(
-      loading: () => const SizedBox(
-        height: AppDesign.liveCardHeight + 48,
-        child: Center(
+      loading: () => SizedBox(
+        height: AppSpacing.liveCardHeight + 48,
+        child: const Center(
           child: SizedBox(
             width: 28,
             height: 28,
-            child: CircularProgressIndicator(strokeWidth: 2.5),
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: AppColors.accentPink,
+            ),
           ),
         ),
       ),
       error: (_, _) => _DemoLiveSection(onPage: (i) => setState(() => _page = i)),
       data: (streams) {
-        final onAir = streams.where((s) => s.isLive).toList();
+        final onAir = streams.where((s) => s.isLive).take(3).toList();
         if (onAir.isEmpty) {
           return _DemoLiveSection(onPage: (i) => setState(() => _page = i));
         }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            DiscoverSectionHeader(
-              title: 'Canlı Yayınlar',
-              actionLabel: 'Tümünü gör',
-              onAction: () => context.go('/live'),
-            ),
-            SizedBox(
-              height: AppDesign.liveCardHeight,
-              child: PageView.builder(
-                controller: _controller,
-                padEnds: false,
-                itemCount: onAir.length,
-                onPageChanged: (i) => setState(() => _page = i),
-                itemBuilder: (ctx, i) => Padding(
-                  padding: EdgeInsets.only(
-                    left: i == 0 ? 20 : 8,
-                    right: 8,
-                  ),
-                  child: _LiveBroadcastCard(stream: onAir[i]),
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            _PageDots(count: onAir.length.clamp(1, 8), index: _page),
-            const SizedBox(height: 8),
-          ],
+        return _LiveRowSection(
+          streams: onAir,
+          pageIndex: _page,
+          onPageChanged: (i) => setState(() => _page = i),
+          ref: ref,
         );
       },
+    );
+  }
+}
+
+class _LiveRowSection extends StatelessWidget {
+  const _LiveRowSection({
+    required this.streams,
+    required this.pageIndex,
+    required this.onPageChanged,
+    required this.ref,
+  });
+
+  final List<LiveStreamEntity> streams;
+  final int pageIndex;
+  final ValueChanged<int> onPageChanged;
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DiscoverSectionHeader(
+          title: 'Canlı Falcılar',
+          actionLabel: 'Tümünü gör',
+          onAction: () => context.go('/live'),
+        ),
+        SizedBox(
+          height: AppSpacing.liveCardHeight,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: streams.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (ctx, i) {
+              final stream = streams[i];
+              return _LiveBroadcastCard(
+                stream: stream,
+                onOpen: () => openLiveStreamNative(context, ref, stream),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 14),
+        _PageDots(count: streams.length, index: pageIndex),
+        const SizedBox(height: 8),
+      ],
     );
   }
 }
@@ -86,6 +109,8 @@ class _DemoLiveSection extends StatelessWidget {
   const _DemoLiveSection({required this.onPage});
 
   final ValueChanged<int> onPage;
+
+  static const _homeLiveCount = 3;
 
   static final _demos = <_DemoLive>[
     _DemoLive(
@@ -119,22 +144,22 @@ class _DemoLiveSection extends StatelessWidget {
     return Column(
       children: [
         DiscoverSectionHeader(
-          title: 'Canlı Yayınlar',
+          title: 'Canlı Falcılar',
           actionLabel: 'Tümünü gör',
           onAction: () => context.go('/live'),
         ),
         SizedBox(
-          height: AppDesign.liveCardHeight,
+          height: AppSpacing.liveCardHeight,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: _demos.length,
+            itemCount: _homeLiveCount,
             separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (ctx, i) => _DemoLiveCard(demo: _demos[i]),
           ),
         ),
         const SizedBox(height: 14),
-        _PageDots(count: _demos.length, index: 0),
+        _PageDots(count: _homeLiveCount, index: 0),
         const SizedBox(height: 8),
       ],
     );
@@ -158,24 +183,18 @@ class _DemoLive {
 }
 
 class _LiveBroadcastCard extends StatelessWidget {
-  const _LiveBroadcastCard({required this.stream});
+  const _LiveBroadcastCard({
+    required this.stream,
+    required this.onOpen,
+  });
 
   final LiveStreamEntity stream;
-
-  void _open(BuildContext context) {
-    context.push(
-      CanlifalWebRoute.location(
-        relativePath: '/sohbet/video?watch=${stream.id}',
-        title: stream.title,
-        streamIdForGifts: stream.id,
-      ),
-    );
-  }
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
     return _LiveCardShell(
-      onTap: () => _open(context),
+      onTap: onOpen,
       imageUrl: stream.thumbnailUrl,
       name: stream.streamerName ?? 'Yayıncı',
       category: stream.title,
@@ -223,34 +242,35 @@ class _LiveCardShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: AppDesign.liveCardWidth,
-      height: AppDesign.liveCardHeight,
+      width: AppSpacing.liveCardWidth,
+      height: AppSpacing.liveCardHeight,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppDesign.radiusCard),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppDesign.radiusCard),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
               boxShadow: [
                 BoxShadow(
-                  color: AppDesign.accentPink.withValues(alpha: 0.2),
+                  color: AppColors.accentPink.withValues(alpha: 0.2),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppDesign.radiusCard),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
                   if (imageUrl != null && imageUrl!.isNotEmpty)
-                    Image.network(
-                      imageUrl!,
+                    CachedNetworkImage(
+                      imageUrl: imageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _placeholder(),
+                      memCacheWidth: 480,
+                      errorWidget: (_, _, _) => _placeholder(),
                     )
                   else
                     _placeholder(),
@@ -266,28 +286,10 @@ class _LiveCardShell extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Positioned(
+                  const Positioned(
                     top: 10,
                     left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppDesign.liveRed,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'LIVE',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.8,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                    child: LiveBadge(compact: true),
                   ),
                   Positioned(
                     right: 10,
@@ -316,7 +318,7 @@ class _LiveCardShell extends StatelessWidget {
                             Icon(
                               Icons.verified_rounded,
                               size: 16,
-                              color: AppDesign.accentCyan.withValues(alpha: 0.9),
+                              color: AppColors.accentCyan.withValues(alpha: 0.9),
                             ),
                           ],
                         ),
@@ -370,8 +372,8 @@ class _LiveCardShell extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppDesign.accentPurple.withValues(alpha: 0.5),
-            AppDesign.bgBase,
+AppColors.accentPurple.withValues(alpha: 0.5),
+AppColors.background,
           ],
         ),
       ),
@@ -404,7 +406,7 @@ class _AvatarStack extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: AppDesign.bgBase, width: 1.5),
+                border: Border.all(color: AppColors.background, width: 1.5),
               ),
               child: UserAvatar(
                 radius: 11,
@@ -452,9 +454,9 @@ class _AudioVisualizer extends StatelessWidget {
       width: 4,
       height: h,
       decoration: BoxDecoration(
-        color: AppDesign.accentPink,
+        color: AppColors.accentPink,
         borderRadius: BorderRadius.circular(2),
-        boxShadow: AppDesign.glowShadow(AppDesign.accentPink, blur: 8),
+        boxShadow: AppColors.glowShadow(AppColors.accentPink, blur: 8),
       ),
     );
   }
@@ -480,7 +482,7 @@ class _PageDots extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(4),
             color: active
-                ? AppDesign.accentPink
+                ? AppColors.accentPink
                 : Colors.white.withValues(alpha: 0.18),
           ),
         );

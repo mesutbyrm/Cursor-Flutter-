@@ -1,27 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_design.dart';
+import '../../../core/ui/premium_2026/premium_immersive_background.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
+import '../../live/domain/entities/voice_room_sort.dart';
 import '../../live/presentation/providers/live_providers.dart';
-import 'widgets/voice_room_web_card.dart';
+import 'theme/voice_room_tokens.dart';
+import '../../vip_gold/presentation/utils/open_voice_room_vip.dart';
+import 'widgets/premium_2026/voice_discover_hub_2026.dart';
 
-/// Sesli sohbet listesi — canlifal.com web arayüzüne yakın neon düzen.
-class VoiceRoomsBody extends ConsumerWidget {
+/// Sesli sohbet keşfet — Premium 2026 hub (referans görsel).
+class VoiceRoomsBody extends ConsumerStatefulWidget {
   const VoiceRoomsBody({
     super.key,
     this.embeddedInLiveShellTab = false,
   });
 
-  /// [true] ise Canlı sekmesinde üstte ayrıca AppBar olduğundan grid üst boşluğu küçültülür.
   final bool embeddedInLiveShellTab;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VoiceRoomsBody> createState() => _VoiceRoomsBodyState();
+}
+
+class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
+  @override
+  Widget build(BuildContext context) {
     if (!Env.useNextAuth) {
       return const DiscoverEmptyState(
         icon: Icons.headset_mic_outlined,
@@ -31,6 +37,12 @@ class VoiceRoomsBody extends ConsumerWidget {
     }
 
     final rooms = ref.watch(voiceRoomsProvider);
+    final liveStreams = ref.watch(liveStreamsProvider);
+    final mq = MediaQuery.paddingOf(context);
+    final topPad = widget.embeddedInLiveShellTab
+        ? 8.0
+        : mq.top + kToolbarHeight + 4;
+
     return rooms.when(
       loading: () => const DiscoverAccentLoader(),
       error: (e, _) => DiscoverEmptyState(
@@ -46,69 +58,38 @@ class VoiceRoomsBody extends ConsumerWidget {
             message: 'Henüz oda yok.\nYeni sesli sohbet odaları burada görünecek.',
           );
         }
-        final featured = list.first;
-        final rest = list.length > 1 ? list.sublist(1) : <VoiceRoomEntity>[];
 
-        return RefreshIndicator(
-          color: AppDesign.accentPink,
-          backgroundColor: AppDesign.bgPurpleGlow,
-          onRefresh: () async => ref.invalidate(voiceRoomsProvider),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
+        final ordered = _orderedRooms(list, ref.watch(myVoiceRoomProvider));
+        final live = liveStreams.valueOrNull ?? const [];
+
+        return PremiumImmersiveBackground(
+          child: RefreshIndicator(
+            color: VoiceRoomTokens.neonPink,
+            backgroundColor: VoiceRoomTokens.bgCosmic,
+            onRefresh: () async {
+              ref.invalidate(voiceRoomsProvider);
+              ref.invalidate(liveStreamsProvider);
+            },
+            child: VoiceDiscoverHub2026(
+              rooms: ordered,
+              liveStreams: live,
+              topPadding: topPad,
+              onRoomTap: (r) => openVoiceRoomWithVipGate(context, ref, r),
+              onSearchChanged: (_) {},
             ),
-            padding: EdgeInsets.fromLTRB(
-              16,
-              embeddedInLiveShellTab ? 8 : 4,
-              16,
-              100,
-            ),
-            children: [
-              const Text(
-                'Popüler odalar',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Web’deki gibi neon sesli sohbet odalarına katıl',
-                style: TextStyle(
-                  color: AppDesign.textMuted.withValues(alpha: 0.95),
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 14),
-              VoiceRoomWebCard(
-                room: featured,
-                large: true,
-                onTap: () => context.push('/voice-room/${featured.id}', extra: featured),
-              ),
-              if (rest.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                const Text(
-                  'Tüm odalar',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ...rest.map(
-                  (r) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: VoiceRoomWebCard(
-                      room: r,
-                      onTap: () => context.push('/voice-room/${r.id}', extra: r),
-                    ),
-                  ),
-                ),
-              ],
-            ],
           ),
         );
       },
     );
+  }
+
+  static List<VoiceRoomEntity> _orderedRooms(
+    List<VoiceRoomEntity> all,
+    VoiceRoomEntity? mine,
+  ) {
+    final sorted = sortVoiceRoomsByPopularity(all);
+    if (mine == null) return sorted;
+    final rest = sorted.where((r) => r.id != mine.id).toList();
+    return [mine, ...rest];
   }
 }

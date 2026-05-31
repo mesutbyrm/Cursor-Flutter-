@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/chat_room_message.dart';
 
@@ -46,8 +46,20 @@ class VoiceRoomActionRow extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
+                      const SizedBox(height: 2),
+                      Text(
+                        dj.musicQueue.isEmpty
+                            ? '${dj.musicRequestCost} jeton · sıra boş'
+                            : 'Sıra: ${dj.musicQueue.length} · ${dj.musicRequestCost} jeton',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: Colors.white.withValues(alpha: 0.82),
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      _WaveBars(active: dj.canPlayMusic),
+                      _WaveBars(active: dj.musicQueue.isNotEmpty || dj.playing),
                     ],
                   ),
                 ),
@@ -123,7 +135,7 @@ class _ActionTile extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: gradient,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: AppDesign.glowShadow(AppDesign.accentPurple, blur: 14),
+                boxShadow: AppColors.glowShadow(AppColors.accentPurple, blur: 14),
               ),
               child: child,
             ),
@@ -195,7 +207,7 @@ class _DjAvatars extends StatelessWidget {
                       return CachedNetworkImage(imageUrl: img, fit: BoxFit.cover);
                     }
                     return const ColoredBox(
-                      color: AppDesign.bgBase,
+                      color: AppColors.background,
                       child: Icon(Icons.person, size: 12),
                     );
                   }(),

@@ -39,7 +39,9 @@ Mobil uygulamada `lib/core/network/dio_provider.dart` bu başlıkları otomatik 
 | HTTP istemcisi | `mobile/lib/core/network/dio_provider.dart` |
 | Lookup / yayın / aktivite | `mobile/lib/features/profile/data/datasources/canlifal_user_api_datasource.dart` |
 | Bildirimler (aktivite) | `mobile/lib/features/notifications/data/repositories/notifications_repository_impl.dart` |
-| Yayın geçmişi ekranı | `mobile/lib/features/live/presentation/pages/broadcast_history_page.dart` |
+| Yayın geçmişi ekranı | `mobile/lib/features/profile/presentation/pages/profile_broadcast_history_page.dart` |
+
+Site dokümanı yolları (`/api/user/...`) başarısız olursa uygulama `/api/users/me/...` yollarını dener.
 
 ## Güncel doküman
 

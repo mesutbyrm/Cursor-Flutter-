@@ -8,148 +8,139 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../auth/data/models/user_dto.dart';
 import '../../../auth/domain/entities/user_entity.dart';
-import '../../domain/entities/broadcast_history_item.dart';
-import '../../domain/entities/user_activity_item.dart';
+import '../../domain/entities/profile_stats_entity.dart';
 
-/// canlifal.com Flutter API dokümanı — kullanıcı lookup, aktivite, yayın geçmişi.
+/// canlifal.com Flutter API — lookup, aktivite, yayın geçmişi (site + `/api/users/me/*` yedek).
 class CanlifalUserApiDataSource {
   CanlifalUserApiDataSource(this._dio);
 
   final Dio _dio;
 
-  /// `GET /api/users/lookup/{username}`
   Future<UserEntity> lookupByUsername(String username) async {
     final name = username.trim();
     if (name.isEmpty) {
       throw const ApiException('Kullanıcı adı gerekli');
     }
-    final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.userLookup(name),
-    );
+    final res = await _dio.safeGet<dynamic>(ApiEndpoints.userLookup(name));
     final body = res.data;
     if (body is Map) {
       final map = asJsonMap(body);
       final err = map['error'];
-      if (err != null) {
-        throw ApiException(err.toString());
-      }
+      if (err != null) throw ApiException(err.toString());
       final userRaw = map['user'] ?? map['data'] ?? map;
       if (userRaw is Map) {
-        return UserDto.fromJson(asJsonMap(userRaw)).toEntity();
+        return UserDto.fromApiMap(asJsonMap(userRaw)).toEntity();
       }
     }
     throw const ApiException('Kullanıcı bulunamadı');
   }
 
-  /// `GET /api/user/broadcast-history?page=1&limit=20&status=ended`
-  Future<List<BroadcastHistoryItem>> broadcastHistory({
+  Future<List<BroadcastHistoryItemEntity>> broadcastHistory({
     int page = 1,
     int limit = 20,
     String status = 'ended',
   }) async {
-    final res = await _dio.safeGet<dynamic>(
+    final query = {
+      'page': page,
+      'limit': limit,
+      if (status.isNotEmpty) 'status': status,
+    };
+    Object? lastError;
+    for (final path in [
       ApiEndpoints.userBroadcastHistory,
-      query: {
-        'page': page,
-        'limit': limit,
-        if (status.isNotEmpty) 'status': status,
-      },
-    );
-    return _parseBroadcastHistory(res.data);
+      ApiEndpoints.meBroadcastHistory,
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path, query: query);
+        final list = _parseBroadcastHistory(res.data);
+        if (list.isNotEmpty) return list;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (lastError != null) throw ApiException.userMessage(lastError);
+    return const [];
   }
 
-  /// `GET /api/user/activity?unread=true`
-  Future<List<UserActivityItem>> fetchActivity({bool unreadOnly = false}) async {
-    final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.userActivity,
-      query: unreadOnly ? {'unread': 'true'} : null,
-    );
-    return _parseActivityList(res.data);
+  Future<List<ProfileActivityItemEntity>> fetchActivity({
+    bool unreadOnly = false,
+  }) async {
+    final query = unreadOnly ? {'unread': 'true'} : null;
+    Object? lastError;
+    for (final path in [ApiEndpoints.userActivity, ApiEndpoints.meActivity]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path, query: query);
+        final list = _parseActivityList(res.data);
+        if (list.isNotEmpty) return list;
+        if (!unreadOnly) return list;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (lastError != null) throw ApiException.userMessage(lastError);
+    return const [];
   }
 
-  /// `PATCH /api/user/activity` — `{"markAllRead": true}`
   Future<void> markAllActivityRead() async {
-    await _dio.safePatch<dynamic>(
-      ApiEndpoints.userActivity,
-      data: jsonEncode({'markAllRead': true}),
-      options: Options(contentType: 'application/json'),
-    );
+    final body = jsonEncode({'markAllRead': true});
+    final opts = Options(contentType: 'application/json');
+    Object? lastError;
+    for (final path in [ApiEndpoints.userActivity, ApiEndpoints.meActivity]) {
+      try {
+        await _dio.safePatch<dynamic>(path, data: body, options: opts);
+        return;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (lastError != null) throw ApiException.userMessage(lastError);
   }
 
-  List<BroadcastHistoryItem> _parseBroadcastHistory(dynamic body) {
+  List<BroadcastHistoryItemEntity> _parseBroadcastHistory(dynamic body) {
     dynamic raw;
     if (body is Map) {
       final map = asJsonMap(body);
       if (map['error'] != null) {
         throw ApiException(map['error'].toString());
       }
+      final data = map['data'];
       raw = map['items'] ??
           map['broadcasts'] ??
           map['history'] ??
-          map['data'];
-      if (raw is Map) {
-        raw = raw['items'] ?? raw['broadcasts'] ?? raw['history'];
-      }
+          (data is Map ? data['items'] : null) ??
+          (data is List ? data : null);
     } else if (body is List) {
       raw = body;
     }
     if (raw is! List) return const [];
-    return raw.map((e) {
-      final m = asJsonMap(e);
-      return BroadcastHistoryItem(
-        id: pick(m, ['id', '_id', 'streamId'])?.toString() ?? '',
-        title: pick(m, ['title', 'name', 'nameTr'])?.toString() ?? 'Yayın',
-        status: pick(m, ['status', 'state'])?.toString(),
-        thumbnailUrl: pick(m, [
-          'thumbnail',
-          'thumbUrl',
-          'coverImage',
-          'broadcastImage',
-          'image',
-        ])?.toString(),
-        startedAt: DateTime.tryParse(
-          pick(m, ['startedAt', 'startTime', 'createdAt'])?.toString() ?? '',
-        ),
-        endedAt: DateTime.tryParse(
-          pick(m, ['endedAt', 'endTime', 'finishedAt'])?.toString() ?? '',
-        ),
-        viewerCount: asInt(pick(m, ['viewerCount', 'viewers', 'peakViewers'])),
-      );
-    }).where((b) => b.id.isNotEmpty).toList();
+    return raw
+        .map((e) => BroadcastHistoryItemEntity.fromJson(asJsonMap(e)))
+        .where((b) => b.id.isNotEmpty)
+        .toList();
   }
 
-  List<UserActivityItem> _parseActivityList(dynamic body) {
+  List<ProfileActivityItemEntity> _parseActivityList(dynamic body) {
     dynamic raw;
     if (body is Map) {
       final map = asJsonMap(body);
       if (map['error'] != null) {
         throw ApiException(map['error'].toString());
       }
+      final data = map['data'];
       raw = map['activities'] ??
           map['items'] ??
           map['notifications'] ??
-          map['data'];
-      if (raw is Map) {
-        raw = raw['activities'] ?? raw['items'] ?? raw['notifications'];
-      }
-      final unread = map['unreadCount'] ?? map['unread'];
-      if (raw == null && unread != null) return const [];
+          (data is Map
+              ? data['activities'] ?? data['items'] ?? data['notifications']
+              : null) ??
+          (data is List ? data : null);
     } else if (body is List) {
       raw = body;
     }
     if (raw is! List) return const [];
-    return raw.map((e) {
-      final m = asJsonMap(e);
-      return UserActivityItem(
-        id: pick(m, ['id', '_id'])?.toString() ?? '',
-        title: pick(m, ['title', 'type', 'subject'])?.toString() ?? 'Aktivite',
-        body: pick(m, ['body', 'message', 'text', 'description'])?.toString(),
-        read: asBool(pick(m, ['read', 'isRead', 'seen'])),
-        createdAt: DateTime.tryParse(
-          pick(m, ['createdAt', 'created_at', 'timestamp'])?.toString() ?? '',
-        ),
-        type: pick(m, ['type', 'kind'])?.toString(),
-      );
-    }).where((a) => a.id.isNotEmpty).toList();
+    return raw
+        .map((e) => ProfileActivityItemEntity.fromJson(asJsonMap(e)))
+        .where((a) => a.id.isNotEmpty)
+        .toList();
   }
 }

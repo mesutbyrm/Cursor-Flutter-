@@ -14,14 +14,26 @@ class TrtcCredentials extends Equatable {
   final String userSig;
   final String roomId;
 
-  factory TrtcCredentials.fromJson(Map<String, dynamic> json) {
+  factory TrtcCredentials.fromJson(
+    Map<String, dynamic> json, {
+    String? requestedRoomId,
+  }) {
+    var roomId = json['roomId']?.toString().trim() ?? '';
+    if (roomId.isEmpty) {
+      roomId = json['strRoomId']?.toString().trim() ?? '';
+    }
+    if (roomId.isEmpty && requestedRoomId != null) {
+      roomId = requestedRoomId.trim();
+    }
     return TrtcCredentials(
       sdkAppId: (json['sdkAppId'] as num?)?.toInt() ?? 0,
       userId: json['userId']?.toString() ?? '',
       userSig: json['userSig']?.toString() ?? '',
-      roomId: json['roomId']?.toString() ?? '',
+      roomId: roomId,
     );
   }
+
+  bool matchesRoom(String id) => roomId == id.trim();
 
   @override
   List<Object?> get props => [sdkAppId, userId, userSig, roomId];
