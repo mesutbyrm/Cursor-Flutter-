@@ -160,9 +160,16 @@ extension DioApi on Dio {
   Future<Response<T>> safePatch<T>(
     String path, {
     Object? data,
+    Map<String, dynamic>? query,
+    Options? options,
   }) async {
     try {
-      return await patch<T>(path, data: data);
+      return await patch<T>(
+        path,
+        data: data,
+        queryParameters: query,
+        options: options,
+      );
     } on DioException catch (e) {
       throw _mapDio(e);
     }

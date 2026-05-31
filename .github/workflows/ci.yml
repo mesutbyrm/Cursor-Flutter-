@@ -1,5 +1,8 @@
 name: CI
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]
@@ -55,4 +58,4 @@ jobs:
           cache-dependency-path: api/package-lock.json
       - run: npm ci
       - run: npx prisma generate
-      - run: npm run build --if-present
+      - run: npm run build

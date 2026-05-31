@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
@@ -82,8 +80,8 @@ class CanlifalUserApiDataSource {
   }
 
   Future<void> markAllActivityRead() async {
-    final body = jsonEncode({'markAllRead': true});
-    final opts = Options(contentType: 'application/json');
+    const body = {'markAllRead': true};
+    final opts = Options(contentType: Headers.jsonContentType);
     Object? lastError;
     for (final path in [ApiEndpoints.userActivity, ApiEndpoints.meActivity]) {
       try {

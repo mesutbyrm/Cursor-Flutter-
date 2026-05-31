@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../vip_gold/domain/vip_tier.dart';
+import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import '../../theme/voice_room_tokens.dart';
 import 'voice_floating_gifts_strip.dart';
