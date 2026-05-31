@@ -12,9 +12,13 @@ Flutter sosyal medya ve canlı yayın istemcisi — **https://canlifal.com** API
 | Bağlantı | Açıklama |
 |----------|----------|
 | **[canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk)** | Her zaman son `main` derlemesi (`apk-latest`) |
-| **[Sürüm arşivi](https://github.com/mesutbyrm/Cursor-Flutter-/releases)** | Tüm test APK’ları (**güncel: 1.0.83+85**, `apk-latest`) |
+| **[Sürüm arşivi](https://github.com/mesutbyrm/Cursor-Flutter-/releases)** | Tüm test APK’ları (**güncel: 1.0.93+95**, `apk-latest`) |
 
 Ayrıntılar: [`APK_DOWNLOAD.md`](APK_DOWNLOAD.md)
+
+## CI durumu (`main` üzerindeki kırmızı X)
+
+Kod hatası değilse, GitHub **faturalandırma / harcama limiti** yüzünden Actions başlamıyor olabilir (özel repo). Adımlar: [`docs/GITHUB_ACTIONS_CI.md`](docs/GITHUB_ACTIONS_CI.md) · yerel kontrol: `bash scripts/ci-local.sh`
 
 ## Hızlı başlangıç
 
