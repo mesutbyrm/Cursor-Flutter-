@@ -70,11 +70,11 @@ class BroadcastHistoryItemEntity {
 
   factory BroadcastHistoryItemEntity.fromJson(Map<String, dynamic> json) {
     return BroadcastHistoryItemEntity(
-      id: pick(json, ['id', 'streamId'])?.toString() ?? '',
+      id: pick(json, ['id', 'streamId', 'roomId'])?.toString() ?? '',
       title: pick(json, ['title'])?.toString() ?? 'Canlı yayın',
       startedAt: pick(json, ['startedAt', 'createdAt'])?.toString(),
-      giftCount: asInt(pick(json, ['giftCount'])),
-      coinsEarned: asInt(pick(json, ['coinsEarned', 'coins'])),
+      giftCount: asInt(pick(json, ['giftCount', 'commentCount'])),
+      coinsEarned: asInt(pick(json, ['coinsEarned', 'coins', 'likeCount'])),
     );
   }
 

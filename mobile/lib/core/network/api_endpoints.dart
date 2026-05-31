@@ -117,6 +117,10 @@ abstract final class ApiEndpoints {
 
   /// Aktivite / bildirimler (site dokümanı: `/api/user/activity`).
   static const userActivity = '/api/user/activity';
+
+  /// Takip et / çık (site dokümanı — toggle POST).
+  static String userFollow(String userId) => '/api/user/$userId/follow';
+
   static String follow(String userId) => '/api/users/$userId/follow';
   static String followers(String userId) => '/api/users/$userId/followers';
   static String following(String userId) => '/api/users/$userId/following';

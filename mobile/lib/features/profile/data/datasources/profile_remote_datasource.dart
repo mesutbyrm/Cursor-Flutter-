@@ -52,10 +52,18 @@ class ProfileRemoteDataSource {
   }
 
   Future<void> follow(String userId) async {
+    if (Env.useMobileAuth) {
+      await _dio.safePost(ApiEndpoints.userFollow(userId));
+      return;
+    }
     await _dio.safePost(ApiEndpoints.follow(userId));
   }
 
   Future<void> unfollow(String userId) async {
+    if (Env.useMobileAuth) {
+      await _dio.safePost(ApiEndpoints.userFollow(userId));
+      return;
+    }
     await _dio.safeDelete(ApiEndpoints.follow(userId));
   }
 

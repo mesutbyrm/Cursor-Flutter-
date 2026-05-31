@@ -16,19 +16,11 @@ bash scripts/sync-canlifal-config.sh
 
 Başarılı olursa Firebase Dart seçenekleri üretilir ve APK derlemesinde FCM etkinleşir.
 
-## Site notu (önemli)
+## Site notu
 
-Şu an `canlifal.com/google-services.json` gibi kök URL’ler bazen **HTML sayfa** döndürüyor (Next.js `[customSlug]` rotası). Statik dosya için site projesinde şunlar gerekir:
+`canlifal-flutter-api-docs.txt` kök URL’si canlıda **düz metin** döner (güncellemek için site `public/` veya repo `docs/` + `scripts/sync-canlifal-config.sh`).
 
-```
-public/google-services.json
-public/canlifal-firebase-adminsdk.json
-public/canlifal-flutter-api-docs.txt
-```
-
-veya özel bir `/downloads/` rotası ile `Content-Type: application/json` / `text/plain`.
-
-Dosyalar HTML dönene kadar Firebase Console’dan indirip elle kopyalayın.
+`google-services.json` gibi diğer kök dosyalar hâlâ HTML dönebilir; o zaman Firebase Console’dan indirip `mobile/android/app/` altına kopyalayın.
 
 ## Sunucu (API)
 

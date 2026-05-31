@@ -1,10 +1,9 @@
-# Canlifal — Flutter API kullanımı
+# Canlifal — Flutter API (mobil)
 
-Kaynak: canlifal.com sitesinden alınan Flutter entegrasyon dokümanı.
+**Tam doküman (canlifal.com):** https://canlifal.com/canlifal-flutter-api-docs.txt  
+**Repo kopyası:** [`canlifal-flutter-api-docs.txt`](canlifal-flutter-api-docs.txt) — `scripts/sync-canlifal-config.sh` ile güncellenir.
 
 ## İstek başlıkları
-
-Tüm korumalı uçlar için:
 
 ```dart
 headers: {
@@ -13,45 +12,39 @@ headers: {
 }
 ```
 
-Mobil uygulamada `lib/core/network/dio_provider.dart` bu başlıkları otomatik ekler (JWT veya oturum çerezi).
+`mobile/lib/core/network/dio_provider.dart` Bearer + JSON başlıklarını otomatik ekler.
 
-## Uçlar
+## Özet (mobil uygulamada kullanılan uçlar)
 
-| Açıklama | Metot | Yol |
-|----------|--------|-----|
-| Kullanıcı adı ile profil | GET | `/api/users/lookup/{username}` |
-| Yayın geçmişi | GET | `/api/user/broadcast-history?page=1&limit=20&status=ended` |
-| Okunmamış aktivite | GET | `/api/user/activity?unread=true` |
-| Tüm aktiviteleri okundu işaretle | PATCH | `/api/user/activity` — gövde: `{"markAllRead": true}` |
+| # | Açıklama | Metot | Yol |
+|---|----------|--------|-----|
+| — | Kayıt | POST | `/api/auth/mobile-register` |
+| — | Giriş | POST | `/api/auth/mobile-login` |
+| — | Google | POST | `/api/auth/mobile-google` |
+| — | TikTok | POST | `/api/auth/mobile-tiktok` |
+| — | Token yenile | POST | `/api/auth/mobile-refresh` |
+| 6 | Profil | GET/PATCH | `/api/me` |
+| 8–12 | DM | GET/POST | `/api/messages`, `/api/messages/{userId}` |
+| 14 | Kullanıcı lookup | GET | `/api/users/lookup/{username}` |
+| 16 | Takip (toggle) | POST | `/api/user/{userId}/follow` |
+| 35 | Yayın geçmişi | GET | `/api/user/broadcast-history?page=1&limit=20&status=ended` |
+| 36 | Aktivite | GET | `/api/user/activity?page=1&limit=30&unread=true` |
+| 37 | Okundu | PATCH | `/api/user/activity` → `{"markAllRead": true}` |
 
-### Örnek URL’ler (canlifal.com)
+Yanıt örnekleri (broadcast `broadcasts[]`, activity `notifications[]`) tam metinde.
 
-- `https://canlifal.com/api/users/lookup/mesut_byrm`
-- `https://canlifal.com/api/user/broadcast-history?page=1&limit=20&status=ended`
-- `https://canlifal.com/api/user/activity?unread=true`
-- `https://canlifal.com/api/user/activity` (PATCH)
-
-## Mobil kod eşlemesi
+## Mobil kod
 
 | API | Dosya |
 |-----|--------|
 | Uç sabitleri | `mobile/lib/core/network/api_endpoints.dart` |
-| HTTP istemcisi | `mobile/lib/core/network/dio_provider.dart` |
+| HTTP + 401 refresh | `mobile/lib/core/network/dio_provider.dart` |
 | Lookup / yayın / aktivite | `mobile/lib/features/profile/data/datasources/canlifal_user_api_datasource.dart` |
-| Bildirimler (aktivite) | `mobile/lib/features/notifications/data/repositories/notifications_repository_impl.dart` |
-| Yayın geçmişi ekranı | `mobile/lib/features/profile/presentation/pages/profile_broadcast_history_page.dart` |
+| Takip | `mobile/lib/features/profile/data/datasources/profile_remote_datasource.dart` |
+| Bildirimler | `mobile/lib/features/notifications/data/repositories/notifications_repository_impl.dart` |
 
-Site dokümanı yolları (`/api/user/...`) başarısız olursa uygulama `/api/users/me/...` yollarını dener.
+Site yolu (`/api/user/...`) başarısız olursa yedek: `/api/users/me/broadcast-history`, `/api/users/me/activity`.
 
-## Güncel doküman
+## OneSignal
 
-| Kaynak | Konum |
-|--------|--------|
-| Repo (önerilen) | `docs/canlifal-flutter-api-docs.txt` |
-| Site (statik yayın gerekir) | https://canlifal.com/canlifal-flutter-api-docs.txt |
-
-Site kökündeki `.txt` URL’si Next.js’te `[customSlug]` yüzünden **404 HTML** dönebilir. Dosyayı canlifal.com projesinde `public/canlifal-flutter-api-docs.txt` olarak ekleyin. API uçları (`/api/user/...`, `/api/users/lookup/...`) JSON ile çalışır; 401 oturum, 404 kullanıcı yok anlamına gelir.
-
-## Uyarı
-
-Dokümandaki bazı URL’ler ortamda 401 (oturum gerekli) veya 404 (kullanıcı yok) dönebilir — bu, uçların geçersiz olduğu anlamına gelmez; Bearer token veya site oturumu gerekir.
+App ID: `578518ed-7b16-46a9-a1e6-7692d3ba55d8` — giriş sonrası `OneSignal.login(user.id)`.

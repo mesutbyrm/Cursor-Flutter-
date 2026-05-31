@@ -50,8 +50,7 @@ class CanlifalUserApiDataSource {
     ]) {
       try {
         final res = await _dio.safeGet<dynamic>(path, query: query);
-        final list = _parseBroadcastHistory(res.data);
-        if (list.isNotEmpty) return list;
+        return _parseBroadcastHistory(res.data);
       } catch (e) {
         lastError = e;
       }
@@ -62,15 +61,19 @@ class CanlifalUserApiDataSource {
 
   Future<List<ProfileActivityItemEntity>> fetchActivity({
     bool unreadOnly = false,
+    int page = 1,
+    int limit = 30,
   }) async {
-    final query = unreadOnly ? {'unread': 'true'} : null;
+    final query = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+      if (unreadOnly) 'unread': 'true',
+    };
     Object? lastError;
     for (final path in [ApiEndpoints.userActivity, ApiEndpoints.meActivity]) {
       try {
         final res = await _dio.safeGet<dynamic>(path, query: query);
-        final list = _parseActivityList(res.data);
-        if (list.isNotEmpty) return list;
-        if (!unreadOnly) return list;
+        return _parseActivityList(res.data);
       } catch (e) {
         lastError = e;
       }
