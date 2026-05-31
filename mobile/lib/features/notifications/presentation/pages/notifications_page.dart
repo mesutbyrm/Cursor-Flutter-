@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/config/env.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/app_notification_entity.dart';
 import '../../domain/notification_action.dart';
-import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../providers/notifications_providers.dart';
 import '../widgets/notification_permission_banner.dart';
@@ -25,6 +26,14 @@ class NotificationsPage extends ConsumerWidget {
       subtitle: 'Son aktiviteler ve uyarılar',
       onRefresh: () async => ref.invalidate(notificationsListProvider),
       actions: [
+        if (Env.useNextAuth)
+          TextButton(
+            onPressed: () async {
+              await ref.read(notificationsRepositoryProvider).markAllRead();
+              ref.invalidate(notificationsListProvider);
+            },
+            child: const Text('Tümünü oku'),
+          ),
         DiscoverIconButton(
           icon: Icons.refresh_rounded,
           onPressed: () => ref.invalidate(notificationsListProvider),

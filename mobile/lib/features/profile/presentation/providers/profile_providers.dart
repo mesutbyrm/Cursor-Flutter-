@@ -9,6 +9,7 @@ import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
+import '../../data/datasources/canlifal_user_api_datasource.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
 import '../../data/repositories/profile_repository_impl.dart';
 
@@ -16,12 +17,19 @@ final profileRemoteProvider = Provider<ProfileRemoteDataSource>((ref) {
   return ProfileRemoteDataSource(ref.watch(dioProvider));
 });
 
+final canlifalUserApiProvider = Provider<CanlifalUserApiDataSource>((ref) {
+  return CanlifalUserApiDataSource(ref.watch(dioProvider));
+});
+
 final walletRemoteProvider = Provider<WalletRemoteDataSource>((ref) {
   return WalletRemoteDataSource(ref.watch(dioProvider));
 });
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
-  return ProfileRepositoryImpl(ref.watch(profileRemoteProvider));
+  return ProfileRepositoryImpl(
+    ref.watch(profileRemoteProvider),
+    ref.watch(canlifalUserApiProvider),
+  );
 });
 
 final walletRepositoryProvider = Provider<WalletRepository>((ref) {

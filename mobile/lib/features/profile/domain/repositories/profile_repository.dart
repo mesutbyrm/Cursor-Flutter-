@@ -22,6 +22,7 @@ abstract class ProfileRepository {
   Future<List<GiftReceivedSummaryEntity>> giftsReceivedSummary();
   Future<List<BroadcastHistoryItemEntity>> broadcastHistory();
   Future<List<ProfileActivityItemEntity>> myActivity();
+  Future<void> markAllActivityRead();
   Future<List<UserEntity>> followers(String userId);
   Future<List<UserEntity>> following(String userId);
 }

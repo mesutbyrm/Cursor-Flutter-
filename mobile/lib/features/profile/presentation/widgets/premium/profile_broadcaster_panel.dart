@@ -25,7 +25,11 @@ class ProfileBroadcasterPanel extends StatelessWidget {
       (icon: Icons.history_rounded, label: 'Yayın Geçmişi', onTap: onHistory),
       (icon: Icons.event_rounded, label: 'Yayın Planla', onTap: onSchedule),
       (icon: Icons.insights_rounded, label: 'İstatistikler', onTap: onStats),
-      (icon: Icons.mic_external_on_rounded, label: 'Ekipmanım', onTap: onEquipment),
+      (
+        icon: Icons.mic_external_on_rounded,
+        label: 'Ekipmanım',
+        onTap: onEquipment,
+      ),
       (icon: Icons.tune_rounded, label: 'Yayın Ayarları', onTap: onSettings),
     ];
 

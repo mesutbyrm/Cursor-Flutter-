@@ -97,12 +97,20 @@ class ProfileActivityItemEntity {
   });
 
   factory ProfileActivityItemEntity.fromJson(Map<String, dynamic> json) {
+    final read = json['read'] == true || json['isRead'] == true;
     return ProfileActivityItemEntity(
       id: json['id']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
-      title: json['title']?.toString() ?? '',
-      subtitle: json['subtitle']?.toString(),
-      status: json['status']?.toString() ?? '',
+      title: json['title']?.toString() ??
+          json['subject']?.toString() ??
+          'Bildirim',
+      subtitle: json['subtitle']?.toString() ??
+          json['body']?.toString() ??
+          json['message']?.toString(),
+      status: read
+          ? 'read'
+          : (json['status']?.toString() ??
+              (json['read'] == false ? 'unread' : '')),
       amount: asInt(json['amount']),
       createdAt: json['createdAt']?.toString(),
     );

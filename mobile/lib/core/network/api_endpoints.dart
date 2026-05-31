@@ -1,4 +1,13 @@
 /// canlifal.com ile uyumlu uçlar. Özel backend için `API_BASE_URL` ve bu dosyayı güncelleyin.
+///
+/// Flutter istekleri (canlifal.com dokümanı):
+/// ```dart
+/// headers: {
+///   'Authorization': 'Bearer $accessToken',
+///   'Content-Type': 'application/json',
+/// }
+/// ```
+/// `dio_provider` Bearer + JSON başlıklarını otomatik ekler.
 abstract final class ApiEndpoints {
   // --- canlifal.com mobil JWT (SQL, WebView yok) ---
   static const authMobileRegister = '/api/auth/mobile-register';
@@ -98,8 +107,16 @@ abstract final class ApiEndpoints {
   static const giftsCatalog = '/api/gifts';
 
   static String userProfile(String userId) => '/api/users/$userId';
+
+  /// Kullanıcı adı ile profil — Flutter API dokümanı.
   static String userLookup(String username) =>
-      '/api/users/lookup/${Uri.encodeComponent(username)}';
+      '/api/users/lookup/${Uri.encodeComponent(username.trim())}';
+
+  /// Yayın geçmişi (site dokümanı: `/api/user/broadcast-history`).
+  static const userBroadcastHistory = '/api/user/broadcast-history';
+
+  /// Aktivite / bildirimler (site dokümanı: `/api/user/activity`).
+  static const userActivity = '/api/user/activity';
   static String follow(String userId) => '/api/users/$userId/follow';
   static String followers(String userId) => '/api/users/$userId/followers';
   static String following(String userId) => '/api/users/$userId/following';
