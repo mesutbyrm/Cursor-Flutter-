@@ -52,7 +52,7 @@ class _ProfileBroadcastHistoryPageState
     final history = ref.watch(broadcastHistoryNotifierProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Yayın Geçmişi',

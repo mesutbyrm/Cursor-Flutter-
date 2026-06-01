@@ -32,7 +32,7 @@ class _ProfileGiftsPageState extends ConsumerState<ProfileGiftsPage> {
     final gifts = ref.watch(giftsReceivedSummaryProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Hediyelerim',

@@ -18,12 +18,12 @@ class VoiceRoomRoutePage extends ConsumerWidget {
     final async = ref.watch(voiceRoomByIdProvider(roomId));
 
     return async.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: DiscoverAccentLoader()),
+      loading: () => Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: const Center(child: DiscoverAccentLoader()),
       ),
       error: (e, _) => Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
           child: DiscoverEmptyState(
             icon: Icons.headset_off_rounded,
@@ -36,7 +36,7 @@ class VoiceRoomRoutePage extends ConsumerWidget {
       data: (room) {
         if (room == null) {
           return Scaffold(
-            backgroundColor: AppColors.background,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: Center(
               child: DiscoverEmptyState(
                 icon: Icons.meeting_room_outlined,

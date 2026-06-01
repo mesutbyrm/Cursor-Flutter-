@@ -60,7 +60,7 @@ class _FortuneResultPageState extends ConsumerState<FortuneResultPage> {
     final type = result.type;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: FortuneMysticBackground(
         child: Column(
           children: [

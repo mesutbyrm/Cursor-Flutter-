@@ -43,7 +43,7 @@ class JetonPurchasePage extends ConsumerWidget {
     final top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0618),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         fit: StackFit.expand,
         children: [

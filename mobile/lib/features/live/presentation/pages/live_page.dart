@@ -61,7 +61,7 @@ class _LivePageState extends ConsumerState<LivePage>
     final top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

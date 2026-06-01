@@ -41,7 +41,7 @@ class ProfilePage extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: RefreshIndicator(
           color: AppColors.accentPink,

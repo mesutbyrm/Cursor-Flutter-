@@ -65,7 +65,7 @@ class _GiftSendPageState extends ConsumerState<GiftSendPage> {
     });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Hediye Gönder'),
         backgroundColor: Colors.transparent,

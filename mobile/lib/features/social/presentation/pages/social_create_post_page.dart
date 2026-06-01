@@ -96,7 +96,7 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
     final top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           Container(

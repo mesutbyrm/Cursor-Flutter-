@@ -69,7 +69,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
         );
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: widget.navigationShell,
         extendBody: true,
         bottomNavigationBar: DiscoverBottomBar(

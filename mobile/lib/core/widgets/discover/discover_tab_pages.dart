@@ -80,7 +80,7 @@ class DiscoverTabPage extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(child: content),
     );
   }
@@ -145,7 +145,7 @@ class DiscoverTabScrollPage extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverRefresh.wrap(
           onRefresh: onRefresh ?? () async {},
@@ -245,7 +245,7 @@ class DiscoverSubPage extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(child: content),
     );
   }
