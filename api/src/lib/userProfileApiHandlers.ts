@@ -2,9 +2,16 @@ import type { Request, Response } from "express";
 import { prisma } from "./prisma";
 import { ok } from "./response";
 
+function parsePageLimit(req: Request, defaultLimit = 20) {
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit) || defaultLimit));
+  return { page, limit, skip: (page - 1) * limit };
+}
+
 /** GET broadcast history — Flutter: /api/user/broadcast-history */
 export async function getBroadcastHistory(req: Request, res: Response) {
   const userId = req.userId!;
+  const { page, limit, skip } = parsePageLimit(req, 20);
   const events = await prisma.giftEvent.findMany({
     where: {
       streamId: { not: null },
@@ -43,12 +50,11 @@ export async function getBroadcastHistory(req: Request, res: Response) {
     }
   }
 
-  const items = [...byStream.values()]
+  const allItems = [...byStream.values()]
     .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
-    .slice(0, 40)
     .map((s, i) => ({
       id: s.streamId,
-      title: `Canlı yayın #${40 - i}`,
+      title: `Canlı yayın #${i + 1}`,
       streamId: s.streamId,
       startedAt: s.startedAt,
       giftCount: s.giftCount,
@@ -56,12 +62,20 @@ export async function getBroadcastHistory(req: Request, res: Response) {
       status: "ended",
     }));
 
-  return ok(res, { items });
+  const total = allItems.length;
+  const items = allItems.slice(skip, skip + limit);
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  return ok(res, {
+    items,
+    pagination: { page, limit, total, totalPages },
+  });
 }
 
 /** GET activity — Flutter: /api/user/activity?unread=true */
 export async function getActivity(req: Request, res: Response) {
   const userId = req.userId!;
+  const { page, limit, skip } = parsePageLimit(req, 30);
   const unreadOnly =
     req.query.unread === "true" || req.query.unreadOnly === "true";
 
@@ -129,12 +143,20 @@ export async function getActivity(req: Request, res: Response) {
     })),
   ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-  let filtered = items.slice(0, 60);
+  let filtered = items;
   if (unreadOnly) {
     filtered = filtered.filter((i) => !i.read && i.status !== "read");
   }
 
-  return ok(res, { items: filtered, activities: filtered });
+  const total = filtered.length;
+  const pageItems = filtered.slice(skip, skip + limit);
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  return ok(res, {
+    items: pageItems,
+    activities: pageItems,
+    pagination: { page, limit, total, totalPages },
+  });
 }
 
 /** PATCH activity — Flutter: {"markAllRead": true} */

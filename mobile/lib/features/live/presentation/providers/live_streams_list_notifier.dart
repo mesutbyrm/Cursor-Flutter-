@@ -1,66 +1,62 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/performance/list_perf.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import 'live_providers.dart';
 
-class LiveStreamsListState {
-  const LiveStreamsListState({
-    required this.all,
-    this.visibleCount = ListPerf.defaultPageSize,
-  });
+class LiveStreamsListNotifier extends AsyncNotifier<List<LiveStreamEntity>> {
+  int _page = 1;
+  bool _end = false;
+  bool _loadingMore = false;
 
-  final List<LiveStreamEntity> all;
-  final int visibleCount;
+  static const int _pageSize = 30;
 
-  bool get hasMore => visibleCount < all.length;
-
-  List<LiveStreamEntity> get visible =>
-      all.take(visibleCount.clamp(0, all.length)).toList();
-
-  LiveStreamsListState copyWith({
-    List<LiveStreamEntity>? all,
-    int? visibleCount,
-  }) {
-    return LiveStreamsListState(
-      all: all ?? this.all,
-      visibleCount: visibleCount ?? this.visibleCount,
-    );
-  }
-}
-
-class LiveStreamsListNotifier extends AsyncNotifier<LiveStreamsListState> {
   @override
-  Future<LiveStreamsListState> build() async {
-    final all = await ref.watch(liveStreamsProvider.future);
-    final visible = ListPerf.defaultPageSize.clamp(0, all.length);
-    return LiveStreamsListState(all: all, visibleCount: visible);
+  Future<List<LiveStreamEntity>> build() async {
+    _page = 1;
+    _end = false;
+    final items =
+        await ref.read(liveRepositoryProvider).fetchStreams(page: 1);
+    _end = items.length < _pageSize;
+    return items;
   }
 
   Future<void> refresh() async {
-    state =
-        const AsyncLoading<LiveStreamsListState>().copyWithPrevious(state);
+    state = const AsyncValue.loading();
     ref.invalidate(liveStreamsProvider);
     state = await AsyncValue.guard(() async {
-      final all = await ref.read(liveStreamsProvider.future);
-      final visible = ListPerf.defaultPageSize.clamp(0, all.length);
-      return LiveStreamsListState(all: all, visibleCount: visible);
+      _page = 1;
+      _end = false;
+      final items =
+          await ref.read(liveRepositoryProvider).fetchStreams(page: 1);
+      _end = items.length < _pageSize;
+      return items;
     });
   }
 
-  void loadMore() {
+  Future<void> loadMore() async {
     final cur = state.valueOrNull;
-    if (cur == null || !cur.hasMore) return;
-    state = AsyncValue.data(
-      cur.copyWith(
-        visibleCount: (cur.visibleCount + ListPerf.defaultPageSize)
-            .clamp(0, cur.all.length),
-      ),
-    );
+    if (cur == null || _end || _loadingMore) return;
+    _loadingMore = true;
+    final nextPage = _page + 1;
+    try {
+      final next =
+          await ref.read(liveRepositoryProvider).fetchStreams(page: nextPage);
+      if (next.isEmpty) {
+        _end = true;
+        return;
+      }
+      _page = nextPage;
+      _end = next.length < _pageSize;
+      state = AsyncValue.data([...cur, ...next]);
+    } finally {
+      _loadingMore = false;
+    }
   }
+
+  bool get hasMore => !_end;
 }
 
 final liveStreamsListNotifierProvider =
-    AsyncNotifierProvider<LiveStreamsListNotifier, LiveStreamsListState>(
+    AsyncNotifierProvider<LiveStreamsListNotifier, List<LiveStreamEntity>>(
   LiveStreamsListNotifier.new,
 );

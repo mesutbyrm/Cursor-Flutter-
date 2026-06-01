@@ -3,20 +3,61 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/performance/list_perf.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
-import '../providers/profile_providers.dart';
+import '../providers/payment_requests_notifier.dart';
+import '../providers/profile_activity_notifier.dart';
 
-class ProfileTransactionsPage extends ConsumerWidget {
+class ProfileTransactionsPage extends ConsumerStatefulWidget {
   const ProfileTransactionsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final payments = ref.watch(allPaymentRequestsProvider);
-    final activity = ref.watch(profileActivityProvider);
+  ConsumerState<ProfileTransactionsPage> createState() =>
+      _ProfileTransactionsPageState();
+}
+
+class _ProfileTransactionsPageState
+    extends ConsumerState<ProfileTransactionsPage> {
+  final _scroll = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scroll.removeListener(_onScroll);
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    final pos = _scroll.position;
+    if (pos.pixels >= pos.maxScrollExtent - ListPerf.preloadThresholdPx) {
+      ref.read(paymentRequestsNotifierProvider.notifier).loadMore();
+      ref.read(profileActivityNotifierProvider.notifier).loadMore();
+    }
+  }
+
+  Future<void> _refresh() async {
+    await Future.wait([
+      ref.read(paymentRequestsNotifierProvider.notifier).refresh(),
+      ref.read(profileActivityNotifierProvider.notifier).refresh(),
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final payments = ref.watch(paymentRequestsNotifierProvider);
+    final activity = ref.watch(profileActivityNotifierProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -24,10 +65,7 @@ class ProfileTransactionsPage extends ConsumerWidget {
         child: DiscoverSubPage(
           title: 'İşlemler',
           subtitle: 'Ödeme talepleri ve site hareketleri',
-          onRefresh: () async {
-            ref.invalidate(allPaymentRequestsProvider);
-            ref.invalidate(profileActivityProvider);
-          },
+          onRefresh: _refresh,
           body: payments.when(
             loading: () => const Center(child: DiscoverAccentLoader()),
             error: (e, _) => DiscoverEmptyState(
@@ -48,7 +86,9 @@ class ProfileTransactionsPage extends ConsumerWidget {
                   );
                 }
                 return ListView(
+                  controller: _scroll,
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                  physics: ListPerf.listPhysics,
                   children: [
                     if (payRows.isNotEmpty) ...[
                       const _SectionTitle('Ödeme talepleri'),
@@ -59,6 +99,18 @@ class ProfileTransactionsPage extends ConsumerWidget {
                       const _SectionTitle('Site hareketleri'),
                       ...actRows.map((r) => _ActivityTile(row: r)),
                     ],
+                    if (ref.read(paymentRequestsNotifierProvider.notifier).hasMore ||
+                        ref.read(profileActivityNotifierProvider.notifier).hasMore)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ),
                   ],
                 );
               },
@@ -94,8 +146,7 @@ class _PaymentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: DiscoverGlassCard(
-        padding: const EdgeInsets.all(12),
+      child: ProGlassListTile(
         child: Row(
           children: [
             Expanded(
@@ -146,8 +197,7 @@ class _ActivityTile extends StatelessWidget {
         : '';
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: DiscoverGlassCard(
-        padding: const EdgeInsets.all(12),
+      child: ProGlassListTile(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

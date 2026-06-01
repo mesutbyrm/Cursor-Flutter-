@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../data/jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 
@@ -241,25 +242,16 @@ class JetonPackageTile extends StatelessWidget {
     final popular = package.badge?.toLowerCase().contains('popüler') == true ||
         package.badge?.toLowerCase().contains('popular') == true;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.zero,
-        child: Ink(
-          padding: EdgeInsets.symmetric(
-            horizontal: fullWidth ? 16 : 12,
-            vertical: fullWidth ? 14 : 12,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.zero,
-            color: const Color(0xFF1A1030).withValues(alpha: 0.85),
-            border: Border.all(
-              color: const Color(0xFF7C3AED).withValues(alpha: 0.45),
-              width: 0.5,
-            ),
-          ),
-          child: Stack(
+    return ProGlassCard(
+      onTap: onTap,
+      blur: 14,
+      animateIn: false,
+      padding: EdgeInsets.symmetric(
+        horizontal: fullWidth ? 16 : 12,
+        vertical: fullWidth ? 14 : 12,
+      ),
+      borderRadius: BorderRadius.circular(fullWidth ? 16 : 0),
+      child: Stack(
             clipBehavior: Clip.none,
             children: [
               if (popular)
@@ -314,8 +306,6 @@ class JetonPackageTile extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
     );
   }
 }

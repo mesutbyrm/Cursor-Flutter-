@@ -4,12 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/lazy_paginated_sliver_list.dart';
 import '../../../feed/domain/entities/post_entity.dart';
-import '../../../social/presentation/providers/social_providers.dart';
+import '../../../social/presentation/providers/user_social_posts_notifier.dart';
 import '../../../social/presentation/widgets/instagram/social_post_caption.dart';
 
-/// TikTok tarzı 3 sütun paylaşım ızgarası — lazy hücre yükleme.
+/// TikTok tarzı 3 sütun paylaşım ızgarası — API sayfalama.
 class UserPostsTikTokGrid extends ConsumerStatefulWidget {
   const UserPostsTikTokGrid({super.key, required this.userId});
 
@@ -21,17 +20,10 @@ class UserPostsTikTokGrid extends ConsumerStatefulWidget {
 }
 
 class _UserPostsTikTokGridState extends ConsumerState<UserPostsTikTokGrid> {
-  final _lazy = LazyVisibleListController();
-
-  @override
-  void dispose() {
-    _lazy.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final postsAsync = ref.watch(userSocialPostsProvider(widget.userId));
+    final postsAsync =
+        ref.watch(userSocialPostsNotifierProvider(widget.userId));
 
     return postsAsync.when(
       loading: () => const Padding(
@@ -67,39 +59,52 @@ class _UserPostsTikTokGridState extends ConsumerState<UserPostsTikTokGrid> {
           );
         }
 
-        _lazy.reset(posts.length);
-        final visible = _lazy.visibleCount.clamp(0, posts.length);
-        final hasMore = _lazy.hasMore;
+        final hasMore = ref
+            .read(userSocialPostsNotifierProvider(widget.userId).notifier)
+            .hasMore;
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(top: 8),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 2,
-                mainAxisSpacing: 2,
-                childAspectRatio: 9 / 16,
-              ),
-              itemCount: visible,
-              itemBuilder: (context, index) {
-                return ListPerf.repaint(
-                  _TikTokPostTile(post: posts[index]),
-                );
-              },
-            ),
-            if (hasMore)
-              TextButton(
-                onPressed: () {
-                  _lazy.loadMore();
-                  setState(() {});
+        return NotificationListener<ScrollNotification>(
+          onNotification: (n) {
+            if (n is ScrollEndNotification &&
+                n.metrics.pixels >=
+                    n.metrics.maxScrollExtent - ListPerf.preloadThresholdPx) {
+              ref
+                  .read(userSocialPostsNotifierProvider(widget.userId).notifier)
+                  .loadMore();
+            }
+            return false;
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(top: 8),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 2,
+                  mainAxisSpacing: 2,
+                  childAspectRatio: 9 / 16,
+                ),
+                itemCount: posts.length,
+                itemBuilder: (context, index) {
+                  return ListPerf.repaint(
+                    _TikTokPostTile(post: posts[index]),
+                  );
                 },
-                child: const Text('Daha fazla paylaşım'),
               ),
-          ],
+              if (hasMore)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+            ],
+          ),
         );
       },
     );

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/pagination/paged_result.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -33,7 +34,7 @@ class CanlifalUserApiDataSource {
     throw const ApiException('Kullanıcı bulunamadı');
   }
 
-  Future<List<BroadcastHistoryItemEntity>> broadcastHistory({
+  Future<PagedResult<BroadcastHistoryItemEntity>> broadcastHistory({
     int page = 1,
     int limit = 20,
     String status = 'ended',
@@ -50,16 +51,17 @@ class CanlifalUserApiDataSource {
     ]) {
       try {
         final res = await _dio.safeGet<dynamic>(path, query: query);
-        return _parseBroadcastHistory(res.data);
+        final items = _parseBroadcastHistory(res.data);
+        return _asPage(items, page, limit, res.data);
       } catch (e) {
         lastError = e;
       }
     }
     if (lastError != null) throw ApiException.userMessage(lastError);
-    return const [];
+    return const PagedResult(items: [], hasMore: false);
   }
 
-  Future<List<ProfileActivityItemEntity>> fetchActivity({
+  Future<PagedResult<ProfileActivityItemEntity>> fetchActivity({
     bool unreadOnly = false,
     int page = 1,
     int limit = 30,
@@ -73,13 +75,33 @@ class CanlifalUserApiDataSource {
     for (final path in [ApiEndpoints.userActivity, ApiEndpoints.meActivity]) {
       try {
         final res = await _dio.safeGet<dynamic>(path, query: query);
-        return _parseActivityList(res.data);
+        final items = _parseActivityList(res.data);
+        return _asPage(items, page, limit, res.data);
       } catch (e) {
         lastError = e;
       }
     }
     if (lastError != null) throw ApiException.userMessage(lastError);
-    return const [];
+    return const PagedResult(items: [], hasMore: false);
+  }
+
+  PagedResult<T> _asPage<T>(List<T> items, int page, int limit, dynamic body) {
+    var hasMore = items.length >= limit;
+    if (body is Map) {
+      final map = asJsonMap(body);
+      final data = map['data'];
+      final pagRaw = map['pagination'] ??
+          (data is Map ? data['pagination'] : null);
+      if (pagRaw is Map) {
+        final pag = asJsonMap(pagRaw);
+        final totalPages = asInt(pag['totalPages']);
+        final current = asInt(pag['page']);
+        if (totalPages > 0) {
+          hasMore = current < totalPages;
+        }
+      }
+    }
+    return PagedResult(items: items, hasMore: hasMore);
   }
 
   Future<void> markAllActivityRead() async {

@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.99+101 (2026-05-31)
+
+### API sayfalama + Pro Glass mağaza / fal
+
+- API: `activity`, `broadcast-history`, `payment/requests` — `page` / `limit` / `pagination`
+- Mobil: canlı yayınlar, işlemler, yayın geçmişi, profil paylaşımları — sunucu sayfalı `AsyncNotifier`
+- Jeton / CFC mağazası: `ProGlassCard` paket kartları, kullanım kartı, CFC geçmişi
+- Fal hub: `FortuneGlassCard` → Pro Glass cam yüzey
+
 ## 1.0.98+100 (2026-05-31)
 
 ### Performans + Pro Glass (devam)

@@ -6,6 +6,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 
 /// Ödeme bildirimi — dekont ve açıklama ile yükleme talebi.
@@ -58,7 +59,7 @@ class _ProfilePaymentNoticePageState
         'senderInfo': _senderCtrl.text.trim(),
         'notes': notes,
       });
-      ref.invalidate(allPaymentRequestsProvider);
+      ref.invalidate(paymentRequestsNotifierProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ödeme bildiriminiz alındı')),

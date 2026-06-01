@@ -303,12 +303,29 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
 
 /** GET /api/payment/requests — kullanıcının talepleri */
 walletRouter.get("/payment/requests", requireAuth, async (req, res) => {
-  const rows = await prisma.cfcPaymentRequest.findMany({
-    where: { userId: req.userId! },
-    orderBy: { createdAt: "desc" },
-    take: 50,
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+  const skip = (page - 1) * limit;
+  const where = { userId: req.userId! };
+
+  const [total, rows] = await Promise.all([
+    prisma.cfcPaymentRequest.count({ where }),
+    prisma.cfcPaymentRequest.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const requests = rows.map((r) => requestPayload(r));
+
+  return res.status(200).json({
+    requests,
+    items: requests,
+    pagination: { page, limit, total, totalPages },
   });
-  return res.status(200).json(rows.map((r) => requestPayload(r)));
 });
 
 /** GET /api/admin/cfc-payment-requests */

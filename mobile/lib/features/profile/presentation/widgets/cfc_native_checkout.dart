@@ -11,7 +11,7 @@ import '../../../../core/widgets/glow_panel.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../../admin/presentation/providers/admin_providers.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
-import '../pages/cfc_purchase_page.dart';
+import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 
 enum CfcPaymentMethod { whatsapp, papara, bank_transfer }
@@ -268,7 +268,7 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
       });
       if (!mounted) return;
       ref.invalidate(walletBalancesProvider);
-      ref.invalidate(cfcPaymentRequestsProvider);
+      ref.invalidate(paymentRequestsNotifierProvider);
       ref.invalidate(adminPaymentRequestsProvider);
       ref.invalidate(adminPaymentNotificationsProvider);
       ref.invalidate(notificationsListProvider);
