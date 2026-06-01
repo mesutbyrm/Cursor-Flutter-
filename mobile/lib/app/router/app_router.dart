@@ -9,7 +9,9 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
+import '../../features/content_hub/presentation/pages/content_hub_page.dart';
 import '../../features/favorites/presentation/pages/favorites_page.dart';
+import '../../features/fortune/presentation/pages/fortune_detail_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
 import '../../features/search/presentation/pages/global_search_page.dart';
 import '../../features/fortune/domain/entities/fortune_type_entity.dart';
@@ -310,6 +312,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           child: const FavoritesPage(),
         ),
+      ),
+      GoRoute(
+        path: '/content-hub',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const ContentHubPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/fortune/history/:id',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return AppPageTransitions.fadeSlide(
+            key: state.pageKey,
+            child: FortuneDetailPage(fortuneId: id),
+          );
+        },
       ),
       GoRoute(
         path: '/jeton-store',

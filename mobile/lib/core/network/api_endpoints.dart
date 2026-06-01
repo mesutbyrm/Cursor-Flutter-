@@ -122,6 +122,10 @@ abstract final class ApiEndpoints {
   static String userFortuneDetail(String fortuneId) =>
       '/api/user/fortunes/$fortuneId';
 
+  static const userFavorites = '/api/user/favorites';
+
+  static String userFavoriteDelete(String id) => '/api/user/favorites/$id';
+
   /// Yayın geçmişi (site dokümanı: `/api/user/broadcast-history`).
   static const userBroadcastHistory = '/api/user/broadcast-history';
 

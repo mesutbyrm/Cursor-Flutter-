@@ -1,26 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover/discover_icon_button.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../domain/entities/fortune_type_entity.dart';
+import '../../domain/repositories/fortune_repository.dart';
+import '../providers/fortune_api_providers.dart';
 import '../services/fortune_reading_service.dart';
 import '../widgets/fortune_glass_card.dart';
 import '../widgets/fortune_mystic_background.dart';
 
-/// Tek fal türü oturumu — mockup’taki özel ekranlar.
-class FortuneSessionPage extends StatefulWidget {
+/// Tek fal türü oturumu — yerel yorum + oturumlu kullanıcıda API kaydı.
+class FortuneSessionPage extends ConsumerStatefulWidget {
   const FortuneSessionPage({super.key, required this.type});
 
   final FortuneTypeEntity type;
 
   @override
-  State<FortuneSessionPage> createState() => _FortuneSessionPageState();
+  ConsumerState<FortuneSessionPage> createState() => _FortuneSessionPageState();
 }
 
-class _FortuneSessionPageState extends State<FortuneSessionPage>
+class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage>
     with SingleTickerProviderStateMixin {
   final _input = TextEditingController();
   final _service = FortuneReadingService();
@@ -57,11 +61,39 @@ class _FortuneSessionPageState extends State<FortuneSessionPage>
     }
     setState(() => _loading = true);
     await Future<void>.delayed(const Duration(milliseconds: 900));
-    final result = _service.generate(
+    var result = _service.generate(
       type,
       userInput: _input.text,
       yesNoChoice: _yesNo,
     );
+    final authed = ref.read(authControllerProvider).valueOrNull;
+    if (authed != null) {
+      try {
+        final saved = await ref.read(fortuneRepositoryProvider).save(
+              SaveFortuneInput(
+                type: type.title,
+                slug: type.slug,
+                question: _input.text.trim().isEmpty ? null : _input.text.trim(),
+                summary: result.summary,
+                detail: result.detail,
+                answer: result.summary,
+                luckyNumber: result.luckyNumber,
+                luckyColor: result.luckyColor,
+              ),
+            );
+        result = FortuneReadingResult(
+          type: result.type,
+          summary: result.summary,
+          detail: result.detail,
+          luckyNumber: result.luckyNumber,
+          luckyColor: result.luckyColor,
+          recordId: saved.id,
+        );
+        ref.invalidate(fortuneHistoryProvider);
+      } catch (_) {
+        // API yoksa yerel sonuç yine gösterilir.
+      }
+    }
     if (!mounted) return;
     setState(() => _loading = false);
     context.push(

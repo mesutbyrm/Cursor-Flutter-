@@ -50,6 +50,11 @@ class ProfileSettingsMenu extends StatelessWidget {
         onTap: () => context.push('/search'),
       ),
       (
+        icon: Icons.menu_book_rounded,
+        label: 'Blog & Rüya',
+        onTap: () => context.push('/content-hub'),
+      ),
+      (
         icon: Icons.help_outline_rounded,
         label: 'Yardım & Destek',
         onTap: onHelp ?? () {},

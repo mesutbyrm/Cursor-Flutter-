@@ -39,6 +39,42 @@ model User {
   cfcPaymentRequests  CfcPaymentRequest[]
   conversationsA      Conversation[] @relation("ConversationUserA")
   conversationsB      Conversation[] @relation("ConversationUserB")
+  fortunes              UserFortune[]
+  favorites             UserFavorite[]
+}
+
+/// Mobil / web fal geçmişi kaydı.
+model UserFortune {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  slug        String?
+  question    String?
+  answer      String?
+  summary     String?
+  detail      String?
+  luckyNumber Int?
+  luckyColor  String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// Kullanıcı favorileri (profil, gönderi, fal, içerik linki).
+model UserFavorite {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetType String
+  targetId   String
+  title      String?
+  url        String?
+  imageUrl   String?
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, targetType, targetId])
+  @@index([userId, createdAt])
 }
 
 model SocialPost {
