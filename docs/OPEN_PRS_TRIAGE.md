@@ -1,4 +1,4 @@
-# Açık PR’lar — durum (main: 1.0.94+96)
+# Açık PR’lar — durum (main: 1.0.95+97)
 
 GitHub’da **15 açık PR** var (58 adet değil). **#58 birleştirildi.**
 
@@ -7,6 +7,7 @@ GitHub’da **15 açık PR** var (58 adet değil). **#58 birleştirildi.**
 | PR | Başlık | Durum |
 |----|--------|--------|
 | **#58** | Premium 2026 UI — Liquid Glass | **main’de** (`d41141d`) |
+| **#62–#64** | Premium 2026 PART 1–3 (auth, keşfet, ses) | **main’de** (1.0.95+97) |
 
 ## Kapatılabilir (main’de zaten var / eski)
 
@@ -22,13 +23,13 @@ Elle kapatın: GitHub → Pull requests → Close pull request
 | 33 | Android paket adı — main’de `com.mesutbyrm.canlifal` |
 | 37 | Scroll/refresh — kısmen main’de |
 
-## İncelenmeli (Premium 2026 serisi)
+## Kapatılabilir (Premium 2026 serisi — main’de birleşti)
 
 | PR | Başlık | Not |
 |----|--------|-----|
-| 62 | Auth PART 1 | #58 ile örtüşür; kapat veya güncel main’den rebase |
-| 63 | Discover PART 2 | Ayrı merge gerekir |
-| 64 | Voice room PART 3 | main ile çok çakışma — rebase gerekli |
+| 62 | Auth PART 1 | main’de — Close pull request |
+| 63 | Discover PART 2 | main’de — Close pull request |
+| 64 | Voice room PART 3 | main’de — Close pull request |
 
 ## main kırmızı X
 
@@ -36,5 +37,5 @@ GitHub **Billing** — Actions çalışmıyor. Bkz. `docs/GITHUB_ACTIONS_CI.md`.
 
 ## APK
 
-- Kod: **1.0.94+96**
+- Kod: **1.0.95+97**
 - İndirilen apk-latest: hâlâ **1.0.91+93** (CI derlemesi yok)

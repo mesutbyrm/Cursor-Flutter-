@@ -4,20 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_refresh.dart';
 import '../../../live/presentation/providers/live_providers.dart';
-import '../providers/feed_providers.dart';
-import '../widgets/discover/discover_background.dart';
 import '../../../social/presentation/providers/social_providers.dart';
+import '../providers/feed_providers.dart';
 import '../providers/platform_stats_providers.dart';
-import '../widgets/discover/discover_fortune_tarot.dart';
-import '../widgets/discover/discover_header.dart';
-import '../widgets/discover/discover_live_carousel.dart';
-import '../widgets/discover/discover_platform_stats.dart';
-import '../widgets/discover/discover_quick_actions.dart';
-import '../widgets/discover/discover_voice_orbs.dart';
-import '../../../../core/ui/premium_2026/premium_motion.dart';
-import '../../../social/presentation/widgets/instagram/social_stories_rail.dart';
+import '../widgets/discover_premium_2026/discover_premium_feed.dart';
 
-/// Keşfet ana sayfa — premium discover layout.
+/// Keşfet ana sayfa — Premium 2026 (PART 2).
 class FeedPage extends ConsumerStatefulWidget {
   const FeedPage({super.key});
 
@@ -38,36 +30,9 @@ class _FeedPageState extends ConsumerState<FeedPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.paddingOf(context).bottom;
-
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: DiscoverBackground(
-        child: DiscoverRefresh.wrap(
-          onRefresh: _refresh,
-          child: CustomScrollView(
-            physics: PremiumMotion.listPhysics,
-            slivers: [
-              SliverSafeArea(
-                top: true,
-                bottom: false,
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    const RepaintBoundary(child: DiscoverHeader()),
-                    const RepaintBoundary(child: SocialStoriesRail()),
-                    const RepaintBoundary(child: DiscoverLiveCarousel()),
-                    const RepaintBoundary(child: DiscoverQuickActions()),
-                    const RepaintBoundary(child: DiscoverVoiceOrbs()),
-                    const RepaintBoundary(child: DiscoverFortuneTarot()),
-                    const RepaintBoundary(child: DiscoverPlatformStats()),
-                    SizedBox(height: bottom + 100),
-                  ]),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      body: DiscoverPremiumFeed(onRefresh: _refresh),
     );
   }
 }

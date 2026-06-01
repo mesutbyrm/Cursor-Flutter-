@@ -86,40 +86,52 @@ abstract final class VoiceRoomTokens {
 
   static const List<VoiceCategoryDef> discoverCategories = [
     VoiceCategoryDef(
-      id: 'entertainment',
-      label: 'Eğlence Odaları',
-      icon: Icons.celebration_rounded,
-      gradient: [Color(0xFF5B7CFF), Color(0xFF9B4DFF)],
+      id: 'night',
+      label: 'Gece Muhabbeti',
+      icon: Icons.nightlight_round,
+      gradient: [Color(0xFF5B7CFF), Color(0xFF1E3A8A)],
+    ),
+    VoiceCategoryDef(
+      id: 'game',
+      label: 'Oyun',
+      icon: Icons.sports_esports_rounded,
+      gradient: [Color(0xFF00E5C3), Color(0xFF00695C)],
     ),
     VoiceCategoryDef(
       id: 'fortune',
-      label: 'Fal & Spiritüel',
+      label: 'Fal & Tarot',
       icon: Icons.auto_awesome_rounded,
       gradient: [Color(0xFFFFD54F), Color(0xFFB8860B)],
     ),
     VoiceCategoryDef(
-      id: 'social',
-      label: 'Sosyal Topluluk',
-      icon: Icons.groups_rounded,
-      gradient: [Color(0xFF7C4DFF), Color(0xFF512DA8)],
-    ),
-    VoiceCategoryDef(
-      id: 'game',
-      label: 'Oyun Odaları',
-      icon: Icons.sports_esports_rounded,
-      gradient: [Color(0xFF00E5C3), Color(0xFF00897B)],
+      id: 'music',
+      label: 'Müzik',
+      icon: Icons.music_note_rounded,
+      gradient: [Color(0xFFFF2D7A), Color(0xFF9B4DFF)],
     ),
     VoiceCategoryDef(
       id: 'pk',
-      label: 'PK Odaları',
+      label: 'PK',
       icon: Icons.flash_on_rounded,
-      gradient: [Color(0xFFFF2D7A), Color(0xFFB832FF)],
+      gradient: [Color(0xFFFF6B35), Color(0xFFB832FF)],
     ),
     VoiceCategoryDef(
       id: 'vip',
-      label: 'VIP Odaları',
+      label: 'VIP',
       icon: Icons.workspace_premium_rounded,
       gradient: [Color(0xFFFFE082), Color(0xFFFF8F00)],
+    ),
+    VoiceCategoryDef(
+      id: 'entertainment',
+      label: 'Eğlence',
+      icon: Icons.celebration_rounded,
+      gradient: [Color(0xFF7C4DFF), Color(0xFF512DA8)],
+    ),
+    VoiceCategoryDef(
+      id: 'flirt',
+      label: 'Flört',
+      icon: Icons.favorite_rounded,
+      gradient: [Color(0xFFFF5C8A), Color(0xFF9C27B0)],
     ),
   ];
 }

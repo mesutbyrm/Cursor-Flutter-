@@ -68,6 +68,10 @@ class RouterRefresh extends ChangeNotifier {
       authControllerProvider,
       (_, _) => notifyListeners(),
     );
+    _ref.listen<bool>(
+      guestModeProvider,
+      (_, _) => notifyListeners(),
+    );
   }
 
   final Ref _ref;
@@ -89,12 +93,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       }
 
       final authed = auth.valueOrNull != null;
+      final guest = ref.read(guestModeProvider);
       final publicAuthPages = loc == '/login' ||
           loc == '/register' ||
           loc.startsWith('/auth/forgot-password') ||
           loc == '/auth/otp-verify';
       final canlifalWeb = loc == '/canlifal-web';
-      if (!authed && !publicAuthPages && !canlifalWeb) return '/login';
+      if (!authed && !guest && !publicAuthPages && !canlifalWeb) {
+        return '/login';
+      }
       if (authed && publicAuthPages) return '/feed';
       return null;
     },

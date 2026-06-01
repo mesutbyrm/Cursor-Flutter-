@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.95+97 (2026-05-31)
+
+### Premium 2026 UI — PART 1–3 (PR #62–#64)
+
+- **PART 1 — Auth:** galaksi splash, liquid glass giriş/kayıt, neon CTA, Google giriş
+- **PART 2 — Keşfet:** `DiscoverPremiumFeed` — kategoriler, trend/sesli/canlı sekmeleri, neon oda kartları
+- **PART 3 — Sesli oda:** responsive sahne bileşenleri, level rozeti, parçacık efektleri (üretim RTC: web overlay + hub ayarları korundu)
+
 ## 1.0.94+96 (2026-05-31)
 
 ### Premium 2026 UI (PR #58)

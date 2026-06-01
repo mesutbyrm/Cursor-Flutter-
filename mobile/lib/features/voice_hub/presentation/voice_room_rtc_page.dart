@@ -39,9 +39,9 @@ import 'widgets/premium/voice_gift_flight_overlay.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/premium_2026/voice_room_audience_strip.dart';
+import 'widgets/premium_2026/voice_timed_duyuru.dart';
 import 'widgets/premium_2026/voice_web_bottom_nav.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
-import 'widgets/premium_2026/voice_timed_duyuru.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_action_row.dart';
@@ -574,7 +574,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _perms(user, live.presence);
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
-    final speakingId = _micOn ? user?.id : null;
+    final speakingIds = <String>{
+      for (final p in live.presence)
+        if (p.isSpeaking) p.id,
+    };
+    if (_micOn && user != null) speakingIds.add(user.id);
+    final speakingId = (_micOn && user != null)
+        ? user.id
+        : (speakingIds.isNotEmpty ? speakingIds.first : null);
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
     final staffBanner = live.enterBanner;
     final viewInsets = MediaQuery.viewInsetsOf(context);
