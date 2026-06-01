@@ -9,7 +9,9 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
+import '../../features/favorites/presentation/pages/favorites_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
+import '../../features/search/presentation/pages/global_search_page.dart';
 import '../../features/fortune/domain/entities/fortune_type_entity.dart';
 import '../../features/fortune/presentation/data/fortune_catalog.dart';
 import '../../features/fortune/presentation/pages/daily_fortune_open_page.dart';
@@ -291,6 +293,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsPage(),
+      ),
+      GoRoute(
+        path: '/search',
+        pageBuilder: (context, state) {
+          final q = state.uri.queryParameters['q'];
+          return AppPageTransitions.fadeSlide(
+            key: state.pageKey,
+            child: GlobalSearchPage(initialQuery: q),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/favorites',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const FavoritesPage(),
+        ),
       ),
       GoRoute(
         path: '/jeton-store',

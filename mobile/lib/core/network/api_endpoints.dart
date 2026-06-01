@@ -112,6 +112,16 @@ abstract final class ApiEndpoints {
   static String userLookup(String username) =>
       '/api/users/lookup/${Uri.encodeComponent(username.trim())}';
 
+  /// İsim veya kullanıcı adı ile arama (min 2 karakter, Bearer).
+  static String usersSearch(String query) =>
+      '/api/users/search?q=${Uri.encodeComponent(query.trim())}';
+
+  /// Oturumlu kullanıcının fal geçmişi.
+  static const userFortunes = '/api/user/fortunes';
+
+  static String userFortuneDetail(String fortuneId) =>
+      '/api/user/fortunes/$fortuneId';
+
   /// Yayın geçmişi (site dokümanı: `/api/user/broadcast-history`).
   static const userBroadcastHistory = '/api/user/broadcast-history';
 
