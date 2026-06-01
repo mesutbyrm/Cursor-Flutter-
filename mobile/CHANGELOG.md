@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.97+99 (2026-05-31)
+
+### Performans + Pro Glass UI
+
+- `ListPerf` sabitleri, `RepaintBoundary`, lazy liste (`LazyVisibleListController`)
+- Mesajlar / bildirimler: sayfalı görünür liste (24’lük artış, scroll’da yükleme)
+- Ses keşfet hub: `ListView.builder` + lazy oda satırları (eager map kaldırıldı)
+- Riverpod: `currentUserIdProvider` — sosyal kartlarda dar rebuild
+- `ProGlassCard` / `DiscoverGlassCard` blur glassmorphism
+- Keşfet oda yenileme aralığı 15 sn (pil / FPS)
+
 ## 1.0.96+98 (2026-05-31)
 
 ### Sesli oda, ödeme, jeton/CFC, sohbet düzeltmeleri

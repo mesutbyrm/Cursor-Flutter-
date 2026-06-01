@@ -5,11 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/performance/list_perf.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../shell/presentation/widgets/branch_quick_actions.dart';
+import '../providers/conversations_list_notifier.dart';
 import '../providers/messages_providers.dart';
 
 class ConversationsPage extends ConsumerStatefulWidget {
@@ -21,12 +24,15 @@ class ConversationsPage extends ConsumerStatefulWidget {
 
 class _ConversationsPageState extends ConsumerState<ConversationsPage> {
   Timer? _poll;
+  final _scroll = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _scroll.addListener(_onScroll);
     _poll = Timer.periodic(const Duration(seconds: 20), (_) {
       if (!mounted) return;
+      ref.read(conversationsListNotifierProvider.notifier).refresh();
       ref.invalidate(conversationsProvider);
     });
   }
@@ -34,24 +40,40 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
   @override
   void dispose() {
     _poll?.cancel();
+    _scroll.removeListener(_onScroll);
+    _scroll.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    final pos = _scroll.position;
+    if (pos.pixels >= pos.maxScrollExtent - ListPerf.preloadThresholdPx) {
+      ref.read(conversationsListNotifierProvider.notifier).loadMore();
+    }
+  }
+
+  Future<void> _refresh() async {
+    await ref.read(conversationsListNotifierProvider.notifier).refresh();
+    ref.invalidate(conversationsProvider);
   }
 
   @override
   Widget build(BuildContext context) {
-    final list = ref.watch(conversationsProvider);
+    final list = ref.watch(conversationsListNotifierProvider);
 
     return DiscoverTabScrollPage(
       title: 'Mesajlar',
       subtitle: 'Sohbetlerin ve grup mesajların',
-      onRefresh: () async => ref.invalidate(conversationsProvider),
+      onRefresh: _refresh,
       actions: [
         const MessagesNotificationsActions(spacing: 4),
         DiscoverIconButton(
           icon: Icons.refresh_rounded,
-          onPressed: () => ref.invalidate(conversationsProvider),
+          onPressed: _refresh,
         ),
       ],
+      scrollController: _scroll,
       slivers: [
         const SliverToBoxAdapter(
           child: Padding(
@@ -68,11 +90,12 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
               icon: Icons.chat_bubble_outline,
               message: ApiException.userMessage(e),
               actionLabel: 'Yenile',
-              action: () => ref.invalidate(conversationsProvider),
+              action: _refresh,
             ),
           ),
-          data: (items) {
-            if (items.isEmpty) {
+          data: (state) {
+            final items = state.visible;
+            if (state.all.isEmpty) {
               return SliverFillRemaining(
                 hasScrollBody: false,
                 child: DiscoverEmptyState(
@@ -85,24 +108,35 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
               );
             }
             return SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (ctx, i) {
+                    if (i >= items.length) {
+                      if (state.hasMore) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        );
+                      }
+                      return null;
+                    }
                     final c = items[i];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
-                      child: DiscoverGlassCard(
+                      child: ProGlassListTile(
                         onTap: () => context.push('/chat/${c.id}'),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
                         child: Row(
                           children: [
                             Container(
                               padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
                                 gradient: AppColors.brandGradient,
                               ),
@@ -157,15 +191,14 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
                             else
                               Icon(
                                 Icons.chevron_right_rounded,
-                                color:
-                                    AppColors.textMuted.withValues(alpha: 0.6),
+                                color: AppColors.textMuted.withValues(alpha: 0.6),
                               ),
                           ],
                         ),
                       ),
                     );
                   },
-                  childCount: items.length,
+                  childCount: items.length + (state.hasMore ? 1 : 0),
                 ),
               ),
             );
