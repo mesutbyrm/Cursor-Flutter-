@@ -159,16 +159,18 @@ class _LiveStreamsTab extends ConsumerWidget {
               action: () =>
                   ref.read(liveStreamsListNotifierProvider.notifier).refresh(),
             ),
-            data: (state) {
-              final streams = state.visible;
-              if (state.all.isEmpty) {
+            data: (streams) {
+              if (streams.isEmpty) {
                 return const DiscoverEmptyState(
                   icon: Icons.videocam_off_outlined,
                   message:
                       'Şu an canlı yayın yok.\nYeni yayınlar burada görünecek.',
                 );
               }
-              final extra = state.hasMore ? 1 : 0;
+              final hasMore = ref
+                  .read(liveStreamsListNotifierProvider.notifier)
+                  .hasMore;
+              final extra = hasMore ? 1 : 0;
               return ListView.separated(
                 controller: scrollController,
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),

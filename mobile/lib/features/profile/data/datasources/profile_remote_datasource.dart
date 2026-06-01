@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/pagination/paged_result.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/network/api_endpoints.dart';
@@ -306,15 +307,46 @@ class WalletRemoteDataSource {
   }
 
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.paymentRequests);
+    final page = await myPaymentRequestsPage(page: 1);
+    return page.items;
+  }
+
+  Future<PagedResult<CfcPaymentRequestEntity>> myPaymentRequestsPage({
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.paymentRequests,
+      query: {'page': page, 'limit': limit},
+    );
     dynamic data = res.data;
     if (data is Map && data['success'] == true) data = data['data'];
+    List<dynamic> raw = const [];
     if (data is List) {
-      return data
-          .map((e) => CfcPaymentRequestEntity.fromJson(asJsonMap(e)))
-          .toList();
+      raw = data;
+    } else if (data is Map) {
+      final m = asJsonMap(data);
+      raw = asJsonList(m['requests'] ?? m['items'] ?? const []);
+    } else if (res.data is Map) {
+      final m = asJsonMap(res.data);
+      raw = asJsonList(m['requests'] ?? m['items'] ?? const []);
     }
-    return const [];
+    final items = raw
+        .map((e) => CfcPaymentRequestEntity.fromJson(asJsonMap(e)))
+        .toList();
+    var hasMore = items.length >= limit;
+    final body = res.data;
+    if (body is Map) {
+      final pag = body['pagination'] ??
+          (body['data'] is Map ? asJsonMap(body['data'])['pagination'] : null);
+      if (pag is Map) {
+        final pm = asJsonMap(pag);
+        final totalPages = asInt(pm['totalPages']);
+        final current = asInt(pm['page']);
+        if (totalPages > 0) hasMore = current < totalPages;
+      }
+    }
+    return PagedResult(items: items, hasMore: hasMore);
   }
 
   Map<String, dynamic> _unwrap(dynamic data) {

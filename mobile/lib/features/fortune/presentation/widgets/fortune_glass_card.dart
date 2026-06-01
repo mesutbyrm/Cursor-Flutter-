@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/ui/premium_2026/liquid_glass.dart';
+import '../../../../core/ui/pro_glass/pro_glass.dart';
 
-/// Fal kartı — Liquid Glass (2026).
+/// Fal kartı — Pro Glass (blur + cam kenarlık).
 class FortuneGlassCard extends StatelessWidget {
   const FortuneGlassCard({
     super.key,
@@ -23,20 +23,22 @@ class FortuneGlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final border = accent ?? AppColors.accentPurple;
-    return LiquidGlass(
+    return ProGlassCard(
       padding: padding,
       elevated: elevated,
       onTap: onTap,
-      blur: elevated ? 24 : 18,
-      gradientBorder: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          border.withValues(alpha: 0.55),
-          border.withValues(alpha: 0.15),
-        ],
+      blur: elevated ? 20 : 14,
+      animateIn: false,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: border.withValues(alpha: 0.35),
+            width: 1,
+          ),
+        ),
+        child: child,
       ),
-      child: child,
     );
   }
 }

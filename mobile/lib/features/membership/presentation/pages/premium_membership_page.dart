@@ -10,6 +10,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../profile/data/jeton_packages_catalog.dart';
 import '../../../profile/domain/entities/jeton_package_entity.dart';
+import '../../../profile/presentation/providers/payment_requests_notifier.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../../../profile/presentation/widgets/jeton_checkout_flow.dart';
@@ -210,7 +211,7 @@ class PremiumMembershipPage extends ConsumerWidget {
       onDone: () {
         ref.invalidate(membershipCatalogProvider);
         ref.invalidate(walletBalancesProvider);
-        ref.invalidate(allPaymentRequestsProvider);
+        ref.invalidate(paymentRequestsNotifierProvider);
       },
     );
   }

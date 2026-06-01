@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../data/jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
@@ -174,9 +175,11 @@ class _JetonStoreHeader extends StatelessWidget {
       children: [
         Align(
           alignment: Alignment.centerLeft,
-          child: Material(
-            color: Colors.white.withValues(alpha: 0.08),
-            shape: const CircleBorder(),
+          child: ProGlassCard(
+            blur: 10,
+            animateIn: false,
+            padding: EdgeInsets.zero,
+            borderRadius: BorderRadius.circular(28),
             child: IconButton(
               icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
               onPressed: onBack,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/content/currency_usage_info.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../../core/ui/pro_glass/pro_glass.dart';
 
 /// CFC veya Jeton kullanım alanları kartı.
 class CurrencyUsageCard extends StatelessWidget {
@@ -18,10 +18,9 @@ class CurrencyUsageCard extends StatelessWidget {
     final items =
         isCfc ? CurrencyUsageInfo.cfcUsageItems : CurrencyUsageInfo.jetonUsageItems;
 
-    return DiscoverGlassCard(
-      borderColor: isCfc
-          ? AppColors.diamondBlue.withValues(alpha: 0.35)
-          : AppColors.coinGold.withValues(alpha: 0.35),
+    return ProGlassCard(
+      blur: 14,
+      animateIn: false,
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

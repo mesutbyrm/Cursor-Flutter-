@@ -15,9 +15,9 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   Future<List<AppNotificationEntity>> fetch() async {
     if (Env.useMobileAuth) {
       try {
-        final items = await _canlifal.fetchActivity();
-        if (items.isNotEmpty) {
-          return items.map(_activityToNotification).toList();
+        final page = await _canlifal.fetchActivity();
+        if (page.items.isNotEmpty) {
+          return page.items.map(_activityToNotification).toList();
         }
       } catch (_) {}
     }
