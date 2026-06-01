@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -47,9 +48,10 @@ class UserProfilePage extends ConsumerWidget {
         ),
         data: (user) {
           return ListView(
+            physics: PremiumMotion.listPhysics,
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             children: [
-              DiscoverGlassCard(
+              LiquidGlassCard(
                 child: Row(
                   children: [
                     Container(
@@ -67,10 +69,7 @@ class UserProfilePage extends ConsumerWidget {
                         children: [
                           Text(
                             user.display,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                            ),
+                            style: PremiumTypography.headline(context),
                           ),
                           Text(
                             '@${user.username}',
@@ -86,7 +85,7 @@ class UserProfilePage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              DiscoverGlassCard(
+              LiquidGlassCard(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -171,11 +170,10 @@ class UserProfilePage extends ConsumerWidget {
                 ),
               if (user.bio != null && user.bio!.isNotEmpty) ...[
                 const SizedBox(height: 14),
-                DiscoverGlassCard(
+                LiquidGlassCard(
                   child: Text(
                     user.bio!,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
+                    style: PremiumTypography.body(context).copyWith(
                       height: 1.45,
                     ),
                   ),

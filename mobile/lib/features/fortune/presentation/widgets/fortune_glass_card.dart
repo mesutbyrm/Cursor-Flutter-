@@ -1,11 +1,9 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/ui/premium_2026/liquid_glass.dart';
 
-/// Cam efektli fal kartı — mockup glassmorphism.
+/// Fal kartı — Liquid Glass (2026).
 class FortuneGlassCard extends StatelessWidget {
   const FortuneGlassCard({
     super.key,
@@ -13,49 +11,32 @@ class FortuneGlassCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(16),
     this.accent,
     this.onTap,
+    this.elevated = false,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
   final Color? accent;
   final VoidCallback? onTap;
+  final bool elevated;
 
   @override
   Widget build(BuildContext context) {
     final border = accent ?? AppColors.accentPurple;
-    final radius = BorderRadius.circular(AppSpacing.radiusLg);
-
-    Widget card = ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                border.withValues(alpha: 0.18),
-                Colors.black.withValues(alpha: 0.55),
-              ],
-            ),
-            border: Border.all(
-              color: border.withValues(alpha: 0.45),
-              width: 1.2,
-            ),
-            boxShadow: AppColors.glowShadow(border, blur: 16),
-          ),
-          child: child,
-        ),
+    return LiquidGlass(
+      padding: padding,
+      elevated: elevated,
+      onTap: onTap,
+      blur: elevated ? 24 : 18,
+      gradientBorder: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          border.withValues(alpha: 0.55),
+          border.withValues(alpha: 0.15),
+        ],
       ),
-    );
-
-    if (onTap == null) return card;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(onTap: onTap, borderRadius: radius, child: card),
+      child: child,
     );
   }
 }

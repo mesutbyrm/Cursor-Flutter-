@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.94+96 (2026-05-31)
+
+### Premium 2026 UI (PR #58)
+
+- Liquid glass auth shell, `PremiumScreenShell`
+- Fortune mystic arka plan + hub kartları
+- Profil düzenleme / kullanıcı profili premium yüzeyler
+
 ## 1.0.93+95 (2026-05-31)
 
 ### Hata düzeltmeleri
