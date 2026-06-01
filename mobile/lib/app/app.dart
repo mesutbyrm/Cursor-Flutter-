@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/l10n/app_localizations_config.dart';
@@ -25,6 +26,18 @@ class CanlifalApp extends ConsumerWidget {
         theme: AppTheme.light(),
         darkTheme: AppTheme.dark(),
         themeMode: themeMode,
+        builder: (context, child) {
+          final brightness = Theme.of(context).brightness;
+          SystemChrome.setSystemUIOverlayStyle(
+            SystemUiOverlayStyle(
+              statusBarIconBrightness:
+                  brightness == Brightness.dark ? Brightness.light : Brightness.dark,
+              statusBarBrightness:
+                  brightness == Brightness.dark ? Brightness.dark : Brightness.light,
+            ),
+          );
+          return child ?? const SizedBox.shrink();
+        },
         routerConfig: router,
       ),
     );

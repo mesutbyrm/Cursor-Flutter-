@@ -17,7 +17,7 @@ class ProfileBroadcasterStatsPage extends ConsumerWidget {
     final mine = ref.watch(profileStatsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'İstatistikler',

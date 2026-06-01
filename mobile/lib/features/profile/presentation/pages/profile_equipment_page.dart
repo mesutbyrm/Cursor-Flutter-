@@ -16,7 +16,7 @@ class ProfileEquipmentPage extends ConsumerWidget {
     final notifier = ref.read(equipmentSettingsProvider.notifier);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Ekipmanım',

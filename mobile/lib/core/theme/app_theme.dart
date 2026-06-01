@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
+import 'app_palette.dart';
 import 'app_spacing.dart';
 import '../ui/premium_2026/premium_2026_tokens.dart';
 import 'canlifal_tokens.dart';
@@ -47,6 +48,7 @@ class AppTheme {
       extensions: [
         tokens,
         isDark ? Premium2026Tokens.dark : Premium2026Tokens.light,
+        isDark ? AppPalette.dark : AppPalette.light,
       ],
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {

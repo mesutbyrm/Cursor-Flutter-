@@ -61,7 +61,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
     final history = ref.watch(paymentRequestsNotifierProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'CFC Yükle',

@@ -1,17 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Uygulama tema modu — varsayılan koyu (premium canlı yayın dili).
+import '../storage/local_cache.dart';
+
+const _themeModeKey = 'app_theme_mode';
+
+/// Uygulama tema modu — Hive ile kalıcı; varsayılan koyu.
 final themeModeProvider =
     NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
 
 class ThemeModeNotifier extends Notifier<ThemeMode> {
   @override
-  ThemeMode build() => ThemeMode.dark;
+  ThemeMode build() => _readPersisted();
 
-  void setMode(ThemeMode mode) => state = mode;
+  ThemeMode _readPersisted() {
+    try {
+      return _decode(LocalCache.getString(_themeModeKey));
+    } catch (_) {
+      return ThemeMode.dark;
+    }
+  }
 
-  void toggle() {
-    state = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+  Future<void> setMode(ThemeMode mode) async {
+    if (state == mode) return;
+    state = mode;
+    try {
+      await LocalCache.setString(_themeModeKey, _encode(mode));
+    } catch (_) {}
+  }
+
+  void toggleLightDark() {
+    final next = state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    setMode(next);
   }
 }
+
+String _encode(ThemeMode mode) => switch (mode) {
+      ThemeMode.light => 'light',
+      ThemeMode.dark => 'dark',
+      ThemeMode.system => 'system',
+    };
+
+ThemeMode _decode(String? raw) => switch (raw) {
+      'light' => ThemeMode.light,
+      'system' => ThemeMode.system,
+      'dark' => ThemeMode.dark,
+      _ => ThemeMode.dark,
+    };

@@ -85,7 +85,7 @@ class _FortuneSessionPageState extends State<FortuneSessionPage>
     final top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: FortuneMysticBackground(
         child: Column(
           children: [

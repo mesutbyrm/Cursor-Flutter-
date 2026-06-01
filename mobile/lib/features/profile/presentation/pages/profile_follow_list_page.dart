@@ -32,7 +32,7 @@ class ProfileFollowListPage extends ConsumerWidget {
         : ProfileRemoteDataSource(ref.watch(dioProvider)).following(userId);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: tab == ProfileFollowTab.followers ? 'Takipçi' : 'Takip',

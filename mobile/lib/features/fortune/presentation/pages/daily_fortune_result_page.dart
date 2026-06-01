@@ -80,7 +80,7 @@ class _DailyFortuneResultPageState extends ConsumerState<DailyFortuneResultPage>
     const gold = Color(0xFFD4AF37);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: FortuneMysticBackground(
         child: Column(
           children: [

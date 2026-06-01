@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.100+102 (2026-05-31)
+
+### Dark / Light Mode
+
+- `AppTheme.light()` / `AppTheme.dark()` — Material 3 tam tema
+- `AppPalette` ThemeExtension — yüzey ve metin renkleri
+- Kalıcı tema: Hive (`app_theme_mode`) — Açık / Koyu / Sistem
+- Profil → Görünüm: `ThemeModeSelector` (segmented)
+- Ana kabuk ve sayfalar `scaffoldBackgroundColor` ile tema uyumlu
+- Durum çubuğu ikonları temaya göre ayarlanır
+
 ## 1.0.99+101 (2026-05-31)
 
 ### API sayfalama + Pro Glass mağaza / fal

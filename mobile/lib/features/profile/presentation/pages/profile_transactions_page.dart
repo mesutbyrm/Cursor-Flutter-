@@ -60,7 +60,7 @@ class _ProfileTransactionsPageState
     final activity = ref.watch(profileActivityNotifierProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'İşlemler',

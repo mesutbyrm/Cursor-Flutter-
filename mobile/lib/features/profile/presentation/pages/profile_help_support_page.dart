@@ -93,7 +93,7 @@ class _ProfileHelpSupportPageState extends ConsumerState<ProfileHelpSupportPage>
     final user = ref.watch(authControllerProvider).valueOrNull;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Yardım & Destek',

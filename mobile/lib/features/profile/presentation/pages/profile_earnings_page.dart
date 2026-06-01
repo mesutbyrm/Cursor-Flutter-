@@ -16,7 +16,7 @@ class ProfileEarningsPage extends ConsumerWidget {
     final stats = ref.watch(profileStatsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Kazançlarım',

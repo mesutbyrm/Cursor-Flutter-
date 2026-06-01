@@ -56,7 +56,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
     final access = ref.watch(staffAccessProvider);
     if (!access.canManagePayments) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: DiscoverBackground(
           child: Center(
             child: DiscoverEmptyState(
@@ -77,7 +77,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
     final pendingCount = ref.watch(adminPendingPaymentsCountProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: Column(
           children: [

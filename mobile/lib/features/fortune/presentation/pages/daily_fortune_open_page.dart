@@ -60,7 +60,7 @@ class _DailyFortuneOpenPageState extends State<DailyFortuneOpenPage> {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: FortuneMysticBackground(
         child: Column(
           children: [

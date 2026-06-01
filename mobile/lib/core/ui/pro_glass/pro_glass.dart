@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../performance/list_perf.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/app_palette.dart';
 import '../../theme/app_spacing.dart';
 import '../premium_2026/liquid_glass.dart';
 import '../premium_2026/premium_motion.dart';
@@ -108,17 +108,16 @@ class ProGlassTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
           height: height,
           decoration: BoxDecoration(
-            color: AppColors.background.withValues(alpha: 0.55),
+            color: palette.glassOverlay,
             border: Border(
-              bottom: BorderSide(
-                color: Colors.white.withValues(alpha: 0.06),
-              ),
+              bottom: BorderSide(color: palette.divider),
             ),
           ),
           child: child,
