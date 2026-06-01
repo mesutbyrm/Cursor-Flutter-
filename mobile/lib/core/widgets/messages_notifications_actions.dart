@@ -26,6 +26,12 @@ class MessagesNotificationsActions extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         PremiumIconButton(
+          icon: Icons.search_rounded,
+          size: iconSize,
+          onTap: () => context.push('/search'),
+        ),
+        SizedBox(width: spacing),
+        PremiumIconButton(
           icon: Icons.chat_bubble_outline_rounded,
           size: iconSize,
           showBadge: unreadMessages > 0,

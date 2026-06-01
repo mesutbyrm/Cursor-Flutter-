@@ -78,6 +78,7 @@ class _DiscoverPremiumFeedState extends ConsumerState<DiscoverPremiumFeed> {
           DiscoverPremiumSearchBar(
             controller: _search,
             onChanged: (_) => setState(() {}),
+            onOpenGlobalSearch: () => context.push('/search'),
           ),
           Expanded(
             child: RefreshIndicator(

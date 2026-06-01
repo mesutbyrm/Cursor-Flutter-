@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../../../../core/ui/premium_2026/liquid_glass.dart';
 import '../../../../../core/ui/premium_2026/premium_motion.dart';
 
@@ -9,11 +8,13 @@ class DiscoverPremiumSearchBar extends StatelessWidget {
     super.key,
     required this.controller,
     this.onChanged,
+    this.onOpenGlobalSearch,
     this.hint = 'Oda, yayın veya kullanıcı ara…',
   });
 
   final TextEditingController controller;
   final ValueChanged<String>? onChanged;
+  final VoidCallback? onOpenGlobalSearch;
   final String hint;
 
   @override
@@ -43,22 +44,37 @@ class DiscoverPremiumSearchBar extends StatelessWidget {
               Icons.search_rounded,
               color: Colors.white.withValues(alpha: 0.7),
             ),
-            suffixIcon: ValueListenableBuilder<TextEditingValue>(
-              valueListenable: controller,
-              builder: (_, value, __) {
-                if (value.text.isEmpty) return const SizedBox.shrink();
-                return IconButton(
-                  icon: Icon(
-                    Icons.close_rounded,
-                    color: Colors.white.withValues(alpha: 0.6),
-                    size: 20,
+            suffixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (onOpenGlobalSearch != null)
+                  IconButton(
+                    tooltip: 'Kullanıcı ara',
+                    icon: Icon(
+                      Icons.person_search_rounded,
+                      color: Colors.white.withValues(alpha: 0.65),
+                      size: 22,
+                    ),
+                    onPressed: onOpenGlobalSearch,
                   ),
-                  onPressed: () {
-                    controller.clear();
-                    onChanged?.call('');
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: controller,
+                  builder: (_, value, __) {
+                    if (value.text.isEmpty) return const SizedBox.shrink();
+                    return IconButton(
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: Colors.white.withValues(alpha: 0.6),
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        controller.clear();
+                        onChanged?.call('');
+                      },
+                    );
                   },
-                );
-              },
+                ),
+              ],
             ),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 14),

@@ -40,6 +40,16 @@ class ProfileSettingsMenu extends StatelessWidget {
         onTap: onNotifications ?? () => context.push('/notifications'),
       ),
       (
+        icon: Icons.bookmark_outline_rounded,
+        label: 'Favoriler',
+        onTap: () => context.push('/favorites'),
+      ),
+      (
+        icon: Icons.search_rounded,
+        label: 'Kullanıcı Ara',
+        onTap: () => context.push('/search'),
+      ),
+      (
         icon: Icons.help_outline_rounded,
         label: 'Yardım & Destek',
         onTap: onHelp ?? () {},
