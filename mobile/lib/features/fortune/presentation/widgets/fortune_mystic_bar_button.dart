@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../../../core/theme/app_colors.dart';
 
 /// Günlük fal ekranları — koyu kare ikon butonu (mockup).
 class FortuneMysticBarButton extends StatelessWidget {
@@ -35,7 +35,7 @@ class FortuneMysticBarButton extends StatelessWidget {
           child: Icon(
             icon,
             size: 20,
-            color: AppColors.textSecondary.withValues(alpha: 0.95),
+            color: context.colors.onSurfaceVariant.withValues(alpha: 0.95),
           ),
         ),
       ),

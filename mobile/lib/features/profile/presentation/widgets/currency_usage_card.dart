@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import '../../../../core/content/currency_usage_info.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 
 /// CFC veya Jeton kullanım alanları kartı.
@@ -27,32 +29,32 @@ class CurrencyUsageCard extends StatelessWidget {
         children: [
           Text(
             '$title — nerelerde kullanılır?',
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
           ),
           if (isCfc) ...[
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               CurrencyUsageInfo.cfcPriceHint,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: AppColors.diamondBlue.withValues(alpha: 0.95),
+                color: AppThemeColors.diamondBlue.withValues(alpha: 0.95),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.liveRed.withValues(alpha: 0.12),
+                color: AppThemeColors.liveRed.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: AppColors.liveRed.withValues(alpha: 0.35),
+                  color: AppThemeColors.liveRed.withValues(alpha: 0.35),
                 ),
               ),
               child: const Row(
                 children: [
                   Icon(Icons.info_outline_rounded,
-                      size: 18, color: AppColors.liveRed),
+                      size: 18, color: AppThemeColors.liveRed),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -68,7 +70,7 @@ class CurrencyUsageCard extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           for (var i = 0; i < items.length; i++)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
@@ -77,17 +79,17 @@ class CurrencyUsageCard extends StatelessWidget {
                 children: [
                   Text(
                     '${i + 1}.',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textMuted,
+                      color: context.colors.onSurfaceMuted,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       items[i],
-                      style: const TextStyle(fontSize: 13, height: 1.35),
+                      style: TextStyle(fontSize: 13, height: 1.35),
                     ),
                   ),
                 ],

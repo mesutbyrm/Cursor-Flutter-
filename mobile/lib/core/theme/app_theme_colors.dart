@@ -71,6 +71,14 @@ class AppThemeColors {
   static const Color onlineGreen = Color(0xFF3DFF6E);
   static const Color diamondBlue = Color(0xFF5B8CFF);
   static const Color coinGold = Color(0xFFFFD54F);
+  static const Color warning = Color(0xFFFFB347);
+
+  static List<BoxShadow> glowShadow(Color color, {double blur = 24}) => [
+        BoxShadow(
+          color: color.withValues(alpha: 0.45),
+          blurRadius: blur,
+        ),
+      ];
 
   static const AppThemeColors dark = AppThemeColors(
     brightness: Brightness.dark,

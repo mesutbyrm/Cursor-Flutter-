@@ -1,8 +1,10 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import 'voice_glass.dart';
 
@@ -67,7 +69,7 @@ class VoicePremiumMessageBar extends StatelessWidget {
             color: Colors.black.withValues(alpha: 0.45),
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
-              color: AppColors.accentPurple.withValues(alpha: 0.35),
+              color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
             ),
           ),
           child: Row(
@@ -84,7 +86,7 @@ class VoicePremiumMessageBar extends StatelessWidget {
                   decoration: InputDecoration(
                     hintText: 'Mesaj yaz…',
                     hintStyle: TextStyle(
-                      color: AppColors.textMuted.withValues(alpha: 0.85),
+                      color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
                     ),
                     border: InputBorder.none,
                     isDense: true,
@@ -96,13 +98,13 @@ class VoicePremiumMessageBar extends StatelessWidget {
                 onPressed: sending ? null : onSend,
                 icon: Icon(
                   Icons.send_rounded,
-                  color: sending ? AppColors.textMuted : AppColors.accentCyan,
+                  color: sending ? context.colors.onSurfaceMuted : AppThemeColors.accentCyan,
                 ),
               ),
               IconButton(
                 onPressed: onGift,
                 icon: const Icon(Icons.card_giftcard_rounded,
-                    color: AppColors.coinGold),
+                    color: AppThemeColors.coinGold),
               ),
             ],
           ),
@@ -129,7 +131,7 @@ class _MessageBubble extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 10,
-            color: AppColors.textMuted.withValues(alpha: 0.9),
+            color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
             fontStyle: FontStyle.italic,
           ),
         ),
@@ -144,8 +146,8 @@ class _MessageBubble extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppColors.accentPink.withValues(alpha: 0.25),
-                AppColors.accentPurple.withValues(alpha: 0.15),
+                AppThemeColors.accentPink.withValues(alpha: 0.25),
+                AppThemeColors.accentPurple.withValues(alpha: 0.15),
               ],
             ),
             borderRadius: BorderRadius.circular(12),
@@ -155,7 +157,7 @@ class _MessageBubble extends StatelessWidget {
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: AppColors.coinGold,
+              color: AppThemeColors.coinGold,
             ),
           ),
         ),
@@ -177,8 +179,8 @@ class _MessageBubble extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   color: user?.isBroadcaster == true
-                      ? AppColors.coinGold
-                      : AppColors.accentPink,
+                      ? AppThemeColors.coinGold
+                      : AppThemeColors.accentPink,
                 ),
               ),
               TextSpan(text: message.content),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../core/theme/app_colors.dart';
 
 /// Fal hub üst bar — mor/altın çerçeveli kare ikon butonu.
 class FortuneHubActionButton extends StatelessWidget {
@@ -36,7 +38,7 @@ class FortuneHubActionButton extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.accentPurple.withValues(alpha: 0.2),
+                color: AppThemeColors.accentPurple.withValues(alpha: 0.2),
                 blurRadius: 8,
               ),
             ],
@@ -47,7 +49,7 @@ class FortuneHubActionButton extends StatelessWidget {
               Icon(
                 icon,
                 size: 20,
-                color: AppColors.textSecondary.withValues(alpha: 0.95),
+                color: context.colors.onSurfaceVariant.withValues(alpha: 0.95),
               ),
               if (badgeCount > 0)
                 Positioned(
@@ -57,7 +59,7 @@ class FortuneHubActionButton extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                     constraints: const BoxConstraints(minWidth: 14),
                     decoration: BoxDecoration(
-                      color: AppColors.liveRed,
+                      color: AppThemeColors.liveRed,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: const Color(0xFF0A0118), width: 1),
                     ),

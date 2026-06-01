@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 import 'fortune_glass_card.dart';
 
@@ -31,23 +33,23 @@ class FortuneDailyCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               gradient: LinearGradient(
                 colors: [
-                  AppColors.coinGold.withValues(alpha: 0.6),
+                  AppThemeColors.coinGold.withValues(alpha: 0.6),
                   type.accent.withValues(alpha: 0.4),
                 ],
               ),
-              boxShadow: AppColors.glowShadow(AppColors.coinGold, blur: 20),
+              boxShadow: AppThemeColors.glowShadow(AppThemeColors.coinGold, blur: 20),
             ),
-            child: Text(type.emoji, style: const TextStyle(fontSize: 36)),
+            child: Text(type.emoji, style: TextStyle(fontSize: 36)),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ShaderMask(
                   shaderCallback: (b) =>
-                      AppColors.brandGradient.createShader(b),
-                  child: const Text(
+                      context.colors.brandGradient.createShader(b),
+                  child: Text(
                     'Günlük Fal',
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
@@ -56,11 +58,11 @@ class FortuneDailyCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 Text(
                   type.description,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: context.colors.onSurfaceVariant,
                     fontSize: 13,
                     height: 1.35,
                   ),
@@ -68,11 +70,11 @@ class FortuneDailyCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           FilledButton(
             onPressed: onOpen,
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.accentPurple,
+              backgroundColor: AppThemeColors.accentPurple,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
@@ -81,7 +83,7 @@ class FortuneDailyCard extends StatelessWidget {
             ),
             child: Text(
               type.ctaLabel,
-              style: const TextStyle(fontWeight: FontWeight.w800),
+              style: TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
         ],

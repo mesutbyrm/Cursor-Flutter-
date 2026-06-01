@@ -1,9 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/domain/entities/user_entity.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
@@ -23,7 +25,7 @@ class SocialStoriesRail extends ConsumerWidget {
     return SizedBox(
       height: 112,
       child: ringsAsync.when(
-        loading: () => const Center(
+        loading: () => Center(
           child: SizedBox(
             width: 24,
             height: 24,
@@ -60,12 +62,12 @@ class _StoriesError extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: AppColors.textMuted.withValues(alpha: 0.9),
+                color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                 fontSize: 12,
               ),
             ),
-            const SizedBox(height: 6),
-            TextButton(onPressed: onRetry, child: const Text('Tekrar dene')),
+            SizedBox(height: 6),
+            TextButton(onPressed: onRetry, child: Text('Tekrar dene')),
           ],
         ),
       ),
@@ -125,12 +127,12 @@ class _OwnStoryChip extends StatelessWidget {
               width: 22,
               height: 22,
               decoration: BoxDecoration(
-                gradient: AppColors.fabGradient,
+                gradient: context.colors.brandGradient,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.background, width: 2),
-                boxShadow: AppColors.glowShadow(AppColors.accentPink, blur: 10),
+                border: Border.all(color: context.scaffoldBg, width: 2),
+                boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: 10),
               ),
-              child: const Icon(Icons.add, size: 14, color: Colors.white),
+              child: Icon(Icons.add, size: 14, color: Colors.white),
             ),
           ),
         ],
@@ -201,29 +203,29 @@ class _StoryRingFrame extends StatelessWidget {
                           Color(0xFFFE2C55),
                         ],
                       )
-                    : AppColors.brandGradient,
+                    : context.colors.brandGradient,
                 boxShadow: isOwn
-                    ? AppColors.glowShadow(AppColors.accentPurple, blur: 14)
+                    ? AppThemeColors.glowShadow(AppThemeColors.accentPurple, blur: 14)
                     : null,
               ),
               child: DecoratedBox(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.background,
+                  color: context.scaffoldBg,
                 ),
                 child: child,
               ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: context.colors.onSurface,
               ),
             ),
           ],
@@ -268,8 +270,8 @@ class _AvatarPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: const Color(0xFF1E1E2E),
-      child: const Center(
-        child: Icon(Icons.person, color: AppColors.textMuted),
+      child: Center(
+        child: Icon(Icons.person, color: context.colors.onSurfaceMuted),
       ),
     );
   }

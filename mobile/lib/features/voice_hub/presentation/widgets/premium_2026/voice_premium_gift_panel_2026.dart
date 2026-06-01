@@ -2,12 +2,14 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/config/env.dart';
 import '../../../../../core/network/api_exception.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../gifts/domain/gift_rarity.dart';
 import '../../../../gifts/domain/premium_gift_catalog_2026.dart';
@@ -83,16 +85,16 @@ class _VoicePremiumGiftPanel2026State
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppColors.accentPink.withValues(alpha: 0.35),
+                AppThemeColors.accentPink.withValues(alpha: 0.35),
                 const Color(0xFF0C0C18).withValues(alpha: 0.97),
               ],
             ),
             border: Border(
-              top: BorderSide(color: AppColors.accentPink.withValues(alpha: 0.55)),
+              top: BorderSide(color: AppThemeColors.accentPink.withValues(alpha: 0.55)),
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.accentPurple.withValues(alpha: 0.3),
+                color: AppThemeColors.accentPurple.withValues(alpha: 0.3),
                 blurRadius: 36,
                 offset: const Offset(0, -10),
               ),
@@ -163,7 +165,7 @@ class _VoicePremiumGiftPanel2026State
                   loading: () => const Center(
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: AppColors.accentPink,
+                      color: AppThemeColors.accentPink,
                     ),
                   ),
                   error: (e, _) => Center(
@@ -265,7 +267,7 @@ class _CategoryChip extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            gradient: selected ? AppColors.brandGradient : null,
+            gradient: selected ? context.colors.brandGradient : null,
             color: selected ? null : Colors.white.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(20),
           ),
@@ -274,7 +276,7 @@ class _CategoryChip extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 12,
-              color: selected ? Colors.white : AppColors.textMuted,
+              color: selected ? Colors.white : context.colors.onSurfaceMuted,
             ),
           ),
         ),
@@ -390,7 +392,7 @@ class _PremiumGiftTile extends StatelessWidget {
               ? LinearGradient(
                   colors: [
                     glow.withValues(alpha: 0.5),
-                    AppColors.accentPurple.withValues(alpha: 0.28),
+                    AppThemeColors.accentPurple.withValues(alpha: 0.28),
                   ],
                 )
               : null,
@@ -399,7 +401,7 @@ class _PremiumGiftTile extends StatelessWidget {
             color: selected ? glow : Colors.white.withValues(alpha: 0.12),
             width: selected ? 2 : 1,
           ),
-          boxShadow: selected ? AppColors.glowShadow(glow, blur: 20) : null,
+          boxShadow: selected ? AppThemeColors.glowShadow(glow, blur: 20) : null,
         ),
         child: Column(
           children: [
@@ -422,7 +424,7 @@ class _PremiumGiftTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
-                color: AppColors.coinGold.withValues(alpha: 0.95),
+                color: AppThemeColors.coinGold.withValues(alpha: 0.95),
               ),
             ),
           ],
@@ -480,9 +482,9 @@ class _CoinChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        gradient: AppColors.coinCapsuleGradient,
+        gradient: context.colors.brandGradient,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: AppColors.glowShadow(AppColors.coinGold, blur: 12),
+        boxShadow: AppThemeColors.glowShadow(AppThemeColors.coinGold, blur: 12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -569,9 +571,9 @@ class _SendButton extends StatelessWidget {
           width: fullWidth ? double.infinity : null,
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            gradient: AppColors.brandGradient,
+            gradient: context.colors.brandGradient,
             borderRadius: BorderRadius.circular(22),
-            boxShadow: AppColors.glowShadow(AppColors.accentPink),
+            boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink),
           ),
           child: Center(
             child: loading

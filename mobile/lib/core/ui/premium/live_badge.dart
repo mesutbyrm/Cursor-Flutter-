@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../theme/app_colors.dart';
 
 /// Canlı yayın rozeti — TikTok/Bigo tarzı kırmızı pill.
 class LiveBadge extends StatelessWidget {
@@ -21,11 +22,11 @@ class LiveBadge extends StatelessWidget {
         vertical: compact ? 2 : 4,
       ),
       decoration: BoxDecoration(
-        color: AppColors.liveRed,
+        color: AppThemeColors.liveRed,
         borderRadius: BorderRadius.circular(6),
         boxShadow: [
           BoxShadow(
-            color: AppColors.liveRed.withValues(alpha: 0.5),
+            color: AppThemeColors.liveRed.withValues(alpha: 0.5),
             blurRadius: 8,
           ),
         ],

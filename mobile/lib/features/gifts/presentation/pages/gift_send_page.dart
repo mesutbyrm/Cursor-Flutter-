@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../../live/presentation/gifts/widgets/floating_gift_particles.dart';
@@ -104,7 +104,7 @@ class _GiftSendPageState extends ConsumerState<GiftSendPage> {
                   'Hediye göndermek için geçerli bir yayın veya oda gerekli.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppColors.textMuted.withValues(alpha: 0.95),
+                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
                   ),
                 ),
               ),

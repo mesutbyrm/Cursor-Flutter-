@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../../../core/widgets/dual_balance_chips.dart';
 import '../../../../../core/widgets/user_avatar.dart';
@@ -63,12 +65,12 @@ class ProfileNeonHeader extends ConsumerWidget {
                 cfc: cfcBalance,
                 compact: true,
               ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             _TopIconButton(icon: Icons.edit_rounded, onPressed: onEdit),
-            const SizedBox(width: 4),
+            SizedBox(width: 4),
             const MessagesNotificationsActions(spacing: 4, iconSize: 36),
             if (onLogout != null) ...[
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               _TopIconButton(
                 icon: Icons.logout_rounded,
                 onPressed: onLogout,
@@ -76,29 +78,29 @@ class ProfileNeonHeader extends ConsumerWidget {
             ],
           ],
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         Center(
           child: GestureDetector(
             onTap: onAvatarTap ?? onEdit,
             child: _NeonAvatar(url: avatarUrl),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               displayName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w900,
                 letterSpacing: -0.5,
               ),
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             ShaderMask(
-              shaderCallback: (b) => AppColors.brandGradient.createShader(b),
-              child: const Icon(
+              shaderCallback: (b) => context.colors.brandGradient.createShader(b),
+              child: Icon(
                 Icons.verified_rounded,
                 color: Colors.white,
                 size: 22,
@@ -106,17 +108,17 @@ class ProfileNeonHeader extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           '@$username',
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.textMuted,
+          style: TextStyle(
+            color: context.colors.onSurfaceMuted,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         Row(
           children: [
             Expanded(
@@ -151,12 +153,12 @@ class ProfileNeonHeader extends ConsumerWidget {
           ],
         ),
         if (bio != null && bio!.trim().isNotEmpty) ...[
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           Text(
             bio!,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: context.colors.onSurfaceVariant,
               fontSize: 14,
               height: 1.45,
             ),
@@ -192,7 +194,7 @@ class _TopIconButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(10),
-          child: Icon(icon, size: 20, color: AppColors.textSecondary),
+          child: Icon(icon, size: 20, color: context.colors.onSurfaceVariant),
         ),
       ),
     );
@@ -210,24 +212,24 @@ class _NeonAvatar extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: AppColors.brandGradient,
+        gradient: context.colors.brandGradient,
         boxShadow: [
           BoxShadow(
-            color: AppColors.accentPink.withValues(alpha: 0.55),
+            color: AppThemeColors.accentPink.withValues(alpha: 0.55),
             blurRadius: 32,
             spreadRadius: 2,
           ),
           BoxShadow(
-            color: AppColors.accentPurple.withValues(alpha: 0.4),
+            color: AppThemeColors.accentPurple.withValues(alpha: 0.4),
             blurRadius: 48,
           ),
         ],
       ),
       child: Container(
         padding: const EdgeInsets.all(3),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppColors.background,
+          color: context.scaffoldBg,
         ),
         child: Stack(
           clipBehavior: Clip.none,
@@ -240,10 +242,10 @@ class _NeonAvatar extends StatelessWidget {
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: AppColors.brandGradient,
-                  border: Border.all(color: AppColors.background, width: 2),
+                  gradient: context.colors.brandGradient,
+                  border: Border.all(color: context.scaffoldBg, width: 2),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.star_rounded,
                   size: 14,
                   color: Colors.white,
@@ -281,19 +283,19 @@ class _StatColumn extends StatelessWidget {
             children: [
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.3,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 label,
                 textAlign: TextAlign.center,
                 maxLines: 2,
-                style: const TextStyle(
-                  color: AppColors.textMuted,
+                style: TextStyle(
+                  color: context.colors.onSurfaceMuted,
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
                   height: 1.2,

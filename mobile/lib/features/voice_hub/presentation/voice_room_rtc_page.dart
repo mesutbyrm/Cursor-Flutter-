@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,7 +11,6 @@ import '../../../core/config/env.dart';
 import '../../../core/widgets/cached_cover_image.dart';
 import '../../../core/navigation/wallet_navigation.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../live/domain/entities/live_gift_event.dart';
@@ -342,7 +343,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 'canlifal.com görselleri',
                 style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.textMuted.withValues(alpha: 0.9),
+                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                 ),
               ),
               const SizedBox(height: 12),
@@ -664,12 +665,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ),
                         if (_audioError != null)
                           Material(
-                            color: AppColors.liveRed.withValues(alpha: 0.15),
+                            color: AppThemeColors.liveRed.withValues(alpha: 0.15),
                             child: ListTile(
                               dense: true,
                               leading: const Icon(
                                 Icons.headset_off_rounded,
-                                color: AppColors.liveRed,
+                                color: AppThemeColors.liveRed,
                                 size: 20,
                               ),
                               title: Text(
@@ -715,7 +716,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             child: Text(
                               live.error!,
                               style: const TextStyle(
-                                color: AppColors.liveRed,
+                                color: AppThemeColors.liveRed,
                                 fontSize: 11,
                               ),
                               maxLines: 2,

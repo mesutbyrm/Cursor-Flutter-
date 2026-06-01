@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/ui/premium/neon_quick_action_card.dart';
 import 'discover_section_header.dart';
@@ -127,7 +127,7 @@ class _FortuneTarotIcon extends StatelessWidget {
             color: Colors.white.withValues(alpha: 0.95),
             shadows: [
               Shadow(
-                color: AppColors.accentPurple.withValues(alpha: 0.9),
+                color: AppThemeColors.accentPurple.withValues(alpha: 0.9),
                 blurRadius: 12,
               ),
             ],

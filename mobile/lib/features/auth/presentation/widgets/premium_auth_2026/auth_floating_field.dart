@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/ui/premium_2026/premium_motion.dart';
 
 /// Cam yüzey üzerinde floating label + neon focus.
@@ -88,8 +90,8 @@ class _AuthFloatingFieldState extends State<AuthFloatingField> {
         textCapitalization: widget.textCapitalization,
         validator: widget.validator,
         onChanged: widget.onChanged,
-        style: const TextStyle(
-          color: AppColors.textPrimary,
+        style: TextStyle(
+          color: context.colors.onSurface,
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
@@ -100,11 +102,11 @@ class _AuthFloatingFieldState extends State<AuthFloatingField> {
           labelStyle: TextStyle(
             color: _focused
                 ? const Color(0xFFC4B5FD)
-                : AppColors.textMuted.withValues(alpha: 0.9),
+                : context.colors.onSurfaceMuted.withValues(alpha: 0.9),
             fontWeight: FontWeight.w600,
           ),
           hintStyle: TextStyle(
-            color: AppColors.textMuted.withValues(alpha: 0.65),
+            color: context.colors.onSurfaceMuted.withValues(alpha: 0.65),
             fontSize: 14,
           ),
           prefixIcon: widget.prefixIcon == null
@@ -113,7 +115,7 @@ class _AuthFloatingFieldState extends State<AuthFloatingField> {
                   widget.prefixIcon,
                   color: _focused
                       ? const Color(0xFF9D6BFF)
-                      : AppColors.textMuted,
+                      : context.colors.onSurfaceMuted,
                   size: 22,
                 ),
           filled: true,
@@ -138,12 +140,12 @@ class _AuthFloatingFieldState extends State<AuthFloatingField> {
           errorBorder: OutlineInputBorder(
             borderRadius: borderRadius,
             borderSide: BorderSide(
-              color: AppColors.liveRed.withValues(alpha: 0.85),
+              color: AppThemeColors.liveRed.withValues(alpha: 0.85),
             ),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: borderRadius,
-            borderSide: const BorderSide(color: AppColors.liveRed),
+            borderSide: const BorderSide(color: AppThemeColors.liveRed),
           ),
         ),
       ),

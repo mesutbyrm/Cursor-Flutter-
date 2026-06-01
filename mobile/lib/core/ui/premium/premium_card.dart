@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../premium_2026/liquid_glass.dart';
-import '../../theme/canlifal_tokens.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 /// Neon çerçeveli liquid glass kart — feed / profil / liste.
 class PremiumCard extends StatelessWidget {

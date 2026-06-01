@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 
 /// Oda kuralları — girişte görünür; yazı yazılınca yukarı kayıp solar.
 class VoiceRoomRulesTicker extends StatefulWidget {
@@ -76,12 +78,12 @@ class _VoiceRoomRulesTickerState extends State<VoiceRoomRulesTicker> {
             borderRadius: BorderRadius.circular(12),
             gradient: LinearGradient(
               colors: [
-                AppColors.accentPurple.withValues(alpha: 0.35),
-                AppColors.bgPurpleGlow.withValues(alpha: 0.5),
+                AppThemeColors.accentPurple.withValues(alpha: 0.35),
+                context.colors.surfaceContainer.withValues(alpha: 0.5),
               ],
             ),
             border: Border.all(
-              color: AppColors.accentCyan.withValues(alpha: 0.35),
+              color: AppThemeColors.accentCyan.withValues(alpha: 0.35),
             ),
           ),
           child: Column(
@@ -92,7 +94,7 @@ class _VoiceRoomRulesTickerState extends State<VoiceRoomRulesTicker> {
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 11,
-                  color: AppColors.accentCyan,
+                  color: AppThemeColors.accentCyan,
                 ),
               ),
               const SizedBox(height: 4),
@@ -101,7 +103,7 @@ class _VoiceRoomRulesTickerState extends State<VoiceRoomRulesTicker> {
                 style: TextStyle(
                   fontSize: 11,
                   height: 1.35,
-                  color: AppColors.textSecondary.withValues(alpha: 0.95),
+                  color: context.colors.onSurfaceVariant.withValues(alpha: 0.95),
                 ),
               ),
             ],

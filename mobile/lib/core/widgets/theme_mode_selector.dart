@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_mode_provider.dart';
 import '../storage/theme_preferences.dart';
 import '../theme/app_spacing.dart';
-import '../theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'themed_glass_card.dart';
 
 /// Ayarlar — Açık / Koyu / Sistem tema seçimi (anında uygulanır).

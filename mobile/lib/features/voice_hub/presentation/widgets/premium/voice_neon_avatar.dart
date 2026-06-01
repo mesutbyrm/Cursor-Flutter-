@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../theme/voice_room_tokens.dart';
 
 /// Konuşurken nabız animasyonlu neon halka.
@@ -108,7 +110,7 @@ class _VoiceNeonAvatarState extends State<VoiceNeonAvatar>
                     fit: BoxFit.cover,
                   )
                 : ColoredBox(
-                    color: AppColors.bgPurpleGlow,
+                    color: context.colors.surfaceContainer,
                     child: Icon(
                       Icons.person_rounded,
                       size: inner * 0.45,
@@ -133,7 +135,7 @@ class _VoiceNeonAvatarState extends State<VoiceNeonAvatar>
                 top: -6,
                 child: Icon(
                   Icons.workspace_premium_rounded,
-                  color: AppColors.coinGold,
+                  color: AppThemeColors.coinGold,
                   size: widget.size * 0.28,
                 ),
               ),
@@ -144,7 +146,7 @@ class _VoiceNeonAvatarState extends State<VoiceNeonAvatar>
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
-                    color: AppColors.onlineGreen,
+                    color: AppThemeColors.onlineGreen,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.mic_rounded, size: 12, color: Colors.white),
@@ -161,7 +163,7 @@ class _VoiceNeonAvatarState extends State<VoiceNeonAvatar>
             style: TextStyle(
               fontSize: widget.size > 64 ? 11 : 9,
               fontWeight: FontWeight.w800,
-              color: widget.showCrown ? AppColors.coinGold : Colors.white,
+              color: widget.showCrown ? AppThemeColors.coinGold : Colors.white,
             ),
           ),
         ],

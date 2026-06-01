@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/message_entities.dart';
 
 class ChatMessageBubble extends StatelessWidget {
@@ -21,7 +23,7 @@ class ChatMessageBubble extends StatelessWidget {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          gradient: m.isMine ? AppColors.brandGradient : null,
+          gradient: m.isMine ? context.colors.brandGradient : null,
           color: m.isMine
               ? null
               : const Color(0xFF16162A).withValues(alpha: 0.92),
@@ -34,7 +36,7 @@ class ChatMessageBubble extends StatelessWidget {
           border: m.isMine
               ? null
               : Border.all(
-                  color: AppColors.accentPurple.withValues(alpha: 0.25),
+                  color: AppThemeColors.accentPurple.withValues(alpha: 0.25),
                 ),
         ),
         child: Column(
@@ -44,7 +46,7 @@ class ChatMessageBubble extends StatelessWidget {
             Text(
               m.text,
               style: TextStyle(
-                color: m.isMine ? Colors.white : AppColors.textPrimary,
+                color: m.isMine ? Colors.white : context.colors.onSurface,
                 height: 1.35,
               ),
             ),
@@ -57,7 +59,7 @@ class ChatMessageBubble extends StatelessWidget {
                     DateFormat.Hm('tr').format(m.createdAt!),
                     style: TextStyle(
                       fontSize: 10,
-                      color: (m.isMine ? Colors.white : AppColors.textMuted)
+                      color: (m.isMine ? Colors.white : context.colors.onSurfaceMuted)
                           .withValues(alpha: 0.65),
                     ),
                   ),
@@ -82,7 +84,7 @@ class MessageReadTicks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (status) {
-      MessageDeliveryStatus.read => AppColors.accentCyan,
+      MessageDeliveryStatus.read => AppThemeColors.accentCyan,
       MessageDeliveryStatus.delivered => Colors.white.withValues(alpha: 0.75),
       MessageDeliveryStatus.sending => Colors.white.withValues(alpha: 0.45),
       MessageDeliveryStatus.sent => Colors.white.withValues(alpha: 0.55),

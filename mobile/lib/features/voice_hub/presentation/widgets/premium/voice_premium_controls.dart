@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../theme/voice_room_tokens.dart';
 import 'voice_glass.dart';
 
@@ -34,7 +36,7 @@ class VoicePremiumControls extends StatelessWidget {
           _ControlItem(
             icon: micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
             label: micOn ? 'Açık' : 'Kapalı',
-            color: micOn ? AppColors.onlineGreen : AppColors.textMuted,
+            color: micOn ? AppThemeColors.onlineGreen : context.colors.onSurfaceMuted,
             onTap: onMic,
           ),
           _ControlItem(
@@ -54,7 +56,7 @@ class VoicePremiumControls extends StatelessWidget {
           _ControlItem(
             icon: Icons.graphic_eq_rounded,
             label: 'Efekt',
-            color: AppColors.accentPink,
+            color: AppThemeColors.accentPink,
             onTap: onEffects,
           ),
           _ControlItem(

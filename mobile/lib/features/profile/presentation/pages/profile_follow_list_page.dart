@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/lazy_paginated_list_view.dart';
@@ -83,7 +83,7 @@ class ProfileFollowListPage extends ConsumerWidget {
                               Text(
                                 '@${u.username}',
                                 style: TextStyle(
-                                  color: AppColors.textMuted
+                                  color: context.colors.onSurfaceMuted
                                       .withValues(alpha: 0.85),
                                   fontSize: 13,
                                 ),
@@ -93,7 +93,7 @@ class ProfileFollowListPage extends ConsumerWidget {
                         ),
                         Icon(
                           Icons.chevron_right_rounded,
-                          color: AppColors.textMuted.withValues(alpha: 0.6),
+                          color: context.colors.onSurfaceMuted.withValues(alpha: 0.6),
                         ),
                       ],
                     ),

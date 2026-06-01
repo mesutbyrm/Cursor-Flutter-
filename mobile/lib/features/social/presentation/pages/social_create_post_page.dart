@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/create_social_post_input.dart';
@@ -102,7 +104,7 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
           Container(
             padding: EdgeInsets.fromLTRB(8, top + 6, 12, 10),
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: context.scaffoldBg,
               border: Border(
                 bottom: BorderSide(
                   color: Colors.white.withValues(alpha: 0.08),
@@ -115,15 +117,15 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
                   onPressed: _submitting
                       ? null
                       : () => Navigator.of(context).maybePop(),
-                  child: const Text(
+                  child: Text(
                     'İptal',
                     style: TextStyle(
-                      color: AppColors.textPrimary,
+                      color: context.colors.onSurface,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Yeni gönderi',
                     textAlign: TextAlign.center,
@@ -136,7 +138,7 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
                 TextButton(
                   onPressed: _canShare ? _submit : null,
                   child: _submitting
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2),
@@ -145,8 +147,8 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
                           'Paylaş',
                           style: TextStyle(
                             color: _canShare
-                                ? AppColors.accentPink
-                                : AppColors.textMuted,
+                                ? AppThemeColors.accentPink
+                                : context.colors.onSurfaceMuted,
                             fontWeight: FontWeight.w800,
                             fontSize: 16,
                           ),
@@ -167,29 +169,29 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
                     onPickCamera: () => _pickImage(ImageSource.camera),
                     onClear: () => setState(() => _imagePath = null),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       UserAvatar(url: me?.avatarUrl, radius: 20),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: TextField(
                           controller: _caption,
                           maxLines: 8,
                           maxLength: 2200,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             height: 1.45,
                           ),
                           decoration: InputDecoration(
                             hintText: 'Bir açıklama yaz…',
                             hintStyle: TextStyle(
-                              color: AppColors.textMuted.withValues(alpha: 0.9),
+                              color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                             ),
                             border: InputBorder.none,
-                            counterStyle: const TextStyle(
-                              color: AppColors.textMuted,
+                            counterStyle: TextStyle(
+                              color: context.colors.onSurfaceMuted,
                               fontSize: 11,
                             ),
                           ),
@@ -198,7 +200,7 @@ class _SocialCreatePostPageState extends ConsumerState<SocialCreatePostPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   _OptionTile(
                     icon: Icons.photo_outlined,
                     label: 'Galeriden seç',
@@ -274,7 +276,7 @@ class _MediaPreview extends StatelessWidget {
               color: Colors.black54,
               shape: const CircleBorder(),
               child: IconButton(
-                icon: const Icon(Icons.close_rounded, color: Colors.white),
+                icon: Icon(Icons.close_rounded, color: Colors.white),
                 onPressed: onClear,
               ),
             ),
@@ -290,7 +292,7 @@ class _MediaPreview extends StatelessWidget {
           color: Colors.white.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.accentPurple.withValues(alpha: 0.25),
+            color: AppThemeColors.accentPurple.withValues(alpha: 0.25),
             width: 1.5,
             strokeAlign: BorderSide.strokeAlignInside,
           ),
@@ -301,9 +303,9 @@ class _MediaPreview extends StatelessWidget {
             Icon(
               Icons.add_photo_alternate_outlined,
               size: 56,
-              color: AppColors.textMuted.withValues(alpha: 0.8),
+              color: context.colors.onSurfaceMuted.withValues(alpha: 0.8),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -312,7 +314,7 @@ class _MediaPreview extends StatelessWidget {
                   label: 'Galeri',
                   onTap: onPickGallery,
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 _PickChip(
                   icon: Icons.photo_camera_rounded,
                   label: 'Kamera',
@@ -341,7 +343,7 @@ class _PickChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.accentPink.withValues(alpha: 0.2),
+      color: AppThemeColors.accentPink.withValues(alpha: 0.2),
       borderRadius: BorderRadius.circular(24),
       child: InkWell(
         onTap: onTap,
@@ -351,13 +353,13 @@ class _PickChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 20, color: AppColors.accentPink),
-              const SizedBox(width: 8),
+              Icon(icon, size: 20, color: AppThemeColors.accentPink),
+              SizedBox(width: 8),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w800,
-                  color: AppColors.accentPink,
+                  color: AppThemeColors.accentPink,
                 ),
               ),
             ],
@@ -387,18 +389,18 @@ class _OptionTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: Icon(
         icon,
-        color: muted ? AppColors.textMuted : AppColors.textPrimary,
+        color: muted ? context.colors.onSurfaceMuted : context.colors.onSurface,
       ),
       title: Text(
         label,
         style: TextStyle(
           fontWeight: FontWeight.w600,
-          color: muted ? AppColors.textMuted : AppColors.textPrimary,
+          color: muted ? context.colors.onSurfaceMuted : context.colors.onSurface,
         ),
       ),
       trailing: Icon(
         Icons.chevron_right_rounded,
-        color: AppColors.textMuted.withValues(alpha: 0.6),
+        color: context.colors.onSurfaceMuted.withValues(alpha: 0.6),
       ),
       onTap: onTap,
     );

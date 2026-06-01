@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 
 /// Jeton yağmuru — hediye gönderiminde kısa süreli coin burst.
 class GiftCoinBurstOverlay extends StatefulWidget {
@@ -78,13 +78,13 @@ class GiftCoinBurstOverlayState extends State<GiftCoinBurstOverlay>
                         angle: c.spin + _ctrl.value * 4,
                         child: Icon(
                           Icons.monetization_on_rounded,
-                          color: AppColors.coinGold.withValues(
+                          color: AppThemeColors.coinGold.withValues(
                             alpha: 0.85 + _rand.nextDouble() * 0.15,
                           ),
                           size: 18 + _rand.nextDouble() * 10,
                           shadows: [
                             Shadow(
-                              color: AppColors.coinGold.withValues(alpha: 0.6),
+                              color: AppThemeColors.coinGold.withValues(alpha: 0.6),
                               blurRadius: 8,
                             ),
                           ],

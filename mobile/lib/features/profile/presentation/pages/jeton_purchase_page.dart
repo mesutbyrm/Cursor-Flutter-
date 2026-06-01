@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../data/jeton_packages_catalog.dart';
@@ -49,7 +51,7 @@ class JetonPurchasePage extends ConsumerWidget {
         children: [
           const JetonStoreBackdrop(),
           RefreshIndicator(
-            color: AppColors.accentPurple,
+            color: AppThemeColors.accentPurple,
             onRefresh: () async {
               ref.invalidate(jetonPackagesProvider);
               ref.invalidate(walletBalancesProvider);
@@ -67,9 +69,9 @@ class JetonPurchasePage extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _JetonStoreHeader(onBack: () => context.pop()),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
                           const CurrencyUsageCard.jeton(),
-                          const SizedBox(height: 20),
+                          SizedBox(height: 20),
                           wallet.when(
                             data: (b) => Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -82,7 +84,7 @@ class JetonPurchasePage extends ConsumerWidget {
                                   b.membership,
                                   b.membershipDaysRemaining,
                                 )) ...[
-                                  const SizedBox(height: 12),
+                                  SizedBox(height: 12),
                                   JetonGoldMemberBanner(
                                     onTap: () =>
                                         context.push('/premium-membership'),
@@ -90,7 +92,7 @@ class JetonPurchasePage extends ConsumerWidget {
                                 ],
                               ],
                             ),
-                            loading: () => const Center(
+                            loading: () => Center(
                               child: Padding(
                                 padding: EdgeInsets.all(24),
                                 child: CircularProgressIndicator(strokeWidth: 2),
@@ -98,7 +100,7 @@ class JetonPurchasePage extends ConsumerWidget {
                             ),
                             error: (e, _) => Text(
                               ApiException.userMessage(e),
-                              style: const TextStyle(color: AppColors.textMuted),
+                              style: TextStyle(color: context.colors.onSurfaceMuted),
                             ),
                           ),
                         ],
@@ -125,17 +127,17 @@ class JetonPurchasePage extends ConsumerWidget {
                           children: [
                             Icon(Icons.cloud_off_rounded,
                                 size: 48,
-                                color: AppColors.textMuted.withValues(alpha: 0.8)),
-                            const SizedBox(height: 12),
+                                color: context.colors.onSurfaceMuted.withValues(alpha: 0.8)),
+                            SizedBox(height: 12),
                             Text(
                               ApiException.userMessage(e),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: 16),
                             FilledButton(
                               onPressed: () =>
                                   ref.invalidate(jetonPackagesProvider),
-                              child: const Text('Tekrar dene'),
+                              child: Text('Tekrar dene'),
                             ),
                           ],
                         ),
@@ -181,36 +183,36 @@ class _JetonStoreHeader extends StatelessWidget {
             padding: EdgeInsets.zero,
             borderRadius: BorderRadius.circular(28),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+              icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
               onPressed: onBack,
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         Container(
           width: 64,
           height: 64,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.coinGold.withValues(alpha: 0.2),
+            color: AppThemeColors.coinGold.withValues(alpha: 0.2),
             border: Border.all(
-              color: AppColors.coinGold.withValues(alpha: 0.55),
+              color: AppThemeColors.coinGold.withValues(alpha: 0.55),
               width: 2,
             ),
-            boxShadow: AppColors.glowShadow(AppColors.coinGold, blur: 18),
+            boxShadow: AppThemeColors.glowShadow(AppThemeColors.coinGold, blur: 18),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.monetization_on_rounded,
-            color: AppColors.coinGold,
+            color: AppThemeColors.coinGold,
             size: 36,
           ),
         ),
-        const SizedBox(height: 14),
-        const Text(
+        SizedBox(height: 14),
+        Text(
           'Jeton Satın Al',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: context.colors.onSurface,
             fontWeight: FontWeight.w900,
             fontSize: 24,
             letterSpacing: -0.5,
@@ -255,7 +257,7 @@ class _JetonPackagesContent extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (isRefreshing)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(bottom: 12),
                   child: LinearProgressIndicator(minHeight: 2),
                 ),
@@ -272,7 +274,7 @@ class _JetonPackagesContent extends StatelessWidget {
                   onTap: () => onCheckout(hero, formatJetonPrice(hero)),
                 ),
               ],
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               JetonCustomAmountSection(
                 tlRate: rate,
                 onPurchase: onCheckout,

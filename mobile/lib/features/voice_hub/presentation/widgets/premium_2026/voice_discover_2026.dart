@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../theme/voice_room_tokens.dart';
 
@@ -227,7 +227,7 @@ class _FeaturedCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: online > 0
-                                ? AppColors.liveRed.withValues(alpha: 0.85)
+                                ? AppThemeColors.liveRed.withValues(alpha: 0.85)
                                 : Colors.black.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -266,7 +266,7 @@ class _FeaturedCard extends StatelessWidget {
                         Row(
                           children: [
                             const Icon(Icons.people_alt_rounded,
-                                size: 14, color: AppColors.onlineGreen),
+                                size: 14, color: AppThemeColors.onlineGreen),
                             const SizedBox(width: 4),
                             Text(
                               VoiceLiveHeader2026Format.count(online),

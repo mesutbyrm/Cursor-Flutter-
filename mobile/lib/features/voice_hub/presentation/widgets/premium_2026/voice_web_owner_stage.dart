@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../utils/voice_room_seat_layout.dart';
@@ -68,14 +70,14 @@ class VoiceWebOwnerStage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.coinGold.withValues(alpha: 0.95),
+                        color: AppThemeColors.coinGold.withValues(alpha: 0.95),
                       ),
                     ),
                     Text(
                       'Oda Sahibi',
                       style: TextStyle(
                         fontSize: 8,
-                        color: AppColors.textMuted.withValues(alpha: 0.85),
+                        color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
                       ),
                     ),
                   ],

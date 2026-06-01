@@ -1,8 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 
 /// Web sesli oda koltuk düzeni (8 koltuk + merkez sahne).
@@ -134,8 +136,8 @@ class _CenterStage extends StatelessWidget {
             height: 88,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: AppColors.brandGradient,
-              boxShadow: AppColors.glowShadow(AppColors.accentPink, blur: 24),
+              gradient: context.colors.brandGradient,
+              boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: 24),
             ),
             child: avatarUrl != null
                 ? ClipOval(
@@ -156,7 +158,7 @@ class _CenterStage extends StatelessWidget {
           Text(
             'Sesli sohbet',
             style: TextStyle(
-              color: AppColors.accentCyan.withValues(alpha: 0.9),
+              color: AppThemeColors.accentCyan.withValues(alpha: 0.9),
               fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
@@ -184,7 +186,7 @@ class _SeatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glow = speaking ? AppColors.accentPink : AppColors.accentPurple;
+    final glow = speaking ? AppThemeColors.accentPink : AppThemeColors.accentPurple;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -197,7 +199,7 @@ class _SeatBubble extends StatelessWidget {
               color: glow.withValues(alpha: speaking ? 1 : 0.4),
               width: speaking ? 3 : 1.5,
             ),
-            boxShadow: speaking ? AppColors.glowShadow(glow, blur: 14) : null,
+            boxShadow: speaking ? AppThemeColors.glowShadow(glow, blur: 14) : null,
             color: Colors.black.withValues(alpha: 0.35),
           ),
           child: avatarUrl != null
@@ -216,7 +218,7 @@ class _SeatBubble extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label!,
-            style: const TextStyle(fontSize: 9, color: AppColors.textMuted),
+            style: TextStyle(fontSize: 9, color: context.colors.onSurfaceMuted),
           ),
         ],
       ],

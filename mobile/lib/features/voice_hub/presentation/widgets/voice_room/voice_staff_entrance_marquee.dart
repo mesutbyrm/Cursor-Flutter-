@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import '../../../../../core/auth/voice_staff_rank.dart';
 import '../../../domain/voice_official_join.dart';
-import '../../../../../core/theme/app_colors.dart';
 
 /// Yetkili girişi — sesli bölüm altında sağdan sola şerit.
 class VoiceStaffEntranceMarquee extends StatefulWidget {
@@ -58,12 +58,12 @@ class _VoiceStaffEntranceMarqueeState extends State<VoiceStaffEntranceMarquee> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppColors.coinGold.withValues(alpha: 0.45),
-                AppColors.accentPurple.withValues(alpha: 0.55),
-                AppColors.accentPink.withValues(alpha: 0.4),
+                AppThemeColors.coinGold.withValues(alpha: 0.45),
+                AppThemeColors.accentPurple.withValues(alpha: 0.55),
+                AppThemeColors.accentPink.withValues(alpha: 0.4),
               ],
             ),
-            boxShadow: AppColors.glowShadow(AppColors.coinGold, blur: 12),
+            boxShadow: AppThemeColors.glowShadow(AppThemeColors.coinGold, blur: 12),
           ),
           child: _MarqueeText(text: marqueeText),
         ),

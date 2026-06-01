@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/config/env.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../domain/entities/fortune_type_entity.dart';
@@ -94,11 +94,11 @@ class _DailyFortuneOpenPageState extends State<DailyFortuneOpenPage> {
                           ],
                         ),
                         border: Border.all(
-                          color: AppColors.accentPurple.withValues(alpha: 0.5),
+                          color: AppThemeColors.accentPurple.withValues(alpha: 0.5),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.accentPurple.withValues(alpha: 0.2),
+                            color: AppThemeColors.accentPurple.withValues(alpha: 0.2),
                             blurRadius: 24,
                           ),
                         ],

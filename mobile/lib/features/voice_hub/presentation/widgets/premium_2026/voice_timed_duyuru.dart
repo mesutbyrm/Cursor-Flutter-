@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import '../../../../../core/storage/local_cache.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../voice_room/voice_room_announcement.dart';
 
 /// Duyuru — 15 saniye gösterilir; kapatılınca oda+metin anahtarıyla kaydedilir.
@@ -144,14 +144,14 @@ class _CountdownBadgeState extends State<_CountdownBadge> {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.accentPink.withValues(alpha: 0.5)),
+        border: Border.all(color: AppThemeColors.accentPink.withValues(alpha: 0.5)),
       ),
       child: Text(
         '${_secondsLeft}s',
         style: const TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w800,
-          color: AppColors.accentPink,
+          color: AppThemeColors.accentPink,
         ),
       ),
     );

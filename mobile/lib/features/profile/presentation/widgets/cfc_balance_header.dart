@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import '../../../../core/content/currency_usage_info.dart';
-import '../../../../core/theme/app_colors.dart';
 
 /// CFC yükleme sayfası — yalnızca CFC bakiyesi.
 class CfcBalanceHeader extends StatelessWidget {
@@ -17,12 +19,12 @@ class CfcBalanceHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
           colors: [
-            AppColors.diamondBlue.withValues(alpha: 0.25),
-            AppColors.bgPurpleGlow.withValues(alpha: 0.5),
+            AppThemeColors.diamondBlue.withValues(alpha: 0.25),
+            context.colors.surfaceContainer.withValues(alpha: 0.5),
           ],
         ),
         border: Border.all(
-          color: AppColors.diamondBlue.withValues(alpha: 0.45),
+          color: AppThemeColors.diamondBlue.withValues(alpha: 0.45),
         ),
       ),
       child: Column(
@@ -32,7 +34,7 @@ class CfcBalanceHeader extends StatelessWidget {
             CurrencyUsageInfo.cfcTitle,
             style: TextStyle(
               fontSize: 12,
-              color: AppColors.textMuted.withValues(alpha: 0.95),
+              color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -42,13 +44,13 @@ class CfcBalanceHeader extends StatelessWidget {
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 28,
-              color: AppColors.diamondBlue,
+              color: AppThemeColors.diamondBlue,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             'Yalnızca CFC yüklenir · ${CurrencyUsageInfo.cfcPriceHint}',
-            style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+            style: TextStyle(fontSize: 11, color: context.colors.onSurfaceMuted),
           ),
         ],
       ),

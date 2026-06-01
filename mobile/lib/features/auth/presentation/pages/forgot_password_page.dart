@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../widgets/auth_shell.dart';
 
@@ -58,7 +58,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
               TextFormField(
                 controller: _email,
                 keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.colors.onSurface),
                 decoration: authInputDecoration(
                   labelText: 'E-posta',
                   prefixIcon: Icons.mail_outline_rounded,

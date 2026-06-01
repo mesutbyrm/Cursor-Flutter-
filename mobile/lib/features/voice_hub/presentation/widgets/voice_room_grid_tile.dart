@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
 import '../../../vip_gold/presentation/theme/vip_gold_tokens.dart';
@@ -30,10 +32,10 @@ class VoiceRoomGridTile extends StatelessWidget {
     final isVip = room.isVipGoldRoom;
     final isLocked = room.isPasswordLockedRoom;
     final borderColor = isMine
-        ? AppColors.coinGold
+        ? AppThemeColors.coinGold
         : isVip
             ? VipGoldTokens.goldMid
-            : AppColors.accentPurple.withValues(alpha: 0.5);
+            : AppThemeColors.accentPurple.withValues(alpha: 0.5);
 
     return Material(
       color: Colors.transparent,
@@ -49,7 +51,7 @@ class VoiceRoomGridTile extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: (isMine ? AppColors.coinGold : AppColors.accentPink)
+                color: (isMine ? AppThemeColors.coinGold : AppThemeColors.accentPink)
                     .withValues(alpha: 0.25),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
@@ -130,7 +132,7 @@ class VoiceRoomGridTile extends StatelessWidget {
                                   vertical: 1,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.coinGold.withValues(alpha: 0.3),
+                                  color: AppThemeColors.coinGold.withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: const Text(
@@ -138,7 +140,7 @@ class VoiceRoomGridTile extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 6,
                                     fontWeight: FontWeight.w900,
-                                    color: AppColors.coinGold,
+                                    color: AppThemeColors.coinGold,
                                   ),
                                 ),
                               ),
@@ -175,7 +177,7 @@ class VoiceRoomGridTile extends StatelessWidget {
                             Icon(
                               Icons.headset_mic_rounded,
                               size: 11,
-                              color: AppColors.accentCyan.withValues(alpha: 0.9),
+                              color: AppThemeColors.accentCyan.withValues(alpha: 0.9),
                             ),
                           ],
                         ),
@@ -269,7 +271,7 @@ class _MiniAvatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: AppColors.accentPink.withValues(alpha: 0.6),
+          color: AppThemeColors.accentPink.withValues(alpha: 0.6),
           width: 1,
         ),
       ),
@@ -277,7 +279,7 @@ class _MiniAvatar extends StatelessWidget {
         child: url != null && url!.isNotEmpty
             ? CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover)
             : ColoredBox(
-                color: AppColors.bgPurpleGlow,
+                color: context.colors.surfaceContainer,
                 child: Icon(
                   Icons.person,
                   size: 9,

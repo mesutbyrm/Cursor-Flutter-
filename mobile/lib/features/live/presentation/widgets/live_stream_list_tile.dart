@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/ui/premium/live_badge.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -56,7 +58,7 @@ class LiveStreamListTile extends StatelessWidget {
                 Text(
                   '${stream.streamerName ?? 'Yayıncı'} · ${stream.viewerCount} izleyici',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.textMuted,
+                    color: context.colors.onSurfaceMuted,
                   ),
                 ),
               ],
@@ -65,7 +67,7 @@ class LiveStreamListTile extends StatelessWidget {
           if (stream.isLive)
             Icon(
               Icons.play_circle_fill_rounded,
-              color: AppColors.accentPink.withValues(alpha: 0.9),
+              color: AppThemeColors.accentPink.withValues(alpha: 0.9),
               size: 36,
             ),
         ],
@@ -102,8 +104,8 @@ class _Fallback extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.accentPurple.withValues(alpha: 0.5),
-            AppColors.background,
+            AppThemeColors.accentPurple.withValues(alpha: 0.5),
+            context.scaffoldBg,
           ],
         ),
       ),

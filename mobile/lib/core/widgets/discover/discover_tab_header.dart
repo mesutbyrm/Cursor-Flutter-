@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_spacing.dart';
-import '../../theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 class DiscoverTabHeader extends StatelessWidget {
   const DiscoverTabHeader({

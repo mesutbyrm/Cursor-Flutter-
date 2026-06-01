@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
@@ -162,7 +164,7 @@ class _PaymentTile extends StatelessWidget {
                       row.notes!,
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textMuted.withValues(alpha: 0.9),
+                        color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                       ),
                     ),
                 ],
@@ -175,7 +177,7 @@ class _PaymentTile extends StatelessWidget {
                 fontWeight: FontWeight.w700,
                 color: row.status == 'approved'
                     ? Colors.greenAccent
-                    : AppColors.accentPink,
+                    : AppThemeColors.accentPink,
               ),
             ),
           ],
@@ -210,13 +212,13 @@ class _ActivityTile extends StatelessWidget {
                 row.subtitle!,
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.textMuted.withValues(alpha: 0.9),
+                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                 ),
               ),
             const SizedBox(height: 4),
             Text(
               '$when · ${row.amount > 0 ? "${row.amount} jeton" : row.status}',
-              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+              style: TextStyle(fontSize: 11, color: context.colors.onSurfaceMuted),
             ),
           ],
         ),

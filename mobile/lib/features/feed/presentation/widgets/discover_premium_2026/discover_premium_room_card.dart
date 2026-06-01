@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../domain/discover_category.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
@@ -160,7 +160,7 @@ class _OnlinePill extends StatelessWidget {
         color: Colors.black.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.onlineGreen.withValues(alpha: 0.6),
+          color: AppThemeColors.onlineGreen.withValues(alpha: 0.6),
         ),
       ),
       child: Row(
@@ -172,7 +172,7 @@ class _OnlinePill extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: count > 0
-                  ? AppColors.onlineGreen
+                  ? AppThemeColors.onlineGreen
                   : Colors.white.withValues(alpha: 0.35),
             ),
           ),

@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import '../../../domain/voice_official_join.dart';
@@ -202,7 +202,7 @@ class VoiceWebChatInputBar extends StatelessWidget {
                   decoration: InputDecoration(
                     hintText: 'Mesajınızı yazın...',
                     hintStyle: TextStyle(
-                      color: AppColors.textMuted.withValues(alpha: 0.85),
+                      color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
                       fontSize: 13,
                     ),
                     filled: true,

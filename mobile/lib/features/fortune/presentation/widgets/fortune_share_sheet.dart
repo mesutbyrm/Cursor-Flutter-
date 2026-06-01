@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 
 void showFortuneShareSheet(
@@ -61,7 +61,7 @@ void showFortuneShareSheet(
                   _ShareChip(
                     icon: Icons.bookmark_border_rounded,
                     label: 'Kaydet',
-                    color: AppColors.accentPurple,
+                    color: AppThemeColors.accentPurple,
                     onTap: () {
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(

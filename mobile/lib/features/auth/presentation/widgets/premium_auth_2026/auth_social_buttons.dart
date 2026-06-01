@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import '../../../../../core/config/env.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/ui/premium_2026/liquid_glass.dart';
 import '../../../../../core/ui/premium_2026/premium_motion.dart';
 import '../google_sign_in_button.dart';
@@ -37,14 +39,14 @@ class AuthSocialSection extends StatelessWidget {
           onPressed: onGoogle,
           busy: busy,
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         _AuthGlassSocialButton(
           icon: Icons.music_note_rounded,
           label: tiktokEnabled ? 'TikTok ile devam et' : 'TikTok (yakında)',
           onPressed: tiktokEnabled && !busy ? onTikTok : null,
           trailing: tiktokEnabled ? null : _soonBadge(),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         _AuthGlassSocialButton(
           icon: Icons.apple_rounded,
           label: 'Apple ile devam et',
@@ -52,7 +54,7 @@ class AuthSocialSection extends StatelessWidget {
           trailing: _soonBadge(),
         ),
         if (onGuest != null) ...[
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           TextButton(
             onPressed: busy ? null : onGuest,
             child: Text(
@@ -76,17 +78,17 @@ class AuthSocialSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        color: AppColors.accentCyan.withValues(alpha: 0.15),
+        color: AppThemeColors.accentCyan.withValues(alpha: 0.15),
         border: Border.all(
-          color: AppColors.accentCyan.withValues(alpha: 0.35),
+          color: AppThemeColors.accentCyan.withValues(alpha: 0.35),
         ),
       ),
-      child: const Text(
+      child: Text(
         'Yakında',
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w800,
-          color: AppColors.accentCyan,
+          color: AppThemeColors.accentCyan,
         ),
       ),
     );
@@ -119,12 +121,12 @@ class _AuthGlassSocialButton extends StatelessWidget {
           child: Row(
             children: [
               Icon(icon, color: Colors.white, size: 22),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: context.colors.onSurface,
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
                   ),
@@ -188,7 +190,7 @@ class AuthTextLinkPremium extends StatelessWidget {
       onPressed: onPressed,
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           color: Color(0xFFE9D5FF),
           fontWeight: FontWeight.w700,
           fontSize: 14,

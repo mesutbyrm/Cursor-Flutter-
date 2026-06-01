@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/theme/app_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 /// Kayıt formu — Material yerelleştirme ile tarih/saat seçici.
 Future<DateTime?> showAuthBirthDatePicker(
@@ -20,16 +21,17 @@ Future<DateTime?> showAuthBirthDatePicker(
     confirmText: 'Tamam',
     builder: (context, child) {
       final theme = Theme.of(context);
+      final colors = context.colors;
       return Theme(
         data: theme.copyWith(
           colorScheme: theme.colorScheme.copyWith(
-            primary: AppColors.accentPink,
+            primary: AppThemeColors.accentPink,
             onPrimary: Colors.white,
-            surface: AppColors.surfaceElevated,
-            onSurface: AppColors.textPrimary,
+            surface: colors.surfaceElevated,
+            onSurface: colors.onSurface,
           ),
           dialogTheme: theme.dialogTheme.copyWith(
-            backgroundColor: AppColors.bgPurpleGlow,
+            backgroundColor: colors.dialogBackground,
           ),
         ),
         child: child ?? const SizedBox.shrink(),
@@ -50,16 +52,17 @@ Future<TimeOfDay?> showAuthBirthTimePicker(
     confirmText: 'Tamam',
     builder: (context, child) {
       final theme = Theme.of(context);
+      final colors = context.colors;
       return Theme(
         data: theme.copyWith(
           colorScheme: theme.colorScheme.copyWith(
-            primary: AppColors.accentCyan,
+            primary: AppThemeColors.accentCyan,
             onPrimary: Colors.black,
-            surface: AppColors.surfaceElevated,
-            onSurface: AppColors.textPrimary,
+            surface: colors.surfaceElevated,
+            onSurface: colors.onSurface,
           ),
           dialogTheme: theme.dialogTheme.copyWith(
-            backgroundColor: AppColors.bgPurpleGlow,
+            backgroundColor: colors.dialogBackground,
           ),
         ),
         child: child ?? const SizedBox.shrink(),
