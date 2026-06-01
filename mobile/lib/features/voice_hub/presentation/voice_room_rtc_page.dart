@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/navigation/wallet_navigation.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
@@ -132,18 +133,30 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final text = VoiceOfficialJoin.normalizeCommandInput(
       _messageCtrl.text.trim(),
     );
-    if (text.isEmpty || _chatOutbound) return;
+    if (text.isEmpty) return;
+    if (_chatOutbound) return;
     _chatOutbound = true;
     _messageCtrl.clear();
     try {
-      await ref.read(voiceRoomLiveProvider(room).notifier).sendMessage(text);
+      await ref
+          .read(voiceRoomLiveProvider(room).notifier)
+          .sendMessage(text)
+          .timeout(const Duration(seconds: 12));
       if (!mounted) return;
       final err = ref.read(voiceRoomLiveProvider(room)).error;
       if (err != null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
       }
+    } on TimeoutException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Mesaj gönderimi zaman aşımı. Tekrar deneyin.'),
+          ),
+        );
+      }
     } finally {
-      _chatOutbound = false;
+      if (mounted) _chatOutbound = false;
     }
   }
 
@@ -851,7 +864,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           _audio?.setMicEnabled(next);
                           setState(() => _micOn = next);
                         },
-                        onCoins: () => context.push('/jeton-store'),
+                        onCoins: () => openJetonStore(context, ref: ref),
                         onSettings: () => _openHubSettings(
                           context,
                           room: room,

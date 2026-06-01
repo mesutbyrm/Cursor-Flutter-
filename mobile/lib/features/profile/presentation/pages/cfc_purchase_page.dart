@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/content/currency_usage_info.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -41,9 +42,24 @@ class CfcPurchasePage extends ConsumerWidget {
           },
           body: config.when(
             loading: () => const Center(child: DiscoverAccentLoader()),
-            error: (e, _) => DiscoverEmptyState(
-              icon: Icons.error_outline_rounded,
-              message: ApiException.userMessage(e),
+            error: (e, _) => ListView(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    'Ödeme ayarları çevrimdışı yüklendi: ${ApiException.userMessage(e)}',
+                    style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                  ),
+                ),
+                CfcNativeCheckout(
+                  config: PaymentDefaults.config,
+                  onSubmitted: () {
+                    ref.invalidate(cfcPaymentRequestsProvider);
+                    ref.invalidate(walletBalancesProvider);
+                  },
+                ),
+              ],
             ),
             data: (cfg) => ListView(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),

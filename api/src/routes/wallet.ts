@@ -117,6 +117,26 @@ function requestPayload(row: {
   };
 }
 
+/** GET /api/me — mobil profil + bakiye (canlifal.com Flutter dokümanı) */
+walletRouter.get("/me", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.userId! } });
+  if (!user) return jsonError(res, 404, "Kullanıcı bulunamadı");
+
+  return res.status(200).json({
+    id: user.id,
+    email: user.email,
+    name: user.displayName,
+    username: user.username ?? user.email.split("@")[0],
+    image: user.avatarUrl,
+    role: user.role,
+    credits: user.coins,
+    jetonBalance: user.coins,
+    cfcBalance: user.cfcBalance,
+    membership: user.membership,
+    membershipExpiresAt: user.membershipExpiresAt?.toISOString() ?? null,
+  });
+});
+
 /** GET /api/user/credits */
 walletRouter.get("/user/credits", requireAuth, async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.userId! } });

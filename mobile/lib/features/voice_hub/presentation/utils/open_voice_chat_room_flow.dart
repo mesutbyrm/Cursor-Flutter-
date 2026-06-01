@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -14,7 +15,15 @@ import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) async {
   const normalCost = LiveRemoteDataSource.voiceRoomNormalOpenJetonCost;
   const vipCost = LiveRemoteDataSource.voiceRoomVipOpenJetonCost;
-  final balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ?? 0;
+  int balance = 0;
+  try {
+    balance = (await ref.read(walletBalancesProvider.future).timeout(
+          const Duration(seconds: 12),
+        ))
+        .jeton;
+  } catch (_) {
+    balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ?? 0;
+  }
 
   final choice = await showModalBottomSheet<_OpenRoomChoice>(
     context: context,
@@ -88,13 +97,13 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
   if (choice == null || !context.mounted) return;
 
   final cost = choice == _OpenRoomChoice.vip ? vipCost : normalCost;
-  if (balance < cost) {
+  if (balance > 0 && balance < cost) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Yetersiz jeton ($cost gerekli, $balance mevcut).'),
         action: SnackBarAction(
           label: 'Jeton yükle',
-          onPressed: () => context.push('/jeton-store'),
+          onPressed: () => openJetonStore(context, ref: ref),
         ),
       ),
     );
@@ -156,7 +165,7 @@ Future<void> _createAndEnter(
           content: Text(msg),
           action: SnackBarAction(
             label: 'Jeton yükle',
-            onPressed: () => context.push('/jeton-store'),
+            onPressed: () => openJetonStore(context, ref: ref),
           ),
         ),
       );

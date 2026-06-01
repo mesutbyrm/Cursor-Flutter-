@@ -11,6 +11,7 @@ import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../profile/data/jeton_packages_catalog.dart';
 import '../../../profile/domain/entities/jeton_package_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../wallet/domain/wallet_balances.dart';
 import '../../../profile/presentation/widgets/jeton_checkout_flow.dart';
 import '../../data/membership_remote_datasource.dart';
 import '../../domain/membership_package_entity.dart';
@@ -22,7 +23,14 @@ final _membershipRemoteProvider = Provider<MembershipRemoteDataSource>((ref) {
 
 final membershipCatalogProvider =
     FutureProvider.autoDispose<MembershipCatalogEntity>((ref) async {
-  final wallet = await ref.watch(walletBalancesProvider.future);
+  WalletBalances wallet;
+  try {
+    wallet = await ref.watch(walletBalancesProvider.future).timeout(
+          const Duration(seconds: 15),
+        );
+  } catch (_) {
+    wallet = const WalletBalances();
+  }
   return ref.watch(_membershipRemoteProvider).loadCatalog(wallet);
 });
 

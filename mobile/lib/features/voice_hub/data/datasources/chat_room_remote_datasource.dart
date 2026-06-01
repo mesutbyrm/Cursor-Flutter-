@@ -325,30 +325,37 @@ class ChatRoomRemoteDataSource {
   Future<List<YoutubeSearchHit>> searchYoutube(String query) async {
     final q = query.trim();
     if (q.length < 2) return const [];
-    Response<dynamic> res;
-    try {
-      res = await _dio
-          .safeGet<dynamic>(
-            youtubeSearchPath(),
-            query: {'q': q, 'query': q},
-          )
-          .timeout(const Duration(seconds: 18));
-    } on Object {
-      res = await _dio
-          .safeGet<dynamic>(
-            '/api/chat/youtube-search',
-            query: {'q': q, 'query': q},
-          )
-          .timeout(const Duration(seconds: 18));
+
+    const paths = [
+      '/api/chat/youtube-search',
+      '/api/youtube/search',
+    ];
+    Object? lastError;
+    for (final path in paths) {
+      try {
+        final res = await _dio
+            .safeGet<dynamic>(
+              path,
+              query: {'q': q, 'query': q, 'search': q},
+            )
+            .timeout(const Duration(seconds: 18));
+        final data = res.data;
+        if (data is String &&
+            (data.contains('<!DOCTYPE') || data.contains('<html'))) {
+          throw const ApiException(
+            'YouTube araması yapılamadı (oturum veya sunucu yanıtı).',
+          );
+        }
+        final hits = _parseYoutubeHits(data);
+        if (hits.isNotEmpty) return hits;
+      } on Object catch (e) {
+        lastError = e;
+      }
     }
-    final data = res.data;
-    if (data is String &&
-        (data.contains('<!DOCTYPE') || data.contains('<html'))) {
-      throw const ApiException(
-        'YouTube araması yapılamadı (oturum veya sunucu yanıtı).',
-      );
+    if (lastError != null) {
+      throw ApiException(ApiException.userMessage(lastError));
     }
-    return _parseYoutubeHits(data);
+    return const [];
   }
 
   Future<({List<MusicQueueItem> queue, int cost})> fetchMusicQueue(
@@ -526,6 +533,12 @@ class ChatRoomRemoteDataSource {
         }
         if (body is Map) {
           final map = _unwrapMap(body) ?? asJsonMap(body);
+          if (map['success'] == false) {
+            throw ApiException(
+              (map['error'] ?? map['message'] ?? 'Mesaj gönderilemedi')
+                  .toString(),
+            );
+          }
           final msg = map['message'];
           if (msg is Map) {
             return ChatRoomMessage.fromJson(Map<String, dynamic>.from(msg));
@@ -543,7 +556,16 @@ class ChatRoomRemoteDataSource {
           createdAt: DateTime.now(),
         );
       }
-      return null;
+      final errBody = res.data;
+      if (errBody is Map) {
+        final m = asJsonMap(errBody);
+        throw ApiException(
+          (m['error'] ?? m['message'] ?? 'Mesaj gönderilemedi ($code)')
+              .toString(),
+          statusCode: code,
+        );
+      }
+      throw ApiException('Mesaj gönderilemedi (HTTP $code)', statusCode: code);
     });
   }
 }

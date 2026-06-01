@@ -121,7 +121,8 @@ class LiveRemoteDataSource {
         message: _formatCreateRoomError(map),
       );
     }
-    if (map['success'] != true) {
+    final httpCode = res.statusCode ?? 0;
+    if (map['success'] != true && httpCode != 201) {
       final err = (map['error'] ?? map['message'])?.toString().trim();
       if (err != null && err.isNotEmpty) {
         throw DioException(

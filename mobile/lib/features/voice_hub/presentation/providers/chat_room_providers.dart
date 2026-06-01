@@ -359,7 +359,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   Future<void> sendMessage(String text) async {
     final trimmed = VoiceOfficialJoin.normalizeCommandInput(text.trim());
     if (trimmed.isEmpty || _roomKey.isEmpty) return;
-    if (state.sending) return;
 
     final user = ref.read(authControllerProvider).valueOrNull;
     final optimisticId = 'local-${DateTime.now().millisecondsSinceEpoch}';
@@ -377,7 +376,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
           )
         : null;
 
-    _pollPaused = true;
     state = state.copyWith(
       messages: optimistic != null
           ? [...state.messages, optimistic]
@@ -393,15 +391,18 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
               roomKey: _roomKey,
               alternateKey: _altRoomKey,
               content: trimmed,
-            );
+            ).timeout(const Duration(seconds: 10));
       } on TimeoutException {
         final alt = _altRoomKey;
         if (alt != null && alt.isNotEmpty && alt != _roomKey) {
-          sent = await ref.read(chatRoomRemoteProvider).sendMessage(
+          sent = await ref
+              .read(chatRoomRemoteProvider)
+              .sendMessage(
                 roomKey: alt,
                 alternateKey: _roomKey,
                 content: trimmed,
-              );
+              )
+              .timeout(const Duration(seconds: 10));
         } else {
           rethrow;
         }
@@ -433,9 +434,16 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         unawaited(refresh());
       }
     } on TimeoutException {
-      state = state.copyWith(
-        error: 'Mesaj gönderimi zaman aşımına uğradı. Tekrar deneyin.',
-      );
+      if (optimistic != null) {
+        state = state.copyWith(
+          messages: [...state.messages, optimistic],
+          error: 'Mesaj zaman aşımı — bağlantıyı kontrol edin.',
+        );
+      } else {
+        state = state.copyWith(
+          error: 'Mesaj gönderimi zaman aşımına uğradı. Tekrar deneyin.',
+        );
+      }
     } catch (e) {
       state = state.copyWith(
         messages: optimistic != null
@@ -444,7 +452,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         error: ApiException.userMessage(e),
       );
     } finally {
-      _pollPaused = false;
       state = state.copyWith(sending: false);
     }
   }

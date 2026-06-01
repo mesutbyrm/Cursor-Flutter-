@@ -191,17 +191,36 @@ class WalletRemoteDataSource {
   }
 
   Future<WalletBalances> balances() async {
-    if (Env.useMobileAuth) {
-      final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.me);
-      final body = res.data ?? {};
-      final err = body['error'];
-      if (err != null) {
-        throw ApiException(err.toString());
-      }
-      return WalletBalances.fromJson(body);
+    if (!Env.useMobileAuth) {
+      final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.wallet);
+      return WalletBalances.fromJson(_unwrap(res.data));
     }
-    final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.wallet);
-    return WalletBalances.fromJson(_unwrap(res.data));
+
+    Object? lastError;
+    for (final path in [ApiEndpoints.me, ApiEndpoints.userCredits]) {
+      try {
+        final res = await _dio
+            .safeGet<Map<String, dynamic>>(path)
+            .timeout(const Duration(seconds: 18));
+        final body = res.data ?? {};
+        final err = body['error'];
+        if (err != null && err.toString().trim().isNotEmpty) {
+          throw ApiException(err.toString());
+        }
+        final map = _unwrap(body);
+        if (map.containsKey('user') && map['user'] is Map) {
+          return WalletBalances.fromJson(asJsonMap(map['user']));
+        }
+        return WalletBalances.fromJson(map);
+      } on Object catch (e) {
+        lastError = e;
+      }
+    }
+    throw ApiException(
+      lastError != null
+          ? ApiException.userMessage(lastError)
+          : 'Bakiye alınamadı. Oturumu kontrol edin.',
+    );
   }
 
   /// Site ödeme ayarları — API dolu alanları korur, yalnız boş alanları tamamlar.
@@ -222,10 +241,18 @@ class WalletRemoteDataSource {
   }
 
   Future<void> submitPaymentRequest(Map<String, dynamic> body) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.paymentRequests,
-      data: body,
-    );
+    final res = await _dio
+        .safePost<dynamic>(
+          ApiEndpoints.paymentRequests,
+          data: body,
+        )
+        .timeout(
+          const Duration(seconds: 22),
+          onTimeout: () => throw const ApiException(
+            'Ödeme bildirimi zaman aşımına uğradı. '
+            'Bağlantınızı kontrol edip tekrar deneyin.',
+          ),
+        );
     final code = res.statusCode ?? 0;
     if (code < 200 || code >= 300) {
       throw ApiException(
@@ -268,7 +295,14 @@ class WalletRemoteDataSource {
       }
       if (m['id'] != null || m['paymentRequestId'] != null) return;
       if (m['success'] == true) return;
+      // 201 Created — gövde tanınmasa bile kayıt oluşmuş olabilir
+      if (code == 201) return;
     }
+
+    throw const ApiException(
+      'Ödeme bildirimi sunucudan onay alınamadı. '
+      'Bildirimler veya talep geçmişinden kontrol edin; gerekirse tekrar deneyin.',
+    );
   }
 
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests() async {

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/navigation/wallet_navigation.dart';
+
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
@@ -133,8 +135,8 @@ class ProfilePage extends ConsumerWidget {
                             ProfileWalletSection(
                               jeton: jeton,
                               cfc: cfc,
-                              onTopUp: () => context.push('/jeton-store'),
-                              onCfcTopUp: () => context.push('/cfc-store'),
+                              onTopUp: () => openJetonStore(context, ref: ref),
+                              onCfcTopUp: () => openCfcStore(context, ref: ref),
                               onEarnings: () =>
                                   context.push('/profile/earnings'),
                               onTransactions: () =>

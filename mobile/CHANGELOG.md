@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.96+98 (2026-05-31)
+
+### Sesli oda, ödeme, jeton/CFC, sohbet düzeltmeleri
+
+- Bakiye: `GET /api/me` + yedek `GET /api/user/credits` — jeton 0 görünme / oda açılamama
+- Oda aç: bakiye yüklenmeden engel kaldırıldı; API jeton kontrolü esas
+- Ödeme bildirimi: 22 sn zaman aşımı; belirsiz yanıtta hata; sonsuz dönme giderildi
+- Jeton/CFC: `openJetonStore` / `openCfcStore` — sesli odadan güvenilir yönlendirme
+- Sohbet: ikinci mesaj kilidi (`sending` + poll pause) kaldırıldı; 10 sn gönderim limiti
+- YouTube: `/api/chat/youtube-search` önce, boş sonuçta yedek uç
+
 ## 1.0.95+97 (2026-05-31)
 
 ### Premium 2026 UI — PART 1–3 (PR #62–#64)
