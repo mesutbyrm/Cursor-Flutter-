@@ -5,7 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/user_avatar.dart';
-import '../../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../../core/providers/auth_selectors.dart';
+import '../../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
 import '../../providers/social_providers.dart';
 import 'social_post_caption.dart';
@@ -37,16 +38,21 @@ class _SocialInstagramPostCardState
 
   @override
   Widget build(BuildContext context) {
-    final me = ref.watch(authControllerProvider).valueOrNull;
-    final isMine = me != null && me.id == post.author.id;
+    final myId = ref.watch(currentUserIdProvider);
+    final isMine = myId != null && myId == post.author.id;
     final likeCount = post.likesCount + (_liked ? 1 : 0);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-      child: DecoratedBox(
+      child: ProGlassCard(
+        blur: 14,
+        animateIn: false,
+        padding: EdgeInsets.zero,
+        borderRadius: BorderRadius.circular(16),
+        child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: const Color(0xFF12081F).withValues(alpha: 0.72),
+          color: Colors.transparent,
           border: Border.all(
             color: AppColors.accentPurple.withValues(alpha: 0.22),
           ),
@@ -171,6 +177,7 @@ class _SocialInstagramPostCardState
             ],
           ),
         ),
+      ),
       ),
     );
   }

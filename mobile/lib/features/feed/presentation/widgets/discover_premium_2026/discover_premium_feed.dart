@@ -36,7 +36,7 @@ class _DiscoverPremiumFeedState extends ConsumerState<DiscoverPremiumFeed> {
   }
 
   void _scheduleVoiceRefresh() {
-    Future.delayed(const Duration(seconds: 8), () {
+    Future.delayed(const Duration(seconds: 15), () {
       if (!mounted) return;
       ref.invalidate(voiceRoomsProvider);
       _scheduleVoiceRefresh();

@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../../core/navigation/wallet_navigation.dart';
+import '../../../../../core/performance/list_perf.dart';
+import '../../../../../core/providers/auth_selectors.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
@@ -39,7 +42,9 @@ class VoiceDiscoverHub2026 extends ConsumerStatefulWidget {
 
 class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
   final _searchCtrl = TextEditingController();
+  final _scroll = ScrollController();
   String _tab = 'discover';
+  int _visibleRooms = ListPerf.defaultPageSize;
 
   static const _tabs = [
     _DiscoverTab(id: 'discover', label: 'Keşfet', icon: Icons.explore_rounded),
@@ -64,9 +69,35 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+  }
+
+  @override
   void dispose() {
     _searchCtrl.dispose();
+    _scroll.removeListener(_onScroll);
+    _scroll.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    if (_scroll.position.pixels >=
+        _scroll.position.maxScrollExtent - ListPerf.preloadThresholdPx) {
+      final total = _filtered.length;
+      if (_visibleRooms < total) {
+        setState(() {
+          _visibleRooms = (_visibleRooms + ListPerf.defaultPageSize)
+              .clamp(0, total);
+        });
+      }
+    }
+  }
+
+  void _resetVisibleRooms() {
+    _visibleRooms = ListPerf.defaultPageSize.clamp(0, _filtered.length);
   }
 
   List<VoiceRoomEntity> get _filtered {
@@ -104,10 +135,15 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(authControllerProvider).valueOrNull;
-    final coins = ref.watch(coinBalanceProvider).valueOrNull ?? user?.coinBalance ?? 0;
-    final name = user?.display ?? 'Misafir';
-    final avatar = user?.avatarUrl;
+    final coinBalance =
+        (ref.watch(coinBalanceProvider).valueOrNull ??
+            ref.watch(currentUserCoinBalanceProvider));
+    final name = ref.watch(
+      authControllerProvider.select((a) => a.valueOrNull?.display ?? 'Misafir'),
+    );
+    final avatar = ref.watch(
+      authControllerProvider.select((a) => a.valueOrNull?.avatarUrl),
+    );
     final vipRooms = widget.rooms.where((r) => r.isVipGoldRoom).take(8).toList();
     final popular = [...widget.rooms]
       ..sort((a, b) => b.displayOnline.compareTo(a.displayOnline));
@@ -120,9 +156,9 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
         _DiscoverHeader(
           userName: name,
           avatarUrl: avatar,
-          coins: coins,
+          coins: coinBalance ?? 0,
           onNotifications: () => context.push('/notifications'),
-          onCoins: () => context.push('/jeton-store'),
+          onCoins: () => openJetonStore(context, ref: ref),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -130,7 +166,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
             controller: _searchCtrl,
             onChanged: (v) {
               widget.onSearchChanged(v);
-              setState(() {});
+              setState(_resetVisibleRooms);
             },
           ),
         ),
@@ -158,7 +194,10 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
                     context.push('/voice-room/${r.apiRoomKey}/pk', extra: r);
                     return;
                   }
-                  setState(() => _tab = t.id);
+                  setState(() {
+                    _tab = t.id;
+                    _resetVisibleRooms();
+                  });
                 },
               );
             },
@@ -171,121 +210,209 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
           onStreamTap: (s) => openLiveFromDiscover(context, ref, s),
         ),
         Expanded(
-          child: ListView(
+          child: ListView.builder(
+            controller: _scroll,
+            cacheExtent: ListPerf.cacheExtent,
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-            children: [
-              _NightBanner(
-                onJoin: widget.rooms.isNotEmpty
-                    ? () => widget.onRoomTap(widget.rooms.first)
-                    : null,
-              ),
-              const SizedBox(height: 22),
-              _SectionTitle(title: 'Popüler Odalar', action: 'Tümü'),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 220,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: popular.take(10).length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (context, i) => _PopularRoomCard(
-                    room: popular[i],
-                    index: i,
-                    onTap: () => widget.onRoomTap(popular[i]),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 22),
-              _SectionTitle(title: 'Canlı Yayınlar', action: 'Tümü'),
-              const SizedBox(height: 10),
-              if (live.isEmpty)
-                Text(
-                  'Şu an canlı yayın yok',
-                  style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.9)),
-                )
-              else
-                SizedBox(
-                  height: 140,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: live.length.clamp(0, 12),
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (context, i) => _LiveStreamCard(
-                      stream: live[i],
-                      onTap: () => openLiveFromDiscover(context, ref, live[i]),
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 22),
-              _SectionTitle(title: 'Kategoriler', action: null),
-              const SizedBox(height: 10),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 0.82,
-                ),
-                itemCount: _gridCats.length,
-                itemBuilder: (context, i) {
-                  final c = _gridCats[i];
-                  final count = _roomCountForCat(c.id);
-                  return _CategoryIconTile(
-                    cat: c,
-                    roomLabel: count > 0 ? '${VoiceLiveHeader2026Format.count(count)} oda' : '—',
-                    onTap: () {
-                      if (c.id == 'vip') {
-                        context.push('/vip-gold');
-                      } else {
-                        setState(() => _tab = c.id == 'night' ? 'discover' : c.id);
-                      }
-                    },
-                  );
-                },
-              ),
-              if (vipRooms.isNotEmpty) ...[
-                const SizedBox(height: 22),
-                _SectionTitle(title: 'VIP Odalar', action: 'Tümü'),
-                const SizedBox(height: 10),
-                SizedBox(
-                  height: 120,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: vipRooms.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (context, i) => _VipRoomCard(
-                      room: vipRooms[i],
-                      onTap: () => widget.onRoomTap(vipRooms[i]),
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 16),
-              Text(
-                'Tüm odalar · ${_filtered.length}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textMuted.withValues(alpha: 0.95),
-                ),
-              ),
-              const SizedBox(height: 10),
-              ..._filtered.map(
-                (r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _CompactRoomRow(
-                    room: r,
-                    onTap: () => widget.onRoomTap(r),
-                  ),
-                ),
-              ),
-            ],
+            itemCount: _listChildCount(
+              popular: popular,
+              live: live,
+              vipRooms: vipRooms,
+            ),
+            itemBuilder: (context, index) => _buildListChild(
+              context,
+              index: index,
+              popular: popular,
+              live: live,
+              vipRooms: vipRooms,
+            ),
           ),
         ),
       ],
     );
+  }
+
+  int _listChildCount({
+    required List<VoiceRoomEntity> popular,
+    required List<LiveStreamEntity> live,
+    required List<VoiceRoomEntity> vipRooms,
+  }) {
+    var n = 8; // banner, titles, horizontals, grid, footer label
+    final roomVisible = _visibleRooms.clamp(0, _filtered.length);
+    return n + roomVisible + (_visibleRooms < _filtered.length ? 1 : 0);
+  }
+
+  Widget _buildListChild(
+    BuildContext context, {
+    required int index,
+    required List<VoiceRoomEntity> popular,
+    required List<LiveStreamEntity> live,
+    required List<VoiceRoomEntity> vipRooms,
+  }) {
+    var i = index;
+    if (i == 0) {
+      return _NightBanner(
+        onJoin: widget.rooms.isNotEmpty
+            ? () => widget.onRoomTap(widget.rooms.first)
+            : null,
+      );
+    }
+    i--;
+    if (i == 0) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 22, bottom: 10),
+        child: _SectionTitle(title: 'Popüler Odalar', action: 'Tümü'),
+      );
+    }
+    i--;
+    if (i == 0) {
+      return SizedBox(
+        height: 220,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: popular.take(10).length,
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (context, j) => _PopularRoomCard(
+            room: popular[j],
+            index: j,
+            onTap: () => widget.onRoomTap(popular[j]),
+          ),
+        ),
+      );
+    }
+    i--;
+    if (i == 0) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 22, bottom: 10),
+        child: _SectionTitle(title: 'Canlı Yayınlar', action: 'Tümü'),
+      );
+    }
+    i--;
+    if (i == 0) {
+      if (live.isEmpty) {
+        return Text(
+          'Şu an canlı yayın yok',
+          style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.9)),
+        );
+      }
+      return SizedBox(
+        height: 140,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: live.length.clamp(0, 12),
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (context, j) => _LiveStreamCard(
+            stream: live[j],
+            onTap: () => openLiveFromDiscover(context, ref, live[j]),
+          ),
+        ),
+      );
+    }
+    i--;
+    if (i == 0) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 22, bottom: 10),
+        child: _SectionTitle(title: 'Kategoriler', action: null),
+      );
+    }
+    i--;
+    if (i == 0) {
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 0.82,
+        ),
+        itemCount: _gridCats.length,
+        itemBuilder: (context, j) {
+          final c = _gridCats[j];
+          final count = _roomCountForCat(c.id);
+          return _CategoryIconTile(
+            cat: c,
+            roomLabel: count > 0 ? '${VoiceLiveHeader2026Format.count(count)} oda' : '—',
+            onTap: () {
+              if (c.id == 'vip') {
+                context.push('/vip-gold');
+              } else {
+                setState(() {
+                  _tab = c.id == 'night' ? 'discover' : c.id;
+                  _resetVisibleRooms();
+                });
+              }
+            },
+          );
+        },
+      );
+    }
+    i--;
+    if (vipRooms.isNotEmpty) {
+      if (i == 0) {
+        return const Padding(
+          padding: EdgeInsets.only(top: 22, bottom: 10),
+          child: _SectionTitle(title: 'VIP Odalar', action: 'Tümü'),
+        );
+      }
+      i--;
+      if (i == 0) {
+        return SizedBox(
+          height: 120,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: vipRooms.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, j) => _VipRoomCard(
+              room: vipRooms[j],
+              onTap: () => widget.onRoomTap(vipRooms[j]),
+            ),
+          ),
+        );
+      }
+      i--;
+    }
+    if (i == 0) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 16, bottom: 10),
+        child: Text(
+          'Tüm odalar · ${_filtered.length}',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textMuted.withValues(alpha: 0.95),
+          ),
+        ),
+      );
+    }
+    i--;
+    final roomIndex = i;
+    final visible = _visibleRooms.clamp(0, _filtered.length);
+    if (roomIndex < visible) {
+      final r = _filtered[roomIndex];
+      return ListPerf.repaint(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: _CompactRoomRow(
+            room: r,
+            onTap: () => widget.onRoomTap(r),
+          ),
+        ),
+      );
+    }
+    if (roomIndex == visible && _visibleRooms < _filtered.length) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   int _roomCountForCat(String id) {
