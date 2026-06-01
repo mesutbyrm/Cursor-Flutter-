@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/widgets/cached_cover_image.dart';
 import '../../../core/navigation/wallet_navigation.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
@@ -375,7 +376,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            Image.network(url, fit: BoxFit.cover),
+                            CachedCoverImage(url: url, fit: BoxFit.cover),
                             Positioned(
                               left: 0,
                               right: 0,

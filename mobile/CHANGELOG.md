@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.98+100 (2026-05-31)
+
+### Performans + Pro Glass (devam)
+
+- Canlı yayınlar, sohbet mesajları, takip listesi, profil ızgarası: lazy pagination
+- `CachedCoverImage` — kalan `Image.network` kullanımları kaldırıldı
+- Sohbet: eski mesajlar yukarı kaydırınca yüklenir; cam üst bar (`ProGlassTopBar`)
+- `LazyPaginatedListView` — genel amaçlı sayfalı liste bileşeni
+
 ## 1.0.97+99 (2026-05-31)
 
 ### Performans + Pro Glass UI
