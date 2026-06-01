@@ -22,4 +22,16 @@ extension AppThemeContext on BuildContext {
   TextTheme get text => Theme.of(this).textTheme;
 
   ColorScheme get scheme => Theme.of(this).colorScheme;
+
+  Color get accentPink => AppThemeColors.accentPink;
+
+  Color get accentPurple => AppThemeColors.accentPurple;
+
+  Color get accentCyan => AppThemeColors.accentCyan;
+
+  Color get liveRed => AppThemeColors.liveRed;
+
+  Color get coinGold => AppThemeColors.coinGold;
+
+  Color get onlineGreen => AppThemeColors.onlineGreen;
 }

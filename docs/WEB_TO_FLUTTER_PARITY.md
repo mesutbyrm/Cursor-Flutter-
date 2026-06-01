@@ -55,10 +55,10 @@ Mobil, web ile aynı koyu mor-pembe atmosferi hedefler; açık mod profesyonel d
 |---------|-----|---------|--------|
 | Global arama | `/arama` | `/search` | ✅ `GET /api/users/search?q=` |
 | Keşfet yerel filtre | — | Feed arama çubuğu | ✅ (oda/yayın metni) |
-| Favoriler | `/favoriler` | `/favorites` | ⚠️ WebView + fal geçmişi API |
-| Fal geçmişi | Profil / fal | Favoriler sekmesi | ✅ `GET /api/user/fortunes` |
+| Favoriler | `/favoriler` | `/favorites` | ✅ Native liste + site WebView |
+| Fal geçmişi | Profil / fal | `/favorites`, `/fortune/history/:id` | ✅ CRUD API (self-hosted) |
 
-> **Eksik API:** Dokümanda `/api/favorites` veya bookmark endpoint'i yok. Site `/favoriler` sayfası WebView ile açılır; kalıcı yerel liste için backend eklenmeli.
+> **API (self-hosted `api/`):** `GET/POST /api/user/fortunes`, `GET /api/user/fortunes/:id`, `GET/POST/DELETE /api/user/favorites`. Production canlifal.com ile aynı path’ler hedeflenir; `prisma migrate` gerekir.
 
 ## Mesajlaşma & bildirimler
 
@@ -138,20 +138,22 @@ Aşağıdaki sayfalar production'da eksik veya yalnızca web oturumu gerektirir;
 | `canlifal_web` | WebView |
 | **`search`** | Kullanıcı arama (`/arama`) |
 | **`favorites`** | Favoriler + fal geçmişi |
+| **`content_hub`** | Blog / rüya WebView hub |
 
 ## Açık eksikler (rapor)
 
-1. **Favoriler API** — Web `/favoriler` için public REST endpoint dokümante değil; WebView + fal geçmişi ile kısmi karşılama.
-2. **Fortune backend** — Tam fal oturumu API entegrasyonu (şu an katalog + yerel UX).
-3. **Şifre sıfırlama / OTP** — Self-hosted `api/` paketinde endpoint yok.
-4. **Global içerik araması** — Yalnızca kullanıcı araması; post/oda araması API bekliyor.
-5. **Tema migrasyonu** — ~200 dosyada hâlâ `AppColors.*` sabitleri.
-6. **Web repo** — Tam Next.js kaynak kodu bu workspace'te değil (`site/` yalnızca jeton mockup).
+1. **Production DB** — `UserFortune` / `UserFavorite` için `cd api && npx prisma migrate dev`.
+2. **Şifre sıfırlama / OTP** — Self-hosted `api/` paketinde endpoint yok.
+3. **Global içerik araması** — Yalnızca kullanıcı araması; post/oda araması API bekliyor.
+4. **Tema migrasyonu** — `context.colors` / `context.accentPink` eklendi; kalan ~150 feature dosyası kademeli.
+5. **Web repo** — Tam Next.js kaynak kodu bu workspace'te değil (`site/` yalnızca jeton mockup).
 
-## Sonraki modül sırası (öneri)
+## Tamamlanan parite (2026-05-19)
 
-1. ✅ `search` + `favorites`
-2. Fortune → `GET /api/user/fortunes` detay sayfası
-3. Blog / rüya sözlüğü → WebView veya native SEO ekranları
-4. `favoriteTeam` profil alanı (API mevcut)
-5. Feed sunucu taraflı pagination
+| Adım | Durum |
+|------|--------|
+| Arama + favoriler modülü | ✅ |
+| Fal API kayıt + `/fortune/history/:id` | ✅ |
+| Blog / rüya `/content-hub` | ✅ |
+| Favoriler REST (`/api/user/favorites`) | ✅ self-hosted |
+| Tema (extension + ana ekranlar) | ⏳ kısmi |

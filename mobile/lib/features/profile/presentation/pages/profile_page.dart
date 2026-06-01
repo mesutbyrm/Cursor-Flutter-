@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -44,8 +44,8 @@ class ProfilePage extends ConsumerWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: RefreshIndicator(
-          color: AppColors.accentPink,
-          backgroundColor: AppColors.bgPurpleGlow,
+          color: context.accentPink,
+          backgroundColor: context.colors.surfaceContainer,
           onRefresh: refresh,
           child: auth.when(
             loading: () => const Center(child: DiscoverAccentLoader()),

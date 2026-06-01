@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/ui/premium/premium.dart';
 import '../../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../../../core/widgets/user_avatar.dart';
@@ -50,10 +50,12 @@ class DiscoverPremiumHeader extends ConsumerWidget {
                     gradient: const LinearGradient(
                       colors: [Color(0xFFFF2D7A), Color(0xFF9B4DFF)],
                     ),
-                    boxShadow: AppColors.glowShadow(
-                      AppColors.accentPurple,
-                      blur: 14,
-                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: context.accentPurple.withValues(alpha: 0.45),
+                        blurRadius: 14,
+                      ),
+                    ],
                   ),
                   child: UserAvatar(url: user?.avatarUrl, radius: 20),
                 ),
