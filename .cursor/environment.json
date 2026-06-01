@@ -1,5 +1,5 @@
 {
   "name": "Canlifal Flutter + API",
-  "install": "bash scripts/cursor-update.sh; exit 0",
-  "start": "bash scripts/cursor-start.sh; exit 0"
+  "install": "bash scripts/cursor-update.sh",
+  "start": "bash scripts/cursor-start.sh"
 }
