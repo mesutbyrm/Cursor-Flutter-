@@ -20,14 +20,14 @@ class DiscoverFortuneTarot extends StatelessWidget {
         DiscoverSectionHeader(
           title: 'Fal & Tarot',
           actionLabel: 'Tümünü Gör',
-          onAction: () => context.push('/fortune'),
+          onAction: () => context.go('/fortune'),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () => context.push('/fortune'),
+              onTap: () => context.go('/fortune'),
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               child: Container(
                 padding: const EdgeInsets.all(14),

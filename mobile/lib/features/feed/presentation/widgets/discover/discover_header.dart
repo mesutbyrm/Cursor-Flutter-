@@ -6,9 +6,9 @@ import 'package:intl/intl.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/canlifal_tokens.dart';
 import '../../../../../core/ui/premium/premium.dart';
+import '../../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
-import '../../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 
 class DiscoverHeader extends ConsumerWidget {
@@ -22,7 +22,6 @@ class DiscoverHeader extends ConsumerWidget {
         user?.coinBalance ??
         0;
     final coinLabel = NumberFormat.decimalPattern('tr').format(coins);
-    final unreadNotifications = ref.watch(notificationsUnreadCountProvider);
     final theme = Theme.of(context);
     final tokens = context.tokens;
 
@@ -95,13 +94,8 @@ class DiscoverHeader extends ConsumerWidget {
             label: coinLabel,
             onTap: () => context.push('/jeton-store'),
           ),
-          const SizedBox(width: 10),
-          PremiumIconButton(
-            icon: Icons.notifications_none_rounded,
-            showBadge: unreadNotifications > 0,
-            badgeCount: unreadNotifications,
-            onTap: () => context.push('/notifications'),
-          ),
+          const SizedBox(width: 6),
+          const MessagesNotificationsActions(),
         ],
       ),
     );

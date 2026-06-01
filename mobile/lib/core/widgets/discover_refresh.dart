@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../ui/premium_2026/premium_motion.dart';
 
 /// Keşfet ve sekmelerde daha kısa / hızlı hissedilen yenileme.
 abstract final class DiscoverRefresh {
@@ -19,7 +20,18 @@ abstract final class DiscoverRefresh {
       displacement: displacement,
       strokeWidth: strokeWidth,
       onRefresh: onRefresh,
-      child: child,
+      child: ScrollConfiguration(
+        behavior: const _PremiumScrollBehavior(),
+        child: child,
+      ),
     );
   }
+}
+
+class _PremiumScrollBehavior extends ScrollBehavior {
+  const _PremiumScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      PremiumMotion.listPhysics;
 }

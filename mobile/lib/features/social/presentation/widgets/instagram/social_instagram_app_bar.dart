@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/canlifal_tokens.dart';
 import '../../../../../core/ui/premium/premium_icon_button.dart';
+import '../../../../../core/widgets/messages_notifications_actions.dart';
 import '../../utils/open_social_create_post.dart';
 
-/// CanlıFal Sosyal üst çubuk — gradyan başlık, bildirim noktaları.
+/// CanlıFal Sosyal üst çubuk — paylaşım + mesajlar + bildirimler.
 class SocialInstagramAppBar extends ConsumerWidget {
   const SocialInstagramAppBar({super.key});
 
@@ -50,59 +50,9 @@ class SocialInstagramAppBar extends ConsumerWidget {
             onTap: () => openSocialCreatePost(context, ref),
           ),
           const SizedBox(width: 4),
-          _NotifyIconButton(
-            icon: Icons.favorite_border_rounded,
-            showDot: true,
-            onTap: () => context.push('/notifications'),
-          ),
-          const SizedBox(width: 4),
-          _NotifyIconButton(
-            icon: Icons.send_outlined,
-            showDot: true,
-            onTap: () => context.go('/messages'),
-          ),
+          const MessagesNotificationsActions(spacing: 4),
         ],
       ),
-    );
-  }
-}
-
-class _NotifyIconButton extends StatelessWidget {
-  const _NotifyIconButton({
-    required this.icon,
-    required this.onTap,
-    this.showDot = false,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool showDot;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        PremiumIconButton(icon: icon, size: 40, onTap: onTap),
-        if (showDot)
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: AppColors.accentPink,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.background, width: 1.5),
-                boxShadow: AppColors.glowShadow(
-                  AppColors.accentPink,
-                  blur: 8,
-                ),
-              ),
-            ),
-          ),
-      ],
     );
   }
 }

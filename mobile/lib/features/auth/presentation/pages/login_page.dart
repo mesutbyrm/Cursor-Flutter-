@@ -4,10 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../providers/auth_providers.dart';
-import '../widgets/auth_shell.dart';
-import '../widgets/google_sign_in_button.dart';
+import '../widgets/premium_auth_2026/premium_auth_2026.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -28,18 +26,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.dispose();
   }
 
-  Future<void> _googleLogin() async {
-    // canlifal.com: NextAuth Google OAuth (/api/auth/signin/google), SQL POST yok.
-    if (Env.useNextAuth) {
-      if (!mounted) return;
-      context.push('/auth/google');
-      return;
-    }
-    await ref.read(authControllerProvider.notifier).loginWithGoogle();
+  void _soon(String label) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$label yakında aktif olacak.')),
+    );
   }
 
-  Future<void> _tiktokLogin() async {
-    await ref.read(authControllerProvider.notifier).loginWithTikTok();
+  void _continueAsGuest() {
+    ref.read(guestModeProvider.notifier).state = true;
+    context.go('/feed');
   }
 
   @override
@@ -47,101 +42,104 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final auth = ref.watch(authControllerProvider);
     ref.listen(authControllerProvider, (prev, next) {
       next.whenOrNull(
+        data: (user) {
+          if (user != null) {
+            ref.read(guestModeProvider.notifier).state = false;
+          }
+        },
         error: (e, _) => ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),
         ),
       );
     });
 
-    return AuthShell(
-      child: AuthFormCard(
-        child: Form(
-          key: _form,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const AuthBrandHeader(
-                title: 'Giriş Yap',
-                subtitle: 'Hesabına giriş yap ve fal dünyasına dön.',
+    return AuthPremiumShell(
+      heroLogo: true,
+      topTitle: 'Hoş geldin',
+      topSubtitle: 'Sesli odalara katıl, fal dünyasını keşfet.',
+      child: Form(
+        key: _form,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AuthSocialSection(
+              busy: auth.isLoading,
+              googleLabel: 'Google ile Giriş yap',
+              onGoogle: auth.isLoading
+                  ? null
+                  : () => ref
+                      .read(authControllerProvider.notifier)
+                      .loginWithGoogle(),
+              onTikTok: auth.isLoading
+                  ? null
+                  : () => ref
+                      .read(authControllerProvider.notifier)
+                      .loginWithTikTok(),
+              onApple: () => _soon('Apple girişi'),
+              onGuest: _continueAsGuest,
+            ),
+            const SizedBox(height: 22),
+            const AuthOrDividerPremium(),
+            const SizedBox(height: 22),
+            AuthFloatingField(
+              controller: _email,
+              label: 'E-posta',
+              hint: 'ornek@email.com',
+              prefixIcon: Icons.mail_outline_rounded,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+              validator: (v) =>
+                  v != null && v.contains('@') ? null : 'Geçerli e-posta girin',
+            ),
+            const SizedBox(height: 14),
+            AuthFloatingField(
+              controller: _password,
+              label: 'Şifre',
+              hint: '••••••••',
+              prefixIcon: Icons.lock_outline_rounded,
+              obscureText: true,
+              autofillHints: const [AutofillHints.password],
+              validator: (v) =>
+                  v != null && v.length >= 6 ? null : 'En az 6 karakter',
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: AuthTextLinkPremium(
+                label: 'Şifremi unuttum',
+                onPressed: () => context.push('/auth/forgot-password'),
               ),
-              const SizedBox(height: 24),
-              GoogleSignInButton(
-                label: 'Google ile Giriş yap',
-                onPressed: auth.isLoading ? null : _googleLogin,
-              ),
-              if (Env.hasTikTokLogin) ...[
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: auth.isLoading ? null : _tiktokLogin,
-                  icon: const Icon(Icons.music_note_rounded, size: 20),
-                  label: const Text('TikTok ile Giriş yap'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.35),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 20),
-              const AuthOrDivider(),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _email,
-                keyboardType: TextInputType.emailAddress,
-                autofillHints: const [AutofillHints.email],
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: authInputDecoration(
-                  labelText: 'E-posta',
-                  hintText: 'ornek@email.com',
-                  prefixIcon: Icons.mail_outline_rounded,
-                ),
-                validator: (v) =>
-                    v != null && v.contains('@') ? null : 'Geçerli e-posta girin',
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _password,
-                obscureText: true,
-                autofillHints: const [AutofillHints.password],
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: authInputDecoration(
-                  labelText: 'Şifre',
-                  hintText: '••••••••',
-                  prefixIcon: Icons.lock_outline_rounded,
-                ),
-                validator: (v) =>
-                    v != null && v.length >= 6 ? null : 'En az 6 karakter',
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: AuthTextLink(
-                  label: 'Şifremi unuttum',
-                  onPressed: () => context.push('/auth/forgot-password'),
-                ),
-              ),
-              const SizedBox(height: 8),
-              AuthPrimaryButton(
-                label: 'Giriş Yap',
-                loading: auth.isLoading,
-                onPressed: auth.isLoading
-                    ? null
-                    : () async {
-                        if (!_form.currentState!.validate()) return;
-                        await ref.read(authControllerProvider.notifier).login(
-                              _email.text.trim(),
-                              _password.text,
-                            );
-                      },
-              ),
+            ),
+            const SizedBox(height: 8),
+            AuthNeonButton(
+              label: 'Giriş Yap',
+              loading: auth.isLoading,
+              onPressed: auth.isLoading
+                  ? null
+                  : () async {
+                      if (!_form.currentState!.validate()) return;
+                      await ref.read(authControllerProvider.notifier).login(
+                            _email.text.trim(),
+                            _password.text,
+                          );
+                    },
+            ),
+            const SizedBox(height: 6),
+            AuthTextLinkPremium(
+              label: 'Hesabın yok mu? Kayıt ol',
+              onPressed: () => context.push('/register'),
+            ),
+            if (!Env.hasTikTokLogin) ...[
               const SizedBox(height: 4),
-              AuthTextLink(
-                label: 'Hesabın yok mu? Kayıt ol',
-                onPressed: () => context.push('/register'),
+              Text(
+                'TikTok girişi yapılandırıldığında burada görünür.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white.withValues(alpha: 0.4),
+                ),
               ),
             ],
-          ),
+          ],
         ),
       ),
     );

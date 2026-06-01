@@ -14,6 +14,18 @@ class FortuneReadingService {
     String? userInput,
     bool? yesNoChoice,
   }) {
+    if (type.isDaily) {
+      return FortuneReadingResult(
+        type: type,
+        summary: 'Enerjin yükseliyor; doğru zamandasın.',
+        detail:
+            'Günlük Fal yorumun kişisel enerjine göre hazırlandı. '
+            'Kendini keşfet, geleceğini aydınlat; iç huzurunu koru; evren seninle.',
+        luckyNumber: 7 + DateTime.now().day % 23,
+        luckyColor: const ['Mor', 'Pembe', 'Altın', 'Turkuaz', 'Mavi'][
+            DateTime.now().weekday % 5],
+      );
+    }
     final summaries = _summariesFor(type, yesNoChoice);
     final summary = summaries[_rng.nextInt(summaries.length)];
     final detail = _detailFor(type, userInput, yesNoChoice);

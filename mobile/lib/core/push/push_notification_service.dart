@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'push_navigation_handler.dart';
+
 /// Uygulama içi + sistem bildirimleri (FCM foreground ve izinler).
 class PushNotificationService {
   PushNotificationService._();
@@ -66,7 +68,15 @@ class PushNotificationService {
   }
 
   void _onTap(NotificationResponse response) {
-    debugPrint('Local notification tap: ${response.payload}');
+    final payload = response.payload?.trim();
+    if (payload == null || payload.isEmpty) return;
+    if (payload.startsWith('{')) {
+      try {
+        // payload JSON hedefi (opsiyonel)
+        return;
+      } catch (_) {}
+    }
+    PushNavigationHandler.navigateToPath(payload);
   }
 
   /// Android 13+ ve iOS bildirim izni.
@@ -95,9 +105,17 @@ class PushNotificationService {
     FirebaseMessaging.onMessage.listen((msg) async {
       await showRemoteMessage(msg);
     });
+    await bindOpenedAppHandlers(messaging);
+  }
+
+  Future<void> bindOpenedAppHandlers(FirebaseMessaging messaging) async {
     FirebaseMessaging.onMessageOpenedApp.listen((msg) {
-      debugPrint('FCM opened app: ${msg.data}');
+      PushNavigationHandler.handleAdditionalData(msg.data);
     });
+    final initial = await messaging.getInitialMessage();
+    if (initial != null) {
+      PushNavigationHandler.handleAdditionalData(initial.data);
+    }
   }
 
   Future<void> showRemoteMessage(RemoteMessage msg) async {

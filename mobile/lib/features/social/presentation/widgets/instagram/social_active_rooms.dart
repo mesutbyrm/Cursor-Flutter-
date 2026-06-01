@@ -13,7 +13,10 @@ import '../../../../live/presentation/utils/open_live_stream.dart';
 
 /// «Aktif Odalar» — canlı yayın ve ses odaları yatay şeridi.
 class SocialActiveRooms extends ConsumerWidget {
-  const SocialActiveRooms({super.key});
+  const SocialActiveRooms({super.key, this.embeddedInFeed = false});
+
+  /// Akışta her 2 gönderi arasında gösterilir.
+  final bool embeddedInFeed;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,16 +40,46 @@ class SocialActiveRooms extends ConsumerWidget {
     final display = chips.isEmpty ? _demoChips() : chips;
 
     return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 12),
+      padding: EdgeInsets.only(
+        top: embeddedInFeed ? 4 : 8,
+        bottom: embeddedInFeed ? 8 : 12,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DiscoverSectionHeader(
-            title: 'Aktif Odalar',
-            actionLabel: 'Tümünü Gör',
-            onAction: () => context.go('/live'),
-          ),
-          const SizedBox(height: 10),
+          if (!embeddedInFeed)
+            DiscoverSectionHeader(
+              title: 'Aktif Odalar',
+              actionLabel: 'Tümünü Gör',
+              onAction: () => context.go('/live'),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.mic_rounded,
+                    size: 18,
+                    color: AppColors.accentPurple.withValues(alpha: 0.95),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Sesli sohbet odaları',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () => context.go('/live'),
+                    child: const Text('Tümü'),
+                  ),
+                ],
+              ),
+            ),
+          if (!embeddedInFeed) const SizedBox(height: 10),
           SizedBox(
             height: 118,
             child: ListView.separated(

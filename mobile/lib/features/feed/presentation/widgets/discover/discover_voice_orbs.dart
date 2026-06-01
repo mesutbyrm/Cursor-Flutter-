@@ -9,28 +9,51 @@ import '../../../../../core/ui/premium/premium.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/domain/entities/voice_room_sort.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
+import '../../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../../../../voice_hub/presentation/widgets/voice_room_grid_tile.dart';
 import 'discover_section_header.dart';
 
-/// Ana sayfa sesli odalar — API, tam genişlik 4 sütun.
-class DiscoverVoiceOrbs extends ConsumerWidget {
+/// Ana sayfa sohbet odaları — 4 sütunlu grid (canlifal.com ana sayfa).
+class DiscoverVoiceOrbs extends ConsumerStatefulWidget {
   const DiscoverVoiceOrbs({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DiscoverVoiceOrbs> createState() => _DiscoverVoiceOrbsState();
+}
+
+class _DiscoverVoiceOrbsState extends ConsumerState<DiscoverVoiceOrbs> {
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.delayed(Duration.zero, () {
+      if (!mounted) return;
+      _scheduleRefresh();
+    });
+  }
+
+  void _scheduleRefresh() {
+    Future.delayed(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      ref.invalidate(voiceRoomsProvider);
+      _scheduleRefresh();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rooms = ref.watch(voiceRoomsProvider);
     if (!Env.useNextAuth) {
-      return const _VoiceRoomsSection(
+      return _VoiceRoomsSection(
         child: PremiumEmptyHint(
-          message: 'Sesli odalar için canlifal.com oturumu gerekir.',
+          message: 'Sesli odalar için giriş yapın.',
+          onRetry: () => context.push('/login'),
         ),
       );
     }
-
-    final rooms = ref.watch(voiceRoomsProvider);
     return rooms.when(
       loading: () => const _VoiceRoomsSection(
         child: SizedBox(
-          height: 160,
+          height: 200,
           child: Center(
             child: SizedBox(
               width: 24,
@@ -57,7 +80,9 @@ class DiscoverVoiceOrbs extends ConsumerWidget {
             ),
           );
         }
-        return _VoiceRoomsGrid(rooms: sortVoiceRoomsByPopularity(list));
+        return _VoiceRoomsGrid(
+          rooms: sortVoiceRoomsByPopularity(list),
+        );
       },
     );
   }
@@ -78,23 +103,24 @@ class _VoiceRoomsSection extends StatelessWidget {
           actionLabel: 'Tüm Odalar',
           onAction: () => context.push('/voice-rooms'),
         ),
-        child,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: child,
+        ),
         const SizedBox(height: 12),
       ],
     );
   }
 }
 
-class _VoiceRoomsGrid extends StatelessWidget {
+class _VoiceRoomsGrid extends ConsumerWidget {
   const _VoiceRoomsGrid({required this.rooms});
 
   final List<VoiceRoomEntity> rooms;
 
   @override
-  Widget build(BuildContext context) {
-    const crossCount = VoiceRoomGridTile.crossAxisCount;
-    const spacing = 10.0;
-    const aspect = VoiceRoomGridTile.tileAspectRatio;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final preview = rooms.take(8).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -108,36 +134,30 @@ class _VoiceRoomsGrid extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final tileWidth =
-                  (width - spacing * (crossCount - 1)) / crossCount;
-              final tileHeight = tileWidth / aspect;
-              final rows = (rooms.length / crossCount).ceil();
-              final gridHeight =
-                  rows * tileHeight + (rows > 1 ? (rows - 1) * spacing : 0);
+              const cols = VoiceRoomGridTile.crossAxisCount;
+              const spacing = 8.0;
+              final tileW =
+                  (constraints.maxWidth - spacing * (cols - 1)) / cols;
+              final tileH = tileW / VoiceRoomGridTile.tileAspectRatio;
 
-              return SizedBox(
-                height: gridHeight,
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossCount,
-                    mainAxisSpacing: spacing,
-                    crossAxisSpacing: spacing,
-                    childAspectRatio: aspect,
-                  ),
-                  itemCount: rooms.length,
-                  itemBuilder: (ctx, i) {
-                    final room = rooms[i];
-                    return VoiceRoomGridTile(
-                      room: room,
-                      onTap: () => context.push(
-                        '/voice-room/${room.id}',
-                        extra: room,
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  for (final room in preview)
+                    SizedBox(
+                      width: tileW,
+                      height: tileH,
+                      child: VoiceRoomGridTile(
+                        room: room,
+                        onTap: () => openVoiceRoomWithVipGate(
+                          context,
+                          ref,
+                          room,
+                        ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                ],
               );
             },
           ),

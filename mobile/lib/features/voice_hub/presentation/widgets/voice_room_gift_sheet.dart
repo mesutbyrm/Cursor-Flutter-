@@ -6,13 +6,20 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
+import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/chat_room_gifts_remote_datasource.dart';
 import '../providers/chat_room_providers.dart';
+import '../providers/voice_gift_combo_tracker.dart';
+import '../providers/voice_gift_leaderboard_provider.dart';
+import '../providers/voice_gift_providers.dart';
+import 'premium_2026/voice_premium_gift_panel_2026.dart';
 
 final chatRoomGiftsRemoteProvider = Provider<ChatRoomGiftsRemoteDataSource>((ref) {
   return ChatRoomGiftsRemoteDataSource(
@@ -26,6 +33,35 @@ final voiceRoomGiftTypesProvider = FutureProvider.autoDispose((ref) async {
 });
 
 Future<void> showVoiceRoomGiftPicker(
+  BuildContext context,
+  WidgetRef ref, {
+  required VoiceRoomEntity room,
+}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black54,
+    builder: (ctx) {
+      return Consumer(
+        builder: (context, ref, _) {
+          return VoicePremiumGiftPanel2026(
+            room: room,
+            onClose: () => Navigator.pop(context),
+            onSent: (raw) {
+              final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
+              ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
+              ref.read(voiceRoomGiftRealtimeProvider).publishLocal(event);
+            },
+          );
+        },
+      );
+    },
+  );
+}
+
+/// Eski grid picker — yedek / dar ekran.
+Future<void> showVoiceRoomGiftPickerLegacy(
   BuildContext context,
   WidgetRef ref, {
   required VoiceRoomEntity room,
@@ -110,6 +146,30 @@ Future<void> showVoiceRoomGiftPicker(
                                         roomId: room.id,
                                         giftTypeId: g.id,
                                       );
+                                  final user = ref
+                                      .read(authControllerProvider)
+                                      .valueOrNull;
+                                  final raw = LiveGiftEvent(
+                                    id: 'local-${DateTime.now().microsecondsSinceEpoch}',
+                                    senderId: user?.id,
+                                    senderName: user?.display ?? 'Sen',
+                                    receiverName:
+                                        room.ownerName ?? 'Oda sahibi',
+                                    giftId: g.id,
+                                    giftName: LiveGiftCatalog.displayName(g),
+                                    quantity: 1,
+                                    coinCost: g.price,
+                                    timestamp: DateTime.now(),
+                                  );
+                                  final event = ref
+                                      .read(voiceGiftComboTrackerProvider.notifier)
+                                      .enrich(raw);
+                                  ref
+                                      .read(voiceSessionGiftLeaderboardProvider.notifier)
+                                      .record(event);
+                                  ref
+                                      .read(voiceRoomGiftRealtimeProvider)
+                                      .publishLocal(event);
                                   if (context.mounted) {
                                     ref.invalidate(coinBalanceProvider);
                                     ref
@@ -119,7 +179,7 @@ Future<void> showVoiceRoomGiftPicker(
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          '${LiveGiftCatalog.displayName(g)} gönderildi',
+                                          '${event.giftName} gönderildi',
                                         ),
                                       ),
                                     );
@@ -177,7 +237,10 @@ class _GiftTile extends StatelessWidget {
                 const Icon(Icons.card_giftcard_rounded, size: 32),
               const SizedBox(height: 6),
               Text(
-                LiveGiftCatalog.displayName(gift),
+                PremiumGiftCatalog2026.displayName(
+                  gift.id,
+                  fallback: LiveGiftCatalog.displayName(gift),
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),

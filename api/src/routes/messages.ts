@@ -6,6 +6,82 @@ import { requireAuth } from "../middleware/requireAuth";
 
 export const messagesRouter = Router();
 
+/** POST /api/messages/:userId — mobil DM (doğrudan kullanıcıya) */
+messagesRouter.post("/:peerUserId", requireAuth, async (req, res) => {
+  const userId = req.userId!;
+  const peerUserId = req.params.peerUserId.trim();
+  const text =
+    (req.body?.text as string | undefined) ??
+    (req.body?.content as string | undefined);
+  if (!text?.trim()) {
+    return res.status(400).json({ success: false, error: "Mesaj boş olamaz" });
+  }
+  if (!peerUserId || peerUserId === userId) {
+    return res.status(400).json({ success: false, error: "Geçersiz alıcı" });
+  }
+
+  const recipient = await prisma.user.findUnique({
+    where: { id: peerUserId },
+    select: { id: true, displayName: true, username: true, avatarUrl: true },
+  });
+  if (!recipient) {
+    return res.status(404).json({ success: false, error: "Kullanıcı bulunamadı" });
+  }
+
+  const [userAId, userBId] =
+    userId < recipient.id ? [userId, recipient.id] : [recipient.id, userId];
+
+  let conv = await prisma.conversation.findFirst({
+    where: { userAId, userBId },
+  });
+  if (!conv) {
+    conv = await prisma.conversation.create({
+      data: { userAId, userBId },
+    });
+  }
+
+  const msg = await prisma.directMessage.create({
+    data: {
+      conversationId: conv.id,
+      senderId: userId,
+      text: text.trim(),
+    },
+  });
+
+  await prisma.conversation.update({
+    where: { id: conv.id },
+    data: {
+      lastMessage: text.trim(),
+      updatedAt: new Date(),
+      ...(conv.userAId === userId
+        ? { unreadForB: { increment: 1 } }
+        : { unreadForA: { increment: 1 } }),
+    },
+  });
+
+  const sender = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { displayName: true, username: true },
+  });
+  const senderLabel =
+    sender?.displayName ?? sender?.username ?? "Bir kullanıcı";
+
+  void notifyDirectMessage({
+    conversationId: conv.id,
+    senderId: userId,
+    recipientId: peerUserId,
+    preview: text.trim(),
+    senderLabel,
+  });
+
+  return ok(res, {
+    id: msg.id,
+    conversationId: conv.id,
+    text: msg.text,
+    createdAt: msg.createdAt.toISOString(),
+  });
+});
+
 function conversationPayload(c: {
   id: string;
   title: string;

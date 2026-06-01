@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/premium_2026/premium_immersive_background.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/domain/entities/voice_room_sort.dart';
 import '../../live/presentation/providers/live_providers.dart';
-import 'widgets/voice_room_grid_tile.dart';
+import 'theme/voice_room_tokens.dart';
+import '../../vip_gold/presentation/utils/open_voice_room_vip.dart';
+import 'widgets/premium_2026/voice_discover_hub_2026.dart';
 
-/// Sesli sohbet — tüm odalar 4 sütunlu grid.
-class VoiceRoomsBody extends ConsumerWidget {
+/// Sesli sohbet keşfet — Premium 2026 hub (referans görsel).
+class VoiceRoomsBody extends ConsumerStatefulWidget {
   const VoiceRoomsBody({
     super.key,
     this.embeddedInLiveShellTab = false,
@@ -21,7 +22,12 @@ class VoiceRoomsBody extends ConsumerWidget {
   final bool embeddedInLiveShellTab;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VoiceRoomsBody> createState() => _VoiceRoomsBodyState();
+}
+
+class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
+  @override
+  Widget build(BuildContext context) {
     if (!Env.useNextAuth) {
       return const DiscoverEmptyState(
         icon: Icons.headset_mic_outlined,
@@ -31,7 +37,11 @@ class VoiceRoomsBody extends ConsumerWidget {
     }
 
     final rooms = ref.watch(voiceRoomsProvider);
-    final myRoom = ref.watch(myVoiceRoomProvider);
+    final liveStreams = ref.watch(liveStreamsProvider);
+    final mq = MediaQuery.paddingOf(context);
+    final topPad = widget.embeddedInLiveShellTab
+        ? 8.0
+        : mq.top + kToolbarHeight + 4;
 
     return rooms.when(
       loading: () => const DiscoverAccentLoader(),
@@ -49,56 +59,30 @@ class VoiceRoomsBody extends ConsumerWidget {
           );
         }
 
-        final ordered = _orderedRooms(list, myRoom);
-        final mq = MediaQuery.paddingOf(context);
-        final topPad = embeddedInLiveShellTab
-            ? 8.0
-            : mq.top + kToolbarHeight + 4;
+        final ordered = _orderedRooms(list, ref.watch(myVoiceRoomProvider));
+        final live = liveStreams.valueOrNull ?? const [];
 
-        return RefreshIndicator(
-          color: AppColors.accentPink,
-          backgroundColor: AppColors.bgPurpleGlow,
-          onRefresh: () async => ref.invalidate(voiceRoomsProvider),
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
+        return PremiumImmersiveBackground(
+          child: RefreshIndicator(
+            color: VoiceRoomTokens.neonPink,
+            backgroundColor: VoiceRoomTokens.bgCosmic,
+            onRefresh: () async {
+              ref.invalidate(voiceRoomsProvider);
+              ref.invalidate(liveStreamsProvider);
+            },
+            child: VoiceDiscoverHub2026(
+              rooms: ordered,
+              liveStreams: live,
+              topPadding: topPad,
+              onRoomTap: (r) => openVoiceRoomWithVipGate(context, ref, r),
+              onSearchChanged: (_) {},
             ),
-            slivers: [
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(12, topPad, 12, 8),
-                sliver: SliverToBoxAdapter(
-                  child: _RoomsHeader(count: ordered.length),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 100),
-                sliver: SliverGrid.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: VoiceRoomGridTile.crossAxisCount,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: VoiceRoomGridTile.tileAspectRatio,
-                  ),
-                  itemCount: ordered.length,
-                  itemBuilder: (context, i) {
-                    final r = ordered[i];
-                    final mine = myRoom != null && r.id == myRoom.id;
-                    return VoiceRoomGridTile(
-                      room: r,
-                      isMine: mine,
-                      onTap: () => _openRoom(context, r),
-                    );
-                  },
-                ),
-              ),
-            ],
           ),
         );
       },
     );
   }
 
-  /// En kalabalık odalar önce; kullanıcının kendi odası varsa en üstte.
   static List<VoiceRoomEntity> _orderedRooms(
     List<VoiceRoomEntity> all,
     VoiceRoomEntity? mine,
@@ -107,70 +91,5 @@ class VoiceRoomsBody extends ConsumerWidget {
     if (mine == null) return sorted;
     final rest = sorted.where((r) => r.id != mine.id).toList();
     return [mine, ...rest];
-  }
-
-  static void _openRoom(BuildContext context, VoiceRoomEntity room) {
-    context.push('/voice-room/${room.id}', extra: room);
-  }
-}
-
-class _RoomsHeader extends StatelessWidget {
-  const _RoomsHeader({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ShaderMask(
-                shaderCallback: (b) => const LinearGradient(
-                  colors: [AppColors.accentCyan, AppColors.accentPink],
-                ).createShader(b),
-                child: const Text(
-                  'Sesli sohbet odaları',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 17,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Tüm odalar · en kalabalık önce',
-                style: TextStyle(
-                  color: AppColors.textMuted.withValues(alpha: 0.95),
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.accentPurple.withValues(alpha: 0.25),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.accentPurple.withValues(alpha: 0.45),
-            ),
-          ),
-          child: Text(
-            '$count oda',
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
-              color: AppColors.accentCyan,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }

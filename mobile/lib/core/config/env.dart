@@ -10,12 +10,14 @@ class Env {
     defaultValue: 'https://canlifal.com',
   );
 
-  /// canlifal.com üretim sitesi NextAuth (çerez) + `/api/*` JSON uçları kullanır.
-  /// E-posta/Google girişi SQL JWT değil NextAuth credentials / signin/google ile yapılır.
-  static bool get useNextAuth {
+  /// canlifal.com — mobil JWT (`/api/auth/mobile-*`, `/api/me`). WebView OAuth yok.
+  static bool get useMobileAuth {
     final u = apiBaseUrl.toLowerCase();
     return u.contains('canlifal.com') && !u.contains('.local');
   }
+
+  /// Geriye dönük: canlı site oturumu (JWT ile aynı taban).
+  static bool get useNextAuth => useMobileAuth;
 
   static String get siteOrigin {
     var u = apiBaseUrl.trim();
@@ -41,4 +43,16 @@ class Env {
 
   static bool get hasTikTokLogin =>
       tiktokClientKey.trim().isNotEmpty && !kIsWeb;
+
+  /// `auto` | `livekit` | `trtc` — sesli oda ses motoru.
+  static const String voiceEngine = String.fromEnvironment(
+    'VOICE_ENGINE',
+    defaultValue: 'auto',
+  );
+
+  static bool get preferLiveKit =>
+      voiceEngine == 'livekit' ||
+      (voiceEngine == 'auto' && !kIsWeb);
+
+  static bool get forceTrtc => voiceEngine == 'trtc';
 }

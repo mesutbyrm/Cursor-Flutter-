@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
 import { optionalAuth } from "../middleware/optionalAuth";
-import { emitGiftEvent } from "../socket/giftHub";
+import { emitGiftEvent, emitGiftRoomEvent } from "../socket/giftHub";
 
 const platformSchema = z.enum(["mobile", "web", "all"]).optional();
 
@@ -154,12 +154,26 @@ export async function sendStreamGift(
 
   const combo = await resolveCombo(streamId, userId, gift.id, quantity);
 
+  let receiverId: string | null = null;
+  if (receiverName && receiverName !== "Yayıncı") {
+    const recv = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username: receiverName.replace(/^@/, "") },
+          { displayName: receiverName },
+        ],
+      },
+      select: { id: true },
+    });
+    receiverId = recv?.id ?? null;
+  }
+
   const event = await prisma.giftEvent.create({
     data: {
       giftId: gift.id,
       senderId: userId ?? null,
       senderName: senderName ?? "Misafir",
-      receiverId: null,
+      receiverId,
       receiverName: receiverName ?? "Yayıncı",
       streamId,
       quantity,
@@ -228,6 +242,131 @@ export async function streamGiftLeaderboard(
   }));
 
   return ok(res, { leaders, streamId });
+}
+
+async function resolveComboRoom(
+  roomId: string,
+  senderId: string | undefined,
+  giftId: string,
+  quantity: number,
+): Promise<number> {
+  if (!senderId) return quantity;
+  const windowStart = new Date(Date.now() - 4000);
+  const recent = await prisma.giftEvent.findFirst({
+    where: {
+      roomId,
+      senderId,
+      giftId,
+      createdAt: { gte: windowStart },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  if (!recent) return quantity;
+  return recent.combo + quantity;
+}
+
+/** POST /api/chat/rooms/:roomId/gifts — sesli sohbet odası hediyesi */
+export async function sendRoomGift(
+  roomId: string,
+  body: unknown,
+  userId: string | undefined,
+  res: import("express").Response,
+) {
+  const parsed = sendSchema.safeParse(body);
+  if (!parsed.success) {
+    return fail(res, 400, "VALIDATION_ERROR", "Geçersiz hediye", parsed.error.flatten());
+  }
+  const { giftTypeId, quantity, senderName, receiverName, platform } = parsed.data;
+
+  const gift = await prisma.gift.findFirst({
+    where: {
+      enabled: true,
+      AND: [
+        { OR: [{ slug: giftTypeId }, { id: giftTypeId }] },
+        { OR: [{ platform: "all" }, { platform }] },
+      ],
+    },
+  });
+  if (!gift) {
+    return fail(res, 404, "GIFT_NOT_FOUND", "Hediye bulunamadı");
+  }
+
+  const totalCost = gift.price * quantity;
+  let newBalance: number | undefined;
+
+  if (userId) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return fail(res, 401, "UNAUTHORIZED", "Kullanıcı bulunamadı");
+    if (user.coins < totalCost) {
+      return fail(res, 402, "INSUFFICIENT_COINS", "Yetersiz jeton");
+    }
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { coins: { decrement: totalCost } },
+    });
+    newBalance = updated.coins;
+  }
+
+  const combo = await resolveComboRoom(roomId, userId, gift.id, quantity);
+
+  let receiverId: string | null = null;
+  if (receiverName && receiverName !== "Yayıncı") {
+    const recv = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username: receiverName.replace(/^@/, "") },
+          { displayName: receiverName },
+        ],
+      },
+      select: { id: true },
+    });
+    receiverId = recv?.id ?? null;
+  }
+
+  const event = await prisma.giftEvent.create({
+    data: {
+      giftId: gift.id,
+      senderId: userId ?? null,
+      senderName: senderName ?? "Misafir",
+      receiverId,
+      receiverName: receiverName ?? "Yayıncı",
+      roomId,
+      quantity,
+      coinCost: totalCost,
+      combo,
+      platform,
+    },
+    include: { gift: true },
+  });
+
+  const payload = eventPayload(event);
+  emitGiftRoomEvent(roomId, payload);
+
+  return res.status(200).json({
+    ...payload,
+    newBalance,
+    balance: newBalance,
+    coinBalance: newBalance,
+  });
+}
+
+/** GET /api/chat/rooms/:roomId/gifts */
+export async function listRoomGiftEvents(
+  roomId: string,
+  since: string | undefined,
+  res: import("express").Response,
+) {
+  const sinceDate = since ? new Date(since) : new Date(Date.now() - 120_000);
+  const rows = await prisma.giftEvent.findMany({
+    where: {
+      roomId,
+      createdAt: { gte: sinceDate },
+    },
+    orderBy: { createdAt: "asc" },
+    take: 100,
+    include: { gift: true },
+  });
+  return ok(res, rows.map(eventPayload));
 }
 
 async function resolveCombo(

@@ -240,13 +240,13 @@ class LiveVoiceBranchQuickActions extends StatelessWidget {
             onTap: () => context.push('/voice-rooms'),
           ),
           QuickActionTile(
-            icon: Icons.chat_bubble_rounded,
-            label: 'Mesaj\nlar',
+            icon: Icons.auto_awesome_rounded,
+            label: 'Fal&\nTarot',
             gradient: [
-              const Color(0xFF243040).withValues(alpha: 0.95),
-              const Color(0xFF101820).withValues(alpha: 0.95),
+              AppColors.accentPurple.withValues(alpha: 0.5),
+              const Color(0xFF312E81).withValues(alpha: 0.95),
             ],
-            onTap: () => context.go('/messages'),
+            onTap: () => context.go('/fortune'),
           ),
         ],
       ],
@@ -307,13 +307,13 @@ class ProfileBranchQuickActions extends StatelessWidget {
         ],
         [
           QuickActionTile(
-            icon: Icons.chat_bubble_outline_rounded,
-            label: 'Mesaj\nlar',
+            icon: Icons.auto_awesome_rounded,
+            label: 'Fal&\nTarot',
             gradient: [
-              const Color(0xFF243040).withValues(alpha: 0.95),
-              const Color(0xFF101820).withValues(alpha: 0.95),
+              AppColors.accentPurple.withValues(alpha: 0.5),
+              const Color(0xFF312E81).withValues(alpha: 0.95),
             ],
-            onTap: () => context.go('/messages'),
+            onTap: () => context.go('/fortune'),
           ),
           QuickActionTile(
             icon: Icons.graphic_eq_rounded,

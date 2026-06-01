@@ -79,7 +79,7 @@ abstract final class FortuneCatalog {
       title: 'El Falı',
       description: 'Avuç içi çizgilerin hayat hikâyeni anlatır',
       emoji: '🖐️',
-      accent: Color(0xFFF472B6),
+      accent: Color(0xFF4ADE80),
       kind: FortuneSessionKind.palmScan,
       ctaLabel: 'Analiz Et',
     ),
@@ -117,7 +117,7 @@ abstract final class FortuneCatalog {
       id: 'numeroloji',
       slug: 'numeroloji',
       title: 'Numeroloji',
-      description: 'Doğum tarihinle sayıların gücünü keşfet',
+      description: 'Sayıların gücüyle kendini keşfet',
       emoji: '🔢',
       accent: Color(0xFF34D399),
       kind: FortuneSessionKind.numberInput,
@@ -127,7 +127,7 @@ abstract final class FortuneCatalog {
       id: 'ruya',
       slug: 'ruya-tabiri',
       title: 'Rüya Tabiri',
-      description: 'Rüyalarının gizli anlamını çöz',
+      description: 'Rüyalarının anlamını keşfet, mesajlarını çöz',
       emoji: '🌙',
       accent: Color(0xFF818CF8),
       kind: FortuneSessionKind.dreamText,
@@ -137,7 +137,7 @@ abstract final class FortuneCatalog {
       id: 'cin',
       slug: 'cin-fali',
       title: 'Çin Falı',
-      description: 'I-Ching ile kadim bilgelik',
+      description: 'Binlerce yıllık Çin bilgeliği sana yol gösterir',
       emoji: '🏮',
       accent: Color(0xFFEF4444),
       kind: FortuneSessionKind.chineseCoins,
@@ -147,7 +147,7 @@ abstract final class FortuneCatalog {
       id: 'pendul',
       slug: 'pendul',
       title: 'Pendül',
-      description: 'Enerji dengeni pendül ile ölç',
+      description: 'Sorularına odaklan, pendül cevap söylesin',
       emoji: '🔮',
       accent: Color(0xFF14B8A6),
       kind: FortuneSessionKind.pendulum,
@@ -157,7 +157,7 @@ abstract final class FortuneCatalog {
       id: 'runik',
       slug: 'runik',
       title: 'Runik',
-      description: 'Kadim runik sembollerden mesaj al',
+      description: 'Runelerin kadim gücüyle spiritüel rehberlik al',
       emoji: 'ᚠ',
       accent: Color(0xFF94A3B8),
       kind: FortuneSessionKind.runeStone,
@@ -167,13 +167,36 @@ abstract final class FortuneCatalog {
       id: 'evet-hayir',
       slug: 'evet-hayir',
       title: 'Evet / Hayır',
-      description: 'Tek soruna net ve hızlı cevap',
+      description: 'Net sorulara net cevaplar, evet mi, hayır mı?',
       emoji: '❓',
       accent: Color(0xFFFBBF24),
       kind: FortuneSessionKind.yesNo,
       ctaLabel: 'Cevap Al',
     ),
   ];
+
+  /// Fal & Tarot hub 2×4 grid — mockup sırası ve kısa alt metinler.
+  static const hubFortuneEntries = <({String slug, String subtitle})>[
+    (slug: 'tarot', subtitle: 'Kartların mesajını keşfet'),
+    (slug: 'kahve-fali', subtitle: 'Fincandaki işaretleri çöz'),
+    (slug: 'ask-fali', subtitle: 'Kalbinin sesini dinle'),
+    (slug: 'yildiz-haritasi', subtitle: 'Burç haritan ve gökyüzü rehberin'),
+    (slug: 'el-fali', subtitle: 'Avuç içindeki sırları keşfet'),
+    (slug: 'katina', subtitle: 'Aşk ve ilişki kartlarıyla bakış'),
+    (slug: 'melek-kartlari', subtitle: 'Meleklerden rehberlik al'),
+    (slug: 'numeroloji', subtitle: 'Sayıların enerjisini öğren'),
+  ];
+
+  static List<({FortuneTypeEntity type, String subtitle})> get hubFortuneTypes {
+    final out = <({FortuneTypeEntity type, String subtitle})>[];
+    for (final entry in hubFortuneEntries) {
+      final type = bySlug(entry.slug);
+      if (type != null) {
+        out.add((type: type, subtitle: entry.subtitle));
+      }
+    }
+    return out;
+  }
 
   static FortuneTypeEntity? bySlug(String slug) {
     if (dailyFortune.slug == slug) return dailyFortune;

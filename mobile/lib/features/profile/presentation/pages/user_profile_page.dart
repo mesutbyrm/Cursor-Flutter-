@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../messages/presentation/providers/messages_providers.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/user_posts_tiktok_grid.dart';
 
 class UserProfilePage extends ConsumerWidget {
   const UserProfilePage({super.key, required this.userId});
@@ -48,9 +48,10 @@ class UserProfilePage extends ConsumerWidget {
         ),
         data: (user) {
           return ListView(
+            physics: PremiumMotion.listPhysics,
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             children: [
-              DiscoverGlassCard(
+              LiquidGlassCard(
                 child: Row(
                   children: [
                     Container(
@@ -68,10 +69,7 @@ class UserProfilePage extends ConsumerWidget {
                         children: [
                           Text(
                             user.display,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                            ),
+                            style: PremiumTypography.headline(context),
                           ),
                           Text(
                             '@${user.username}',
@@ -87,7 +85,7 @@ class UserProfilePage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              DiscoverGlassCard(
+              LiquidGlassCard(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -172,16 +170,30 @@ class UserProfilePage extends ConsumerWidget {
                 ),
               if (user.bio != null && user.bio!.isNotEmpty) ...[
                 const SizedBox(height: 14),
-                DiscoverGlassCard(
+                LiquidGlassCard(
                   child: Text(
                     user.bio!,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
+                    style: PremiumTypography.body(context).copyWith(
                       height: 1.45,
                     ),
                   ),
                 ),
               ],
+              const SizedBox(height: 20),
+              const Row(
+                children: [
+                  Icon(Icons.grid_on_rounded, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Paylaşımlar',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              UserPostsTikTokGrid(userId: userId),
             ],
           );
         },
@@ -190,18 +202,7 @@ class UserProfilePage extends ConsumerWidget {
   }
 
   Future<void> _openDirectMessage(BuildContext context, WidgetRef ref) async {
-    try {
-      final conv = await ref
-          .read(messagesRepositoryProvider)
-          .startConversation(userId);
-      if (!context.mounted) return;
-      context.push('/chat/${conv.id}');
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiException.userMessage(e))),
-      );
-    }
+    context.push('/chat/$userId');
   }
 }
 

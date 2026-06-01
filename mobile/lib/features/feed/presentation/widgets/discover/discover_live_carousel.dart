@@ -77,7 +77,7 @@ class _LiveRowSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         DiscoverSectionHeader(
-          title: 'Canlı Yayınlar',
+          title: 'Canlı Falcılar',
           actionLabel: 'Tümünü gör',
           onAction: () => context.go('/live'),
         ),
@@ -144,7 +144,7 @@ class _DemoLiveSection extends StatelessWidget {
     return Column(
       children: [
         DiscoverSectionHeader(
-          title: 'Canlı Yayınlar',
+          title: 'Canlı Falcılar',
           actionLabel: 'Tümünü gör',
           onAction: () => context.go('/live'),
         ),

@@ -46,14 +46,129 @@ class LiveRemoteDataSource {
     if (!Env.useNextAuth) return const [];
     final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatRooms);
     final body = res.data;
-    if (body is! List) return const [];
-    return asJsonList(body).map(_mapVoiceRoom).where((r) => r.id.isNotEmpty).toList();
+    dynamic list = body;
+    if (body is Map<String, dynamic>) {
+      if (body['success'] == true && body['data'] != null) {
+        final data = body['data'];
+        list = data is Map ? pick(asJsonMap(data), ['rooms']) : data;
+      } else {
+        list = pick(body, ['rooms', 'items', 'data']) ?? body;
+      }
+    }
+    if (list is! List) return const [];
+    return asJsonList(list)
+        .map(_mapVoiceRoom)
+        .where((r) => r.apiRoomKey.isNotEmpty)
+        .toList();
+  }
+
+  static const int voiceRoomNormalOpenJetonCost = 100;
+  static const int voiceRoomVipOpenJetonCost = 5000;
+
+  static int openRoomJetonCost({required bool vip}) =>
+      vip ? voiceRoomVipOpenJetonCost : voiceRoomNormalOpenJetonCost;
+
+  /// canlifal.com `POST /api/chat/rooms/create`
+  Future<VoiceRoomEntity> createVoiceChatRoom({
+    bool vip = false,
+    String? roomName,
+  }) async {
+    final cost = openRoomJetonCost(vip: vip);
+    final name = roomName?.trim();
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.chatRoomCreate,
+      data: {
+        'cost': cost,
+        'jeton': cost,
+        'jetonCost': cost,
+        'coins': cost,
+        'amount': cost,
+        'isVip': vip,
+        if (vip) 'vip': true,
+        'roomType': vip ? 'vip' : 'normal',
+        'type': vip ? 'vip' : 'normal',
+        if (name != null && name.isNotEmpty) ...{
+          'name': name,
+          'nameTr': name,
+          'title': name,
+          'roomName': name,
+        },
+      },
+    );
+    final body = res.data;
+    if (body is String &&
+        (body.contains('<!DOCTYPE') || body.contains('<html'))) {
+      throw DioException(
+        requestOptions: res.requestOptions,
+        message: 'Oda açılamadı — oturum gerekli',
+      );
+    }
+    Map<String, dynamic>? map;
+    if (body is Map<String, dynamic>) {
+      map = body;
+    } else if (body is Map) {
+      map = Map<String, dynamic>.from(body);
+    }
+    if (map == null) {
+      throw DioException(
+        requestOptions: res.requestOptions,
+        message: 'Geçersiz oda oluşturma yanıtı',
+      );
+    }
+    if (map['success'] == false) {
+      throw DioException(
+        requestOptions: res.requestOptions,
+        message: _formatCreateRoomError(map),
+      );
+    }
+    final httpCode = res.statusCode ?? 0;
+    if (map['success'] != true && httpCode != 201) {
+      final err = (map['error'] ?? map['message'])?.toString().trim();
+      if (err != null && err.isNotEmpty) {
+        throw DioException(
+          requestOptions: res.requestOptions,
+          message: err,
+        );
+      }
+    }
+    dynamic roomRaw = map['room'] ?? map['data'];
+    if (roomRaw is Map && roomRaw['room'] is Map) {
+      roomRaw = roomRaw['room'];
+    }
+    if (roomRaw is Map) {
+      return _mapVoiceRoom(asJsonMap(roomRaw));
+    }
+    if (map.containsKey('id') || map.containsKey('slug')) {
+      return _mapVoiceRoom(map);
+    }
+    throw DioException(
+      requestOptions: res.requestOptions,
+      message: 'Oda oluşturuldu ancak oda bilgisi alınamadı',
+    );
+  }
+
+  static String _formatCreateRoomError(Map<String, dynamic> map) {
+    final raw = map['error'] ?? map['message'] ?? map['detail'];
+    final msg = raw?.toString().trim();
+    if (msg != null && msg.isNotEmpty) return msg;
+    return 'Oda açılamadı. Jeton bakiyenizi ve oturumunuzu kontrol edin.';
   }
 
   Future<VoiceRoomEntity?> fetchVoiceRoomById(String id) async {
     final rooms = await fetchVoiceRooms();
+    final needle = id.trim().toLowerCase();
+    if (needle.isEmpty) return null;
+    String norm(String s) =>
+        s.trim().toLowerCase().replaceAll(RegExp(r'-+$'), '');
     for (final r in rooms) {
-      if (r.id == id || r.slug == id) return r;
+      if (r.id == id ||
+          r.slug == id ||
+          r.id.toLowerCase() == needle ||
+          r.slug.toLowerCase() == needle ||
+          norm(r.slug) == norm(id) ||
+          norm(r.id) == norm(id)) {
+        return r;
+      }
     }
     return null;
   }
@@ -158,11 +273,14 @@ class LiveRemoteDataSource {
         }
       } catch (_) {}
     }
+    final slug = pick(json, ['slug'])?.toString() ?? '';
+    final rawId = pick(json, ['id', '_id', 'roomId'])?.toString() ?? '';
     return VoiceRoomEntity(
-      id: pick(json, ['id'])?.toString() ?? '',
-      slug: pick(json, ['slug'])?.toString() ?? '',
+      id: rawId.isNotEmpty ? rawId : slug,
+      slug: slug,
       nameTr: pick(json, ['nameTr', 'nameEn', 'name', 'slug'])?.toString() ?? 'Oda',
       descTr: pick(json, ['descTr', 'descEn', 'description']) as String?,
+      rulesTr: pick(json, ['rules', 'rulesTr', 'roomRules']) as String?,
       icon: pick(json, ['icon']) as String?,
       onlineCount: asInt(pick(json, ['onlineCount'])),
       userCount: asInt(pick(json, ['userCount'])),

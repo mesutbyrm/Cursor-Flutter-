@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../../../core/widgets/dual_balance_chips.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import 'profile_glass.dart';
 
-class ProfileNeonHeader extends StatelessWidget {
+class ProfileNeonHeader extends ConsumerWidget {
   const ProfileNeonHeader({
     super.key,
     required this.displayName,
@@ -20,7 +22,9 @@ class ProfileNeonHeader extends StatelessWidget {
     this.cfcBalance = 0,
     this.onSettings,
     this.onEdit,
-    this.onNotifications,
+    this.onAvatarTap,
+    this.onFollowersTap,
+    this.onFollowingTap,
     this.onLogout,
   });
 
@@ -36,11 +40,13 @@ class ProfileNeonHeader extends StatelessWidget {
   final int cfcBalance;
   final VoidCallback? onSettings;
   final VoidCallback? onEdit;
-  final VoidCallback? onNotifications;
+  final VoidCallback? onAvatarTap;
+  final VoidCallback? onFollowersTap;
+  final VoidCallback? onFollowingTap;
   final VoidCallback? onLogout;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -59,13 +65,8 @@ class ProfileNeonHeader extends StatelessWidget {
               ),
             const SizedBox(width: 8),
             _TopIconButton(icon: Icons.edit_rounded, onPressed: onEdit),
-            if (onNotifications != null) ...[
-              const SizedBox(width: 4),
-              _TopIconButton(
-                icon: Icons.notifications_none_rounded,
-                onPressed: onNotifications,
-              ),
-            ],
+            const SizedBox(width: 4),
+            const MessagesNotificationsActions(spacing: 4, iconSize: 36),
             if (onLogout != null) ...[
               const SizedBox(width: 4),
               _TopIconButton(
@@ -76,7 +77,12 @@ class ProfileNeonHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
-        Center(child: _NeonAvatar(url: avatarUrl)),
+        Center(
+          child: GestureDetector(
+            onTap: onAvatarTap ?? onEdit,
+            child: _NeonAvatar(url: avatarUrl),
+          ),
+        ),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -124,6 +130,7 @@ class ProfileNeonHeader extends StatelessWidget {
               child: _StatColumn(
                 value: profileFormatCount(followers),
                 label: 'Takipçi',
+                onTap: onFollowersTap,
               ),
             ),
             _statDivider(),
@@ -131,6 +138,7 @@ class ProfileNeonHeader extends StatelessWidget {
               child: _StatColumn(
                 value: profileFormatCount(following),
                 label: 'Takip',
+                onTap: onFollowingTap,
               ),
             ),
             _statDivider(),
@@ -250,36 +258,51 @@ class _NeonAvatar extends StatelessWidget {
 }
 
 class _StatColumn extends StatelessWidget {
-  const _StatColumn({required this.value, required this.label});
+  const _StatColumn({
+    required this.value,
+    required this.label,
+    this.onTap,
+  });
 
   final String value;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.3,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          style: const TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            height: 1.2,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

@@ -117,6 +117,26 @@ function requestPayload(row: {
   };
 }
 
+/** GET /api/me — mobil profil + bakiye (canlifal.com Flutter dokümanı) */
+walletRouter.get("/me", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.userId! } });
+  if (!user) return jsonError(res, 404, "Kullanıcı bulunamadı");
+
+  return res.status(200).json({
+    id: user.id,
+    email: user.email,
+    name: user.displayName,
+    username: user.username ?? user.email.split("@")[0],
+    image: user.avatarUrl,
+    role: user.role,
+    credits: user.coins,
+    jetonBalance: user.coins,
+    cfcBalance: user.cfcBalance,
+    membership: user.membership,
+    membershipExpiresAt: user.membershipExpiresAt?.toISOString() ?? null,
+  });
+});
+
 /** GET /api/user/credits */
 walletRouter.get("/user/credits", requireAuth, async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.userId! } });
@@ -213,10 +233,15 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
   }
 
   const pending = await prisma.cfcPaymentRequest.findFirst({
-    where: { userId, status: "pending" },
+    where: { userId, status: "pending", requestType },
   });
   if (pending) {
-    return jsonError(res, 400, "Zaten bekleyen bir ödeme talebiniz var");
+    const label = requestType === "jeton" ? "jeton" : "CFC";
+    return jsonError(
+      res,
+      400,
+      `Zaten bekleyen bir ${label} ödeme talebiniz var. Onaylanmasını bekleyin veya destek ile iletişime geçin.`,
+    );
   }
 
   const row = await prisma.cfcPaymentRequest.create({

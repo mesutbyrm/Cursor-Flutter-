@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.mesutbyrm.canlifal"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = maxOf(flutter.compileSdkVersion, 36)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

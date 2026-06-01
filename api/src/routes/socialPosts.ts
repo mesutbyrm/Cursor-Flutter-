@@ -65,10 +65,16 @@ socialPostsRouter.get("/posts", async (req, res) => {
   const page = Math.max(1, Number(req.query.page ?? 1));
   const limit = Math.min(50, Math.max(1, Number(req.query.limit ?? 20)));
   const skip = (page - 1) * limit;
+  const authorId =
+    typeof req.query.authorId === "string" && req.query.authorId.trim()
+      ? req.query.authorId.trim()
+      : undefined;
+  const where = authorId ? { authorId } : {};
 
   const [total, rows] = await Promise.all([
-    prisma.socialPost.count(),
+    prisma.socialPost.count({ where }),
     prisma.socialPost.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       skip,
       take: limit,

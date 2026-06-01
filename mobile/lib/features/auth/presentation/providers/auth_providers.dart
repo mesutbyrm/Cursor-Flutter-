@@ -34,7 +34,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
       ref.read(authRepositoryProvider).currentUser();
 
   Future<UserEntity?> _withSiteProfile(UserEntity? base) async {
-    if (base == null || !Env.useNextAuth) return base;
+    if (base == null) return null;
+    if (Env.useMobileAuth) return base;
+    if (!Env.useNextAuth) return base;
     try {
       return await ref.read(profileRemoteProvider).mySiteProfile();
     } catch (_) {
@@ -104,6 +106,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   }
 
   Future<void> logout() async {
+    ref.read(guestModeProvider.notifier).state = false;
     await OneSignalBootstrap.logout();
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncValue.data(null);
@@ -114,6 +117,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     state = await AsyncValue.guard(_resolvedUser);
   }
 }
+
+/// Misafir gezinme — oturum açmadan keşfet / feed (sınırlı).
+final guestModeProvider = StateProvider<bool>((ref) => false);
 
 final authControllerProvider =
     AsyncNotifierProvider<AuthController, UserEntity?>(AuthController.new);

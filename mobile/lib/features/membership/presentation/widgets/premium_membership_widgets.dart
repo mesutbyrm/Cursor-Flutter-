@@ -209,7 +209,7 @@ class PremiumActiveMembershipCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${tierLabel.toUpperCase()} ÜYESİNİZ',
+                      'Zaten ${tierLabel.toUpperCase()} üyesiniz',
                       style: const TextStyle(
                         color: AppColors.coinGold,
                         fontWeight: FontWeight.w900,
@@ -218,7 +218,7 @@ class PremiumActiveMembershipCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '$daysRemaining gün kaldı, uzatın',
+                      '$daysRemaining gününüz kaldı — uzatmak için dokunun',
                       style: TextStyle(
                         color: AppColors.textSecondary.withValues(alpha: 0.95),
                         fontSize: 12,

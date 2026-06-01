@@ -1,8 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 import 'app_spacing.dart';
+import '../ui/premium_2026/premium_2026_tokens.dart';
 import 'canlifal_tokens.dart';
 
 /// Material 3 — koyu (varsayılan) ve açık tema.
@@ -42,13 +44,25 @@ class AppTheme {
         onSecondary: Colors.black,
         onSurface: onBg,
       ),
-      extensions: [tokens],
+      extensions: [
+        tokens,
+        isDark ? Premium2026Tokens.dark : Premium2026Tokens.light,
+      ],
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
     );
 
     final textTheme = _textTheme(base.textTheme, onBg);
 
     return base.copyWith(
       textTheme: textTheme,
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: Colors.transparent,
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -120,7 +134,15 @@ class AppTheme {
         ),
       ),
       dividerColor: isDark ? AppColors.surfaceElevated : const Color(0xFFE5E5EA),
-      splashFactory: InkRipple.splashFactory,
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: isDark ? AppColors.surfaceElevated : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(Premium2026Tokens.dark.radiusSheet),
+          ),
+        ),
+        showDragHandle: true,
+      ),
     );
   }
 

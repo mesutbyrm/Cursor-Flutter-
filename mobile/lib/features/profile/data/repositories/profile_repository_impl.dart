@@ -2,24 +2,88 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../../domain/entities/jeton_package_entity.dart';
+import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
+import '../datasources/canlifal_user_api_datasource.dart';
 import '../datasources/profile_remote_datasource.dart';
 
 class ProfileRepositoryImpl implements ProfileRepository {
-  ProfileRepositoryImpl(this._remote);
+  ProfileRepositoryImpl(this._remote, this._canlifal);
 
   final ProfileRemoteDataSource _remote;
+  final CanlifalUserApiDataSource _canlifal;
 
   @override
-  Future<UserEntity> getUser(String id) => _remote.user(id);
+  Future<UserEntity> getUser(String id) async {
+    if (ProfileRemoteDataSource.looksLikeUsernameKey(id)) {
+      try {
+        return await _canlifal.lookupByUsername(id);
+      } catch (_) {}
+    }
+    return _remote.user(id);
+  }
 
   @override
   Future<void> follow(String id) => _remote.follow(id);
 
   @override
   Future<void> unfollow(String id) => _remote.unfollow(id);
+
+  @override
+  Future<UserEntity> updateMe({
+    String? displayName,
+    String? bio,
+    String? avatarUrl,
+    String? username,
+    String? currentPassword,
+    String? newPassword,
+  }) =>
+      _remote.updateMe(
+        displayName: displayName,
+        bio: bio,
+        avatarUrl: avatarUrl,
+        username: username,
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+
+  @override
+  Future<ProfileStatsEntity> myStats() => _remote.myStats();
+
+  @override
+  Future<List<GiftReceivedSummaryEntity>> giftsReceivedSummary() =>
+      _remote.giftsReceivedSummary();
+
+  @override
+  Future<List<BroadcastHistoryItemEntity>> broadcastHistory() async {
+    try {
+      final site = await _canlifal.broadcastHistory();
+      if (site.isNotEmpty) return site;
+    } catch (_) {}
+    return _remote.broadcastHistory();
+  }
+
+  @override
+  Future<List<ProfileActivityItemEntity>> myActivity() async {
+    try {
+      final site = await _canlifal.fetchActivity();
+      if (site.isNotEmpty) return site;
+    } catch (_) {}
+    return _remote.myActivity();
+  }
+
+  @override
+  Future<void> markAllActivityRead() => _canlifal.markAllActivityRead();
+
+  @override
+  Future<List<UserEntity>> followers(String userId) =>
+      _remote.followers(userId);
+
+  @override
+  Future<List<UserEntity>> following(String userId) =>
+      _remote.following(userId);
 }
 
 class WalletRepositoryImpl implements WalletRepository {

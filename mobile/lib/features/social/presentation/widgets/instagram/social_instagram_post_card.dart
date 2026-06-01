@@ -41,107 +41,137 @@ class _SocialInstagramPostCardState
     final isMine = me != null && me.id == post.author.id;
     final likeCount = post.likesCount + (_liked ? 1 : 0);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _PostHeader(
-          post: post,
-          isMine: isMine,
-          onProfile: () => context.push('/user/${post.author.id}'),
-          onDelete: isMine ? () => _deletePost(context) : null,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: const Color(0xFF12081F).withValues(alpha: 0.72),
+          border: Border.all(
+            color: AppColors.accentPurple.withValues(alpha: 0.22),
+          ),
         ),
-        if ((post.caption?.trim().isNotEmpty ?? false))
-          SocialPostCaption(post: post, inlineBodyOnly: true),
-        if (post.isAutoShare || post.fortuneCount > 0)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (post.isAutoShare) const _AutoShareBadge(),
-                if (post.fortuneCount > 0)
-                  _CoViewersBadge(count: post.fortuneCount),
-              ],
-            ),
-          ),
-        if (_hasMedia)
-          _PostMediaBlock(
-            post: post,
-            onFortuneTap: () => _openFortune(context),
-          ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-          child: Row(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(15),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _ActionWithCount(
-                icon: _liked
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                color: _liked ? AppColors.accentPink : AppColors.textPrimary,
-                count: likeCount,
-                onTap: () => setState(() => _liked = !_liked),
+              _PostHeader(
+                post: post,
+                isMine: isMine,
+                onProfile: () => context.push('/user/${post.author.id}'),
+                onDelete: isMine ? () => _deletePost(context) : null,
               ),
-              const SizedBox(width: 16),
-              _ActionWithCount(
-                icon: Icons.mode_comment_outlined,
-                count: post.commentsCount,
-                onTap: () => _showCommentsHint(context),
-              ),
-              const SizedBox(width: 16),
-              _ActionWithCount(
-                icon: Icons.visibility_outlined,
-                count: post.viewCount,
-                hideZeroCount: true,
-                onTap: () {},
-              ),
-              const SizedBox(width: 16),
-              _ActionIcon(
-                icon: Icons.ios_share_rounded,
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Paylaşım yakında')),
-                  );
-                },
-              ),
-              const Spacer(),
-              if (_isFortunePost) ...[
-                _TextAction(
-                  label: 'Kart',
-                  icon: Icons.palette_outlined,
-                  onTap: () => _openFortune(context),
+              if ((post.caption?.trim().isNotEmpty ?? false) && _hasMedia)
+                SocialPostCaption(post: post, inlineBodyOnly: true),
+              if (!_hasMedia && (post.caption?.trim().isNotEmpty ?? false))
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF2A1548), Color(0xFF14102A)],
+                      ),
+                      border: Border.all(
+                        color: AppColors.accentPurple.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: SocialPostTextPreview(text: post.caption!.trim()),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 12),
-                _TextAction(
-                  label: 'Detay',
-                  icon: Icons.open_in_new_rounded,
-                  onTap: () => _openFortune(context),
+              if (post.isAutoShare || post.fortuneCount > 0)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (post.isAutoShare) const _AutoShareBadge(),
+                      if (post.fortuneCount > 0)
+                        _CoViewersBadge(count: post.fortuneCount),
+                    ],
+                  ),
                 ),
-              ],
+              if (_hasMedia)
+                _PostMediaBlock(
+                  post: post,
+                  onFortuneTap: () => _openFortune(context),
+                ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                child: Row(
+                  children: [
+                    _ActionWithCount(
+                      icon: _liked
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      color: _liked ? AppColors.accentPink : AppColors.textPrimary,
+                      count: likeCount,
+                      onTap: () => setState(() => _liked = !_liked),
+                    ),
+                    const SizedBox(width: 16),
+                    _ActionWithCount(
+                      icon: Icons.mode_comment_outlined,
+                      count: post.commentsCount,
+                      onTap: () => _showCommentsHint(context),
+                    ),
+                    const SizedBox(width: 16),
+                    _ActionWithCount(
+                      icon: Icons.visibility_outlined,
+                      count: post.viewCount,
+                      hideZeroCount: false,
+                      onTap: () {},
+                    ),
+                    const SizedBox(width: 16),
+                    _ActionIcon(
+                      icon: Icons.ios_share_rounded,
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Paylaşım yakında')),
+                        );
+                      },
+                    ),
+                    const Spacer(),
+                    if (_isFortunePost) ...[
+                      _TextAction(
+                        label: 'Kart',
+                        icon: Icons.palette_outlined,
+                        onTap: () => _openFortune(context),
+                      ),
+                      const SizedBox(width: 12),
+                      _TextAction(
+                        label: 'Detay',
+                        icon: Icons.open_in_new_rounded,
+                        onTap: () => _openFortune(context),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (post.commentsCount > 0)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                  child: GestureDetector(
+                    onTap: () => _showCommentsHint(context),
+                    child: Text(
+                      '${post.commentsCount} yorumun tümünü gör',
+                      style: TextStyle(
+                        color: AppColors.textMuted.withValues(alpha: 0.95),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
-        if (post.commentsCount > 0)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
-            child: GestureDetector(
-              onTap: () => _showCommentsHint(context),
-              child: Text(
-                '${post.commentsCount} yorumun tümünü gör',
-                style: TextStyle(
-                  color: AppColors.textMuted.withValues(alpha: 0.95),
-                  fontSize: 13,
-                ),
-              ),
-            ),
-          ),
-        const SizedBox(height: 12),
-        Divider(
-          height: 1,
-          thickness: 0.5,
-          color: Colors.white.withValues(alpha: 0.08),
-        ),
-      ],
+      ),
     );
   }
 
@@ -224,64 +254,76 @@ class _PostHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GestureDetector(
-            onTap: onProfile,
-            child: UserAvatar(url: post.author.avatarUrl, radius: 20),
-          ),
-          const SizedBox(width: 10),
           Expanded(
-            child: GestureDetector(
-              onTap: onProfile,
-              behavior: HitTestBehavior.opaque,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onProfile,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Flexible(
-                        child: Text(
-                          post.author.display,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 14,
-                          ),
+                      UserAvatar(url: post.author.avatarUrl, radius: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    post.author.display,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                                if (timeLabel != null) ...[
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '· $timeLabel',
+                                    style: TextStyle(
+                                      color: AppColors.textMuted
+                                          .withValues(alpha: 0.85),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            if (fortuneLabel != null) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Text(
+                                    _fortuneEmoji(post.fortuneType),
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    fortuneLabel,
+                                    style: TextStyle(
+                                      color: AppColors.accentPurple
+                                          .withValues(alpha: 0.95),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
                         ),
                       ),
-                      if (timeLabel != null) ...[
-                        const SizedBox(width: 6),
-                        Text(
-                          '· $timeLabel',
-                          style: TextStyle(
-                            color: AppColors.textMuted.withValues(alpha: 0.85),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
                     ],
                   ),
-                  if (fortuneLabel != null) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          _fortuneEmoji(post.fortuneType),
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          fortuneLabel,
-                          style: TextStyle(
-                            color: AppColors.accentPurple.withValues(alpha: 0.95),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           ),
@@ -475,7 +517,7 @@ class _ActionWithCount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final showCount = count > 0 || !hideZeroCount;
+    final showCountLabel = !hideZeroCount || count > 0;
 
     return InkWell(
       onTap: onTap,
@@ -486,7 +528,7 @@ class _ActionWithCount extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 24, color: color),
-            if (showCount && count > 0) ...[
+            if (showCountLabel) ...[
               const SizedBox(width: 5),
               Text(
                 _formatCount(count),

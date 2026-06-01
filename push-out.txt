@@ -1,0 +1,3 @@
+To https://github.com/mesutbyrm/Cursor-Flutter-
+ * [new branch]      cursor/fortune-type-showcase-cards-7009 -> cursor/fortune-type-showcase-cards-7009
+branch 'cursor/fortune-type-showcase-cards-7009' set up to track 'origin/cursor/fortune-type-showcase-cards-7009'.

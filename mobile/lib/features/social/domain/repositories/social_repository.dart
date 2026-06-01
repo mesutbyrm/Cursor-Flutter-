@@ -13,6 +13,9 @@ class SocialFeedPage {
 abstract class SocialRepository {
   Future<SocialFeedPage> fetchPage({int page});
 
+  /// Kullanıcı profilinde TikTok tarzı ızgara için paylaşımlar.
+  Future<List<PostEntity>> fetchPostsByUser(String userId, {int page = 1});
+
   /// Instagram / Facebook tarzı yeni paylaşım.
   Future<PostEntity> createPost(CreateSocialPostInput input);
 

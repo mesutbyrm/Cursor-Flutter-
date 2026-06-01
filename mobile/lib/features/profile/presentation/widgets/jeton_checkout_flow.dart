@@ -322,13 +322,18 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
   }
 
   Future<void> _submitRequest() async {
-    await ref.read(walletRepositoryProvider).submitPaymentRequest(
-      buildJetonPaymentRequest(
-        package: widget.package,
-        method: _methodApi,
-        notes: widget.paymentNotes,
-      ),
-    );
+    final body = widget.package.id.startsWith('membership_')
+        ? buildMembershipPaymentRequest(
+            package: widget.package,
+            method: _methodApi,
+            notes: widget.paymentNotes,
+          )
+        : buildJetonPaymentRequest(
+            package: widget.package,
+            method: _methodApi,
+            notes: widget.paymentNotes,
+          );
+    await ref.read(walletRepositoryProvider).submitPaymentRequest(body);
     ref.invalidate(walletBalancesProvider);
     ref.invalidate(cfcPaymentRequestsProvider);
     ref.invalidate(adminPaymentRequestsProvider);
@@ -354,7 +359,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
           const SnackBar(content: Text('Talebiniz alındı')),
         );
         widget.onDone();
-        Navigator.of(context).popUntil((r) => r.isFirst);
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -381,7 +386,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
           ),
         );
         widget.onDone();
-        Navigator.of(context).popUntil((r) => r.isFirst);
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {

@@ -1,7 +1,5 @@
 import 'package:cookie_jar/cookie_jar.dart';
 
-import '../../../../core/config/env.dart';
-import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -48,11 +46,13 @@ class AuthRepositoryImpl implements AuthRepository {
     }
     final um = _userMap(body);
     if (um != null) {
-      return UserDto.fromJson(um).toEntity();
+      final dto = UserDto.fromJson(um);
+      return dto.toEntity(role: dto.roleFrom(um));
     }
     final me = await _remote.me();
     final um2 = _userMap(me) ?? me;
-    return UserDto.fromJson(um2).toEntity();
+    final dto = UserDto.fromJson(um2);
+    return dto.toEntity(role: dto.roleFrom(um2));
   }
 
   @override
@@ -60,22 +60,8 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    try {
-      final body = await _remote.login(email: email, password: password);
-      if (body.containsKey('ok') && Env.useNextAuth) {
-        await _tokens.writeTokens(
-          access: TokenStorage.sessionCookieMarker,
-          refresh: null,
-        );
-        final s = await _remote.session();
-        final u = _userMap(s);
-        if (u == null) throw const ApiException('Oturum oluşturulamadı');
-        return UserDto.fromJson(u).toEntity();
-      }
-      return _persistAndMap(body);
-    } on ApiException {
-      rethrow;
-    }
+    final body = await _remote.login(email: email, password: password);
+    return _persistAndMap(body);
   }
 
   @override
@@ -117,24 +103,16 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<UserEntity?> currentUser() async {
     final access = await _tokens.readAccess();
-    if (access == TokenStorage.sessionCookieMarker) {
-      try {
-        final s = await _remote.session();
-        final u = s['user'];
-        if (u is Map) {
-          return UserDto.fromJson(Map<String, dynamic>.from(u)).toEntity();
-        }
-        return null;
-      } catch (_) {
-        await logout();
-        return null;
-      }
-    }
     if (access == null || access.isEmpty) return null;
+    if (access == TokenStorage.sessionCookieMarker) {
+      await _tokens.clear();
+      return null;
+    }
     try {
       final me = await _remote.me();
       final um = _userMap(me) ?? me;
-      return UserDto.fromJson(um).toEntity();
+      final dto = UserDto.fromJson(um);
+      return dto.toEntity(role: dto.roleFrom(um));
     } catch (_) {
       await _tokens.clear();
       return null;
@@ -143,12 +121,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> logout() async {
-    if (Env.useNextAuth) {
-      try {
-        await _remote.signOutNextAuth();
-      } catch (_) {}
-      await _cookieJar.deleteAll();
-    }
+    await _cookieJar.deleteAll();
     await _tokens.clear();
   }
 }

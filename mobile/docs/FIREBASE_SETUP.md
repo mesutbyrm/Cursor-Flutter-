@@ -4,8 +4,22 @@ Uygulama Firebase’i **isteğe bağlı** başlatır. `google-services.json` vey
 
 ## Hızlı etkinleştirme
 
+### canlifal.com resmi dosyalar
+
+```bash
+# Repo kökünden
+bash scripts/sync-canlifal-config.sh
+```
+
+Kaynak URL’ler: [docs/CANLIFAL_OFFICIAL_CONFIG.md](../../docs/CANLIFAL_OFFICIAL_CONFIG.md)
+
+Site statik dosya sunmuyorsa (HTML dönüyorsa) Firebase Console’dan indirin.
+
+### Manuel
+
 1. [Firebase Console](https://console.firebase.google.com/) → proje oluştur → Android uygulaması ekle (`com.mesutbyrm.canlifal`).
 2. `google-services.json` dosyasını `mobile/android/app/` altına kopyalayın.
+3. `bash scripts/generate-firebase-options.sh` (FCM için Dart tarafını doldurur).
 3. FlutterFire (önerilen):
 
    ```bash

@@ -3,11 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/discover/discover_glass_card.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../widgets/wallet_balance_header.dart';
+import '../../domain/wallet_balances.dart';
 
 /// Cüzdan merkezi — Jeton, CFC ve Premium üyelik tek giriş.
 class WalletCenterPage extends ConsumerWidget {
@@ -16,6 +17,10 @@ class WalletCenterPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final wallet = ref.watch(walletBalancesProvider);
+    final authUser = ref.watch(authControllerProvider).valueOrNull;
+    final cached = wallet.valueOrNull;
+    final balances = cached ??
+        WalletBalances(jeton: authUser?.coinBalance ?? 0);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -24,17 +29,18 @@ class WalletCenterPage extends ConsumerWidget {
           title: 'Cüzdanım',
           subtitle: 'Jeton · CFC · Premium üyelik',
           onRefresh: () async => ref.invalidate(walletBalancesProvider),
-          body: wallet.when(
-            loading: () => const Center(child: DiscoverAccentLoader()),
-            error: (e, _) => Center(child: Text(e.toString())),
-            data: (b) => ListView(
+          body: wallet.isLoading && cached == null
+              ? const Center(child: DiscoverAccentLoader())
+              : wallet.hasError && cached == null
+                  ? Center(child: Text(wallet.error.toString()))
+                  : ListView(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
               children: [
                 WalletBalanceHeader(
-                  jeton: b.jeton,
-                  cfc: b.cfc,
-                  membership: b.membership,
-                  daysRemaining: b.membershipDaysRemaining,
+                  jeton: balances.jeton,
+                  cfc: balances.cfc,
+                  membership: balances.membership,
+                  daysRemaining: balances.membershipDaysRemaining,
                 ),
                 const SizedBox(height: 24),
                 _HubCard(
@@ -62,7 +68,6 @@ class WalletCenterPage extends ConsumerWidget {
                 ),
               ],
             ),
-          ),
         ),
       ),
     );

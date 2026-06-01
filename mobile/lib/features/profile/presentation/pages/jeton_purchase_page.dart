@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../data/jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
+import '../../../wallet/domain/wallet_balances.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/currency_usage_card.dart';
 import '../widgets/jeton_checkout_flow.dart';
@@ -105,15 +106,13 @@ class JetonPurchasePage extends ConsumerWidget {
                   ),
                 ),
                 packages.when(
-                  loading: () => const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    ),
+                  loading: () => _JetonPackagesContent(
+                    pageContext: context,
+                    ref: ref,
+                    list: kFallbackJetonPackages,
+                    wallet: wallet,
+                    onCheckout: (p, price) => _openCheckout(context, ref, p, price),
+                    isRefreshing: true,
                   ),
                   error: (e, _) => SliverFillRemaining(
                     hasScrollBody: false,
@@ -142,61 +141,13 @@ class JetonPurchasePage extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  data: (list) {
-                    final display = list.isEmpty
-                        ? List<JetonPackageEntity>.from(kFallbackJetonPackages)
-                        : list;
-                    final grid = jetonGridPackages(display);
-                    final hero = jetonHeroPackage(display);
-                    final rate =
-                        wallet.valueOrNull?.jetonTlRate ?? kDefaultJetonTlRate;
-
-                    return SliverToBoxAdapter(
-                      child: ResponsiveConstrained(
-                        child: Padding(
-                          padding: ResponsiveLayout.pagePadding(
-                            context,
-                            bottom: 32,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              if (grid.isNotEmpty)
-                                _ResponsivePackageGrid(
-                                  packages: grid,
-                                  onTap: (p) => _openCheckout(
-                                    context,
-                                    ref,
-                                    p,
-                                    formatJetonPrice(p),
-                                  ),
-                                ),
-                              if (hero != null) ...[
-                            const SizedBox(height: 0),
-                                JetonPackageTile(
-                                  package: hero,
-                                  priceText: formatJetonPrice(hero),
-                                  fullWidth: true,
-                                  onTap: () => _openCheckout(
-                                    context,
-                                    ref,
-                                    hero,
-                                    formatJetonPrice(hero),
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 24),
-                              JetonCustomAmountSection(
-                                tlRate: rate,
-                                onPurchase: (p, price) =>
-                                    _openCheckout(context, ref, p, price),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+                  data: (list) => _JetonPackagesContent(
+                    pageContext: context,
+                    ref: ref,
+                    list: list.isEmpty ? kFallbackJetonPackages : list,
+                    wallet: wallet,
+                    onCheckout: (p, price) => _openCheckout(context, ref, p, price),
+                  ),
                 ),
               ],
             ),
@@ -263,6 +214,70 @@ class _JetonStoreHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _JetonPackagesContent extends StatelessWidget {
+  const _JetonPackagesContent({
+    required this.pageContext,
+    required this.ref,
+    required this.list,
+    required this.wallet,
+    required this.onCheckout,
+    this.isRefreshing = false,
+  });
+
+  final BuildContext pageContext;
+  final WidgetRef ref;
+  final List<JetonPackageEntity> list;
+  final AsyncValue<WalletBalances> wallet;
+  final void Function(JetonPackageEntity package, String priceText) onCheckout;
+  final bool isRefreshing;
+
+  @override
+  Widget build(BuildContext context) {
+    final grid = jetonGridPackages(list);
+    final hero = jetonHeroPackage(list);
+    final rate = wallet.valueOrNull?.jetonTlRate ?? kDefaultJetonTlRate;
+
+    return SliverToBoxAdapter(
+      child: ResponsiveConstrained(
+        child: Padding(
+          padding: ResponsiveLayout.pagePadding(
+            pageContext,
+            bottom: 32,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (isRefreshing)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: LinearProgressIndicator(minHeight: 2),
+                ),
+              if (grid.isNotEmpty)
+                _ResponsivePackageGrid(
+                  packages: grid,
+                  onTap: (p) => onCheckout(p, formatJetonPrice(p)),
+                ),
+              if (hero != null) ...[
+                JetonPackageTile(
+                  package: hero,
+                  priceText: formatJetonPrice(hero),
+                  fullWidth: true,
+                  onTap: () => onCheckout(hero, formatJetonPrice(hero)),
+                ),
+              ],
+              const SizedBox(height: 24),
+              JetonCustomAmountSection(
+                tlRate: rate,
+                onPurchase: onCheckout,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

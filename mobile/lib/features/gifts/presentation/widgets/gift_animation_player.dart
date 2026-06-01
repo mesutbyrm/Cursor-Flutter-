@@ -9,6 +9,8 @@ import '../../data/gift_catalog_maps.dart';
 import '../../domain/gift_animation_kind.dart';
 import '../../domain/gift_entity.dart';
 import '../../domain/gift_rarity.dart';
+import '../../domain/premium_gift_catalog_2026.dart';
+import 'premium_2026/premium_gift_icon.dart';
 
 /// Lottie / Rive / SVGA (yerel veya ağ) — RepaintBoundary ile izole oynatıcı.
 class GiftAnimationPlayer extends StatelessWidget {
@@ -19,6 +21,7 @@ class GiftAnimationPlayer extends StatelessWidget {
     this.event,
     this.size = 220,
     this.repeat = false,
+    this.preferPremiumVisual = false,
   });
 
   final String giftId;
@@ -26,6 +29,7 @@ class GiftAnimationPlayer extends StatelessWidget {
   final LiveGiftEvent? event;
   final double size;
   final bool repeat;
+  final bool preferPremiumVisual;
 
   GiftEntity get _entity {
     if (gift != null) return gift!;
@@ -43,6 +47,12 @@ class GiftAnimationPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final g = _entity;
+    final canonical = PremiumGiftCatalog2026.canonicalId(giftId) ?? giftId;
+    if (preferPremiumVisual || GiftCatalogMaps.usePremiumPainter(g)) {
+      return RepaintBoundary(
+        child: PremiumGiftIcon(giftId: canonical, size: size),
+      );
+    }
     final kind = GiftCatalogMaps.resolvedKind(g);
     final emoji = GiftCatalogMaps.emoji(g);
 

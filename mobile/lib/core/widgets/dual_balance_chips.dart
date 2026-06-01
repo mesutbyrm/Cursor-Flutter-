@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
+import '../navigation/wallet_navigation.dart';
 import '../theme/app_colors.dart';
 
 /// Jeton + CFC yan yana — ayrı tıklama: jeton mağazası / CFC yükle.
@@ -34,7 +34,7 @@ class DualBalanceChips extends StatelessWidget {
           icon: Icons.monetization_on_rounded,
           color: AppColors.coinGold,
           compact: compact,
-          onTap: onJetonTap ?? onTap ?? () => context.push('/jeton-store'),
+          onTap: onJetonTap ?? onTap ?? () => openJetonStore(context),
         ),
         SizedBox(width: compact ? 4 : 6),
         _Chip(
@@ -43,7 +43,7 @@ class DualBalanceChips extends StatelessWidget {
           icon: Icons.diamond_rounded,
           color: AppColors.diamondBlue,
           compact: compact,
-          onTap: onCfcTap ?? () => context.push('/cfc-store'),
+          onTap: onCfcTap ?? () => openCfcStore(context),
         ),
       ],
     );

@@ -21,23 +21,44 @@ export async function oauthPlaceholderPassword(): Promise<string> {
   return hashPassword(randomBytes(32).toString("hex"));
 }
 
-export function publicUserPayload(u: User) {
+/** Tam kullanıcı veya Prisma `select` ile kısmi satır — takip listeleri dahil. */
+export type PublicUserSource = Pick<
+  User,
+  "id" | "displayName" | "username" | "avatarUrl" | "bio" | "followerCount"
+> &
+  Partial<
+    Pick<
+      User,
+      | "email"
+      | "phone"
+      | "birthDate"
+      | "birthTime"
+      | "language"
+      | "role"
+      | "coins"
+      | "cfcBalance"
+      | "followingCount"
+      | "createdAt"
+    >
+  >;
+
+export function publicUserPayload(u: PublicUserSource) {
   return {
     id: u.id,
-    email: u.email,
+    email: u.email ?? null,
     displayName: u.displayName,
     username: u.username,
     avatarUrl: u.avatarUrl,
     bio: u.bio,
-    phone: u.phone,
+    phone: u.phone ?? null,
     birthDate: u.birthDate?.toISOString().slice(0, 10) ?? null,
-    birthTime: u.birthTime,
-    language: u.language,
-    role: u.role,
-    coins: u.coins,
-    cfcBalance: u.cfcBalance,
+    birthTime: u.birthTime ?? null,
+    language: u.language ?? null,
+    role: u.role ?? "user",
+    coins: u.coins ?? 0,
+    cfcBalance: u.cfcBalance ?? 0,
     followerCount: u.followerCount,
-    followingCount: u.followingCount,
-    createdAt: u.createdAt.toISOString(),
+    followingCount: u.followingCount ?? 0,
+    createdAt: u.createdAt?.toISOString() ?? null,
   };
 }

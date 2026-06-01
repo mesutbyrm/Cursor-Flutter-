@@ -9,16 +9,20 @@ import 'cookie_jar_provider.dart';
 import 'token_storage.dart';
 
 bool _isPublicAuthPath(String path) {
-  return path == ApiEndpoints.authLogin ||
+  return path == ApiEndpoints.authMobileLogin ||
+      path == ApiEndpoints.authMobileRegister ||
+      path == ApiEndpoints.authMobileGoogle ||
+      path == ApiEndpoints.authMobileTiktok ||
+      path == ApiEndpoints.authMobileRefresh ||
+      path == ApiEndpoints.authLogin ||
       path == ApiEndpoints.authRegister ||
       path == ApiEndpoints.authGoogle ||
       path == ApiEndpoints.authTiktok ||
-      path == ApiEndpoints.authRefresh ||
-      path == ApiEndpoints.authCsrf ||
-      path == ApiEndpoints.authCredentials ||
-      path == ApiEndpoints.authSession ||
-      path.startsWith('/api/auth/providers');
+      path == ApiEndpoints.authRefresh;
 }
+
+String _refreshPath() =>
+    Env.useMobileAuth ? ApiEndpoints.authMobileRefresh : ApiEndpoints.authRefresh;
 
 final dioProvider = Provider<Dio>((ref) {
   final tokenStorage = ref.watch(tokenStorageProvider);
@@ -29,7 +33,10 @@ final dioProvider = Provider<Dio>((ref) {
       baseUrl: Env.apiBaseUrl,
       connectTimeout: const Duration(seconds: 20),
       receiveTimeout: const Duration(seconds: 30),
-      headers: {'Accept': 'application/json'},
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
     ),
   );
 
@@ -38,8 +45,7 @@ final dioProvider = Provider<Dio>((ref) {
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final path = options.path;
-        final public = _isPublicAuthPath(path);
+        final public = _isPublicAuthPath(options.path);
         if (!public) {
           final token = await tokenStorage.readAccess();
           if (token != null &&
@@ -53,13 +59,18 @@ final dioProvider = Provider<Dio>((ref) {
         handler.next(options);
       },
       onError: (e, handler) async {
+        final refreshPath = _refreshPath();
         final already = e.requestOptions.extra['_authRetry'] == true;
         if (!already &&
             e.response?.statusCode == 401 &&
-            e.requestOptions.path != ApiEndpoints.authRefresh) {
+            e.requestOptions.path != refreshPath) {
           e.requestOptions.extra['_authRetry'] = true;
-          final refreshed = await _tryRefresh(dio, tokenStorage);
+          final refreshed = await _tryRefresh(dio, tokenStorage, refreshPath);
           if (refreshed) {
+            final token = await tokenStorage.readAccess();
+            if (token != null && token.isNotEmpty) {
+              e.requestOptions.headers['Authorization'] = 'Bearer $token';
+            }
             final res = await dio.fetch(e.requestOptions);
             return handler.resolve(res);
           }
@@ -72,12 +83,16 @@ final dioProvider = Provider<Dio>((ref) {
   return dio;
 });
 
-Future<bool> _tryRefresh(Dio dio, TokenStorage storage) async {
+Future<bool> _tryRefresh(
+  Dio dio,
+  TokenStorage storage,
+  String refreshPath,
+) async {
   final refresh = await storage.readRefresh();
   if (refresh == null || refresh.isEmpty) return false;
   try {
     final res = await dio.post<Map<String, dynamic>>(
-      ApiEndpoints.authRefresh,
+      refreshPath,
       data: {'refreshToken': refresh},
     );
     final data = res.data;
@@ -145,9 +160,16 @@ extension DioApi on Dio {
   Future<Response<T>> safePatch<T>(
     String path, {
     Object? data,
+    Map<String, dynamic>? query,
+    Options? options,
   }) async {
     try {
-      return await patch<T>(path, data: data);
+      return await patch<T>(
+        path,
+        data: data,
+        queryParameters: query,
+        options: options,
+      );
     } on DioException catch (e) {
       throw _mapDio(e);
     }
@@ -162,7 +184,7 @@ ApiException _mapDio(DioException e) {
     final raw = (e.message ?? '').toLowerCase();
     if (raw.contains('failed host lookup') || raw.contains('socketexception')) {
       return ApiException(
-        'Sunucu adresi çözülemedi veya ağ yok. Wi-Fi/mobil veriyi ve canlifal.com erişimini kontrol edin; uygulamayı güncel APK ile yeniden kurmayı deneyin.',
+        'Sunucu adresi çözülemedi veya ağ yok. Wi-Fi/mobil veriyi kontrol edin.',
         statusCode: code,
       );
     }

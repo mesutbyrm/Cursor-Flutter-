@@ -7,6 +7,7 @@ class UserEntity extends Equatable {
     this.displayName,
     this.avatarUrl,
     this.bio,
+    this.role,
     this.followersCount = 0,
     this.followingCount = 0,
     this.isFollowing = false,
@@ -15,6 +16,7 @@ class UserEntity extends Equatable {
 
   final String id;
   final String username;
+  final String? role;
   final String? displayName;
   final String? avatarUrl;
   final String? bio;
@@ -34,6 +36,7 @@ class UserEntity extends Equatable {
         displayName,
         avatarUrl,
         bio,
+        role,
         followersCount,
         followingCount,
         isFollowing,

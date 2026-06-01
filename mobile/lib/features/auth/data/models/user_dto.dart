@@ -22,7 +22,7 @@ abstract class UserDto with _$UserDto {
   const UserDto._();
 
   factory UserDto.fromApiMap(Map<String, dynamic> json) {
-    final id = pick(json, ['id', 'userId', '_id'])?.toString() ?? '';
+    final id = pick(json, ['id', 'userId', '_id', 'sub'])?.toString() ?? '';
     var username =
         pick(json, ['username', 'userName', 'handle'])?.toString() ?? '';
     if (username.isEmpty) {
@@ -58,10 +58,18 @@ abstract class UserDto with _$UserDto {
       followersCount: followers,
       followingCount: following,
       isFollowing: pick(json, ['isFollowing', 'following_me']) == true,
-      coinBalance:
-          asInt(pick(json, ['coinBalance', 'coins', 'balance', 'credits'])),
+      coinBalance: asInt(pick(json, [
+        'jetonBalance',
+        'coinBalance',
+        'coins',
+        'balance',
+        'credits',
+      ])),
     );
   }
+
+  String? roleFrom(Map<String, dynamic> json) =>
+      pick(json, ['role', 'tier'])?.toString();
 
   /// Geriye dönük uyumluluk.
   factory UserDto.fromJson(Map<String, dynamic> json) => UserDto.fromApiMap(json);
@@ -83,12 +91,13 @@ abstract class UserDto with _$UserDto {
     return UserDto.fromApiMap(merged);
   }
 
-  UserEntity toEntity() => UserEntity(
+  UserEntity toEntity({String? role}) => UserEntity(
         id: id,
         username: username,
         displayName: displayName,
         avatarUrl: avatarUrl,
         bio: bio,
+        role: role,
         followersCount: followersCount,
         followingCount: followingCount,
         isFollowing: isFollowing,

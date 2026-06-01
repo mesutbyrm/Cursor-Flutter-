@@ -6,6 +6,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../../../voice_hub/presentation/voice_rooms_body.dart';
@@ -56,6 +57,7 @@ class _LivePageState extends ConsumerState<LivePage>
               title: 'Canlı',
               subtitle: 'Yayınlar ve sesli sohbet odaları',
               actions: [
+                const MessagesNotificationsActions(spacing: 4),
                 DiscoverIconButton(
                   icon: Icons.videocam_rounded,
                   tooltip: 'Yayına başla',

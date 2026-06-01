@@ -4,14 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/canlifal_tokens.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/domain/entities/user_entity.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../domain/entities/social_story_ring_entity.dart';
+import '../../pages/story_viewer_page.dart';
 import '../../providers/social_providers.dart';
 
-/// Yatay hikâye şeridi — «Hikayen», mistik dekor, diğer halkalar.
+/// Yatay hikâye şeridi — «Hikayen» ve diğer kullanıcı halkaları.
 class SocialStoriesRail extends ConsumerWidget {
   const SocialStoriesRail({super.key});
 
@@ -30,11 +30,44 @@ class SocialStoriesRail extends ConsumerWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
-        error: (_, _) => _StoriesList(
-          me: me,
-          rings: const [],
+        error: (e, _) => _StoriesError(
+          message: e.toString(),
+          onRetry: () => ref.invalidate(socialStoryRingsProvider),
         ),
         data: (rings) => _StoriesList(me: me, rings: rings),
+      ),
+    );
+  }
+}
+
+class _StoriesError extends StatelessWidget {
+  const _StoriesError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              message.length > 80 ? 'Hikâyeler yüklenemedi' : message,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppColors.textMuted.withValues(alpha: 0.9),
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextButton(onPressed: onRetry, child: const Text('Tekrar dene')),
+          ],
+        ),
       ),
     );
   }
@@ -55,8 +88,6 @@ class _StoriesList extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       children: [
         _OwnStoryChip(user: me),
-        const SizedBox(width: 14),
-        const _MysticStoryDeco(),
         ...others.map(
           (r) => Padding(
             padding: const EdgeInsets.only(left: 14),
@@ -64,65 +95,6 @@ class _StoriesList extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _MysticStoryDeco extends StatelessWidget {
-  const _MysticStoryDeco();
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-
-    return SizedBox(
-      width: 88,
-      child: Column(
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.bgPurpleGlow,
-                  tokens.brandGradient.colors.last.withValues(alpha: 0.5),
-                ],
-              ),
-              border: Border.all(
-                color: AppColors.accentPurple.withValues(alpha: 0.45),
-              ),
-              boxShadow: AppColors.glowShadow(
-                AppColors.accentPurple,
-                blur: 16,
-              ),
-            ),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('🔮', style: TextStyle(fontSize: 26)),
-                SizedBox(height: 2),
-                Text('🃏', style: TextStyle(fontSize: 14)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Fal hikâyeleri',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary.withValues(alpha: 0.9),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -176,7 +148,17 @@ class _StoryRingChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return _StoryRingFrame(
       label: ring.user.display,
-      onTap: () => context.push('/user/${ring.user.id}'),
+      onTap: () {
+        if (ring.previewUrl != null && ring.previewUrl!.isNotEmpty) {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => StoryViewerPage(ring: ring),
+            ),
+          );
+        } else {
+          context.push('/user/${ring.user.id}');
+        }
+      },
       child: _RingAvatar(
         avatarUrl: ring.user.avatarUrl,
         previewUrl: ring.previewUrl,
