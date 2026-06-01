@@ -1,102 +1,94 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
+import 'app_theme_colors.dart';
 
-/// Tema-duyarlı yüzey ve metin renkleri — `Theme.of(context).extension`.
+/// Material [ThemeExtension] — [AppThemeColors] token seti.
 @immutable
 class AppPalette extends ThemeExtension<AppPalette> {
-  const AppPalette({
-    required this.background,
-    required this.surface,
-    required this.surfaceElevated,
-    required this.textPrimary,
-    required this.textSecondary,
-    required this.textMuted,
-    required this.divider,
-    required this.glassOverlay,
-    required this.iconMuted,
-  });
+  const AppPalette(this.colors);
 
-  final Color background;
-  final Color surface;
-  final Color surfaceElevated;
-  final Color textPrimary;
-  final Color textSecondary;
-  final Color textMuted;
-  final Color divider;
-  final Color glassOverlay;
-  final Color iconMuted;
+  final AppThemeColors colors;
 
-  static const dark = AppPalette(
-    background: AppColors.background,
-    surface: AppColors.surface,
-    surfaceElevated: AppColors.surfaceElevated,
-    textPrimary: AppColors.textPrimary,
-    textSecondary: AppColors.textSecondary,
-    textMuted: AppColors.textMuted,
-    divider: Color(0xFF2A2A38),
-    glassOverlay: Color(0x8C0B0B1E),
-    iconMuted: AppColors.textMuted,
-  );
+  static final AppPalette dark = AppPalette(AppThemeColors.dark);
+  static final AppPalette light = AppPalette(AppThemeColors.light);
 
-  static const light = AppPalette(
-    background: Color(0xFFF8F8FC),
-    surface: Colors.white,
-    surfaceElevated: Color(0xFFF0F0F5),
-    textPrimary: Color(0xFF0B0B1E),
-    textSecondary: Color(0xFF3D3D52),
-    textMuted: Color(0xFF6E6E82),
-    divider: Color(0xFFE5E5EA),
-    glassOverlay: Color(0x99FFFFFF),
-    iconMuted: Color(0xFF8E8E93),
-  );
+  bool get isDark => colors.isDark;
+  bool get useGlassBlur => colors.useGlassBlur;
+
+  Color get background => colors.scaffoldBackground;
+  Color get surface => colors.surface;
+  Color get surfaceElevated => colors.surfaceElevated;
+  Color get textPrimary => colors.onSurface;
+  Color get textSecondary => colors.onSurfaceVariant;
+  Color get textMuted => colors.onSurfaceMuted;
+  Color get divider => colors.divider;
+  Color get glassOverlay => colors.glassFill;
+  Color get iconMuted => colors.onSurfaceMuted;
+  Color get glassFill => colors.glassFill;
+  Color get glassBorder => colors.glassBorder;
 
   @override
-  AppPalette copyWith({
-    Color? background,
-    Color? surface,
-    Color? surfaceElevated,
-    Color? textPrimary,
-    Color? textSecondary,
-    Color? textMuted,
-    Color? divider,
-    Color? glassOverlay,
-    Color? iconMuted,
-  }) {
-    return AppPalette(
-      background: background ?? this.background,
-      surface: surface ?? this.surface,
-      surfaceElevated: surfaceElevated ?? this.surfaceElevated,
-      textPrimary: textPrimary ?? this.textPrimary,
-      textSecondary: textSecondary ?? this.textSecondary,
-      textMuted: textMuted ?? this.textMuted,
-      divider: divider ?? this.divider,
-      glassOverlay: glassOverlay ?? this.glassOverlay,
-      iconMuted: iconMuted ?? this.iconMuted,
-    );
+  AppPalette copyWith({AppThemeColors? colors}) {
+    return AppPalette(colors ?? this.colors);
   }
 
   @override
   AppPalette lerp(ThemeExtension<AppPalette>? other, double t) {
     if (other is! AppPalette) return this;
+    final a = colors;
+    final b = other.colors;
     return AppPalette(
-      background: Color.lerp(background, other.background, t)!,
-      surface: Color.lerp(surface, other.surface, t)!,
-      surfaceElevated:
-          Color.lerp(surfaceElevated, other.surfaceElevated, t)!,
-      textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
-      textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
-      textMuted: Color.lerp(textMuted, other.textMuted, t)!,
-      divider: Color.lerp(divider, other.divider, t)!,
-      glassOverlay: Color.lerp(glassOverlay, other.glassOverlay, t)!,
-      iconMuted: Color.lerp(iconMuted, other.iconMuted, t)!,
+      AppThemeColors(
+        brightness: t < 0.5 ? a.brightness : b.brightness,
+        scaffoldBackground:
+            Color.lerp(a.scaffoldBackground, b.scaffoldBackground, t)!,
+        surface: Color.lerp(a.surface, b.surface, t)!,
+        surfaceElevated:
+            Color.lerp(a.surfaceElevated, b.surfaceElevated, t)!,
+        surfaceContainer:
+            Color.lerp(a.surfaceContainer, b.surfaceContainer, t)!,
+        onSurface: Color.lerp(a.onSurface, b.onSurface, t)!,
+        onSurfaceVariant:
+            Color.lerp(a.onSurfaceVariant, b.onSurfaceVariant, t)!,
+        onSurfaceMuted:
+            Color.lerp(a.onSurfaceMuted, b.onSurfaceMuted, t)!,
+        primary: Color.lerp(a.primary, b.primary, t)!,
+        onPrimary: Color.lerp(a.onPrimary, b.onPrimary, t)!,
+        secondary: Color.lerp(a.secondary, b.secondary, t)!,
+        onSecondary: Color.lerp(a.onSecondary, b.onSecondary, t)!,
+        outline: Color.lerp(a.outline, b.outline, t)!,
+        outlineVariant:
+            Color.lerp(a.outlineVariant, b.outlineVariant, t)!,
+        divider: Color.lerp(a.divider, b.divider, t)!,
+        glassFill: Color.lerp(a.glassFill, b.glassFill, t)!,
+        glassFillElevated:
+            Color.lerp(a.glassFillElevated, b.glassFillElevated, t)!,
+        glassBorder: Color.lerp(a.glassBorder, b.glassBorder, t)!,
+        glassHighlight:
+            Color.lerp(a.glassHighlight, b.glassHighlight, t)!,
+        dialogBackground:
+            Color.lerp(a.dialogBackground, b.dialogBackground, t)!,
+        bottomSheetBackground: Color.lerp(
+          a.bottomSheetBackground,
+          b.bottomSheetBackground,
+          t,
+        )!,
+        snackBarBackground:
+            Color.lerp(a.snackBarBackground, b.snackBarBackground, t)!,
+        barrier: Color.lerp(a.barrier, b.barrier, t)!,
+        brandGradient: t < 0.5 ? a.brandGradient : b.brandGradient,
+        cardShadow: t < 0.5 ? a.cardShadow : b.cardShadow,
+        elevatedShadow: t < 0.5 ? a.elevatedShadow : b.elevatedShadow,
+        useGlassBlur: t < 0.5 ? a.useGlassBlur : b.useGlassBlur,
+      ),
     );
   }
 }
 
 extension AppPaletteX on BuildContext {
   AppPalette get palette =>
-      Theme.of(this).extension<AppPalette>() ?? AppPalette.dark;
-
-  bool get isDarkTheme => Theme.of(this).brightness == Brightness.dark;
+      Theme.of(this).extension<AppPalette>() ??
+      (Theme.of(this).brightness == Brightness.dark
+          ? AppPalette.dark
+          : AppPalette.light);
 }

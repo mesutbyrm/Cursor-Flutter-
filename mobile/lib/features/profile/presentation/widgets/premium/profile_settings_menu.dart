@@ -57,10 +57,7 @@ class ProfileSettingsMenu extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        ProfileGlass(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-          child: const ThemeModeSelector(),
-        ),
+        const ThemeModeSelector(),
         const SizedBox(height: 12),
         ProfileGlass(
           padding: EdgeInsets.zero,

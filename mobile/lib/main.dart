@@ -12,6 +12,7 @@ import 'core/firebase/firebase_bootstrap.dart';
 import 'core/network/cookie_jar_provider.dart';
 import 'core/onesignal/onesignal_bootstrap.dart';
 import 'core/storage/local_cache.dart';
+import 'core/storage/theme_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +21,12 @@ Future<void> main() async {
     await LocalCache.init();
   } catch (e) {
     debugPrint('LocalCache init failed: $e');
+  }
+
+  try {
+    await ThemePreferences.init();
+  } catch (e) {
+    debugPrint('ThemePreferences init failed: $e');
   }
 
   await OneSignalBootstrap.init();

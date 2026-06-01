@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/ui/pro_glass/pro_glass.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_theme_colors.dart';
+import '../../../../core/widgets/themed_glass_card.dart';
 
-/// Fal kartı — Pro Glass (blur + cam kenarlık).
+/// Fal kartı — tema uyumlu cam yüzey.
 class FortuneGlassCard extends StatelessWidget {
   const FortuneGlassCard({
     super.key,
@@ -22,20 +23,16 @@ class FortuneGlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final border = accent ?? AppColors.accentPurple;
-    return ProGlassCard(
+    final border = accent ?? AppThemeColors.accentPurple;
+    return ThemedGlassCard(
       padding: padding,
       elevated: elevated,
       onTap: onTap,
-      blur: elevated ? 20 : 14,
-      animateIn: false,
+      borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: border.withValues(alpha: 0.35),
-            width: 1,
-          ),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          border: Border.all(color: border.withValues(alpha: 0.35)),
         ),
         child: child,
       ),

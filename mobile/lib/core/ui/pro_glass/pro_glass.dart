@@ -3,14 +3,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../performance/list_perf.dart';
-import '../../theme/app_palette.dart';
 import '../../theme/app_spacing.dart';
-import '../premium_2026/liquid_glass.dart';
+import '../../theme/app_theme_extensions.dart';
+import '../../widgets/themed_glass_card.dart';
 import '../premium_2026/premium_motion.dart';
 
-export '../premium_2026/liquid_glass.dart' show PressableScale;
-
-/// TikTok / Discord seviyesi cam kart — blur, yarı saydam dolgu, yumuşak gölge.
+/// TikTok / Discord seviyesi cam kart — tema uyumlu glassmorphism.
 class ProGlassCard extends StatelessWidget {
   const ProGlassCard({
     super.key,
@@ -35,12 +33,13 @@ class ProGlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = borderRadius ?? BorderRadius.circular(AppSpacing.radiusLg);
-    Widget card = LiquidGlass(
+    final c = context.colors;
+    final effectiveBlur = c.useGlassBlur ? blur : 0.0;
+    Widget card = ThemedGlassCard(
       padding: padding,
       margin: margin,
-      borderRadius: radius,
-      blur: blur,
+      borderRadius: borderRadius,
+      blur: effectiveBlur,
       elevated: elevated,
       onTap: onTap,
       child: child,
@@ -108,21 +107,24 @@ class ProGlassTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          height: height,
-          decoration: BoxDecoration(
-            color: palette.glassOverlay,
-            border: Border(
-              bottom: BorderSide(color: palette.divider),
-            ),
-          ),
-          child: child,
-        ),
+    final c = context.colors;
+    final sigma = c.useGlassBlur ? 20.0 : 0.0;
+    Widget bar = Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: c.glassFill,
+        border: Border(bottom: BorderSide(color: c.divider)),
       ),
+      child: child,
     );
+    if (sigma > 0) {
+      bar = ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+          child: bar,
+        ),
+      );
+    }
+    return bar;
   }
 }

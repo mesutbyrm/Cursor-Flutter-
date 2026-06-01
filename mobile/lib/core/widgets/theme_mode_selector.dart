@@ -2,89 +2,84 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/theme_mode_provider.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_palette.dart';
+import '../storage/theme_preferences.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_theme_extensions.dart';
+import 'themed_glass_card.dart';
 
-/// Profil / ayarlar — Açık, Koyu, Sistem tema seçici.
+/// Ayarlar — Açık / Koyu / Sistem tema seçimi (anında uygulanır).
 class ThemeModeSelector extends ConsumerWidget {
   const ThemeModeSelector({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
-    final palette = context.palette;
+    final c = context.colors;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.palette_outlined, color: palette.textSecondary, size: 22),
-            const SizedBox(width: 10),
-            Text(
-              'Görünüm',
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
-                color: palette.textPrimary,
+    return ThemedGlassCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.palette_outlined, color: c.secondary, size: 22),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                'Tema',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: c.onSurface,
+                    ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        SegmentedButton<ThemeMode>(
-          segments: const [
-            ButtonSegment(
-              value: ThemeMode.light,
-              label: Text('Açık'),
-              icon: Icon(Icons.light_mode_rounded, size: 18),
-            ),
-            ButtonSegment(
-              value: ThemeMode.dark,
-              label: Text('Koyu'),
-              icon: Icon(Icons.dark_mode_rounded, size: 18),
-            ),
-            ButtonSegment(
-              value: ThemeMode.system,
-              label: Text('Sistem'),
-              icon: Icon(Icons.brightness_auto_rounded, size: 18),
-            ),
-          ],
-          selected: {mode},
-          onSelectionChanged: (selected) {
-            ref.read(themeModeProvider.notifier).setMode(selected.first);
-          },
-          style: ButtonStyle(
-            foregroundColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return Colors.white;
-              }
-              return palette.textSecondary;
-            }),
-            backgroundColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return AppColors.accentPink;
-              }
-              return palette.surfaceElevated;
-            }),
+            ],
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          _hint(mode),
-          style: TextStyle(
-            fontSize: 12,
-            color: palette.textMuted,
-            height: 1.35,
+          const SizedBox(height: AppSpacing.md),
+          SegmentedButton<ThemeMode>(
+            segments: [
+              ButtonSegment(
+                value: ThemeMode.light,
+                label: Text(ThemePreferences.label(ThemeMode.light)),
+                icon: const Icon(Icons.light_mode_rounded, size: 18),
+              ),
+              ButtonSegment(
+                value: ThemeMode.dark,
+                label: Text(ThemePreferences.label(ThemeMode.dark)),
+                icon: const Icon(Icons.dark_mode_rounded, size: 18),
+              ),
+              ButtonSegment(
+                value: ThemeMode.system,
+                label: Text(
+                  ThemePreferences.label(ThemeMode.system),
+                  style: const TextStyle(fontSize: 11),
+                ),
+                icon: const Icon(Icons.brightness_auto_rounded, size: 18),
+              ),
+            ],
+            selected: {mode},
+            onSelectionChanged: (selected) {
+              ref.read(themeModeProvider.notifier).setMode(selected.first);
+            },
           ),
-        ),
-      ],
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            _hint(mode),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: c.onSurfaceMuted,
+                  height: 1.35,
+                ),
+          ),
+        ],
+      ),
     );
   }
 
   String _hint(ThemeMode mode) => switch (mode) {
-        ThemeMode.light => 'Açık tema — gündüz kullanımı için yüksek kontrast.',
-        ThemeMode.dark => 'Koyu tema — canlı yayın ve gece kullanımı için optimize.',
-        ThemeMode.system => 'Cihazınızın açık/koyu ayarını otomatik takip eder.',
+        ThemeMode.light =>
+          'Açık tema: modern, ferah arayüz. Gündüz kullanımı için idealdir.',
+        ThemeMode.dark =>
+          'Koyu tema: cam efektli premium görünüm. Gece ve yayın için optimize.',
+        ThemeMode.system =>
+          'Telefonunuzun açık veya koyu ayarını otomatik takip eder.',
       };
 }
