@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.101+103 (2026-05-31)
+
+### Tema sistemi (production)
+
+- Tek kaynak: `app_theme_colors.dart` — light/dark tüm token'lar
+- **SharedPreferences** ile kalıcı tema (Açık / Koyu / Sistem)
+- Material 3: dialog, bottom sheet, snackbar, AppBar, buton, input
+- `ThemedGlassCard` — koyu modda glassmorphism, açık modda premium gölge
+- `context.colors` extension — sabit renk yerine tema
+- Profil → Tema seçici (anında güncelleme, yeniden başlatma gerekmez)
+
 ## 1.0.100+102 (2026-05-31)
 
 ### Dark / Light Mode
