@@ -2,24 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.96+98` |
-| Tarih (UTC) | 2026-06-01 10:09 |
-| Commit | [`7e6289dd092cc2e9e8c6456072475f2c4339b85b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/7e6289dd092cc2e9e8c6456072475f2c4339b85b) |
-| İş akışı | [Run 26747502772](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26747502772) |
+| Sürüm | `1.0.98+100` |
+| Tarih (UTC) | 2026-06-01 14:33 |
+| Commit | [`209b4785b5465b17e7ca9d25446c26ac7d9b9e28`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/209b4785b5465b17e7ca9d25446c26ac7d9b9e28) |
+| İş akışı | [Run 26760172604](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26760172604) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.96+98 (2026-05-31)
+## 1.0.98+100 (2026-05-31)
 
-### Sesli oda, ödeme, jeton/CFC, sohbet düzeltmeleri
+### Performans + Pro Glass (devam)
 
-- Bakiye: `GET /api/me` + yedek `GET /api/user/credits` — jeton 0 görünme / oda açılamama
-- Oda aç: bakiye yüklenmeden engel kaldırıldı; API jeton kontrolü esas
-- Ödeme bildirimi: 22 sn zaman aşımı; belirsiz yanıtta hata; sonsuz dönme giderildi
-- Jeton/CFC: `openJetonStore` / `openCfcStore` — sesli odadan güvenilir yönlendirme
-- Sohbet: ikinci mesaj kilidi (`sending` + poll pause) kaldırıldı; 10 sn gönderim limiti
-- YouTube: `/api/chat/youtube-search` önce, boş sonuçta yedek uç
+- Canlı yayınlar, sohbet mesajları, takip listesi, profil ızgarası: lazy pagination
+- `CachedCoverImage` — kalan `Image.network` kullanımları kaldırıldı
+- Sohbet: eski mesajlar yukarı kaydırınca yüklenir; cam üst bar (`ProGlassTopBar`)
+- `LazyPaginatedListView` — genel amaçlı sayfalı liste bileşeni
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
