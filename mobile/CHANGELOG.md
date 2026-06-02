@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.108+110 (2026-06-02)
+
+### Ana sayfa — canlifal.com düzeni (native)
+
+- Keşfet sekmesi: dikey akış — Hikâyeler, Canlı Yayınlar, Sesli Odalar, Trend Videolar, Fan Club, Fal & Tarot, Popüler Falcılar, Keşfet grid, Gold Üyelikler
+- REST API (`/api/trend-videos`, canlı, sohbet odaları, falcılar, üyelik paketleri) — WebView yok
+- 2026 cam/glow tasarım, 24px kartlar
+
 ## 1.0.107+109 (2026-06-02)
 
 ### Keşfet ve sesli oda — premium görsel (yapı aynı)

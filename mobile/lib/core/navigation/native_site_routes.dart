@@ -19,7 +19,11 @@ void openNativeSitePath(BuildContext context, String path) {
     return;
   }
   if (p == '/populer-falcilar' || p.contains('falci')) {
-    context.go('/home');
+    context.go('/feed');
+    return;
+  }
+  if (p == '/fan-club' || p.contains('fan-club')) {
+    context.push('/content-hub');
     return;
   }
   if (p.startsWith('/blog') || p.startsWith('/ruya')) {

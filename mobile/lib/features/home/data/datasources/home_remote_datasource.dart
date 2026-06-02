@@ -6,6 +6,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
+import '../../domain/entities/home_trend_video_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 
 class HomeRemoteDataSource {
@@ -70,6 +71,25 @@ class HomeRemoteDataSource {
     } catch (_) {
       return const [];
     }
+  }
+
+  Future<List<HomeTrendVideoEntity>> fetchTrendVideos() async {
+    for (final path in [ApiEndpoints.trendVideos]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final items = _itemsFromBody(
+          res.data,
+          keys: const ['videos', 'items', 'posts', 'data', 'results'],
+        );
+        if (items.isNotEmpty) {
+          return items
+              .map(_mapTrendVideo)
+              .where((v) => v.id.isNotEmpty)
+              .toList();
+        }
+      } catch (_) {}
+    }
+    return const [];
   }
 
   Future<int?> fetchUnreadNotifications() async {
@@ -170,6 +190,29 @@ class HomeRemoteDataSource {
       icon: _str(m, ['icon', 'emoji']),
       route: _str(m, ['route', 'path', 'deepLink']),
       accentColorArgb: _parseColorInt(m['accentColor'] ?? m['color']),
+    );
+  }
+
+  HomeTrendVideoEntity _mapTrendVideo(dynamic raw) {
+    final m = asJsonMap(raw);
+    final badges = ['POPÜLER', 'EZEL', 'YENİ', 'TREND'];
+    final idx = m.hashCode.abs() % badges.length;
+    return HomeTrendVideoEntity(
+      id: _str(m, ['id', '_id']) ?? '',
+      title: _str(m, ['title', 'name', 'content']) ?? 'Video',
+      channelName: _str(m, ['channelName', 'author', 'username']) ??
+          _str(asJsonMap(m['channel'] ?? m['celebrity']), ['name', 'displayName']) ??
+          'Canlifal',
+      thumbnailUrl: _str(m, [
+        'thumbnailUrl',
+        'thumbnail',
+        'imageUrl',
+        'coverUrl',
+        'image',
+      ]),
+      duration: _str(m, ['duration', 'length']) ?? '0:30',
+      badge: _str(m, ['badge', 'tag', 'label']) ?? badges[idx],
+      viewCount: asInt(pick(m, ['viewCount', 'views', 'viewers'])),
     );
   }
 

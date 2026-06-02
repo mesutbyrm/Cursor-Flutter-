@@ -6,8 +6,8 @@ abstract final class HomePalette {
   static const lightBackground = Color(0xFFFFFFFF);
   static const lightSurface = Color(0xFFF8F8FC);
 
-  static const primary = Color(0xFF7B4DFF);
-  static const secondary = Color(0xFFB388FF);
+  static const primary = Color(0xFF7B2FF7);
+  static const secondary = Color(0xFFB84DFF);
   static const accentGold = Color(0xFFFFD700);
 
   static const radiusCard = 24.0;

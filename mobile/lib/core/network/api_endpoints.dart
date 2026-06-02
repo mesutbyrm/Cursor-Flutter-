@@ -58,6 +58,9 @@ abstract final class ApiEndpoints {
   /// Günlük ödüller.
   static const homeDailyRewards = '/api/daily-rewards';
 
+  /// Ana sayfa trend videolar (canlifal.com).
+  static const trendVideos = '/api/trend-videos';
+
   /// Geriye dönük (self-hosted seed).
   static const socialAnnouncements = '/api/social/announcements';
   static const socialFortuneTellers = '/api/social/fortune-tellers';

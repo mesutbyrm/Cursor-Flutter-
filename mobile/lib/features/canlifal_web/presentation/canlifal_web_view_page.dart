@@ -23,7 +23,7 @@ class CanlifalWebViewPage extends StatelessWidget {
       if (context.canPop()) {
         context.pop();
       } else {
-        context.go('/home');
+        context.go('/feed');
       }
     });
 

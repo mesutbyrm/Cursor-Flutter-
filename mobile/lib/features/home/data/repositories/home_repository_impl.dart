@@ -5,6 +5,7 @@ import '../../../live/domain/repositories/live_repository.dart';
 import '../../../social/domain/repositories/social_repository.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
+import '../../domain/entities/home_trend_video_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 import '../../domain/repositories/home_repository.dart';
 import '../datasources/home_remote_datasource.dart';
@@ -50,4 +51,8 @@ class HomeRepositoryImpl implements HomeRepository {
   @override
   Future<List<DailyRewardEntity>> fetchDailyRewards() =>
       _remote.fetchDailyRewards();
+
+  @override
+  Future<List<HomeTrendVideoEntity>> fetchTrendVideos() =>
+      _remote.fetchTrendVideos();
 }
