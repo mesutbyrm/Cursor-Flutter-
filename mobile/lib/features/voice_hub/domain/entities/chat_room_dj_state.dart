@@ -9,6 +9,7 @@ class ChatRoomDjState {
     this.canPlayMusic = false,
     this.isOwner = false,
     this.musicUrl,
+    this.backgroundImage,
     this.playing = false,
     this.musicQueue = const [],
     this.musicRequestCost = 10,
@@ -44,6 +45,8 @@ class ChatRoomDjState {
       canPlayMusic: canPlay,
       isOwner: json['isOwner'] == true,
       musicUrl: json['musicUrl']?.toString() ?? json['url']?.toString(),
+      backgroundImage: json['backgroundImage']?.toString() ??
+          json['backgroundUrl']?.toString(),
       playing: json['playing'] == true || json['isPlaying'] == true,
       musicQueue: queue,
       musicRequestCost: json['musicRequestCost'] as int? ?? 10,
@@ -57,6 +60,7 @@ class ChatRoomDjState {
   final bool canPlayMusic;
   final bool isOwner;
   final String? musicUrl;
+  final String? backgroundImage;
   final bool playing;
   final List<MusicQueueItem> musicQueue;
   final int musicRequestCost;

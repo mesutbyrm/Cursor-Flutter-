@@ -31,7 +31,7 @@ class VoiceRoomGiftRealtimeService {
         if (_seen.add(e.id) && !_local.isClosed) _local.add(e);
       },
     );
-    _poll = Timer.periodic(const Duration(seconds: 2), (_) => _pollOnce());
+    _poll = Timer.periodic(const Duration(seconds: 6), (_) => _pollOnce());
     _pollOnce();
   }
 

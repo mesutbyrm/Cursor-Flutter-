@@ -28,6 +28,8 @@ import {
   listMusicQueue,
   requestMusicQueue,
   searchYoutube,
+  resolveYoutubeStreamUrl,
+  advanceMusicQueue,
   addRoomDj,
   removeRoomDj,
   MUSIC_REQUEST_JETON,
@@ -95,6 +97,15 @@ chatRoomsRouter.get("/youtube-search", optionalAuth, async (req, res) => {
   return res.status(200).json({ items });
 });
 
+chatRoomsRouter.get("/youtube-stream", optionalAuth, async (req, res) => {
+  const url = String(req.query.url ?? req.query.videoId ?? "");
+  const streamUrl = await resolveYoutubeStreamUrl(url);
+  if (!streamUrl) {
+    return fail(res, 404, "NOT_FOUND", "Ses akışı bulunamadı");
+  }
+  return res.status(200).json({ streamUrl, url: streamUrl });
+});
+
 chatRoomsRouter.get("/rooms/:roomId/music-queue", optionalAuth, async (req, res) => {
   const roomId = req.params.roomId;
   if (!getChatRoom(roomId)) {
@@ -146,8 +157,24 @@ chatRoomsRouter.post("/rooms/:roomId/song-request", requireAuth, async (req, res
     newBalance: result.newBalance,
     coinBalance: result.newBalance,
     cost: MUSIC_REQUEST_JETON,
+    musicUrl: result.musicUrl,
+    playing: result.playing,
   });
 });
+
+chatRoomsRouter.post(
+  "/rooms/:roomId/music-queue/advance",
+  requireAuth,
+  async (req, res) => {
+    const roomId = req.params.roomId;
+    if (!getChatRoom(roomId)) {
+      return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+    }
+    await advanceMusicQueue(roomId);
+    const user = await loadUser(req.userId);
+    return res.status(200).json(getDjState(roomId, user));
+  },
+);
 
 chatRoomsRouter.get("/rooms/:roomId/song-request", optionalAuth, async (req, res) => {
   const roomId = req.params.roomId;
@@ -200,6 +227,8 @@ chatRoomsRouter.post("/rooms/:roomId/music-queue", requireAuth, async (req, res)
     newBalance: result.newBalance,
     coinBalance: result.newBalance,
     cost: MUSIC_REQUEST_JETON,
+    musicUrl: result.musicUrl,
+    playing: result.playing,
   });
 });
 
@@ -291,7 +320,7 @@ chatRoomsRouter.post("/rooms/:roomId/dj", requireAuth, async (req, res) => {
   const musicUrl =
     typeof req.body?.musicUrl === "string" ? req.body.musicUrl : null;
   const playing = req.body?.playing === true;
-  const state = setDjMusic(roomId, user, musicUrl, playing);
+  const state = await setDjMusic(roomId, user, musicUrl, playing);
   if (!state) return fail(res, 403, "FORBIDDEN", "Müzik yetkisi yok");
   return res.status(200).json({
     ...getDjState(roomId, user),
