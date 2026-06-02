@@ -2,21 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.108+110` |
-| Tarih (UTC) | 2026-06-02 19:32 |
-| Commit | [`3aa5e980cfa5f70fa5fe0e0c13491e42ef8b3f08`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3aa5e980cfa5f70fa5fe0e0c13491e42ef8b3f08) |
-| İş akışı | [Run 26842005226](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26842005226) |
+| Sürüm | `1.0.109+111` |
+| Tarih (UTC) | 2026-06-02 20:48 |
+| Commit | [`e58598053a6307d670a8b51e8b8bf5f4d3d38d17`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/e58598053a6307d670a8b51e8b8bf5f4d3d38d17) |
+| İş akışı | [Run 26845810850](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26845810850) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.108+110 (2026-06-02)
+## 1.0.109+111 (2026-06-02)
 
-### Ana sayfa — canlifal.com düzeni (native)
+### Sesli sohbet odası (canlifal.com UI)
 
-- Keşfet sekmesi: dikey akış — Hikâyeler, Canlı Yayınlar, Sesli Odalar, Trend Videolar, Fan Club, Fal & Tarot, Popüler Falcılar, Keşfet grid, Gold Üyelikler
-- REST API (`/api/trend-videos`, canlı, sohbet odaları, falcılar, üyelik paketleri) — WebView yok
-- 2026 cam/glow tasarım, 24px kartlar
+- 2×5 mikrofon ızgarası, kalıcı duyuru kutusu, sağ yüzen ‹ araçlar + ♫ müzik
+- YouTube şarkı arama/istek (jeton), DJ API düzeltmeleri
+- Sohbet: ardışık mesaj bekleme kaldırıldı
+- Moderatör: yasaklı kelime listesi API
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
