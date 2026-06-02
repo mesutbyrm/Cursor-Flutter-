@@ -1,12 +1,15 @@
+import 'dart:ui';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/ui/premium_2026/liquid_glass.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
 import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/performance/list_perf.dart';
 import '../../../../../core/providers/auth_selectors.dart';
@@ -155,12 +158,14 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(height: widget.topPadding),
-        _DiscoverHeader(
-          userName: name,
-          avatarUrl: avatar,
-          coins: coinBalance ?? 0,
-          onNotifications: () => context.push('/notifications'),
-          onCoins: () => openJetonStore(context, ref: ref),
+        RepaintBoundary(
+          child: _DiscoverHeader(
+            userName: name,
+            avatarUrl: avatar,
+            coins: coinBalance ?? 0,
+            onNotifications: () => context.push('/notifications'),
+            onCoins: () => openJetonStore(context, ref: ref),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -173,43 +178,47 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
           ),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 40,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _tabs.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (context, i) {
-              final t = _tabs[i];
-              final active = _tab == t.id;
-              return _TabChip(
-                tab: t,
-                active: active,
-                onTap: () {
-                  if (t.id == 'vip') {
-                    context.push('/vip-gold');
-                    return;
-                  }
-                  if (t.id == 'pk' && widget.rooms.isNotEmpty) {
-                    final r = widget.rooms.first;
-                    context.push('/voice-room/${r.apiRoomKey}/pk', extra: r);
-                    return;
-                  }
-                  setState(() {
-                    _tab = t.id;
-                    _resetVisibleRooms();
-                  });
-                },
-              );
-            },
+        RepaintBoundary(
+          child: SizedBox(
+            height: 40,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _tabs.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, i) {
+                final t = _tabs[i];
+                final active = _tab == t.id;
+                return _TabChip(
+                  tab: t,
+                  active: active,
+                  onTap: () {
+                    if (t.id == 'vip') {
+                      context.push('/vip-gold');
+                      return;
+                    }
+                    if (t.id == 'pk' && widget.rooms.isNotEmpty) {
+                      final r = widget.rooms.first;
+                      context.push('/voice-room/${r.apiRoomKey}/pk', extra: r);
+                      return;
+                    }
+                    setState(() {
+                      _tab = t.id;
+                      _resetVisibleRooms();
+                    });
+                  },
+                );
+              },
+            ),
           ),
         ),
         const SizedBox(height: 14),
-        _LiveStoriesRow(
-          live: live,
-          onOpenRoom: () => showOpenVoiceChatRoomFlow(context, ref),
-          onStreamTap: (s) => openLiveFromDiscover(context, ref, s),
+        RepaintBoundary(
+          child: _LiveStoriesRow(
+            live: live,
+            onOpenRoom: () => showOpenVoiceChatRoomFlow(context, ref),
+            onStreamTap: (s) => openLiveFromDiscover(context, ref, s),
+          ),
         ),
         Expanded(
           child: ListView.builder(
@@ -473,9 +482,21 @@ class _DiscoverHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 12, 0),
-      child: Row(
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: DiscoverPremiumVisual.glassBlur,
+          sigmaY: DiscoverPremiumVisual.glassBlur,
+        ),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 8, 12, 10),
+          decoration: BoxDecoration(
+            color: DiscoverPremiumVisual.glassFill,
+            border: Border(
+              bottom: BorderSide(color: DiscoverPremiumVisual.glassBorder),
+            ),
+          ),
+          child: Row(
         children: [
           Stack(
             clipBehavior: Clip.none,
@@ -568,6 +589,8 @@ class _DiscoverHeader extends StatelessWidget {
             icon: const Icon(Icons.notifications_none_rounded),
           ),
         ],
+          ),
+        ),
       ),
     );
   }
@@ -581,22 +604,19 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
+    return LiquidGlass(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      borderRadius: BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+      blur: DiscoverPremiumVisual.glassBlur,
       child: Row(
         children: [
-          Icon(Icons.search_rounded, color: Colors.white.withValues(alpha: 0.5)),
+          Icon(Icons.search_rounded, color: Colors.white.withValues(alpha: 0.65)),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
               controller: controller,
               onChanged: onChanged,
-              style: const TextStyle(fontSize: 14),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               decoration: InputDecoration(
                 hintText: 'Oda, kullanıcı veya kategori ara…',
                 hintStyle: TextStyle(
@@ -632,14 +652,15 @@ class _TabChip extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            gradient: active ? VoiceRoomTokens.fabGradient : null,
-            color: active ? null : Colors.white.withValues(alpha: 0.06),
+            gradient: active ? DiscoverPremiumVisual.brandGradient : null,
+            color: active ? null : DiscoverPremiumVisual.glassFill,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: active
-                  ? Colors.transparent
-                  : Colors.white.withValues(alpha: 0.12),
+                  ? DiscoverPremiumVisual.secondary.withValues(alpha: 0.35)
+                  : DiscoverPremiumVisual.glassBorder,
             ),
+            boxShadow: active ? DiscoverPremiumVisual.cardGlow(pressed: true) : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -708,8 +729,8 @@ class _StoryOpenRoom extends StatelessWidget {
             height: 64,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: VoiceRoomTokens.fabGradient,
-              boxShadow: VoiceRoomTokens.neonGlow(VoiceRoomTokens.neonPurple),
+              gradient: DiscoverPremiumVisual.brandGradient,
+              boxShadow: DiscoverPremiumVisual.cardGlow(),
             ),
             child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
           ),
@@ -802,11 +823,14 @@ class _NightBanner extends StatelessWidget {
     return Container(
       height: 140,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
         gradient: const LinearGradient(
-          colors: [Color(0xFF5B2D9E), Color(0xFF1A0B3D)],
+          colors: [
+            DiscoverPremiumVisual.primary,
+            DiscoverPremiumVisual.backgroundMid,
+          ],
         ),
-        boxShadow: VoiceRoomTokens.neonGlow(VoiceRoomTokens.neonPurple, blur: 18),
+        boxShadow: DiscoverPremiumVisual.cardGlow(),
       ),
       child: Stack(
         children: [
@@ -883,7 +907,7 @@ class _SectionTitle extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 12,
-              color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.95),
+              color: DiscoverPremiumVisual.secondary.withValues(alpha: 0.95),
             ),
           ),
       ],
@@ -925,14 +949,18 @@ class _PopularRoomCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius:
+              BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              color: Colors.white.withValues(alpha: 0.06),
+              borderRadius:
+                  BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+              color: DiscoverPremiumVisual.glassFill,
+              boxShadow: DiscoverPremiumVisual.cardGlow(),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius:
+                  BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -1047,9 +1075,19 @@ class _LiveStreamCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+          borderRadius:
+              BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius:
+                  BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+              boxShadow: DiscoverPremiumVisual.cardGlow(
+                color: AppThemeColors.liveRed,
+              ),
+            ),
+            child: ClipRRect(
+            borderRadius:
+                BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -1135,6 +1173,7 @@ class _LiveStreamCard extends StatelessWidget {
               ],
             ),
           ),
+          ),
         ),
       ),
     );
@@ -1158,13 +1197,14 @@ class _CategoryIconTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            color: DiscoverPremiumVisual.glassFill,
+            borderRadius: BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+            border: Border.all(color: DiscoverPremiumVisual.glassBorder),
+            boxShadow: DiscoverPremiumVisual.cardGlow(color: cat.color),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1210,10 +1250,13 @@ class _VipRoomCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius:
+              BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius:
+                  BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+              boxShadow: DiscoverPremiumVisual.cardGlow(color: VipGoldTokens.goldMid),
               gradient: LinearGradient(
                 colors: [
                   VipGoldTokens.goldDeep.withValues(alpha: 0.5),
@@ -1302,10 +1345,16 @@ class _CompactRoomRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
         child: Container(
           padding: const EdgeInsets.all(12),
-          decoration: VoiceRoomTokens.glassCard(radius: 14),
+          decoration: BoxDecoration(
+            color: DiscoverPremiumVisual.glassFill,
+            borderRadius:
+                BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+            border: Border.all(color: DiscoverPremiumVisual.glassBorder),
+            boxShadow: DiscoverPremiumVisual.cardGlow(),
+          ),
           child: Row(
             children: [
               Text(room.icon ?? '🎤', style: const TextStyle(fontSize: 28)),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/env.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/ui/premium_2026/premium_immersive_background.dart';
+import '../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/domain/entities/voice_room_sort.dart';
@@ -64,8 +65,8 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
 
         return PremiumImmersiveBackground(
           child: RefreshIndicator(
-            color: VoiceRoomTokens.neonPink,
-            backgroundColor: VoiceRoomTokens.bgCosmic,
+            color: DiscoverPremiumVisual.accent,
+            backgroundColor: DiscoverPremiumVisual.backgroundMid,
             onRefresh: () async {
               ref.invalidate(voiceRoomsProvider);
               ref.invalidate(liveStreamsProvider);
