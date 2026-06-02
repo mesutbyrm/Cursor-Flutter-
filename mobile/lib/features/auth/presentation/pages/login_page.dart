@@ -34,7 +34,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   void _continueAsGuest() {
     ref.read(guestModeProvider.notifier).state = true;
-    context.go('/home');
+    context.go('/feed');
   }
 
   @override

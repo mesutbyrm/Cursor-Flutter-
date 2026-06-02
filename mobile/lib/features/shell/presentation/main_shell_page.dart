@@ -75,6 +75,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
         bottomNavigationBar: DiscoverBottomBar(
           currentIndex: widget.navigationShell.currentIndex,
           onTap: _goBranch,
+          onFabTap: () => openLiveFromFab(context),
         ),
       ),
     );

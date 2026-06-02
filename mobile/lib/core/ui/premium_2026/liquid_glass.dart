@@ -15,7 +15,7 @@ class LiquidGlass extends StatelessWidget {
     this.padding = const EdgeInsets.all(16),
     this.margin,
     this.borderRadius,
-    this.blur = 22,
+    this.blur = 24,
     this.elevated = false,
     this.onTap,
     this.gradientBorder,
@@ -44,7 +44,7 @@ class LiquidGlass extends StatelessWidget {
           colors: [
             t.glassBorder,
             t.glassBorder.withValues(alpha: 0.15),
-            AppThemeColors.accentPurple.withValues(alpha: 0.35),
+            const Color(0xFFB84DFF).withValues(alpha: 0.4),
           ],
         );
 

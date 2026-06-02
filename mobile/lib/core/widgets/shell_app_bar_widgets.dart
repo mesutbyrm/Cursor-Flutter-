@@ -17,7 +17,7 @@ class ShellFeedLeading extends StatelessWidget {
       padding: const EdgeInsets.only(left: 4),
       child: IconButton(
         tooltip: 'Ana akış',
-        onPressed: () => context.go('/home'),
+        onPressed: () => context.go('/feed'),
         icon: const Icon(Icons.home_rounded),
       ),
     );
