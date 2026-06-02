@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/ui/premium_2026/premium_motion.dart';
+import 'discover_premium_visual.dart';
 import '../../../domain/discover_category.dart';
 
 /// Yatay neon kategori kartları (8 kategori).
@@ -88,7 +89,8 @@ class _CategoryPillState extends State<_CategoryPill> {
           duration: PremiumMotion.medium,
           width: 118,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius:
+                BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -97,15 +99,10 @@ class _CategoryPillState extends State<_CategoryPill> {
             border: widget.selected
                 ? Border.all(color: Colors.white, width: 2)
                 : Border.all(color: Colors.white.withValues(alpha: 0.12)),
-            boxShadow: [
-              BoxShadow(
-                color: widget.def.gradient.first.withValues(
-                  alpha: widget.selected ? 0.55 : 0.32,
-                ),
-                blurRadius: widget.selected ? 18 : 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
+            boxShadow: DiscoverPremiumVisual.cardGlow(
+              color: widget.def.gradient.first,
+              pressed: widget.selected,
+            ),
           ),
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           child: Column(

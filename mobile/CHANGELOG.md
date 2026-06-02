@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.107+109 (2026-06-02)
+
+### Keşfet ve sesli oda — premium görsel (yapı aynı)
+
+- Ana sekme yeniden **Keşfet (`/feed`)** — DiscoverPremiumFeed; bölüm sırası korunur
+- Mor/pembe palet (#7B2FF7, #B84DFF, #FF4FD8), 24px cam kartlar, LiquidGlass
+- VoiceDiscoverHub2026 aynı görsel dil; WebView kaldırıldı, native yönlendirme
+
 ## 1.0.101+103 (2026-05-31)
 
 ### Tema sistemi (production)

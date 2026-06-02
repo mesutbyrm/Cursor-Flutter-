@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_spacing.dart';
+import '../discover_premium_2026/discover_premium_visual.dart';
 import '../../../../../core/ui/premium/live_badge.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
@@ -250,20 +251,17 @@ class _LiveCardShell extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          borderRadius:
+              BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-              boxShadow: [
-                BoxShadow(
-                  color: AppThemeColors.accentPink.withValues(alpha: 0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+              borderRadius:
+              BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+              boxShadow: DiscoverPremiumVisual.cardGlow(),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+              borderRadius:
+              BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
               child: Stack(
                 fit: StackFit.expand,
                 children: [

@@ -9,12 +9,7 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
-import '../../features/content_hub/presentation/pages/content_hub_page.dart';
-import '../../features/favorites/presentation/pages/favorites_page.dart';
-import '../../features/fortune/presentation/pages/fortune_detail_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
-import '../../features/home/presentation/pages/home_page.dart';
-import '../../features/search/presentation/pages/global_search_page.dart';
 import '../../features/fortune/domain/entities/fortune_type_entity.dart';
 import '../../features/fortune/presentation/data/fortune_catalog.dart';
 import '../../features/fortune/presentation/pages/daily_fortune_open_page.dart';
@@ -94,7 +89,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       if (loc == '/splash') {
         if (auth.isLoading) return null;
-        return auth.valueOrNull != null ? '/home' : '/login';
+        return auth.valueOrNull != null ? '/feed' : '/login';
       }
 
       final authed = auth.valueOrNull != null;
@@ -107,8 +102,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (!authed && !guest && !publicAuthPages && !canlifalWeb) {
         return '/login';
       }
-      if (authed && publicAuthPages) return '/home';
-      if (loc == '/feed') return '/home';
+      if (authed && publicAuthPages) return '/feed';
       return null;
     },
     routes: [
@@ -148,16 +142,27 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/home',
-                builder: (context, state) => const HomePage(),
+                path: '/feed',
+                builder: (context, state) => const FeedPage(),
               ),
             ],
           ),
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/discover',
-                builder: (context, state) => const FeedPage(),
+                path: '/social',
+                builder: (context, state) => const SocialPage(),
+                routes: [
+                  GoRoute(
+                    path: 'create',
+                    pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+                      key: state.pageKey,
+                      child: SocialCreatePostPage(
+                        initialCaption: state.extra as String?,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -172,8 +177,64 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/messages',
-                builder: (context, state) => const ConversationsPage(),
+                path: '/fortune',
+                builder: (context, state) => const FortuneTarotHubPage(),
+                routes: [
+                  GoRoute(
+                    path: 'types',
+                    pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+                      key: state.pageKey,
+                      child: const FortuneTypesAllPage(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: ':slug',
+                    pageBuilder: (context, state) {
+                      final slug = state.pathParameters['slug']!;
+                      final type = FortuneCatalog.bySlug(slug);
+                      final child = type == null
+                          ? const FortuneTarotHubPage()
+                          : type.isDaily
+                              ? DailyFortuneOpenPage(type: type)
+                              : FortuneTypeIntroPage(type: type);
+                      return AppPageTransitions.fadeSlide(
+                        key: state.pageKey,
+                        child: child,
+                      );
+                    },
+                    routes: [
+                      GoRoute(
+                        path: 'session',
+                        pageBuilder: (context, state) {
+                          final slug = state.pathParameters['slug']!;
+                          final type = FortuneCatalog.bySlug(slug);
+                          final child = type == null
+                              ? const FortuneTarotHubPage()
+                              : FortuneSessionPage(type: type);
+                          return AppPageTransitions.fadeSlide(
+                            key: state.pageKey,
+                            child: child,
+                          );
+                        },
+                      ),
+                      GoRoute(
+                        path: 'result',
+                        pageBuilder: (context, state) {
+                          final result = state.extra as FortuneReadingResult?;
+                          final child = result == null
+                              ? const FortuneTarotHubPage()
+                              : result.type.isDaily
+                                  ? DailyFortuneResultPage(result: result)
+                                  : FortuneResultPage(result: result);
+                          return AppPageTransitions.fadeSlide(
+                            key: state.pageKey,
+                            child: child,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
@@ -182,81 +243,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/profile',
                 builder: (context, state) => const ProfilePage(),
-              ),
-            ],
-          ),
-        ],
-      ),
-      GoRoute(
-        path: '/social',
-        builder: (context, state) => const SocialPage(),
-        routes: [
-          GoRoute(
-            path: 'create',
-            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-              key: state.pageKey,
-              child: SocialCreatePostPage(
-                initialCaption: state.extra as String?,
-              ),
-            ),
-          ),
-        ],
-      ),
-      GoRoute(
-        path: '/fortune',
-        builder: (context, state) => const FortuneTarotHubPage(),
-        routes: [
-          GoRoute(
-            path: 'types',
-            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-              key: state.pageKey,
-              child: const FortuneTypesAllPage(),
-            ),
-          ),
-          GoRoute(
-            path: ':slug',
-            pageBuilder: (context, state) {
-              final slug = state.pathParameters['slug']!;
-              final type = FortuneCatalog.bySlug(slug);
-              final child = type == null
-                  ? const FortuneTarotHubPage()
-                  : type.isDaily
-                      ? DailyFortuneOpenPage(type: type)
-                      : FortuneTypeIntroPage(type: type);
-              return AppPageTransitions.fadeSlide(
-                key: state.pageKey,
-                child: child,
-              );
-            },
-            routes: [
-              GoRoute(
-                path: 'session',
-                pageBuilder: (context, state) {
-                  final slug = state.pathParameters['slug']!;
-                  final type = FortuneCatalog.bySlug(slug);
-                  final child = type == null
-                      ? const FortuneTarotHubPage()
-                      : FortuneSessionPage(type: type);
-                  return AppPageTransitions.fadeSlide(
-                    key: state.pageKey,
-                    child: child,
-                  );
-                },
-              ),
-              GoRoute(
-                path: 'result',
-                pageBuilder: (context, state) {
-                  final result = state.extra as FortuneReadingResult?;
-                  final child = result == null
-                      ? const FortuneTarotHubPage()
-                      : result.type.isDaily
-                          ? DailyFortuneResultPage(result: result)
-                          : FortuneResultPage(result: result);
-                  return AppPageTransitions.fadeSlide(
-                    key: state.pageKey,
-                    child: child,
-                  );
-                },
               ),
             ],
           ),
@@ -305,40 +291,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsPage(),
-      ),
-      GoRoute(
-        path: '/search',
-        pageBuilder: (context, state) {
-          final q = state.uri.queryParameters['q'];
-          return AppPageTransitions.fadeSlide(
-            key: state.pageKey,
-            child: GlobalSearchPage(initialQuery: q),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/favorites',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const FavoritesPage(),
-        ),
-      ),
-      GoRoute(
-        path: '/content-hub',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const ContentHubPage(),
-        ),
-      ),
-      GoRoute(
-        path: '/fortune/history/:id',
-        pageBuilder: (context, state) {
-          final id = state.pathParameters['id'] ?? '';
-          return AppPageTransitions.fadeSlide(
-            key: state.pageKey,
-            child: FortuneDetailPage(fortuneId: id),
-          );
-        },
       ),
       GoRoute(
         path: '/jeton-store',
