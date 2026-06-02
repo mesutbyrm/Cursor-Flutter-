@@ -177,7 +177,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       _warmBackgrounds();
     });
     _poll = Timer.periodic(const Duration(seconds: 2), (_) {
-      if (!state.sending && !_pollPaused) refresh();
+      if (!_pollPaused) refresh();
     });
     return VoiceRoomLiveState(
       backgroundUrl: room.backgroundImageUrl?.trim().isNotEmpty == true
@@ -380,7 +380,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       messages: optimistic != null
           ? [...state.messages, optimistic]
           : state.messages,
-      sending: true,
       clearError: true,
     );
 
@@ -626,6 +625,43 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
             targetUserId: targetUserId,
           );
       await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<List<String>> fetchBannedWords() async {
+    try {
+      return await ref.read(chatRoomRemoteProvider).fetchBannedWords(
+            _roomKey,
+            alternateKey: _altRoomKey,
+          );
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<String?> addBannedWord(String word) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).addBannedWord(
+            roomKey: _roomKey,
+            alternateKey: _altRoomKey,
+            word: word,
+          );
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> removeBannedWord(String word) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).removeBannedWord(
+            roomKey: _roomKey,
+            alternateKey: _altRoomKey,
+            word: word,
+          );
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

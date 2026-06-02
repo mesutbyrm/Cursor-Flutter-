@@ -192,7 +192,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
                 controller: _queryCtrl,
                 style: TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  hintText: 'Şarkı veya sanatçı ara...',
+                  hintText: 'Müzik veya sanatçı adı yazın...',
                   hintStyle: TextStyle(color: context.colors.onSurfaceMuted.withValues(alpha: 0.8)),
                   prefixIcon: Icon(Icons.search_rounded, color: AppThemeColors.accentPink),
                   filled: true,

@@ -88,6 +88,7 @@ const messages = new Map<string, ChatRoomMessageRow[]>();
 const presence = new Map<string, Map<string, ChatPresenceRow>>();
 const speakRequests = new Map<string, Set<string>>();
 const roomBans = new Map<string, Set<string>>();
+const roomBannedWords = new Map<string, Set<string>>();
 const djByRoom = new Map<
   string,
   { activeDjId: string | null; musicUrl: string | null; playing: boolean }
@@ -445,6 +446,48 @@ export async function createVoiceChatRoom(
   return { ok: true as const, room: row, newBalance: dbUser.coins - cost };
 }
 
+function bannedWordsForRoom(roomId: string) {
+  const id = resolveRoomId(roomId);
+  let set = roomBannedWords.get(id);
+  if (!set) {
+    set = new Set();
+    roomBannedWords.set(id, set);
+  }
+  return set;
+}
+
+export function listRoomBannedWords(roomId: string): string[] {
+  return [...bannedWordsForRoom(roomId)].sort();
+}
+
+export function addRoomBannedWord(roomId: string, actor: User, word: string) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  const priv = roomPrivileges(actor, room);
+  if (!priv.canModerate) return { ok: false as const, error: "Yetki yok" };
+  const w = word.trim().toLowerCase();
+  if (w.length < 2) return { ok: false as const, error: "Kelime çok kısa" };
+  bannedWordsForRoom(roomId).add(w);
+  return { ok: true as const, words: listRoomBannedWords(roomId) };
+}
+
+export function removeRoomBannedWord(roomId: string, actor: User, word: string) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  const priv = roomPrivileges(actor, room);
+  if (!priv.canModerate) return { ok: false as const, error: "Yetki yok" };
+  bannedWordsForRoom(roomId).delete(word.trim().toLowerCase());
+  return { ok: true as const, words: listRoomBannedWords(roomId) };
+}
+
+function containsBannedWord(roomId: string, text: string) {
+  const lower = text.toLowerCase();
+  for (const w of bannedWordsForRoom(roomId)) {
+    if (w.length >= 2 && lower.includes(w)) return true;
+  }
+  return false;
+}
+
 export async function addTextMessage(roomId: string, user: User, content: string) {
   const trimmed = content.trim();
   if (!trimmed) return null;
@@ -454,6 +497,9 @@ export async function addTextMessage(roomId: string, user: User, content: string
   const priv = roomPrivileges(user, room);
   const commandRow = tryHandleRoomCommand(room, user, roomId, trimmed);
   if (commandRow) return commandRow;
+  if (!priv.canModerate && containsBannedWord(roomId, trimmed)) {
+    return null;
+  }
   const row = pushMessage(roomId, {
     id: randomUUID(),
     content: trimmed,

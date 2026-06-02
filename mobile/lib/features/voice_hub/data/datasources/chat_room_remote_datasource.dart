@@ -464,14 +464,18 @@ class ChatRoomRemoteDataSource {
     required String targetUserId,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final res = await _dio.safePost<dynamic>(
-        djPath(key),
-        data: jsonEncode({
-          'userId': targetUserId,
-          'action': 'add',
-        }),
-        options: Options(contentType: 'application/json'),
-      );
+      Response<dynamic> res;
+      try {
+        res = await _dio.safePost<dynamic>(
+          '/api/chat/rooms/$key/dj/$targetUserId',
+        );
+      } on Object {
+        res = await _dio.safePost<dynamic>(
+          djPath(key),
+          data: jsonEncode({'userId': targetUserId, 'action': 'add'}),
+          options: Options(contentType: 'application/json'),
+        );
+      }
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['djUserIds'];
       if (raw is List) return raw.map((e) => e.toString()).toList();
@@ -485,17 +489,77 @@ class ChatRoomRemoteDataSource {
     required String targetUserId,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final res = await _dio.safePost<dynamic>(
-        djPath(key),
-        data: jsonEncode({
-          'userId': targetUserId,
-          'action': 'remove',
-        }),
-        options: Options(contentType: 'application/json'),
-      );
+      Response<dynamic> res;
+      try {
+        res = await _dio.safeDelete<dynamic>(
+          '/api/chat/rooms/$key/dj/$targetUserId',
+        );
+      } on Object {
+        res = await _dio.safePost<dynamic>(
+          djPath(key),
+          data: jsonEncode({'userId': targetUserId, 'action': 'remove'}),
+          options: Options(contentType: 'application/json'),
+        );
+      }
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['djUserIds'];
       if (raw is List) return raw.map((e) => e.toString()).toList();
+      return const [];
+    });
+  }
+
+  Future<List<String>> fetchBannedWords(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(
+        '/api/chat/rooms/$key/banned-words',
+      );
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['words'];
+      if (raw is List) {
+        return raw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+      }
+      return const [];
+    });
+  }
+
+  Future<List<String>> addBannedWord({
+    required String roomKey,
+    String? alternateKey,
+    required String word,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safePost<dynamic>(
+        '/api/chat/rooms/$key/banned-words',
+        data: jsonEncode({'word': word}),
+        options: Options(contentType: 'application/json'),
+      );
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['words'];
+      if (raw is List) {
+        return raw.map((e) => e.toString()).toList();
+      }
+      return const [];
+    });
+  }
+
+  Future<List<String>> removeBannedWord({
+    required String roomKey,
+    String? alternateKey,
+    required String word,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final encoded = Uri.encodeComponent(word);
+      final res = await _dio.safeDelete<dynamic>(
+        '/api/chat/rooms/$key/banned-words/$encoded',
+      );
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['words'];
+      if (raw is List) {
+        return raw.map((e) => e.toString()).toList();
+      }
       return const [];
     });
   }

@@ -8,7 +8,7 @@ import '../../../domain/entities/chat_room_presence.dart';
 import '../../utils/voice_room_seat_layout.dart';
 import 'voice_mic_seat.dart';
 
-/// Web referans: solda büyük Admin, sağda 2×5 (10) mikrofon koltuğu.
+/// canlifal.com: 2×5 (10) mikrofon koltuğu — 1. koltuk Admin.
 class VoiceWebOwnerStage extends StatelessWidget {
   const VoiceWebOwnerStage({
     super.key,
@@ -33,77 +33,36 @@ class VoiceWebOwnerStage extends StatelessWidget {
         final w = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width;
-        final ownerSize = (w * 0.18).clamp(68.0, 88.0);
-        final gridW = w - ownerSize - 16;
-        final gap = 4.0;
-        final cell = ((gridW - gap * 4) / 5).clamp(36.0, 52.0);
-        final rowH = cell + 18;
+        final gap = 6.0;
+        final cell = ((w - gap * 4) / 5).clamp(40.0, 56.0);
+        final rowH = cell + 20;
         final gridH = rowH * 2 + gap;
 
         final seats = VoiceRoomSeatLayout(room: room, presence: presence).build();
-        final owner = _resolveOwner(seats);
+        _ensureOwnerOnSeatOne(seats);
 
         return SizedBox(
-          height: gridH.clamp(108.0, 168.0),
+          height: gridH.clamp(112.0, 176.0),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    VoiceMicSeat(
-                      user: owner,
-                      seatIndex: 0,
-                      size: ownerSize,
-                      isHost: true,
-                      speaking: speakingUserId == owner?.id ||
-                          owner?.isSpeaking == true,
-                      onTap: owner != null ? () => onUserTap?.call(owner) : null,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      owner?.displayName ?? 'Admin',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        color: AppThemeColors.coinGold.withValues(alpha: 0.95),
-                      ),
-                    ),
-                    Text(
-                      'Oda Sahibi',
-                      style: TextStyle(
-                        fontSize: 8,
-                        color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
-                      ),
-                    ),
-                  ],
+                _seatRow(
+                  seats: seats,
+                  displayStart: 1,
+                  internalStart: 1,
+                  size: cell,
+                  gap: gap,
+                  hostSeat: 1,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _seatRow(
-                        seats: seats,
-                        displayStart: 1,
-                        internalStart: 2,
-                        size: cell,
-                        gap: gap,
-                      ),
-                      SizedBox(height: gap),
-                      _seatRow(
-                        seats: seats,
-                        displayStart: 6,
-                        internalStart: 7,
-                        size: cell,
-                        gap: gap,
-                      ),
-                    ],
-                  ),
+                SizedBox(height: gap),
+                _seatRow(
+                  seats: seats,
+                  displayStart: 6,
+                  internalStart: 6,
+                  size: cell,
+                  gap: gap,
                 ),
               ],
             ),
@@ -113,25 +72,26 @@ class VoiceWebOwnerStage extends StatelessWidget {
     );
   }
 
-  ChatRoomPresence? _resolveOwner(Map<int, ChatRoomPresence> seats) {
-    final fromSeat = seats[1];
-    if (fromSeat != null) return fromSeat;
+  void _ensureOwnerOnSeatOne(Map<int, ChatRoomPresence> seats) {
+    if (seats.containsKey(1)) return;
     final ownerId = room.ownerId;
+    ChatRoomPresence? ownerUser;
     if (ownerId != null) {
       for (final p in presence) {
-        if (p.id == ownerId) return p;
+        if (p.id == ownerId) {
+          ownerUser = p;
+          break;
+        }
       }
     }
-    if (room.ownerName != null || room.ownerAvatarUrl != null) {
-      return ChatRoomPresence(
-        id: ownerId ?? 'owner',
-        name: room.ownerName ?? 'Admin',
-        image: room.ownerAvatarUrl,
-        chatRole: 'owner',
-        seatIndex: 1,
-      );
-    }
-    return null;
+    ownerUser ??= ChatRoomPresence(
+      id: ownerId ?? 'owner',
+      name: room.ownerName ?? 'Admin',
+      image: room.ownerAvatarUrl,
+      chatRole: 'owner',
+      seatIndex: 1,
+    );
+    seats[1] = ownerUser;
   }
 
   Widget _seatRow({
@@ -140,6 +100,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
     required int internalStart,
     required double size,
     required double gap,
+    int? hostSeat,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -151,6 +112,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
           user: user,
           seatIndex: displayNum,
           size: size,
+          isHost: hostSeat != null && displayNum == hostSeat,
           speaking: speakingUserId == user?.id || user?.isSpeaking == true,
           onTap: () => onSeatTap?.call(internal, user),
         );

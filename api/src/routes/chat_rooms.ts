@@ -31,6 +31,9 @@ import {
   addRoomDj,
   removeRoomDj,
   MUSIC_REQUEST_JETON,
+  listRoomBannedWords,
+  addRoomBannedWord,
+  removeRoomBannedWord,
 } from "../lib/chatRoomStore";
 import { emitChatRoomMessage } from "../socket/giftHub";
 import { listRoomGiftEvents, sendRoomGift } from "./gifts";
@@ -332,6 +335,44 @@ chatRoomsRouter.delete(
     const result = unbanRoomUser(roomId, user, req.params.targetUserId);
     if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error);
     return ok(res, { unbanned: true });
+  },
+);
+
+chatRoomsRouter.get("/rooms/:roomId/banned-words", optionalAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  if (!getChatRoom(roomId)) return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+  return ok(res, { words: listRoomBannedWords(roomId) });
+});
+
+chatRoomsRouter.post("/rooms/:roomId/banned-words", requireAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+  const word =
+    typeof req.body?.word === "string"
+      ? req.body.word
+      : typeof req.body?.text === "string"
+        ? req.body.text
+        : "";
+  const result = addRoomBannedWord(roomId, user, word);
+  if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error);
+  return ok(res, { words: result.words });
+});
+
+chatRoomsRouter.delete(
+  "/rooms/:roomId/banned-words/:word",
+  requireAuth,
+  async (req, res) => {
+    const roomId = req.params.roomId;
+    const user = await loadUser(req.userId);
+    if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+    const result = removeRoomBannedWord(
+      roomId,
+      user,
+      decodeURIComponent(req.params.word),
+    );
+    if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error);
+    return ok(res, { words: result.words });
   },
 );
 
