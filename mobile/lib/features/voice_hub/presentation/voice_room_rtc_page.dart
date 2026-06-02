@@ -42,7 +42,8 @@ import 'widgets/premium/voice_gift_flight_overlay.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/premium_2026/voice_room_audience_strip.dart';
-import 'sheets/voice_room_tools_sheet.dart';
+import 'sheets/voice_room_commands_panel.dart';
+import 'sheets/voice_room_dj_sheet.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'widgets/premium_2026/voice_web_bottom_nav.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
@@ -750,8 +751,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 ref,
                                 room: room,
                               ),
-                              onDjTap: () => _openHubSettings(
+                              onDjTap: () => showVoiceRoomDjSheet(
                                 context,
+                                ref,
                                 room: room,
                                 live: live,
                                 perms: perms,
@@ -801,7 +803,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 right: 4,
                 top: mq.height * 0.38,
                 child: VoiceWebFloatingRail(
-                  onTools: () => showVoiceRoomToolsSheet(
+                  onTools: () => showVoiceRoomCommandsPanel(
                     context,
                     ref,
                     room: room,

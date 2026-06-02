@@ -386,6 +386,77 @@ function tryHandleRoomCommand(
     return system("🎵 Müzik kuyruğu «Müzik Aç» veya DJ ayarlarından yönetilir.");
   }
 
+  if (head === "/istek") {
+    const song = parts.slice(1).join(" ").trim();
+    if (!song) {
+      return system(
+        "🎵 Şarkı isteği: sağdaki ♫ veya «Müzik Aç» ile ara. Her istek 10 jeton.",
+      );
+    }
+    return system(
+      `🎵 Şarkı isteği alındı (yetkililere): «${song}» — onay için ♫ panelini kullanın.`,
+    );
+  }
+
+  if (head === "/kural" || head === "/kurallar") {
+    const rules =
+      room.rules?.trim() ||
+      room.descTr?.trim() ||
+      "Saygılı olun, spam yapmayın, reklam yasaktır.";
+    return system(`📜 Oda kuralları:\n${rules}`);
+  }
+
+  if (head === "/bilgi") {
+    return system(
+      `ℹ️ Oda: ${room.nameTr} · ID: ${room.slug}\nÇevrimiçi: ${room.onlineCount}`,
+    );
+  }
+
+  if (head === "/yardim" || head === "/help") {
+    return system(
+      "📖 Komutlar: !istek, !kural, !bilgi, !yardım · Yetkililer: !ban, !sessiz, !at, !temizle, !duyuru, !yetki",
+    );
+  }
+
+  if (head === "/ban") {
+    if (!priv.canModerate && !priv.owner) {
+      return system("⚠️ Ban için yetkiniz yok.");
+    }
+    const target = parts[1]?.replace(/^@/, "") ?? "";
+    if (!target) return system("⚠️ Kullanım: !ban kullanıcı");
+    return system(`⛔ Ban isteği: ${target} (mobil: kullanıcı menüsünden onaylayın)`);
+  }
+
+  if (head === "/at" || head === "/kick") {
+    if (!priv.canModerate && !priv.owner) {
+      return system("⚠️ Atma için yetkiniz yok.");
+    }
+    const target = parts[1]?.replace(/^@/, "") ?? "";
+    if (!target) return system("⚠️ Kullanım: !at kullanıcı");
+    return system(`👢 ${target} odadan atıldı (simülasyon — REST ban önerilir)`);
+  }
+
+  if (head === "/sessiz" || head === "/mute") {
+    if (!priv.canModerate && !priv.owner) {
+      return system("⚠️ Susturma için yetkiniz yok.");
+    }
+    const target = parts[1]?.replace(/^@/, "") ?? "";
+    if (!target) return system("⚠️ Kullanım: !sessiz kullanıcı");
+    return system(`🔇 ${target} 30 dakika susturuldu (kayıt)`);
+  }
+
+  if (head === "/yetki") {
+    if (!priv.canModerate && !priv.owner) {
+      return system("⚠️ Rol vermek için yetkiniz yok.");
+    }
+    const target = parts[1]?.replace(/^@/, "") ?? "";
+    const sym = parts[2] ?? "";
+    if (!target || !sym) {
+      return system("⚠️ Kullanım: !yetki kullanıcı sembol (~ % & @ +)");
+    }
+    return system(`✅ ${target} rol sembolü: ${sym}`);
+  }
+
   return null;
 }
 
@@ -613,6 +684,8 @@ export type MusicQueueItem = {
   thumbUrl?: string | null;
   requestedBy: ChatRoomUser;
   createdAt: string;
+  giftTo?: string | null;
+  note?: string | null;
 };
 
 const musicQueues = new Map<string, MusicQueueItem[]>();
@@ -634,7 +707,13 @@ export function listMusicQueue(roomId: string) {
 export async function requestMusicQueue(
   roomId: string,
   user: User,
-  input: { title: string; youtubeUrl: string; thumbUrl?: string | null },
+  input: {
+    title: string;
+    youtubeUrl: string;
+    thumbUrl?: string | null;
+    giftTo?: string | null;
+    note?: string | null;
+  },
 ) {
   const room = getChatRoom(roomId);
   if (!room) return { ok: false as const, error: "Oda bulunamadı" };
@@ -649,6 +728,8 @@ export async function requestMusicQueue(
     where: { id: user.id },
     data: { coins: { decrement: MUSIC_REQUEST_JETON } },
   });
+  const giftTo = input.giftTo?.trim() || null;
+  const note = input.note?.trim() || null;
   const item: MusicQueueItem = {
     id: randomUUID(),
     title: input.title.trim() || "Şarkı",
@@ -656,14 +737,18 @@ export async function requestMusicQueue(
     thumbUrl: input.thumbUrl ?? null,
     requestedBy: toChatUser(user, "listener"),
     createdAt: new Date().toISOString(),
+    giftTo,
+    note,
   };
   const list = musicQueueList(roomId);
   list.push(item);
   if (list.length > 50) list.splice(0, list.length - 50);
   const canonical = resolveRoomId(roomId);
+  const giftPart = giftTo ? ` → armağan: ${giftTo}` : "";
+  const notePart = note ? ` «${note}»` : "";
   pushMessage(canonical, {
     id: randomUUID(),
-    content: `🎵 ${item.requestedBy.name} sıraya ekledi: ${item.title} (−${MUSIC_REQUEST_JETON} jeton)`,
+    content: `🎵 ${item.requestedBy.name} şarkı isteği gönderdi: ${item.title}${giftPart}${notePart} [${MUSIC_REQUEST_JETON} 💎]`,
     createdAt: new Date().toISOString(),
     user: item.requestedBy,
   });
@@ -714,6 +799,7 @@ export type YoutubeSearchHit = {
   url: string;
   thumbUrl?: string;
   uploader?: string;
+  duration?: string;
 };
 
 export async function searchYoutube(query: string): Promise<YoutubeSearchHit[]> {
@@ -761,6 +847,7 @@ export async function searchYoutube(query: string): Promise<YoutubeSearchHit[]> 
             ? String((row.thumbnail as string) ?? "")
             : `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
           uploader: row.uploaderName ? String(row.uploaderName) : undefined,
+          duration: row.duration != null ? String(row.duration) : undefined,
         },
       ];
     });

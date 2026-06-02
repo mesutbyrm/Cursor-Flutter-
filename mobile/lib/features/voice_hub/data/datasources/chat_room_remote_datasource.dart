@@ -316,10 +316,21 @@ class ChatRoomRemoteDataSource {
           thumbUrl: m['thumbUrl']?.toString() ??
               m['thumbnail']?.toString(),
           uploader: m['uploader']?.toString() ?? m['channel']?.toString(),
+          duration: _formatDuration(m['duration']),
         ),
       );
     }
     return out;
+  }
+
+  String? _formatDuration(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is String && raw.contains(':')) return raw;
+    final sec = raw is num ? raw.round() : int.tryParse(raw.toString());
+    if (sec == null || sec <= 0) return null;
+    final m = sec ~/ 60;
+    final s = sec % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
   }
 
   Future<List<YoutubeSearchHit>> searchYoutube(String query) async {
@@ -394,6 +405,8 @@ class ChatRoomRemoteDataSource {
     required String youtubeUrl,
     String? thumbUrl,
     String? videoId,
+    String? giftTo,
+    String? note,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final vid = videoId?.trim().isNotEmpty == true
@@ -404,6 +417,9 @@ class ChatRoomRemoteDataSource {
         'youtubeUrl': youtubeUrl,
         if (vid != null) 'videoId': vid,
         if (thumbUrl != null) 'thumbUrl': thumbUrl,
+        if (giftTo != null && giftTo.trim().isNotEmpty)
+          'giftTo': giftTo.trim(),
+        if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
       });
       final opts = Options(contentType: 'application/json');
       Response<dynamic> res;

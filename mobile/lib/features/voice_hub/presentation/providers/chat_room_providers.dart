@@ -563,6 +563,8 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     required String youtubeUrl,
     String? thumbUrl,
     String? videoId,
+    String? giftTo,
+    String? note,
   }) async {
     try {
       final result = await ref
@@ -574,6 +576,8 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
             youtubeUrl: youtubeUrl,
             thumbUrl: thumbUrl,
             videoId: videoId,
+            giftTo: giftTo,
+            note: note,
           )
           .timeout(
             const Duration(seconds: 22),
