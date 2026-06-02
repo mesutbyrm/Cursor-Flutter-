@@ -2,24 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.105+107` |
-| Tarih (UTC) | 2026-06-02 10:08 |
-| Commit | [`5b3f69909deb308691590cafb6083914ae64a585`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/5b3f69909deb308691590cafb6083914ae64a585) |
-| İş akışı | [Run 26811849461](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26811849461) |
+| Sürüm | `1.0.108+110` |
+| Tarih (UTC) | 2026-06-02 19:32 |
+| Commit | [`3aa5e980cfa5f70fa5fe0e0c13491e42ef8b3f08`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3aa5e980cfa5f70fa5fe0e0c13491e42ef8b3f08) |
+| İş akışı | [Run 26842005226](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26842005226) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.101+103 (2026-05-31)
+## 1.0.108+110 (2026-06-02)
 
-### Tema sistemi (production)
+### Ana sayfa — canlifal.com düzeni (native)
 
-- Tek kaynak: `app_theme_colors.dart` — light/dark tüm token'lar
-- **SharedPreferences** ile kalıcı tema (Açık / Koyu / Sistem)
-- Material 3: dialog, bottom sheet, snackbar, AppBar, buton, input
-- `ThemedGlassCard` — koyu modda glassmorphism, açık modda premium gölge
-- `context.colors` extension — sabit renk yerine tema
-- Profil → Tema seçici (anında güncelleme, yeniden başlatma gerekmez)
+- Keşfet sekmesi: dikey akış — Hikâyeler, Canlı Yayınlar, Sesli Odalar, Trend Videolar, Fan Club, Fal & Tarot, Popüler Falcılar, Keşfet grid, Gold Üyelikler
+- REST API (`/api/trend-videos`, canlı, sohbet odaları, falcılar, üyelik paketleri) — WebView yok
+- 2026 cam/glow tasarım, 24px kartlar
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
