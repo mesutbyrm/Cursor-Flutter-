@@ -167,7 +167,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
       widget.onSwipeClose!();
     } else {
-      context.go('/feed');
+      context.go('/home');
     }
   }
 

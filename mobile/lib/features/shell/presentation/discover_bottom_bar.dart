@@ -9,12 +9,12 @@ class DiscoverBottomBar extends StatelessWidget {
     super.key,
     required this.currentIndex,
     required this.onTap,
-    required this.onFabTap,
+    this.onFabTap,
   });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
-  final VoidCallback onFabTap;
+  final VoidCallback? onFabTap;
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +22,7 @@ class DiscoverBottomBar extends StatelessWidget {
       currentIndex: currentIndex,
       onTap: onTap,
       onFabTap: onFabTap,
+      showCenterFab: onFabTap != null,
       fabIcon: Icons.videocam_rounded,
     );
   }

@@ -82,14 +82,14 @@ class AppThemeColors {
 
   static const AppThemeColors dark = AppThemeColors(
     brightness: Brightness.dark,
-    scaffoldBackground: Color(0xFF0B0B1E),
+    scaffoldBackground: Color(0xFF0F0B1D),
     surface: Color(0xFF14141C),
     surfaceElevated: Color(0xFF1C1C26),
     surfaceContainer: Color(0xFF16162A),
     onSurface: Color(0xFFFFFFFF),
     onSurfaceVariant: Color(0xFFB8B8C8),
     onSurfaceMuted: Color(0xFF6E6E82),
-    primary: accentPink,
+    primary: Color(0xFF7B4DFF),
     onPrimary: Colors.white,
     secondary: accentCyan,
     onSecondary: Color(0xFF0B0B1E),

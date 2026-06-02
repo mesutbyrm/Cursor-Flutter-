@@ -45,6 +45,28 @@ abstract final class ApiEndpoints {
 
   /// Site geneli istatistikler (mobil ana sayfa).
   static const socialPublicStats = '/api/social/public-stats';
+
+  /// Ana sayfa promosyon slider.
+  static const homeBanners = '/api/banners';
+
+  /// Çevrimiçi falcılar / danışmanlar.
+  static const homeAdvisorsOnline = '/api/advisors/online';
+
+  /// Oyunlar ve etkinlikler.
+  static const homeGames = '/api/games';
+
+  /// Günlük ödüller.
+  static const homeDailyRewards = '/api/daily-rewards';
+
+  /// Geriye dönük (self-hosted seed).
+  static const socialAnnouncements = '/api/social/announcements';
+  static const socialFortuneTellers = '/api/social/fortune-tellers';
+
+  /// Sosyal akış (ana sayfa feed bölümü).
+  static const feedPosts = '/api/social/posts';
+
+  /// Okunmamış bildirim sayısı (yoksa liste üzerinden hesaplanır).
+  static const notificationsUnread = '/api/notifications/unread';
   static const socialPostsAutoFortune = '/api/social/posts/auto-fortune';
   static String socialPostDelete(String id) => '/api/social/posts/$id';
   /// canlifal.com ana sayfa canlı yayın listesi (JSON dizi).

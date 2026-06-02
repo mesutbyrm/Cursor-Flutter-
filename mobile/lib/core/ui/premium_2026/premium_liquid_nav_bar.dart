@@ -18,14 +18,16 @@ class PremiumLiquidNavBar extends StatelessWidget {
     super.key,
     required this.currentIndex,
     required this.onTap,
-    required this.onFabTap,
+    this.onFabTap,
     this.fabIcon = Icons.videocam_rounded,
+    this.showCenterFab = false,
   });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
-  final VoidCallback onFabTap;
+  final VoidCallback? onFabTap;
   final IconData fabIcon;
+  final bool showCenterFab;
 
   @override
   Widget build(BuildContext context) {
@@ -53,26 +55,37 @@ class PremiumLiquidNavBar extends StatelessWidget {
                     _LiquidNavItem(
                       index: 0,
                       current: currentIndex,
-                      icon: Icons.explore_outlined,
-                      selectedIcon: Icons.explore_rounded,
-                      label: 'Keşfet',
+                      icon: Icons.home_outlined,
+                      selectedIcon: Icons.home_rounded,
+                      label: 'Ana Sayfa',
                       onTap: onTap,
                     ),
                     _LiquidNavItem(
                       index: 1,
                       current: currentIndex,
-                      icon: Icons.groups_outlined,
-                      selectedIcon: Icons.groups_rounded,
-                      label: 'Sosyal',
+                      icon: Icons.explore_outlined,
+                      selectedIcon: Icons.explore_rounded,
+                      label: 'Keşfet',
                       onTap: onTap,
                     ),
-                    GradientFab(icon: fabIcon, onTap: onFabTap),
+                    if (showCenterFab && onFabTap != null)
+                      GradientFab(icon: fabIcon, onTap: onFabTap!)
+                    else
+                      _LiquidNavItem(
+                        index: 2,
+                        current: currentIndex,
+                        icon: Icons.sensors_outlined,
+                        selectedIcon: Icons.sensors_rounded,
+                        label: 'Canlı',
+                        onTap: onTap,
+                        emphasize: true,
+                      ),
                     _LiquidNavItem(
                       index: 3,
                       current: currentIndex,
-                      icon: Icons.auto_awesome_outlined,
-                      selectedIcon: Icons.auto_awesome_rounded,
-                      label: 'Fal',
+                      icon: Icons.chat_bubble_outline_rounded,
+                      selectedIcon: Icons.chat_bubble_rounded,
+                      label: 'Sohbet',
                       onTap: onTap,
                     ),
                     _LiquidNavItem(
@@ -110,6 +123,7 @@ class _LiquidNavItem extends StatelessWidget {
     required this.selectedIcon,
     required this.label,
     required this.onTap,
+    this.emphasize = false,
   });
 
   final int index;
@@ -118,6 +132,7 @@ class _LiquidNavItem extends StatelessWidget {
   final IconData selectedIcon;
   final String label;
   final ValueChanged<int> onTap;
+  final bool emphasize;
 
   @override
   Widget build(BuildContext context) {
@@ -147,8 +162,10 @@ class _LiquidNavItem extends StatelessWidget {
           children: [
             Icon(
               selected ? selectedIcon : icon,
-              size: 24,
-              color: selected ? context.colors.onSurface : context.colors.onSurfaceMuted,
+              size: emphasize ? 26 : 24,
+              color: selected
+                  ? (emphasize ? AppThemeColors.accentPink : context.colors.onSurface)
+                  : context.colors.onSurfaceMuted,
             ),
             const SizedBox(height: 3),
             Text(

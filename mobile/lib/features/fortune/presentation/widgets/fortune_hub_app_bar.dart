@@ -91,7 +91,7 @@ class FortuneHubAppBar extends ConsumerWidget {
               title: const Text('Ana Sayfa'),
               onTap: () {
                 Navigator.pop(ctx);
-                context.go('/feed');
+                context.go('/home');
               },
             ),
             ListTile(
