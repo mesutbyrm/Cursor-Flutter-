@@ -22,8 +22,8 @@ class HomeAdvisorsRow extends ConsumerWidget {
       loading: () => Column(
         children: [
           const HomeSectionHeader(
-            title: 'Canlı Falcılar',
-            subtitle: 'Şu an hizmet veren falcılar',
+            title: 'Popüler Falcılar',
+            subtitle: 'Çevrimiçi uzmanlar',
             leadingDotColor: HomePalette.primary,
           ),
           SizedBox(
@@ -45,12 +45,13 @@ class HomeAdvisorsRow extends ConsumerWidget {
       error: (_, __) => const SizedBox.shrink(),
       data: (items) {
         final online = items.where((a) => a.isOnline).toList();
-        if (online.isEmpty) return const SizedBox.shrink();
+        final list = online.isNotEmpty ? online : items;
+        if (list.isEmpty) return const SizedBox.shrink();
         return Column(
           children: [
             HomeSectionHeader(
-              title: 'Canlı Falcılar',
-              subtitle: 'Şu an hizmet veren falcılar',
+              title: 'Popüler Falcılar',
+              subtitle: 'Çevrimiçi uzmanlar',
               leadingDotColor: HomePalette.primary,
               onTrailing: () => context.push('/search'),
             ),
@@ -59,9 +60,9 @@ class HomeAdvisorsRow extends ConsumerWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: online.length,
+                itemCount: list.length.clamp(0, 12),
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (_, i) => _AdvisorCard(advisor: online[i]),
+                itemBuilder: (_, i) => _AdvisorCard(advisor: list[i]),
               ),
             ),
           ],

@@ -2,18 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
+import '../../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
 import '../providers/home_providers.dart';
 import '../providers/home_realtime_bridge.dart';
 import '../theme/home_palette.dart';
 import '../widgets/home_advisors_row.dart';
-import '../widgets/home_banner_carousel.dart';
-import '../widgets/home_games_row.dart';
-import '../widgets/home_header.dart';
+import '../widgets/home_discover_grid.dart';
+import '../widgets/home_fan_club_row.dart';
+import '../widgets/home_fortune_grid.dart';
+import '../widgets/home_gold_memberships_row.dart';
 import '../widgets/home_live_streams_row.dart';
-import '../widgets/home_social_feed_section.dart';
+import '../widgets/home_stories_section.dart';
+import '../widgets/home_site_top_bar.dart';
+import '../widgets/home_trend_videos_row.dart';
 import '../widgets/home_voice_rooms_row.dart';
 
-/// CanlıFal ana sayfa — tüm bölümler REST API + canlı yenileme.
+/// canlifal.com ana sayfa — dikey akış, native API, WebView yok.
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -22,30 +26,12 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
-  final _scroll = ScrollController();
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(homeRealtimeBridgeProvider).start();
     });
-    _scroll.addListener(_onScroll);
-  }
-
-  void _onScroll() {
-    if (_scroll.position.pixels <
-        _scroll.position.maxScrollExtent - 480) {
-      return;
-    }
-    ref.read(homeFeedNotifierProvider.notifier).loadMore();
-  }
-
-  @override
-  void dispose() {
-    _scroll.removeListener(_onScroll);
-    _scroll.dispose();
-    super.dispose();
   }
 
   Future<void> _onRefresh() => refreshHomeData(ref);
@@ -55,28 +41,29 @@ class _HomePageState extends ConsumerState<HomePage> {
     final bottom = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
-      backgroundColor: HomePalette.darkBackground,
+      backgroundColor: DiscoverPremiumVisual.backgroundBottom,
       body: CosmicGalaxyBackground(
         showVignette: true,
         child: RefreshIndicator(
-          color: HomePalette.primary,
+          color: DiscoverPremiumVisual.primary,
           backgroundColor: HomePalette.darkBackground,
           onRefresh: _onRefresh,
           child: CustomScrollView(
-            controller: _scroll,
             physics: const AlwaysScrollableScrollPhysics(
               parent: BouncingScrollPhysics(),
             ),
             slivers: [
-              const SliverToBoxAdapter(child: HomeHeader()),
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-              const SliverToBoxAdapter(child: HomeBannerCarousel()),
-              const SliverToBoxAdapter(child: HomeAdvisorsRow()),
+              const SliverToBoxAdapter(child: HomeSiteTopBar()),
+              const SliverToBoxAdapter(child: HomeStoriesSection()),
               const SliverToBoxAdapter(child: HomeLiveStreamsRow()),
               const SliverToBoxAdapter(child: HomeVoiceRoomsRow()),
-              const SliverToBoxAdapter(child: HomeSocialFeedSection()),
-              const SliverToBoxAdapter(child: HomeGamesRow()),
-              SliverToBoxAdapter(child: SizedBox(height: 88 + bottom)),
+              const SliverToBoxAdapter(child: HomeTrendVideosRow()),
+              const SliverToBoxAdapter(child: HomeFanClubRow()),
+              const SliverToBoxAdapter(child: HomeFortuneGrid()),
+              const SliverToBoxAdapter(child: HomeAdvisorsRow()),
+              const SliverToBoxAdapter(child: HomeDiscoverGrid()),
+              const SliverToBoxAdapter(child: HomeGoldMembershipsRow()),
+              SliverToBoxAdapter(child: SizedBox(height: 96 + bottom)),
             ],
           ),
         ),

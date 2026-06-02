@@ -7,6 +7,7 @@ import '../../data/datasources/home_remote_datasource.dart';
 import '../../data/repositories/home_repository_impl.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
+import '../../domain/entities/home_trend_video_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 import '../../domain/repositories/home_repository.dart';
 import '../../../feed/domain/entities/post_entity.dart';
@@ -51,6 +52,11 @@ final homeGamesProvider = FutureProvider<List<HomeGameEntity>>((ref) async {
 final homeDailyRewardsProvider =
     FutureProvider<List<DailyRewardEntity>>((ref) async {
   return ref.watch(homeRepositoryProvider).fetchDailyRewards();
+});
+
+final homeTrendVideosProvider =
+    FutureProvider<List<HomeTrendVideoEntity>>((ref) async {
+  return ref.watch(homeRepositoryProvider).fetchTrendVideos();
 });
 
 /// Ana sayfa sosyal akış — sayfalama.
@@ -117,12 +123,15 @@ Future<void> refreshHomeData(WidgetRef ref) async {
   ref.invalidate(homeVoiceRoomsProvider);
   ref.invalidate(homeGamesProvider);
   ref.invalidate(homeDailyRewardsProvider);
+  ref.invalidate(homeTrendVideosProvider);
+  ref.invalidate(socialStoryRingsProvider);
   await Future.wait([
     ref.refresh(homeBannersProvider.future),
     ref.refresh(homeAdvisorsProvider.future),
     ref.refresh(homeLiveStreamsProvider.future),
     ref.refresh(homeVoiceRoomsProvider.future),
     ref.refresh(homeGamesProvider.future),
-    ref.read(homeFeedNotifierProvider.notifier).refresh(),
+    ref.refresh(homeTrendVideosProvider.future),
+    ref.refresh(socialStoryRingsProvider.future),
   ]);
 }
