@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.109+111 (2026-06-02)
+
+### Sesli sohbet odası (canlifal.com UI)
+
+- 2×5 mikrofon ızgarası, kalıcı duyuru kutusu, sağ yüzen ‹ araçlar + ♫ müzik
+- YouTube şarkı arama/istek (jeton), DJ API düzeltmeleri
+- Sohbet: ardışık mesaj bekleme kaldırıldı
+- Moderatör: yasaklı kelime listesi API
+
 ## 1.0.108+110 (2026-06-02)
 
 ### Ana sayfa — canlifal.com düzeni (native)

@@ -217,15 +217,15 @@ class _CenterMicButtonState extends State<_CenterMicButton>
   }
 }
 
-/// Sağ kenar yüzen kısayollar.
+/// Sağ kenar — ‹ oda araçları, ♫ müzik isteği (canlifal.com).
 class VoiceWebFloatingRail extends StatelessWidget {
   const VoiceWebFloatingRail({
     super.key,
-    this.onAudience,
+    this.onTools,
     this.onMusic,
   });
 
-  final VoidCallback? onAudience;
+  final VoidCallback? onTools;
   final VoidCallback? onMusic;
 
   @override
@@ -233,7 +233,7 @@ class VoiceWebFloatingRail extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _FloatBtn(icon: Icons.person_rounded, onTap: onAudience),
+        _FloatBtn(icon: Icons.chevron_left_rounded, onTap: onTools),
         const SizedBox(height: 10),
         _FloatBtn(icon: Icons.queue_music_rounded, onTap: onMusic),
       ],

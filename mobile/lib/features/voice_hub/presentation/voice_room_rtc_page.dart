@@ -42,7 +42,8 @@ import 'widgets/premium/voice_gift_flight_overlay.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/premium_2026/voice_room_audience_strip.dart';
-import 'widgets/premium_2026/voice_timed_duyuru.dart';
+import 'sheets/voice_room_tools_sheet.dart';
+import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'widgets/premium_2026/voice_web_bottom_nav.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
@@ -73,7 +74,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   LiveGiftEvent? _fullscreenGift;
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
-  var _chatOutbound = false;
   final _messageFocus = FocusNode();
 
   @override
@@ -131,35 +131,22 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
   }
 
-  Future<void> _sendChatMessage(VoiceRoomEntity room) async {
+  void _sendChatMessage(VoiceRoomEntity room) {
     final text = VoiceOfficialJoin.normalizeCommandInput(
       _messageCtrl.text.trim(),
     );
     if (text.isEmpty) return;
-    if (_chatOutbound) return;
-    _chatOutbound = true;
     _messageCtrl.clear();
-    try {
-      await ref
-          .read(voiceRoomLiveProvider(room).notifier)
-          .sendMessage(text)
-          .timeout(const Duration(seconds: 12));
+    unawaited(() async {
+      await ref.read(voiceRoomLiveProvider(room).notifier).sendMessage(text);
       if (!mounted) return;
       final err = ref.read(voiceRoomLiveProvider(room)).error;
       if (err != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-      }
-    } on TimeoutException {
-      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Mesaj gönderimi zaman aşımı. Tekrar deneyin.'),
-          ),
+          SnackBar(content: Text(err)),
         );
       }
-    } finally {
-      if (mounted) _chatOutbound = false;
-    }
+    }());
   }
 
   void _startGiftRealtime() {
@@ -606,7 +593,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final chatMaxH = keyboardOpen
         ? (mq.height * 0.22).clamp(96.0, 160.0)
         : (mq.height * 0.28).clamp(120.0, 220.0);
-    final duyuru = (room.descTr ?? room.rulesTr)?.trim();
+    final duyuru = ((room.descTr ?? room.rulesTr)?.trim().isNotEmpty == true)
+        ? (room.descTr ?? room.rulesTr)!.trim()
+        : 'Sohbet odasına hoş geldiniz. Saygılı olun, keyifli sohbetler!';
     ChatRoomPresence? ownerPresence;
     if (room.ownerId != null) {
       for (final p in live.presence) {
@@ -748,11 +737,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ownerAvatarUrl: ownerAvatar,
                         ),
                         if (!keyboardOpen) ...[
-                          if (duyuru?.isNotEmpty == true)
-                            VoiceTimedDuyuru(
-                              roomKey: room.apiRoomKey,
-                              text: duyuru!,
-                            ),
+                          VoiceRoomPersistentDuyuru(
+                            text: duyuru,
+                            canEdit: perms.canModerate || isOwner,
+                          ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: VoiceRoomActionRow(
@@ -808,6 +796,25 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
             ),
             PremiumGiftFullscreenOverlay(event: _fullscreenGift),
+            if (_loginError == null && !keyboardOpen)
+              Positioned(
+                right: 4,
+                top: mq.height * 0.38,
+                child: VoiceWebFloatingRail(
+                  onTools: () => showVoiceRoomToolsSheet(
+                    context,
+                    ref,
+                    room: room,
+                    perms: perms,
+                    isOwner: isOwner,
+                  ),
+                  onMusic: () => showVoiceYoutubeSongSheet(
+                    context,
+                    ref,
+                    room: room,
+                  ),
+                ),
+              ),
             if (_showVipEntrance && user != null)
               VipEntranceOverlay(
                 tier: ref.watch(vipTierProvider),
@@ -836,8 +843,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       VoiceWebChatInputBar(
                         controller: _messageCtrl,
                         focusNode: _messageFocus,
-                        sending: live.sending || _chatOutbound,
-                        onSend: () => unawaited(_sendChatMessage(room)),
+                        sending: false,
+                        onSend: () => _sendChatMessage(room),
                       ),
                     if (!keyboardOpen)
                       VoiceWebBottomNav(
