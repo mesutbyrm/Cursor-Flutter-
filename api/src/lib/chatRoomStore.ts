@@ -57,10 +57,10 @@ const SITE_BACKGROUNDS = [
   "https://canlifal.com/images/voice-bg-4.jpg",
   "https://canlifal.com/images/voice-bg-5.jpg",
   "https://canlifal.com/images/voice-bg-6.jpg",
-  "https://canlifal.com/images/chat-bg-1.jpg",
-  "https://canlifal.com/images/chat-bg-2.jpg",
-  "https://canlifal.com/uploads/voice-bg/default.jpg",
-  "https://canlifal.com/apple-touch-icon.png",
+  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80",
+  "https://images.unsplash.com/photo-1579546929518-9e396f3cc760?w=1200&q=80",
+  "https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&q=80",
+  "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=1200&q=80",
 ];
 
 const rooms: ChatRoomRow[] = [
@@ -569,7 +569,12 @@ export async function addTextMessage(roomId: string, user: User, content: string
   const commandRow = tryHandleRoomCommand(room, user, roomId, trimmed);
   if (commandRow) return commandRow;
   if (!priv.canModerate && containsBannedWord(roomId, trimmed)) {
-    return null;
+    return pushMessage(roomId, {
+      id: randomUUID(),
+      content: "⚠️ Mesajınız yasaklı kelime içeriyor.",
+      createdAt: new Date().toISOString(),
+      user: toChatUser(user, "listener"),
+    });
   }
   const row = pushMessage(roomId, {
     id: randomUUID(),
@@ -630,6 +635,7 @@ export function getDjState(roomId: string, user: User | null) {
     activeDjId: dj.activeDjId,
     musicUrl: dj.musicUrl,
     playing: dj.playing,
+    backgroundImage: room?.backgroundImage ?? null,
     ownerPresent: room?.ownerId
       ? roomMap(roomId).has(room.ownerId)
       : false,
@@ -641,15 +647,24 @@ export function getDjState(roomId: string, user: User | null) {
   };
 }
 
-export function setDjMusic(roomId: string, user: User, musicUrl: string | null, playing: boolean) {
+export async function setDjMusic(
+  roomId: string,
+  user: User,
+  musicUrl: string | null,
+  playing: boolean,
+) {
   const room = getChatRoom(roomId);
   if (!room) return null;
   const priv = roomPrivileges(user, room);
   if (!priv.owner && !priv.admin && !priv.dj) return null;
+  let resolved = musicUrl;
+  if (resolved && /youtube\.com|youtu\.be/i.test(resolved)) {
+    resolved = (await resolveYoutubeStreamUrl(resolved)) ?? resolved;
+  }
   const next = {
     activeDjId: user.id,
-    musicUrl,
-    playing: playing && Boolean(musicUrl),
+    musicUrl: resolved,
+    playing: playing && Boolean(resolved),
   };
   const key = resolveRoomId(roomId);
   djByRoom.set(key, next);
@@ -752,11 +767,16 @@ export async function requestMusicQueue(
     createdAt: new Date().toISOString(),
     user: item.requestedBy,
   });
+  await tryStartMusicFromQueue(roomId);
+  const key = resolveRoomId(roomId);
+  const dj = djByRoom.get(key);
   return {
     ok: true as const,
     item,
     queue: [...list],
     newBalance: updated.coins,
+    musicUrl: dj?.musicUrl ?? null,
+    playing: dj?.playing ?? false,
   };
 }
 
@@ -854,6 +874,58 @@ export async function searchYoutube(query: string): Promise<YoutubeSearchHit[]> 
   } catch {
     return [];
   }
+}
+
+export async function resolveYoutubeStreamUrl(
+  youtubeUrlOrId: string,
+): Promise<string | null> {
+  const id =
+    extractYoutubeId(youtubeUrlOrId) ??
+    (youtubeUrlOrId.length <= 15 ? youtubeUrlOrId : null);
+  if (!id) return null;
+  try {
+    const res = await fetch(`https://pipedapi.kavin.rocks/streams/${id}`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      audioStreams?: Array<{ url?: string; bitrate?: number }>;
+      audioOnly?: Array<{ url?: string; bitrate?: number }>;
+    };
+    const streams = [...(data.audioStreams ?? []), ...(data.audioOnly ?? [])];
+    if (streams.length === 0) return null;
+    streams.sort((a, b) => (b.bitrate ?? 0) - (a.bitrate ?? 0));
+    const url = streams[0]?.url;
+    return url && url.startsWith("http") ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function tryStartMusicFromQueue(roomId: string) {
+  const key = resolveRoomId(roomId);
+  const current = djByRoom.get(key);
+  if (current?.playing && current.musicUrl) return current;
+  const list = musicQueueList(roomId);
+  if (list.length === 0) return current ?? null;
+  const next = list[0];
+  const stream = await resolveYoutubeStreamUrl(next.youtubeUrl);
+  if (!stream) return current ?? null;
+  const nextDj = {
+    activeDjId: next.requestedBy.id,
+    musicUrl: stream,
+    playing: true,
+  };
+  djByRoom.set(key, nextDj);
+  return nextDj;
+}
+
+export async function advanceMusicQueue(roomId: string) {
+  const key = resolveRoomId(roomId);
+  const list = musicQueueList(roomId);
+  if (list.length > 0) list.shift();
+  djByRoom.set(key, { activeDjId: null, musicUrl: null, playing: false });
+  return tryStartMusicFromQueue(roomId);
 }
 
 function extractYoutubeId(raw: string) {

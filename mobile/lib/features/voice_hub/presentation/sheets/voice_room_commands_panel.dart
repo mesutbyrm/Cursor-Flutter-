@@ -135,30 +135,55 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
     if (c.command.startsWith('!istek')) {
       final nav = Navigator.of(context);
       nav.pop();
+      if (!mounted) return;
       await showVoiceYoutubeSongSheet(context, ref, room: widget.room);
       return;
     }
     if (c.command == '!yardım') {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Komut listesi bu panelde')),
-        );
-      }
+      await _runCommand('!yardım');
       return;
     }
     final needsArgs = c.command.contains('kullanıcı') ||
         c.command.contains('mesaj') ||
-        c.command.contains('sembol') ||
-        c.command.contains('şarkı');
+        c.command.contains('sembol');
     if (needsArgs) {
-      await Clipboard.setData(ClipboardData(text: c.command));
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Komut kopyalandı — sohbete yapıştırın')),
-      );
+      final filled = await _promptCommandArgs(c.command);
+      if (filled == null || !mounted) return;
+      await _runCommand(filled);
       return;
     }
     await _runCommand(c.command.split(' ').first);
+  }
+
+  Future<String?> _promptCommandArgs(String template) async {
+    final ctrl = TextEditingController(text: template);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0E38),
+        title: const Text('Komutu düzenle'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: 'Örn. !ban kullanici',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Gönder'),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    return result;
   }
 
   Future<void> _addWord() async {
@@ -266,8 +291,12 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                 _JetonCard(
                   balance: coinLabel,
                   onTopUp: () {
-                    Navigator.pop(context);
-                    openJetonStore(context, ref: ref);
+                    final ctx = context;
+                    Navigator.pop(ctx);
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!ctx.mounted) return;
+                      openJetonStore(ctx, ref: ref);
+                    });
                   },
                 ),
                 if (canModerate) ...[

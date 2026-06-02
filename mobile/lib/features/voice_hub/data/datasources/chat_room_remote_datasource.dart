@@ -195,8 +195,16 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  static const _fallbackBackgrounds = [
+    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80',
+    'https://images.unsplash.com/photo-1579546929518-9e396f3cc760?w=1200&q=80',
+    'https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&q=80',
+    'https://canlifal.com/images/voice-bg-1.jpg',
+    'https://canlifal.com/images/voice-bg-2.jpg',
+  ];
+
   Future<List<String>> fetchBackgrounds() async {
-    final urls = <String>{};
+    final urls = <String>{..._fallbackBackgrounds};
     try {
       final res = await _dio.safeGet<dynamic>(backgroundsPath());
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
@@ -208,23 +216,20 @@ class ChatRoomRemoteDataSource {
         }
       }
     } catch (_) {}
-    try {
-      final roomsRes = await _dio.safeGet<dynamic>('/api/chat/rooms');
-      dynamic list = roomsRes.data;
-      if (list is Map) {
-        list = list['rooms'] ?? list['data'] ?? list['items'];
-        if (list is Map) list = list['rooms'];
-      }
-      if (list is List) {
-        for (final row in list) {
-          if (row is! Map) continue;
-          final m = Map<String, dynamic>.from(row);
-          final bg = m['backgroundImage']?.toString();
-          if (bg != null && bg.isNotEmpty) urls.add(bg);
-        }
-      }
-    } catch (_) {}
     return urls.toList();
+  }
+
+  Future<void> advanceMusicQueue(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _dio.safePost<dynamic>(
+          '/api/chat/rooms/$key/music-queue/advance',
+        );
+      } catch (_) {}
+    });
   }
 
   Future<void> setRoomBackground({

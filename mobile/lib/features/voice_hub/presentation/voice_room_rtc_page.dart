@@ -113,23 +113,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   Future<void> _prefetchRoomImages() async {
     if (!mounted) return;
     final room = widget.room;
-    try {
-      final urls = await ref
-          .read(voiceRoomLiveProvider(room).notifier)
-          .fetchBackgrounds();
-      if (!mounted) return;
-      await prefetchVoiceRoomImages(
-        context,
-        primaryUrl: room.backgroundImageUrl,
-        extraUrls: urls,
-      );
-    } catch (_) {
-      if (!mounted) return;
-      await prefetchVoiceRoomImages(
-        context,
-        primaryUrl: room.backgroundImageUrl,
-      );
-    }
+    final bg = ref.read(voiceRoomLiveProvider(room)).backgroundUrl ??
+        room.backgroundImageUrl;
+    if (bg == null || bg.isEmpty) return;
+    await prefetchVoiceRoomImages(context, primaryUrl: bg);
   }
 
   void _sendChatMessage(VoiceRoomEntity room) {
