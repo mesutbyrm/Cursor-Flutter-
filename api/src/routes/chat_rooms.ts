@@ -116,7 +116,25 @@ chatRoomsRouter.post("/rooms/:roomId/song-request", requireAuth, async (req, res
         : "";
   const thumbUrl =
     typeof req.body?.thumbUrl === "string" ? req.body.thumbUrl : null;
-  const result = await requestMusicQueue(roomId, user, { title, youtubeUrl, thumbUrl });
+  const giftTo =
+    typeof req.body?.giftTo === "string"
+      ? req.body.giftTo
+      : typeof req.body?.giftToUsername === "string"
+        ? req.body.giftToUsername
+        : null;
+  const note =
+    typeof req.body?.note === "string"
+      ? req.body.note
+      : typeof req.body?.message === "string"
+        ? req.body.message
+        : null;
+  const result = await requestMusicQueue(roomId, user, {
+    title,
+    youtubeUrl,
+    thumbUrl,
+    giftTo,
+    note,
+  });
   if (!result.ok) {
     const code = result.error?.includes("jeton") ? 402 : 400;
     return fail(res, code, "BAD_REQUEST", result.error ?? "İstek başarısız");
@@ -152,7 +170,25 @@ chatRoomsRouter.post("/rooms/:roomId/music-queue", requireAuth, async (req, res)
         : "";
   const thumbUrl =
     typeof req.body?.thumbUrl === "string" ? req.body.thumbUrl : null;
-  const result = await requestMusicQueue(roomId, user, { title, youtubeUrl, thumbUrl });
+  const giftTo =
+    typeof req.body?.giftTo === "string"
+      ? req.body.giftTo
+      : typeof req.body?.giftToUsername === "string"
+        ? req.body.giftToUsername
+        : null;
+  const note =
+    typeof req.body?.note === "string"
+      ? req.body.note
+      : typeof req.body?.message === "string"
+        ? req.body.message
+        : null;
+  const result = await requestMusicQueue(roomId, user, {
+    title,
+    youtubeUrl,
+    thumbUrl,
+    giftTo,
+    note,
+  });
   if (!result.ok) {
     const code = result.error?.includes("jeton") ? 402 : 400;
     return fail(res, code, "BAD_REQUEST", result.error ?? "İstek başarısız");

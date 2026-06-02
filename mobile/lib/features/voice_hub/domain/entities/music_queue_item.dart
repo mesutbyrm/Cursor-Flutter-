@@ -53,6 +53,7 @@ class YoutubeSearchHit extends Equatable {
     required this.url,
     this.thumbUrl,
     this.uploader,
+    this.duration,
   });
 
   factory YoutubeSearchHit.fromJson(Map<String, dynamic> json) {
@@ -66,7 +67,8 @@ class YoutubeSearchHit extends Equatable {
               ? 'https://www.youtube.com/watch?v=$vid'
               : ''),
       thumbUrl: json['thumbUrl']?.toString(),
-      uploader: json['uploader']?.toString(),
+      uploader: json['uploader']?.toString() ?? json['channel']?.toString(),
+      duration: json['duration']?.toString(),
     );
   }
 
@@ -75,7 +77,15 @@ class YoutubeSearchHit extends Equatable {
   final String url;
   final String? thumbUrl;
   final String? uploader;
+  final String? duration;
+
+  String get subtitleLine {
+    final parts = <String>[];
+    if (uploader != null && uploader!.isNotEmpty) parts.add(uploader!);
+    if (duration != null && duration!.isNotEmpty) parts.add(duration!);
+    return parts.join(' • ');
+  }
 
   @override
-  List<Object?> get props => [videoId, title, url, thumbUrl, uploader];
+  List<Object?> get props => [videoId, title, url, thumbUrl, uploader, duration];
 }
