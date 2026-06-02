@@ -12,6 +12,7 @@ import 'discover_premium_header.dart';
 import 'discover_premium_search.dart';
 import 'discover_premium_sections.dart';
 import 'discover_premium_stories.dart';
+import 'discover_premium_visual.dart';
 
 /// PART 2 — Premium keşfet ana gövde.
 class DiscoverPremiumFeed extends ConsumerStatefulWidget {
@@ -82,30 +83,37 @@ class _DiscoverPremiumFeedState extends ConsumerState<DiscoverPremiumFeed> {
           ),
           Expanded(
             child: RefreshIndicator(
-              color: const Color(0xFFFF2D7A),
-              backgroundColor: const Color(0xFF1A1030),
+              color: DiscoverPremiumVisual.accent,
+              backgroundColor: DiscoverPremiumVisual.backgroundMid,
               onRefresh: widget.onRefresh ?? () async {},
               child: CustomScrollView(
               physics: PremiumMotion.listPhysics,
               slivers: [
-                const SliverToBoxAdapter(child: DiscoverPremiumStories()),
-                SliverToBoxAdapter(
-                  child: DiscoverPremiumCategories(
-                    selectedId: _categoryId,
-                    onCategoryTap: _onCategoryTap,
-                  ),
+                const SliverToBoxAdapter(
+                  child: RepaintBoundary(child: DiscoverPremiumStories()),
                 ),
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 8, bottom: 12),
-                    child: DiscoverPremiumTabs(
-                      index: _tab,
-                      onChanged: (i) => setState(() => _tab = i),
+                  child: RepaintBoundary(
+                    child: DiscoverPremiumCategories(
+                      selectedId: _categoryId,
+                      onCategoryTap: _onCategoryTap,
                     ),
                   ),
                 ),
                 SliverToBoxAdapter(
-                  child: AnimatedSwitcher(
+                  child: RepaintBoundary(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 12),
+                      child: DiscoverPremiumTabs(
+                        index: _tab,
+                        onChanged: (i) => setState(() => _tab = i),
+                      ),
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: RepaintBoundary(
+                    child: AnimatedSwitcher(
                     duration: PremiumMotion.medium,
                     switchInCurve: PremiumMotion.easeOut,
                     switchOutCurve: PremiumMotion.easeIn,
@@ -113,6 +121,7 @@ class _DiscoverPremiumFeedState extends ConsumerState<DiscoverPremiumFeed> {
                       key: ValueKey('$_tab-$_categoryId-${_search.text}'),
                       child: _tabBody(),
                     ),
+                  ),
                   ),
                 ),
                 SliverToBoxAdapter(child: SizedBox(height: bottom + 108)),

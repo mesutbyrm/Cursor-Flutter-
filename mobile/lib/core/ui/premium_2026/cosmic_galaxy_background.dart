@@ -29,9 +29,9 @@ class _CosmicGalaxyBackgroundState extends State<CosmicGalaxyBackground>
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFF1A0B3D),
+      Color(0xFF1A0E38),
       Color(0xFF12082A),
-      Color(0xFF05050D),
+      Color(0xFF0A0618),
     ],
   );
 
