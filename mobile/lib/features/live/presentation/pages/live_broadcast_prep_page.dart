@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -130,7 +132,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                     icon: Icons.arrow_back_ios_new_rounded,
                     onPressed: () => context.pop(),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Canlı Yayın Hazırlığı',
                       textAlign: TextAlign.center,
@@ -158,15 +160,15 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                       username: user?.username ?? 'cemreofficial',
                       avatarUrl: user?.avatarUrl,
                     ),
-                    const SizedBox(height: 22),
-                    const Text(
+                    SizedBox(height: 22),
+                    Text(
                       'Yayın Bilgileri',
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     ProfileGlass(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -174,20 +176,20 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                         children: [
                           TextField(
                             controller: _title,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
+                            style: TextStyle(
+                              color: context.colors.onSurface,
                               fontWeight: FontWeight.w600,
                             ),
                             decoration: authLikeDecoration('Yayın başlığı'),
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
                           SizedBox(
                             height: 40,
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               itemCount: _categories.length,
                               separatorBuilder: (_, _) =>
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8),
                               itemBuilder: (ctx, i) {
                                 final c = _categories[i];
                                 final selected = _category == c.$1;
@@ -199,7 +201,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                                     size: 16,
                                     color: selected
                                         ? Colors.white
-                                        : AppColors.textMuted,
+                                        : context.colors.onSurfaceMuted,
                                   ),
                                   label: Text(c.$1),
                                   labelStyle: TextStyle(
@@ -207,15 +209,15 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                                     fontSize: 12,
                                     color: selected
                                         ? Colors.white
-                                        : AppColors.textSecondary,
+                                        : context.colors.onSurfaceVariant,
                                   ),
-                                  selectedColor: AppColors.accentPink,
+                                  selectedColor: AppThemeColors.accentPink,
                                   backgroundColor:
                                       Colors.white.withValues(alpha: 0.06),
                                   side: BorderSide(
                                     color: selected
-                                        ? AppColors.accentPink
-                                        : AppColors.accentPurple
+                                        ? AppThemeColors.accentPink
+                                        : AppThemeColors.accentPurple
                                             .withValues(alpha: 0.3),
                                   ),
                                   onSelected: (_) =>
@@ -224,7 +226,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                               },
                             ),
                           ),
-                          const SizedBox(height: 14),
+                          SizedBox(height: 14),
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
@@ -232,22 +234,22 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                               for (final t in _tags)
                                 Chip(
                                   label: Text(t),
-                                  deleteIcon: const Icon(Icons.close, size: 16),
+                                  deleteIcon: Icon(Icons.close, size: 16),
                                   onDeleted: () =>
                                       setState(() => _tags.remove(t)),
                                   backgroundColor:
-                                      AppColors.accentPurple.withValues(
+                                      AppThemeColors.accentPurple.withValues(
                                     alpha: 0.2,
                                   ),
                                   side: BorderSide.none,
-                                  labelStyle: const TextStyle(
+                                  labelStyle: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ActionChip(
-                                avatar: const Icon(Icons.add, size: 16),
-                                label: const Text('Etiket'),
+                                avatar: Icon(Icons.add, size: 16),
+                                label: Text('Etiket'),
                                 onPressed: () {
                                   setState(() {
                                     _tags.add('#yeni${_tags.length + 1}');
@@ -258,13 +260,13 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 14),
+                          SizedBox(height: 14),
                           TextField(
                             controller: _description,
                             maxLines: 3,
                             maxLength: 200,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
+                            style: TextStyle(
+                              color: context.colors.onSurface,
                               fontSize: 14,
                             ),
                             decoration: authLikeDecoration(
@@ -276,15 +278,15 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 22),
-                    const Text(
+                    SizedBox(height: 22),
+                    Text(
                       'Yayın Ayarları',
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     GridView.count(
                       crossAxisCount: 3,
                       shrinkWrap: true,
@@ -304,7 +306,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 28),
+                    SizedBox(height: 28),
                     _StartLiveButton(
                       loading: _starting,
                       onPressed: _starting ? null : _startLive,
@@ -332,26 +334,26 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
 InputDecoration authLikeDecoration(String label, {String? counter}) {
   return InputDecoration(
     labelText: label,
-    labelStyle: const TextStyle(color: AppColors.textMuted),
+    labelStyle: TextStyle(color: AppThemeColors.dark.onSurfaceMuted),
     counterText: counter,
-    counterStyle: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+    counterStyle: TextStyle(color: AppThemeColors.dark.onSurfaceMuted, fontSize: 11),
     filled: true,
     fillColor: Colors.white.withValues(alpha: 0.04),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
       borderSide: BorderSide(
-        color: AppColors.accentPurple.withValues(alpha: 0.25),
+        color: AppThemeColors.accentPurple.withValues(alpha: 0.25),
       ),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
       borderSide: BorderSide(
-        color: AppColors.accentPurple.withValues(alpha: 0.2),
+        color: AppThemeColors.accentPurple.withValues(alpha: 0.2),
       ),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: AppColors.accentPink),
+      borderSide: const BorderSide(color: AppThemeColors.accentPink),
     ),
   );
 }
@@ -397,12 +399,12 @@ class _PreviewCardState extends State<_PreviewCard>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: AppColors.accentPink.withValues(alpha: 0.55),
+          color: AppThemeColors.accentPink.withValues(alpha: 0.55),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.accentPurple.withValues(alpha: 0.35),
+            color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
             blurRadius: 28,
           ),
         ],
@@ -413,7 +415,7 @@ class _PreviewCardState extends State<_PreviewCard>
           fit: StackFit.expand,
           children: [
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -440,7 +442,7 @@ class _PreviewCardState extends State<_PreviewCard>
                   Row(
                     children: [
                       UserAvatar(url: widget.avatarUrl, radius: 18),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -450,23 +452,23 @@ class _PreviewCardState extends State<_PreviewCard>
                                 Flexible(
                                   child: Text(
                                     widget.displayName,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 14,
                                     ),
                                   ),
                                 ),
-                                const Icon(
+                                Icon(
                                   Icons.verified_rounded,
                                   size: 14,
-                                  color: AppColors.diamondBlue,
+                                  color: AppThemeColors.diamondBlue,
                                 ),
                               ],
                             ),
                             Text(
                               '@${widget.username}',
-                              style: const TextStyle(
-                                color: AppColors.textMuted,
+                              style: TextStyle(
+                                color: context.colors.onSurfaceMuted,
                                 fontSize: 11,
                               ),
                             ),
@@ -479,10 +481,10 @@ class _PreviewCardState extends State<_PreviewCard>
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.liveRed,
+                          color: AppThemeColors.liveRed,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text(
+                        child: Text(
                           'LIVE',
                           style: TextStyle(
                             fontSize: 10,
@@ -498,13 +500,13 @@ class _PreviewCardState extends State<_PreviewCard>
                       Container(
                         width: 8,
                         height: 8,
-                        decoration: const BoxDecoration(
-                          color: AppColors.onlineGreen,
+                        decoration: BoxDecoration(
+                          color: AppThemeColors.onlineGreen,
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      const Expanded(
+                      SizedBox(width: 8),
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -518,7 +520,7 @@ class _PreviewCardState extends State<_PreviewCard>
                             Text(
                               'Bağlantı stabil · Ses testi tamam',
                               style: TextStyle(
-                                color: AppColors.textMuted,
+                                color: context.colors.onSurfaceMuted,
                                 fontSize: 11,
                               ),
                             ),
@@ -559,7 +561,7 @@ class _AudioBars extends StatelessWidget {
           margin: const EdgeInsets.only(left: 3),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(2),
-            gradient: AppColors.brandGradient,
+            gradient: context.colors.brandGradient,
           ),
         );
       }),
@@ -591,25 +593,25 @@ class _SettingTile extends StatelessWidget {
         children: [
           Icon(
             icon,
-            color: enabled ? AppColors.accentCyan : AppColors.textMuted,
+            color: enabled ? AppThemeColors.accentCyan : context.colors.onSurfaceMuted,
             size: 24,
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             enabled ? 'Açık' : 'Kapalı',
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w800,
-              color: enabled ? AppColors.onlineGreen : AppColors.liveRed,
+              color: enabled ? AppThemeColors.onlineGreen : AppThemeColors.liveRed,
             ),
           ),
         ],
@@ -637,19 +639,19 @@ class _StartLiveButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             gradient: onPressed == null && !loading
                 ? null
-                : AppColors.brandGradient,
+                : context.colors.brandGradient,
             color: onPressed == null && !loading
                 ? Colors.white.withValues(alpha: 0.1)
                 : null,
             boxShadow: onPressed == null
                 ? null
-                : AppColors.glowShadow(AppColors.accentPink, blur: 28),
+                : AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: 28),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (loading)
-                const SizedBox(
+                SizedBox(
                   width: 22,
                   height: 22,
                   child: CircularProgressIndicator(
@@ -658,9 +660,9 @@ class _StartLiveButton extends StatelessWidget {
                   ),
                 )
               else ...[
-                const Icon(Icons.fiber_manual_record_rounded, color: Colors.white),
-                const SizedBox(width: 10),
-                const Text(
+                Icon(Icons.fiber_manual_record_rounded, color: Colors.white),
+                SizedBox(width: 10),
+                Text(
                   'CANLI YAYINA BAŞLA',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,

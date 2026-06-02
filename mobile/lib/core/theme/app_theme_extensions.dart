@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'app_palette.dart';
 import 'app_theme_colors.dart';
+import 'canlifal_tokens.dart';
 
 export 'app_palette.dart' show AppPalette, AppPaletteX;
+export 'canlifal_tokens.dart' show CanlifalTokens;
 
 /// Tema renklerine kısayol — yeni kodda bunu kullanın.
 extension AppThemeContext on BuildContext {
@@ -34,4 +36,10 @@ extension AppThemeContext on BuildContext {
   Color get coinGold => AppThemeColors.coinGold;
 
   Color get onlineGreen => AppThemeColors.onlineGreen;
+
+  CanlifalTokens get tokens =>
+      Theme.of(this).extension<CanlifalTokens>() ??
+      (Theme.of(this).brightness == Brightness.dark
+          ? CanlifalTokens.dark
+          : CanlifalTokens.light);
 }

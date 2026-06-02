@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -6,7 +7,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_date_pickers.dart';
 import '../widgets/premium_auth_2026/premium_auth_2026.dart';
@@ -318,7 +318,7 @@ class _BirthChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary.withValues(alpha: 0.95),
+              color: context.colors.onSurfaceVariant.withValues(alpha: 0.95),
             ),
           ),
         ),

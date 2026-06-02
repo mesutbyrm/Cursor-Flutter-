@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -6,7 +7,6 @@ import 'package:intl/intl.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../domain/entities/app_notification_entity.dart';
 import '../../domain/notification_action.dart';
@@ -67,7 +67,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
               await ref.read(notificationsRepositoryProvider).markAllRead();
               await _refresh();
             },
-            child: const Text('Tümünü oku'),
+            child: Text('Tümünü oku'),
           ),
         DiscoverIconButton(
           icon: Icons.refresh_rounded,
@@ -134,11 +134,11 @@ class _NotificationsListView extends ConsumerWidget {
       cacheExtent: ListPerf.cacheExtent,
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
       itemCount: items.length + (state.hasMore ? 1 : 0),
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => SizedBox(height: 10),
       itemBuilder: (ctx, i) {
         if (i >= items.length) {
           onLoadMore();
-          return const Padding(
+          return Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Center(
               child: SizedBox(
@@ -170,7 +170,7 @@ class _NotificationsListView extends ConsumerWidget {
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    gradient: n.read ? null : AppColors.brandGradient,
+                    gradient: n.read ? null : context.colors.brandGradient,
                     color: n.read
                         ? Colors.white.withValues(alpha: 0.06)
                         : null,
@@ -178,10 +178,10 @@ class _NotificationsListView extends ConsumerWidget {
                   child: Icon(
                     Icons.notifications_rounded,
                     size: 20,
-                    color: n.read ? AppColors.textMuted : Colors.white,
+                    color: n.read ? context.colors.onSurfaceMuted : Colors.white,
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,13 +195,13 @@ class _NotificationsListView extends ConsumerWidget {
                         ),
                       ),
                       if (n.body != null && n.body!.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           n.body!,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.textMuted,
+                          style: TextStyle(
+                            color: context.colors.onSurfaceMuted,
                             fontSize: 13,
                           ),
                         ),
@@ -213,7 +213,7 @@ class _NotificationsListView extends ConsumerWidget {
                   fmt.format((n.createdAt ?? DateTime.now()).toLocal()),
                   style: TextStyle(
                     fontSize: 11,
-                    color: AppColors.textMuted.withValues(alpha: 0.85),
+                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
                   ),
                 ),
               ],

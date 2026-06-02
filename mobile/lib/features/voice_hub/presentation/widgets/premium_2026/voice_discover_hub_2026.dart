@@ -1,5 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,7 +10,6 @@ import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/performance/list_perf.dart';
 import '../../../../../core/providers/auth_selectors.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
@@ -292,7 +294,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
       if (live.isEmpty) {
         return Text(
           'Şu an canlı yayın yok',
-          style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.9)),
+          style: TextStyle(color: context.colors.onSurfaceMuted.withValues(alpha: 0.9)),
         );
       }
       return SizedBox(
@@ -380,7 +382,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w800,
-            color: AppColors.textMuted.withValues(alpha: 0.95),
+            color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
           ),
         ),
       );
@@ -532,7 +534,7 @@ class _DiscoverHeader extends StatelessWidget {
                   'Premium keşfet',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textMuted.withValues(alpha: 0.95),
+                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
                   ),
                 ),
               ],
@@ -598,7 +600,7 @@ class _SearchBar extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: 'Oda, kullanıcı veya kategori ara…',
                 hintStyle: TextStyle(
-                  color: AppColors.textMuted.withValues(alpha: 0.85),
+                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
                   fontSize: 13,
                 ),
                 border: InputBorder.none,
@@ -740,7 +742,7 @@ class _StoryLiveItem extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
-                colors: [AppColors.liveRed, VoiceRoomTokens.neonPink],
+                colors: [AppThemeColors.liveRed, VoiceRoomTokens.neonPink],
               ),
             ),
             child: CircleAvatar(
@@ -759,7 +761,7 @@ class _StoryLiveItem extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.liveRed,
+              color: AppThemeColors.liveRed,
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Text(
@@ -782,7 +784,7 @@ class _StoryLiveItem extends StatelessWidget {
             VoiceLiveHeader2026Format.count(stream.viewerCount),
             style: TextStyle(
               fontSize: 9,
-              color: AppColors.textMuted.withValues(alpha: 0.9),
+              color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
             ),
           ),
         ],
@@ -908,7 +910,7 @@ class _PopularRoomCard extends StatelessWidget {
       };
 
   Color get _badgeColor => switch (_badge) {
-        'Sıcak' => AppColors.liveRed,
+        'Sıcak' => AppThemeColors.liveRed,
         'VIP' => VipGoldTokens.goldMid,
         'Gece' => VoiceRoomTokens.neonPurple,
         _ => VoiceRoomTokens.neonBlue,
@@ -991,7 +993,7 @@ class _PopularRoomCard extends StatelessWidget {
                         Row(
                           children: [
                             Icon(Icons.people_alt_rounded,
-                                size: 12, color: AppColors.onlineGreen),
+                                size: 12, color: AppThemeColors.onlineGreen),
                             const SizedBox(width: 4),
                             Text(
                               VoiceLiveHeader2026Format.count(room.displayOnline),
@@ -1089,7 +1091,7 @@ class _LiveStreamCard extends StatelessWidget {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.liveRed,
+                              color: AppThemeColors.liveRed,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: const Text(
@@ -1183,7 +1185,7 @@ class _CategoryIconTile extends StatelessWidget {
                 roomLabel,
                 style: TextStyle(
                   fontSize: 8,
-                  color: AppColors.textMuted.withValues(alpha: 0.85),
+                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
                 ),
               ),
             ],
@@ -1320,7 +1322,7 @@ class _CompactRoomRow extends StatelessWidget {
                       '${VoiceLiveHeader2026Format.count(room.displayOnline)} çevrimiçi',
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textMuted.withValues(alpha: 0.9),
+                        color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                       ),
                     ),
                   ],

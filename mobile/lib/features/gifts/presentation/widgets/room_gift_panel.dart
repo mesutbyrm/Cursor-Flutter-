@@ -1,10 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -28,7 +30,7 @@ class RoomGiftPanel extends ConsumerWidget {
     final gifts = ref.watch(voiceRoomGiftTypesProvider);
 
     return gifts.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => Center(child: CircularProgressIndicator()),
       error: (e, _) => Padding(
         padding: const EdgeInsets.all(24),
         child: Text(
@@ -38,7 +40,7 @@ class RoomGiftPanel extends ConsumerWidget {
       ),
       data: (list) {
         if (list.isEmpty) {
-          return const Center(child: Text('Hediye listesi boş'));
+          return Center(child: Text('Hediye listesi boş'));
         }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -47,20 +49,20 @@ class RoomGiftPanel extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
               child: Text(
                 'Hediye gönder · $receiverName',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
               ),
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Text(
                 'Jeton bakiyenizden düşülür. Oda sohbetinde herkese görünür.',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                style: TextStyle(color: context.colors.onSurfaceMuted, fontSize: 12),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Expanded(
               child: GridView.builder(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -137,19 +139,19 @@ class _RoomGiftTile extends StatelessWidget {
               if (url.isNotEmpty)
                 CachedNetworkImage(imageUrl: url, height: 40, width: 40)
               else
-                const Icon(Icons.card_giftcard_rounded, size: 32),
-              const SizedBox(height: 6),
+                Icon(Icons.card_giftcard_rounded, size: 32),
+              SizedBox(height: 6),
               Text(
                 LiveGiftCatalog.displayName(gift),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
               ),
               Text(
                 '${gift.price} jeton',
                 style: TextStyle(
                   fontSize: 10,
-                  color: AppColors.accentPink.withValues(alpha: 0.9),
+                  color: AppThemeColors.accentPink.withValues(alpha: 0.9),
                 ),
               ),
             ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../utils/voice_room_seat_layout.dart';
@@ -139,7 +139,7 @@ class VoicePremiumStage extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,
-                color: AppColors.textMuted.withValues(alpha: 0.9),
+                color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
               ),
             ),
           ),
@@ -197,7 +197,7 @@ class _ListenerRow extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: AppColors.textMuted.withValues(alpha: 0.95),
+              color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
             ),
           ),
       ],

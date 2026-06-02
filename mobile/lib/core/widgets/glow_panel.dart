@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../theme/app_colors.dart';
 
 /// Hafif neon çerçeveli kart — ana sayfa / şerit bölümleri için.
 class GlowPanel extends StatelessWidget {
@@ -25,13 +26,13 @@ class GlowPanel extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.accentPink.withValues(alpha: 0.45),
-            AppColors.accentCyan.withValues(alpha: 0.35),
+            AppThemeColors.accentPink.withValues(alpha: 0.45),
+            AppThemeColors.accentCyan.withValues(alpha: 0.35),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.accentPink.withValues(alpha: 0.12),
+            color: AppThemeColors.accentPink.withValues(alpha: 0.12),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -41,7 +42,7 @@ class GlowPanel extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(borderRadius - 1),
-          color: AppColors.surface.withValues(alpha: 0.94),
+          color: context.colors.surface.withValues(alpha: 0.94),
         ),
         child: Padding(
           padding: padding,

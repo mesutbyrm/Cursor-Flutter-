@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/onesignal/onesignal_bootstrap.dart';
 import '../../../../core/push/push_notification_service.dart';
 import '../../../../core/push/push_registrar.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 
 /// Sistem bildirim izni kapalıysa etkinleştirme çağrısı.
@@ -60,10 +60,10 @@ class _NotificationPermissionBannerState
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
       child: DiscoverGlassCard(
         padding: const EdgeInsets.all(14),
-        borderColor: AppColors.accentPink.withValues(alpha: 0.35),
+        borderColor: AppThemeColors.accentPink.withValues(alpha: 0.35),
         child: Row(
           children: [
-            const Icon(Icons.notifications_active_rounded, color: AppColors.accentPink),
+            const Icon(Icons.notifications_active_rounded, color: AppThemeColors.accentPink),
             const SizedBox(width: 12),
             const Expanded(
               child: Text(

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/content/currency_usage_info.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
@@ -77,7 +79,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(
                     'Ödeme ayarları çevrimdışı yüklendi: ${ApiException.userMessage(e)}',
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                    style: TextStyle(color: context.colors.onSurfaceMuted, fontSize: 12),
                   ),
                 ),
                 CfcNativeCheckout(
@@ -104,7 +106,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                   loading: () => const SizedBox.shrink(),
                   error: (e, _) => Text(
                     ApiException.userMessage(e),
-                    style: const TextStyle(color: AppColors.textMuted),
+                    style: TextStyle(color: context.colors.onSurfaceMuted),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -140,7 +142,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                       return Text(
                         'Henüz CFC talebi yok.',
                         style: TextStyle(
-                          color: AppColors.textMuted.withValues(alpha: 0.9),
+                          color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                         ),
                       );
                     }
@@ -196,7 +198,7 @@ class _HistoryTile extends StatelessWidget {
                     _statusTr(row.status),
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.diamondBlue.withValues(alpha: 0.9),
+                      color: AppThemeColors.diamondBlue.withValues(alpha: 0.9),
                     ),
                   ),
                 ],
@@ -227,7 +229,7 @@ IconData _statusIcon(String s) => switch (s) {
     };
 
 Color _statusColor(String s) => switch (s) {
-      'approved' => AppColors.accentCyan,
-      'rejected' => AppColors.liveRed,
-      _ => AppColors.diamondBlue,
+      'approved' => AppThemeColors.accentCyan,
+      'rejected' => AppThemeColors.liveRed,
+      _ => AppThemeColors.diamondBlue,
     };

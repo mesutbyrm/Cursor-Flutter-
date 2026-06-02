@@ -13,6 +13,7 @@ import '../../features/content_hub/presentation/pages/content_hub_page.dart';
 import '../../features/favorites/presentation/pages/favorites_page.dart';
 import '../../features/fortune/presentation/pages/fortune_detail_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
+import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/search/presentation/pages/global_search_page.dart';
 import '../../features/fortune/domain/entities/fortune_type_entity.dart';
 import '../../features/fortune/presentation/data/fortune_catalog.dart';
@@ -93,7 +94,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       if (loc == '/splash') {
         if (auth.isLoading) return null;
-        return auth.valueOrNull != null ? '/feed' : '/login';
+        return auth.valueOrNull != null ? '/home' : '/login';
       }
 
       final authed = auth.valueOrNull != null;
@@ -106,7 +107,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (!authed && !guest && !publicAuthPages && !canlifalWeb) {
         return '/login';
       }
-      if (authed && publicAuthPages) return '/feed';
+      if (authed && publicAuthPages) return '/home';
+      if (loc == '/feed') return '/home';
       return null;
     },
     routes: [
@@ -146,27 +148,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/feed',
-                builder: (context, state) => const FeedPage(),
+                path: '/home',
+                builder: (context, state) => const HomePage(),
               ),
             ],
           ),
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/social',
-                builder: (context, state) => const SocialPage(),
-                routes: [
-                  GoRoute(
-                    path: 'create',
-                    pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-                      key: state.pageKey,
-                      child: SocialCreatePostPage(
-                        initialCaption: state.extra as String?,
-                      ),
-                    ),
-                  ),
-                ],
+                path: '/discover',
+                builder: (context, state) => const FeedPage(),
               ),
             ],
           ),
@@ -181,64 +172,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/fortune',
-                builder: (context, state) => const FortuneTarotHubPage(),
-                routes: [
-                  GoRoute(
-                    path: 'types',
-                    pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-                      key: state.pageKey,
-                      child: const FortuneTypesAllPage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: ':slug',
-                    pageBuilder: (context, state) {
-                      final slug = state.pathParameters['slug']!;
-                      final type = FortuneCatalog.bySlug(slug);
-                      final child = type == null
-                          ? const FortuneTarotHubPage()
-                          : type.isDaily
-                              ? DailyFortuneOpenPage(type: type)
-                              : FortuneTypeIntroPage(type: type);
-                      return AppPageTransitions.fadeSlide(
-                        key: state.pageKey,
-                        child: child,
-                      );
-                    },
-                    routes: [
-                      GoRoute(
-                        path: 'session',
-                        pageBuilder: (context, state) {
-                          final slug = state.pathParameters['slug']!;
-                          final type = FortuneCatalog.bySlug(slug);
-                          final child = type == null
-                              ? const FortuneTarotHubPage()
-                              : FortuneSessionPage(type: type);
-                          return AppPageTransitions.fadeSlide(
-                            key: state.pageKey,
-                            child: child,
-                          );
-                        },
-                      ),
-                      GoRoute(
-                        path: 'result',
-                        pageBuilder: (context, state) {
-                          final result = state.extra as FortuneReadingResult?;
-                          final child = result == null
-                              ? const FortuneTarotHubPage()
-                              : result.type.isDaily
-                                  ? DailyFortuneResultPage(result: result)
-                                  : FortuneResultPage(result: result);
-                          return AppPageTransitions.fadeSlide(
-                            key: state.pageKey,
-                            child: child,
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ],
+                path: '/messages',
+                builder: (context, state) => const ConversationsPage(),
               ),
             ],
           ),
@@ -247,6 +182,81 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/profile',
                 builder: (context, state) => const ProfilePage(),
+              ),
+            ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/social',
+        builder: (context, state) => const SocialPage(),
+        routes: [
+          GoRoute(
+            path: 'create',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: SocialCreatePostPage(
+                initialCaption: state.extra as String?,
+              ),
+            ),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/fortune',
+        builder: (context, state) => const FortuneTarotHubPage(),
+        routes: [
+          GoRoute(
+            path: 'types',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const FortuneTypesAllPage(),
+            ),
+          ),
+          GoRoute(
+            path: ':slug',
+            pageBuilder: (context, state) {
+              final slug = state.pathParameters['slug']!;
+              final type = FortuneCatalog.bySlug(slug);
+              final child = type == null
+                  ? const FortuneTarotHubPage()
+                  : type.isDaily
+                      ? DailyFortuneOpenPage(type: type)
+                      : FortuneTypeIntroPage(type: type);
+              return AppPageTransitions.fadeSlide(
+                key: state.pageKey,
+                child: child,
+              );
+            },
+            routes: [
+              GoRoute(
+                path: 'session',
+                pageBuilder: (context, state) {
+                  final slug = state.pathParameters['slug']!;
+                  final type = FortuneCatalog.bySlug(slug);
+                  final child = type == null
+                      ? const FortuneTarotHubPage()
+                      : FortuneSessionPage(type: type);
+                  return AppPageTransitions.fadeSlide(
+                    key: state.pageKey,
+                    child: child,
+                  );
+                },
+              ),
+              GoRoute(
+                path: 'result',
+                pageBuilder: (context, state) {
+                  final result = state.extra as FortuneReadingResult?;
+                  final child = result == null
+                      ? const FortuneTarotHubPage()
+                      : result.type.isDaily
+                          ? DailyFortuneResultPage(result: result)
+                          : FortuneResultPage(result: result);
+                  return AppPageTransitions.fadeSlide(
+                    key: state.pageKey,
+                    child: child,
+                  );
+                },
               ),
             ],
           ),

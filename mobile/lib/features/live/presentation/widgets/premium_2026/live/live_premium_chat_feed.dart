@@ -1,9 +1,9 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../../../core/theme/app_colors.dart';
 import '../../broadcast_room/live_room_chat_message.dart';
 
 /// Canlı yorum akışı — cam baloncuklar, alttan yukarı.
@@ -59,7 +59,7 @@ class _ChatBubble extends StatelessWidget {
         child: Text(
           message.text,
           style: TextStyle(
-            color: AppColors.coinGold.withValues(alpha: 0.95),
+            color: AppThemeColors.coinGold.withValues(alpha: 0.95),
             fontSize: 12,
             fontWeight: FontWeight.w700,
           ),
@@ -88,7 +88,7 @@ class _ChatBubble extends StatelessWidget {
                     text: '${message.user} ',
                     style: const TextStyle(
                       fontWeight: FontWeight.w900,
-                      color: AppColors.accentPink,
+                      color: AppThemeColors.accentPink,
                     ),
                   ),
                   TextSpan(

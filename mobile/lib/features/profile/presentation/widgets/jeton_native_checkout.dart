@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -41,21 +43,21 @@ class _JetonNativeCheckoutState extends ConsumerState<JetonNativeCheckout> {
     final config = ref.watch(paymentConfigProvider);
 
     return config.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => Center(child: CircularProgressIndicator()),
       error: (e, _) => Text(ApiException.userMessage(e)),
       data: (cfg) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             '${widget.package.title} · ${widget.priceText}',
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'Ödeme yöntemi',
             style: TextStyle(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           _MethodTile(
             icon: Icons.chat_rounded,
             label: 'WhatsApp',
@@ -77,7 +79,7 @@ class _JetonNativeCheckoutState extends ConsumerState<JetonNativeCheckout> {
             selected: _method == PaymentMethodKind.bank_transfer,
             onTap: () => setState(() => _method = PaymentMethodKind.bank_transfer),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           GlowPanel(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -85,29 +87,29 @@ class _JetonNativeCheckoutState extends ConsumerState<JetonNativeCheckout> {
               children: [
                 Text(
                   _detailTitle(cfg),
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: TextStyle(fontWeight: FontWeight.w800),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 SelectableText(
                   _detailValue(cfg),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.accentCyan,
+                    color: AppThemeColors.accentCyan,
                   ),
                 ),
                 if (_method == PaymentMethodKind.bank_transfer) ...[
                   if (cfg.bankName != null) ...[
-                    const SizedBox(height: 6),
-                    Text(cfg.bankName!, style: const TextStyle(fontSize: 12)),
+                    SizedBox(height: 6),
+                    Text(cfg.bankName!, style: TextStyle(fontSize: 12)),
                   ],
                   if (cfg.bankAccountHolder.isNotEmpty)
                     Text(
                       cfg.bankAccountHolder,
-                      style: const TextStyle(fontSize: 12),
+                      style: TextStyle(fontSize: 12),
                     ),
                 ],
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 Text(
                   'Ödemeyi yaptıktan sonra «Talep gönder» ile admin ve site bildirim paneline düşer.',
                   style: TextStyle(
@@ -119,37 +121,37 @@ class _JetonNativeCheckoutState extends ConsumerState<JetonNativeCheckout> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _copyDetail(cfg),
-                  icon: const Icon(Icons.copy_rounded, size: 18),
-                  label: const Text('Kopyala'),
+                  icon: Icon(Icons.copy_rounded, size: 18),
+                  label: Text('Kopyala'),
                 ),
               ),
               if (_method == PaymentMethodKind.whatsapp) ...[
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: () => _openWhatsApp(cfg),
-                    icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                    label: const Text('WhatsApp'),
+                    icon: Icon(Icons.open_in_new_rounded, size: 18),
+                    label: Text('WhatsApp'),
                   ),
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           FilledButton(
             onPressed: _submitting ? null : () => _submit(cfg),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              backgroundColor: AppColors.accentPink,
+              backgroundColor: AppThemeColors.accentPink,
             ),
             child: _submitting
-                ? const SizedBox(
+                ? SizedBox(
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(
@@ -157,7 +159,7 @@ class _JetonNativeCheckoutState extends ConsumerState<JetonNativeCheckout> {
                       color: Colors.white,
                     ),
                   )
-                : const Text(
+                : Text(
                     'Ödeme bilgisi / WhatsApp',
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
@@ -246,7 +248,7 @@ class _MethodTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: selected
-            ? AppColors.accentPurple.withValues(alpha: 0.25)
+            ? AppThemeColors.accentPurple.withValues(alpha: 0.25)
             : Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
@@ -256,27 +258,27 @@ class _MethodTile extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                Icon(icon, color: selected ? AppColors.accentPink : AppColors.textMuted),
-                const SizedBox(width: 12),
+                Icon(icon, color: selected ? AppThemeColors.accentPink : context.colors.onSurfaceMuted),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
+                      Text(label, style: TextStyle(fontWeight: FontWeight.w800)),
                       Text(
                         subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textMuted,
+                          color: context.colors.onSurfaceMuted,
                         ),
                       ),
                     ],
                   ),
                 ),
                 if (selected)
-                  const Icon(Icons.check_circle_rounded, color: AppColors.accentPink),
+                  Icon(Icons.check_circle_rounded, color: AppThemeColors.accentPink),
               ],
             ),
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../theme/app_colors.dart';
 
 class DiscoverAccentLoader extends StatelessWidget {
   const DiscoverAccentLoader({super.key});
@@ -13,7 +14,7 @@ class DiscoverAccentLoader extends StatelessWidget {
         height: 32,
         child: CircularProgressIndicator(
           strokeWidth: 2.5,
-          color: AppColors.accentPink,
+          color: AppThemeColors.accentPink,
         ),
       ),
     );

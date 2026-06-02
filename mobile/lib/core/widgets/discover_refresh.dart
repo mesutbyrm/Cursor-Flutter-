@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_theme_colors.dart';
 import '../ui/premium_2026/premium_motion.dart';
 
 /// Keşfet ve sekmelerde daha kısa / hızlı hissedilen yenileme.
 abstract final class DiscoverRefresh {
   static const displacement = 28.0;
   static const strokeWidth = 2.0;
-  static const color = AppColors.accentPink;
-  static const backgroundColor = AppColors.bgPurpleGlow;
+  static const color = AppThemeColors.accentPink;
+  static const backgroundColor = Color(0xFF1A0F3D);
 
   static RefreshIndicator wrap({
     required Future<void> Function() onRefresh,

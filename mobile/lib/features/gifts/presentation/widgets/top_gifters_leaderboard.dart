@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../domain/gift_leaderboard_entry.dart';
 
@@ -24,7 +26,7 @@ class TopGiftersLeaderboard extends StatelessWidget {
         child: Center(
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AppColors.accentPink,
+            color: AppThemeColors.accentPink,
           ),
         ),
       );
@@ -36,7 +38,7 @@ class TopGiftersLeaderboard extends StatelessWidget {
         child: Text(
           'Henüz hediye sıralaması yok',
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.9)),
+          style: TextStyle(color: context.colors.onSurfaceMuted.withValues(alpha: 0.9)),
         ),
       );
     }
@@ -78,7 +80,7 @@ class _LeaderRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: entry.rank <= 3
-              ? AppColors.coinGold.withValues(alpha: 0.35)
+              ? AppThemeColors.coinGold.withValues(alpha: 0.35)
               : Colors.white12,
         ),
       ),
@@ -110,7 +112,7 @@ class _LeaderRow extends StatelessWidget {
                   '${entry.giftCount} hediye',
                   style: TextStyle(
                     fontSize: 11,
-                    color: AppColors.textMuted.withValues(alpha: 0.9),
+                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                   ),
                 ),
               ],
@@ -121,7 +123,7 @@ class _LeaderRow extends StatelessWidget {
               const Icon(
                 Icons.monetization_on_rounded,
                 size: 14,
-                color: AppColors.coinGold,
+                color: AppThemeColors.coinGold,
               ),
               const SizedBox(width: 4),
               Text(
@@ -129,7 +131,7 @@ class _LeaderRow extends StatelessWidget {
                 style: const TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 13,
-                  color: AppColors.coinGold,
+                  color: AppThemeColors.coinGold,
                 ),
               ),
             ],

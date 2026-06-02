@@ -1,8 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 
@@ -25,8 +27,8 @@ class VoiceRoomCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = room.backgroundImageUrl;
     final borderColor = highlight
-        ? AppColors.coinGold.withValues(alpha: 0.7)
-        : AppColors.accentPurple.withValues(alpha: 0.45);
+        ? AppThemeColors.coinGold.withValues(alpha: 0.7)
+        : AppThemeColors.accentPurple.withValues(alpha: 0.45);
 
     return Material(
       color: Colors.transparent,
@@ -37,8 +39,8 @@ class VoiceRoomCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
             border: Border.all(color: borderColor, width: highlight ? 2 : 1),
-            boxShadow: AppColors.glowShadow(
-              highlight ? AppColors.coinGold : AppColors.accentPink,
+            boxShadow: AppThemeColors.glowShadow(
+              highlight ? AppThemeColors.coinGold : AppThemeColors.accentPink,
               blur: highlight ? 20 : 14,
             ),
           ),
@@ -92,25 +94,25 @@ class VoiceRoomCard extends StatelessWidget {
                             style: TextStyle(fontSize: large ? 28 : 22),
                           ),
                           if (highlight) ...[
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.coinGold.withValues(alpha: 0.25),
+                                color: AppThemeColors.coinGold.withValues(alpha: 0.25),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: AppColors.coinGold.withValues(alpha: 0.6),
+                                  color: AppThemeColors.coinGold.withValues(alpha: 0.6),
                                 ),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'BENİM ODAM',
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w900,
-                                  color: AppColors.coinGold,
+                                  color: AppThemeColors.coinGold,
                                 ),
                               ),
                             ),
@@ -132,18 +134,18 @@ class VoiceRoomCard extends StatelessWidget {
                         ),
                       ),
                       if (room.descTr != null && room.descTr!.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           room.descTr!,
                           maxLines: large ? 2 : 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.textMuted,
+                          style: TextStyle(
+                            color: context.colors.onSurfaceMuted,
                             fontSize: 11,
                           ),
                         ),
                       ],
-                      const SizedBox(height: 10),
+                      SizedBox(height: 10),
                       Row(
                         children: [
                           if (room.ownerAvatarUrl != null)
@@ -157,7 +159,7 @@ class VoiceRoomCard extends StatelessWidget {
                               radius: large ? 16 : 13,
                               child: Icon(Icons.person, size: large ? 18 : 14),
                             ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               room.ownerName ?? 'Oda sahibi',
@@ -170,7 +172,7 @@ class VoiceRoomCard extends StatelessWidget {
                             ),
                           ),
                           ..._avatarStack(room.recentUserAvatars),
-                          const SizedBox(width: 6),
+                          SizedBox(width: 6),
                           ProfileGlass(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
@@ -183,13 +185,13 @@ class VoiceRoomCard extends StatelessWidget {
                                 Icon(
                                   Icons.headset_mic_rounded,
                                   size: 14,
-                                  color: AppColors.accentCyan.withValues(alpha: 0.95),
+                                  color: AppThemeColors.accentCyan.withValues(alpha: 0.95),
                                 ),
-                                const SizedBox(width: 4),
+                                SizedBox(width: 4),
                                 Text(
                                   'Katıl',
                                   style: TextStyle(
-                                    color: AppColors.accentCyan.withValues(alpha: 0.95),
+                                    color: AppThemeColors.accentCyan.withValues(alpha: 0.95),
                                     fontWeight: FontWeight.w800,
                                     fontSize: 11,
                                   ),
@@ -244,9 +246,9 @@ class _OnlinePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.onlineGreen.withValues(alpha: 0.22),
+        color: AppThemeColors.onlineGreen.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.onlineGreen.withValues(alpha: 0.55)),
+        border: Border.all(color: AppThemeColors.onlineGreen.withValues(alpha: 0.55)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -254,15 +256,15 @@ class _OnlinePill extends StatelessWidget {
           Container(
             width: 6,
             height: 6,
-            decoration: const BoxDecoration(
-              color: AppColors.onlineGreen,
+            decoration: BoxDecoration(
+              color: AppThemeColors.onlineGreen,
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 4),
+          SizedBox(width: 4),
           Text(
             '$count',
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11),
           ),
         ],
       ),

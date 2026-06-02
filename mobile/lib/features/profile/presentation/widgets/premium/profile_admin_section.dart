@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../admin/presentation/providers/admin_providers.dart';
 import '../../../../admin/presentation/providers/staff_access_provider.dart';
 import 'profile_glass.dart';
@@ -35,7 +37,7 @@ class ProfileAdminSection extends ConsumerWidget {
         ProfileGlass(
           onTap: () => context.push('/admin'),
           padding: const EdgeInsets.all(16),
-          borderColor: AppColors.liveRed.withValues(alpha: 0.4),
+          borderColor: AppThemeColors.liveRed.withValues(alpha: 0.4),
           child: Row(
             children: [
               Container(
@@ -44,19 +46,19 @@ class ProfileAdminSection extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(14),
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.liveRed.withValues(alpha: 0.5),
-                      AppColors.accentPurple.withValues(alpha: 0.35),
+                      AppThemeColors.liveRed.withValues(alpha: 0.5),
+                      AppThemeColors.accentPurple.withValues(alpha: 0.35),
                     ],
                   ),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.payments_rounded,
                   color: Colors.white,
                   size: 28,
                 ),
               ),
-              const SizedBox(width: 14),
-              const Expanded(
+              SizedBox(width: 14),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -71,7 +73,7 @@ class ProfileAdminSection extends ConsumerWidget {
                     Text(
                       'Jeton/CFC talepleri canlifal.com’dan · onay ve bildirimler',
                       style: TextStyle(
-                        color: AppColors.textMuted,
+                        color: context.colors.onSurfaceMuted,
                         fontSize: 12,
                       ),
                     ),
@@ -83,12 +85,12 @@ class ProfileAdminSection extends ConsumerWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.liveRed,
+                    color: AppThemeColors.liveRed,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     pending > 99 ? '99+' : '$pending',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
@@ -96,11 +98,11 @@ class ProfileAdminSection extends ConsumerWidget {
                   ),
                 )
               else
-                const Icon(Icons.chevron_right_rounded),
+                Icon(Icons.chevron_right_rounded),
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
       ],
     );
   }

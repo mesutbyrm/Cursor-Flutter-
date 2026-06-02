@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/dual_balance_chips.dart';
 import 'profile_glass.dart';
 
@@ -34,7 +36,7 @@ class ProfileWalletSection extends StatelessWidget {
         const ProfileSectionTitle(title: 'Cüzdanım'),
         ProfileGlass(
           padding: const EdgeInsets.all(16),
-          borderColor: AppColors.accentPurple.withValues(alpha: 0.35),
+          borderColor: AppThemeColors.accentPurple.withValues(alpha: 0.35),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -52,7 +54,7 @@ class ProfileWalletSection extends StatelessWidget {
                 'Jeton: canlı yayın, sohbet, hediye · CFC (CanlıFal Coin): oyun ve fal',
                 style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.textMuted.withValues(alpha: 0.9),
+                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                   height: 1.35,
                 ),
               ),
@@ -75,7 +77,7 @@ class ProfileWalletSection extends StatelessWidget {
                 icon: Icons.diamond_rounded,
                 label: 'CFC Yükle',
                 onTap: onCfcTopUp,
-                accent: AppColors.diamondBlue,
+                accent: AppThemeColors.diamondBlue,
               ),
             ),
           ],
@@ -99,7 +101,7 @@ class ProfileWalletSection extends StatelessWidget {
           icon: Icons.payment_rounded,
           label: 'Ödeme Bildirimi',
           onTap: onPaymentNotice,
-          accent: AppColors.accentPink,
+          accent: AppThemeColors.accentPink,
         ),
         const SizedBox(height: 10),
         Row(
@@ -153,12 +155,12 @@ class _WalletAction extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               gradient: LinearGradient(
                 colors: [
-                  AppColors.accentPurple.withValues(alpha: 0.35),
-                  AppColors.accentPink.withValues(alpha: 0.2),
+                  AppThemeColors.accentPurple.withValues(alpha: 0.35),
+                  AppThemeColors.accentPink.withValues(alpha: 0.2),
                 ],
               ),
             ),
-            child: Icon(icon, size: 18, color: accent ?? AppColors.accentCyan),
+            child: Icon(icon, size: 18, color: accent ?? AppThemeColors.accentCyan),
           ),
           const SizedBox(width: 8),
           Expanded(

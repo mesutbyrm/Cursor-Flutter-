@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../theme/voice_room_tokens.dart';
 
 /// Web alt navigasyon — Ana Sayfa, Hoparlör, merkez mikrofon, Jeton, Ayarlar.
@@ -70,7 +70,7 @@ class VoiceWebBottomNav extends StatelessWidget {
               _NavItem(
                 icon: Icons.monetization_on_rounded,
                 label: 'Jeton Yükle',
-                color: AppColors.diamondBlue,
+                color: AppThemeColors.diamondBlue,
                 onTap: onCoins,
               ),
               _NavItem(

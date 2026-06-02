@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../theme/app_colors.dart';
 
 enum NeonButtonSize { sm, md, lg }
 
@@ -46,9 +47,9 @@ class NeonButton extends StatelessWidget {
           height: heights,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            gradient: AppColors.brandGradient,
+            gradient: context.colors.brandGradient,
             boxShadow: onPressed != null
-                ? AppColors.glowShadow(AppColors.accentPink, blur: 16)
+                ? AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: 16)
                 : null,
           ),
           child: Padding(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/ui/premium/premium_glass_surface.dart';
 import 'live_room_chat_message.dart';
 
@@ -43,7 +45,7 @@ class LiveRoomChatBubble extends StatelessWidget {
         child: Text(
           message.text,
           style: TextStyle(
-            color: AppColors.accentCyan.withValues(alpha: 0.95),
+            color: AppThemeColors.accentCyan.withValues(alpha: 0.95),
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -65,12 +67,12 @@ class LiveRoomChatBubble extends StatelessWidget {
                 text: '${message.user}: ',
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
-                  color: AppColors.accentCyan,
+                  color: AppThemeColors.accentCyan,
                 ),
               ),
               TextSpan(
                 text: message.text,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.colors.onSurface),
               ),
             ],
           ),

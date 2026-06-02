@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../../live/domain/entities/live_gift_event.dart';
 import '../../theme/voice_room_tokens.dart';
@@ -178,7 +178,7 @@ class _GiftFlightBubble extends StatelessWidget {
             'x${event.combo}',
             style: const TextStyle(
               fontWeight: FontWeight.w900,
-              color: AppColors.coinGold,
+              color: AppThemeColors.coinGold,
               fontSize: 14,
             ),
           ),

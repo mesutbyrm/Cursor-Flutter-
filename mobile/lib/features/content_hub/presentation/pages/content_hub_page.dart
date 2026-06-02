@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
-import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../domain/content_link.dart';
 
-/// Blog, rüya ve SEO içerikleri — canlifal.com WebView hub.
+/// Blog, rüya ve fal içerikleri — yalnızca native ekranlara yönlendirir (WebView yok).
 class ContentHubPage extends StatelessWidget {
   const ContentHubPage({super.key});
 
@@ -21,7 +21,7 @@ class ContentHubPage extends StatelessWidget {
         padding: ResponsiveLayout.pagePadding(context).copyWith(bottom: 32),
         children: [
           Text(
-            'Blog, rüya sözlüğü ve topluluk sayfaları site ile aynı içeriği gösterir.',
+            'Tüm içerikler uygulama içi native ekranlarda ve API üzerinden sunulur.',
             style: TextStyle(
               color: palette.textSecondary,
               height: 1.4,
@@ -59,12 +59,7 @@ class ContentHubPage extends StatelessWidget {
                     Icons.chevron_right_rounded,
                     color: palette.textMuted,
                   ),
-                  onTap: () => context.push(
-                    CanlifalWebRoute.location(
-                      relativePath: link.path,
-                      title: link.title,
-                    ),
-                  ),
+                  onTap: () => openNativeSitePath(context, link.path),
                 ),
               ),
             ),

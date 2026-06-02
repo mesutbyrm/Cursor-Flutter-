@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/messages_notifications_actions.dart';
@@ -114,7 +114,7 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
                   (ctx, i) {
                     if (i >= items.length) {
                       if (state.hasMore) {
-                        return const Padding(
+                        return Padding(
                           padding: EdgeInsets.symmetric(vertical: 16),
                           child: Center(
                             child: SizedBox(
@@ -136,13 +136,13 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
                           children: [
                             Container(
                               padding: const EdgeInsets.all(2),
-                              decoration: const BoxDecoration(
+                              decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: AppColors.brandGradient,
+                                gradient: context.colors.brandGradient,
                               ),
                               child: UserAvatar(url: c.avatarUrl, radius: 26),
                             ),
-                            const SizedBox(width: 14),
+                            SizedBox(width: 14),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,13 +156,13 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
                                       fontSize: 16,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  SizedBox(height: 4),
                                   Text(
                                     c.subtitle ?? '',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: AppColors.textMuted,
+                                    style: TextStyle(
+                                      color: context.colors.onSurfaceMuted,
                                       fontSize: 13,
                                     ),
                                   ),
@@ -176,12 +176,12 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  gradient: AppColors.brandGradient,
+                                  gradient: context.colors.brandGradient,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   '${c.unreadCount}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.white,
@@ -191,7 +191,7 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
                             else
                               Icon(
                                 Icons.chevron_right_rounded,
-                                color: AppColors.textMuted.withValues(alpha: 0.6),
+                                color: context.colors.onSurfaceMuted.withValues(alpha: 0.6),
                               ),
                           ],
                         ),

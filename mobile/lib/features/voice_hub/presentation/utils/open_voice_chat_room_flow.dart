@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/data/datasources/live_remote_datasource.dart';
 import '../../../live/presentation/providers/live_providers.dart';
@@ -46,7 +47,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
             Text(
               'Normal oda $normalCost jeton · VIP oda $vipCost jeton',
               style: TextStyle(
-                color: AppColors.textMuted.withValues(alpha: 0.95),
+                color: ctx.colors.onSurfaceMuted.withValues(alpha: 0.95),
                 fontSize: 13,
                 height: 1.35,
               ),
@@ -56,8 +57,8 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
               'Bakiyeniz: $balance jeton',
               style: TextStyle(
                 color: balance >= normalCost
-                    ? AppColors.accentCyan
-                    : AppColors.liveRed,
+                    ? AppThemeColors.accentCyan
+                    : AppThemeColors.liveRed,
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
               ),
@@ -68,7 +69,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
               icon: const Icon(Icons.mic_rounded),
               label: Text('Sesli oda aç · $normalCost jeton'),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.accentPurple,
+                backgroundColor: AppThemeColors.accentPurple,
                 minimumSize: const Size.fromHeight(48),
               ),
             ),
@@ -78,8 +79,8 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
               icon: const Icon(Icons.workspace_premium_rounded),
               label: Text('VIP oda aç · $vipCost jeton'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.coinGold,
-                side: const BorderSide(color: AppColors.coinGold),
+                foregroundColor: AppThemeColors.coinGold,
+                side: const BorderSide(color: AppThemeColors.coinGold),
                 minimumSize: const Size.fromHeight(48),
               ),
             ),
@@ -124,7 +125,7 @@ Future<void> _createAndEnter(
     context: context,
     barrierDismissible: false,
     builder: (_) => const Center(
-      child: CircularProgressIndicator(color: AppColors.accentPink),
+      child: CircularProgressIndicator(color: AppThemeColors.accentPink),
     ),
   );
 

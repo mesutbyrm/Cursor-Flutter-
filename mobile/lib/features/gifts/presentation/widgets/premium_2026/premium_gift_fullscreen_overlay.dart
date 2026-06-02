@@ -1,9 +1,11 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/premium_gift_catalog_2026.dart';
 import '../../../../live/domain/entities/live_gift_event.dart';
 import '../../../../live/presentation/gifts/widgets/floating_gift_particles.dart';
@@ -117,7 +119,7 @@ class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverl
                       DecoratedBox(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          boxShadow: AppColors.glowShadow(glow, blur: 48),
+                          boxShadow: AppThemeColors.glowShadow(glow, blur: 48),
                         ),
                         child: _GiftHero(giftId: e.giftId, event: e),
                       ),
@@ -177,12 +179,12 @@ class _ComboBadge extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             glow.withValues(alpha: 0.5),
-            AppColors.accentPink.withValues(alpha: 0.35),
+            AppThemeColors.accentPink.withValues(alpha: 0.35),
           ],
         ),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.coinGold.withValues(alpha: 0.7), width: 2),
-        boxShadow: AppColors.glowShadow(AppColors.coinGold, blur: 20),
+        border: Border.all(color: AppThemeColors.coinGold.withValues(alpha: 0.7), width: 2),
+        boxShadow: AppThemeColors.glowShadow(AppThemeColors.coinGold, blur: 20),
       ),
       child: Text(
         'COMBO x$combo',
@@ -191,7 +193,7 @@ class _ComboBadge extends StatelessWidget {
           fontWeight: FontWeight.w900,
           letterSpacing: 1.2,
           foreground: Paint()
-            ..shader = AppColors.brandGradient.createShader(
+            ..shader = context.colors.brandGradient.createShader(
               const Rect.fromLTWH(0, 0, 200, 44),
             ),
           shadows: [Shadow(color: glow.withValues(alpha: 0.9), blurRadius: 18)],
@@ -224,7 +226,7 @@ class _SenderBanner extends StatelessWidget {
         color: Colors.black.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: glow.withValues(alpha: 0.55)),
-        boxShadow: AppColors.glowShadow(glow, blur: 14),
+        boxShadow: AppThemeColors.glowShadow(glow, blur: 14),
       ),
       child: Text(
         event.notificationText,
@@ -273,7 +275,7 @@ class _GlowRingPainter extends CustomPainter {
         colors: [
           glow.withValues(alpha: 0.05),
           glow,
-          AppColors.accentPink,
+          AppThemeColors.accentPink,
           glow.withValues(alpha: 0.05),
         ],
       ).createShader(Rect.fromCircle(center: c, radius: r))
@@ -306,7 +308,7 @@ class _NeonVignettePainter extends CustomPainter {
           radius: 1.1,
           colors: [
             glow.withValues(alpha: 0.22),
-            AppColors.accentPurple.withValues(alpha: 0.12),
+            AppThemeColors.accentPurple.withValues(alpha: 0.12),
             Colors.transparent,
           ],
         ).createShader(rect),

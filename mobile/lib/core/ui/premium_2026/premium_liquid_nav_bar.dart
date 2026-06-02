@@ -1,9 +1,10 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../premium/gradient_fab.dart';
 import 'premium_2026_tokens.dart';
@@ -17,14 +18,16 @@ class PremiumLiquidNavBar extends StatelessWidget {
     super.key,
     required this.currentIndex,
     required this.onTap,
-    required this.onFabTap,
+    this.onFabTap,
     this.fabIcon = Icons.videocam_rounded,
+    this.showCenterFab = false,
   });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
-  final VoidCallback onFabTap;
+  final VoidCallback? onFabTap;
   final IconData fabIcon;
+  final bool showCenterFab;
 
   @override
   Widget build(BuildContext context) {
@@ -52,26 +55,37 @@ class PremiumLiquidNavBar extends StatelessWidget {
                     _LiquidNavItem(
                       index: 0,
                       current: currentIndex,
-                      icon: Icons.explore_outlined,
-                      selectedIcon: Icons.explore_rounded,
-                      label: 'Keşfet',
+                      icon: Icons.home_outlined,
+                      selectedIcon: Icons.home_rounded,
+                      label: 'Ana Sayfa',
                       onTap: onTap,
                     ),
                     _LiquidNavItem(
                       index: 1,
                       current: currentIndex,
-                      icon: Icons.groups_outlined,
-                      selectedIcon: Icons.groups_rounded,
-                      label: 'Sosyal',
+                      icon: Icons.explore_outlined,
+                      selectedIcon: Icons.explore_rounded,
+                      label: 'Keşfet',
                       onTap: onTap,
                     ),
-                    GradientFab(icon: fabIcon, onTap: onFabTap),
+                    if (showCenterFab && onFabTap != null)
+                      GradientFab(icon: fabIcon, onTap: onFabTap!)
+                    else
+                      _LiquidNavItem(
+                        index: 2,
+                        current: currentIndex,
+                        icon: Icons.sensors_outlined,
+                        selectedIcon: Icons.sensors_rounded,
+                        label: 'Canlı',
+                        onTap: onTap,
+                        emphasize: true,
+                      ),
                     _LiquidNavItem(
                       index: 3,
                       current: currentIndex,
-                      icon: Icons.auto_awesome_outlined,
-                      selectedIcon: Icons.auto_awesome_rounded,
-                      label: 'Fal',
+                      icon: Icons.chat_bubble_outline_rounded,
+                      selectedIcon: Icons.chat_bubble_rounded,
+                      label: 'Sohbet',
                       onTap: onTap,
                     ),
                     _LiquidNavItem(
@@ -109,6 +123,7 @@ class _LiquidNavItem extends StatelessWidget {
     required this.selectedIcon,
     required this.label,
     required this.onTap,
+    this.emphasize = false,
   });
 
   final int index;
@@ -117,6 +132,7 @@ class _LiquidNavItem extends StatelessWidget {
   final IconData selectedIcon;
   final String label;
   final ValueChanged<int> onTap;
+  final bool emphasize;
 
   @override
   Widget build(BuildContext context) {
@@ -133,11 +149,11 @@ class _LiquidNavItem extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(t.radiusPill),
           color: selected
-              ? AppColors.accentPink.withValues(alpha: 0.18)
+              ? AppThemeColors.accentPink.withValues(alpha: 0.18)
               : Colors.transparent,
           border: selected
               ? Border.all(
-                  color: AppColors.accentPink.withValues(alpha: 0.35),
+                  color: AppThemeColors.accentPink.withValues(alpha: 0.35),
                 )
               : null,
         ),
@@ -146,8 +162,10 @@ class _LiquidNavItem extends StatelessWidget {
           children: [
             Icon(
               selected ? selectedIcon : icon,
-              size: 24,
-              color: selected ? AppColors.textPrimary : AppColors.textMuted,
+              size: emphasize ? 26 : 24,
+              color: selected
+                  ? (emphasize ? AppThemeColors.accentPink : context.colors.onSurface)
+                  : context.colors.onSurfaceMuted,
             ),
             const SizedBox(height: 3),
             Text(

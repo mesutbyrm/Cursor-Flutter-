@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../messages/presentation/providers/messages_providers.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
 import 'fortune_hub_action_button.dart';
@@ -37,7 +37,7 @@ class FortuneHubAppBar extends ConsumerWidget {
         child: Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.menu_rounded, color: AppColors.textPrimary),
+              icon: Icon(Icons.menu_rounded, color: context.colors.onSurface),
               onPressed: () => _openMenu(context),
             ),
             const FortuneHubGoldStars(size: 11),
@@ -91,7 +91,7 @@ class FortuneHubAppBar extends ConsumerWidget {
               title: const Text('Ana Sayfa'),
               onTap: () {
                 Navigator.pop(ctx);
-                context.go('/feed');
+                context.go('/home');
               },
             ),
             ListTile(

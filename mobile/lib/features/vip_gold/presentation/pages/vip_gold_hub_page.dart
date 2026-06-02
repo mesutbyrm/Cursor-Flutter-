@@ -1,10 +1,10 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../domain/vip_tier.dart';
 import '../providers/vip_membership_provider.dart';
 import '../theme/vip_gold_tokens.dart';
@@ -87,7 +87,7 @@ class _VipGoldHubPageState extends ConsumerState<VipGoldHubPage> {
                           Text(
                             '$days gün kaldı',
                             style: TextStyle(
-                              color: AppColors.textMuted.withValues(alpha: 0.9),
+                              color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                               fontSize: 12,
                             ),
                           ),
@@ -136,7 +136,7 @@ class _VipGoldHubPageState extends ConsumerState<VipGoldHubPage> {
                             'Seviye önizleme',
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
-                              color: AppColors.textMuted.withValues(alpha: 0.95),
+                              color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
                             ),
                           ),
                         ),

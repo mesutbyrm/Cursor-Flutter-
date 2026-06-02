@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../../../core/theme/app_colors.dart';
 
 /// Sağ dikey aksiyon şeridi — beğeni, hediye, paylaş.
 class LivePremiumSideRail extends StatelessWidget {
@@ -35,15 +37,15 @@ class LivePremiumSideRail extends StatelessWidget {
           gradient: const LinearGradient(
             colors: [Color(0xFFFF2D7A), Color(0xFFB832FF)],
           ),
-          glow: AppColors.accentPink,
+          glow: AppThemeColors.accentPink,
           onTap: onLike,
         ),
         const SizedBox(height: 14),
         _RailButton(
           icon: Icons.card_giftcard_rounded,
           label: giftLabel,
-          gradient: AppColors.coinCapsuleGradient,
-          glow: AppColors.coinGold,
+          gradient: context.colors.brandGradient,
+          glow: AppThemeColors.coinGold,
           onTap: onGift,
         ),
         const SizedBox(height: 14),
@@ -104,7 +106,7 @@ class _RailButton extends StatelessWidget {
                   color: (glow ?? Colors.white).withValues(alpha: 0.4),
                 ),
                 boxShadow: glow != null
-                    ? AppColors.glowShadow(glow!, blur: 16)
+                    ? AppThemeColors.glowShadow(glow!, blur: 16)
                     : null,
               ),
               child: Icon(icon, color: iconColor ?? Colors.white, size: 26),

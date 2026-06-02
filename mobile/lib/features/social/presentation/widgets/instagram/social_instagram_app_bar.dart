@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/canlifal_tokens.dart';
 import '../../../../../core/ui/premium/premium_icon_button.dart';
 import '../../../../../core/widgets/messages_notifications_actions.dart';
@@ -19,7 +21,7 @@ class SocialInstagramAppBar extends ConsumerWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(16, top + 8, 8, 10),
       decoration: BoxDecoration(
-        color: AppColors.background.withValues(alpha: 0.98),
+        color: context.scaffoldBg.withValues(alpha: 0.98),
         border: Border(
           bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
         ),
@@ -29,7 +31,7 @@ class SocialInstagramAppBar extends ConsumerWidget {
           Icon(
             Icons.auto_awesome_rounded,
             size: 22,
-            color: AppColors.accentPurple.withValues(alpha: 0.95),
+            color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
           ),
           const SizedBox(width: 8),
           ShaderMask(

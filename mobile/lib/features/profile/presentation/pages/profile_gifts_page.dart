@@ -1,11 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/widgets/lazy_paginated_sliver_list.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/profile_providers.dart';
@@ -100,7 +100,7 @@ class _ProfileGiftsPageState extends ConsumerState<ProfileGiftsPage> {
                           'x${g.count}',
                           style: const TextStyle(
                             fontWeight: FontWeight.w900,
-                            color: AppColors.accentPink,
+                            color: AppThemeColors.accentPink,
                           ),
                         ),
                               ],

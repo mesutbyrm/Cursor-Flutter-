@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 import '../premium_2026/liquid_glass.dart';
-import '../../theme/app_colors.dart';
 
 /// Jeton kapsülü — liquid glass + gradient ikon.
 class PremiumCoinCapsule extends StatelessWidget {
@@ -39,7 +39,7 @@ class PremiumCoinCapsule extends StatelessWidget {
             label,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: context.colors.onSurface,
                 ),
           ),
         ],

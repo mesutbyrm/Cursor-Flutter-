@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover/discover_icon_button.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
@@ -133,7 +135,7 @@ class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage>
                     child: Text(
                       type.title,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 18,
                       ),
@@ -141,13 +143,13 @@ class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage>
                   ),
                   if (Env.useNextAuth)
                     IconButton(
-                      icon: const Icon(Icons.language_rounded),
-                      color: AppColors.textMuted,
+                      icon: Icon(Icons.language_rounded),
+                      color: context.colors.onSurfaceMuted,
                       onPressed: _openWeb,
                       tooltip: 'Web\'de aç',
                     )
                   else
-                    const SizedBox(width: 48),
+                    SizedBox(width: 48),
                 ],
               ),
             ),
@@ -174,7 +176,7 @@ class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage>
                         if (d != null) setState(() => _birthDate = d);
                       },
                     ),
-                    const SizedBox(height: 28),
+                    SizedBox(height: 28),
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -188,7 +190,7 @@ class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage>
                           ),
                         ),
                         child: _loading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 22,
                                 height: 22,
                                 child: CircularProgressIndicator(
@@ -198,7 +200,7 @@ class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage>
                               )
                             : Text(
                                 type.ctaLabel,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 16,
                                 ),
@@ -275,8 +277,8 @@ class _TarotVisual extends StatelessWidget {
       children: [
         Text(type.description,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary)),
-        const SizedBox(height: 20),
+            style: TextStyle(color: context.colors.onSurfaceVariant)),
+        SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
@@ -299,10 +301,10 @@ class _TarotVisual extends StatelessWidget {
                       ],
                     ),
                     border: Border.all(color: type.accent, width: 1.5),
-                    boxShadow: AppColors.glowShadow(type.accent),
+                    boxShadow: AppThemeColors.glowShadow(type.accent),
                   ),
                   alignment: Alignment.center,
-                  child: const Text('🃏', style: TextStyle(fontSize: 32)),
+                  child: Text('🃏', style: TextStyle(fontSize: 32)),
                 ),
               ),
             ),
@@ -325,12 +327,12 @@ class _LoveVisual extends StatelessWidget {
       children: [
         ScaleTransition(
           scale: Tween(begin: 0.9, end: 1.1).animate(pulse),
-          child: Text(type.emoji, style: const TextStyle(fontSize: 80)),
+          child: Text(type.emoji, style: TextStyle(fontSize: 80)),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Text(type.description,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary)),
+            style: TextStyle(color: context.colors.onSurfaceVariant)),
       ],
     );
   }
@@ -352,15 +354,15 @@ class _CoffeeVisual extends StatelessWidget {
             shape: BoxShape.circle,
             color: const Color(0xFF3D2817),
             border: Border.all(color: type.accent, width: 2),
-            boxShadow: AppColors.glowShadow(type.accent),
+            boxShadow: AppThemeColors.glowShadow(type.accent),
           ),
           alignment: Alignment.center,
-          child: const Text('☕', style: TextStyle(fontSize: 56)),
+          child: Text('☕', style: TextStyle(fontSize: 56)),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         Text(type.description,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary)),
+            style: TextStyle(color: context.colors.onSurfaceVariant)),
       ],
     );
   }
@@ -387,17 +389,17 @@ class _ZodiacVisual extends StatelessWidget {
                 color: type.accent.withValues(alpha: 0.6),
                 width: 2,
               ),
-              boxShadow: AppColors.glowShadow(type.accent),
+              boxShadow: AppThemeColors.glowShadow(type.accent),
             ),
-            child: const Center(
+            child: Center(
               child: Text('✨', style: TextStyle(fontSize: 56)),
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Text(type.description,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary)),
+            style: TextStyle(color: context.colors.onSurfaceVariant)),
       ],
     );
   }
@@ -414,15 +416,15 @@ class _PalmVisual extends StatelessWidget {
       children: [
         Icon(Icons.pan_tool_alt_rounded,
             size: 100, color: type.accent.withValues(alpha: 0.9)),
-        const SizedBox(height: 12),
-        const Text(
+        SizedBox(height: 12),
+        Text(
           'Avucunu ekrana hizala',
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(type.description,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary)),
+            style: TextStyle(color: context.colors.onSurfaceVariant)),
       ],
     );
   }
@@ -438,15 +440,15 @@ class _DreamInput extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           'Rüyanı kısaca anlat',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         TextField(
           controller: input,
           maxLines: 5,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white),
           decoration: InputDecoration(
             hintText: 'Gece gördüğün rüyayı yaz…',
             filled: true,
@@ -474,18 +476,18 @@ class _DateInput extends StatelessWidget {
         : 'Doğum tarihini seç';
     return Column(
       children: [
-        const Text(
+        Text(
           'Numeroloji için doğum tarihin',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         OutlinedButton.icon(
           onPressed: onPick,
-          icon: const Icon(Icons.calendar_month_rounded),
+          icon: Icon(Icons.calendar_month_rounded),
           label: Text(label),
           style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.accentCyan,
-            side: BorderSide(color: AppColors.accentCyan.withValues(alpha: 0.5)),
+            foregroundColor: AppThemeColors.accentCyan,
+            side: BorderSide(color: AppThemeColors.accentCyan.withValues(alpha: 0.5)),
             padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
           ),
         ),
@@ -504,28 +506,28 @@ class _YesNoVisual extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Text(
+        Text(
           'Sorunu içinden geçir, sonra seç',
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: context.colors.onSurfaceVariant),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         Row(
           children: [
             Expanded(
               child: _YesNoButton(
                 label: 'Evet',
                 selected: yesNo == true,
-                color: AppColors.onlineGreen,
+                color: AppThemeColors.onlineGreen,
                 onTap: () => onPick?.call(true),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: _YesNoButton(
                 label: 'Hayır',
                 selected: yesNo == false,
-                color: AppColors.liveRed,
+                color: AppThemeColors.liveRed,
                 onTap: () => onPick?.call(false),
               ),
             ),
@@ -565,7 +567,7 @@ class _YesNoButton extends StatelessWidget {
               color: selected ? color : Colors.white24,
               width: selected ? 2 : 1,
             ),
-            boxShadow: selected ? AppColors.glowShadow(color, blur: 14) : null,
+            boxShadow: selected ? AppThemeColors.glowShadow(color, blur: 14) : null,
           ),
           alignment: Alignment.center,
           child: Text(
@@ -573,7 +575,7 @@ class _YesNoButton extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 18,
-              color: selected ? Colors.white : AppColors.textMuted,
+              color: selected ? Colors.white : context.colors.onSurfaceMuted,
             ),
           ),
         ),
@@ -591,12 +593,12 @@ class _PendulumVisual extends StatelessWidget {
   Widget build(BuildContext context) {
     return RotationTransition(
       turns: Tween(begin: -0.08, end: 0.08).animate(pulse),
-      child: const Column(
+      child: Column(
         children: [
-          Text('🔮', style: TextStyle(fontSize: 64)),
-          SizedBox(height: 8),
-          Text('|', style: TextStyle(color: AppColors.textMuted, fontSize: 24)),
-          Text('◆', style: TextStyle(color: AppColors.accentCyan)),
+          const Text('🔮', style: TextStyle(fontSize: 64)),
+          const SizedBox(height: 8),
+          Text('|', style: TextStyle(color: context.colors.onSurfaceMuted, fontSize: 24)),
+          const Text('◆', style: TextStyle(color: AppThemeColors.accentCyan)),
         ],
       ),
     );
@@ -620,14 +622,14 @@ class _RuneVisual extends StatelessWidget {
             shape: BoxShape.circle,
             color: Colors.white.withValues(alpha: 0.08),
             border: Border.all(color: type.accent),
-            boxShadow: AppColors.glowShadow(type.accent),
+            boxShadow: AppThemeColors.glowShadow(type.accent),
           ),
-          child: Text(type.emoji, style: const TextStyle(fontSize: 40)),
+          child: Text(type.emoji, style: TextStyle(fontSize: 40)),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Text(type.description,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary)),
+            style: TextStyle(color: context.colors.onSurfaceVariant)),
       ],
     );
   }
@@ -645,11 +647,11 @@ class _GenericVisual extends StatelessWidget {
       scale: Tween(begin: 0.95, end: 1.05).animate(pulse),
       child: Column(
         children: [
-          Text(type.emoji, style: const TextStyle(fontSize: 72)),
-          const SizedBox(height: 12),
+          Text(type.emoji, style: TextStyle(fontSize: 72)),
+          SizedBox(height: 12),
           Text(type.description,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary)),
+              style: TextStyle(color: context.colors.onSurfaceVariant)),
         ],
       ),
     );

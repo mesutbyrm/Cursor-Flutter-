@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
 
 const socialCaptionPreviewChars = 250;
@@ -43,36 +45,36 @@ class _SocialPostCaptionState extends State<SocialPostCaption> {
           widget.inlineBodyOnly
               ? Text(
                   preview,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     height: 1.45,
-                    color: AppColors.textPrimary,
+                    color: context.colors.onSurface,
                   ),
                 )
               : RichText(
                   text: TextSpan(
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       height: 1.4,
-                      color: AppColors.textPrimary,
+                      color: context.colors.onSurface,
                     ),
                     children: [
                       TextSpan(
                         text: '${post.author.display} ',
-                        style: const TextStyle(fontWeight: FontWeight.w800),
+                        style: TextStyle(fontWeight: FontWeight.w800),
                       ),
                       TextSpan(text: preview),
                     ],
                   ),
                 ),
           if (hasOverflow && !_expanded) ...[
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             GestureDetector(
               onTap: () => setState(() => _expanded = true),
-              child: const Text(
+              child: Text(
                 'daha fazla',
                 style: TextStyle(
-                  color: AppColors.accentCyan,
+                  color: AppThemeColors.accentCyan,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
                 ),
@@ -80,13 +82,13 @@ class _SocialPostCaptionState extends State<SocialPostCaption> {
             ),
           ],
           if (hasOverflow && _expanded) ...[
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             GestureDetector(
               onTap: () => setState(() => _expanded = false),
-              child: const Text(
+              child: Text(
                 'daha az',
                 style: TextStyle(
-                  color: AppColors.textMuted,
+                  color: context.colors.onSurfaceMuted,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -125,21 +127,21 @@ class _SocialPostTextPreviewState extends State<SocialPostTextPreview> {
       children: [
         Text(
           preview,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             height: 1.45,
             fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
+            color: context.colors.onSurface,
           ),
         ),
         if (hasOverflow && !_expanded) ...[
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           GestureDetector(
             onTap: () => setState(() => _expanded = true),
-            child: const Text(
+            child: Text(
               'daha fazla',
               style: TextStyle(
-                color: AppColors.accentCyan,
+                color: AppThemeColors.accentCyan,
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
               ),
@@ -147,13 +149,13 @@ class _SocialPostTextPreviewState extends State<SocialPostTextPreview> {
           ),
         ],
         if (hasOverflow && _expanded) ...[
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           GestureDetector(
             onTap: () => setState(() => _expanded = false),
-            child: const Text(
+            child: Text(
               'daha az',
               style: TextStyle(
-                color: AppColors.textMuted,
+                color: context.colors.onSurfaceMuted,
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),

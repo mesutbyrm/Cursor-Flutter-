@@ -2,8 +2,10 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/chat_room_message.dart';
 
@@ -31,14 +33,14 @@ class VoiceRoomActionRow extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.music_note_rounded, color: Colors.white, size: 28),
-                const SizedBox(width: 8),
+                Icon(Icons.music_note_rounded, color: Colors.white, size: 28),
+                SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         'Müzik Aç',
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
@@ -46,7 +48,7 @@ class VoiceRoomActionRow extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         dj.musicQueue.isEmpty
                             ? '${dj.musicRequestCost} jeton · sıra boş'
@@ -58,7 +60,7 @@ class VoiceRoomActionRow extends StatelessWidget {
                           color: Colors.white.withValues(alpha: 0.82),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       _WaveBars(active: dj.musicQueue.isNotEmpty || dj.playing),
                     ],
                   ),
@@ -67,7 +69,7 @@ class VoiceRoomActionRow extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Expanded(
           child: _ActionTile(
             onTap: onDjTap,
@@ -78,8 +80,8 @@ class VoiceRoomActionRow extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.headphones_rounded, color: Colors.white, size: 28),
-                const SizedBox(width: 8),
+                Icon(Icons.headphones_rounded, color: Colors.white, size: 28),
+                SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,13 +89,13 @@ class VoiceRoomActionRow extends StatelessWidget {
                     children: [
                       Text(
                         'DJ ${dj.djCount}/5',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 13,
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       _DjAvatars(users: dj.djUsers),
                     ],
                   ),
@@ -135,7 +137,7 @@ class _ActionTile extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: gradient,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: AppColors.glowShadow(AppColors.accentPurple, blur: 14),
+                boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPurple, blur: 14),
               ),
               child: child,
             ),
@@ -206,9 +208,9 @@ class _DjAvatars extends StatelessWidget {
                     if (img != null && img.isNotEmpty) {
                       return CachedNetworkImage(imageUrl: img, fit: BoxFit.cover);
                     }
-                    return const ColoredBox(
-                      color: AppColors.background,
-                      child: Icon(Icons.person, size: 12),
+                    return ColoredBox(
+                      color: AppThemeColors.dark.scaffoldBackground,
+                      child: const Icon(Icons.person, size: 12),
                     );
                   }(),
                 ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../theme/voice_room_tokens.dart';
 import 'voice_glass.dart';
@@ -74,8 +76,8 @@ class VoicePremiumHeader extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             color: onlineCount > 0
-                                ? AppColors.onlineGreen
-                                : AppColors.textMuted,
+                                ? AppThemeColors.onlineGreen
+                                : context.colors.onSurfaceMuted,
                             fontWeight: onlineCount > 0
                                 ? FontWeight.w800
                                 : FontWeight.normal,
@@ -94,7 +96,7 @@ class VoicePremiumHeader extends StatelessWidget {
                   onPressed: onExit,
                   icon: const Icon(
                     Icons.power_settings_new_rounded,
-                    color: AppColors.liveRed,
+                    color: AppThemeColors.liveRed,
                     size: 22,
                   ),
                 ),

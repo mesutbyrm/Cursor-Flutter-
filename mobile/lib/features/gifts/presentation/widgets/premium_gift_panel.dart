@@ -2,11 +2,13 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/env.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../live/presentation/gifts/live_gift_controller.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -74,16 +76,16 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppColors.accentPurple.withValues(alpha: 0.42),
+                AppThemeColors.accentPurple.withValues(alpha: 0.42),
                 const Color(0xFF0A0A14).withValues(alpha: 0.96),
               ],
             ),
             border: Border(
-              top: BorderSide(color: AppColors.accentPink.withValues(alpha: 0.5)),
+              top: BorderSide(color: AppThemeColors.accentPink.withValues(alpha: 0.5)),
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.accentPurple.withValues(alpha: 0.25),
+                color: AppThemeColors.accentPurple.withValues(alpha: 0.25),
                 blurRadius: 32,
                 offset: const Offset(0, -8),
               ),
@@ -123,9 +125,9 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
               ),
               TabBar(
                 controller: _tabs,
-                indicatorColor: AppColors.accentPink,
-                labelColor: AppColors.textPrimary,
-                unselectedLabelColor: AppColors.textMuted,
+                indicatorColor: AppThemeColors.accentPink,
+                labelColor: context.colors.onSurface,
+                unselectedLabelColor: context.colors.onSurfaceMuted,
                 tabs: const [
                   Tab(text: 'Hediyeler'),
                   Tab(text: 'Top Gifters'),
@@ -200,7 +202,7 @@ class _GiftsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return gifts.when(
       loading: () => const Center(
-        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accentPink),
+        child: CircularProgressIndicator(strokeWidth: 2, color: AppThemeColors.accentPink),
       ),
       error: (_, _) => const Center(child: Text('Hediyeler yüklenemedi')),
       data: (catalog) {
@@ -253,7 +255,7 @@ class _GiftsTab extends StatelessWidget {
                         label: Text('x$q'),
                         selected: qty == q,
                         onSelected: (_) => onQty(q),
-                        selectedColor: AppColors.accentPink.withValues(alpha: 0.45),
+                        selectedColor: AppThemeColors.accentPink.withValues(alpha: 0.45),
                         backgroundColor: Colors.white10,
                         labelStyle: const TextStyle(fontWeight: FontWeight.w800),
                       ),
@@ -298,7 +300,7 @@ class _PremiumGiftTile extends StatelessWidget {
               ? LinearGradient(
                   colors: [
                     glow.withValues(alpha: 0.45),
-                    AppColors.accentPurple.withValues(alpha: 0.25),
+                    AppThemeColors.accentPurple.withValues(alpha: 0.25),
                   ],
                 )
               : null,
@@ -307,7 +309,7 @@ class _PremiumGiftTile extends StatelessWidget {
             color: selected ? glow : Colors.white.withValues(alpha: 0.12),
             width: selected ? 2 : 1,
           ),
-          boxShadow: selected ? AppColors.glowShadow(glow, blur: 18) : null,
+          boxShadow: selected ? AppThemeColors.glowShadow(glow, blur: 18) : null,
         ),
         child: Column(
           children: [
@@ -332,7 +334,7 @@ class _PremiumGiftTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
-                color: AppColors.coinGold.withValues(alpha: 0.95),
+                color: AppThemeColors.coinGold.withValues(alpha: 0.95),
               ),
             ),
           ],
@@ -378,9 +380,9 @@ class _CoinChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        gradient: AppColors.coinCapsuleGradient,
+        gradient: context.colors.brandGradient,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: AppColors.glowShadow(AppColors.coinGold, blur: 12),
+        boxShadow: AppThemeColors.glowShadow(AppThemeColors.coinGold, blur: 12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -417,9 +419,9 @@ class _SendButton extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 12),
           decoration: BoxDecoration(
-            gradient: AppColors.brandGradient,
+            gradient: context.colors.brandGradient,
             borderRadius: BorderRadius.circular(22),
-            boxShadow: AppColors.glowShadow(AppColors.accentPink),
+            boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink),
           ),
           child: loading
               ? const SizedBox(

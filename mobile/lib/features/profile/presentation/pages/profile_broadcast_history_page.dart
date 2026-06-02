@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
@@ -103,7 +105,7 @@ class _ProfileBroadcastHistoryPageState
                       children: [
                         const Icon(
                           Icons.live_tv_rounded,
-                          color: AppColors.accentPink,
+                          color: AppThemeColors.accentPink,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -120,7 +122,7 @@ class _ProfileBroadcastHistoryPageState
                                 when,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textMuted
+                                  color: context.colors.onSurfaceMuted
                                       .withValues(alpha: 0.9),
                                 ),
                               ),

@@ -71,17 +71,25 @@ class AppThemeColors {
   static const Color onlineGreen = Color(0xFF3DFF6E);
   static const Color diamondBlue = Color(0xFF5B8CFF);
   static const Color coinGold = Color(0xFFFFD54F);
+  static const Color warning = Color(0xFFFFB347);
+
+  static List<BoxShadow> glowShadow(Color color, {double blur = 24}) => [
+        BoxShadow(
+          color: color.withValues(alpha: 0.45),
+          blurRadius: blur,
+        ),
+      ];
 
   static const AppThemeColors dark = AppThemeColors(
     brightness: Brightness.dark,
-    scaffoldBackground: Color(0xFF0B0B1E),
+    scaffoldBackground: Color(0xFF0F0B1D),
     surface: Color(0xFF14141C),
     surfaceElevated: Color(0xFF1C1C26),
     surfaceContainer: Color(0xFF16162A),
     onSurface: Color(0xFFFFFFFF),
     onSurfaceVariant: Color(0xFFB8B8C8),
     onSurfaceMuted: Color(0xFF6E6E82),
-    primary: accentPink,
+    primary: Color(0xFF7B4DFF),
     onPrimary: Colors.white,
     secondary: accentCyan,
     onSecondary: Color(0xFF0B0B1E),

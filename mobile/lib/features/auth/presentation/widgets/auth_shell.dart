@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/widgets/canlifal_brand_logo.dart';
 
@@ -42,10 +44,10 @@ class AuthShell extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                           blur: 14,
                           onTap: onBack ?? () => Navigator.of(context).maybePop(),
-                          child: const Icon(
+                          child: Icon(
                             Icons.arrow_back_ios_new_rounded,
                             size: 18,
-                            color: AppColors.textSecondary,
+                            color: AppThemeColors.dark.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -65,7 +67,7 @@ class AuthShell extends StatelessWidget {
                               CanlifalBrandLogo.appIcon(
                                 size: useAppIcon ? 96 : 112,
                               ),
-                              const SizedBox(height: 28),
+                              SizedBox(height: 28),
                               child,
                             ],
                           ),
@@ -109,7 +111,7 @@ class _AuthGlowOverlay extends StatelessWidget {
                 center: const Alignment(0.8, 0.9),
                 radius: 0.75,
                 colors: [
-                  AppColors.accentPurple.withValues(alpha: 0.2),
+                  AppThemeColors.accentPurple.withValues(alpha: 0.2),
                   Colors.transparent,
                 ],
               ),
@@ -156,7 +158,7 @@ class AuthBrandHeader extends StatelessWidget {
           style: PremiumTypography.displayMedium(context),
         ),
         if (subtitle != null) ...[
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
             subtitle!,
             textAlign: TextAlign.center,
@@ -198,15 +200,15 @@ InputDecoration authInputDecoration({
   return InputDecoration(
     labelText: labelText,
     hintText: hintText,
-    labelStyle: const TextStyle(
-      color: AppColors.textMuted,
+    labelStyle: TextStyle(
+      color: AppThemeColors.dark.onSurfaceMuted,
       fontWeight: FontWeight.w600,
     ),
     hintStyle: TextStyle(
-      color: AppColors.textMuted.withValues(alpha: 0.7),
+      color: AppThemeColors.dark.onSurfaceMuted.withValues(alpha: 0.7),
       fontSize: 14,
     ),
-    prefixIcon: Icon(prefixIcon, color: AppColors.accentPurple, size: 22),
+    prefixIcon: Icon(prefixIcon, color: AppThemeColors.accentPurple, size: 22),
     filled: true,
     fillColor: Colors.black.withValues(alpha: 0.35),
     enabledBorder: border,
@@ -214,10 +216,10 @@ InputDecoration authInputDecoration({
       borderSide: const BorderSide(color: Color(0xFF9D6BFF), width: 1.5),
     ),
     errorBorder: border.copyWith(
-      borderSide: BorderSide(color: AppColors.liveRed.withValues(alpha: 0.8)),
+      borderSide: BorderSide(color: AppThemeColors.liveRed.withValues(alpha: 0.8)),
     ),
     focusedErrorBorder: border.copyWith(
-      borderSide: const BorderSide(color: AppColors.liveRed),
+      borderSide: const BorderSide(color: AppThemeColors.liveRed),
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
   );
@@ -251,7 +253,7 @@ class AuthPrimaryButton extends StatelessWidget {
           ),
           child: Center(
             child: loading
-                ? const SizedBox(
+                ? SizedBox(
                     height: 22,
                     width: 22,
                     child: CircularProgressIndicator(
@@ -261,7 +263,7 @@ class AuthPrimaryButton extends StatelessWidget {
                   )
                 : Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 17,
                       color: Colors.white,
@@ -292,9 +294,9 @@ class AuthInfoBanner extends StatelessWidget {
           Icon(
             Icons.info_outline_rounded,
             size: 20,
-            color: AppColors.accentCyan.withValues(alpha: 0.9),
+            color: AppThemeColors.accentCyan.withValues(alpha: 0.9),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
@@ -315,7 +317,7 @@ class AuthOrDivider extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Divider(color: AppColors.textMuted.withValues(alpha: 0.35)),
+          child: Divider(color: AppThemeColors.dark.onSurfaceMuted.withValues(alpha: 0.35)),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -325,7 +327,7 @@ class AuthOrDivider extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: Divider(color: AppColors.textMuted.withValues(alpha: 0.35)),
+          child: Divider(color: AppThemeColors.dark.onSurfaceMuted.withValues(alpha: 0.35)),
         ),
       ],
     );

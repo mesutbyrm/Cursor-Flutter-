@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 
 /// Orta alt navigasyon FAB — tam yuvarlak, gradient, isteğe bağlı nabız.
@@ -30,8 +31,8 @@ class GradientFab extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: AppColors.fabGradient,
-          boxShadow: AppColors.glowShadow(AppColors.accentPink, blur: 28),
+          gradient: context.colors.brandGradient,
+          boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: 28),
         ),
         child: Icon(icon, color: Colors.white, size: size * 0.52),
       ),

@@ -1,11 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
@@ -130,7 +130,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
                               bottom: 0,
                               child: CircleAvatar(
                                 radius: 18,
-                                backgroundColor: AppColors.accentPink,
+                                backgroundColor: AppThemeColors.accentPink,
                                 child: const Icon(
                                   Icons.camera_alt_rounded,
                                   size: 18,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/canlifal_tokens.dart';
 import 'gradient_fab.dart';
@@ -93,7 +93,7 @@ class _NavSlot extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = selected
         ? Theme.of(context).colorScheme.onSurface
-        : AppColors.textMuted;
+        : context.colors.onSurfaceMuted;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),

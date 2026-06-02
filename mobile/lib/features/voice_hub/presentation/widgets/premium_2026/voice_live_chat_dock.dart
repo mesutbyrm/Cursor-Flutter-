@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import '../../theme/voice_room_tokens.dart';
@@ -50,7 +50,7 @@ class VoiceLiveChatFeed extends StatelessWidget {
             'Sohbet başlatın — mesajlar burada görünür',
             style: TextStyle(
               fontSize: 11,
-              color: AppColors.textMuted.withValues(alpha: 0.85),
+              color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -146,7 +146,7 @@ class VoiceLiveMessageInput extends StatelessWidget {
                       decoration: InputDecoration(
                         hintText: hintText,
                         hintStyle: TextStyle(
-                          color: AppColors.textMuted.withValues(alpha: 0.85),
+                          color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
                         ),
                         border: InputBorder.none,
                         isDense: true,
@@ -271,7 +271,7 @@ class _Bubble extends StatelessWidget {
           message.content,
           style: TextStyle(
             fontSize: 10,
-            color: AppColors.textMuted.withValues(alpha: 0.9),
+            color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
             fontStyle: FontStyle.italic,
           ),
         ),

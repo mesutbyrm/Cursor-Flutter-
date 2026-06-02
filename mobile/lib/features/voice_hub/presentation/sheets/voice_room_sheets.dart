@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
@@ -184,7 +186,7 @@ Future<void> showVoiceMoreMenuSheet(
           ),
           if (onPkBattle != null)
             ListTile(
-              leading: const Icon(Icons.flash_on_rounded, color: AppColors.accentPink),
+              leading: const Icon(Icons.flash_on_rounded, color: AppThemeColors.accentPink),
               title: const Text('PK Savaşı'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -194,7 +196,7 @@ Future<void> showVoiceMoreMenuSheet(
           if (onGoldVip != null)
             ListTile(
               leading: const Icon(Icons.workspace_premium_rounded,
-                  color: AppColors.coinGold),
+                  color: AppThemeColors.coinGold),
               title: const Text('Gold VIP odası'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -349,8 +351,8 @@ class _SpeakerListSheetState extends State<_SpeakerListSheet>
                                 ? Icons.mic_rounded
                                 : Icons.mic_off_rounded,
                             color: u.isSpeaking
-                                ? AppColors.onlineGreen
-                                : AppColors.textMuted,
+                                ? AppThemeColors.onlineGreen
+                                : context.colors.onSurfaceMuted,
                           ),
                           onTap: () {
                             Navigator.pop(context);
@@ -484,7 +486,7 @@ class _RequestSpeakSheet extends StatelessWidget {
                   ? 'Yönetici onayından sonra mikrofonunuz açılacak.'
                   : 'Konuşmacı koltuğuna geçmek için istek gönderin.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.95)),
+              style: TextStyle(color: context.colors.onSurfaceMuted.withValues(alpha: 0.95)),
             ),
             const SizedBox(height: 20),
             FilledButton(
@@ -603,8 +605,8 @@ class _RoomSettingsSheet extends StatelessWidget {
               OutlinedButton(
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.liveRed,
-                  side: const BorderSide(color: AppColors.liveRed),
+                  foregroundColor: AppThemeColors.liveRed,
+                  side: const BorderSide(color: AppThemeColors.liveRed),
                 ),
                 child: const Text('Odayı kapat'),
               ),
@@ -658,7 +660,7 @@ Future<void> showVoiceUserManagementSheet(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.block_rounded, color: AppColors.liveRed),
+                          icon: const Icon(Icons.block_rounded, color: AppThemeColors.liveRed),
                           tooltip: 'Yasakla',
                           onPressed: () async {
                             try {
@@ -738,7 +740,7 @@ class _UserProfileSheet extends StatelessWidget {
             if (user.chatRole != null)
               Text(
                 user.chatRole!,
-                style: const TextStyle(color: AppColors.textMuted),
+                style: TextStyle(color: context.colors.onSurfaceMuted),
               ),
             const SizedBox(height: 20),
             Row(

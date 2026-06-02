@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../../../core/theme/app_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 enum GiftRarity {
   common,
@@ -28,11 +27,11 @@ enum GiftRarity {
       };
 
   Color get glowColor => switch (this) {
-        GiftRarity.common => AppColors.textMuted,
-        GiftRarity.rare => AppColors.diamondBlue,
-        GiftRarity.epic => AppColors.accentPurple,
-        GiftRarity.legendary => AppColors.coinGold,
-        GiftRarity.mythic => AppColors.accentPink,
+        GiftRarity.common => AppThemeColors.dark.onSurfaceMuted,
+        GiftRarity.rare => AppThemeColors.diamondBlue,
+        GiftRarity.epic => AppThemeColors.accentPurple,
+        GiftRarity.legendary => AppThemeColors.coinGold,
+        GiftRarity.mythic => AppThemeColors.accentPink,
       };
 
   Color get borderColor => glowColor.withValues(alpha: 0.85);

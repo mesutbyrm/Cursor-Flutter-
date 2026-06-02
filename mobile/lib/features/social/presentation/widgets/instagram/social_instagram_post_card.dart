@@ -1,9 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../../core/providers/auth_selectors.dart';
 import '../../../../../core/ui/pro_glass/pro_glass.dart';
@@ -54,7 +55,7 @@ class _SocialInstagramPostCardState
           borderRadius: BorderRadius.circular(16),
           color: Colors.transparent,
           border: Border.all(
-            color: AppColors.accentPurple.withValues(alpha: 0.22),
+            color: AppThemeColors.accentPurple.withValues(alpha: 0.22),
           ),
         ),
         child: ClipRRect(
@@ -82,7 +83,7 @@ class _SocialInstagramPostCardState
                         colors: [Color(0xFF2A1548), Color(0xFF14102A)],
                       ),
                       border: Border.all(
-                        color: AppColors.accentPurple.withValues(alpha: 0.35),
+                        color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
                       ),
                     ),
                     child: Padding(
@@ -117,24 +118,24 @@ class _SocialInstagramPostCardState
                       icon: _liked
                           ? Icons.favorite_rounded
                           : Icons.favorite_border_rounded,
-                      color: _liked ? AppColors.accentPink : AppColors.textPrimary,
+                      color: _liked ? AppThemeColors.accentPink : context.colors.onSurface,
                       count: likeCount,
                       onTap: () => setState(() => _liked = !_liked),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16),
                     _ActionWithCount(
                       icon: Icons.mode_comment_outlined,
                       count: post.commentsCount,
                       onTap: () => _showCommentsHint(context),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16),
                     _ActionWithCount(
                       icon: Icons.visibility_outlined,
                       count: post.viewCount,
                       hideZeroCount: false,
                       onTap: () {},
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16),
                     _ActionIcon(
                       icon: Icons.ios_share_rounded,
                       onTap: () {
@@ -150,7 +151,7 @@ class _SocialInstagramPostCardState
                         icon: Icons.palette_outlined,
                         onTap: () => _openFortune(context),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       _TextAction(
                         label: 'Detay',
                         icon: Icons.open_in_new_rounded,
@@ -168,7 +169,7 @@ class _SocialInstagramPostCardState
                     child: Text(
                       '${post.commentsCount} yorumun tümünü gör',
                       style: TextStyle(
-                        color: AppColors.textMuted.withValues(alpha: 0.95),
+                        color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
                         fontSize: 13,
                       ),
                     ),
@@ -187,16 +188,16 @@ class _SocialInstagramPostCardState
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1A0B2E),
-        title: const Text('Gönderiyi sil'),
-        content: const Text('Bu paylaşımı kaldırmak istediğinize emin misiniz?'),
+        title: Text('Gönderiyi sil'),
+        content: Text('Bu paylaşımı kaldırmak istediğinize emin misiniz?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Vazgeç'),
+            child: Text('Vazgeç'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sil', style: TextStyle(color: Colors.redAccent)),
+            child: Text('Sil', style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -273,7 +274,7 @@ class _PostHeader extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       UserAvatar(url: post.author.avatarUrl, radius: 20),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,18 +286,18 @@ class _PostHeader extends StatelessWidget {
                                     post.author.display,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 14,
                                     ),
                                   ),
                                 ),
                                 if (timeLabel != null) ...[
-                                  const SizedBox(width: 6),
+                                  SizedBox(width: 6),
                                   Text(
                                     '· $timeLabel',
                                     style: TextStyle(
-                                      color: AppColors.textMuted
+                                      color: context.colors.onSurfaceMuted
                                           .withValues(alpha: 0.85),
                                       fontSize: 12,
                                     ),
@@ -305,18 +306,18 @@ class _PostHeader extends StatelessWidget {
                               ],
                             ),
                             if (fortuneLabel != null) ...[
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Row(
                                 children: [
                                   Text(
                                     _fortuneEmoji(post.fortuneType),
-                                    style: const TextStyle(fontSize: 14),
+                                    style: TextStyle(fontSize: 14),
                                   ),
-                                  const SizedBox(width: 4),
+                                  SizedBox(width: 4),
                                   Text(
                                     fortuneLabel,
                                     style: TextStyle(
-                                      color: AppColors.accentPurple
+                                      color: AppThemeColors.accentPurple
                                           .withValues(alpha: 0.95),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
@@ -336,8 +337,8 @@ class _PostHeader extends StatelessWidget {
           ),
           if (onDelete != null)
             IconButton(
-              icon: const Icon(Icons.delete_outline_rounded, size: 22),
-              color: AppColors.textMuted.withValues(alpha: 0.9),
+              icon: Icon(Icons.delete_outline_rounded, size: 22),
+              color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
               onPressed: onDelete,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -400,10 +401,10 @@ class _AutoShareBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.accentPurple.withValues(alpha: 0.35),
+        color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.accentPurple.withValues(alpha: 0.5),
+          color: AppThemeColors.accentPurple.withValues(alpha: 0.5),
         ),
       ),
       child: Row(
@@ -412,15 +413,15 @@ class _AutoShareBadge extends StatelessWidget {
           Icon(
             Icons.auto_awesome_rounded,
             size: 14,
-            color: AppColors.accentPink.withValues(alpha: 0.95),
+            color: AppThemeColors.accentPink.withValues(alpha: 0.95),
           ),
-          const SizedBox(width: 5),
-          const Text(
+          SizedBox(width: 5),
+          Text(
             'Otomatik paylaşıldı',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: context.colors.onSurface,
             ),
           ),
         ],
@@ -489,7 +490,7 @@ class _MysticMediaPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -500,7 +501,7 @@ class _MysticMediaPlaceholder extends StatelessWidget {
           ],
         ),
       ),
-      child: const Center(
+      child: Center(
         child: Text('🔮', style: TextStyle(fontSize: 48)),
       ),
     );
@@ -512,18 +513,19 @@ class _ActionWithCount extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.count = 0,
-    this.color = AppColors.textPrimary,
+    this.color,
     this.hideZeroCount = false,
   });
 
   final IconData icon;
   final VoidCallback? onTap;
   final int count;
-  final Color color;
+  final Color? color;
   final bool hideZeroCount;
 
   @override
   Widget build(BuildContext context) {
+    final iconColor = color ?? context.colors.onSurface;
     final showCountLabel = !hideZeroCount || count > 0;
 
     return InkWell(
@@ -534,15 +536,15 @@ class _ActionWithCount extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 24, color: color),
+            Icon(icon, size: 24, color: iconColor),
             if (showCountLabel) ...[
-              const SizedBox(width: 5),
+              SizedBox(width: 5),
               Text(
                 _formatCount(count),
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: context.colors.onSurfaceVariant,
                 ),
               ),
             ],
@@ -572,7 +574,7 @@ class _ActionIcon extends StatelessWidget {
       borderRadius: BorderRadius.circular(24),
       child: Padding(
         padding: const EdgeInsets.all(4),
-        child: Icon(icon, size: 24, color: AppColors.textPrimary),
+        child: Icon(icon, size: 24, color: context.colors.onSurface),
       ),
     );
   }
@@ -599,12 +601,12 @@ class _TextAction extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: AppColors.accentPurple),
-            const SizedBox(width: 4),
+            Icon(icon, size: 18, color: AppThemeColors.accentPurple),
+            SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
-                color: AppColors.accentPurple.withValues(alpha: 0.95),
+                color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),

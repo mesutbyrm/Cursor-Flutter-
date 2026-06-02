@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/music_queue_item.dart';
@@ -172,27 +174,27 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              const Text(
+              SizedBox(height: 12),
+              Text(
                 'Şarkı İsteği',
                 style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 'YouTube\'da ara · her istek $_cost jeton${coins != null ? ' · bakiye: $coins' : ''}',
                 style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.textMuted.withValues(alpha: 0.95),
+                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextField(
                 controller: _queryCtrl,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: 'Şarkı veya sanatçı ara...',
-                  hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.8)),
-                  prefixIcon: const Icon(Icons.search_rounded, color: AppColors.accentPink),
+                  hintStyle: TextStyle(color: context.colors.onSurfaceMuted.withValues(alpha: 0.8)),
+                  prefixIcon: Icon(Icons.search_rounded, color: AppThemeColors.accentPink),
                   filled: true,
                   fillColor: Colors.white.withValues(alpha: 0.08),
                   border: OutlineInputBorder(
@@ -204,12 +206,12 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
                 onSubmitted: _search,
               ),
               if (_error != null) ...[
-                const SizedBox(height: 8),
-                Text(_error!, style: const TextStyle(color: AppColors.liveRed, fontSize: 11)),
+                SizedBox(height: 8),
+                Text(_error!, style: TextStyle(color: AppThemeColors.liveRed, fontSize: 11)),
               ],
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               if (_searching)
-                const Center(
+                Center(
                   child: Padding(
                     padding: EdgeInsets.all(12),
                     child: CircularProgressIndicator(strokeWidth: 2),
@@ -223,23 +225,23 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
                       if (queue.isNotEmpty) ...[
                         Text(
                           'Sıradaki (${queue.length})',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 12,
                             color: VoiceRoomTokens.gold,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         ...queue.map((q) => _QueueTile(item: q)),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                       ],
                       if (_hits.isEmpty && _queryCtrl.text.trim().length >= 2)
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.all(16),
                           child: Text(
                             'Sonuç bulunamadı',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColors.textMuted),
+                            style: TextStyle(color: context.colors.onSurfaceMuted),
                           ),
                         ),
                       ..._hits.map(
@@ -291,21 +293,21 @@ class _HitTile extends StatelessWidget {
                 width: 56,
                 height: 42,
                 color: Colors.white12,
-                child: const Icon(Icons.music_video_rounded, color: Colors.white54),
+                child: Icon(Icons.music_video_rounded, color: Colors.white54),
               ),
       ),
       title: Text(
         hit.title,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
       ),
       subtitle: hit.uploader != null
           ? Text(
               hit.uploader!,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+              style: TextStyle(fontSize: 10, color: context.colors.onSurfaceMuted),
             )
           : null,
       trailing: FilledButton(
@@ -315,7 +317,7 @@ class _HitTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10),
           minimumSize: const Size(0, 32),
         ),
-        child: Text('$cost J', style: const TextStyle(fontSize: 11)),
+        child: Text('$cost J', style: TextStyle(fontSize: 11)),
       ),
     );
   }
@@ -331,17 +333,17 @@ class _QueueTile extends StatelessWidget {
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
-      leading: const Icon(Icons.queue_music_rounded, color: AppColors.accentPink, size: 20),
+      leading: Icon(Icons.queue_music_rounded, color: AppThemeColors.accentPink, size: 20),
       title: Text(
         item.title,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontSize: 12),
+        style: TextStyle(fontSize: 12),
       ),
       subtitle: item.requestedBy != null
           ? Text(
               item.requestedBy!.displayWithPrefix,
-              style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+              style: TextStyle(fontSize: 10, color: context.colors.onSurfaceMuted),
             )
           : null,
     );

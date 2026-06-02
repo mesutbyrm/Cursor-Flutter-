@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../theme/voice_room_tokens.dart';
 
 /// Alt aksiyon çubuğu — Sohbet, Davet, Mikrofon, Müzik, Jeton Al.
@@ -76,7 +76,7 @@ class VoiceLiveBottomBar2026 extends StatelessWidget {
                 _SideAction(
                   icon: Icons.diamond_rounded,
                   label: 'Jeton Al',
-                  color: AppColors.diamondBlue,
+                  color: AppThemeColors.diamondBlue,
                   onTap: onJetonStore,
                 ),
               ],

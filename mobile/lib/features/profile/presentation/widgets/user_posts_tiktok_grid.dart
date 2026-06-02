@@ -1,9 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/performance/list_perf.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../../../social/presentation/providers/user_social_posts_notifier.dart';
 import '../../../social/presentation/widgets/instagram/social_post_caption.dart';
@@ -26,7 +27,7 @@ class _UserPostsTikTokGridState extends ConsumerState<UserPostsTikTokGrid> {
         ref.watch(userSocialPostsNotifierProvider(widget.userId));
 
     return postsAsync.when(
-      loading: () => const Padding(
+      loading: () => Padding(
         padding: EdgeInsets.symmetric(vertical: 32),
         child: Center(
           child: SizedBox(
@@ -40,7 +41,7 @@ class _UserPostsTikTokGridState extends ConsumerState<UserPostsTikTokGrid> {
         padding: const EdgeInsets.all(16),
         child: Text(
           'Paylaşımlar yüklenemedi',
-          style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.9)),
+          style: TextStyle(color: context.colors.onSurfaceMuted.withValues(alpha: 0.9)),
         ),
       ),
       data: (posts) {
@@ -51,7 +52,7 @@ class _UserPostsTikTokGridState extends ConsumerState<UserPostsTikTokGrid> {
               child: Text(
                 'Henüz paylaşım yok',
                 style: TextStyle(
-                  color: AppColors.textMuted.withValues(alpha: 0.9),
+                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -95,7 +96,7 @@ class _UserPostsTikTokGridState extends ConsumerState<UserPostsTikTokGrid> {
                 },
               ),
               if (hasMore)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: SizedBox(
                     width: 24,
@@ -165,7 +166,7 @@ class _TikTokPostTile extends StatelessWidget {
                         : caption,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
@@ -181,15 +182,15 @@ class _TikTokPostTile extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.favorite_rounded,
                       size: 12,
                       color: Colors.white,
                     ),
-                    const SizedBox(width: 2),
+                    SizedBox(width: 2),
                     Text(
                       '${post.likesCount}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -208,7 +209,7 @@ class _TikTokPostTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(8),
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -220,11 +221,11 @@ class _TikTokPostTile extends StatelessWidget {
         maxLines: 6,
         overflow: TextOverflow.ellipsis,
         textAlign: TextAlign.center,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           height: 1.25,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: AppThemeColors.dark.onSurface,
         ),
       ),
     );
@@ -259,7 +260,7 @@ class _TikTokPostTile extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               if (post.mediaUrl != null && post.mediaUrl!.isNotEmpty)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
@@ -272,7 +273,7 @@ class _TikTokPostTile extends StatelessWidget {
                   ),
                 ),
               if (caption.isNotEmpty) ...[
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 SocialPostTextPreview(text: caption),
               ],
             ],
