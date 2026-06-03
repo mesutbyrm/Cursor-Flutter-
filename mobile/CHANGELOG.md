@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.118+120 (2026-05-19)
+
+### Sesli oda — web ↔ Flutter senkronizasyonu
+
+- Socket.IO: JWT (`Authorization` + `auth.token`), `id` ve `slug` ile çift `joinRoom`
+- Hediye socket aynı düzeltmeler
+- TRTC: önce `id`, gerekirse `slug` ile UserSig (web ile aynı oda)
+- Sohbet/presence yenileme 3 sn
+- YouTube arama: önce oturumlu `/api/youtube/search`, sonra Piped/Invidious
+- API: `emitChatRoomMessage` hem `room:{id}` hem `room:{slug}` kanallarına yayın
+
 ## 1.0.117+119 (2026-05-19)
 
 ### Tam native işlevsellik (canlifal.com)

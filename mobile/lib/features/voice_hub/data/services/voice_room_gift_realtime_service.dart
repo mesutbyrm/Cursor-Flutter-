@@ -20,13 +20,19 @@ class VoiceRoomGiftRealtimeService {
 
   Stream<LiveGiftEvent> get events => _local.stream;
 
-  void start(String roomId) {
+  void start(
+    String roomId, {
+    String? alternateRoomId,
+    Future<String?> Function()? accessToken,
+  }) {
     if (_roomId == roomId && _poll != null) return;
     stop();
     _roomId = roomId;
     _since = DateTime.now().subtract(const Duration(minutes: 2));
     _socket.connect(
       roomId: roomId,
+      alternateRoomId: alternateRoomId,
+      accessToken: accessToken,
       onEvent: (e) {
         if (_seen.add(e.id) && !_local.isClosed) _local.add(e);
       },

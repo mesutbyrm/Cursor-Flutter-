@@ -3,30 +3,37 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../../../../core/config/env.dart';
 import '../../domain/entities/chat_room_message.dart';
+import 'voice_room_socket_helper.dart';
 
-/// Sesli oda sohbet — anlık mesaj olayları.
+/// Sesli oda sohbet — anlık mesaj olayları (web ile aynı Socket.IO odaları).
 class VoiceRoomChatSocket {
   io.Socket? _socket;
   void Function(ChatRoomMessage message)? _onMessage;
+  List<String> _joinKeys = const [];
 
   void connect({
     required String roomId,
+    String? alternateRoomId,
     required void Function(ChatRoomMessage message) onMessage,
+    Future<String?> Function()? accessToken,
   }) {
     _onMessage = onMessage;
-    Future.microtask(() {
+    _joinKeys = VoiceRoomSocketHelper.joinKeys(
+      primary: roomId,
+      alternate: alternateRoomId,
+    );
+    Future.microtask(() async {
       try {
+        final token = accessToken != null ? await accessToken() : null;
         _socket?.dispose();
         _socket = io.io(
           Env.siteOrigin,
-          io.OptionBuilder()
-              .setTransports(['websocket', 'polling'])
-              .disableAutoConnect()
-              .setTimeout(5000)
-              .build(),
+          VoiceRoomSocketHelper.baseOptions(bearerToken: token).build(),
         );
         _socket!
-          ..onConnect((_) => _socket?.emit('joinRoom', {'roomId': roomId}))
+          ..onConnect((_) => VoiceRoomSocketHelper.emitJoinRooms(_socket, _joinKeys))
+          ..onReconnect((_) =>
+              VoiceRoomSocketHelper.emitJoinRooms(_socket, _joinKeys))
           ..on('chatMessage', (data) => _handle(data))
           ..on('message', (data) => _handle(data))
           ..on('roomMessage', (data) => _handle(data))
@@ -65,5 +72,6 @@ class VoiceRoomChatSocket {
     _socket?.dispose();
     _socket = null;
     _onMessage = null;
+    _joinKeys = const [];
   }
 }

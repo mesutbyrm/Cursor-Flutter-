@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/network/token_storage.dart';
 import '../../../core/widgets/cached_cover_image.dart';
 import '../../../core/navigation/wallet_navigation.dart';
 import '../../../core/network/api_exception.dart';
@@ -142,7 +143,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   void _startGiftRealtime() {
     final service = ref.read(voiceRoomGiftRealtimeProvider);
-    service.start(widget.room.id);
+    final room = widget.room;
+    service.start(
+      room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id,
+      alternateRoomId: room.apiRoomAlternateKey,
+      accessToken: ref.read(tokenStorageProvider).readAccess,
+    );
     _giftSub?.cancel();
     _giftSub = service.events.listen(_onGiftEvent);
   }
@@ -205,6 +211,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       final roomKey = widget.room.apiRoomKey;
       await _audio!.join(
         roomId: roomKey.isNotEmpty ? roomKey : widget.room.id,
+        alternateRoomId: widget.room.apiRoomAlternateKey,
         userId: user.id,
         isHost: _isRoomOwner(user.id, user.username) || perms.isSiteAdmin,
         liveKitRemote: ref.read(liveKitRemoteProvider),

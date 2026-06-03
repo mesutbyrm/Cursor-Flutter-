@@ -554,15 +554,10 @@ class ChatRoomRemoteDataSource {
     final q = query.trim();
     if (q.length < 2) return const [];
 
-    final piped = await _searchYoutubePiped(q);
-    if (piped.isNotEmpty) return piped;
-
-    final inv = await _searchYoutubeInvidious(q);
-    if (inv.isNotEmpty) return inv;
-
-    const apiPaths = [
+    final apiPaths = [
       '/api/youtube/search',
       '/api/chat/youtube-search',
+      youtubeSearchPath(),
     ];
     Object? lastError;
     for (final path in apiPaths) {
@@ -572,7 +567,7 @@ class ChatRoomRemoteDataSource {
               path,
               query: {'q': q, 'query': q, 'search': q},
             )
-            .timeout(const Duration(seconds: 14));
+            .timeout(const Duration(seconds: 16));
         final data = res.data;
         if (data is String &&
             (data.contains('<!DOCTYPE') || data.contains('<html'))) {
@@ -581,6 +576,9 @@ class ChatRoomRemoteDataSource {
         final hits = _parseYoutubeHits(data);
         if (hits.isNotEmpty) return hits;
       } on ApiException catch (e) {
+        if (e.statusCode == 401) {
+          throw const ApiException('Şarkı aramak için giriş yapın.');
+        }
         if (e.statusCode == 404) continue;
         lastError = e;
       } on Object catch (e) {
@@ -588,12 +586,16 @@ class ChatRoomRemoteDataSource {
       }
     }
 
+    final piped = await _searchYoutubePiped(q);
+    if (piped.isNotEmpty) return piped;
+
+    final inv = await _searchYoutubeInvidious(q);
+    if (inv.isNotEmpty) return inv;
+
     if (lastError != null) {
       final msg = ApiException.userMessage(lastError);
       if (msg.contains('401') || msg.toLowerCase().contains('oturum')) {
-        throw const ApiException(
-          'Şarkı aramak için giriş yapın.',
-        );
+        throw const ApiException('Şarkı aramak için giriş yapın.');
       }
     }
     throw const ApiException(
