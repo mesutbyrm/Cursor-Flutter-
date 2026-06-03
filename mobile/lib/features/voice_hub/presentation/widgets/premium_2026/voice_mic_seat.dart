@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
+import '../../../../../core/auth/voice_staff_rank.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/widgets/vip_badge.dart';
@@ -54,8 +55,16 @@ class VoiceMicSeat extends StatelessWidget {
               url: user!.image,
               size: size,
               speaking: speaking,
-              showCrown: isHost,
-              roleLabel: null,
+              showCrown: isHost || user!.chatRole == 'owner',
+              roleLabel: isHost
+                  ? null
+                  : () {
+                      final sym = user!.roleSymbol?.trim();
+                      if (sym != null && sym.isNotEmpty) return sym;
+                      final label =
+                          VoiceStaffRankParser.displayPrefix(user!.staffRank);
+                      return label.isEmpty ? null : label;
+                    }(),
               onTap: onTap,
             ),
             if (vip && !isHost)

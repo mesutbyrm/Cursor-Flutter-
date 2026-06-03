@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/auth/voice_staff_rank.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
@@ -38,6 +40,14 @@ final voiceRoomDjPlayerProvider = Provider<VoiceRoomDjPlayer>((ref) {
   ref.onDispose(p.dispose);
   return p;
 });
+
+String? _roleSymbolForUser(UserEntity user) {
+  final rank = VoiceStaffRankParser.resolve(
+    username: user.username,
+    chatRole: user.role,
+  );
+  return VoiceStaffRankParser.prefixSymbol(rank);
+}
 
 class VoiceRoomLiveState {
   const VoiceRoomLiveState({
@@ -206,7 +216,8 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         name: user.display,
         nickname: user.username,
         image: user.avatarUrl,
-        chatRole: 'listener',
+        chatRole: user.role ?? 'listener',
+        roleSymbol: _roleSymbolForUser(user),
       ),
     ];
   }
@@ -242,7 +253,12 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         );
         return;
       }
-      state = state.copyWith(loading: false, error: msg);
+      state = state.copyWith(
+        loading: false,
+        error: msg.contains('401') || msg.toLowerCase().contains('oturum')
+            ? 'Listede görünmek için tekrar giriş yapın.'
+            : msg,
+      );
     }
   }
 
@@ -282,6 +298,10 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     if (_roomKey.isEmpty) return;
     final room = arg;
     final remote = ref.read(chatRoomRemoteProvider);
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user != null && !state.selfInRoom) {
+      unawaited(_joinPresence());
+    }
     Object? refreshError;
     try {
       final since = _lastMessageAt?.toUtc().toIso8601String();
@@ -480,7 +500,11 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(true);
       return null;
     } catch (e) {
-      return ApiException.userMessage(e);
+      final msg = ApiException.userMessage(e);
+      if (msg.contains('404')) {
+        return 'Mikrofon isteği bu odada desteklenmiyor; boş koltuğa dokunarak oturmayı deneyin.';
+      }
+      return msg;
     }
   }
 
@@ -542,13 +566,8 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   Future<List<String>> fetchBackgrounds() =>
       ref.read(chatRoomRemoteProvider).fetchBackgrounds();
 
-  Future<List<YoutubeSearchHit>> searchYoutube(String query) => ref
-      .read(chatRoomRemoteProvider)
-      .searchYoutube(query)
-      .timeout(
-        const Duration(seconds: 18),
-        onTimeout: () => throw TimeoutException('YouTube araması zaman aşımı'),
-      );
+  Future<List<YoutubeSearchHit>> searchYoutube(String query) =>
+      ref.read(chatRoomRemoteProvider).searchYoutube(query);
 
   Future<({List<MusicQueueItem> queue, int cost})> fetchMusicQueue() =>
       ref.read(chatRoomRemoteProvider).fetchMusicQueue(
@@ -570,6 +589,28 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       await refresh();
       return null;
     } catch (e) {
+      final self = ref.read(authControllerProvider).valueOrNull;
+      if (self != null && (userId == null || userId == self.id)) {
+        final list = [...state.presence];
+        final idx = list.indexWhere((p) => p.id == self.id);
+        final updated = ChatRoomPresence(
+          id: self.id,
+          name: self.display,
+          nickname: self.username,
+          image: self.avatarUrl,
+          chatRole: self.role ?? 'listener',
+          roleSymbol: _roleSymbolForUser(self),
+          seatIndex: seatIndex,
+          isSpeaking: idx >= 0 ? list[idx].isSpeaking : false,
+        );
+        if (idx >= 0) {
+          list[idx] = updated;
+        } else {
+          list.add(updated);
+        }
+        state = state.copyWith(presence: list, selfInRoom: true);
+        return null;
+      }
       return ApiException.userMessage(e);
     }
   }
