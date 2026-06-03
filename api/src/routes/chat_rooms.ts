@@ -44,7 +44,7 @@ import {
   addRoomBannedWord,
   removeRoomBannedWord,
 } from "../lib/chatRoomStore";
-import { emitChatRoomMessage } from "../socket/giftHub";
+import { emitChatRoomMessage, emitChatRoomPresence } from "../socket/giftHub";
 import { listRoomGiftEvents, sendRoomGift } from "./gifts";
 
 export const chatRoomsRouter = Router();
@@ -404,6 +404,10 @@ chatRoomsRouter.post("/rooms/:roomId/presence", requireAuth, async (req, res) =>
     return fail(res, 403, "FORBIDDEN", "Bu odadan yasaklandınız");
   }
   if (result.systemMsg) emitChatRoomMessage(resolveRoomId(roomId), result.systemMsg);
+  const joinedRow = result.presence.find((p) => p.id === user.id);
+  emitChatRoomPresence(resolveRoomId(roomId), result.presence, {
+    joined: joinedRow,
+  });
   return res.status(200).json({ users: result.presence });
 });
 
@@ -412,6 +416,9 @@ chatRoomsRouter.delete("/rooms/:roomId/presence", requireAuth, async (req, res) 
   const userId = req.userId!;
   const result = leavePresence(roomId, userId);
   if (result.systemMsg) emitChatRoomMessage(resolveRoomId(roomId), result.systemMsg);
+  emitChatRoomPresence(resolveRoomId(roomId), result.presence, {
+    leftUserId: userId,
+  });
   return res.status(200).json({ users: result.presence });
 });
 
@@ -471,7 +478,12 @@ chatRoomsRouter.post(
     if (!room || !user) return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
     const priv = roomPrivileges(user, room);
     if (!priv.canModerate) return fail(res, 403, "FORBIDDEN", "Yetki yok");
-    approveSpeak(roomId, req.params.targetUserId);
+    const approved = approveSpeak(roomId, req.params.targetUserId);
+    emitChatRoomPresence(
+      resolveRoomId(roomId),
+      listPresence(roomId),
+      approved ? { joined: approved } : undefined,
+    );
     return ok(res, { approved: true });
   },
 );

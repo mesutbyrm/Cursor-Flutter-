@@ -12,6 +12,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_chat_socket.dart';
+import '../../data/services/voice_room_debug_log.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/voice_official_join.dart';
@@ -236,11 +237,13 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       return;
     }
     try {
+      VoiceRoomDebugLog.log('api.presence.join', {'room': _roomKey});
       final joined = await ref.read(chatRoomRemoteProvider).joinPresence(
             _roomKey,
             alternateKey: _altRoomKey,
           );
       final merged = _mergeSelf(joined);
+      VoiceRoomDebugLog.log('api.presence.join.ok', {'count': merged.length});
       state = state.copyWith(
         presence: merged,
         selfInRoom: true,
@@ -248,6 +251,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         clearError: true,
       );
     } on Object catch (e) {
+      VoiceRoomDebugLog.log('api.presence.join.fail', {'error': e.toString()});
       final msg = ApiException.userMessage(e);
       if (msg.toLowerCase().contains('yasak') ||
           msg.contains('403') ||
@@ -292,6 +296,17 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
             VoiceOfficialJoin.isOfficialEntrance(msg.content)) {
           _showEnterBanner(msg.content);
         }
+      },
+      onPresence: (users) {
+        final merged = _mergeSelf(users);
+        final joinMsgs = _joinMessagesForNewPresence(state.presence, merged);
+        state = state.copyWith(
+          presence: merged,
+          messages: joinMsgs.isEmpty
+              ? state.messages
+              : [...state.messages, ...joinMsgs],
+          selfInRoom: state.selfInRoom || merged.isNotEmpty,
+        );
       },
     );
   }

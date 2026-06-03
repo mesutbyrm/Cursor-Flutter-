@@ -5,6 +5,7 @@ import '../../../livekit/data/datasources/livekit_remote_datasource.dart';
 import '../../../livekit/presentation/livekit_room_manager.dart';
 import '../../../trtc/data/datasources/trtc_remote_datasource.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
+import '../../data/services/voice_room_debug_log.dart';
 import '../../data/services/voice_room_socket_helper.dart';
 import '../../domain/entities/voice_audio_engine.dart';
 
@@ -78,6 +79,7 @@ class VoiceRoomAudioCoordinator {
     Object? lastError;
     for (final key in keys) {
       try {
+        VoiceRoomDebugLog.log('audio.trtc.token', {'roomId': key, 'userId': userId});
         final cred = await trtcDs.fetchUserSig(userId: userId, roomId: key);
         await _trtc.join(
           credentials: cred,
@@ -85,10 +87,15 @@ class VoiceRoomAudioCoordinator {
           audioOnly: true,
         );
         _engine = VoiceAudioEngineKind.trtc;
+        VoiceRoomDebugLog.log('audio.trtc.joined', {
+          'roomId': cred.roomId,
+          'sdkAppId': cred.sdkAppId,
+        });
         debugPrint('Voice room audio: TRTC (room=${cred.roomId})');
         return _engine!;
       } catch (e) {
         lastError = e;
+        VoiceRoomDebugLog.log('audio.trtc.fail', {'roomId': key, 'error': e.toString()});
         debugPrint('TRTC join failed for key=$key: $e');
       }
     }
