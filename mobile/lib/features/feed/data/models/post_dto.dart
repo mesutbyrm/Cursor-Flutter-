@@ -23,11 +23,15 @@ abstract class PostDto with _$PostDto {
     @Default(false) bool isAutoShare,
     @Default(0) int fortuneCount,
     String? postType,
+    @Default(false) bool likedByMe,
   }) = _PostDto;
 
   const PostDto._();
 
-  factory PostDto.fromApiMap(Map<String, dynamic> json) {
+  factory PostDto.fromApiMap(
+    Map<String, dynamic> json, {
+    String? currentUserId,
+  }) {
     final authorRaw = pick(json, ['author', 'user', 'creator']);
     Map<String, dynamic> authorMap =
         authorRaw is Map ? asJsonMap(authorRaw) : <String, dynamic>{};
@@ -40,13 +44,43 @@ abstract class PostDto with _$PostDto {
       };
     }
 
-    var likes = asInt(pick(json, ['likesCount', 'likes', 'likeCount']));
-    var comments = asInt(pick(json, ['commentsCount', 'comments']));
+    var likes = asInt(pick(json, ['likesCount', 'likeCount']));
+    var comments = asInt(pick(json, ['commentsCount']));
+    final likesRaw = json['likes'];
+    if (likesRaw is List) {
+      likes = likesRaw.length;
+    } else if (likes == 0) {
+      likes = asInt(pick(json, ['likes']));
+    }
+    final commentsRaw = json['comments'];
+    if (commentsRaw is List) {
+      comments = commentsRaw.length;
+    } else if (comments == 0) {
+      comments = asInt(pick(json, ['comments']));
+    }
     final countRaw = json['_count'];
     if (countRaw is Map) {
       final cm = Map<String, dynamic>.from(countRaw);
       if (cm.containsKey('likes')) likes = asInt(cm['likes']);
       if (cm.containsKey('comments')) comments = asInt(cm['comments']);
+    }
+
+    var likedByMe = json['likedByMe'] == true ||
+        json['isLiked'] == true ||
+        json['liked'] == true;
+    if (!likedByMe &&
+        currentUserId != null &&
+        currentUserId.isNotEmpty &&
+        likesRaw is List) {
+      for (final l in likesRaw) {
+        if (l is! Map) continue;
+        final lm = asJsonMap(l);
+        final uid = pick(lm, ['userId', 'id'])?.toString();
+        if (uid == currentUserId) {
+          likedByMe = true;
+          break;
+        }
+      }
     }
 
     return PostDto(
@@ -75,6 +109,7 @@ abstract class PostDto with _$PostDto {
           json['autoShared'] == true,
       fortuneCount: asInt(pick(json, ['fortuneCount', 'fortune_count'])),
       postType: pick(json, ['postType', 'post_type', 'type'])?.toString(),
+      likedByMe: likedByMe,
     );
   }
 
@@ -91,6 +126,7 @@ abstract class PostDto with _$PostDto {
         isAutoShare: isAutoShare,
         fortuneCount: fortuneCount,
         postType: postType,
+        likedByMe: likedByMe,
       );
 
   static DateTime? _parseDate(dynamic v) {

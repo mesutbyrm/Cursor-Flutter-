@@ -16,6 +16,7 @@ class PostEntity extends Equatable {
     this.isAutoShare = false,
     this.fortuneCount = 0,
     this.postType,
+    this.likedByMe = false,
   });
 
   final String id;
@@ -34,6 +35,30 @@ class PostEntity extends Equatable {
   /// Örn. `fortune`, `text` — canlifal `postType`.
   final String? postType;
 
+  /// Oturumlu kullanıcı bu gönderiyi beğendi mi.
+  final bool likedByMe;
+
+  PostEntity copyWith({
+    int? likesCount,
+    int? commentsCount,
+    bool? likedByMe,
+  }) =>
+      PostEntity(
+        id: id,
+        author: author,
+        caption: caption,
+        mediaUrl: mediaUrl,
+        likesCount: likesCount ?? this.likesCount,
+        commentsCount: commentsCount ?? this.commentsCount,
+        createdAt: createdAt,
+        fortuneType: fortuneType,
+        viewCount: viewCount,
+        isAutoShare: isAutoShare,
+        fortuneCount: fortuneCount,
+        postType: postType,
+        likedByMe: likedByMe ?? this.likedByMe,
+      );
+
   @override
   List<Object?> get props => [
         id,
@@ -48,5 +73,6 @@ class PostEntity extends Equatable {
         isAutoShare,
         fortuneCount,
         postType,
+        likedByMe,
       ];
 }

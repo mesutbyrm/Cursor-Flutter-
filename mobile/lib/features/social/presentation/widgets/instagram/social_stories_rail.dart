@@ -5,7 +5,9 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/domain/entities/user_entity.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
@@ -101,21 +103,50 @@ class _StoriesList extends StatelessWidget {
   }
 }
 
-class _OwnStoryChip extends StatelessWidget {
+class _OwnStoryChip extends ConsumerWidget {
   const _OwnStoryChip({this.user});
 
   final UserEntity? user;
 
+  Future<void> _addStory(BuildContext context, WidgetRef ref) async {
+    final me = ref.read(authControllerProvider).valueOrNull;
+    if (me == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Hikâye eklemek için giriş yapın')),
+        );
+        context.push('/login');
+      }
+      return;
+    }
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked == null || !context.mounted) return;
+    try {
+      await ref.read(socialRepositoryProvider).createStoryImage(picked.path);
+      ref.invalidate(socialStoryRingsProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Hikâyen paylaşıldı')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return _StoryRingFrame(
       label: 'Hikayen',
       isOwn: true,
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Hikâye ekleme yakında')),
-        );
-      },
+      onTap: () => _addStory(context, ref),
       child: Stack(
         alignment: Alignment.center,
         children: [

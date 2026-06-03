@@ -8,6 +8,7 @@ import '../../../auth/data/models/user_dto.dart';
 import '../../../feed/data/models/post_dto.dart';
 import '../../domain/entities/create_social_post_input.dart';
 import '../../domain/entities/share_fortune_input.dart';
+import '../../domain/entities/social_comment_entity.dart';
 import '../../domain/entities/social_story_ring_entity.dart';
 
 class SocialRemoteDataSource {
@@ -19,6 +20,7 @@ class SocialRemoteDataSource {
   Future<({List<PostDto> posts, bool hasMore})> fetch({
     int page = 1,
     String? authorId,
+    String? currentUserId,
   }) async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.socialPosts,
@@ -31,7 +33,7 @@ class SocialRemoteDataSource {
     final body = res.data;
     if (body is List) {
       final posts = asJsonList(body)
-          .map(PostDto.fromApiMap)
+          .map((j) => PostDto.fromApiMap(j, currentUserId: currentUserId))
           .where((p) => p.id.isNotEmpty)
           .toList();
       return (posts: posts, hasMore: posts.length >= 20);
@@ -49,7 +51,7 @@ class SocialRemoteDataSource {
     }
 
     final posts = asJsonList(rawPosts)
-        .map(PostDto.fromApiMap)
+        .map((j) => PostDto.fromApiMap(j, currentUserId: currentUserId))
         .where((p) => p.id.isNotEmpty)
         .toList();
 
@@ -152,6 +154,97 @@ class SocialRemoteDataSource {
 
   Future<void> deletePost(String postId) async {
     await _dio.safeDelete(ApiEndpoints.socialPostDelete(postId));
+  }
+
+  /// POST `/api/social/posts/:id/likes` — beğeni toggle.
+  Future<({bool liked, int likesCount})> toggleLike(String postId) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.socialPostLikes(postId),
+    );
+    return _parseLikeResult(res.data);
+  }
+
+  ({bool liked, int likesCount}) _parseLikeResult(dynamic body) {
+    final m = _unwrapBody(body) ?? (body is Map ? asJsonMap(body) : null);
+    if (m == null) return (liked: true, likesCount: 0);
+    return (
+      liked: m['liked'] == true ||
+          m['isLiked'] == true ||
+          m['likedByMe'] == true,
+      likesCount: asInt(
+        pick(m, ['likesCount', 'likeCount', 'likes', 'count']),
+      ),
+    );
+  }
+
+  Future<List<SocialCommentEntity>> fetchComments(String postId) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.socialPostComments(postId),
+    );
+    return _parseComments(res.data);
+  }
+
+  Future<SocialCommentEntity> addComment(String postId, String text) async {
+    final content = text.trim();
+    if (content.isEmpty) {
+      throw const ApiException('Yorum boş olamaz');
+    }
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.socialPostComments(postId),
+      data: {'content': content, 'text': content},
+    );
+    final list = _parseComments(res.data);
+    if (list.isNotEmpty) return list.first;
+    final m = _unwrapBody(res.data) ?? asJsonMap(res.data);
+    final commentRaw = pick(m, ['comment', 'item', 'data']) ?? m;
+    if (commentRaw is Map) {
+      final parsed = _parseComments([commentRaw]);
+      if (parsed.isNotEmpty) return parsed.first;
+    }
+    throw const ApiException('Yorum yanıtı okunamadı');
+  }
+
+  List<SocialCommentEntity> _parseComments(dynamic body) {
+    dynamic list = body;
+    if (body is Map) {
+      final m = _unwrapBody(body) ?? asJsonMap(body);
+      list = pick(m, ['comments', 'items', 'data']) ?? body;
+    }
+    if (list is! List) return const [];
+    return asJsonList(list).map(_commentFromMap).where((c) => c.id.isNotEmpty).toList();
+  }
+
+  SocialCommentEntity _commentFromMap(dynamic raw) {
+    final m = asJsonMap(raw);
+    final userRaw = pick(m, ['user', 'author', 'profile']);
+    final userMap = userRaw is Map ? asJsonMap(userRaw) : <String, dynamic>{};
+    return SocialCommentEntity(
+      id: pick(m, ['id', '_id'])?.toString() ?? '',
+      author: UserDto.fromJson(userMap).toEntity(),
+      text: pick(m, ['content', 'text', 'body'])?.toString() ?? '',
+      createdAt: DateTime.tryParse(
+        pick(m, ['createdAt', 'created_at'])?.toString() ?? '',
+      ),
+    );
+  }
+
+  /// POST `/api/stories` — görsel hikâye (multipart).
+  Future<void> createStoryImage(String imagePath) async {
+    final form = FormData.fromMap({
+      'image': await MultipartFile.fromFile(
+        imagePath,
+        filename: 'story_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      ),
+      'media': await MultipartFile.fromFile(
+        imagePath,
+        filename: 'story_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      ),
+    });
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.feed,
+      data: form,
+      options: Options(contentType: 'multipart/form-data'),
+    );
   }
 
   /// GET `/api/stories` — `storyGroups` hikâye halkaları (web ana akış ile aynı).

@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PostDto {
 
- String get id; UserEntity get author; String? get caption; String? get mediaUrl; int get likesCount; int get commentsCount; DateTime? get createdAt; String? get fortuneType; int get viewCount; bool get isAutoShare; int get fortuneCount; String? get postType;
+ String get id; UserEntity get author; String? get caption; String? get mediaUrl; int get likesCount; int get commentsCount; DateTime? get createdAt; String? get fortuneType; int get viewCount; bool get isAutoShare; int get fortuneCount; String? get postType; bool get likedByMe;
 /// Create a copy of PostDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $PostDtoCopyWith<PostDto> get copyWith => _$PostDtoCopyWithImpl<PostDto>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostDto&&(identical(other.id, id) || other.id == id)&&(identical(other.author, author) || other.author == author)&&(identical(other.caption, caption) || other.caption == caption)&&(identical(other.mediaUrl, mediaUrl) || other.mediaUrl == mediaUrl)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.commentsCount, commentsCount) || other.commentsCount == commentsCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.fortuneType, fortuneType) || other.fortuneType == fortuneType)&&(identical(other.viewCount, viewCount) || other.viewCount == viewCount)&&(identical(other.isAutoShare, isAutoShare) || other.isAutoShare == isAutoShare)&&(identical(other.fortuneCount, fortuneCount) || other.fortuneCount == fortuneCount)&&(identical(other.postType, postType) || other.postType == postType));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostDto&&(identical(other.id, id) || other.id == id)&&(identical(other.author, author) || other.author == author)&&(identical(other.caption, caption) || other.caption == caption)&&(identical(other.mediaUrl, mediaUrl) || other.mediaUrl == mediaUrl)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.commentsCount, commentsCount) || other.commentsCount == commentsCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.fortuneType, fortuneType) || other.fortuneType == fortuneType)&&(identical(other.viewCount, viewCount) || other.viewCount == viewCount)&&(identical(other.isAutoShare, isAutoShare) || other.isAutoShare == isAutoShare)&&(identical(other.fortuneCount, fortuneCount) || other.fortuneCount == fortuneCount)&&(identical(other.postType, postType) || other.postType == postType)&&(identical(other.likedByMe, likedByMe) || other.likedByMe == likedByMe));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,author,caption,mediaUrl,likesCount,commentsCount,createdAt,fortuneType,viewCount,isAutoShare,fortuneCount,postType);
+int get hashCode => Object.hash(runtimeType,id,author,caption,mediaUrl,likesCount,commentsCount,createdAt,fortuneType,viewCount,isAutoShare,fortuneCount,postType,likedByMe);
 
 @override
 String toString() {
-  return 'PostDto(id: $id, author: $author, caption: $caption, mediaUrl: $mediaUrl, likesCount: $likesCount, commentsCount: $commentsCount, createdAt: $createdAt, fortuneType: $fortuneType, viewCount: $viewCount, isAutoShare: $isAutoShare, fortuneCount: $fortuneCount, postType: $postType)';
+  return 'PostDto(id: $id, author: $author, caption: $caption, mediaUrl: $mediaUrl, likesCount: $likesCount, commentsCount: $commentsCount, createdAt: $createdAt, fortuneType: $fortuneType, viewCount: $viewCount, isAutoShare: $isAutoShare, fortuneCount: $fortuneCount, postType: $postType, likedByMe: $likedByMe)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $PostDtoCopyWith<$Res>  {
   factory $PostDtoCopyWith(PostDto value, $Res Function(PostDto) _then) = _$PostDtoCopyWithImpl;
 @useResult
 $Res call({
- String id, UserEntity author, String? caption, String? mediaUrl, int likesCount, int commentsCount, DateTime? createdAt, String? fortuneType, int viewCount, bool isAutoShare, int fortuneCount, String? postType
+ String id, UserEntity author, String? caption, String? mediaUrl, int likesCount, int commentsCount, DateTime? createdAt, String? fortuneType, int viewCount, bool isAutoShare, int fortuneCount, String? postType, bool likedByMe
 });
 
 
@@ -62,7 +62,7 @@ class _$PostDtoCopyWithImpl<$Res>
 
 /// Create a copy of PostDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? author = null,Object? caption = freezed,Object? mediaUrl = freezed,Object? likesCount = null,Object? commentsCount = null,Object? createdAt = freezed,Object? fortuneType = freezed,Object? viewCount = null,Object? isAutoShare = null,Object? fortuneCount = null,Object? postType = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? author = null,Object? caption = freezed,Object? mediaUrl = freezed,Object? likesCount = null,Object? commentsCount = null,Object? createdAt = freezed,Object? fortuneType = freezed,Object? viewCount = null,Object? isAutoShare = null,Object? fortuneCount = null,Object? postType = freezed,Object? likedByMe = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,author: null == author ? _self.author : author // ignore: cast_nullable_to_non_nullable
@@ -76,7 +76,8 @@ as String?,viewCount: null == viewCount ? _self.viewCount : viewCount // ignore:
 as int,isAutoShare: null == isAutoShare ? _self.isAutoShare : isAutoShare // ignore: cast_nullable_to_non_nullable
 as bool,fortuneCount: null == fortuneCount ? _self.fortuneCount : fortuneCount // ignore: cast_nullable_to_non_nullable
 as int,postType: freezed == postType ? _self.postType : postType // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,likedByMe: null == likedByMe ? _self.likedByMe : likedByMe // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -161,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  UserEntity author,  String? caption,  String? mediaUrl,  int likesCount,  int commentsCount,  DateTime? createdAt,  String? fortuneType,  int viewCount,  bool isAutoShare,  int fortuneCount,  String? postType)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  UserEntity author,  String? caption,  String? mediaUrl,  int likesCount,  int commentsCount,  DateTime? createdAt,  String? fortuneType,  int viewCount,  bool isAutoShare,  int fortuneCount,  String? postType,  bool likedByMe)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PostDto() when $default != null:
-return $default(_that.id,_that.author,_that.caption,_that.mediaUrl,_that.likesCount,_that.commentsCount,_that.createdAt,_that.fortuneType,_that.viewCount,_that.isAutoShare,_that.fortuneCount,_that.postType);case _:
+return $default(_that.id,_that.author,_that.caption,_that.mediaUrl,_that.likesCount,_that.commentsCount,_that.createdAt,_that.fortuneType,_that.viewCount,_that.isAutoShare,_that.fortuneCount,_that.postType,_that.likedByMe);case _:
   return orElse();
 
 }
@@ -182,10 +183,10 @@ return $default(_that.id,_that.author,_that.caption,_that.mediaUrl,_that.likesCo
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  UserEntity author,  String? caption,  String? mediaUrl,  int likesCount,  int commentsCount,  DateTime? createdAt,  String? fortuneType,  int viewCount,  bool isAutoShare,  int fortuneCount,  String? postType)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  UserEntity author,  String? caption,  String? mediaUrl,  int likesCount,  int commentsCount,  DateTime? createdAt,  String? fortuneType,  int viewCount,  bool isAutoShare,  int fortuneCount,  String? postType,  bool likedByMe)  $default,) {final _that = this;
 switch (_that) {
 case _PostDto():
-return $default(_that.id,_that.author,_that.caption,_that.mediaUrl,_that.likesCount,_that.commentsCount,_that.createdAt,_that.fortuneType,_that.viewCount,_that.isAutoShare,_that.fortuneCount,_that.postType);case _:
+return $default(_that.id,_that.author,_that.caption,_that.mediaUrl,_that.likesCount,_that.commentsCount,_that.createdAt,_that.fortuneType,_that.viewCount,_that.isAutoShare,_that.fortuneCount,_that.postType,_that.likedByMe);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +203,10 @@ return $default(_that.id,_that.author,_that.caption,_that.mediaUrl,_that.likesCo
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  UserEntity author,  String? caption,  String? mediaUrl,  int likesCount,  int commentsCount,  DateTime? createdAt,  String? fortuneType,  int viewCount,  bool isAutoShare,  int fortuneCount,  String? postType)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  UserEntity author,  String? caption,  String? mediaUrl,  int likesCount,  int commentsCount,  DateTime? createdAt,  String? fortuneType,  int viewCount,  bool isAutoShare,  int fortuneCount,  String? postType,  bool likedByMe)?  $default,) {final _that = this;
 switch (_that) {
 case _PostDto() when $default != null:
-return $default(_that.id,_that.author,_that.caption,_that.mediaUrl,_that.likesCount,_that.commentsCount,_that.createdAt,_that.fortuneType,_that.viewCount,_that.isAutoShare,_that.fortuneCount,_that.postType);case _:
+return $default(_that.id,_that.author,_that.caption,_that.mediaUrl,_that.likesCount,_that.commentsCount,_that.createdAt,_that.fortuneType,_that.viewCount,_that.isAutoShare,_that.fortuneCount,_that.postType,_that.likedByMe);case _:
   return null;
 
 }
@@ -217,7 +218,7 @@ return $default(_that.id,_that.author,_that.caption,_that.mediaUrl,_that.likesCo
 
 
 class _PostDto extends PostDto {
-  const _PostDto({required this.id, required this.author, this.caption, this.mediaUrl, this.likesCount = 0, this.commentsCount = 0, this.createdAt, this.fortuneType, this.viewCount = 0, this.isAutoShare = false, this.fortuneCount = 0, this.postType}): super._();
+  const _PostDto({required this.id, required this.author, this.caption, this.mediaUrl, this.likesCount = 0, this.commentsCount = 0, this.createdAt, this.fortuneType, this.viewCount = 0, this.isAutoShare = false, this.fortuneCount = 0, this.postType, this.likedByMe = false}): super._();
   
 
 @override final  String id;
@@ -232,6 +233,7 @@ class _PostDto extends PostDto {
 @override@JsonKey() final  bool isAutoShare;
 @override@JsonKey() final  int fortuneCount;
 @override final  String? postType;
+@override@JsonKey() final  bool likedByMe;
 
 /// Create a copy of PostDto
 /// with the given fields replaced by the non-null parameter values.
@@ -243,16 +245,16 @@ _$PostDtoCopyWith<_PostDto> get copyWith => __$PostDtoCopyWithImpl<_PostDto>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PostDto&&(identical(other.id, id) || other.id == id)&&(identical(other.author, author) || other.author == author)&&(identical(other.caption, caption) || other.caption == caption)&&(identical(other.mediaUrl, mediaUrl) || other.mediaUrl == mediaUrl)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.commentsCount, commentsCount) || other.commentsCount == commentsCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.fortuneType, fortuneType) || other.fortuneType == fortuneType)&&(identical(other.viewCount, viewCount) || other.viewCount == viewCount)&&(identical(other.isAutoShare, isAutoShare) || other.isAutoShare == isAutoShare)&&(identical(other.fortuneCount, fortuneCount) || other.fortuneCount == fortuneCount)&&(identical(other.postType, postType) || other.postType == postType));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PostDto&&(identical(other.id, id) || other.id == id)&&(identical(other.author, author) || other.author == author)&&(identical(other.caption, caption) || other.caption == caption)&&(identical(other.mediaUrl, mediaUrl) || other.mediaUrl == mediaUrl)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.commentsCount, commentsCount) || other.commentsCount == commentsCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.fortuneType, fortuneType) || other.fortuneType == fortuneType)&&(identical(other.viewCount, viewCount) || other.viewCount == viewCount)&&(identical(other.isAutoShare, isAutoShare) || other.isAutoShare == isAutoShare)&&(identical(other.fortuneCount, fortuneCount) || other.fortuneCount == fortuneCount)&&(identical(other.postType, postType) || other.postType == postType)&&(identical(other.likedByMe, likedByMe) || other.likedByMe == likedByMe));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,author,caption,mediaUrl,likesCount,commentsCount,createdAt,fortuneType,viewCount,isAutoShare,fortuneCount,postType);
+int get hashCode => Object.hash(runtimeType,id,author,caption,mediaUrl,likesCount,commentsCount,createdAt,fortuneType,viewCount,isAutoShare,fortuneCount,postType,likedByMe);
 
 @override
 String toString() {
-  return 'PostDto(id: $id, author: $author, caption: $caption, mediaUrl: $mediaUrl, likesCount: $likesCount, commentsCount: $commentsCount, createdAt: $createdAt, fortuneType: $fortuneType, viewCount: $viewCount, isAutoShare: $isAutoShare, fortuneCount: $fortuneCount, postType: $postType)';
+  return 'PostDto(id: $id, author: $author, caption: $caption, mediaUrl: $mediaUrl, likesCount: $likesCount, commentsCount: $commentsCount, createdAt: $createdAt, fortuneType: $fortuneType, viewCount: $viewCount, isAutoShare: $isAutoShare, fortuneCount: $fortuneCount, postType: $postType, likedByMe: $likedByMe)';
 }
 
 
@@ -263,7 +265,7 @@ abstract mixin class _$PostDtoCopyWith<$Res> implements $PostDtoCopyWith<$Res> {
   factory _$PostDtoCopyWith(_PostDto value, $Res Function(_PostDto) _then) = __$PostDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, UserEntity author, String? caption, String? mediaUrl, int likesCount, int commentsCount, DateTime? createdAt, String? fortuneType, int viewCount, bool isAutoShare, int fortuneCount, String? postType
+ String id, UserEntity author, String? caption, String? mediaUrl, int likesCount, int commentsCount, DateTime? createdAt, String? fortuneType, int viewCount, bool isAutoShare, int fortuneCount, String? postType, bool likedByMe
 });
 
 
@@ -280,7 +282,7 @@ class __$PostDtoCopyWithImpl<$Res>
 
 /// Create a copy of PostDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? author = null,Object? caption = freezed,Object? mediaUrl = freezed,Object? likesCount = null,Object? commentsCount = null,Object? createdAt = freezed,Object? fortuneType = freezed,Object? viewCount = null,Object? isAutoShare = null,Object? fortuneCount = null,Object? postType = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? author = null,Object? caption = freezed,Object? mediaUrl = freezed,Object? likesCount = null,Object? commentsCount = null,Object? createdAt = freezed,Object? fortuneType = freezed,Object? viewCount = null,Object? isAutoShare = null,Object? fortuneCount = null,Object? postType = freezed,Object? likedByMe = null,}) {
   return _then(_PostDto(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,author: null == author ? _self.author : author // ignore: cast_nullable_to_non_nullable
@@ -294,7 +296,8 @@ as String?,viewCount: null == viewCount ? _self.viewCount : viewCount // ignore:
 as int,isAutoShare: null == isAutoShare ? _self.isAutoShare : isAutoShare // ignore: cast_nullable_to_non_nullable
 as bool,fortuneCount: null == fortuneCount ? _self.fortuneCount : fortuneCount // ignore: cast_nullable_to_non_nullable
 as int,postType: freezed == postType ? _self.postType : postType // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,likedByMe: null == likedByMe ? _self.likedByMe : likedByMe // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
