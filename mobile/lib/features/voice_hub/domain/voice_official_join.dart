@@ -1,11 +1,31 @@
 /// Yetkili / VIP oda giriş mesajları — kayan şerit ve sohbet filtresi.
 abstract final class VoiceOfficialJoin {
+  /// Aynı giriş şeridini oturumda bir kez göstermek için anahtar.
+  static String entranceDedupeKey(String raw, {String? roomName}) {
+    final trimmed = raw.trim();
+    if (trimmed.startsWith('[SYSTEM_VIP_JOIN:')) {
+      return 'vip:$trimmed:${roomName ?? ''}';
+    }
+    final formatted = formatEntranceBanner(trimmed, roomName: roomName);
+    if (formatted.isNotEmpty) {
+      return 'entrance:${formatted.toLowerCase()}';
+    }
+    final name = _parseEntranceName(trimmed) ?? _cleanDisplayName(trimmed);
+    final room = roomName?.trim().toLowerCase() ?? '';
+    return 'entrance:${name.toLowerCase()}:$room';
+  }
+
   static bool isOfficialEntrance(String content) {
     final raw = content.trim();
     if (raw.isEmpty) return false;
     if (raw.startsWith('[SYSTEM_VIP_JOIN:')) return true;
     final upper = raw.toUpperCase();
-    if (!upper.contains('KATILDI') && !upper.contains('JOINED')) return false;
+    if (!upper.contains('KATILDI') &&
+        !upper.contains('JOINED') &&
+        !upper.contains('GİRİŞ YAPTI') &&
+        !upper.contains('GIRIS YAPTI')) {
+      return false;
+    }
     return upper.contains('MODERATOR') ||
         upper.contains('MODERAT') ||
         upper.contains('ADMIN') ||
@@ -33,6 +53,10 @@ abstract final class VoiceOfficialJoin {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return '';
 
+    if (_looksLikeFormattedEntrance(trimmed)) {
+      return _stripDuplicateRoom(trimmed, roomName);
+    }
+
     if (trimmed.startsWith('[SYSTEM_VIP_JOIN:')) {
       final inner = trimmed
           .replaceFirst('[SYSTEM_VIP_JOIN:', '')
@@ -54,12 +78,42 @@ abstract final class VoiceOfficialJoin {
     return trimmed.contains('📣') ? trimmed : '📣 $trimmed';
   }
 
+  static bool _looksLikeFormattedEntrance(String raw) {
+    final lower = raw.toLowerCase();
+    return lower.contains('sesli odasına') ||
+        lower.contains('odaya katıldı') ||
+        lower.contains('giriş yaptı') ||
+        lower.contains('giris yaptı');
+  }
+
+  static String _stripDuplicateRoom(String raw, String? roomName) {
+    var line = raw.trim();
+    if (!line.startsWith('📣')) line = '📣 $line';
+    final room = roomName?.trim();
+    if (room == null || room.isEmpty) return line;
+    final escaped = RegExp.escape(room);
+    line = line.replaceAll(
+      RegExp('$escaped\\s+$escaped', caseSensitive: false),
+      room,
+    );
+    return line;
+  }
+
   static String _joinLine(String name, String? roomName) {
+    final cleanName = _cleanDisplayName(name);
     final room = roomName?.trim();
     if (room != null && room.isNotEmpty) {
-      return '📣 $name $room sesli odasına katıldı';
+      final lower = cleanName.toLowerCase();
+      final roomLower = room.toLowerCase();
+      if (lower.contains(roomLower) &&
+          (_looksLikeFormattedEntrance(cleanName) ||
+              lower.contains('katıldı') ||
+              lower.contains('giriş'))) {
+        return _stripDuplicateRoom(cleanName, roomName);
+      }
+      return '📣 $cleanName $room sesli odasına katıldı';
     }
-    return '📣 $name odaya katıldı';
+    return '📣 $cleanName odaya katıldı';
   }
 
   /// «MODERATÖR İlham Perisi … katıldı» → «İlham Perisi»

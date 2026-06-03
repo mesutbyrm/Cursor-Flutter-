@@ -119,6 +119,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   Timer? _presenceHeartbeat;
   Timer? _enterBannerTimer;
   var _pollPaused = false;
+  final Set<String> _shownEntranceKeys = {};
 
   /// Prisma cuid — slug değil.
   String get _roomKey => arg.apiRoomKey;
@@ -155,34 +156,11 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     return merged;
   }
 
-  List<ChatRoomMessage> _joinMessagesForNewPresence(
-    List<ChatRoomPresence> previous,
-    List<ChatRoomPresence> next,
-  ) {
-    if (previous.isEmpty) return const [];
-    final known = previous.map((p) => p.id).toSet();
-    final out = <ChatRoomMessage>[];
-    for (final p in next) {
-      if (known.contains(p.id)) continue;
-      out.add(
-        ChatRoomMessage(
-          id: 'join-${p.id}-${DateTime.now().microsecondsSinceEpoch}',
-          content: '${p.displayName} odaya katıldı',
-          createdAt: DateTime.now(),
-          user: ChatRoomUserRef(
-            id: p.id,
-            name: p.name,
-            nickname: p.nickname,
-            image: p.image,
-            chatRole: p.chatRole,
-            roleSymbol: p.roleSymbol,
-            membership: p.membership,
-          ),
-          kind: ChatMessageKind.systemJoin,
-        ),
-      );
-    }
-    return out;
+  bool _markEntranceOnce(String raw) {
+    final key = VoiceOfficialJoin.entranceDedupeKey(raw, roomName: arg.nameTr);
+    if (_shownEntranceKeys.contains(key)) return false;
+    _shownEntranceKeys.add(key);
+    return true;
   }
 
   @override
@@ -319,19 +297,16 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         if (exists) return;
         state = state.copyWith(messages: [...state.messages, msg]);
         if (msg.kind == ChatMessageKind.systemJoin &&
-            VoiceOfficialJoin.isOfficialEntrance(msg.content)) {
+            VoiceOfficialJoin.isOfficialEntrance(msg.content) &&
+            _markEntranceOnce(msg.content)) {
           _showEnterBanner(msg.content);
         }
       },
       onPresence: (users) {
         final merged = _mergeSelf(users);
-        final joinMsgs = _joinMessagesForNewPresence(state.presence, merged);
         state = state.copyWith(
           presence: merged,
           sseConnected: true,
-          messages: joinMsgs.isEmpty
-              ? state.messages
-              : [...state.messages, ...joinMsgs],
           selfInRoom: true,
         );
       },
@@ -379,21 +354,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       );
       final bgFromDj = dj.backgroundImage?.trim();
       presence = _mergeSelf(presence);
-      var messages = _mergeMessages(state.messages, fetchedMsgs);
-      final latestOfficial = VoiceOfficialJoin.latestEntranceBanner(
-        messages
-            .where((m) => m.kind == ChatMessageKind.systemJoin)
-            .map((m) => m.content),
-      );
-      if (latestOfficial != null) {
-        final formatted = VoiceOfficialJoin.formatEntranceBanner(
-          latestOfficial,
-          roomName: arg.nameTr,
-        );
-        if (state.enterBanner != formatted) {
-          _showEnterBanner(latestOfficial);
-        }
-      }
+      final messages = _mergeMessages(state.messages, fetchedMsgs);
       state = state.copyWith(
         messages: messages,
         presence: presence,
@@ -444,6 +405,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       raw,
       roomName: arg.nameTr,
     );
+    if (formatted.isEmpty) return;
     state = state.copyWith(enterBanner: formatted);
     _enterBannerTimer?.cancel();
     _enterBannerTimer = Timer(const Duration(seconds: 5), () {
