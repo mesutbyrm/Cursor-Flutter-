@@ -5,7 +5,7 @@ import '../../../livekit/data/datasources/livekit_remote_datasource.dart';
 import '../../../livekit/presentation/livekit_room_manager.dart';
 import '../../../trtc/data/datasources/trtc_remote_datasource.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
-import '../../data/services/voice_room_socket_helper.dart';
+import '../../data/services/voice_room_debug_log.dart';
 import '../../domain/entities/voice_audio_engine.dart';
 
 /// LiveKit öncelikli, TRTC yedek — sesli sohbet ses katmanı.
@@ -36,8 +36,7 @@ class VoiceRoomAudioCoordinator {
   bool get isSupported => _liveKit.isSupported || _trtc.isSupported;
 
   Future<VoiceAudioEngineKind> join({
-    required String roomId,
-    String? alternateRoomId,
+    required String trtcRoomId,
     required String userId,
     required bool isHost,
     LiveKitRemoteDataSource? liveKitRemote,
@@ -54,7 +53,10 @@ class VoiceRoomAudioCoordinator {
         lkRemote != null &&
         _liveKit.isSupported) {
       try {
-        final cred = await lkRemote.fetchToken(roomId: roomId, roomName: roomId);
+        final cred = await lkRemote.fetchToken(
+          roomId: trtcRoomId,
+          roomName: trtcRoomId,
+        );
         await _liveKit.join(credentials: cred, enableMic: true);
         _engine = VoiceAudioEngineKind.livekit;
         debugPrint('Voice room audio: LiveKit');
@@ -71,30 +73,35 @@ class VoiceRoomAudioCoordinator {
       throw StateError('TRTC yapılandırması eksik');
     }
 
-    final keys = VoiceRoomSocketHelper.joinKeys(
-      primary: roomId,
-      alternate: alternateRoomId,
-    );
-    Object? lastError;
-    for (final key in keys) {
-      try {
-        final cred = await trtcDs.fetchUserSig(userId: userId, roomId: key);
-        await _trtc.join(
-          credentials: cred,
-          isHost: isHost,
-          audioOnly: true,
-        );
-        _engine = VoiceAudioEngineKind.trtc;
-        debugPrint('Voice room audio: TRTC (room=${cred.roomId})');
-        return _engine!;
-      } catch (e) {
-        lastError = e;
-        debugPrint('TRTC join failed for key=$key: $e');
-      }
+    final roomKey = trtcRoomId.trim();
+    if (roomKey.isEmpty) {
+      throw StateError('TRTC oda kimliği boş');
     }
-    throw StateError(
-      lastError?.toString() ?? 'Ses odasına bağlanılamadı',
-    );
+    try {
+      VoiceRoomDebugLog.log('audio.trtc.token', {
+        'roomId': roomKey,
+        'userId': userId,
+      });
+      final cred = await trtcDs.fetchUserSig(userId: userId, roomId: roomKey);
+      await _trtc.join(
+        credentials: cred,
+        isHost: isHost,
+        audioOnly: true,
+      );
+      _engine = VoiceAudioEngineKind.trtc;
+      VoiceRoomDebugLog.log('audio.trtc.joined', {
+        'roomId': cred.roomId,
+        'sdkAppId': cred.sdkAppId,
+      });
+      debugPrint('Voice room audio: TRTC (room=${cred.roomId})');
+      return _engine!;
+    } catch (e) {
+      VoiceRoomDebugLog.log('audio.trtc.fail', {
+        'roomId': roomKey,
+        'error': e.toString(),
+      });
+      throw StateError(e.toString());
+    }
   }
 
   void setMicEnabled(bool enabled) {

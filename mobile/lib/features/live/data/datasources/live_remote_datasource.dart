@@ -285,7 +285,7 @@ class LiveRemoteDataSource {
     final slug = pick(json, ['slug'])?.toString() ?? '';
     final rawId = pick(json, ['id', '_id', 'roomId'])?.toString() ?? '';
     return VoiceRoomEntity(
-      id: rawId.isNotEmpty ? rawId : slug,
+      id: rawId,
       slug: slug,
       nameTr: pick(json, ['nameTr', 'nameEn', 'name', 'slug'])?.toString() ?? 'Oda',
       descTr: pick(json, ['descTr', 'descEn', 'description']) as String?,

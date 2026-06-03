@@ -77,3 +77,30 @@ export function emitChatRoomMessage(
     io.to(voiceRoom(key)).emit("roomMessage", payload);
   }
 }
+
+/** Oda üye listesi — web ve mobil gerçek zamanlı presence senkronu */
+export function emitChatRoomPresence(
+  roomId: string,
+  users: Record<string, unknown>[],
+  delta?: { joined?: Record<string, unknown>; leftUserId?: string },
+) {
+  if (!io) return;
+  const canonical = resolveRoomId(roomId);
+  const payload = { users, roomId: canonical };
+  for (const key of voiceRoomTargets(roomId)) {
+    io.to(voiceRoom(key)).emit("roomUsers", payload);
+    io.to(voiceRoom(key)).emit("presenceUpdated", payload);
+    if (delta?.joined) {
+      io.to(voiceRoom(key)).emit("userJoined", {
+        user: delta.joined,
+        users: payload.users,
+      });
+    }
+    if (delta?.leftUserId) {
+      io.to(voiceRoom(key)).emit("userLeft", {
+        userId: delta.leftUserId,
+        users: payload.users,
+      });
+    }
+  }
+}
