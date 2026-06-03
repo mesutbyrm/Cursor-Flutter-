@@ -17,6 +17,7 @@ import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/voice_official_join.dart';
 import '../utils/voice_room_permissions.dart';
+import '../widgets/voice_room/voice_room_music_request_flash.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
@@ -62,6 +63,7 @@ class VoiceRoomLiveState {
     this.error,
     this.sending = false,
     this.enterBanner,
+    this.musicRequestFlash,
     this.backgroundUrl,
     this.selfInRoom = false,
     this.sseConnected = false,
@@ -74,6 +76,7 @@ class VoiceRoomLiveState {
   final String? error;
   final bool sending;
   final String? enterBanner;
+  final String? musicRequestFlash;
   final String? backgroundUrl;
   final bool selfInRoom;
   final bool sseConnected;
@@ -93,6 +96,8 @@ class VoiceRoomLiveState {
     bool? sending,
     String? enterBanner,
     bool clearEnterBanner = false,
+    String? musicRequestFlash,
+    bool clearMusicRequestFlash = false,
     String? backgroundUrl,
     bool? selfInRoom,
     bool? sseConnected,
@@ -106,6 +111,9 @@ class VoiceRoomLiveState {
       error: clearError ? null : (error ?? this.error),
       sending: sending ?? this.sending,
       enterBanner: clearEnterBanner ? null : (enterBanner ?? this.enterBanner),
+      musicRequestFlash: clearMusicRequestFlash
+          ? null
+          : (musicRequestFlash ?? this.musicRequestFlash),
       backgroundUrl: backgroundUrl ?? this.backgroundUrl,
       selfInRoom: selfInRoom ?? this.selfInRoom,
       sseConnected: sseConnected ?? this.sseConnected,
@@ -118,8 +126,10 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   Timer? _poll;
   Timer? _presenceHeartbeat;
   Timer? _enterBannerTimer;
+  Timer? _musicRequestFlashTimer;
   var _pollPaused = false;
   final Set<String> _shownEntranceKeys = {};
+  final Set<String> _shownMusicRequestFlashKeys = {};
 
   /// Prisma cuid — slug değil.
   String get _roomKey => arg.apiRoomKey;
@@ -170,6 +180,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       _poll?.cancel();
       _presenceHeartbeat?.cancel();
       _enterBannerTimer?.cancel();
+      _musicRequestFlashTimer?.cancel();
       _leavePresence();
       ref.read(voiceRoomSseServiceProvider).disconnect();
       ref.read(voiceRoomDjPlayerProvider).stop();
@@ -296,6 +307,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         final exists = state.messages.any((m) => m.id == msg.id);
         if (exists) return;
         state = state.copyWith(messages: [...state.messages, msg]);
+        _maybeShowMusicRequestFlash(msg);
         if (msg.kind == ChatMessageKind.systemJoin &&
             VoiceOfficialJoin.isOfficialEntrance(msg.content) &&
             _markEntranceOnce(msg.content)) {
@@ -398,6 +410,22 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
             : urls.first,
       );
     } catch (_) {}
+  }
+
+  void _maybeShowMusicRequestFlash(ChatRoomMessage msg) {
+    final line = VoiceMusicRequestFlashText.fromChatContent(
+      msg.content,
+      userName: msg.user?.displayName ?? msg.user?.name,
+    );
+    if (line == null) return;
+    final key = '${msg.id}:$line';
+    if (_shownMusicRequestFlashKeys.contains(key)) return;
+    _shownMusicRequestFlashKeys.add(key);
+    state = state.copyWith(musicRequestFlash: line);
+    _musicRequestFlashTimer?.cancel();
+    _musicRequestFlashTimer = Timer(const Duration(seconds: 8), () {
+      state = state.copyWith(clearMusicRequestFlash: true);
+    });
   }
 
   void _showEnterBanner(String raw) {

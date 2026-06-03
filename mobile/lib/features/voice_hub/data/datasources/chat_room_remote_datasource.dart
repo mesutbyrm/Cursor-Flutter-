@@ -575,14 +575,14 @@ class ChatRoomRemoteDataSource {
       ];
     }
 
-    final apiHits = await _searchYoutubeViaApi(q);
-    if (apiHits.isNotEmpty) return apiHits;
-
     final piped = await _searchYoutubePiped(q);
     if (piped.isNotEmpty) return piped;
 
     final inv = await _searchYoutubeInvidious(q);
     if (inv.isNotEmpty) return inv;
+
+    final apiHits = await _searchYoutubeViaApi(q);
+    if (apiHits.isNotEmpty) return apiHits;
 
     final popularHits = await _searchYoutubeFromPopularCatalog(q);
     if (popularHits.isNotEmpty) return popularHits;
@@ -617,15 +617,9 @@ class ChatRoomRemoteDataSource {
           if (hits.isNotEmpty) return hits;
         } on DioException catch (e) {
           final mapped = _mapDioForYoutube(e);
-          if (mapped.statusCode == 401) {
-            throw const ApiException('Şarkı aramak için giriş yapın.');
-          }
           if (mapped.statusCode == 404) continue;
           lastError = mapped;
         } on ApiException catch (e) {
-          if (e.statusCode == 401) {
-            throw const ApiException('Şarkı aramak için giriş yapın.');
-          }
           if (e.statusCode == 404) continue;
           lastError = e;
         } on Object catch (e) {
@@ -644,12 +638,6 @@ class ChatRoomRemoteDataSource {
         if (hits.isNotEmpty) return hits;
       } catch (e) {
         lastError ??= e;
-      }
-    }
-    if (lastError != null) {
-      final msg = ApiException.userMessage(lastError);
-      if (msg.contains('401') || msg.toLowerCase().contains('oturum')) {
-        throw const ApiException('Şarkı aramak için giriş yapın.');
       }
     }
     return const [];
@@ -680,10 +668,10 @@ class ChatRoomRemoteDataSource {
         )
         .take(4);
     for (final m in matches) {
-      final hits = await _searchYoutubeViaApi(m.query);
-      if (hits.isNotEmpty) return hits;
       final piped = await _searchYoutubePiped(m.query);
       if (piped.isNotEmpty) return piped;
+      final inv = await _searchYoutubeInvidious(m.query);
+      if (inv.isNotEmpty) return inv;
     }
     return const [];
   }

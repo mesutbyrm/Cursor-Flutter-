@@ -304,7 +304,9 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
     final live = ref.watch(voiceRoomLiveProvider(widget.room));
     final canMod = widget.perms.canModerate || widget.isOwner;
 
-    return Scaffold(
+    return PopScope(
+      canPop: true,
+      child: Scaffold(
       backgroundColor: VoiceRoomTokens.bgDeep,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -371,6 +373,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
               onSubmit: _submit,
             )
           : null,
+    ),
     );
   }
 

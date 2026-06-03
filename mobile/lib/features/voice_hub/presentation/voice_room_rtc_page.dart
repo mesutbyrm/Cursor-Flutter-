@@ -55,6 +55,7 @@ import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_action_row.dart';
 import 'widgets/voice_room/voice_room_music_mini_player.dart';
 import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
+import 'widgets/voice_room/voice_room_music_request_flash.dart';
 
 /// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
@@ -244,12 +245,48 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     setState(() => _showVipEntrance = true);
   }
 
-  Future<void> _leave() async {
+  Future<void> _leaveRoom() async {
     if (_leaving) return;
     _leaving = true;
     ref.read(voiceRoomGiftRealtimeProvider).stop();
     await _audio?.leave();
-    if (mounted) context.go('/voice-rooms');
+    if (!mounted) return;
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/voice-rooms');
+    }
+    _leaving = false;
+  }
+
+  Future<void> _leave() async {
+    final nav = Navigator.of(context);
+    if (nav.canPop()) {
+      nav.pop();
+      return;
+    }
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0F2E),
+        title: const Text('Odadan çık', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Sesli sohbet listesine dönmek ister misiniz?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Kal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ana liste'),
+          ),
+        ],
+      ),
+    );
+    if (leave == true && mounted) await _leaveRoom();
   }
 
   VoiceRoomPermissions _perms(
@@ -620,6 +657,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
+        final rootNav = Navigator.of(context);
+        if (rootNav.canPop()) {
+          rootNav.pop();
+          return;
+        }
         await _leave();
       },
       child: Scaffold(
@@ -783,6 +825,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 isOwner: isOwner,
                               ),
                             ),
+                          ),
+                          VoiceRoomMusicRequestFlash(
+                            message: live.musicRequestFlash,
                           ),
                           const SizedBox(height: 2),
                           VoiceRoomAudienceStrip(
