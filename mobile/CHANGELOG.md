@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.119+121 (2026-05-19)
+
+### Birleşik sürüm (main + sesli oda senkron)
+
+- **PR #87** Oda Komutları, Şarkı İsteği, DJ Yönetimi (zaten main’de)
+- **PR #91–#93** Komut/YouTube, müzik kuyruk, native API uyumu
+- **PR #95** Web ↔ Flutter sesli oda senkronu, YouTube API önceliği
+- Sosyal: beğeni, yorum, paylaşım, hikâye (önceki dal)
+
 ## 1.0.118+120 (2026-05-19)
 
 ### Sesli oda — web ↔ Flutter senkronizasyonu
