@@ -71,9 +71,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   void _startGiftRealtime() {
     final service = ref.read(voiceRoomGiftRealtimeProvider);
     final r = widget.room;
-    service.start(
-      r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id,
-    );
+    service.start(r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id);
     _giftSub?.cancel();
     _giftSub = service.events.listen(_onGiftEvent);
   }

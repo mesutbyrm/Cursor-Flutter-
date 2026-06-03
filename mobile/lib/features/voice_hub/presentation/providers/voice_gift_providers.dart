@@ -5,13 +5,6 @@ import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../data/datasources/chat_room_gifts_remote_datasource.dart';
 import '../../data/services/voice_room_gift_realtime_service.dart';
-import '../../data/services/voice_room_gift_socket.dart';
-
-final voiceRoomGiftSocketProvider = Provider<VoiceRoomGiftSocket>((ref) {
-  final remote = LiveGiftsRemoteDataSource(ref.watch(dioProvider));
-  return VoiceRoomGiftSocket(remote);
-});
-
 final voiceRoomGiftRealtimeProvider =
     Provider<VoiceRoomGiftRealtimeService>((ref) {
   final dio = ref.watch(dioProvider);
@@ -20,10 +13,7 @@ final voiceRoomGiftRealtimeProvider =
     dio,
     live,
   );
-  final service = VoiceRoomGiftRealtimeService(
-    gifts,
-    ref.watch(voiceRoomGiftSocketProvider),
-  );
+  final service = VoiceRoomGiftRealtimeService(gifts);
   ref.onDispose(service.dispose);
   return service;
 });

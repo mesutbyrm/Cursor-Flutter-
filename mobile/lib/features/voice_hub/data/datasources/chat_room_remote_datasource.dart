@@ -8,6 +8,7 @@ import '../../../../core/util/json_util.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../services/voice_room_debug_log.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 
@@ -164,7 +165,13 @@ class ChatRoomRemoteDataSource {
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final res = await _dio.safePost<dynamic>(presencePath(key));
-      return _presenceList(res.data);
+      final list = _presenceList(res.data);
+      VoiceRoomDebugLog.log('api.presence.post', {
+        'roomId': key,
+        'status': res.statusCode,
+        'count': list.length,
+      });
+      return list;
     });
   }
 

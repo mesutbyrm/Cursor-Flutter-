@@ -144,10 +144,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   void _startGiftRealtime() {
     final service = ref.read(voiceRoomGiftRealtimeProvider);
     final room = widget.room;
-    service.start(
-      room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id,
-      accessToken: ref.read(tokenStorageProvider).readAccess,
-    );
+    service.start(room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id);
     _giftSub?.cancel();
     _giftSub = service.events.listen(_onGiftEvent);
   }

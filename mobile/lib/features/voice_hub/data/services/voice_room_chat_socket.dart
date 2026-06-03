@@ -7,7 +7,8 @@ import '../../domain/entities/chat_room_presence.dart';
 import 'voice_room_debug_log.dart';
 import 'voice_room_socket_helper.dart';
 
-/// Sesli oda sohbet — anlık mesaj + presence olayları (web ile aynı Socket.IO odaları).
+/// @deprecated Üretim SSE kullanır — [VoiceRoomSseService]. Socket.IO bağlanmaz.
+/// Sesli oda sohbet — eski Socket.IO istemcisi (yerel API aynası için).
 class VoiceRoomChatSocket {
   io.Socket? _socket;
   void Function(ChatRoomMessage message)? _onMessage;

@@ -11,7 +11,6 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
-import '../../data/services/voice_room_chat_socket.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import '../../data/services/voice_room_sse_service.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
@@ -34,14 +33,8 @@ final chatRoomRemoteProvider = Provider<ChatRoomRemoteDataSource>((ref) {
   return ChatRoomRemoteDataSource(ref.watch(dioProvider));
 });
 
-final voiceRoomChatSocketProvider = Provider<VoiceRoomChatSocket>((ref) {
-  final s = VoiceRoomChatSocket();
-  ref.onDispose(s.disconnect);
-  return s;
-});
-
 final voiceRoomSseServiceProvider = Provider<VoiceRoomSseService>((ref) {
-  final s = VoiceRoomSseService(ref.watch(dioProvider));
+  final s = VoiceRoomSseService();
   ref.onDispose(s.disconnect);
   return s;
 });
@@ -71,6 +64,7 @@ class VoiceRoomLiveState {
     this.enterBanner,
     this.backgroundUrl,
     this.selfInRoom = false,
+    this.sseConnected = false,
   });
 
   final List<ChatRoomMessage> messages;
@@ -82,6 +76,7 @@ class VoiceRoomLiveState {
   final String? enterBanner;
   final String? backgroundUrl;
   final bool selfInRoom;
+  final bool sseConnected;
 
   int onlineCountFor(VoiceRoomEntity room) {
     if (presence.isNotEmpty) return presence.length;
@@ -100,6 +95,7 @@ class VoiceRoomLiveState {
     bool clearEnterBanner = false,
     String? backgroundUrl,
     bool? selfInRoom,
+    bool? sseConnected,
     bool clearError = false,
   }) {
     return VoiceRoomLiveState(
@@ -112,6 +108,7 @@ class VoiceRoomLiveState {
       enterBanner: clearEnterBanner ? null : (enterBanner ?? this.enterBanner),
       backgroundUrl: backgroundUrl ?? this.backgroundUrl,
       selfInRoom: selfInRoom ?? this.selfInRoom,
+      sseConnected: sseConnected ?? this.sseConnected,
     );
   }
 }
@@ -196,7 +193,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       _presenceHeartbeat?.cancel();
       _enterBannerTimer?.cancel();
       _leavePresence();
-      ref.read(voiceRoomChatSocketProvider).disconnect();
       ref.read(voiceRoomSseServiceProvider).disconnect();
       ref.read(voiceRoomDjPlayerProvider).stop();
     });
@@ -205,7 +201,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       ref.invalidate(walletBalancesProvider);
       await _joinPresence();
       await refresh();
-      _startSocket();
       _startSse();
       _warmBackgrounds();
       final player = ref.read(voiceRoomDjPlayerProvider);
@@ -253,7 +248,10 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       VoiceRoomDebugLog.log('api.presence.join', {'room': _roomKey});
       final joined = await ref.read(chatRoomRemoteProvider).joinPresence(_roomKey);
       final merged = _mergeSelf(joined);
-      VoiceRoomDebugLog.log('api.presence.join.ok', {'count': merged.length});
+      VoiceRoomDebugLog.log('api.presence.join.ok', {
+        'count': merged.length,
+        'roomId': _roomKey,
+      });
       state = state.copyWith(
         presence: merged,
         selfInRoom: true,
@@ -306,31 +304,20 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   void _startSse() {
     if (_roomKey.isEmpty) return;
     final storage = ref.read(tokenStorageProvider);
+    VoiceRoomDebugLog.log('sse.subscribe', {
+      'url': VoiceRoomSseService.streamUrlFor(_roomKey),
+      'roomId': _roomKey,
+    });
     ref.read(voiceRoomSseServiceProvider).connect(
       roomId: _roomKey,
       accessToken: storage.readAccess,
+      onConnected: () {
+        state = state.copyWith(sseConnected: true);
+      },
       onMessage: (msg) {
         final exists = state.messages.any((m) => m.id == msg.id);
         if (exists) return;
         state = state.copyWith(messages: [...state.messages, msg]);
-      },
-      onPresence: (users) {
-        final merged = _mergeSelf(users);
-        state = state.copyWith(presence: merged, selfInRoom: true);
-      },
-    );
-  }
-
-  void _startSocket() {
-    final storage = ref.read(tokenStorageProvider);
-    ref.read(voiceRoomChatSocketProvider).connect(
-      roomId: _roomKey,
-      accessToken: storage.readAccess,
-      onMessage: (msg) {
-        final exists = state.messages.any((m) => m.id == msg.id);
-        if (exists) return;
-        final list = [...state.messages, msg];
-        state = state.copyWith(messages: list);
         if (msg.kind == ChatMessageKind.systemJoin &&
             VoiceOfficialJoin.isOfficialEntrance(msg.content)) {
           _showEnterBanner(msg.content);
@@ -341,10 +328,11 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         final joinMsgs = _joinMessagesForNewPresence(state.presence, merged);
         state = state.copyWith(
           presence: merged,
+          sseConnected: true,
           messages: joinMsgs.isEmpty
               ? state.messages
               : [...state.messages, ...joinMsgs],
-          selfInRoom: state.selfInRoom || merged.isNotEmpty,
+          selfInRoom: true,
         );
       },
     );
