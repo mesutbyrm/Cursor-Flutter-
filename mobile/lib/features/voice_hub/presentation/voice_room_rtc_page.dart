@@ -701,7 +701,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             ),
                           ),
                         if (!keyboardOpen)
-                          VoiceStaffEntranceMarquee(message: staffBanner),
+                          VoiceStaffEntranceMarquee(
+                            message: staffBanner,
+                            roomName: room.nameTr,
+                          ),
                         VoiceWebOwnerStage(
                           room: room,
                           presence: live.presence,

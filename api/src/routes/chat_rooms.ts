@@ -278,6 +278,20 @@ chatRoomsRouter.post("/rooms/:roomId/messages", requireAuth, async (req, res) =>
   return res.status(200).json({ message: row, success: true });
 });
 
+chatRoomsRouter.delete("/rooms/:roomId/messages", requireAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  const room = getChatRoom(roomId);
+  if (!room) return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+  const priv = roomPrivileges(user, room);
+  if (!priv.canModerate && !priv.owner) {
+    return fail(res, 403, "FORBIDDEN", "Sohbeti temizlemek için yetkiniz yok");
+  }
+  clearRoomMessages(roomId);
+  return res.status(200).json({ success: true, cleared: true });
+});
+
 chatRoomsRouter.get("/rooms/:roomId/presence", optionalAuth, async (req, res) => {
   const roomId = req.params.roomId;
   if (!getChatRoom(roomId)) {
