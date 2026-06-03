@@ -17,6 +17,7 @@ import '../../domain/voice_official_join.dart';
 import '../utils/voice_room_permissions.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/music_queue_item.dart';
+import '../../domain/entities/popular_music_suggestion.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/youtube_stream_resolver.dart';
 import '../services/voice_room_dj_player.dart';
@@ -658,11 +659,84 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   Future<List<YoutubeSearchHit>> searchYoutube(String query) =>
       ref.read(chatRoomRemoteProvider).searchYoutube(query);
 
-  Future<({List<MusicQueueItem> queue, int cost})> fetchMusicQueue() =>
+  Future<
+      ({
+        List<MusicQueueItem> queue,
+        int cost,
+        int maxMusicQueue,
+        bool musicEnabled,
+        MusicQueueItem? nowPlaying,
+        bool playing,
+        bool canRequestMusic,
+      })> fetchMusicQueue() =>
       ref.read(chatRoomRemoteProvider).fetchMusicQueue(
             _roomKey,
             alternateKey: _altRoomKey,
           );
+
+  Future<List<PopularMusicSuggestion>> fetchPopularMusic() =>
+      ref.read(chatRoomRemoteProvider).fetchPopularMusic();
+
+  Future<String?> skipMusic() async {
+    try {
+      await ref.read(chatRoomRemoteProvider).skipMusicQueue(
+            roomKey: _roomKey,
+            alternateKey: _altRoomKey,
+          );
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> removeQueueItem(String itemId) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).removeMusicQueueItem(
+            roomKey: _roomKey,
+            alternateKey: _altRoomKey,
+            itemId: itemId,
+          );
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> clearMusicQueue() async {
+    try {
+      await ref.read(chatRoomRemoteProvider).clearMusicQueue(
+            roomKey: _roomKey,
+            alternateKey: _altRoomKey,
+          );
+      await ref.read(voiceRoomDjPlayerProvider).stop();
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> updateMusicSettings({
+    bool? musicEnabled,
+    int? musicRequestCost,
+    int? maxMusicQueue,
+  }) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).updateMusicSettings(
+            roomKey: _roomKey,
+            alternateKey: _altRoomKey,
+            musicEnabled: musicEnabled,
+            musicRequestCost: musicRequestCost,
+            maxMusicQueue: maxMusicQueue,
+          );
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
 
   Future<String?> assignSeat({
     required int seatIndex,
@@ -713,7 +787,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     String? note,
   }) async {
     try {
-      await ref
+      final result = await ref
           .read(chatRoomRemoteProvider)
           .requestMusic(
             roomKey: _roomKey,
@@ -732,6 +806,9 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       ref.invalidate(coinBalanceProvider);
       ref.invalidate(walletBalancesProvider);
       await refresh();
+      if (result.queuePosition != null && result.queuePosition! > 1) {
+        return 'Sıranız: #${result.queuePosition}';
+      }
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

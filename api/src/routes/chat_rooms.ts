@@ -4,6 +4,7 @@ import { requireAuth } from "../middleware/requireAuth";
 import { fail, ok } from "../lib/response";
 import {
   addTextMessage,
+  clearRoomMessages,
   approveSpeak,
   banRoomUser,
   cancelSpeakRequest,
@@ -30,6 +31,12 @@ import {
   searchYoutube,
   resolveYoutubeStreamUrl,
   advanceMusicQueue,
+  skipMusicQueue,
+  removeMusicQueueItem,
+  clearMusicQueue,
+  setRoomMusicSettings,
+  getRoomMusicSettings,
+  POPULAR_MUSIC_SUGGESTIONS,
   addRoomDj,
   removeRoomDj,
   MUSIC_REQUEST_JETON,
@@ -106,12 +113,28 @@ chatRoomsRouter.get("/youtube-stream", optionalAuth, async (req, res) => {
   return res.status(200).json({ streamUrl, url: streamUrl });
 });
 
+chatRoomsRouter.get("/music/popular", optionalAuth, async (_req, res) => {
+  return res.status(200).json({ items: POPULAR_MUSIC_SUGGESTIONS });
+});
+
 chatRoomsRouter.get("/rooms/:roomId/music-queue", optionalAuth, async (req, res) => {
   const roomId = req.params.roomId;
   if (!getChatRoom(roomId)) {
     return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
   }
-  return res.status(200).json({ queue: listMusicQueue(roomId), cost: MUSIC_REQUEST_JETON });
+  const settings = getRoomMusicSettings(roomId);
+  const user = await loadUser(req.userId);
+  const dj = getDjState(roomId, user);
+  return res.status(200).json({
+    queue: listMusicQueue(roomId),
+    cost: settings.musicRequestCost,
+    musicRequestCost: settings.musicRequestCost,
+    maxMusicQueue: settings.maxQueueLength,
+    musicEnabled: settings.musicEnabled,
+    nowPlaying: dj.nowPlaying ?? null,
+    playing: dj.playing,
+    canRequestMusic: dj.canRequestMusic,
+  });
 });
 
 chatRoomsRouter.post("/rooms/:roomId/song-request", requireAuth, async (req, res) => {
@@ -170,9 +193,80 @@ chatRoomsRouter.post(
     if (!getChatRoom(roomId)) {
       return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
     }
-    await advanceMusicQueue(roomId);
     const user = await loadUser(req.userId);
-    return res.status(200).json(getDjState(roomId, user));
+    if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+    const skipped = await skipMusicQueue(roomId, user);
+    if (!skipped.ok) {
+      return fail(res, 403, "FORBIDDEN", skipped.error ?? "Yetki yok");
+    }
+    return res.status(200).json({
+      ...getDjState(roomId, user),
+      queue: skipped.queue,
+    });
+  },
+);
+
+chatRoomsRouter.delete(
+  "/rooms/:roomId/music-queue/:itemId",
+  requireAuth,
+  async (req, res) => {
+    const roomId = req.params.roomId;
+    const user = await loadUser(req.userId);
+    if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+    const result = removeMusicQueueItem(roomId, user, req.params.itemId);
+    if (!result.ok) {
+      return fail(res, 403, "FORBIDDEN", result.error ?? "İşlem başarısız");
+    }
+    return res.status(200).json({ success: true, queue: result.queue });
+  },
+);
+
+chatRoomsRouter.delete(
+  "/rooms/:roomId/music-queue",
+  requireAuth,
+  async (req, res) => {
+    const roomId = req.params.roomId;
+    const user = await loadUser(req.userId);
+    if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+    const result = clearMusicQueue(roomId, user);
+    if (!result.ok) {
+      return fail(res, 403, "FORBIDDEN", result.error ?? "İşlem başarısız");
+    }
+    return res.status(200).json({ success: true, queue: result.queue });
+  },
+);
+
+chatRoomsRouter.patch(
+  "/rooms/:roomId/music-settings",
+  requireAuth,
+  async (req, res) => {
+    const roomId = req.params.roomId;
+    const user = await loadUser(req.userId);
+    if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+    const result = setRoomMusicSettings(roomId, user, {
+      musicEnabled:
+        typeof req.body?.musicEnabled === "boolean"
+          ? req.body.musicEnabled
+          : undefined,
+      musicRequestCost:
+        typeof req.body?.musicRequestCost === "number"
+          ? req.body.musicRequestCost
+          : undefined,
+      maxQueueLength:
+        typeof req.body?.maxMusicQueue === "number"
+          ? req.body.maxMusicQueue
+          : typeof req.body?.maxQueueLength === "number"
+            ? req.body.maxQueueLength
+            : undefined,
+    });
+    if (!result.ok) {
+      return fail(res, 403, "FORBIDDEN", result.error ?? "Yetki yok");
+    }
+    return res.status(200).json({
+      success: true,
+      settings: result.settings,
+      ...getDjState(roomId, user),
+    });
   },
 );
 

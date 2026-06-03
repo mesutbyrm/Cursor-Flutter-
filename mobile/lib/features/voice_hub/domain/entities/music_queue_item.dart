@@ -10,6 +10,10 @@ class MusicQueueItem extends Equatable {
     required this.createdAt,
     this.thumbUrl,
     this.requestedBy,
+    this.giftTo,
+    this.note,
+    this.uploader,
+    this.duration,
   });
 
   factory MusicQueueItem.fromJson(Map<String, dynamic> json) {
@@ -32,6 +36,10 @@ class MusicQueueItem extends Equatable {
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.now(),
       requestedBy: user,
+      giftTo: json['giftTo']?.toString(),
+      note: json['note']?.toString(),
+      uploader: json['uploader']?.toString() ?? json['artist']?.toString(),
+      duration: json['duration']?.toString(),
     );
   }
 
@@ -41,9 +49,21 @@ class MusicQueueItem extends Equatable {
   final String? thumbUrl;
   final DateTime createdAt;
   final ChatRoomUserRef? requestedBy;
+  final String? giftTo;
+  final String? note;
+  final String? uploader;
+  final String? duration;
+
+  String get artistLine {
+    final parts = <String>[];
+    if (uploader != null && uploader!.isNotEmpty) parts.add(uploader!);
+    if (duration != null && duration!.isNotEmpty) parts.add(duration!);
+    return parts.join(' • ');
+  }
 
   @override
-  List<Object?> get props => [id, title, youtubeUrl, thumbUrl, createdAt, requestedBy];
+  List<Object?> get props =>
+      [id, title, youtubeUrl, thumbUrl, createdAt, requestedBy, giftTo, note, uploader, duration];
 }
 
 class YoutubeSearchHit extends Equatable {

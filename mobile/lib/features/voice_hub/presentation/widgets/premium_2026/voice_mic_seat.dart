@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 import '../../../domain/entities/chat_room_presence.dart';
+import '../../../../live/domain/entities/voice_room_entity.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/widgets/vip_badge.dart';
 import '../../theme/voice_room_tokens.dart';
@@ -18,6 +19,8 @@ class VoiceMicSeat extends StatelessWidget {
     this.size = 56,
     this.isHost = false,
     this.locked = false,
+    this.room,
+    this.djUserIds = const [],
     this.onTap,
   });
 
@@ -27,6 +30,8 @@ class VoiceMicSeat extends StatelessWidget {
   final double size;
   final bool isHost;
   final bool locked;
+  final VoiceRoomEntity? room;
+  final List<String> djUserIds;
   final VoidCallback? onTap;
 
   @override
@@ -55,19 +60,15 @@ class VoiceMicSeat extends StatelessWidget {
               child: VoiceSeatAvatarFrame(
                 imageUrl: user!.image,
                 size: size,
-                isHost: isHost,
+                role: SeatAvatarRoleResolver.resolve(
+                  user: user!,
+                  isHost: isHost,
+                  isRoomDj: djUserIds.contains(user!.id) ||
+                      room?.djUserIds.contains(user!.id) == true,
+                ),
                 speaking: speaking,
               ),
             ),
-            if (isHost)
-              Positioned(
-                top: -4,
-                child: Icon(
-                  Icons.workspace_premium_rounded,
-                  color: VoiceRoomTokens.gold,
-                  size: size * 0.26,
-                ),
-              ),
             if (vip && !isHost)
               Positioned(
                 bottom: -2,

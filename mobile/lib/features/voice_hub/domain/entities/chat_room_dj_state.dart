@@ -7,12 +7,16 @@ class ChatRoomDjState {
     this.activeDjId,
     this.ownerPresent = false,
     this.canPlayMusic = false,
+    this.canRequestMusic = false,
     this.isOwner = false,
     this.musicUrl,
     this.backgroundImage,
     this.playing = false,
     this.musicQueue = const [],
+    this.nowPlaying,
     this.musicRequestCost = 10,
+    this.maxMusicQueue = 20,
+    this.musicEnabled = true,
     this.maxDj = 5,
   });
 
@@ -29,6 +33,7 @@ class ChatRoomDjState {
     final canPlay = json['canPlayMusic'] == true ||
         json['canControlMusic'] == true ||
         json['canDj'] == true;
+    final canRequest = json['canRequestMusic'] == true || canPlay;
     final queueRaw = json['musicQueue'];
     final queue = <MusicQueueItem>[];
     if (queueRaw is List) {
@@ -38,18 +43,33 @@ class ChatRoomDjState {
         }
       }
     }
+    MusicQueueItem? nowPlaying;
+    final np = json['nowPlaying'];
+    if (np is Map) {
+      nowPlaying = MusicQueueItem.fromJson(Map<String, dynamic>.from(np));
+    } else if (json['playing'] == true && queue.isNotEmpty) {
+      nowPlaying = queue.first;
+    }
     return ChatRoomDjState(
       djUsers: users,
       activeDjId: json['activeDjId']?.toString() ?? json['djId']?.toString(),
       ownerPresent: json['ownerPresent'] == true,
       canPlayMusic: canPlay,
+      canRequestMusic: canRequest,
       isOwner: json['isOwner'] == true,
       musicUrl: json['musicUrl']?.toString() ?? json['url']?.toString(),
       backgroundImage: json['backgroundImage']?.toString() ??
           json['backgroundUrl']?.toString(),
       playing: json['playing'] == true || json['isPlaying'] == true,
       musicQueue: queue,
-      musicRequestCost: json['musicRequestCost'] as int? ?? 10,
+      nowPlaying: nowPlaying,
+      musicRequestCost: json['musicRequestCost'] as int? ??
+          json['cost'] as int? ??
+          10,
+      maxMusicQueue: json['maxMusicQueue'] as int? ??
+          json['maxQueueLength'] as int? ??
+          20,
+      musicEnabled: json['musicEnabled'] != false,
       maxDj: json['maxDj'] as int? ?? 5,
     );
   }
@@ -58,13 +78,23 @@ class ChatRoomDjState {
   final String? activeDjId;
   final bool ownerPresent;
   final bool canPlayMusic;
+  final bool canRequestMusic;
   final bool isOwner;
   final String? musicUrl;
   final String? backgroundImage;
   final bool playing;
   final List<MusicQueueItem> musicQueue;
+  final MusicQueueItem? nowPlaying;
   final int musicRequestCost;
+  final int maxMusicQueue;
+  final bool musicEnabled;
   final int maxDj;
 
   int get djCount => djUsers.length;
+
+  int queuePositionFor(String? itemId) {
+    if (itemId == null) return musicQueue.length;
+    final idx = musicQueue.indexWhere((e) => e.id == itemId);
+    return idx >= 0 ? idx + 1 : musicQueue.length;
+  }
 }

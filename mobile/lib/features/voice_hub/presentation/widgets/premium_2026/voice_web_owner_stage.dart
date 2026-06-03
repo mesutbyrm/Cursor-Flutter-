@@ -113,6 +113,8 @@ class VoiceWebOwnerStage extends StatelessWidget {
           seatIndex: displayNum,
           size: size,
           isHost: hostSeat != null && displayNum == hostSeat,
+          room: room,
+          djUserIds: room.djUserIds,
           speaking: speakingUserId == user?.id || user?.isSpeaking == true,
           onTap: () => onSeatTap?.call(internal, user),
         );

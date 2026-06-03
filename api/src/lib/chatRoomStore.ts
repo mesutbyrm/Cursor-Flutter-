@@ -630,19 +630,38 @@ export function getDjState(roomId: string, user: User | null) {
       p.chatRole === "admin" ||
       (room?.djUserIds.includes(p.id) ?? false),
   );
+  const settings = getRoomMusicSettings(roomId);
+  const queue = listMusicQueue(roomId);
+  const playing = Boolean(dj.playing && dj.musicUrl);
+  const isDj =
+    Boolean(priv?.dj) ||
+    (room?.djUserIds.includes(user?.id ?? "") ?? false);
+  const canRequestMusic =
+    settings.musicEnabled &&
+    Boolean(
+      user &&
+        (isDj ||
+          priv?.owner ||
+          priv?.admin ||
+          (user.coins ?? 0) >= settings.musicRequestCost),
+    );
   return {
     djUsers,
     activeDjId: dj.activeDjId,
     musicUrl: dj.musicUrl,
-    playing: dj.playing,
+    playing,
     backgroundImage: room?.backgroundImage ?? null,
     ownerPresent: room?.ownerId
       ? roomMap(roomId).has(room.ownerId)
       : false,
     canPlayMusic: Boolean(priv?.owner || priv?.admin || priv?.dj),
+    canRequestMusic,
     isOwner: Boolean(priv?.owner),
-    musicQueue: listMusicQueue(roomId),
-    musicRequestCost: MUSIC_REQUEST_JETON,
+    musicQueue: queue,
+    nowPlaying: playing && queue.length > 0 ? queue[0] : null,
+    musicRequestCost: settings.musicRequestCost,
+    maxMusicQueue: settings.maxQueueLength,
+    musicEnabled: settings.musicEnabled,
     maxDj: 5,
   };
 }
@@ -691,6 +710,63 @@ export async function loadUser(userId: string | undefined) {
 }
 
 export const MUSIC_REQUEST_JETON = 10;
+export const DEFAULT_MAX_MUSIC_QUEUE = 20;
+
+export type RoomMusicSettings = {
+  musicEnabled: boolean;
+  musicRequestCost: number;
+  maxQueueLength: number;
+};
+
+const musicSettingsByRoom = new Map<string, RoomMusicSettings>();
+
+export function getRoomMusicSettings(roomId: string): RoomMusicSettings {
+  const key = resolveRoomId(roomId);
+  return (
+    musicSettingsByRoom.get(key) ?? {
+      musicEnabled: true,
+      musicRequestCost: MUSIC_REQUEST_JETON,
+      maxQueueLength: DEFAULT_MAX_MUSIC_QUEUE,
+    }
+  );
+}
+
+export function setRoomMusicSettings(
+  roomId: string,
+  actor: User,
+  input: Partial<RoomMusicSettings>,
+) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  const priv = roomPrivileges(actor, room);
+  if (!priv.owner) return { ok: false as const, error: "Yalnızca oda sahibi ayarlayabilir" };
+  const key = resolveRoomId(roomId);
+  const prev = getRoomMusicSettings(roomId);
+  const next: RoomMusicSettings = {
+    musicEnabled: input.musicEnabled ?? prev.musicEnabled,
+    musicRequestCost: Math.min(
+      500,
+      Math.max(1, input.musicRequestCost ?? prev.musicRequestCost),
+    ),
+    maxQueueLength: Math.min(
+      50,
+      Math.max(1, input.maxQueueLength ?? prev.maxQueueLength),
+    ),
+  };
+  musicSettingsByRoom.set(key, next);
+  return { ok: true as const, settings: next };
+}
+
+export const POPULAR_MUSIC_SUGGESTIONS = [
+  { title: "Tutamıyorum Zamanı", artist: "Müslüm Gürses", query: "Müslüm Gürses Tutamıyorum Zamanı" },
+  { title: "Beni Yak", artist: "Duman", query: "Duman Beni Yak" },
+  { title: "Yalan", artist: "Tarkan", query: "Tarkan Yalan" },
+  { title: "Gülümse", artist: "Sezen Aksu", query: "Sezen Aksu Gülümse" },
+  { title: "Aşk", artist: "Tarkan", query: "Tarkan Aşk" },
+  { title: "Kum Gibi", artist: "Ahmet Kaya", query: "Ahmet Kaya Kum Gibi" },
+  { title: "Islak Islak", artist: "Ferdi Tayfur", query: "Ferdi Tayfur Islak Islak" },
+  { title: "Şımarık", artist: "Tarkan", query: "Tarkan Şımarık" },
+];
 
 export type MusicQueueItem = {
   id: string;
@@ -734,15 +810,37 @@ export async function requestMusicQueue(
   if (!room) return { ok: false as const, error: "Oda bulunamadı" };
   const url = input.youtubeUrl.trim();
   if (!url) return { ok: false as const, error: "YouTube bağlantısı gerekli" };
+  const settings = getRoomMusicSettings(roomId);
+  if (!settings.musicEnabled) {
+    return { ok: false as const, error: "DJ sistemi bu odada kapalı" };
+  }
+  const priv = roomPrivileges(user, room);
+  const isDj =
+    priv.dj || priv.owner || priv.admin || room.djUserIds.includes(user.id);
   const dbUser = await loadUser(user.id);
   if (!dbUser) return { ok: false as const, error: "Oturum gerekli" };
-  if (dbUser.coins < MUSIC_REQUEST_JETON) {
-    return { ok: false as const, error: `Yetersiz jeton (${MUSIC_REQUEST_JETON} gerekli)` };
+  const cost = settings.musicRequestCost;
+  if (!isDj && dbUser.coins < cost) {
+    return {
+      ok: false as const,
+      error: "Bu şarkıyı istemek için en az 10 jeton gerekli.",
+    };
   }
-  const updated = await prisma.user.update({
-    where: { id: user.id },
-    data: { coins: { decrement: MUSIC_REQUEST_JETON } },
-  });
+  const listBefore = musicQueueList(roomId);
+  if (listBefore.length >= settings.maxQueueLength) {
+    return {
+      ok: false as const,
+      error: `Kuyruk dolu (maks. ${settings.maxQueueLength})`,
+    };
+  }
+  let newBalance = dbUser.coins;
+  if (!isDj) {
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: { coins: { decrement: cost } },
+    });
+    newBalance = updated.coins;
+  }
   const giftTo = input.giftTo?.trim() || null;
   const note = input.note?.trim() || null;
   const item: MusicQueueItem = {
@@ -756,14 +854,38 @@ export async function requestMusicQueue(
     note,
   };
   const list = musicQueueList(roomId);
+  const wasPlaying =
+    Boolean(djByRoom.get(resolveRoomId(roomId))?.playing) && list.length > 0;
   list.push(item);
-  if (list.length > 50) list.splice(0, list.length - 50);
+  const queuePosition = list.length;
+  if (list.length > settings.maxQueueLength) {
+    list.splice(0, list.length - settings.maxQueueLength);
+  }
   const canonical = resolveRoomId(roomId);
-  const giftPart = giftTo ? ` → armağan: ${giftTo}` : "";
-  const notePart = note ? ` «${note}»` : "";
+  const displayName = item.requestedBy.name;
   pushMessage(canonical, {
     id: randomUUID(),
-    content: `🎵 ${item.requestedBy.name} şarkı isteği gönderdi: ${item.title}${giftPart}${notePart} [${MUSIC_REQUEST_JETON} 💎]`,
+    content: `🎵 ${displayName} "${item.title}" şarkısını istedi.`,
+    createdAt: new Date().toISOString(),
+    user: item.requestedBy,
+  });
+  if (giftTo) {
+    pushMessage(canonical, {
+      id: randomUUID(),
+      content: `🎁 ${displayName} bu şarkıyı tüm odaya armağan etti.`,
+      createdAt: new Date().toISOString(),
+      user: item.requestedBy,
+    });
+  }
+  pushMessage(canonical, {
+    id: randomUUID(),
+    content: `📀 Şarkı kuyruğa eklendi.`,
+    createdAt: new Date().toISOString(),
+    user: item.requestedBy,
+  });
+  pushMessage(canonical, {
+    id: randomUUID(),
+    content: `🔢 Sıra: #${queuePosition}`,
     createdAt: new Date().toISOString(),
     user: item.requestedBy,
   });
@@ -774,10 +896,72 @@ export async function requestMusicQueue(
     ok: true as const,
     item,
     queue: [...list],
-    newBalance: updated.coins,
+    queuePosition,
+    startedImmediately: !wasPlaying && queuePosition === 1,
+    newBalance,
     musicUrl: dj?.musicUrl ?? null,
     playing: dj?.playing ?? false,
   };
+}
+
+function canManageMusicQueue(user: User, room: ChatRoomRow) {
+  const priv = roomPrivileges(user, room);
+  return priv.owner || priv.canModerate || priv.admin || priv.dj;
+}
+
+export async function skipMusicQueue(roomId: string, user: User) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  if (!canManageMusicQueue(user, room)) {
+    return { ok: false as const, error: "Şarkı atlama yetkisi yok" };
+  }
+  await advanceMusicQueue(roomId);
+  pushMessage(resolveRoomId(roomId), {
+    id: randomUUID(),
+    content: `⏭️ ${user.displayName ?? user.username} şarkıyı atladı.`,
+    createdAt: new Date().toISOString(),
+  });
+  return { ok: true as const, queue: listMusicQueue(roomId) };
+}
+
+export function removeMusicQueueItem(
+  roomId: string,
+  user: User,
+  itemId: string,
+) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  if (!canManageMusicQueue(user, room)) {
+    return { ok: false as const, error: "Yetki yok" };
+  }
+  const list = musicQueueList(roomId);
+  const idx = list.findIndex((i) => i.id === itemId);
+  if (idx < 0) return { ok: false as const, error: "Şarkı bulunamadı" };
+  const removed = list.splice(idx, 1)[0];
+  pushMessage(resolveRoomId(roomId), {
+    id: randomUUID(),
+    content: `🗑️ Kuyruktan kaldırıldı: ${removed.title}`,
+    createdAt: new Date().toISOString(),
+  });
+  return { ok: true as const, queue: [...list] };
+}
+
+export function clearMusicQueue(roomId: string, user: User) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  if (!canManageMusicQueue(user, room)) {
+    return { ok: false as const, error: "Yetki yok" };
+  }
+  const list = musicQueueList(roomId);
+  list.splice(0, list.length);
+  const key = resolveRoomId(roomId);
+  djByRoom.set(key, { activeDjId: null, musicUrl: null, playing: false });
+  pushMessage(key, {
+    id: randomUUID(),
+    content: `🧹 Müzik kuyruğu temizlendi.`,
+    createdAt: new Date().toISOString(),
+  });
+  return { ok: true as const, queue: [] as MusicQueueItem[] };
 }
 
 export function addRoomDj(roomId: string, actor: User, targetUserId: string) {
@@ -920,7 +1104,11 @@ export async function tryStartMusicFromQueue(roomId: string) {
   return nextDj;
 }
 
-export async function advanceMusicQueue(roomId: string) {
+export async function advanceMusicQueue(roomId: string, user?: User) {
+  const room = getChatRoom(roomId);
+  if (user && room && !canManageMusicQueue(user, room)) {
+    return null;
+  }
   const key = resolveRoomId(roomId);
   const list = musicQueueList(roomId);
   if (list.length > 0) list.shift();
