@@ -11,9 +11,20 @@ import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/music_queue_item.dart';
 
 class ChatRoomRemoteDataSource {
-  ChatRoomRemoteDataSource(this._dio);
+  ChatRoomRemoteDataSource(this._dio) : _publicDio = _buildPublicDio();
 
   final Dio _dio;
+  final Dio _publicDio;
+
+  static Dio _buildPublicDio() {
+    return Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 12),
+        receiveTimeout: const Duration(seconds: 16),
+        headers: {'Accept': 'application/json'},
+      ),
+    );
+  }
 
   static String messagesPath(String roomId) =>
       '/api/chat/rooms/$roomId/messages';
@@ -344,6 +355,9 @@ class ChatRoomRemoteDataSource {
     const hosts = [
       'https://pipedapi.kavin.rocks',
       'https://pipedapi.adminforge.de',
+      'https://pipedapi.syncpundit.io',
+      'https://pipedapi.leptons.xyz',
+      'https://pipedapi.in.projectsegfau.lt',
     ];
     for (final host in hosts) {
       final hits = await _searchYoutubePipedOnHost(host, q);
@@ -357,7 +371,7 @@ class ChatRoomRemoteDataSource {
     String q,
   ) async {
     try {
-      final res = await _dio.get<dynamic>(
+      final res = await _publicDio.get<dynamic>(
         '$host/search',
         queryParameters: {'q': q, 'filter': 'music_songs'},
         options: Options(
@@ -412,10 +426,12 @@ class ChatRoomRemoteDataSource {
       'https://invidious.nerdvpn.de',
       'https://invidious.privacyredirect.com',
       'https://yt.artemislena.eu',
+      'https://invidious.fdn.fr',
+      'https://invidious.dhus.de',
     ];
     for (final base in instances) {
       try {
-        final res = await _dio.get<dynamic>(
+        final res = await _publicDio.get<dynamic>(
           '$base/api/v1/search',
           queryParameters: {'q': q, 'type': 'video', 'sort_by': 'relevance'},
           options: Options(
@@ -457,6 +473,12 @@ class ChatRoomRemoteDataSource {
     final q = query.trim();
     if (q.length < 2) return const [];
 
+    final piped = await _searchYoutubePiped(q);
+    if (piped.isNotEmpty) return piped;
+
+    final inv = await _searchYoutubeInvidious(q);
+    if (inv.isNotEmpty) return inv;
+
     const apiPaths = [
       '/api/youtube/search',
       '/api/chat/youtube-search',
@@ -477,20 +499,14 @@ class ChatRoomRemoteDataSource {
         }
         final hits = _parseYoutubeHits(data);
         if (hits.isNotEmpty) return hits;
+      } on ApiException catch (e) {
+        if (e.statusCode == 404) continue;
+        lastError = e;
       } on Object catch (e) {
         lastError = e;
       }
     }
 
-    final piped = await _searchYoutubePiped(q);
-    if (piped.isNotEmpty) return piped;
-
-    final inv = await _searchYoutubeInvidious(q);
-    if (inv.isNotEmpty) return inv;
-
-    if (lastError is ApiException) {
-      throw lastError as ApiException;
-    }
     if (lastError != null) {
       final msg = ApiException.userMessage(lastError);
       if (msg.contains('401') || msg.toLowerCase().contains('oturum')) {
@@ -498,11 +514,22 @@ class ChatRoomRemoteDataSource {
           'Şarkı aramak için giriş yapın.',
         );
       }
-      throw ApiException(msg);
     }
     throw const ApiException(
-      'YouTube araması şu an kullanılamıyor. Biraz sonra tekrar deneyin.',
+      'Şarkı araması şu an kullanılamıyor. Biraz sonra tekrar deneyin.',
     );
+  }
+
+  /// Üretimde komut işlenmezse sohbeti temizlemek için dene.
+  Future<void> tryClearRoomMessages({
+    required String roomKey,
+    String? alternateKey,
+  }) async {
+    try {
+      await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+        await _dio.safeDelete<dynamic>(messagesPath(key));
+      });
+    } catch (_) {}
   }
 
   Future<({List<MusicQueueItem> queue, int cost})> fetchMusicQueue(

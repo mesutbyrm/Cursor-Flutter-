@@ -14,6 +14,7 @@ import '../../data/services/voice_room_chat_socket.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/voice_official_join.dart';
+import '../utils/voice_room_permissions.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -108,6 +109,7 @@ class VoiceRoomLiveState {
 class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     VoiceRoomLiveState, VoiceRoomEntity> {
   Timer? _poll;
+  Timer? _enterBannerTimer;
   var _pollPaused = false;
 
   String get _roomKey => arg.apiRoomKey;
@@ -181,6 +183,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     ref.keepAlive();
     ref.onDispose(() {
       _poll?.cancel();
+      _enterBannerTimer?.cancel();
       _leavePresence();
       ref.read(voiceRoomChatSocketProvider).disconnect();
       ref.read(voiceRoomDjPlayerProvider).stop();
@@ -279,16 +282,10 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         final exists = state.messages.any((m) => m.id == msg.id);
         if (exists) return;
         final list = [...state.messages, msg];
-        var banner = state.enterBanner;
+        state = state.copyWith(messages: list);
         if (msg.kind == ChatMessageKind.systemJoin &&
             VoiceOfficialJoin.isOfficialEntrance(msg.content)) {
-          banner = msg.content;
-        }
-        state = state.copyWith(messages: list, enterBanner: banner);
-        if (msg.kind == ChatMessageKind.systemJoin) {
-          Future.delayed(const Duration(seconds: 4), () {
-            state = state.copyWith(clearEnterBanner: true);
-          });
+          _showEnterBanner(msg.content);
         }
       },
     );
@@ -338,18 +335,24 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       final bgFromDj = dj.backgroundImage?.trim();
       presence = _mergeSelf(presence);
       var messages = _mergeMessages(state.messages, fetchedMsgs);
-      var banner = state.enterBanner;
       final latestOfficial = VoiceOfficialJoin.latestEntranceBanner(
         messages
             .where((m) => m.kind == ChatMessageKind.systemJoin)
             .map((m) => m.content),
       );
-      if (latestOfficial != null) banner = latestOfficial;
+      if (latestOfficial != null) {
+        final formatted = VoiceOfficialJoin.formatEntranceBanner(
+          latestOfficial,
+          roomName: arg.nameTr,
+        );
+        if (state.enterBanner != formatted) {
+          _showEnterBanner(latestOfficial);
+        }
+      }
       state = state.copyWith(
         messages: messages,
         presence: presence,
         dj: dj,
-        enterBanner: banner,
         loading: false,
         error: refreshError != null
             ? ApiException.userMessage(refreshError)
@@ -392,11 +395,56 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     } catch (_) {}
   }
 
+  void _showEnterBanner(String raw) {
+    final formatted = VoiceOfficialJoin.formatEntranceBanner(
+      raw,
+      roomName: arg.nameTr,
+    );
+    state = state.copyWith(enterBanner: formatted);
+    _enterBannerTimer?.cancel();
+    _enterBannerTimer = Timer(const Duration(seconds: 5), () {
+      state = state.copyWith(clearEnterBanner: true);
+    });
+  }
+
+  VoiceRoomPermissions _permissions() {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    ChatRoomPresence? self;
+    if (user != null) {
+      for (final p in state.presence) {
+        if (p.id == user.id) {
+          self = p;
+          break;
+        }
+      }
+    }
+    return VoiceRoomPermissions.forUser(
+      user: user,
+      room: arg,
+      selfPresence: self,
+    );
+  }
+
+  void _applyLocalChatClear() {
+    state = state.copyWith(
+      messages: state.messages
+          .where(
+            (m) =>
+                m.kind != ChatMessageKind.text ||
+                m.content.contains('temizlendi') ||
+                m.content.toUpperCase().contains('DUYURU'),
+          )
+          .toList(),
+    );
+  }
+
   Future<void> sendMessage(String text) async {
     final trimmed = VoiceOfficialJoin.normalizeCommandInput(text.trim());
     if (trimmed.isEmpty || _roomKey.isEmpty) return;
 
     final user = ref.read(authControllerProvider).valueOrNull;
+    final isClear = VoiceOfficialJoin.isClearChatCommand(trimmed);
+    final perms = _permissions();
     final optimisticId = 'local-${DateTime.now().millisecondsSinceEpoch}';
     final optimistic = user != null
         ? ChatRoomMessage(
@@ -413,11 +461,21 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         : null;
 
     state = state.copyWith(
+      sending: true,
       messages: optimistic != null
           ? [...state.messages, optimistic]
           : state.messages,
       clearError: true,
     );
+
+    if (isClear && (perms.canModerate || perms.isRoomOwner)) {
+      unawaited(
+        ref.read(chatRoomRemoteProvider).tryClearRoomMessages(
+              roomKey: _roomKey,
+              alternateKey: _altRoomKey,
+            ),
+      );
+    }
 
     try {
       ChatRoomMessage? sent;
@@ -426,7 +484,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
               roomKey: _roomKey,
               alternateKey: _altRoomKey,
               content: trimmed,
-            ).timeout(const Duration(seconds: 10));
+            ).timeout(const Duration(seconds: 22));
       } on TimeoutException {
         final alt = _altRoomKey;
         if (alt != null && alt.isNotEmpty && alt != _roomKey) {
@@ -437,7 +495,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
                 alternateKey: _roomKey,
                 content: trimmed,
               )
-              .timeout(const Duration(seconds: 10));
+              .timeout(const Duration(seconds: 22));
         } else {
           rethrow;
         }
@@ -465,20 +523,19 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       }
       list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
       state = state.copyWith(messages: list, clearError: true);
+      if (isClear && (perms.canModerate || perms.isRoomOwner)) {
+        _applyLocalChatClear();
+      }
       if (VoiceOfficialJoin.looksLikeRoomCommand(trimmed)) {
         unawaited(refresh());
       }
     } on TimeoutException {
-      if (optimistic != null) {
-        state = state.copyWith(
-          messages: [...state.messages, optimistic],
-          error: 'Mesaj zaman aşımı — bağlantıyı kontrol edin.',
-        );
-      } else {
-        state = state.copyWith(
-          error: 'Mesaj gönderimi zaman aşımına uğradı. Tekrar deneyin.',
-        );
-      }
+      await _recoverAfterSendTimeout(
+        trimmed: trimmed,
+        optimisticId: optimistic?.id,
+        isClear: isClear,
+        canModerate: perms.canModerate || perms.isRoomOwner,
+      );
     } catch (e) {
       state = state.copyWith(
         messages: optimistic != null
@@ -489,6 +546,38 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     } finally {
       state = state.copyWith(sending: false);
     }
+  }
+
+  Future<void> _recoverAfterSendTimeout({
+    required String trimmed,
+    String? optimisticId,
+    required bool isClear,
+    required bool canModerate,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    try {
+      await refresh();
+    } catch (_) {}
+    final delivered = state.messages.any(
+      (m) =>
+          m.content == trimmed &&
+          !m.id.startsWith('local-') &&
+          (m.user?.id == ref.read(authControllerProvider).valueOrNull?.id ||
+              m.kind != ChatMessageKind.text),
+    );
+    var list = state.messages;
+    if (optimisticId != null) {
+      list = list.where((m) => m.id != optimisticId).toList();
+    }
+    if (delivered || (isClear && canModerate)) {
+      if (isClear && canModerate) _applyLocalChatClear();
+      state = state.copyWith(messages: list, clearError: true);
+      return;
+    }
+    state = state.copyWith(
+      messages: list,
+      error: 'Mesaj gecikmeli iletildi; listede görünmüyorsa tekrar deneyin.',
+    );
   }
 
   Future<String?> requestSpeak() async {
