@@ -22,6 +22,18 @@ Başarılı olursa Firebase Dart seçenekleri üretilir ve APK derlemesinde FCM 
 
 `google-services.json` gibi diğer kök dosyalar hâlâ HTML dönebilir; o zaman Firebase Console’dan indirip `mobile/android/app/` altına kopyalayın.
 
+## YouTube şarkı araması
+
+Mobil uygulama `GET /api/youtube/search` ve `GET /api/chat/youtube-search` kullanır.
+
+canlifal.com **sunucu ortam değişkeni** (repoya anahtar koymayın):
+
+```env
+YOUTUBE_API_KEY=your-youtube-data-api-v3-key
+```
+
+Google Cloud Console: **YouTube Data API v3** etkin; anahtarı yalnızca bu API ile kısıtlayın. Tanımlı değilse arka uç Piped yedeklerine düşer.
+
 ## Sunucu (API)
 
 `api/.env` (repoya yazılmaz):
