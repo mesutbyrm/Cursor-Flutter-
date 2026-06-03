@@ -146,7 +146,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final room = widget.room;
     service.start(
       room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id,
-      alternateRoomId: room.apiRoomAlternateKey,
       accessToken: ref.read(tokenStorageProvider).readAccess,
     );
     _giftSub?.cancel();
@@ -208,10 +207,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     try {
       final perms = VoiceRoomPermissions.forUser(user: user, room: widget.room);
-      final roomKey = widget.room.apiRoomKey;
       await _audio!.join(
-        roomId: roomKey.isNotEmpty ? roomKey : widget.room.id,
-        alternateRoomId: widget.room.apiRoomAlternateKey,
+        trtcRoomId: widget.room.trtcRoomId,
         userId: user.id,
         isHost: _isRoomOwner(user.id, user.username) || perms.isSiteAdmin,
         liveKitRemote: ref.read(liveKitRemoteProvider),

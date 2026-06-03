@@ -103,6 +103,10 @@ abstract final class ApiEndpoints {
   static String chatRoomPresence(String roomId) =>
       '/api/chat/rooms/$roomId/presence';
 
+  /// SSE — mesaj / presence anlık akışı (Bearer gerekli).
+  static String chatRoomStream(String roomId) =>
+      '/api/chat/rooms/$roomId/stream';
+
   static String chatRoomDj(String roomId) => '/api/chat/rooms/$roomId/dj';
 
   static String chatRoomGifts(String roomId) => '/api/chat/rooms/$roomId/gifts';

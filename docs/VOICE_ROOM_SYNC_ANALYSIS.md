@@ -44,10 +44,12 @@ Bu dalda (`cursor/voice-web-flutter-sync-7009`) Flutter tarafı güçlendirildi;
 
 ### 3.2 Kritik: `roomId` vs `slug`
 
-`chatRoomStore.resolveRoomId()` tüm haritaları **canonical Prisma `id`** ile anahtarlar. URL’de slug (`sohbet`, `ilhamperisi-xxx`) kullanılsa bile presence/mesajlar aynı `id` altında birleşir.
+**Mobil (güncel):** Tüm `/api/chat/rooms/*` istekleri yalnızca `room.id` (cuid) kullanır; slug yedeklenmez.  
+**TRTC:** Kanal adı `voice_room_{room.id}` (`VoiceRoomEntity.trtcRoomId`).  
+**Presence heartbeat:** `POST .../presence` her **20 saniye**.  
+**SSE (opsiyonel):** `GET .../stream` + `Authorization: Bearer`.
 
-**Risk:** Socket `joinRoom` yalnızca `room:slug` ile yapılırsa, sunucu mesajı `room:canonicalId`’ye yayınlar → istemci mesaj alamaz.  
-**Çözüm:** Hem `id` hem `slug` ile `joinRoom` + `voiceRoomTargets()` ile çift yayın (`giftHub.ts`).
+Sunucu tarafında `resolveRoomId()` slug/id birleştirir; istemci tek anahtar (`id`) göndermelidir.
 
 ### 3.3 Response modelleri
 
