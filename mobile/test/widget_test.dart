@@ -47,6 +47,9 @@ class _FakeAuthRepository implements AuthRepository {
   Future<UserEntity> loginWithTikTok() {
     throw UnimplementedError();
   }
+
+  @override
+  Future<void> requestPasswordReset(String email) async {}
 }
 
 void main() {

@@ -15,20 +15,23 @@ class MessagesRemoteDataSource {
   final Dio _dio;
 
   Future<List<ConversationEntity>> conversations() async {
-    try {
-      final path =
-          Env.useMobileAuth ? ApiEndpoints.messages : ApiEndpoints.messagesConversations;
-      final res = await _dio.safeGet<dynamic>(path);
-      final parsed = _parseConversations(res.data);
-      if (parsed != null) return parsed;
-    } on ApiException catch (e) {
-      if (e.statusCode == 401) {
-        throw const ApiException(
-          'Mesajlar için oturum açmanız gerekiyor.',
-          statusCode: 401,
-        );
-      }
-      rethrow;
+    final paths = Env.useMobileAuth
+        ? [ApiEndpoints.messages, ApiEndpoints.messagesConversations]
+        : [ApiEndpoints.messagesConversations, ApiEndpoints.messages];
+    for (final path in paths) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final parsed = _parseConversations(res.data);
+        if (parsed != null && parsed.isNotEmpty) return parsed;
+        if (parsed != null) return parsed;
+      } on ApiException catch (e) {
+        if (e.statusCode == 401) {
+          throw const ApiException(
+            'Mesajlar için oturum açmanız gerekiyor.',
+            statusCode: 401,
+          );
+        }
+      } catch (_) {}
     }
     return const [];
   }
@@ -49,9 +52,25 @@ class MessagesRemoteDataSource {
         return _parseConversations(map['data']);
       }
 
-      final list = pick(map, ['items', 'data', 'conversations', 'results']);
+      final list = pick(map, [
+        'conversations',
+        'items',
+        'data',
+        'results',
+      ]);
       if (list != null) {
-        return asJsonList(list)
+        final parsed = asJsonList(list)
+            .map(ConversationDto.fromApiMap)
+            .map((d) => d.toEntity())
+            .where((c) => c.id.isNotEmpty)
+            .toList();
+        if (parsed.isNotEmpty) return parsed;
+      }
+
+      // canlifal.com: { conversations: [...], requests: [...] } — boş liste de geçerli.
+      final convOnly = map['conversations'];
+      if (convOnly is List) {
+        return asJsonList(convOnly)
             .map(ConversationDto.fromApiMap)
             .map((d) => d.toEntity())
             .where((c) => c.id.isNotEmpty)

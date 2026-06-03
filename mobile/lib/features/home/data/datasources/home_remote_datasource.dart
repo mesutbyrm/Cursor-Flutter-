@@ -100,6 +100,17 @@ class HomeRemoteDataSource {
       final countRaw = pick(data, ['count', 'unread', 'unreadCount']);
       if (countRaw != null) return asInt(countRaw);
     } catch (_) {}
+    if (Env.useMobileAuth) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          ApiEndpoints.messages,
+          query: {'unreadCount': 'true'},
+        );
+        final map = asJsonMap(res.data);
+        final countRaw = pick(map, ['unreadCount', 'count', 'unread']);
+        if (countRaw != null) return asInt(countRaw);
+      } catch (_) {}
+    }
     return null;
   }
 

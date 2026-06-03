@@ -6,6 +6,12 @@ void openNativeSitePath(BuildContext context, String path) {
   final p = path.trim();
   if (p.isEmpty) return;
 
+  if (p.startsWith('/auth/forgot-password') ||
+      p.startsWith('/auth/reset-password') ||
+      p.startsWith('/sifre-sifirla')) {
+    context.push('/auth/forgot-password');
+    return;
+  }
   if (p.startsWith('/fortune') || p.contains('fal')) {
     context.push(p.startsWith('/') ? p : '/$p');
     return;

@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.116+118 (2026-05-19)
+
+### Native canlifal.com API uyumu (WebView yok)
+
+- Şifre sıfırlama: `POST /api/auth/forgot-password` (native ekran)
+- DM: `conversations` / `requests` ayrıştırma; mobil `GET /api/messages`
+- Takip: `POST /api/users/:id/follow` toggle
+- Profil: `PATCH /api/me` (`name`, `image`)
+- Canlı: `/api/video-streams`; sesli odalar her zaman `/api/chat/rooms`
+- Okunmamış mesaj: `GET /api/messages?unreadCount=true`
+- Site yolları → `native_site_routes` (şifre sıfırlama dahil)
+
 ## 1.0.109+111 (2026-06-02)
 
 ### Sesli sohbet odası (canlifal.com UI)
