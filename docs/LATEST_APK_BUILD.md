@@ -2,25 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.116+118` |
-| Tarih (UTC) | 2026-06-03 16:00 |
-| Commit | [`7da948316e7d2a0bb139253bf6dc34077f8d5054`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/7da948316e7d2a0bb139253bf6dc34077f8d5054) |
-| İş akışı | [Run 26895372956](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26895372956) |
+| Sürüm | `1.0.119+121` |
+| Tarih (UTC) | 2026-06-03 17:21 |
+| Commit | [`e8f641888335b4a20f9482017f38920f8253fd6c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/e8f641888335b4a20f9482017f38920f8253fd6c) |
+| İş akışı | [Run 26900039569](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26900039569) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.116+118 (2026-05-19)
+## 1.0.119+121 (2026-05-19)
 
-### Native canlifal.com API uyumu (WebView yok)
+### Birleşik sürüm (main + sesli oda senkron)
 
-- Şifre sıfırlama: `POST /api/auth/forgot-password` (native ekran)
-- DM: `conversations` / `requests` ayrıştırma; mobil `GET /api/messages`
-- Takip: `POST /api/users/:id/follow` toggle
-- Profil: `PATCH /api/me` (`name`, `image`)
-- Canlı: `/api/video-streams`; sesli odalar her zaman `/api/chat/rooms`
-- Okunmamış mesaj: `GET /api/messages?unreadCount=true`
-- Site yolları → `native_site_routes` (şifre sıfırlama dahil)
+- **PR #87** Oda Komutları, Şarkı İsteği, DJ Yönetimi (zaten main’de)
+- **PR #91–#93** Komut/YouTube, müzik kuyruk, native API uyumu
+- **PR #95** Web ↔ Flutter sesli oda senkronu, YouTube API önceliği
+- Sosyal: beğeni, yorum, paylaşım, hikâye (önceki dal)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
