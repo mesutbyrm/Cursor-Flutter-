@@ -352,7 +352,7 @@ function tryHandleRoomCommand(
 ): ChatRoomMessageRow | null {
   let cmd = raw.trim();
   if (cmd.startsWith("!")) cmd = `/${cmd.slice(1)}`;
-  if (!cmd.startsWith("/")) return null;
+  else if (!cmd.startsWith("/")) return null;
   const priv = roomPrivileges(actor, room);
   const parts = cmd.split(/\s+/).filter(Boolean);
   const head = (parts[0] ?? "").toLowerCase();

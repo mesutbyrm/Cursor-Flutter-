@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 import '../../../../core/pagination/paged_result.dart';
@@ -241,28 +243,76 @@ class WalletRemoteDataSource {
     return PaymentDefaults.merge(remote);
   }
 
+  bool _paymentRequestAccepted(dynamic data, int code) {
+    if (code == 201 || code == 200) {
+      if (data == null) return true;
+      if (data is String && data.trim().isEmpty) return true;
+    }
+    if (data is! Map) return false;
+    final m = Map<String, dynamic>.from(data);
+    if (m['success'] == true) return true;
+    if (m['id'] != null || m['paymentRequestId'] != null) return true;
+    final nested = m['data'];
+    if (nested is Map) {
+      final inner = Map<String, dynamic>.from(nested);
+      if (inner['id'] != null || inner['paymentRequestId'] != null) {
+        return true;
+      }
+      if (inner['request'] is Map) {
+        final r = Map<String, dynamic>.from(inner['request'] as Map);
+        if (r['id'] != null) return true;
+      }
+    }
+    if (m['request'] is Map) {
+      final r = Map<String, dynamic>.from(m['request'] as Map);
+      if (r['id'] != null) return true;
+    }
+    return false;
+  }
+
   Future<void> submitPaymentRequest(Map<String, dynamic> body) async {
-    final res = await _dio
-        .safePost<dynamic>(
-          ApiEndpoints.paymentRequests,
-          data: body,
-        )
-        .timeout(
-          const Duration(seconds: 22),
-          onTimeout: () => throw const ApiException(
-            'Ödeme bildirimi zaman aşımına uğradı. '
-            'Bağlantınızı kontrol edip tekrar deneyin.',
-          ),
-        );
-    final code = res.statusCode ?? 0;
-    if (code < 200 || code >= 300) {
-      throw ApiException(
-        'Talep gönderilemedi (HTTP $code). Oturumu kontrol edip tekrar deneyin.',
-        statusCode: code,
-      );
+    final payload = jsonEncode(body);
+    final opts = Options(contentType: 'application/json');
+    Response<dynamic> res;
+    try {
+      res = await _dio
+          .safePost<dynamic>(
+            ApiEndpoints.paymentRequests,
+            data: payload,
+            options: opts,
+          )
+          .timeout(
+            const Duration(seconds: 22),
+            onTimeout: () => throw const ApiException(
+              'Ödeme bildirimi zaman aşımına uğradı. '
+              'Bağlantınızı kontrol edip tekrar deneyin.',
+            ),
+          );
+    } on ApiException catch (e) {
+      if (e.statusCode != 404) rethrow;
+      res = await _dio
+          .safePost<dynamic>(
+            '/api/jeton/payment-request',
+            data: payload,
+            options: opts,
+          )
+          .timeout(const Duration(seconds: 22));
     }
 
+    final code = res.statusCode ?? 0;
     final data = res.data;
+
+    if (code >= 400) {
+      String msg = 'Talep gönderilemedi (HTTP $code).';
+      if (data is Map) {
+        msg = (data['error'] ?? data['message'] ?? msg).toString();
+      } else if (data is String && data.isNotEmpty && !data.contains('<html')) {
+        msg = data;
+      }
+      throw ApiException(msg, statusCode: code);
+    }
+
+    if (_paymentRequestAccepted(data, code)) return;
     if (data is String) {
       final s = data.trim();
       if (s.contains('<!DOCTYPE') || s.contains('<html')) {
@@ -288,16 +338,6 @@ class WalletRemoteDataSource {
       if (err != null && err.toString().isNotEmpty) {
         throw ApiException(err.toString());
       }
-      final nested = m['data'];
-      if (nested is Map) {
-        final inner = Map<String, dynamic>.from(nested);
-        final id = inner['id'] ?? inner['paymentRequestId'];
-        if (id != null && id.toString().isNotEmpty) return;
-      }
-      if (m['id'] != null || m['paymentRequestId'] != null) return;
-      if (m['success'] == true) return;
-      // 201 Created — gövde tanınmasa bile kayıt oluşmuş olabilir
-      if (code == 201) return;
     }
 
     throw const ApiException(

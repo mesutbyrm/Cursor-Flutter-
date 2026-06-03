@@ -406,26 +406,70 @@ class ChatRoomRemoteDataSource {
     }
   }
 
+  Future<List<YoutubeSearchHit>> _searchYoutubeInvidious(String q) async {
+    const instances = [
+      'https://inv.nadeko.net',
+      'https://invidious.nerdvpn.de',
+      'https://invidious.privacyredirect.com',
+      'https://yt.artemislena.eu',
+    ];
+    for (final base in instances) {
+      try {
+        final res = await _dio.get<dynamic>(
+          '$base/api/v1/search',
+          queryParameters: {'q': q, 'type': 'video', 'sort_by': 'relevance'},
+          options: Options(
+            headers: {'Accept': 'application/json'},
+            receiveTimeout: const Duration(seconds: 10),
+            sendTimeout: const Duration(seconds: 8),
+          ),
+        );
+        final data = res.data;
+        if (data is! List) continue;
+        final out = <YoutubeSearchHit>[];
+        for (final row in data.take(12)) {
+          if (row is! Map) continue;
+          final m = Map<String, dynamic>.from(row);
+          if (m['type']?.toString() != 'video') continue;
+          final vid = m['videoId']?.toString() ?? '';
+          if (vid.length < 6) continue;
+          final title = m['title']?.toString() ?? 'Video';
+          final author = m['author']?.toString();
+          final length = m['lengthSeconds'];
+          out.add(
+            YoutubeSearchHit(
+              videoId: vid,
+              title: title,
+              url: 'https://www.youtube.com/watch?v=$vid',
+              thumbUrl: 'https://i.ytimg.com/vi/$vid/hqdefault.jpg',
+              uploader: author,
+              duration: _formatDuration(length),
+            ),
+          );
+        }
+        if (out.isNotEmpty) return out;
+      } catch (_) {}
+    }
+    return const [];
+  }
+
   Future<List<YoutubeSearchHit>> searchYoutube(String query) async {
     final q = query.trim();
     if (q.length < 2) return const [];
 
-    final piped = await _searchYoutubePiped(q);
-    if (piped.isNotEmpty) return piped;
-
-    const paths = [
+    const apiPaths = [
       '/api/youtube/search',
       '/api/chat/youtube-search',
     ];
     Object? lastError;
-    for (final path in paths) {
+    for (final path in apiPaths) {
       try {
         final res = await _dio
             .safeGet<dynamic>(
               path,
               query: {'q': q, 'query': q, 'search': q},
             )
-            .timeout(const Duration(seconds: 12));
+            .timeout(const Duration(seconds: 14));
         final data = res.data;
         if (data is String &&
             (data.contains('<!DOCTYPE') || data.contains('<html'))) {
@@ -438,15 +482,27 @@ class ChatRoomRemoteDataSource {
       }
     }
 
-    final pipedRetry = await _searchYoutubePiped(q);
-    if (pipedRetry.isNotEmpty) return pipedRetry;
+    final piped = await _searchYoutubePiped(q);
+    if (piped.isNotEmpty) return piped;
 
-    if (lastError != null) {
-      throw ApiException(
-        'YouTube araması başarısız. İnternet bağlantınızı kontrol edip tekrar deneyin.',
-      );
+    final inv = await _searchYoutubeInvidious(q);
+    if (inv.isNotEmpty) return inv;
+
+    if (lastError is ApiException) {
+      throw lastError as ApiException;
     }
-    return const [];
+    if (lastError != null) {
+      final msg = ApiException.userMessage(lastError);
+      if (msg.contains('401') || msg.toLowerCase().contains('oturum')) {
+        throw const ApiException(
+          'Şarkı aramak için giriş yapın.',
+        );
+      }
+      throw ApiException(msg);
+    }
+    throw const ApiException(
+      'YouTube araması şu an kullanılamıyor. Biraz sonra tekrar deneyin.',
+    );
   }
 
   Future<({List<MusicQueueItem> queue, int cost})> fetchMusicQueue(
