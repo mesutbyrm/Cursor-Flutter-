@@ -5,9 +5,9 @@ Benim (bulut ortamının) sizin telefonunuzda uygulamayı açması mümkün değ
 ## Yol 1 — Hazır APK (en kolay, bilgisayar bilgisi az)
 
 1. Telefonda **Bilinmeyen kaynaklardan yükleme**ye izin verin.
-2. APK indirin:
+2. APK indirin (en güncel, **1.0.119+121** — sesli oda + oda komutları + native API):
    - https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk  
-   - veya site: https://canlifal.com/canlifal-export.zip (içinde güncel APK varsa)
+   - GitHub **Actions → Build release APK** yeşil olduktan sonra da aynı link güncellenir.
 3. Dosyaya dokunup kurun.
 4. Uygulamayı açın → Giriş yapın → canlifal.com hesabınızla kullanın.
 

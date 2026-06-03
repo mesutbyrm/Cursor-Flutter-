@@ -2,25 +2,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.116+118` |
-| Tarih (UTC) | 2026-06-03 16:00 |
-| Commit | [`7da948316e7d2a0bb139253bf6dc34077f8d5054`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/7da948316e7d2a0bb139253bf6dc34077f8d5054) |
-| İş akışı | [Run 26895372956](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26895372956) |
+| Sürüm | `1.0.119+121` |
+| Tarih (UTC) | 2026-06-03 |
+| API | `https://canlifal.com` |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
-## Özellikler
+## Bu sürümde
 
-## 1.0.116+118 (2026-05-19)
+- PR #87 Oda Komutları, şarkı isteği, DJ
+- Web ↔ Flutter sesli oda senkronu (socket, TRTC, YouTube API)
+- Native canlifal.com API (WebView yok)
+- Sosyal beğeni / yorum / paylaşım
 
-### Native canlifal.com API uyumu (WebView yok)
+## Telefona kurulum
 
-- Şifre sıfırlama: `POST /api/auth/forgot-password` (native ekran)
-- DM: `conversations` / `requests` ayrıştırma; mobil `GET /api/messages`
-- Takip: `POST /api/users/:id/follow` toggle
-- Profil: `PATCH /api/me` (`name`, `image`)
-- Canlı: `/api/video-streams`; sesli odalar her zaman `/api/chat/rooms`
-- Okunmamış mesaj: `GET /api/messages?unreadCount=true`
-- Site yolları → `native_site_routes` (şifre sıfırlama dahil)
-
-
-_Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
+1. APK’yı indirin (yukarıdaki link).
+2. **Bilinmeyen kaynaklardan yükleme**ye izin verin.
+3. Dosyaya dokunup kurun → uygulamayı açın → giriş yapın.
