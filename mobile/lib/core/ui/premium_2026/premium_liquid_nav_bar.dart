@@ -3,7 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../theme/app_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import '../../theme/app_spacing.dart';
 import '../premium/gradient_fab.dart';
 import 'premium_2026_tokens.dart';
@@ -34,12 +35,15 @@ class PremiumLiquidNavBar extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(t.radiusLiquid),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: t.navFloater,
               borderRadius: BorderRadius.circular(t.radiusLiquid),
-              border: Border.all(color: t.glassBorder.withValues(alpha: 0.35)),
+              border: Border.all(
+                color: t.glassBorder.withValues(alpha: 0.45),
+                width: 0.75,
+              ),
               boxShadow: t.shadowFloating,
             ),
             child: SafeArea(
@@ -133,11 +137,11 @@ class _LiquidNavItem extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(t.radiusPill),
           color: selected
-              ? AppColors.accentPink.withValues(alpha: 0.18)
+              ? const Color(0xFF7B2FF7).withValues(alpha: 0.2)
               : Colors.transparent,
           border: selected
               ? Border.all(
-                  color: AppColors.accentPink.withValues(alpha: 0.35),
+                  color: const Color(0xFFB84DFF).withValues(alpha: 0.45),
                 )
               : null,
         ),
@@ -147,7 +151,9 @@ class _LiquidNavItem extends StatelessWidget {
             Icon(
               selected ? selectedIcon : icon,
               size: 24,
-              color: selected ? AppColors.textPrimary : AppColors.textMuted,
+              color: selected
+                  ? context.colors.onSurface
+                  : context.colors.onSurfaceMuted,
             ),
             const SizedBox(height: 3),
             Text(

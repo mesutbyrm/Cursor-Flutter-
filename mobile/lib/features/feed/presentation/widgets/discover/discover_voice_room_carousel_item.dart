@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../voice_hub/presentation/widgets/voice_room_grid_tile.dart';
 
@@ -42,7 +44,7 @@ class DiscoverVoiceRoomCarouselItem extends StatelessWidget {
                       'Henüz kimse yok',
                       style: TextStyle(
                         fontSize: 9,
-                        color: AppColors.textMuted.withValues(alpha: 0.8),
+                        color: context.colors.onSurfaceMuted.withValues(alpha: 0.8),
                       ),
                     ),
                   )
@@ -89,12 +91,12 @@ class _MiniPresenceAvatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: AppColors.accentPink.withValues(alpha: 0.65),
+          color: AppThemeColors.accentPink.withValues(alpha: 0.65),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.accentPurple.withValues(alpha: 0.25),
+            color: AppThemeColors.accentPurple.withValues(alpha: 0.25),
             blurRadius: 6,
           ),
         ],
@@ -104,7 +106,7 @@ class _MiniPresenceAvatar extends StatelessWidget {
           imageUrl: url,
           fit: BoxFit.cover,
           placeholder: (_, _) => ColoredBox(
-            color: AppColors.bgPurpleGlow,
+            color: context.colors.surfaceContainer,
             child: Icon(
               Icons.person,
               size: 14,
@@ -112,7 +114,7 @@ class _MiniPresenceAvatar extends StatelessWidget {
             ),
           ),
           errorWidget: (_, _, _) => ColoredBox(
-            color: AppColors.bgPurpleGlow,
+            color: context.colors.surfaceContainer,
             child: Icon(
               Icons.person,
               size: 14,

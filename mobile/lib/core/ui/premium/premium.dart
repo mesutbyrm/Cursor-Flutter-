@@ -2,6 +2,7 @@
 library;
 
 export '../premium_2026/premium_2026.dart';
+export '../pro_glass/pro_glass.dart';
 export 'gradient_fab.dart';
 export 'live_badge.dart';
 export 'neon_button.dart';

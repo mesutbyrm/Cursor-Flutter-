@@ -2,37 +2,56 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/auth/voice_staff_rank.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/token_storage.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
-import '../../data/services/voice_room_chat_socket.dart';
+import '../../data/services/voice_room_debug_log.dart';
+import '../../data/services/voice_room_sse_service.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/voice_official_join.dart';
+import '../utils/voice_room_permissions.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/music_queue_item.dart';
+import '../../domain/entities/popular_music_suggestion.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../data/youtube_stream_resolver.dart';
 import '../services/voice_room_dj_player.dart';
 import 'voice_room_ui_provider.dart';
+
+final youtubeStreamResolverProvider = Provider<YoutubeStreamResolver>((ref) {
+  return YoutubeStreamResolver(ref.watch(dioProvider));
+});
 
 final chatRoomRemoteProvider = Provider<ChatRoomRemoteDataSource>((ref) {
   return ChatRoomRemoteDataSource(ref.watch(dioProvider));
 });
 
-final voiceRoomChatSocketProvider = Provider<VoiceRoomChatSocket>((ref) {
-  final s = VoiceRoomChatSocket();
+final voiceRoomSseServiceProvider = Provider<VoiceRoomSseService>((ref) {
+  final s = VoiceRoomSseService();
   ref.onDispose(s.disconnect);
   return s;
 });
 
 final voiceRoomDjPlayerProvider = Provider<VoiceRoomDjPlayer>((ref) {
-  final p = VoiceRoomDjPlayer();
+  final p = VoiceRoomDjPlayer(ref.watch(youtubeStreamResolverProvider));
   ref.onDispose(p.dispose);
   return p;
 });
+
+String? _roleSymbolForUser(UserEntity user) {
+  final rank = VoiceStaffRankParser.resolve(
+    username: user.username,
+    chatRole: user.role,
+  );
+  return VoiceStaffRankParser.prefixSymbol(rank);
+}
 
 class VoiceRoomLiveState {
   const VoiceRoomLiveState({
@@ -45,6 +64,7 @@ class VoiceRoomLiveState {
     this.enterBanner,
     this.backgroundUrl,
     this.selfInRoom = false,
+    this.sseConnected = false,
   });
 
   final List<ChatRoomMessage> messages;
@@ -56,6 +76,7 @@ class VoiceRoomLiveState {
   final String? enterBanner;
   final String? backgroundUrl;
   final bool selfInRoom;
+  final bool sseConnected;
 
   int onlineCountFor(VoiceRoomEntity room) {
     if (presence.isNotEmpty) return presence.length;
@@ -74,6 +95,7 @@ class VoiceRoomLiveState {
     bool clearEnterBanner = false,
     String? backgroundUrl,
     bool? selfInRoom,
+    bool? sseConnected,
     bool clearError = false,
   }) {
     return VoiceRoomLiveState(
@@ -86,6 +108,7 @@ class VoiceRoomLiveState {
       enterBanner: clearEnterBanner ? null : (enterBanner ?? this.enterBanner),
       backgroundUrl: backgroundUrl ?? this.backgroundUrl,
       selfInRoom: selfInRoom ?? this.selfInRoom,
+      sseConnected: sseConnected ?? this.sseConnected,
     );
   }
 }
@@ -93,11 +116,13 @@ class VoiceRoomLiveState {
 class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     VoiceRoomLiveState, VoiceRoomEntity> {
   Timer? _poll;
+  Timer? _presenceHeartbeat;
+  Timer? _enterBannerTimer;
   var _pollPaused = false;
+  final Set<String> _shownEntranceKeys = {};
 
+  /// Prisma cuid — slug değil.
   String get _roomKey => arg.apiRoomKey;
-
-  String? get _altRoomKey => arg.apiRoomAlternateKey;
 
   DateTime? get _lastMessageAt {
     if (state.messages.isEmpty) return null;
@@ -131,34 +156,11 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     return merged;
   }
 
-  List<ChatRoomMessage> _joinMessagesForNewPresence(
-    List<ChatRoomPresence> previous,
-    List<ChatRoomPresence> next,
-  ) {
-    if (previous.isEmpty) return const [];
-    final known = previous.map((p) => p.id).toSet();
-    final out = <ChatRoomMessage>[];
-    for (final p in next) {
-      if (known.contains(p.id)) continue;
-      out.add(
-        ChatRoomMessage(
-          id: 'join-${p.id}-${DateTime.now().microsecondsSinceEpoch}',
-          content: '${p.displayName} odaya katıldı',
-          createdAt: DateTime.now(),
-          user: ChatRoomUserRef(
-            id: p.id,
-            name: p.name,
-            nickname: p.nickname,
-            image: p.image,
-            chatRole: p.chatRole,
-            roleSymbol: p.roleSymbol,
-            membership: p.membership,
-          ),
-          kind: ChatMessageKind.systemJoin,
-        ),
-      );
-    }
-    return out;
+  bool _markEntranceOnce(String raw) {
+    final key = VoiceOfficialJoin.entranceDedupeKey(raw, roomName: arg.nameTr);
+    if (_shownEntranceKeys.contains(key)) return false;
+    _shownEntranceKeys.add(key);
+    return true;
   }
 
   @override
@@ -166,18 +168,27 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     ref.keepAlive();
     ref.onDispose(() {
       _poll?.cancel();
+      _presenceHeartbeat?.cancel();
+      _enterBannerTimer?.cancel();
       _leavePresence();
-      ref.read(voiceRoomChatSocketProvider).disconnect();
+      ref.read(voiceRoomSseServiceProvider).disconnect();
       ref.read(voiceRoomDjPlayerProvider).stop();
     });
     Future.microtask(() async {
+      ref.invalidate(coinBalanceProvider);
+      ref.invalidate(walletBalancesProvider);
       await _joinPresence();
       await refresh();
-      _startSocket(_roomKey);
+      _startSse();
       _warmBackgrounds();
+      final player = ref.read(voiceRoomDjPlayerProvider);
+      player.onTrackComplete = () => unawaited(_onDjTrackComplete());
     });
-    _poll = Timer.periodic(const Duration(seconds: 2), (_) {
-      if (!state.sending && !_pollPaused) refresh();
+    _poll = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (!_pollPaused) refresh();
+    });
+    _presenceHeartbeat = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (state.selfInRoom) unawaited(_presenceHeartbeatTick());
     });
     return VoiceRoomLiveState(
       backgroundUrl: room.backgroundImageUrl?.trim().isNotEmpty == true
@@ -197,7 +208,8 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         name: user.display,
         nickname: user.username,
         image: user.avatarUrl,
-        chatRole: 'listener',
+        chatRole: user.role ?? 'listener',
+        roleSymbol: _roleSymbolForUser(user),
       ),
     ];
   }
@@ -211,11 +223,13 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       return;
     }
     try {
-      final joined = await ref.read(chatRoomRemoteProvider).joinPresence(
-            _roomKey,
-            alternateKey: _altRoomKey,
-          );
+      VoiceRoomDebugLog.log('api.presence.join', {'room': _roomKey});
+      final joined = await ref.read(chatRoomRemoteProvider).joinPresence(_roomKey);
       final merged = _mergeSelf(joined);
+      VoiceRoomDebugLog.log('api.presence.join.ok', {
+        'count': merged.length,
+        'roomId': _roomKey,
+      });
       state = state.copyWith(
         presence: merged,
         selfInRoom: true,
@@ -223,6 +237,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         clearError: true,
       );
     } on Object catch (e) {
+      VoiceRoomDebugLog.log('api.presence.join.fail', {'error': e.toString()});
       final msg = ApiException.userMessage(e);
       if (msg.toLowerCase().contains('yasak') ||
           msg.contains('403') ||
@@ -233,38 +248,67 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         );
         return;
       }
-      state = state.copyWith(loading: false, error: msg);
+      state = state.copyWith(
+        loading: false,
+        error: msg.contains('401') || msg.toLowerCase().contains('oturum')
+            ? 'Listede görünmek için tekrar giriş yapın.'
+            : msg,
+      );
     }
   }
 
   Future<void> _leavePresence() async {
     if (_roomKey.isEmpty) return;
     try {
-      await ref.read(chatRoomRemoteProvider).leavePresence(
-            _roomKey,
-            alternateKey: _altRoomKey,
-          );
+      await ref.read(chatRoomRemoteProvider).leavePresence(_roomKey);
     } catch (_) {}
   }
 
-  void _startSocket(String roomId) {
-    ref.read(voiceRoomChatSocketProvider).connect(
-      roomId: roomId,
+  Future<void> _presenceHeartbeatTick() async {
+    if (_roomKey.isEmpty) return;
+    try {
+      VoiceRoomDebugLog.log('api.presence.heartbeat', {'room': _roomKey});
+      final list =
+          await ref.read(chatRoomRemoteProvider).joinPresence(_roomKey);
+      final merged = _mergeSelf(list);
+      state = state.copyWith(presence: merged, selfInRoom: true);
+    } catch (e) {
+      VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {
+        'error': e.toString(),
+      });
+    }
+  }
+
+  void _startSse() {
+    if (_roomKey.isEmpty) return;
+    final storage = ref.read(tokenStorageProvider);
+    VoiceRoomDebugLog.log('sse.subscribe', {
+      'url': VoiceRoomSseService.streamUrlFor(_roomKey),
+      'roomId': _roomKey,
+    });
+    ref.read(voiceRoomSseServiceProvider).connect(
+      roomId: _roomKey,
+      accessToken: storage.readAccess,
+      onConnected: () {
+        state = state.copyWith(sseConnected: true);
+      },
       onMessage: (msg) {
         final exists = state.messages.any((m) => m.id == msg.id);
         if (exists) return;
-        final list = [...state.messages, msg];
-        var banner = state.enterBanner;
+        state = state.copyWith(messages: [...state.messages, msg]);
         if (msg.kind == ChatMessageKind.systemJoin &&
-            VoiceOfficialJoin.isOfficialEntrance(msg.content)) {
-          banner = msg.content;
+            VoiceOfficialJoin.isOfficialEntrance(msg.content) &&
+            _markEntranceOnce(msg.content)) {
+          _showEnterBanner(msg.content);
         }
-        state = state.copyWith(messages: list, enterBanner: banner);
-        if (msg.kind == ChatMessageKind.systemJoin) {
-          Future.delayed(const Duration(seconds: 4), () {
-            state = state.copyWith(clearEnterBanner: true);
-          });
-        }
+      },
+      onPresence: (users) {
+        final merged = _mergeSelf(users);
+        state = state.copyWith(
+          presence: merged,
+          sseConnected: true,
+          selfInRoom: true,
+        );
       },
     );
   }
@@ -273,6 +317,10 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     if (_roomKey.isEmpty) return;
     final room = arg;
     final remote = ref.read(chatRoomRemoteProvider);
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user != null && !state.selfInRoom) {
+      unawaited(_joinPresence());
+    }
     Object? refreshError;
     try {
       final since = _lastMessageAt?.toUtc().toIso8601String();
@@ -283,7 +331,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       try {
         fetchedMsgs = await remote.fetchMessages(
           _roomKey,
-          alternateKey: _altRoomKey,
           since: since,
         );
       } catch (e) {
@@ -292,48 +339,36 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       try {
         presence = await remote.fetchPresence(
           _roomKey,
-          alternateKey: _altRoomKey,
         );
       } catch (e) {
         refreshError ??= e;
       }
       try {
-        dj = await remote.fetchDj(_roomKey, alternateKey: _altRoomKey);
+        dj = await remote.fetchDj(_roomKey);
       } catch (_) {}
       final ui = ref.read(voiceRoomUiProvider);
-      if (ui.backgroundMusicEnabled && dj.playing && dj.musicUrl != null) {
-        await ref.read(voiceRoomDjPlayerProvider).sync(
-              musicUrl: dj.musicUrl,
-              playing: true,
-            );
-      }
-      final prevPresence = state.presence;
-      presence = _mergeSelf(presence);
-      var messages = _mergeMessages(state.messages, fetchedMsgs);
-      final joins = _joinMessagesForNewPresence(prevPresence, presence);
-      if (joins.isNotEmpty) {
-        messages = _mergeMessages(messages, joins);
-      }
-      var banner = state.enterBanner;
-      final latestOfficial = VoiceOfficialJoin.latestEntranceBanner(
-        messages
-            .where((m) => m.kind == ChatMessageKind.systemJoin)
-            .map((m) => m.content),
+      await ref.read(voiceRoomDjPlayerProvider).sync(
+        musicUrl: dj.musicUrl,
+        playing: dj.playing,
+        muted: !ui.backgroundMusicEnabled,
       );
-      if (latestOfficial != null) banner = latestOfficial;
+      final bgFromDj = dj.backgroundImage?.trim();
+      presence = _mergeSelf(presence);
+      final messages = _mergeMessages(state.messages, fetchedMsgs);
       state = state.copyWith(
         messages: messages,
         presence: presence,
         dj: dj,
-        enterBanner: banner,
         loading: false,
         error: refreshError != null
             ? ApiException.userMessage(refreshError)
             : null,
         clearError: refreshError == null,
-        backgroundUrl: (state.backgroundUrl?.isNotEmpty == true)
-            ? state.backgroundUrl
-            : room.backgroundImageUrl,
+        backgroundUrl: (bgFromDj != null && bgFromDj.isNotEmpty)
+            ? bgFromDj
+            : (state.backgroundUrl?.isNotEmpty == true)
+                ? state.backgroundUrl
+                : room.backgroundImageUrl,
         selfInRoom: state.selfInRoom || presence.isNotEmpty,
       );
     } catch (e) {
@@ -342,6 +377,15 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         error: ApiException.userMessage(e),
       );
     }
+  }
+
+  Future<void> _onDjTrackComplete() async {
+    try {
+      await ref.read(chatRoomRemoteProvider).advanceMusicQueue(
+            _roomKey,
+          );
+      await refresh();
+    } catch (_) {}
   }
 
   Future<void> _warmBackgrounds() async {
@@ -356,11 +400,57 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     } catch (_) {}
   }
 
+  void _showEnterBanner(String raw) {
+    final formatted = VoiceOfficialJoin.formatEntranceBanner(
+      raw,
+      roomName: arg.nameTr,
+    );
+    if (formatted.isEmpty) return;
+    state = state.copyWith(enterBanner: formatted);
+    _enterBannerTimer?.cancel();
+    _enterBannerTimer = Timer(const Duration(seconds: 5), () {
+      state = state.copyWith(clearEnterBanner: true);
+    });
+  }
+
+  VoiceRoomPermissions _permissions() {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    ChatRoomPresence? self;
+    if (user != null) {
+      for (final p in state.presence) {
+        if (p.id == user.id) {
+          self = p;
+          break;
+        }
+      }
+    }
+    return VoiceRoomPermissions.forUser(
+      user: user,
+      room: arg,
+      selfPresence: self,
+    );
+  }
+
+  void _applyLocalChatClear() {
+    state = state.copyWith(
+      messages: state.messages
+          .where(
+            (m) =>
+                m.kind != ChatMessageKind.text ||
+                m.content.contains('temizlendi') ||
+                m.content.toUpperCase().contains('DUYURU'),
+          )
+          .toList(),
+    );
+  }
+
   Future<void> sendMessage(String text) async {
     final trimmed = VoiceOfficialJoin.normalizeCommandInput(text.trim());
     if (trimmed.isEmpty || _roomKey.isEmpty) return;
 
     final user = ref.read(authControllerProvider).valueOrNull;
+    final isClear = VoiceOfficialJoin.isClearChatCommand(trimmed);
+    final perms = _permissions();
     final optimisticId = 'local-${DateTime.now().millisecondsSinceEpoch}';
     final optimistic = user != null
         ? ChatRoomMessage(
@@ -377,35 +467,30 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         : null;
 
     state = state.copyWith(
+      sending: true,
       messages: optimistic != null
           ? [...state.messages, optimistic]
           : state.messages,
-      sending: true,
       clearError: true,
     );
+
+    if (isClear && (perms.canModerate || perms.isRoomOwner)) {
+      unawaited(
+        ref.read(chatRoomRemoteProvider).tryClearRoomMessages(
+              roomKey: _roomKey,
+            ),
+      );
+    }
 
     try {
       ChatRoomMessage? sent;
       try {
         sent = await ref.read(chatRoomRemoteProvider).sendMessage(
               roomKey: _roomKey,
-              alternateKey: _altRoomKey,
               content: trimmed,
-            ).timeout(const Duration(seconds: 10));
+            ).timeout(const Duration(seconds: 22));
       } on TimeoutException {
-        final alt = _altRoomKey;
-        if (alt != null && alt.isNotEmpty && alt != _roomKey) {
-          sent = await ref
-              .read(chatRoomRemoteProvider)
-              .sendMessage(
-                roomKey: alt,
-                alternateKey: _roomKey,
-                content: trimmed,
-              )
-              .timeout(const Duration(seconds: 10));
-        } else {
-          rethrow;
-        }
+        rethrow;
       }
 
       var list = [...state.messages];
@@ -430,20 +515,19 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       }
       list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
       state = state.copyWith(messages: list, clearError: true);
+      if (isClear && (perms.canModerate || perms.isRoomOwner)) {
+        _applyLocalChatClear();
+      }
       if (VoiceOfficialJoin.looksLikeRoomCommand(trimmed)) {
         unawaited(refresh());
       }
     } on TimeoutException {
-      if (optimistic != null) {
-        state = state.copyWith(
-          messages: [...state.messages, optimistic],
-          error: 'Mesaj zaman aşımı — bağlantıyı kontrol edin.',
-        );
-      } else {
-        state = state.copyWith(
-          error: 'Mesaj gönderimi zaman aşımına uğradı. Tekrar deneyin.',
-        );
-      }
+      await _recoverAfterSendTimeout(
+        trimmed: trimmed,
+        optimisticId: optimistic?.id,
+        isClear: isClear,
+        canModerate: perms.canModerate || perms.isRoomOwner,
+      );
     } catch (e) {
       state = state.copyWith(
         messages: optimistic != null
@@ -456,16 +540,51 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     }
   }
 
+  Future<void> _recoverAfterSendTimeout({
+    required String trimmed,
+    String? optimisticId,
+    required bool isClear,
+    required bool canModerate,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    try {
+      await refresh();
+    } catch (_) {}
+    final delivered = state.messages.any(
+      (m) =>
+          m.content == trimmed &&
+          !m.id.startsWith('local-') &&
+          (m.user?.id == ref.read(authControllerProvider).valueOrNull?.id ||
+              m.kind != ChatMessageKind.text),
+    );
+    var list = state.messages;
+    if (optimisticId != null) {
+      list = list.where((m) => m.id != optimisticId).toList();
+    }
+    if (delivered || (isClear && canModerate)) {
+      if (isClear && canModerate) _applyLocalChatClear();
+      state = state.copyWith(messages: list, clearError: true);
+      return;
+    }
+    state = state.copyWith(
+      messages: list,
+      error: 'Mesaj gecikmeli iletildi; listede görünmüyorsa tekrar deneyin.',
+    );
+  }
+
   Future<String?> requestSpeak() async {
     try {
       await ref.read(chatRoomRemoteProvider).requestSpeak(
             _roomKey,
-            alternateKey: _altRoomKey,
           );
       ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(true);
       return null;
     } catch (e) {
-      return ApiException.userMessage(e);
+      final msg = ApiException.userMessage(e);
+      if (msg.contains('404')) {
+        return 'Mikrofon isteği bu odada desteklenmiyor; boş koltuğa dokunarak oturmayı deneyin.';
+      }
+      return msg;
     }
   }
 
@@ -473,7 +592,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     try {
       await ref.read(chatRoomRemoteProvider).cancelSpeakRequest(
             _roomKey,
-            alternateKey: _altRoomKey,
           );
       ref.read(voiceRoomUiProvider.notifier).setRequestSpeakPending(false);
       return null;
@@ -488,7 +606,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       if (enabled) {
         await ref.read(chatRoomRemoteProvider).updateDj(
               roomKey: _roomKey,
-              alternateKey: _altRoomKey,
               musicUrl: dj.musicUrl ??
                   'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
               playing: true,
@@ -496,7 +613,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       } else {
         await ref.read(chatRoomRemoteProvider).updateDj(
               roomKey: _roomKey,
-              alternateKey: _altRoomKey,
               musicUrl: dj.musicUrl,
               playing: false,
             );
@@ -513,7 +629,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     try {
       await ref.read(chatRoomRemoteProvider).setRoomBackground(
             roomKey: _roomKey,
-            alternateKey: _altRoomKey,
             backgroundImage: url,
           );
       state = state.copyWith(backgroundUrl: url);
@@ -527,19 +642,82 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   Future<List<String>> fetchBackgrounds() =>
       ref.read(chatRoomRemoteProvider).fetchBackgrounds();
 
-  Future<List<YoutubeSearchHit>> searchYoutube(String query) => ref
-      .read(chatRoomRemoteProvider)
-      .searchYoutube(query)
-      .timeout(
-        const Duration(seconds: 18),
-        onTimeout: () => throw TimeoutException('YouTube araması zaman aşımı'),
-      );
+  Future<List<YoutubeSearchHit>> searchYoutube(String query) =>
+      ref.read(chatRoomRemoteProvider).searchYoutube(query);
 
-  Future<({List<MusicQueueItem> queue, int cost})> fetchMusicQueue() =>
+  Future<
+      ({
+        List<MusicQueueItem> queue,
+        int cost,
+        int maxMusicQueue,
+        bool musicEnabled,
+        MusicQueueItem? nowPlaying,
+        bool playing,
+        bool canRequestMusic,
+      })> fetchMusicQueue() =>
       ref.read(chatRoomRemoteProvider).fetchMusicQueue(
             _roomKey,
-            alternateKey: _altRoomKey,
           );
+
+  Future<List<PopularMusicSuggestion>> fetchPopularMusic() =>
+      ref.read(chatRoomRemoteProvider).fetchPopularMusic();
+
+  Future<String?> skipMusic() async {
+    try {
+      await ref.read(chatRoomRemoteProvider).skipMusicQueue(
+            roomKey: _roomKey,
+          );
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> removeQueueItem(String itemId) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).removeMusicQueueItem(
+            roomKey: _roomKey,
+            itemId: itemId,
+          );
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> clearMusicQueue() async {
+    try {
+      await ref.read(chatRoomRemoteProvider).clearMusicQueue(
+            roomKey: _roomKey,
+          );
+      await ref.read(voiceRoomDjPlayerProvider).stop();
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> updateMusicSettings({
+    bool? musicEnabled,
+    int? musicRequestCost,
+    int? maxMusicQueue,
+  }) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).updateMusicSettings(
+            roomKey: _roomKey,
+            musicEnabled: musicEnabled,
+            musicRequestCost: musicRequestCost,
+            maxMusicQueue: maxMusicQueue,
+          );
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
 
   Future<String?> assignSeat({
     required int seatIndex,
@@ -548,13 +726,34 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     try {
       await ref.read(chatRoomRemoteProvider).assignSeat(
             roomKey: _roomKey,
-            alternateKey: _altRoomKey,
             seatIndex: seatIndex,
             userId: userId,
           );
       await refresh();
       return null;
     } catch (e) {
+      final self = ref.read(authControllerProvider).valueOrNull;
+      if (self != null && (userId == null || userId == self.id)) {
+        final list = [...state.presence];
+        final idx = list.indexWhere((p) => p.id == self.id);
+        final updated = ChatRoomPresence(
+          id: self.id,
+          name: self.display,
+          nickname: self.username,
+          image: self.avatarUrl,
+          chatRole: self.role ?? 'listener',
+          roleSymbol: _roleSymbolForUser(self),
+          seatIndex: seatIndex,
+          isSpeaking: idx >= 0 ? list[idx].isSpeaking : false,
+        );
+        if (idx >= 0) {
+          list[idx] = updated;
+        } else {
+          list.add(updated);
+        }
+        state = state.copyWith(presence: list, selfInRoom: true);
+        return null;
+      }
       return ApiException.userMessage(e);
     }
   }
@@ -564,40 +763,31 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     required String youtubeUrl,
     String? thumbUrl,
     String? videoId,
+    String? giftTo,
+    String? note,
   }) async {
     try {
       final result = await ref
           .read(chatRoomRemoteProvider)
           .requestMusic(
             roomKey: _roomKey,
-            alternateKey: _altRoomKey,
             title: title,
             youtubeUrl: youtubeUrl,
             thumbUrl: thumbUrl,
             videoId: videoId,
+            giftTo: giftTo,
+            note: note,
           )
           .timeout(
             const Duration(seconds: 22),
             onTimeout: () => throw TimeoutException('Şarkı isteği zaman aşımı'),
           );
-      if (result.newBalance != null) {
-        ref.invalidate(coinBalanceProvider);
-      }
-      state = state.copyWith(
-        dj: ChatRoomDjState(
-          djUsers: state.dj.djUsers,
-          activeDjId: state.dj.activeDjId,
-          ownerPresent: state.dj.ownerPresent,
-          canPlayMusic: state.dj.canPlayMusic,
-          isOwner: state.dj.isOwner,
-          musicUrl: state.dj.musicUrl,
-          playing: state.dj.playing,
-          musicQueue: result.queue,
-          musicRequestCost: state.dj.musicRequestCost,
-          maxDj: state.dj.maxDj,
-        ),
-      );
+      ref.invalidate(coinBalanceProvider);
+      ref.invalidate(walletBalancesProvider);
       await refresh();
+      if (result.queuePosition != null && result.queuePosition! > 1) {
+        return 'Sıranız: #${result.queuePosition}';
+      }
       return null;
     } catch (e) {
       return ApiException.userMessage(e);
@@ -608,7 +798,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     try {
       await ref.read(chatRoomRemoteProvider).addRoomDj(
             roomKey: _roomKey,
-            alternateKey: _altRoomKey,
             targetUserId: targetUserId,
           );
       await refresh();
@@ -622,10 +811,43 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     try {
       await ref.read(chatRoomRemoteProvider).removeRoomDj(
             roomKey: _roomKey,
-            alternateKey: _altRoomKey,
             targetUserId: targetUserId,
           );
       await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<List<String>> fetchBannedWords() async {
+    try {
+      return await ref.read(chatRoomRemoteProvider).fetchBannedWords(
+            _roomKey,
+          );
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<String?> addBannedWord(String word) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).addBannedWord(
+            roomKey: _roomKey,
+            word: word,
+          );
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> removeBannedWord(String word) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).removeBannedWord(
+            roomKey: _roomKey,
+            word: word,
+          );
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

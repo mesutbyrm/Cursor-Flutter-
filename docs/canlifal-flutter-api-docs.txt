@@ -1048,7 +1048,11 @@ Sosyal:
 
 İçerik:
   GET  /api/user/fortunes
+  POST /api/user/fortunes
   GET  /api/user/fortunes/{fortuneId}
+  GET  /api/user/favorites
+  POST /api/user/favorites
+  DELETE /api/user/favorites/{id}
   GET  /api/user/stats
   GET  /api/user/statistics
   GET  /api/user/credits

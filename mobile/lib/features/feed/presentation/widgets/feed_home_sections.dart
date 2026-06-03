@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/widgets/cached_cover_image.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
 import '../../../../core/widgets/quick_action_tile.dart';
@@ -151,11 +152,10 @@ class _LiveChip extends StatelessWidget {
                     children: [
                       stream.thumbnailUrl != null &&
                               stream.thumbnailUrl!.isNotEmpty
-                          ? Image.network(
-                              stream.thumbnailUrl!,
+                          ? CachedCoverImage(
+                              url: stream.thumbnailUrl!,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const ColoredBox(
+                              fallback: const ColoredBox(
                                 color: AppTheme.surface,
                                 child: Icon(Icons.live_tv_rounded,
                                     color: AppTheme.accent, size: 36),

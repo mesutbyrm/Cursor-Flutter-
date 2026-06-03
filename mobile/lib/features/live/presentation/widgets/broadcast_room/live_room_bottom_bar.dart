@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/ui/premium/premium_glass_surface.dart';
 import '../../../../trtc/presentation/trtc_room_manager.dart';
 
@@ -92,7 +92,7 @@ class LiveRoomBottomBar extends StatelessWidget {
                 onPressed: onSend,
                 icon: const Icon(Icons.send_rounded, size: 20),
                 style: IconButton.styleFrom(
-                  backgroundColor: AppColors.accentPink,
+                  backgroundColor: AppThemeColors.accentPink,
                 ),
               ),
               if (!isHost && onGift != null) ...[
@@ -102,7 +102,7 @@ class LiveRoomBottomBar extends StatelessWidget {
                   child: const LiveRoomActionPill(
                     icon: Icons.card_giftcard_rounded,
                     label: 'Hediye',
-                    color: AppColors.accentPurple,
+                    color: AppThemeColors.accentPurple,
                   ),
                 ),
               ],
@@ -111,17 +111,17 @@ class LiveRoomBottomBar extends StatelessWidget {
                 const LiveRoomActionPill(
                   icon: Icons.card_giftcard_rounded,
                   label: 'Hediye',
-                  color: AppColors.accentPurple,
+                  color: AppThemeColors.accentPurple,
                 ),
                 const SizedBox(width: 6),
                 LiveRoomActionPill(
                   icon: Icons.person_add_rounded,
                   label: 'Davet',
-                  color: AppColors.accentCyan,
+                  color: AppThemeColors.accentCyan,
                 ),
                 const SizedBox(width: 6),
                 Material(
-                  color: AppColors.liveRed,
+                  color: AppThemeColors.liveRed,
                   borderRadius: BorderRadius.circular(14),
                   child: InkWell(
                     onTap: onEnd,

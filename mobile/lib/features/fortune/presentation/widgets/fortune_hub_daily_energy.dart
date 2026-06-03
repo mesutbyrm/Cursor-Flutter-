@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../data/fortune_catalog.dart';
 import 'fortune_hub_insight_banner.dart';
 
@@ -54,7 +54,7 @@ class FortuneHubDailyEnergy extends StatelessWidget {
                 child: Text(
                   'Tümünü Gör >',
                   style: TextStyle(
-                    color: AppColors.accentPurple.withValues(alpha: 0.95),
+                    color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
@@ -134,7 +134,7 @@ class _EnergyCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         color: const Color(0xFF1A0B2E).withValues(alpha: 0.85),
         border: Border.all(
-          color: AppColors.accentPurple.withValues(alpha: 0.35),
+          color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
         ),
       ),
       child: Column(

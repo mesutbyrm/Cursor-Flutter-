@@ -37,23 +37,29 @@ class Premium2026Tokens extends ThemeExtension<Premium2026Tokens> {
     radiusLiquid: 32,
     radiusSheet: 28,
     radiusPill: 999,
-    glassFill: Color(0x38FFFFFF),
-    glassFillElevated: Color(0x4DFFFFFF),
-    glassBorder: Color(0x55FFFFFF),
-    glassHighlight: Color(0x18FFFFFF),
+    glassFill: Color(0x1FFFFFFF),
+    glassFillElevated: Color(0x26FFFFFF),
+    glassBorder: Color(0x33FFFFFF),
+    glassHighlight: Color(0x14FFFFFF),
     shadowAmbient: [
       BoxShadow(
-        color: Color(0x40000000),
+        color: Color(0x50000000),
         blurRadius: 40,
         offset: Offset(0, 16),
       ),
     ],
     shadowFloating: [
       BoxShadow(
-        color: Color(0x55FE2C55),
+        color: Color(0x557B2FF7),
         blurRadius: 32,
         spreadRadius: -8,
         offset: Offset(0, 12),
+      ),
+      BoxShadow(
+        color: Color(0x66FF4FD8),
+        blurRadius: 20,
+        spreadRadius: -12,
+        offset: Offset(0, 6),
       ),
       BoxShadow(
         color: Color(0x66000000),
@@ -65,9 +71,9 @@ class Premium2026Tokens extends ThemeExtension<Premium2026Tokens> {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        Color(0xFF1E1038),
-        Color(0xFF0B0B1E),
-        Color(0xFF0A1528),
+        Color(0xFF1A0E38),
+        Color(0xFF12082A),
+        Color(0xFF0A0618),
       ],
       stops: [0.0, 0.45, 1.0],
     ),
@@ -75,7 +81,7 @@ class Premium2026Tokens extends ThemeExtension<Premium2026Tokens> {
       center: Alignment(0.85, -0.2),
       radius: 0.9,
       colors: [
-        Color(0x40B832FF),
+        Color(0x45B84DFF),
         Colors.transparent,
       ],
     ),
@@ -83,7 +89,7 @@ class Premium2026Tokens extends ThemeExtension<Premium2026Tokens> {
       center: Alignment(-0.7, 1.1),
       radius: 0.75,
       colors: [
-        Color(0x35FE2C55),
+        Color(0x38FF4FD8),
         Colors.transparent,
       ],
     ),
@@ -91,8 +97,8 @@ class Premium2026Tokens extends ThemeExtension<Premium2026Tokens> {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        Color(0xCC14141C),
-        Color(0xF014141C),
+        Color(0xCC1A0E38),
+        Color(0xF012082A),
       ],
     ),
   );

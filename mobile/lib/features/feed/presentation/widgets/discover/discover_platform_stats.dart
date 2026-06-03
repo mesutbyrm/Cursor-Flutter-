@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../domain/entities/platform_stats_entity.dart';
 import '../../providers/platform_stats_providers.dart';
@@ -225,7 +227,7 @@ class _StatCard extends StatelessWidget {
             item.subtitle,
             style: TextStyle(
               fontSize: 8,
-              color: AppColors.textMuted.withValues(alpha: 0.9),
+              color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
               height: 1.2,
             ),
           ),
@@ -250,7 +252,7 @@ class _RecentLoginsSection extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           color: const Color(0xFF12081F).withValues(alpha: 0.88),
           border: Border.all(
-            color: AppColors.accentPurple.withValues(alpha: 0.28),
+            color: AppThemeColors.accentPurple.withValues(alpha: 0.28),
           ),
         ),
         child: Column(
@@ -261,7 +263,7 @@ class _RecentLoginsSection extends StatelessWidget {
                 Icon(
                   Icons.schedule_rounded,
                   size: 18,
-                  color: AppColors.accentCyan.withValues(alpha: 0.95),
+                  color: AppThemeColors.accentCyan.withValues(alpha: 0.95),
                 ),
                 const SizedBox(width: 8),
                 const Expanded(
@@ -280,7 +282,7 @@ class _RecentLoginsSection extends StatelessWidget {
                   child: Text(
                     'Tümünü Gör >',
                     style: TextStyle(
-                      color: AppColors.accentPurple.withValues(alpha: 0.95),
+                      color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
                     ),
@@ -293,7 +295,7 @@ class _RecentLoginsSection extends StatelessWidget {
               Text(
                 'Henüz giriş kaydı yok.',
                 style: TextStyle(
-                  color: AppColors.textMuted.withValues(alpha: 0.9),
+                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                   fontSize: 12,
                 ),
               )
@@ -332,7 +334,7 @@ class _RecentLoginChip extends StatelessWidget {
             padding: const EdgeInsets.all(2.5),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: AppColors.brandGradient,
+              gradient: context.colors.brandGradient,
             ),
             child: UserAvatar(url: login.user.avatarUrl, radius: 28),
           ),
@@ -366,7 +368,7 @@ class _RecentLoginChip extends StatelessWidget {
             login.timeLabel,
             style: TextStyle(
               fontSize: 9,
-              color: AppColors.textMuted.withValues(alpha: 0.85),
+              color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
             ),
           ),
           const SizedBox(height: 4),
@@ -383,7 +385,7 @@ class _RecentLoginChip extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.accentPurple.withValues(alpha: 0.95),
+                    color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
                   ),
                 ),
               ),
@@ -412,7 +414,7 @@ class _StatsSkeleton extends StatelessWidget {
                 height: 28,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.accentPurple.withValues(alpha: 0.7),
+                  color: AppThemeColors.accentPurple.withValues(alpha: 0.7),
                 ),
               ),
             ),

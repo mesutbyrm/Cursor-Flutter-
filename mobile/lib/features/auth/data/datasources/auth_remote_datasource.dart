@@ -76,6 +76,13 @@ class AuthRemoteDataSource {
     return _unwrapAuthBody(res.data);
   }
 
+  Future<void> requestPasswordReset(String email) async {
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.authForgotPassword,
+      data: {'email': email.trim().toLowerCase()},
+    );
+  }
+
   Future<Map<String, dynamic>> me() async {
     final path = Env.useMobileAuth ? ApiEndpoints.me : ApiEndpoints.authMe;
     final res = await _dio.safeGet<Map<String, dynamic>>(path);

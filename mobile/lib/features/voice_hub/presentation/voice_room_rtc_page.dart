@@ -1,14 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/network/token_storage.dart';
+import '../../../core/widgets/cached_cover_image.dart';
 import '../../../core/navigation/wallet_navigation.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../live/domain/entities/live_gift_event.dart';
@@ -33,19 +36,24 @@ import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'sheets/voice_room_hub_settings.dart';
 import 'sheets/voice_room_sheets.dart';
-import 'sheets/voice_youtube_song_sheet.dart';
+import 'pages/voice_music_hub_page.dart';
+import 'utils/voice_music_access.dart';
+import '../../profile/presentation/providers/profile_providers.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
 import 'widgets/premium/voice_gift_flight_overlay.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/premium_2026/voice_room_audience_strip.dart';
-import 'widgets/premium_2026/voice_timed_duyuru.dart';
+import 'sheets/voice_room_commands_panel.dart';
+import 'sheets/voice_room_dj_sheet.dart';
+import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'widgets/premium_2026/voice_web_bottom_nav.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_action_row.dart';
+import 'widgets/voice_room/voice_room_music_mini_player.dart';
 import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
 
 /// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
@@ -71,7 +79,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   LiveGiftEvent? _fullscreenGift;
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
-  var _chatOutbound = false;
   final _messageFocus = FocusNode();
 
   @override
@@ -110,59 +117,34 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   Future<void> _prefetchRoomImages() async {
     if (!mounted) return;
     final room = widget.room;
-    try {
-      final urls = await ref
-          .read(voiceRoomLiveProvider(room).notifier)
-          .fetchBackgrounds();
-      if (!mounted) return;
-      await prefetchVoiceRoomImages(
-        context,
-        primaryUrl: room.backgroundImageUrl,
-        extraUrls: urls,
-      );
-    } catch (_) {
-      if (!mounted) return;
-      await prefetchVoiceRoomImages(
-        context,
-        primaryUrl: room.backgroundImageUrl,
-      );
-    }
+    final bg = ref.read(voiceRoomLiveProvider(room)).backgroundUrl ??
+        room.backgroundImageUrl;
+    if (bg == null || bg.isEmpty) return;
+    await prefetchVoiceRoomImages(context, primaryUrl: bg);
   }
 
-  Future<void> _sendChatMessage(VoiceRoomEntity room) async {
+  void _sendChatMessage(VoiceRoomEntity room) {
     final text = VoiceOfficialJoin.normalizeCommandInput(
       _messageCtrl.text.trim(),
     );
     if (text.isEmpty) return;
-    if (_chatOutbound) return;
-    _chatOutbound = true;
     _messageCtrl.clear();
-    try {
-      await ref
-          .read(voiceRoomLiveProvider(room).notifier)
-          .sendMessage(text)
-          .timeout(const Duration(seconds: 12));
+    unawaited(() async {
+      await ref.read(voiceRoomLiveProvider(room).notifier).sendMessage(text);
       if (!mounted) return;
       final err = ref.read(voiceRoomLiveProvider(room)).error;
       if (err != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-      }
-    } on TimeoutException {
-      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Mesaj gönderimi zaman aşımı. Tekrar deneyin.'),
-          ),
+          SnackBar(content: Text(err)),
         );
       }
-    } finally {
-      if (mounted) _chatOutbound = false;
-    }
+    }());
   }
 
   void _startGiftRealtime() {
     final service = ref.read(voiceRoomGiftRealtimeProvider);
-    service.start(widget.room.id);
+    final room = widget.room;
+    service.start(room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id);
     _giftSub?.cancel();
     _giftSub = service.events.listen(_onGiftEvent);
   }
@@ -222,9 +204,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     try {
       final perms = VoiceRoomPermissions.forUser(user: user, room: widget.room);
-      final roomKey = widget.room.apiRoomKey;
       await _audio!.join(
-        roomId: roomKey.isNotEmpty ? roomKey : widget.room.id,
+        trtcRoomId: widget.room.trtcRoomId,
         userId: user.id,
         isHost: _isRoomOwner(user.id, user.username) || perms.isSiteAdmin,
         liveKitRemote: ref.read(liveKitRemoteProvider),
@@ -341,7 +322,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 'canlifal.com görselleri',
                 style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.textMuted.withValues(alpha: 0.9),
+                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                 ),
               ),
               const SizedBox(height: 12),
@@ -375,7 +356,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            Image.network(url, fit: BoxFit.cover),
+                            CachedCoverImage(url: url, fit: BoxFit.cover),
                             Positioned(
                               left: 0,
                               right: 0,
@@ -587,6 +568,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _perms(user, live.presence);
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
+    final jeton = VoiceMusicAccess.jetonFromBalances(
+      ref.watch(walletBalancesProvider).valueOrNull,
+    );
+    final showMusicCard = VoiceMusicAccess.canShowMusicCard(
+      dj: live.dj,
+      perms: perms,
+      jetonBalance: jeton,
+    );
     final speakingIds = <String>{
       for (final p in live.presence)
         if (p.isSpeaking) p.id,
@@ -604,7 +593,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final chatMaxH = keyboardOpen
         ? (mq.height * 0.22).clamp(96.0, 160.0)
         : (mq.height * 0.28).clamp(120.0, 220.0);
-    final duyuru = (room.descTr ?? room.rulesTr)?.trim();
+    final duyuru = ((room.descTr ?? room.rulesTr)?.trim().isNotEmpty == true)
+        ? (room.descTr ?? room.rulesTr)!.trim()
+        : 'Sohbet odasına hoş geldiniz. Saygılı olun, keyifli sohbetler!';
     ChatRoomPresence? ownerPresence;
     if (room.ownerId != null) {
       for (final p in live.presence) {
@@ -663,12 +654,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ),
                         if (_audioError != null)
                           Material(
-                            color: AppColors.liveRed.withValues(alpha: 0.15),
+                            color: AppThemeColors.liveRed.withValues(alpha: 0.15),
                             child: ListTile(
                               dense: true,
                               leading: const Icon(
                                 Icons.headset_off_rounded,
-                                color: AppColors.liveRed,
+                                color: AppThemeColors.liveRed,
                                 size: 20,
                               ),
                               title: Text(
@@ -714,7 +705,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             child: Text(
                               live.error!,
                               style: const TextStyle(
-                                color: AppColors.liveRed,
+                                color: AppThemeColors.liveRed,
                                 fontSize: 11,
                               ),
                               maxLines: 2,
@@ -722,7 +713,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             ),
                           ),
                         if (!keyboardOpen)
-                          VoiceStaffEntranceMarquee(message: staffBanner),
+                          VoiceStaffEntranceMarquee(
+                            message: staffBanner,
+                            roomName: room.nameTr,
+                          ),
                         VoiceWebOwnerStage(
                           room: room,
                           presence: live.presence,
@@ -746,22 +740,43 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ownerAvatarUrl: ownerAvatar,
                         ),
                         if (!keyboardOpen) ...[
-                          if (duyuru?.isNotEmpty == true)
-                            VoiceTimedDuyuru(
-                              roomKey: room.apiRoomKey,
-                              text: duyuru!,
-                            ),
+                          VoiceRoomPersistentDuyuru(
+                            text: duyuru,
+                            canEdit: perms.canModerate || isOwner,
+                          ),
+                          VoiceRoomMusicMiniPlayer(
+                            dj: live.dj,
+                            canModerate: perms.canModerate || isOwner,
+                            onTap: showMusicCard
+                                ? () => showVoiceMusicHubPage(
+                                      context,
+                                      ref,
+                                      room: room,
+                                      perms: perms,
+                                      isOwner: isOwner,
+                                    )
+                                : null,
+                            onSkip: (perms.canModerate || isOwner)
+                                ? () => ref
+                                    .read(voiceRoomLiveProvider(room).notifier)
+                                    .skipMusic()
+                                : null,
+                          ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: VoiceRoomActionRow(
                               dj: live.dj,
-                              onMusicTap: () => showVoiceYoutubeSongSheet(
+                              showMusicCard: showMusicCard,
+                              onMusicTap: () => showVoiceMusicHubPage(
                                 context,
                                 ref,
                                 room: room,
+                                perms: perms,
+                                isOwner: isOwner,
                               ),
-                              onDjTap: () => _openHubSettings(
+                              onDjTap: () => showVoiceRoomDjSheet(
                                 context,
+                                ref,
                                 room: room,
                                 live: live,
                                 perms: perms,
@@ -806,6 +821,29 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
             ),
             PremiumGiftFullscreenOverlay(event: _fullscreenGift),
+            if (_loginError == null && !keyboardOpen)
+              Positioned(
+                right: 4,
+                bottom: MediaQuery.paddingOf(context).bottom + 168,
+                child: VoiceWebFloatingRail(
+                  onTools: () => showVoiceRoomCommandsPanel(
+                    context,
+                    ref,
+                    room: room,
+                    perms: perms,
+                    isOwner: isOwner,
+                  ),
+                  onMusic: showMusicCard
+                      ? () => showVoiceMusicHubPage(
+                            context,
+                            ref,
+                            room: room,
+                            perms: perms,
+                            isOwner: isOwner,
+                          )
+                      : null,
+                ),
+              ),
             if (_showVipEntrance && user != null)
               VipEntranceOverlay(
                 tier: ref.watch(vipTierProvider),
@@ -834,8 +872,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       VoiceWebChatInputBar(
                         controller: _messageCtrl,
                         focusNode: _messageFocus,
-                        sending: live.sending || _chatOutbound,
-                        onSend: () => unawaited(_sendChatMessage(room)),
+                        sending: false,
+                        onSend: () => _sendChatMessage(room),
                       ),
                     if (!keyboardOpen)
                       VoiceWebBottomNav(

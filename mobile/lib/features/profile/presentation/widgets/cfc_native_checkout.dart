@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/content/currency_usage_info.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../../admin/presentation/providers/admin_providers.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
-import '../pages/cfc_purchase_page.dart';
+import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 
 enum CfcPaymentMethod { whatsapp, papara, bank_transfer }
@@ -71,7 +73,7 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: AppColors.diamondBlue,
+              color: AppThemeColors.diamondBlue,
             ),
           ),
         ],
@@ -145,7 +147,7 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.accentCyan,
+                  color: AppThemeColors.accentCyan,
                 ),
               ),
               if (_method == CfcPaymentMethod.bank_transfer) ...[
@@ -194,7 +196,7 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
           onPressed: _submitting ? null : () => _submit(cfg),
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 14),
-            backgroundColor: AppColors.diamondBlue,
+            backgroundColor: AppThemeColors.diamondBlue,
           ),
           child: _submitting
               ? const SizedBox(
@@ -268,7 +270,7 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
       });
       if (!mounted) return;
       ref.invalidate(walletBalancesProvider);
-      ref.invalidate(cfcPaymentRequestsProvider);
+      ref.invalidate(paymentRequestsNotifierProvider);
       ref.invalidate(adminPaymentRequestsProvider);
       ref.invalidate(adminPaymentNotificationsProvider);
       ref.invalidate(notificationsListProvider);
@@ -317,7 +319,7 @@ class _MethodTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: selected
-            ? AppColors.diamondBlue.withValues(alpha: 0.2)
+            ? AppThemeColors.diamondBlue.withValues(alpha: 0.2)
             : Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
@@ -327,7 +329,7 @@ class _MethodTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
-                Icon(icon, color: selected ? AppColors.diamondBlue : null),
+                Icon(icon, color: selected ? AppThemeColors.diamondBlue : null),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -338,13 +340,13 @@ class _MethodTile extends StatelessWidget {
                         subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                        style: TextStyle(fontSize: 11, color: context.colors.onSurfaceMuted),
                       ),
                     ],
                   ),
                 ),
                 if (selected)
-                  const Icon(Icons.check_circle_rounded, color: AppColors.diamondBlue),
+                  const Icon(Icons.check_circle_rounded, color: AppThemeColors.diamondBlue),
               ],
             ),
           ),

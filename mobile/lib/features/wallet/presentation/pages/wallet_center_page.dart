@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -23,7 +25,7 @@ class WalletCenterPage extends ConsumerWidget {
         WalletBalances(jeton: authUser?.coinBalance ?? 0);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Cüzdanım',
@@ -55,7 +57,7 @@ class WalletCenterPage extends ConsumerWidget {
                   icon: Icons.diamond_rounded,
                   title: 'CFC Yükle',
                   subtitle: 'WhatsApp · Papara · Havale/EFT',
-                  color: AppColors.diamondBlue,
+                  color: AppThemeColors.diamondBlue,
                   onTap: () => context.push('/cfc-store'),
                 ),
                 const SizedBox(height: 12),
@@ -63,7 +65,7 @@ class WalletCenterPage extends ConsumerWidget {
                   icon: Icons.monetization_on_rounded,
                   title: 'Jeton Mağazası',
                   subtitle: 'Paketler ve jeton bakiyesi',
-                  color: AppColors.coinGold,
+                  color: AppThemeColors.coinGold,
                   onTap: () => context.push('/jeton-store'),
                 ),
               ],
@@ -115,7 +117,7 @@ class _HubCard extends StatelessWidget {
                   subtitle,
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textMuted.withValues(alpha: 0.95),
+                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
                   ),
                 ),
               ],

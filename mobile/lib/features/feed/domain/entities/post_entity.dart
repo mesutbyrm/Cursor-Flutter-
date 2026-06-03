@@ -18,6 +18,7 @@ class PostEntity extends Equatable {
     this.isAutoShare = false,
     this.fortuneCount = 0,
     this.postType,
+    this.likedByMe = false,
   });
 
   final String id;
@@ -28,16 +29,16 @@ class PostEntity extends Equatable {
   final int commentsCount;
   /// Görüntülenme (UI + yerel sayaç; akış kartında kullanılır).
   final int viewsCount;
+  /// Yerel optimistik beğeni (feed kartı).
   final bool isLiked;
   final DateTime? createdAt;
-  /// Örn. `kahve-fali` — canlifal.com `/api/social/posts`.
   final String? fortuneType;
   final int viewCount;
   final bool isAutoShare;
-  /// Aynı fal / paylaşımı gören kişi sayısı (canlifal `fortuneCount`).
   final int fortuneCount;
-  /// Örn. `fortune`, `text` — canlifal `postType`.
   final String? postType;
+  /// Oturumlu kullanıcı bu gönderiyi beğendi mi (API).
+  final bool likedByMe;
 
   /// Fal / tarot içeriklerini hikâye şeridinde göstermemek için.
   bool get isFortuneContent {
@@ -63,7 +64,9 @@ class PostEntity extends Equatable {
     bool? isAutoShare,
     int? fortuneCount,
     String? postType,
+    bool? likedByMe,
   }) {
+    final nextLiked = isLiked ?? likedByMe;
     return PostEntity(
       id: id ?? this.id,
       author: author ?? this.author,
@@ -72,13 +75,14 @@ class PostEntity extends Equatable {
       likesCount: likesCount ?? this.likesCount,
       commentsCount: commentsCount ?? this.commentsCount,
       viewsCount: viewsCount ?? this.viewsCount,
-      isLiked: isLiked ?? this.isLiked,
+      isLiked: nextLiked ?? this.isLiked,
       createdAt: createdAt ?? this.createdAt,
       fortuneType: fortuneType ?? this.fortuneType,
       viewCount: viewCount ?? this.viewCount,
       isAutoShare: isAutoShare ?? this.isAutoShare,
       fortuneCount: fortuneCount ?? this.fortuneCount,
       postType: postType ?? this.postType,
+      likedByMe: nextLiked ?? this.likedByMe,
     );
   }
 
@@ -98,5 +102,6 @@ class PostEntity extends Equatable {
         isAutoShare,
         fortuneCount,
         postType,
+        likedByMe,
       ];
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import 'profile_glass.dart';
 
 class ProfilePremiumBanner extends StatelessWidget {
@@ -37,7 +39,7 @@ class ProfilePremiumBanner extends StatelessWidget {
           Color(0xFF8E2DA8),
         ],
       ),
-      borderColor: AppColors.accentPink.withValues(alpha: 0.4),
+      borderColor: AppThemeColors.accentPink.withValues(alpha: 0.4),
       child: Row(
         children: [
           Container(
@@ -45,7 +47,7 @@ class ProfilePremiumBanner extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.12),
-              boxShadow: AppColors.glowShadow(
+              boxShadow: AppThemeColors.glowShadow(
                 const Color(0xFFFFD54F),
                 blur: 16,
               ),
@@ -75,7 +77,7 @@ class ProfilePremiumBanner extends StatelessWidget {
                   style: TextStyle(
                     color: isGold
                         ? const Color(0xFFFFD54F).withValues(alpha: 0.95)
-                        : AppColors.textSecondary,
+                        : context.colors.onSurfaceVariant,
                     fontSize: 12,
                     height: 1.3,
                     fontWeight: isGold ? FontWeight.w700 : FontWeight.w400,
@@ -85,7 +87,7 @@ class ProfilePremiumBanner extends StatelessWidget {
             ),
           ),
           Material(
-            color: AppColors.accentPink,
+            color: AppThemeColors.accentPink,
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               onTap: onViewPrivileges,

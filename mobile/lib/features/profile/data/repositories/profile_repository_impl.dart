@@ -2,6 +2,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../../domain/entities/jeton_package_entity.dart';
+import '../../../../core/pagination/paged_result.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
@@ -58,20 +59,38 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<List<BroadcastHistoryItemEntity>> broadcastHistory() async {
+    final page = await broadcastHistoryPage(page: 1);
+    return page.items;
+  }
+
+  @override
+  Future<PagedResult<BroadcastHistoryItemEntity>> broadcastHistoryPage({
+    int page = 1,
+  }) async {
     try {
-      final site = await _canlifal.broadcastHistory();
-      if (site.isNotEmpty) return site;
+      final site = await _canlifal.broadcastHistory(page: page);
+      if (site.items.isNotEmpty) return site;
     } catch (_) {}
-    return _remote.broadcastHistory();
+    final items = await _remote.broadcastHistory();
+    return PagedResult(items: items, hasMore: false);
   }
 
   @override
   Future<List<ProfileActivityItemEntity>> myActivity() async {
+    final page = await myActivityPage(page: 1);
+    return page.items;
+  }
+
+  @override
+  Future<PagedResult<ProfileActivityItemEntity>> myActivityPage({
+    int page = 1,
+  }) async {
     try {
-      final site = await _canlifal.fetchActivity();
-      if (site.isNotEmpty) return site;
+      final site = await _canlifal.fetchActivity(page: page);
+      if (site.items.isNotEmpty) return site;
     } catch (_) {}
-    return _remote.myActivity();
+    final items = await _remote.myActivity();
+    return PagedResult(items: items, hasMore: false);
   }
 
   @override
@@ -108,8 +127,16 @@ class WalletRepositoryImpl implements WalletRepository {
       _remote.submitPaymentRequest(body);
 
   @override
-  Future<List<CfcPaymentRequestEntity>> myPaymentRequests() =>
-      _remote.myPaymentRequests();
+  Future<List<CfcPaymentRequestEntity>> myPaymentRequests() async {
+    final page = await myPaymentRequestsPage(page: 1);
+    return page.items;
+  }
+
+  @override
+  Future<PagedResult<CfcPaymentRequestEntity>> myPaymentRequestsPage({
+    int page = 1,
+  }) =>
+      _remote.myPaymentRequestsPage(page: page);
 
   @override
   Future<ReferralInfoEntity> referralInfo() => _remote.referralInfo();

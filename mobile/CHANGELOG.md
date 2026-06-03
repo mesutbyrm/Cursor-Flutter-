@@ -1,5 +1,126 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.119+121 (2026-05-19)
+
+### Birleşik sürüm (main + sesli oda senkron)
+
+- **PR #87** Oda Komutları, Şarkı İsteği, DJ Yönetimi (zaten main’de)
+- **PR #91–#93** Komut/YouTube, müzik kuyruk, native API uyumu
+- **PR #95** Web ↔ Flutter sesli oda senkronu, YouTube API önceliği
+- Sosyal: beğeni, yorum, paylaşım, hikâye (önceki dal)
+
+## 1.0.118+120 (2026-05-19)
+
+### Sesli oda — web ↔ Flutter senkronizasyonu
+
+- Socket.IO: JWT (`Authorization` + `auth.token`), `id` ve `slug` ile çift `joinRoom`
+- Hediye socket aynı düzeltmeler
+- TRTC: önce `id`, gerekirse `slug` ile UserSig (web ile aynı oda)
+- Sohbet/presence yenileme 3 sn
+- YouTube arama: önce oturumlu `/api/youtube/search`, sonra Piped/Invidious
+- API: `emitChatRoomMessage` hem `room:{id}` hem `room:{slug}` kanallarına yayın
+
+## 1.0.117+119 (2026-05-19)
+
+### Tam native işlevsellik (canlifal.com)
+
+- Sosyal: beğeni (`POST .../likes`), yorumlar (sheet + API), paylaşım (`share_plus`)
+- Hikâye: galeriden görsel → `POST /api/stories`
+- Akış: `/api/stories` boşsa `/api/social/posts` yedek
+- Takipçi listesi: `/api/users/:id/follow` + `/api/user/followers`
+- Takip toggle: `/api/users` ve `/api/user` yolları
+- Bildirim okundu: `PATCH /api/user/activity` + `notificationIds`
+- OTP sayfası production’da şifre sıfırlamaya yönlendirir
+- Gönderi: `likedByMe`, beğeni/yorum sayısı düzeltmesi
+
+## 1.0.116+118 (2026-05-19)
+
+### Native canlifal.com API uyumu (WebView yok)
+
+- Şifre sıfırlama: `POST /api/auth/forgot-password` (native ekran)
+- DM: `conversations` / `requests` ayrıştırma; mobil `GET /api/messages`
+- Takip: `POST /api/users/:id/follow` toggle
+- Profil: `PATCH /api/me` (`name`, `image`)
+- Canlı: `/api/video-streams`; sesli odalar her zaman `/api/chat/rooms`
+- Okunmamış mesaj: `GET /api/messages?unreadCount=true`
+- Site yolları → `native_site_routes` (şifre sıfırlama dahil)
+
+## 1.0.109+111 (2026-06-02)
+
+### Sesli sohbet odası (canlifal.com UI)
+
+- 2×5 mikrofon ızgarası, kalıcı duyuru kutusu, sağ yüzen ‹ araçlar + ♫ müzik
+- YouTube şarkı arama/istek (jeton), DJ API düzeltmeleri
+- Sohbet: ardışık mesaj bekleme kaldırıldı
+- Moderatör: yasaklı kelime listesi API
+
+## 1.0.108+110 (2026-06-02)
+
+### Ana sayfa — canlifal.com düzeni (native)
+
+- Keşfet sekmesi: dikey akış — Hikâyeler, Canlı Yayınlar, Sesli Odalar, Trend Videolar, Fan Club, Fal & Tarot, Popüler Falcılar, Keşfet grid, Gold Üyelikler
+- REST API (`/api/trend-videos`, canlı, sohbet odaları, falcılar, üyelik paketleri) — WebView yok
+- 2026 cam/glow tasarım, 24px kartlar
+
+## 1.0.107+109 (2026-06-02)
+
+### Keşfet ve sesli oda — premium görsel (yapı aynı)
+
+- Ana sekme yeniden **Keşfet (`/feed`)** — DiscoverPremiumFeed; bölüm sırası korunur
+- Mor/pembe palet (#7B2FF7, #B84DFF, #FF4FD8), 24px cam kartlar, LiquidGlass
+- VoiceDiscoverHub2026 aynı görsel dil; WebView kaldırıldı, native yönlendirme
+
+## 1.0.101+103 (2026-05-31)
+
+### Tema sistemi (production)
+
+- Tek kaynak: `app_theme_colors.dart` — light/dark tüm token'lar
+- **SharedPreferences** ile kalıcı tema (Açık / Koyu / Sistem)
+- Material 3: dialog, bottom sheet, snackbar, AppBar, buton, input
+- `ThemedGlassCard` — koyu modda glassmorphism, açık modda premium gölge
+- `context.colors` extension — sabit renk yerine tema
+- Profil → Tema seçici (anında güncelleme, yeniden başlatma gerekmez)
+
+## 1.0.100+102 (2026-05-31)
+
+### Dark / Light Mode
+
+- `AppTheme.light()` / `AppTheme.dark()` — Material 3 tam tema
+- `AppPalette` ThemeExtension — yüzey ve metin renkleri
+- Kalıcı tema: Hive (`app_theme_mode`) — Açık / Koyu / Sistem
+- Profil → Görünüm: `ThemeModeSelector` (segmented)
+- Ana kabuk ve sayfalar `scaffoldBackgroundColor` ile tema uyumlu
+- Durum çubuğu ikonları temaya göre ayarlanır
+
+## 1.0.99+101 (2026-05-31)
+
+### API sayfalama + Pro Glass mağaza / fal
+
+- API: `activity`, `broadcast-history`, `payment/requests` — `page` / `limit` / `pagination`
+- Mobil: canlı yayınlar, işlemler, yayın geçmişi, profil paylaşımları — sunucu sayfalı `AsyncNotifier`
+- Jeton / CFC mağazası: `ProGlassCard` paket kartları, kullanım kartı, CFC geçmişi
+- Fal hub: `FortuneGlassCard` → Pro Glass cam yüzey
+
+## 1.0.98+100 (2026-05-31)
+
+### Performans + Pro Glass (devam)
+
+- Canlı yayınlar, sohbet mesajları, takip listesi, profil ızgarası: lazy pagination
+- `CachedCoverImage` — kalan `Image.network` kullanımları kaldırıldı
+- Sohbet: eski mesajlar yukarı kaydırınca yüklenir; cam üst bar (`ProGlassTopBar`)
+- `LazyPaginatedListView` — genel amaçlı sayfalı liste bileşeni
+
+## 1.0.97+99 (2026-05-31)
+
+### Performans + Pro Glass UI
+
+- `ListPerf` sabitleri, `RepaintBoundary`, lazy liste (`LazyVisibleListController`)
+- Mesajlar / bildirimler: sayfalı görünür liste (24’lük artış, scroll’da yükleme)
+- Ses keşfet hub: `ListView.builder` + lazy oda satırları (eager map kaldırıldı)
+- Riverpod: `currentUserIdProvider` — sosyal kartlarda dar rebuild
+- `ProGlassCard` / `DiscoverGlassCard` blur glassmorphism
+- Keşfet oda yenileme aralığı 15 sn (pil / FPS)
+
 ## 1.0.96+98 (2026-05-31)
 
 ### Sesli oda, ödeme, jeton/CFC, sohbet düzeltmeleri

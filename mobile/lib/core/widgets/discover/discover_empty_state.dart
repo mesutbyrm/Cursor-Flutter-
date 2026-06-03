@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../theme/app_colors.dart';
 import 'discover_glass_card.dart';
 
 class DiscoverEmptyState extends StatelessWidget {
@@ -25,13 +26,13 @@ class DiscoverEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 52, color: AppColors.textMuted),
+            Icon(icon, size: 52, color: context.colors.onSurfaceMuted),
             const SizedBox(height: 16),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: context.colors.onSurfaceVariant,
                 height: 1.4,
                 fontSize: 15,
               ),
@@ -41,7 +42,7 @@ class DiscoverEmptyState extends StatelessWidget {
               FilledButton(
                 onPressed: action,
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.accentPink,
+                  backgroundColor: AppThemeColors.accentPink,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,

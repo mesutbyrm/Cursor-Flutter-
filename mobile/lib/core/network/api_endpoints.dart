@@ -15,6 +15,7 @@ abstract final class ApiEndpoints {
   static const authMobileGoogle = '/api/auth/mobile-google';
   static const authMobileTiktok = '/api/auth/mobile-tiktok';
   static const authMobileRefresh = '/api/auth/mobile-refresh';
+  static const authForgotPassword = '/api/auth/forgot-password';
   static const me = '/api/me';
   static const meStats = '/api/users/me/stats';
   static const meGiftsReceived = '/api/users/me/gifts-received';
@@ -45,8 +46,49 @@ abstract final class ApiEndpoints {
 
   /// Site geneli istatistikler (mobil ana sayfa).
   static const socialPublicStats = '/api/social/public-stats';
+
+  /// Ana sayfa promosyon slider.
+  static const homeBanners = '/api/banners';
+
+  /// Ana sayfa fal kartları vitrin.
+  static const homepageFortuneCards = '/api/homepage-fortune-cards';
+
+  /// Çevrimiçi falcılar / danışmanlar.
+  static const homeAdvisorsOnline = '/api/advisors/online';
+
+  /// Oyunlar ve etkinlikler.
+  static const homeGames = '/api/games';
+
+  /// Günlük ödüller.
+  static const homeDailyRewards = '/api/daily-rewards';
+
+  /// Ana sayfa trend videolar (canlifal.com).
+  static const trendVideos = '/api/trend-videos';
+
+  /// Geriye dönük (self-hosted seed).
+  static const socialAnnouncements = '/api/social/announcements';
+  static const socialFortuneTellers = '/api/social/fortune-tellers';
+
+  /// Sosyal akış (ana sayfa feed bölümü).
+  static const feedPosts = '/api/social/posts';
+
+  /// Okunmamış bildirim sayısı (yoksa liste üzerinden hesaplanır).
+  static const notificationsUnread = '/api/notifications/unread';
   static const socialPostsAutoFortune = '/api/social/posts/auto-fortune';
   static String socialPostDelete(String id) => '/api/social/posts/$id';
+
+  /// Beğeni toggle — POST (canlifal.com).
+  static String socialPostLikes(String postId) => '/api/social/posts/$postId/likes';
+
+  static String socialPostComments(String postId) =>
+      '/api/social/posts/$postId/comments';
+
+  /// Oturumlu kullanıcının takipçi / takip listesi.
+  static const userFollowers = '/api/user/followers';
+  static const userFollowing = '/api/user/following';
+
+  /// Başka kullanıcının takipçileri (dizi döner).
+  static String userPublicFollowers(String userId) => '/api/users/$userId/follow';
   /// canlifal.com ana sayfa canlı yayın listesi (JSON dizi).
   static const videoStreams = '/api/video-streams';
   /// Sesli / metin sohbet odaları (web `/sohbet/{slug}`).
@@ -60,6 +102,10 @@ abstract final class ApiEndpoints {
 
   static String chatRoomPresence(String roomId) =>
       '/api/chat/rooms/$roomId/presence';
+
+  /// SSE — mesaj / presence anlık akışı (Bearer gerekli).
+  static String chatRoomStream(String roomId) =>
+      '/api/chat/rooms/$roomId/stream';
 
   static String chatRoomDj(String roomId) => '/api/chat/rooms/$roomId/dj';
 
@@ -111,6 +157,20 @@ abstract final class ApiEndpoints {
   /// Kullanıcı adı ile profil — Flutter API dokümanı.
   static String userLookup(String username) =>
       '/api/users/lookup/${Uri.encodeComponent(username.trim())}';
+
+  /// İsim veya kullanıcı adı ile arama (min 2 karakter, Bearer).
+  static String usersSearch(String query) =>
+      '/api/users/search?q=${Uri.encodeComponent(query.trim())}';
+
+  /// Oturumlu kullanıcının fal geçmişi.
+  static const userFortunes = '/api/user/fortunes';
+
+  static String userFortuneDetail(String fortuneId) =>
+      '/api/user/fortunes/$fortuneId';
+
+  static const userFavorites = '/api/user/favorites';
+
+  static String userFavoriteDelete(String id) => '/api/user/favorites/$id';
 
   /// Yayın geçmişi (site dokümanı: `/api/user/broadcast-history`).
   static const userBroadcastHistory = '/api/user/broadcast-history';

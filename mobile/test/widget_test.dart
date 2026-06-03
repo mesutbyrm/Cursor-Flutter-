@@ -43,6 +43,9 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<UserEntity> loginWithTikTok() => throw UnimplementedError();
+
+  @override
+  Future<void> requestPasswordReset(String email) async {}
 }
 
 void main() {
@@ -57,7 +60,6 @@ void main() {
       ),
     );
     await tester.pump();
-    // flutter_animate / splash timers — tüketmeden test invariant’ı düşer.
     await tester.pump(const Duration(seconds: 2));
     expect(find.byType(MaterialApp), findsOneWidget);
   });

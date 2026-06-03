@@ -1,13 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -56,7 +58,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
     final access = ref.watch(staffAccessProvider);
     if (!access.canManagePayments) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: DiscoverBackground(
           child: Center(
             child: DiscoverEmptyState(
@@ -77,7 +79,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
     final pendingCount = ref.watch(adminPendingPaymentsCountProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: Column(
           children: [
@@ -90,7 +92,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                     icon: Icons.arrow_back_ios_new_rounded,
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: DiscoverTabHeader(
                       title: 'Ödeme istekleri',
                       subtitle: 'canlifal.com · jeton ve CFC talepleri',
@@ -107,17 +109,17 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: TabBar(
                 controller: _tabs,
-                indicatorColor: AppColors.accentPink,
+                indicatorColor: AppThemeColors.accentPink,
                 labelColor: Colors.white,
-                unselectedLabelColor: AppColors.textMuted,
+                unselectedLabelColor: context.colors.onSurfaceMuted,
                 tabs: [
                   Tab(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('Bekleyen'),
+                        Text('Bekleyen'),
                         if (pendingCount > 0) ...[
-                          const SizedBox(width: 6),
+                          SizedBox(width: 6),
                           _CountChip(count: pendingCount),
                         ],
                       ],
@@ -127,7 +129,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('Bildirimler'),
+                        Text('Bildirimler'),
                         notifs.maybeWhen(
                           data: (rows) {
                             final unread =
@@ -135,7 +137,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                             if (unread <= 0) return const SizedBox.shrink();
                             return Row(
                               children: [
-                                const SizedBox(width: 6),
+                                SizedBox(width: 6),
                                 _CountChip(count: unread),
                               ],
                             );
@@ -160,21 +162,21 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Site ödeme bilgileri',
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         for (final e in cfg.entries)
                           if (e.value != '—')
                             Text(
                               '${e.key}: ${e.value}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: AppColors.textMuted,
+                                color: context.colors.onSurfaceMuted,
                               ),
                             ),
                       ],
@@ -257,12 +259,12 @@ class _CountChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.liveRed,
+        color: AppThemeColors.liveRed,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         count > 99 ? '99+' : '$count',
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w800,
           color: Colors.white,
@@ -286,7 +288,7 @@ class _PendingPaymentsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      color: AppColors.accentPink,
+      color: AppThemeColors.accentPink,
       onRefresh: () async => onRefresh(),
       child: async.when(
         loading: () => ListView(
@@ -297,7 +299,7 @@ class _PendingPaymentsTab extends StatelessWidget {
         ),
         error: (e, _) => ListView(
           children: [
-            const SizedBox(height: 80),
+            SizedBox(height: 80),
             DiscoverEmptyState(
               icon: Icons.shield_outlined,
               message: ApiException.userMessage(e),
@@ -310,7 +312,7 @@ class _PendingPaymentsTab extends StatelessWidget {
           if (rows.isEmpty) {
             return ListView(
               children: [
-                const SizedBox(height: 80),
+                SizedBox(height: 80),
                 const DiscoverEmptyState(
                   icon: Icons.inbox_outlined,
                   message:
@@ -322,7 +324,7 @@ class _PendingPaymentsTab extends StatelessWidget {
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             itemCount: rows.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            separatorBuilder: (_, _) => SizedBox(height: 10),
             itemBuilder: (ctx, i) {
               final r = rows[i];
               final id = r['id']?.toString() ?? '';
@@ -337,7 +339,7 @@ class _PendingPaymentsTab extends StatelessWidget {
 
               return DiscoverGlassCard(
                 padding: const EdgeInsets.all(14),
-                borderColor: AppColors.accentPink.withValues(alpha: 0.3),
+                borderColor: AppThemeColors.accentPink.withValues(alpha: 0.3),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -348,13 +350,13 @@ class _PendingPaymentsTab extends StatelessWidget {
                               ? Icons.monetization_on_rounded
                               : Icons.account_balance_wallet_outlined,
                           size: 20,
-                          color: AppColors.accentCyan,
+                          color: AppThemeColors.accentCyan,
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 15,
                             ),
@@ -366,25 +368,25 @@ class _PendingPaymentsTab extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.liveRed.withValues(alpha: 0.2),
+                            color: AppThemeColors.liveRed.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Bekliyor',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.liveRed,
+                              color: AppThemeColors.liveRed,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     Text(
                       paymentRequestSummary(r),
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
+                      style: TextStyle(
+                        color: context.colors.onSurfaceMuted,
                         fontSize: 13,
                       ),
                     ),
@@ -393,10 +395,10 @@ class _PendingPaymentsTab extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           r['notes'].toString(),
-                          style: const TextStyle(fontSize: 12),
+                          style: TextStyle(fontSize: 12),
                         ),
                       ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
@@ -404,19 +406,19 @@ class _PendingPaymentsTab extends StatelessWidget {
                             onPressed: id.isEmpty
                                 ? null
                                 : () => onReview(context, id, 'reject'),
-                            child: const Text('Reddet'),
+                            child: Text('Reddet'),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                         Expanded(
                           child: FilledButton(
                             onPressed: id.isEmpty
                                 ? null
                                 : () => onReview(context, id, 'approve'),
                             style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.accentCyan,
+                              backgroundColor: AppThemeColors.accentCyan,
                             ),
-                            child: const Text('Onayla'),
+                            child: Text('Onayla'),
                           ),
                         ),
                       ],
@@ -448,7 +450,7 @@ class _PaymentNotificationsTab extends StatelessWidget {
     final fmt = DateFormat('dd.MM HH:mm');
 
     return RefreshIndicator(
-      color: AppColors.accentPink,
+      color: AppThemeColors.accentPink,
       onRefresh: () async => onRefresh(),
       child: async.when(
         loading: () => ListView(
@@ -459,7 +461,7 @@ class _PaymentNotificationsTab extends StatelessWidget {
         ),
         error: (e, _) => ListView(
           children: [
-            const SizedBox(height: 80),
+            SizedBox(height: 80),
             DiscoverEmptyState(
               icon: Icons.notifications_off_outlined,
               message: ApiException.userMessage(e),
@@ -472,7 +474,7 @@ class _PaymentNotificationsTab extends StatelessWidget {
           if (rows.isEmpty) {
             return ListView(
               children: [
-                const SizedBox(height: 80),
+                SizedBox(height: 80),
                 DiscoverEmptyState(
                   icon: Icons.notifications_none_rounded,
                   message:
@@ -486,7 +488,7 @@ class _PaymentNotificationsTab extends StatelessWidget {
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             itemCount: rows.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            separatorBuilder: (_, _) => SizedBox(height: 10),
             itemBuilder: (ctx, i) {
               final n = rows[i];
               final read = n['read'] == true;
@@ -500,7 +502,7 @@ class _PaymentNotificationsTab extends StatelessWidget {
                 onTap: isRequest ? onOpenPending : null,
                 borderColor: read
                     ? null
-                    : AppColors.accentPink.withValues(alpha: 0.4),
+                    : AppThemeColors.accentPink.withValues(alpha: 0.4),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 12,
@@ -510,9 +512,9 @@ class _PaymentNotificationsTab extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.payments_rounded,
-                      color: read ? AppColors.textMuted : AppColors.accentCyan,
+                      color: read ? context.colors.onSurfaceMuted : AppThemeColors.accentCyan,
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -525,11 +527,11 @@ class _PaymentNotificationsTab extends StatelessWidget {
                               fontSize: 14,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Text(
                             paymentNotificationSummary(n),
-                            style: const TextStyle(
-                              color: AppColors.textMuted,
+                            style: TextStyle(
+                              color: context.colors.onSurfaceMuted,
                               fontSize: 12,
                               height: 1.35,
                             ),
@@ -540,9 +542,9 @@ class _PaymentNotificationsTab extends StatelessWidget {
                     if (created != null)
                       Text(
                         fmt.format(created.toLocal()),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
-                          color: AppColors.textMuted,
+                          color: context.colors.onSurfaceMuted,
                         ),
                       ),
                   ],

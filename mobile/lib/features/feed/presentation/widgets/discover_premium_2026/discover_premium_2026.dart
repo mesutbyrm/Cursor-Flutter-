@@ -8,3 +8,4 @@ export 'discover_premium_room_card.dart';
 export 'discover_premium_search.dart';
 export 'discover_premium_sections.dart';
 export 'discover_premium_stories.dart';
+export 'discover_premium_visual.dart';

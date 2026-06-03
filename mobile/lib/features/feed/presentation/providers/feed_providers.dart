@@ -70,7 +70,11 @@ class FeedNotifier extends AsyncNotifier<List<PostEntity>> {
           final liked = !p.isLiked;
           final delta = liked ? 1 : -1;
           final nextLikes = (p.likesCount + delta).clamp(0, 999999999);
-          return p.copyWith(isLiked: liked, likesCount: nextLikes);
+          return p.copyWith(
+            isLiked: liked,
+            likedByMe: liked,
+            likesCount: nextLikes,
+          );
         }).toList(),
       );
     });

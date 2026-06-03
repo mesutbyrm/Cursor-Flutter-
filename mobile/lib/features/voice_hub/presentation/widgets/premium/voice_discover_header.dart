@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../theme/voice_room_tokens.dart';
 import 'voice_glass.dart';
 
@@ -43,7 +43,7 @@ class VoiceDiscoverHeader extends StatelessWidget {
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Oda veya kullanıcı ara…',
-              hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.9)),
+              hintStyle: TextStyle(color: context.colors.onSurfaceMuted.withValues(alpha: 0.9)),
               border: InputBorder.none,
               icon: Icon(Icons.search_rounded,
                   color: VoiceRoomTokens.neonBlue.withValues(alpha: 0.9)),
@@ -67,7 +67,7 @@ class VoiceDiscoverHeader extends StatelessWidget {
                     labelStyle: TextStyle(
                       fontWeight:
                           selectedCategory == c ? FontWeight.w800 : FontWeight.w600,
-                      color: selectedCategory == c ? Colors.white : AppColors.textSecondary,
+                      color: selectedCategory == c ? Colors.white : context.colors.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -80,7 +80,7 @@ class VoiceDiscoverHeader extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: AppColors.textMuted.withValues(alpha: 0.95),
+            color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
           ),
         ),
       ],

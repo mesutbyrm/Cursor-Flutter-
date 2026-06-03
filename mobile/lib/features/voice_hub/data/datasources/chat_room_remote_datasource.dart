@@ -2,18 +2,33 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../services/voice_room_debug_log.dart';
 import '../../domain/entities/music_queue_item.dart';
+import '../../domain/entities/popular_music_suggestion.dart';
 
 class ChatRoomRemoteDataSource {
-  ChatRoomRemoteDataSource(this._dio);
+  ChatRoomRemoteDataSource(this._dio) : _publicDio = _buildPublicDio();
 
   final Dio _dio;
+  final Dio _publicDio;
+
+  static Dio _buildPublicDio() {
+    return Dio(
+      BaseOptions(
+        baseUrl: Env.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 12),
+        receiveTimeout: const Duration(seconds: 16),
+        headers: {'Accept': 'application/json'},
+      ),
+    );
+  }
 
   static String messagesPath(String roomId) =>
       '/api/chat/rooms/$roomId/messages';
@@ -69,7 +84,9 @@ class ChatRoomRemoteDataSource {
       raw = map['users'] ??
           map['presence'] ??
           map['members'] ??
-          map['onlineUsers'];
+          map['onlineUsers'] ??
+          map['viewers'] ??
+          map['listeners'];
       if (raw == null && map['data'] is List) raw = map['data'];
       if (raw == null && map['data'] is Map) {
         final inner = asJsonMap(map['data']);
@@ -150,7 +167,13 @@ class ChatRoomRemoteDataSource {
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final res = await _dio.safePost<dynamic>(presencePath(key));
-      return _presenceList(res.data);
+      final list = _presenceList(res.data);
+      VoiceRoomDebugLog.log('api.presence.post', {
+        'roomId': key,
+        'status': res.statusCode,
+        'count': list.length,
+      });
+      return list;
     });
   }
 
@@ -195,8 +218,16 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  static const _fallbackBackgrounds = [
+    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80',
+    'https://images.unsplash.com/photo-1579546929518-9e396f3cc760?w=1200&q=80',
+    'https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&q=80',
+    'https://canlifal.com/images/voice-bg-1.jpg',
+    'https://canlifal.com/images/voice-bg-2.jpg',
+  ];
+
   Future<List<String>> fetchBackgrounds() async {
-    final urls = <String>{};
+    final urls = <String>{..._fallbackBackgrounds};
     try {
       final res = await _dio.safeGet<dynamic>(backgroundsPath());
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
@@ -208,23 +239,100 @@ class ChatRoomRemoteDataSource {
         }
       }
     } catch (_) {}
+    return urls.toList();
+  }
+
+  Future<void> advanceMusicQueue(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    await skipMusicQueue(roomKey: roomKey, alternateKey: alternateKey);
+  }
+
+  Future<void> skipMusicQueue({
+    required String roomKey,
+    String? alternateKey,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        '/api/chat/rooms/$key/music-queue/advance',
+      );
+    });
+  }
+
+  Future<void> removeMusicQueueItem({
+    required String roomKey,
+    String? alternateKey,
+    required String itemId,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safeDelete<dynamic>(
+        '/api/chat/rooms/$key/music-queue/$itemId',
+      );
+    });
+  }
+
+  Future<void> clearMusicQueue({
+    required String roomKey,
+    String? alternateKey,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safeDelete<dynamic>('/api/chat/rooms/$key/music-queue');
+    });
+  }
+
+  Future<void> updateMusicSettings({
+    required String roomKey,
+    String? alternateKey,
+    bool? musicEnabled,
+    int? musicRequestCost,
+    int? maxMusicQueue,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePatch<dynamic>(
+        '/api/chat/rooms/$key/music-settings',
+        data: jsonEncode({
+          if (musicEnabled != null) 'musicEnabled': musicEnabled,
+          if (musicRequestCost != null) 'musicRequestCost': musicRequestCost,
+          if (maxMusicQueue != null) 'maxMusicQueue': maxMusicQueue,
+        }),
+        options: Options(contentType: 'application/json'),
+      );
+    });
+  }
+
+  Future<List<PopularMusicSuggestion>> fetchPopularMusic() async {
+    const fallback = [
+      PopularMusicSuggestion(
+        title: 'Tutamıyorum Zamanı',
+        artist: 'Müslüm Gürses',
+        query: 'Müslüm Gürses Tutamıyorum Zamanı',
+      ),
+      PopularMusicSuggestion(
+        title: 'Kum Gibi',
+        artist: 'Ahmet Kaya',
+        query: 'Ahmet Kaya Kum Gibi',
+      ),
+      PopularMusicSuggestion(
+        title: 'Yalan',
+        artist: 'Tarkan',
+        query: 'Tarkan Yalan',
+      ),
+    ];
     try {
-      final roomsRes = await _dio.safeGet<dynamic>('/api/chat/rooms');
-      dynamic list = roomsRes.data;
-      if (list is Map) {
-        list = list['rooms'] ?? list['data'] ?? list['items'];
-        if (list is Map) list = list['rooms'];
-      }
-      if (list is List) {
-        for (final row in list) {
-          if (row is! Map) continue;
-          final m = Map<String, dynamic>.from(row);
-          final bg = m['backgroundImage']?.toString();
-          if (bg != null && bg.isNotEmpty) urls.add(bg);
-        }
+      final res = await _dio.safeGet<dynamic>('/api/chat/music/popular');
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['items'];
+      if (raw is List && raw.isNotEmpty) {
+        return raw
+            .whereType<Map>()
+            .map((e) => PopularMusicSuggestion.fromJson(
+                  Map<String, dynamic>.from(e),
+                ))
+            .toList();
       }
     } catch (_) {}
-    return urls.toList();
+    return fallback;
   }
 
   Future<void> setRoomBackground({
@@ -316,49 +424,292 @@ class ChatRoomRemoteDataSource {
           thumbUrl: m['thumbUrl']?.toString() ??
               m['thumbnail']?.toString(),
           uploader: m['uploader']?.toString() ?? m['channel']?.toString(),
+          duration: _formatDuration(m['duration']),
         ),
       );
     }
     return out;
   }
 
-  Future<List<YoutubeSearchHit>> searchYoutube(String query) async {
-    final q = query.trim();
-    if (q.length < 2) return const [];
+  String? _formatDuration(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is String && raw.contains(':')) return raw;
+    final sec = raw is num ? raw.round() : int.tryParse(raw.toString());
+    if (sec == null || sec <= 0) return null;
+    final m = sec ~/ 60;
+    final s = sec % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
 
-    const paths = [
-      '/api/chat/youtube-search',
-      '/api/youtube/search',
+  Future<List<YoutubeSearchHit>> _searchYoutubePiped(String q) async {
+    const hosts = [
+      'https://pipedapi.kavin.rocks',
+      'https://pipedapi.adminforge.de',
+      'https://pipedapi.syncpundit.io',
+      'https://pipedapi.leptons.xyz',
+      'https://pipedapi.in.projectsegfau.lt',
     ];
-    Object? lastError;
-    for (final path in paths) {
-      try {
-        final res = await _dio
-            .safeGet<dynamic>(
-              path,
-              query: {'q': q, 'query': q, 'search': q},
-            )
-            .timeout(const Duration(seconds: 18));
-        final data = res.data;
-        if (data is String &&
-            (data.contains('<!DOCTYPE') || data.contains('<html'))) {
-          throw const ApiException(
-            'YouTube araması yapılamadı (oturum veya sunucu yanıtı).',
-          );
-        }
-        final hits = _parseYoutubeHits(data);
-        if (hits.isNotEmpty) return hits;
-      } on Object catch (e) {
-        lastError = e;
-      }
-    }
-    if (lastError != null) {
-      throw ApiException(ApiException.userMessage(lastError));
+    for (final host in hosts) {
+      final hits = await _searchYoutubePipedOnHost(host, q);
+      if (hits.isNotEmpty) return hits;
     }
     return const [];
   }
 
-  Future<({List<MusicQueueItem> queue, int cost})> fetchMusicQueue(
+  Future<List<YoutubeSearchHit>> _searchYoutubePipedOnHost(
+    String host,
+    String q,
+  ) async {
+    try {
+      final res = await _publicDio.get<dynamic>(
+        '$host/search',
+        queryParameters: {'q': q, 'filter': 'music_songs'},
+        options: Options(
+          headers: {'Accept': 'application/json'},
+          receiveTimeout: const Duration(seconds: 14),
+          sendTimeout: const Duration(seconds: 10),
+        ),
+      );
+      final data = res.data;
+      if (data is! Map) return const [];
+      final items = data['items'];
+      if (items is! List) return const [];
+      final out = <YoutubeSearchHit>[];
+      for (final row in items.take(12)) {
+        if (row is! Map) continue;
+        final m = Map<String, dynamic>.from(row);
+        final rawUrl = m['url']?.toString() ?? '';
+        var id = '';
+        final vMatch = RegExp(r'[?&]v=([a-zA-Z0-9_-]{6,})').firstMatch(rawUrl);
+        if (vMatch != null) {
+          id = vMatch.group(1)!;
+        } else if (rawUrl.startsWith('/')) {
+          final parts = rawUrl.split('/').where((s) => s.isNotEmpty).toList();
+          if (parts.isNotEmpty) id = parts.last;
+        } else {
+          id = m['id']?.toString() ?? '';
+        }
+        id = id.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '');
+        if (id.length > 11) id = id.substring(0, 11);
+        if (id.length < 6) continue;
+        out.add(
+          YoutubeSearchHit(
+            videoId: id,
+            title: m['title']?.toString() ?? 'Video',
+            url: 'https://www.youtube.com/watch?v=$id',
+            thumbUrl: m['thumbnail']?.toString() ??
+                'https://i.ytimg.com/vi/$id/hqdefault.jpg',
+            uploader: m['uploaderName']?.toString(),
+            duration: _formatDuration(m['duration']),
+          ),
+        );
+      }
+      return out;
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<List<YoutubeSearchHit>> _searchYoutubeInvidious(String q) async {
+    const instances = [
+      'https://inv.nadeko.net',
+      'https://invidious.nerdvpn.de',
+      'https://invidious.privacyredirect.com',
+      'https://yt.artemislena.eu',
+      'https://invidious.fdn.fr',
+      'https://invidious.dhus.de',
+    ];
+    for (final base in instances) {
+      try {
+        final res = await _publicDio.get<dynamic>(
+          '$base/api/v1/search',
+          queryParameters: {'q': q, 'type': 'video', 'sort_by': 'relevance'},
+          options: Options(
+            headers: {'Accept': 'application/json'},
+            receiveTimeout: const Duration(seconds: 10),
+            sendTimeout: const Duration(seconds: 8),
+          ),
+        );
+        final data = res.data;
+        if (data is! List) continue;
+        final out = <YoutubeSearchHit>[];
+        for (final row in data.take(12)) {
+          if (row is! Map) continue;
+          final m = Map<String, dynamic>.from(row);
+          if (m['type']?.toString() != 'video') continue;
+          final vid = m['videoId']?.toString() ?? '';
+          if (vid.length < 6) continue;
+          final title = m['title']?.toString() ?? 'Video';
+          final author = m['author']?.toString();
+          final length = m['lengthSeconds'];
+          out.add(
+            YoutubeSearchHit(
+              videoId: vid,
+              title: title,
+              url: 'https://www.youtube.com/watch?v=$vid',
+              thumbUrl: 'https://i.ytimg.com/vi/$vid/hqdefault.jpg',
+              uploader: author,
+              duration: _formatDuration(length),
+            ),
+          );
+        }
+        if (out.isNotEmpty) return out;
+      } catch (_) {}
+    }
+    return const [];
+  }
+
+  Future<List<YoutubeSearchHit>> searchYoutube(String query) async {
+    final q = query.trim();
+    if (q.length < 2) return const [];
+
+    final directId = _extractYoutubeId(q);
+    if (directId != null) {
+      return [
+        YoutubeSearchHit(
+          videoId: directId,
+          title: 'YouTube bağlantısı',
+          url: 'https://www.youtube.com/watch?v=$directId',
+          thumbUrl: 'https://i.ytimg.com/vi/$directId/hqdefault.jpg',
+        ),
+      ];
+    }
+
+    final apiHits = await _searchYoutubeViaApi(q);
+    if (apiHits.isNotEmpty) return apiHits;
+
+    final piped = await _searchYoutubePiped(q);
+    if (piped.isNotEmpty) return piped;
+
+    final inv = await _searchYoutubeInvidious(q);
+    if (inv.isNotEmpty) return inv;
+
+    final popularHits = await _searchYoutubeFromPopularCatalog(q);
+    if (popularHits.isNotEmpty) return popularHits;
+
+    throw const ApiException(
+      'Şarkı araması şu an kullanılamıyor. Biraz sonra tekrar deneyin.',
+    );
+  }
+
+  Future<List<YoutubeSearchHit>> _searchYoutubeViaApi(String q) async {
+    final apiPaths = [
+      '/api/chat/youtube-search',
+      '/api/youtube/search',
+      youtubeSearchPath(),
+    ];
+    Object? lastError;
+    for (final path in apiPaths) {
+      for (final client in [_dio, _publicDio]) {
+        try {
+          final res = await client
+              .get<dynamic>(
+                path,
+                queryParameters: {'q': q, 'query': q, 'search': q},
+              )
+              .timeout(const Duration(seconds: 16));
+          final data = res.data;
+          if (data is String &&
+              (data.contains('<!DOCTYPE') || data.contains('<html'))) {
+            continue;
+          }
+          final hits = _parseYoutubeHits(data);
+          if (hits.isNotEmpty) return hits;
+        } on DioException catch (e) {
+          final mapped = _mapDioForYoutube(e);
+          if (mapped.statusCode == 401) {
+            throw const ApiException('Şarkı aramak için giriş yapın.');
+          }
+          if (mapped.statusCode == 404) continue;
+          lastError = mapped;
+        } on ApiException catch (e) {
+          if (e.statusCode == 401) {
+            throw const ApiException('Şarkı aramak için giriş yapın.');
+          }
+          if (e.statusCode == 404) continue;
+          lastError = e;
+        } on Object catch (e) {
+          lastError = e;
+        }
+      }
+      try {
+        final res = await _dio
+            .safePost<dynamic>(
+              path,
+              data: jsonEncode({'q': q, 'query': q}),
+              options: Options(contentType: 'application/json'),
+            )
+            .timeout(const Duration(seconds: 16));
+        final hits = _parseYoutubeHits(res.data);
+        if (hits.isNotEmpty) return hits;
+      } catch (e) {
+        lastError ??= e;
+      }
+    }
+    if (lastError != null) {
+      final msg = ApiException.userMessage(lastError);
+      if (msg.contains('401') || msg.toLowerCase().contains('oturum')) {
+        throw const ApiException('Şarkı aramak için giriş yapın.');
+      }
+    }
+    return const [];
+  }
+
+  ApiException _mapDioForYoutube(DioException e) {
+    final status = e.response?.statusCode;
+    final body = e.response?.data;
+    var msg = e.message ?? 'İstek başarısız';
+    if (body is Map) {
+      final m = body['message'] ?? body['error'];
+      if (m is String && m.isNotEmpty) msg = m;
+    }
+    return ApiException(msg, statusCode: status);
+  }
+
+  Future<List<YoutubeSearchHit>> _searchYoutubeFromPopularCatalog(
+    String q,
+  ) async {
+    final lower = q.toLowerCase();
+    final popular = await fetchPopularMusic();
+    final matches = popular
+        .where(
+          (p) =>
+              p.title.toLowerCase().contains(lower) ||
+              p.artist.toLowerCase().contains(lower) ||
+              p.query.toLowerCase().contains(lower),
+        )
+        .take(4);
+    for (final m in matches) {
+      final hits = await _searchYoutubeViaApi(m.query);
+      if (hits.isNotEmpty) return hits;
+      final piped = await _searchYoutubePiped(m.query);
+      if (piped.isNotEmpty) return piped;
+    }
+    return const [];
+  }
+
+  /// Üretimde komut işlenmezse sohbeti temizlemek için dene.
+  Future<void> tryClearRoomMessages({
+    required String roomKey,
+    String? alternateKey,
+  }) async {
+    try {
+      await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+        await _dio.safeDelete<dynamic>(messagesPath(key));
+      });
+    } catch (_) {}
+  }
+
+  Future<
+      ({
+        List<MusicQueueItem> queue,
+        int cost,
+        int maxMusicQueue,
+        bool musicEnabled,
+        MusicQueueItem? nowPlaying,
+        bool playing,
+        bool canRequestMusic,
+      })> fetchMusicQueue(
     String roomKey, {
     String? alternateKey,
   }) async {
@@ -382,18 +733,40 @@ class ChatRoomRemoteDataSource {
       final cost = map['cost'] as int? ??
           map['musicRequestCost'] as int? ??
           10;
-      return (queue: queue, cost: cost);
+      MusicQueueItem? nowPlaying;
+      final np = map['nowPlaying'];
+      if (np is Map) {
+        nowPlaying = MusicQueueItem.fromJson(Map<String, dynamic>.from(np));
+      } else if (map['playing'] == true && queue.isNotEmpty) {
+        nowPlaying = queue.first;
+      }
+      return (
+        queue: queue,
+        cost: cost,
+        maxMusicQueue: map['maxMusicQueue'] as int? ?? 20,
+        musicEnabled: map['musicEnabled'] != false,
+        nowPlaying: nowPlaying,
+        playing: map['playing'] == true,
+        canRequestMusic: map['canRequestMusic'] == true,
+      );
     });
   }
 
-  Future<({MusicQueueItem? item, List<MusicQueueItem> queue, int? newBalance})>
-      requestMusic({
+  Future<
+      ({
+        MusicQueueItem? item,
+        List<MusicQueueItem> queue,
+        int? newBalance,
+        int? queuePosition,
+      })> requestMusic({
     required String roomKey,
     String? alternateKey,
     required String title,
     required String youtubeUrl,
     String? thumbUrl,
     String? videoId,
+    String? giftTo,
+    String? note,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final vid = videoId?.trim().isNotEmpty == true
@@ -404,6 +777,9 @@ class ChatRoomRemoteDataSource {
         'youtubeUrl': youtubeUrl,
         if (vid != null) 'videoId': vid,
         if (thumbUrl != null) 'thumbUrl': thumbUrl,
+        if (giftTo != null && giftTo.trim().isNotEmpty)
+          'giftTo': giftTo.trim(),
+        if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
       });
       final opts = Options(contentType: 'application/json');
       Response<dynamic> res;
@@ -436,7 +812,13 @@ class ChatRoomRemoteDataSource {
         }
       }
       final balance = map['newBalance'] as int? ?? map['coinBalance'] as int?;
-      return (item: item, queue: queue, newBalance: balance);
+      final position = map['queuePosition'] as int?;
+      return (
+        item: item,
+        queue: queue,
+        newBalance: balance,
+        queuePosition: position,
+      );
     });
   }
 
@@ -446,14 +828,26 @@ class ChatRoomRemoteDataSource {
     required int seatIndex,
     String? userId,
   }) async {
+    final body = jsonEncode({
+      'seatIndex': seatIndex,
+      if (userId != null && userId.isNotEmpty) 'userId': userId,
+    });
+    final opts = Options(contentType: 'application/json');
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _dio.safePatch<dynamic>(
+          seatsPath(key),
+          data: body,
+          options: opts,
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 405 && e.statusCode != 404) rethrow;
+      }
       await _dio.safePost<dynamic>(
         seatsPath(key),
-        data: jsonEncode({
-          'seatIndex': seatIndex,
-          if (userId != null && userId.isNotEmpty) 'userId': userId,
-        }),
-        options: Options(contentType: 'application/json'),
+        data: body,
+        options: opts,
       );
     });
   }
@@ -464,14 +858,18 @@ class ChatRoomRemoteDataSource {
     required String targetUserId,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final res = await _dio.safePost<dynamic>(
-        djPath(key),
-        data: jsonEncode({
-          'userId': targetUserId,
-          'action': 'add',
-        }),
-        options: Options(contentType: 'application/json'),
-      );
+      Response<dynamic> res;
+      try {
+        res = await _dio.safePost<dynamic>(
+          '/api/chat/rooms/$key/dj/$targetUserId',
+        );
+      } on Object {
+        res = await _dio.safePost<dynamic>(
+          djPath(key),
+          data: jsonEncode({'userId': targetUserId, 'action': 'add'}),
+          options: Options(contentType: 'application/json'),
+        );
+      }
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['djUserIds'];
       if (raw is List) return raw.map((e) => e.toString()).toList();
@@ -485,17 +883,77 @@ class ChatRoomRemoteDataSource {
     required String targetUserId,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final res = await _dio.safePost<dynamic>(
-        djPath(key),
-        data: jsonEncode({
-          'userId': targetUserId,
-          'action': 'remove',
-        }),
-        options: Options(contentType: 'application/json'),
-      );
+      Response<dynamic> res;
+      try {
+        res = await _dio.safeDelete<dynamic>(
+          '/api/chat/rooms/$key/dj/$targetUserId',
+        );
+      } on Object {
+        res = await _dio.safePost<dynamic>(
+          djPath(key),
+          data: jsonEncode({'userId': targetUserId, 'action': 'remove'}),
+          options: Options(contentType: 'application/json'),
+        );
+      }
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['djUserIds'];
       if (raw is List) return raw.map((e) => e.toString()).toList();
+      return const [];
+    });
+  }
+
+  Future<List<String>> fetchBannedWords(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(
+        '/api/chat/rooms/$key/banned-words',
+      );
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['words'];
+      if (raw is List) {
+        return raw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+      }
+      return const [];
+    });
+  }
+
+  Future<List<String>> addBannedWord({
+    required String roomKey,
+    String? alternateKey,
+    required String word,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safePost<dynamic>(
+        '/api/chat/rooms/$key/banned-words',
+        data: jsonEncode({'word': word}),
+        options: Options(contentType: 'application/json'),
+      );
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['words'];
+      if (raw is List) {
+        return raw.map((e) => e.toString()).toList();
+      }
+      return const [];
+    });
+  }
+
+  Future<List<String>> removeBannedWord({
+    required String roomKey,
+    String? alternateKey,
+    required String word,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final encoded = Uri.encodeComponent(word);
+      final res = await _dio.safeDelete<dynamic>(
+        '/api/chat/rooms/$key/banned-words/$encoded',
+      );
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['words'];
+      if (raw is List) {
+        return raw.map((e) => e.toString()).toList();
+      }
       return const [];
     });
   }

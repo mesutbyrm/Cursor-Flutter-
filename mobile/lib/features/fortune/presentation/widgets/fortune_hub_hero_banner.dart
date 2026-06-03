@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../data/fortune_catalog.dart';
 import 'fortune_hub_crystal_illustration.dart';
 
@@ -18,12 +20,12 @@ class FortuneHubHeroBanner extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: AppColors.accentPurple.withValues(alpha: 0.55),
+            color: AppThemeColors.accentPurple.withValues(alpha: 0.55),
             width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.accentPurple.withValues(alpha: 0.25),
+              color: AppThemeColors.accentPurple.withValues(alpha: 0.25),
               blurRadius: 20,
               spreadRadius: 0,
             ),
@@ -53,7 +55,7 @@ class FortuneHubHeroBanner extends StatelessWidget {
                 child: Icon(
                   Icons.blur_on_rounded,
                   size: 160,
-                  color: AppColors.accentPurple.withValues(alpha: 0.22),
+                  color: AppThemeColors.accentPurple.withValues(alpha: 0.22),
                 ),
               ),
               const Positioned(left: 20, top: 28, child: _StarDot(size: 2)),
@@ -95,7 +97,7 @@ class FortuneHubHeroBanner extends StatelessWidget {
                           Text(
                             'Fal ve tarotun mistik dünyasına hoş geldin.',
                             style: TextStyle(
-                              color: AppColors.textSecondary.withValues(alpha: 0.92),
+                              color: context.colors.onSurfaceVariant.withValues(alpha: 0.92),
                               fontSize: 12,
                               height: 1.35,
                             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../theme/app_colors.dart';
 
 /// CanlıFal marka logosu — yıldız + gradyan wordmark (raster ikon gerekmez).
 class CanlifalLogo extends StatelessWidget {
@@ -22,8 +23,8 @@ class CanlifalLogo extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: AppColors.brandGradient,
-        boxShadow: AppColors.glowShadow(AppColors.accentPink, blur: size * 0.35),
+        gradient: context.colors.brandGradient,
+        boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: size * 0.35),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.35),
           width: 2,
@@ -61,7 +62,7 @@ class CanlifalLogo extends StatelessWidget {
         icon,
         SizedBox(height: size * 0.28),
         ShaderMask(
-          shaderCallback: (b) => AppColors.brandGradient.createShader(b),
+          shaderCallback: (b) => context.colors.brandGradient.createShader(b),
           child: Text(
             'CanlıFal',
             style: TextStyle(

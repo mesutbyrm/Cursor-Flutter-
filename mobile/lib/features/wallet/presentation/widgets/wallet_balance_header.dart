@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/dual_balance_chips.dart';
 
 /// CFC + Jeton + kısa yönlendirme — CFC yükle / Premium üyelik.
@@ -35,7 +37,7 @@ class WalletBalanceHeader extends StatelessWidget {
               child: _BalanceLine(
                 label: 'Jeton Bakiyeniz',
                 value: '$jeton',
-                color: AppColors.coinGold,
+                color: AppThemeColors.coinGold,
               ),
             ),
             const SizedBox(width: 12),
@@ -43,7 +45,7 @@ class WalletBalanceHeader extends StatelessWidget {
               child: _BalanceLine(
                 label: 'CFC Bakiyeniz',
                 value: '$cfc',
-                color: AppColors.diamondBlue,
+                color: AppThemeColors.diamondBlue,
               ),
             ),
           ],
@@ -92,7 +94,7 @@ class WalletBalanceHeader extends StatelessWidget {
                 child: _QuickLink(
                   icon: Icons.diamond_rounded,
                   label: 'CFC Yükle',
-                  color: AppColors.diamondBlue,
+                  color: AppThemeColors.diamondBlue,
                   onTap: () => context.push('/cfc-store'),
                 ),
               ),
@@ -101,7 +103,7 @@ class WalletBalanceHeader extends StatelessWidget {
                 child: _QuickLink(
                   icon: Icons.monetization_on_rounded,
                   label: 'Jeton',
-                  color: AppColors.coinGold,
+                  color: AppThemeColors.coinGold,
                   onTap: () => context.push('/jeton-store'),
                 ),
               ),
@@ -147,7 +149,7 @@ class _BalanceLine extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: AppColors.textMuted.withValues(alpha: 0.95)),
+            style: TextStyle(fontSize: 11, color: context.colors.onSurfaceMuted.withValues(alpha: 0.95)),
           ),
           Text(
             value,

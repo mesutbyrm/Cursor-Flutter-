@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import '../../../domain/voice_official_join.dart';
@@ -74,8 +74,84 @@ class VoiceWebChatOverlay extends StatelessWidget {
           itemCount: slice.length,
           itemBuilder: (context, i) {
             final msg = slice[slice.length - 1 - i];
+            if (_isMusicSystemLine(msg.content)) {
+              return _AnimatedMusicChatLine(
+                key: ValueKey(msg.id),
+                text: msg.content,
+              );
+            }
             return _WebChatLine(message: msg, onUserTap: onUserTap);
           },
+        ),
+      ),
+    );
+  }
+}
+
+bool _isMusicSystemLine(String content) {
+  final c = content.trim();
+  return c.startsWith('🎵') ||
+      c.startsWith('🎁') ||
+      c.startsWith('📀') ||
+      c.startsWith('🔢') ||
+      c.startsWith('⏭️') ||
+      c.startsWith('🗑️') ||
+      c.startsWith('🧹');
+}
+
+class _AnimatedMusicChatLine extends StatefulWidget {
+  const _AnimatedMusicChatLine({super.key, required this.text});
+
+  final String text;
+
+  @override
+  State<_AnimatedMusicChatLine> createState() => _AnimatedMusicChatLineState();
+}
+
+class _AnimatedMusicChatLineState extends State<_AnimatedMusicChatLine>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<Offset> _slide;
+  late final Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 520),
+    );
+    _slide = Tween<Offset>(
+      begin: const Offset(0.12, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fade,
+      child: SlideTransition(
+        position: _slide,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Text(
+            widget.text,
+            style: const TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFFB388FF),
+              shadows: [Shadow(color: Colors.black87, blurRadius: 8)],
+            ),
+          ),
         ),
       ),
     );
@@ -202,7 +278,7 @@ class VoiceWebChatInputBar extends StatelessWidget {
                   decoration: InputDecoration(
                     hintText: 'Mesajınızı yazın...',
                     hintStyle: TextStyle(
-                      color: AppColors.textMuted.withValues(alpha: 0.85),
+                      color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
                       fontSize: 13,
                     ),
                     filled: true,

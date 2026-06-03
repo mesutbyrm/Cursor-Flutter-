@@ -2,14 +2,11 @@ import 'dart:async';
 
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../datasources/chat_room_gifts_remote_datasource.dart';
-import 'voice_room_gift_socket.dart';
-
-/// REST poll + socket — sesli oda hediye olayları.
+/// REST poll — sesli oda hediyeleri (SSE/HTTP; Socket.IO yok).
 class VoiceRoomGiftRealtimeService {
-  VoiceRoomGiftRealtimeService(this._gifts, this._socket);
+  VoiceRoomGiftRealtimeService(this._gifts);
 
   final ChatRoomGiftsRemoteDataSource _gifts;
-  final VoiceRoomGiftSocket _socket;
 
   final _local = StreamController<LiveGiftEvent>.broadcast();
   final _seen = <String>{};
@@ -25,20 +22,13 @@ class VoiceRoomGiftRealtimeService {
     stop();
     _roomId = roomId;
     _since = DateTime.now().subtract(const Duration(minutes: 2));
-    _socket.connect(
-      roomId: roomId,
-      onEvent: (e) {
-        if (_seen.add(e.id) && !_local.isClosed) _local.add(e);
-      },
-    );
-    _poll = Timer.periodic(const Duration(seconds: 2), (_) => _pollOnce());
+    _poll = Timer.periodic(const Duration(seconds: 6), (_) => _pollOnce());
     _pollOnce();
   }
 
   void stop() {
     _poll?.cancel();
     _poll = null;
-    _socket.disconnect();
     _roomId = null;
   }
 

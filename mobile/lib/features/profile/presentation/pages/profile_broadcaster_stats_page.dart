@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/providers/platform_stats_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
@@ -17,7 +17,7 @@ class ProfileBroadcasterStatsPage extends ConsumerWidget {
     final mine = ref.watch(profileStatsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'İstatistikler',
@@ -37,28 +37,28 @@ class ProfileBroadcasterStatsPage extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Senin yayınların',
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 15,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      _row('Canlı yayın', '${s.liveStreams}'),
-                      _row('Beğeni', '${s.likes}'),
-                      _row('Takipçi', '${s.followers}'),
-                      _row('Hediye jetonu', '${s.earningsJeton}'),
+                      SizedBox(height: 10),
+                      _row(context, 'Canlı yayın', '${s.liveStreams}'),
+                      _row(context, 'Beğeni', '${s.likes}'),
+                      _row(context, 'Takipçi', '${s.followers}'),
+                      _row(context, 'Hediye jetonu', '${s.earningsJeton}'),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              const Text(
+              SizedBox(height: 20),
+              Text(
                 'Site istatistikleri',
                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               const DiscoverPlatformStats(),
             ],
           ),
@@ -67,14 +67,14 @@ class ProfileBroadcasterStatsPage extends ConsumerWidget {
     );
   }
 
-  Widget _row(String label, String value) {
+  Widget _row(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
+          Text(label, style: TextStyle(color: context.colors.onSurfaceVariant)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w800)),
         ],
       ),
     );

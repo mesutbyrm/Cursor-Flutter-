@@ -1,8 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/social_story_ring_entity.dart';
 
 /// Basit hikâye görüntüleyici — halkaya tıklanınca.
@@ -70,7 +70,7 @@ class StoryViewerPage extends StatelessWidget {
               child: Text(
                 'canlifal.com hikâyeleri',
                 style: TextStyle(
-                  color: AppColors.textMuted.withValues(alpha: 0.8),
+                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.8),
                   fontSize: 11,
                 ),
               ),

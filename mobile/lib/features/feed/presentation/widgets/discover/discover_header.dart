@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/canlifal_tokens.dart';
 import '../../../../../core/ui/premium/premium.dart';
 import '../../../../../core/widgets/messages_notifications_actions.dart';
@@ -40,7 +42,7 @@ class DiscoverHeader extends ConsumerWidget {
                   shape: BoxShape.circle,
                   gradient: tokens.brandGradient,
                   boxShadow:
-                      AppColors.glowShadow(AppColors.accentPurple, blur: 16),
+                      AppThemeColors.glowShadow(AppThemeColors.accentPurple, blur: 16),
                 ),
                 child: UserAvatar(url: user?.avatarUrl, radius: 22),
               ),
@@ -59,7 +61,7 @@ class DiscoverHeader extends ConsumerWidget {
                     Text(
                       'Hoş geldin',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: context.colors.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -81,7 +83,7 @@ class DiscoverHeader extends ConsumerWidget {
                         Icon(
                           Icons.verified_rounded,
                           size: 20,
-                          color: AppColors.accentPurple.withValues(alpha: 0.95),
+                          color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
                         ),
                       ],
                     ),

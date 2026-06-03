@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/config/env.dart';
 import '../../../../../core/network/api_exception.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/ui/premium/premium.dart';
 import '../../../domain/discover_category.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
@@ -105,7 +105,7 @@ class DiscoverPremiumVoicePanel extends ConsumerWidget {
         child: Center(
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AppColors.accentPink,
+            color: AppThemeColors.accentPink,
           ),
         ),
       ),

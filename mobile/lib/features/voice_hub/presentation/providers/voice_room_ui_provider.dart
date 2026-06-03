@@ -18,7 +18,7 @@ class VoiceRoomUiState {
     this.effectVolume = 0.8,
     this.listenerMessagesEnabled = true,
     this.giftAnimationsEnabled = true,
-    this.backgroundMusicEnabled = false,
+    this.backgroundMusicEnabled = true,
     this.autoOpenMic = false,
   });
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 import 'fortune_glass_card.dart';
 
@@ -36,7 +38,7 @@ class FortuneTypeGridCard extends StatelessWidget {
                   type.accent.withValues(alpha: 0.08),
                 ],
               ),
-              boxShadow: AppColors.glowShadow(type.accent, blur: 12),
+              boxShadow: AppThemeColors.glowShadow(type.accent, blur: 12),
             ),
             child: Text(type.emoji, style: const TextStyle(fontSize: 28)),
           ),
@@ -55,7 +57,7 @@ class FortuneTypeGridCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: AppColors.textSecondary.withValues(alpha: 0.95),
+              color: context.colors.onSurfaceVariant.withValues(alpha: 0.95),
               fontSize: 12,
               height: 1.35,
             ),

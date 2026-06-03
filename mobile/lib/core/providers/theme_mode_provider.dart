@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Uygulama tema modu — varsayılan koyu (premium canlı yayın dili).
+import '../storage/theme_preferences.dart';
+
+/// Uygulama tema modu — [SharedPreferences] ile kalıcı; anında güncellenir.
 final themeModeProvider =
     NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
 
 class ThemeModeNotifier extends Notifier<ThemeMode> {
   @override
-  ThemeMode build() => ThemeMode.dark;
+  ThemeMode build() => ThemePreferences.loadThemeMode();
 
-  void setMode(ThemeMode mode) => state = mode;
+  Future<void> setMode(ThemeMode mode) async {
+    if (state == mode) return;
+    state = mode;
+    await ThemePreferences.saveThemeMode(mode);
+  }
 
-  void toggle() {
-    state = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+  void toggleLightDark() {
+    final next = state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    setMode(next);
   }
 }

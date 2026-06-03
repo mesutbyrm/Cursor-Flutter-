@@ -5,8 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/ui/premium/premium.dart';
+import 'discover_premium_visual.dart';
 import '../../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
@@ -26,16 +27,20 @@ class DiscoverPremiumHeader extends ConsumerWidget {
         0;
     final coinLabel = NumberFormat.decimalPattern('tr').format(coins);
 
-    return ClipRect(
+    return RepaintBoundary(
+      child: ClipRect(
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        filter: ImageFilter.blur(
+          sigmaX: DiscoverPremiumVisual.glassBlur,
+          sigmaY: DiscoverPremiumVisual.glassBlur,
+        ),
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 8, 12, 10),
           decoration: BoxDecoration(
-            color: const Color(0xFF0B0B1E).withValues(alpha: 0.55),
+            color: DiscoverPremiumVisual.glassFill,
             border: Border(
               bottom: BorderSide(
-                color: Colors.white.withValues(alpha: 0.06),
+                color: DiscoverPremiumVisual.glassBorder,
               ),
             ),
           ),
@@ -47,13 +52,8 @@ class DiscoverPremiumHeader extends ConsumerWidget {
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFF2D7A), Color(0xFF9B4DFF)],
-                    ),
-                    boxShadow: AppColors.glowShadow(
-                      AppColors.accentPurple,
-                      blur: 14,
-                    ),
+                    gradient: DiscoverPremiumVisual.brandGradient,
+                    boxShadow: DiscoverPremiumVisual.cardGlow(),
                   ),
                   child: UserAvatar(url: user?.avatarUrl, radius: 20),
                 ),
@@ -98,6 +98,7 @@ class DiscoverPremiumHeader extends ConsumerWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

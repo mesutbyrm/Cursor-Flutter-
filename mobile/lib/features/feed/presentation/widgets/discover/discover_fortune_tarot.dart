@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../fortune/presentation/data/fortune_catalog.dart';
 import 'discover_section_header.dart';
@@ -35,33 +37,33 @@ class DiscoverFortuneTarot extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.accentPurple.withValues(alpha: 0.25),
-                      AppColors.bgPurpleGlow.withValues(alpha: 0.9),
+                      AppThemeColors.accentPurple.withValues(alpha: 0.25),
+                      context.colors.surfaceContainer.withValues(alpha: 0.9),
                     ],
                   ),
                   border: Border.all(
-                    color: AppColors.accentPink.withValues(alpha: 0.35),
+                    color: AppThemeColors.accentPink.withValues(alpha: 0.35),
                   ),
                 ),
                 child: Row(
                   children: [
-                    const Text('🔮', style: TextStyle(fontSize: 32)),
-                    const SizedBox(width: 12),
+                    Text('🔮', style: TextStyle(fontSize: 32)),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             FortuneCatalog.tagline,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 13,
                             ),
                           ),
                           Text(
                             '${FortuneCatalog.types.length}+ fal türü',
-                            style: const TextStyle(
-                              color: AppColors.textMuted,
+                            style: TextStyle(
+                              color: context.colors.onSurfaceMuted,
                               fontSize: 11,
                             ),
                           ),
@@ -71,7 +73,7 @@ class DiscoverFortuneTarot extends StatelessWidget {
                     Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 16,
-                      color: AppColors.textMuted.withValues(alpha: 0.8),
+                      color: context.colors.onSurfaceMuted.withValues(alpha: 0.8),
                     ),
                   ],
                 ),
@@ -147,7 +149,7 @@ class _FortunePreviewTile extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 border.withValues(alpha: 0.22),
-                AppColors.bgPurpleGlow.withValues(alpha: 0.85),
+                context.colors.surfaceContainer.withValues(alpha: 0.85),
               ],
             ),
           ),
@@ -156,17 +158,17 @@ class _FortunePreviewTile extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(emoji, style: const TextStyle(fontSize: 22)),
-                const SizedBox(height: 4),
+                Text(emoji, style: TextStyle(fontSize: 22)),
+                SizedBox(height: 4),
                 Text(
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 9,
-                    color: AppColors.textPrimary,
+                    color: context.colors.onSurface,
                   ),
                 ),
               ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/ui/premium_2026/premium_motion.dart';
 
 /// Neon gradient CTA — TikTok / Discord seviyesi.
@@ -63,7 +63,7 @@ class _AuthNeonButtonState extends State<AuthNeonButton> {
                       offset: const Offset(0, 10),
                     ),
                     BoxShadow(
-                      color: AppColors.accentPink.withValues(alpha: 0.25),
+                      color: AppThemeColors.accentPink.withValues(alpha: 0.25),
                       blurRadius: 32,
                       spreadRadius: -8,
                     ),

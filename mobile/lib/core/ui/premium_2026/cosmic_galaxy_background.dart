@@ -2,8 +2,9 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../theme/app_colors.dart';
 
 /// Karanlık galaksi gradient + neon orb + yüzen parçacıklar (auth / splash).
 class CosmicGalaxyBackground extends StatefulWidget {
@@ -28,9 +29,9 @@ class _CosmicGalaxyBackgroundState extends State<CosmicGalaxyBackground>
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFF1A0B3D),
+      Color(0xFF1A0E38),
       Color(0xFF12082A),
-      Color(0xFF05050D),
+      Color(0xFF0A0618),
     ],
   );
 
@@ -58,7 +59,7 @@ class _CosmicGalaxyBackgroundState extends State<CosmicGalaxyBackground>
       fit: StackFit.expand,
       children: [
         const DecoratedBox(decoration: BoxDecoration(gradient: _galaxy)),
-        Positioned(top: -90, right: -50, child: _neonOrb(AppColors.accentPurple, 240)),
+        Positioned(top: -90, right: -50, child: _neonOrb(AppThemeColors.accentPurple, 240)),
         Positioned(
           bottom: h * 0.12,
           left: -70,
@@ -67,7 +68,7 @@ class _CosmicGalaxyBackgroundState extends State<CosmicGalaxyBackground>
         Positioned(
           top: h * 0.32,
           left: w * 0.15,
-          child: _neonOrb(AppColors.accentCyan, 130, opacity: 0.22),
+          child: _neonOrb(AppThemeColors.accentCyan, 130, opacity: 0.22),
         ),
         AnimatedBuilder(
           animation: _drift,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import 'fortune_hub_gold_stars.dart';
 
 /// Sezgi bildirimi — kristal küre + metin + yıldızlar (mockup).
@@ -22,7 +24,7 @@ class FortuneHubInsightBanner extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             color: const Color(0xFF1A0B2E).withValues(alpha: 0.9),
             border: Border.all(
-              color: AppColors.accentPurple.withValues(alpha: 0.3),
+              color: AppThemeColors.accentPurple.withValues(alpha: 0.3),
             ),
           ),
           child: Row(
@@ -33,9 +35,9 @@ class FortuneHubInsightBanner extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.accentPurple.withValues(alpha: 0.2),
-                  boxShadow: AppColors.glowShadow(
-                    AppColors.accentPurple,
+                  color: AppThemeColors.accentPurple.withValues(alpha: 0.2),
+                  boxShadow: AppThemeColors.glowShadow(
+                    AppThemeColors.accentPurple,
                     blur: 10,
                   ),
                 ),
@@ -46,7 +48,7 @@ class FortuneHubInsightBanner extends StatelessWidget {
                 child: Text(
                   'Bugün sezgilerin güçlü, iç sesini dinlemeyi unutma.',
                   style: TextStyle(
-                    color: AppColors.textSecondary.withValues(alpha: 0.95),
+                    color: context.colors.onSurfaceVariant.withValues(alpha: 0.95),
                     fontSize: 12,
                     height: 1.35,
                   ),
@@ -58,7 +60,7 @@ class FortuneHubInsightBanner extends StatelessWidget {
               Icon(
                 Icons.chevron_right_rounded,
                 size: 20,
-                color: AppColors.textMuted.withValues(alpha: 0.8),
+                color: context.colors.onSurfaceMuted.withValues(alpha: 0.8),
               ),
             ],
           ),

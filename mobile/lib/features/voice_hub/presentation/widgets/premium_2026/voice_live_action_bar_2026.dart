@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../theme/voice_room_tokens.dart';
 
 /// PART 3 — Alt action bar: mic merkez, hediye, müzik, efekt, davet, ayarlar.
@@ -232,7 +232,7 @@ class _CenterMicFabState extends State<_CenterMicFab>
                   fontWeight: FontWeight.w900,
                   color: widget.micOn
                       ? Colors.white
-                      : AppColors.liveRed.withValues(alpha: 0.9),
+                      : AppThemeColors.liveRed.withValues(alpha: 0.9),
                 ),
               ),
             ],

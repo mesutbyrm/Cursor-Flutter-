@@ -1,9 +1,9 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/voice_room_access.dart';
 import '../providers/vip_membership_provider.dart';
@@ -108,7 +108,7 @@ class _LockedSheetState extends State<_LockedSheet> {
                 Text(
                   'Bu oda şifre korumalı. Davet kodunu gir.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.95)),
+                  style: TextStyle(color: context.colors.onSurfaceMuted.withValues(alpha: 0.95)),
                 ),
                 const SizedBox(height: 20),
                 TextField(

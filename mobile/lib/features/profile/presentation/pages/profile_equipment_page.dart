@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/profile_providers.dart';
@@ -16,7 +16,7 @@ class ProfileEquipmentPage extends ConsumerWidget {
     final notifier = ref.read(equipmentSettingsProvider.notifier);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Ekipmanım',
@@ -64,7 +64,7 @@ class ProfileEquipmentPage extends ConsumerWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.textMuted.withValues(alpha: 0.9),
+                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                 ),
               ),
             ],

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../domain/entities/live_gift_catalog.dart';
 import '../../../domain/entities/live_gift_event.dart';
@@ -47,41 +49,41 @@ class _GiftBanner extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          boxShadow: AppColors.glowShadow(AppColors.accentPink, blur: 18),
+          boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: 18),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 22)),
-            const SizedBox(width: 8),
+            Text(emoji, style: TextStyle(fontSize: 22)),
+            SizedBox(width: 8),
             Flexible(
               child: RichText(
                 text: TextSpan(
-                  style: const TextStyle(fontSize: 12, height: 1.25),
+                  style: TextStyle(fontSize: 12, height: 1.25),
                   children: [
                     TextSpan(
                       text: event.senderName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        color: AppColors.accentCyan,
+                        color: AppThemeColors.accentCyan,
                       ),
                     ),
-                    const TextSpan(
+                    TextSpan(
                       text: ' → ',
-                      style: TextStyle(color: AppColors.textMuted),
+                      style: TextStyle(color: AppThemeColors.dark.onSurfaceMuted),
                     ),
                     TextSpan(
                       text: event.receiverName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
                     ),
                     TextSpan(
                       text: ' ${event.quantity > 1 ? '${event.quantity} ' : ''}${event.giftName}$combo',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.accentPink,
+                        color: AppThemeColors.accentPink,
                       ),
                     ),
                   ],

@@ -14,10 +14,10 @@ class LiveRemoteDataSource {
   final Dio _dio;
 
   Future<List<LiveStreamEntity>> fetch({int page = 1}) async {
-    if (Env.useNextAuth) {
+    if (Env.useMobileAuth) {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.videoStreams,
-        query: {'limit': '50'},
+        query: {'limit': '50', 'page': '$page'},
       );
       return _parseStreamList(res.data);
     }
@@ -31,7 +31,17 @@ class LiveRemoteDataSource {
   List<LiveStreamEntity> _parseStreamList(dynamic body) {
     dynamic list;
     if (body is Map<String, dynamic>) {
-      list = pick(body, ['items', 'data', 'streams', 'results', 'lives']);
+      if (body['success'] == true && body['data'] != null) {
+        return _parseStreamList(body['data']);
+      }
+      list = pick(body, [
+        'videoStreams',
+        'streams',
+        'items',
+        'data',
+        'results',
+        'lives',
+      ]);
     } else {
       list = body;
     }
@@ -43,7 +53,6 @@ class LiveRemoteDataSource {
 
   /// canlifal.com `/api/chat/rooms` — site ile aynı oda kartları.
   Future<List<VoiceRoomEntity>> fetchVoiceRooms() async {
-    if (!Env.useNextAuth) return const [];
     final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatRooms);
     final body = res.data;
     dynamic list = body;
@@ -276,7 +285,7 @@ class LiveRemoteDataSource {
     final slug = pick(json, ['slug'])?.toString() ?? '';
     final rawId = pick(json, ['id', '_id', 'roomId'])?.toString() ?? '';
     return VoiceRoomEntity(
-      id: rawId.isNotEmpty ? rawId : slug,
+      id: rawId,
       slug: slug,
       nameTr: pick(json, ['nameTr', 'nameEn', 'name', 'slug'])?.toString() ?? 'Oda',
       descTr: pick(json, ['descTr', 'descEn', 'description']) as String?,

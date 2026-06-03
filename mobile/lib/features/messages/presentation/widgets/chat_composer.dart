@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../core/theme/app_colors.dart';
 
 class ChatComposer extends StatelessWidget {
   const ChatComposer({
@@ -28,7 +30,7 @@ class ChatComposer extends StatelessWidget {
               onPressed: () {},
               icon: Icon(
                 Icons.add_circle_outline_rounded,
-                color: AppColors.accentPurple.withValues(alpha: 0.9),
+                color: AppThemeColors.accentPurple.withValues(alpha: 0.9),
               ),
             ),
             Expanded(
@@ -37,29 +39,29 @@ class ChatComposer extends StatelessWidget {
                 onChanged: onChanged,
                 minLines: 1,
                 maxLines: 4,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: context.colors.onSurface),
                 decoration: InputDecoration(
                   hintText: 'Mesaj yaz...',
                   hintStyle: TextStyle(
-                    color: AppColors.textMuted.withValues(alpha: 0.8),
+                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.8),
                   ),
                   filled: true,
                   fillColor: Colors.white.withValues(alpha: 0.06),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(
-                      color: AppColors.accentPurple.withValues(alpha: 0.3),
+                      color: AppThemeColors.accentPurple.withValues(alpha: 0.3),
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(
-                      color: AppColors.accentPurple.withValues(alpha: 0.25),
+                      color: AppThemeColors.accentPurple.withValues(alpha: 0.25),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppColors.accentPink),
+                    borderSide: const BorderSide(color: AppThemeColors.accentPink),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -80,7 +82,7 @@ class ChatComposer extends StatelessWidget {
                   height: 52,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    gradient: AppColors.brandGradient,
+                    gradient: context.colors.brandGradient,
                   ),
                   child: Center(
                     child: sending

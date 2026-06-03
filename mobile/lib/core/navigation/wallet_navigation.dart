@@ -40,6 +40,12 @@ void _pushWalletRoute(
     }
   }
 
-  final router = GoRouter.of(context);
+  final router = GoRouter.maybeOf(context);
+  if (router == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Sayfa açılamadı — uygulamayı yeniden deneyin.')),
+    );
+    return;
+  }
   router.push(location);
 }

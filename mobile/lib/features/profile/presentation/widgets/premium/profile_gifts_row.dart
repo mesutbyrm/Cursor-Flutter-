@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/profile_stats_entity.dart';
 import '../../providers/profile_providers.dart';
 import 'profile_glass.dart';
@@ -23,7 +25,7 @@ class ProfileGiftsRow extends ConsumerWidget {
           trailing: TextButton(
             onPressed: onViewAll,
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.accentCyan,
+              foregroundColor: AppThemeColors.accentCyan,
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -69,7 +71,7 @@ class _EmptyGiftsHint extends StatelessWidget {
         'Yayınlarda aldığın hediyeler burada görünür.',
         style: TextStyle(
           fontSize: 13,
-          color: AppColors.textMuted.withValues(alpha: 0.9),
+          color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
         ),
       ),
     );
@@ -103,8 +105,8 @@ class _GiftTile extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.accentPink.withValues(alpha: 0.8),
-                        AppColors.accentPurple.withValues(alpha: 0.6),
+                        AppThemeColors.accentPink.withValues(alpha: 0.8),
+                        AppThemeColors.accentPurple.withValues(alpha: 0.6),
                       ],
                     ),
                   ),
@@ -118,9 +120,9 @@ class _GiftTile extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  gradient: AppColors.brandGradient,
+                  gradient: context.colors.brandGradient,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.background, width: 1.5),
+                  border: Border.all(color: context.scaffoldBg, width: 1.5),
                 ),
                 child: Text(
                   'x${gift.count}',

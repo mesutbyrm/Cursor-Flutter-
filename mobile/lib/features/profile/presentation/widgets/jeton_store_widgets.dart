@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../data/jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 
@@ -14,7 +17,7 @@ class JetonStoreBackdrop extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        const DecoratedBox(
+        DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -100,11 +103,11 @@ class JetonStoreBalanceRow extends StatelessWidget {
             icon: Icons.monetization_on_rounded,
             label: 'Jeton:',
             value: '$jeton',
-            valueColor: AppColors.coinGold,
-            borderColor: AppColors.coinGold.withValues(alpha: 0.45),
+            valueColor: AppThemeColors.coinGold,
+            borderColor: AppThemeColors.coinGold.withValues(alpha: 0.45),
           ),
         ),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Expanded(
           child: _BalanceChip(
             icon: Icons.auto_awesome_rounded,
@@ -146,11 +149,11 @@ class _BalanceChip extends StatelessWidget {
       child: Row(
         children: [
           Icon(icon, size: 20, color: valueColor),
-          const SizedBox(width: 6),
+          SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: context.colors.onSurfaceVariant,
               fontWeight: FontWeight.w600,
               fontSize: 13,
             ),
@@ -187,23 +190,23 @@ class JetonGoldMemberBanner extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: AppColors.coinGold.withValues(alpha: 0.65),
+              color: AppThemeColors.coinGold.withValues(alpha: 0.65),
             ),
-            color: AppColors.coinGold.withValues(alpha: 0.08),
+            color: AppThemeColors.coinGold.withValues(alpha: 0.08),
           ),
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.workspace_premium_rounded,
-                color: AppColors.coinGold,
+                color: AppThemeColors.coinGold,
                 size: 22,
               ),
-              const SizedBox(width: 10),
-              const Expanded(
+              SizedBox(width: 10),
+              Expanded(
                 child: Text(
                   'Gold üyesiniz, uzatın',
                   style: TextStyle(
-                    color: AppColors.coinGold,
+                    color: AppThemeColors.coinGold,
                     fontWeight: FontWeight.w800,
                     fontSize: 14,
                   ),
@@ -211,7 +214,7 @@ class JetonGoldMemberBanner extends StatelessWidget {
               ),
               Icon(
                 Icons.star_rounded,
-                color: AppColors.coinGold.withValues(alpha: 0.9),
+                color: AppThemeColors.coinGold.withValues(alpha: 0.9),
                 size: 20,
               ),
             ],
@@ -241,25 +244,16 @@ class JetonPackageTile extends StatelessWidget {
     final popular = package.badge?.toLowerCase().contains('popüler') == true ||
         package.badge?.toLowerCase().contains('popular') == true;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.zero,
-        child: Ink(
-          padding: EdgeInsets.symmetric(
-            horizontal: fullWidth ? 16 : 12,
-            vertical: fullWidth ? 14 : 12,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.zero,
-            color: const Color(0xFF1A1030).withValues(alpha: 0.85),
-            border: Border.all(
-              color: const Color(0xFF7C3AED).withValues(alpha: 0.45),
-              width: 0.5,
-            ),
-          ),
-          child: Stack(
+    return ProGlassCard(
+      onTap: onTap,
+      blur: 14,
+      animateIn: false,
+      padding: EdgeInsets.symmetric(
+        horizontal: fullWidth ? 16 : 12,
+        vertical: fullWidth ? 14 : 12,
+      ),
+      borderRadius: BorderRadius.circular(fullWidth ? 16 : 0),
+      child: Stack(
             clipBehavior: Clip.none,
             children: [
               if (popular)
@@ -270,7 +264,7 @@ class JetonPackageTile extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: AppColors.accentPink,
+                      color: AppThemeColors.accentPink,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Row(
@@ -296,16 +290,16 @@ class JetonPackageTile extends StatelessWidget {
                   Text(
                     '${package.coins} jeton',
                     style: TextStyle(
-                      color: AppColors.coinGold,
+                      color: AppThemeColors.coinGold,
                       fontWeight: FontWeight.w900,
                       fontSize: fullWidth ? 22 : 18,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   Text(
                     priceText,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
+                    style: TextStyle(
+                      color: context.colors.onSurface,
                       fontWeight: FontWeight.w900,
                       fontSize: 16,
                     ),
@@ -314,8 +308,6 @@ class JetonPackageTile extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
     );
   }
 }
@@ -416,7 +408,7 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
         borderRadius: BorderRadius.circular(16),
         color: Colors.white.withValues(alpha: 0.04),
         border: Border.all(
-          color: AppColors.accentPurple.withValues(alpha: 0.35),
+          color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
         ),
       ),
       child: Column(
@@ -424,7 +416,7 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
         children: [
           const Row(
             children: [
-              Icon(Icons.link_rounded, color: AppColors.accentPurple, size: 20),
+              Icon(Icons.link_rounded, color: AppThemeColors.accentPurple, size: 20),
               SizedBox(width: 8),
               Text(
                 'Özel Miktar Belirle',
@@ -435,7 +427,7 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
@@ -460,30 +452,30 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           TextField(
             controller: _controller,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: const TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.colors.onSurface),
             decoration: InputDecoration(
               hintText: _byJeton
                   ? 'Kaç jeton almak istiyorsun?'
                   : 'Ödeyeceğiniz tutarı girin (₺)',
               hintStyle: TextStyle(
-                color: AppColors.textMuted.withValues(alpha: 0.85),
+                color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
               ),
               filled: true,
               fillColor: const Color(0xFF1A1030),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: AppColors.accentPurple.withValues(alpha: 0.35),
+                  color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: AppColors.accentPurple.withValues(alpha: 0.35),
+                  color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -494,7 +486,7 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Material(
             color: Colors.transparent,
             child: InkWell(
@@ -512,7 +504,7 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
                     ],
                   ),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
                     'Satın Al',
                     style: TextStyle(
@@ -525,12 +517,12 @@ class _JetonCustomAmountSectionState extends State<JetonCustomAmountSection> {
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
             '1 Jeton = ₺$rateLabel',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: AppColors.textMuted.withValues(alpha: 0.95),
+              color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
               fontSize: 12,
             ),
           ),
@@ -574,7 +566,7 @@ class _ModeTab extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: selected ? Colors.white : AppColors.textMuted,
+              color: selected ? Colors.white : context.colors.onSurfaceMuted,
             ),
           ),
         ),

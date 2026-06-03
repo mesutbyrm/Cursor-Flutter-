@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 
 /// Skeleton loading — 2026 feed / kart shimmer.
@@ -24,13 +25,13 @@ class PremiumSkeleton extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         borderRadius: borderRadius ?? BorderRadius.circular(AppSpacing.radiusMd),
-        color: AppColors.surfaceElevated,
+        color: context.colors.surfaceElevated,
       ),
     )
         .animate(onPlay: (c) => c.repeat())
         .shimmer(
           duration: 1400.ms,
-          color: AppColors.accentPurple.withValues(alpha: 0.12),
+          color: AppThemeColors.accentPurple.withValues(alpha: 0.12),
         );
   }
 }

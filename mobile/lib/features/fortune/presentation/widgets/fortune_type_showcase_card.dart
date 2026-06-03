@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../data/fortune_type_showcase.dart';
 
 /// Mockup vitrin kartı — AI illüstrasyon, açıklama, 3 özellik, Falını Aç.
@@ -28,7 +30,7 @@ class FortuneTypeShowcaseCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: accent.withValues(alpha: 0.55), width: 1.2),
-        boxShadow: AppColors.glowShadow(accent, blur: 18),
+        boxShadow: AppThemeColors.glowShadow(accent, blur: 18),
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -112,7 +114,7 @@ class FortuneTypeShowcaseCard extends StatelessWidget {
                 showcase.type.description,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: AppColors.textSecondary.withValues(alpha: 0.95),
+                  color: context.colors.onSurfaceVariant.withValues(alpha: 0.95),
                   fontSize: compact ? 12 : 13,
                   height: 1.35,
                 ),
@@ -181,7 +183,7 @@ class _FeatureTile extends StatelessWidget {
             fontSize: 9,
             fontWeight: FontWeight.w700,
             height: 1.2,
-            color: AppColors.textMuted.withValues(alpha: 0.95),
+            color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
           ),
         ),
       ],
@@ -211,7 +213,7 @@ class _OpenFortuneButton extends StatelessWidget {
                 Color.lerp(accent, const Color(0xFF5B21B6), 0.45)!,
               ],
             ),
-            boxShadow: AppColors.glowShadow(accent, blur: 14),
+            boxShadow: AppThemeColors.glowShadow(accent, blur: 14),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 14),

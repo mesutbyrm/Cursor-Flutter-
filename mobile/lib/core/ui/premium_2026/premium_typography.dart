@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../theme/app_colors.dart';
-
 /// Premium tipografi — display / headline / label hiyerarşisi.
 abstract final class PremiumTypography {
   static TextStyle _base(TextStyle? from, TextStyle fallback) {
@@ -20,7 +18,7 @@ abstract final class PremiumTypography {
           fontWeight: FontWeight.w800,
           letterSpacing: -1.2,
           height: 1.1,
-          color: AppColors.textPrimary,
+          color: Color(0xFFFFFFFF),
         ),
       );
 
@@ -31,7 +29,7 @@ abstract final class PremiumTypography {
           fontWeight: FontWeight.w800,
           letterSpacing: -0.8,
           height: 1.15,
-          color: AppColors.textPrimary,
+          color: Color(0xFFFFFFFF),
         ),
       );
 
@@ -41,7 +39,7 @@ abstract final class PremiumTypography {
           fontSize: 20,
           fontWeight: FontWeight.w700,
           letterSpacing: -0.4,
-          color: AppColors.textPrimary,
+          color: Color(0xFFFFFFFF),
         ),
       );
 
@@ -51,7 +49,7 @@ abstract final class PremiumTypography {
           fontSize: 16,
           fontWeight: FontWeight.w700,
           letterSpacing: -0.2,
-          color: AppColors.textPrimary,
+          color: Color(0xFFFFFFFF),
         ),
       );
 
@@ -61,7 +59,7 @@ abstract final class PremiumTypography {
           fontSize: 14,
           fontWeight: FontWeight.w500,
           height: 1.45,
-          color: AppColors.textSecondary,
+          color: Color(0xFFB8B8C8),
         ),
       );
 
@@ -71,7 +69,7 @@ abstract final class PremiumTypography {
           fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.6,
-          color: AppColors.textMuted,
+          color: Color(0xFF6E6E82),
         ),
       );
 
@@ -82,7 +80,9 @@ abstract final class PremiumTypography {
           fontSize: 10,
           fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
           letterSpacing: selected ? 0.2 : 0,
-          color: selected ? AppColors.textPrimary : AppColors.textMuted,
+          color: selected
+              ? const Color(0xFFFFFFFF)
+              : const Color(0xFF6E6E82),
         ),
       );
 }

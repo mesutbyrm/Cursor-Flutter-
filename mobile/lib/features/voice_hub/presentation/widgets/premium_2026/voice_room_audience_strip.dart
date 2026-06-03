@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../theme/voice_room_tokens.dart';
 import '../premium/voice_neon_avatar.dart';
@@ -39,23 +39,23 @@ class VoiceRoomAudienceStrip extends StatelessWidget {
             size: 16,
             color: VoiceRoomTokens.neonBlue.withValues(alpha: 0.9),
           ),
-          const SizedBox(width: 6),
+          SizedBox(width: 6),
           Text(
             'Odada $totalOnline',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: Colors.white70,
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: SizedBox(
               height: 36,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: visible.length + (extra > 0 ? 1 : 0),
-                separatorBuilder: (_, __) => const SizedBox(width: 6),
+                separatorBuilder: (_, __) => SizedBox(width: 6),
                 itemBuilder: (context, i) {
                   if (i < visible.length) {
                     final u = visible[i];
@@ -80,10 +80,10 @@ class VoiceRoomAudienceStrip extends StatelessWidget {
                     ),
                     child: Text(
                       '+$extra',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textMuted,
+                        color: context.colors.onSurfaceMuted,
                       ),
                     ),
                   );

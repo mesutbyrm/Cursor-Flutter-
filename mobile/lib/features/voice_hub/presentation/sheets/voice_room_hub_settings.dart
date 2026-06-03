@@ -1,8 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
@@ -117,7 +119,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
               'Moderatör ve oda sahibi için (canlifal.com ile uyumlu)',
               style: TextStyle(
                 fontSize: 11,
-                color: AppColors.textMuted.withValues(alpha: 0.9),
+                color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
               ),
             ),
             const SizedBox(height: 12),
@@ -200,7 +202,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                   'DJ eklemek için oda sahibi veya moderatör olun',
                   style: TextStyle(
                     fontSize: 11,
-                    color: AppColors.textMuted.withValues(alpha: 0.9),
+                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                   ),
                 ),
               Expanded(
@@ -216,7 +218,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                           ? IconButton(
                               icon: Icon(
                                 isDj ? Icons.remove_circle_outline : Icons.add_circle_outline,
-                                color: isDj ? AppColors.liveRed : AppColors.onlineGreen,
+                                color: isDj ? AppThemeColors.liveRed : AppThemeColors.onlineGreen,
                               ),
                               onPressed: () async {
                                 final ctrl = ref.read(
@@ -287,7 +289,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
               onTap: _openRoomSettings,
             ),
             ListTile(
-              leading: const Icon(Icons.queue_music_rounded, color: AppColors.accentPink),
+              leading: const Icon(Icons.queue_music_rounded, color: AppThemeColors.accentPink),
               title: const Text('Şarkı isteği'),
               subtitle: Text(
                 'YouTube ara · ${widget.live.dj.musicRequestCost} jeton / istek',
@@ -301,7 +303,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
               onTap: _openRoomCommands,
             ),
             ListTile(
-              leading: const Icon(Icons.headphones_rounded, color: AppColors.coinGold),
+              leading: const Icon(Icons.headphones_rounded, color: AppThemeColors.coinGold),
               title: Text('DJ (${widget.live.dj.djCount}/${widget.live.dj.maxDj})'),
               subtitle: const Text('DJ ekle veya çıkar'),
               onTap: _openDjManage,

@@ -2,7 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'premium_2026_tokens.dart';
 import 'premium_motion.dart';
 
@@ -14,7 +15,7 @@ class LiquidGlass extends StatelessWidget {
     this.padding = const EdgeInsets.all(16),
     this.margin,
     this.borderRadius,
-    this.blur = 22,
+    this.blur = 24,
     this.elevated = false,
     this.onTap,
     this.gradientBorder,
@@ -32,8 +33,10 @@ class LiquidGlass extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.p26;
+    final c = context.colors;
     final radius = borderRadius ?? BorderRadius.circular(t.radiusLiquid);
     final fill = elevated ? t.glassFillElevated : t.glassFill;
+    final effectiveBlur = c.useGlassBlur ? blur : 0.0;
     final border = gradientBorder ??
         LinearGradient(
           begin: Alignment.topLeft,
@@ -41,55 +44,59 @@ class LiquidGlass extends StatelessWidget {
           colors: [
             t.glassBorder,
             t.glassBorder.withValues(alpha: 0.15),
-            AppColors.accentPurple.withValues(alpha: 0.35),
+            const Color(0xFFB84DFF).withValues(alpha: 0.4),
           ],
         );
 
-    Widget inner = ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                fill,
-                fill.withValues(alpha: fill.a * 0.65),
-              ],
-            ),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.08),
-              width: 0.5,
-            ),
-            boxShadow: elevated ? t.shadowFloating : t.shadowAmbient,
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 1,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        t.glassHighlight,
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
+    Widget inner = DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            fill,
+            fill.withValues(alpha: fill.a * 0.65),
+          ],
+        ),
+        border: Border.all(
+          color: c.glassBorder.withValues(alpha: 0.5),
+          width: 0.5,
+        ),
+        boxShadow: elevated ? t.shadowFloating : t.shadowAmbient,
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 1,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    t.glassHighlight,
+                    Colors.transparent,
+                  ],
                 ),
               ),
-              Padding(padding: padding, child: child),
-            ],
+            ),
           ),
-        ),
+          Padding(padding: padding, child: child),
+        ],
       ),
     );
+
+    if (effectiveBlur > 0) {
+      inner = ClipRRect(
+        borderRadius: radius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: effectiveBlur, sigmaY: effectiveBlur),
+          child: inner,
+        ),
+      );
+    }
 
     inner = Container(
       decoration: BoxDecoration(

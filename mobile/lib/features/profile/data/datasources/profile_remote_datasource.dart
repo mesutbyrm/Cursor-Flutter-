@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
+import '../../../../core/pagination/paged_result.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/network/api_endpoints.dart';
@@ -52,16 +55,24 @@ class ProfileRemoteDataSource {
   }
 
   Future<void> follow(String userId) async {
-    if (Env.useMobileAuth) {
-      await _dio.safePost(ApiEndpoints.userFollow(userId));
-      return;
+    Object? lastError;
+    for (final path in [
+      ApiEndpoints.follow(userId),
+      ApiEndpoints.userFollow(userId),
+    ]) {
+      try {
+        await _dio.safePost(path);
+        return;
+      } catch (e) {
+        lastError = e;
+      }
     }
-    await _dio.safePost(ApiEndpoints.follow(userId));
+    throw ApiException.userMessage(lastError ?? 'Takip edilemedi');
   }
 
   Future<void> unfollow(String userId) async {
     if (Env.useMobileAuth) {
-      await _dio.safePost(ApiEndpoints.userFollow(userId));
+      await _dio.safePost(ApiEndpoints.follow(userId));
       return;
     }
     await _dio.safeDelete(ApiEndpoints.follow(userId));
@@ -78,9 +89,15 @@ class ProfileRemoteDataSource {
     final res = await _dio.safePatch<Map<String, dynamic>>(
       ApiEndpoints.me,
       data: {
-        if (displayName != null) 'displayName': displayName,
+        if (displayName != null) ...{
+          'name': displayName,
+          'displayName': displayName,
+        },
         if (bio != null) 'bio': bio,
-        if (avatarUrl != null) 'avatarUrl': avatarUrl,
+        if (avatarUrl != null) ...{
+          'image': avatarUrl,
+          'avatarUrl': avatarUrl,
+        },
         if (username != null) 'username': username,
         if (currentPassword != null) 'currentPassword': currentPassword,
         if (newPassword != null) 'newPassword': newPassword,
@@ -150,31 +167,51 @@ class ProfileRemoteDataSource {
   }
 
   Future<List<UserEntity>> followers(String userId) async {
-    try {
-      final res = await _dio.safeGet<Map<String, dynamic>>(
-        ApiEndpoints.followers(userId),
-      );
-      return _parseUserList(res.data);
-    } catch (_) {
-      return const [];
+    for (final path in [
+      ApiEndpoints.userPublicFollowers(userId),
+      if (Env.useMobileAuth) ApiEndpoints.userFollowers,
+      ApiEndpoints.followers(userId),
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          path,
+          query: const {'page': 1, 'limit': 50},
+        );
+        final list = _parseUserList(res.data);
+        if (list.isNotEmpty) return list;
+      } catch (_) {}
     }
+    return const [];
   }
 
   Future<List<UserEntity>> following(String userId) async {
-    try {
-      final res = await _dio.safeGet<Map<String, dynamic>>(
-        ApiEndpoints.following(userId),
-      );
-      return _parseUserList(res.data);
-    } catch (_) {
-      return const [];
+    for (final path in [
+      if (Env.useMobileAuth) ApiEndpoints.userFollowing,
+      ApiEndpoints.following(userId),
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          path,
+          query: const {'page': 1, 'limit': 50},
+        );
+        final list = _parseUserList(res.data);
+        if (list.isNotEmpty) return list;
+      } catch (_) {}
     }
+    return const [];
   }
 
   List<UserEntity> _parseUserList(dynamic body) {
+    if (body is List) {
+      return asJsonList(body)
+          .map((e) => UserDto.fromApiMap(asJsonMap(e)).toEntity())
+          .where((u) => u.id.isNotEmpty)
+          .toList();
+    }
     if (body is! Map) return const [];
     final data = body['data'] is Map ? asJsonMap(body['data']) : asJsonMap(body);
-    final raw = data['users'] ?? data['items'];
+    final raw =
+        data['followers'] ?? data['following'] ?? data['users'] ?? data['items'];
     if (raw is! List) return const [];
     return raw.map((e) => UserDto.fromApiMap(asJsonMap(e)).toEntity()).toList();
   }
@@ -240,28 +277,76 @@ class WalletRemoteDataSource {
     return PaymentDefaults.merge(remote);
   }
 
+  bool _paymentRequestAccepted(dynamic data, int code) {
+    if (code == 201 || code == 200) {
+      if (data == null) return true;
+      if (data is String && data.trim().isEmpty) return true;
+    }
+    if (data is! Map) return false;
+    final m = Map<String, dynamic>.from(data);
+    if (m['success'] == true) return true;
+    if (m['id'] != null || m['paymentRequestId'] != null) return true;
+    final nested = m['data'];
+    if (nested is Map) {
+      final inner = Map<String, dynamic>.from(nested);
+      if (inner['id'] != null || inner['paymentRequestId'] != null) {
+        return true;
+      }
+      if (inner['request'] is Map) {
+        final r = Map<String, dynamic>.from(inner['request'] as Map);
+        if (r['id'] != null) return true;
+      }
+    }
+    if (m['request'] is Map) {
+      final r = Map<String, dynamic>.from(m['request'] as Map);
+      if (r['id'] != null) return true;
+    }
+    return false;
+  }
+
   Future<void> submitPaymentRequest(Map<String, dynamic> body) async {
-    final res = await _dio
-        .safePost<dynamic>(
-          ApiEndpoints.paymentRequests,
-          data: body,
-        )
-        .timeout(
-          const Duration(seconds: 22),
-          onTimeout: () => throw const ApiException(
-            'Ödeme bildirimi zaman aşımına uğradı. '
-            'Bağlantınızı kontrol edip tekrar deneyin.',
-          ),
-        );
-    final code = res.statusCode ?? 0;
-    if (code < 200 || code >= 300) {
-      throw ApiException(
-        'Talep gönderilemedi (HTTP $code). Oturumu kontrol edip tekrar deneyin.',
-        statusCode: code,
-      );
+    final payload = jsonEncode(body);
+    final opts = Options(contentType: 'application/json');
+    Response<dynamic> res;
+    try {
+      res = await _dio
+          .safePost<dynamic>(
+            ApiEndpoints.paymentRequests,
+            data: payload,
+            options: opts,
+          )
+          .timeout(
+            const Duration(seconds: 22),
+            onTimeout: () => throw const ApiException(
+              'Ödeme bildirimi zaman aşımına uğradı. '
+              'Bağlantınızı kontrol edip tekrar deneyin.',
+            ),
+          );
+    } on ApiException catch (e) {
+      if (e.statusCode != 404) rethrow;
+      res = await _dio
+          .safePost<dynamic>(
+            '/api/jeton/payment-request',
+            data: payload,
+            options: opts,
+          )
+          .timeout(const Duration(seconds: 22));
     }
 
+    final code = res.statusCode ?? 0;
     final data = res.data;
+
+    if (code >= 400) {
+      String msg = 'Talep gönderilemedi (HTTP $code).';
+      if (data is Map) {
+        msg = (data['error'] ?? data['message'] ?? msg).toString();
+      } else if (data is String && data.isNotEmpty && !data.contains('<html')) {
+        msg = data;
+      }
+      throw ApiException(msg, statusCode: code);
+    }
+
+    if (_paymentRequestAccepted(data, code)) return;
     if (data is String) {
       final s = data.trim();
       if (s.contains('<!DOCTYPE') || s.contains('<html')) {
@@ -287,16 +372,6 @@ class WalletRemoteDataSource {
       if (err != null && err.toString().isNotEmpty) {
         throw ApiException(err.toString());
       }
-      final nested = m['data'];
-      if (nested is Map) {
-        final inner = Map<String, dynamic>.from(nested);
-        final id = inner['id'] ?? inner['paymentRequestId'];
-        if (id != null && id.toString().isNotEmpty) return;
-      }
-      if (m['id'] != null || m['paymentRequestId'] != null) return;
-      if (m['success'] == true) return;
-      // 201 Created — gövde tanınmasa bile kayıt oluşmuş olabilir
-      if (code == 201) return;
     }
 
     throw const ApiException(
@@ -306,15 +381,46 @@ class WalletRemoteDataSource {
   }
 
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.paymentRequests);
+    final page = await myPaymentRequestsPage(page: 1);
+    return page.items;
+  }
+
+  Future<PagedResult<CfcPaymentRequestEntity>> myPaymentRequestsPage({
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.paymentRequests,
+      query: {'page': page, 'limit': limit},
+    );
     dynamic data = res.data;
     if (data is Map && data['success'] == true) data = data['data'];
+    List<dynamic> raw = const [];
     if (data is List) {
-      return data
-          .map((e) => CfcPaymentRequestEntity.fromJson(asJsonMap(e)))
-          .toList();
+      raw = data;
+    } else if (data is Map) {
+      final m = asJsonMap(data);
+      raw = asJsonList(m['requests'] ?? m['items'] ?? const []);
+    } else if (res.data is Map) {
+      final m = asJsonMap(res.data);
+      raw = asJsonList(m['requests'] ?? m['items'] ?? const []);
     }
-    return const [];
+    final items = raw
+        .map((e) => CfcPaymentRequestEntity.fromJson(asJsonMap(e)))
+        .toList();
+    var hasMore = items.length >= limit;
+    final body = res.data;
+    if (body is Map) {
+      final pag = body['pagination'] ??
+          (body['data'] is Map ? asJsonMap(body['data'])['pagination'] : null);
+      if (pag is Map) {
+        final pm = asJsonMap(pag);
+        final totalPages = asInt(pm['totalPages']);
+        final current = asInt(pm['page']);
+        if (totalPages > 0) hasMore = current < totalPages;
+      }
+    }
+    return PagedResult(items: items, hasMore: hasMore);
   }
 
   Map<String, dynamic> _unwrap(dynamic data) {

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../utils/open_social_create_post.dart';
@@ -21,12 +23,12 @@ class SocialFeedComposer extends ConsumerWidget {
           color: const Color(0xFF12122A).withValues(alpha: 0.95),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.accentPurple.withValues(alpha: 0.38),
+            color: AppThemeColors.accentPurple.withValues(alpha: 0.38),
             width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.accentPurple.withValues(alpha: 0.12),
+              color: AppThemeColors.accentPurple.withValues(alpha: 0.12),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -46,12 +48,12 @@ class SocialFeedComposer extends ConsumerWidget {
                   child: Row(
                     children: [
                       UserAvatar(url: me?.avatarUrl, radius: 20),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'Ne düşünüyorsun, Canlıfal?',
                           style: TextStyle(
-                            color: AppColors.textMuted.withValues(alpha: 0.95),
+                            color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                           ),
@@ -74,7 +76,7 @@ class SocialFeedComposer extends ConsumerWidget {
                   _ComposerAction(
                     icon: Icons.photo_library_rounded,
                     label: 'Fotoğraf',
-                    color: AppColors.accentPink,
+                    color: AppThemeColors.accentPink,
                     onTap: () => openSocialCreatePost(context, ref),
                   ),
                   _ComposerAction(
@@ -133,13 +135,13 @@ class _ComposerAction extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 22, color: color),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
-                color: AppColors.textSecondary,
+                color: context.colors.onSurfaceVariant,
               ),
             ),
           ],

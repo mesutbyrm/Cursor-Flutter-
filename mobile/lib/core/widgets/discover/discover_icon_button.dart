@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../theme/app_colors.dart';
 
 class DiscoverIconButton extends StatelessWidget {
   const DiscoverIconButton({
@@ -22,7 +22,7 @@ class DiscoverIconButton extends StatelessWidget {
       child: IconButton(
         tooltip: tooltip,
         onPressed: onPressed,
-        icon: Icon(icon, color: AppColors.textSecondary, size: 24),
+        icon: Icon(icon, color: context.colors.onSurfaceVariant, size: 24),
       ),
     );
   }

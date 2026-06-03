@@ -6,6 +6,7 @@ Map<String, dynamic> buildJetonPaymentRequest({
   required JetonPackageEntity package,
   required String method,
   String? notes,
+  String? senderLabel,
 }) {
   final coins = package.coins > 0 ? package.coins : 1;
   return {
@@ -17,6 +18,8 @@ Map<String, dynamic> buildJetonPaymentRequest({
     'coins': coins,
     'amount': coins,
     if (package.priceTry != null) 'priceTry': package.priceTry,
+    if (senderLabel != null && senderLabel.trim().isNotEmpty)
+      'senderInfo': senderLabel.trim(),
     'notes': notes ?? 'Jeton yükleme · $method',
   };
 }

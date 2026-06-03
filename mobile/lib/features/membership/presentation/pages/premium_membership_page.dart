@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,10 +9,10 @@ import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../profile/data/jeton_packages_catalog.dart';
 import '../../../profile/domain/entities/jeton_package_entity.dart';
+import '../../../profile/presentation/providers/payment_requests_notifier.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../../../profile/presentation/widgets/jeton_checkout_flow.dart';
@@ -51,7 +54,7 @@ class PremiumMembershipPage extends ConsumerWidget {
           ),
           error: (e, _) => _ErrorBody(message: ApiException.userMessage(e)),
           data: (cat) => RefreshIndicator(
-            color: AppColors.accentPurple,
+            color: AppThemeColors.accentPurple,
             onRefresh: () async {
               ref.invalidate(membershipCatalogProvider);
               ref.invalidate(walletBalancesProvider);
@@ -100,7 +103,7 @@ class PremiumMembershipPage extends ConsumerWidget {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 11,
-                            color: AppColors.textMuted.withValues(alpha: 0.9),
+                            color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                             height: 1.35,
                           ),
                         ),
@@ -210,7 +213,7 @@ class PremiumMembershipPage extends ConsumerWidget {
       onDone: () {
         ref.invalidate(membershipCatalogProvider);
         ref.invalidate(walletBalancesProvider);
-        ref.invalidate(allPaymentRequestsProvider);
+        ref.invalidate(paymentRequestsNotifierProvider);
       },
     );
   }

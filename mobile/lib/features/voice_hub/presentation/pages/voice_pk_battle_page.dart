@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
@@ -70,7 +70,8 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
 
   void _startGiftRealtime() {
     final service = ref.read(voiceRoomGiftRealtimeProvider);
-    service.start(widget.room.id);
+    final r = widget.room;
+    service.start(r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id);
     _giftSub?.cancel();
     _giftSub = service.events.listen(_onGiftEvent);
   }
@@ -238,7 +239,7 @@ class _PkHeader extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: const BoxDecoration(
-                      color: AppColors.liveRed,
+                      color: AppThemeColors.liveRed,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -248,7 +249,7 @@ class _PkHeader extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 11,
-                      color: AppColors.liveRed,
+                      color: AppThemeColors.liveRed,
                     ),
                   ),
                   const SizedBox(width: 10),

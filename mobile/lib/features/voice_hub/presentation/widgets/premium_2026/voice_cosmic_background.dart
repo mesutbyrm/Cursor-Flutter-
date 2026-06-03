@@ -8,9 +8,14 @@ import '../../theme/voice_room_tokens.dart';
 
 /// Kozmik / galaksi arka plan + yüzen parçacıklar.
 class VoiceCosmicBackground extends StatefulWidget {
-  const VoiceCosmicBackground({super.key, this.imageUrl});
+  const VoiceCosmicBackground({
+    super.key,
+    this.imageUrl,
+    this.showParticles = false,
+  });
 
   final String? imageUrl;
+  final bool showParticles;
 
   @override
   State<VoiceCosmicBackground> createState() => _VoiceCosmicBackgroundState();
@@ -52,7 +57,9 @@ class _VoiceCosmicBackgroundState extends State<VoiceCosmicBackground>
             placeholder: (_, _) => const DecoratedBox(
               decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
             ),
-            errorWidget: (_, _, _) => const SizedBox.shrink(),
+            errorWidget: (_, _, __) => const DecoratedBox(
+              decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
+            ),
             color: Colors.black.withValues(alpha: 0.42),
             colorBlendMode: BlendMode.darken,
           ),
@@ -71,13 +78,14 @@ class _VoiceCosmicBackgroundState extends State<VoiceCosmicBackground>
           left: MediaQuery.sizeOf(context).width * 0.2,
           child: _orb(VoiceRoomTokens.neonBlue, 120, opacity: 0.2),
         ),
-        AnimatedBuilder(
-          animation: _drift,
-          builder: (context, _) => CustomPaint(
-            painter: _ParticlePainter(progress: _drift.value),
-            size: Size.infinite,
+        if (widget.showParticles)
+          AnimatedBuilder(
+            animation: _drift,
+            builder: (context, _) => CustomPaint(
+              painter: _ParticlePainter(progress: _drift.value),
+              size: Size.infinite,
+            ),
           ),
-        ),
         ClipRect(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),
