@@ -11,6 +11,7 @@ class VoiceRoomsHubPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final titleSize = MediaQuery.sizeOf(context).width >= 600 ? 24.0 : 22.0;
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: VoiceRoomTokens.bgDeep,
@@ -19,11 +20,11 @@ class VoiceRoomsHubPage extends ConsumerWidget {
         elevation: 0,
         title: ShaderMask(
           shaderCallback: (b) => VoiceRoomTokens.neonRing.createShader(b),
-          child: const Text(
+          child: Text(
             'Sesli Sohbet',
             style: TextStyle(
               fontWeight: FontWeight.w900,
-              fontSize: 22,
+              fontSize: titleSize,
               color: Colors.white,
             ),
           ),

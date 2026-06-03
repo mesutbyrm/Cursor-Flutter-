@@ -824,7 +824,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             if (_loginError == null && !keyboardOpen)
               Positioned(
                 right: 4,
-                top: mq.height * 0.38,
+                bottom: MediaQuery.paddingOf(context).bottom + 168,
                 child: VoiceWebFloatingRail(
                   onTools: () => showVoiceRoomCommandsPanel(
                     context,

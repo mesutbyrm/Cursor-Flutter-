@@ -138,8 +138,24 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     };
   }
 
+  _DiscoverMetrics _metrics(BuildContext context) {
+    final w = MediaQuery.sizeOf(context).width;
+    final compact = w < 360;
+    final tablet = w >= 600;
+    return _DiscoverMetrics(
+      horizontalPad: tablet ? 24.0 : (compact ? 12.0 : 16.0),
+      popularCardWidth: (w * 0.44).clamp(148.0, 200.0),
+      popularRowHeight: tablet ? 240.0 : 220.0,
+      bannerHeight: (w * 0.36).clamp(128.0, 168.0),
+      gridColumns: tablet ? 4 : (w >= 400 ? 4 : 3),
+      storiesHeight: tablet ? 116.0 : 108.0,
+      sectionTitleSize: tablet ? 20.0 : 18.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final metrics = _metrics(context);
     final coinBalance =
         (ref.watch(coinBalanceProvider).valueOrNull ??
             ref.watch(currentUserCoinBalanceProvider));
@@ -163,12 +179,13 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
             userName: name,
             avatarUrl: avatar,
             coins: coinBalance ?? 0,
+            horizontalPad: metrics.horizontalPad,
             onNotifications: () => context.push('/notifications'),
             onCoins: () => openJetonStore(context, ref: ref),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          padding: EdgeInsets.fromLTRB(metrics.horizontalPad, 12, metrics.horizontalPad, 0),
           child: _SearchBar(
             controller: _searchCtrl,
             onChanged: (v) {
@@ -183,7 +200,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
             height: 40,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: metrics.horizontalPad),
               itemCount: _tabs.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, i) {
@@ -216,6 +233,8 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
         RepaintBoundary(
           child: _LiveStoriesRow(
             live: live,
+            height: metrics.storiesHeight,
+            horizontalPad: metrics.horizontalPad,
             onOpenRoom: () => showOpenVoiceChatRoomFlow(context, ref),
             onStreamTap: (s) => openLiveFromDiscover(context, ref, s),
           ),
@@ -224,7 +243,12 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
           child: ListView.builder(
             controller: _scroll,
             cacheExtent: ListPerf.cacheExtent,
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            padding: EdgeInsets.fromLTRB(
+              metrics.horizontalPad,
+              16,
+              metrics.horizontalPad,
+              100,
+            ),
             itemCount: _listChildCount(
               popular: popular,
               live: live,
@@ -233,6 +257,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
             itemBuilder: (context, index) => _buildListChild(
               context,
               index: index,
+              metrics: metrics,
               popular: popular,
               live: live,
               vipRooms: vipRooms,
@@ -256,6 +281,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
   Widget _buildListChild(
     BuildContext context, {
     required int index,
+    required _DiscoverMetrics metrics,
     required List<VoiceRoomEntity> popular,
     required List<LiveStreamEntity> live,
     required List<VoiceRoomEntity> vipRooms,
@@ -263,6 +289,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     var i = index;
     if (i == 0) {
       return _NightBanner(
+        height: metrics.bannerHeight,
         onJoin: widget.rooms.isNotEmpty
             ? () => widget.onRoomTap(widget.rooms.first)
             : null,
@@ -270,15 +297,19 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     }
     i--;
     if (i == 0) {
-      return const Padding(
-        padding: EdgeInsets.only(top: 22, bottom: 10),
-        child: _SectionTitle(title: 'Popüler Odalar', action: 'Tümü'),
+      return Padding(
+        padding: const EdgeInsets.only(top: 22, bottom: 10),
+        child: _SectionTitle(
+          title: 'Popüler Odalar',
+          action: 'Tümü',
+          fontSize: metrics.sectionTitleSize,
+        ),
       );
     }
     i--;
     if (i == 0) {
       return SizedBox(
-        height: 220,
+        height: metrics.popularRowHeight,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: popular.take(10).length,
@@ -286,6 +317,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
           itemBuilder: (context, j) => _PopularRoomCard(
             room: popular[j],
             index: j,
+            width: metrics.popularCardWidth,
             onTap: () => widget.onRoomTap(popular[j]),
           ),
         ),
@@ -293,9 +325,13 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     }
     i--;
     if (i == 0) {
-      return const Padding(
-        padding: EdgeInsets.only(top: 22, bottom: 10),
-        child: _SectionTitle(title: 'Canlı Yayınlar', action: 'Tümü'),
+      return Padding(
+        padding: const EdgeInsets.only(top: 22, bottom: 10),
+        child: _SectionTitle(
+          title: 'Canlı Yayınlar',
+          action: 'Tümü',
+          fontSize: metrics.sectionTitleSize,
+        ),
       );
     }
     i--;
@@ -321,9 +357,13 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     }
     i--;
     if (i == 0) {
-      return const Padding(
-        padding: EdgeInsets.only(top: 22, bottom: 10),
-        child: _SectionTitle(title: 'Kategoriler', action: null),
+      return Padding(
+        padding: const EdgeInsets.only(top: 22, bottom: 10),
+        child: _SectionTitle(
+          title: 'Kategoriler',
+          action: null,
+          fontSize: metrics.sectionTitleSize,
+        ),
       );
     }
     i--;
@@ -331,11 +371,11 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
       return GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: metrics.gridColumns,
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
-          childAspectRatio: 0.82,
+          childAspectRatio: metrics.gridColumns >= 4 ? 0.82 : 0.88,
         ),
         itemCount: _gridCats.length,
         itemBuilder: (context, j) {
@@ -361,9 +401,13 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     i--;
     if (vipRooms.isNotEmpty) {
       if (i == 0) {
-        return const Padding(
-          padding: EdgeInsets.only(top: 22, bottom: 10),
-          child: _SectionTitle(title: 'VIP Odalar', action: 'Tümü'),
+        return Padding(
+          padding: const EdgeInsets.only(top: 22, bottom: 10),
+          child: _SectionTitle(
+            title: 'VIP Odalar',
+            action: 'Tümü',
+            fontSize: metrics.sectionTitleSize,
+          ),
         );
       }
       i--;
@@ -450,6 +494,26 @@ void openLiveFromDiscover(
   openLiveStreamNative(context, ref, stream);
 }
 
+class _DiscoverMetrics {
+  const _DiscoverMetrics({
+    required this.horizontalPad,
+    required this.popularCardWidth,
+    required this.popularRowHeight,
+    required this.bannerHeight,
+    required this.gridColumns,
+    required this.storiesHeight,
+    required this.sectionTitleSize,
+  });
+
+  final double horizontalPad;
+  final double popularCardWidth;
+  final double popularRowHeight;
+  final double bannerHeight;
+  final int gridColumns;
+  final double storiesHeight;
+  final double sectionTitleSize;
+}
+
 class _DiscoverTab {
   const _DiscoverTab({required this.id, required this.label, required this.icon});
   final String id;
@@ -470,6 +534,7 @@ class _DiscoverHeader extends StatelessWidget {
     required this.userName,
     required this.avatarUrl,
     required this.coins,
+    required this.horizontalPad,
     required this.onNotifications,
     required this.onCoins,
   });
@@ -477,6 +542,7 @@ class _DiscoverHeader extends StatelessWidget {
   final String userName;
   final String? avatarUrl;
   final int coins;
+  final double horizontalPad;
   final VoidCallback onNotifications;
   final VoidCallback onCoins;
 
@@ -489,7 +555,7 @@ class _DiscoverHeader extends StatelessWidget {
           sigmaY: DiscoverPremiumVisual.glassBlur,
         ),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 8, 12, 10),
+          padding: EdgeInsets.fromLTRB(horizontalPad, 8, horizontalPad - 4, 10),
           decoration: BoxDecoration(
             color: DiscoverPremiumVisual.glassFill,
             border: Border(
@@ -686,21 +752,25 @@ class _TabChip extends StatelessWidget {
 class _LiveStoriesRow extends StatelessWidget {
   const _LiveStoriesRow({
     required this.live,
+    required this.height,
+    required this.horizontalPad,
     required this.onOpenRoom,
     required this.onStreamTap,
   });
 
   final List<LiveStreamEntity> live;
+  final double height;
+  final double horizontalPad;
   final VoidCallback onOpenRoom;
   final ValueChanged<LiveStreamEntity> onStreamTap;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 108,
+      height: height,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.symmetric(horizontal: horizontalPad),
         children: [
           _StoryOpenRoom(onTap: onOpenRoom),
           const SizedBox(width: 12),
@@ -815,13 +885,15 @@ class _StoryLiveItem extends StatelessWidget {
 }
 
 class _NightBanner extends StatelessWidget {
-  const _NightBanner({required this.onJoin});
+  const _NightBanner({required this.height, required this.onJoin});
+
+  final double height;
   final VoidCallback? onJoin;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 140,
+      height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
         gradient: const LinearGradient(
@@ -887,10 +959,15 @@ class _NightBanner extends StatelessWidget {
 }
 
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.title, this.action});
+  const _SectionTitle({
+    required this.title,
+    this.action,
+    this.fontSize = 18,
+  });
 
   final String title;
   final String? action;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -898,7 +975,7 @@ class _SectionTitle extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: fontSize),
         ),
         const Spacer(),
         if (action != null)
@@ -919,11 +996,13 @@ class _PopularRoomCard extends StatelessWidget {
   const _PopularRoomCard({
     required this.room,
     required this.index,
+    required this.width,
     required this.onTap,
   });
 
   final VoiceRoomEntity room;
   final int index;
+  final double width;
   final VoidCallback onTap;
 
   String get _badge => switch (index % 4) {
@@ -944,7 +1023,7 @@ class _PopularRoomCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = room.backgroundImageUrl;
     return SizedBox(
-      width: 160,
+      width: width,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
