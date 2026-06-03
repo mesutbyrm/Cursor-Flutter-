@@ -13,11 +13,13 @@ class VoiceRoomActionRow extends StatelessWidget {
   const VoiceRoomActionRow({
     super.key,
     required this.dj,
+    this.showMusicCard = true,
     this.onMusicTap,
     this.onDjTap,
   });
 
   final ChatRoomDjState dj;
+  final bool showMusicCard;
   final VoidCallback? onMusicTap;
   final VoidCallback? onDjTap;
 
@@ -25,9 +27,10 @@ class VoiceRoomActionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(
-          child: _ActionTile(
-            onTap: onMusicTap,
+        if (showMusicCard)
+          Expanded(
+            child: _ActionTile(
+              onTap: onMusicTap,
             gradient: const LinearGradient(
               colors: [Color(0xFFFF0080), Color(0xFF8E2DE2)],
             ),
@@ -69,8 +72,9 @@ class VoiceRoomActionRow extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: 10),
+        if (showMusicCard) const SizedBox(width: 10),
         Expanded(
+          flex: showMusicCard ? 1 : 2,
           child: _ActionTile(
             onTap: onDjTap,
             gradient: const LinearGradient(

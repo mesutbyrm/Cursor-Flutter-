@@ -35,7 +35,9 @@ import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'sheets/voice_room_hub_settings.dart';
 import 'sheets/voice_room_sheets.dart';
-import 'sheets/voice_youtube_song_sheet.dart';
+import 'pages/voice_music_hub_page.dart';
+import 'utils/voice_music_access.dart';
+import '../../profile/presentation/providers/profile_providers.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
 import 'widgets/premium/voice_gift_flight_overlay.dart';
@@ -50,6 +52,7 @@ import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_action_row.dart';
+import 'widgets/voice_room/voice_room_music_mini_player.dart';
 import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
 
 /// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
@@ -564,6 +567,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _perms(user, live.presence);
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
+    final jeton = VoiceMusicAccess.jetonFromBalances(
+      ref.watch(walletBalancesProvider).valueOrNull,
+    );
+    final showMusicCard = VoiceMusicAccess.canShowMusicCard(
+      dj: live.dj,
+      perms: perms,
+      jetonBalance: jeton,
+    );
     final speakingIds = <String>{
       for (final p in live.presence)
         if (p.isSpeaking) p.id,
@@ -732,14 +743,35 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             text: duyuru,
                             canEdit: perms.canModerate || isOwner,
                           ),
+                          VoiceRoomMusicMiniPlayer(
+                            dj: live.dj,
+                            canModerate: perms.canModerate || isOwner,
+                            onTap: showMusicCard
+                                ? () => showVoiceMusicHubPage(
+                                      context,
+                                      ref,
+                                      room: room,
+                                      perms: perms,
+                                      isOwner: isOwner,
+                                    )
+                                : null,
+                            onSkip: (perms.canModerate || isOwner)
+                                ? () => ref
+                                    .read(voiceRoomLiveProvider(room).notifier)
+                                    .skipMusic()
+                                : null,
+                          ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: VoiceRoomActionRow(
                               dj: live.dj,
-                              onMusicTap: () => showVoiceYoutubeSongSheet(
+                              showMusicCard: showMusicCard,
+                              onMusicTap: () => showVoiceMusicHubPage(
                                 context,
                                 ref,
                                 room: room,
+                                perms: perms,
+                                isOwner: isOwner,
                               ),
                               onDjTap: () => showVoiceRoomDjSheet(
                                 context,
@@ -800,11 +832,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     perms: perms,
                     isOwner: isOwner,
                   ),
-                  onMusic: () => showVoiceYoutubeSongSheet(
-                    context,
-                    ref,
-                    room: room,
-                  ),
+                  onMusic: showMusicCard
+                      ? () => showVoiceMusicHubPage(
+                            context,
+                            ref,
+                            room: room,
+                            perms: perms,
+                            isOwner: isOwner,
+                          )
+                      : null,
                 ),
               ),
             if (_showVipEntrance && user != null)

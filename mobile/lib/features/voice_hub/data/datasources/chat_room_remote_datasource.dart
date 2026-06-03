@@ -9,6 +9,7 @@ import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/music_queue_item.dart';
+import '../../domain/entities/popular_music_suggestion.dart';
 
 class ChatRoomRemoteDataSource {
   ChatRoomRemoteDataSource(this._dio) : _publicDio = _buildPublicDio();
@@ -236,13 +237,93 @@ class ChatRoomRemoteDataSource {
     String roomKey, {
     String? alternateKey,
   }) async {
+    await skipMusicQueue(roomKey: roomKey, alternateKey: alternateKey);
+  }
+
+  Future<void> skipMusicQueue({
+    required String roomKey,
+    String? alternateKey,
+  }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      try {
-        await _dio.safePost<dynamic>(
-          '/api/chat/rooms/$key/music-queue/advance',
-        );
-      } catch (_) {}
+      await _dio.safePost<dynamic>(
+        '/api/chat/rooms/$key/music-queue/advance',
+      );
     });
+  }
+
+  Future<void> removeMusicQueueItem({
+    required String roomKey,
+    String? alternateKey,
+    required String itemId,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safeDelete<dynamic>(
+        '/api/chat/rooms/$key/music-queue/$itemId',
+      );
+    });
+  }
+
+  Future<void> clearMusicQueue({
+    required String roomKey,
+    String? alternateKey,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safeDelete<dynamic>('/api/chat/rooms/$key/music-queue');
+    });
+  }
+
+  Future<void> updateMusicSettings({
+    required String roomKey,
+    String? alternateKey,
+    bool? musicEnabled,
+    int? musicRequestCost,
+    int? maxMusicQueue,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePatch<dynamic>(
+        '/api/chat/rooms/$key/music-settings',
+        data: jsonEncode({
+          if (musicEnabled != null) 'musicEnabled': musicEnabled,
+          if (musicRequestCost != null) 'musicRequestCost': musicRequestCost,
+          if (maxMusicQueue != null) 'maxMusicQueue': maxMusicQueue,
+        }),
+        options: Options(contentType: 'application/json'),
+      );
+    });
+  }
+
+  Future<List<PopularMusicSuggestion>> fetchPopularMusic() async {
+    const fallback = [
+      PopularMusicSuggestion(
+        title: 'Tutamıyorum Zamanı',
+        artist: 'Müslüm Gürses',
+        query: 'Müslüm Gürses Tutamıyorum Zamanı',
+      ),
+      PopularMusicSuggestion(
+        title: 'Kum Gibi',
+        artist: 'Ahmet Kaya',
+        query: 'Ahmet Kaya Kum Gibi',
+      ),
+      PopularMusicSuggestion(
+        title: 'Yalan',
+        artist: 'Tarkan',
+        query: 'Tarkan Yalan',
+      ),
+    ];
+    try {
+      final res = await _dio.safeGet<dynamic>('/api/chat/music/popular');
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['items'];
+      if (raw is List && raw.isNotEmpty) {
+        return raw
+            .whereType<Map>()
+            .map((e) => PopularMusicSuggestion.fromJson(
+                  Map<String, dynamic>.from(e),
+                ))
+            .toList();
+      }
+    } catch (_) {}
+    return fallback;
   }
 
   Future<void> setRoomBackground({
@@ -532,7 +613,16 @@ class ChatRoomRemoteDataSource {
     } catch (_) {}
   }
 
-  Future<({List<MusicQueueItem> queue, int cost})> fetchMusicQueue(
+  Future<
+      ({
+        List<MusicQueueItem> queue,
+        int cost,
+        int maxMusicQueue,
+        bool musicEnabled,
+        MusicQueueItem? nowPlaying,
+        bool playing,
+        bool canRequestMusic,
+      })> fetchMusicQueue(
     String roomKey, {
     String? alternateKey,
   }) async {
@@ -556,12 +646,32 @@ class ChatRoomRemoteDataSource {
       final cost = map['cost'] as int? ??
           map['musicRequestCost'] as int? ??
           10;
-      return (queue: queue, cost: cost);
+      MusicQueueItem? nowPlaying;
+      final np = map['nowPlaying'];
+      if (np is Map) {
+        nowPlaying = MusicQueueItem.fromJson(Map<String, dynamic>.from(np));
+      } else if (map['playing'] == true && queue.isNotEmpty) {
+        nowPlaying = queue.first;
+      }
+      return (
+        queue: queue,
+        cost: cost,
+        maxMusicQueue: map['maxMusicQueue'] as int? ?? 20,
+        musicEnabled: map['musicEnabled'] != false,
+        nowPlaying: nowPlaying,
+        playing: map['playing'] == true,
+        canRequestMusic: map['canRequestMusic'] == true,
+      );
     });
   }
 
-  Future<({MusicQueueItem? item, List<MusicQueueItem> queue, int? newBalance})>
-      requestMusic({
+  Future<
+      ({
+        MusicQueueItem? item,
+        List<MusicQueueItem> queue,
+        int? newBalance,
+        int? queuePosition,
+      })> requestMusic({
     required String roomKey,
     String? alternateKey,
     required String title,
@@ -615,7 +725,13 @@ class ChatRoomRemoteDataSource {
         }
       }
       final balance = map['newBalance'] as int? ?? map['coinBalance'] as int?;
-      return (item: item, queue: queue, newBalance: balance);
+      final position = map['queuePosition'] as int?;
+      return (
+        item: item,
+        queue: queue,
+        newBalance: balance,
+        queuePosition: position,
+      );
     });
   }
 
