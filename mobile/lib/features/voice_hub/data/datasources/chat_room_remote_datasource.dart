@@ -69,7 +69,9 @@ class ChatRoomRemoteDataSource {
       raw = map['users'] ??
           map['presence'] ??
           map['members'] ??
-          map['onlineUsers'];
+          map['onlineUsers'] ??
+          map['viewers'] ??
+          map['listeners'];
       if (raw == null && map['data'] is List) raw = map['data'];
       if (raw == null && map['data'] is Map) {
         final inner = asJsonMap(map['data']);
@@ -338,13 +340,82 @@ class ChatRoomRemoteDataSource {
     return '$m:${s.toString().padLeft(2, '0')}';
   }
 
+  Future<List<YoutubeSearchHit>> _searchYoutubePiped(String q) async {
+    const hosts = [
+      'https://pipedapi.kavin.rocks',
+      'https://pipedapi.adminforge.de',
+    ];
+    for (final host in hosts) {
+      final hits = await _searchYoutubePipedOnHost(host, q);
+      if (hits.isNotEmpty) return hits;
+    }
+    return const [];
+  }
+
+  Future<List<YoutubeSearchHit>> _searchYoutubePipedOnHost(
+    String host,
+    String q,
+  ) async {
+    try {
+      final res = await _dio.get<dynamic>(
+        '$host/search',
+        queryParameters: {'q': q, 'filter': 'music_songs'},
+        options: Options(
+          headers: {'Accept': 'application/json'},
+          receiveTimeout: const Duration(seconds: 14),
+          sendTimeout: const Duration(seconds: 10),
+        ),
+      );
+      final data = res.data;
+      if (data is! Map) return const [];
+      final items = data['items'];
+      if (items is! List) return const [];
+      final out = <YoutubeSearchHit>[];
+      for (final row in items.take(12)) {
+        if (row is! Map) continue;
+        final m = Map<String, dynamic>.from(row);
+        final rawUrl = m['url']?.toString() ?? '';
+        var id = '';
+        final vMatch = RegExp(r'[?&]v=([a-zA-Z0-9_-]{6,})').firstMatch(rawUrl);
+        if (vMatch != null) {
+          id = vMatch.group(1)!;
+        } else if (rawUrl.startsWith('/')) {
+          final parts = rawUrl.split('/').where((s) => s.isNotEmpty).toList();
+          if (parts.isNotEmpty) id = parts.last;
+        } else {
+          id = m['id']?.toString() ?? '';
+        }
+        id = id.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '');
+        if (id.length > 11) id = id.substring(0, 11);
+        if (id.length < 6) continue;
+        out.add(
+          YoutubeSearchHit(
+            videoId: id,
+            title: m['title']?.toString() ?? 'Video',
+            url: 'https://www.youtube.com/watch?v=$id',
+            thumbUrl: m['thumbnail']?.toString() ??
+                'https://i.ytimg.com/vi/$id/hqdefault.jpg',
+            uploader: m['uploaderName']?.toString(),
+            duration: _formatDuration(m['duration']),
+          ),
+        );
+      }
+      return out;
+    } catch (_) {
+      return const [];
+    }
+  }
+
   Future<List<YoutubeSearchHit>> searchYoutube(String query) async {
     final q = query.trim();
     if (q.length < 2) return const [];
 
+    final piped = await _searchYoutubePiped(q);
+    if (piped.isNotEmpty) return piped;
+
     const paths = [
-      '/api/chat/youtube-search',
       '/api/youtube/search',
+      '/api/chat/youtube-search',
     ];
     Object? lastError;
     for (final path in paths) {
@@ -354,13 +425,11 @@ class ChatRoomRemoteDataSource {
               path,
               query: {'q': q, 'query': q, 'search': q},
             )
-            .timeout(const Duration(seconds: 18));
+            .timeout(const Duration(seconds: 12));
         final data = res.data;
         if (data is String &&
             (data.contains('<!DOCTYPE') || data.contains('<html'))) {
-          throw const ApiException(
-            'YouTube araması yapılamadı (oturum veya sunucu yanıtı).',
-          );
+          continue;
         }
         final hits = _parseYoutubeHits(data);
         if (hits.isNotEmpty) return hits;
@@ -368,8 +437,14 @@ class ChatRoomRemoteDataSource {
         lastError = e;
       }
     }
+
+    final pipedRetry = await _searchYoutubePiped(q);
+    if (pipedRetry.isNotEmpty) return pipedRetry;
+
     if (lastError != null) {
-      throw ApiException(ApiException.userMessage(lastError));
+      throw ApiException(
+        'YouTube araması başarısız. İnternet bağlantınızı kontrol edip tekrar deneyin.',
+      );
     }
     return const [];
   }
@@ -467,14 +542,26 @@ class ChatRoomRemoteDataSource {
     required int seatIndex,
     String? userId,
   }) async {
+    final body = jsonEncode({
+      'seatIndex': seatIndex,
+      if (userId != null && userId.isNotEmpty) 'userId': userId,
+    });
+    final opts = Options(contentType: 'application/json');
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _dio.safePatch<dynamic>(
+          seatsPath(key),
+          data: body,
+          options: opts,
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 405 && e.statusCode != 404) rethrow;
+      }
       await _dio.safePost<dynamic>(
         seatsPath(key),
-        data: jsonEncode({
-          'seatIndex': seatIndex,
-          if (userId != null && userId.isNotEmpty) 'userId': userId,
-        }),
-        options: Options(contentType: 'application/json'),
+        data: body,
+        options: opts,
       );
     });
   }

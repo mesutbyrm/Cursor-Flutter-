@@ -194,6 +194,19 @@ ApiException _mapDio(DioException e) {
     );
   }
 
+  if (code == 405) {
+    return ApiException(
+      'Bu işlem sunucuda desteklenmiyor (405). Uygulamayı güncelleyin veya web sürümünü deneyin.',
+      statusCode: code,
+    );
+  }
+  if (code == 404) {
+    return ApiException(
+      'İstenen kaynak bulunamadı (404).',
+      statusCode: code,
+    );
+  }
+
   String msg = e.message ?? 'Ağ hatası';
   if (body is Map) {
     final m = body.cast<String, dynamic>();

@@ -44,9 +44,14 @@ class ChatRoomUserRef extends Equatable {
   final String? roleSymbol;
   final String? membership;
 
-  String get displayName => (nickname?.trim().isNotEmpty == true)
-      ? nickname!.trim()
-      : name;
+  /// Görünen ad — kullanıcı adı değil, site `displayName` / `name` öncelikli.
+  String get displayName {
+    final n = name.trim();
+    if (n.isNotEmpty && n.toLowerCase() != (nickname?.trim().toLowerCase() ?? '')) {
+      return n;
+    }
+    return nickname?.trim().isNotEmpty == true ? nickname!.trim() : name;
+  }
 
   bool get isBroadcaster =>
       chatRole == 'superadmin' ||

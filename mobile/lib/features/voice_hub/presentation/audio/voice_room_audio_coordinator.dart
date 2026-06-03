@@ -44,7 +44,13 @@ class VoiceRoomAudioCoordinator {
     final lkRemote = liveKitRemote ?? _liveKitRemote;
     final trtcDs = trtcRemote ?? _trtcRemote;
 
-    if (!Env.forceTrtc && Env.preferLiveKit && lkRemote != null && _liveKit.isSupported) {
+    final siteUsesTrtc =
+        Env.apiBaseUrl.toLowerCase().contains('canlifal.com');
+    if (!Env.forceTrtc &&
+        !siteUsesTrtc &&
+        Env.preferLiveKit &&
+        lkRemote != null &&
+        _liveKit.isSupported) {
       try {
         final cred = await lkRemote.fetchToken(roomId: roomId, roomName: roomId);
         await _liveKit.join(credentials: cred, enableMic: true);
