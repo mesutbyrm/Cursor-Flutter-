@@ -55,16 +55,13 @@ class ProfileRemoteDataSource {
   }
 
   Future<void> follow(String userId) async {
-    if (Env.useMobileAuth) {
-      await _dio.safePost(ApiEndpoints.userFollow(userId));
-      return;
-    }
+    // canlifal.com: POST /api/users/:id/follow — takip / çık toggle.
     await _dio.safePost(ApiEndpoints.follow(userId));
   }
 
   Future<void> unfollow(String userId) async {
     if (Env.useMobileAuth) {
-      await _dio.safePost(ApiEndpoints.userFollow(userId));
+      await _dio.safePost(ApiEndpoints.follow(userId));
       return;
     }
     await _dio.safeDelete(ApiEndpoints.follow(userId));
@@ -81,9 +78,15 @@ class ProfileRemoteDataSource {
     final res = await _dio.safePatch<Map<String, dynamic>>(
       ApiEndpoints.me,
       data: {
-        if (displayName != null) 'displayName': displayName,
+        if (displayName != null) ...{
+          'name': displayName,
+          'displayName': displayName,
+        },
         if (bio != null) 'bio': bio,
-        if (avatarUrl != null) 'avatarUrl': avatarUrl,
+        if (avatarUrl != null) ...{
+          'image': avatarUrl,
+          'avatarUrl': avatarUrl,
+        },
         if (username != null) 'username': username,
         if (currentPassword != null) 'currentPassword': currentPassword,
         if (newPassword != null) 'newPassword': newPassword,

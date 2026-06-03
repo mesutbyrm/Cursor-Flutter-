@@ -15,5 +15,6 @@ abstract class AuthRepository {
   Future<UserEntity> loginWithGoogle();
   Future<UserEntity> loginWithTikTok();
   Future<UserEntity?> currentUser();
+  Future<void> requestPasswordReset(String email);
   Future<void> logout();
 }
