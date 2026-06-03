@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/auth/voice_staff_rank.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/token_storage.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -194,12 +195,12 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       ref.invalidate(walletBalancesProvider);
       await _joinPresence();
       await refresh();
-      _startSocket(_roomKey);
+      _startSocket();
       _warmBackgrounds();
       final player = ref.read(voiceRoomDjPlayerProvider);
       player.onTrackComplete = () => unawaited(_onDjTrackComplete());
     });
-    _poll = Timer.periodic(const Duration(seconds: 5), (_) {
+    _poll = Timer.periodic(const Duration(seconds: 3), (_) {
       if (!_pollPaused) refresh();
     });
     return VoiceRoomLiveState(
@@ -276,9 +277,12 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     } catch (_) {}
   }
 
-  void _startSocket(String roomId) {
+  void _startSocket() {
+    final storage = ref.read(tokenStorageProvider);
     ref.read(voiceRoomChatSocketProvider).connect(
-      roomId: roomId,
+      roomId: _roomKey,
+      alternateRoomId: _altRoomKey,
+      accessToken: storage.readAccess,
       onMessage: (msg) {
         final exists = state.messages.any((m) => m.id == msg.id);
         if (exists) return;

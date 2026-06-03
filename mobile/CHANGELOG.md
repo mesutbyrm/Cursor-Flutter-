@@ -1,5 +1,38 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.119+121 (2026-05-19)
+
+### Birleşik sürüm (main + sesli oda senkron)
+
+- **PR #87** Oda Komutları, Şarkı İsteği, DJ Yönetimi (zaten main’de)
+- **PR #91–#93** Komut/YouTube, müzik kuyruk, native API uyumu
+- **PR #95** Web ↔ Flutter sesli oda senkronu, YouTube API önceliği
+- Sosyal: beğeni, yorum, paylaşım, hikâye (önceki dal)
+
+## 1.0.118+120 (2026-05-19)
+
+### Sesli oda — web ↔ Flutter senkronizasyonu
+
+- Socket.IO: JWT (`Authorization` + `auth.token`), `id` ve `slug` ile çift `joinRoom`
+- Hediye socket aynı düzeltmeler
+- TRTC: önce `id`, gerekirse `slug` ile UserSig (web ile aynı oda)
+- Sohbet/presence yenileme 3 sn
+- YouTube arama: önce oturumlu `/api/youtube/search`, sonra Piped/Invidious
+- API: `emitChatRoomMessage` hem `room:{id}` hem `room:{slug}` kanallarına yayın
+
+## 1.0.117+119 (2026-05-19)
+
+### Tam native işlevsellik (canlifal.com)
+
+- Sosyal: beğeni (`POST .../likes`), yorumlar (sheet + API), paylaşım (`share_plus`)
+- Hikâye: galeriden görsel → `POST /api/stories`
+- Akış: `/api/stories` boşsa `/api/social/posts` yedek
+- Takipçi listesi: `/api/users/:id/follow` + `/api/user/followers`
+- Takip toggle: `/api/users` ve `/api/user` yolları
+- Bildirim okundu: `PATCH /api/user/activity` + `notificationIds`
+- OTP sayfası production’da şifre sıfırlamaya yönlendirir
+- Gönderi: `likedByMe`, beğeni/yorum sayısı düzeltmesi
+
 ## 1.0.116+118 (2026-05-19)
 
 ### Native canlifal.com API uyumu (WebView yok)

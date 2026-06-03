@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/providers/auth_selectors.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../../data/datasources/social_remote_datasource.dart';
 import '../../data/repositories/social_repository_impl.dart';
@@ -12,7 +13,10 @@ final socialRemoteProvider = Provider<SocialRemoteDataSource>((ref) {
 });
 
 final socialRepositoryProvider = Provider<SocialRepository>((ref) {
-  return SocialRepositoryImpl(ref.watch(socialRemoteProvider));
+  return SocialRepositoryImpl(
+    ref.watch(socialRemoteProvider),
+    currentUserId: ref.watch(currentUserIdProvider),
+  );
 });
 
 class SocialNotifier extends AsyncNotifier<List<PostEntity>> {

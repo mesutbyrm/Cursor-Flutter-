@@ -38,6 +38,12 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
 
   @override
   Future<void> markRead(String id) async {
+    if (Env.useMobileAuth) {
+      try {
+        await _canlifal.markActivityRead(id);
+        return;
+      } catch (_) {}
+    }
     try {
       await _remote.markRead(id);
     } catch (_) {}

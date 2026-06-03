@@ -104,6 +104,21 @@ class CanlifalUserApiDataSource {
     return PagedResult(items: items, hasMore: hasMore);
   }
 
+  Future<void> markActivityRead(String notificationId) async {
+    final body = {'notificationIds': [notificationId]};
+    final opts = Options(contentType: Headers.jsonContentType);
+    Object? lastError;
+    for (final path in [ApiEndpoints.userActivity, ApiEndpoints.meActivity]) {
+      try {
+        await _dio.safePatch<dynamic>(path, data: body, options: opts);
+        return;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (lastError != null) throw ApiException.userMessage(lastError);
+  }
+
   Future<void> markAllActivityRead() async {
     const body = {'markAllRead': true};
     final opts = Options(contentType: Headers.jsonContentType);

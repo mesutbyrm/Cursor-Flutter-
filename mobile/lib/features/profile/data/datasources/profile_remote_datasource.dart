@@ -55,8 +55,19 @@ class ProfileRemoteDataSource {
   }
 
   Future<void> follow(String userId) async {
-    // canlifal.com: POST /api/users/:id/follow — takip / çık toggle.
-    await _dio.safePost(ApiEndpoints.follow(userId));
+    Object? lastError;
+    for (final path in [
+      ApiEndpoints.follow(userId),
+      ApiEndpoints.userFollow(userId),
+    ]) {
+      try {
+        await _dio.safePost(path);
+        return;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    throw ApiException.userMessage(lastError ?? 'Takip edilemedi');
   }
 
   Future<void> unfollow(String userId) async {
@@ -156,31 +167,51 @@ class ProfileRemoteDataSource {
   }
 
   Future<List<UserEntity>> followers(String userId) async {
-    try {
-      final res = await _dio.safeGet<Map<String, dynamic>>(
-        ApiEndpoints.followers(userId),
-      );
-      return _parseUserList(res.data);
-    } catch (_) {
-      return const [];
+    for (final path in [
+      ApiEndpoints.userPublicFollowers(userId),
+      if (Env.useMobileAuth) ApiEndpoints.userFollowers,
+      ApiEndpoints.followers(userId),
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          path,
+          query: const {'page': 1, 'limit': 50},
+        );
+        final list = _parseUserList(res.data);
+        if (list.isNotEmpty) return list;
+      } catch (_) {}
     }
+    return const [];
   }
 
   Future<List<UserEntity>> following(String userId) async {
-    try {
-      final res = await _dio.safeGet<Map<String, dynamic>>(
-        ApiEndpoints.following(userId),
-      );
-      return _parseUserList(res.data);
-    } catch (_) {
-      return const [];
+    for (final path in [
+      if (Env.useMobileAuth) ApiEndpoints.userFollowing,
+      ApiEndpoints.following(userId),
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          path,
+          query: const {'page': 1, 'limit': 50},
+        );
+        final list = _parseUserList(res.data);
+        if (list.isNotEmpty) return list;
+      } catch (_) {}
     }
+    return const [];
   }
 
   List<UserEntity> _parseUserList(dynamic body) {
+    if (body is List) {
+      return asJsonList(body)
+          .map((e) => UserDto.fromApiMap(asJsonMap(e)).toEntity())
+          .where((u) => u.id.isNotEmpty)
+          .toList();
+    }
     if (body is! Map) return const [];
     final data = body['data'] is Map ? asJsonMap(body['data']) : asJsonMap(body);
-    final raw = data['users'] ?? data['items'];
+    final raw =
+        data['followers'] ?? data['following'] ?? data['users'] ?? data['items'];
     if (raw is! List) return const [];
     return raw.map((e) => UserDto.fromApiMap(asJsonMap(e)).toEntity()).toList();
   }

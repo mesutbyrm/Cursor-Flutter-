@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,8 +10,11 @@ import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../../core/providers/auth_selectors.dart';
 import '../../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../feed/domain/entities/post_entity.dart';
+import '../../../../../core/config/env.dart';
+import '../../../../../core/network/api_exception.dart';
 import '../../providers/social_providers.dart';
 import 'social_post_caption.dart';
+import 'social_post_comments_sheet.dart';
 
 /// CanlıFal Sosyal akış kartı — fal rozeti, otomatik paylaşım, etkileşim.
 class SocialInstagramPostCard extends ConsumerStatefulWidget {
@@ -25,7 +29,29 @@ class SocialInstagramPostCard extends ConsumerStatefulWidget {
 
 class _SocialInstagramPostCardState
     extends ConsumerState<SocialInstagramPostCard> {
-  var _liked = false;
+  late bool _liked;
+  late int _likeCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncFromPost(widget.post);
+  }
+
+  @override
+  void didUpdateWidget(covariant SocialInstagramPostCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.post.id != widget.post.id ||
+        oldWidget.post.likesCount != widget.post.likesCount ||
+        oldWidget.post.likedByMe != widget.post.likedByMe) {
+      _syncFromPost(widget.post);
+    }
+  }
+
+  void _syncFromPost(PostEntity p) {
+    _liked = p.likedByMe;
+    _likeCount = p.likesCount;
+  }
 
   PostEntity get post => widget.post;
 
@@ -41,7 +67,7 @@ class _SocialInstagramPostCardState
   Widget build(BuildContext context) {
     final myId = ref.watch(currentUserIdProvider);
     final isMine = myId != null && myId == post.author.id;
-    final likeCount = post.likesCount + (_liked ? 1 : 0);
+    final likeCount = _likeCount;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
@@ -120,13 +146,13 @@ class _SocialInstagramPostCardState
                           : Icons.favorite_border_rounded,
                       color: _liked ? AppThemeColors.accentPink : context.colors.onSurface,
                       count: likeCount,
-                      onTap: () => setState(() => _liked = !_liked),
+                      onTap: _toggleLike,
                     ),
                     SizedBox(width: 16),
                     _ActionWithCount(
                       icon: Icons.mode_comment_outlined,
                       count: post.commentsCount,
-                      onTap: () => _showCommentsHint(context),
+                      onTap: () => _openComments(context),
                     ),
                     SizedBox(width: 16),
                     _ActionWithCount(
@@ -138,11 +164,7 @@ class _SocialInstagramPostCardState
                     SizedBox(width: 16),
                     _ActionIcon(
                       icon: Icons.ios_share_rounded,
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Paylaşım yakında')),
-                        );
-                      },
+                      onTap: () => _sharePost(context),
                     ),
                     const Spacer(),
                     if (_isFortunePost) ...[
@@ -165,7 +187,7 @@ class _SocialInstagramPostCardState
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
                   child: GestureDetector(
-                    onTap: () => _showCommentsHint(context),
+                    onTap: () => _openComments(context),
                     child: Text(
                       '${post.commentsCount} yorumun tümünü gör',
                       style: TextStyle(
@@ -230,10 +252,59 @@ class _SocialInstagramPostCardState
     }
   }
 
-  void _showCommentsHint(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Yorumlar yakında')),
+  Future<void> _toggleLike() async {
+    final myId = ref.read(currentUserIdProvider);
+    if (myId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Beğenmek için giriş yapın')),
+        );
+      }
+      return;
+    }
+    final prevLiked = _liked;
+    final prevCount = _likeCount;
+    setState(() {
+      _liked = !_liked;
+      _likeCount += _liked ? 1 : -1;
+      if (_likeCount < 0) _likeCount = 0;
+    });
+    try {
+      final r =
+          await ref.read(socialRepositoryProvider).toggleLike(post.id);
+      if (!mounted) return;
+      setState(() {
+        _liked = r.liked;
+        if (r.likesCount > 0) _likeCount = r.likesCount;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _liked = prevLiked;
+        _likeCount = prevCount;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
+  }
+
+  void _openComments(BuildContext context) {
+    SocialPostCommentsSheet.show(
+      context,
+      postId: post.id,
+      initialCount: post.commentsCount,
     );
+  }
+
+  Future<void> _sharePost(BuildContext context) async {
+    final base = Env.siteOrigin.replaceAll(RegExp(r'/+$'), '');
+    final link = '$base/sosyal?post=${post.id}';
+    final caption = post.caption?.trim();
+    final text = caption != null && caption.isNotEmpty
+        ? '$caption\n\n$link'
+        : 'Canlifal paylaşımı\n$link';
+    await SharePlus.instance.share(ShareParams(text: text));
   }
 }
 

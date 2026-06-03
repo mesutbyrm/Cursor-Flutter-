@@ -50,6 +50,9 @@ abstract final class ApiEndpoints {
   /// Ana sayfa promosyon slider.
   static const homeBanners = '/api/banners';
 
+  /// Ana sayfa fal kartları vitrin.
+  static const homepageFortuneCards = '/api/homepage-fortune-cards';
+
   /// Çevrimiçi falcılar / danışmanlar.
   static const homeAdvisorsOnline = '/api/advisors/online';
 
@@ -73,6 +76,19 @@ abstract final class ApiEndpoints {
   static const notificationsUnread = '/api/notifications/unread';
   static const socialPostsAutoFortune = '/api/social/posts/auto-fortune';
   static String socialPostDelete(String id) => '/api/social/posts/$id';
+
+  /// Beğeni toggle — POST (canlifal.com).
+  static String socialPostLikes(String postId) => '/api/social/posts/$postId/likes';
+
+  static String socialPostComments(String postId) =>
+      '/api/social/posts/$postId/comments';
+
+  /// Oturumlu kullanıcının takipçi / takip listesi.
+  static const userFollowers = '/api/user/followers';
+  static const userFollowing = '/api/user/following';
+
+  /// Başka kullanıcının takipçileri (dizi döner).
+  static String userPublicFollowers(String userId) => '/api/users/$userId/follow';
   /// canlifal.com ana sayfa canlı yayın listesi (JSON dizi).
   static const videoStreams = '/api/video-streams';
   /// Sesli / metin sohbet odaları (web `/sohbet/{slug}`).
