@@ -27,15 +27,12 @@ abstract final class VoiceOfficialJoin {
     return found;
   }
 
-  /// Komut satırı — sunucu `/` veya `!` ile işler.
-  static String normalizeCommandInput(String text) {
-    final t = text.trim();
-    if (t.startsWith('!')) return '/${t.substring(1)}';
-    return t;
-  }
+  /// Komut satırı — canlifal.com sohbet `!` ile çalışır; `/` dönüşümü yapılmaz.
+  static String normalizeCommandInput(String text) => text.trim();
 
   static bool looksLikeRoomCommand(String text) {
-    final t = normalizeCommandInput(text);
-    return t.startsWith('/') && t.length > 1;
+    final t = text.trim();
+    if (t.length < 2) return false;
+    return (t.startsWith('!') || t.startsWith('/')) && t.length > 1;
   }
 }

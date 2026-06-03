@@ -334,6 +334,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
             package: widget.package,
             method: _methodApi,
             notes: widget.paymentNotes,
+            senderLabel: _userLabel,
           );
     await ref.read(walletRepositoryProvider).submitPaymentRequest(body);
     ref.invalidate(walletBalancesProvider);
