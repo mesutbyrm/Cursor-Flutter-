@@ -2,30 +2,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.126+128` |
-| Tarih (UTC) | 2026-06-04 19:21 |
-| Commit | [`3828353d5413f91b952f4bc67360fefbee33a51c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3828353d5413f91b952f4bc67360fefbee33a51c) |
-| İş akışı | [Run 26972975676](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26972975676) |
+| Sürüm | `1.0.127+129` |
+| Tarih (UTC) | 2026-06-04 20:38 |
+| Commit | [`93bf0009c47f8f327b4814a654fb93480e4dbdac`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/93bf0009c47f8f327b4814a654fb93480e4dbdac) |
+| İş akışı | [Run 26976924303](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26976924303) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.126+128 (2026-05-19)
+## 1.0.127+129 (2026-05-19)
 
-### Canlı yayın ve hediye
+### Google ile giriş
 
-- Yayın oluşturma: esnek `streamId` ayrıştırma, `live-started` uç sabiti, `[Live]` debug logları
-- TRTC: `{ success, data }` sarmalayıcı, `sdkAppId`/`userSig` doğrulama
-- Prep: kamera/mikrofon izni önce; `useMobileAuth` ile `POST /api/video-streams`
-- Hediye: `senderName` / `receiverName` gönderimi; poll 4 sn
-- Analiz: `docs/LIVE_STREAM_FLUTTER_ANALYSIS.md`
-
-### Hata düzeltmeleri (sesli oda / API)
-
-- **Müzik araması:** Popüler şarkılara `videoId` eklendi; Piped/Invidious kapalıyken de sonuç döner (ör. Müslüm Gürses)
-- YouTube arama: önce JWT ile `/api/youtube/search`; 401’de net oturum mesajı
-- Oda komutları UI: `/` → `!` (sunucu ile uyumlu)
-- API: `prisma generate` postinstall; `/api/youtube/search` optionalAuth
+- `GOOGLE_SERVER_CLIENT_ID`: dart-define veya `google-services.json` Web client (`client_type: 3`)
+- `GoogleAuthConfig` + net hata mesajları (SHA-1, yapılandırma eksik)
+- `POST /api/auth/mobile-google` — düz JSON ve `{ success, data }` sarmalayıcı
+- CI: `print-firebase-dart-defines.sh` APK’ya otomatik Web client ID ekler
+- Kurulum: `docs/GOOGLE_SIGNIN_SETUP_TR.md`
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
