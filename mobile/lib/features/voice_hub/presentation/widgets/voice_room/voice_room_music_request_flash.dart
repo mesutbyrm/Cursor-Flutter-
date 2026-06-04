@@ -116,6 +116,22 @@ abstract final class VoiceMusicRequestFlashText {
       return '🎵 $who «${queued.group(1)!.trim()}» sıraya eklendi';
     }
 
+    final queueAdded = RegExp(
+      r'📀\s*Şarkı kuyruğa eklendi',
+      caseSensitive: false,
+    ).hasMatch(raw);
+    if (queueAdded) {
+      return '🎵 Yeni şarkı kuyruğa eklendi';
+    }
+
+    final position = RegExp(
+      r'🔢\s*Sıra:\s*#(\d+)',
+      caseSensitive: false,
+    ).firstMatch(raw);
+    if (position != null) {
+      return '🎵 Sıra: #${position.group(1)}';
+    }
+
     if (raw.toLowerCase().startsWith('!istek') ||
         raw.toLowerCase().startsWith('/istek')) {
       final song = raw.replaceFirst(RegExp(r'^[!/]istek\s*', caseSensitive: false), '').trim();

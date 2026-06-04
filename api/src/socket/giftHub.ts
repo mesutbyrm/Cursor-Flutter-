@@ -79,6 +79,17 @@ export function emitChatRoomMessage(
 }
 
 /** Oda üye listesi — web ve mobil gerçek zamanlı presence senkronu */
+/** DJ / müzik kuyruğu güncellemesi — SSE `type: dj` (mobil dinler). */
+export function emitChatRoomDjUpdate(roomId: string) {
+  if (!io) return;
+  const canonical = resolveRoomId(roomId);
+  const payload = { type: "dj", roomId: canonical };
+  for (const key of voiceRoomTargets(roomId)) {
+    io.to(voiceRoom(key)).emit("dj", payload);
+    io.to(voiceRoom(key)).emit("music", payload);
+  }
+}
+
 export function emitChatRoomPresence(
   roomId: string,
   users: Record<string, unknown>[],

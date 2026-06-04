@@ -44,7 +44,11 @@ import {
   addRoomBannedWord,
   removeRoomBannedWord,
 } from "../lib/chatRoomStore";
-import { emitChatRoomMessage, emitChatRoomPresence } from "../socket/giftHub";
+import {
+  emitChatRoomDjUpdate,
+  emitChatRoomMessage,
+  emitChatRoomPresence,
+} from "../socket/giftHub";
 import { listRoomGiftEvents, sendRoomGift } from "./gifts";
 
 export const chatRoomsRouter = Router();
@@ -173,6 +177,7 @@ chatRoomsRouter.post("/rooms/:roomId/song-request", requireAuth, async (req, res
     const code = result.error?.includes("jeton") ? 402 : 400;
     return fail(res, code, "BAD_REQUEST", result.error ?? "İstek başarısız");
   }
+  emitChatRoomDjUpdate(roomId);
   return res.status(200).json({
     success: true,
     item: result.item,
@@ -182,6 +187,7 @@ chatRoomsRouter.post("/rooms/:roomId/song-request", requireAuth, async (req, res
     cost: MUSIC_REQUEST_JETON,
     musicUrl: result.musicUrl,
     playing: result.playing,
+    queuePosition: result.queuePosition,
   });
 });
 
@@ -199,6 +205,7 @@ chatRoomsRouter.post(
     if (!skipped.ok) {
       return fail(res, 403, "FORBIDDEN", skipped.error ?? "Yetki yok");
     }
+    emitChatRoomDjUpdate(roomId);
     return res.status(200).json({
       ...getDjState(roomId, user),
       queue: skipped.queue,
@@ -217,6 +224,7 @@ chatRoomsRouter.delete(
     if (!result.ok) {
       return fail(res, 403, "FORBIDDEN", result.error ?? "İşlem başarısız");
     }
+    emitChatRoomDjUpdate(roomId);
     return res.status(200).json({ success: true, queue: result.queue });
   },
 );
@@ -232,6 +240,7 @@ chatRoomsRouter.delete(
     if (!result.ok) {
       return fail(res, 403, "FORBIDDEN", result.error ?? "İşlem başarısız");
     }
+    emitChatRoomDjUpdate(roomId);
     return res.status(200).json({ success: true, queue: result.queue });
   },
 );
@@ -314,6 +323,7 @@ chatRoomsRouter.post("/rooms/:roomId/music-queue", requireAuth, async (req, res)
     const code = result.error?.includes("jeton") ? 402 : 400;
     return fail(res, code, "BAD_REQUEST", result.error ?? "İstek başarısız");
   }
+  emitChatRoomDjUpdate(roomId);
   return res.status(200).json({
     success: true,
     item: result.item,

@@ -394,7 +394,7 @@ function tryHandleRoomCommand(
       );
     }
     return system(
-      `🎵 Şarkı isteği alındı (yetkililere): «${song}» — onay için ♫ panelini kullanın.`,
+      `🎵 Şarkı isteği alındı: «${song}» — işleniyor…`,
     );
   }
 
@@ -566,6 +566,46 @@ export async function addTextMessage(roomId: string, user: User, content: string
   const room = getChatRoom(roomId);
   if (!room) return null;
   const priv = roomPrivileges(user, room);
+  let cmd = trimmed;
+  if (cmd.startsWith("!")) cmd = `/${cmd.slice(1)}`;
+  const head = (cmd.split(/\s+/).filter(Boolean)[0] ?? "").toLowerCase();
+  if (head === "/istek") {
+    const song = cmd.replace(/^\/istek\s*/i, "").trim();
+    if (song.length >= 2) {
+      const hits = await searchYoutube(song);
+      if (hits.length > 0) {
+        const hit = hits[0]!;
+        const result = await requestMusicQueue(roomId, user, {
+          title: hit.title,
+          youtubeUrl: hit.url,
+          thumbUrl: hit.thumbUrl ?? null,
+        });
+        if (result.ok) {
+          return pushMessage(roomId, {
+            id: randomUUID(),
+            content: trimmed,
+            createdAt: new Date().toISOString(),
+            user: toChatUser(
+              user,
+              priv.admin ? "admin" : priv.owner ? "owner" : "listener",
+            ),
+          });
+        }
+        return pushMessage(roomId, {
+          id: randomUUID(),
+          content: `⚠️ ${result.error ?? "Şarkı isteği başarısız"}`,
+          createdAt: new Date().toISOString(),
+          user: toChatUser(user, "listener"),
+        });
+      }
+      return pushMessage(roomId, {
+        id: randomUUID(),
+        content: `⚠️ «${song}» için sonuç bulunamadı.`,
+        createdAt: new Date().toISOString(),
+        user: toChatUser(user, "listener"),
+      });
+    }
+  }
   const commandRow = tryHandleRoomCommand(room, user, roomId, trimmed);
   if (commandRow) return commandRow;
   if (!priv.canModerate && containsBannedWord(roomId, trimmed)) {
