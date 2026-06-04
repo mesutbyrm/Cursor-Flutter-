@@ -78,6 +78,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
   int _cost = 10;
   int _maxQueue = 20;
   var _tabIndex = 0;
+  ProviderSubscription<VoiceRoomLiveState>? _liveSub;
 
   @override
   void initState() {
@@ -89,6 +90,19 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
         }
       });
     _bootstrap();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _liveSub = ref.listenManual(
+        voiceRoomLiveProvider(widget.room),
+        (prev, next) {
+          if (prev?.dj.musicQueue.length != next.dj.musicQueue.length ||
+              prev?.dj.playing != next.dj.playing ||
+              prev?.dj.nowPlaying?.id != next.dj.nowPlaying?.id) {
+            unawaited(_reloadQueue());
+          }
+        },
+      );
+    });
   }
 
   Future<void> _bootstrap() async {
@@ -122,6 +136,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
 
   @override
   void dispose() {
+    _liveSub?.close();
     _debounce?.cancel();
     _tabs.dispose();
     _queryCtrl.dispose();

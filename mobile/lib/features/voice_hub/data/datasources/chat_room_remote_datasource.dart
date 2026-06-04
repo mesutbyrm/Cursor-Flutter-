@@ -575,14 +575,15 @@ class ChatRoomRemoteDataSource {
       ];
     }
 
+    // Web ile aynı: önce site API (JWT), sonra Piped / Invidious yedekleri.
+    final apiHits = await _searchYoutubeViaApi(q);
+    if (apiHits.isNotEmpty) return apiHits;
+
     final piped = await _searchYoutubePiped(q);
     if (piped.isNotEmpty) return piped;
 
     final inv = await _searchYoutubeInvidious(q);
     if (inv.isNotEmpty) return inv;
-
-    final apiHits = await _searchYoutubeViaApi(q);
-    if (apiHits.isNotEmpty) return apiHits;
 
     final popularHits = await _searchYoutubeFromPopularCatalog(q);
     if (popularHits.isNotEmpty) return popularHits;
