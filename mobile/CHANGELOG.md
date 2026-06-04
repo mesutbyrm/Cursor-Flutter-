@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.128+130 (2026-06-04)
+
+### Müzik arama ve !istek
+
+- YouTube arama: canlifal API + Piped + Invidious **paralel** (18 sn API beklemesi kaldırıldı)
+- Zaman aşımı: kullanıcıya Türkçe mesaj; ham `TimeoutException` gösterilmez
+- `!istek şarkı`: boş komutta kullanım uyarısı; yerel arama başarısızsa sunucuya iletme
+- Oda içi duyuru: aranıyor / eklendi / sunucuya iletiliyor flaşları
+
 ## 1.0.127+129 (2026-05-19)
 
 ### Google ile giriş
