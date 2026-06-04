@@ -280,23 +280,29 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
   const notifType =
     requestType === "jeton" ? "jeton_payment_request" : "cfc_payment_request";
 
-  await createNotification({
-    userId,
-    title: userTitle,
-    body: userBody,
-    type: notifType,
-    data: notifData,
-    targetPath: userPath,
-    targetId: row.id,
-    urgent: true,
-  });
-
-  void notifyStaffPaymentPending({
-    paymentRequestId: row.id,
-    requestType: requestType as "jeton" | "cfc",
-    amountLabel: userBody,
-    method,
-  });
+  // Yanıtı geciktirmemek için bildirimleri yanıttan sonra gönder (mobil zaman aşımı).
+  void (async () => {
+    try {
+      await createNotification({
+        userId,
+        title: userTitle,
+        body: userBody,
+        type: notifType,
+        data: notifData,
+        targetPath: userPath,
+        targetId: row.id,
+        urgent: true,
+      });
+      await notifyStaffPaymentPending({
+        paymentRequestId: row.id,
+        requestType: requestType as "jeton" | "cfc",
+        amountLabel: userBody,
+        method,
+      });
+    } catch (err) {
+      console.error("[payment/requests] post-create notify failed", err);
+    }
+  })();
 
   return res.status(201).json(requestPayload(row));
 });

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 
 import '../../../../core/pagination/paged_result.dart';
@@ -8,6 +6,8 @@ import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/payment_debug_log.dart';
+import '../../../../core/network/token_storage.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../auth/data/models/user_dto.dart';
 import '../../../auth/domain/entities/user_entity.dart';
@@ -218,9 +218,10 @@ class ProfileRemoteDataSource {
 }
 
 class WalletRemoteDataSource {
-  WalletRemoteDataSource(this._dio);
+  WalletRemoteDataSource(this._dio, this._tokens);
 
   final Dio _dio;
+  final TokenStorage _tokens;
 
   Future<int> balance() async {
     final b = await balances();
@@ -304,33 +305,70 @@ class WalletRemoteDataSource {
     return false;
   }
 
+  static const _paymentTimeout = Duration(seconds: 45);
+
+  Options _paymentPostOptions() => Options(
+        contentType: 'application/json',
+        receiveTimeout: _paymentTimeout,
+        sendTimeout: const Duration(seconds: 25),
+        headers: const {'Accept': 'application/json'},
+      );
+
+  Future<Response<dynamic>> _postPaymentRequest(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final started = DateTime.now();
+    PaymentDebugLog.log('submitStart', {
+      'path': path,
+      'baseUrl': Env.apiBaseUrl,
+      'timeoutSec': _paymentTimeout.inSeconds,
+      'bodyKeys': body.keys.join(','),
+    });
+    try {
+      final res = await _dio.safePost<dynamic>(
+        path,
+        data: body,
+        options: _paymentPostOptions(),
+      );
+      PaymentDebugLog.log('submitDone', {
+        'path': path,
+        'status': res.statusCode,
+        'elapsedMs': DateTime.now().difference(started).inMilliseconds,
+      });
+      return res;
+    } on ApiException catch (e) {
+      PaymentDebugLog.log('submitFailed', {
+        'path': path,
+        'status': e.statusCode,
+        'elapsedMs': DateTime.now().difference(started).inMilliseconds,
+        'message': e.message,
+      });
+      rethrow;
+    }
+  }
+
   Future<void> submitPaymentRequest(Map<String, dynamic> body) async {
-    final payload = jsonEncode(body);
-    final opts = Options(contentType: 'application/json');
+    final access = await _tokens.readAccess();
+    final hasJwt = access != null &&
+        access.isNotEmpty &&
+        access != TokenStorage.sessionCookieMarker;
+    PaymentDebugLog.log('jwtStatus', {
+      'hasAccessToken': hasJwt,
+      'useMobileAuth': Env.useMobileAuth,
+    });
+    if (!hasJwt) {
+      throw const ApiException(
+        'Oturum bulunamadı. Çıkış yapıp tekrar giriş yapın, ardından ödemeyi deneyin.',
+      );
+    }
+
     Response<dynamic> res;
     try {
-      res = await _dio
-          .safePost<dynamic>(
-            ApiEndpoints.paymentRequests,
-            data: payload,
-            options: opts,
-          )
-          .timeout(
-            const Duration(seconds: 22),
-            onTimeout: () => throw const ApiException(
-              'Ödeme bildirimi zaman aşımına uğradı. '
-              'Bağlantınızı kontrol edip tekrar deneyin.',
-            ),
-          );
+      res = await _postPaymentRequest(ApiEndpoints.paymentRequests, body);
     } on ApiException catch (e) {
       if (e.statusCode != 404) rethrow;
-      res = await _dio
-          .safePost<dynamic>(
-            '/api/jeton/payment-request',
-            data: payload,
-            options: opts,
-          )
-          .timeout(const Duration(seconds: 22));
+      res = await _postPaymentRequest('/api/jeton/payment-request', body);
     }
 
     final code = res.statusCode ?? 0;

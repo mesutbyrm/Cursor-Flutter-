@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.125+127 (2026-05-19)
+
+### WhatsApp jeton ödemesi — zaman aşımı düzeltmesi
+
+- `POST /api/payment/requests`: 22 sn dış zaman aşımı kaldırıldı; istek başına 45 sn `receiveTimeout`
+- Gövde artık `Map` olarak gönderiliyor (web ile aynı JSON; çift kodlama riski yok)
+- Oturum yoksa anında anlamlı hata; 4xx/5xx sunucu mesajı snackbar’da
+- Debug: `[Payment]` logları (URL, method, JWT varlığı, status, süre)
+- API: ödeme talebi 201 yanıtı bildirimler tamamlanmadan döner (mobil zaman aşımı önlenir)
+
 ## 1.0.119+121 (2026-05-19)
 
 ### Birleşik sürüm (main + sesli oda senkron)
