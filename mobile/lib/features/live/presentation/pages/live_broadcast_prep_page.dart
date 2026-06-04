@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -15,6 +14,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../providers/live_providers.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
+import '../../../trtc/presentation/trtc_room_manager.dart';
 
 /// Canlı yayın hazırlığı — neon cam arayüz.
 class LiveBroadcastPrepPage extends ConsumerStatefulWidget {
@@ -75,8 +75,20 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
 
     setState(() => _starting = true);
     try {
+      final wantCamera = _settings['Kamera'] ?? true;
+      final wantMic = _settings['Mikrofon'] ?? true;
+      if (!wantMic && !wantCamera) {
+        throw StateError('Yayın için en az mikrofon veya kamera açık olmalı');
+      }
+      final permsOk = await TrtcRoomManager.requestPermissions(video: wantCamera);
+      if (!permsOk) {
+        throw StateError(
+          'Mikrofon veya kamera izni verilmedi. Ayarlardan izin verip tekrar deneyin.',
+        );
+      }
+
       var roomId = 'live-${DateTime.now().millisecondsSinceEpoch}';
-      if (Env.useNextAuth) {
+      if (Env.useMobileAuth) {
         roomId = await ref.read(liveRepositoryProvider).createVideoStream(
               title: _title.text.trim(),
               description: _description.text.trim(),
@@ -99,7 +111,13 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         streamerName: user.display,
         streamerHandle: user.username,
         avatarUrl: user.avatarUrl,
-      ).copyWith(streamId: roomId, trtc: trtc, hostUserId: user.id);
+      ).copyWith(
+        streamId: roomId,
+        trtc: trtc,
+        hostUserId: user.id,
+        initialMicOn: wantMic,
+        initialCameraOn: wantCamera,
+      );
 
       context.push('/live/room', extra: session);
     } catch (e) {

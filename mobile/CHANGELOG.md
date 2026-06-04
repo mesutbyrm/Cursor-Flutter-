@@ -2,6 +2,14 @@
 
 ## 1.0.126+128 (2026-05-19)
 
+### Canlı yayın ve hediye
+
+- Yayın oluşturma: esnek `streamId` ayrıştırma, `live-started` uç sabiti, `[Live]` debug logları
+- TRTC: `{ success, data }` sarmalayıcı, `sdkAppId`/`userSig` doğrulama
+- Prep: kamera/mikrofon izni önce; `useMobileAuth` ile `POST /api/video-streams`
+- Hediye: `senderName` / `receiverName` gönderimi; poll 4 sn
+- Analiz: `docs/LIVE_STREAM_FLUTTER_ANALYSIS.md`
+
 ### Hata düzeltmeleri (sesli oda / API)
 
 - **Müzik araması:** Popüler şarkılara `videoId` eklendi; Piped/Invidious kapalıyken de sonuç döner (ör. Müslüm Gürses)

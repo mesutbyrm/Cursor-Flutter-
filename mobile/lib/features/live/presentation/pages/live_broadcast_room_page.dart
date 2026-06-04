@@ -76,7 +76,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       if (mounted) setState(() => _elapsed += const Duration(seconds: 1));
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(liveRoomInteractionProvider.notifier).reset(initialLikes: 12500);
+      ref.read(liveRoomInteractionProvider.notifier).reset(initialLikes: 0);
       _initTrtc();
       _initGifts();
     });
@@ -123,6 +123,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         audioOnly: false,
         expectedAnchorUserId: anchorHint,
       );
+      if (widget.session.isHost) {
+        _trtc.setMicEnabled(widget.session.initialMicOn);
+        _trtc.setCameraEnabled(widget.session.initialCameraOn);
+      }
       if (mounted) setState(() => _rtcReady = true);
     } catch (e) {
       if (mounted) {

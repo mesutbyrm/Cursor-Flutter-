@@ -30,7 +30,7 @@ class LiveGiftRealtimeService {
         if (_seen.add(e.id) && !_local.isClosed) _local.add(e);
       },
     );
-    _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) => _poll());
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) => _poll());
     _poll();
   }
 
