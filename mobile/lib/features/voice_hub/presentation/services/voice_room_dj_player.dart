@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 
@@ -7,6 +9,7 @@ import '../../data/youtube_stream_resolver.dart';
 class VoiceRoomDjPlayer {
   VoiceRoomDjPlayer(this._resolver)
       : _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop) {
+    unawaited(_configureAudio());
     _player.onPlayerComplete.listen((_) {
       onTrackComplete?.call();
     });
@@ -39,6 +42,28 @@ class VoiceRoomDjPlayer {
       ValueNotifier(const VoiceRoomDjPlayback());
   String? _currentUrl;
   void Function()? onTrackComplete;
+
+  Future<void> _configureAudio() async {
+    try {
+      await _player.setAudioContext(
+        AudioContext(
+          android: AudioContextAndroid(
+            isSpeakerphoneOn: true,
+            stayAwake: true,
+            contentType: AndroidContentType.music,
+            usageType: AndroidUsageType.media,
+            audioFocus: AndroidAudioFocus.gain,
+          ),
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.playback,
+            options: {AVAudioSessionOptions.mixWithOthers},
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('DJ audio context: $e');
+    }
+  }
 
   Future<void> sync({
     String? musicUrl,
@@ -75,6 +100,22 @@ class VoiceRoomDjPlayer {
     } catch (e) {
       debugPrint('DJ play error: $e');
       _currentUrl = null;
+      if (_resolver.needsResolve(musicUrl)) {
+        try {
+          final retry = await _resolver.resolvePlayableUrl(musicUrl);
+          if (retry != null && retry.isNotEmpty && retry != source) {
+            _currentUrl = retry;
+            await _player.play(UrlSource(retry));
+            playback.value = VoiceRoomDjPlayback(
+              position: Duration.zero,
+              duration: playback.value.duration,
+              playing: true,
+            );
+          }
+        } catch (e2) {
+          debugPrint('DJ play retry error: $e2');
+        }
+      }
     }
   }
 

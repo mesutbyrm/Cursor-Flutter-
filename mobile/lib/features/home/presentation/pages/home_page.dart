@@ -55,9 +55,9 @@ class _HomePageState extends ConsumerState<HomePage> {
             slivers: [
               const SliverToBoxAdapter(child: HomeSiteTopBar()),
               const SliverToBoxAdapter(child: HomeStoriesSection()),
-              const SliverToBoxAdapter(child: HomeLiveFortuneTellersRow()),
-              const SliverToBoxAdapter(child: HomeVoiceRoomsRow()),
               const SliverToBoxAdapter(child: HomeLiveStreamsRow()),
+              const SliverToBoxAdapter(child: HomeVoiceRoomsRow()),
+              const SliverToBoxAdapter(child: HomeLiveFortuneTellersRow()),
               const SliverToBoxAdapter(child: HomeFortuneGrid()),
               const SliverToBoxAdapter(child: HomeTrendVideosRow()),
               const SliverToBoxAdapter(child: HomeFanClubRow()),

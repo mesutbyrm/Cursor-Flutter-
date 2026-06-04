@@ -525,7 +525,12 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
                 width: 56,
                 height: 56,
                 child: hit.thumbUrl != null
-                    ? CachedNetworkImage(imageUrl: hit.thumbUrl!, fit: BoxFit.cover)
+                    ? CachedNetworkImage(
+                        imageUrl: hit.thumbUrl!,
+                        fit: BoxFit.cover,
+                        memCacheWidth: 112,
+                        memCacheHeight: 112,
+                      )
                     : const ColoredBox(color: Colors.white12),
               ),
             ),

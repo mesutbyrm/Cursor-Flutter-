@@ -97,4 +97,17 @@ class ChatRoomDjState {
     final idx = musicQueue.indexWhere((e) => e.id == itemId);
     return idx >= 0 ? idx + 1 : musicQueue.length;
   }
+
+  /// Oynatılacak URL — `musicUrl` boşsa kuyruk / nowPlaying'den (site ile uyumlu).
+  String? get playbackSource {
+    final direct = musicUrl?.trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    final np = nowPlaying?.youtubeUrl.trim() ?? '';
+    if (np.isNotEmpty) return np;
+    if (musicQueue.isNotEmpty) {
+      final first = musicQueue.first.youtubeUrl.trim();
+      if (first.isNotEmpty) return first;
+    }
+    return null;
+  }
 }

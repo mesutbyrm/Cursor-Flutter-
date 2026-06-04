@@ -195,7 +195,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       final player = ref.read(voiceRoomDjPlayerProvider);
       player.onTrackComplete = () => unawaited(_onDjTrackComplete());
     });
-    _poll = Timer.periodic(const Duration(seconds: 3), (_) {
+    _poll = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!_pollPaused) refresh();
     });
     _presenceHeartbeat = Timer.periodic(const Duration(seconds: 20), (_) {
@@ -303,6 +303,9 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       onConnected: () {
         state = state.copyWith(sseConnected: true);
       },
+      onDjUpdate: () {
+        unawaited(refresh());
+      },
       onMessage: (msg) {
         final exists = state.messages.any((m) => m.id == msg.id);
         if (exists) return;
@@ -359,9 +362,10 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         dj = await remote.fetchDj(_roomKey);
       } catch (_) {}
       final ui = ref.read(voiceRoomUiProvider);
+      final playbackUrl = dj.playbackSource;
       await ref.read(voiceRoomDjPlayerProvider).sync(
-        musicUrl: dj.musicUrl,
-        playing: dj.playing,
+        musicUrl: playbackUrl,
+        playing: dj.playing && playbackUrl != null,
         muted: !ui.backgroundMusicEnabled,
       );
       final bgFromDj = dj.backgroundImage?.trim();

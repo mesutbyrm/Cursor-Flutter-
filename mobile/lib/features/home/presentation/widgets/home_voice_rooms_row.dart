@@ -8,14 +8,21 @@ import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/domain/entities/voice_room_sort.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
-import '../../../voice_hub/presentation/widgets/voice_room_grid_tile.dart';
 import '../providers/home_providers.dart';
 import '../theme/home_palette.dart';
+import 'home_circular_orb.dart';
 import 'home_section_header.dart';
 
-/// Sesli sohbet — 4 sütunlu oda grid'i (canlifal.com ana sayfa §3.3).
+/// Sesli sohbet — yuvarlak oda halkaları (canlifal.com ana sayfa).
 class HomeVoiceRoomsRow extends ConsumerWidget {
   const HomeVoiceRoomsRow({super.key});
+
+  static const _placeholderTitles = [
+    'Sohbet',
+    'CanlıFal',
+    'Müzik',
+    'Gece',
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,7 +44,22 @@ class HomeVoiceRoomsRow extends ConsumerWidget {
     final rooms = ref.watch(homeVoiceRoomsProvider);
 
     return rooms.when(
-      loading: () => _section(child: _LoadingGrid()),
+      loading: () => _section(
+        child: SizedBox(
+          height: 118,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: 4,
+            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            itemBuilder: (_, __) => const PremiumSkeleton(
+              width: 72,
+              height: 72,
+              borderRadius: BorderRadius.all(Radius.circular(36)),
+            ),
+          ),
+        ),
+      ),
       error: (e, _) => _section(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -51,9 +73,7 @@ class HomeVoiceRoomsRow extends ConsumerWidget {
         ),
       ),
       data: (items) => _section(
-        child: _VoiceRoomsGrid(
-          rooms: sortVoiceRoomsByPopularity(items),
-        ),
+        child: _buildRow(context, ref, sortVoiceRoomsByPopularity(items)),
       ),
     );
   }
@@ -67,85 +87,59 @@ class HomeVoiceRoomsRow extends ConsumerWidget {
             leadingDotColor: HomePalette.secondary,
             onTrailing: () => context.push('/voice-rooms'),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: child,
-          ),
-          const SizedBox(height: 8),
+          child,
         ],
       ),
     );
   }
-}
 
-class _LoadingGrid extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const cols = VoiceRoomGridTile.crossAxisCount;
-        const spacing = 8.0;
-        final tileW = (constraints.maxWidth - spacing * (cols - 1)) / cols;
-        final tileH = tileW / VoiceRoomGridTile.tileAspectRatio;
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: List.generate(
-            8,
-            (_) => PremiumSkeleton(
-              width: tileW,
-              height: tileH,
-              borderRadius: const BorderRadius.all(Radius.circular(12)),
-            ),
-          ),
-        );
-      },
+  Widget _buildRow(
+    BuildContext context,
+    WidgetRef ref,
+    List<VoiceRoomEntity> rooms,
+  ) {
+    final preview = rooms.take(12).toList();
+    final count =
+        preview.isEmpty ? _placeholderTitles.length : preview.length;
+
+    return SizedBox(
+      height: 118,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: count,
+        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        itemBuilder: (_, i) {
+          if (preview.isEmpty) {
+            return HomeCircularOrb(
+              title: _placeholderTitles[i % _placeholderTitles.length],
+              subtitle: '0 kişi',
+              ringColor: _ringColor(i),
+              onTap: () => context.push('/voice-rooms'),
+            );
+          }
+          final room = preview[i];
+          return HomeCircularOrb(
+            title: room.displayTitle,
+            subtitle: '${room.displayOnline} kişi',
+            imageUrl: room.ownerAvatarUrl,
+            ringColor: _ringColor(i),
+            onTap: () => openVoiceRoomWithVipGate(context, ref, room),
+          );
+        },
+      ),
     );
   }
-}
 
-class _VoiceRoomsGrid extends ConsumerWidget {
-  const _VoiceRoomsGrid({required this.rooms});
-
-  final List<VoiceRoomEntity> rooms;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (rooms.isEmpty) {
-      return Text(
-        'Şu an açık sohbet odası yok.',
-        style: TextStyle(
-          fontSize: 13,
-          color: Colors.white.withValues(alpha: 0.65),
-        ),
-      );
-    }
-
-    final preview = rooms.take(8).toList();
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const cols = VoiceRoomGridTile.crossAxisCount;
-        const spacing = 8.0;
-        final tileW = (constraints.maxWidth - spacing * (cols - 1)) / cols;
-        final tileH = tileW / VoiceRoomGridTile.tileAspectRatio;
-
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: [
-            for (final room in preview)
-              SizedBox(
-                width: tileW,
-                height: tileH,
-                child: VoiceRoomGridTile(
-                  room: room,
-                  onTap: () => openVoiceRoomWithVipGate(context, ref, room),
-                ),
-              ),
-          ],
-        );
-      },
-    );
+  Color _ringColor(int i) {
+    const colors = [
+      Color(0xFFFF4FD8),
+      Color(0xFF25F4EE),
+      Color(0xFF7B2FF7),
+      Color(0xFFFF6B35),
+      Color(0xFF22C55E),
+      Color(0xFFFBBF24),
+    ];
+    return colors[i % colors.length];
   }
 }
