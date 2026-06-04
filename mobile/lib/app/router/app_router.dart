@@ -62,6 +62,8 @@ import '../../features/voice_hub/presentation/pages/voice_pk_battle_page.dart';
 import '../../features/voice_hub/presentation/voice_room_route_page.dart';
 import '../../features/voice_hub/presentation/voice_room_rtc_page.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
+import '../../features/home/presentation/pages/live_fortune_teller_detail_page.dart';
+import '../../features/home/presentation/pages/live_fortune_tellers_page.dart';
 import '../../features/vip_gold/presentation/pages/vip_gold_hub_page.dart';
 import '../../core/navigation/app_page_transitions.dart';
 
@@ -461,6 +463,25 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           child: const VipGoldHubPage(),
         ),
+      ),
+      GoRoute(
+        path: '/canli-falcilar',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const LiveFortuneTellersPage(),
+        ),
+        routes: [
+          GoRoute(
+            path: ':id',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              return AppPageTransitions.fadeSlide(
+                key: state.pageKey,
+                child: LiveFortuneTellerDetailPage(tellerId: id),
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: '/voice-rooms',

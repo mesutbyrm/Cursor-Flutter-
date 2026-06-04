@@ -7,6 +7,7 @@ import '../../../../core/util/json_util.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
 import '../../domain/entities/home_trend_video_entity.dart';
+import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 
 class HomeRemoteDataSource {
@@ -28,8 +29,9 @@ class HomeRemoteDataSource {
     return const [];
   }
 
-  Future<List<OnlineAdvisorEntity>> fetchOnlineAdvisors() async {
+  Future<List<LiveFortuneTellerEntity>> fetchLiveFortuneTellers() async {
     for (final path in [
+      ApiEndpoints.fortuneTellers,
       ApiEndpoints.homeAdvisorsOnline,
       ApiEndpoints.socialFortuneTellers,
     ]) {
@@ -39,15 +41,65 @@ class HomeRemoteDataSource {
           'items',
           'tellers',
           'advisors',
+          'fortuneTellers',
           'data',
+          'results',
         ]);
         if (items.isNotEmpty) {
-          return items
-              .map(_mapAdvisor)
-              .where((a) => a.id.isNotEmpty)
+          final tellers = items
+              .map(_mapLiveFortuneTeller)
+              .where((t) => t.id.isNotEmpty)
               .toList();
+          tellers.sort((a, b) {
+            if (a.isOnline != b.isOnline) {
+              return a.isOnline ? -1 : 1;
+            }
+            return b.rating.compareTo(a.rating);
+          });
+          return tellers;
         }
       } catch (_) {}
+    }
+    return const [];
+  }
+
+  Future<LiveFortuneTellerEntity?> fetchLiveFortuneTeller(String id) async {
+    final key = id.trim();
+    if (key.isEmpty) return null;
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTeller(key));
+      final body = res.data;
+      if (body is Map) {
+        final map = asJsonMap(body);
+        final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+        final teller = data['teller'] ?? data['fortuneTeller'] ?? data;
+        return _mapLiveFortuneTeller(teller);
+      }
+    } catch (_) {}
+    final list = await fetchLiveFortuneTellers();
+    for (final t in list) {
+      if (t.id == key) return t;
+    }
+    return null;
+  }
+
+  Future<List<OnlineAdvisorEntity>> fetchOnlineAdvisors() async {
+    final tellers = await fetchLiveFortuneTellers();
+    if (tellers.isNotEmpty) {
+      return tellers
+          .map(
+            (t) => OnlineAdvisorEntity(
+              id: t.id,
+              name: t.name,
+              category: t.displayCategory,
+              avatarUrl: t.avatarUrl,
+              isOnline: t.isOnline,
+              rating: t.rating,
+              viewerCount: t.reviewCount,
+              specialties: t.specialties,
+            ),
+          )
+          .toList();
     }
     return const [];
   }
@@ -173,6 +225,52 @@ class HomeRemoteDataSource {
       imageUrl: _str(m, ['imageUrl', 'image', 'thumbnailUrl', 'icon']),
       gradient: gradient,
       quickActions: actions,
+    );
+  }
+
+  LiveFortuneTellerEntity _mapLiveFortuneTeller(dynamic raw) {
+    final m = asJsonMap(raw);
+    final user = asJsonMap(m['user'] ?? m['profile']);
+    final online = m['isOnline'] == true ||
+        m['online'] == true ||
+        m['status']?.toString().toLowerCase() == 'online' ||
+        m['canGoOnline'] == true;
+    final specs = _stringList(m['specialties'] ?? m['tags'] ?? user['specialties']);
+    return LiveFortuneTellerEntity(
+      id: _str(m, ['id', '_id', 'tellerId', 'userId']) ??
+          _str(user, ['id', 'userId']) ??
+          '',
+      name: _str(m, ['displayName', 'name', 'username']) ??
+          _str(user, ['displayName', 'name', 'username']) ??
+          'Falcı',
+      bio: _str(m, ['bio', 'description', 'about']) ?? _str(user, ['bio']),
+      avatarUrl: _str(m, [
+            'avatarUrl',
+            'image',
+            'avatar',
+            'photoUrl',
+            'profileImage',
+          ]) ??
+          _str(user, ['avatarUrl', 'image', 'avatar']),
+      isOnline: online,
+      rating: _dbl(m, ['rating', 'score', 'averageRating']) != 0
+          ? _dbl(m, ['rating', 'score', 'averageRating'])
+          : _dbl(user, ['rating', 'score']),
+      reviewCount: asInt(
+        pick(m, ['reviewCount', 'reviews', 'totalReviews', 'viewerCount']),
+      ),
+      pricePerMinute: asInt(
+        pick(m, [
+          'pricePerMinute',
+          'pricePerSession',
+          'sessionPrice',
+          'price',
+          'minutePrice',
+        ]),
+      ),
+      level: _str(m, ['level', 'tier', 'tellerLevel']),
+      specialties: specs,
+      category: _advisorCategory(m) ?? _advisorCategory(user),
     );
   }
 

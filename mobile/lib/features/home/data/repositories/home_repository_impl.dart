@@ -6,6 +6,7 @@ import '../../../social/domain/repositories/social_repository.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
 import '../../domain/entities/home_trend_video_entity.dart';
+import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 import '../../domain/repositories/home_repository.dart';
 import '../datasources/home_remote_datasource.dart';
@@ -23,6 +24,14 @@ class HomeRepositoryImpl implements HomeRepository {
 
   @override
   Future<List<HomeBannerEntity>> fetchBanners() => _remote.fetchBanners();
+
+  @override
+  Future<List<LiveFortuneTellerEntity>> fetchLiveFortuneTellers() =>
+      _remote.fetchLiveFortuneTellers();
+
+  @override
+  Future<LiveFortuneTellerEntity?> fetchLiveFortuneTeller(String id) =>
+      _remote.fetchLiveFortuneTeller(id);
 
   @override
   Future<List<OnlineAdvisorEntity>> fetchOnlineAdvisors() =>

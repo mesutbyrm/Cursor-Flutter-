@@ -56,6 +56,11 @@ abstract final class ApiEndpoints {
   /// Çevrimiçi falcılar / danışmanlar.
   static const homeAdvisorsOnline = '/api/advisors/online';
 
+  /// Canlı falcılar listesi (canlifal.com `/canli-falcilar`).
+  static const fortuneTellers = '/api/fortune-tellers';
+
+  static String fortuneTeller(String id) => '/api/fortune-tellers/$id';
+
   /// Oyunlar ve etkinlikler.
   static const homeGames = '/api/games';
 
