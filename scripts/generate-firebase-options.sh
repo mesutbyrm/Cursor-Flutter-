@@ -27,6 +27,14 @@ SENDER_ID=$(jq -r '.project_info.project_number' "$JSON")
 API_KEY=$(jq -r '.client[0].api_key[0].current_key' "$JSON")
 APP_ID=$(jq -r '.client[0].client_info.mobilesdk_app_id' "$JSON")
 PACKAGE=$(jq -r '.client[0].client_info.android_client_info.package_name' "$JSON")
+WEB_CLIENT_ID=$(jq -r '
+  .client[0].oauth_client[]?
+  | select(.client_type == 3)
+  | .client_id
+' "$JSON" 2>/dev/null | head -1)
+if [[ -z "$WEB_CLIENT_ID" || "$WEB_CLIENT_ID" == "null" ]]; then
+  WEB_CLIENT_ID=""
+fi
 
 if [[ -z "$PROJECT_ID" || "$PROJECT_ID" == "null" ]]; then
   echo "generate-firebase-options: project_id okunamadı"
@@ -49,6 +57,7 @@ abstract final class FirebaseOptionsGenerated {
   static const String apiKey = '$API_KEY';
   static const String appId = '$APP_ID';
   static const String androidPackageName = '$PACKAGE';
+  static const String googleWebClientId = '$WEB_CLIENT_ID';
 
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {

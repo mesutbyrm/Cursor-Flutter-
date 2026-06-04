@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.127+129 (2026-05-19)
+
+### Google ile giriş
+
+- `GOOGLE_SERVER_CLIENT_ID`: dart-define veya `google-services.json` Web client (`client_type: 3`)
+- `GoogleAuthConfig` + net hata mesajları (SHA-1, yapılandırma eksik)
+- `POST /api/auth/mobile-google` — düz JSON ve `{ success, data }` sarmalayıcı
+- CI: `print-firebase-dart-defines.sh` APK’ya otomatik Web client ID ekler
+- Kurulum: `docs/GOOGLE_SIGNIN_SETUP_TR.md`
+
 ## 1.0.126+128 (2026-05-19)
 
 ### Canlı yayın ve hediye
