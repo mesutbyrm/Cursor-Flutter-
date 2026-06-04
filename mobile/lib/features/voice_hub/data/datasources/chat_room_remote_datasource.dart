@@ -307,16 +307,19 @@ class ChatRoomRemoteDataSource {
         title: 'Tutamıyorum Zamanı',
         artist: 'Müslüm Gürses',
         query: 'Müslüm Gürses Tutamıyorum Zamanı',
+        videoId: 'c9Fq8_Q5Wx8',
       ),
       PopularMusicSuggestion(
         title: 'Kum Gibi',
         artist: 'Ahmet Kaya',
         query: 'Ahmet Kaya Kum Gibi',
+        videoId: '4sakaTjeb50',
       ),
       PopularMusicSuggestion(
         title: 'Yalan',
         artist: 'Tarkan',
         query: 'Tarkan Yalan',
+        videoId: 'nboC0smLRsE',
       ),
     ];
     try {
@@ -575,9 +578,25 @@ class ChatRoomRemoteDataSource {
       ];
     }
 
+    final catalogHits = await _searchYoutubeFromPopularCatalog(q);
+    if (catalogHits.isNotEmpty) return catalogHits;
+
+    Object? lastError;
     // Web ile aynı: önce site API (JWT), sonra Piped / Invidious yedekleri.
-    final apiHits = await _searchYoutubeViaApi(q);
-    if (apiHits.isNotEmpty) return apiHits;
+    try {
+      final apiHits = await _searchYoutubeViaApi(q);
+      if (apiHits.isNotEmpty) return apiHits;
+    } on ApiException catch (e) {
+      lastError = e;
+      if (e.statusCode == 401) {
+        throw const ApiException(
+          'Şarkı araması için oturum gerekli. Çıkış yapıp tekrar giriş yapın.',
+          statusCode: 401,
+        );
+      }
+    } on Object catch (e) {
+      lastError = e;
+    }
 
     final piped = await _searchYoutubePiped(q);
     if (piped.isNotEmpty) return piped;
@@ -585,62 +604,66 @@ class ChatRoomRemoteDataSource {
     final inv = await _searchYoutubeInvidious(q);
     if (inv.isNotEmpty) return inv;
 
-    final popularHits = await _searchYoutubeFromPopularCatalog(q);
+    final popularHits = await _searchYoutubeFromPopularCatalog(q, pipedFallback: true);
     if (popularHits.isNotEmpty) return popularHits;
 
-    throw const ApiException(
-      'Şarkı araması şu an kullanılamıyor. Biraz sonra tekrar deneyin.',
+    if (lastError is ApiException) {
+      throw lastError;
+    }
+    throw ApiException(
+      lastError != null
+          ? ApiException.userMessage(lastError)
+          : 'Şarkı araması şu an kullanılamıyor. Biraz sonra tekrar deneyin.',
     );
   }
 
   Future<List<YoutubeSearchHit>> _searchYoutubeViaApi(String q) async {
     final apiPaths = [
-      '/api/chat/youtube-search',
-      '/api/youtube/search',
       youtubeSearchPath(),
+      '/api/chat/youtube-search',
     ];
-    Object? lastError;
+    ApiException? lastApiError;
     for (final path in apiPaths) {
-      for (final client in [_dio, _publicDio]) {
-        try {
-          final res = await client
-              .get<dynamic>(
-                path,
-                queryParameters: {'q': q, 'query': q, 'search': q},
-              )
-              .timeout(const Duration(seconds: 16));
-          final data = res.data;
-          if (data is String &&
-              (data.contains('<!DOCTYPE') || data.contains('<html'))) {
-            continue;
-          }
-          final hits = _parseYoutubeHits(data);
-          if (hits.isNotEmpty) return hits;
-        } on DioException catch (e) {
-          final mapped = _mapDioForYoutube(e);
-          if (mapped.statusCode == 404) continue;
-          lastError = mapped;
-        } on ApiException catch (e) {
-          if (e.statusCode == 404) continue;
-          lastError = e;
-        } on Object catch (e) {
-          lastError = e;
+      try {
+        final res = await _dio
+            .get<dynamic>(
+              path,
+              queryParameters: {'q': q, 'query': q},
+            )
+            .timeout(const Duration(seconds: 18));
+        final data = res.data;
+        if (data is String &&
+            (data.contains('<!DOCTYPE') || data.contains('<html'))) {
+          continue;
         }
+        final hits = _parseYoutubeHits(data);
+        if (hits.isNotEmpty) return hits;
+      } on DioException catch (e) {
+        final mapped = _mapDioForYoutube(e);
+        if (mapped.statusCode == 404) continue;
+        lastApiError = mapped;
+        if (mapped.statusCode == 401) throw mapped;
+      } on ApiException catch (e) {
+        if (e.statusCode == 404) continue;
+        lastApiError = e;
+        if (e.statusCode == 401) rethrow;
       }
       try {
         final res = await _dio
             .safePost<dynamic>(
               path,
-              data: jsonEncode({'q': q, 'query': q}),
+              data: {'q': q, 'query': q},
               options: Options(contentType: 'application/json'),
             )
-            .timeout(const Duration(seconds: 16));
+            .timeout(const Duration(seconds: 18));
         final hits = _parseYoutubeHits(res.data);
         if (hits.isNotEmpty) return hits;
-      } catch (e) {
-        lastError ??= e;
+      } on ApiException catch (e) {
+        lastApiError = e;
+        if (e.statusCode == 401) rethrow;
       }
     }
+    if (lastApiError != null) throw lastApiError;
     return const [];
   }
 
@@ -656,8 +679,9 @@ class ChatRoomRemoteDataSource {
   }
 
   Future<List<YoutubeSearchHit>> _searchYoutubeFromPopularCatalog(
-    String q,
-  ) async {
+    String q, {
+    bool pipedFallback = false,
+  }) async {
     final lower = q.toLowerCase();
     final popular = await fetchPopularMusic();
     final matches = popular
@@ -667,7 +691,19 @@ class ChatRoomRemoteDataSource {
               p.artist.toLowerCase().contains(lower) ||
               p.query.toLowerCase().contains(lower),
         )
-        .take(4);
+        .take(6)
+        .toList();
+    if (matches.isEmpty) return const [];
+
+    final withIds = <YoutubeSearchHit>[];
+    for (final m in matches) {
+      final hit = m.toSearchHit();
+      if (hit != null) withIds.add(hit);
+    }
+    if (withIds.isNotEmpty) return withIds;
+
+    if (!pipedFallback) return const [];
+
     for (final m in matches) {
       final piped = await _searchYoutubePiped(m.query);
       if (piped.isNotEmpty) return piped;

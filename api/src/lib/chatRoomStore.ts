@@ -798,14 +798,19 @@ export function setRoomMusicSettings(
 }
 
 export const POPULAR_MUSIC_SUGGESTIONS = [
-  { title: "Tutamıyorum Zamanı", artist: "Müslüm Gürses", query: "Müslüm Gürses Tutamıyorum Zamanı" },
-  { title: "Beni Yak", artist: "Duman", query: "Duman Beni Yak" },
-  { title: "Yalan", artist: "Tarkan", query: "Tarkan Yalan" },
-  { title: "Gülümse", artist: "Sezen Aksu", query: "Sezen Aksu Gülümse" },
-  { title: "Aşk", artist: "Tarkan", query: "Tarkan Aşk" },
-  { title: "Kum Gibi", artist: "Ahmet Kaya", query: "Ahmet Kaya Kum Gibi" },
-  { title: "Islak Islak", artist: "Ferdi Tayfur", query: "Ferdi Tayfur Islak Islak" },
-  { title: "Şımarık", artist: "Tarkan", query: "Tarkan Şımarık" },
+  {
+    title: "Tutamıyorum Zamanı",
+    artist: "Müslüm Gürses",
+    query: "Müslüm Gürses Tutamıyorum Zamanı",
+    videoId: "c9Fq8_Q5Wx8",
+  },
+  { title: "Beni Yak", artist: "Duman", query: "Duman Beni Yak", videoId: "v0Kpfr2E3W0" },
+  { title: "Yalan", artist: "Tarkan", query: "Tarkan Yalan", videoId: "nboC0smLRsE" },
+  { title: "Gülümse", artist: "Sezen Aksu", query: "Sezen Aksu Gülümse", videoId: "0p8yZ7-m3eY" },
+  { title: "Aşk", artist: "Tarkan", query: "Tarkan Aşk", videoId: "1VRmoDGxiWQ" },
+  { title: "Kum Gibi", artist: "Ahmet Kaya", query: "Ahmet Kaya Kum Gibi", videoId: "4sakaTjeb50" },
+  { title: "Islak Islak", artist: "Ferdi Tayfur", query: "Ferdi Tayfur Islak Islak", videoId: "m1Q9Z8v5_2E" },
+  { title: "Şımarık", artist: "Tarkan", query: "Tarkan Şımarık", videoId: "7LZG9RXx0pY" },
 ];
 
 export type MusicQueueItem = {

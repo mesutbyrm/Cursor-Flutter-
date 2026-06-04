@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.126+128 (2026-05-19)
+
+### Hata düzeltmeleri (sesli oda / API)
+
+- **Müzik araması:** Popüler şarkılara `videoId` eklendi; Piped/Invidious kapalıyken de sonuç döner (ör. Müslüm Gürses)
+- YouTube arama: önce JWT ile `/api/youtube/search`; 401’de net oturum mesajı
+- Oda komutları UI: `/` → `!` (sunucu ile uyumlu)
+- API: `prisma generate` postinstall; `/api/youtube/search` optionalAuth
+
 ## 1.0.125+127 (2026-05-19)
 
 ### WhatsApp jeton ödemesi — zaman aşımı düzeltmesi
