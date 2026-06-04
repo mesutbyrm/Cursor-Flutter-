@@ -83,6 +83,8 @@ class LiveGiftsRemoteDataSource {
         'giftTypeId': giftTypeId,
         'quantity': quantity,
         'platform': GiftPlatform.mobile.queryValue,
+        if (senderName.trim().isNotEmpty) 'senderName': senderName.trim(),
+        if (receiverName.trim().isNotEmpty) 'receiverName': receiverName.trim(),
       },
     );
     final raw = _unwrap(res.data);

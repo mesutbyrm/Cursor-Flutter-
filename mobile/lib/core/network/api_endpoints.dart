@@ -149,6 +149,9 @@ abstract final class ApiEndpoints {
 
   static String videoStreamEnd(String streamId) => '/api/video-streams/$streamId/end';
 
+  static String videoStreamLiveStarted(String streamId) =>
+      '/api/video-streams/$streamId/live-started';
+
   static String videoStreamGifts(String streamId) =>
       '/api/video-streams/$streamId/gifts';
 

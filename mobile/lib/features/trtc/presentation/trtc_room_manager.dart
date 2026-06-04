@@ -257,6 +257,12 @@ class TrtcRoomManager {
     _micOn = enabled;
   }
 
+  void setCameraEnabled(bool enabled) {
+    if (_cloud == null || !_inRoom || !_isHost) return;
+    _cloud!.muteLocalVideo(TRTCVideoStreamType.big, enabled);
+    _cameraOn = enabled;
+  }
+
   void setAllRemoteAudioMuted(bool mute) {
     _cloud?.muteAllRemoteAudio(mute);
   }

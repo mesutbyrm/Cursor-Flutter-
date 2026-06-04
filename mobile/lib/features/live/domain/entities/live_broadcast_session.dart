@@ -16,6 +16,8 @@ class LiveBroadcastSession {
     this.viewerCount = 0,
     this.trtc,
     this.hostUserId,
+    this.initialMicOn = true,
+    this.initialCameraOn = true,
   });
 
   final String title;
@@ -30,6 +32,8 @@ class LiveBroadcastSession {
   final int viewerCount;
   final TrtcCredentials? trtc;
   final String? hostUserId;
+  final bool initialMicOn;
+  final bool initialCameraOn;
 
   factory LiveBroadcastSession.fromStream(LiveStreamEntity stream) {
     return LiveBroadcastSession(
@@ -49,6 +53,8 @@ class LiveBroadcastSession {
     String? streamId,
     TrtcCredentials? trtc,
     String? hostUserId,
+    bool? initialMicOn,
+    bool? initialCameraOn,
   }) {
     return LiveBroadcastSession(
       title: title,
@@ -63,6 +69,8 @@ class LiveBroadcastSession {
       viewerCount: viewerCount,
       trtc: trtc ?? this.trtc,
       hostUserId: hostUserId ?? this.hostUserId,
+      initialMicOn: initialMicOn ?? this.initialMicOn,
+      initialCameraOn: initialCameraOn ?? this.initialCameraOn,
     );
   }
 
