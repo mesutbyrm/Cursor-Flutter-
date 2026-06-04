@@ -3,14 +3,22 @@
 | Alan | Değer |
 |------|--------|
 | Sürüm | `1.0.126+128` |
-| Tarih (UTC) | 2026-06-04 16:42 |
-| Commit | [`e4b67b07375b2b2e48d1b5d8d356b9e9c0ab273a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/e4b67b07375b2b2e48d1b5d8d356b9e9c0ab273a) |
-| İş akışı | [Run 26964565971](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26964565971) |
+| Tarih (UTC) | 2026-06-04 19:21 |
+| Commit | [`3828353d5413f91b952f4bc67360fefbee33a51c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3828353d5413f91b952f4bc67360fefbee33a51c) |
+| İş akışı | [Run 26972975676](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26972975676) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
 ## 1.0.126+128 (2026-05-19)
+
+### Canlı yayın ve hediye
+
+- Yayın oluşturma: esnek `streamId` ayrıştırma, `live-started` uç sabiti, `[Live]` debug logları
+- TRTC: `{ success, data }` sarmalayıcı, `sdkAppId`/`userSig` doğrulama
+- Prep: kamera/mikrofon izni önce; `useMobileAuth` ile `POST /api/video-streams`
+- Hediye: `senderName` / `receiverName` gönderimi; poll 4 sn
+- Analiz: `docs/LIVE_STREAM_FLUTTER_ANALYSIS.md`
 
 ### Hata düzeltmeleri (sesli oda / API)
 
