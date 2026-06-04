@@ -7,7 +7,11 @@ class ApiException implements Exception {
   /// Snackbar / dialog metni; `ApiException(null): ...` gibi ham `toString` kullanmayın.
   static String userMessage(Object error) {
     if (error is ApiException) return error.message;
-    return error.toString();
+    final raw = error.toString();
+    if (raw.contains('TimeoutException') || raw.contains('timeout')) {
+      return 'İstek zaman aşımına uğradı. Bağlantınızı kontrol edip tekrar deneyin.';
+    }
+    return raw;
   }
 
   @override

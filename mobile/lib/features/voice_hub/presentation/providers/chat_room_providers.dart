@@ -477,6 +477,15 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     });
   }
 
+  void _showMusicRequestFlashLine(String line) {
+    if (line.trim().isEmpty) return;
+    state = state.copyWith(musicRequestFlash: line);
+    _musicRequestFlashTimer?.cancel();
+    _musicRequestFlashTimer = Timer(const Duration(seconds: 8), () {
+      state = state.copyWith(clearMusicRequestFlash: true);
+    });
+  }
+
   Future<String?> _submitMusicRequestByTitle(String title) async {
     final q = title.trim();
     if (q.length < 2) return 'Şarkı adı çok kısa.';
@@ -547,17 +556,27 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
 
     if (VoiceMusicSync.isIstekCommand(trimmed)) {
       final song = VoiceMusicSync.parseIstekSongTitle(trimmed);
-      if (song != null && song.isNotEmpty) {
-        state = state.copyWith(sending: true, clearError: true);
-        final err = await _submitMusicRequestByTitle(song);
-        if (err != null) {
-          state = state.copyWith(sending: false, error: err);
-          return;
-        }
-        await _syncMusicFromServer();
-        state = state.copyWith(sending: false);
+      if (song == null || song.isEmpty) {
+        state = state.copyWith(
+          error: 'Kullanım: !istek Sanatçı - Şarkı adı',
+        );
+        _showMusicRequestFlashLine('🎵 Kullanım: !istek Sanatçı - Şarkı adı');
         return;
       }
+      state = state.copyWith(sending: true, clearError: true);
+      _showMusicRequestFlashLine('🔍 «$song» aranıyor…');
+      final err = await _submitMusicRequestByTitle(song);
+      if (err == null) {
+        await _syncMusicFromServer();
+        state = state.copyWith(sending: false);
+        _showMusicRequestFlashLine('✅ «$song» kuyruğa eklendi');
+        return;
+      }
+      // Yerel arama başarısız — komutu sunucuya ilet (sohbette sistem yanıtı).
+      state = state.copyWith(sending: false, clearError: true);
+      _showMusicRequestFlashLine(
+        '⚠️ Yerel arama başarısız, sunucuya iletiliyor…',
+      );
     }
 
     final user = ref.read(authControllerProvider).valueOrNull;
