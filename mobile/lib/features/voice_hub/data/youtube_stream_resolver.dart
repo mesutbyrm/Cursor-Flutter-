@@ -1,12 +1,27 @@
 import 'package:dio/dio.dart';
 
-/// YouTube watch URL → doğrudan ses akışı (Piped / site API).
+/// YouTube watch URL → doğrudan ses akışı (site API + Piped + Invidious).
 class YoutubeStreamResolver {
   YoutubeStreamResolver(this._dio);
 
   final Dio _dio;
 
   static final _youtubeHost = RegExp(r'youtube\.com|youtu\.be', caseSensitive: false);
+
+  static const _pipedHosts = [
+    'https://pipedapi.kavin.rocks',
+    'https://pipedapi.adminforge.de',
+    'https://pipedapi.syncpundit.io',
+    'https://pipedapi.leptons.xyz',
+    'https://pipedapi.in.projectsegfau.lt',
+  ];
+
+  static const _invidiousHosts = [
+    'https://invidious.nerdvpn.de',
+    'https://invidious.privacyredirect.com',
+    'https://invidious.fdn.fr',
+    'https://invidious.dhus.de',
+  ];
 
   bool needsResolve(String url) => _youtubeHost.hasMatch(url);
 
@@ -29,6 +44,24 @@ class YoutubeStreamResolver {
     if (musicUrl.isEmpty) return null;
     if (!_youtubeHost.hasMatch(musicUrl)) return musicUrl;
 
+    final fromApi = await _resolveViaSiteApi(musicUrl);
+    if (fromApi != null) return fromApi;
+
+    final id = videoIdFrom(musicUrl);
+    if (id == null || id.isEmpty) return null;
+
+    for (final host in _pipedHosts) {
+      final url = await _resolveViaPiped(host, id);
+      if (url != null) return url;
+    }
+    for (final host in _invidiousHosts) {
+      final url = await _resolveViaInvidious(host, id);
+      if (url != null) return url;
+    }
+    return null;
+  }
+
+  Future<String?> _resolveViaSiteApi(String musicUrl) async {
     try {
       final res = await _dio.get<dynamic>(
         '/api/chat/youtube-stream',
@@ -40,12 +73,13 @@ class YoutubeStreamResolver {
         if (stream is String && stream.startsWith('http')) return stream;
       }
     } catch (_) {}
+    return null;
+  }
 
-    final id = videoIdFrom(musicUrl);
-    if (id == null || id.isEmpty) return null;
+  Future<String?> _resolveViaPiped(String host, String id) async {
     try {
       final res = await _dio.get<dynamic>(
-        'https://pipedapi.kavin.rocks/streams/$id',
+        '$host/streams/$id',
         options: Options(
           headers: {'Accept': 'application/json'},
           receiveTimeout: const Duration(seconds: 12),
@@ -68,6 +102,37 @@ class YoutubeStreamResolver {
       );
       final url = streams.first['url']?.toString();
       if (url != null && url.startsWith('http')) return url;
+    } catch (_) {}
+    return null;
+  }
+
+  Future<String?> _resolveViaInvidious(String host, String id) async {
+    try {
+      final res = await _dio.get<dynamic>(
+        '$host/api/v1/videos/$id',
+        options: Options(
+          headers: {'Accept': 'application/json'},
+          receiveTimeout: const Duration(seconds: 12),
+        ),
+      );
+      final data = res.data;
+      if (data is! Map) return null;
+      final adaptive = data['adaptiveFormats'];
+      if (adaptive is! List) return null;
+      String? best;
+      var bestBitrate = -1;
+      for (final raw in adaptive) {
+        if (raw is! Map) continue;
+        final type = raw['type']?.toString() ?? '';
+        if (!type.startsWith('audio/')) continue;
+        final url = raw['url']?.toString();
+        final bitrate = raw['bitrate'] as num? ?? 0;
+        if (url != null && url.startsWith('http') && bitrate > bestBitrate) {
+          bestBitrate = bitrate.toInt();
+          best = url;
+        }
+      }
+      return best;
     } catch (_) {}
     return null;
   }
