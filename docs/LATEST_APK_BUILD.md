@@ -2,22 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.133+135` |
-| Tarih (UTC) | 2026-06-05 20:39 |
-| Commit | [`53ac7627872827fba08dddffa4a0fe19b00c54f3`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/53ac7627872827fba08dddffa4a0fe19b00c54f3) |
-| İş akışı | [Run 27037864894](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27037864894) |
+| Sürüm | `1.0.134+136` |
+| Tarih (UTC) | 2026-06-05 22:05 |
+| Commit | [`19bb3fc75a9bdc8ef304acf4c34e01438fb27033`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/19bb3fc75a9bdc8ef304acf4c34e01438fb27033) |
+| İş akışı | [Run 27041645557](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27041645557) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.131+133 (2026-05-19)
+## 1.0.134+136 (2026-05-19)
 
-### Müzik sistemi — web paritesi
+### Müzik isteği oynatma düzeltmesi
 
-- Müzik Aç: web gibi blur’lu modal (`YouTube Müzik`), sayfa değişmez
-- DJ senkron: SSE/socket `dj` payload, öncelikli kuyruk (10 jeton), ücretsiz `!istek` (sunucu)
-- Oynatma: kuyruk merge düzeltmesi, YouTube yedek URL, hata mesajları
-- API mirror: `priority`, `skipPayment`, zengin `QUEUE_UPDATED` socket olayları
+- `[SONG_REQUEST_FREE] videoId|başlık` sohbet satırı parse edilir; anında oynatma + sunucu senkronu
+- `!istek` sonrası kademeli yeniden senkron (300 ms–3 sn)
+- Kuyruk dolu ama `playing: false` ise mobil YouTube yedek URL ile çalmayı dener
+- API: Piped çözümleme başarısızsa YouTube watch URL ile kuyruk başlatılır; `nowPlaying` kuyruk başında gösterilir
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
