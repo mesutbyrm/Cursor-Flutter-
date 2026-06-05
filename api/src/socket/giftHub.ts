@@ -11,7 +11,7 @@ export function initGiftSocket(httpServer: HttpServer) {
   });
 
   io.on("connection", (socket) => {
-    socket.on("joinStream", (payload: { streamId?: string }) => {
+    socket.on("joinStream", (payload: { streamId?: string; userId?: string }) => {
       const id = payload?.streamId?.trim();
       if (id) socket.join(streamRoom(id));
     });
@@ -47,6 +47,36 @@ export function emitGiftEvent(streamId: string, payload: Record<string, unknown>
   if (!io) return;
   io.to(streamRoom(streamId)).emit("gift", payload);
   io.to(streamRoom(streamId)).emit("giftSent", payload);
+}
+
+export function emitStreamMessage(
+  streamId: string,
+  payload: Record<string, unknown>,
+) {
+  if (!io) return;
+  const room = streamRoom(streamId);
+  io.to(room).emit("streamMessage", payload);
+  io.to(room).emit("chatMessage", payload);
+  io.to(room).emit("message", payload);
+}
+
+export function emitStreamViewerCount(streamId: string, viewerCount: number) {
+  if (!io) return;
+  const payload = { streamId, viewerCount, viewers: viewerCount };
+  const room = streamRoom(streamId);
+  io.to(room).emit("viewerCount", payload);
+  io.to(room).emit("viewerCountUpdated", payload);
+}
+
+export function emitStreamEnded(
+  streamId: string,
+  payload: Record<string, unknown> = {},
+) {
+  if (!io) return;
+  const body = { streamId, event: "STREAM_ENDED", ...payload };
+  const room = streamRoom(streamId);
+  io.to(room).emit("streamEnded", body);
+  io.to(room).emit("STREAM_ENDED", body);
 }
 
 function voiceRoomTargets(roomIdOrSlug: string): string[] {

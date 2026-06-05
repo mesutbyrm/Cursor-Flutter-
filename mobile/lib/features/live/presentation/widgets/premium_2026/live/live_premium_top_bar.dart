@@ -21,6 +21,7 @@ class LivePremiumTopBar extends StatelessWidget {
     required this.onFollow,
     required this.onClose,
     this.onBack,
+    this.onProfileTap,
   });
 
   final LiveBroadcastSession session;
@@ -30,10 +31,11 @@ class LivePremiumTopBar extends StatelessWidget {
   final VoidCallback onFollow;
   final VoidCallback onClose;
   final VoidCallback? onBack;
+  final VoidCallback? onProfileTap;
 
   @override
   Widget build(BuildContext context) {
-    final viewers = session.viewerCount > 0 ? session.viewerCount : 4892;
+    final viewers = session.viewerCount;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(22),
@@ -56,7 +58,10 @@ class LivePremiumTopBar extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 ),
-              UserAvatar(url: session.avatarUrl, radius: 20),
+              GestureDetector(
+                onTap: onProfileTap,
+                child: UserAvatar(url: session.avatarUrl, radius: 20),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(

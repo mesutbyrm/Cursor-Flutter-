@@ -55,6 +55,7 @@ class LiveBroadcastSession {
     String? hostUserId,
     bool? initialMicOn,
     bool? initialCameraOn,
+    int? viewerCount,
   }) {
     return LiveBroadcastSession(
       title: title,
@@ -66,7 +67,7 @@ class LiveBroadcastSession {
       streamerName: streamerName,
       streamerHandle: streamerHandle,
       avatarUrl: avatarUrl,
-      viewerCount: viewerCount,
+      viewerCount: viewerCount ?? this.viewerCount,
       trtc: trtc ?? this.trtc,
       hostUserId: hostUserId ?? this.hostUserId,
       initialMicOn: initialMicOn ?? this.initialMicOn,

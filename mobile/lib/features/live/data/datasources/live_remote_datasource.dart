@@ -7,6 +7,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/live_debug_log.dart';
 import '../../../../core/util/json_util.dart';
 import '../models/live_stream_dto.dart';
+import '../../domain/entities/live_stream_chat_message.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/entities/voice_room_entity.dart';
 
@@ -186,11 +187,109 @@ class LiveRemoteDataSource {
     return null;
   }
 
+  Future<LiveStreamEntity?> fetchStream(String streamId) async {
+    if (!Env.useMobileAuth) return null;
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.videoStream(streamId),
+      );
+      final body = res.data;
+      if (body is Map<String, dynamic>) {
+        final raw = body['stream'] ?? body['data'] ?? body;
+        if (raw is Map) {
+          return LiveStreamDto.fromApiMap(Map<String, dynamic>.from(raw))
+              .toEntity();
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<int> joinVideoStream(String streamId) async {
+    LiveDebugLog.log('stream.join', {'streamId': streamId});
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.videoStreamJoin(streamId),
+    );
+    final body = res.data;
+    if (body is Map) {
+      final map = Map<String, dynamic>.from(body);
+      final data = map['data'] is Map
+          ? Map<String, dynamic>.from(map['data'] as Map)
+          : map;
+      return asInt(pick(data, ['viewerCount', 'viewers', 'watching']));
+    }
+    return 0;
+  }
+
+  Future<void> leaveVideoStream(String streamId) async {
+    try {
+      await _dio.safePost<dynamic>(ApiEndpoints.videoStreamLeave(streamId));
+      LiveDebugLog.log('stream.leave', {'streamId': streamId});
+    } catch (_) {}
+  }
+
+  Future<List<LiveStreamChatMessage>> fetchStreamMessages(
+    String streamId, {
+    DateTime? since,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.videoStreamMessages(streamId),
+      query: since != null
+          ? {'since': since.toUtc().toIso8601String()}
+          : null,
+    );
+    return _parseStreamMessages(res.data);
+  }
+
+  Future<LiveStreamChatMessage?> sendStreamMessage({
+    required String streamId,
+    required String content,
+  }) async {
+    LiveDebugLog.log('stream.chat.send', {'streamId': streamId});
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.videoStreamMessages(streamId),
+      data: {'content': content.trim()},
+    );
+    final body = res.data;
+    if (body is Map) {
+      final map = Map<String, dynamic>.from(body);
+      final raw = map['message'] ?? map['data'];
+      if (raw is Map) {
+        return LiveStreamChatMessage.fromJson(
+          Map<String, dynamic>.from(raw),
+        );
+      }
+    }
+    return null;
+  }
+
+  List<LiveStreamChatMessage> _parseStreamMessages(dynamic body) {
+    dynamic list;
+    if (body is Map) {
+      final map = Map<String, dynamic>.from(body);
+      if (map['success'] == true && map['data'] != null) {
+        return _parseStreamMessages(map['data']);
+      }
+      list = pick(map, ['messages', 'items', 'data']);
+    } else {
+      list = body;
+    }
+    if (list is! List) return const [];
+    return list
+        .whereType<Map>()
+        .map((e) => LiveStreamChatMessage.fromJson(
+              Map<String, dynamic>.from(e),
+            ))
+        .where((m) => m.content.isNotEmpty)
+        .toList();
+  }
+
   Future<String> createVideoStream({
     required String title,
     String? description,
     String? category,
     List<String>? tags,
+    String? thumbnailUrl,
   }) async {
     final started = DateTime.now();
     LiveDebugLog.log('create.request', {'title': title});
@@ -203,6 +302,10 @@ class LiveRemoteDataSource {
           'description': description,
         if (category != null && category.isNotEmpty) 'category': category,
         if (tags != null && tags.isNotEmpty) 'tags': tags,
+        if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
+          'thumbnailUrl': thumbnailUrl,
+        if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
+          'coverUrl': thumbnailUrl,
         'requestType': 'live',
         'status': 'live',
       },

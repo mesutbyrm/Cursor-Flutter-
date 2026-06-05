@@ -33,7 +33,7 @@ class LiveRoomInteractionNotifier extends Notifier<LiveRoomInteractionState> {
   @override
   LiveRoomInteractionState build() => const LiveRoomInteractionState();
 
-  void reset({int initialLikes = 12500}) {
+  void reset({int initialLikes = 0}) {
     state = LiveRoomInteractionState(likeCount: initialLikes);
   }
 

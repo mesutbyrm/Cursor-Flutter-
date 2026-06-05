@@ -94,6 +94,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
               description: _description.text.trim(),
               category: _category,
               tags: _tags,
+              thumbnailUrl: user.avatarUrl,
             );
       }
 

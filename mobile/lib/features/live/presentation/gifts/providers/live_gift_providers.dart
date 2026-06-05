@@ -17,10 +17,7 @@ final liveGiftSocketBridgeProvider = Provider<LiveGiftSocketBridge>((ref) {
 });
 
 final liveGiftRealtimeProvider = Provider<LiveGiftRealtimeService>((ref) {
-  final svc = LiveGiftRealtimeService(
-    ref.watch(liveGiftsRemoteProvider),
-    ref.watch(liveGiftSocketBridgeProvider),
-  );
+  final svc = LiveGiftRealtimeService(ref.watch(liveGiftsRemoteProvider));
   ref.onDispose(svc.dispose);
   return svc;
 });

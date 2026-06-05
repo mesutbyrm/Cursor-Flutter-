@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
@@ -39,7 +40,12 @@ Future<void> openLiveStreamNative(
   LiveStreamEntity stream, {
   bool swipeMode = true,
 }) async {
-  if (!stream.isLive) return;
+  if (!stream.isLive) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Bu yayın artık aktif değil')),
+    );
+    return;
+  }
 
   final user = ref.read(authControllerProvider).valueOrNull;
   if (user == null) {
@@ -50,6 +56,18 @@ Future<void> openLiveStreamNative(
   }
 
   try {
+    if (Env.useMobileAuth) {
+      final meta = await ref.read(liveRemoteProvider).fetchStream(stream.id);
+      if (meta != null && !meta.isLive) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Yayın sona erdi')),
+          );
+        }
+        ref.invalidate(liveStreamsProvider);
+        return;
+      }
+    }
     if (swipeMode) {
       await openLiveStreamSwipe(context, ref, stream);
       return;
