@@ -23,6 +23,7 @@ import '../gifts/widgets/gift_fullscreen_overlay.dart';
 import '../gifts/widgets/gift_notification_stack.dart';
 import '../providers/live_providers.dart';
 import '../providers/live_room_interaction_provider.dart';
+import '../providers/live_room_providers.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
 import '../widgets/premium_2026/live_premium_2026.dart';
@@ -50,17 +51,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   var _rtcReady = false;
   String? _rtcError;
   final _chat = TextEditingController();
-  final _messages = <LiveRoomChatMessage>[
-    const LiveRoomChatMessage(
-      user: 'Ayşe',
-      text: 'Merhaba! Yayına hoş geldin 💜',
-    ),
-    const LiveRoomChatMessage(
-      user: 'Sistem',
-      text: 'Canlı yayına hoş geldin',
-      isSystem: true,
-    ),
-  ];
 
   late Timer _timer;
   Duration _elapsed = Duration.zero;
@@ -252,13 +242,60 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     return '$h:$m:$s';
   }
 
+  void _openHostProfile(BuildContext context, LiveBroadcastSession s) {
+    final handle = s.streamerHandle?.trim();
+    if (handle != null && handle.isNotEmpty) {
+      context.push('/profile/${Uri.encodeComponent(handle)}');
+      return;
+    }
+    final id = s.hostUserId;
+    if (id != null && id.isNotEmpty) {
+      context.push('/profile/user/$id');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final s = widget.session;
+    final baseSession = widget.session;
+    final streamId = baseSession.streamId?.trim();
+    final hasStream = streamId != null && streamId.isNotEmpty;
+    final roomState =
+        hasStream ? ref.watch(liveRoomProvider(streamId)) : const LiveRoomState();
+    final s = baseSession.copyWith(viewerCount: roomState.viewerCount);
     final top = MediaQuery.paddingOf(context).top;
     final giftCtrl = ref.watch(liveGiftControllerProvider);
     final user = ref.watch(authControllerProvider).valueOrNull;
     final interaction = ref.watch(liveRoomInteractionProvider);
+
+    if (hasStream) {
+      ref.listen(liveRoomProvider(streamId), (prev, next) {
+        if (next.streamEnded && !(prev?.streamEnded ?? false) && !s.isHost) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (!mounted) return;
+          await showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Yayın sona erdi'),
+              content: const Text('Yayıncı yayını kapattı.'),
+              actions: [
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Tamam'),
+                ),
+              ],
+            ),
+          );
+          if (!mounted) return;
+          if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+            widget.onSwipeClose!();
+          } else {
+            context.go('/live');
+          }
+        });
+        }
+      });
+    }
 
     ref.listen<LiveGiftController>(liveGiftControllerProvider, (prev, next) {
       final ev = next.activeFullscreen;
@@ -305,6 +342,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                       followLoading: interaction.followLoading,
                       onFollow: _onFollow,
                       onClose: () => _confirmEnd(context),
+                      onProfileTap: s.hostUserId != null || s.streamerHandle != null
+                          ? () => _openHostProfile(context, s)
+                          : null,
                       onBack: widget.embeddedInSwipe
                           ? () => widget.onSwipeClose?.call()
                           : null,
@@ -341,7 +381,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                                 events: giftCtrl.notifications,
                               ),
                               const SizedBox(height: 8),
-                              LivePremiumChatFeed(messages: _messages),
+                              LivePremiumChatFeed(
+                                messages: roomState.messages.isEmpty
+                                    ? const [
+                                        LiveRoomChatMessage(
+                                          user: 'Sistem',
+                                          text: 'Canlı yayına hoş geldin',
+                                          isSystem: true,
+                                        ),
+                                      ]
+                                    : roomState.messages,
+                              ),
                             ],
                           ),
                         ),
@@ -387,11 +437,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                     onGift: () => giftCtrl.setPanelOpen(true),
                     onSend: () {
                       final t = _chat.text.trim();
-                      if (t.isEmpty) return;
-                      setState(() {
-                        _messages.add(LiveRoomChatMessage(user: 'Sen', text: t));
-                        _chat.clear();
-                      });
+                      if (t.isEmpty || streamId == null || streamId.isEmpty) {
+                        return;
+                      }
+                      _chat.clear();
+                      unawaited(
+                        ref.read(liveRoomProvider(streamId).notifier).sendMessage(
+                              t,
+                              selfName: user?.display ?? 'Sen',
+                            ),
+                      );
                     },
                     onEnd: s.isHost ? () => _confirmEnd(context) : null,
                   ),

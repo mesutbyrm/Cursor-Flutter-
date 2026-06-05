@@ -19,7 +19,12 @@ abstract class LiveRepository {
     String? description,
     String? category,
     List<String>? tags,
+    String? thumbnailUrl,
   });
 
   Future<void> endVideoStream(String streamId);
+
+  Future<int> joinVideoStream(String streamId);
+
+  Future<void> leaveVideoStream(String streamId);
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -27,16 +29,22 @@ class _LivePageState extends ConsumerState<LivePage>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
   final _liveScroll = ScrollController();
+  Timer? _listRefresh;
 
   @override
   void initState() {
     super.initState();
     _tab = TabController(length: 2, vsync: this);
     _liveScroll.addListener(_onLiveScroll);
+    _listRefresh = Timer.periodic(const Duration(seconds: 12), (_) {
+      if (!mounted || _tab.index != 0) return;
+      ref.read(liveStreamsListNotifierProvider.notifier).refresh();
+    });
   }
 
   @override
   void dispose() {
+    _listRefresh?.cancel();
     _liveScroll.removeListener(_onLiveScroll);
     _liveScroll.dispose();
     _tab.dispose();

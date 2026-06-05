@@ -14,7 +14,9 @@ Güncelleme: 2026-05-19 · Mobil sürüm hedefi: **1.0.126+128**
 | Hediye katalog | GET | `/api/video-streams/gifts?platform=mobile` | — |
 | Hediye gönder | POST | `/api/video-streams/{id}/gifts` | Bearer (jeton düşümü) |
 | Hediye listesi | GET | `/api/video-streams/{id}/gifts` | — |
-| Socket.IO | — | `joinStream` `{ streamId }` | Mirror’da auth yok |
+| Yayın sohbeti | GET/POST | `/api/video-streams/{id}/messages` | Bearer (POST) |
+| İzleyici join/leave | POST | `/api/video-streams/{id}/join` · `/leave` | Bearer |
+| Socket.IO | — | `joinStream`, `streamMessage`, `viewerCount`, `streamEnded` | Mirror’da auth yok |
 
 Web: NextAuth **çerez**. Flutter: **`Authorization: Bearer`** (`dio_provider.dart`).
 

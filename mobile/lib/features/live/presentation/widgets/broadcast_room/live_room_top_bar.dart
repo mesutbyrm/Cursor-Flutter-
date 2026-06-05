@@ -88,7 +88,7 @@ class LiveRoomTopBar extends StatelessWidget {
               SizedBox(width: 4),
               Text(
                 _formatViewers(
-                  session.viewerCount > 0 ? session.viewerCount : 4892,
+                  session.viewerCount,
                 ),
                 style: TextStyle(
                   fontWeight: FontWeight.w700,

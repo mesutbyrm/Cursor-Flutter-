@@ -147,7 +147,18 @@ abstract final class ApiEndpoints {
   /// Canlı yayın hediye kataloğu (Tencent / site ile aynı liste).
   static const videoStreamGiftsCatalog = '/api/video-streams/gifts';
 
+  static String videoStream(String streamId) => '/api/video-streams/$streamId';
+
   static String videoStreamEnd(String streamId) => '/api/video-streams/$streamId/end';
+
+  static String videoStreamJoin(String streamId) =>
+      '/api/video-streams/$streamId/join';
+
+  static String videoStreamLeave(String streamId) =>
+      '/api/video-streams/$streamId/leave';
+
+  static String videoStreamMessages(String streamId) =>
+      '/api/video-streams/$streamId/messages';
 
   static String videoStreamLiveStarted(String streamId) =>
       '/api/video-streams/$streamId/live-started';

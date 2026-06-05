@@ -18,6 +18,15 @@ class SocialBranchQuickActions extends StatelessWidget {
       rows: [
         [
           QuickActionTile(
+            icon: Icons.videocam_rounded,
+            label: 'Canlı Yayın\nAç',
+            gradient: [
+              AppColors.liveRed.withValues(alpha: 0.55),
+              AppColors.accentPink.withValues(alpha: 0.35),
+            ],
+            onTap: () => context.push('/live/prep'),
+          ),
+          QuickActionTile(
             icon: Icons.person_add_alt_1_rounded,
             label: 'Arkadaşlarını\ndavet et',
             gradient: [
@@ -26,6 +35,8 @@ class SocialBranchQuickActions extends StatelessWidget {
             ],
             onTap: () => context.push('/invite-friends'),
           ),
+        ],
+        [
           QuickActionTile(
             icon: Icons.monetization_on_rounded,
             label: 'Jeton\nyükle',
@@ -35,8 +46,6 @@ class SocialBranchQuickActions extends StatelessWidget {
             ],
             onTap: () => context.push('/jeton-store'),
           ),
-        ],
-        [
           QuickActionTile(
             icon: Icons.home_rounded,
             label: 'Ana\nakış',
@@ -46,6 +55,8 @@ class SocialBranchQuickActions extends StatelessWidget {
             ],
             onTap: () => context.go('/feed'),
           ),
+        ],
+        [
           QuickActionTile(
             icon: Icons.graphic_eq_rounded,
             label: 'Sesli\nodalar',
@@ -74,6 +85,15 @@ class LiveStreamsBranchQuickActions extends StatelessWidget {
       rows: [
         [
           QuickActionTile(
+            icon: Icons.videocam_rounded,
+            label: 'Canlı Yayın\nAç',
+            gradient: [
+              AppColors.liveRed.withValues(alpha: 0.55),
+              AppColors.accentPink.withValues(alpha: 0.35),
+            ],
+            onTap: () => context.push('/live/prep'),
+          ),
+          QuickActionTile(
             icon: Icons.monetization_on_rounded,
             label: 'Jeton\nyükle',
             gradient: [
@@ -82,6 +102,8 @@ class LiveStreamsBranchQuickActions extends StatelessWidget {
             ],
             onTap: () => context.push('/jeton-store'),
           ),
+        ],
+        [
           QuickActionTile(
             icon: Icons.card_giftcard_rounded,
             label: 'Davet\npaylaş',
@@ -91,8 +113,6 @@ class LiveStreamsBranchQuickActions extends StatelessWidget {
             ],
             onTap: () => context.push('/invite-friends'),
           ),
-        ],
-        [
           QuickActionTile(
             icon: Icons.forum_rounded,
             label: 'Sosyal\nakış',
