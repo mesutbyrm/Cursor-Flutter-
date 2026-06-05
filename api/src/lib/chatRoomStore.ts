@@ -678,7 +678,9 @@ export function getDjState(roomId: string, user: User | null) {
   );
   const settings = getRoomMusicSettings(roomId);
   const queue = listMusicQueue(roomId);
-  const playing = Boolean(dj.playing && dj.musicUrl);
+  const playing = Boolean(
+    dj.playing && (dj.musicUrl || queue.length > 0),
+  );
   const isDj =
     Boolean(priv?.dj) ||
     (room?.djUserIds.includes(user?.id ?? "") ?? false);
@@ -704,7 +706,7 @@ export function getDjState(roomId: string, user: User | null) {
     canRequestMusic,
     isOwner: Boolean(priv?.owner),
     musicQueue: queue,
-    nowPlaying: playing && queue.length > 0 ? queue[0] : null,
+    nowPlaying: queue.length > 0 ? queue[0]! : null,
     musicRequestCost: settings.musicRequestCost,
     maxMusicQueue: settings.maxQueueLength,
     musicEnabled: settings.musicEnabled,
@@ -1088,15 +1090,19 @@ export async function searchYoutube(query: string): Promise<YoutubeSearchHit[]> 
   }
 }
 
-export async function resolveYoutubeStreamUrl(
-  youtubeUrlOrId: string,
+const PIPED_API_HOSTS = [
+  "https://pipedapi.kavin.rocks",
+  "https://pipedapi.adminforge.de",
+  "https://pipedapi.syncpundit.io",
+  "https://pipedapi.leptons.xyz",
+];
+
+async function resolveViaPipedHost(
+  host: string,
+  videoId: string,
 ): Promise<string | null> {
-  const id =
-    extractYoutubeId(youtubeUrlOrId) ??
-    (youtubeUrlOrId.length <= 15 ? youtubeUrlOrId : null);
-  if (!id) return null;
   try {
-    const res = await fetch(`https://pipedapi.kavin.rocks/streams/${id}`, {
+    const res = await fetch(`${host}/streams/${videoId}`, {
       headers: { Accept: "application/json" },
     });
     if (!res.ok) return null;
@@ -1114,18 +1120,46 @@ export async function resolveYoutubeStreamUrl(
   }
 }
 
+export function youtubeWatchUrl(videoId: string) {
+  return `https://www.youtube.com/watch?v=${videoId}`;
+}
+
+export async function resolveYoutubeStreamUrl(
+  youtubeUrlOrId: string,
+): Promise<string | null> {
+  const id =
+    extractYoutubeId(youtubeUrlOrId) ??
+    (youtubeUrlOrId.length <= 15 ? youtubeUrlOrId : null);
+  if (!id) return null;
+  for (const host of PIPED_API_HOSTS) {
+    const stream = await resolveViaPipedHost(host, id);
+    if (stream) return stream;
+  }
+  return null;
+}
+
 export async function tryStartMusicFromQueue(roomId: string) {
   const key = resolveRoomId(roomId);
   const current = djByRoom.get(key);
   if (current?.playing && current.musicUrl) return current;
   const list = musicQueueList(roomId);
   if (list.length === 0) return current ?? null;
-  const next = list[0];
-  const stream = await resolveYoutubeStreamUrl(next.youtubeUrl);
-  if (!stream) return current ?? null;
+  const next = list[0]!;
+  const rawUrl = next.youtubeUrl.trim();
+  const videoId =
+    extractYoutubeId(rawUrl) ??
+    (rawUrl.length <= 15 && !rawUrl.includes("/") ? rawUrl : null);
+  const watchUrl = videoId
+    ? rawUrl.startsWith("http")
+      ? rawUrl
+      : youtubeWatchUrl(videoId)
+    : rawUrl || null;
+  const stream = watchUrl ? await resolveYoutubeStreamUrl(watchUrl) : null;
+  const playbackUrl = stream ?? watchUrl;
+  if (!playbackUrl) return current ?? null;
   const nextDj = {
     activeDjId: next.requestedBy.id,
-    musicUrl: stream,
+    musicUrl: playbackUrl,
     playing: true,
   };
   djByRoom.set(key, nextDj);

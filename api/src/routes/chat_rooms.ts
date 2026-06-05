@@ -137,6 +137,7 @@ chatRoomsRouter.get("/rooms/:roomId/music-queue", optionalAuth, async (req, res)
     musicEnabled: settings.musicEnabled,
     nowPlaying: dj.nowPlaying ?? null,
     playing: dj.playing,
+    musicUrl: dj.musicUrl ?? null,
     canRequestMusic: dj.canRequestMusic,
   });
 });
