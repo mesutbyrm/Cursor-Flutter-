@@ -92,10 +92,36 @@ model SocialPost {
   commentsCount  Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  likes          SocialPostLike[]
+  comments       SocialPostComment[]
 
   @@index([authorId])
   @@index([createdAt])
   @@index([postType, createdAt])
+}
+
+model SocialPostLike {
+  id        String     @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime   @default(now())
+  post      SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+}
+
+model SocialPostComment {
+  id        String     @id @default(cuid())
+  postId    String
+  authorId  String
+  content   String
+  createdAt DateTime   @default(now())
+  post      SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@index([authorId])
 }
 
 model Follow {

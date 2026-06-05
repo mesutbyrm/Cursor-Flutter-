@@ -117,6 +117,24 @@ function requestPayload(row: {
   };
 }
 
+/** GET /api/referral — davet bilgisi */
+walletRouter.get("/referral", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.userId! } });
+  if (!user) return jsonError(res, 404, "Kullanıcı bulunamadı");
+  const code = user.id.slice(-8).toUpperCase();
+  const origin = (process.env.PUBLIC_SITE_URL ?? "https://canlifal.com").replace(
+    /\/$/,
+    "",
+  );
+  return res.status(200).json({
+    referralCode: code,
+    referralLink: `${origin}/davet?ref=${code}`,
+    referralUrl: `${origin}/davet?ref=${code}`,
+    referralCreditsEarned: 0,
+    inviteCount: 0,
+  });
+});
+
 /** GET /api/me — mobil profil + bakiye (canlifal.com Flutter dokümanı) */
 walletRouter.get("/me", requireAuth, async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.userId! } });

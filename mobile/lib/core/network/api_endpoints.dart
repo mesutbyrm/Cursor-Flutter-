@@ -207,4 +207,10 @@ abstract final class ApiEndpoints {
 
   /// İçerik / kullanıcı şikayeti (canlifal moderasyon API).
   static const reports = '/api/reports';
+
+  /// Müzik arama (JWT, sunucu YouTube Data API v3).
+  static const musicSearch = '/api/music/search';
+
+  /// @deprecated — `musicSearch` kullanın.
+  static const youtubeSearch = '/api/youtube/search';
 }
