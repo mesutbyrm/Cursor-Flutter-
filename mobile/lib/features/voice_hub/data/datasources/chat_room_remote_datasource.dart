@@ -11,13 +11,16 @@ import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../services/voice_room_debug_log.dart';
+import '../youtube_music_search_cache.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 
 class ChatRoomRemoteDataSource {
-  ChatRoomRemoteDataSource(this._dio);
+  ChatRoomRemoteDataSource(this._dio, {YoutubeMusicSearchCache? searchCache})
+      : _searchCache = searchCache ?? YoutubeMusicSearchCache();
 
   final Dio _dio;
+  final YoutubeMusicSearchCache _searchCache;
 
   static String messagesPath(String roomId) =>
       '/api/chat/rooms/$roomId/messages';
@@ -438,98 +441,100 @@ class ChatRoomRemoteDataSource {
   Future<List<YoutubeSearchHit>> searchYoutube(String query) async {
     final q = query.trim();
     if (q.length < 2) return const [];
-    VoiceRoomDebugLog.log('music.search', {'q': q});
+    final started = DateTime.now();
+    VoiceRoomDebugLog.log('music.search.start', {'q': q});
 
     final directId = _extractYoutubeId(q);
     if (directId != null) {
-      return [
-        YoutubeSearchHit(
-          videoId: directId,
-          title: 'YouTube bağlantısı',
-          url: 'https://www.youtube.com/watch?v=$directId',
-          thumbUrl: 'https://i.ytimg.com/vi/$directId/hqdefault.jpg',
-        ),
-      ];
+      final hit = YoutubeSearchHit(
+        videoId: directId,
+        title: 'YouTube bağlantısı',
+        url: 'https://www.youtube.com/watch?v=$directId',
+        thumbUrl: 'https://i.ytimg.com/vi/$directId/hqdefault.jpg',
+      );
+      VoiceRoomDebugLog.log('music.search.direct_id', {
+        'ms': DateTime.now().difference(started).inMilliseconds,
+      });
+      return [hit];
     }
 
-    final catalogHits = await _searchYoutubeFromPopularCatalog(q);
-    if (catalogHits.isNotEmpty) return catalogHits;
+    final cached = _searchCache.get(q);
+    if (cached != null) {
+      VoiceRoomDebugLog.log('music.search.cache_hit', {
+        'q': q,
+        'count': cached.length,
+        'ms': DateTime.now().difference(started).inMilliseconds,
+      });
+      return cached;
+    }
 
     try {
       final hits = await _searchMusicViaBackend(q);
-      if (hits.isNotEmpty) return hits;
+      if (hits.isNotEmpty) {
+        _searchCache.put(q, hits);
+        VoiceRoomDebugLog.log('music.search.ok', {
+          'q': q,
+          'count': hits.length,
+          'ms': DateTime.now().difference(started).inMilliseconds,
+        });
+        return hits;
+      }
     } on ApiException catch (e) {
+      VoiceRoomDebugLog.log('music.search.fail', {
+        'q': q,
+        'status': e.statusCode,
+        'ms': DateTime.now().difference(started).inMilliseconds,
+      });
       if (e.statusCode == 401) rethrow;
       if (e.statusCode == 503) {
         throw const ApiException(
-          'Müzik araması sunucuda yapılandırılmamış. Lütfen daha sonra tekrar deneyin '
-          'veya popüler listeden seçin.',
+          'Müzik araması sunucuda yapılandırılmamış. Lütfen daha sonra tekrar deneyin.',
         );
       }
       rethrow;
     }
 
-    final popularHits = await _searchYoutubeFromPopularCatalog(q);
-    if (popularHits.isNotEmpty) return popularHits;
-
-    throw const ApiException(
-      'Şarkı bulunamadı. Farklı bir arama deneyin veya popüler listeden seçin.',
-    );
+    VoiceRoomDebugLog.log('music.search.empty', {
+      'q': q,
+      'ms': DateTime.now().difference(started).inMilliseconds,
+    });
+    throw const ApiException('Şarkı bulunamadı. Farklı bir arama deneyin.');
   }
 
   Future<List<YoutubeSearchHit>> _searchMusicViaBackend(String q) async {
-    final apiPaths = [
-      musicSearchPath(),
-      ApiEndpoints.youtubeSearch,
-      '/api/chat/youtube-search',
-    ];
-    ApiException? lastApiError;
-    for (final path in apiPaths) {
-      try {
-        final res = await _dio
-            .get<dynamic>(
-              path,
-              queryParameters: {'q': q, 'query': q},
-            )
-            .timeout(const Duration(seconds: 10));
-        final data = res.data;
-        if (data is String &&
-            (data.contains('<!DOCTYPE') || data.contains('<html'))) {
-          continue;
-        }
-        final hits = _parseYoutubeHits(data);
-        if (hits.isNotEmpty) return hits;
-      } on TimeoutException {
-        continue;
-      } on DioException catch (e) {
-        final mapped = _mapDioForYoutube(e);
-        if (mapped.statusCode == 404) continue;
-        lastApiError = mapped;
-        if (mapped.statusCode == 401) throw mapped;
-      } on ApiException catch (e) {
-        if (e.statusCode == 404) continue;
-        lastApiError = e;
-        if (e.statusCode == 401) rethrow;
+    try {
+      final res = await _dio
+          .get<dynamic>(
+            musicSearchPath(),
+            queryParameters: {'q': q},
+          )
+          .timeout(const Duration(seconds: 8));
+      final data = res.data;
+      if (data is String &&
+          (data.contains('<!DOCTYPE') || data.contains('<html'))) {
+        throw const ApiException('Müzik araması geçersiz yanıt döndü.');
       }
-      try {
-        final res = await _dio
-            .safePost<dynamic>(
-              path,
-              data: {'q': q, 'query': q},
-              options: Options(contentType: 'application/json'),
-            )
-            .timeout(const Duration(seconds: 10));
-        final hits = _parseYoutubeHits(res.data);
-        if (hits.isNotEmpty) return hits;
-      } on TimeoutException {
-        continue;
-      } on ApiException catch (e) {
-        lastApiError = e;
-        if (e.statusCode == 401) rethrow;
-      }
+      final hits = _parseYoutubeHits(data);
+      if (hits.isNotEmpty) return hits;
+    } on TimeoutException {
+      throw const ApiException('Arama zaman aşımına uğradı. Tekrar deneyin.');
+    } on DioException catch (e) {
+      throw _mapDioForYoutube(e);
     }
-    if (lastApiError != null) throw lastApiError;
-    return const [];
+
+    // Eski backend yolu — yalnızca birincil endpoint 404 ise.
+    try {
+      final res = await _dio
+          .get<dynamic>(
+            ApiEndpoints.youtubeSearch,
+            queryParameters: {'q': q, 'query': q},
+          )
+          .timeout(const Duration(seconds: 8));
+      return _parseYoutubeHits(res.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return const [];
+      throw _mapDioForYoutube(e);
+    }
   }
 
   ApiException _mapDioForYoutube(DioException e) {
@@ -672,6 +677,12 @@ class ChatRoomRemoteDataSource {
       final vid = videoId?.trim().isNotEmpty == true
           ? videoId!.trim()
           : _extractYoutubeId(youtubeUrl);
+      VoiceRoomDebugLog.log('music.queue.add', {
+        'room': key,
+        'title': title,
+        'priority': priority,
+        'skipPayment': skipPayment,
+      });
       final body = jsonEncode({
         'title': title,
         'youtubeUrl': youtubeUrl,
@@ -716,6 +727,14 @@ class ChatRoomRemoteDataSource {
       final balance = map['newBalance'] as int? ?? map['coinBalance'] as int?;
       final position = map['queuePosition'] as int?;
       final musicUrlRaw = map['musicUrl']?.toString();
+      final playing = map['playing'] == true;
+      VoiceRoomDebugLog.log('music.queue.add.ok', {
+        'room': key,
+        'playing': playing,
+        'queueLen': queue.length,
+        'position': position,
+        'hasUrl': musicUrlRaw != null && musicUrlRaw.isNotEmpty,
+      });
       return (
         item: item,
         queue: queue,
@@ -724,7 +743,7 @@ class ChatRoomRemoteDataSource {
         musicUrl: musicUrlRaw != null && musicUrlRaw.isNotEmpty
             ? musicUrlRaw
             : null,
-        playing: map['playing'] == true,
+        playing: playing,
       );
     });
   }

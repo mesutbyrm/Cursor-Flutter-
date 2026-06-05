@@ -4,6 +4,7 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../../../core/config/env.dart';
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
+import 'voice_room_debug_log.dart';
 import 'voice_room_socket_helper.dart';
 
 /// Sesli oda hediye socket — `joinRoom` + `gift` olayları.
@@ -65,7 +66,13 @@ class VoiceRoomGiftSocket {
 
   void _emitDj(dynamic data) {
     if (data is! Map) return;
-    _onDjUpdate?.call(Map<String, dynamic>.from(data));
+    final map = Map<String, dynamic>.from(data);
+    VoiceRoomDebugLog.log('socket.dj.recv', {
+      'playing': map['playing'],
+      'hasUrl': map['musicUrl'] != null,
+      'type': map['type'],
+    });
+    _onDjUpdate?.call(map);
   }
 
   void disconnect() {

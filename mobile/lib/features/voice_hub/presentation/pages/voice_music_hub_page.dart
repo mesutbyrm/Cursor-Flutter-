@@ -9,10 +9,8 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../data/voice_music_recent_store.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/music_queue_item.dart';
-import '../../domain/entities/popular_music_suggestion.dart';
 import '../providers/chat_room_providers.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_music_access.dart';
@@ -108,16 +106,14 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
     with SingleTickerProviderStateMixin {
   final _queryCtrl = TextEditingController();
   final _giftCtrl = TextEditingController();
-  final _recentStore = VoiceMusicRecentStore();
   late final TabController _tabs;
 
   Timer? _debounce;
   var _searching = false;
   var _submitting = false;
   var _giftMode = false;
+  var _searchGen = 0;
   List<YoutubeSearchHit> _hits = const [];
-  List<String> _recent = const [];
-  List<PopularMusicSuggestion> _popular = const [];
   List<MusicQueueItem> _queue = const [];
   YoutubeSearchHit? _selected;
   String? _error;
@@ -135,7 +131,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
           setState(() => _tabIndex = _tabs.index);
         }
       });
-    _bootstrap();
+    unawaited(_reloadQueue());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _liveSub = ref.listenManual(
@@ -149,20 +145,6 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
         },
       );
     });
-  }
-
-  Future<void> _bootstrap() async {
-    final recent = await _recentStore.load();
-    final popular = await ref
-        .read(voiceRoomLiveProvider(widget.room).notifier)
-        .fetchPopularMusic();
-    await _reloadQueue();
-    if (mounted) {
-      setState(() {
-        _recent = recent;
-        _popular = popular;
-      });
-    }
   }
 
   Future<void> _reloadQueue() async {
@@ -202,10 +184,11 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
       });
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 400), () => _search(trimmed));
+    _debounce = Timer(const Duration(milliseconds: 300), () => _search(trimmed));
   }
 
   Future<void> _search(String q) async {
+    final gen = ++_searchGen;
     setState(() {
       _searching = true;
       _error = null;
@@ -215,19 +198,17 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
       final hits = await ref
           .read(voiceRoomLiveProvider(widget.room).notifier)
           .searchYoutube(q);
-      if (mounted) {
-        setState(() {
-          _hits = hits;
-          _searching = false;
-        });
-      }
+      if (!mounted || gen != _searchGen) return;
+      setState(() {
+        _hits = hits;
+        _searching = false;
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _searching = false;
-          _error = ApiException.userMessage(e);
-        });
-      }
+      if (!mounted || gen != _searchGen) return;
+      setState(() {
+        _searching = false;
+        _error = ApiException.userMessage(e);
+      });
     }
   }
 
@@ -251,9 +232,6 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
     }
 
     setState(() => _submitting = true);
-    await _recentStore.add(_queryCtrl.text.trim().isNotEmpty
-        ? _queryCtrl.text.trim()
-        : hit.title);
     final isDjFree = widget.perms.canManageDj || djState.canPlayMusic;
     final queueHint = await ref
         .read(voiceRoomLiveProvider(widget.room).notifier)
@@ -472,77 +450,21 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
           const SizedBox(height: 8),
           Text(_error!, style: const TextStyle(color: AppThemeColors.liveRed, fontSize: 12)),
         ],
-        if (_recent.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          _sectionTitle('Son aramalar'),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _recent
-                .map(
-                  (q) => ActionChip(
-                    label: Text(q, style: const TextStyle(fontSize: 11)),
-                    onPressed: () {
-                      _queryCtrl.text = q;
-                      _search(q);
-                    },
-                  ),
-                )
-                .toList(),
-          ),
-        ],
-        const SizedBox(height: 16),
-        _sectionTitle('Popüler şarkılar'),
-        SizedBox(
-          height: 108,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _popular.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, i) {
-              final p = _popular[i];
-              return GestureDetector(
-                onTap: () {
-                  _queryCtrl.text = p.query;
-                  _search(p.query);
-                },
-                child: VoiceGlass(
-                  borderRadius: 14,
-                  padding: const EdgeInsets.all(10),
-                  child: SizedBox(
-                    width: 140,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.trending_up_rounded, color: AppThemeColors.coinGold, size: 18),
-                        const Spacer(),
-                        Text(
-                          p.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 11,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          p.artist,
-                          maxLines: 1,
-                          style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.6)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
         if (_hits.isNotEmpty) ...[
           const SizedBox(height: 16),
           _sectionTitle('Sonuçlar'),
           ..._hits.map(_hitTile),
+        ] else if (!_searching && _queryCtrl.text.trim().length < 2) ...[
+          const SizedBox(height: 32),
+          Center(
+            child: Text(
+              'Müzik aramak için yukarıya yazın',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
         ],
         const SizedBox(height: 12),
         SwitchListTile(

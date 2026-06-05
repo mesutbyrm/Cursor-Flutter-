@@ -651,6 +651,19 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           SnackBar(content: Text(next.error!)),
         );
       }
+      if (next.openCommandsPanel && !(prev?.openCommandsPanel ?? false)) {
+        ref.read(voiceRoomLiveProvider(room).notifier).clearOpenCommandsPanel();
+        if (!mounted) return;
+        unawaited(
+          showVoiceRoomCommandsPanel(
+            context,
+            ref,
+            room: room,
+            perms: perms,
+            isOwner: isOwner,
+          ),
+        );
+      }
     });
 
     return PopScope(

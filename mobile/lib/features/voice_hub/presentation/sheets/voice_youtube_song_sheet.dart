@@ -100,7 +100,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
       });
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 450), () => _search(trimmed));
+    _debounce = Timer(const Duration(milliseconds: 300), () => _search(trimmed));
   }
 
   Future<void> _search(String q) async {
