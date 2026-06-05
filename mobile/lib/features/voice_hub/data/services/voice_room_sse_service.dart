@@ -41,7 +41,7 @@ class VoiceRoomSseService {
   void Function()? _onConnected;
   void Function(ChatRoomMessage message)? _onMessage;
   void Function(List<ChatRoomPresence> users)? _onPresence;
-  void Function()? _onDjUpdate;
+  void Function(Map<String, dynamic> payload)? _onDjUpdate;
 
   /// Tam URL — log / teşhis için.
   static String streamUrlFor(String roomId) {
@@ -55,7 +55,7 @@ class VoiceRoomSseService {
     void Function()? onConnected,
     void Function(ChatRoomMessage message)? onMessage,
     void Function(List<ChatRoomPresence> users)? onPresence,
-    void Function()? onDjUpdate,
+    void Function(Map<String, dynamic> payload)? onDjUpdate,
   }) async {
     _stopped = false;
     _roomId = roomId.trim();
@@ -226,12 +226,12 @@ class VoiceRoomSseService {
         return;
       case VoiceRoomSseKind.dj:
         VoiceRoomDebugLog.log('sse.dj', {'room': _roomId});
-        _onDjUpdate?.call();
+        _onDjUpdate?.call(map);
         return;
       case VoiceRoomSseKind.unknown:
         if (map.containsKey('musicUrl') || map.containsKey('playing')) {
           VoiceRoomDebugLog.log('sse.dj', {'room': _roomId});
-          _onDjUpdate?.call();
+          _onDjUpdate?.call(map);
           return;
         }
         if (_tryPresence(map)) return;

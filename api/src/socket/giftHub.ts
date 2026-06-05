@@ -1,6 +1,6 @@
 import type { Server as HttpServer } from "node:http";
 import { Server } from "socket.io";
-import { getChatRoom, resolveRoomId } from "../lib/chatRoomStore";
+import { getChatRoom, getDjState, resolveRoomId } from "../lib/chatRoomStore";
 
 let io: Server | null = null;
 
@@ -83,10 +83,22 @@ export function emitChatRoomMessage(
 export function emitChatRoomDjUpdate(roomId: string) {
   if (!io) return;
   const canonical = resolveRoomId(roomId);
-  const payload = { type: "dj", roomId: canonical };
+  const dj = getDjState(roomId, null);
+  const payload = {
+    type: "dj",
+    event: "QUEUE_UPDATED",
+    roomId: canonical,
+    playing: dj.playing,
+    musicUrl: dj.musicUrl,
+    nowPlaying: dj.nowPlaying,
+    musicQueue: dj.musicQueue,
+    queueLength: dj.musicQueue.length,
+  };
   for (const key of voiceRoomTargets(roomId)) {
     io.to(voiceRoom(key)).emit("dj", payload);
     io.to(voiceRoom(key)).emit("music", payload);
+    io.to(voiceRoom(key)).emit("QUEUE_UPDATED", payload);
+    io.to(voiceRoom(key)).emit("CURRENT_SONG_CHANGED", payload);
   }
 }
 

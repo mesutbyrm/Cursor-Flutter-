@@ -166,12 +166,16 @@ chatRoomsRouter.post("/rooms/:roomId/song-request", requireAuth, async (req, res
       : typeof req.body?.message === "string"
         ? req.body.message
         : null;
+  const priority = req.body?.priority === true;
+  const skipPayment = req.body?.skipPayment === true;
   const result = await requestMusicQueue(roomId, user, {
     title,
     youtubeUrl,
     thumbUrl,
     giftTo,
     note,
+    priority,
+    skipPayment,
   });
   if (!result.ok) {
     const code = result.error?.includes("jeton") ? 402 : 400;
@@ -312,12 +316,16 @@ chatRoomsRouter.post("/rooms/:roomId/music-queue", requireAuth, async (req, res)
       : typeof req.body?.message === "string"
         ? req.body.message
         : null;
+  const priority = req.body?.priority === true;
+  const skipPayment = req.body?.skipPayment === true;
   const result = await requestMusicQueue(roomId, user, {
     title,
     youtubeUrl,
     thumbUrl,
     giftTo,
     note,
+    priority,
+    skipPayment,
   });
   if (!result.ok) {
     const code = result.error?.includes("jeton") ? 402 : 400;
@@ -432,6 +440,10 @@ chatRoomsRouter.post("/rooms/:roomId/messages", requireAuth, async (req, res) =>
   const row = await addTextMessage(roomId, user, content);
   if (!row) return fail(res, 400, "BAD_REQUEST", "Mesaj gönderilemedi");
   emitChatRoomMessage(resolveRoomId(roomId), row);
+  const cmd = content.trim().toLowerCase();
+  if (cmd.startsWith("!istek") || cmd.startsWith("/istek")) {
+    emitChatRoomDjUpdate(roomId);
+  }
   return res.status(200).json({ message: row, success: true });
 });
 

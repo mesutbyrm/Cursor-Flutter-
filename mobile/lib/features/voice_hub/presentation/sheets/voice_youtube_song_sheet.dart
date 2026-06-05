@@ -7,22 +7,39 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/music_queue_item.dart';
+import '../pages/voice_music_hub_page.dart';
 import '../providers/chat_room_providers.dart';
 import '../theme/voice_room_tokens.dart';
+import '../utils/voice_music_access.dart';
+import '../utils/voice_room_permissions.dart';
 
+/// Web ile aynı modal — tam sayfa veya alt sayfa açılmaz.
 Future<void> showVoiceYoutubeSongSheet(
   BuildContext context,
   WidgetRef ref, {
   required VoiceRoomEntity room,
+  VoiceRoomPermissions? perms,
+  bool? isOwner,
 }) {
-  return showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => _YoutubeSongSheet(room: room),
+  final live = ref.read(voiceRoomLiveProvider(room));
+  final user = ref.read(authControllerProvider).valueOrNull;
+  final resolvedPerms = perms ??
+      VoiceMusicAccess.permissionsFor(
+        user: user,
+        room: room,
+        presence: live.presence,
+      );
+  final owner = isOwner ?? resolvedPerms.isRoomOwner;
+  return showVoiceMusicHubPage(
+    context,
+    ref,
+    room: room,
+    perms: resolvedPerms,
+    isOwner: owner,
   );
 }
 

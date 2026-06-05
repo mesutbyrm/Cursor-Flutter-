@@ -19,6 +19,7 @@ import '../utils/voice_music_access.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 
+/// Web ile aynı: oda üstünde blur’lu modal (sayfa değişmez).
 Future<void> showVoiceMusicHubPage(
   BuildContext context,
   WidgetRef ref, {
@@ -27,18 +28,61 @@ Future<void> showVoiceMusicHubPage(
   required bool isOwner,
 }) {
   final container = ProviderScope.containerOf(context);
-  return Navigator.of(context).push(
-    MaterialPageRoute<void>(
-      fullscreenDialog: true,
-      builder: (_) => UncontrolledProviderScope(
-        container: container,
-        child: VoiceMusicHubPage(
-          room: room,
-          perms: perms,
-          isOwner: isOwner,
+  final size = MediaQuery.sizeOf(context);
+  return showGeneralDialog<void>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: 'YouTube Müzik',
+    barrierColor: Colors.black.withValues(alpha: 0.45),
+    transitionDuration: const Duration(milliseconds: 220),
+    pageBuilder: (ctx, animation, secondaryAnimation) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+            child: const SizedBox.expand(),
+          ),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              child: Material(
+                color: Colors.transparent,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: 420,
+                    maxHeight: size.height * 0.86,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: UncontrolledProviderScope(
+                      container: container,
+                      child: VoiceMusicHubPage(
+                        room: room,
+                        perms: perms,
+                        isOwner: isOwner,
+                        embeddedInDialog: true,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+    transitionBuilder: (ctx, anim, _, child) {
+      return FadeTransition(
+        opacity: anim,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.96, end: 1).animate(
+            CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
+          ),
+          child: child,
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 
@@ -48,11 +92,13 @@ class VoiceMusicHubPage extends ConsumerStatefulWidget {
     required this.room,
     required this.perms,
     required this.isOwner,
+    this.embeddedInDialog = false,
   });
 
   final VoiceRoomEntity room;
   final VoiceRoomPermissions perms;
   final bool isOwner;
+  final bool embeddedInDialog;
 
   @override
   ConsumerState<VoiceMusicHubPage> createState() => _VoiceMusicHubPageState();
@@ -208,6 +254,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
     await _recentStore.add(_queryCtrl.text.trim().isNotEmpty
         ? _queryCtrl.text.trim()
         : hit.title);
+    final isDjFree = widget.perms.canManageDj || djState.canPlayMusic;
     final queueHint = await ref
         .read(voiceRoomLiveProvider(widget.room).notifier)
         .requestMusic(
@@ -216,6 +263,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
           thumbUrl: hit.thumbUrl,
           videoId: hit.videoId,
           giftTo: _giftMode ? _giftCtrl.text.trim() : null,
+          priority: !isDjFree,
         );
     if (!mounted) return;
     setState(() => _submitting = false);
@@ -332,7 +380,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Müzik İsteği',
+          'YouTube Müzik',
           style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
         ),
         actions: [

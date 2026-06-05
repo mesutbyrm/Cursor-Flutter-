@@ -13,15 +13,18 @@ class VoiceRoomGiftSocket {
   final LiveGiftsRemoteDataSource _remote;
   io.Socket? _socket;
   void Function(LiveGiftEvent)? _onEvent;
+  void Function(Map<String, dynamic> payload)? _onDjUpdate;
   List<String> _joinKeys = const [];
 
   void connect({
     required String roomId,
     String? alternateRoomId,
     required void Function(LiveGiftEvent event) onEvent,
+    void Function(Map<String, dynamic> payload)? onDjUpdate,
     Future<String?> Function()? accessToken,
   }) {
     _onEvent = onEvent;
+    _onDjUpdate = onDjUpdate;
     _joinKeys = VoiceRoomSocketHelper.joinKeys(
       primary: roomId,
       alternate: alternateRoomId,
@@ -40,6 +43,10 @@ class VoiceRoomGiftSocket {
               VoiceRoomSocketHelper.emitJoinRooms(_socket, _joinKeys))
           ..on('gift', (data) => _emit(data, roomId))
           ..on('giftSent', (data) => _emit(data, roomId))
+          ..on('dj', (data) => _emitDj(data))
+          ..on('music', (data) => _emitDj(data))
+          ..on('QUEUE_UPDATED', (data) => _emitDj(data))
+          ..on('CURRENT_SONG_CHANGED', (data) => _emitDj(data))
           ..connect();
       } catch (e) {
         debugPrint('Voice gift socket: $e');
@@ -56,10 +63,16 @@ class VoiceRoomGiftSocket {
     if (ev != null) _onEvent?.call(ev);
   }
 
+  void _emitDj(dynamic data) {
+    if (data is! Map) return;
+    _onDjUpdate?.call(Map<String, dynamic>.from(data));
+  }
+
   void disconnect() {
     _socket?.dispose();
     _socket = null;
     _onEvent = null;
+    _onDjUpdate = null;
     _joinKeys = const [];
   }
 }
