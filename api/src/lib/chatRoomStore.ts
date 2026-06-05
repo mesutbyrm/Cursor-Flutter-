@@ -286,7 +286,11 @@ export function unbanRoomUser(roomId: string, actor: User, targetUserId: string)
   return { ok: true as const };
 }
 
-export async function joinPresence(roomId: string, user: User) {
+export async function joinPresence(
+  roomId: string,
+  user: User,
+  opts?: { nickname?: string | null },
+) {
   const room = getChatRoom(roomId);
   if (!room) return null;
   if (isRoomBanned(roomId, user.id)) {
@@ -300,8 +304,12 @@ export async function joinPresence(roomId: string, user: User) {
       : priv.dj
         ? "dj"
         : "listener";
+  const customNick = opts?.nickname?.trim().slice(0, 32);
+  const base = toChatUser(user, chatRole);
   const row: ChatPresenceRow = {
-    ...toChatUser(user, chatRole),
+    ...base,
+    nickname: customNick || base.nickname,
+    name: customNick || base.name,
     seatIndex: priv.owner || priv.admin ? 1 : null,
     isSpeaking: priv.owner || priv.admin,
     joinedAt: Date.now(),

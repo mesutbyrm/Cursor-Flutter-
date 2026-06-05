@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { listCoBroadcastInvites } from "../lib/liveStreamExtrasStore";
 import { requireAuth } from "../middleware/requireAuth";
 import {
   getActivity,
@@ -20,6 +21,11 @@ import {
 export const userFlutterApiRouter = Router();
 
 userFlutterApiRouter.get("/broadcast-history", requireAuth, getBroadcastHistory);
+
+userFlutterApiRouter.get("/co-broadcast-invites", requireAuth, (req, res) => {
+  const invites = listCoBroadcastInvites(req.userId!);
+  return res.status(200).json({ invites, items: invites });
+});
 userFlutterApiRouter.get("/activity", requireAuth, getActivity);
 userFlutterApiRouter.patch("/activity", requireAuth, patchActivityMarkAllRead);
 

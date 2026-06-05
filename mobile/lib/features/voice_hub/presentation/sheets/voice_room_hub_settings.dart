@@ -99,6 +99,48 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
     showVoiceYoutubeSongSheet(context, ref, room: widget.room);
   }
 
+  Future<void> _changeNickname() async {
+    final controller = TextEditingController();
+    final err = await showDialog<String?>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Oda rumuzu'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'Sohbette görünecek rumuz',
+            border: OutlineInputBorder(),
+          ),
+          maxLength: 32,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: const Text('Kaydet'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || err == null) return;
+    final message = await ref
+        .read(voiceRoomLiveProvider(widget.room).notifier)
+        .updateRoomNickname(err);
+    if (!mounted) return;
+    if (message != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Rumuz güncellendi')),
+      );
+    }
+  }
+
   void _openRoomCommands() {
     showModalBottomSheet(
       context: context,
@@ -295,6 +337,12 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                 'YouTube ara · ${widget.live.dj.musicRequestCost} jeton / istek',
               ),
               onTap: _openSongRequest,
+            ),
+            ListTile(
+              leading: const Icon(Icons.badge_rounded, color: VoiceRoomTokens.neonBlue),
+              title: const Text('Rumuz değiştir'),
+              subtitle: const Text('Sohbette görünen oda adınız'),
+              onTap: _changeNickname,
             ),
             ListTile(
               leading: const Icon(Icons.terminal_rounded, color: VoiceRoomTokens.neonBlue),

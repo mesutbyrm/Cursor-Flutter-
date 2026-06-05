@@ -22,8 +22,12 @@ import '../gifts/widgets/floating_gift_particles.dart';
 import '../gifts/widgets/gift_fullscreen_overlay.dart';
 import '../gifts/widgets/gift_notification_stack.dart';
 import '../providers/live_providers.dart';
+import '../../data/services/video_webrtc_signal_service.dart';
+import '../providers/co_broadcast_provider.dart';
+import '../providers/live_providers.dart';
 import '../providers/live_room_interaction_provider.dart';
 import '../providers/live_room_providers.dart';
+import '../providers/live_video_pk_provider.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
 import '../widgets/premium_2026/live_premium_2026.dart';
@@ -58,6 +62,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   final _heartsKey = GlobalKey<LiveFloatingHeartsOverlayState>();
   Key _localPreviewKey = UniqueKey();
   var _leaving = false;
+  VideoWebrtcSignalService? _signalService;
 
   @override
   void initState() {
@@ -69,6 +74,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       ref.read(liveRoomInteractionProvider.notifier).reset(initialLikes: 0);
       _initTrtc();
       _initGifts();
+      _initStreamExtras();
     });
   }
 
@@ -127,6 +133,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
 
   @override
   void dispose() {
+    _signalService?.stop();
     _timer.cancel();
     _chat.dispose();
     _trtc.dispose();
@@ -185,8 +192,40 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     }
   }
 
+  void _initStreamExtras() {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    if (widget.session.isHost) {
+      unawaited(ref.read(coBroadcastProvider.notifier).refresh());
+    }
+    _signalService = ref.read(videoWebrtcSignalServiceProvider);
+    _signalService?.start(streamId: streamId);
+  }
+
   void _onDoubleTapHeart() {
-    ref.read(liveRoomInteractionProvider.notifier).burstHearts(likes: 3);
+    final streamId = widget.session.streamId;
+    ref.read(liveRoomInteractionProvider.notifier).burstHearts(
+          likes: 1,
+          streamId: streamId,
+        );
+  }
+
+  Future<void> _openPkPanel() async {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    final pk = ref.read(liveVideoPkProvider(streamId).notifier);
+    await pk.create();
+    if (!mounted) return;
+    final state = ref.read(liveVideoPkProvider(streamId));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          state.battle != null
+              ? 'PK başlatıldı (${state.status})'
+              : (state.error ?? 'PK başlatılamadı'),
+        ),
+      ),
+    );
   }
 
   String _fmtLikes(int n) {
@@ -305,7 +344,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           emoji,
           count: 6 + ev.combo.clamp(0, 12).toInt(),
         );
-        ref.read(liveRoomInteractionProvider.notifier).burstHearts(likes: 2);
+        ref.read(liveRoomInteractionProvider.notifier).burstHearts(
+              likes: 1,
+              streamId: widget.session.streamId,
+            );
       }
     });
 
@@ -355,14 +397,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                       child: Row(
                         children: [
-                          _HostBadge(
-                            icon: Icons.emoji_events_rounded,
-                            label: 'Haftalık #12',
+                          TextButton.icon(
+                            onPressed: _openPkPanel,
+                            icon: const Icon(Icons.sports_mma_rounded,
+                                color: Colors.white, size: 18),
+                            label: const Text('PK',
+                                style: TextStyle(color: Colors.white)),
                           ),
                           const SizedBox(width: 8),
                           _HostBadge(
-                            icon: Icons.explore_rounded,
-                            label: 'Keşfet',
+                            icon: Icons.emoji_events_rounded,
+                            label: 'Haftalık #12',
                           ),
                         ],
                       ),

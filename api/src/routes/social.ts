@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { createFortuneSession } from "../lib/liveStreamExtrasStore";
 import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
 import { requireAuth } from "../middleware/requireAuth";
@@ -111,6 +112,37 @@ socialRouter.get("/fortune-tellers", async (_req, res) => {
         image: "https://canlifal.com/favicon.ico",
       },
     ],
+  });
+});
+
+/** POST /api/fortune-tellers/session — canlı falcı oturumu */
+socialRouter.post("/fortune-tellers/session", requireAuth, async (req, res) => {
+  const tellerId =
+    req.body?.tellerId?.toString()?.trim() ||
+    req.body?.fortuneTellerId?.toString()?.trim();
+  if (!tellerId) {
+    return fail(res, 400, "BAD_REQUEST", "tellerId gerekli");
+  }
+  const session = createFortuneSession(tellerId, req.userId!);
+  return ok(res, {
+    session,
+    sessionId: session.id,
+    status: session.status,
+  });
+});
+
+socialRouter.get("/fortune-tellers/:id", async (req, res) => {
+  const id = req.params.id;
+  return ok(res, {
+    teller: {
+      id,
+      displayName: "Canlı Falcı",
+      rating: 4.8,
+      pricePerSession: 120,
+      isOnline: true,
+      specialties: ["tarot"],
+      image: "https://canlifal.com/favicon.ico",
+    },
   });
 });
 

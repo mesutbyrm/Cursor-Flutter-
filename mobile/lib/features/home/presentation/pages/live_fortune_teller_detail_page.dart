@@ -8,10 +8,40 @@ import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/live_badge.dart';
 import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../live/presentation/providers/live_providers.dart';
 import '../providers/home_providers.dart';
 import '../theme/home_palette.dart';
 
 /// canlifal.com `/canli-falcilar/[tellerId]` — falcı profili.
+Future<void> _startLiveSession(
+  BuildContext context,
+  WidgetRef ref,
+  String tellerId,
+) async {
+  final remote = ref.read(homeRemoteProvider);
+  final session = await remote.createFortuneTellerSession(tellerId);
+  if (!context.mounted) return;
+  if (session == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Oturum başlatılamadı. Oturum açık mı kontrol edin.'),
+      ),
+    );
+    return;
+  }
+  ref.read(videoWebrtcSignalServiceProvider).start(
+        streamId: session.sessionId,
+      );
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        'Fal oturumu başladı (#${session.sessionId}). Sinyal kanalı açık.',
+      ),
+    ),
+  );
+  context.push('/messages');
+}
+
 class LiveFortuneTellerDetailPage extends ConsumerWidget {
   const LiveFortuneTellerDetailPage({super.key, required this.tellerId});
 
@@ -120,12 +150,22 @@ class LiveFortuneTellerDetailPage extends ConsumerWidget {
                   const SizedBox(height: 28),
                   FilledButton.icon(
                     onPressed: teller.isOnline
+                        ? () => _startLiveSession(context, ref, teller.id)
+                        : null,
+                    icon: const Icon(Icons.videocam_rounded),
+                    label: Text(
+                      teller.isOnline
+                          ? 'Canlı Fal Oturumu Başlat'
+                          : 'Şu an çevrimdışı',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed: teller.isOnline
                         ? () => context.push('/messages')
                         : null,
                     icon: const Icon(Icons.chat_rounded),
-                    label: Text(
-                      teller.isOnline ? 'Canlı Sohbet Başlat' : 'Şu an çevrimdışı',
-                    ),
+                    label: const Text('Mesaj Gönder'),
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton.icon(

@@ -6,10 +6,23 @@ import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/entities/voice_room_entity.dart';
 import '../../domain/repositories/live_repository.dart';
 import '../../data/datasources/live_remote_datasource.dart';
+import '../../data/datasources/live_stream_extras_datasource.dart';
 import '../../data/repositories/live_repository_impl.dart';
+import '../../data/services/video_webrtc_signal_service.dart';
 
 final liveRemoteProvider = Provider<LiveRemoteDataSource>((ref) {
   return LiveRemoteDataSource(ref.watch(dioProvider));
+});
+
+final liveStreamExtrasProvider = Provider<LiveStreamExtrasDataSource>((ref) {
+  return LiveStreamExtrasDataSource(ref.watch(dioProvider));
+});
+
+final videoWebrtcSignalServiceProvider =
+    Provider<VideoWebrtcSignalService>((ref) {
+  final s = VideoWebrtcSignalService(ref.watch(liveStreamExtrasProvider));
+  ref.onDispose(s.dispose);
+  return s;
 });
 
 final liveRepositoryProvider = Provider<LiveRepository>((ref) {
