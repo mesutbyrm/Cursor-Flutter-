@@ -59,6 +59,8 @@ abstract final class ApiEndpoints {
   /// Canlı falcılar listesi (canlifal.com `/canli-falcilar`).
   static const fortuneTellers = '/api/fortune-tellers';
 
+  static const fortuneTellerSession = '/api/fortune-tellers/session';
+
   static String fortuneTeller(String id) => '/api/fortune-tellers/$id';
 
   /// Oyunlar ve etkinlikler.
@@ -168,6 +170,23 @@ abstract final class ApiEndpoints {
 
   static String videoStreamGiftLeaderboard(String streamId) =>
       '/api/video-streams/$streamId/gifts/leaderboard';
+
+  static String videoStreamLike(String streamId) =>
+      '/api/video-streams/$streamId/like';
+
+  static String videoStreamPkBattle(String streamId) =>
+      '/api/video-streams/$streamId/pk-battle';
+
+  static String videoStreamSignal(String streamId) =>
+      '/api/video-streams/$streamId/signal';
+
+  static String videoStreamCoBroadcast(String streamId) =>
+      '/api/video-streams/$streamId/co-broadcast';
+
+  static String videoStreamCoBroadcastInvite(String streamId) =>
+      '/api/video-streams/$streamId/co-broadcast/invite';
+
+  static const coBroadcastInvites = '/api/user/co-broadcast-invites';
 
   static const giftsCatalog = '/api/gifts';
 

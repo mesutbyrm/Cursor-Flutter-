@@ -1,6 +1,16 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma";
 import {
+  addStreamLike,
+  getPkBattle,
+  getStreamLikeCount,
+  handlePkBattleAction,
+  inviteCoBroadcast,
+  listStreamSignals,
+  pushStreamSignal,
+  respondCoBroadcastInvite,
+} from "../lib/liveStreamExtrasStore";
+import {
   addLiveStreamMessage,
   endLiveStream,
   getLiveStream,
@@ -48,6 +58,7 @@ function mapStream(row: LiveStreamRow) {
     broadcasterName: row.broadcasterName,
     createdAt: row.createdAt,
     endedAt: row.endedAt,
+    likeCount: getStreamLikeCount(row.id),
     user: {
       id: row.broadcasterId,
       name: row.broadcasterName,
@@ -210,6 +221,104 @@ videoStreamsRouter.get("/:id/messages", optionalAuth, async (req, res) => {
   const since = req.query.since as string | undefined;
   const items = listLiveStreamMessages(streamId, since);
   return res.status(200).json({ messages: items, items });
+});
+
+/** POST /api/video-streams/:id/like — TikTok tarzı kümülatif beğeni */
+videoStreamsRouter.post("/:id/like", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  if (!getLiveStream(streamId)) {
+    return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+  }
+  const amount = Math.min(10, Math.max(1, Number(req.body?.count ?? 1)));
+  const likeCount = addStreamLike(streamId, amount);
+  return ok(res, { likeCount, count: likeCount, success: true });
+});
+
+/** POST /api/video-streams/:id/pk-battle */
+videoStreamsRouter.post("/:id/pk-battle", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  if (!getLiveStream(streamId)) {
+    return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+  }
+  const action =
+    typeof req.body?.action === "string" ? req.body.action : "create";
+  const result = handlePkBattleAction(streamId, req.userId!, {
+    action,
+    opponentStreamId: req.body?.opponentStreamId?.toString(),
+    opponentId: req.body?.opponentId?.toString(),
+    score: Number(req.body?.score ?? 1),
+    side: req.body?.side === "right" ? "right" : "left",
+  });
+  if (!result.ok) {
+    return fail(res, 400, "BAD_REQUEST", result.error ?? "PK işlemi başarısız");
+  }
+  return ok(res, { battle: result.battle, pk: result.battle });
+});
+
+/** GET /api/video-streams/:id/pk-battle */
+videoStreamsRouter.get("/:id/pk-battle", optionalAuth, async (req, res) => {
+  const battle = getPkBattle(req.params.id);
+  return res.status(200).json({ battle, pk: battle });
+});
+
+/** GET /api/video-streams/:id/signal — WebRTC polling */
+videoStreamsRouter.get("/:id/signal", optionalAuth, async (req, res) => {
+  const streamId = req.params.id;
+  if (!getLiveStream(streamId)) {
+    return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+  }
+  const since = req.query.since as string | undefined;
+  const signals = listStreamSignals(streamId, since);
+  return res.status(200).json({ signals, items: signals });
+});
+
+/** POST /api/video-streams/:id/signal */
+videoStreamsRouter.post("/:id/signal", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  if (!getLiveStream(streamId)) {
+    return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+  }
+  const type = req.body?.type?.toString() ?? "ice";
+  const payload =
+    req.body?.payload && typeof req.body.payload === "object"
+      ? (req.body.payload as Record<string, unknown>)
+      : {};
+  const row = pushStreamSignal(streamId, req.userId!, type, payload);
+  return ok(res, { signal: row });
+});
+
+/** POST /api/video-streams/:id/co-broadcast/invite */
+videoStreamsRouter.post(
+  "/:id/co-broadcast/invite",
+  requireAuth,
+  async (req, res) => {
+    const streamId = req.params.id;
+    const row = getLiveStream(streamId);
+    if (!row) return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+    if (row.broadcasterId !== req.userId) {
+      return fail(res, 403, "FORBIDDEN", "Yalnızca yayıncı davet gönderebilir");
+    }
+    const inviteeId = req.body?.inviteeId?.toString()?.trim();
+    if (!inviteeId) {
+      return fail(res, 400, "BAD_REQUEST", "inviteeId gerekli");
+    }
+    const invite = inviteCoBroadcast(streamId, req.userId!, inviteeId);
+    return ok(res, { invite });
+  },
+);
+
+/** POST /api/video-streams/:id/co-broadcast */
+videoStreamsRouter.post("/:id/co-broadcast", requireAuth, async (req, res) => {
+  const inviteId = req.body?.inviteId?.toString()?.trim();
+  if (!inviteId) {
+    return fail(res, 400, "BAD_REQUEST", "inviteId gerekli");
+  }
+  const accept = req.body?.accept !== false;
+  const result = respondCoBroadcastInvite(inviteId, req.userId!, accept);
+  if (!result.ok) {
+    return fail(res, 400, "BAD_REQUEST", result.error ?? "İşlem başarısız");
+  }
+  return ok(res, { invite: result.invite });
 });
 
 /** POST /api/video-streams/:id/messages */

@@ -474,7 +474,9 @@ chatRoomsRouter.post("/rooms/:roomId/presence", requireAuth, async (req, res) =>
   const roomId = req.params.roomId;
   const user = await loadUser(req.userId);
   if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
-  const result = await joinPresence(roomId, user);
+  const nickname =
+    typeof req.body?.nickname === "string" ? req.body.nickname.trim() : null;
+  const result = await joinPresence(roomId, user, { nickname });
   if (!result) return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
   if ("banned" in result && result.banned) {
     return fail(res, 403, "FORBIDDEN", "Bu odadan yasaklandınız");

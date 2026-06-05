@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'live_providers.dart';
 
 /// Canlı oda etkileşimleri — kalp patlaması, beğeni sayacı.
 class LiveRoomInteractionState {
@@ -37,11 +41,25 @@ class LiveRoomInteractionNotifier extends Notifier<LiveRoomInteractionState> {
     state = LiveRoomInteractionState(likeCount: initialLikes);
   }
 
-  void burstHearts({int likes = 1}) {
+  void burstHearts({int likes = 1, String? streamId}) {
     state = state.copyWith(
       likeCount: state.likeCount + likes,
       heartBurstToken: state.heartBurstToken + 1,
     );
+    final id = streamId?.trim();
+    if (id == null || id.isEmpty) return;
+    unawaited(_syncLikeToServer(id, likes));
+  }
+
+  Future<void> _syncLikeToServer(String streamId, int likes) async {
+    try {
+      final total = await ref
+          .read(liveStreamExtrasProvider)
+          .sendLike(streamId, count: likes);
+      if (total > state.likeCount) {
+        state = state.copyWith(likeCount: total);
+      }
+    } catch (_) {}
   }
 
   void setFollowing(bool v) => state = state.copyWith(following: v);

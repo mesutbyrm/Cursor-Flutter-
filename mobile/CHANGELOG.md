@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.135+137 (2026-05-19)
+
+### FLUTTER_CURSOR_PROMPT parite — tam paket
+
+- Canlı beğeni: `POST /api/video-streams/{id}/like` (TikTok +1/tap)
+- Video PK: `POST/GET …/pk-battle` (create/accept/reject/score/end)
+- Co-broadcast: davet listesi, invite, accept/decline
+- Falcı oturumu: `POST /api/fortune-tellers/session` + WebRTC signal poll
+- Rumuz: `POST …/presence` body `{ nickname }`
+- WebRTC signaling: `video_webrtc_signal_service.dart` (HTTP poll)
+
 ## 1.0.134+136 (2026-05-19)
 
 ### Müzik isteği oynatma düzeltmesi

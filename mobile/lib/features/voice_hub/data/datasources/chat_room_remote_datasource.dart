@@ -156,9 +156,14 @@ class ChatRoomRemoteDataSource {
   Future<List<ChatRoomPresence>> joinPresence(
     String roomKey, {
     String? alternateKey,
+    String? nickname,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final res = await _dio.safePost<dynamic>(presencePath(key));
+      final nick = nickname?.trim();
+      final res = await _dio.safePost<dynamic>(
+        presencePath(key),
+        data: nick != null && nick.isNotEmpty ? {'nickname': nick} : null,
+      );
       final list = _presenceList(res.data);
       VoiceRoomDebugLog.log('api.presence.post', {
         'roomId': key,

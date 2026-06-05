@@ -1021,6 +1021,24 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   Future<List<String>> fetchBackgrounds() =>
       ref.read(chatRoomRemoteProvider).fetchBackgrounds();
 
+  Future<String?> updateRoomNickname(String nickname) async {
+    final nick = nickname.trim();
+    if (nick.isEmpty || _roomKey.isEmpty) {
+      return 'Rumuz boş olamaz.';
+    }
+    try {
+      final list = await ref.read(chatRoomRemoteProvider).joinPresence(
+            _roomKey,
+            nickname: nick,
+          );
+      final merged = _mergeSelf(list);
+      state = state.copyWith(presence: merged, selfInRoom: true, clearError: true);
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
   Future<List<YoutubeSearchHit>> searchYoutube(String query) =>
       ref.read(chatRoomRemoteProvider).searchYoutube(query);
 

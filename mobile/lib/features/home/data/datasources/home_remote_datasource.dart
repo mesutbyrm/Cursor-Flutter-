@@ -63,6 +63,35 @@ class HomeRemoteDataSource {
     return const [];
   }
 
+  Future<({String sessionId, String status})?> createFortuneTellerSession(
+    String tellerId,
+  ) async {
+    final id = tellerId.trim();
+    if (id.isEmpty) return null;
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.fortuneTellerSession,
+        data: {'tellerId': id, 'fortuneTellerId': id},
+      );
+      final body = res.data;
+      if (body is! Map) return null;
+      final map = asJsonMap(body);
+      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+      final sessionId = pick(data, ['sessionId', 'id'])?.toString() ??
+          (data['session'] is Map
+              ? pick(asJsonMap(data['session']), ['id', 'sessionId'])?.toString()
+              : null);
+      final status = pick(data, ['status'])?.toString() ??
+          (data['session'] is Map
+              ? pick(asJsonMap(data['session']), ['status'])?.toString()
+              : 'pending');
+      if (sessionId == null || sessionId.isEmpty) return null;
+      return (sessionId: sessionId, status: status ?? 'pending');
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<LiveFortuneTellerEntity?> fetchLiveFortuneTeller(String id) async {
     final key = id.trim();
     if (key.isEmpty) return null;
