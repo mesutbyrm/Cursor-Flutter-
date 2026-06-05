@@ -559,20 +559,33 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     await _applyDjPlayback(dj);
   }
 
+  ChatRoomDjState _djWithQueuePlaybackFallback(ChatRoomDjState dj) {
+    if (dj.playing) return dj;
+    if (dj.musicQueue.isEmpty && dj.nowPlaying == null) return dj;
+    if (dj.playbackSource == null && dj.youtubeFallbackSource == null) {
+      return dj;
+    }
+    return dj.copyWith(playing: true);
+  }
+
   Future<bool> _applyDjPlayback(ChatRoomDjState dj) async {
     final ui = ref.read(voiceRoomUiProvider);
-    final playbackUrl = dj.playbackSource;
-    final shouldPlay = dj.playing && playbackUrl != null;
+    final effectiveDj = _djWithQueuePlaybackFallback(dj);
+    if (effectiveDj.playing != dj.playing) {
+      state = state.copyWith(dj: effectiveDj);
+    }
+    final playbackUrl = effectiveDj.playbackSource;
+    final shouldPlay = effectiveDj.playing && playbackUrl != null;
     VoiceRoomDebugLog.log('music.player.sync', {
       'shouldPlay': shouldPlay,
       'hasUrl': playbackUrl != null,
       'muted': !ui.backgroundMusicEnabled,
-      'nowPlaying': dj.nowPlaying?.title,
+      'nowPlaying': effectiveDj.nowPlaying?.title,
     });
     final player = ref.read(voiceRoomDjPlayerProvider);
     final ok = await player.sync(
       musicUrl: playbackUrl,
-      fallbackYoutubeUrl: dj.youtubeFallbackSource,
+      fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
       playing: shouldPlay,
       muted: !ui.backgroundMusicEnabled,
     );
@@ -613,10 +626,73 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     }
   }
 
+  Future<void> _syncMusicFromServerWithRetries() async {
+    const delays = <Duration>[
+      Duration.zero,
+      Duration(milliseconds: 300),
+      Duration(milliseconds: 800),
+      Duration(milliseconds: 1500),
+      Duration(milliseconds: 3000),
+    ];
+    for (final delay in delays) {
+      if (delay > Duration.zero) {
+        await Future<void>.delayed(delay);
+      }
+      await _syncMusicFromServer();
+      final dj = state.dj;
+      final player = ref.read(voiceRoomDjPlayerProvider);
+      if (dj.playing && player.playback.value.playing) {
+        return;
+      }
+      if (dj.musicQueue.isNotEmpty || dj.nowPlaying != null) {
+        final ok = await _applyDjPlayback(dj);
+        if (ok) return;
+      }
+    }
+  }
+
+  Future<void> _handleSongRequestFree(
+    SongRequestFreePayload payload, {
+    ChatRoomUserRef? requester,
+  }) async {
+    VoiceRoomDebugLog.log('music.song_request_free', {
+      'videoId': payload.videoId,
+      'title': payload.title,
+    });
+    final item = MusicQueueItem(
+      id: 'free-${payload.videoId}',
+      title: payload.title,
+      youtubeUrl: payload.youtubeUrl,
+      createdAt: DateTime.now(),
+      requestedBy: requester,
+    );
+    var dj = state.dj;
+    final alreadyQueued = dj.musicQueue.any(
+      (q) => q.youtubeUrl.contains(payload.videoId),
+    );
+    final queue = alreadyQueued ? dj.musicQueue : [...dj.musicQueue, item];
+    dj = dj.copyWith(
+      musicQueue: queue,
+      nowPlaying: dj.nowPlaying ?? item,
+      playing: true,
+      musicUrl: dj.musicUrl?.isNotEmpty == true
+          ? dj.musicUrl
+          : payload.youtubeUrl,
+    );
+    state = state.copyWith(dj: dj, clearError: true);
+    await _applyDjPlayback(dj);
+    unawaited(_syncMusicFromServerWithRetries());
+  }
+
   void _onMusicRelatedChatMessage(ChatRoomMessage msg) {
     _maybeShowMusicRequestFlash(msg);
+    final free = VoiceMusicSync.parseSongRequestFree(msg.content);
+    if (free != null) {
+      unawaited(_handleSongRequestFree(free, requester: msg.user));
+      return;
+    }
     if (VoiceMusicSync.isQueueUpdateMessage(msg.content)) {
-      unawaited(_syncMusicFromServer());
+      unawaited(_syncMusicFromServerWithRetries());
     }
   }
 
@@ -737,7 +813,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
               roomKey: _roomKey,
               content: trimmed,
             );
-        unawaited(_syncMusicFromServer());
+        await _syncMusicFromServerWithRetries();
         state = state.copyWith(sending: false);
         _showMusicRequestFlashLine('✅ «$song» isteği iletildi');
       } catch (e) {
@@ -822,7 +898,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       }
       if (VoiceOfficialJoin.looksLikeRoomCommand(trimmed) ||
           VoiceMusicSync.isQueueUpdateMessage(trimmed)) {
-        unawaited(_syncMusicFromServer());
+        unawaited(_syncMusicFromServerWithRetries());
       }
     } on TimeoutException {
       await _recoverAfterSendTimeout(

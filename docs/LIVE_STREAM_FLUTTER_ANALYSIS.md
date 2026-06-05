@@ -1,6 +1,6 @@
 # Canlı yayın ve hediye — Web ↔ Flutter analizi
 
-Güncelleme: 2026-05-19 · Mobil sürüm hedefi: **1.0.126+128**
+Güncelleme: 2026-05-19 · Mobil sürüm hedefi: **1.0.133+135**
 
 ## 1. API uçları (canlifal.com)
 
@@ -49,7 +49,7 @@ Web: NextAuth **çerez**. Flutter: **`Authorization: Bearer`** (`dio_provider.da
 | 4 | `useNextAuth` / `useMobileAuth` karışıklığı | Self-hosted’da local id | Prep `useMobileAuth` kullanıyor |
 | 5 | Hediye POST’ta `senderName` yok | Diğer izleyicide “Misafir” | **Düzeltildi** |
 | 6 | Sayfalama 50 vs 30 | Yanlış “daha fazla” | **Düzeltildi** — limit 30 |
-| 7 | Canlı sohbet API yok | Mesajlar senkron değil | **Bilinen** — yerel liste (web uç gerekir) |
+| 7 | Canlı sohbet API yok | Mesajlar senkron değil | **Düzeltildi** — `GET/POST /api/video-streams/:id/messages` + socket |
 | 8 | Socket auth yok | Teorik risk | Prod mirror ile aynı; poll yedek 4 sn |
 
 ## 4. Senkronizasyon

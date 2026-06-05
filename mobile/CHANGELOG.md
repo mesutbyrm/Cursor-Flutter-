@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.134+136 (2026-05-19)
+
+### Müzik isteği oynatma düzeltmesi
+
+- `[SONG_REQUEST_FREE] videoId|başlık` sohbet satırı parse edilir; anında oynatma + sunucu senkronu
+- `!istek` sonrası kademeli yeniden senkron (300 ms–3 sn)
+- Kuyruk dolu ama `playing: false` ise mobil YouTube yedek URL ile çalmayı dener
+- API: Piped çözümleme başarısızsa YouTube watch URL ile kuyruk başlatılır; `nowPlaying` kuyruk başında gösterilir
+
 ## 1.0.131+133 (2026-05-19)
 
 ### Müzik sistemi — web paritesi

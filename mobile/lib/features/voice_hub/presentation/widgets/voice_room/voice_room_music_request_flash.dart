@@ -100,6 +100,22 @@ abstract final class VoiceMusicRequestFlashText {
 
     final who = userName?.trim().isNotEmpty == true ? userName!.trim() : 'Bir dinleyici';
 
+    final free = RegExp(
+      r'\[SONG_REQUEST_FREE\]\s*[^\s|]+\|([^|]+)',
+      caseSensitive: false,
+    ).firstMatch(raw);
+    if (free != null) {
+      return '🎵 $who şarkı isteği gönderdi: ${free.group(1)!.trim()}';
+    }
+
+    final sent = RegExp(
+      r'şarkı isteği gönderdi:\s*(.+)$',
+      caseSensitive: false,
+    ).firstMatch(raw);
+    if (sent != null) {
+      return '🎵 $who şarkı isteği gönderdi: ${sent.group(1)!.trim()}';
+    }
+
     final cmd = RegExp(
       r'Şarkı isteği alındı.*[«"]([^»"]+)[»"]',
       caseSensitive: false,
