@@ -2,6 +2,10 @@ import { randomUUID } from "node:crypto";
 import type { User } from "@prisma/client";
 import { prisma } from "./prisma";
 import {
+  searchMusicViaYoutubeApi,
+  toLegacyYoutubeHits,
+} from "./youtubeMusicSearch";
+import {
   canModerateRank,
   fullControlRank,
   parseStaffRank,
@@ -1051,102 +1055,9 @@ export type YoutubeSearchHit = {
   duration?: string;
 };
 
-async function searchYoutubeViaGoogleApi(query: string): Promise<YoutubeSearchHit[]> {
-  const key = process.env.YOUTUBE_API_KEY?.trim();
-  if (!key || query.length < 2) return [];
-  try {
-    const url = new URL("https://www.googleapis.com/youtube/v3/search");
-    url.searchParams.set("part", "snippet");
-    url.searchParams.set("type", "video");
-    url.searchParams.set("maxResults", "12");
-    url.searchParams.set("q", query);
-    url.searchParams.set("key", key);
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!res.ok) return [];
-    const data = (await res.json()) as {
-      items?: Array<{
-        id?: { videoId?: string };
-        snippet?: {
-          title?: string;
-          channelTitle?: string;
-          thumbnails?: { medium?: { url?: string }; default?: { url?: string } };
-        };
-      }>;
-    };
-    const out: YoutubeSearchHit[] = [];
-    for (const row of data.items ?? []) {
-      const vid = row.id?.videoId?.trim() ?? "";
-      if (vid.length < 6) continue;
-      const sn = row.snippet;
-      const thumb =
-        sn?.thumbnails?.medium?.url ??
-        sn?.thumbnails?.default?.url ??
-        `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
-      out.push({
-        videoId: vid,
-        title: sn?.title?.trim() || "Video",
-        url: `https://www.youtube.com/watch?v=${vid}`,
-        thumbUrl: thumb,
-        uploader: sn?.channelTitle?.trim() || undefined,
-      });
-    }
-    return out;
-  } catch {
-    return [];
-  }
-}
-
 export async function searchYoutube(query: string): Promise<YoutubeSearchHit[]> {
-  const q = query.trim();
-  if (q.length < 2) return [];
-  if (/youtube\.com|youtu\.be/i.test(q)) {
-    const id = extractYoutubeId(q);
-    if (!id) return [];
-    return [
-      {
-        videoId: id,
-        title: "YouTube bağlantısı",
-        url: `https://www.youtube.com/watch?v=${id}`,
-        thumbUrl: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-      },
-    ];
-  }
-  const googleHits = await searchYoutubeViaGoogleApi(q);
-  if (googleHits.length > 0) return googleHits;
   try {
-    const res = await fetch(
-      `https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(q)}&filter=music_songs`,
-      { headers: { Accept: "application/json" } },
-    );
-    if (!res.ok) return [];
-    const data = (await res.json()) as { items?: Array<Record<string, unknown>> };
-    const items = data.items ?? [];
-    return items.slice(0, 12).flatMap((row) => {
-      const rawUrl = String(row.url ?? "");
-      let id = "";
-      const vMatch = rawUrl.match(/[?&]v=([a-zA-Z0-9_-]{6,})/);
-      if (vMatch) id = vMatch[1];
-      else if (rawUrl.startsWith("/")) {
-        const parts = rawUrl.split("/").filter(Boolean);
-        id = parts[parts.length - 1] ?? "";
-      } else {
-        id = String(row.id ?? "");
-      }
-      id = id.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 11);
-      if (id.length < 6) return [];
-      return [
-        {
-          videoId: id,
-          title: String(row.title ?? "Video"),
-          url: `https://www.youtube.com/watch?v=${id}`,
-          thumbUrl: row.thumbnail
-            ? String((row.thumbnail as string) ?? "")
-            : `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-          uploader: row.uploaderName ? String(row.uploaderName) : undefined,
-          duration: row.duration != null ? String(row.duration) : undefined,
-        },
-      ];
-    });
+    return toLegacyYoutubeHits(await searchMusicViaYoutubeApi(query));
   } catch {
     return [];
   }

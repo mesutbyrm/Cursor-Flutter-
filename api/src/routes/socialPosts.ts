@@ -164,6 +164,116 @@ socialPostsRouter.post("/posts/auto-fortune", requireAuth, async (req, res) => {
   return ok(res, { post: postPayload(created) }, 201);
 });
 
+/** POST /api/social/posts/:id/likes — beğeni toggle */
+socialPostsRouter.post("/posts/:id/likes", requireAuth, async (req, res) => {
+  const userId = req.userId!;
+  const postId = req.params.id;
+  const post = await prisma.socialPost.findUnique({ where: { id: postId } });
+  if (!post) return fail(res, 404, "NOT_FOUND", "Gönderi bulunamadı");
+
+  const existing = await prisma.socialPostLike.findUnique({
+    where: { postId_userId: { postId, userId } },
+  });
+
+  let liked: boolean;
+  if (existing) {
+    await prisma.socialPostLike.delete({ where: { id: existing.id } });
+    await prisma.socialPost.update({
+      where: { id: postId },
+      data: { likesCount: { decrement: 1 } },
+    });
+    liked = false;
+  } else {
+    await prisma.socialPostLike.create({ data: { postId, userId } });
+    await prisma.socialPost.update({
+      where: { id: postId },
+      data: { likesCount: { increment: 1 } },
+    });
+    liked = true;
+  }
+
+  const updated = await prisma.socialPost.findUnique({ where: { id: postId } });
+  return res.status(200).json({
+    liked,
+    isLiked: liked,
+    likedByMe: liked,
+    likesCount: updated?.likesCount ?? post.likesCount,
+  });
+});
+
+/** GET /api/social/posts/:id/comments */
+socialPostsRouter.get("/posts/:id/comments", async (req, res) => {
+  const rows = await prisma.socialPostComment.findMany({
+    where: { postId: req.params.id },
+    orderBy: { createdAt: "asc" },
+    take: 100,
+  });
+  const authorIds = [...new Set(rows.map((r) => r.authorId))];
+  const authors = await prisma.user.findMany({
+    where: { id: { in: authorIds } },
+  });
+  const byId = new Map(authors.map((a) => [a.id, a]));
+  const comments = rows.map((c) => {
+    const a = byId.get(c.authorId);
+    return {
+      id: c.id,
+      content: c.content,
+      text: c.content,
+      createdAt: c.createdAt.toISOString(),
+      user: a
+        ? {
+            id: a.id,
+            username: a.username,
+            displayName: a.displayName,
+            avatarUrl: a.avatarUrl,
+            image: a.avatarUrl,
+          }
+        : { id: c.authorId },
+    };
+  });
+  return res.status(200).json({ comments, items: comments });
+});
+
+/** POST /api/social/posts/:id/comments */
+socialPostsRouter.post("/posts/:id/comments", requireAuth, async (req, res) => {
+  const userId = req.userId!;
+  const postId = req.params.id;
+  const content = String(
+    req.body?.content ?? req.body?.text ?? "",
+  ).trim();
+  if (content.length < 1) {
+    return fail(res, 400, "VALIDATION_ERROR", "Yorum boş olamaz");
+  }
+  const post = await prisma.socialPost.findUnique({ where: { id: postId } });
+  if (!post) return fail(res, 404, "NOT_FOUND", "Gönderi bulunamadı");
+
+  const author = await prisma.user.findUnique({ where: { id: userId } });
+  if (!author) return fail(res, 404, "NOT_FOUND", "Kullanıcı bulunamadı");
+
+  const created = await prisma.socialPostComment.create({
+    data: { postId, authorId: userId, content },
+  });
+  await prisma.socialPost.update({
+    where: { id: postId },
+    data: { commentsCount: { increment: 1 } },
+  });
+
+  const comment = {
+    id: created.id,
+    content: created.content,
+    text: created.content,
+    createdAt: created.createdAt.toISOString(),
+    user: {
+      id: author.id,
+      username: author.username,
+      displayName: author.displayName,
+      avatarUrl: author.avatarUrl,
+      image: author.avatarUrl,
+    },
+  };
+  return res.status(201).json({ comment, item: comment });
+});
+
 /** DELETE /api/social/posts/:id — yazar veya admin */
 socialPostsRouter.delete("/posts/:id", requireAuth, async (req, res) => {
   const post = await prisma.socialPost.findUnique({ where: { id: req.params.id } });

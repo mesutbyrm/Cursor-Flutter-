@@ -180,7 +180,6 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   final showOlder = state.hasMore;
                   return ListView.builder(
                     controller: _scroll,
-                    cacheExtent: 400,
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
                     physics: ListPerf.listPhysics,
                     cacheExtent: ListPerf.cacheExtent,

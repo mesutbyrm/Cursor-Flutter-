@@ -102,7 +102,7 @@ chatRoomsRouter.get("/rooms/backgrounds", async (_req, res) => {
   return ok(res, { backgrounds: listSiteBackgrounds() });
 });
 
-chatRoomsRouter.get("/youtube-search", optionalAuth, async (req, res) => {
+chatRoomsRouter.get("/youtube-search", requireAuth, async (req, res) => {
   const q = String(req.query.q ?? req.query.query ?? "");
   const items = await searchYoutube(q);
   return res.status(200).json({ items });
@@ -350,6 +350,45 @@ chatRoomsRouter.delete("/rooms/:roomId/dj/:targetUserId", requireAuth, async (re
   const result = removeRoomDj(req.params.roomId, user, req.params.targetUserId);
   if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error ?? "Yetki yok");
   return ok(res, { djUserIds: result.djUserIds });
+});
+
+/** GET /api/chat/rooms/:roomId/stream — SSE (Flutter birincil kanal) */
+chatRoomsRouter.get("/rooms/:roomId/stream", optionalAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  if (!getChatRoom(roomId)) {
+    return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+  }
+
+  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders?.();
+
+  const send = (payload: Record<string, unknown>) => {
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  };
+
+  send({ type: "connected", roomId });
+
+  const msgs = listMessages(roomId);
+  let lastId = msgs.length > 0 ? msgs[msgs.length - 1]!.id : "";
+
+  const timer = setInterval(() => {
+    try {
+      send({ type: "presence", users: listPresence(roomId) });
+      const latest = listMessages(roomId);
+      for (const m of latest) {
+        if (!lastId || m.id > lastId) {
+          send({ type: "message", message: m });
+          lastId = m.id;
+        }
+      }
+    } catch {
+      /* bağlantı kapanmış olabilir */
+    }
+  }, 3000);
+
+  req.on("close", () => clearInterval(timer));
 });
 
 chatRoomsRouter.get("/rooms/:roomId/messages", optionalAuth, async (req, res) => {

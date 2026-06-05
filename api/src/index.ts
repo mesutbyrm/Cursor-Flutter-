@@ -5,6 +5,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import { authRouter } from "./routes/auth";
+import { authMobileRouter } from "./routes/auth_mobile";
 import { usersRouter } from "./routes/users";
 import { profileExtrasRouter } from "./routes/profileExtras";
 import { userFlutterApiRouter } from "./routes/userFlutterApi";
@@ -18,9 +19,18 @@ import { notificationsRouter } from "./routes/notifications";
 import { devicesRouter } from "./routes/devices";
 import { messagesRouter } from "./routes/messages";
 import { chatRoomsRouter } from "./routes/chat_rooms";
-import { searchYoutube } from "./lib/chatRoomStore";
+import { musicRouter } from "./routes/music";
+import { trtcRouter } from "./routes/trtc";
+import { storiesRouter } from "./routes/stories";
+import { reportsRouter } from "./routes/reports";
+import {
+  searchMusicViaYoutubeApi,
+  toLegacyYoutubeHits,
+  YoutubeApiNotConfiguredError,
+} from "./lib/youtubeMusicSearch";
 import { livekitRouter } from "./routes/livekit";
-import { optionalAuth } from "./middleware/optionalAuth";
+import { requireAuth } from "./middleware/requireAuth";
+import { jsonError } from "./lib/jsonError";
 import { fail } from "./lib/response";
 import { initGiftSocket } from "./socket/giftHub";
 
@@ -39,6 +49,7 @@ v1.use("/", socialRouter);
 
 app.use("/api/v1", v1);
 app.use("/api/auth", authRouter);
+app.use("/api/auth", authMobileRouter);
 app.use("/api/social", socialPostsRouter);
 app.use("/api/gifts", giftsRouter);
 app.use("/api/video-streams", videoStreamsRouter);
@@ -53,11 +64,27 @@ app.use("/api/notifications", notificationsRouter);
 app.use("/api/devices", devicesRouter);
 app.use("/api/messages", messagesRouter);
 app.use("/api/chat", chatRoomsRouter);
-app.get("/api/youtube/search", optionalAuth, async (req, res) => {
+app.use("/api/music", musicRouter);
+app.use("/api/trtc", trtcRouter);
+app.use("/api/stories", storiesRouter);
+app.use("/api/social/stories", storiesRouter);
+app.use("/api/reports", reportsRouter);
+
+/** @deprecated — GET /api/music/search kullanın */
+app.get("/api/youtube/search", requireAuth, async (req, res) => {
   const q = String(req.query.q ?? req.query.query ?? "");
-  const items = await searchYoutube(q);
-  return res.status(200).json({ items });
+  try {
+    const items = toLegacyYoutubeHits(await searchMusicViaYoutubeApi(q));
+    return res.status(200).json({ items });
+  } catch (e) {
+    if (e instanceof YoutubeApiNotConfiguredError) {
+      return jsonError(res, 503, e.message);
+    }
+    const msg = e instanceof Error ? e.message : "YouTube araması başarısız";
+    return jsonError(res, 502, msg);
+  }
 });
+
 app.use("/api/livekit", livekitRouter);
 
 app.use((_req, res) => {

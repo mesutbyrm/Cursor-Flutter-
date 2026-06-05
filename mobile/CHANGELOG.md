@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.129+131 (2026-05-19)
+
+### Backend parite (API mirror + Flutter)
+
+- Müzik arama: yalnızca `GET /api/music/search` (JWT); Piped/Invidious istemci araması kaldırıldı
+- API mirror: mobil auth, TRTC usersig, stories, reports, referral, users search, sosyal beğeni/yorum, DM GET, video-streams list/end, SSE
+- Next.js referans: `docs/nextjs/app-api-music-search-route.ts` — canlifal.com’a deploy için
+- Üretim: `YOUTUBE_API_KEY` Vercel’de tanımlanmalı (`/api/music/search` şu an 404)
+
 ## 1.0.128+130 (2026-06-04)
 
 ### Müzik arama ve !istek
