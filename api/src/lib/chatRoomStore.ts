@@ -583,6 +583,8 @@ export async function addTextMessage(roomId: string, user: User, content: string
           title: hit.title,
           youtubeUrl: hit.url,
           thumbUrl: hit.thumbUrl ?? null,
+          skipPayment: true,
+          priority: false,
         });
         if (result.ok) {
           return pushMessage(roomId, {
@@ -853,6 +855,10 @@ export async function requestMusicQueue(
     thumbUrl?: string | null;
     giftTo?: string | null;
     note?: string | null;
+    /** Ücretli müzik ikonu isteği — çalan şarkının hemen arkasına */
+    priority?: boolean;
+    /** Chat !istek — jeton düşülmez */
+    skipPayment?: boolean;
   },
 ) {
   const room = getChatRoom(roomId);
@@ -869,10 +875,11 @@ export async function requestMusicQueue(
   const dbUser = await loadUser(user.id);
   if (!dbUser) return { ok: false as const, error: "Oturum gerekli" };
   const cost = settings.musicRequestCost;
-  if (!isDj && dbUser.coins < cost) {
+  const skipPayment = input.skipPayment === true || isDj;
+  if (!skipPayment && dbUser.coins < cost) {
     return {
       ok: false as const,
-      error: "Bu şarkıyı istemek için en az 10 jeton gerekli.",
+      error: `Bu şarkıyı istemek için en az ${cost} jeton gerekli.`,
     };
   }
   const listBefore = musicQueueList(roomId);
@@ -883,7 +890,7 @@ export async function requestMusicQueue(
     };
   }
   let newBalance = dbUser.coins;
-  if (!isDj) {
+  if (!skipPayment) {
     const updated = await prisma.user.update({
       where: { id: user.id },
       data: { coins: { decrement: cost } },
@@ -903,15 +910,34 @@ export async function requestMusicQueue(
     note,
   };
   const list = musicQueueList(roomId);
-  const wasPlaying =
-    Boolean(djByRoom.get(resolveRoomId(roomId))?.playing) && list.length > 0;
-  list.push(item);
-  const queuePosition = list.length;
+  const key = resolveRoomId(roomId);
+  const djNow = djByRoom.get(key);
+  const wasPlaying = Boolean(djNow?.playing && djNow.musicUrl);
+  const usePriority = input.priority === true && !isDj;
+  let queuePosition: number;
+  if (usePriority && wasPlaying && list.length > 0) {
+    list.splice(1, 0, item);
+    queuePosition = 2;
+  } else if (usePriority && !wasPlaying) {
+    list.unshift(item);
+    queuePosition = 1;
+  } else {
+    list.push(item);
+    queuePosition = list.length;
+  }
   if (list.length > settings.maxQueueLength) {
     list.splice(0, list.length - settings.maxQueueLength);
   }
-  const canonical = resolveRoomId(roomId);
+  const canonical = key;
   const displayName = item.requestedBy.name;
+  if (usePriority) {
+    pushMessage(canonical, {
+      id: randomUUID(),
+      content: `⚡ Öncelikli istek: «${item.title}» (çalan şarkının ardından)`,
+      createdAt: new Date().toISOString(),
+      user: item.requestedBy,
+    });
+  }
   pushMessage(canonical, {
     id: randomUUID(),
     content: `🎵 ${displayName} "${item.title}" şarkısını istedi.`,
@@ -939,7 +965,6 @@ export async function requestMusicQueue(
     user: item.requestedBy,
   });
   await tryStartMusicFromQueue(roomId);
-  const key = resolveRoomId(roomId);
   const dj = djByRoom.get(key);
   return {
     ok: true as const,

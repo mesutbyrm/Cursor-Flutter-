@@ -305,8 +305,12 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       onConnected: () {
         state = state.copyWith(sseConnected: true);
       },
-      onDjUpdate: () {
-        unawaited(refresh());
+      onDjUpdate: (payload) {
+        if (payload != null && payload.isNotEmpty) {
+          unawaited(_applyDjRealtimePayload(payload));
+        } else {
+          unawaited(refresh());
+        }
       },
       onMessage: (msg) {
         final exists = state.messages.any((m) => m.id == msg.id);
@@ -393,12 +397,22 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   }
 
   Future<void> _onDjTrackComplete() async {
+    final perms = _permissions();
+    final canAdvance =
+        perms.canManageDj || perms.isRoomOwner || state.dj.canPlayMusic;
+    if (!canAdvance) {
+      VoiceRoomDebugLog.log('music.track_complete.listener_only');
+      return;
+    }
     try {
+      VoiceRoomDebugLog.log('music.track_complete.advance');
       await ref.read(chatRoomRemoteProvider).advanceMusicQueue(
             _roomKey,
           );
       await refresh();
-    } catch (_) {}
+    } catch (e) {
+      VoiceRoomDebugLog.log('music.track_complete.fail', {'error': '$e'});
+    }
   }
 
   Future<void> _warmBackgrounds() async {
@@ -430,6 +444,31 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     } catch (_) {
       return dj;
     }
+  }
+
+  Future<void> _applyDjRealtimePayload(Map<String, dynamic> payload) async {
+    VoiceRoomDebugLog.log('music.realtime', {
+      'playing': payload['playing'],
+      'hasUrl': payload['musicUrl'] != null,
+    });
+    var dj = state.dj;
+    if (payload.containsKey('playing')) {
+      dj = dj.copyWith(playing: payload['playing'] == true);
+    }
+    if (payload['musicUrl'] is String) {
+      final url = payload['musicUrl'] as String;
+      if (url.isNotEmpty) dj = dj.copyWith(musicUrl: url);
+    }
+    if (payload['nowPlaying'] is Map) {
+      dj = dj.copyWith(
+        nowPlaying: MusicQueueItem.fromJson(
+          Map<String, dynamic>.from(payload['nowPlaying'] as Map),
+        ),
+      );
+    }
+    state = state.copyWith(dj: dj);
+    await _applyDjPlayback(dj);
+    unawaited(_syncMusicFromServer());
   }
 
   Future<bool> _applyDjPlayback(ChatRoomDjState dj) async {
@@ -574,19 +613,24 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         return;
       }
       state = state.copyWith(sending: true, clearError: true);
-      _showMusicRequestFlashLine('🔍 «$song» aranıyor…');
-      final err = await _submitMusicRequestByTitle(song);
-      if (err == null) {
+      _showMusicRequestFlashLine('🔍 «$song» sunucuda aranıyor…');
+      VoiceRoomDebugLog.log('music.istek.server', {'song': song});
+      try {
+        await ref.read(chatRoomRemoteProvider).sendMessage(
+              roomKey: _roomKey,
+              content: trimmed,
+            );
         await _syncMusicFromServer();
         state = state.copyWith(sending: false);
-        _showMusicRequestFlashLine('✅ «$song» kuyruğa eklendi');
-        return;
+        _showMusicRequestFlashLine('✅ «$song» isteği iletildi');
+      } catch (e) {
+        state = state.copyWith(
+          sending: false,
+          error: ApiException.userMessage(e),
+        );
+        _showMusicRequestFlashLine('⚠️ İstek gönderilemedi');
       }
-      // Yerel arama başarısız — komutu sunucuya ilet (sohbette sistem yanıtı).
-      state = state.copyWith(sending: false, clearError: true);
-      _showMusicRequestFlashLine(
-        '⚠️ Yerel arama başarısız, sunucuya iletiliyor…',
-      );
+      return;
     }
 
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -908,8 +952,15 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     String? videoId,
     String? giftTo,
     String? note,
+    bool priority = true,
+    bool skipPayment = false,
   }) async {
     try {
+      VoiceRoomDebugLog.log('music.request', {
+        'title': title,
+        'priority': priority,
+        'skipPayment': skipPayment,
+      });
       final result = await ref
           .read(chatRoomRemoteProvider)
           .requestMusic(
@@ -920,6 +971,8 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
             videoId: videoId,
             giftTo: giftTo,
             note: note,
+            priority: priority,
+            skipPayment: skipPayment,
           )
           .timeout(
             const Duration(seconds: 22),

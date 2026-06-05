@@ -438,6 +438,7 @@ class ChatRoomRemoteDataSource {
   Future<List<YoutubeSearchHit>> searchYoutube(String query) async {
     final q = query.trim();
     if (q.length < 2) return const [];
+    VoiceRoomDebugLog.log('music.search', {'q': q});
 
     final directId = _extractYoutubeId(q);
     if (directId != null) {
@@ -664,6 +665,8 @@ class ChatRoomRemoteDataSource {
     String? videoId,
     String? giftTo,
     String? note,
+    bool priority = true,
+    bool skipPayment = false,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final vid = videoId?.trim().isNotEmpty == true
@@ -677,6 +680,8 @@ class ChatRoomRemoteDataSource {
         if (giftTo != null && giftTo.trim().isNotEmpty)
           'giftTo': giftTo.trim(),
         if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+        if (priority) 'priority': true,
+        if (skipPayment) 'skipPayment': true,
       });
       final opts = Options(contentType: 'application/json');
       Response<dynamic> res;

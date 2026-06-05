@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.131+133 (2026-05-19)
+
+### Müzik sistemi — web paritesi
+
+- Müzik Aç: web gibi blur’lu modal (`YouTube Müzik`), sayfa değişmez
+- DJ senkron: SSE/socket `dj` payload, öncelikli kuyruk (10 jeton), ücretsiz `!istek` (sunucu)
+- Oynatma: kuyruk merge düzeltmesi, YouTube yedek URL, hata mesajları
+- API mirror: `priority`, `skipPayment`, zengin `QUEUE_UPDATED` socket olayları
+
 ## 1.0.130+132 (2026-05-19)
 
 ### Sesli oda müzik senkronu (web ↔ mobil)
