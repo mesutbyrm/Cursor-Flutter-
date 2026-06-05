@@ -87,6 +87,7 @@ class FeedRemoteDataSource {
       for (final st in storiesRaw) {
         final sm = asJsonMap(st);
         if (sm.isEmpty) continue;
+        if (_isFortuneStoryMap(sm)) continue;
 
         final merged = Map<String, dynamic>.from(sm);
         merged.putIfAbsent(
@@ -101,5 +102,21 @@ class FeedRemoteDataSource {
       }
     }
     return out;
+  }
+
+  static bool _isFortuneStoryMap(Map<String, dynamic> sm) {
+    final type =
+        pick(sm, ['type', 'storyType', 'category', 'kind'])?.toString().toLowerCase() ??
+            '';
+    if (type.contains('fal') ||
+        type.contains('tarot') ||
+        type.contains('fortune') ||
+        type.contains('kahve')) {
+      return true;
+    }
+    final text = [
+      pick(sm, ['caption', 'text', 'title', 'description']),
+    ].whereType<Object>().map((e) => e.toString().toLowerCase()).join(' ');
+    return text.contains('fal') || text.contains('tarot');
   }
 }

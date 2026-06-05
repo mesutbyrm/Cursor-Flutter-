@@ -20,6 +20,8 @@ abstract class PostDto with _$PostDto {
     DateTime? createdAt,
     String? fortuneType,
     @Default(0) int viewCount,
+    @Default(0) int viewsCount,
+    @Default(false) bool isLiked,
     @Default(false) bool isAutoShare,
     @Default(0) int fortuneCount,
     String? postType,
@@ -65,6 +67,16 @@ abstract class PostDto with _$PostDto {
       if (cm.containsKey('comments')) comments = asInt(cm['comments']);
     }
 
+    final vc = asInt(pick(json, ['viewCount', 'views']));
+    final displayViews = asInt(pick(json, [
+      'viewsCount',
+      'views',
+      'viewCount',
+      'plays',
+      'playCount',
+    ])).clamp(0, 999999999);
+    final viewsForUi = displayViews > 0 ? displayViews : vc;
+
     var likedByMe = json['likedByMe'] == true ||
         json['isLiked'] == true ||
         json['liked'] == true;
@@ -82,6 +94,10 @@ abstract class PostDto with _$PostDto {
         }
       }
     }
+
+    final isLikedFlag = likedByMe ||
+        pick(json, ['isLiked', 'liked', 'hasLiked']) == true ||
+        pick(json, ['isLiked', 'liked', 'hasLiked']) == 1;
 
     return PostDto(
       id: pick(json, ['id', '_id', 'postId', 'storyId', 'mediaId'])
@@ -102,7 +118,9 @@ abstract class PostDto with _$PostDto {
       commentsCount: comments,
       createdAt: _parseDate(pick(json, ['createdAt', 'created_at', 'timestamp'])),
       fortuneType: pick(json, ['fortuneType', 'fortune_type'])?.toString(),
-      viewCount: asInt(pick(json, ['viewCount', 'views'])),
+      viewCount: vc,
+      viewsCount: viewsForUi,
+      isLiked: isLikedFlag,
       isAutoShare: json['isAutoShare'] == true ||
           json['isAuto'] == true ||
           json['is_auto_share'] == true ||
@@ -120,6 +138,8 @@ abstract class PostDto with _$PostDto {
         mediaUrl: mediaUrl,
         likesCount: likesCount,
         commentsCount: commentsCount,
+        viewsCount: viewsCount,
+        isLiked: isLiked || likedByMe,
         createdAt: createdAt,
         fortuneType: fortuneType,
         viewCount: viewCount,

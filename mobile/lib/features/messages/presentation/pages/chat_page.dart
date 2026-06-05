@@ -69,9 +69,14 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   }
 
   void _scrollToEnd() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!_scroll.hasClients) return;
-      _scroll.jumpTo(_scroll.position.maxScrollExtent);
+      final max = _scroll.position.maxScrollExtent;
+      await _scroll.animateTo(
+        max,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
     });
   }
 
@@ -175,6 +180,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   final showOlder = state.hasMore;
                   return ListView.builder(
                     controller: _scroll,
+                    cacheExtent: 400,
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
                     physics: ListPerf.listPhysics,
                     cacheExtent: ListPerf.cacheExtent,

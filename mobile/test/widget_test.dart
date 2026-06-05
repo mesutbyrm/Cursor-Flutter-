@@ -39,14 +39,10 @@ class _FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<UserEntity> loginWithGoogle() {
-    throw UnimplementedError();
-  }
+  Future<UserEntity> loginWithGoogle() => throw UnimplementedError();
 
   @override
-  Future<UserEntity> loginWithTikTok() {
-    throw UnimplementedError();
-  }
+  Future<UserEntity> loginWithTikTok() => throw UnimplementedError();
 
   @override
   Future<void> requestPasswordReset(String email) async {}
@@ -64,6 +60,7 @@ void main() {
       ),
     );
     await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 }
