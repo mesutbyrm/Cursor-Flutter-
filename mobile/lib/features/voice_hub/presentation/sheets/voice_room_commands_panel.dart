@@ -139,8 +139,14 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
       await showVoiceYoutubeSongSheet(context, ref, room: widget.room);
       return;
     }
-    if (c.command == '!yardım') {
-      await _runCommand('!yardım');
+    if (c.command == '!yardım' || c.command == '!komutlar') {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Komutlar listesi yukarıda'),
+          duration: Duration(milliseconds: 1500),
+        ),
+      );
       return;
     }
     final needsArgs = c.command.contains('kullanıcı') ||
