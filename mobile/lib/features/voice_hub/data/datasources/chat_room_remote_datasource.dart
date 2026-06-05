@@ -583,18 +583,28 @@ class ChatRoomRemoteDataSource {
         int maxMusicQueue,
         bool musicEnabled,
         MusicQueueItem? nowPlaying,
-        bool playing,
-        bool canRequestMusic,
+        bool? playing,
+        bool? canRequestMusic,
+        String? musicUrl,
       })> fetchMusicQueue(
     String roomKey, {
     String? alternateKey,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      Response<dynamic> res;
-      try {
-        res = await _dio.safeGet<dynamic>(songRequestPath(key));
-      } on Object {
-        res = await _dio.safeGet<dynamic>('/api/chat/rooms/$key/music-queue');
+      Response<dynamic>? res;
+      for (final path in [
+        '/api/chat/rooms/$key/music-queue',
+        songRequestPath(key),
+      ]) {
+        try {
+          res = await _dio.safeGet<dynamic>(path);
+          break;
+        } on Object {
+          continue;
+        }
+      }
+      if (res == null) {
+        throw const ApiException('Müzik kuyruğu alınamadı');
       }
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['queue'] ?? map['items'];
@@ -610,20 +620,29 @@ class ChatRoomRemoteDataSource {
           map['musicRequestCost'] as int? ??
           10;
       MusicQueueItem? nowPlaying;
-      final np = map['nowPlaying'];
-      if (np is Map) {
-        nowPlaying = MusicQueueItem.fromJson(Map<String, dynamic>.from(np));
+      if (map.containsKey('nowPlaying')) {
+        final np = map['nowPlaying'];
+        if (np is Map) {
+          nowPlaying = MusicQueueItem.fromJson(Map<String, dynamic>.from(np));
+        }
       } else if (map['playing'] == true && queue.isNotEmpty) {
         nowPlaying = queue.first;
       }
+      final hasPlaying = map.containsKey('playing');
+      final hasCanRequest = map.containsKey('canRequestMusic');
+      final musicUrlRaw = map['musicUrl']?.toString();
       return (
         queue: queue,
         cost: cost,
         maxMusicQueue: map['maxMusicQueue'] as int? ?? 20,
         musicEnabled: map['musicEnabled'] != false,
         nowPlaying: nowPlaying,
-        playing: map['playing'] == true,
-        canRequestMusic: map['canRequestMusic'] == true,
+        playing: hasPlaying ? map['playing'] == true : null,
+        canRequestMusic:
+            hasCanRequest ? map['canRequestMusic'] == true : null,
+        musicUrl: musicUrlRaw != null && musicUrlRaw.isNotEmpty
+            ? musicUrlRaw
+            : null,
       );
     });
   }
@@ -634,6 +653,8 @@ class ChatRoomRemoteDataSource {
         List<MusicQueueItem> queue,
         int? newBalance,
         int? queuePosition,
+        String? musicUrl,
+        bool playing,
       })> requestMusic({
     required String roomKey,
     String? alternateKey,
@@ -689,11 +710,16 @@ class ChatRoomRemoteDataSource {
       }
       final balance = map['newBalance'] as int? ?? map['coinBalance'] as int?;
       final position = map['queuePosition'] as int?;
+      final musicUrlRaw = map['musicUrl']?.toString();
       return (
         item: item,
         queue: queue,
         newBalance: balance,
         queuePosition: position,
+        musicUrl: musicUrlRaw != null && musicUrlRaw.isNotEmpty
+            ? musicUrlRaw
+            : null,
+        playing: map['playing'] == true,
       );
     });
   }

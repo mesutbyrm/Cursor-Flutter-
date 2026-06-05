@@ -92,6 +92,31 @@ class ChatRoomDjState {
 
   int get djCount => djUsers.length;
 
+  ChatRoomDjState copyWith({
+    bool? playing,
+    String? musicUrl,
+    MusicQueueItem? nowPlaying,
+    List<MusicQueueItem>? musicQueue,
+  }) {
+    return ChatRoomDjState(
+      djUsers: djUsers,
+      activeDjId: activeDjId,
+      ownerPresent: ownerPresent,
+      canPlayMusic: canPlayMusic,
+      canRequestMusic: canRequestMusic,
+      isOwner: isOwner,
+      musicUrl: musicUrl ?? this.musicUrl,
+      backgroundImage: backgroundImage,
+      playing: playing ?? this.playing,
+      musicQueue: musicQueue ?? this.musicQueue,
+      nowPlaying: nowPlaying ?? this.nowPlaying,
+      musicRequestCost: musicRequestCost,
+      maxMusicQueue: maxMusicQueue,
+      musicEnabled: musicEnabled,
+      maxDj: maxDj,
+    );
+  }
+
   ChatRoomDjState mergeMusicQueue({
     required List<MusicQueueItem> queue,
     MusicQueueItem? nowPlaying,
@@ -100,7 +125,15 @@ class ChatRoomDjState {
     int? maxMusicQueue,
     bool? musicEnabled,
     bool? canRequestMusic,
+    String? musicUrl,
+    bool overwriteNowPlaying = false,
   }) {
+    final resolvedNowPlaying = overwriteNowPlaying
+        ? nowPlaying
+        : (nowPlaying ?? this.nowPlaying);
+    final resolvedMusicUrl = musicUrl?.trim().isNotEmpty == true
+        ? musicUrl
+        : this.musicUrl;
     return ChatRoomDjState(
       djUsers: djUsers,
       activeDjId: activeDjId,
@@ -108,11 +141,11 @@ class ChatRoomDjState {
       canPlayMusic: canPlayMusic,
       canRequestMusic: canRequestMusic ?? this.canRequestMusic,
       isOwner: isOwner,
-      musicUrl: musicUrl,
+      musicUrl: resolvedMusicUrl,
       backgroundImage: backgroundImage,
       playing: playing ?? this.playing,
       musicQueue: queue,
-      nowPlaying: nowPlaying ?? this.nowPlaying,
+      nowPlaying: resolvedNowPlaying,
       musicRequestCost: musicRequestCost ?? this.musicRequestCost,
       maxMusicQueue: maxMusicQueue ?? this.maxMusicQueue,
       musicEnabled: musicEnabled ?? this.musicEnabled,
@@ -126,16 +159,37 @@ class ChatRoomDjState {
     return idx >= 0 ? idx + 1 : musicQueue.length;
   }
 
-  /// Oynatılacak URL — `musicUrl` boşsa kuyruk / nowPlaying'den (site ile uyumlu).
+  /// Oynatılacak URL — önce sunucu akışı, yoksa YouTube watch (mobil çözer).
   String? get playbackSource {
     final direct = musicUrl?.trim();
-    if (direct != null && direct.isNotEmpty) return direct;
+    if (direct != null &&
+        direct.isNotEmpty &&
+        !_isYoutubeWatchUrl(direct)) {
+      return direct;
+    }
     final np = nowPlaying?.youtubeUrl.trim() ?? '';
     if (np.isNotEmpty) return np;
+    if (direct != null && direct.isNotEmpty) return direct;
     if (musicQueue.isNotEmpty) {
       final first = musicQueue.first.youtubeUrl.trim();
       if (first.isNotEmpty) return first;
     }
     return null;
   }
+
+  /// YouTube watch URL — akış çözümü mobilde yapılır (web iframe farkı).
+  String? get youtubeFallbackSource {
+    final np = nowPlaying?.youtubeUrl.trim() ?? '';
+    if (np.isNotEmpty) return np;
+    if (musicQueue.isNotEmpty) {
+      final first = musicQueue.first.youtubeUrl.trim();
+      if (first.isNotEmpty) return first;
+    }
+    final direct = musicUrl?.trim();
+    if (direct != null && _isYoutubeWatchUrl(direct)) return direct;
+    return null;
+  }
+
+  static bool _isYoutubeWatchUrl(String url) =>
+      url.contains('youtube.com') || url.contains('youtu.be');
 }

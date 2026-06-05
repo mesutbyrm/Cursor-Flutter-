@@ -27,6 +27,8 @@ abstract final class VoiceMusicSync {
         c.contains('şarkıyı atladı') ||
         c.contains('kuyruktan kaldırıldı') ||
         c.contains('müzik kuyruğu temizlendi') ||
+        c.contains('şu an çalıyor') ||
+        c.contains('şimdi çalıyor') ||
         c.startsWith('!istek') ||
         c.startsWith('/istek');
   }

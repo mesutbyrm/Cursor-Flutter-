@@ -28,26 +28,25 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final track = dj.nowPlaying ??
         (dj.musicQueue.isNotEmpty ? dj.musicQueue.first : null);
-    if (!dj.playing || track == null) return const SizedBox.shrink();
+    if (track == null) return const SizedBox.shrink();
 
     final playback = ref.watch(voiceRoomDjPlayerProvider).playback;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
-      child: VoiceGlass(
-        borderRadius: 16,
-        padding: EdgeInsets.zero,
-        onTap: onTap,
-        child: ValueListenableBuilder<VoiceRoomDjPlayback>(
-          valueListenable: playback,
-          builder: (context, pb, _) {
-            final progress = pb.duration.inMilliseconds > 0
-                ? pb.progress
-                : 0.08;
-            final remaining = pb.duration.inMilliseconds > 0
-                ? _format(pb.remaining)
-                : '—:—';
-            return Column(
+    return ValueListenableBuilder<VoiceRoomDjPlayback>(
+      valueListenable: playback,
+      builder: (context, pb, _) {
+        if (!dj.playing && !pb.playing) return const SizedBox.shrink();
+        final progress =
+            pb.duration.inMilliseconds > 0 ? pb.progress : 0.08;
+        final remaining =
+            pb.duration.inMilliseconds > 0 ? _format(pb.remaining) : '—:—';
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+          child: VoiceGlass(
+            borderRadius: 16,
+            padding: EdgeInsets.zero,
+            onTap: onTap,
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
@@ -123,10 +122,10 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                   ),
                 ),
               ],
-            );
-          },
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 

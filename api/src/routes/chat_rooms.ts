@@ -372,6 +372,7 @@ chatRoomsRouter.get("/rooms/:roomId/stream", optionalAuth, async (req, res) => {
 
   const msgs = listMessages(roomId);
   let lastId = msgs.length > 0 ? msgs[msgs.length - 1]!.id : "";
+  let lastDjSig = "";
 
   const timer = setInterval(() => {
     try {
@@ -382,6 +383,19 @@ chatRoomsRouter.get("/rooms/:roomId/stream", optionalAuth, async (req, res) => {
           send({ type: "message", message: m });
           lastId = m.id;
         }
+      }
+      const dj = getDjState(roomId, null);
+      const sig = `${dj.playing}|${dj.musicUrl ?? ""}|${dj.nowPlaying?.id ?? ""}|${dj.musicQueue.length}`;
+      if (sig != lastDjSig) {
+        lastDjSig = sig;
+        send({
+          type: "dj",
+          roomId: resolveRoomId(roomId),
+          playing: dj.playing,
+          musicUrl: dj.musicUrl,
+          nowPlaying: dj.nowPlaying,
+          queueLength: dj.musicQueue.length,
+        });
       }
     } catch {
       /* bağlantı kapanmış olabilir */
@@ -486,6 +500,7 @@ chatRoomsRouter.post("/rooms/:roomId/dj", requireAuth, async (req, res) => {
   const playing = req.body?.playing === true;
   const state = await setDjMusic(roomId, user, musicUrl, playing);
   if (!state) return fail(res, 403, "FORBIDDEN", "Müzik yetkisi yok");
+  emitChatRoomDjUpdate(roomId);
   return res.status(200).json({
     ...getDjState(roomId, user),
     musicUrl: state.musicUrl,

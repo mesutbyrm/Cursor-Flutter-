@@ -65,58 +65,55 @@ class VoiceRoomDjPlayer {
     }
   }
 
-  Future<void> sync({
+  /// Oynatma başarılıysa `true` döner.
+  Future<bool> sync({
     String? musicUrl,
+    String? fallbackYoutubeUrl,
     required bool playing,
     bool muted = false,
   }) async {
     if (muted || !playing || musicUrl == null || musicUrl.isEmpty) {
       await stop();
-      return;
+      return false;
     }
 
-    var source = musicUrl;
-    if (_resolver.needsResolve(musicUrl)) {
-      final resolved = await _resolver.resolvePlayableUrl(musicUrl);
-      if (resolved == null || resolved.isEmpty) {
-        debugPrint('DJ: YouTube akışı çözülemedi: $musicUrl');
-        return;
+    final candidates = <String>[
+      musicUrl,
+      if (fallbackYoutubeUrl != null &&
+          fallbackYoutubeUrl.isNotEmpty &&
+          fallbackYoutubeUrl != musicUrl)
+        fallbackYoutubeUrl,
+    ];
+
+    for (final candidate in candidates) {
+      final source = await _resolveSource(candidate);
+      if (source == null || source.isEmpty) continue;
+      if (_currentUrl == source && _player.state == PlayerState.playing) {
+        return true;
       }
-      source = resolved;
+      try {
+        _currentUrl = source;
+        await _player.stop();
+        await _player.play(UrlSource(source));
+        playback.value = VoiceRoomDjPlayback(
+          position: Duration.zero,
+          duration: playback.value.duration,
+          playing: true,
+        );
+        return true;
+      } catch (e) {
+        debugPrint('DJ play error ($candidate): $e');
+        _currentUrl = null;
+      }
     }
 
-    if (_currentUrl == source && _player.state == PlayerState.playing) {
-      return;
-    }
-    try {
-      _currentUrl = source;
-      await _player.stop();
-      await _player.play(UrlSource(source));
-      playback.value = VoiceRoomDjPlayback(
-        position: Duration.zero,
-        duration: playback.value.duration,
-        playing: true,
-      );
-    } catch (e) {
-      debugPrint('DJ play error: $e');
-      _currentUrl = null;
-      if (_resolver.needsResolve(musicUrl)) {
-        try {
-          final retry = await _resolver.resolvePlayableUrl(musicUrl);
-          if (retry != null && retry.isNotEmpty && retry != source) {
-            _currentUrl = retry;
-            await _player.play(UrlSource(retry));
-            playback.value = VoiceRoomDjPlayback(
-              position: Duration.zero,
-              duration: playback.value.duration,
-              playing: true,
-            );
-          }
-        } catch (e2) {
-          debugPrint('DJ play retry error: $e2');
-        }
-      }
-    }
+    debugPrint('DJ: oynatılamadı — $musicUrl');
+    return false;
+  }
+
+  Future<String?> _resolveSource(String musicUrl) async {
+    if (!_resolver.needsResolve(musicUrl)) return musicUrl;
+    return _resolver.resolvePlayableUrl(musicUrl);
   }
 
   Future<void> stop() async {
