@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.130+132 (2026-05-19)
+
+### Sesli oda müzik senkronu (web ↔ mobil)
+
+- DJ durumu: `GET /music-queue` öncelikli; `GET /song-request` artık `playing: false` ile ezmez
+- Oynatma: YouTube yedek URL + akış çözümü; hata mesajı gösterilir
+- Sohbet: «şu an çalıyor» mesajında anında senkron
+- Mini player: gerçek oynatıcı durumunu yansıtır
+- API mirror SSE: `type: dj` olayları (3 sn)
+
 ## 1.0.129+131 (2026-05-19)
 
 ### Backend parite (API mirror + Flutter)
