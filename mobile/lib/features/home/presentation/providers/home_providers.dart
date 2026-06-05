@@ -8,6 +8,7 @@ import '../../data/repositories/home_repository_impl.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
 import '../../domain/entities/home_trend_video_entity.dart';
+import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 import '../../domain/repositories/home_repository.dart';
 import '../../../feed/domain/entities/post_entity.dart';
@@ -28,6 +29,16 @@ final homeRepositoryProvider = Provider<HomeRepository>((ref) {
 
 final homeBannersProvider = FutureProvider<List<HomeBannerEntity>>((ref) async {
   return ref.watch(homeRepositoryProvider).fetchBanners();
+});
+
+final homeLiveFortuneTellersProvider =
+    FutureProvider<List<LiveFortuneTellerEntity>>((ref) async {
+  return ref.watch(homeRepositoryProvider).fetchLiveFortuneTellers();
+});
+
+final liveFortuneTellerProvider =
+    FutureProvider.family<LiveFortuneTellerEntity?, String>((ref, id) async {
+  return ref.watch(homeRepositoryProvider).fetchLiveFortuneTeller(id);
 });
 
 final homeAdvisorsProvider =
@@ -118,6 +129,7 @@ final homeFeedNotifierProvider =
 /// Tüm ana sayfa verilerini yenile.
 Future<void> refreshHomeData(WidgetRef ref) async {
   ref.invalidate(homeBannersProvider);
+  ref.invalidate(homeLiveFortuneTellersProvider);
   ref.invalidate(homeAdvisorsProvider);
   ref.invalidate(homeLiveStreamsProvider);
   ref.invalidate(homeVoiceRoomsProvider);
@@ -127,6 +139,7 @@ Future<void> refreshHomeData(WidgetRef ref) async {
   ref.invalidate(socialStoryRingsProvider);
   await Future.wait([
     ref.refresh(homeBannersProvider.future),
+    ref.refresh(homeLiveFortuneTellersProvider.future),
     ref.refresh(homeAdvisorsProvider.future),
     ref.refresh(homeLiveStreamsProvider.future),
     ref.refresh(homeVoiceRoomsProvider.future),

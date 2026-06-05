@@ -52,7 +52,7 @@ class HomeLiveStreamsRow extends ConsumerWidget {
     return Column(
       children: [
         HomeSectionHeader(
-          title: 'Canlı Yayınlar',
+          title: 'Canlı Yayın Aç',
           leadingDotColor: const Color(0xFFFF3B5C),
           onTrailing: () => context.go('/live'),
         ),

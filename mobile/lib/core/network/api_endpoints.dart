@@ -56,6 +56,11 @@ abstract final class ApiEndpoints {
   /// Çevrimiçi falcılar / danışmanlar.
   static const homeAdvisorsOnline = '/api/advisors/online';
 
+  /// Canlı falcılar listesi (canlifal.com `/canli-falcilar`).
+  static const fortuneTellers = '/api/fortune-tellers';
+
+  static String fortuneTeller(String id) => '/api/fortune-tellers/$id';
+
   /// Oyunlar ve etkinlikler.
   static const homeGames = '/api/games';
 
@@ -143,6 +148,9 @@ abstract final class ApiEndpoints {
   static const videoStreamGiftsCatalog = '/api/video-streams/gifts';
 
   static String videoStreamEnd(String streamId) => '/api/video-streams/$streamId/end';
+
+  static String videoStreamLiveStarted(String streamId) =>
+      '/api/video-streams/$streamId/live-started';
 
   static String videoStreamGifts(String streamId) =>
       '/api/video-streams/$streamId/gifts';

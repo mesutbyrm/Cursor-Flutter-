@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/config/env.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
-import '../../../../core/widgets/user_avatar.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/domain/entities/voice_room_sort.dart';
+import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../providers/home_providers.dart';
 import '../theme/home_palette.dart';
+import 'home_circular_orb.dart';
 import 'home_section_header.dart';
 
-/// Sesli sohbet — dairesel oda halkaları (canlifal.com).
+/// Sesli sohbet — yuvarlak oda halkaları (canlifal.com ana sayfa).
 class HomeVoiceRoomsRow extends ConsumerWidget {
   const HomeVoiceRoomsRow({super.key});
 
@@ -23,6 +26,21 @@ class HomeVoiceRoomsRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!Env.useNextAuth) {
+      return _section(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            'Sesli odalar için giriş yapın.',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.white.withValues(alpha: 0.65),
+            ),
+          ),
+        ),
+      );
+    }
+
     final rooms = ref.watch(homeVoiceRoomsProvider);
 
     return rooms.when(
@@ -42,9 +60,20 @@ class HomeVoiceRoomsRow extends ConsumerWidget {
           ),
         ),
       ),
-      error: (_, __) => _section(child: _buildRow(context, const [])),
+      error: (e, _) => _section(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            ApiException.userMessage(e),
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.white.withValues(alpha: 0.65),
+            ),
+          ),
+        ),
+      ),
       data: (items) => _section(
-        child: _buildRow(context, items.take(12).toList()),
+        child: _buildRow(context, ref, sortVoiceRoomsByPopularity(items)),
       ),
     );
   }
@@ -54,7 +83,7 @@ class HomeVoiceRoomsRow extends ConsumerWidget {
       builder: (context) => Column(
         children: [
           HomeSectionHeader(
-            title: 'Sesli Sohbet Odaları',
+            title: 'Sesli Sohbet',
             leadingDotColor: HomePalette.secondary,
             onTrailing: () => context.push('/voice-rooms'),
           ),
@@ -64,8 +93,14 @@ class HomeVoiceRoomsRow extends ConsumerWidget {
     );
   }
 
-  Widget _buildRow(BuildContext context, List<VoiceRoomEntity> rooms) {
-    final count = rooms.isEmpty ? _placeholderTitles.length : rooms.length;
+  Widget _buildRow(
+    BuildContext context,
+    WidgetRef ref,
+    List<VoiceRoomEntity> rooms,
+  ) {
+    final preview = rooms.take(12).toList();
+    final count =
+        preview.isEmpty ? _placeholderTitles.length : preview.length;
 
     return SizedBox(
       height: 118,
@@ -75,20 +110,21 @@ class HomeVoiceRoomsRow extends ConsumerWidget {
         itemCount: count,
         separatorBuilder: (_, __) => const SizedBox(width: 16),
         itemBuilder: (_, i) {
-          if (rooms.isEmpty) {
-            return _PlaceholderOrb(
+          if (preview.isEmpty) {
+            return HomeCircularOrb(
               title: _placeholderTitles[i % _placeholderTitles.length],
-              color: _ringColor(i),
+              subtitle: '0 kişi',
+              ringColor: _ringColor(i),
+              onTap: () => context.push('/voice-rooms'),
             );
           }
-          final room = rooms[i];
-          return _VoiceOrb(
-            room: room,
+          final room = preview[i];
+          return HomeCircularOrb(
+            title: room.displayTitle,
+            subtitle: '${room.displayOnline} kişi',
+            imageUrl: room.ownerAvatarUrl,
             ringColor: _ringColor(i),
-            onTap: () => context.push(
-              '/voice-room/${room.apiRoomKey}',
-              extra: room,
-            ),
+            onTap: () => openVoiceRoomWithVipGate(context, ref, room),
           );
         },
       ),
@@ -105,123 +141,5 @@ class HomeVoiceRoomsRow extends ConsumerWidget {
       Color(0xFFFBBF24),
     ];
     return colors[i % colors.length];
-  }
-}
-
-class _VoiceOrb extends StatelessWidget {
-  const _VoiceOrb({
-    required this.room,
-    required this.ringColor,
-    required this.onTap,
-  });
-
-  final VoiceRoomEntity room;
-  final Color ringColor;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: SizedBox(
-        width: 76,
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [ringColor, ringColor.withValues(alpha: 0.4)],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: ringColor.withValues(alpha: 0.4),
-                    blurRadius: 12,
-                  ),
-                ],
-              ),
-              child: UserAvatar(
-                url: room.ownerAvatarUrl,
-                radius: 30,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              room.displayTitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: context.colors.onSurface,
-              ),
-            ),
-            Text(
-              '${room.displayOnline} kişi',
-              style: TextStyle(
-                fontSize: 10,
-                color: context.colors.onSurfaceMuted,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PlaceholderOrb extends StatelessWidget {
-  const _PlaceholderOrb({required this.title, required this.color});
-
-  final String title;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 76,
-      child: Column(
-        children: [
-          Container(
-            width: 66,
-            height: 66,
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [color, color.withValues(alpha: 0.35)],
-              ),
-            ),
-            child: CircleAvatar(
-              backgroundColor: const Color(0xFF1A0E38),
-              child: Icon(
-                Icons.mic_rounded,
-                color: color.withValues(alpha: 0.9),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: context.colors.onSurface,
-            ),
-          ),
-          Text(
-            '0 kişi',
-            style: TextStyle(
-              fontSize: 10,
-              color: context.colors.onSurfaceMuted,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

@@ -46,16 +46,16 @@ class _VoiceRoomToolsSheet extends ConsumerWidget {
   final bool isOwner;
 
   static const _roomCommands = [
-    ('/duyuru', 'Duyuru yayınla (moderatör)'),
-    ('/temizle', 'Sohbeti temizle'),
-    ('/muzik', 'Müzik / DJ bilgisi'),
+    ('!duyuru', 'Duyuru yayınla (moderatör)'),
+    ('!temizle', 'Sohbeti temizle'),
+    ('!muzik', 'Müzik / DJ bilgisi'),
   ];
 
   static const _staffCommands = [
-    ('/kick @kullanıcı', 'Odadan çıkar (REST ban önerilir)'),
-    ('/ban @kullanıcı', 'Yasakla'),
-    ('/unban @kullanıcı', 'Yasağı kaldır'),
-    ('/dj @kullanıcı', 'DJ ata / kaldır'),
+    ('!kick @kullanıcı', 'Odadan çıkar (REST ban önerilir)'),
+    ('!ban @kullanıcı', 'Yasakla'),
+    ('!unban @kullanıcı', 'Yasağı kaldır'),
+    ('!dj @kullanıcı', 'DJ ata / kaldır'),
   ];
 
   @override

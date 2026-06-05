@@ -4,6 +4,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../entities/home_banner_entity.dart';
 import '../entities/home_game_entity.dart';
 import '../entities/home_trend_video_entity.dart';
+import '../entities/live_fortune_teller_entity.dart';
 import '../entities/online_advisor_entity.dart';
 
 class HomeFeedBundle {
@@ -20,6 +21,8 @@ class HomeFeedBundle {
 
 abstract interface class HomeRepository {
   Future<List<HomeBannerEntity>> fetchBanners();
+  Future<List<LiveFortuneTellerEntity>> fetchLiveFortuneTellers();
+  Future<LiveFortuneTellerEntity?> fetchLiveFortuneTeller(String id);
   Future<List<OnlineAdvisorEntity>> fetchOnlineAdvisors();
   Future<List<LiveStreamEntity>> fetchLiveStreams();
   Future<List<VoiceRoomEntity>> fetchVoiceRooms();

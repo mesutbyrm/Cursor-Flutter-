@@ -83,3 +83,4 @@ if [[ "$fail" -gt 0 ]]; then
 fi
 
 echo "Tamam. APK için: cd mobile && flutter build apk --release \$(bash ../scripts/print-firebase-dart-defines.sh)"
+echo "Google giriş: docs/GOOGLE_SIGNIN_SETUP_TR.md"

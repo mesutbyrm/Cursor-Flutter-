@@ -2,7 +2,9 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/live_debug_log.dart';
 import '../../../../core/util/json_util.dart';
 import '../models/live_stream_dto.dart';
 import '../../domain/entities/live_stream_entity.dart';
@@ -13,11 +15,13 @@ class LiveRemoteDataSource {
 
   final Dio _dio;
 
+  static const int _pageSize = 30;
+
   Future<List<LiveStreamEntity>> fetch({int page = 1}) async {
     if (Env.useMobileAuth) {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.videoStreams,
-        query: {'limit': '50', 'page': '$page'},
+        query: {'limit': '$_pageSize', 'page': '$page'},
       );
       return _parseStreamList(res.data);
     }
@@ -188,51 +192,68 @@ class LiveRemoteDataSource {
     String? category,
     List<String>? tags,
   }) async {
+    final started = DateTime.now();
+    LiveDebugLog.log('create.request', {'title': title});
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreams,
       data: {
         'title': title,
+        'name': title,
         if (description != null && description.isNotEmpty)
           'description': description,
         if (category != null && category.isNotEmpty) 'category': category,
         if (tags != null && tags.isNotEmpty) 'tags': tags,
+        'requestType': 'live',
+        'status': 'live',
       },
     );
-    final body = res.data;
+    final streamId = _extractStreamId(res.data);
+    if (streamId == null || streamId.isEmpty) {
+      throw ApiException(
+        'Yayın oluşturuldu ancak oda kimliği alınamadı. '
+        'Yanıt: ${res.statusCode}',
+      );
+    }
+    LiveDebugLog.log('create.ok', {
+      'streamId': streamId,
+      'elapsedMs': DateTime.now().difference(started).inMilliseconds,
+    });
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.videoStreamLiveStarted(streamId),
+        data: {'title': title},
+      );
+      LiveDebugLog.log('live-started.ok', {'streamId': streamId});
+    } catch (e) {
+      LiveDebugLog.log('live-started.skip', {
+        'streamId': streamId,
+        'reason': ApiException.userMessage(e),
+      });
+    }
+    return streamId;
+  }
+
+  String? _extractStreamId(dynamic body) {
+    if (body is String && body.trim().isNotEmpty && !body.contains('<html')) {
+      return body.trim();
+    }
     Map<String, dynamic>? map;
     if (body is Map<String, dynamic>) {
       map = body;
     } else if (body is Map) {
       map = Map<String, dynamic>.from(body);
     }
-    if (map == null) {
-      throw DioException(
-        requestOptions: res.requestOptions,
-        message: 'Geçersiz yayın yanıtı',
-      );
+    if (map == null) return null;
+    if (map['success'] == true && map['data'] != null) {
+      return _extractStreamId(map['data']);
     }
-    final dataMap = map['data'];
-    final id = pick(map, ['id', '_id', 'streamId']) ??
-        (dataMap is Map
-            ? pick(asJsonMap(Map<String, dynamic>.from(dataMap)),
-                ['id', '_id', 'streamId'])
-            : null);
-    if (id == null || id.toString().isEmpty) {
-      throw DioException(
-        requestOptions: res.requestOptions,
-        message: 'Yayın oluşturuldu ancak oda kimliği alınamadı',
-      );
+    final streamObj = map['stream'] ?? map['videoStream'] ?? map['broadcast'];
+    if (streamObj is Map) {
+      final nested = _extractStreamId(streamObj);
+      if (nested != null) return nested;
     }
-    final streamId = id.toString();
-    try {
-      await _dio.safePost<dynamic>(
-        '/api/video-streams/$streamId/live-started',
-        data: {'title': title},
-      );
-    } catch (_) {
-      // Site uç yoksa sessiz; push canlifal.com backend'inde tetiklenmeli
-    }
-    return streamId;
+    final id = pick(map, ['id', '_id', 'streamId', 'roomId']);
+    return id?.toString();
   }
 
   Future<void> endVideoStream(String streamId) async {

@@ -157,13 +157,13 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
   }
 
   static const _roomCommands = [
-    ('/duyuru', Icons.campaign_rounded, 'Oda duyurusu yayınla'),
-    ('/temizle', Icons.cleaning_services_rounded, 'Sohbet akışını temizle'),
-    ('/kick', Icons.person_remove_rounded, 'Kullanıcıyı odadan çıkar'),
-    ('/ban', Icons.block_rounded, 'Kullanıcıyı yasakla'),
-    ('/unban', Icons.lock_open_rounded, 'Yasağı kaldır'),
-    ('/dj', Icons.headphones_rounded, 'DJ yetkisi ver / al'),
-    ('/muzik', Icons.queue_music_rounded, 'Müzik kuyruğunu yönet'),
+    ('!duyuru', Icons.campaign_rounded, 'Oda duyurusu yayınla'),
+    ('!temizle', Icons.cleaning_services_rounded, 'Sohbet akışını temizle'),
+    ('!kick', Icons.person_remove_rounded, 'Kullanıcıyı odadan çıkar'),
+    ('!ban', Icons.block_rounded, 'Kullanıcıyı yasakla'),
+    ('!unban', Icons.lock_open_rounded, 'Yasağı kaldır'),
+    ('!dj', Icons.headphones_rounded, 'DJ yetkisi ver / al'),
+    ('!muzik', Icons.queue_music_rounded, 'Müzik kuyruğunu yönet'),
   ];
 
   Future<void> _applyBackground(String url) async {

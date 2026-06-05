@@ -2,22 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.120+122` |
-| Tarih (UTC) | 2026-06-03 21:19 |
-| Commit | [`70915f8bbb658e109ed357d59d838021a9c3fcde`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/70915f8bbb658e109ed357d59d838021a9c3fcde) |
-| İş akışı | [Run 26912502369](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26912502369) |
+| Sürüm | `1.0.128+130` |
+| Tarih (UTC) | 2026-06-04 22:41 |
+| Commit | [`2cf7b3c18d01adaffb8d215364f2caa50c6ec133`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/2cf7b3c18d01adaffb8d215364f2caa50c6ec133) |
+| İş akışı | [Run 26982974225](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26982974225) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.119+121 (2026-05-19)
+## 1.0.128+130 (2026-06-04)
 
-### Birleşik sürüm (main + sesli oda senkron)
+### Müzik arama ve !istek
 
-- **PR #87** Oda Komutları, Şarkı İsteği, DJ Yönetimi (zaten main’de)
-- **PR #91–#93** Komut/YouTube, müzik kuyruk, native API uyumu
-- **PR #95** Web ↔ Flutter sesli oda senkronu, YouTube API önceliği
-- Sosyal: beğeni, yorum, paylaşım, hikâye (önceki dal)
+- YouTube arama: canlifal API + Piped + Invidious **paralel** (18 sn API beklemesi kaldırıldı)
+- Zaman aşımı: kullanıcıya Türkçe mesaj; ham `TimeoutException` gösterilmez
+- `!istek şarkı`: boş komutta kullanım uyarısı; yerel arama başarısızsa sunucuya iletme
+- Oda içi duyuru: aranıyor / eklendi / sunucuya iletiliyor flaşları
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._

@@ -394,7 +394,7 @@ function tryHandleRoomCommand(
       );
     }
     return system(
-      `🎵 Şarkı isteği alındı (yetkililere): «${song}» — onay için ♫ panelini kullanın.`,
+      `🎵 Şarkı isteği alındı: «${song}» — işleniyor…`,
     );
   }
 
@@ -566,6 +566,46 @@ export async function addTextMessage(roomId: string, user: User, content: string
   const room = getChatRoom(roomId);
   if (!room) return null;
   const priv = roomPrivileges(user, room);
+  let cmd = trimmed;
+  if (cmd.startsWith("!")) cmd = `/${cmd.slice(1)}`;
+  const head = (cmd.split(/\s+/).filter(Boolean)[0] ?? "").toLowerCase();
+  if (head === "/istek") {
+    const song = cmd.replace(/^\/istek\s*/i, "").trim();
+    if (song.length >= 2) {
+      const hits = await searchYoutube(song);
+      if (hits.length > 0) {
+        const hit = hits[0]!;
+        const result = await requestMusicQueue(roomId, user, {
+          title: hit.title,
+          youtubeUrl: hit.url,
+          thumbUrl: hit.thumbUrl ?? null,
+        });
+        if (result.ok) {
+          return pushMessage(roomId, {
+            id: randomUUID(),
+            content: trimmed,
+            createdAt: new Date().toISOString(),
+            user: toChatUser(
+              user,
+              priv.admin ? "admin" : priv.owner ? "owner" : "listener",
+            ),
+          });
+        }
+        return pushMessage(roomId, {
+          id: randomUUID(),
+          content: `⚠️ ${result.error ?? "Şarkı isteği başarısız"}`,
+          createdAt: new Date().toISOString(),
+          user: toChatUser(user, "listener"),
+        });
+      }
+      return pushMessage(roomId, {
+        id: randomUUID(),
+        content: `⚠️ «${song}» için sonuç bulunamadı.`,
+        createdAt: new Date().toISOString(),
+        user: toChatUser(user, "listener"),
+      });
+    }
+  }
   const commandRow = tryHandleRoomCommand(room, user, roomId, trimmed);
   if (commandRow) return commandRow;
   if (!priv.canModerate && containsBannedWord(roomId, trimmed)) {
@@ -758,14 +798,19 @@ export function setRoomMusicSettings(
 }
 
 export const POPULAR_MUSIC_SUGGESTIONS = [
-  { title: "Tutamıyorum Zamanı", artist: "Müslüm Gürses", query: "Müslüm Gürses Tutamıyorum Zamanı" },
-  { title: "Beni Yak", artist: "Duman", query: "Duman Beni Yak" },
-  { title: "Yalan", artist: "Tarkan", query: "Tarkan Yalan" },
-  { title: "Gülümse", artist: "Sezen Aksu", query: "Sezen Aksu Gülümse" },
-  { title: "Aşk", artist: "Tarkan", query: "Tarkan Aşk" },
-  { title: "Kum Gibi", artist: "Ahmet Kaya", query: "Ahmet Kaya Kum Gibi" },
-  { title: "Islak Islak", artist: "Ferdi Tayfur", query: "Ferdi Tayfur Islak Islak" },
-  { title: "Şımarık", artist: "Tarkan", query: "Tarkan Şımarık" },
+  {
+    title: "Tutamıyorum Zamanı",
+    artist: "Müslüm Gürses",
+    query: "Müslüm Gürses Tutamıyorum Zamanı",
+    videoId: "c9Fq8_Q5Wx8",
+  },
+  { title: "Beni Yak", artist: "Duman", query: "Duman Beni Yak", videoId: "v0Kpfr2E3W0" },
+  { title: "Yalan", artist: "Tarkan", query: "Tarkan Yalan", videoId: "nboC0smLRsE" },
+  { title: "Gülümse", artist: "Sezen Aksu", query: "Sezen Aksu Gülümse", videoId: "0p8yZ7-m3eY" },
+  { title: "Aşk", artist: "Tarkan", query: "Tarkan Aşk", videoId: "1VRmoDGxiWQ" },
+  { title: "Kum Gibi", artist: "Ahmet Kaya", query: "Ahmet Kaya Kum Gibi", videoId: "4sakaTjeb50" },
+  { title: "Islak Islak", artist: "Ferdi Tayfur", query: "Ferdi Tayfur Islak Islak", videoId: "m1Q9Z8v5_2E" },
+  { title: "Şımarık", artist: "Tarkan", query: "Tarkan Şımarık", videoId: "7LZG9RXx0pY" },
 ];
 
 export type MusicQueueItem = {
@@ -1006,6 +1051,51 @@ export type YoutubeSearchHit = {
   duration?: string;
 };
 
+async function searchYoutubeViaGoogleApi(query: string): Promise<YoutubeSearchHit[]> {
+  const key = process.env.YOUTUBE_API_KEY?.trim();
+  if (!key || query.length < 2) return [];
+  try {
+    const url = new URL("https://www.googleapis.com/youtube/v3/search");
+    url.searchParams.set("part", "snippet");
+    url.searchParams.set("type", "video");
+    url.searchParams.set("maxResults", "12");
+    url.searchParams.set("q", query);
+    url.searchParams.set("key", key);
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) return [];
+    const data = (await res.json()) as {
+      items?: Array<{
+        id?: { videoId?: string };
+        snippet?: {
+          title?: string;
+          channelTitle?: string;
+          thumbnails?: { medium?: { url?: string }; default?: { url?: string } };
+        };
+      }>;
+    };
+    const out: YoutubeSearchHit[] = [];
+    for (const row of data.items ?? []) {
+      const vid = row.id?.videoId?.trim() ?? "";
+      if (vid.length < 6) continue;
+      const sn = row.snippet;
+      const thumb =
+        sn?.thumbnails?.medium?.url ??
+        sn?.thumbnails?.default?.url ??
+        `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
+      out.push({
+        videoId: vid,
+        title: sn?.title?.trim() || "Video",
+        url: `https://www.youtube.com/watch?v=${vid}`,
+        thumbUrl: thumb,
+        uploader: sn?.channelTitle?.trim() || undefined,
+      });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 export async function searchYoutube(query: string): Promise<YoutubeSearchHit[]> {
   const q = query.trim();
   if (q.length < 2) return [];
@@ -1021,6 +1111,8 @@ export async function searchYoutube(query: string): Promise<YoutubeSearchHit[]> 
       },
     ];
   }
+  const googleHits = await searchYoutubeViaGoogleApi(q);
+  if (googleHits.length > 0) return googleHits;
   try {
     const res = await fetch(
       `https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(q)}&filter=music_songs`,

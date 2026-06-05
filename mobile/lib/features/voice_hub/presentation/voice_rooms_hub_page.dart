@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../live/presentation/providers/live_providers.dart';
 import 'theme/voice_room_tokens.dart';
@@ -12,7 +13,17 @@ class VoiceRoomsHubPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final titleSize = MediaQuery.sizeOf(context).width >= 600 ? 24.0 : 22.0;
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/feed');
+        }
+      },
+      child: Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: VoiceRoomTokens.bgDeep,
       appBar: AppBar(
@@ -44,6 +55,7 @@ class VoiceRoomsHubPage extends ConsumerWidget {
           VoiceRoomsBody(),
         ],
       ),
+    ),
     );
   }
 }

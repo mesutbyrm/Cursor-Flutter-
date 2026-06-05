@@ -1,5 +1,33 @@
 # Canlifal — Agent talimatları
 
+## Üretim envanteri (canlifal.com)
+
+Bu repo, **canlifal.com** (Next.js 14 + Prisma + PostgreSQL) platformunun **Flutter mobil istemcisidir**. Yeni özellik, hata düzeltmesi veya refactor öncesi ilgili sistemin üretim sözleşmesine uy; mevcut akışları kırma.
+
+| Katman | Üretim | Bu repo |
+|--------|--------|---------|
+| Web + API | Next.js App Router, **384** API, **149** Prisma model | `mobile/` → JWT `Bearer`, `https://canlifal.com` |
+| Yerel mirror | — | `api/` (Express; üretimin tam kopyası değil) |
+
+**Mobil dokunulan başlıca sistemler (rapor §3):**
+
+- **Sohbet / sesli oda (§3.3–3.4):** `room.id` (cuid), SSE `GET /api/chat/rooms/{id}/stream`, presence **20s**, TRTC `voice_room_{id}`, IRC rolleri, DJ + YouTube müzik, `!istek` komutu
+- **Auth (§3 + §7.5):** NextAuth (web) + **mobil JWT** (`/api/auth/mobile/*`, `/api/me`); `sub` ≠ kullanıcı anahtarı — `realCid` / `gcid`
+- **Kredi / jeton (§3.12):** CFC + Jeton; mobil cüzdan uçları
+- **Video / TRTC (§3.5):** LiveKit/TRTC token uçları; PK, hediye
+- **Fal, sosyal, bildirim, oyun** vb.: rapordaki endpoint listesi; mobilde `api_endpoints.dart` + feature modülleri
+
+**Gerçek zamanlı (§6):** Sohbet = **SSE + polling** (Socket.IO değil). Fal = SSE streaming. Presence heartbeat 20s.
+
+**Değişiklik yaparken:**
+
+1. Rapordaki ilgili bölümü (sayfa / API / model) kontrol et
+2. Üretim uçlarını değiştirmeden önce mobilin zaten hangi path’i kullandığını `grep` ile doğrula
+3. `api/` mirror’a eklenen davranış, canlifal.com’da yoksa dokümante et veya yalnızca mobil-safe fallback kullan
+4. Admin / Stripe / reklam gibi **web-only** sistemlere mobilde gereksiz bağımlılık ekleme
+
+Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-raporu.txt
+
 ## Cursor Cloud specific instructions
 
 ### Proje düzeni

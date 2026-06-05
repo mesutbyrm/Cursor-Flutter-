@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -307,16 +308,19 @@ class ChatRoomRemoteDataSource {
         title: 'Tutamıyorum Zamanı',
         artist: 'Müslüm Gürses',
         query: 'Müslüm Gürses Tutamıyorum Zamanı',
+        videoId: 'c9Fq8_Q5Wx8',
       ),
       PopularMusicSuggestion(
         title: 'Kum Gibi',
         artist: 'Ahmet Kaya',
         query: 'Ahmet Kaya Kum Gibi',
+        videoId: '4sakaTjeb50',
       ),
       PopularMusicSuggestion(
         title: 'Yalan',
         artist: 'Tarkan',
         query: 'Tarkan Yalan',
+        videoId: 'nboC0smLRsE',
       ),
     ];
     try {
@@ -449,8 +453,10 @@ class ChatRoomRemoteDataSource {
       'https://pipedapi.leptons.xyz',
       'https://pipedapi.in.projectsegfau.lt',
     ];
-    for (final host in hosts) {
-      final hits = await _searchYoutubePipedOnHost(host, q);
+    final batches = await Future.wait(
+      hosts.map((host) => _searchYoutubePipedOnHost(host, q)),
+    );
+    for (final hits in batches) {
       if (hits.isNotEmpty) return hits;
     }
     return const [];
@@ -466,8 +472,8 @@ class ChatRoomRemoteDataSource {
         queryParameters: {'q': q, 'filter': 'music_songs'},
         options: Options(
           headers: {'Accept': 'application/json'},
-          receiveTimeout: const Duration(seconds: 14),
-          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 8),
+          sendTimeout: const Duration(seconds: 6),
         ),
       );
       final data = res.data;
@@ -510,6 +516,49 @@ class ChatRoomRemoteDataSource {
     }
   }
 
+  Future<List<YoutubeSearchHit>> _searchYoutubeInvidiousOnHost(
+    String base,
+    String q,
+  ) async {
+    try {
+      final res = await _publicDio.get<dynamic>(
+        '$base/api/v1/search',
+        queryParameters: {'q': q, 'type': 'video', 'sort_by': 'relevance'},
+        options: Options(
+          headers: {'Accept': 'application/json'},
+          receiveTimeout: const Duration(seconds: 8),
+          sendTimeout: const Duration(seconds: 6),
+        ),
+      );
+      final data = res.data;
+      if (data is! List) return const [];
+      final out = <YoutubeSearchHit>[];
+      for (final row in data.take(12)) {
+        if (row is! Map) continue;
+        final m = Map<String, dynamic>.from(row);
+        if (m['type']?.toString() != 'video') continue;
+        final vid = m['videoId']?.toString() ?? '';
+        if (vid.length < 6) continue;
+        final title = m['title']?.toString() ?? 'Video';
+        final author = m['author']?.toString();
+        final length = m['lengthSeconds'];
+        out.add(
+          YoutubeSearchHit(
+            videoId: vid,
+            title: title,
+            url: 'https://www.youtube.com/watch?v=$vid',
+            thumbUrl: 'https://i.ytimg.com/vi/$vid/hqdefault.jpg',
+            uploader: author,
+            duration: _formatDuration(length),
+          ),
+        );
+      }
+      return out;
+    } catch (_) {
+      return const [];
+    }
+  }
+
   Future<List<YoutubeSearchHit>> _searchYoutubeInvidious(String q) async {
     const instances = [
       'https://inv.nadeko.net',
@@ -519,42 +568,11 @@ class ChatRoomRemoteDataSource {
       'https://invidious.fdn.fr',
       'https://invidious.dhus.de',
     ];
-    for (final base in instances) {
-      try {
-        final res = await _publicDio.get<dynamic>(
-          '$base/api/v1/search',
-          queryParameters: {'q': q, 'type': 'video', 'sort_by': 'relevance'},
-          options: Options(
-            headers: {'Accept': 'application/json'},
-            receiveTimeout: const Duration(seconds: 10),
-            sendTimeout: const Duration(seconds: 8),
-          ),
-        );
-        final data = res.data;
-        if (data is! List) continue;
-        final out = <YoutubeSearchHit>[];
-        for (final row in data.take(12)) {
-          if (row is! Map) continue;
-          final m = Map<String, dynamic>.from(row);
-          if (m['type']?.toString() != 'video') continue;
-          final vid = m['videoId']?.toString() ?? '';
-          if (vid.length < 6) continue;
-          final title = m['title']?.toString() ?? 'Video';
-          final author = m['author']?.toString();
-          final length = m['lengthSeconds'];
-          out.add(
-            YoutubeSearchHit(
-              videoId: vid,
-              title: title,
-              url: 'https://www.youtube.com/watch?v=$vid',
-              thumbUrl: 'https://i.ytimg.com/vi/$vid/hqdefault.jpg',
-              uploader: author,
-              duration: _formatDuration(length),
-            ),
-          );
-        }
-        if (out.isNotEmpty) return out;
-      } catch (_) {}
+    final batches = await Future.wait(
+      instances.map((base) => _searchYoutubeInvidiousOnHost(base, q)),
+    );
+    for (final hits in batches) {
+      if (hits.isNotEmpty) return hits;
     }
     return const [];
   }
@@ -575,83 +593,96 @@ class ChatRoomRemoteDataSource {
       ];
     }
 
-    final apiHits = await _searchYoutubeViaApi(q);
-    if (apiHits.isNotEmpty) return apiHits;
+    final catalogHits = await _searchYoutubeFromPopularCatalog(q);
+    if (catalogHits.isNotEmpty) return catalogHits;
 
-    final piped = await _searchYoutubePiped(q);
-    if (piped.isNotEmpty) return piped;
+    // API + Piped + Invidious aynı anda — 18 sn API beklemesi yok.
+    try {
+      final parallel = await Future.wait<List<YoutubeSearchHit>>([
+        _searchYoutubeViaApiSafe(q),
+        _searchYoutubePiped(q),
+        _searchYoutubeInvidious(q),
+      ]);
+      for (final hits in parallel) {
+        if (hits.isNotEmpty) return hits;
+      }
+    } on ApiException catch (e) {
+      if (e.statusCode == 401) rethrow;
+    }
 
-    final inv = await _searchYoutubeInvidious(q);
-    if (inv.isNotEmpty) return inv;
-
-    final popularHits = await _searchYoutubeFromPopularCatalog(q);
+    final popularHits = await _searchYoutubeFromPopularCatalog(q, pipedFallback: true);
     if (popularHits.isNotEmpty) return popularHits;
 
     throw const ApiException(
-      'Şarkı araması şu an kullanılamıyor. Biraz sonra tekrar deneyin.',
+      'Şarkı araması şu an kullanılamıyor. İnternetinizi kontrol edip tekrar deneyin '
+      'veya popüler listeden seçin.',
     );
+  }
+
+  Future<List<YoutubeSearchHit>> _searchYoutubeViaApiSafe(String q) async {
+    try {
+      return await _searchYoutubeViaApi(q);
+    } on ApiException catch (e) {
+      if (e.statusCode == 401) rethrow;
+      return const [];
+    } on TimeoutException {
+      return const [];
+    } catch (_) {
+      return const [];
+    }
   }
 
   Future<List<YoutubeSearchHit>> _searchYoutubeViaApi(String q) async {
     final apiPaths = [
-      '/api/chat/youtube-search',
-      '/api/youtube/search',
       youtubeSearchPath(),
+      '/api/chat/youtube-search',
     ];
-    Object? lastError;
+    ApiException? lastApiError;
     for (final path in apiPaths) {
-      for (final client in [_dio, _publicDio]) {
-        try {
-          final res = await client
-              .get<dynamic>(
-                path,
-                queryParameters: {'q': q, 'query': q, 'search': q},
-              )
-              .timeout(const Duration(seconds: 16));
-          final data = res.data;
-          if (data is String &&
-              (data.contains('<!DOCTYPE') || data.contains('<html'))) {
-            continue;
-          }
-          final hits = _parseYoutubeHits(data);
-          if (hits.isNotEmpty) return hits;
-        } on DioException catch (e) {
-          final mapped = _mapDioForYoutube(e);
-          if (mapped.statusCode == 401) {
-            throw const ApiException('Şarkı aramak için giriş yapın.');
-          }
-          if (mapped.statusCode == 404) continue;
-          lastError = mapped;
-        } on ApiException catch (e) {
-          if (e.statusCode == 401) {
-            throw const ApiException('Şarkı aramak için giriş yapın.');
-          }
-          if (e.statusCode == 404) continue;
-          lastError = e;
-        } on Object catch (e) {
-          lastError = e;
+      try {
+        final res = await _dio
+            .get<dynamic>(
+              path,
+              queryParameters: {'q': q, 'query': q},
+            )
+            .timeout(const Duration(seconds: 10));
+        final data = res.data;
+        if (data is String &&
+            (data.contains('<!DOCTYPE') || data.contains('<html'))) {
+          continue;
         }
+        final hits = _parseYoutubeHits(data);
+        if (hits.isNotEmpty) return hits;
+      } on TimeoutException {
+        continue;
+      } on DioException catch (e) {
+        final mapped = _mapDioForYoutube(e);
+        if (mapped.statusCode == 404) continue;
+        lastApiError = mapped;
+        if (mapped.statusCode == 401) throw mapped;
+      } on ApiException catch (e) {
+        if (e.statusCode == 404) continue;
+        lastApiError = e;
+        if (e.statusCode == 401) rethrow;
       }
       try {
         final res = await _dio
             .safePost<dynamic>(
               path,
-              data: jsonEncode({'q': q, 'query': q}),
+              data: {'q': q, 'query': q},
               options: Options(contentType: 'application/json'),
             )
-            .timeout(const Duration(seconds: 16));
+            .timeout(const Duration(seconds: 10));
         final hits = _parseYoutubeHits(res.data);
         if (hits.isNotEmpty) return hits;
-      } catch (e) {
-        lastError ??= e;
+      } on TimeoutException {
+        continue;
+      } on ApiException catch (e) {
+        lastApiError = e;
+        if (e.statusCode == 401) rethrow;
       }
     }
-    if (lastError != null) {
-      final msg = ApiException.userMessage(lastError);
-      if (msg.contains('401') || msg.toLowerCase().contains('oturum')) {
-        throw const ApiException('Şarkı aramak için giriş yapın.');
-      }
-    }
+    if (lastApiError != null) throw lastApiError;
     return const [];
   }
 
@@ -667,8 +698,9 @@ class ChatRoomRemoteDataSource {
   }
 
   Future<List<YoutubeSearchHit>> _searchYoutubeFromPopularCatalog(
-    String q,
-  ) async {
+    String q, {
+    bool pipedFallback = false,
+  }) async {
     final lower = q.toLowerCase();
     final popular = await fetchPopularMusic();
     final matches = popular
@@ -678,12 +710,24 @@ class ChatRoomRemoteDataSource {
               p.artist.toLowerCase().contains(lower) ||
               p.query.toLowerCase().contains(lower),
         )
-        .take(4);
+        .take(6)
+        .toList();
+    if (matches.isEmpty) return const [];
+
+    final withIds = <YoutubeSearchHit>[];
     for (final m in matches) {
-      final hits = await _searchYoutubeViaApi(m.query);
-      if (hits.isNotEmpty) return hits;
+      final hit = m.toSearchHit();
+      if (hit != null) withIds.add(hit);
+    }
+    if (withIds.isNotEmpty) return withIds;
+
+    if (!pipedFallback) return const [];
+
+    for (final m in matches) {
       final piped = await _searchYoutubePiped(m.query);
       if (piped.isNotEmpty) return piped;
+      final inv = await _searchYoutubeInvidious(m.query);
+      if (inv.isNotEmpty) return inv;
     }
     return const [];
   }

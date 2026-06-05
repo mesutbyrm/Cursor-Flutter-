@@ -24,8 +24,16 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push('/voice-rooms');
     return;
   }
-  if (p == '/populer-falcilar' || p.contains('falci')) {
-    context.go('/feed');
+  if (p.startsWith('/canli-falcilar')) {
+    context.push(p.startsWith('/') ? p : '/$p');
+    return;
+  }
+  if (p == '/populer-falcilar') {
+    context.push('/canli-falcilar');
+    return;
+  }
+  if (p == '/falci-ol') {
+    context.push('/content-hub');
     return;
   }
   if (p == '/fan-club' || p.contains('fan-club')) {

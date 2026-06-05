@@ -1,5 +1,51 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.128+130 (2026-06-04)
+
+### Müzik arama ve !istek
+
+- YouTube arama: canlifal API + Piped + Invidious **paralel** (18 sn API beklemesi kaldırıldı)
+- Zaman aşımı: kullanıcıya Türkçe mesaj; ham `TimeoutException` gösterilmez
+- `!istek şarkı`: boş komutta kullanım uyarısı; yerel arama başarısızsa sunucuya iletme
+- Oda içi duyuru: aranıyor / eklendi / sunucuya iletiliyor flaşları
+
+## 1.0.127+129 (2026-05-19)
+
+### Google ile giriş
+
+- `GOOGLE_SERVER_CLIENT_ID`: dart-define veya `google-services.json` Web client (`client_type: 3`)
+- `GoogleAuthConfig` + net hata mesajları (SHA-1, yapılandırma eksik)
+- `POST /api/auth/mobile-google` — düz JSON ve `{ success, data }` sarmalayıcı
+- CI: `print-firebase-dart-defines.sh` APK’ya otomatik Web client ID ekler
+- Kurulum: `docs/GOOGLE_SIGNIN_SETUP_TR.md`
+
+## 1.0.126+128 (2026-05-19)
+
+### Canlı yayın ve hediye
+
+- Yayın oluşturma: esnek `streamId` ayrıştırma, `live-started` uç sabiti, `[Live]` debug logları
+- TRTC: `{ success, data }` sarmalayıcı, `sdkAppId`/`userSig` doğrulama
+- Prep: kamera/mikrofon izni önce; `useMobileAuth` ile `POST /api/video-streams`
+- Hediye: `senderName` / `receiverName` gönderimi; poll 4 sn
+- Analiz: `docs/LIVE_STREAM_FLUTTER_ANALYSIS.md`
+
+### Hata düzeltmeleri (sesli oda / API)
+
+- **Müzik araması:** Popüler şarkılara `videoId` eklendi; Piped/Invidious kapalıyken de sonuç döner (ör. Müslüm Gürses)
+- YouTube arama: önce JWT ile `/api/youtube/search`; 401’de net oturum mesajı
+- Oda komutları UI: `/` → `!` (sunucu ile uyumlu)
+- API: `prisma generate` postinstall; `/api/youtube/search` optionalAuth
+
+## 1.0.125+127 (2026-05-19)
+
+### WhatsApp jeton ödemesi — zaman aşımı düzeltmesi
+
+- `POST /api/payment/requests`: 22 sn dış zaman aşımı kaldırıldı; istek başına 45 sn `receiveTimeout`
+- Gövde artık `Map` olarak gönderiliyor (web ile aynı JSON; çift kodlama riski yok)
+- Oturum yoksa anında anlamlı hata; 4xx/5xx sunucu mesajı snackbar’da
+- Debug: `[Payment]` logları (URL, method, JWT varlığı, status, süre)
+- API: ödeme talebi 201 yanıtı bildirimler tamamlanmadan döner (mobil zaman aşımı önlenir)
+
 ## 1.0.119+121 (2026-05-19)
 
 ### Birleşik sürüm (main + sesli oda senkron)

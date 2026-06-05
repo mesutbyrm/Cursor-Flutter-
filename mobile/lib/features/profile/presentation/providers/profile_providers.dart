@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/token_storage.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
@@ -22,7 +23,10 @@ final canlifalUserApiProvider = Provider<CanlifalUserApiDataSource>((ref) {
 });
 
 final walletRemoteProvider = Provider<WalletRemoteDataSource>((ref) {
-  return WalletRemoteDataSource(ref.watch(dioProvider));
+  return WalletRemoteDataSource(
+    ref.watch(dioProvider),
+    ref.watch(tokenStorageProvider),
+  );
 });
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
