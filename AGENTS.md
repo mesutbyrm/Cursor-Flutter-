@@ -28,6 +28,8 @@ Bu repo, **canlifal.com** (Next.js 14 + Prisma + PostgreSQL) platformunun **Flut
 
 Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-raporu.txt
 
+**Flutter Cursor prompt (mobil sözleşme):** `docs/FLUTTER_CURSOR_PROMPT.md` — auth, canlı yayın, PK, müzik/DJ, SSE, parite tablosu. Site kökü: `public/FLUTTER_CURSOR_PROMPT.md` olarak yayınlanmalı.
+
 ## Cursor Cloud specific instructions
 
 ### Proje düzeni
