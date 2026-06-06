@@ -134,6 +134,34 @@ class VoiceRoomDjPlayer {
     return _resolver.resolvePlayableUrl(musicUrl);
   }
 
+  Future<void> pause() async {
+    try {
+      await _player.pause();
+      playback.value = VoiceRoomDjPlayback(
+        position: playback.value.position,
+        duration: playback.value.duration,
+        playing: false,
+      );
+    } catch (e) {
+      debugPrint('DJ pause: $e');
+    }
+  }
+
+  Future<void> resume() async {
+    if (_currentUrl == null) return;
+    try {
+      await VoiceRoomMusicAudioSession.activateForPlayback();
+      await _player.resume();
+      playback.value = VoiceRoomDjPlayback(
+        position: playback.value.position,
+        duration: playback.value.duration,
+        playing: true,
+      );
+    } catch (e) {
+      debugPrint('DJ resume: $e');
+    }
+  }
+
   Future<void> stop() async {
     _currentUrl = null;
     try {

@@ -249,10 +249,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final remote = ref.read(pkBattleRemoteProvider.notifier);
     await remote.loadRoomBattle(roomKey);
     if (!mounted) return;
+    final battle = ref.read(pkBattleRemoteProvider);
+    if (battle == null || battle.isEnded) return;
     remote.connectSocket(
       roomId: roomKey,
       alternateRoomId: r.slug != roomKey ? r.slug : null,
-      battleId: ref.read(pkBattleRemoteProvider)?.id,
+      battleId: battle.id,
     );
   }
 
@@ -883,6 +885,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           VoiceRoomMusicMiniPlayer(
                             dj: live.dj,
                             canModerate: perms.canModerate || isOwner,
+                            canControl: perms.canManageDj ||
+                                isOwner ||
+                                live.dj.canPlayMusic,
                             onTap: showMusicCard
                                 ? () => showVoiceMusicHubPage(
                                       context,
@@ -892,6 +897,24 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                       isOwner: isOwner,
                                     )
                                 : null,
+                            onPlayPause: () {
+                              final ctrl = ref
+                                  .read(voiceRoomLiveProvider(room).notifier);
+                              final playing = live.dj.playing ||
+                                  ref
+                                      .read(voiceRoomDjPlayerProvider)
+                                      .playback
+                                      .value
+                                      .playing;
+                              unawaited(
+                                playing ? ctrl.pauseMusic() : ctrl.resumeMusic(),
+                              );
+                            },
+                            onStop: () => unawaited(
+                              ref
+                                  .read(voiceRoomLiveProvider(room).notifier)
+                                  .stopMusic(),
+                            ),
                             onSkip: (perms.canModerate || isOwner)
                                 ? () => ref
                                     .read(voiceRoomLiveProvider(room).notifier)

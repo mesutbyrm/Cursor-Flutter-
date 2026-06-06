@@ -5,10 +5,13 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/presentation/widgets/broadcast_room/live_pk_score_bar.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/pk/pk_battle_mode.dart';
+import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_battle_state.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_provider.dart';
@@ -83,11 +86,23 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   }
 
   void _startGiftRealtime() {
+    ref.read(voiceRoomLiveProvider(widget.room));
     final service = ref.read(voiceRoomGiftRealtimeProvider);
     final r = widget.room;
-    service.start(r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id);
+    final key = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+    service.start(key);
     _giftSub?.cancel();
     _giftSub = service.events.listen(_onGiftEvent);
+  }
+
+  bool _isOpponentOwner(PkBattleRemote? remote) {
+    if (remote == null) return false;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return false;
+    final r = widget.room;
+    final keys = {r.apiRoomKey, r.id, r.slug};
+    final opp = remote.opponentVoiceRoomId;
+    return opp != null && keys.contains(opp);
   }
 
   void _onGiftEvent(LiveGiftEvent raw) {
@@ -101,7 +116,6 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   @override
   void dispose() {
     _giftSub?.cancel();
-    ref.read(voiceRoomGiftRealtimeProvider).stop();
     ref.read(pkBattleRemoteProvider.notifier).disconnectSocket();
     super.dispose();
   }
@@ -110,7 +124,11 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   Widget build(BuildContext context) {
     final live = ref.watch(voiceRoomLiveProvider(widget.room));
     final pk = ref.watch(pkBattleProvider);
+    final remote = ref.watch(pkBattleRemoteProvider);
     final leadingLeft = pk.left.total >= pk.right.total;
+    final isChallenger = remote != null &&
+        [widget.room.apiRoomKey, widget.room.id, widget.room.slug]
+            .contains(remote.voiceRoomId);
 
     return Scaffold(
       backgroundColor: VoiceRoomTokens.bgDeep,
@@ -155,6 +173,33 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                   padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
                   child: PkAnimatedScoreBar(state: pk, compact: true),
                 ),
+                if (remote?.isPending == true)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                    child: remote!.isPending && _isOpponentOwner(remote)
+                        ? LivePkScoreBar(
+                            leftScore: remote.challengerScore,
+                            rightScore: remote.opponentScore,
+                            status: 'pending',
+                            isHost: false,
+                            onAccept: () => ref
+                                .read(pkBattleRemoteProvider.notifier)
+                                .accept(remote.id),
+                            onReject: () => ref
+                                .read(pkBattleRemoteProvider.notifier)
+                                .reject(remote.id),
+                          )
+                        : Text(
+                            isChallenger
+                                ? 'Rakip kabul edene kadar bekleniyor…'
+                                : 'PK daveti bekleniyor…',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.75),
+                              fontSize: 12,
+                            ),
+                          ),
+                  ),
                 PkMicParticipantRow(presence: live.presence),
                 Expanded(
                   flex: 2,

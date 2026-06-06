@@ -37,15 +37,16 @@ class _VoiceGiftFlightOverlayState extends State<VoiceGiftFlightOverlay>
   @override
   void initState() {
     super.initState();
-    _ambientTimer = Timer.periodic(const Duration(milliseconds: 700), (_) {
+    _ambientTimer = Timer.periodic(const Duration(milliseconds: 1400), (_) {
       if (!widget.enabled || !mounted) return;
+      if (_active.isEmpty && _ambient.isEmpty) return;
       setState(() {
         _ambient.add(_AmbientParticle(
           id: _rand.nextInt(1 << 30),
           emoji: const ['✨', '💖', '🌹', '⭐', '🎁'][_rand.nextInt(5)],
           x: _rand.nextDouble(),
         ));
-        if (_ambient.length > 12) _ambient.removeAt(0);
+        if (_ambient.length > 8) _ambient.removeAt(0);
       });
     });
   }

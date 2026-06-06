@@ -2,7 +2,8 @@ import 'dart:async';
 
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../datasources/chat_room_gifts_remote_datasource.dart';
-/// REST poll — sesli oda hediyeleri (SSE/HTTP; Socket.IO yok).
+
+/// REST poll — sesli oda hediyeleri (socket yedek).
 class VoiceRoomGiftRealtimeService {
   VoiceRoomGiftRealtimeService(this._gifts);
 
@@ -14,15 +15,28 @@ class VoiceRoomGiftRealtimeService {
   Timer? _poll;
   String? _roomId;
   DateTime? _since;
+  var _socketPreferred = false;
 
   Stream<LiveGiftEvent> get events => _local.stream;
+
+  /// Socket.IO aktifken REST poll seyrekleştirilir.
+  void setSocketPreferred(bool preferred) {
+    _socketPreferred = preferred;
+    if (_roomId != null) {
+      stop();
+      start(_roomId!);
+    }
+  }
 
   void start(String roomId) {
     if (_roomId == roomId && _poll != null) return;
     stop();
     _roomId = roomId;
     _since = DateTime.now().subtract(const Duration(minutes: 2));
-    _poll = Timer.periodic(const Duration(seconds: 6), (_) => _pollOnce());
+    final interval = _socketPreferred
+        ? const Duration(seconds: 30)
+        : const Duration(seconds: 12);
+    _poll = Timer.periodic(interval, (_) => _pollOnce());
     _pollOnce();
   }
 

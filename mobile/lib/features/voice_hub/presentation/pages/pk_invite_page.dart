@@ -40,10 +40,15 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
         setState(() => _error = 'PK daveti gönderilemedi');
         return;
       }
-      context.push(
-        '/voice-room/$roomKey/pk',
-        extra: widget.room,
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'PK daveti gönderildi. Rakip kabul edince PK başlayacak.',
+          ),
+        ),
       );
+      context.pop();
     } catch (e) {
       if (mounted) setState(() => _error = '$e');
     } finally {

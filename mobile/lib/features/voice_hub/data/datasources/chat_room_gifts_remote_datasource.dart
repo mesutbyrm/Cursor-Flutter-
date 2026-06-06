@@ -21,10 +21,22 @@ class ChatRoomGiftsRemoteDataSource {
     required String roomId,
     required String giftTypeId,
     int quantity = 1,
+    String? senderName,
+    String? receiverName,
+    String? receiverId,
+    String platform = 'flutter',
   }) async {
     await _dio.safePost<dynamic>(
       ApiEndpoints.chatRoomGifts(roomId),
-      data: jsonEncode({'giftTypeId': giftTypeId, 'quantity': quantity}),
+      data: jsonEncode({
+        'giftTypeId': giftTypeId,
+        'quantity': quantity,
+        if (senderName != null && senderName.isNotEmpty) 'senderName': senderName,
+        if (receiverName != null && receiverName.isNotEmpty)
+          'receiverName': receiverName,
+        if (receiverId != null && receiverId.isNotEmpty) 'receiverId': receiverId,
+        'platform': platform,
+      }),
       options: Options(contentType: 'application/json'),
     );
   }
