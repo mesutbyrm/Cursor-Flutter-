@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../voice_hub/domain/pk/pk_battle_remote_models.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_provider.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
 import '../../domain/entities/live_broadcast_session.dart';
@@ -43,8 +44,10 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
     ref.read(liveGiftSocketBridgeProvider).connect(
       streamId: streamId,
       onEvent: _onGift,
-      onPkBattle: (battle, _) {
-        ref.read(pkBattleProvider.notifier).applyRemoteBattle(battle);
+      onPkBattle: (battle) {
+        final remote = PkBattleRemote.fromJson(battle);
+        if (remote.id.isEmpty) return;
+        ref.read(pkBattleProvider.notifier).applyRemoteBattle(remote);
       },
     );
   }
