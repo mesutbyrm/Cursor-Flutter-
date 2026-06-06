@@ -2,9 +2,11 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../../core/theme/app_design.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../profile/presentation/widgets/premium/profile_glass.dart';
 
@@ -15,18 +17,23 @@ class VoiceRoomTopBar extends StatelessWidget {
     required this.onlineCount,
     required this.onBack,
     required this.onExit,
+    this.onShare,
+    this.isCurrentUserOwner = false,
   });
 
   final VoiceRoomEntity room;
   final int onlineCount;
   final VoidCallback onBack;
   final VoidCallback onExit;
+  final VoidCallback? onShare;
+  final bool isCurrentUserOwner;
 
   @override
   Widget build(BuildContext context) {
-    final shortId = room.id.length > 12
-        ? room.id.substring(0, 12)
-        : room.id;
+    final shortId = room.id.length > 12 ? room.id.substring(0, 12) : room.id;
+    final ownerLabel = room.ownerName?.trim().isNotEmpty == true
+        ? room.ownerName!.trim()
+        : 'Oda sahibi';
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
@@ -38,19 +45,19 @@ class VoiceRoomTopBar extends StatelessWidget {
             color: Colors.black.withValues(alpha: 0.45),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: AppDesign.accentPurple.withValues(alpha: 0.35),
+              color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
             ),
           ),
           child: Row(
             children: [
               IconButton(
                 onPressed: onBack,
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               ),
               _RoomAvatar(url: room.ownerAvatarUrl, icon: room.icon),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,31 +69,33 @@ class VoiceRoomTopBar extends StatelessWidget {
                             room.displayTitle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 14,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppDesign.coinGold.withValues(alpha: 0.25),
+                            color: AppThemeColors.coinGold.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: AppDesign.coinGold.withValues(alpha: 0.6),
+                              color: AppThemeColors.coinGold.withValues(alpha: 0.5),
                             ),
                           ),
-                          child: const Text(
-                            'ADMIN',
+                          child: Text(
+                            isCurrentUserOwner ? 'BENİM ODAM' : 'Sahip · $ownerLabel',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 8,
+                              fontSize: 7,
                               fontWeight: FontWeight.w900,
-                              color: AppDesign.coinGold,
+                              color: AppThemeColors.coinGold,
                             ),
                           ),
                         ),
@@ -101,8 +110,8 @@ class VoiceRoomTopBar extends StatelessWidget {
                       },
                       child: Text(
                         'ID: $shortId',
-                        style: const TextStyle(
-                          color: AppDesign.textMuted,
+                        style: TextStyle(
+                          color: context.colors.onSurfaceMuted,
                           fontSize: 10,
                         ),
                       ),
@@ -111,12 +120,11 @@ class VoiceRoomTopBar extends StatelessWidget {
                 ),
               ),
               _OnlineChip(count: onlineCount),
-              _HeaderIcon(icon: Icons.photo_library_outlined, onTap: () {}),
-              _HeaderIcon(icon: Icons.settings_outlined, onTap: () {}),
-              _HeaderIcon(icon: Icons.bar_chart_rounded, onTap: () {}),
+              if (onShare != null)
+                _HeaderIcon(icon: Icons.share_outlined, onTap: onShare!),
               _HeaderIcon(
                 icon: Icons.power_settings_new_rounded,
-                color: AppDesign.liveRed,
+                color: AppThemeColors.liveRed,
                 onTap: onExit,
               ),
             ],
@@ -140,16 +148,16 @@ class _RoomAvatar extends StatelessWidget {
       height: 40,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppDesign.accentPink, width: 2),
-        boxShadow: AppDesign.glowShadow(AppDesign.accentPink, blur: 10),
+        border: Border.all(color: AppThemeColors.accentPink, width: 2),
+        boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: 10),
       ),
       child: ClipOval(
         child: url != null && url!.isNotEmpty
             ? CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover)
             : ColoredBox(
-                color: AppDesign.bgPurpleGlow,
+                color: context.colors.surfaceContainer,
                 child: Center(
-                  child: Text(icon ?? '💬', style: const TextStyle(fontSize: 20)),
+                  child: Text(icon ?? '💬', style: TextStyle(fontSize: 20)),
                 ),
               ),
       ),
@@ -172,11 +180,11 @@ class _OnlineChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.people_alt_rounded, size: 14, color: AppDesign.accentCyan),
-            const SizedBox(width: 4),
+            Icon(Icons.people_alt_rounded, size: 14, color: AppThemeColors.accentCyan),
+            SizedBox(width: 4),
             Text(
               '$count',
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
             ),
           ],
         ),

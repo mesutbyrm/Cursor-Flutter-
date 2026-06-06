@@ -32,6 +32,8 @@ abstract final class ApiEndpoints {
   static String chatRoomDj(String roomId) => '/api/chat/rooms/$roomId/dj';
 
   static String chatRoomGifts(String roomId) => '/api/chat/rooms/$roomId/gifts';
+
+  static const musicSearch = '/api/music/search';
   /// Oturumlu kullanıcı profili (takipçi, bio, görsel — NextAuth çerezi).
   static const userSiteProfile = '/api/user/profile';
   /// Jeton / kredi bakiyesi (NextAuth).
