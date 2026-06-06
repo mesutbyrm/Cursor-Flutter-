@@ -24,10 +24,11 @@ import '../gifts/widgets/gift_notification_stack.dart';
 import '../providers/live_providers.dart';
 import '../../data/services/video_webrtc_signal_service.dart';
 import '../providers/co_broadcast_provider.dart';
-import '../providers/live_providers.dart';
-import '../providers/live_room_interaction_provider.dart';
+import '../providers/live_room_interaction_provider.dart'
+    show LiveRoomInteractionNotifier, LiveRoomInteractionState, liveRoomInteractionProvider;
 import '../providers/live_room_providers.dart';
 import '../providers/live_video_pk_provider.dart';
+import '../widgets/broadcast_room/live_pk_score_bar.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
 import '../widgets/premium_2026/live_premium_2026.dart';
@@ -71,7 +72,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       if (mounted) setState(() => _elapsed += const Duration(seconds: 1));
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(liveRoomInteractionProvider.notifier).reset(initialLikes: 0);
+      final streamId = widget.session.streamId?.trim();
+      if (streamId != null && streamId.isNotEmpty) {
+        ref.read(liveRoomInteractionProvider(streamId).notifier)
+          ..reset(initialLikes: 0)
+          ..loadInitialLikeCount();
+      }
       _initTrtc();
       _initGifts();
       _initStreamExtras();
@@ -170,13 +176,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     }
   }
 
+  LiveRoomInteractionNotifier? _interactionNotifier() {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return null;
+    return ref.read(liveRoomInteractionProvider(streamId).notifier);
+  }
+
   Future<void> _onFollow() async {
     final hostId = widget.session.hostUserId;
+    final notifier = _interactionNotifier();
     if (hostId == null || hostId.isEmpty) {
-      ref.read(liveRoomInteractionProvider.notifier).setFollowing(true);
+      notifier?.setFollowing(true);
       return;
     }
-    final notifier = ref.read(liveRoomInteractionProvider.notifier);
+    if (notifier == null) return;
     notifier.setFollowLoading(true);
     try {
       await ref.read(profileRepositoryProvider).follow(hostId);
@@ -203,10 +216,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   }
 
   void _onDoubleTapHeart() {
-    final streamId = widget.session.streamId;
-    ref.read(liveRoomInteractionProvider.notifier).burstHearts(
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    ref.read(liveRoomInteractionProvider(streamId).notifier).burstHearts(
           likes: 1,
-          streamId: streamId,
         );
   }
 
@@ -304,7 +317,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     final top = MediaQuery.paddingOf(context).top;
     final giftCtrl = ref.watch(liveGiftControllerProvider);
     final user = ref.watch(authControllerProvider).valueOrNull;
-    final interaction = ref.watch(liveRoomInteractionProvider);
+    final interaction = hasStream
+        ? ref.watch(liveRoomInteractionProvider(streamId))
+        : const LiveRoomInteractionState();
+    final pkState = hasStream ? ref.watch(liveVideoPkProvider(streamId)) : null;
 
     if (hasStream) {
       ref.listen(liveRoomProvider(streamId), (prev, next) {
@@ -344,10 +360,21 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           emoji,
           count: 6 + ev.combo.clamp(0, 12).toInt(),
         );
-        ref.read(liveRoomInteractionProvider.notifier).burstHearts(
-              likes: 1,
-              streamId: widget.session.streamId,
+        if (hasStream) {
+          ref
+              .read(liveRoomInteractionProvider(streamId).notifier)
+              .pulseHeartsVisual();
+          final battle = ref.read(liveVideoPkProvider(streamId)).battle;
+          if (battle != null && battle['status'] == 'active') {
+            final score = (ev.coinCost * ev.quantity).clamp(1, 9999);
+            unawaited(
+              ref.read(liveVideoPkProvider(streamId).notifier).addScore(
+                    score: score,
+                    rightSide: false,
+                  ),
             );
+          }
+        }
       }
     });
 
@@ -392,7 +419,26 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                           : null,
                     ),
                   ),
-                  if (s.isHost)
+                  if (hasStream && pkState?.battle != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                      child: LivePkScoreBar(
+                        leftScore: pkState!.leftScore,
+                        rightScore: pkState.rightScore,
+                        status: pkState.status,
+                        isHost: s.isHost,
+                        onAccept: () => ref
+                            .read(liveVideoPkProvider(streamId).notifier)
+                            .accept(),
+                        onReject: () => ref
+                            .read(liveVideoPkProvider(streamId).notifier)
+                            .reject(),
+                        onEnd: () => ref
+                            .read(liveVideoPkProvider(streamId).notifier)
+                            .end(),
+                      ),
+                    )
+                  else if (s.isHost)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                       child: Row(

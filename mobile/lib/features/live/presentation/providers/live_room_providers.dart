@@ -8,6 +8,7 @@ import '../../domain/entities/live_stream_chat_message.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import 'live_providers.dart';
 import '../gifts/providers/live_gift_providers.dart';
+import 'live_video_pk_provider.dart';
 
 class LiveRoomState {
   const LiveRoomState({
@@ -93,6 +94,9 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       },
       onStreamEnded: () {
         state = state.copyWith(streamEnded: true);
+      },
+      onPkBattle: (battle) {
+        ref.read(liveVideoPkProvider(streamId).notifier).applyRemoteBattle(battle);
       },
     );
   }

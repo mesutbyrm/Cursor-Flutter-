@@ -28,6 +28,7 @@ import '../../domain/entities/popular_music_suggestion.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/youtube_stream_resolver.dart';
 import '../services/voice_room_dj_player.dart';
+import 'voice_gift_providers.dart';
 import 'voice_room_ui_provider.dart';
 
 final youtubeStreamResolverProvider = Provider<YoutubeStreamResolver>((ref) {
@@ -372,7 +373,9 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     _giftSocket!.connect(
       roomId: _roomKey,
       alternateRoomId: arg.id,
-      onEvent: (_) {},
+      onEvent: (event) {
+        ref.read(voiceRoomGiftRealtimeProvider).publishRemote(event);
+      },
       onDjUpdate: (payload) => unawaited(_applyDjRealtimePayload(payload)),
       accessToken: storage.readAccess,
     );
@@ -577,6 +580,12 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     final playbackUrl = effectiveDj.playbackSource;
     final shouldPlay = effectiveDj.playing && playbackUrl != null;
     VoiceRoomDebugLog.log('music.player.sync', {
+      'roomId': _roomKey,
+      'musicId': effectiveDj.nowPlaying?.id,
+      'youtubeVideoId': effectiveDj.nowPlaying?.youtubeUrl,
+      'streamUrl': playbackUrl,
+      'audioUrl': playbackUrl,
+      'playState': effectiveDj.playing,
       'shouldPlay': shouldPlay,
       'hasUrl': playbackUrl != null,
       'muted': !ui.backgroundMusicEnabled,

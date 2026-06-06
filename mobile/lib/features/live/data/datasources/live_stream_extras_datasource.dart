@@ -9,6 +9,29 @@ class LiveStreamExtrasDataSource {
 
   final Dio _dio;
 
+  Future<int> fetchLikeCount(String streamId) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.videoStream(streamId),
+      );
+      final body = res.data;
+      if (body is Map) {
+        final map = Map<String, dynamic>.from(body);
+        final data = map['data'] is Map
+            ? Map<String, dynamic>.from(map['data'] as Map)
+            : map;
+        final stream = data['stream'] ?? data;
+        if (stream is Map) {
+          return asInt(
+            pick(Map<String, dynamic>.from(stream), ['likeCount', 'count']),
+          );
+        }
+        return asInt(pick(data, ['likeCount', 'count']));
+      }
+    } catch (_) {}
+    return 0;
+  }
+
   Future<int> sendLike(String streamId, {int count = 1}) async {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamLike(streamId),

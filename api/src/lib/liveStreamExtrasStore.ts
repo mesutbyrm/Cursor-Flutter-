@@ -28,6 +28,29 @@ export type PkBattleRow = {
 
 const pkByStream = new Map<string, PkBattleRow>();
 
+function mirrorPkRow(row: PkBattleRow) {
+  pkByStream.set(row.streamId, row);
+  if (row.opponentStreamId) {
+    pkByStream.set(row.opponentStreamId, {
+      ...row,
+      streamId: row.opponentStreamId,
+      opponentStreamId: row.streamId,
+      leftScore: row.rightScore,
+      rightScore: row.leftScore,
+      winner:
+        row.winner === "left"
+          ? "right"
+          : row.winner === "right"
+            ? "left"
+            : row.winner,
+    });
+  }
+}
+
+function syncPkMirrors(row: PkBattleRow) {
+  mirrorPkRow(row);
+}
+
 export function getPkBattle(streamId: string) {
   return pkByStream.get(streamId) ?? null;
 }
@@ -61,14 +84,7 @@ export function handlePkBattleAction(
       rightScore: 0,
       createdAt: new Date().toISOString(),
     };
-    pkByStream.set(streamId, row);
-    if (input.opponentStreamId) {
-      pkByStream.set(input.opponentStreamId, {
-        ...row,
-        streamId: input.opponentStreamId,
-        opponentStreamId: streamId,
-      });
-    }
+    syncPkMirrors(row);
     return { ok: true as const, battle: row };
   }
 
@@ -79,12 +95,14 @@ export function handlePkBattleAction(
   if (action === "accept") {
     existing.status = "active";
     existing.opponentId = userId;
+    syncPkMirrors(existing);
     return { ok: true as const, battle: existing };
   }
 
   if (action === "reject") {
     existing.status = "rejected";
     existing.endedAt = new Date().toISOString();
+    syncPkMirrors(existing);
     return { ok: true as const, battle: existing };
   }
 
@@ -92,6 +110,7 @@ export function handlePkBattleAction(
     const bump = Math.max(0, Number(input.score ?? 1));
     if (input.side === "right") existing.rightScore += bump;
     else existing.leftScore += bump;
+    syncPkMirrors(existing);
     return { ok: true as const, battle: existing };
   }
 
@@ -105,6 +124,7 @@ export function handlePkBattleAction(
     } else {
       existing.winner = "right";
     }
+    syncPkMirrors(existing);
     return { ok: true as const, battle: existing };
   }
 

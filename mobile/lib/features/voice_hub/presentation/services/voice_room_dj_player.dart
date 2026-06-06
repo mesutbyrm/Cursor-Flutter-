@@ -52,7 +52,7 @@ class VoiceRoomDjPlayer {
             stayAwake: true,
             contentType: AndroidContentType.music,
             usageType: AndroidUsageType.media,
-            audioFocus: AndroidAudioFocus.gain,
+            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
           ),
           iOS: AudioContextIOS(
             category: AVAudioSessionCategory.playback,
@@ -87,6 +87,10 @@ class VoiceRoomDjPlayer {
 
     for (final candidate in candidates) {
       final source = await _resolveSource(candidate);
+      debugPrint(
+        'DJ sync: musicUrl=$musicUrl streamUrl=$source '
+        'playState=$playing playerState=${_player.state}',
+      );
       if (source == null || source.isEmpty) continue;
       if (_currentUrl == source && _player.state == PlayerState.playing) {
         return true;
@@ -100,6 +104,7 @@ class VoiceRoomDjPlayer {
           duration: playback.value.duration,
           playing: true,
         );
+        debugPrint('DJ play ok: audioUrl=$source playerState=${_player.state}');
         return true;
       } catch (e) {
         debugPrint('DJ play error ($candidate): $e');
@@ -107,7 +112,7 @@ class VoiceRoomDjPlayer {
       }
     }
 
-    debugPrint('DJ: oynatılamadı — $musicUrl');
+    debugPrint('DJ: oynatılamadı — musicUrl=$musicUrl');
     return false;
   }
 
