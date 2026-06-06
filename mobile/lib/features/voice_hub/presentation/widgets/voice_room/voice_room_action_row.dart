@@ -36,22 +36,22 @@ class VoiceRoomActionRow extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.music_note_rounded, color: Colors.white, size: 28),
-                SizedBox(width: 8),
+                const Icon(Icons.music_note_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
+                      const Text(
                         'Müzik Aç',
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
-                          fontSize: 13,
+                          fontSize: 11,
                           color: Colors.white,
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 1),
                       Text(
                         dj.musicQueue.isEmpty
                             ? '${dj.musicRequestCost} jeton · sıra boş'
@@ -59,11 +59,11 @@ class VoiceRoomActionRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: 8,
                           color: Colors.white.withValues(alpha: 0.82),
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       _WaveBars(active: dj.musicQueue.isNotEmpty || dj.playing),
                     ],
                   ),
@@ -84,8 +84,8 @@ class VoiceRoomActionRow extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.headphones_rounded, color: Colors.white, size: 28),
-                SizedBox(width: 8),
+                const Icon(Icons.headphones_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,13 +93,13 @@ class VoiceRoomActionRow extends StatelessWidget {
                     children: [
                       Text(
                         'DJ ${dj.djCount}/5',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.w900,
-                          fontSize: 13,
+                          fontSize: 11,
                           color: Colors.white,
                         ),
                       ),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 3),
                       _DjAvatars(users: dj.djUsers),
                     ],
                   ),
@@ -136,8 +136,8 @@ class _ActionTile extends StatelessWidget {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
             child: Container(
-              height: 72,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              height: 54,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 gradient: gradient,
                 borderRadius: BorderRadius.circular(16),
@@ -193,15 +193,15 @@ class _DjAvatars extends StatelessWidget {
       );
     }
     return SizedBox(
-      height: 22,
+      height: 18,
       child: Stack(
         children: [
           for (var i = 0; i < users.length && i < 5; i++)
             Positioned(
-              left: i * 14.0,
+              left: i * 12.0,
               child: Container(
-                width: 22,
-                height: 22,
+                width: 18,
+                height: 18,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 1.5),

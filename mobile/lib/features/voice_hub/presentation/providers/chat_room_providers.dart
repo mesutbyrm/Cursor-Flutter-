@@ -441,7 +441,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         );
         if (sig != _lastDjPlaybackSignature) {
           _lastDjPlaybackSignature = sig;
-          await _applyDjPlayback(dj);
+          dj = await _applyDjPlayback(dj);
         }
         bgFromDj = dj.backgroundImage?.trim();
       }
@@ -553,13 +553,13 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         dj = dj.copyWith(musicQueue: queue);
       }
     }
-    state = state.copyWith(dj: dj);
     final ui = ref.read(voiceRoomUiProvider);
     _lastDjPlaybackSignature = _djPlaybackSignature(
       dj,
       muted: !ui.backgroundMusicEnabled,
     );
-    await _applyDjPlayback(dj);
+    dj = await _applyDjPlayback(dj);
+    state = state.copyWith(dj: dj);
   }
 
   ChatRoomDjState _djWithQueuePlaybackFallback(ChatRoomDjState dj) {
@@ -571,12 +571,9 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     return dj.copyWith(playing: true);
   }
 
-  Future<bool> _applyDjPlayback(ChatRoomDjState dj) async {
+  Future<ChatRoomDjState> _applyDjPlayback(ChatRoomDjState dj) async {
     final ui = ref.read(voiceRoomUiProvider);
     final effectiveDj = _djWithQueuePlaybackFallback(dj);
-    if (effectiveDj.playing != dj.playing) {
-      state = state.copyWith(dj: effectiveDj);
-    }
     final playbackUrl = effectiveDj.playbackSource;
     final shouldPlay = effectiveDj.playing && playbackUrl != null;
     VoiceRoomDebugLog.log('music.player.sync', {
@@ -604,11 +601,13 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     );
     if (shouldPlay && !ok) {
       state = state.copyWith(
+        dj: effectiveDj,
         error:
             'Müzik yüklenemedi. Birkaç saniye sonra yenileyin veya DJ şarkıyı tekrar seçsin.',
       );
+      return effectiveDj;
     }
-    return ok;
+    return effectiveDj;
   }
 
   Future<void> _syncMusicFromServer() async {
@@ -622,7 +621,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         dj,
         muted: !ui.backgroundMusicEnabled,
       );
-      await _applyDjPlayback(dj);
+      dj = await _applyDjPlayback(dj);
       state = state.copyWith(dj: dj, clearError: true);
       ref.invalidate(coinBalanceProvider);
       ref.invalidate(walletBalancesProvider);
@@ -654,8 +653,12 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         return;
       }
       if (dj.musicQueue.isNotEmpty || dj.nowPlaying != null) {
-        final ok = await _applyDjPlayback(dj);
-        if (ok) return;
+        final applied = await _applyDjPlayback(dj);
+        state = state.copyWith(dj: applied);
+        if (applied.playing &&
+            ref.read(voiceRoomDjPlayerProvider).playback.value.playing) {
+          return;
+        }
       }
     }
   }
@@ -688,8 +691,8 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
           ? dj.musicUrl
           : payload.youtubeUrl,
     );
+    dj = await _applyDjPlayback(dj);
     state = state.copyWith(dj: dj, clearError: true);
-    await _applyDjPlayback(dj);
     unawaited(_syncMusicFromServerWithRetries());
   }
 
@@ -1232,23 +1235,32 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
             musicQueue: result.queue.isNotEmpty ? result.queue : dj.musicQueue,
           );
         }
-        state = state.copyWith(dj: dj);
         final ui = ref.read(voiceRoomUiProvider);
         _lastDjPlaybackSignature = _djPlaybackSignature(
           dj,
           muted: !ui.backgroundMusicEnabled,
         );
-        await _applyDjPlayback(dj);
+        dj = await _applyDjPlayback(dj);
+        state = state.copyWith(dj: dj);
       } else {
-        final current = state.dj;
-        state = state.copyWith(
-          dj: current.copyWith(
-            musicQueue:
-                result.queue.isNotEmpty ? result.queue : current.musicQueue,
-          ),
+        var updated = state.dj.copyWith(
+          musicQueue:
+              result.queue.isNotEmpty ? result.queue : state.dj.musicQueue,
+          nowPlaying: result.item ?? state.dj.nowPlaying,
+          musicUrl: result.musicUrl ?? state.dj.musicUrl,
         );
+        if (result.queuePosition == 1) {
+          updated = updated.copyWith(playing: true);
+        }
+        final ui = ref.read(voiceRoomUiProvider);
+        _lastDjPlaybackSignature = _djPlaybackSignature(
+          updated,
+          muted: !ui.backgroundMusicEnabled,
+        );
+        updated = await _applyDjPlayback(updated);
+        state = state.copyWith(dj: updated);
       }
-      unawaited(_syncMusicFromServer());
+      unawaited(_syncMusicFromServerWithRetries());
       if (result.queuePosition != null && result.queuePosition! > 1) {
         return 'Sıranız: #${result.queuePosition}';
       }
