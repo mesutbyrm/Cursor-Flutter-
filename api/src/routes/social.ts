@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { createFortuneSession } from "../lib/liveStreamExtrasStore";
 import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
 import { requireAuth } from "../middleware/requireAuth";
@@ -66,18 +67,6 @@ const seedLive = [
   },
 ];
 
-const seedRooms = [
-  {
-    id: "room-1",
-    nameTr: "Genel Sohbet",
-    descTr: "Herkes hoş geldin",
-    onlineCount: 42,
-    unreadCount: 3,
-    isVoice: true,
-    owner: { displayName: "Moderatör", image: "https://canlifal.com/favicon.ico" },
-  },
-];
-
 const seedNotifications = [
   {
     id: "n-1",
@@ -106,24 +95,6 @@ socialRouter.get("/video-streams", async (_req, res) => {
   return ok(res, { items: seedLive });
 });
 
-socialRouter.get("/chat/rooms", async (_req, res) => {
-  return ok(res, { rooms: seedRooms });
-});
-
-socialRouter.get("/chat/rooms/:roomId/messages", requireAuth, async (req, res) => {
-  const roomId = req.params.roomId;
-  return ok(res, {
-    items: [
-      {
-        id: "m-1",
-        body: "Merhaba! $roomId odasına hoş geldin.",
-        sentAt: new Date().toISOString(),
-        sender: { displayName: "Sistem", username: "system" },
-      },
-    ],
-  });
-});
-
 socialRouter.get("/announcements", async (_req, res) => {
   return ok(res, { items: seedNotifications });
 });
@@ -144,6 +115,37 @@ socialRouter.get("/fortune-tellers", async (_req, res) => {
   });
 });
 
+/** POST /api/fortune-tellers/session — canlı falcı oturumu */
+socialRouter.post("/fortune-tellers/session", requireAuth, async (req, res) => {
+  const tellerId =
+    req.body?.tellerId?.toString()?.trim() ||
+    req.body?.fortuneTellerId?.toString()?.trim();
+  if (!tellerId) {
+    return fail(res, 400, "BAD_REQUEST", "tellerId gerekli");
+  }
+  const session = createFortuneSession(tellerId, req.userId!);
+  return ok(res, {
+    session,
+    sessionId: session.id,
+    status: session.status,
+  });
+});
+
+socialRouter.get("/fortune-tellers/:id", async (req, res) => {
+  const id = req.params.id;
+  return ok(res, {
+    teller: {
+      id,
+      displayName: "Canlı Falcı",
+      rating: 4.8,
+      pricePerSession: 120,
+      isOnline: true,
+      specialties: ["tarot"],
+      image: "https://canlifal.com/favicon.ico",
+    },
+  });
+});
+
 socialRouter.get("/celebrities/posts/latest", async (_req, res) => {
   return ok(res, {
     posts: seedPosts.map((p) => ({
@@ -160,11 +162,42 @@ socialRouter.get("/celebrities/posts/latest", async (_req, res) => {
 
 socialRouter.get("/public-stats", async (_req, res) => {
   const users = await prisma.user.count();
+  const recent = await prisma.user.findMany({
+    orderBy: { updatedAt: "desc" },
+    take: 5,
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      avatarUrl: true,
+      updatedAt: true,
+    },
+  });
   return ok(res, {
-    users: { total: users },
+    onlineUsers: 1200 + users,
+    inGames: Math.round(users * 0.17),
+    inSocial: Math.round(users * 0.38),
+    onLive: seedLive.length * 42,
+    inVoiceChat: 42,
+    fortuneActive: Math.round(users * 0.12),
+    browsing: Math.round(users * 0.43),
+    todayLogins: users * 2,
+    users: { total: users, online: 1200 + users },
     video: { activeStreams: seedLive.length },
     chat: { totalOnline: 42 },
     fortunes: { total: 12 },
+    recentLogins: recent.map((u, i) => ({
+      user: {
+        id: u.id,
+        username: u.username,
+        displayName: u.displayName,
+        avatarUrl: u.avatarUrl,
+      },
+      timeLabel:
+        i === 0 ? "Az önce" : `${i + 1} dakika önce`,
+      activity: ["El Falı", "Tarot", "Yıldız Falı", "Kahve Falı", "Çevrimiçi"][i % 5],
+      activityEmoji: ["✋", "🃏", "⭐", "☕", "✨"][i % 5],
+    })),
   });
 });
 

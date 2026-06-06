@@ -33,6 +33,25 @@ abstract final class ApiEndpoints {
 
   static String chatRoomGifts(String roomId) => '/api/chat/rooms/$roomId/gifts';
 
+  static String chatRoomPkBattle(String roomId) =>
+      '/api/chat/rooms/$roomId/pk-battle';
+
+  static String videoStreamPkBattle(String streamId) =>
+      '/api/video-streams/$streamId/pk-battle';
+
+  static const pkHistory = '/api/pk/history';
+
+  static String pkBattle(String battleId) => '/api/pk/battles/$battleId';
+
+  static String pkBattleAccept(String battleId) =>
+      '/api/pk/battles/$battleId/accept';
+
+  static String pkBattleReject(String battleId) =>
+      '/api/pk/battles/$battleId/reject';
+
+  static String pkBattleEnd(String battleId) =>
+      '/api/pk/battles/$battleId/end';
+
   static const musicSearch = '/api/music/search';
   /// Oturumlu kullanıcı profili (takipçi, bio, görsel — NextAuth çerezi).
   static const userSiteProfile = '/api/user/profile';

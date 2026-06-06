@@ -21,6 +21,8 @@ import '../domain/entities/chat_room_message.dart';
 import '../domain/entities/chat_room_presence.dart';
 import 'pages/voice_music_hub_page.dart';
 import 'providers/chat_room_providers.dart';
+import 'providers/pk_battle_remote_provider.dart';
+import 'sheets/voice_room_sheets.dart';
 import 'providers/voice_room_ui_provider.dart';
 import 'utils/voice_music_access.dart';
 import 'utils/voice_room_permissions.dart';
@@ -51,6 +53,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _micOn = true;
   var _leaving = false;
   var _announcementVisible = true;
+  String? _shownPkInviteId;
 
   @override
   void initState() {
@@ -122,6 +125,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _joined = true;
           _micOn = _trtc.micOn;
         });
+        final r = widget.room;
+        final roomKey = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+        final remote = ref.read(pkBattleRemoteProvider.notifier);
+        await remote.loadRoomBattle(roomKey);
+        remote.connectSocket(
+          roomId: roomKey,
+          alternateRoomId: r.slug != roomKey ? r.slug : null,
+          battleId: ref.read(pkBattleRemoteProvider)?.id,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -136,6 +148,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   Future<void> _leave() async {
     if (_leaving) return;
     _leaving = true;
+    ref.read(pkBattleRemoteProvider.notifier).clear();
     await _trtc.leave();
     if (mounted) context.go('/voice-rooms');
   }
@@ -147,6 +160,46 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Paylaşım linki kopyalandı: $url')),
     );
+  }
+
+  void _openPkInvite() {
+    final room = widget.room;
+    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    context.push('/voice-room/$key/pk-invite', extra: room);
+  }
+
+  void _openActivePk() {
+    final room = widget.room;
+    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    context.push('/voice-room/$key/pk', extra: room);
+  }
+
+  Future<void> _showIncomingPkInvite(String battleId) async {
+    if (!mounted) return;
+    final accept = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('PK Daveti'),
+        content: const Text('Bir oda size PK daveti gönderdi. Kabul ediyor musunuz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Reddet'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Kabul Et'),
+          ),
+        ],
+      ),
+    );
+    final remote = ref.read(pkBattleRemoteProvider.notifier);
+    if (accept == true) {
+      await remote.accept(battleId);
+      if (mounted) _openActivePk();
+    } else if (accept == false) {
+      await remote.reject(battleId);
+    }
   }
 
   String _latestSystemJoin(List<ChatRoomMessage> messages) {
@@ -185,6 +238,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           ref.read(voiceRoomLiveProvider(room).notifier).refresh(includeDj: true),
         );
       }
+    });
+
+    ref.listen(pkBattleRemoteProvider, (prev, next) {
+      if (next == null || !isOwner || !next.isPending) return;
+      final opp = next.opponentVoiceRoomId;
+      final isTarget = opp == room.apiRoomKey ||
+          opp == room.id ||
+          opp == room.slug;
+      if (!isTarget || _shownPkInviteId == next.id) return;
+      _shownPkInviteId = next.id;
+      _showIncomingPkInvite(next.id);
     });
 
     return PopScope(
@@ -227,6 +291,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         onlineCount: online,
                         onBack: _leave,
                         onExit: _leave,
+                        onShare: _shareRoom,
+                        isCurrentUserOwner: isOwner,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -341,6 +407,40 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       },
                     ),
                   ],
+                ),
+              ),
+            if (_joined && isOwner)
+              Positioned(
+                right: 16,
+                bottom: 100,
+                child: FloatingActionButton.extended(
+                  heroTag: 'voice-pk-fab',
+                  backgroundColor: const Color(0xFFB832FF),
+                  onPressed: () {
+                    final active = ref.read(pkBattleRemoteProvider);
+                    if (active?.isActive == true) {
+                      _openActivePk();
+                    } else {
+                      showVoiceMoreMenuSheet(
+                        context,
+                        ref: ref,
+                        room: room,
+                        live: live,
+                        perms: perms,
+                        onSettings: () {},
+                        onSpeakers: () {},
+                        onShare: _shareRoom,
+                        onBackgroundMusic: () {},
+                        onPkBattle: _openPkInvite,
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.flash_on_rounded),
+                  label: Text(
+                    ref.watch(pkBattleRemoteProvider)?.isActive == true
+                        ? 'PK'
+                        : 'PK Başlat',
+                  ),
                 ),
               ),
           ],

@@ -6,6 +6,7 @@ import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/pk/pk_battle_mode.dart';
+import '../../domain/pk/pk_battle_remote_models.dart';
 import '../../domain/pk/pk_battle_state.dart';
 
 /// PK savaş kontrolü — skor, zamanlayıcı, hediye gücü, kazanan.
@@ -137,7 +138,7 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
   }
 
   void applyGift(LiveGiftEvent event, {required bool toLeft}) {
-    if (!state.isActive) return;
+    if (!state.isActive || state.serverAuthoritative) return;
     final power = event.coinCost * event.quantity * (event.combo.clamp(1, 99));
     final bump = (power * 0.85).round().clamp(50, 500000);
 
@@ -170,8 +171,61 @@ class PkBattleNotifier extends Notifier<PkBattleState> {
     return event.senderName.hashCode.isEven;
   }
 
+  void applyRemoteBattle(PkBattleRemote remote) {
+    _tick?.cancel();
+    final phase = remote.isActive
+        ? PkBattlePhase.active
+        : remote.isEnded
+            ? PkBattlePhase.finished
+            : PkBattlePhase.ready;
+
+    PkBattleWinner winner = PkBattleWinner.none;
+    if (remote.isEnded && remote.result != null) {
+      final side = remote.result!.winnerSide;
+      if (side == 'tie') {
+        winner = PkBattleWinner.tie;
+      } else if (side == 'challenger') {
+        winner = PkBattleWinner.left;
+      } else if (side == 'opponent') {
+        winner = PkBattleWinner.right;
+      }
+    }
+
+    ChatRoomPresence? leaderFrom(PkParticipantRemote? p) {
+      if (p == null || p.userId.isEmpty) return null;
+      return ChatRoomPresence(
+        id: p.userId,
+        name: p.displayName ?? 'Yayıncı',
+        image: p.avatarUrl,
+        chatRole: 'owner',
+      );
+    }
+
+    state = state.copyWith(
+      phase: phase,
+      secondsLeft: remote.secondsLeft,
+      targetScore: remote.targetScore,
+      remoteBattleId: remote.id,
+      serverAuthoritative: true,
+      winner: winner,
+      left: state.left.copyWith(
+        score: remote.challengerScore,
+        giftPower: 0,
+        winStreak: remote.challenger?.winStreak ?? state.left.winStreak,
+        leader: leaderFrom(remote.challenger) ?? state.left.leader,
+      ),
+      right: state.right.copyWith(
+        score: remote.opponentScore,
+        giftPower: 0,
+        winStreak: remote.opponent?.winStreak ?? state.right.winStreak,
+        leader: leaderFrom(remote.opponent) ?? state.right.leader,
+      ),
+      reactionBurst: remote.isActive ? state.reactionBurst + 1 : state.reactionBurst,
+    );
+  }
+
   void _onTick() {
-    if (!state.isActive) return;
+    if (!state.isActive || state.serverAuthoritative) return;
     if (state.secondsLeft <= 1) {
       _finish();
       return;

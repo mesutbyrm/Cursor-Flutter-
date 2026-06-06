@@ -21,6 +21,9 @@ usersRouter.get("/me", requireAuth, async (req, res) => {
     avatarUrl: user.avatarUrl ?? "https://canlifal.com/favicon.ico",
     coverUrl: user.coverUrl ?? "https://canlifal.com/apple-touch-icon.png",
     coins: user.coins,
+    cfc: user.cfcBalance,
+    cfcBalance: user.cfcBalance,
+    role: user.role,
     followers: user.followerCount,
     following: user.followingCount,
     createdAt: user.createdAt.toISOString(),
@@ -31,6 +34,14 @@ usersRouter.get("/me", requireAuth, async (req, res) => {
 const patchMeSchema = z
   .object({
     displayName: z.union([z.string().min(1).max(120), z.null()]).optional(),
+    bio: z.union([z.string().max(500), z.null()]).optional(),
+    avatarUrl: z.union([z.string().url().max(2048), z.string().max(500_000), z.null()]).optional(),
+    username: z
+      .string()
+      .min(3)
+      .max(32)
+      .regex(/^[a-zA-Z0-9_]+$/, "Kullanıcı adı yalnızca harf, rakam ve _ içerebilir")
+      .optional(),
     currentPassword: z.string().optional(),
     newPassword: z.string().min(8, "Yeni şifre en az 8 karakter olmalı").optional(),
   })
@@ -49,11 +60,19 @@ usersRouter.patch("/me", requireAuth, async (req, res) => {
   if (!parsed.success) {
     return fail(res, 400, "VALIDATION_ERROR", "Geçersiz istek gövdesi", parsed.error.flatten());
   }
-  const { displayName, currentPassword, newPassword } = parsed.data;
+  const { displayName, bio, avatarUrl, username, currentPassword, newPassword } =
+    parsed.data;
 
   const user = await prisma.user.findUnique({ where: { id: req.userId! } });
   if (!user) {
     return fail(res, 404, "NOT_FOUND", "Kullanıcı bulunamadı");
+  }
+
+  if (username && username !== user.username) {
+    const taken = await prisma.user.findUnique({ where: { username } });
+    if (taken) {
+      return fail(res, 409, "USERNAME_IN_USE", "Bu kullanıcı adı alınmış");
+    }
   }
 
   let passwordHash = user.passwordHash;
@@ -69,6 +88,9 @@ usersRouter.patch("/me", requireAuth, async (req, res) => {
     where: { id: user.id },
     data: {
       ...(displayName !== undefined ? { displayName } : {}),
+      ...(bio !== undefined ? { bio } : {}),
+      ...(avatarUrl !== undefined ? { avatarUrl } : {}),
+      ...(username !== undefined ? { username } : {}),
       ...(newPassword ? { passwordHash } : {}),
     },
   });
@@ -77,6 +99,13 @@ usersRouter.patch("/me", requireAuth, async (req, res) => {
     id: updated.id,
     email: updated.email,
     displayName: updated.displayName,
+    username: updated.username,
+    bio: updated.bio ?? "",
+    avatarUrl: updated.avatarUrl,
+    coins: updated.coins,
+    cfcBalance: updated.cfcBalance,
+    followers: updated.followerCount,
+    following: updated.followingCount,
     createdAt: updated.createdAt.toISOString(),
     updatedAt: updated.updatedAt.toISOString(),
   });
