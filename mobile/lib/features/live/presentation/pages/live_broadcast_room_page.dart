@@ -441,21 +441,27 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                   else if (s.isHost)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                      child: Row(
-                        children: [
-                          TextButton.icon(
-                            onPressed: _openPkPanel,
-                            icon: const Icon(Icons.sports_mma_rounded,
-                                color: Colors.white, size: 18),
-                            label: const Text('PK',
-                                style: TextStyle(color: Colors.white)),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: _openPkPanel,
+                          style: TextButton.styleFrom(
+                            backgroundColor: Colors.black.withValues(alpha: 0.35),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                           ),
-                          const SizedBox(width: 8),
-                          _HostBadge(
-                            icon: Icons.emoji_events_rounded,
-                            label: 'Haftalık #12',
+                          icon: const Icon(
+                            Icons.sports_mma_rounded,
+                            color: Colors.white,
+                            size: 16,
                           ),
-                        ],
+                          label: const Text(
+                            'PK Başlat',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ),
                       ),
                     ),
                   const Spacer(),

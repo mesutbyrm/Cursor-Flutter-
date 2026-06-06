@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/live_badge.dart';
 import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
@@ -39,7 +39,8 @@ class LiveFortuneTellersPage extends ConsumerWidget {
               ),
             ),
             data: (list) {
-              if (!Env.useNextAuth) {
+              final authed = ref.watch(authControllerProvider).valueOrNull != null;
+              if (!authed) {
                 return Center(
                   child: Text(
                     'Canlı falcılar için giriş yapın.',

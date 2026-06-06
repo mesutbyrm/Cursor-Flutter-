@@ -223,10 +223,12 @@ class VoiceWebFloatingRail extends StatelessWidget {
     super.key,
     this.onTools,
     this.onMusic,
+    this.onGift,
   });
 
   final VoidCallback? onTools;
   final VoidCallback? onMusic;
+  final VoidCallback? onGift;
 
   @override
   Widget build(BuildContext context) {
@@ -235,6 +237,10 @@ class VoiceWebFloatingRail extends StatelessWidget {
       children: [
         _FloatBtn(icon: Icons.chevron_left_rounded, onTap: onTools),
         const SizedBox(height: 8),
+        if (onGift != null) ...[
+          _FloatBtn(icon: Icons.card_giftcard_rounded, onTap: onGift),
+          const SizedBox(height: 8),
+        ],
         _FloatBtn(icon: Icons.queue_music_rounded, onTap: onMusic),
       ],
     );
