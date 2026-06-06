@@ -23,6 +23,7 @@ class LiveGiftSocketBridge {
     void Function(LiveStreamChatMessage message)? onChat,
     void Function(int viewerCount)? onViewerCount,
     VoidCallback? onStreamEnded,
+    void Function(Map<String, dynamic> battle)? onPkBattle,
   }) {
     _streamId = streamId;
     Future.microtask(() {
@@ -53,6 +54,9 @@ class LiveGiftSocketBridge {
             onStreamEnded?.call();
           })
           ..on('STREAM_ENDED', (_) => onStreamEnded?.call())
+          ..on('pkBattle', (data) => _emitPk(data, onPkBattle))
+          ..on('pkBattleUpdated', (data) => _emitPk(data, onPkBattle))
+          ..on('PK_UPDATED', (data) => _emitPk(data, onPkBattle))
           ..connect();
       } catch (e) {
         debugPrint('Gift socket: $e');
@@ -85,6 +89,18 @@ class LiveGiftSocketBridge {
       Map<String, dynamic>.from(raw),
     );
     if (msg.content.isNotEmpty) onChat(msg);
+  }
+
+  void _emitPk(
+    dynamic data,
+    void Function(Map<String, dynamic> battle)? onPkBattle,
+  ) {
+    if (onPkBattle == null || data is! Map) return;
+    final map = Map<String, dynamic>.from(data);
+    final raw = map['battle'] ?? map['pk'];
+    if (raw is Map) {
+      onPkBattle(Map<String, dynamic>.from(raw));
+    }
   }
 
   void _emitViewers(

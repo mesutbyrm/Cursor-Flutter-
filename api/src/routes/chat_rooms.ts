@@ -403,6 +403,8 @@ chatRoomsRouter.get("/rooms/:roomId/stream", optionalAuth, async (req, res) => {
           playing: dj.playing,
           musicUrl: dj.musicUrl,
           nowPlaying: dj.nowPlaying,
+          musicQueue: dj.musicQueue,
+          queue: dj.musicQueue,
           queueLength: dj.musicQueue.length,
         });
       }

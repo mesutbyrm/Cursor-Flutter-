@@ -37,6 +37,10 @@ class VoiceRoomGiftRealtimeService {
     if (!_local.isClosed) _local.add(event);
   }
 
+  void publishRemote(LiveGiftEvent event) {
+    if (_seen.add(event.id) && !_local.isClosed) _local.add(event);
+  }
+
   void dispose() {
     stop();
     _local.close();

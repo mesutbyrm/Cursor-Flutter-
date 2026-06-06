@@ -26,6 +26,7 @@ import { fail, ok } from "../lib/response";
 import { optionalAuth } from "../middleware/optionalAuth";
 import { requireAuth } from "../middleware/requireAuth";
 import {
+  emitPkBattleUpdate,
   emitStreamEnded,
   emitStreamMessage,
   emitStreamViewerCount,
@@ -251,6 +252,13 @@ videoStreamsRouter.post("/:id/pk-battle", requireAuth, async (req, res) => {
   });
   if (!result.ok) {
     return fail(res, 400, "BAD_REQUEST", result.error ?? "PK işlemi başarısız");
+  }
+  emitPkBattleUpdate(streamId, result.battle as unknown as Record<string, unknown>);
+  if (result.battle.opponentStreamId) {
+    emitPkBattleUpdate(
+      result.battle.opponentStreamId,
+      result.battle as unknown as Record<string, unknown>,
+    );
   }
   return ok(res, { battle: result.battle, pk: result.battle });
 });

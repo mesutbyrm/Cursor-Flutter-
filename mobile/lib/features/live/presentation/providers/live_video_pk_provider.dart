@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/datasources/live_stream_extras_datasource.dart';
@@ -31,9 +33,10 @@ class LiveVideoPkState {
     bool? loading,
     String? error,
     bool clearError = false,
+    bool clearBattle = false,
   }) {
     return LiveVideoPkState(
-      battle: battle ?? this.battle,
+      battle: clearBattle ? null : (battle ?? this.battle),
       loading: loading ?? this.loading,
       error: clearError ? null : (error ?? this.error),
     );
@@ -43,14 +46,32 @@ class LiveVideoPkState {
 class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, String> {
   LiveStreamExtrasDataSource get _remote => ref.read(liveStreamExtrasProvider);
 
+  Timer? _poll;
+
   @override
   LiveVideoPkState build(String streamId) {
+    ref.onDispose(() => _poll?.cancel());
     Future.microtask(() => refresh());
+    _startPolling();
     return const LiveVideoPkState();
+  }
+
+  void _startPolling() {
+    _poll?.cancel();
+    _poll = Timer.periodic(const Duration(seconds: 3), (_) => refresh());
   }
 
   Future<void> refresh() async {
     final battle = await _remote.fetchPkBattle(arg);
+    if (battle == null && state.battle == null) return;
+    state = state.copyWith(
+      battle: battle,
+      clearBattle: battle == null,
+      clearError: true,
+    );
+  }
+
+  void applyRemoteBattle(Map<String, dynamic> battle) {
     state = state.copyWith(battle: battle, clearError: true);
   }
 
@@ -73,13 +94,15 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   Future<void> end() => _action('end');
 
   Future<void> addScore({required int score, required bool rightSide}) async {
-    final battle = await _remote.pkAction(
-      streamId: arg,
-      action: 'score',
-      score: score,
-      side: rightSide ? 'right' : 'left',
-    );
-    state = state.copyWith(battle: battle);
+    try {
+      final battle = await _remote.pkAction(
+        streamId: arg,
+        action: 'score',
+        score: score,
+        side: rightSide ? 'right' : 'left',
+      );
+      state = state.copyWith(battle: battle);
+    } catch (_) {}
   }
 
   Future<void> _action(String action) async {

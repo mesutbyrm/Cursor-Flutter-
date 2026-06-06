@@ -79,6 +79,26 @@ export function emitStreamEnded(
   io.to(room).emit("STREAM_ENDED", body);
 }
 
+/** Canlı yayın PK güncellemesi — web ve mobil senkronu */
+export function emitPkBattleUpdate(
+  streamId: string,
+  battle: Record<string, unknown>,
+) {
+  if (!io) return;
+  const payload = { streamId, battle, pk: battle, event: "PK_UPDATED" };
+  const room = streamRoom(streamId);
+  io.to(room).emit("pkBattle", payload);
+  io.to(room).emit("pkBattleUpdated", payload);
+  io.to(room).emit("PK_UPDATED", payload);
+  const opponentId = battle.opponentStreamId;
+  if (typeof opponentId === "string" && opponentId.trim()) {
+    const oppRoom = streamRoom(opponentId.trim());
+    io.to(oppRoom).emit("pkBattle", payload);
+    io.to(oppRoom).emit("pkBattleUpdated", payload);
+    io.to(oppRoom).emit("PK_UPDATED", payload);
+  }
+}
+
 function voiceRoomTargets(roomIdOrSlug: string): string[] {
   const canonical = resolveRoomId(roomIdOrSlug);
   const room = getChatRoom(roomIdOrSlug);
