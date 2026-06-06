@@ -69,7 +69,9 @@ import '../../features/voice_hub/presentation/voice_room_route_page.dart';
 import '../../features/voice_hub/presentation/voice_room_rtc_page.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
 import '../../features/home/presentation/pages/live_fortune_teller_detail_page.dart';
+import '../../features/home/presentation/pages/live_fortune_session_page.dart';
 import '../../features/home/presentation/pages/live_fortune_tellers_page.dart';
+import '../../features/home/domain/entities/live_fortune_session_entity.dart';
 import '../../features/vip_gold/presentation/pages/vip_gold_hub_page.dart';
 import '../../core/navigation/app_page_transitions.dart';
 
@@ -486,6 +488,25 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 child: LiveFortuneTellerDetailPage(tellerId: id),
               );
             },
+            routes: [
+              GoRoute(
+                path: 'session',
+                pageBuilder: (context, state) {
+                  final session = state.extra as LiveFortuneSessionEntity?;
+                  if (session == null) {
+                    final id = state.pathParameters['id'] ?? '';
+                    return AppPageTransitions.fadeSlide(
+                      key: state.pageKey,
+                      child: LiveFortuneTellerDetailPage(tellerId: id),
+                    );
+                  }
+                  return AppPageTransitions.fadeSlide(
+                    key: state.pageKey,
+                    child: LiveFortuneSessionPage(session: session),
+                  );
+                },
+              ),
+            ],
           ),
         ],
       ),

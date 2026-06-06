@@ -44,7 +44,25 @@ class HomeLiveFortuneTellersRow extends ConsumerWidget {
           ),
         ],
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (e, _) => Column(
+        children: [
+          const HomeSectionHeader(
+            title: 'Canlı Falcılar',
+            subtitle: 'Liste yüklenemedi',
+            leadingDotColor: AppThemeColors.accentPink,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              '$e',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.55),
+              ),
+            ),
+          ),
+        ],
+      ),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
         final online = items.where((t) => t.isOnline).toList();

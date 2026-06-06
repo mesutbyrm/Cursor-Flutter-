@@ -1020,6 +1020,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     perms: perms,
                     isOwner: isOwner,
                   ),
+                  onGift: () => showPremiumVoiceGiftShop(context, ref, room: room),
                   onMusic: showMusicCard
                       ? () => showVoiceMusicHubPage(
                             context,
@@ -1059,7 +1060,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       VoiceWebChatInputBar(
                         controller: _messageCtrl,
                         focusNode: _messageFocus,
-                        sending: false,
+                        sending: live.sending,
                         onSend: () => _sendChatMessage(room),
                       ),
                     if (!keyboardOpen)
