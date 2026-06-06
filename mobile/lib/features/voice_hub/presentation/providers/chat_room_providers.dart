@@ -27,6 +27,7 @@ import '../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/youtube_stream_resolver.dart';
+import '../audio/voice_room_music_audio_session.dart';
 import '../services/voice_room_dj_player.dart';
 import 'voice_gift_providers.dart';
 import 'voice_room_ui_provider.dart';
@@ -209,6 +210,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       ref.read(voiceRoomDjPlayerProvider).stop();
     });
     Future.microtask(() async {
+      await VoiceRoomMusicAudioSession.ensureConfigured();
       ref.invalidate(coinBalanceProvider);
       ref.invalidate(walletBalancesProvider);
       await _joinPresence();
@@ -381,8 +383,13 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     );
   }
 
-  String _djPlaybackSignature(ChatRoomDjState dj, {required bool muted}) =>
-      '${dj.playing}|${dj.musicUrl}|${dj.nowPlaying?.id}|${dj.musicQueue.length}|$muted';
+  String _djPlaybackSignature(ChatRoomDjState dj, {required bool muted}) {
+    final effective = _djWithQueuePlaybackFallback(dj);
+    final url = effective.playbackSource ?? '';
+    return '${effective.playing}|$url|${effective.musicUrl}|'
+        '${effective.nowPlaying?.id}|${effective.musicQueue.length}|'
+        '${effective.musicEnabled}|$muted';
+  }
 
   void clearOpenCommandsPanel() {
     if (state.openCommandsPanel) {
@@ -440,7 +447,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
           muted: !ui.backgroundMusicEnabled,
         );
         if (sig != _lastDjPlaybackSignature) {
-          _lastDjPlaybackSignature = sig;
           dj = await _applyDjPlayback(dj);
         }
         bgFromDj = dj.backgroundImage?.trim();
@@ -549,15 +555,8 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
           .whereType<Map>()
           .map((e) => MusicQueueItem.fromJson(Map<String, dynamic>.from(e)))
           .toList();
-      if (queue.isNotEmpty) {
-        dj = dj.copyWith(musicQueue: queue);
-      }
+      dj = dj.copyWith(musicQueue: queue);
     }
-    final ui = ref.read(voiceRoomUiProvider);
-    _lastDjPlaybackSignature = _djPlaybackSignature(
-      dj,
-      muted: !ui.backgroundMusicEnabled,
-    );
     dj = await _applyDjPlayback(dj);
     state = state.copyWith(dj: dj);
   }
@@ -573,6 +572,14 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
 
   Future<ChatRoomDjState> _applyDjPlayback(ChatRoomDjState dj) async {
     final ui = ref.read(voiceRoomUiProvider);
+    final muted = !ui.backgroundMusicEnabled;
+
+    if (!dj.musicEnabled) {
+      await ref.read(voiceRoomDjPlayerProvider).stop();
+      _lastDjPlaybackSignature = _djPlaybackSignature(dj, muted: muted);
+      return dj.copyWith(playing: false);
+    }
+
     final effectiveDj = _djWithQueuePlaybackFallback(dj);
     final playbackUrl = effectiveDj.playbackSource;
     final shouldPlay = effectiveDj.playing && playbackUrl != null;
@@ -585,7 +592,8 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       'playState': effectiveDj.playing,
       'shouldPlay': shouldPlay,
       'hasUrl': playbackUrl != null,
-      'muted': !ui.backgroundMusicEnabled,
+      'muted': muted,
+      'musicEnabled': effectiveDj.musicEnabled,
       'nowPlaying': effectiveDj.nowPlaying?.title,
     });
     final player = ref.read(voiceRoomDjPlayerProvider);
@@ -593,13 +601,18 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       musicUrl: playbackUrl,
       fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
       playing: shouldPlay,
-      muted: !ui.backgroundMusicEnabled,
+      muted: muted,
     );
     VoiceRoomDebugLog.log(
       ok ? 'music.player.started' : 'music.player.failed',
       {'url': playbackUrl},
     );
-    if (shouldPlay && !ok) {
+    if (shouldPlay && ok) {
+      _lastDjPlaybackSignature = _djPlaybackSignature(effectiveDj, muted: muted);
+    } else if (!shouldPlay) {
+      _lastDjPlaybackSignature = _djPlaybackSignature(effectiveDj, muted: muted);
+    } else {
+      _lastDjPlaybackSignature = null;
       state = state.copyWith(
         dj: effectiveDj,
         error:
@@ -616,11 +629,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       VoiceRoomDebugLog.log('music.sync.start', {'room': _roomKey});
       var dj = await ref.read(chatRoomRemoteProvider).fetchDj(_roomKey);
       dj = await _mergeMusicQueueIntoDj(dj);
-      final ui = ref.read(voiceRoomUiProvider);
-      _lastDjPlaybackSignature = _djPlaybackSignature(
-        dj,
-        muted: !ui.backgroundMusicEnabled,
-      );
       dj = await _applyDjPlayback(dj);
       state = state.copyWith(dj: dj, clearError: true);
       ref.invalidate(coinBalanceProvider);
@@ -1235,11 +1243,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
             musicQueue: result.queue.isNotEmpty ? result.queue : dj.musicQueue,
           );
         }
-        final ui = ref.read(voiceRoomUiProvider);
-        _lastDjPlaybackSignature = _djPlaybackSignature(
-          dj,
-          muted: !ui.backgroundMusicEnabled,
-        );
         dj = await _applyDjPlayback(dj);
         state = state.copyWith(dj: dj);
       } else {
@@ -1252,11 +1255,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         if (result.queuePosition == 1) {
           updated = updated.copyWith(playing: true);
         }
-        final ui = ref.read(voiceRoomUiProvider);
-        _lastDjPlaybackSignature = _djPlaybackSignature(
-          updated,
-          muted: !ui.backgroundMusicEnabled,
-        );
         updated = await _applyDjPlayback(updated);
         state = state.copyWith(dj: updated);
       }
