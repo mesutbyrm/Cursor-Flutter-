@@ -7,6 +7,7 @@ import '../../../trtc/data/datasources/trtc_remote_datasource.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import '../../domain/entities/voice_audio_engine.dart';
+import 'voice_room_music_audio_session.dart';
 
 /// LiveKit öncelikli, TRTC yedek — sesli sohbet ses katmanı.
 class VoiceRoomAudioCoordinator {
@@ -42,6 +43,7 @@ class VoiceRoomAudioCoordinator {
     LiveKitRemoteDataSource? liveKitRemote,
     TrtcRemoteDataSource? trtcRemote,
   }) async {
+    await VoiceRoomMusicAudioSession.ensureConfigured();
     final lkRemote = liveKitRemote ?? _liveKitRemote;
     final trtcDs = trtcRemote ?? _trtcRemote;
 

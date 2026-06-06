@@ -4,12 +4,14 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../data/youtube_stream_resolver.dart';
+import '../audio/voice_room_music_audio_session.dart';
 
-/// Oda arka plan müziği — DJ API `musicUrl` ile senkron.
+/// Oda arka plan müziği — DJ API `musicUrl` ile senkron (web iframe yerine stream URL).
 class VoiceRoomDjPlayer {
   VoiceRoomDjPlayer(this._resolver)
-      : _player = AudioPlayer()..setReleaseMode(ReleaseMode.stop) {
-    unawaited(_configureAudio());
+      : _player = AudioPlayer(playerId: 'voice_room_dj') {
+    _player.setReleaseMode(ReleaseMode.stop);
+    unawaited(_initPlayer());
     _player.onPlayerComplete.listen((_) {
       onTrackComplete?.call();
     });
@@ -43,7 +45,8 @@ class VoiceRoomDjPlayer {
   String? _currentUrl;
   void Function()? onTrackComplete;
 
-  Future<void> _configureAudio() async {
+  Future<void> _initPlayer() async {
+    await VoiceRoomMusicAudioSession.ensureConfigured();
     try {
       await _player.setAudioContext(
         AudioContext(
@@ -56,10 +59,14 @@ class VoiceRoomDjPlayer {
           ),
           iOS: AudioContextIOS(
             category: AVAudioSessionCategory.playback,
-            options: {AVAudioSessionOptions.mixWithOthers},
+            options: {
+              AVAudioSessionOptions.mixWithOthers,
+              AVAudioSessionOptions.duckOthers,
+            },
           ),
         ),
       );
+      await _player.setVolume(1.0);
     } catch (e) {
       debugPrint('DJ audio context: $e');
     }
@@ -77,6 +84,8 @@ class VoiceRoomDjPlayer {
       return false;
     }
 
+    await VoiceRoomMusicAudioSession.ensureConfigured();
+
     final candidates = <String>[
       musicUrl,
       if (fallbackYoutubeUrl != null &&
@@ -88,16 +97,20 @@ class VoiceRoomDjPlayer {
     for (final candidate in candidates) {
       final source = await _resolveSource(candidate);
       debugPrint(
-        'DJ sync: musicUrl=$musicUrl streamUrl=$source '
+        'DJ sync: candidate=$candidate streamUrl=$source '
         'playState=$playing playerState=${_player.state}',
       );
       if (source == null || source.isEmpty) continue;
-      if (_currentUrl == source && _player.state == PlayerState.playing) {
-        return true;
-      }
+
+      final alreadyPlaying =
+          _currentUrl == source && _player.state == PlayerState.playing;
+      if (alreadyPlaying) return true;
+
       try {
+        await VoiceRoomMusicAudioSession.activateForPlayback();
         _currentUrl = source;
         await _player.stop();
+        await _player.setVolume(1.0);
         await _player.play(UrlSource(source));
         playback.value = VoiceRoomDjPlayback(
           position: Duration.zero,

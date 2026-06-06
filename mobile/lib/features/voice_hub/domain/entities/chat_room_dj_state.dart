@@ -159,13 +159,11 @@ class ChatRoomDjState {
     return idx >= 0 ? idx + 1 : musicQueue.length;
   }
 
-  /// Oynatılacak URL — önce sunucu akışı, yoksa YouTube watch (mobil çözer).
+  /// Oynatılacak URL — önce sunucunun çözdüğü doğrudan akış, yoksa YouTube watch (mobil çözer).
   String? get playbackSource {
     final direct = musicUrl?.trim();
-    if (direct != null &&
-        direct.isNotEmpty &&
-        !_isYoutubeWatchUrl(direct)) {
-      return direct;
+    if (direct != null && direct.isNotEmpty) {
+      if (!_isYoutubeWatchUrl(direct)) return direct;
     }
     final np = nowPlaying?.youtubeUrl.trim() ?? '';
     if (np.isNotEmpty) return np;

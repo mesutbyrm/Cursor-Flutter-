@@ -903,6 +903,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             child: VoiceRoomActionRow(
                               dj: live.dj,
                               showMusicCard: showMusicCard,
+                              showPkCard: isOwner,
+                              pkActive:
+                                  ref.watch(pkBattleRemoteProvider)?.isActive ==
+                                      true,
                               onMusicTap: () => showVoiceMusicHubPage(
                                 context,
                                 ref,
@@ -918,6 +922,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 perms: perms,
                                 isOwner: isOwner,
                               ),
+                              onPkTap: () {
+                                final active = ref.read(pkBattleRemoteProvider);
+                                if (active?.isActive == true) {
+                                  _openActivePk(room);
+                                } else {
+                                  _openPkInvite(room);
+                                }
+                              },
                             ),
                           ),
                           VoiceRoomMusicRequestFlash(
@@ -960,54 +972,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
             ),
             PremiumGiftFullscreenOverlay(event: _fullscreenGift),
-            if (_loginError == null && isOwner && !keyboardOpen)
-              Positioned(
-                right: 10,
-                bottom: MediaQuery.paddingOf(context).bottom + 188,
-                child: Material(
-                  color: const Color(0xFFB832FF),
-                  borderRadius: BorderRadius.circular(20),
-                  elevation: 4,
-                  child: InkWell(
-                    onTap: () {
-                      final active = ref.read(pkBattleRemoteProvider);
-                      if (active?.isActive == true) {
-                        _openActivePk(room);
-                      } else {
-                        _openPkInvite(room);
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 7,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.flash_on_rounded,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            ref.watch(pkBattleRemoteProvider)?.isActive == true
-                                ? 'PK'
-                                : 'PK',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
             if (_loginError == null && !keyboardOpen)
               Positioned(
                 right: 4,
