@@ -2,14 +2,20 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma";
 import {
   addStreamLike,
-  getPkBattle,
   getStreamLikeCount,
-  handlePkBattleAction,
   inviteCoBroadcast,
   listStreamSignals,
   pushStreamSignal,
   respondCoBroadcastInvite,
 } from "../lib/liveStreamExtrasStore";
+import {
+  getActiveBattleForStream,
+  legacyPkRowFromBattle,
+} from "../lib/pkBattleService";
+import {
+  broadcastPkResult,
+  handleLiveStreamPkAction,
+} from "./pk_battles";
 import {
   addLiveStreamMessage,
   endLiveStream,
@@ -241,32 +247,35 @@ videoStreamsRouter.post("/:id/pk-battle", requireAuth, async (req, res) => {
   if (!getLiveStream(streamId)) {
     return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
   }
-  const action =
-    typeof req.body?.action === "string" ? req.body.action : "create";
-  const result = handlePkBattleAction(streamId, req.userId!, {
-    action,
-    opponentStreamId: req.body?.opponentStreamId?.toString(),
-    opponentId: req.body?.opponentId?.toString(),
-    score: Number(req.body?.score ?? 1),
-    side: req.body?.side === "right" ? "right" : "left",
-  });
+  const result = await handleLiveStreamPkAction(
+    streamId,
+    req.userId!,
+    req.body ?? {},
+  );
   if (!result.ok) {
     return fail(res, 400, "BAD_REQUEST", result.error ?? "PK işlemi başarısız");
   }
-  emitPkBattleUpdate(streamId, result.battle as unknown as Record<string, unknown>);
-  if (result.battle.opponentStreamId) {
-    emitPkBattleUpdate(
-      result.battle.opponentStreamId,
-      result.battle as unknown as Record<string, unknown>,
-    );
-  }
-  return ok(res, { battle: result.battle, pk: result.battle });
+  const battle = result.battle as Record<string, unknown>;
+  const events =
+    "events" in result && Array.isArray(result.events)
+      ? result.events
+      : "event" in result && result.event
+        ? [result.event]
+        : ["pk:invite"];
+  broadcastPkResult(battle, events);
+  const legacy = legacyPkRowFromBattle(battle, streamId);
+  return ok(res, { battle: legacy, pk: legacy, full: battle });
 });
 
 /** GET /api/video-streams/:id/pk-battle */
 videoStreamsRouter.get("/:id/pk-battle", optionalAuth, async (req, res) => {
-  const battle = getPkBattle(req.params.id);
-  return res.status(200).json({ battle, pk: battle });
+  const streamId = req.params.id;
+  const battle = await getActiveBattleForStream(streamId);
+  if (!battle) {
+    return res.status(200).json({ battle: null, pk: null });
+  }
+  const legacy = legacyPkRowFromBattle(battle, streamId);
+  return res.status(200).json({ battle: legacy, pk: legacy, full: battle });
 });
 
 /** GET /api/video-streams/:id/signal — WebRTC polling */

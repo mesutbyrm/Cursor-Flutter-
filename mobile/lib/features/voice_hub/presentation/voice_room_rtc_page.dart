@@ -28,6 +28,7 @@ import '../domain/entities/chat_room_presence.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
 import 'audio/voice_room_audio_coordinator.dart';
 import 'providers/chat_room_providers.dart';
+import 'providers/pk_battle_remote_provider.dart';
 import 'utils/voice_room_image_prefetch.dart';
 import 'providers/voice_gift_providers.dart';
 import 'providers/voice_room_audio_providers.dart';
@@ -80,6 +81,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   LiveGiftEvent? _fullscreenGift;
   var _showVipEntrance = false;
   var _vipEntrancePlayed = false;
+  String? _shownPkInviteId;
   final _messageFocus = FocusNode();
 
   @override
@@ -200,6 +202,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       });
       _startGiftRealtime();
       _maybeShowVipEntrance(user);
+      unawaited(_connectPkBattle());
       return;
     }
 
@@ -224,6 +227,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         _startGiftRealtime();
         _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
         _maybeShowVipEntrance(user);
+        unawaited(_connectPkBattle());
       }
     } catch (e) {
       if (mounted) {
@@ -233,8 +237,23 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         });
         _startGiftRealtime();
         _maybeShowVipEntrance(user);
+        unawaited(_connectPkBattle());
       }
     }
+  }
+
+  Future<void> _connectPkBattle() async {
+    if (!mounted) return;
+    final r = widget.room;
+    final roomKey = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+    final remote = ref.read(pkBattleRemoteProvider.notifier);
+    await remote.loadRoomBattle(roomKey);
+    if (!mounted) return;
+    remote.connectSocket(
+      roomId: roomKey,
+      alternateRoomId: r.slug != roomKey ? r.slug : null,
+      battleId: ref.read(pkBattleRemoteProvider)?.id,
+    );
   }
 
   void _maybeShowVipEntrance(UserEntity user) {
@@ -248,6 +267,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   Future<void> _leaveRoom() async {
     if (_leaving) return;
     _leaving = true;
+    ref.read(pkBattleRemoteProvider.notifier).clear();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
     await _audio?.leave();
     if (!mounted) return;
@@ -325,6 +345,48 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Paylaşım linki kopyalandı: $url')),
     );
+  }
+
+  void _openPkInvite(VoiceRoomEntity room) {
+    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    context.push('/voice-room/$key/pk-invite', extra: room);
+  }
+
+  void _openActivePk(VoiceRoomEntity room) {
+    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    context.push('/voice-room/$key/pk', extra: room);
+  }
+
+  Future<void> _showIncomingPkInvite(String battleId) async {
+    if (!mounted) return;
+    final accept = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0F2E),
+        title: const Text('PK Daveti', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Bir oda size PK daveti gönderdi. Kabul ediyor musunuz?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Reddet'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Kabul Et'),
+          ),
+        ],
+      ),
+    );
+    final remote = ref.read(pkBattleRemoteProvider.notifier);
+    if (accept == true) {
+      await remote.accept(battleId);
+      if (mounted) _openActivePk(widget.room);
+    } else if (accept == false) {
+      await remote.reject(battleId);
+    }
   }
 
   Future<void> _pickBackground(BuildContext context, VoiceRoomEntity room) async {
@@ -666,6 +728,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       }
     });
 
+    ref.listen(pkBattleRemoteProvider, (prev, next) {
+      if (next == null || !isOwner || !next.isPending) return;
+      final opp = next.opponentVoiceRoomId;
+      final isTarget = opp == room.apiRoomKey ||
+          opp == room.id ||
+          opp == room.slug;
+      if (!isTarget || _shownPkInviteId == next.id) return;
+      _shownPkInviteId = next.id;
+      unawaited(_showIncomingPkInvite(next.id));
+    });
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
@@ -879,6 +952,29 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
             ),
             PremiumGiftFullscreenOverlay(event: _fullscreenGift),
+            if (_loginError == null && isOwner && !keyboardOpen)
+              Positioned(
+                right: 12,
+                bottom: MediaQuery.paddingOf(context).bottom + 248,
+                child: FloatingActionButton.extended(
+                  heroTag: 'voice-pk-fab',
+                  backgroundColor: const Color(0xFFB832FF),
+                  onPressed: () {
+                    final active = ref.read(pkBattleRemoteProvider);
+                    if (active?.isActive == true) {
+                      _openActivePk(room);
+                    } else {
+                      _openPkInvite(room);
+                    }
+                  },
+                  icon: const Icon(Icons.flash_on_rounded),
+                  label: Text(
+                    ref.watch(pkBattleRemoteProvider)?.isActive == true
+                        ? 'PK'
+                        : 'PK Başlat',
+                  ),
+                ),
+              ),
             if (_loginError == null && !keyboardOpen)
               Positioned(
                 right: 4,

@@ -32,6 +32,7 @@ import { livekitRouter } from "./routes/livekit";
 import { requireAuth } from "./middleware/requireAuth";
 import { jsonError } from "./lib/jsonError";
 import { fail } from "./lib/response";
+import { pkBattlesRouter } from "./routes/pk_battles";
 import { initGiftSocket } from "./socket/giftHub";
 
 const app = express();
@@ -69,6 +70,7 @@ app.use("/api/trtc", trtcRouter);
 app.use("/api/stories", storiesRouter);
 app.use("/api/social/stories", storiesRouter);
 app.use("/api/reports", reportsRouter);
+app.use("/api/pk", pkBattlesRouter);
 
 /** @deprecated — GET /api/music/search kullanın */
 app.get("/api/youtube/search", requireAuth, async (req, res) => {

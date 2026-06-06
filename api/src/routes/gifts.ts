@@ -3,7 +3,12 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
 import { optionalAuth } from "../middleware/optionalAuth";
-import { emitGiftEvent, emitGiftRoomEvent } from "../socket/giftHub";
+import { applyPkGift } from "../lib/pkBattleService";
+import {
+  emitGiftEvent,
+  emitGiftRoomEvent,
+  emitPkBattleEvent,
+} from "../socket/giftHub";
 
 const platformSchema = z.enum(["mobile", "web", "all"]).optional();
 
@@ -187,12 +192,29 @@ export async function sendStreamGift(
   const payload = eventPayload(event);
   emitGiftEvent(streamId, payload);
 
+  const pkResult = await applyPkGift({
+    streamId,
+    giftEventId: event.id,
+    senderId: userId ?? null,
+    senderName: event.senderName,
+    giftSlug: gift.slug,
+    giftName: gift.name,
+    quantity,
+    coinPrice: gift.price,
+  });
+  if (pkResult) {
+    for (const ev of pkResult.events) {
+      emitPkBattleEvent(pkResult.battle, ev, { gift: pkResult.gift });
+    }
+  }
+
   return res.status(200).json({
     ...payload,
     newBalance,
     balance: newBalance,
     coinBalance: newBalance,
     streamerBalance: totalCost,
+    pkBattle: pkResult?.battle ?? null,
   });
 }
 
@@ -342,11 +364,28 @@ export async function sendRoomGift(
   const payload = eventPayload(event);
   emitGiftRoomEvent(roomId, payload);
 
+  const pkResult = await applyPkGift({
+    roomId,
+    giftEventId: event.id,
+    senderId: userId ?? null,
+    senderName: event.senderName,
+    giftSlug: gift.slug,
+    giftName: gift.name,
+    quantity,
+    coinPrice: gift.price,
+  });
+  if (pkResult) {
+    for (const ev of pkResult.events) {
+      emitPkBattleEvent(pkResult.battle, ev, { gift: pkResult.gift });
+    }
+  }
+
   return res.status(200).json({
     ...payload,
     newBalance,
     balance: newBalance,
     coinBalance: newBalance,
+    pkBattle: pkResult?.battle ?? null,
   });
 }
 

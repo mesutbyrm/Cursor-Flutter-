@@ -49,7 +49,12 @@ import {
   emitChatRoomMessage,
   emitChatRoomPresence,
 } from "../socket/giftHub";
+import { getActiveBattleForRoom } from "../lib/pkBattleService";
 import { listRoomGiftEvents, sendRoomGift } from "./gifts";
+import {
+  broadcastPkResult,
+  handleVoiceRoomPkAction,
+} from "./pk_battles";
 
 export const chatRoomsRouter = Router();
 
@@ -664,5 +669,40 @@ chatRoomsRouter.post(
   optionalAuth,
   async (req, res) => {
     return sendRoomGift(req.params.roomId, req.body, req.userId, res);
+  },
+);
+
+/** GET /api/chat/rooms/:roomId/pk-battle */
+chatRoomsRouter.get("/rooms/:roomId/pk-battle", optionalAuth, async (req, res) => {
+  const battle = await getActiveBattleForRoom(req.params.roomId);
+  return ok(res, { battle, pk: battle });
+});
+
+/** POST /api/chat/rooms/:roomId/pk-battle */
+chatRoomsRouter.post(
+  "/rooms/:roomId/pk-battle",
+  requireAuth,
+  async (req, res) => {
+    const roomId = req.params.roomId;
+    if (!getChatRoom(roomId)) {
+      return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+    }
+    const result = await handleVoiceRoomPkAction(
+      roomId,
+      req.userId!,
+      req.body ?? {},
+    );
+    if (!result.ok) {
+      return fail(res, 400, "BAD_REQUEST", result.error ?? "PK işlemi başarısız");
+    }
+    const battle = result.battle as Record<string, unknown>;
+    const events =
+      "events" in result && Array.isArray(result.events)
+        ? result.events
+        : "event" in result && result.event
+          ? [result.event]
+          : ["pk:invite"];
+    broadcastPkResult(battle, events);
+    return ok(res, { battle, pk: battle });
   },
 );

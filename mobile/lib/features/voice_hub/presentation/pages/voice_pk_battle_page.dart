@@ -12,6 +12,7 @@ import '../../domain/pk/pk_battle_mode.dart';
 import '../../domain/pk/pk_battle_state.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_provider.dart';
+import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_providers.dart';
 import '../theme/voice_room_tokens.dart';
@@ -66,6 +67,19 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
           right: widget.rightUser,
         );
     _startGiftRealtime();
+    _startPkRemote();
+  }
+
+  Future<void> _startPkRemote() async {
+    final r = widget.room;
+    final roomKey = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+    final remote = ref.read(pkBattleRemoteProvider.notifier);
+    await remote.loadRoomBattle(roomKey);
+    remote.connectSocket(
+      roomId: roomKey,
+      alternateRoomId: r.slug != roomKey ? r.slug : null,
+      battleId: ref.read(pkBattleRemoteProvider)?.id,
+    );
   }
 
   void _startGiftRealtime() {
@@ -88,6 +102,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   void dispose() {
     _giftSub?.cancel();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
+    ref.read(pkBattleRemoteProvider.notifier).disconnectSocket();
     super.dispose();
   }
 

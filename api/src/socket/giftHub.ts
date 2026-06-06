@@ -30,6 +30,16 @@ export function initGiftSocket(httpServer: HttpServer) {
       const id = payload?.roomId?.trim();
       if (id) socket.leave(voiceRoom(id));
     });
+
+    socket.on("joinPk", (payload: { battleId?: string }) => {
+      const id = payload?.battleId?.trim();
+      if (id) socket.join(pkBattleRoom(id));
+    });
+
+    socket.on("leavePk", (payload: { battleId?: string }) => {
+      const id = payload?.battleId?.trim();
+      if (id) socket.leave(pkBattleRoom(id));
+    });
   });
 
   return io;
@@ -41,6 +51,10 @@ function streamRoom(streamId: string) {
 
 function voiceRoom(roomId: string) {
   return `room:${roomId}`;
+}
+
+function pkBattleRoom(battleId: string) {
+  return `pk:${battleId}`;
 }
 
 export function emitGiftEvent(streamId: string, payload: Record<string, unknown>) {
@@ -90,12 +104,54 @@ export function emitPkBattleUpdate(
   io.to(room).emit("pkBattle", payload);
   io.to(room).emit("pkBattleUpdated", payload);
   io.to(room).emit("PK_UPDATED", payload);
-  const opponentId = battle.opponentStreamId;
+  const opponentId =
+    battle.opponentStreamId ?? battle.opponentLiveStreamId;
   if (typeof opponentId === "string" && opponentId.trim()) {
     const oppRoom = streamRoom(opponentId.trim());
     io.to(oppRoom).emit("pkBattle", payload);
     io.to(oppRoom).emit("pkBattleUpdated", payload);
     io.to(oppRoom).emit("PK_UPDATED", payload);
+  }
+}
+
+/** Birleşik PK socket olayları — pk:invite, pk:accept, pk:score-update, … */
+export function emitPkBattleEvent(
+  battle: Record<string, unknown>,
+  eventName: string,
+  extra: Record<string, unknown> = {},
+) {
+  if (!io) return;
+  const battleId = String(battle.id ?? "");
+  const payload = { battle, pk: battle, event: eventName, ...extra };
+
+  const targets = new Set<string>();
+  const voiceA = battle.voiceRoomId;
+  const voiceB = battle.opponentVoiceRoomId;
+  const streamA = battle.liveStreamId;
+  const streamB = battle.opponentLiveStreamId;
+
+  if (typeof voiceA === "string" && voiceA.trim()) {
+    for (const key of voiceRoomTargets(voiceA)) targets.add(voiceRoom(key));
+  }
+  if (typeof voiceB === "string" && voiceB.trim()) {
+    for (const key of voiceRoomTargets(voiceB)) targets.add(voiceRoom(key));
+  }
+  if (typeof streamA === "string" && streamA.trim()) {
+    targets.add(streamRoom(streamA.trim()));
+  }
+  if (typeof streamB === "string" && streamB.trim()) {
+    targets.add(streamRoom(streamB.trim()));
+  }
+  if (battleId) targets.add(pkBattleRoom(battleId));
+
+  for (const room of targets) {
+    io.to(room).emit(eventName, payload);
+    io.to(room).emit("pkBattle", payload);
+    io.to(room).emit("pkBattleUpdated", payload);
+  }
+
+  if (typeof streamA === "string" && streamA.trim()) {
+    emitPkBattleUpdate(streamA.trim(), battle);
   }
 }
 

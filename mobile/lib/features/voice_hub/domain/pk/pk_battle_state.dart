@@ -51,6 +51,9 @@ class PkBattleState extends Equatable {
     this.right = const PkSideState(score: 0, giftPower: 0),
     this.winner = PkBattleWinner.none,
     this.reactionBurst = 0,
+    this.remoteBattleId,
+    this.targetScore = 150000,
+    this.serverAuthoritative = false,
   });
 
   final PkBattleMode mode;
@@ -62,6 +65,11 @@ class PkBattleState extends Equatable {
 
   /// Hediye patlaması tetikleyici (artırılınca UI animasyonu).
   final int reactionBurst;
+
+  /// Sunucu PK oturumu — web ile senkron.
+  final String? remoteBattleId;
+  final int targetScore;
+  final bool serverAuthoritative;
 
   double get leftRatio {
     final t = left.total + right.total;
@@ -86,6 +94,9 @@ class PkBattleState extends Equatable {
     PkSideState? right,
     PkBattleWinner? winner,
     int? reactionBurst,
+    String? remoteBattleId,
+    int? targetScore,
+    bool? serverAuthoritative,
   }) {
     return PkBattleState(
       mode: mode ?? this.mode,
@@ -95,10 +106,23 @@ class PkBattleState extends Equatable {
       right: right ?? this.right,
       winner: winner ?? this.winner,
       reactionBurst: reactionBurst ?? this.reactionBurst,
+      remoteBattleId: remoteBattleId ?? this.remoteBattleId,
+      targetScore: targetScore ?? this.targetScore,
+      serverAuthoritative: serverAuthoritative ?? this.serverAuthoritative,
     );
   }
 
   @override
-  List<Object?> get props =>
-      [mode, phase, secondsLeft, left, right, winner, reactionBurst];
+  List<Object?> get props => [
+        mode,
+        phase,
+        secondsLeft,
+        left,
+        right,
+        winner,
+        reactionBurst,
+        remoteBattleId,
+        targetScore,
+        serverAuthoritative,
+      ];
 }

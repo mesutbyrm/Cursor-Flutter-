@@ -57,7 +57,13 @@ import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/profile_transactions_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/shell/presentation/main_shell_page.dart';
+import '../../features/live/domain/entities/live_stream_entity.dart';
 import '../../features/live/domain/entities/voice_room_entity.dart';
+import '../../features/live/presentation/pages/live_pk_battle_page.dart';
+import '../../features/live/presentation/pages/live_pk_invite_page.dart';
+import '../../features/voice_hub/presentation/pages/pk_history_page.dart';
+import '../../features/voice_hub/presentation/pages/pk_invite_page.dart';
+import '../../features/voice_hub/presentation/pages/pk_result_page.dart';
 import '../../features/voice_hub/presentation/pages/voice_pk_battle_page.dart';
 import '../../features/voice_hub/presentation/voice_room_route_page.dart';
 import '../../features/voice_hub/presentation/voice_room_rtc_page.dart';
@@ -509,7 +515,52 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               return VoiceRoomRoutePage(roomId: id);
             },
           ),
+          GoRoute(
+            path: 'pk-invite',
+            builder: (context, state) {
+              final room = state.extra as VoiceRoomEntity?;
+              if (room == null) {
+                return VoiceRoomRoutePage(roomId: state.pathParameters['id'] ?? '');
+              }
+              return PkInvitePage(room: room);
+            },
+          ),
         ],
+      ),
+      GoRoute(
+        path: '/live/pk-invite',
+        builder: (context, state) {
+          final session = state.extra as LiveBroadcastSession?;
+          if (session == null) return const LiveBroadcastPrepPage();
+          return LivePkInvitePage(session: session);
+        },
+      ),
+      GoRoute(
+        path: '/live/pk',
+        builder: (context, state) {
+          final extra = state.extra;
+          LiveBroadcastSession? session;
+          LiveStreamEntity? opponent;
+          if (extra is LiveBroadcastSession) {
+            session = extra;
+          } else if (extra is Map) {
+            session = extra['session'] as LiveBroadcastSession?;
+            opponent = extra['opponent'] as LiveStreamEntity?;
+          }
+          if (session == null) return const LiveBroadcastPrepPage();
+          return LivePkBattlePage(session: session, opponentStream: opponent);
+        },
+      ),
+      GoRoute(
+        path: '/pk/history',
+        builder: (context, state) {
+          final type = state.uri.queryParameters['type'];
+          return PkHistoryPage(battleType: type);
+        },
+      ),
+      GoRoute(
+        path: '/pk/result',
+        builder: (context, state) => const PkResultPage(),
       ),
     ],
   );
