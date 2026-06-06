@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/app_design.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../live/presentation/providers/live_providers.dart';
 import 'voice_room_rtc_page.dart';
@@ -18,12 +18,12 @@ class VoiceRoomRoutePage extends ConsumerWidget {
     final async = ref.watch(voiceRoomByIdProvider(roomId));
 
     return async.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppDesign.bgBase,
-        body: Center(child: DiscoverAccentLoader()),
+      loading: () => Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: const Center(child: DiscoverAccentLoader()),
       ),
       error: (e, _) => Scaffold(
-        backgroundColor: AppDesign.bgBase,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
           child: DiscoverEmptyState(
             icon: Icons.headset_off_rounded,
@@ -36,7 +36,7 @@ class VoiceRoomRoutePage extends ConsumerWidget {
       data: (room) {
         if (room == null) {
           return Scaffold(
-            backgroundColor: AppDesign.bgBase,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: Center(
               child: DiscoverEmptyState(
                 icon: Icons.meeting_room_outlined,

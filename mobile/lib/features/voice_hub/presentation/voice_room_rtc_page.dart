@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -17,15 +18,21 @@ import '../../profile/presentation/providers/profile_providers.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
 import '../../trtc/presentation/trtc_room_manager.dart';
 import '../domain/entities/chat_room_message.dart';
+import '../domain/entities/chat_room_presence.dart';
+import 'pages/voice_music_hub_page.dart';
 import 'providers/chat_room_providers.dart';
+import 'providers/voice_room_ui_provider.dart';
+import 'utils/voice_music_access.dart';
+import 'utils/voice_room_permissions.dart';
 import 'widgets/voice_room/voice_room_action_row.dart';
 import 'widgets/voice_room/voice_room_announcement.dart';
 import 'widgets/voice_room/voice_room_bottom_bar.dart';
 import 'widgets/voice_room/voice_room_chat_panel.dart';
+import 'widgets/voice_room/voice_room_music_mini_player.dart';
 import 'widgets/voice_room/voice_room_seats_panel.dart';
 import 'widgets/voice_room/voice_room_top_bar.dart';
 
-/// Sesli sohbet odası — web neon düzeni + TRTC ses + canlifal.com API.
+/// Sesli sohbet odası — web neon düzeni + TRTC ses + native müzik.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
   const VoiceRoomRtcPage({super.key, required this.room});
 
@@ -58,6 +65,27 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     super.dispose();
   }
 
+  VoiceRoomPermissions _permissions(
+    VoiceRoomEntity room,
+    List<ChatRoomPresence> presence,
+  ) {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    ChatRoomPresence? self;
+    if (user != null) {
+      for (final p in presence) {
+        if (p.id == user.id) {
+          self = p;
+          break;
+        }
+      }
+    }
+    return VoiceRoomPermissions.forUser(
+      user: user,
+      room: room,
+      selfPresence: self,
+    );
+  }
+
   Future<void> _joinRoom() async {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) {
@@ -79,7 +107,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     try {
       final cred = await ref.read(trtcRemoteProvider).fetchUserSig(
             userId: user.id,
-            roomId: widget.room.id,
+            roomId: widget.room.trtcRoomId.isNotEmpty
+                ? widget.room.trtcRoomId
+                : widget.room.id,
           );
       await _trtc.join(
         credentials: cred,
@@ -141,6 +171,21 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         : room.displayOnline;
     final user = ref.watch(authControllerProvider).valueOrNull;
     final speakingId = _micOn ? user?.id : null;
+    final perms = _permissions(room, live.presence);
+    final isOwner = perms.isRoomOwner;
+    final showMusic = VoiceMusicAccess.canShowMusicCard(
+      dj: live.dj,
+      perms: perms,
+      jetonBalance: coins,
+    );
+
+    ref.listen(voiceRoomUiProvider, (prev, next) {
+      if (prev?.backgroundMusicEnabled != next.backgroundMusicEnabled) {
+        unawaited(
+          ref.read(voiceRoomLiveProvider(room).notifier).refresh(includeDj: true),
+        );
+      }
+    });
 
     return PopScope(
       canPop: false,
@@ -212,16 +257,40 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               message: _latestSystemJoin(live.messages),
                             ),
                             const SizedBox(height: 8),
+                            VoiceRoomMusicMiniPlayer(
+                              dj: live.dj,
+                              canModerate: perms.canModerate || isOwner,
+                              onTap: showMusic
+                                  ? () => showVoiceMusicHubPage(
+                                        context,
+                                        ref,
+                                        room: room,
+                                        perms: perms,
+                                        isOwner: isOwner,
+                                      )
+                                  : null,
+                              onSkip: (perms.canModerate || isOwner)
+                                  ? () => ref
+                                      .read(voiceRoomLiveProvider(room).notifier)
+                                      .skipMusic()
+                                  : null,
+                              onStop: () => ref
+                                  .read(voiceRoomLiveProvider(room).notifier)
+                                  .stopRoomMusic(
+                                    clearQueue: perms.canModerate || isOwner,
+                                  ),
+                            ),
                             VoiceRoomActionRow(
                               dj: live.dj,
-                              onMusicTap: () {
-                                context.push(
-                                  CanlifalWebRoute.location(
-                                    relativePath: '/sohbet/${room.slug}',
-                                    title: room.displayTitle,
-                                  ),
-                                );
-                              },
+                              onMusicTap: showMusic
+                                  ? () => showVoiceMusicHubPage(
+                                        context,
+                                        ref,
+                                        room: room,
+                                        perms: perms,
+                                        isOwner: isOwner,
+                                      )
+                                  : null,
                             ),
                             const SizedBox(height: 8),
                             Expanded(
@@ -250,8 +319,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             .read(voiceRoomLiveProvider(room).notifier)
                             .sendMessage(text);
                       },
-                      onRefresh: () =>
-                          ref.read(voiceRoomLiveProvider(room).notifier).refresh(),
+                      onRefresh: () => ref
+                          .read(voiceRoomLiveProvider(room).notifier)
+                          .refresh(),
                       onShare: _shareRoom,
                       onTopUp: () {
                         context.push(

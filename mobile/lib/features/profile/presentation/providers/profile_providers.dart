@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../wallet/domain/wallet_balances.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
@@ -29,8 +30,14 @@ final userProfileProvider =
   return ref.watch(profileRepositoryProvider).getUser(userId);
 });
 
+final walletBalancesProvider = FutureProvider<WalletBalances>((ref) async {
+  final coins = await ref.watch(walletRepositoryProvider).coinBalance();
+  return WalletBalances(jeton: coins);
+});
+
 final coinBalanceProvider = FutureProvider<int>((ref) async {
-  return ref.watch(walletRepositoryProvider).coinBalance();
+  final b = await ref.watch(walletBalancesProvider.future);
+  return b.jeton;
 });
 
 final jetonPackagesProvider =

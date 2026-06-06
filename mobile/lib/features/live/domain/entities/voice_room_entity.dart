@@ -36,6 +36,16 @@ class VoiceRoomEntity extends Equatable {
 
   int get displayOnline => onlineCount > 0 ? onlineCount : userCount;
 
+  /// REST / Socket — Prisma `id` (cuid).
+  String get apiRoomKey => id.trim();
+
+  /// Tencent TRTC — web ile aynı: `voice_room_{id}`.
+  String get trtcRoomId {
+    final i = id.trim();
+    if (i.isEmpty) return '';
+    return 'voice_room_$i';
+  }
+
   String get displayTitle => nameTr.trim().isEmpty ? 'Sohbet Odası' : nameTr.trim();
 
   @override
