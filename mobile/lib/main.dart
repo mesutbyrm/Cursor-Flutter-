@@ -8,10 +8,29 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app/app.dart';
+import 'core/firebase/firebase_bootstrap.dart';
 import 'core/network/cookie_jar_provider.dart';
+import 'core/onesignal/onesignal_bootstrap.dart';
+import 'core/storage/local_cache.dart';
+import 'core/storage/theme_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await LocalCache.init();
+  } catch (e) {
+    debugPrint('LocalCache init failed: $e');
+  }
+
+  try {
+    await ThemePreferences.init();
+  } catch (e) {
+    debugPrint('ThemePreferences init failed: $e');
+  }
+
+  await OneSignalBootstrap.init();
+  await FirebaseBootstrap.init();
 
   // Ağ yokken font indirme bazı cihazlarda açılışta çökme yapabiliyor.
   GoogleFonts.config.allowRuntimeFetching = false;

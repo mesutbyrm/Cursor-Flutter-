@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/widgets/messages_notifications_actions.dart';
+import '../../../../../core/widgets/dual_balance_chips.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import 'profile_glass.dart';
 
-class ProfileNeonHeader extends StatelessWidget {
+class ProfileNeonHeader extends ConsumerWidget {
   const ProfileNeonHeader({
     super.key,
     required this.displayName,
@@ -16,9 +21,12 @@ class ProfileNeonHeader extends StatelessWidget {
     this.liveStreams = 0,
     this.likes = 0,
     this.diamondBalance,
+    this.cfcBalance = 0,
     this.onSettings,
     this.onEdit,
-    this.onNotifications,
+    this.onAvatarTap,
+    this.onFollowersTap,
+    this.onFollowingTap,
     this.onLogout,
   });
 
@@ -31,13 +39,16 @@ class ProfileNeonHeader extends StatelessWidget {
   final int liveStreams;
   final int likes;
   final int? diamondBalance;
+  final int cfcBalance;
   final VoidCallback? onSettings;
   final VoidCallback? onEdit;
-  final VoidCallback? onNotifications;
+  final VoidCallback? onAvatarTap;
+  final VoidCallback? onFollowersTap;
+  final VoidCallback? onFollowingTap;
   final VoidCallback? onLogout;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -48,18 +59,18 @@ class ProfileNeonHeader extends StatelessWidget {
               onPressed: onSettings,
             ),
             const Spacer(),
-            if (diamondBalance != null) _DiamondPill(balance: diamondBalance!),
-            const SizedBox(width: 8),
-            _TopIconButton(icon: Icons.edit_rounded, onPressed: onEdit),
-            if (onNotifications != null) ...[
-              const SizedBox(width: 4),
-              _TopIconButton(
-                icon: Icons.notifications_none_rounded,
-                onPressed: onNotifications,
+            if (diamondBalance != null)
+              DualBalanceChips(
+                jeton: diamondBalance!,
+                cfc: cfcBalance,
+                compact: true,
               ),
-            ],
+            SizedBox(width: 8),
+            _TopIconButton(icon: Icons.edit_rounded, onPressed: onEdit),
+            SizedBox(width: 4),
+            const MessagesNotificationsActions(spacing: 4, iconSize: 36),
             if (onLogout != null) ...[
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               _TopIconButton(
                 icon: Icons.logout_rounded,
                 onPressed: onLogout,
@@ -67,24 +78,29 @@ class ProfileNeonHeader extends StatelessWidget {
             ],
           ],
         ),
-        const SizedBox(height: 20),
-        Center(child: _NeonAvatar(url: avatarUrl)),
-        const SizedBox(height: 16),
+        SizedBox(height: 20),
+        Center(
+          child: GestureDetector(
+            onTap: onAvatarTap ?? onEdit,
+            child: _NeonAvatar(url: avatarUrl),
+          ),
+        ),
+        SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               displayName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w900,
                 letterSpacing: -0.5,
               ),
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             ShaderMask(
-              shaderCallback: (b) => AppDesign.heroGradient.createShader(b),
-              child: const Icon(
+              shaderCallback: (b) => context.colors.brandGradient.createShader(b),
+              child: Icon(
                 Icons.verified_rounded,
                 color: Colors.white,
                 size: 22,
@@ -92,17 +108,17 @@ class ProfileNeonHeader extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           '@$username',
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppDesign.textMuted,
+          style: TextStyle(
+            color: context.colors.onSurfaceMuted,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         Row(
           children: [
             Expanded(
@@ -116,6 +132,7 @@ class ProfileNeonHeader extends StatelessWidget {
               child: _StatColumn(
                 value: profileFormatCount(followers),
                 label: 'Takipçi',
+                onTap: onFollowersTap,
               ),
             ),
             _statDivider(),
@@ -123,6 +140,7 @@ class ProfileNeonHeader extends StatelessWidget {
               child: _StatColumn(
                 value: profileFormatCount(following),
                 label: 'Takip',
+                onTap: onFollowingTap,
               ),
             ),
             _statDivider(),
@@ -135,12 +153,12 @@ class ProfileNeonHeader extends StatelessWidget {
           ],
         ),
         if (bio != null && bio!.trim().isNotEmpty) ...[
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           Text(
             bio!,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppDesign.textSecondary,
+            style: TextStyle(
+              color: context.colors.onSurfaceVariant,
               fontSize: 14,
               height: 1.45,
             ),
@@ -176,64 +194,8 @@ class _TopIconButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(10),
-          child: Icon(icon, size: 20, color: AppDesign.textSecondary),
+          child: Icon(icon, size: 20, color: context.colors.onSurfaceVariant),
         ),
-      ),
-    );
-  }
-}
-
-class _DiamondPill extends StatelessWidget {
-  const _DiamondPill({required this.balance});
-
-  final int balance;
-
-  @override
-  Widget build(BuildContext context) {
-    return ProfileGlass(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      borderRadius: 20,
-      borderColor: const Color(0xFF5B8CFF).withValues(alpha: 0.45),
-      blur: 8,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF6EB5FF).withValues(alpha: 0.9),
-                  const Color(0xFF3D6BFF).withValues(alpha: 0.9),
-                ],
-              ),
-              boxShadow: AppDesign.glowShadow(
-                const Color(0xFF5B8CFF),
-                blur: 12,
-              ),
-            ),
-            child: const Icon(
-              Icons.diamond_rounded,
-              size: 14,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            profileFormatCoins(balance),
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Icon(
-            Icons.add_circle_rounded,
-            size: 16,
-            color: AppDesign.accentCyan.withValues(alpha: 0.9),
-          ),
-        ],
       ),
     );
   }
@@ -250,24 +212,24 @@ class _NeonAvatar extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: AppDesign.heroGradient,
+        gradient: context.colors.brandGradient,
         boxShadow: [
           BoxShadow(
-            color: AppDesign.accentPink.withValues(alpha: 0.55),
+            color: AppThemeColors.accentPink.withValues(alpha: 0.55),
             blurRadius: 32,
             spreadRadius: 2,
           ),
           BoxShadow(
-            color: AppDesign.accentPurple.withValues(alpha: 0.4),
+            color: AppThemeColors.accentPurple.withValues(alpha: 0.4),
             blurRadius: 48,
           ),
         ],
       ),
       child: Container(
         padding: const EdgeInsets.all(3),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppDesign.bgBase,
+          color: context.scaffoldBg,
         ),
         child: Stack(
           clipBehavior: Clip.none,
@@ -280,10 +242,10 @@ class _NeonAvatar extends StatelessWidget {
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: AppDesign.heroGradient,
-                  border: Border.all(color: AppDesign.bgBase, width: 2),
+                  gradient: context.colors.brandGradient,
+                  border: Border.all(color: context.scaffoldBg, width: 2),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.star_rounded,
                   size: 14,
                   color: Colors.white,
@@ -298,36 +260,51 @@ class _NeonAvatar extends StatelessWidget {
 }
 
 class _StatColumn extends StatelessWidget {
-  const _StatColumn({required this.value, required this.label});
+  const _StatColumn({
+    required this.value,
+    required this.label,
+    this.onTap,
+  });
 
   final String value;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.3,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                style: TextStyle(
+                  color: context.colors.onSurfaceMuted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          style: const TextStyle(
-            color: AppDesign.textMuted,
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            height: 1.2,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

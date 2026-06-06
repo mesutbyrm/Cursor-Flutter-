@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart';
+import 'dual_balance_chips.dart';
 import 'user_avatar.dart';
 
 /// Profil sekmesi gibi yerlerde: ana akışa (`/feed`) döner.
@@ -86,42 +87,25 @@ class ShellCoinBalanceAction extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final coins = ref.watch(coinBalanceProvider);
+    final wallet = ref.watch(walletBalancesProvider);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: Tooltip(
-        message: 'Jeton yükle',
-        child: InkWell(
-          onTap: () => context.push('/jeton-store'),
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.monetization_on_rounded,
-                    size: 20, color: Color(0xFFFFD54F)),
-                const SizedBox(width: 4),
-                coins.when(
-                  data: (c) => Text(
-                    '$c',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 14,
-                    ),
-                  ),
-                  loading: () => const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  error: (e, s) => const Text(
-                    '—',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                ),
-              ],
-            ),
+      child: wallet.when(
+        data: (b) => DualBalanceChips(
+          jeton: b.jeton,
+          cfc: b.cfc,
+          compact: true,
+        ),
+        loading: () => const SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+        error: (_, _) => Tooltip(
+          message: 'Jeton yükle',
+          child: InkWell(
+            onTap: () => context.push('/jeton-store'),
+            child: const Icon(Icons.monetization_on_rounded, size: 22),
           ),
         ),
       ),

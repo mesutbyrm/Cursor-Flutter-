@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/providers/auth_selectors.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../../data/datasources/social_remote_datasource.dart';
 import '../../data/repositories/social_repository_impl.dart';
+import '../../domain/entities/social_story_ring_entity.dart';
 import '../../domain/repositories/social_repository.dart';
 
 final socialRemoteProvider = Provider<SocialRemoteDataSource>((ref) {
@@ -11,7 +13,10 @@ final socialRemoteProvider = Provider<SocialRemoteDataSource>((ref) {
 });
 
 final socialRepositoryProvider = Provider<SocialRepository>((ref) {
-  return SocialRepositoryImpl(ref.watch(socialRemoteProvider));
+  return SocialRepositoryImpl(
+    ref.watch(socialRemoteProvider),
+    currentUserId: ref.watch(currentUserIdProvider),
+  );
 });
 
 class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
@@ -64,3 +69,15 @@ class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
 
 final socialNotifierProvider =
     AsyncNotifierProvider<SocialNotifier, List<PostEntity>>(SocialNotifier.new);
+
+/// Üst hikâye şeridi — canlifal.com `/api/stories`.
+final socialStoryRingsProvider =
+    FutureProvider<List<SocialStoryRingEntity>>((ref) async {
+  return ref.read(socialRemoteProvider).fetchStoryRings();
+});
+
+/// Profil sayfası — kullanıcının paylaşımları (TikTok ızgara).
+final userSocialPostsProvider =
+    FutureProvider.family<List<PostEntity>, String>((ref, userId) async {
+  return ref.read(socialRepositoryProvider).fetchPostsByUser(userId);
+});

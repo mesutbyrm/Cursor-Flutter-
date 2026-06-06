@@ -6,59 +6,40 @@ import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../providers/chat_room_providers.dart';
-import '../../providers/voice_room_ui_provider.dart';
 import '../../services/voice_room_dj_player.dart';
 import '../premium/voice_glass.dart';
 
-/// Şu an çalan müzik — web ile aynı: duraklat, ses, kapat.
+/// Şu an çalan müzik — kapak, ilerleme, isteyen.
 class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
   const VoiceRoomMusicMiniPlayer({
     super.key,
     required this.dj,
     this.onTap,
     this.onSkip,
-    this.onStop,
     this.canModerate = false,
   });
 
   final ChatRoomDjState dj;
   final VoidCallback? onTap;
   final VoidCallback? onSkip;
-  final VoidCallback? onStop;
   final bool canModerate;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final track = dj.nowPlaying ??
         (dj.musicQueue.isNotEmpty ? dj.musicQueue.first : null);
-    if (track == null && !dj.playing) return const SizedBox.shrink();
+    if (track == null) return const SizedBox.shrink();
 
     final playback = ref.watch(voiceRoomDjPlayerProvider).playback;
-    final ui = ref.watch(voiceRoomUiProvider);
-    final effectiveTrack = track ??
-        MusicQueueItem(
-          id: 'unknown',
-          title: 'Şarkı yükleniyor…',
-          youtubeUrl: dj.musicUrl ?? '',
-          createdAt: DateTime.now(),
-        );
 
     return ValueListenableBuilder<VoiceRoomDjPlayback>(
       valueListenable: playback,
       builder: (context, pb, _) {
-        final showBar = dj.playing ||
-            track != null ||
-            dj.musicQueue.isNotEmpty ||
-            pb.playing ||
-            pb.paused;
-        if (!showBar) return const SizedBox.shrink();
-
+        if (!dj.playing && !pb.playing) return const SizedBox.shrink();
         final progress =
-            pb.duration.inMilliseconds > 0 ? pb.progress : 0.0;
+            pb.duration.inMilliseconds > 0 ? pb.progress : 0.08;
         final remaining =
             pb.duration.inMilliseconds > 0 ? _format(pb.remaining) : '—:—';
-        final isPaused = pb.paused || (!pb.playing && dj.playing);
-
         return Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
           child: VoiceGlass(
@@ -69,7 +50,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 6, 6),
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
                   child: Row(
                     children: [
                       ClipRRect(
@@ -77,7 +58,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                         child: SizedBox(
                           width: 44,
                           height: 44,
-                          child: _thumb(effectiveTrack),
+                          child: _thumb(track),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -86,15 +67,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '🎶 Şu an çalıyor',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white.withValues(alpha: 0.65),
-                              ),
-                            ),
-                            Text(
-                              effectiveTrack.title,
+                              track.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -103,8 +76,18 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                                 color: Colors.white,
                               ),
                             ),
+                            if (track.artistLine.isNotEmpty)
+                              Text(
+                                track.artistLine,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.white.withValues(alpha: 0.72),
+                                ),
+                              ),
                             Text(
-                              'İsteyen: ${effectiveTrack.requestedBy?.displayName ?? '—'} · $remaining',
+                              'İsteyen: ${track.requestedBy?.displayName ?? '—'} · $remaining',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -114,30 +97,6 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                             ),
                           ],
                         ),
-                      ),
-                      _ControlButton(
-                        color: const Color(0xFFFFC107),
-                        icon: isPaused
-                            ? Icons.play_arrow_rounded
-                            : Icons.pause_rounded,
-                        onPressed: () => ref
-                            .read(voiceRoomDjPlayerProvider)
-                            .togglePause(),
-                      ),
-                      _ControlButton(
-                        color: AppThemeColors.accentPurple,
-                        icon: ui.backgroundMusicEnabled
-                            ? Icons.volume_up_rounded
-                            : Icons.volume_off_rounded,
-                        onPressed: () => ref
-                            .read(voiceRoomUiProvider.notifier)
-                            .toggleBackgroundMusic(),
-                      ),
-                      _ControlButton(
-                        color: AppThemeColors.liveRed,
-                        icon: Icons.close_rounded,
-                        onPressed: onStop ??
-                            () => ref.read(voiceRoomDjPlayerProvider).stop(),
                       ),
                       if (canModerate && onSkip != null)
                         IconButton(
@@ -156,7 +115,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                     bottom: Radius.circular(16),
                   ),
                   child: LinearProgressIndicator(
-                    value: progress > 0 ? progress : null,
+                    value: progress,
                     minHeight: 3,
                     backgroundColor: Colors.white12,
                     color: AppThemeColors.accentPink,
@@ -185,37 +144,5 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
     final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$m:$s';
-  }
-}
-
-class _ControlButton extends StatelessWidget {
-  const _ControlButton({
-    required this.color,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  final Color color;
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Material(
-        color: color,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(10),
-          child: SizedBox(
-            width: 34,
-            height: 34,
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
-        ),
-      ),
-    );
   }
 }

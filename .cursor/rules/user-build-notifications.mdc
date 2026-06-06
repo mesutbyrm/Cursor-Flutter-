@@ -1,0 +1,38 @@
+---
+description: APK derlemesi bitince ve özellik eklendiğinde kullanıcıyı bilgilendir
+alwaysApply: true
+---
+
+# Kullanıcı bildirimi — APK ve özellikler (zorunlu)
+
+Kullanıcı isteği: **Her oturumda** APK derlemesi bittiğinde ve **işlenen özellikler** eklendiğinde bilgilendirilsin.
+
+## Ne zaman bildir
+
+1. `main`’e `mobile/` veya APK workflow değişikliği **push** ettiysen
+2. Kullanıcıya yeni özellik / düzeltme **özetlediğinde**
+3. Oturum **kapanmadan önce** (son kullanıcı mesajında)
+
+## Agent yapacakları
+
+1. Push sonrası (mümkünse): `bash scripts/wait-apk-build.sh 900` — başarılı olana kadar bekle (zaman aşımında durumu yaz).
+2. Özet için: `bash scripts/print-build-status.sh` ve `mobile/CHANGELOG.md` en üst sürüm bloğu.
+3. Kullanıcı mesajında **ayrı bir bölüm** kullan:
+
+### 📢 Derleme ve özellikler
+
+- **Sürüm:** `X.Y.Z+build` (`mobile/pubspec.yaml`)
+- **Yeni / güncel özellikler:** CHANGELOG veya bu oturumda yaptığın maddeler (madde madde, Türkçe)
+- **APK derleme:** başarılı / devam ediyor / başarısız + [Actions linki](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml)
+- **İndir:** https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
+- **Detay dosyası:** `docs/LATEST_APK_BUILD.md` (CI günceller)
+
+Derleme hâlâ sürüyorsa bunu açıkça yaz; bitince aynı linkler geçerli olur.
+
+## GitHub e-posta bildirimi (kullanıcıya söyle)
+
+Depoda **Watch → Custom → Releases** açarsa `apk-latest` her güncellendiğinde GitHub e-posta gönderebilir.
+
+## APK footer
+
+`flutter-apk-footer.mdc` ile birlikte uygula; bu kural **özellik listesi + derleme durumu** ekler.

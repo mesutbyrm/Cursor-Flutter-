@@ -1,0 +1,12 @@
+HTTP/2 400 
+date: Sat, 23 May 2026 13:39:36 GMT
+content-type: text/plain;charset=UTF-8
+server: cloudflare
+vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+x-envoy-upstream-service-time: 6
+cf-cache-status: DYNAMIC
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=kdGGhK7q2Qvc%2BOA6d4WJIAEBLyhDV7Pt%2FPy6s4HCcOeWEA5Mc2BVDaHyNclBclDHr%2B6JH3Odkm37VBNI6nhvDzRR66SbYyQIhIQSiJraQtFEarXsPV8QrSnz%2BOfPVmw%3D"}]}
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+cf-ray: a00477b98837c76b-IAD
+alt-svc: h3=":443"; ma=86400
+

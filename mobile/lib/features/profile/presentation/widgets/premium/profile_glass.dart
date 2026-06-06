@@ -1,16 +1,16 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/theme/app_theme_extensions.dart';
+import '../../../../../core/widgets/themed_glass_card.dart';
 
-/// Cam efektli kart — profil sayfası bileşenleri için.
+/// Cam efektli kart — profil bileşenleri ([ThemedGlassCard]).
 class ProfileGlass extends StatelessWidget {
   const ProfileGlass({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(16),
-    this.borderRadius = AppDesign.radiusCard,
+    this.borderRadius = AppSpacing.radiusLg,
     this.borderColor,
     this.gradient,
     this.onTap,
@@ -27,51 +27,13 @@ class ProfileGlass extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final border = borderColor ?? AppDesign.accentPurple.withValues(alpha: 0.28);
-
-    Widget content = ClipRRect(
+    return ThemedGlassCard(
+      padding: padding,
+      onTap: onTap,
+      blur: blur,
       borderRadius: BorderRadius.circular(borderRadius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(borderRadius),
-            gradient: gradient ??
-                LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF1E1E36).withValues(alpha: 0.72),
-                    const Color(0xFF141428).withValues(alpha: 0.55),
-                  ],
-                ),
-            border: Border.all(color: border, width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: AppDesign.accentPurple.withValues(alpha: 0.12),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: child,
-        ),
-      ),
+      child: child,
     );
-
-    if (onTap != null) {
-      content = Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(borderRadius),
-          child: content,
-        ),
-      );
-    }
-
-    return content;
   }
 }
 
@@ -87,17 +49,19 @@ class ProfileSectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 8, 4, 12),
       child: Row(
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
-            ),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
+                  color: c.onSurface,
+                ),
           ),
           const Spacer(),
           if (trailing != null) trailing!,

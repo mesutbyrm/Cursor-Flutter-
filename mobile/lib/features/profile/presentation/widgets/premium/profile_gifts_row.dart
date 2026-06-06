@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../domain/entities/profile_stats_entity.dart';
+import '../../providers/profile_providers.dart';
 import 'profile_glass.dart';
 
-class ProfileGiftsRow extends StatelessWidget {
+class ProfileGiftsRow extends ConsumerWidget {
   const ProfileGiftsRow({super.key, this.onViewAll});
 
   final VoidCallback? onViewAll;
 
-  static const _gifts = [
-    (emoji: '🌹', label: 'Gül', count: 12, colors: [Color(0xFFFF6B9D), Color(0xFFC9184A)]),
-    (emoji: '💖', label: 'Kalp', count: 23, colors: [Color(0xFFFF5E9A), Color(0xFFFF2D9A)]),
-    (emoji: '⭐', label: 'Yıldız', count: 8, colors: [Color(0xFFFFD54F), Color(0xFFFF9800)]),
-    (emoji: '🧸', label: 'Ayıcık', count: 5, colors: [Color(0xFFD4A574), Color(0xFF8B5A2B)]),
-    (emoji: '👑', label: 'Taç', count: 3, colors: [Color(0xFFFFD54F), Color(0xFFB8860B)]),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gifts = ref.watch(giftsReceivedSummaryProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -26,7 +25,7 @@ class ProfileGiftsRow extends StatelessWidget {
           trailing: TextButton(
             onPressed: onViewAll,
             style: TextButton.styleFrom(
-              foregroundColor: AppDesign.accentCyan,
+              foregroundColor: AppThemeColors.accentCyan,
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -37,40 +36,56 @@ class ProfileGiftsRow extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(
-          height: 100,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _gifts.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (ctx, i) {
-              final g = _gifts[i];
-              return _GiftTile(
-                emoji: g.emoji,
-                count: g.count,
-                colors: g.colors,
-              );
-            },
+        gifts.when(
+          loading: () => const SizedBox(
+            height: 100,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
           ),
+          error: (_, _) => const _EmptyGiftsHint(),
+          data: (items) {
+            if (items.isEmpty) return const _EmptyGiftsHint();
+            return SizedBox(
+              height: 100,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: items.length.clamp(0, 8),
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
+                itemBuilder: (ctx, i) => _GiftTile(gift: items[i]),
+              ),
+            );
+          },
         ),
       ],
     );
   }
 }
 
-class _GiftTile extends StatelessWidget {
-  const _GiftTile({
-    required this.emoji,
-    required this.count,
-    required this.colors,
-  });
-
-  final String emoji;
-  final int count;
-  final List<Color> colors;
+class _EmptyGiftsHint extends StatelessWidget {
+  const _EmptyGiftsHint();
 
   @override
   Widget build(BuildContext context) {
+    return ProfileGlass(
+      padding: const EdgeInsets.all(16),
+      child: Text(
+        'Yayınlarda aldığın hediyeler burada görünür.',
+        style: TextStyle(
+          fontSize: 13,
+          color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
+        ),
+      ),
+    );
+  }
+}
+
+class _GiftTile extends StatelessWidget {
+  const _GiftTile({required this.gift});
+
+  final GiftReceivedSummaryEntity gift;
+
+  @override
+  Widget build(BuildContext context) {
+    final display = gift.icon.startsWith('http') ? '🎁' : gift.icon;
     return SizedBox(
       width: 72,
       child: ProfileGlass(
@@ -89,19 +104,13 @@ class _GiftTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: colors,
+                      colors: [
+                        AppThemeColors.accentPink.withValues(alpha: 0.8),
+                        AppThemeColors.accentPurple.withValues(alpha: 0.6),
+                      ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.first.withValues(alpha: 0.45),
-                        blurRadius: 14,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
                   ),
-                  child: Text(emoji, style: const TextStyle(fontSize: 26)),
+                  child: Text(display, style: const TextStyle(fontSize: 26)),
                 ),
               ],
             ),
@@ -111,12 +120,12 @@ class _GiftTile extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  gradient: AppDesign.heroGradient,
+                  gradient: context.colors.brandGradient,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppDesign.bgBase, width: 1.5),
+                  border: Border.all(color: context.scaffoldBg, width: 1.5),
                 ),
                 child: Text(
-                  'x$count',
+                  'x${gift.count}',
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../core/theme/app_design.dart';
 
 /// Google markasına yakın renklerle "G" rozeti + metin.
 class GoogleSignInButton extends StatelessWidget {
@@ -27,7 +29,7 @@ class GoogleSignInButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             color: const Color(0xFF16162A).withValues(alpha: 0.92),
             border: Border.all(
-              color: AppDesign.accentPurple.withValues(alpha: 0.35),
+              color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
             ),
           ),
           child: Padding(
@@ -36,26 +38,26 @@ class GoogleSignInButton extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (busy)
-                  const SizedBox(
+                  SizedBox(
                     height: 22,
                     width: 22,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: AppDesign.accentPink,
+                      color: AppThemeColors.accentPink,
                     ),
                   )
                 else ...[
                   const _GoogleGlyph(),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Flexible(
                     child: Text(
                       label,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                         letterSpacing: -0.2,
-                        color: AppDesign.textPrimary,
+                        color: context.colors.onSurface,
                       ),
                     ),
                   ),
@@ -104,7 +106,7 @@ class _GoogleGlyph extends StatelessWidget {
             stops: [0.0, 0.35, 0.65, 1.0],
           ).createShader(bounds);
         },
-        child: const Text(
+        child: Text(
           'G',
           style: TextStyle(
             fontSize: 16,
@@ -114,40 +116,6 @@ class _GoogleGlyph extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// İnce ayırıcı + "veya" etiketi.
-class AuthOrDivider extends StatelessWidget {
-  const AuthOrDivider({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Divider(
-            color: AppDesign.accentPurple.withValues(alpha: 0.25),
-          ),
-        ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14),
-          child: Text(
-            'veya',
-            style: TextStyle(
-              color: AppDesign.textMuted,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Divider(
-            color: AppDesign.accentPurple.withValues(alpha: 0.25),
-          ),
-        ),
-      ],
     );
   }
 }

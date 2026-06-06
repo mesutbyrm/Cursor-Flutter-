@@ -12,11 +12,21 @@ https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlif
 
 | Sürüm | İndirme |
 |-------|---------|
-| **apk-latest** (otomatik) | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
+| **apk-latest** (otomatik, `main` son derleme) | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
+| **Kaynak sürüm (dal)** | `mobile/pubspec.yaml` → `version:` (**1.0.95+97**) |
+| **v1.0.6** (ana sayfa + navbar) | [Releases](https://github.com/mesutbyrm/Cursor-Flutter-/releases) |
 | v1.0.5 | [Releases](https://github.com/mesutbyrm/Cursor-Flutter-/releases/tag/v1.0.5) |
 | v1.0.4 sesli oda (neon UI) | [canlifal-v104-voice-7009.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-v104-voice-7009/canlifal-v104-voice-7009.apk) |
 
 Tüm sürümler: https://github.com/mesutbyrm/Cursor-Flutter-/releases
+
+## Bildirimler
+
+| Yöntem | Nasıl |
+|--------|--------|
+| **Bu dosya (otomatik)** | Her başarılı `main` derlemesinde [`docs/LATEST_APK_BUILD.md`](docs/LATEST_APK_BUILD.md) güncellenir (sürüm + özellikler). |
+| **GitHub e-posta** | Depoda **Watch → Custom → Releases** işaretleyin; `apk-latest` yenilendiğinde e-posta gelir. |
+| **Cursor Agent** | Oturum sonunda agent APK linki + CHANGELOG özeti verir (`scripts/print-build-status.sh`). |
 
 ## Kurulum
 

@@ -9,7 +9,6 @@ import '../../../../core/network/token_storage.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
-import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_debug_log.dart';
@@ -29,6 +28,7 @@ import '../../domain/entities/popular_music_suggestion.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/youtube_stream_resolver.dart';
 import '../services/voice_room_dj_player.dart';
+import 'voice_gift_providers.dart';
 import 'voice_room_ui_provider.dart';
 
 final youtubeStreamResolverProvider = Provider<YoutubeStreamResolver>((ref) {
@@ -373,7 +373,9 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     _giftSocket!.connect(
       roomId: _roomKey,
       alternateRoomId: arg.id,
-      onEvent: (_) {},
+      onEvent: (event) {
+        ref.read(voiceRoomGiftRealtimeProvider).publishRemote(event);
+      },
       onDjUpdate: (payload) => unawaited(_applyDjRealtimePayload(payload)),
       accessToken: storage.readAccess,
     );
@@ -578,6 +580,12 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     final playbackUrl = effectiveDj.playbackSource;
     final shouldPlay = effectiveDj.playing && playbackUrl != null;
     VoiceRoomDebugLog.log('music.player.sync', {
+      'roomId': _roomKey,
+      'musicId': effectiveDj.nowPlaying?.id,
+      'youtubeVideoId': effectiveDj.nowPlaying?.youtubeUrl,
+      'streamUrl': playbackUrl,
+      'audioUrl': playbackUrl,
+      'playState': effectiveDj.playing,
       'shouldPlay': shouldPlay,
       'hasUrl': playbackUrl != null,
       'muted': !ui.backgroundMusicEnabled,
@@ -778,8 +786,9 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       messages: state.messages
           .where(
             (m) =>
+                m.kind != ChatMessageKind.text ||
                 m.content.contains('temizlendi') ||
-                m.content.contains('Sohbet akışı temizlendi'),
+                m.content.toUpperCase().contains('DUYURU'),
           )
           .toList(),
     );
@@ -860,16 +869,12 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       );
     }
 
-    final outbound = isClear && (perms.canModerate || perms.isRoomOwner)
-        ? '!temizle'
-        : trimmed;
-
     try {
       ChatRoomMessage? sent;
       try {
         sent = await ref.read(chatRoomRemoteProvider).sendMessage(
               roomKey: _roomKey,
-              content: outbound,
+              content: trimmed,
             ).timeout(const Duration(seconds: 22));
       } on TimeoutException {
         rethrow;
@@ -1100,17 +1105,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     } catch (e) {
       return ApiException.userMessage(e);
     }
-  }
-
-  Future<void> stopRoomMusic({bool clearQueue = false}) async {
-    await ref.read(voiceRoomDjPlayerProvider).stop();
-    if (clearQueue) {
-      await clearMusicQueue();
-      return;
-    }
-    await _applyDjPlayback(
-      state.dj.copyWith(playing: false),
-    );
   }
 
   Future<String?> updateMusicSettings({

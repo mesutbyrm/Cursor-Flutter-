@@ -1,10 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/performance/list_perf.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../moderation/domain/entities/report_target.dart';
+import '../../../moderation/presentation/utils/open_report_flow.dart';
+import '../providers/chat_messages_list_notifier.dart';
 import '../providers/messages_providers.dart';
+import '../widgets/chat_composer.dart';
+import '../widgets/chat_message_bubble.dart';
+import '../widgets/chat_typing_indicator.dart';
 
 class ChatPage extends ConsumerStatefulWidget {
   const ChatPage({super.key, required this.conversationId});
@@ -18,19 +28,68 @@ class ChatPage extends ConsumerStatefulWidget {
 class _ChatPageState extends ConsumerState<ChatPage> {
   final _text = TextEditingController();
   final _scroll = ScrollController();
-  bool _sending = false;
+  var _sending = false;
+  var _peerTyping = false;
+  Timer? _typingHideTimer;
+  Timer? _typingEmitTimer;
+  Timer? _poll;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+    _poll = Timer.periodic(const Duration(seconds: 8), (_) {
+      if (!mounted) return;
+      ref
+          .read(chatMessagesListNotifierProvider(widget.conversationId)
+              .notifier)
+          .refresh();
+    });
+  }
 
   @override
   void dispose() {
+    _poll?.cancel();
+    _scroll.removeListener(_onScroll);
+    _typingHideTimer?.cancel();
+    _typingEmitTimer?.cancel();
     _text.dispose();
     _scroll.dispose();
     super.dispose();
   }
 
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    if (_scroll.position.pixels <= ListPerf.preloadThresholdPx) {
+      ref
+          .read(chatMessagesListNotifierProvider(widget.conversationId)
+              .notifier)
+          .loadOlder();
+    }
+  }
+
   void _scrollToEnd() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!_scroll.hasClients) return;
-      _scroll.jumpTo(_scroll.position.maxScrollExtent);
+      final max = _scroll.position.maxScrollExtent;
+      await _scroll.animateTo(
+        max,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  void _onComposerChanged(String value) {
+    _typingEmitTimer?.cancel();
+    if (value.trim().isEmpty) return;
+    _typingEmitTimer = Timer(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+      setState(() => _peerTyping = true);
+      _typingHideTimer?.cancel();
+      _typingHideTimer = Timer(const Duration(seconds: 3), () {
+        if (mounted) setState(() => _peerTyping = false);
+      });
     });
   }
 
@@ -43,7 +102,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           .read(messagesRepositoryProvider)
           .sendMessage(widget.conversationId, t);
       _text.clear();
-      ref.invalidate(chatMessagesProvider(widget.conversationId));
+      await ref
+          .read(chatMessagesListNotifierProvider(widget.conversationId)
+              .notifier)
+          .refresh();
       ref.invalidate(conversationsProvider);
       _scrollToEnd();
     } finally {
@@ -53,33 +115,51 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    final msgs = ref.watch(chatMessagesProvider(widget.conversationId));
+    final msgs =
+        ref.watch(chatMessagesListNotifierProvider(widget.conversationId));
 
-    ref.listen(chatMessagesProvider(widget.conversationId), (_, next) {
+    ref.listen(chatMessagesListNotifierProvider(widget.conversationId),
+        (_, next) {
       next.whenData((_) => _scrollToEnd());
     });
 
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: Column(
           children: [
             SizedBox(height: MediaQuery.paddingOf(context).top + 4),
-            Padding(
-              padding: const EdgeInsets.only(left: 4, right: 12),
-              child: Row(
-                children: [
-                  DiscoverIconButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onPressed: () => Navigator.of(context).maybePop(),
-                  ),
-                  const Expanded(
-                    child: DiscoverTabHeader(
-                      title: 'Sohbet',
-                      subtitle: 'Mesajlaşma',
+            ProGlassTopBar(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 4, right: 12),
+                child: Row(
+                  children: [
+                    DiscoverIconButton(
+                      icon: Icons.arrow_back_ios_new_rounded,
+                      onPressed: () => Navigator.of(context).maybePop(),
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: DiscoverTabHeader(
+                        title: 'Sohbet',
+                        subtitle: 'Çevrimiçi',
+                        actions: [
+                          DiscoverIconButton(
+                            icon: Icons.flag_outlined,
+                            tooltip: 'Sohbeti bildir',
+                            onPressed: () => openReportFlow(
+                              context,
+                              ReportTarget(
+                                type: ReportTargetType.conversation,
+                                targetId: widget.conversationId,
+                                displayTitle: 'Sohbet',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             Expanded(
@@ -89,151 +169,59 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   icon: Icons.chat_bubble_outline,
                   message: e.toString(),
                 ),
-                data: (rows) {
-                  if (rows.isEmpty) {
+                data: (state) {
+                  if (state.all.isEmpty) {
                     return const DiscoverEmptyState(
                       icon: Icons.waving_hand_rounded,
                       message: 'Mesaj yok — ilk mesajı gönder.',
                     );
                   }
+                  final rows = state.visible;
+                  final showOlder = state.hasMore;
                   return ListView.builder(
                     controller: _scroll,
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                    itemCount: rows.length,
+                    physics: ListPerf.listPhysics,
+                    cacheExtent: ListPerf.cacheExtent,
+                    itemCount: rows.length + (showOlder ? 1 : 0),
                     itemBuilder: (ctx, i) {
-                      final m = rows[i];
-                      return Align(
-                        alignment: m.isMine
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          constraints: BoxConstraints(
-                            maxWidth: MediaQuery.sizeOf(context).width * 0.78,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: m.isMine
-                                ? AppDesign.heroGradient
-                                : null,
-                            color: m.isMine
-                                ? null
-                                : const Color(0xFF16162A)
-                                    .withValues(alpha: 0.92),
-                            borderRadius: BorderRadius.only(
-                              topLeft: const Radius.circular(16),
-                              topRight: const Radius.circular(16),
-                              bottomLeft: Radius.circular(m.isMine ? 16 : 4),
-                              bottomRight: Radius.circular(m.isMine ? 4 : 16),
-                            ),
-                            border: m.isMine
-                                ? null
-                                : Border.all(
-                                    color: AppDesign.accentPurple
-                                        .withValues(alpha: 0.25),
-                                  ),
-                          ),
-                          child: Text(
-                            m.text,
-                            style: TextStyle(
-                              color: m.isMine
-                                  ? Colors.white
-                                  : AppDesign.textPrimary,
-                              height: 1.35,
+                      if (showOlder && i == 0) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Center(
+                            child: TextButton.icon(
+                              onPressed: () => ref
+                                  .read(
+                                    chatMessagesListNotifierProvider(
+                                      widget.conversationId,
+                                    ).notifier,
+                                  )
+                                  .loadOlder(),
+                              icon: const Icon(Icons.expand_less_rounded),
+                              label: Text(
+                                state.olderHiddenCount > 0
+                                    ? '${state.olderHiddenCount} eski mesaj'
+                                    : 'Daha fazla yükle',
+                              ),
                             ),
                           ),
-                        ),
+                        );
+                      }
+                      final idx = showOlder ? i - 1 : i;
+                      return ListPerf.repaint(
+                        ChatMessageBubble(message: rows[idx]),
                       );
                     },
                   );
                 },
               ),
             ),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _text,
-                        minLines: 1,
-                        maxLines: 4,
-                        style: const TextStyle(color: AppDesign.textPrimary),
-                        decoration: InputDecoration(
-                          hintText: 'Mesaj yaz...',
-                          hintStyle: TextStyle(
-                            color: AppDesign.textMuted.withValues(alpha: 0.8),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white.withValues(alpha: 0.06),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(
-                              color: AppDesign.accentPurple
-                                  .withValues(alpha: 0.3),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(
-                              color: AppDesign.accentPurple
-                                  .withValues(alpha: 0.25),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppDesign.accentPink,
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
-                        onSubmitted: (_) => _send(),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: _sending ? null : _send,
-                        borderRadius: BorderRadius.circular(16),
-                        child: Ink(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            gradient: AppDesign.heroGradient,
-                          ),
-                          child: Center(
-                            child: _sending
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons.send_rounded,
-                                    color: Colors.white,
-                                    size: 22,
-                                  ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            if (_peerTyping) const ChatTypingIndicator(),
+            ChatComposer(
+              controller: _text,
+              sending: _sending,
+              onSend: _send,
+              onChanged: _onComposerChanged,
             ),
           ],
         ),

@@ -1,0 +1,17 @@
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:11:8: Error: Error when reading 'lib/features/voice_hub/vip_gold/domain/voice_room_access.dart': No such file or directory
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:12:8: Error: Error when reading 'lib/features/voice_hub/vip_gold/presentation/theme/vip_gold_tokens.dart': No such file or directory
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:62:55: Error: Undefined name 'VipGoldTokens'.
+lib/features/voice_hub/presentation/widgets/premium_2026/pk/pk_mic_participant_row.dart:40:23: Error: The method '_EmptyMicSlot' isn't defined for the class 'PkMicParticipantRow'.
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:86:36: Error: The getter 'isVipGoldRoom' isn't defined for the class 'VoiceRoomEntity'.
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:110:50: Error: The getter 'isVipGoldRoom' isn't defined for the class 'VoiceRoomEntity'.
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:292:44: Error: The getter 'isVipGoldRoom' isn't defined for the class 'VoiceRoomEntity'.
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:373:33: Error: The getter 'VipGoldTokens' isn't defined for the class '_DiscoverHeader'.
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:420:43: Error: The getter 'VipGoldTokens' isn't defined for the class '_DiscoverHeader'.
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:426:40: Error: The getter 'VipGoldTokens' isn't defined for the class '_DiscoverHeader'.
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:784:18: Error: The getter 'VipGoldTokens' isn't defined for the class '_PopularRoomCard'.
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:1089:19: Error: The getter 'VipGoldTokens' isn't defined for the class '_VipRoomCard'.
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:1093:41: Error: The getter 'VipGoldTokens' isn't defined for the class '_VipRoomCard'.
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:1104:35: Error: The getter 'VipGoldTokens' isn't defined for the class '_VipRoomCard'.
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:1118:28: Error: The getter 'isPasswordLockedRoom' isn't defined for the class 'VoiceRoomEntity'.
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:1121:30: Error: The getter 'VipGoldTokens' isn't defined for the class '_VipRoomCard'.
+lib/features/voice_hub/presentation/widgets/premium_2026/voice_discover_hub_2026.dart:1151:28: Error: The getter 'VipGoldTokens' isn't defined for the class '_VipRoomCard'.

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/network/dio_provider.dart';
+import '../../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../data/datasources/live_gifts_remote_datasource.dart';
 import '../../../data/services/live_gift_realtime_service.dart';
 import '../../../data/services/live_gift_socket_bridge.dart';
@@ -16,10 +17,7 @@ final liveGiftSocketBridgeProvider = Provider<LiveGiftSocketBridge>((ref) {
 });
 
 final liveGiftRealtimeProvider = Provider<LiveGiftRealtimeService>((ref) {
-  final svc = LiveGiftRealtimeService(
-    ref.watch(liveGiftsRemoteProvider),
-    ref.watch(liveGiftSocketBridgeProvider),
-  );
+  final svc = LiveGiftRealtimeService(ref.watch(liveGiftsRemoteProvider));
   ref.onDispose(svc.dispose);
   return svc;
 });
@@ -29,6 +27,7 @@ final liveGiftControllerProvider =
   final c = LiveGiftController(
     remote: ref.watch(liveGiftsRemoteProvider),
     realtime: ref.watch(liveGiftRealtimeProvider),
+    sound: ref.watch(giftSoundServiceProvider),
   );
   ref.onDispose(c.dispose);
   return c;
@@ -36,5 +35,6 @@ final liveGiftControllerProvider =
 
 final liveGiftTypesProvider =
     FutureProvider.autoDispose<List<LiveVideoGiftType>>((ref) async {
-  return ref.watch(liveGiftsRemoteProvider).fetchGiftTypes();
+  final catalog = await ref.watch(liveGiftCatalogProvider.future);
+  return catalog.map(LiveVideoGiftType.fromGift).toList();
 });

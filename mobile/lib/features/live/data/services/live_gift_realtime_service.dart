@@ -2,14 +2,12 @@ import 'dart:async';
 
 import '../../domain/entities/live_gift_event.dart';
 import '../datasources/live_gifts_remote_datasource.dart';
-import 'live_gift_socket_bridge.dart';
 
-/// REST poll + isteğe bağlı Socket.IO + yerel olay hattı.
+/// REST poll + yerel olay hattı (socket LiveRoomController üzerinden).
 class LiveGiftRealtimeService {
-  LiveGiftRealtimeService(this._remote, this._socket);
+  LiveGiftRealtimeService(this._remote);
 
   final LiveGiftsRemoteDataSource _remote;
-  final LiveGiftSocketBridge _socket;
   final _local = StreamController<LiveGiftEvent>.broadcast();
   final Set<String> _seen = {};
 
@@ -24,20 +22,13 @@ class LiveGiftRealtimeService {
     stop();
     _streamId = streamId;
     _since = DateTime.now().subtract(const Duration(minutes: 2));
-    _socket.connect(
-      streamId: streamId,
-      onEvent: (e) {
-        if (_seen.add(e.id) && !_local.isClosed) _local.add(e);
-      },
-    );
-    _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) => _poll());
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) => _poll());
     _poll();
   }
 
   void stop() {
     _pollTimer?.cancel();
     _pollTimer = null;
-    _socket.disconnect();
     _streamId = null;
   }
 
@@ -46,10 +37,13 @@ class LiveGiftRealtimeService {
     _local.close();
   }
 
-  /// Gönderen cihazda anında gösterim (tüm izleyiciler poll ile alır).
   void publishLocal(LiveGiftEvent event) {
     _seen.add(event.id);
     if (!_local.isClosed) _local.add(event);
+  }
+
+  void publishRemote(LiveGiftEvent event) {
+    if (_seen.add(event.id) && !_local.isClosed) _local.add(event);
   }
 
   Future<void> _poll() async {

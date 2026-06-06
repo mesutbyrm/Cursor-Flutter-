@@ -1,0 +1,5 @@
+ create mode 100644 api/src/lib/google_auth.ts
+ create mode 100644 api/src/lib/tiktok_auth.ts
+ create mode 100644 docs/CANLIFAL_COM_AI_PROMPT.md
+ create mode 100644 mobile/lib/features/auth/data/datasources/native_auth_datasource.dart
+ create mode 100644 mobile/lib/features/live/domain/entities/voice_room_sort.dart

@@ -1,18 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_design.dart';
+import '../../../../core/performance/list_perf.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../shell/presentation/widgets/branch_quick_actions.dart';
-import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../../voice_hub/presentation/voice_rooms_body.dart';
-import '../../domain/entities/live_broadcast_session.dart';
-import '../../domain/entities/live_stream_entity.dart';
+import '../providers/live_streams_list_notifier.dart';
 import '../providers/live_providers.dart';
+import '../utils/open_live_stream.dart';
+import '../widgets/live_stream_list_tile.dart';
 
 class LivePage extends ConsumerStatefulWidget {
   const LivePage({super.key});
@@ -24,21 +28,39 @@ class LivePage extends ConsumerStatefulWidget {
 class _LivePageState extends ConsumerState<LivePage>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
+  final _liveScroll = ScrollController();
+  Timer? _listRefresh;
 
   @override
   void initState() {
     super.initState();
     _tab = TabController(length: 2, vsync: this);
+    _liveScroll.addListener(_onLiveScroll);
+    _listRefresh = Timer.periodic(const Duration(seconds: 12), (_) {
+      if (!mounted || _tab.index != 0) return;
+      ref.read(liveStreamsListNotifierProvider.notifier).refresh();
+    });
   }
 
   @override
   void dispose() {
+    _listRefresh?.cancel();
+    _liveScroll.removeListener(_onLiveScroll);
+    _liveScroll.dispose();
     _tab.dispose();
     super.dispose();
   }
 
+  void _onLiveScroll() {
+    if (!_liveScroll.hasClients) return;
+    final pos = _liveScroll.position;
+    if (pos.pixels >= pos.maxScrollExtent - ListPerf.preloadThresholdPx) {
+      ref.read(liveStreamsListNotifierProvider.notifier).loadMore();
+    }
+  }
+
   void _refresh() {
-    ref.invalidate(liveStreamsProvider);
+    ref.read(liveStreamsListNotifierProvider.notifier).refresh();
     ref.invalidate(voiceRoomsProvider);
   }
 
@@ -47,7 +69,7 @@ class _LivePageState extends ConsumerState<LivePage>
     final top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -57,6 +79,7 @@ class _LivePageState extends ConsumerState<LivePage>
               title: 'Canlı',
               subtitle: 'Yayınlar ve sesli sohbet odaları',
               actions: [
+                const MessagesNotificationsActions(spacing: 4),
                 DiscoverIconButton(
                   icon: Icons.videocam_rounded,
                   tooltip: 'Yayına başla',
@@ -78,9 +101,9 @@ class _LivePageState extends ConsumerState<LivePage>
             Expanded(
               child: TabBarView(
                 controller: _tab,
-                children: const [
-                  _LiveStreamsTab(),
-                  _VoiceTab(),
+                children: [
+                  _LiveStreamsTab(scrollController: _liveScroll),
+                  const _VoiceTab(),
                 ],
               ),
             ),
@@ -112,11 +135,13 @@ class _VoiceTab extends StatelessWidget {
 }
 
 class _LiveStreamsTab extends ConsumerWidget {
-  const _LiveStreamsTab();
+  const _LiveStreamsTab({required this.scrollController});
+
+  final ScrollController scrollController;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final live = ref.watch(liveStreamsProvider);
+    final live = ref.watch(liveStreamsListNotifierProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -127,12 +152,20 @@ class _LiveStreamsTab extends ConsumerWidget {
         ),
         Expanded(
           child: live.when(
-            loading: () => const DiscoverAccentLoader(),
+            loading: () => ListView.separated(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+              itemCount: 4,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (_, _) => const RepaintBoundary(
+                child: PremiumLiveCardSkeleton(),
+              ),
+            ),
             error: (e, _) => DiscoverEmptyState(
               icon: Icons.live_tv_outlined,
               message: ApiException.userMessage(e),
               actionLabel: 'Yenile',
-              action: () => ref.invalidate(liveStreamsProvider),
+              action: () =>
+                  ref.read(liveStreamsListNotifierProvider.notifier).refresh(),
             ),
             data: (streams) {
               if (streams.isEmpty) {
@@ -142,86 +175,37 @@ class _LiveStreamsTab extends ConsumerWidget {
                       'Şu an canlı yayın yok.\nYeni yayınlar burada görünecek.',
                 );
               }
+              final hasMore = ref
+                  .read(liveStreamsListNotifierProvider.notifier)
+                  .hasMore;
+              final extra = hasMore ? 1 : 0;
               return ListView.separated(
+                controller: scrollController,
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                itemCount: streams.length,
+                physics: ListPerf.listPhysics,
+                cacheExtent: ListPerf.cacheExtent,
+                itemCount: streams.length + extra,
                 separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (ctx, i) {
+                  if (i >= streams.length) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    );
+                  }
                   final s = streams[i];
-                  return DiscoverGlassCard(
-                    onTap: s.isLive
-                        ? () => _openLiveStream(context, ref, s)
-                        : null,
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: SizedBox(
-                            width: 72,
-                            height: 88,
-                            child: s.thumbnailUrl != null &&
-                                    s.thumbnailUrl!.isNotEmpty
-                                ? Image.network(
-                                    s.thumbnailUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, _, _) => _thumbFallback(),
-                                  )
-                                : _thumbFallback(),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (s.isLive)
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 6),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppDesign.liveRed,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: const Text(
-                                    'LIVE',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              Text(
-                                s.title,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${s.streamerName ?? 'Yayıncı'} · ${s.viewerCount} izleyici',
-                                style: const TextStyle(
-                                  color: AppDesign.textMuted,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (s.isLive)
-                          Icon(
-                            Icons.play_circle_fill_rounded,
-                            color: AppDesign.accentPink.withValues(alpha: 0.9),
-                            size: 36,
-                          ),
-                      ],
+                  return ListPerf.repaint(
+                    LiveStreamListTile(
+                      stream: s,
+                      onTap: s.isLive
+                          ? () => openLiveStreamNative(context, ref, s)
+                          : null,
                     ),
                   );
                 },
@@ -230,57 +214,6 @@ class _LiveStreamsTab extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  static Future<void> _openLiveStream(
-    BuildContext context,
-    WidgetRef ref,
-    LiveStreamEntity s,
-  ) async {
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('İzlemek için giriş yapın')),
-      );
-      return;
-    }
-
-    try {
-      final cred = await ref.read(trtcRemoteProvider).fetchUserSig(
-            userId: user.id,
-            roomId: s.id,
-          );
-      if (!context.mounted) return;
-      context.push(
-        '/live/room',
-        extra: LiveBroadcastSession.fromStream(s).copyWith(
-          streamId: s.id,
-          trtc: cred,
-        ),
-      );
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
-      }
-    }
-  }
-
-  static Widget _thumbFallback() {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppDesign.accentPurple.withValues(alpha: 0.5),
-            AppDesign.bgBase,
-          ],
-        ),
-      ),
-      child: const Center(
-        child: Icon(Icons.live_tv_rounded, color: Colors.white54, size: 32),
-      ),
     );
   }
 }

@@ -1,0 +1,58 @@
+name: CI
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - 'api/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - 'api/**'
+      - '.github/workflows/ci.yml'
+  workflow_dispatch:
+
+# Aynı dalda üst üste koşan işleri iptal et (dakika tasarrufu).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: API + Flutter analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: API — TypeScript derleme
+        working-directory: api
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
+        run: |
+          set -eux
+          npm ci
+          npx prisma generate
+          npm run build
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter — dart analyze (yalnızca error)
+        working-directory: mobile
+        run: |
+          set -eux
+          flutter pub get
+          set +e
+          dart analyze lib
+          ec=$?
+          if [ "$ec" -eq 3 ]; then exit 1; fi
+          exit 0

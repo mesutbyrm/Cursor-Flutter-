@@ -6,13 +6,14 @@ plugins {
 }
 
 android {
-    namespace = "com.canlifal.canlifal_social"
-    compileSdk = flutter.compileSdkVersion
+    namespace = "com.mesutbyrm.canlifal"
+    compileSdk = maxOf(flutter.compileSdkVersion, 36)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -20,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.canlifal.canlifal_social"
+        applicationId = "com.mesutbyrm.canlifal"
         minSdk = maxOf(flutter.minSdkVersion, 23)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -56,4 +57,13 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // flutter_local_notifications release derlemesi için zorunlu
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+}
+
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }

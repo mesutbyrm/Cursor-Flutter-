@@ -1,252 +1,156 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
-import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/glow_panel.dart';
-import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
+import '../../../../core/ui/pro_glass/pro_glass.dart';
+import '../../../../core/ui/responsive/responsive_layout.dart';
+import '../../data/jeton_packages_catalog.dart';
 import '../../domain/entities/jeton_package_entity.dart';
+import '../../../wallet/domain/wallet_balances.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/currency_usage_card.dart';
+import '../widgets/jeton_checkout_flow.dart';
+import '../widgets/jeton_store_widgets.dart';
 
-/// Ana sayfadan veya profilden açılır; paketleri `/api/jeton` üzerinden okur.
+/// Jeton mağazası — responsive mockup (`/api/jeton`, `/api/user/credits`).
 class JetonPurchasePage extends ConsumerWidget {
   const JetonPurchasePage({super.key});
 
-  String _formatPrice(JetonPackageEntity p) {
-    if (p.priceLabel != null && p.priceLabel!.trim().isNotEmpty) {
-      return p.priceLabel!.trim();
-    }
-    if (p.priceTry != null) {
-      return NumberFormat.currency(
-        locale: 'tr_TR',
-        symbol: '₺',
-        decimalDigits: 2,
-      ).format(p.priceTry);
-    }
-    return '—';
+  void _openCheckout(
+    BuildContext context,
+    WidgetRef ref,
+    JetonPackageEntity package,
+    String priceText,
+  ) {
+    openJetonCheckoutFlow(
+      context,
+      ref,
+      package: package,
+      priceText: priceText,
+      onDone: () {
+        ref.invalidate(walletBalancesProvider);
+        ref.invalidate(jetonPackagesProvider);
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final packages = ref.watch(jetonPackagesProvider);
-    final balance = ref.watch(coinBalanceProvider);
+    final wallet = ref.watch(walletBalancesProvider);
+    final top = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: ShaderMask(
-          shaderCallback: (b) => const LinearGradient(
-            colors: [Color(0xFFFFD54F), AppTheme.accentSecondary],
-          ).createShader(b),
-          child: const Text(
-            'Jeton yükle',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 20,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          const _JetonBackdrop(),
+          const JetonStoreBackdrop(),
           RefreshIndicator(
-            color: AppTheme.accent,
+            color: AppThemeColors.accentPurple,
             onRefresh: () async {
               ref.invalidate(jetonPackagesProvider);
-              ref.invalidate(coinBalanceProvider);
+              ref.invalidate(walletBalancesProvider);
               await ref.read(jetonPackagesProvider.future);
             },
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                    16,
-                    MediaQuery.paddingOf(context).top + kToolbarHeight + 12,
-                    16,
-                    32,
-                  ),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      GlowPanel(
-                        borderRadius: 20,
-                        padding: const EdgeInsets.all(18),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.monetization_on_rounded,
-                                color: Color(0xFFFFD54F), size: 40),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Mevcut bakiye',
-                                    style: TextStyle(
-                                      color: AppTheme.muted
-                                          .withValues(alpha: 0.95),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  balance.when(
-                                    data: (c) => Text(
-                                      '$c jeton',
-                                      style: const TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                    loading: () => const Text('…'),
-                                    error: (e, _) => Text(
-                                      ApiException.userMessage(e),
-                                      style: const TextStyle(
-                                          color: AppTheme.muted),
-                                    ),
+                SliverToBoxAdapter(child: SizedBox(height: top + 8)),
+                SliverToBoxAdapter(
+                  child: ResponsiveConstrained(
+                    child: Padding(
+                      padding: ResponsiveLayout.pagePadding(context),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _JetonStoreHeader(onBack: () => context.pop()),
+                          SizedBox(height: 16),
+                          const CurrencyUsageCard.jeton(),
+                          SizedBox(height: 20),
+                          wallet.when(
+                            data: (b) => Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                JetonStoreBalanceRow(
+                                  jeton: b.jeton,
+                                  cfc: b.cfc,
+                                ),
+                                if (_isGoldMember(
+                                  b.membership,
+                                  b.membershipDaysRemaining,
+                                )) ...[
+                                  SizedBox(height: 12),
+                                  JetonGoldMemberBanner(
+                                    onTap: () =>
+                                        context.push('/premium-membership'),
                                   ),
                                 ],
+                              ],
+                            ),
+                            loading: () => Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(24),
+                                child: CircularProgressIndicator(strokeWidth: 2),
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      Text(
-                        Env.useNextAuth
-                            ? 'Paketler ve fiyatlar canlifal.com API’sinden gelir. Ödeme, hediye ve kampanyalar web ile aynı akışta tamamlanır.'
-                            : 'Bu API adresi için jeton kataloğu yapılandırılmamış olabilir; ödeme sayfasını web üzerinden açın.',
-                        style: TextStyle(
-                          color: AppTheme.muted.withValues(alpha: 0.95),
-                          height: 1.35,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton.icon(
-                        onPressed: () => context.push(
-                          CanlifalWebRoute.location(
-                            relativePath: '/jeton',
-                            title: 'Jeton al',
-                          ),
-                        ),
-                        icon: const Icon(Icons.open_in_browser_rounded),
-                        label: const Text('Web’de jeton sayfasını aç'),
-                      ),
-                      const SizedBox(height: 28),
-                      const Text(
-                        'Paketler',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 18,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ]),
-                  ),
-                ),
-                packages.when(
-                  loading: () => const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    ),
-                  ),
-                  error: (e, _) => SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.cloud_off_rounded,
-                              size: 48,
-                              color: AppTheme.muted.withValues(alpha: 0.8)),
-                          const SizedBox(height: 12),
-                          Text(
-                            ApiException.userMessage(e),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          FilledButton(
-                            onPressed: () =>
-                                ref.invalidate(jetonPackagesProvider),
-                            child: const Text('Tekrar dene'),
+                            error: (e, _) => Text(
+                              ApiException.userMessage(e),
+                              style: TextStyle(color: context.colors.onSurfaceMuted),
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  data: (list) {
-                    if (list.isEmpty) {
-                      return SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.inventory_2_outlined,
-                                  size: 48,
-                                  color:
-                                      AppTheme.muted.withValues(alpha: 0.8)),
-                              const SizedBox(height: 12),
-                              Text(
-                                Env.useNextAuth
-                                    ? 'API’den paket listesi alınamadı veya boş döndü. Ödeme için web sayfasını kullanın.'
-                                    : 'Bu ortam için paket listesi yok.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color:
-                                      AppTheme.muted.withValues(alpha: 0.95),
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-                    return SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (ctx, i) {
-                            final p = list[i];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _JetonPackageCard(
-                                package: p,
-                                priceText: _formatPrice(p),
-                                onBuy: () {
-                                  final q = p.id.isNotEmpty &&
-                                          !p.id.startsWith('pkg_')
-                                      ? '?paket=${Uri.encodeQueryComponent(p.id)}'
-                                      : '';
-                                  context.push(
-                                    CanlifalWebRoute.location(
-                                      relativePath: '/jeton$q',
-                                      title: 'Jeton al',
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          },
-                          childCount: list.length,
+                ),
+                packages.when(
+                  loading: () => _JetonPackagesContent(
+                    pageContext: context,
+                    ref: ref,
+                    list: kFallbackJetonPackages,
+                    wallet: wallet,
+                    onCheckout: (p, price) => _openCheckout(context, ref, p, price),
+                    isRefreshing: true,
+                  ),
+                  error: (e, _) => SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: ResponsiveConstrained(
+                      child: Padding(
+                        padding: ResponsiveLayout.pagePadding(context),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.cloud_off_rounded,
+                                size: 48,
+                                color: context.colors.onSurfaceMuted.withValues(alpha: 0.8)),
+                            SizedBox(height: 12),
+                            Text(
+                              ApiException.userMessage(e),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 16),
+                            FilledButton(
+                              onPressed: () =>
+                                  ref.invalidate(jetonPackagesProvider),
+                              child: Text('Tekrar dene'),
+                            ),
+                          ],
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  ),
+                  data: (list) => _JetonPackagesContent(
+                    pageContext: context,
+                    ref: ref,
+                    list: list.isEmpty ? kFallbackJetonPackages : list,
+                    wallet: wallet,
+                    onCheckout: (p, price) => _openCheckout(context, ref, p, price),
+                  ),
                 ),
               ],
             ),
@@ -255,127 +159,171 @@ class JetonPurchasePage extends ConsumerWidget {
       ),
     );
   }
+
+  static bool _isGoldMember(String? membership, int? days) {
+    if (membership?.toLowerCase() != 'gold') return false;
+    return (days ?? 0) > 0;
+  }
 }
 
-class _JetonBackdrop extends StatelessWidget {
-  const _JetonBackdrop();
+class _JetonStoreHeader extends StatelessWidget {
+  const _JetonStoreHeader({required this.onBack});
+
+  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppTheme.background,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF2A1C10),
-            AppTheme.background,
-            const Color(0xFF101820),
-          ],
-          stops: const [0.0, 0.5, 1.0],
+    return Column(
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: ProGlassCard(
+            blur: 10,
+            animateIn: false,
+            padding: EdgeInsets.zero,
+            borderRadius: BorderRadius.circular(28),
+            child: IconButton(
+              icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
+              onPressed: onBack,
+            ),
+          ),
         ),
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(-0.6, -0.4),
-            radius: 1.1,
-            colors: [
-              const Color(0xFFFFD54F).withValues(alpha: 0.12),
-              Colors.transparent,
+        SizedBox(height: 16),
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppThemeColors.coinGold.withValues(alpha: 0.2),
+            border: Border.all(
+              color: AppThemeColors.coinGold.withValues(alpha: 0.55),
+              width: 2,
+            ),
+            boxShadow: AppThemeColors.glowShadow(AppThemeColors.coinGold, blur: 18),
+          ),
+          child: Icon(
+            Icons.monetization_on_rounded,
+            color: AppThemeColors.coinGold,
+            size: 36,
+          ),
+        ),
+        SizedBox(height: 14),
+        Text(
+          'Jeton Satın Al',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: context.colors.onSurface,
+            fontWeight: FontWeight.w900,
+            fontSize: 24,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _JetonPackagesContent extends StatelessWidget {
+  const _JetonPackagesContent({
+    required this.pageContext,
+    required this.ref,
+    required this.list,
+    required this.wallet,
+    required this.onCheckout,
+    this.isRefreshing = false,
+  });
+
+  final BuildContext pageContext;
+  final WidgetRef ref;
+  final List<JetonPackageEntity> list;
+  final AsyncValue<WalletBalances> wallet;
+  final void Function(JetonPackageEntity package, String priceText) onCheckout;
+  final bool isRefreshing;
+
+  @override
+  Widget build(BuildContext context) {
+    final grid = jetonGridPackages(list);
+    final hero = jetonHeroPackage(list);
+    final rate = wallet.valueOrNull?.jetonTlRate ?? kDefaultJetonTlRate;
+
+    return SliverToBoxAdapter(
+      child: ResponsiveConstrained(
+        child: Padding(
+          padding: ResponsiveLayout.pagePadding(
+            pageContext,
+            bottom: 32,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (isRefreshing)
+                Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: LinearProgressIndicator(minHeight: 2),
+                ),
+              if (grid.isNotEmpty)
+                _ResponsivePackageGrid(
+                  packages: grid,
+                  onTap: (p) => onCheckout(p, formatJetonPrice(p)),
+                ),
+              if (hero != null) ...[
+                JetonPackageTile(
+                  package: hero,
+                  priceText: formatJetonPrice(hero),
+                  fullWidth: true,
+                  onTap: () => onCheckout(hero, formatJetonPrice(hero)),
+                ),
+              ],
+              SizedBox(height: 24),
+              JetonCustomAmountSection(
+                tlRate: rate,
+                onPurchase: onCheckout,
+              ),
             ],
           ),
         ),
-        child: const SizedBox.expand(),
       ),
     );
   }
 }
 
-class _JetonPackageCard extends StatelessWidget {
-  const _JetonPackageCard({
-    required this.package,
-    required this.priceText,
-    required this.onBuy,
+class _ResponsivePackageGrid extends StatelessWidget {
+  const _ResponsivePackageGrid({
+    required this.packages,
+    required this.onTap,
   });
 
-  final JetonPackageEntity package;
-  final String priceText;
-  final VoidCallback onBuy;
+  final List<JetonPackageEntity> packages;
+  final void Function(JetonPackageEntity) onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GlowPanel(
-      borderRadius: 18,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.accent.withValues(alpha: 0.35),
-                  AppTheme.accentSecondary.withValues(alpha: 0.25),
-                ],
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cols = ResponsiveLayout.gridColumns(constraints.maxWidth);
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: cols,
+              mainAxisSpacing: 0,
+              crossAxisSpacing: 0,
+              childAspectRatio: ResponsiveLayout.gridAspectRatio(cols),
             ),
-            child: Text(
-              package.coins > 0 ? '${package.coins}' : '★',
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
-              ),
-            ),
+            itemCount: packages.length,
+            itemBuilder: (context, i) {
+              final p = packages[i];
+              return JetonPackageTile(
+                package: p,
+                priceText: formatJetonPrice(p),
+                onTap: () => onTap(p),
+              );
+            },
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  package.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                  ),
-                ),
-                if (package.badge != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    package.badge!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.accentSecondary.withValues(alpha: 0.95),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 6),
-                Text(
-                  priceText,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.muted.withValues(alpha: 0.95),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          FilledButton(
-            onPressed: onBuy,
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            child: const Text('Satın al'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

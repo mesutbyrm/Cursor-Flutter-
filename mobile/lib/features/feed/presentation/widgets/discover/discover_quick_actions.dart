@@ -1,155 +1,205 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_design.dart';
+import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/ui/premium/neon_quick_action_card.dart';
 import 'discover_section_header.dart';
 
+/// Ana sayfa — 5 neon cam hızlı işlem (yatay kaydırma).
 class DiscoverQuickActions extends StatelessWidget {
   const DiscoverQuickActions({super.key});
 
-  static const _actions = <_QuickAction>[
-    _QuickAction(
-      icon: Icons.videocam_rounded,
-      label: 'Canlı Yayın\nBaşlat',
-      gradient: [Color(0xFFFF4EC8), Color(0xFFD52DFF)],
-    ),
-    _QuickAction(
-      icon: Icons.graphic_eq_rounded,
-      label: 'Sesli Odaya\nGir',
-      gradient: [Color(0xFF6B21FF), Color(0xFF3B0764)],
-    ),
-    _QuickAction(
-      icon: Icons.group_rounded,
-      label: 'Arkadaşlarını\nDavet Et',
-      gradient: [Color(0xFFFFB347), Color(0xFFFF8C00)],
-    ),
-    _QuickAction(
-      icon: Icons.card_giftcard_rounded,
-      label: 'Hediye\nYolla',
-      gradient: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
-    ),
-    _QuickAction(
-      icon: Icons.diamond_rounded,
-      label: 'Jeton\nYükle',
-      gradient: [Color(0xFF2DD4BF), Color(0xFF0891B2)],
-    ),
-  ];
+  static const _cardSize = AppSpacing.quickActionSize + 4;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        DiscoverSectionHeader(
+        const DiscoverSectionHeader(
           title: 'Hızlı İşlemler',
-          actionLabel: 'Tümünü gör',
-          onAction: () => context.go('/live'),
+          actionLabel: '',
+          onAction: null,
         ),
         SizedBox(
-          height: AppDesign.quickActionSize + 36,
-          child: ListView.separated(
+          height: _cardSize + 52,
+          child: ListView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: _actions.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (ctx, i) {
-              final a = _actions[i];
-              return _QuickActionTile(
-                action: a,
-                onTap: () => _handleTap(context, i),
-              );
-            },
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            physics: const BouncingScrollPhysics(),
+            children: [
+              NeonQuickActionCard(
+                label: 'Fal&Tarot',
+                gradient: const [Color(0xFF9333EA), Color(0xFF4C1D95)],
+                glowColor: const Color(0xFFA855F7),
+                size: _cardSize,
+                icon: const NeonQuickActionIcon(
+                  glowColor: Color(0xFFE9D5FF),
+                  child: _FortuneTarotIcon(),
+                ),
+                onTap: () => context.go('/fortune'),
+              ),
+              const SizedBox(width: 12),
+              NeonQuickActionCard(
+                label: 'Sesli Odaya\nGir',
+                gradient: const [Color(0xFF6366F1), Color(0xFF312E81)],
+                glowColor: const Color(0xFF818CF8),
+                size: _cardSize,
+                icon: const NeonQuickActionIcon(
+                  glowColor: Color(0xFFC7D2FE),
+                  child: _VoiceWaveIcon(),
+                ),
+                onTap: () => context.push('/voice-rooms'),
+              ),
+              const SizedBox(width: 12),
+              NeonQuickActionCard(
+                label: 'Arkadaşlarını\nDavet Et',
+                gradient: const [Color(0xFFFBBF24), Color(0xFFEA580C)],
+                glowColor: const Color(0xFFF59E0B),
+                size: _cardSize,
+                icon: const NeonQuickActionIcon(
+                  glowColor: Color(0xFFFDE68A),
+                  child: Icon(
+                    Icons.people_rounded,
+                    color: Colors.white,
+                    size: 34,
+                  ),
+                ),
+                onTap: () => context.push('/invite-friends'),
+              ),
+              const SizedBox(width: 12),
+              NeonQuickActionCard(
+                label: 'Hediye\nYolla',
+                gradient: const [Color(0xFF3B82F6), Color(0xFF1E3A8A)],
+                glowColor: const Color(0xFF60A5FA),
+                size: _cardSize,
+                icon: const NeonQuickActionIcon(
+                  glowColor: Color(0xFFBFDBFE),
+                  child: Icon(
+                    Icons.card_giftcard_rounded,
+                    color: Colors.white,
+                    size: 34,
+                  ),
+                ),
+                onTap: () => context.push('/gift-send'),
+              ),
+              const SizedBox(width: 12),
+              NeonQuickActionCard(
+                label: 'Jeton\nYükle',
+                gradient: const [Color(0xFF2DD4BF), Color(0xFF0F766E)],
+                glowColor: const Color(0xFF14B8A6),
+                size: _cardSize,
+                icon: const NeonQuickActionIcon(
+                  glowColor: Color(0xFF99F6E4),
+                  child: Icon(
+                    Icons.diamond_rounded,
+                    color: Colors.white,
+                    size: 34,
+                  ),
+                ),
+                onTap: () => context.push('/jeton-store'),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 8),
       ],
     );
   }
-
-  void _handleTap(BuildContext context, int index) {
-    switch (index) {
-      case 0:
-        context.go('/live');
-      case 1:
-        context.push('/voice-rooms');
-      case 2:
-        context.go('/profile');
-      case 3:
-        context.go('/live');
-      case 4:
-        context.go('/profile');
-    }
-  }
 }
 
-class _QuickAction {
-  const _QuickAction({
-    required this.icon,
-    required this.label,
-    required this.gradient,
-  });
-
-  final IconData icon;
-  final String label;
-  final List<Color> gradient;
-}
-
-class _QuickActionTile extends StatelessWidget {
-  const _QuickActionTile({
-    required this.action,
-    required this.onTap,
-  });
-
-  final _QuickAction action;
-  final VoidCallback onTap;
+/// Kristal küre — yıldız + hilal.
+class _FortuneTarotIcon extends StatelessWidget {
+  const _FortuneTarotIcon();
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: AppDesign.quickActionSize,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Ink(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: action.gradient,
+      width: 40,
+      height: 40,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(
+            Icons.blur_circular_rounded,
+            size: 38,
+            color: Colors.white.withValues(alpha: 0.95),
+            shadows: [
+              Shadow(
+                color: AppThemeColors.accentPurple.withValues(alpha: 0.9),
+                blurRadius: 12,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: action.gradient.first.withValues(alpha: 0.35),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
+            ],
+          ),
+          Icon(
+            Icons.star_rounded,
+            size: 14,
+            color: const Color(0xFFFFE566),
+            shadows: [
+              Shadow(
+                color: const Color(0xFFFFE566).withValues(alpha: 0.8),
+                blurRadius: 8,
+              ),
+            ],
+          ),
+          Positioned(
+            right: 6,
+            bottom: 8,
+            child: Icon(
+              Icons.nightlight_round,
+              size: 12,
+              color: const Color(0xFFFFE566),
+              shadows: [
+                Shadow(
+                  color: const Color(0xFFFFE566).withValues(alpha: 0.7),
+                  blurRadius: 6,
                 ),
               ],
             ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(action.icon, color: Colors.white, size: 28),
-                  const SizedBox(height: 10),
-                  Text(
-                    action.label,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      height: 1.15,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Dikey ses dalgası çubukları.
+class _VoiceWaveIcon extends StatelessWidget {
+  const _VoiceWaveIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        _bar(10, const Color(0xFFC4B5FD)),
+        const SizedBox(width: 3),
+        _bar(18, const Color(0xFFE9D5FF)),
+        const SizedBox(width: 3),
+        _bar(26, Colors.white),
+        const SizedBox(width: 3),
+        _bar(18, const Color(0xFFE9D5FF)),
+        const SizedBox(width: 3),
+        _bar(10, const Color(0xFFC4B5FD)),
+      ],
+    );
+  }
+
+  Widget _bar(double h, Color c) {
+    return Container(
+      width: 4,
+      height: h,
+      decoration: BoxDecoration(
+        color: c,
+        borderRadius: BorderRadius.circular(2),
+        boxShadow: [
+          BoxShadow(
+            color: c.withValues(alpha: 0.75),
+            blurRadius: 6,
+          ),
+        ],
       ),
     );
   }

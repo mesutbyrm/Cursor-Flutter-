@@ -3,13 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
-import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_design.dart';
-import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../providers/auth_providers.dart';
-import '../widgets/auth_shell.dart';
-import '../widgets/google_sign_in_button.dart';
+import '../widgets/premium_auth_2026/premium_auth_2026.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -30,14 +26,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.dispose();
   }
 
-  void _openGoogleOAuth() {
-    context.push(
-      CanlifalWebRoute.location(
-        relativePath: ApiEndpoints.authSignInGoogle,
-        title: 'Google ile giriş',
-        sessionImport: true,
-      ),
+  void _soon(String label) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$label yakında aktif olacak.')),
     );
+  }
+
+  void _continueAsGuest() {
+    ref.read(guestModeProvider.notifier).state = true;
+    context.go('/feed');
   }
 
   @override
@@ -45,55 +42,76 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final auth = ref.watch(authControllerProvider);
     ref.listen(authControllerProvider, (prev, next) {
       next.whenOrNull(
+        data: (user) {
+          if (user != null) {
+            ref.read(guestModeProvider.notifier).state = false;
+          }
+        },
         error: (e, _) => ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),
         ),
       );
     });
 
-    return AuthShell(
+    return AuthPremiumShell(
+      heroLogo: true,
+      topTitle: 'Hoş geldin',
+      topSubtitle: 'Sesli odalara katıl, fal dünyasını keşfet.',
       child: Form(
         key: _form,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const AuthBrandHeader(title: 'Hesabına giriş yap'),
-            const SizedBox(height: 28),
-            if (Env.useNextAuth) ...[
-              GoogleSignInButton(
-                label: 'Google ile devam et',
-                onPressed: _openGoogleOAuth,
-              ),
-              const SizedBox(height: 22),
-              const AuthOrDivider(),
-              const SizedBox(height: 22),
-            ],
-            TextFormField(
+            AuthSocialSection(
+              busy: auth.isLoading,
+              googleLabel: 'Google ile Giriş yap',
+              onGoogle: auth.isLoading
+                  ? null
+                  : () => ref
+                      .read(authControllerProvider.notifier)
+                      .loginWithGoogle(),
+              onTikTok: auth.isLoading
+                  ? null
+                  : () => ref
+                      .read(authControllerProvider.notifier)
+                      .loginWithTikTok(),
+              onApple: () => _soon('Apple girişi'),
+              onGuest: _continueAsGuest,
+            ),
+            const SizedBox(height: 22),
+            const AuthOrDividerPremium(),
+            const SizedBox(height: 22),
+            AuthFloatingField(
               controller: _email,
+              label: 'E-posta',
+              hint: 'ornek@email.com',
+              prefixIcon: Icons.mail_outline_rounded,
               keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(color: AppDesign.textPrimary),
-              decoration: authInputDecoration(
-                labelText: 'E-posta',
-                prefixIcon: Icons.mail_outline_rounded,
-              ),
+              autofillHints: const [AutofillHints.email],
               validator: (v) =>
                   v != null && v.contains('@') ? null : 'Geçerli e-posta girin',
             ),
             const SizedBox(height: 14),
-            TextFormField(
+            AuthFloatingField(
               controller: _password,
+              label: 'Şifre',
+              hint: '••••••••',
+              prefixIcon: Icons.lock_outline_rounded,
               obscureText: true,
-              style: const TextStyle(color: AppDesign.textPrimary),
-              decoration: authInputDecoration(
-                labelText: 'Şifre',
-                prefixIcon: Icons.lock_outline_rounded,
-              ),
+              autofillHints: const [AutofillHints.password],
               validator: (v) =>
                   v != null && v.length >= 6 ? null : 'En az 6 karakter',
             ),
-            const SizedBox(height: 26),
-            AuthPrimaryButton(
-              label: 'Giriş yap',
+            Align(
+              alignment: Alignment.centerRight,
+              child: AuthTextLinkPremium(
+                label: 'Şifremi unuttum',
+                onPressed: () => context.push('/auth/forgot-password'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            AuthNeonButton(
+              label: 'Giriş Yap',
               loading: auth.isLoading,
               onPressed: auth.isLoading
                   ? null
@@ -105,11 +123,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           );
                     },
             ),
-            AuthTextLink(
+            const SizedBox(height: 6),
+            AuthTextLinkPremium(
               label: 'Hesabın yok mu? Kayıt ol',
               onPressed: () => context.push('/register'),
             ),
-            const SizedBox(height: 8),
+            if (!Env.hasTikTokLogin) ...[
+              const SizedBox(height: 4),
+              Text(
+                'TikTok girişi yapılandırıldığında burada görünür.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white.withValues(alpha: 0.4),
+                ),
+              ),
+            ],
           ],
         ),
       ),

@@ -2,11 +2,13 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/config/env.dart';
-import '../../../../../core/theme/app_design.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../../domain/entities/live_gift_catalog.dart';
 import '../../../domain/entities/live_gift_type.dart';
@@ -58,13 +60,13 @@ class _LiveGiftPanelState extends ConsumerState<LiveGiftPanel> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppDesign.accentPurple.withValues(alpha: 0.35),
+                AppThemeColors.accentPurple.withValues(alpha: 0.35),
                 Colors.black.withValues(alpha: 0.92),
               ],
             ),
             border: Border(
               top: BorderSide(
-                color: AppDesign.accentPink.withValues(alpha: 0.45),
+                color: AppThemeColors.accentPink.withValues(alpha: 0.45),
               ),
             ),
           ),
@@ -138,7 +140,7 @@ class _LiveGiftPanelState extends ConsumerState<LiveGiftPanel> {
                         label: Text('x$q'),
                         selected: _qty == q,
                         onSelected: (_) => setState(() => _qty = q),
-                        selectedColor: AppDesign.accentPink.withValues(alpha: 0.5),
+                        selectedColor: AppThemeColors.accentPink.withValues(alpha: 0.5),
                         backgroundColor: Colors.white10,
                         labelStyle: const TextStyle(fontWeight: FontWeight.w800),
                       ),
@@ -179,9 +181,9 @@ class _CoinChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        gradient: AppDesign.coinCapsuleGradient,
+        gradient: context.colors.brandGradient,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: AppDesign.glowShadow(AppDesign.coinGold, blur: 12),
+        boxShadow: AppThemeColors.glowShadow(AppThemeColors.coinGold, blur: 12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -228,20 +230,20 @@ class _GiftGlowTile extends StatelessWidget {
           gradient: selected
               ? LinearGradient(
                   colors: [
-                    AppDesign.accentPink.withValues(alpha: 0.5),
-                    AppDesign.accentPurple.withValues(alpha: 0.4),
+                    AppThemeColors.accentPink.withValues(alpha: 0.5),
+                    AppThemeColors.accentPurple.withValues(alpha: 0.4),
                   ],
                 )
               : null,
           color: selected ? null : Colors.white.withValues(alpha: 0.08),
           border: Border.all(
             color: selected
-                ? AppDesign.accentPink
+                ? AppThemeColors.accentPink
                 : Colors.white.withValues(alpha: 0.15),
             width: selected ? 2 : 1,
           ),
           boxShadow: selected
-              ? AppDesign.glowShadow(AppDesign.accentPink, blur: 16)
+              ? AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: 16)
               : null,
         ),
         child: Column(
@@ -264,7 +266,7 @@ class _GiftGlowTile extends StatelessWidget {
               '${gift.price}',
               style: TextStyle(
                 fontSize: 9,
-                color: AppDesign.coinGold.withValues(alpha: 0.95),
+                color: AppThemeColors.coinGold.withValues(alpha: 0.95),
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -291,9 +293,9 @@ class _SendGlowButton extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
           decoration: BoxDecoration(
-            gradient: AppDesign.heroGradient,
+            gradient: context.colors.brandGradient,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: AppDesign.glowShadow(AppDesign.accentPink),
+            boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink),
           ),
           child: loading
               ? const SizedBox(
@@ -333,11 +335,11 @@ class LiveGiftSideButton extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: [
-                  AppDesign.accentPink.withValues(alpha: 0.9),
-                  AppDesign.accentPurple.withValues(alpha: 0.85),
+                  AppThemeColors.accentPink.withValues(alpha: 0.9),
+                  AppThemeColors.accentPurple.withValues(alpha: 0.85),
                 ],
               ),
-              boxShadow: AppDesign.glowShadow(AppDesign.accentPink, blur: 20),
+              boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: 20),
               border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
             ),
             child: const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 26),

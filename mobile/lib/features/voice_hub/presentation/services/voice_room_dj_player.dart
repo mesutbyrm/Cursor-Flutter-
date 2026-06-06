@@ -18,7 +18,6 @@ class VoiceRoomDjPlayer {
         position: playback.value.position,
         duration: d,
         playing: playback.value.playing,
-        paused: playback.value.paused,
       );
     });
     _player.onPositionChanged.listen((p) {
@@ -26,16 +25,13 @@ class VoiceRoomDjPlayer {
         position: p,
         duration: playback.value.duration,
         playing: playback.value.playing,
-        paused: playback.value.paused,
       );
     });
     _player.onPlayerStateChanged.listen((s) {
-      final playing = s == PlayerState.playing;
       playback.value = VoiceRoomDjPlayback(
         position: playback.value.position,
         duration: playback.value.duration,
-        playing: playing,
-        paused: s == PlayerState.paused,
+        playing: s == PlayerState.playing,
       );
     });
   }
@@ -45,7 +41,6 @@ class VoiceRoomDjPlayer {
   final ValueNotifier<VoiceRoomDjPlayback> playback =
       ValueNotifier(const VoiceRoomDjPlayback());
   String? _currentUrl;
-  var _userPaused = false;
   void Function()? onTrackComplete;
 
   Future<void> _configureAudio() async {
@@ -70,6 +65,7 @@ class VoiceRoomDjPlayer {
     }
   }
 
+  /// Oynatma başarılıysa `true` döner.
   Future<bool> sync({
     String? musicUrl,
     String? fallbackYoutubeUrl,
@@ -80,28 +76,23 @@ class VoiceRoomDjPlayer {
       await stop();
       return false;
     }
-    if (_userPaused) return false;
 
-    final candidates = <String>{
+    final candidates = <String>[
       musicUrl,
       if (fallbackYoutubeUrl != null &&
           fallbackYoutubeUrl.isNotEmpty &&
           fallbackYoutubeUrl != musicUrl)
         fallbackYoutubeUrl,
-    };
+    ];
 
     for (final candidate in candidates) {
       final source = await _resolveSource(candidate);
       debugPrint(
-        'DJ sync musicUrl=$musicUrl streamUrl=$source playState=$playing',
+        'DJ sync: musicUrl=$musicUrl streamUrl=$source '
+        'playState=$playing playerState=${_player.state}',
       );
       if (source == null || source.isEmpty) continue;
-      if (_currentUrl == source &&
-          (_player.state == PlayerState.playing ||
-              _player.state == PlayerState.paused)) {
-        if (_player.state == PlayerState.paused && !_userPaused) {
-          await _player.resume();
-        }
+      if (_currentUrl == source && _player.state == PlayerState.playing) {
         return true;
       }
       try {
@@ -113,7 +104,7 @@ class VoiceRoomDjPlayer {
           duration: playback.value.duration,
           playing: true,
         );
-        debugPrint('DJ play ok audioUrl=$source');
+        debugPrint('DJ play ok: audioUrl=$source playerState=${_player.state}');
         return true;
       } catch (e) {
         debugPrint('DJ play error ($candidate): $e');
@@ -121,32 +112,8 @@ class VoiceRoomDjPlayer {
       }
     }
 
-    debugPrint('DJ: oynatılamadı — $musicUrl');
+    debugPrint('DJ: oynatılamadı — musicUrl=$musicUrl');
     return false;
-  }
-
-  Future<void> pause() async {
-    _userPaused = true;
-    try {
-      await _player.pause();
-      playback.value = playback.value.copyWith(playing: false, paused: true);
-    } catch (_) {}
-  }
-
-  Future<void> resume() async {
-    _userPaused = false;
-    try {
-      await _player.resume();
-      playback.value = playback.value.copyWith(playing: true, paused: false);
-    } catch (_) {}
-  }
-
-  Future<void> togglePause() async {
-    if (_player.state == PlayerState.playing) {
-      await pause();
-    } else {
-      await resume();
-    }
   }
 
   Future<String?> _resolveSource(String musicUrl) async {
@@ -155,7 +122,6 @@ class VoiceRoomDjPlayer {
   }
 
   Future<void> stop() async {
-    _userPaused = false;
     _currentUrl = null;
     try {
       await _player.stop();
@@ -175,13 +141,11 @@ class VoiceRoomDjPlayback {
     this.position = Duration.zero,
     this.duration = Duration.zero,
     this.playing = false,
-    this.paused = false,
   });
 
   final Duration position;
   final Duration duration;
   final bool playing;
-  final bool paused;
 
   double get progress {
     if (duration.inMilliseconds <= 0) return 0;
@@ -191,19 +155,5 @@ class VoiceRoomDjPlayback {
   Duration get remaining {
     if (duration <= position) return Duration.zero;
     return duration - position;
-  }
-
-  VoiceRoomDjPlayback copyWith({
-    Duration? position,
-    Duration? duration,
-    bool? playing,
-    bool? paused,
-  }) {
-    return VoiceRoomDjPlayback(
-      position: position ?? this.position,
-      duration: duration ?? this.duration,
-      playing: playing ?? this.playing,
-      paused: paused ?? this.paused,
-    );
   }
 }

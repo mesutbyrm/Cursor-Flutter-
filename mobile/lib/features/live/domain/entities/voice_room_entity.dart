@@ -7,6 +7,7 @@ class VoiceRoomEntity extends Equatable {
     required this.slug,
     required this.nameTr,
     this.descTr,
+    this.rulesTr,
     this.icon,
     this.onlineCount = 0,
     this.userCount = 0,
@@ -23,6 +24,7 @@ class VoiceRoomEntity extends Equatable {
   final String slug;
   final String nameTr;
   final String? descTr;
+  final String? rulesTr;
   final String? icon;
   final int onlineCount;
   final int userCount;
@@ -36,10 +38,10 @@ class VoiceRoomEntity extends Equatable {
 
   int get displayOnline => onlineCount > 0 ? onlineCount : userCount;
 
-  /// REST / Socket — Prisma `id` (cuid).
+  /// REST / Socket — yalnızca Prisma `id` (cuid); slug kullanılmaz.
   String get apiRoomKey => id.trim();
 
-  /// Tencent TRTC — web ile aynı: `voice_room_{id}`.
+  /// Tencent TRTC kanal adı — web ile aynı: `voice_room_{id}`.
   String get trtcRoomId {
     final i = id.trim();
     if (i.isEmpty) return '';
@@ -54,6 +56,7 @@ class VoiceRoomEntity extends Equatable {
         slug,
         nameTr,
         descTr,
+        rulesTr,
         icon,
         onlineCount,
         userCount,

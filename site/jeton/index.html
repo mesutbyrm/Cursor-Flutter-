@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="api-base" content="https://canlifal.com" />
+    <title>Jeton Yükle — CanlıFal</title>
+    <link rel="stylesheet" href="assets/jeton.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- Mağaza -->
+      <section id="view-store" class="view active">
+        <header class="topbar">
+          <div class="icon-badge yellow">🪙</div>
+          <div>
+            <h1>Jeton yükle</h1>
+            <span class="sub">WhatsApp · Papara · Havale/EFT</span>
+          </div>
+        </header>
+        <div class="balance-bar">
+          Mevcut jeton: <span id="balance-jeton">…</span>
+        </div>
+        <p style="margin:0 16px 12px;font-size:13px;color:var(--muted);line-height:1.4">
+          Ödemeyi yaptıktan sonra talebiniz admin paneline düşer. Onay sonrası jeton bakiyenize eklenir.
+        </p>
+        <div id="packages-list" class="packages-grid">
+          <p class="loading">Paketler yükleniyor…</p>
+        </div>
+      </section>
+
+      <!-- Ödeme yöntemi -->
+      <section id="view-methods" class="view">
+        <header class="topbar">
+          <div class="icon-badge yellow">💳</div>
+          <div>
+            <h1>Ödeme Yöntemi</h1>
+            <span class="sub">Güvenli ödeme seçenekleri</span>
+          </div>
+          <button type="button" class="icon-btn" id="btn-close-methods" aria-label="Kapat">×</button>
+        </header>
+
+        <div class="package-pick">
+          <div class="coin-icon">🪙</div>
+          <div>
+            <strong data-pkg-title>1000 Jeton</strong>
+          </div>
+          <div class="right">
+            <div data-pkg-price>₺500</div>
+            <div class="user-tag" id="methods-user-tag">Admin</div>
+          </div>
+        </div>
+
+        <p class="pay-methods-title">Ödeme Yöntemleri</p>
+
+        <button type="button" class="method-btn whatsapp" id="btn-method-wa">
+          <span style="font-size:1.5rem">💬</span>
+          <div class="meta">
+            <div class="title">WhatsApp <span class="badge-rec">Önerilen</span></div>
+            <div class="desc">Hızlı ve kolay ödeme</div>
+          </div>
+          <span>↗</span>
+        </button>
+        <button type="button" class="method-btn papara" id="btn-method-papara">
+          <span style="font-size:1.5rem">👛</span>
+          <div class="meta">
+            <div class="title">Papara</div>
+            <div class="desc">Papara ile ödeme</div>
+          </div>
+          <span>↗</span>
+        </button>
+        <button type="button" class="method-btn bank" id="btn-method-bank">
+          <span style="font-size:1.5rem">🏦</span>
+          <div class="meta">
+            <div class="title">Havale / IBAN</div>
+            <div class="desc">Banka havalesi ile ödeme</div>
+          </div>
+          <span>↗</span>
+        </button>
+
+        <div class="trust">
+          <div>✓ Güvenli Ödeme</div>
+          <div class="sub">Tüm işlemleriniz güvence altında</div>
+        </div>
+        <button type="button" class="btn-ghost" id="btn-cancel-methods">İptal</button>
+      </section>
+
+      <!-- WhatsApp -->
+      <section id="view-whatsapp" class="view">
+        <header class="topbar">
+          <div class="icon-badge green">💬</div>
+          <div><h1>WhatsApp ile Ödeme</h1></div>
+          <button type="button" class="icon-btn" data-back-store aria-label="Kapat">×</button>
+        </header>
+        <div class="card">
+          <div class="row-split"><span class="label">Jeton Miktarı:</span><strong data-pkg-coins style="color:var(--yellow)">1000</strong></div>
+          <div class="row-split"><span class="label">Toplam:</span><strong data-pkg-price style="color:var(--yellow)">₺500</strong></div>
+        </div>
+        <div class="card user-card">
+          <div class="avatar" id="wa-user-avatar">A</div>
+          <div>
+            <strong id="wa-user-name">Admin</strong>
+            <div class="email" id="wa-user-email">—</div>
+          </div>
+        </div>
+        <p style="margin:12px 16px;font-size:14px;color:var(--muted);line-height:1.45">
+          Aşağıdaki butona tıklayarak WhatsApp üzerinden sipariş verebilirsiniz. Mesajınız otomatik hazırlanır ve talep admin paneline düşer.
+        </p>
+        <button type="button" class="btn-primary whatsapp" id="btn-wa-order">💬 WhatsApp'tan Sipariş Ver</button>
+        <button type="button" class="btn-ghost" data-back>← Geri Dön</button>
+      </section>
+
+      <!-- Papara -->
+      <section id="view-papara" class="view">
+        <header class="topbar">
+          <div class="icon-badge" style="background:rgba(168,85,247,.25);color:#c4b5fd">👛</div>
+          <div><h1>Papara ile Ödeme</h1></div>
+          <button type="button" class="icon-btn" data-back-store aria-label="Kapat">×</button>
+        </header>
+        <div class="card summary">
+          <strong data-pkg-title style="color:var(--yellow)">1000 Jeton</strong>
+          <span class="price" data-pkg-price>₺500</span>
+        </div>
+        <div class="card">
+          <div class="copy-row">
+            <span class="label">Papara No:</span>
+            <button type="button" class="btn-copy" data-copy="papara">📋 Kopyala</button>
+          </div>
+          <div id="papara-no" style="font-weight:800;font-size:1.1rem;margin-top:8px">—</div>
+        </div>
+        <div class="card row-split" style="display:flex;justify-content:space-between;margin-top:0">
+          <span class="label">Alıcı:</span>
+          <strong id="papara-holder">—</strong>
+        </div>
+        <div class="warn">
+          <span>⚠</span>
+          <span>Açıklama kısmına kullanıcı adınızı yazın: <strong data-username>'Admin'</strong></span>
+        </div>
+        <button type="button" class="btn-primary submit" id="btn-papara-done">Ödemeyi yaptım — talep gönder</button>
+        <button type="button" class="btn-ghost" data-back>← Geri Dön</button>
+      </section>
+
+      <!-- Havale -->
+      <section id="view-bank" class="view">
+        <header class="topbar">
+          <div class="icon-badge blue">🏦</div>
+          <div><h1>Banka Transferi</h1></div>
+          <button type="button" class="icon-btn" data-back-store aria-label="Kapat">×</button>
+        </header>
+        <div class="card summary">
+          <strong data-pkg-title style="color:var(--yellow)">1000 Jeton</strong>
+          <span class="price" data-pkg-price>₺500</span>
+        </div>
+        <div class="card">
+          <div class="row-split"><span class="label">Banka:</span><strong id="bank-name">—</strong></div>
+          <div class="row-split"><span class="label">Alıcı:</span><strong id="bank-holder">—</strong></div>
+        </div>
+        <div class="card">
+          <div class="copy-row">
+            <span class="label">IBAN:</span>
+            <button type="button" class="btn-copy" data-copy="iban">📋 Kopyala</button>
+          </div>
+          <div class="iban-box" id="bank-iban">—</div>
+        </div>
+        <div class="warn">
+          <span>⚠</span>
+          <span>Açıklama kısmına kullanıcı adınızı yazın: <strong data-username>'Admin'</strong></span>
+        </div>
+        <button type="button" class="btn-primary submit" id="btn-bank-done">Ödemeyi yaptım — talep gönder</button>
+        <button type="button" class="btn-ghost" data-back>← Geri Dön</button>
+      </section>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <script src="assets/jeton.js"></script>
+  </body>
+</html>

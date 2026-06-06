@@ -5,8 +5,16 @@ abstract class AuthRepository {
   Future<UserEntity> register({
     required String email,
     required String password,
-    String? displayName,
+    required String displayName,
+    required String username,
+    String? phone,
+    String? birthDate,
+    String? birthTime,
+    String language,
   });
+  Future<UserEntity> loginWithGoogle();
+  Future<UserEntity> loginWithTikTok();
   Future<UserEntity?> currentUser();
+  Future<void> requestPasswordReset(String email);
   Future<void> logout();
 }

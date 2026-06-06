@@ -38,6 +38,12 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     return battle;
   }
 
+  Future<PkBattleRemote?> loadStreamBattle(String streamId) async {
+    final battle = await _api.fetchStreamBattle(streamId);
+    if (battle != null) _apply(battle, 'load');
+    return battle;
+  }
+
   Future<PkBattleRemote?> inviteRoom({
     required String roomId,
     required String opponentRoomId,
@@ -45,6 +51,19 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     final battle = await _api.inviteVoiceRoom(
       roomId: roomId,
       opponentRoomId: opponentRoomId,
+    );
+    if (battle != null) _apply(battle, 'pk:invite');
+    return battle;
+  }
+
+  Future<PkBattleRemote?> inviteStream({
+    required String streamId,
+    required String opponentStreamId,
+  }) async {
+    final battle = await _api.streamPkAction(
+      streamId: streamId,
+      action: 'create',
+      opponentStreamId: opponentStreamId,
     );
     if (battle != null) _apply(battle, 'pk:invite');
     return battle;

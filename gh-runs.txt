@@ -1,0 +1,6 @@
+completed	failure	Merge pull request #44 from mesutbyrm/cursor/fortune-hub-types-grid-7009	CI	main	push	26340588313	1m2s	2026-05-23T18:42:58Z
+completed	failure	Merge pull request #44 from mesutbyrm/cursor/fortune-hub-types-grid-7009	Build release APK	main	push	26340588316	2m18s	2026-05-23T18:42:58Z
+completed	success	Merge pull request #43 from mesutbyrm/cursor/fix-ci-export-path-7009	CI	main	push	26337994780	1m21s	2026-05-23T16:37:15Z
+completed	success	Merge pull request #43 from mesutbyrm/cursor/fix-ci-export-path-7009	Build release APK	main	push	26337994765	16m39s	2026-05-23T16:37:15Z
+completed	failure	Merge pull request #42 from mesutbyrm/cursor/messages-header-all-tabs…	CI	main	push	26337660534	1m39s	2026-05-23T16:21:02Z
+completed	failure	Merge pull request #42 from mesutbyrm/cursor/messages-header-all-tabs…	Build release APK	main	push	26337660533	4m9s	2026-05-23T16:21:02Z

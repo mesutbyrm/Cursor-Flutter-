@@ -1,60 +1,139 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../core/theme/app_design.dart';
-import '../../../../core/widgets/discover_tab_layout.dart';
-import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../../core/ui/premium_2026/premium_2026.dart';
+import '../../../../core/widgets/canlifal_brand_logo.dart';
 
-/// Giriş / kayıt ekranları için keşfet ile uyumlu iskelet.
+/// Giriş / kayıt — 2026 liquid glass + immersive mesh.
 class AuthShell extends StatelessWidget {
   const AuthShell({
     super.key,
     required this.child,
     this.showBack = false,
     this.onBack,
+    this.useAppIcon = false,
   });
 
   final Widget child;
   final bool showBack;
   final VoidCallback? onBack;
+  final bool useAppIcon;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppDesign.bgBase,
-      body: DiscoverBackground(
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (showBack)
-                Padding(
-                  padding: const EdgeInsets.only(left: 4, top: 4),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: DiscoverIconButton(
-                      icon: Icons.arrow_back_ios_new_rounded,
-                      onPressed: onBack ?? () => Navigator.of(context).maybePop(),
+      backgroundColor: Colors.transparent,
+      body: PremiumImmersiveBackground(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            const _AuthGlowOverlay(),
+            SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (showBack)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8, top: 4),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: LiquidGlass(
+                          padding: const EdgeInsets.all(8),
+                          borderRadius: BorderRadius.circular(16),
+                          blur: 14,
+                          onTap: onBack ?? () => Navigator.of(context).maybePop(),
+                          child: Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            size: 18,
+                            color: AppThemeColors.dark.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ),
+                  Expanded(
+                    child: Center(
+                      child: SingleChildScrollView(
+                        physics: PremiumMotion.listPhysics,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 400),
+                          child: Column(
+                            children: [
+                              CanlifalBrandLogo.appIcon(
+                                size: useAppIcon ? 96 : 112,
+                              ),
+                              SizedBox(height: 28),
+                              child,
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              Expanded(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 22,
-                      vertical: 16,
-                    ),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 420),
-                      child: child,
-                    ),
-                  ),
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _AuthGlowOverlay extends StatelessWidget {
+  const _AuthGlowOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Stack(
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(0, -0.35),
+                radius: 1.1,
+                colors: [
+                  const Color(0xFF4C1D95).withValues(alpha: 0.45),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(0.8, 0.9),
+                radius: 0.75,
+                colors: [
+                  AppThemeColors.accentPurple.withValues(alpha: 0.2),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class AuthFormCard extends StatelessWidget {
+  const AuthFormCard({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LiquidGlassCard(
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
+      elevated: true,
+      child: child,
     );
   }
 }
@@ -71,49 +150,22 @@ class AuthBrandHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DiscoverGlassCard(
-      borderColor: AppDesign.accentPurple.withValues(alpha: 0.35),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-      child: Column(
-        children: [
-          ShaderMask(
-            shaderCallback: (b) => AppDesign.heroGradient.createShader(b),
-            child: const Text(
-              'Canlifal',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 34,
-                letterSpacing: -0.8,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
+    return Column(
+      children: [
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: PremiumTypography.displayMedium(context),
+        ),
+        if (subtitle != null) ...[
+          SizedBox(height: 10),
           Text(
-            title,
+            subtitle!,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppDesign.textSecondary,
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
-            ),
+            style: PremiumTypography.body(context),
           ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              subtitle!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppDesign.textMuted,
-                fontSize: 13,
-                height: 1.4,
-              ),
-            ),
-          ],
         ],
-      ),
+      ],
     );
   }
 }
@@ -130,67 +182,46 @@ class AuthSectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ShaderMask(
-          shaderCallback: (b) => AppDesign.heroGradient.createShader(b),
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 26,
-              letterSpacing: -0.5,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        if (subtitle != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            subtitle!,
-            style: const TextStyle(
-              color: AppDesign.textSecondary,
-              fontSize: 15,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ],
-    );
+    return AuthBrandHeader(title: title, subtitle: subtitle);
   }
 }
 
 InputDecoration authInputDecoration({
   required String labelText,
   required IconData prefixIcon,
+  String? hintText,
 }) {
+  final t = Premium2026Tokens.dark;
   final border = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(16),
-    borderSide: BorderSide(
-      color: AppDesign.accentPurple.withValues(alpha: 0.28),
-    ),
+    borderRadius: BorderRadius.circular(18),
+    borderSide: BorderSide(color: t.glassBorder.withValues(alpha: 0.4)),
   );
 
   return InputDecoration(
     labelText: labelText,
-    labelStyle: const TextStyle(color: AppDesign.textMuted),
-    prefixIcon: Icon(prefixIcon, color: AppDesign.textMuted, size: 22),
+    hintText: hintText,
+    labelStyle: TextStyle(
+      color: AppThemeColors.dark.onSurfaceMuted,
+      fontWeight: FontWeight.w600,
+    ),
+    hintStyle: TextStyle(
+      color: AppThemeColors.dark.onSurfaceMuted.withValues(alpha: 0.7),
+      fontSize: 14,
+    ),
+    prefixIcon: Icon(prefixIcon, color: AppThemeColors.accentPurple, size: 22),
     filled: true,
-    fillColor: Colors.white.withValues(alpha: 0.05),
+    fillColor: Colors.black.withValues(alpha: 0.35),
     enabledBorder: border,
     focusedBorder: border.copyWith(
-      borderSide: const BorderSide(color: AppDesign.accentPink, width: 1.5),
+      borderSide: const BorderSide(color: Color(0xFF9D6BFF), width: 1.5),
     ),
     errorBorder: border.copyWith(
-      borderSide: BorderSide(
-        color: AppDesign.liveRed.withValues(alpha: 0.8),
-      ),
+      borderSide: BorderSide(color: AppThemeColors.liveRed.withValues(alpha: 0.8)),
     ),
     focusedErrorBorder: border.copyWith(
-      borderSide: const BorderSide(color: AppDesign.liveRed),
+      borderSide: const BorderSide(color: AppThemeColors.liveRed),
     ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
   );
 }
 
@@ -208,25 +239,21 @@ class AuthPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: loading ? null : onPressed,
-        borderRadius: BorderRadius.circular(16),
-        child: Ink(
-          height: 52,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: onPressed == null && !loading
-                ? null
-                : AppDesign.heroGradient,
-            color: onPressed == null && !loading
-                ? Colors.white.withValues(alpha: 0.08)
-                : null,
+    return PressableScale(
+      onTap: loading ? () {} : (onPressed ?? () {}),
+      child: AnimatedOpacity(
+        opacity: onPressed != null || loading ? 1 : 0.5,
+        duration: PremiumMotion.fast,
+        child: LiquidGlass(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          borderRadius: BorderRadius.circular(18),
+          blur: 12,
+          gradientBorder: const LinearGradient(
+            colors: [Color(0xFF9D6BFF), Color(0xFF7C3AED), Color(0xFF5B21B6)],
           ),
           child: Center(
             child: loading
-                ? const SizedBox(
+                ? SizedBox(
                     height: 22,
                     width: 22,
                     child: CircularProgressIndicator(
@@ -236,10 +263,11 @@ class AuthPrimaryButton extends StatelessWidget {
                   )
                 : Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w800,
-                      fontSize: 16,
+                      fontSize: 17,
                       color: Colors.white,
+                      letterSpacing: 0.2,
                     ),
                   ),
           ),
@@ -256,30 +284,52 @@ class AuthInfoBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DiscoverGlassCard(
-      borderColor: AppDesign.accentCyan.withValues(alpha: 0.3),
-      padding: const EdgeInsets.all(14),
+    return LiquidGlass(
+      padding: const EdgeInsets.all(12),
+      borderRadius: BorderRadius.circular(16),
+      blur: 14,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             Icons.info_outline_rounded,
             size: 20,
-            color: AppDesign.accentCyan.withValues(alpha: 0.9),
+            color: AppThemeColors.accentCyan.withValues(alpha: 0.9),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                color: AppDesign.textSecondary,
-                height: 1.4,
-                fontSize: 13,
-              ),
+              style: PremiumTypography.body(context).copyWith(fontSize: 13),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class AuthOrDivider extends StatelessWidget {
+  const AuthOrDivider({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Divider(color: AppThemeColors.dark.onSurfaceMuted.withValues(alpha: 0.35)),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            'veya',
+            style: PremiumTypography.label(context),
+          ),
+        ),
+        Expanded(
+          child: Divider(color: AppThemeColors.dark.onSurfaceMuted.withValues(alpha: 0.35)),
+        ),
+      ],
     );
   }
 }
@@ -301,8 +351,9 @@ class AuthTextLink extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          color: AppDesign.accentCyan.withValues(alpha: 0.95),
+          color: const Color(0xFFC4B5FD).withValues(alpha: 0.95),
           fontWeight: FontWeight.w700,
+          fontSize: 14,
         ),
       ),
     );

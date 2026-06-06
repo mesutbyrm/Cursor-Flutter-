@@ -1,0 +1,93 @@
+import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+
+import '../../domain/entities/fortune_type_entity.dart';
+import 'fortune_glass_card.dart';
+
+/// Günlük fal — öne çıkan büyük kart (sandık / hazine).
+class FortuneDailyCard extends StatelessWidget {
+  const FortuneDailyCard({
+    super.key,
+    required this.type,
+    required this.onOpen,
+  });
+
+  final FortuneTypeEntity type;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return FortuneGlassCard(
+      accent: type.accent,
+      padding: const EdgeInsets.all(20),
+      onTap: onOpen,
+      child: Row(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                colors: [
+                  AppThemeColors.coinGold.withValues(alpha: 0.6),
+                  type.accent.withValues(alpha: 0.4),
+                ],
+              ),
+              boxShadow: AppThemeColors.glowShadow(AppThemeColors.coinGold, blur: 20),
+            ),
+            child: Text(type.emoji, style: TextStyle(fontSize: 36)),
+          ),
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ShaderMask(
+                  shaderCallback: (b) =>
+                      context.colors.brandGradient.createShader(b),
+                  child: Text(
+                    'Günlük Fal',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  type.description,
+                  style: TextStyle(
+                    color: context.colors.onSurfaceVariant,
+                    fontSize: 13,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 8),
+          FilledButton(
+            onPressed: onOpen,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppThemeColors.accentPurple,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: Text(
+              type.ctaLabel,
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

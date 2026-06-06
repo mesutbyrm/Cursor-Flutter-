@@ -145,28 +145,13 @@ abstract final class VoiceOfficialJoin {
         .trim();
   }
 
-  /// `%Admin !temizle` gibi önekli satırlardan komutu ayıklar.
-  static String extractCommandBody(String text) {
-    final t = text.trim();
-    final match = RegExp(r'[!/][\wğüşıöçĞÜŞİÖÇ-]+', caseSensitive: false)
-        .firstMatch(t);
-    if (match == null) return t;
-    final start = match.start;
-    if (start > 0) return t.substring(start).trim();
-    return t;
-  }
-
   static bool isClearChatCommand(String text) {
-    final t = extractCommandBody(text).trim().toLowerCase();
+    final t = text.trim().toLowerCase();
     return t == '!temizle' || t == '/temizle';
   }
 
-  /// Komut satırı — canlifal.com sohbet `!` ile çalışır.
-  static String normalizeCommandInput(String text) {
-    final trimmed = text.trim();
-    if (trimmed.startsWith('!') || trimmed.startsWith('/')) return trimmed;
-    return extractCommandBody(trimmed);
-  }
+  /// Komut satırı — canlifal.com sohbet `!` ile çalışır; `/` dönüşümü yapılmaz.
+  static String normalizeCommandInput(String text) => text.trim();
 
   static bool looksLikeRoomCommand(String text) {
     final t = text.trim();

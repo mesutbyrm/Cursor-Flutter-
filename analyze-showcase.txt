@@ -1,0 +1,6 @@
+Analyzing fortune, app_router.dart...
+
+warning - lib/features/fortune/presentation/pages/fortune_tarot_hub_page.dart:7:8 - Unused import: '../data/fortune_catalog.dart'. Try removing the import directive. - unused_import
+
+1 issue found.
+EXIT:0

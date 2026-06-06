@@ -1,0 +1,6 @@
+   info - features/profile/presentation/widgets/jeton_native_checkout.dart:15:44 - The constant name 'bank_transfer' isn't a lowerCamelCase identifier. Try changing the name to follow the lowerCamelCase style. - constant_identifier_names
+   info - features/profile/presentation/widgets/jeton_native_checkout.dart:37:7 - The private field _submitting could be 'final'. Try making the field 'final'. - prefer_final_fields
+   info - features/wallet/presentation/pages/wallet_center_page.dart:6:8 - The import of '../../../../core/widgets/discover/discover_glass_card.dart' is unnecessary because all of the used elements are also provided by the import of '../../../../core/widgets/discover_tab_layout.dart'. Try removing the import directive. - unnecessary_import
+
+15 issues found.
+EXIT:0

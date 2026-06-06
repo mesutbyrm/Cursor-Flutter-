@@ -3,13 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/widgets/cached_cover_image.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
 import '../../../../core/widgets/quick_action_tile.dart';
-import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../../live/presentation/utils/open_live_stream.dart';
 
 /// Ana sayfa hızlı işlemler (davet, jeton).
 class FeedQuickActions extends StatelessWidget {
@@ -108,7 +109,7 @@ class FeedLiveStrip extends ConsumerWidget {
                   separatorBuilder: (_, _) => const SizedBox(width: 10),
                   itemBuilder: (ctx, i) {
                     final s = onAir[i];
-                    return _LiveChip(stream: s);
+                    return _LiveChip(stream: s, ref: ref);
                   },
                 ),
               ),
@@ -121,20 +122,10 @@ class FeedLiveStrip extends ConsumerWidget {
 }
 
 class _LiveChip extends StatelessWidget {
-  const _LiveChip({required this.stream});
+  const _LiveChip({required this.stream, required this.ref});
 
   final LiveStreamEntity stream;
-
-  void _open(BuildContext context) {
-    if (!stream.isLive) return;
-    context.push(
-      CanlifalWebRoute.location(
-        relativePath: '/sohbet/video?watch=${stream.id}',
-        title: stream.title,
-        streamIdForGifts: stream.id,
-      ),
-    );
-  }
+  final WidgetRef ref;
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +134,9 @@ class _LiveChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       elevation: 0,
       child: InkWell(
-        onTap: stream.isLive ? () => _open(context) : null,
+        onTap: stream.isLive
+            ? () => openLiveStreamNative(context, ref, stream)
+            : null,
         borderRadius: BorderRadius.circular(16),
         child: SizedBox(
           width: 118,
@@ -159,11 +152,10 @@ class _LiveChip extends StatelessWidget {
                     children: [
                       stream.thumbnailUrl != null &&
                               stream.thumbnailUrl!.isNotEmpty
-                          ? Image.network(
-                              stream.thumbnailUrl!,
+                          ? CachedCoverImage(
+                              url: stream.thumbnailUrl!,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const ColoredBox(
+                              fallback: const ColoredBox(
                                 color: AppTheme.surface,
                                 child: Icon(Icons.live_tv_rounded,
                                     color: AppTheme.accent, size: 36),
@@ -303,12 +295,7 @@ class _RoomChip extends StatelessWidget {
   final VoiceRoomEntity room;
 
   void _open(BuildContext context) {
-    context.push(
-      CanlifalWebRoute.location(
-        relativePath: '/sohbet/${room.slug}',
-        title: room.nameTr,
-      ),
-    );
+    context.push('/voice-room/${room.id}', extra: room);
   }
 
   @override

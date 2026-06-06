@@ -1,15 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_design.dart';
 import 'profile_glass.dart';
 
 class ProfilePremiumBanner extends StatelessWidget {
-  const ProfilePremiumBanner({super.key, this.onViewPrivileges});
+  const ProfilePremiumBanner({
+    super.key,
+    this.onViewPrivileges,
+    this.membership,
+    this.daysRemaining,
+  });
 
   final VoidCallback? onViewPrivileges;
+  final String? membership;
+  final int? daysRemaining;
 
   @override
   Widget build(BuildContext context) {
+    final tier = membership?.toLowerCase() ?? 'basic';
+    final days = daysRemaining ?? 0;
+    final isGold = tier == 'gold' && days > 0;
+    final subtitle = isGold
+        ? 'Gold üyesiniz · $days gün kaldı'
+        : 'Özel rozetler, öncelikli destek ve daha fazlası';
+    final cta = isGold ? 'Uzat' : 'Ayrıcalıkları Gör';
+
     return ProfileGlass(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       borderRadius: 20,
@@ -22,7 +39,7 @@ class ProfilePremiumBanner extends StatelessWidget {
           Color(0xFF8E2DA8),
         ],
       ),
-      borderColor: AppDesign.accentPink.withValues(alpha: 0.4),
+      borderColor: AppThemeColors.accentPink.withValues(alpha: 0.4),
       child: Row(
         children: [
           Container(
@@ -30,7 +47,7 @@ class ProfilePremiumBanner extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.12),
-              boxShadow: AppDesign.glowShadow(
+              boxShadow: AppThemeColors.glowShadow(
                 const Color(0xFFFFD54F),
                 blur: 16,
               ),
@@ -42,7 +59,7 @@ class ProfilePremiumBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -56,26 +73,29 @@ class ProfilePremiumBanner extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'Özel rozetler, öncelikli destek ve daha fazlası',
+                  subtitle,
                   style: TextStyle(
-                    color: AppDesign.textSecondary,
+                    color: isGold
+                        ? const Color(0xFFFFD54F).withValues(alpha: 0.95)
+                        : context.colors.onSurfaceVariant,
                     fontSize: 12,
                     height: 1.3,
+                    fontWeight: isGold ? FontWeight.w700 : FontWeight.w400,
                   ),
                 ),
               ],
             ),
           ),
           Material(
-            color: AppDesign.accentPink,
+            color: AppThemeColors.accentPink,
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               onTap: onViewPrivileges,
               borderRadius: BorderRadius.circular(14),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 child: Text(
-                  'Ayrıcalıkları Gör',
+                  cta,
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 12,
