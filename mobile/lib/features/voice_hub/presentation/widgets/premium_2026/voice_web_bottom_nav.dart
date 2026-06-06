@@ -234,7 +234,7 @@ class VoiceWebFloatingRail extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _FloatBtn(icon: Icons.chevron_left_rounded, onTap: onTools),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         _FloatBtn(icon: Icons.queue_music_rounded, onTap: onMusic),
       ],
     );
@@ -256,13 +256,13 @@ class _FloatBtn extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: Container(
-          width: 44,
-          height: 44,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
           ),
-          child: Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 22),
+          child: Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 18),
         ),
       ),
     );
