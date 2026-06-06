@@ -9,20 +9,26 @@ import '../../providers/chat_room_providers.dart';
 import '../../services/voice_room_dj_player.dart';
 import '../premium/voice_glass.dart';
 
-/// Şu an çalan veya sıradaki müzik — kapak, ilerleme, isteyen.
+/// Şu an çalan veya sıradaki müzik — kapak, ilerleme, oynatma kontrolleri.
 class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
   const VoiceRoomMusicMiniPlayer({
     super.key,
     required this.dj,
     this.onTap,
     this.onSkip,
+    this.onPlayPause,
+    this.onStop,
     this.canModerate = false,
+    this.canControl = false,
   });
 
   final ChatRoomDjState dj;
   final VoidCallback? onTap;
   final VoidCallback? onSkip;
+  final VoidCallback? onPlayPause;
+  final VoidCallback? onStop;
   final bool canModerate;
+  final bool canControl;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -53,7 +59,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 6, 8, 5),
+                  padding: const EdgeInsets.fromLTRB(8, 6, 4, 5),
                   child: Row(
                     children: [
                       ClipRRect(
@@ -90,9 +96,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                                 ),
                               ),
                             Text(
-                              isQueuedOnly
-                                  ? 'İsteyen: ${track.requestedBy?.displayName ?? '—'} · $remaining'
-                                  : 'İsteyen: ${track.requestedBy?.displayName ?? '—'} · $remaining',
+                              'İsteyen: ${track.requestedBy?.displayName ?? '—'} · $remaining',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -106,12 +110,44 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      if (canControl && onPlayPause != null)
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 30,
+                            minHeight: 30,
+                          ),
+                          onPressed: onPlayPause,
+                          icon: Icon(
+                            isPlaying
+                                ? Icons.pause_rounded
+                                : Icons.play_arrow_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      if (canControl && onStop != null)
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 30,
+                            minHeight: 30,
+                          ),
+                          onPressed: onStop,
+                          icon: Icon(
+                            Icons.stop_rounded,
+                            color: Colors.white.withValues(alpha: 0.85),
+                            size: 18,
+                          ),
+                        ),
                       if (isPlaying)
                         Padding(
                           padding: const EdgeInsets.only(right: 2),
                           child: Icon(
                             Icons.graphic_eq_rounded,
-                            size: 16,
+                            size: 14,
                             color: AppThemeColors.accentPink
                                 .withValues(alpha: 0.95),
                           ),
@@ -121,8 +157,8 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                           visualDensity: VisualDensity.compact,
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(
-                            minWidth: 32,
-                            minHeight: 32,
+                            minWidth: 30,
+                            minHeight: 30,
                           ),
                           onPressed: onSkip,
                           icon: const Icon(

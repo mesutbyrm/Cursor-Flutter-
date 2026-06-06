@@ -201,12 +201,18 @@ class _VoicePremiumGiftPanel2026State
     if (g == null || _sending) return;
     setState(() => _sending = true);
     try {
+      final user = ref.read(authControllerProvider).valueOrNull;
+      final roomKey = widget.room.apiRoomKey.isNotEmpty
+          ? widget.room.apiRoomKey
+          : widget.room.id;
       await ref.read(chatRoomGiftsRemoteProvider).sendGift(
-            roomId: widget.room.id,
+            roomId: roomKey,
             giftTypeId: g.id,
             quantity: _qty,
+            senderName: user?.display ?? 'Sen',
+            receiverName: widget.room.ownerName ?? 'Yayıncı',
+            receiverId: widget.room.ownerId,
           );
-      final user = ref.read(authControllerProvider).valueOrNull;
       final raw = LiveGiftEvent(
         id: 'local-${DateTime.now().microsecondsSinceEpoch}',
         senderId: user?.id,
@@ -218,7 +224,7 @@ class _VoicePremiumGiftPanel2026State
           fallback: LiveGiftCatalog.displayName(g),
         ),
         quantity: _qty,
-        coinCost: g.price,
+        coinCost: g.price * _qty,
         timestamp: DateTime.now(),
         combo: _qty,
         rarity: PremiumGiftCatalog2026.rarity(g.id),

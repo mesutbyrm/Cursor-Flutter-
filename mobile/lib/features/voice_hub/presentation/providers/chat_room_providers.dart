@@ -221,17 +221,11 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       final player = ref.read(voiceRoomDjPlayerProvider);
       player.onTrackComplete = () => unawaited(_onDjTrackComplete());
     });
-    _poll = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_pollPaused) return;
-      _pollTick++;
-      final sse = state.sseConnected;
-      final interval = sse ? 12 : 5;
-      if (_pollTick % interval != 0) return;
-      final fullDj = !sse || (_pollTick % (interval * 3) == 0);
-      unawaited(refresh(includeDj: fullDj));
-    });
-    _presenceHeartbeat = Timer.periodic(const Duration(seconds: 20), (_) {
-      if (state.selfInRoom) unawaited(_presenceHeartbeatTick());
+    _schedulePoll();
+    _presenceHeartbeat = Timer.periodic(const Duration(seconds: 45), (_) {
+      if (!state.sseConnected && state.selfInRoom) {
+        unawaited(_presenceHeartbeatTick());
+      }
     });
     return VoiceRoomLiveState(
       backgroundUrl: room.backgroundImageUrl?.trim().isNotEmpty == true
@@ -357,24 +351,41 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       },
       onPresence: (users) {
         final merged = _mergeSelf(users);
+        final wasSse = state.sseConnected;
         state = state.copyWith(
           presence: merged,
           sseConnected: true,
           selfInRoom: true,
         );
+        if (!wasSse) _schedulePoll();
       },
     );
+  }
+
+  void _schedulePoll() {
+    _poll?.cancel();
+    _pollTick = 0;
+    final sse = state.sseConnected;
+    final interval = sse ? 15 : 8;
+    _poll = Timer.periodic(Duration(seconds: interval), (_) {
+      if (_pollPaused) return;
+      _pollTick++;
+      final fullDj = !sse || (_pollTick % 3 == 0);
+      unawaited(refresh(includeDj: fullDj));
+    });
   }
 
   void _startGiftSocket() {
     if (_roomKey.isEmpty) return;
     _giftSocket?.disconnect();
     final storage = ref.read(tokenStorageProvider);
+    final slug = arg.slug.trim();
     _giftSocket = VoiceRoomGiftSocket(ref.read(liveGiftsRemoteProvider));
     VoiceRoomDebugLog.log('socket.dj.subscribe', {'room': _roomKey});
+    ref.read(voiceRoomGiftRealtimeProvider).setSocketPreferred(true);
     _giftSocket!.connect(
       roomId: _roomKey,
-      alternateRoomId: arg.id,
+      alternateRoomId: slug.isNotEmpty && slug != _roomKey ? slug : null,
       onEvent: (event) {
         ref.read(voiceRoomGiftRealtimeProvider).publishRemote(event);
       },
@@ -645,10 +656,8 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   Future<void> _syncMusicFromServerWithRetries() async {
     const delays = <Duration>[
       Duration.zero,
-      Duration(milliseconds: 300),
-      Duration(milliseconds: 800),
+      Duration(milliseconds: 500),
       Duration(milliseconds: 1500),
-      Duration(milliseconds: 3000),
     ];
     for (final delay in delays) {
       if (delay > Duration.zero) {
@@ -999,6 +1008,47 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     }
   }
 
+  bool _canControlMusic() {
+    final perms = _permissions();
+    return perms.canManageDj || perms.isRoomOwner || state.dj.canPlayMusic;
+  }
+
+  Future<String?> pauseMusic() async {
+    if (!_canControlMusic()) return 'Yetki yok';
+    try {
+      await ref.read(chatRoomRemoteProvider).updateDj(
+            roomKey: _roomKey,
+            musicUrl: state.dj.musicUrl,
+            playing: false,
+          );
+      await ref.read(voiceRoomDjPlayerProvider).pause();
+      state = state.copyWith(dj: state.dj.copyWith(playing: false));
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> resumeMusic() async {
+    if (!_canControlMusic()) return 'Yetki yok';
+    final url = state.dj.playbackSource;
+    if (url == null) return 'Çalınacak şarkı yok';
+    try {
+      await ref.read(chatRoomRemoteProvider).updateDj(
+            roomKey: _roomKey,
+            musicUrl: state.dj.musicUrl ?? url,
+            playing: true,
+          );
+      final dj = await _applyDjPlayback(state.dj.copyWith(playing: true));
+      state = state.copyWith(dj: dj);
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> stopMusic() => clearMusicQueue();
+
   Future<String?> toggleBackgroundMusic(bool enabled) async {
     final dj = state.dj;
     try {
@@ -1250,9 +1300,14 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
           musicQueue:
               result.queue.isNotEmpty ? result.queue : state.dj.musicQueue,
           nowPlaying: result.item ?? state.dj.nowPlaying,
-          musicUrl: result.musicUrl ?? state.dj.musicUrl,
+          musicUrl: result.musicUrl ??
+              result.item?.youtubeUrl ??
+              state.dj.musicUrl,
         );
-        if (result.queuePosition == 1) {
+        final shouldStart = result.playing ||
+            result.queuePosition == 1 ||
+            (updated.musicQueue.isNotEmpty && updated.nowPlaying != null);
+        if (shouldStart) {
           updated = updated.copyWith(playing: true);
         }
         updated = await _applyDjPlayback(updated);

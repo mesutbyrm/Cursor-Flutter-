@@ -142,13 +142,20 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                               gift: g,
                               onTap: () async {
                                 try {
-                                  await ref.read(chatRoomGiftsRemoteProvider).sendGift(
-                                        roomId: room.id,
-                                        giftTypeId: g.id,
-                                      );
                                   final user = ref
                                       .read(authControllerProvider)
                                       .valueOrNull;
+                                  final roomKey = room.apiRoomKey.isNotEmpty
+                                      ? room.apiRoomKey
+                                      : room.id;
+                                  await ref.read(chatRoomGiftsRemoteProvider).sendGift(
+                                        roomId: roomKey,
+                                        giftTypeId: g.id,
+                                        senderName: user?.display ?? 'Sen',
+                                        receiverName:
+                                            room.ownerName ?? 'Yayıncı',
+                                        receiverId: room.ownerId,
+                                      );
                                   final raw = LiveGiftEvent(
                                     id: 'local-${DateTime.now().microsecondsSinceEpoch}',
                                     senderId: user?.id,
