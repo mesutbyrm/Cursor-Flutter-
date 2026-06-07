@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/config/env.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../vip_gold/domain/voice_room_access.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
@@ -19,10 +18,6 @@ class VoiceRoomSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!Env.useNextAuth) {
-      return const SizedBox.shrink();
-    }
-
     final rooms = ref.watch(homeVoiceRoomsProvider);
 
     return rooms.when(
@@ -52,37 +47,66 @@ class VoiceRoomSection extends ConsumerWidget {
           ),
         ],
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, __) => _content(context, ref, _fallbackRooms),
       data: (items) {
-        if (items.isEmpty) return const SizedBox.shrink();
-        final sorted = sortVoiceRoomsByPopularity(items).take(12).toList();
-        return Column(
-          children: [
-            HomeSectionTitle(
-              emoji: '🎙️',
-              title: 'Sesli Sohbet Odaları',
-              actionLabel: 'Tüm Odalar >',
-              onAction: () => context.push('/voice-rooms'),
-            ),
-            SizedBox(
-              height: HomeApprovedDesign.voiceCardH,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-                itemCount: sorted.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (context, i) => _VoiceRoomCard(
-                  room: sorted[i],
-                  onTap: () => openVoiceRoomWithVipGate(context, ref, sorted[i]),
-                ),
-              ),
-            ),
-          ],
-        );
+        final sorted = items.isEmpty
+            ? _fallbackRooms
+            : sortVoiceRoomsByPopularity(items).take(12).toList();
+        return _content(context, ref, sorted);
       },
     );
   }
+
+  static Widget _content(
+    BuildContext context,
+    WidgetRef ref,
+    List<VoiceRoomEntity> rooms,
+  ) {
+    return Column(
+      children: [
+        HomeSectionTitle(
+          emoji: '🎙️',
+          title: 'Sesli Sohbet Odaları',
+          actionLabel: 'Tüm Odalar >',
+          onAction: () => context.push('/voice-rooms'),
+        ),
+        SizedBox(
+          height: HomeApprovedDesign.voiceCardH,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+            itemCount: rooms.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, i) => _VoiceRoomCard(
+              room: rooms[i],
+              onTap: rooms[i].id.startsWith('demo-')
+                  ? () => context.push('/voice-rooms')
+                  : () => openVoiceRoomWithVipGate(context, ref, rooms[i]),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  static const _fallbackRooms = [
+    VoiceRoomEntity(
+      id: 'demo-1',
+      slug: 'demo-tarot',
+      nameTr: 'Tarot Sohbet',
+      descTr: 'Müzik • Sohbet',
+      onlineCount: 24,
+      icon: '🔮',
+    ),
+    VoiceRoomEntity(
+      id: 'demo-2',
+      slug: 'demo-kahve',
+      nameTr: 'Kahve Falı Odası',
+      descTr: 'Fal • Sohbet',
+      onlineCount: 18,
+      icon: '☕',
+    ),
+  ];
 }
 
 class _VoiceRoomCard extends StatelessWidget {

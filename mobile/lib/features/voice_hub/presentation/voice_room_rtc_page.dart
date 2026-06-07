@@ -699,12 +699,72 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
   }
 
+  void _syncSessionKeyIfNeeded(VoiceRoomEntity room) {
+    if (_liveRoomKey.apiRoomKey.isNotEmpty || room.apiRoomKey.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_liveRoomKey.apiRoomKey.isNotEmpty || room.apiRoomKey.isEmpty) return;
+      setState(() => _liveRoomKey = room.stableSessionKey);
+      unawaited(_joinRoom());
+    });
+  }
+
+  Widget _roomLoadingShell() {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await _leave();
+      },
+      child: Scaffold(
+        backgroundColor: VoiceRoomTokens.bgDeep,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            const VoiceCosmicBackground(),
+            SafeArea(
+              child: Column(
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      onPressed: _leave,
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                      color: Colors.white,
+                    ),
+                  ),
+                  const Spacer(),
+                  const CircularProgressIndicator(
+                    color: VoiceRoomTokens.neonPurple,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Oda yükleniyor…',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.75),
+                      fontSize: 14,
+                    ),
+                  ),
+                  const Spacer(flex: 2),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final synced = _roomSynced(ref.watch(voiceRoomsProvider).valueOrNull);
     final room = synced.apiRoomKey.isNotEmpty ? synced : widget.room;
-    if (_liveRoomKey.apiRoomKey.isEmpty && room.apiRoomKey.isNotEmpty) {
-      _liveRoomKey = room.stableSessionKey;
+    _syncSessionKeyIfNeeded(room);
+    if (room.apiRoomKey.isEmpty) {
+      return _roomLoadingShell();
+    }
+    if (_liveRoomKey.apiRoomKey.isEmpty) {
+      return _roomLoadingShell();
     }
     final live = ref.watch(voiceRoomLiveProvider(_liveRoomKey));
     final ui = ref.watch(voiceRoomUiProvider);
@@ -804,6 +864,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     ref.listen(voiceRoomsProvider, (prev, next) {
       final synced = _roomSynced(next.valueOrNull);
       if (synced.apiRoomKey.isEmpty) return;
+      if (_liveRoomKey.apiRoomKey.isEmpty) {
+        setState(() => _liveRoomKey = synced.stableSessionKey);
+      }
       final hadKey = _roomSynced(prev?.valueOrNull).apiRoomKey.isNotEmpty;
       if (!hadKey && !_audioReady && !_leaving) {
         unawaited(_joinRoom());
@@ -832,7 +895,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             Positioned.fill(
               child: Column(
                 children: [
-                  Flexible(
+                  Expanded(
                     child: SingleChildScrollView(
                       physics: const ClampingScrollPhysics(),
                       child: SafeArea(
@@ -1045,22 +1108,20 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       ),
                     ),
                   ),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.bottomLeft,
-                      child: VoiceWebChatOverlay(
-                        messages: live.messages,
-                        hideOfficialJoinInChat: staffBanner != null,
-                        maxHeight: chatMaxH,
-                        onUserTap: (id, _) {
-                          for (final e in live.presence) {
-                            if (e.id == id) {
-                              _openUser(e);
-                              break;
-                            }
+                  Align(
+                    alignment: Alignment.bottomLeft,
+                    child: VoiceWebChatOverlay(
+                      messages: live.messages,
+                      hideOfficialJoinInChat: staffBanner != null,
+                      maxHeight: chatMaxH,
+                      onUserTap: (id, _) {
+                        for (final e in live.presence) {
+                          if (e.id == id) {
+                            _openUser(e);
+                            break;
                           }
-                        },
-                      ),
+                        }
+                      },
                     ),
                   ),
                 ],
