@@ -2,22 +2,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.140+142` |
-| Tarih (UTC) | 2026-06-07 12:10 |
-| Commit | [`07da458feb0d41c60ee8b4f12268b46ae6cb097c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/07da458feb0d41c60ee8b4f12268b46ae6cb097c) |
-| İş akışı | [Run 27091646607](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27091646607) |
+| Sürüm | `1.0.141+143` |
+| Tarih (UTC) | 2026-06-07 12:51 |
+| Commit | [`0f3259019d00fcf987329a89fb94a6f7f0afa631`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/0f3259019d00fcf987329a89fb94a6f7f0afa631) |
+| İş akışı | [Run 27092561884](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27092561884) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.140+142 (2026-06-07)
+## 1.0.141+143 (2026-06-07)
 
-### Sesli oda + canlı fal davet
+### Ana sayfa — Canlı Yayındakiler
 
-- Sesli oda: tam ekran bağlanma overlay kaldırıldı (odaya giriş engelleniyordu)
-- Falcı daveti: push bildirimi → uygulama içi Kabul/Beklet/Reddet sheet (global host)
-- OneSignal ön planda fal isteği sheet açar; bildirim yalnızca bilgi amaçlı
-- Davet sheet BackdropFilter kaldırıldı (Android gri boş sheet)
+- Yatay kaydırmalı büyük 16:9 canlı yayın kartları (neon glow)
+- Kırmızı CANLI rozeti, sağ üst izleyici sayısı, alt yayıncı adı + başlık + kategori
+- Web ile aynı `GET /api/video-streams` endpoint; yayın yoksa bölüm gizlenir
+- CachedNetworkImage + lazy list; ilk 5 önizleme önceden yüklenir
+- Bölüm sırası: Hikâyeler → Canlı Yayındakiler → Sesli Sohbet → … → Keşfet → Fan Club → Gold
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
