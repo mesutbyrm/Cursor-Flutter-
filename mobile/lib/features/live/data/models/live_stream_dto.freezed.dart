@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LiveStreamDto {
 
- String get id; String get title; String? get streamerName; String? get thumbnailUrl; int get viewerCount; bool get isLive; String? get hostUserId;
+ String get id; String get title; String? get streamerName; String? get thumbnailUrl; String? get category; int get viewerCount; bool get isLive; String? get hostUserId;
 /// Create a copy of LiveStreamDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $LiveStreamDtoCopyWith<LiveStreamDto> get copyWith => _$LiveStreamDtoCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LiveStreamDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.streamerName, streamerName) || other.streamerName == streamerName)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.viewerCount, viewerCount) || other.viewerCount == viewerCount)&&(identical(other.isLive, isLive) || other.isLive == isLive)&&(identical(other.hostUserId, hostUserId) || other.hostUserId == hostUserId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LiveStreamDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.streamerName, streamerName) || other.streamerName == streamerName)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.category, category) || other.category == category)&&(identical(other.viewerCount, viewerCount) || other.viewerCount == viewerCount)&&(identical(other.isLive, isLive) || other.isLive == isLive)&&(identical(other.hostUserId, hostUserId) || other.hostUserId == hostUserId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,streamerName,thumbnailUrl,viewerCount,isLive,hostUserId);
+int get hashCode => Object.hash(runtimeType,id,title,streamerName,thumbnailUrl,category,viewerCount,isLive,hostUserId);
 
 @override
 String toString() {
-  return 'LiveStreamDto(id: $id, title: $title, streamerName: $streamerName, thumbnailUrl: $thumbnailUrl, viewerCount: $viewerCount, isLive: $isLive, hostUserId: $hostUserId)';
+  return 'LiveStreamDto(id: $id, title: $title, streamerName: $streamerName, thumbnailUrl: $thumbnailUrl, category: $category, viewerCount: $viewerCount, isLive: $isLive, hostUserId: $hostUserId)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $LiveStreamDtoCopyWith<$Res>  {
   factory $LiveStreamDtoCopyWith(LiveStreamDto value, $Res Function(LiveStreamDto) _then) = _$LiveStreamDtoCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, String? streamerName, String? thumbnailUrl, int viewerCount, bool isLive, String? hostUserId
+ String id, String title, String? streamerName, String? thumbnailUrl, String? category, int viewerCount, bool isLive, String? hostUserId
 });
 
 
@@ -62,12 +62,13 @@ class _$LiveStreamDtoCopyWithImpl<$Res>
 
 /// Create a copy of LiveStreamDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? streamerName = freezed,Object? thumbnailUrl = freezed,Object? viewerCount = null,Object? isLive = null,Object? hostUserId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? streamerName = freezed,Object? thumbnailUrl = freezed,Object? category = freezed,Object? viewerCount = null,Object? isLive = null,Object? hostUserId = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,streamerName: freezed == streamerName ? _self.streamerName : streamerName // ignore: cast_nullable_to_non_nullable
 as String?,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
+as String?,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as String?,viewerCount: null == viewerCount ? _self.viewerCount : viewerCount // ignore: cast_nullable_to_non_nullable
 as int,isLive: null == isLive ? _self.isLive : isLive // ignore: cast_nullable_to_non_nullable
 as bool,hostUserId: freezed == hostUserId ? _self.hostUserId : hostUserId // ignore: cast_nullable_to_non_nullable
@@ -156,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String? streamerName,  String? thumbnailUrl,  int viewerCount,  bool isLive,  String? hostUserId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String? streamerName,  String? thumbnailUrl,  String? category,  int viewerCount,  bool isLive,  String? hostUserId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LiveStreamDto() when $default != null:
-return $default(_that.id,_that.title,_that.streamerName,_that.thumbnailUrl,_that.viewerCount,_that.isLive,_that.hostUserId);case _:
+return $default(_that.id,_that.title,_that.streamerName,_that.thumbnailUrl,_that.category,_that.viewerCount,_that.isLive,_that.hostUserId);case _:
   return orElse();
 
 }
@@ -177,10 +178,10 @@ return $default(_that.id,_that.title,_that.streamerName,_that.thumbnailUrl,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String? streamerName,  String? thumbnailUrl,  int viewerCount,  bool isLive,  String? hostUserId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String? streamerName,  String? thumbnailUrl,  String? category,  int viewerCount,  bool isLive,  String? hostUserId)  $default,) {final _that = this;
 switch (_that) {
 case _LiveStreamDto():
-return $default(_that.id,_that.title,_that.streamerName,_that.thumbnailUrl,_that.viewerCount,_that.isLive,_that.hostUserId);case _:
+return $default(_that.id,_that.title,_that.streamerName,_that.thumbnailUrl,_that.category,_that.viewerCount,_that.isLive,_that.hostUserId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -197,10 +198,10 @@ return $default(_that.id,_that.title,_that.streamerName,_that.thumbnailUrl,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String? streamerName,  String? thumbnailUrl,  int viewerCount,  bool isLive,  String? hostUserId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String? streamerName,  String? thumbnailUrl,  String? category,  int viewerCount,  bool isLive,  String? hostUserId)?  $default,) {final _that = this;
 switch (_that) {
 case _LiveStreamDto() when $default != null:
-return $default(_that.id,_that.title,_that.streamerName,_that.thumbnailUrl,_that.viewerCount,_that.isLive,_that.hostUserId);case _:
+return $default(_that.id,_that.title,_that.streamerName,_that.thumbnailUrl,_that.category,_that.viewerCount,_that.isLive,_that.hostUserId);case _:
   return null;
 
 }
@@ -212,13 +213,14 @@ return $default(_that.id,_that.title,_that.streamerName,_that.thumbnailUrl,_that
 
 
 class _LiveStreamDto extends LiveStreamDto {
-  const _LiveStreamDto({required this.id, this.title = 'Canlı yayın', this.streamerName, this.thumbnailUrl, this.viewerCount = 0, this.isLive = true, this.hostUserId}): super._();
+  const _LiveStreamDto({required this.id, this.title = 'Canlı yayın', this.streamerName, this.thumbnailUrl, this.category, this.viewerCount = 0, this.isLive = true, this.hostUserId}): super._();
   
 
 @override final  String id;
 @override@JsonKey() final  String title;
 @override final  String? streamerName;
 @override final  String? thumbnailUrl;
+@override final  String? category;
 @override@JsonKey() final  int viewerCount;
 @override@JsonKey() final  bool isLive;
 @override final  String? hostUserId;
@@ -233,16 +235,16 @@ _$LiveStreamDtoCopyWith<_LiveStreamDto> get copyWith => __$LiveStreamDtoCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LiveStreamDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.streamerName, streamerName) || other.streamerName == streamerName)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.viewerCount, viewerCount) || other.viewerCount == viewerCount)&&(identical(other.isLive, isLive) || other.isLive == isLive)&&(identical(other.hostUserId, hostUserId) || other.hostUserId == hostUserId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LiveStreamDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.streamerName, streamerName) || other.streamerName == streamerName)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.category, category) || other.category == category)&&(identical(other.viewerCount, viewerCount) || other.viewerCount == viewerCount)&&(identical(other.isLive, isLive) || other.isLive == isLive)&&(identical(other.hostUserId, hostUserId) || other.hostUserId == hostUserId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,streamerName,thumbnailUrl,viewerCount,isLive,hostUserId);
+int get hashCode => Object.hash(runtimeType,id,title,streamerName,thumbnailUrl,category,viewerCount,isLive,hostUserId);
 
 @override
 String toString() {
-  return 'LiveStreamDto(id: $id, title: $title, streamerName: $streamerName, thumbnailUrl: $thumbnailUrl, viewerCount: $viewerCount, isLive: $isLive, hostUserId: $hostUserId)';
+  return 'LiveStreamDto(id: $id, title: $title, streamerName: $streamerName, thumbnailUrl: $thumbnailUrl, category: $category, viewerCount: $viewerCount, isLive: $isLive, hostUserId: $hostUserId)';
 }
 
 
@@ -253,7 +255,7 @@ abstract mixin class _$LiveStreamDtoCopyWith<$Res> implements $LiveStreamDtoCopy
   factory _$LiveStreamDtoCopyWith(_LiveStreamDto value, $Res Function(_LiveStreamDto) _then) = __$LiveStreamDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, String? streamerName, String? thumbnailUrl, int viewerCount, bool isLive, String? hostUserId
+ String id, String title, String? streamerName, String? thumbnailUrl, String? category, int viewerCount, bool isLive, String? hostUserId
 });
 
 
@@ -270,12 +272,13 @@ class __$LiveStreamDtoCopyWithImpl<$Res>
 
 /// Create a copy of LiveStreamDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? streamerName = freezed,Object? thumbnailUrl = freezed,Object? viewerCount = null,Object? isLive = null,Object? hostUserId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? streamerName = freezed,Object? thumbnailUrl = freezed,Object? category = freezed,Object? viewerCount = null,Object? isLive = null,Object? hostUserId = freezed,}) {
   return _then(_LiveStreamDto(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,streamerName: freezed == streamerName ? _self.streamerName : streamerName // ignore: cast_nullable_to_non_nullable
 as String?,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
+as String?,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as String?,viewerCount: null == viewerCount ? _self.viewerCount : viewerCount // ignore: cast_nullable_to_non_nullable
 as int,isLive: null == isLive ? _self.isLive : isLive // ignore: cast_nullable_to_non_nullable
 as bool,hostUserId: freezed == hostUserId ? _self.hostUserId : hostUserId // ignore: cast_nullable_to_non_nullable

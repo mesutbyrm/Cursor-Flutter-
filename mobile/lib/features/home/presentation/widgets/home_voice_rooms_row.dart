@@ -83,7 +83,7 @@ class HomeVoiceRoomsRow extends ConsumerWidget {
       builder: (context) => Column(
         children: [
           HomeSectionHeader(
-            title: 'Sesli Sohbet',
+            title: 'Sesli Sohbet Odaları',
             leadingDotColor: HomePalette.secondary,
             onTrailing: () => context.push('/voice-rooms'),
           ),
