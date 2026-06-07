@@ -1,5 +1,24 @@
 import 'live_fortune_teller_entity.dart';
 
+/// `POST /api/fortune-tellers/session` yanıtı.
+class FortuneSessionCreateResult {
+  const FortuneSessionCreateResult({
+    required this.sessionId,
+    required this.status,
+    this.tellerUserId,
+    this.clientId,
+    this.role,
+    this.isClient = true,
+  });
+
+  final String sessionId;
+  final String status;
+  final String? tellerUserId;
+  final String? clientId;
+  final String? role;
+  final bool isClient;
+}
+
 /// Canlı fal oturumu — TRTC oda + süre/jeton.
 class LiveFortuneSessionEntity {
   const LiveFortuneSessionEntity({
@@ -7,6 +26,8 @@ class LiveFortuneSessionEntity {
     required this.teller,
     required this.durationMinutes,
     required this.totalJeton,
+    this.tellerUserId,
+    this.clientId,
     this.isClient = true,
   });
 
@@ -14,9 +35,17 @@ class LiveFortuneSessionEntity {
   final LiveFortuneTellerEntity teller;
   final int durationMinutes;
   final int totalJeton;
+  final String? tellerUserId;
+  final String? clientId;
   final bool isClient;
 
   String get trtcRoomId => sessionId;
+
+  String get anchorUserId {
+    final fromSession = tellerUserId?.trim();
+    if (fromSession != null && fromSession.isNotEmpty) return fromSession;
+    return teller.trtcUserId;
+  }
 }
 
 /// Randevu süre seçenekleri (dakika → jeton/dk).

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
 import '../../live/presentation/providers/live_providers.dart';
+import 'theme/voice_room_tokens.dart';
 import 'voice_room_rtc_page.dart';
 
 /// `/voice-room/:id` — oda `extra` yoksa canlifal.com listesinden yükler.
@@ -18,12 +18,12 @@ class VoiceRoomRoutePage extends ConsumerWidget {
     final async = ref.watch(voiceRoomByIdProvider(roomId));
 
     return async.when(
-      loading: () => Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: const Center(child: DiscoverAccentLoader()),
+      loading: () => const Scaffold(
+        backgroundColor: VoiceRoomTokens.bgDeep,
+        body: Center(child: DiscoverAccentLoader()),
       ),
       error: (e, _) => Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: VoiceRoomTokens.bgDeep,
         body: Center(
           child: DiscoverEmptyState(
             icon: Icons.headset_off_rounded,
@@ -36,7 +36,7 @@ class VoiceRoomRoutePage extends ConsumerWidget {
       data: (room) {
         if (room == null) {
           return Scaffold(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            backgroundColor: VoiceRoomTokens.bgDeep,
             body: Center(
               child: DiscoverEmptyState(
                 icon: Icons.meeting_room_outlined,

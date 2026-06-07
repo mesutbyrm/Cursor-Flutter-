@@ -7,6 +7,7 @@ import '../../../../core/util/json_util.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
 import '../../domain/entities/home_trend_video_entity.dart';
+import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 
@@ -63,30 +64,50 @@ class HomeRemoteDataSource {
     return const [];
   }
 
-  Future<({String sessionId, String status})?> createFortuneTellerSession(
-    String tellerId,
-  ) async {
+  Future<FortuneSessionCreateResult?> createFortuneTellerSession(
+    String tellerId, {
+    String? tellerUserId,
+  }) async {
     final id = tellerId.trim();
     if (id.isEmpty) return null;
     try {
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.fortuneTellerSession,
-        data: {'tellerId': id, 'fortuneTellerId': id},
+        data: {
+          'tellerId': id,
+          'fortuneTellerId': id,
+          if (tellerUserId != null && tellerUserId.trim().isNotEmpty)
+            'tellerUserId': tellerUserId.trim(),
+        },
       );
       final body = res.data;
       if (body is! Map) return null;
       final map = asJsonMap(body);
       final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      final sessionId = pick(data, ['sessionId', 'id'])?.toString() ??
-          (data['session'] is Map
-              ? pick(asJsonMap(data['session']), ['id', 'sessionId'])?.toString()
-              : null);
+      final sessionMap =
+          data['session'] is Map ? asJsonMap(data['session']) : data;
+      final sessionId = pick(data, ['sessionId', 'id', 'trtcRoomId'])
+              ?.toString() ??
+          pick(sessionMap, ['id', 'sessionId', 'trtcRoomId'])?.toString();
       final status = pick(data, ['status'])?.toString() ??
-          (data['session'] is Map
-              ? pick(asJsonMap(data['session']), ['status'])?.toString()
-              : 'pending');
+          pick(sessionMap, ['status'])?.toString() ??
+          'pending';
       if (sessionId == null || sessionId.isEmpty) return null;
-      return (sessionId: sessionId, status: status ?? 'pending');
+      final role = pick(data, ['role'])?.toString();
+      final isClientRaw = data['isClient'];
+      final isClient = isClientRaw is bool
+          ? isClientRaw
+          : role != 'teller';
+      return FortuneSessionCreateResult(
+        sessionId: sessionId,
+        status: status,
+        tellerUserId: pick(data, ['tellerUserId', 'anchorUserId'])?.toString() ??
+            pick(sessionMap, ['tellerUserId'])?.toString(),
+        clientId: pick(data, ['clientId'])?.toString() ??
+            pick(sessionMap, ['clientId'])?.toString(),
+        role: role,
+        isClient: isClient,
+      );
     } catch (_) {
       return null;
     }
@@ -265,10 +286,14 @@ class HomeRemoteDataSource {
         m['status']?.toString().toLowerCase() == 'online' ||
         m['canGoOnline'] == true;
     final specs = _stringList(m['specialties'] ?? m['tags'] ?? user['specialties']);
+    final profileId = _str(m, ['id', '_id', 'tellerId']) ??
+        _str(user, ['tellerId']) ??
+        '';
+    final userId = _str(m, ['userId', 'tellerUserId', 'ownerId', 'uid']) ??
+        _str(user, ['id', 'userId']);
     return LiveFortuneTellerEntity(
-      id: _str(m, ['id', '_id', 'tellerId', 'userId']) ??
-          _str(user, ['id', 'userId']) ??
-          '',
+      id: profileId.isNotEmpty ? profileId : (userId ?? ''),
+      userId: userId,
       name: _str(m, ['displayName', 'name', 'username']) ??
           _str(user, ['displayName', 'name', 'username']) ??
           'Falcı',

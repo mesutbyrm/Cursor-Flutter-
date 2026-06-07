@@ -8,6 +8,7 @@ import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme_colors.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/presentation/widgets/broadcast_room/live_room_video_background.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
@@ -60,16 +61,27 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     super.dispose();
   }
 
+  Future<UserEntity?> _waitForAuth() async {
+    final auth = ref.read(authControllerProvider);
+    if (!auth.isLoading) return auth.valueOrNull;
+    try {
+      return await ref.read(authControllerProvider.future);
+    } catch (_) {
+      return ref.read(authControllerProvider).valueOrNull;
+    }
+  }
+
   Future<void> _joinRtc() async {
-    final user = ref.read(authControllerProvider).valueOrNull;
+    final user = await _waitForAuth();
     if (user == null) {
-      setState(() => _rtcError = 'Oturum için giriş gerekli');
+      if (mounted) setState(() => _rtcError = 'Oturum için giriş gerekli');
       return;
     }
     if (!_trtc.isSupported) {
-      setState(() => _rtcError = 'Video bu cihazda desteklenmiyor');
+      if (mounted) setState(() => _rtcError = 'Video bu cihazda desteklenmiyor');
       return;
     }
+    final isClient = widget.session.isClient;
     try {
       final cred = await ref.read(trtcRemoteProvider).fetchUserSig(
             userId: user.id,
@@ -77,9 +89,9 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
           );
       await _trtc.join(
         credentials: cred,
-        isHost: !widget.session.isClient,
+        isHost: !isClient,
         audioOnly: false,
-        expectedAnchorUserId: widget.session.teller.id,
+        expectedAnchorUserId: isClient ? widget.session.anchorUserId : null,
       );
       if (mounted) setState(() => _rtcReady = true);
     } catch (e) {
@@ -166,14 +178,17 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     if (!widget.session.isClient) {
       return TrtcLocalVideoView(key: _localPreviewKey, manager: _trtc);
     }
+    final anchorId = widget.session.anchorUserId;
     return ValueListenableBuilder<String?>(
       valueListenable: _trtc.remoteAnchorUserIdNotifier,
       builder: (context, anchor, _) {
-        if (anchor != null && anchor.isNotEmpty) {
+        final remoteId =
+            (anchor != null && anchor.isNotEmpty) ? anchor : anchorId;
+        if (remoteId.isNotEmpty) {
           return TrtcRemoteVideoView(
-            key: ValueKey(anchor),
+            key: ValueKey(remoteId),
             manager: _trtc,
-            userId: anchor,
+            userId: remoteId,
           );
         }
         return const LiveRoomVideoBackground();

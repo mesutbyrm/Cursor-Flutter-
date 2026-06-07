@@ -233,23 +233,45 @@ export function respondCoBroadcastInvite(
 export type FortuneSessionRow = {
   id: string;
   tellerId: string;
+  /** TRTC anchor — platform kullanıcı kimliği (falcı profil id'sinden farklı olabilir). */
+  tellerUserId: string;
   clientId: string;
+  trtcRoomId: string;
   status: "pending" | "active" | "ended";
   createdAt: string;
 };
 
 const fortuneSessions = new Map<string, FortuneSessionRow>();
 
-export function createFortuneSession(tellerId: string, clientId: string) {
+export function createFortuneSession(
+  tellerId: string,
+  clientId: string,
+  tellerUserId?: string,
+) {
+  const sessionId = `fs-${randomUUID().slice(0, 12)}`;
+  const anchorUserId =
+    tellerUserId?.trim() || tellerId.trim() || clientId.trim();
   const row: FortuneSessionRow = {
-    id: `fs-${randomUUID().slice(0, 12)}`,
+    id: sessionId,
     tellerId,
+    tellerUserId: anchorUserId,
     clientId,
+    trtcRoomId: sessionId,
     status: "pending",
     createdAt: new Date().toISOString(),
   };
   fortuneSessions.set(row.id, row);
   return row;
+}
+
+export function fortuneSessionRoleForUser(
+  session: FortuneSessionRow,
+  userId: string,
+): "client" | "teller" {
+  if (userId === session.tellerUserId || userId === session.tellerId) {
+    return "teller";
+  }
+  return "client";
 }
 
 export function getFortuneSession(sessionId: string) {

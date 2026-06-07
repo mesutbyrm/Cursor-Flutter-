@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { z } from "zod";
-import { createFortuneSession } from "../lib/liveStreamExtrasStore";
+import {
+  createFortuneSession,
+  fortuneSessionRoleForUser,
+} from "../lib/liveStreamExtrasStore";
 import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
 import { requireAuth } from "../middleware/requireAuth";
@@ -99,13 +102,35 @@ socialRouter.get("/announcements", async (_req, res) => {
   return ok(res, { items: seedNotifications });
 });
 
+/** Falcı profil id → TRTC anchor userId (canlifal.com ile uyumlu). */
+function resolveTellerUserId(
+  tellerId: string,
+  body?: Record<string, unknown>,
+): string {
+  const fromBody =
+    body?.tellerUserId?.toString()?.trim() ||
+    body?.userId?.toString()?.trim() ||
+    body?.anchorUserId?.toString()?.trim();
+  if (fromBody) return fromBody;
+  // Seed: ft-* profilleri için sabit demo anchor (gerçek ortamda DB userId gelir).
+  if (tellerId.startsWith("ft-")) {
+    return `teller-user-${tellerId}`;
+  }
+  return tellerId;
+}
+
 socialRouter.get("/fortune-tellers", async (_req, res) => {
+  const tellerId = "ft-1";
+  const tellerUserId = resolveTellerUserId(tellerId);
   return ok(res, {
     tellers: [
       {
-        id: "ft-1",
+        id: tellerId,
+        userId: tellerUserId,
+        tellerUserId,
         displayName: "Canlı Falcı",
         rating: 4.8,
+        pricePerMinute: 12,
         pricePerSession: 120,
         isOnline: true,
         specialties: ["tarot"],
@@ -123,21 +148,37 @@ socialRouter.post("/fortune-tellers/session", requireAuth, async (req, res) => {
   if (!tellerId) {
     return fail(res, 400, "BAD_REQUEST", "tellerId gerekli");
   }
-  const session = createFortuneSession(tellerId, req.userId!);
+  const clientId = req.userId!;
+  const tellerUserId = resolveTellerUserId(
+    tellerId,
+    req.body as Record<string, unknown>,
+  );
+  const session = createFortuneSession(tellerId, clientId, tellerUserId);
+  const role = fortuneSessionRoleForUser(session, clientId);
   return ok(res, {
     session,
     sessionId: session.id,
+    tellerId: session.tellerId,
+    tellerUserId: session.tellerUserId,
+    clientId: session.clientId,
+    trtcRoomId: session.trtcRoomId,
+    role,
+    isClient: role === "client",
     status: session.status,
   });
 });
 
 socialRouter.get("/fortune-tellers/:id", async (req, res) => {
   const id = req.params.id;
+  const tellerUserId = resolveTellerUserId(id);
   return ok(res, {
     teller: {
       id,
+      userId: tellerUserId,
+      tellerUserId,
       displayName: "Canlı Falcı",
       rating: 4.8,
+      pricePerMinute: 12,
       pricePerSession: 120,
       isOnline: true,
       specialties: ["tarot"],

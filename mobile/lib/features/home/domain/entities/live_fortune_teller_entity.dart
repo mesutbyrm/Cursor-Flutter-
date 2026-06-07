@@ -5,6 +5,7 @@ class LiveFortuneTellerEntity extends Equatable {
   const LiveFortuneTellerEntity({
     required this.id,
     required this.name,
+    this.userId,
     this.bio,
     this.avatarUrl,
     this.isOnline = false,
@@ -17,6 +18,8 @@ class LiveFortuneTellerEntity extends Equatable {
   });
 
   final String id;
+  /// TRTC yayıncı kimliği — profil `id` ile aynı olmayabilir.
+  final String? userId;
   final String name;
   final String? bio;
   final String? avatarUrl;
@@ -46,9 +49,16 @@ class LiveFortuneTellerEntity extends Equatable {
     };
   }
 
+  String get trtcUserId {
+    final u = userId?.trim();
+    if (u != null && u.isNotEmpty) return u;
+    return id;
+  }
+
   @override
   List<Object?> get props => [
         id,
+        userId,
         name,
         bio,
         avatarUrl,

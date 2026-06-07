@@ -36,6 +36,10 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push('/content-hub');
     return;
   }
+  if (p == '/ajans-ol') {
+    context.push('/content-hub');
+    return;
+  }
   if (p == '/fan-club' || p.contains('fan-club')) {
     context.push('/content-hub');
     return;

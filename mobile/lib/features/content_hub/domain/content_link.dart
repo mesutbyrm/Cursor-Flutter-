@@ -79,6 +79,12 @@ abstract final class ContentHubCatalog {
           icon: Icons.workspace_premium_rounded,
         ),
         ContentLink(
+          title: 'Ajans ol',
+          subtitle: 'Partner başvurusu',
+          path: '/ajans-ol',
+          icon: Icons.business_center_rounded,
+        ),
+        ContentLink(
           title: 'Fan Club',
           subtitle: 'Üretici kulüpleri',
           path: '/fan-club',

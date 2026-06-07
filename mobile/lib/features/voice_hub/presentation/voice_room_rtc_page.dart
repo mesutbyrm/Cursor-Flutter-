@@ -178,8 +178,25 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
   }
 
+  Future<UserEntity?> _waitForAuth({Duration timeout = const Duration(seconds: 12)}) async {
+    final auth = ref.read(authControllerProvider);
+    if (!auth.isLoading) return auth.valueOrNull;
+    try {
+      return await ref.read(authControllerProvider.future).timeout(timeout);
+    } catch (_) {
+      return ref.read(authControllerProvider).valueOrNull;
+    }
+  }
+
   Future<void> _joinRoom() async {
-    final user = ref.read(authControllerProvider).valueOrNull;
+    if (!mounted) return;
+    setState(() {
+      _audioJoining = true;
+      _audioError = null;
+    });
+
+    final user = await _waitForAuth();
+    if (!mounted) return;
     if (user == null) {
       setState(() {
         _audioJoining = false;
@@ -188,18 +205,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       return;
     }
 
-    setState(() {
-      _audioJoining = true;
-      _audioError = null;
-      _loginError = null;
-    });
+    setState(() => _loginError = null);
 
     _audio = ref.read(voiceRoomAudioCoordinatorProvider);
     if (!_audio!.isSupported) {
-      setState(() {
-        _audioJoining = false;
-        _audioError = 'Ses bağlantısı bu cihazda desteklenmiyor; sohbet çalışır';
-      });
+      if (mounted) {
+        setState(() {
+          _audioJoining = false;
+          _audioError = 'Ses bağlantısı bu cihazda desteklenmiyor; sohbet çalışır';
+        });
+      }
       _startGiftRealtime();
       _maybeShowVipEntrance(user);
       unawaited(_connectPkBattle());
@@ -238,6 +253,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         _startGiftRealtime();
         _maybeShowVipEntrance(user);
         unawaited(_connectPkBattle());
+      }
+    } finally {
+      if (mounted && _audioJoining) {
+        setState(() => _audioJoining = false);
       }
     }
   }
@@ -749,6 +768,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       }
     });
 
+    ref.listen(authControllerProvider, (prev, next) {
+      final wasGuest = prev?.valueOrNull == null;
+      final nowUser = next.valueOrNull;
+      if (wasGuest && nowUser != null && _loginError != null && !_audioReady) {
+        unawaited(_joinRoom());
+      }
+    });
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
@@ -768,23 +795,33 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
-            if (_loginError != null)
-              Center(
-                child: DiscoverEmptyState(
-                  icon: Icons.login_rounded,
-                  message: _loginError!,
-                  actionLabel: 'Giriş',
-                  action: () => context.push('/login'),
-                ),
-              )
-            else
-              Column(
+            Column(
                 children: [
                   SafeArea(
                     bottom: false,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (_loginError != null)
+                          Material(
+                            color: AppThemeColors.liveRed.withValues(alpha: 0.18),
+                            child: ListTile(
+                              dense: true,
+                              leading: const Icon(
+                                Icons.login_rounded,
+                                color: AppThemeColors.liveRed,
+                                size: 20,
+                              ),
+                              title: Text(
+                                _loginError!,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              trailing: TextButton(
+                                onPressed: () => context.push('/login'),
+                                child: const Text('Giriş yap'),
+                              ),
+                            ),
+                          ),
                         if (_audioJoining)
                           const LinearProgressIndicator(
                             minHeight: 2,
@@ -995,7 +1032,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
             ),
             PremiumGiftFullscreenOverlay(event: _fullscreenGift),
-            if (_loginError == null && !keyboardOpen)
+            if (!keyboardOpen)
               Positioned(
                 right: 4,
                 bottom: MediaQuery.paddingOf(context).bottom + 112,
@@ -1031,9 +1068,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               ),
           ],
         ),
-        bottomNavigationBar: _loginError != null
-            ? null
-            : AnimatedPadding(
+        bottomNavigationBar: AnimatedPadding(
                 duration: const Duration(milliseconds: 100),
                 curve: Curves.easeOutCubic,
                 padding: EdgeInsets.only(
