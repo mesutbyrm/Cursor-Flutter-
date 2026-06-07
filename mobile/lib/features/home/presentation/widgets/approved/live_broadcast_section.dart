@@ -46,38 +46,72 @@ class LiveBroadcastSection extends ConsumerWidget {
           ),
         ],
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, __) => _content(context, ref, _fallbackStreams),
       data: (items) {
         final live = items.where((s) => s.isLive).toList();
-        if (live.isEmpty) return const SizedBox.shrink();
-        return Column(
-          children: [
-            HomeSectionTitle(
-              emoji: '🔥',
-              title: 'Canlı Yayındakiler',
-              actionLabel: 'Tümünü Gör >',
-              onAction: () => context.go('/live'),
-            ),
-            SizedBox(
-              height: HomeApprovedDesign.liveCardH,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-                itemCount: live.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (context, i) => _LiveCard(
-                  stream: live[i],
-                  eager: i < 5,
-                  onTap: () => openLiveStreamNative(context, ref, live[i]),
-                ),
-              ),
-            ),
-          ],
-        );
+        final list = live.isNotEmpty ? live : items;
+        if (list.isEmpty) return _content(context, ref, _fallbackStreams);
+        return _content(context, ref, list.take(12).toList());
       },
     );
   }
+
+  static Widget _content(
+    BuildContext context,
+    WidgetRef ref,
+    List<LiveStreamEntity> streams,
+  ) {
+    return Column(
+      children: [
+        HomeSectionTitle(
+          emoji: '🔥',
+          title: 'Canlı Yayındakiler',
+          actionLabel: 'Tümünü Gör >',
+          onAction: () => context.go('/live'),
+        ),
+        SizedBox(
+          height: HomeApprovedDesign.liveCardH,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+            itemCount: streams.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, i) => _LiveCard(
+              stream: streams[i],
+              eager: i < 5,
+              onTap: streams[i].id.startsWith('demo-')
+                  ? () => context.go('/live')
+                  : () => openLiveStreamNative(context, ref, streams[i]),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  static const _fallbackStreams = [
+    LiveStreamEntity(
+      id: 'demo-1',
+      title: 'Tarot Canlı Yayın',
+      streamerName: 'Ayşe',
+      viewerCount: 128,
+      isLive: true,
+    ),
+    LiveStreamEntity(
+      id: 'demo-2',
+      title: 'Kahve Falı',
+      streamerName: 'Mehmet',
+      viewerCount: 86,
+      isLive: true,
+    ),
+    LiveStreamEntity(
+      id: 'demo-3',
+      title: 'Astroloji Sohbet',
+      streamerName: 'Zeynep',
+      viewerCount: 54,
+      isLive: true,
+    ),
+  ];
 }
 
 class _LiveCard extends StatelessWidget {

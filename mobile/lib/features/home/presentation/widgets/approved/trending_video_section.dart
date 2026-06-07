@@ -44,36 +44,60 @@ class TrendingVideoSection extends ConsumerWidget {
           ),
         ],
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, __) => _content(context, _fallbackVideos),
       data: (items) {
-        if (items.isEmpty) return const SizedBox.shrink();
-        return Column(
-          children: [
-            HomeSectionTitle(
-              emoji: '🔥',
-              title: 'Trend Videolar',
-              actionLabel: 'Tümünü Gör >',
-              onAction: () => context.go('/social'),
-            ),
-            SizedBox(
-              height: HomeApprovedDesign.trendThumb,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-                itemCount: items.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (_, i) => _TrendThumb(
-                  video: items[i],
-                  onTap: () => context.go('/social'),
-                ),
-              ),
-            ),
-          ],
-        );
+        final list = items.isNotEmpty ? items : _fallbackVideos;
+        return _content(context, list);
       },
     );
   }
+
+  static Widget _content(BuildContext context, List<HomeTrendVideoEntity> videos) {
+    return Column(
+      children: [
+        HomeSectionTitle(
+          emoji: '🔥',
+          title: 'Trend Videolar',
+          actionLabel: 'Tümünü Gör >',
+          onAction: () => context.go('/social'),
+        ),
+        SizedBox(
+          height: HomeApprovedDesign.trendThumb,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+            itemCount: videos.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (_, i) => _TrendThumb(
+              video: videos[i],
+              onTap: () => context.go('/social'),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  static const _fallbackVideos = [
+    HomeTrendVideoEntity(
+      id: 'demo-1',
+      title: 'Tarot Rehberi',
+      channelName: 'Canlifal',
+      viewCount: 2400,
+    ),
+    HomeTrendVideoEntity(
+      id: 'demo-2',
+      title: 'Kahve Falı',
+      channelName: 'Canlifal',
+      viewCount: 1800,
+    ),
+    HomeTrendVideoEntity(
+      id: 'demo-3',
+      title: 'Astroloji',
+      channelName: 'Canlifal',
+      viewCount: 920,
+    ),
+  ];
 }
 
 class _TrendThumb extends StatelessWidget {
