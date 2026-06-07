@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.143+145 (2026-06-07)
+
+### Ana sayfa — onaylı mockup (piksel uyumlu)
+
+- HomeHeader, StoriesSection, LiveBroadcastSection, VoiceRoomSection
+- TrendingVideoSection, FortuneSection, MoreFortunesButton
+- BottomNavigationWidget: Ana Sayfa, Canlı, Odalar, Jeton, Profil
+- Arka plan #0B0B15, bölüm sırası mockup ile birebir
+
 ## 1.0.142+144 (2026-06-07)
 
 ### Ana sayfa sıkılık + sesli oda gri ekran + kaydırma performansı
