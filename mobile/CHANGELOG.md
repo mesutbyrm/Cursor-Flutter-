@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.141+143 (2026-06-07)
+
+### Ana sayfa — Canlı Yayındakiler
+
+- Yatay kaydırmalı büyük 16:9 canlı yayın kartları (neon glow)
+- Kırmızı CANLI rozeti, sağ üst izleyici sayısı, alt yayıncı adı + başlık + kategori
+- Web ile aynı `GET /api/video-streams` endpoint; yayın yoksa bölüm gizlenir
+- CachedNetworkImage + lazy list; ilk 5 önizleme önceden yüklenir
+- Bölüm sırası: Hikâyeler → Canlı Yayındakiler → Sesli Sohbet → … → Keşfet → Fan Club → Gold
+
 ## 1.0.140+142 (2026-06-07)
 
 ### Sesli oda + canlı fal davet
