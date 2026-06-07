@@ -10,13 +10,13 @@ import '../../../../core/ui/premium/live_badge.dart';
 import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../live/presentation/providers/live_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../providers/home_providers.dart';
 import '../theme/home_palette.dart';
-import '../widgets/live_fortune_invite_sheet.dart';
+import '../widgets/live_fortune_client_booking_sheet.dart';
+import 'live_fortune_waiting_page.dart';
 
 class LiveFortuneTellerDetailPage extends ConsumerStatefulWidget {
   const LiveFortuneTellerDetailPage({super.key, required this.tellerId});
@@ -59,20 +59,26 @@ class _LiveFortuneTellerDetailPageState
       return;
     }
 
-    final invite = await showLiveFortuneInviteSheet(
+    final confirmed = await showLiveFortuneClientBookingSheet(
       context,
       teller: teller,
       durationMinutes: opt.minutes,
       totalJeton: opt.totalJeton,
     );
-    if (!mounted || invite != true) return;
+    if (!mounted || confirmed != true) return;
 
     setState(() => _booking = true);
     try {
       final remote = ref.read(homeRemoteProvider);
+      final displayName = user.displayName?.trim().isNotEmpty == true
+          ? user.displayName!.trim()
+          : user.username;
       final created = await remote.createFortuneTellerSession(
         teller.id,
         tellerUserId: teller.trtcUserId,
+        clientName: displayName,
+        durationMinutes: opt.minutes,
+        totalJeton: opt.totalJeton,
       );
       if (!mounted) return;
       if (created == null) {
@@ -87,16 +93,14 @@ class _LiveFortuneTellerDetailPageState
         durationMinutes: opt.minutes,
         totalJeton: opt.totalJeton,
         tellerUserId: created.tellerUserId ?? teller.trtcUserId,
-        clientId: created.clientId,
-        isClient: created.isClient,
+        clientId: created.clientId ?? user.id,
+        isClient: true,
       );
-      ref.read(videoWebrtcSignalServiceProvider).start(
-            streamId: session.sessionId,
-          );
       if (!mounted) return;
-      await context.push(
-        '/canli-falcilar/${teller.id}/session',
-        extra: session,
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => LiveFortuneWaitingPage(session: session),
+        ),
       );
     } finally {
       if (mounted) setState(() => _booking = false);

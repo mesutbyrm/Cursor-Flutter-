@@ -86,21 +86,16 @@ class _VoiceCosmicBackgroundState extends State<VoiceCosmicBackground>
               size: Size.infinite,
             ),
           ),
-        ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.08),
-                    VoiceRoomTokens.bgDeep.withValues(alpha: 0.78),
-                  ],
-                  stops: const [0.0, 0.92],
-                ),
-              ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withValues(alpha: 0.08),
+                VoiceRoomTokens.bgDeep.withValues(alpha: 0.78),
+              ],
+              stops: const [0.0, 0.92],
             ),
           ),
         ),

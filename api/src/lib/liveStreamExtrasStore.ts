@@ -236,8 +236,12 @@ export type FortuneSessionRow = {
   /** TRTC anchor — platform kullanıcı kimliği (falcı profil id'sinden farklı olabilir). */
   tellerUserId: string;
   clientId: string;
+  clientName?: string;
+  durationMinutes?: number;
+  totalJeton?: number;
   trtcRoomId: string;
   status: "pending" | "active" | "ended";
+  tellerResponse: "pending" | "accepted" | "held" | "rejected";
   createdAt: string;
 };
 
@@ -247,6 +251,11 @@ export function createFortuneSession(
   tellerId: string,
   clientId: string,
   tellerUserId?: string,
+  extras?: {
+    clientName?: string;
+    durationMinutes?: number;
+    totalJeton?: number;
+  },
 ) {
   const sessionId = `fs-${randomUUID().slice(0, 12)}`;
   const anchorUserId =
@@ -256,12 +265,52 @@ export function createFortuneSession(
     tellerId,
     tellerUserId: anchorUserId,
     clientId,
+    clientName: extras?.clientName?.trim() || undefined,
+    durationMinutes: extras?.durationMinutes,
+    totalJeton: extras?.totalJeton,
     trtcRoomId: sessionId,
     status: "pending",
+    tellerResponse: "pending",
     createdAt: new Date().toISOString(),
   };
   fortuneSessions.set(row.id, row);
   return row;
+}
+
+export function listIncomingFortuneSessionsForTeller(userId: string) {
+  const uid = userId.trim();
+  if (!uid) return [];
+  return [...fortuneSessions.values()]
+    .filter(
+      (s) =>
+        s.status === "pending" &&
+        s.tellerResponse !== "rejected" &&
+        (s.tellerUserId === uid || s.tellerId === uid),
+    )
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export function respondFortuneSession(
+  sessionId: string,
+  tellerUserId: string,
+  action: "accept" | "hold" | "reject",
+) {
+  const row = fortuneSessions.get(sessionId);
+  if (!row) return { ok: false as const, error: "Oturum bulunamadı" };
+  if (row.tellerUserId !== tellerUserId && row.tellerId !== tellerUserId) {
+    return { ok: false as const, error: "Yetki yok" };
+  }
+  if (action === "accept") {
+    row.tellerResponse = "accepted";
+    row.status = "active";
+  } else if (action === "hold") {
+    row.tellerResponse = "held";
+    row.status = "pending";
+  } else {
+    row.tellerResponse = "rejected";
+    row.status = "ended";
+  }
+  return { ok: true as const, session: row };
 }
 
 export function fortuneSessionRoleForUser(

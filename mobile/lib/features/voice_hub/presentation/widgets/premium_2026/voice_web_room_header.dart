@@ -41,18 +41,15 @@ class VoiceWebRoomHeader extends StatelessWidget {
         ? room.apiRoomKey.substring(0, 10)
         : room.apiRoomKey;
 
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
+    return Container(
           padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.black.withValues(alpha: 0.55),
-                Colors.black.withValues(alpha: 0.15),
+                Colors.black.withValues(alpha: 0.72),
+                Colors.black.withValues(alpha: 0.28),
               ],
             ),
           ),
@@ -142,8 +139,6 @@ class VoiceWebRoomHeader extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
     );
   }
 }

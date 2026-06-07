@@ -32,13 +32,10 @@ class VoiceWebBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
 
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-        child: Container(
+    return Container(
           padding: EdgeInsets.fromLTRB(8, 10, 8, bottom + 10),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.72),
+            color: Colors.black.withValues(alpha: 0.88),
             border: Border(
               top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
             ),
@@ -81,8 +78,6 @@ class VoiceWebBottomNav extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
     );
   }
 }

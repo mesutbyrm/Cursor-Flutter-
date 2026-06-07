@@ -1,5 +1,49 @@
 import 'live_fortune_teller_entity.dart';
 
+/// Bekleyen falcı daveti.
+class FortuneIncomingSession {
+  const FortuneIncomingSession({
+    required this.sessionId,
+    required this.clientId,
+    required this.clientName,
+    required this.tellerId,
+    required this.durationMinutes,
+    required this.totalJeton,
+    required this.category,
+    this.status = 'pending',
+    this.tellerResponse = 'pending',
+  });
+
+  final String sessionId;
+  final String clientId;
+  final String clientName;
+  final String tellerId;
+  final int durationMinutes;
+  final int totalJeton;
+  final String category;
+  final String status;
+  final String tellerResponse;
+}
+
+/// Oturum durumu poll yanıtı.
+class FortuneSessionStatusResult {
+  const FortuneSessionStatusResult({
+    required this.sessionId,
+    required this.status,
+    required this.tellerResponse,
+    required this.isClient,
+  });
+
+  final String sessionId;
+  final String status;
+  final String tellerResponse;
+  final bool isClient;
+
+  bool get isActive => status == 'active' || tellerResponse == 'accepted';
+  bool get isRejected =>
+      status == 'ended' || tellerResponse == 'rejected';
+}
+
 /// `POST /api/fortune-tellers/session` yanıtı.
 class FortuneSessionCreateResult {
   const FortuneSessionCreateResult({

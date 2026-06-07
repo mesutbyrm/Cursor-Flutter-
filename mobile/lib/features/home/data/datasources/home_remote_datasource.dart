@@ -67,6 +67,9 @@ class HomeRemoteDataSource {
   Future<FortuneSessionCreateResult?> createFortuneTellerSession(
     String tellerId, {
     String? tellerUserId,
+    String? clientName,
+    int? durationMinutes,
+    int? totalJeton,
   }) async {
     final id = tellerId.trim();
     if (id.isEmpty) return null;
@@ -78,6 +81,10 @@ class HomeRemoteDataSource {
           'fortuneTellerId': id,
           if (tellerUserId != null && tellerUserId.trim().isNotEmpty)
             'tellerUserId': tellerUserId.trim(),
+          if (clientName != null && clientName.trim().isNotEmpty)
+            'clientName': clientName.trim(),
+          if (durationMinutes != null) 'durationMinutes': durationMinutes,
+          if (totalJeton != null) 'totalJeton': totalJeton,
         },
       );
       final body = res.data;
@@ -111,6 +118,95 @@ class HomeRemoteDataSource {
     } catch (_) {
       return null;
     }
+  }
+
+  Future<List<FortuneIncomingSession>> fetchIncomingFortuneSessions() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.fortuneTellerIncomingSessions,
+      );
+      final body = res.data;
+      if (body is! Map) return const [];
+      final map = asJsonMap(body);
+      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+      final raw = data['sessions'] ?? data['items'] ?? [];
+      if (raw is! List) return const [];
+      return raw.map(_mapIncomingFortuneSession).where((s) => s.sessionId.isNotEmpty).toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<FortuneSessionStatusResult?> fetchFortuneSessionStatus(
+    String sessionId,
+  ) async {
+    final key = sessionId.trim();
+    if (key.isEmpty) return null;
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.fortuneTellerSessionStatus(key),
+      );
+      final body = res.data;
+      if (body is! Map) return null;
+      final map = asJsonMap(body);
+      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+      final sessionMap =
+          data['session'] is Map ? asJsonMap(data['session']) : data;
+      final id = pick(data, ['sessionId', 'id'])?.toString() ??
+          pick(sessionMap, ['id', 'sessionId'])?.toString();
+      if (id == null || id.isEmpty) return null;
+      final status = pick(data, ['status'])?.toString() ??
+          pick(sessionMap, ['status'])?.toString() ??
+          'pending';
+      final tellerResponse = pick(data, ['tellerResponse'])?.toString() ??
+          pick(sessionMap, ['tellerResponse'])?.toString() ??
+          'pending';
+      final isClientRaw = data['isClient'];
+      final isClient = isClientRaw is bool ? isClientRaw : true;
+      return FortuneSessionStatusResult(
+        sessionId: id,
+        status: status,
+        tellerResponse: tellerResponse,
+        isClient: isClient,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<bool> respondFortuneSession(
+    String sessionId, {
+    required String action,
+  }) async {
+    final key = sessionId.trim();
+    if (key.isEmpty) return false;
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.fortuneTellerSessionRespond(key),
+        data: {'action': action},
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  FortuneIncomingSession _mapIncomingFortuneSession(dynamic raw) {
+    final m = asJsonMap(raw);
+    return FortuneIncomingSession(
+      sessionId: _str(m, ['id', 'sessionId']) ?? '',
+      clientId: _str(m, ['clientId']) ?? '',
+      clientName: _str(m, ['clientName', 'clientDisplayName']) ?? 'Danışan',
+      tellerId: _str(m, ['tellerId']) ?? '',
+      durationMinutes: () {
+        final v = asInt(pick(m, ['durationMinutes']));
+        return v > 0 ? v : 10;
+      }(),
+      totalJeton: asInt(pick(m, ['totalJeton'])),
+      category: _str(m, ['category', 'specialty']) ?? 'general',
+      status: _str(m, ['status']) ?? 'pending',
+      tellerResponse: _str(m, ['tellerResponse']) ?? 'pending',
+    );
   }
 
   Future<LiveFortuneTellerEntity?> fetchLiveFortuneTeller(String id) async {

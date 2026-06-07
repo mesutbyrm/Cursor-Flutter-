@@ -248,13 +248,10 @@ class VoiceWebChatInputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
+    return Container(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.62),
+            color: Colors.black.withValues(alpha: 0.88),
             border: Border(
               top: BorderSide(
                 color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.35),
@@ -322,8 +319,6 @@ class VoiceWebChatInputBar extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
     );
   }
 }
