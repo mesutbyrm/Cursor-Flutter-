@@ -1053,27 +1053,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 ],
               ),
             ),
-            if (_audioJoining && !_audioReady)
-              const Positioned.fill(
-                child: ColoredBox(
-                  color: Color(0x6605050D),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(
-                          color: VoiceRoomTokens.neonPurple,
-                        ),
-                        SizedBox(height: 12),
-                        Text(
-                          'Odaya bağlanılıyor…',
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             VoiceGiftFlightOverlay(
               events: flightQueue,
               enabled: ui.giftAnimationsEnabled,
@@ -1137,7 +1116,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     if (!keyboardOpen)
                       VoiceWebBottomNav(
                         micOn: _micOn,
-                        micEnabled: _audioReady,
+                        micEnabled: _audioReady || _audioJoining,
                         headphonesOn: ui.headphonesOn,
                         onHome: _leave,
                         onSpeaker: () {

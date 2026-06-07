@@ -40,7 +40,15 @@ class OneSignalBootstrap {
       });
 
       OneSignal.Notifications.addForegroundWillDisplayListener((event) {
-        event.notification.display();
+        final data = event.notification.additionalData;
+        if (data != null &&
+            PushNavigationHandler.handleFortuneInviteData(
+              Map<String, dynamic>.from(data),
+            )) {
+          event.preventDefault();
+        } else {
+          event.notification.display();
+        }
         PushNavigationHandler.onPushReceived?.call();
       });
 

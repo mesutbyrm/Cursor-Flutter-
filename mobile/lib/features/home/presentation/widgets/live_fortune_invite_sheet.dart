@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
@@ -47,23 +45,26 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
         16,
         MediaQuery.paddingOf(context).bottom + 16,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
+      child: Container(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
+              gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFF2A1450).withValues(alpha: 0.95),
-                  const Color(0xFF120A24).withValues(alpha: 0.98),
+                  Color(0xFF2A1450),
+                  Color(0xFF120A24),
                 ],
               ),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+              border: Border.all(color: Colors.white24),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black54,
+                  blurRadius: 24,
+                  offset: Offset(0, 8),
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -202,8 +203,6 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-        ),
       ),
     );
   }

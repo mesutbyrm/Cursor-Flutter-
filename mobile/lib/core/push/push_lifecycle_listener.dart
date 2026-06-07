@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/admin/presentation/providers/admin_providers.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../../features/home/presentation/providers/fortune_incoming_invite_provider.dart';
 import '../../features/messages/presentation/providers/messages_providers.dart';
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
 import '../../app/router/app_router.dart';
@@ -39,6 +40,12 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
       PushNavigationHandler.install(
         ref.read(goRouterProvider),
         onReceived: _onPushReceived,
+        onFortuneInviteData: (data) {
+          final invite = parseFortuneIncomingPayload(data);
+          if (invite != null) {
+            ref.read(fortuneIncomingInviteProvider.notifier).enqueue(invite);
+          }
+        },
       );
     });
   }

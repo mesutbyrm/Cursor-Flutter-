@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.140+142 (2026-06-07)
+
+### Sesli oda + canlı fal davet
+
+- Sesli oda: tam ekran bağlanma overlay kaldırıldı (odaya giriş engelleniyordu)
+- Falcı daveti: push bildirimi → uygulama içi Kabul/Beklet/Reddet sheet (global host)
+- OneSignal ön planda fal isteği sheet açar; bildirim yalnızca bilgi amaçlı
+- Davet sheet BackdropFilter kaldırıldı (Android gri boş sheet)
+
 ## 1.0.139+141 (2026-06-07)
 
 ### Sesli oda gri ekran — Android düzeltmesi (2. tur)

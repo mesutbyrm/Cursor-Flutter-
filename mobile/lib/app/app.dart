@@ -7,6 +7,7 @@ import '../core/providers/theme_mode_provider.dart';
 import '../core/push/push_lifecycle_listener.dart';
 import '../core/scroll/modern_social_scroll_behavior.dart';
 import '../core/theme/app_theme.dart';
+import '../features/home/presentation/widgets/fortune_incoming_invite_host.dart';
 import 'router/app_router.dart';
 
 class CanlifalApp extends ConsumerWidget {
@@ -38,7 +39,9 @@ class CanlifalApp extends ConsumerWidget {
                   brightness == Brightness.dark ? Brightness.dark : Brightness.light,
             ),
           );
-          return child ?? const SizedBox.shrink();
+          return FortuneIncomingInviteHost(
+            child: child ?? const SizedBox.shrink(),
+          );
         },
         routerConfig: router,
       ),
