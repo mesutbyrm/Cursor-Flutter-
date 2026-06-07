@@ -30,6 +30,7 @@ import '../../data/youtube_stream_resolver.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import '../services/voice_room_dj_player.dart';
 import 'voice_gift_providers.dart';
+import 'voice_room_diagnostic_provider.dart';
 import 'voice_room_ui_provider.dart';
 
 final youtubeStreamResolverProvider = Provider<YoutubeStreamResolver>((ref) {
@@ -260,6 +261,10 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       return;
     }
     try {
+      final token = await ref.read(tokenStorageProvider).readAccess();
+      final hasJwt = token != null && token.isNotEmpty;
+      VoiceRoomDebugLog.jwtStatus(hasToken: hasJwt, tokenLength: token?.length);
+      ref.read(voiceRoomDiagnosticProvider.notifier).setJwt(hasJwt: hasJwt);
       VoiceRoomDebugLog.log('api.presence.join', {'room': _roomKey});
       final joined = await ref.read(chatRoomRemoteProvider).joinPresence(_roomKey);
       final merged = _mergeSelf(joined);
@@ -273,8 +278,16 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         loading: false,
         clearError: true,
       );
+      ref.read(voiceRoomDiagnosticProvider.notifier).setPresence(
+            joined: true,
+            count: merged.length,
+          );
     } on Object catch (e) {
       VoiceRoomDebugLog.log('api.presence.join.fail', {'error': e.toString()});
+      ref.read(voiceRoomDiagnosticProvider.notifier).setPresence(joined: false);
+      ref.read(voiceRoomDiagnosticProvider.notifier).setError(
+            ApiException.userMessage(e),
+          );
       final msg = ApiException.userMessage(e);
       if (msg.toLowerCase().contains('yasak') ||
           msg.contains('403') ||
@@ -330,6 +343,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         if (!state.sseConnected) {
           state = state.copyWith(sseConnected: true);
         }
+        ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);
       },
       onDjUpdate: (payload) {
         if (payload != null && payload.isNotEmpty) {
@@ -357,6 +371,11 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
           sseConnected: true,
           selfInRoom: true,
         );
+        ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);
+        ref.read(voiceRoomDiagnosticProvider.notifier).setPresence(
+              joined: true,
+              count: merged.length,
+            );
         if (!wasSse) _schedulePoll();
       },
     );

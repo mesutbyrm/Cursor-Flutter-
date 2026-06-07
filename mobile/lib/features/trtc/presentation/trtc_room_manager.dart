@@ -10,6 +10,7 @@ import 'package:tencent_rtc_sdk/trtc_cloud_listener.dart';
 import 'package:tencent_rtc_sdk/trtc_cloud_video_view.dart';
 import 'package:tencent_rtc_sdk/tx_device_manager.dart';
 
+import '../../voice_hub/data/services/voice_room_debug_log.dart';
 import '../domain/entities/trtc_credentials.dart';
 
 /// Tencent TRTC oda oturumu — canlı yayın ve sesli sohbet.
@@ -117,6 +118,12 @@ class TrtcRoomManager {
       onError: (code, msg) => debugPrint('TRTC error $code: $msg'),
       onEnterRoom: (result) {
         _inRoom = result > 0;
+        VoiceRoomDebugLog.log('audio.trtc.enter_room', {
+          'result': result,
+          'room': roomId,
+          'host': _isHost,
+          'audioOnly': audioOnly,
+        });
         debugPrint('TRTC enterRoom: $result room=$roomId host=$_isHost');
         final c = _enterRoomCompleter;
         if (c != null && !c.isCompleted) c.complete(result);

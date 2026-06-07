@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.149+151 (2026-06-07)
+
+### Sesli oda — teşhis + gri ekran yerine hata UI
+
+- `VoiceRoomErrorBoundary`: Flutter `ErrorWidget` gri ekranı yerine anlamlı hata paneli
+- `VoiceRoomDiagnosticProvider`: JWT, presence, SSE, socket, TRTC durumu tek yerde
+- `VoiceRoomApiLogInterceptor`: `/api/chat/rooms` ve `/api/trtc/usersig` yanıtları loglanır
+- TRTC `enterRoom`, socket connect/disconnect release logları
+- `main.dart`: `FlutterError` / `PlatformDispatcher` / zone hataları `[VoiceRoom]` tag ile
+- Oda route: API hatalarında retry + açıklayıcı mesaj
+
 ## 1.0.148+150 (2026-06-07)
 
 ### Sesli oda gri ekran (v3 — PR #104 TRTC + UI)
