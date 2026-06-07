@@ -1,5 +1,18 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.147+149 (2026-06-07)
+
+### Sesli oda — kapsamlı gri ekran düzeltmesi
+
+- Layout: PK sayfası modeli — `SafeArea` + `Column` + `ListView` (taşma/gri ekran önlendi)
+- Alt bar `bottomNavigationBar` yerine gövde içinde (klavye/resize uyumu)
+- `roomReady` kapısı kaldırıldı — oda UI her zaman render edilir
+- `_displayRoom` tek kaynak: liste sync + `widget.room` fallback
+- Android koltuk avatarları: CustomPaint/Lottie yerine basit daire (GPU güvenli)
+- VIP şifre sheet: `BackdropFilter` kaldırıldı (Android gri ekran)
+- Favorilerden oda: `voiceRoomByIdProvider` ile `extra` geçirilir
+- Sayfa dispose: ses koordinatörü `leave()` çağrısı
+
 ## 1.0.146+148 (2026-06-07)
 
 ### Sesli oda gri ekran (v2)

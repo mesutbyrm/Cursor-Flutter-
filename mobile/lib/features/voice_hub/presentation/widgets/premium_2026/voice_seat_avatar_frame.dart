@@ -90,6 +90,10 @@ class _VoiceSeatAvatarFrameState extends State<VoiceSeatAvatarFrame>
 
   @override
   Widget build(BuildContext context) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return _androidSimpleAvatar();
+    }
+
     final border = _borderWidth;
     final inner = widget.size - border * 2;
 
@@ -145,6 +149,50 @@ class _VoiceSeatAvatarFrameState extends State<VoiceSeatAvatarFrame>
                 child: _miniEq(),
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _androidSimpleAvatar() {
+    final url = widget.imageUrl?.trim();
+    final ring = switch (widget.role) {
+      SeatAvatarRole.host || SeatAvatarRole.admin => VoiceRoomTokens.gold,
+      SeatAvatarRole.dj => VoiceRoomTokens.neonBlue,
+      SeatAvatarRole.moderator => VoiceRoomTokens.neonPurple,
+      SeatAvatarRole.vip => VoiceRoomTokens.gold,
+      SeatAvatarRole.guest => VoiceRoomTokens.neonPurple.withValues(alpha: 0.7),
+    };
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: widget.speaking ? ring : ring.withValues(alpha: 0.85),
+            width: widget.speaking ? 3 : 2,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(2),
+          child: ClipOval(
+            child: url != null && url.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: url,
+                    width: widget.size,
+                    height: widget.size,
+                    fit: BoxFit.cover,
+                  )
+                : ColoredBox(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    child: Icon(
+                      Icons.person_rounded,
+                      size: widget.size * 0.48,
+                      color: Colors.white54,
+                    ),
+                  ),
+          ),
         ),
       ),
     );
