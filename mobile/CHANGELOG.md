@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.138+140 (2026-06-07)
+
+### Canlı fal ve sesli oda düzeltmeleri
+
+- Canlı fal: danışan onay + bekleme ekranı; Kabul/Beklet/Reddet yalnızca falcıya düşer
+- Falcı gelen istek dinleyicisi (incoming sessions poll)
+- Sesli oda: Android gri boş ekran (BackdropFilter) giderildi, bağlanma göstergesi
+- Profil: Falcı ol / Ajans ol kısayolları
+- API: `sessions/incoming`, session status, teller respond
+
 ## 1.0.135+137 (2026-05-19)
 
 ### FLUTTER_CURSOR_PROMPT parite — tam paket
