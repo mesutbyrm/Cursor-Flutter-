@@ -57,32 +57,47 @@ class VoiceWebChatOverlay extends StatelessWidget {
       );
     }
 
-    return ShaderMask(
-      shaderCallback: (rect) => const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Colors.transparent, Colors.white, Colors.white],
-        stops: [0.0, 0.08, 1.0],
-      ).createShader(rect),
-      blendMode: BlendMode.dstIn,
-      child: SizedBox(
-        height: maxHeight,
-        child: ListView.builder(
-          reverse: true,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          physics: const ClampingScrollPhysics(),
-          itemCount: slice.length,
-          itemBuilder: (context, i) {
-            final msg = slice[slice.length - 1 - i];
-            if (_isMusicSystemLine(msg.content)) {
-              return _AnimatedMusicChatLine(
-                key: ValueKey(msg.id),
-                text: msg.content,
-              );
-            }
-            return _WebChatLine(message: msg, onUserTap: onUserTap);
-          },
-        ),
+    return SizedBox(
+      height: maxHeight,
+      child: Stack(
+        children: [
+          ListView.builder(
+            reverse: true,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            physics: const ClampingScrollPhysics(),
+            itemCount: slice.length,
+            itemBuilder: (context, i) {
+              final msg = slice[slice.length - 1 - i];
+              if (_isMusicSystemLine(msg.content)) {
+                return _AnimatedMusicChatLine(
+                  key: ValueKey(msg.id),
+                  text: msg.content,
+                );
+              }
+              return _WebChatLine(message: msg, onUserTap: onUserTap);
+            },
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 24,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      VoiceRoomTokens.bgDeep.withValues(alpha: 0.85),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

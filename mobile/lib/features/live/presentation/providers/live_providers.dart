@@ -39,6 +39,23 @@ final voiceRoomsProvider = FutureProvider<List<VoiceRoomEntity>>((ref) async {
 
 final voiceRoomByIdProvider =
     FutureProvider.autoDispose.family<VoiceRoomEntity?, String>((ref, id) async {
+  final needle = id.trim().toLowerCase();
+  if (needle.isEmpty) return null;
+  final cached = ref.watch(voiceRoomsProvider).valueOrNull;
+  if (cached != null) {
+    String norm(String s) =>
+        s.trim().toLowerCase().replaceAll(RegExp(r'-+$'), '');
+    for (final r in cached) {
+      if (r.id == id ||
+          r.slug == id ||
+          r.id.toLowerCase() == needle ||
+          r.slug.toLowerCase() == needle ||
+          norm(r.slug) == norm(id) ||
+          norm(r.id) == norm(id)) {
+        return r;
+      }
+    }
+  }
   return ref.watch(liveRepositoryProvider).fetchVoiceRoomById(id);
 });
 

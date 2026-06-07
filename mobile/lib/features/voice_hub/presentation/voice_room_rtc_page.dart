@@ -108,6 +108,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     return w;
   }
 
+  VoiceRoomEntity _effectiveRoom() {
+    return _roomSynced(ref.read(voiceRoomsProvider).valueOrNull);
+  }
+
   @override
   void dispose() {
     _giftSub?.cancel();
@@ -146,8 +150,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   void _startGiftRealtime() {
     final service = ref.read(voiceRoomGiftRealtimeProvider);
-    final room = widget.room;
-    service.start(room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id);
+    final room = _effectiveRoom();
+    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    if (key.isEmpty) return;
+    service.start(key);
     _giftSub?.cancel();
     _giftSub = service.events.listen(_onGiftEvent);
   }
@@ -207,6 +213,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     setState(() => _loginError = null);
 
+    final room = _effectiveRoom();
+    if (room.apiRoomKey.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _audioJoining = false;
+          _audioError = 'Oda bilgisi yükleniyor…';
+        });
+      }
+      return;
+    }
+
     _audio = ref.read(voiceRoomAudioCoordinatorProvider);
     if (!_audio!.isSupported) {
       if (mounted) {
@@ -222,11 +239,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
 
     try {
-      final perms = VoiceRoomPermissions.forUser(user: user, room: widget.room);
+      final perms = VoiceRoomPermissions.forUser(user: user, room: room);
       await _audio!.join(
-        trtcRoomId: widget.room.trtcRoomId,
+        trtcRoomId: room.trtcRoomId,
         userId: user.id,
-        isHost: _isRoomOwner(user.id, user.username) || perms.isSiteAdmin,
+        isHost: _isRoomOwner(user.id, user.username, room) || perms.isSiteAdmin,
         liveKitRemote: ref.read(liveKitRemoteProvider),
         trtcRemote: ref.read(trtcRemoteProvider),
       );
@@ -350,8 +367,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
   }
 
-  bool _isRoomOwner(String userId, String username) {
-    final room = widget.room;
+  bool _isRoomOwner(String userId, String username, [VoiceRoomEntity? roomIn]) {
+    final room = roomIn ?? _effectiveRoom();
     final oid = room.ownerId;
     if (oid != null && oid.isNotEmpty && oid == userId) return true;
     final uname = username.trim().toLowerCase();
@@ -776,6 +793,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       }
     });
 
+    ref.listen(voiceRoomsProvider, (prev, next) {
+      final synced = _roomSynced(next.valueOrNull);
+      if (synced.apiRoomKey.isEmpty) return;
+      final hadKey = _roomSynced(prev?.valueOrNull).apiRoomKey.isNotEmpty;
+      if (!hadKey && !_audioReady && !_leaving) {
+        unawaited(_joinRoom());
+      }
+    });
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
@@ -795,21 +821,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
-            if (_audioJoining && !_audioReady)
-              const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: VoiceRoomTokens.neonPurple),
-                    SizedBox(height: 12),
-                    Text(
-                      'Odaya bağlanılıyor…',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-            Column(
+            Positioned.fill(
+              child: Column(
                 children: [
                   SafeArea(
                     bottom: false,
@@ -1038,6 +1051,28 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     ),
                   ),
                 ],
+              ),
+            ),
+            if (_audioJoining && !_audioReady)
+              const Positioned.fill(
+                child: ColoredBox(
+                  color: Color(0x6605050D),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(
+                          color: VoiceRoomTokens.neonPurple,
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          'Odaya bağlanılıyor…',
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             VoiceGiftFlightOverlay(
               events: flightQueue,

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -19,18 +17,14 @@ class VoiceRoomAnnouncement extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
+    return Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppThemeColors.accentPurple.withValues(alpha: 0.35),
-                context.colors.surfaceContainer.withValues(alpha: 0.55),
+                AppThemeColors.accentPurple.withValues(alpha: 0.42),
+                Colors.black.withValues(alpha: 0.72),
               ],
             ),
             borderRadius: BorderRadius.circular(14),
@@ -84,8 +78,6 @@ class VoiceRoomAnnouncement extends StatelessWidget {
                 ),
             ],
           ),
-        ),
-      ),
     );
   }
 }

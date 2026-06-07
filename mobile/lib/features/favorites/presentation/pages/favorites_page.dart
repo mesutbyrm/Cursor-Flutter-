@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +10,9 @@ import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../../fortune/presentation/providers/fortune_api_providers.dart';
+import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../../live/presentation/providers/live_providers.dart';
+import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import '../../domain/entities/user_favorite_entity.dart';
 import '../providers/favorites_providers.dart';
 
@@ -287,7 +292,7 @@ class _SavedFavoritesTab extends ConsumerWidget {
                     f.targetType,
                     style: TextStyle(color: palette.textMuted, fontSize: 12),
                   ),
-                  onTap: () => _openFavorite(context, f),
+                  onTap: () => _openFavorite(context, ref, f),
                 ),
               );
             },
@@ -307,7 +312,7 @@ class _SavedFavoritesTab extends ConsumerWidget {
     };
   }
 
-  void _openFavorite(BuildContext context, UserFavoriteEntity f) {
+  void _openFavorite(BuildContext context, WidgetRef ref, UserFavoriteEntity f) {
     switch (f.targetType) {
       case 'user':
         context.push('/user/${f.targetId}');
@@ -316,7 +321,25 @@ class _SavedFavoritesTab extends ConsumerWidget {
       case 'post':
         context.go('/social');
       case 'room':
-        context.push('/voice-room/${f.targetId}');
+        final rooms = ref.read(voiceRoomsProvider).valueOrNull;
+        VoiceRoomEntity? room;
+        if (rooms != null) {
+          final needle = f.targetId.trim().toLowerCase();
+          for (final r in rooms) {
+            if (r.id == f.targetId ||
+                r.slug == f.targetId ||
+                r.id.toLowerCase() == needle ||
+                r.slug.toLowerCase() == needle) {
+              room = r;
+              break;
+            }
+          }
+        }
+        if (room != null) {
+          unawaited(openVoiceRoomWithVipGate(context, ref, room));
+        } else {
+          context.push('/voice-room/${f.targetId}');
+        }
       default:
         if (f.url != null && f.url!.startsWith('/')) {
           context.push(

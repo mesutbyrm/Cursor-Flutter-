@@ -18,9 +18,24 @@ class VoiceRoomRoutePage extends ConsumerWidget {
     final async = ref.watch(voiceRoomByIdProvider(roomId));
 
     return async.when(
-      loading: () => const Scaffold(
+      loading: () => Scaffold(
         backgroundColor: VoiceRoomTokens.bgDeep,
-        body: Center(child: DiscoverAccentLoader()),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const DiscoverAccentLoader(),
+              const SizedBox(height: 16),
+              Text(
+                'Oda yükleniyor…',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
       error: (e, _) => Scaffold(
         backgroundColor: VoiceRoomTokens.bgDeep,

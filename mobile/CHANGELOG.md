@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.139+141 (2026-06-07)
+
+### Sesli oda gri ekran — Android düzeltmesi (2. tur)
+
+- Kalan `BackdropFilter` kaldırıldı: duyuru, aksiyon satırı, VoiceGlass
+- Sohbet overlay `ShaderMask` → gradient fade (Android uyumlu)
+- Oda UI `Positioned.fill` ile tam ekran layout
+- Oda kimliği senkronizasyonu + favorilerden `extra` ile giriş
+- `voiceRoomByIdProvider` önce önbellekten oda arar
+
 ## 1.0.138+140 (2026-06-07)
 
 ### Canlı fal ve sesli oda düzeltmeleri

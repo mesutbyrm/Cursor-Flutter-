@@ -1,9 +1,8 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../theme/voice_room_tokens.dart';
 
+/// Yarı saydam panel — Android'de BackdropFilter gri ekran yapabildiği için blur yok.
 class VoiceGlass extends StatelessWidget {
   const VoiceGlass({
     super.key,
@@ -12,6 +11,7 @@ class VoiceGlass extends StatelessWidget {
     this.borderRadius = 20,
     this.onTap,
     this.borderColor,
+    this.backgroundColor,
   });
 
   final Widget child;
@@ -19,25 +19,20 @@ class VoiceGlass extends StatelessWidget {
   final double borderRadius;
   final VoidCallback? onTap;
   final Color? borderColor;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
-    final content = ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.07),
-            borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(
-              color: borderColor ?? VoiceRoomTokens.neonPurple.withValues(alpha: 0.35),
-            ),
-          ),
-          child: child,
+    final content = Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: backgroundColor ?? Colors.black.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: borderColor ?? VoiceRoomTokens.neonPurple.withValues(alpha: 0.35),
         ),
       ),
+      child: child,
     );
 
     if (onTap == null) return content;
