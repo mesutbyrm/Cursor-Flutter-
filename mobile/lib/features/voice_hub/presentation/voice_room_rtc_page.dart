@@ -105,6 +105,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   @override
   void initState() {
     super.initState();
+    if (widget.room.apiRoomKey.isNotEmpty) {
+      _pinnedLiveSession = widget.room.stableSessionKey;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.room.apiRoomKey.isEmpty) {
         unawaited(ref.read(voiceRoomsProvider.future));
@@ -241,7 +244,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     setState(() => _loginError = null);
 
-    final room = _effectiveRoom();
+    var room = _effectiveRoom();
+    if (room.apiRoomKey.isEmpty && widget.room.apiRoomKey.isNotEmpty) {
+      room = widget.room;
+      _pinnedLiveSession = room.stableSessionKey;
+    }
     if (room.apiRoomKey.isEmpty) {
       if (mounted) {
         setState(() {
@@ -390,7 +397,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
     return VoiceRoomPermissions.forUser(
       user: user,
-      room: widget.room,
+      room: _effectiveRoom(),
       selfPresence: self,
     );
   }
@@ -929,11 +936,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               ),
                             ),
                           ),
-                        Expanded(
-                          child: ListView(
-                            padding: EdgeInsets.zero,
-                            physics: const ClampingScrollPhysics(),
-                            children: [
                         VoiceWebRoomHeader(
                           room: room,
                           onlineCount: online,
@@ -957,6 +959,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             isOwner: isOwner,
                           ),
                         ),
+                        Expanded(
+                          child: ListView(
+                            padding: EdgeInsets.zero,
+                            physics: const ClampingScrollPhysics(),
+                            children: [
                         if (live.error != null)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),

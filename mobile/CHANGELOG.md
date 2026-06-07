@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.148+150 (2026-06-07)
+
+### Sesli oda gri ekran (v3 — PR #104 TRTC + UI)
+
+- PR #104 deseni: oda `extra` ile gelince oturum `initState`'te sabitlenir
+- Üst bar (geri, oda adı) scroll dışında — her zaman görünür
+- Android: ses dalga halkası (`VoiceAudioWaveRing`) devre dışı
+- Hediye paneli: `BackdropFilter` kaldırıldı (Android gri sheet)
+- `_joinRoom`: `widget.room` fallback + pinned session
+
 ## 1.0.147+149 (2026-06-07)
 
 ### Sesli oda — kapsamlı gri ekran düzeltmesi

@@ -76,11 +76,10 @@ class _VoicePremiumGiftPanel2026State
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
-        child: Container(
+      child: Container(
           height: MediaQuery.sizeOf(context).height * 0.72,
           decoration: BoxDecoration(
+            color: const Color(0xFF0C0C18).withValues(alpha: 0.98),
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
@@ -192,7 +191,6 @@ class _VoicePremiumGiftPanel2026State
             ],
           ),
         ),
-      ),
     ).animate().slideY(begin: 1, end: 0, duration: 360.ms, curve: Curves.easeOutCubic);
   }
 
