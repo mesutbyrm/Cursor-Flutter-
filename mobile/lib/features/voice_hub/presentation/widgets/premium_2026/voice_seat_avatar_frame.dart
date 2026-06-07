@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
@@ -129,6 +130,11 @@ class _VoiceSeatAvatarFrameState extends State<VoiceSeatAvatarFrame>
                     'assets/gifts/lottie/crown.json',
                     repeat: true,
                     fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => Icon(
+                      Icons.workspace_premium_rounded,
+                      size: widget.size * 0.22,
+                      color: VoiceRoomTokens.gold,
+                    ),
                   ),
                 ),
               ),
@@ -248,7 +254,15 @@ class _SeatFramePainter extends CustomPainter {
         SeatAvatarRole.guest => 2.0,
       };
     canvas.drawPath(path, paint);
-    if (speaking) {
+    if (speaking && !kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = colors.first.withValues(alpha: 0.35)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4,
+      );
+    } else if (speaking) {
       canvas.drawPath(
         path,
         Paint()

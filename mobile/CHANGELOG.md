@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.146+148 (2026-06-07)
+
+### Sesli oda gri ekran (v2)
+
+- Riverpod erken `return` kaldırıldı — tüm `ref.listen`/`ref.watch` her karede tutarlı
+- Üst panel `SingleChildScrollView` ile kaydırılabilir (küçük ekranda layout taşması)
+- Tam ekran ses bağlantı overlay'i kaldırıldı — UI ses bağlanırken görünür kalır
+- `stableSessionKey` sabitlenerek canlı provider yeniden kurulması engellendi
+- Android koltuk çerçevesinde `MaskFilter.blur` yerine düz stroke
+
 ## 1.0.143+145 (2026-06-07)
 
 ### Ana sayfa — onaylı mockup (piksel uyumlu)
