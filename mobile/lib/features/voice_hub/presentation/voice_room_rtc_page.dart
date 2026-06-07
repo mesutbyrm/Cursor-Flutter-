@@ -795,6 +795,20 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
+            if (_audioJoining && !_audioReady)
+              const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: VoiceRoomTokens.neonPurple),
+                    SizedBox(height: 12),
+                    Text(
+                      'Odaya bağlanılıyor…',
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
             Column(
                 children: [
                   SafeArea(

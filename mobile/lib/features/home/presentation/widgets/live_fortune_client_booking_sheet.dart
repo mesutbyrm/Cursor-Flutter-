@@ -3,11 +3,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-/// Falcıya düşen canlı fal daveti — Kabul / Beklet / Reddet.
-Future<bool?> showLiveFortuneTellerInviteSheet(
+import '../../domain/entities/live_fortune_teller_entity.dart';
+
+/// Danışan onayı — falcıya bağlanmadan önce süre/jeton özeti.
+Future<bool?> showLiveFortuneClientBookingSheet(
   BuildContext context, {
-  required String clientName,
-  required String category,
+  required LiveFortuneTellerEntity teller,
   required int durationMinutes,
   required int totalJeton,
 }) {
@@ -15,26 +16,22 @@ Future<bool?> showLiveFortuneTellerInviteSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    isDismissible: false,
-    builder: (ctx) => _LiveFortuneInviteSheet(
-      clientName: clientName,
-      category: category,
+    builder: (ctx) => _LiveFortuneClientBookingSheet(
+      teller: teller,
       durationMinutes: durationMinutes,
       totalJeton: totalJeton,
     ),
   );
 }
 
-class _LiveFortuneInviteSheet extends StatelessWidget {
-  const _LiveFortuneInviteSheet({
-    required this.clientName,
-    required this.category,
+class _LiveFortuneClientBookingSheet extends StatelessWidget {
+  const _LiveFortuneClientBookingSheet({
+    required this.teller,
     required this.durationMinutes,
     required this.totalJeton,
   });
 
-  final String clientName;
-  final String category;
+  final LiveFortuneTellerEntity teller;
   final int durationMinutes;
   final int totalJeton;
 
@@ -58,7 +55,7 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFF2A1450).withValues(alpha: 0.95),
+                  const Color(0xFF1E2A48).withValues(alpha: 0.96),
                   const Color(0xFF120A24).withValues(alpha: 0.98),
                 ],
               ),
@@ -68,25 +65,14 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppThemeColors.accentPink.withValues(alpha: 0.6),
-                      width: 2,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: AppThemeColors.accentPink,
-                    size: 36,
-                  ),
+                const Icon(
+                  Icons.video_chat_rounded,
+                  color: AppThemeColors.accentCyan,
+                  size: 40,
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 const Text(
-                  'Canlı Fal İsteği',
+                  'Canlı Fal Bağlantısı',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 20,
@@ -96,16 +82,16 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text.rich(
                   TextSpan(
-                    text: clientName,
+                    text: teller.name,
                     style: const TextStyle(
                       color: Color(0xFFFFD54F),
                       fontWeight: FontWeight.w800,
                     ),
-                    children: const [
+                    children: [
                       TextSpan(
-                        text: ' sizinle canlı fal için bağlanmak istiyor',
+                        text: ' ile $durationMinutes dakikalık seans',
                         style: TextStyle(
-                          color: Colors.white70,
+                          color: Colors.white.withValues(alpha: 0.75),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -115,7 +101,7 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '✨ $category',
+                  '✨ ${teller.displayCategory}',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.65),
                     fontSize: 12,
@@ -123,7 +109,8 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.35),
                     borderRadius: BorderRadius.circular(14),
@@ -134,7 +121,7 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
                         child: Column(
                           children: [
                             Text(
-                              '$durationMinutes dakika',
+                              '$durationMinutes dk',
                               style: const TextStyle(
                                 color: Color(0xFFFFD54F),
                                 fontWeight: FontWeight.w900,
@@ -143,7 +130,7 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Seçilen Süre',
+                              'Süre',
                               style: TextStyle(
                                 fontSize: 10,
                                 color: Colors.white.withValues(alpha: 0.55),
@@ -166,7 +153,7 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Toplam Tutar',
+                              'Ücret',
                               style: TextStyle(
                                 fontSize: 10,
                                 color: Colors.white.withValues(alpha: 0.55),
@@ -178,27 +165,27 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 10),
+                Text(
+                  'İsteğiniz falcıya iletilecek. Kabul ettiğinde seans başlar.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1.35,
+                    color: Colors.white.withValues(alpha: 0.62),
+                  ),
+                ),
                 const SizedBox(height: 18),
                 _ActionBtn(
-                  label: 'Kabul Et',
-                  icon: Icons.call_rounded,
-                  gradient: const [Color(0xFF00C853), Color(0xFF00E676)],
+                  label: 'Falcıya Bağlan',
+                  icon: Icons.send_rounded,
+                  gradient: const [Color(0xFF7C4DFF), Color(0xFF536DFE)],
                   onTap: () => Navigator.pop(context, true),
                 ),
                 const SizedBox(height: 8),
-                _ActionBtn(
-                  label: 'Beklet',
-                  icon: Icons.schedule_rounded,
-                  gradient: const [Color(0xFFFFB300), Color(0xFFFFD54F)],
-                  foreground: Colors.black87,
-                  onTap: () => Navigator.pop(context, null),
-                ),
-                const SizedBox(height: 8),
-                _ActionBtn(
-                  label: 'Reddet',
-                  icon: Icons.call_end_rounded,
-                  gradient: const [Color(0xFFE53935), Color(0xFFFF5252)],
-                  onTap: () => Navigator.pop(context, false),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Vazgeç'),
                 ),
               ],
             ),
@@ -215,14 +202,12 @@ class _ActionBtn extends StatelessWidget {
     required this.icon,
     required this.gradient,
     required this.onTap,
-    this.foreground = Colors.white,
   });
 
   final String label;
   final IconData icon;
   final List<Color> gradient;
   final VoidCallback onTap;
-  final Color foreground;
 
   @override
   Widget build(BuildContext context) {
@@ -240,12 +225,12 @@ class _ActionBtn extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: foreground, size: 20),
+              Icon(icon, color: Colors.white, size: 20),
               const SizedBox(width: 8),
               Text(
                 label,
-                style: TextStyle(
-                  color: foreground,
+                style: const TextStyle(
+                  color: Colors.white,
                   fontWeight: FontWeight.w800,
                   fontSize: 15,
                 ),

@@ -61,6 +61,15 @@ abstract final class ApiEndpoints {
 
   static const fortuneTellerSession = '/api/fortune-tellers/session';
 
+  static const fortuneTellerIncomingSessions =
+      '/api/fortune-tellers/sessions/incoming';
+
+  static String fortuneTellerSessionStatus(String sessionId) =>
+      '/api/fortune-tellers/session/$sessionId';
+
+  static String fortuneTellerSessionRespond(String sessionId) =>
+      '/api/fortune-tellers/session/$sessionId/respond';
+
   static String fortuneTeller(String id) => '/api/fortune-tellers/$id';
 
   /// Oyunlar ve etkinlikler.
