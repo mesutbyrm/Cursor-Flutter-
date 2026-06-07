@@ -7,7 +7,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/exit_confirm_dialog.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../messages/presentation/providers/messages_providers.dart';
-import '../../home/presentation/widgets/fortune_teller_incoming_listener.dart';
 import '../../notifications/presentation/providers/notifications_providers.dart';
 import 'discover_bottom_bar.dart';
 
@@ -71,9 +70,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: FortuneTellerIncomingListener(
-          child: widget.navigationShell,
-        ),
+        body: widget.navigationShell,
         extendBody: true,
         bottomNavigationBar: DiscoverBottomBar(
           currentIndex: widget.navigationShell.currentIndex,
