@@ -18,7 +18,6 @@ class HomeStoriesSection extends ConsumerWidget {
           leadingDotColor: Color(0xFF25F4EE),
         ),
         SocialStoriesRail(),
-        SizedBox(height: 4),
       ],
     );
   }

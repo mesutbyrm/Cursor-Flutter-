@@ -71,7 +71,6 @@ class HomeLiveStreamsRow extends ConsumerWidget {
           onTrailing: () => context.go('/live'),
         ),
         child,
-        const SizedBox(height: 4),
       ],
     );
   }

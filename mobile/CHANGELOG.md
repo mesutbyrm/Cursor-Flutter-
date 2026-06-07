@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.142+144 (2026-06-07)
+
+### Ana sayfa sıkılık + sesli oda gri ekran + kaydırma performansı
+
+- Bölüm başlıkları arası boşluk azaltıldı (sıkı dikey akış)
+- Ana sayfa galaksi arka planı statik — animasyon/blur kapatıldı (kaydırma takılması)
+- Sesli oda: canlı oturum provider'ı sabit oda kimliğiyle (online sayısı değişince yeniden kurulmuyor)
+- Sesli oda: üst panel kaydırılabilir — küçük ekranda taşma/gri ekran giderildi
+- Odaya girerken `voiceRoomsProvider` invalidate kaldırıldı
+
 ## 1.0.141+143 (2026-06-07)
 
 ### Ana sayfa — Canlı Yayındakiler

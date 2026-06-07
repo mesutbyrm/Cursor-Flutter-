@@ -83,12 +83,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _vipEntrancePlayed = false;
   String? _shownPkInviteId;
   final _messageFocus = FocusNode();
+  late VoiceRoomEntity _liveRoomKey;
 
   @override
   void initState() {
     super.initState();
+    _liveRoomKey = widget.room.stableSessionKey;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.invalidate(voiceRoomsProvider);
+      if (widget.room.apiRoomKey.isEmpty) {
+        unawaited(ref.read(voiceRoomsProvider.future));
+      }
       _joinRoom();
       _prefetchRoomImages();
     });
@@ -124,7 +128,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   Future<void> _prefetchRoomImages() async {
     if (!mounted) return;
     final room = widget.room;
-    final bg = ref.read(voiceRoomLiveProvider(room)).backgroundUrl ??
+    final bg = ref.read(voiceRoomLiveProvider(_liveRoomKey)).backgroundUrl ??
         room.backgroundImageUrl;
     if (bg == null || bg.isEmpty) return;
     await prefetchVoiceRoomImages(context, primaryUrl: bg);
@@ -137,9 +141,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     if (text.isEmpty) return;
     _messageCtrl.clear();
     unawaited(() async {
-      await ref.read(voiceRoomLiveProvider(room).notifier).sendMessage(text);
+      await ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).sendMessage(text);
       if (!mounted) return;
-      final err = ref.read(voiceRoomLiveProvider(room)).error;
+      final err = ref.read(voiceRoomLiveProvider(_liveRoomKey)).error;
       if (err != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(err)),
@@ -429,7 +433,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   Future<void> _pickBackground(BuildContext context, VoiceRoomEntity room) async {
     final urls =
-        await ref.read(voiceRoomLiveProvider(room).notifier).fetchBackgrounds();
+        await ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).fetchBackgrounds();
     if (!context.mounted || urls.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Arka plan listesi alınamadı')),
@@ -479,7 +483,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       onTap: () async {
                         Navigator.pop(ctx);
                         final err = await ref
-                            .read(voiceRoomLiveProvider(room).notifier)
+                            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
                             .setRoomBackground(url);
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -575,7 +579,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
     if (perms.canTakeSeat) {
       final err = await ref
-          .read(voiceRoomLiveProvider(room).notifier)
+          .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
           .assignSeat(seatIndex: internalSeatIndex);
       if (!context.mounted) return;
       if (err != null) {
@@ -624,7 +628,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 onTap: () async {
                   Navigator.pop(ctx);
                   final err = await ref
-                      .read(voiceRoomLiveProvider(room).notifier)
+                      .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
                       .assignSeat(seatIndex: seatIndex);
                   if (context.mounted && err != null) {
                     ScaffoldMessenger.of(context)
@@ -646,7 +650,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 onTap: () async {
                   Navigator.pop(ctx);
                   final err = await ref
-                      .read(voiceRoomLiveProvider(room).notifier)
+                      .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
                       .assignSeat(
                         seatIndex: seatIndex,
                         userId: p.id,
@@ -669,7 +673,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     VoiceRoomEntity room,
     VoiceRoomUiState ui,
   ) async {
-    final liveCtrl = ref.read(voiceRoomLiveProvider(room).notifier);
+    final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
     final err = ui.requestSpeakPending
         ? await liveCtrl.cancelSpeakRequest()
         : await liveCtrl.requestSpeak();
@@ -683,7 +687,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       ref,
       pending: ref.read(voiceRoomUiProvider).requestSpeakPending,
       onPrimary: () async {
-        final ctrl = ref.read(voiceRoomLiveProvider(room).notifier);
+        final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
         final pendingNow = ref.read(voiceRoomUiProvider).requestSpeakPending;
         final e = pendingNow
             ? await ctrl.cancelSpeakRequest()
@@ -697,8 +701,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   @override
   Widget build(BuildContext context) {
-    final room = _roomSynced(ref.watch(voiceRoomsProvider).valueOrNull);
-    final live = ref.watch(voiceRoomLiveProvider(room));
+    final synced = _roomSynced(ref.watch(voiceRoomsProvider).valueOrNull);
+    final room = synced.apiRoomKey.isNotEmpty ? synced : widget.room;
+    if (_liveRoomKey.apiRoomKey.isEmpty && room.apiRoomKey.isNotEmpty) {
+      _liveRoomKey = room.stableSessionKey;
+    }
+    final live = ref.watch(voiceRoomLiveProvider(_liveRoomKey));
     final ui = ref.watch(voiceRoomUiProvider);
     final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
     final online = live.onlineCountFor(room);
@@ -745,14 +753,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final ownerName = ownerPresence?.displayName ?? room.ownerName;
     final ownerAvatar = ownerPresence?.image ?? room.ownerAvatarUrl;
     final headerAvatar = ownerAvatar ?? room.ownerAvatarUrl;
-    ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(room), (prev, next) {
+    ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
       if (prev?.error != next.error && next.error != null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(next.error!)),
         );
       }
       if (next.openCommandsPanel && !(prev?.openCommandsPanel ?? false)) {
-        ref.read(voiceRoomLiveProvider(room).notifier).clearOpenCommandsPanel();
+        ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearOpenCommandsPanel();
         if (!mounted) return;
         unawaited(
           showVoiceRoomCommandsPanel(
@@ -780,7 +788,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     ref.listen(voiceRoomUiProvider, (prev, next) {
       if (prev?.backgroundMusicEnabled != next.backgroundMusicEnabled) {
         unawaited(
-          ref.read(voiceRoomLiveProvider(room).notifier).refresh(includeDj: true),
+          ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).refresh(includeDj: true),
         );
       }
     });
@@ -824,11 +832,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             Positioned.fill(
               child: Column(
                 children: [
-                  SafeArea(
-                    bottom: false,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
+                  Flexible(
+                    child: SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: SafeArea(
+                        bottom: false,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
                         if (_loginError != null)
                           Material(
                             color: AppThemeColors.liveRed.withValues(alpha: 0.18),
@@ -963,7 +974,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 : null,
                             onPlayPause: () {
                               final ctrl = ref
-                                  .read(voiceRoomLiveProvider(room).notifier);
+                                  .read(voiceRoomLiveProvider(_liveRoomKey).notifier);
                               final playing = live.dj.playing ||
                                   ref
                                       .read(voiceRoomDjPlayerProvider)
@@ -976,12 +987,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             },
                             onStop: () => unawaited(
                               ref
-                                  .read(voiceRoomLiveProvider(room).notifier)
+                                  .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
                                   .stopMusic(),
                             ),
                             onSkip: (perms.canModerate || isOwner)
                                 ? () => ref
-                                    .read(voiceRoomLiveProvider(room).notifier)
+                                    .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
                                     .skipMusic()
                                 : null,
                           ),
@@ -1029,7 +1040,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             onUserTap: _openUser,
                           ),
                         ],
-                      ],
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                   Expanded(

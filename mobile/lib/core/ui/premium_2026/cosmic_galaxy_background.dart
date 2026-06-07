@@ -12,10 +12,13 @@ class CosmicGalaxyBackground extends StatefulWidget {
     super.key,
     this.child = const SizedBox.expand(),
     this.showVignette = true,
+    this.animate = true,
   });
 
   final Widget child;
   final bool showVignette;
+  /// Ana sayfa kaydırması için animasyon ve blur kapalı (GPU yükü).
+  final bool animate;
 
   @override
   State<CosmicGalaxyBackground> createState() => _CosmicGalaxyBackgroundState();
@@ -41,7 +44,22 @@ class _CosmicGalaxyBackgroundState extends State<CosmicGalaxyBackground>
     _drift = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 20),
-    )..repeat();
+    );
+    if (widget.animate) {
+      _drift.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant CosmicGalaxyBackground oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.animate != widget.animate) {
+      if (widget.animate) {
+        _drift.repeat();
+      } else {
+        _drift.stop();
+      }
+    }
   }
 
   @override
@@ -59,24 +77,33 @@ class _CosmicGalaxyBackgroundState extends State<CosmicGalaxyBackground>
       fit: StackFit.expand,
       children: [
         const DecoratedBox(decoration: BoxDecoration(gradient: _galaxy)),
-        Positioned(top: -90, right: -50, child: _neonOrb(AppThemeColors.accentPurple, 240)),
-        Positioned(
-          bottom: h * 0.12,
-          left: -70,
-          child: _neonOrb(const Color(0xFFFF2D7A), 200),
-        ),
-        Positioned(
-          top: h * 0.32,
-          left: w * 0.15,
-          child: _neonOrb(AppThemeColors.accentCyan, 130, opacity: 0.22),
-        ),
-        AnimatedBuilder(
-          animation: _drift,
-          builder: (_, __) => CustomPaint(
-            painter: _GalaxyParticlePainter(progress: _drift.value),
-            size: Size.infinite,
+        if (widget.animate) ...[
+          Positioned(top: -90, right: -50, child: _neonOrb(AppThemeColors.accentPurple, 240)),
+          Positioned(
+            bottom: h * 0.12,
+            left: -70,
+            child: _neonOrb(const Color(0xFFFF2D7A), 200),
           ),
-        ),
+          Positioned(
+            top: h * 0.32,
+            left: w * 0.15,
+            child: _neonOrb(AppThemeColors.accentCyan, 130, opacity: 0.22),
+          ),
+          AnimatedBuilder(
+            animation: _drift,
+            builder: (_, __) => CustomPaint(
+              painter: _GalaxyParticlePainter(progress: _drift.value),
+              size: Size.infinite,
+            ),
+          ),
+        ] else ...[
+          Positioned(top: -90, right: -50, child: _staticOrb(AppThemeColors.accentPurple, 220)),
+          Positioned(
+            bottom: h * 0.12,
+            left: -70,
+            child: _staticOrb(const Color(0xFFFF2D7A), 180),
+          ),
+        ],
         if (widget.showVignette)
           DecoratedBox(
             decoration: BoxDecoration(
@@ -110,6 +137,22 @@ class _CosmicGalaxyBackgroundState extends State<CosmicGalaxyBackground>
               Colors.transparent,
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _staticOrb(Color color, double size, {double opacity = 0.28}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            color.withValues(alpha: opacity),
+            Colors.transparent,
+          ],
         ),
       ),
     );
