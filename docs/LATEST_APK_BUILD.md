@@ -2,23 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.139+141` |
-| Tarih (UTC) | 2026-06-07 11:19 |
-| Commit | [`eaaa1c46c0725c8e3b8f7863fd84b1e5a37b690b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/eaaa1c46c0725c8e3b8f7863fd84b1e5a37b690b) |
-| İş akışı | [Run 27090539582](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27090539582) |
+| Sürüm | `1.0.140+142` |
+| Tarih (UTC) | 2026-06-07 12:10 |
+| Commit | [`07da458feb0d41c60ee8b4f12268b46ae6cb097c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/07da458feb0d41c60ee8b4f12268b46ae6cb097c) |
+| İş akışı | [Run 27091646607](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27091646607) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.139+141 (2026-06-07)
+## 1.0.140+142 (2026-06-07)
 
-### Sesli oda gri ekran — Android düzeltmesi (2. tur)
+### Sesli oda + canlı fal davet
 
-- Kalan `BackdropFilter` kaldırıldı: duyuru, aksiyon satırı, VoiceGlass
-- Sohbet overlay `ShaderMask` → gradient fade (Android uyumlu)
-- Oda UI `Positioned.fill` ile tam ekran layout
-- Oda kimliği senkronizasyonu + favorilerden `extra` ile giriş
-- `voiceRoomByIdProvider` önce önbellekten oda arar
+- Sesli oda: tam ekran bağlanma overlay kaldırıldı (odaya giriş engelleniyordu)
+- Falcı daveti: push bildirimi → uygulama içi Kabul/Beklet/Reddet sheet (global host)
+- OneSignal ön planda fal isteği sheet açar; bildirim yalnızca bilgi amaçlı
+- Davet sheet BackdropFilter kaldırıldı (Android gri boş sheet)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
