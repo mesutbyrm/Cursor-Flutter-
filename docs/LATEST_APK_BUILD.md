@@ -2,24 +2,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.137+139` |
-| Tarih (UTC) | 2026-06-07 07:27 |
-| Commit | [`a84530178915f2d7b8f03210fc1ee5c5d3fe5dd0`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a84530178915f2d7b8f03210fc1ee5c5d3fe5dd0) |
-| İş akışı | [Run 27085651308](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27085651308) |
+| Sürüm | `1.0.138+140` |
+| Tarih (UTC) | 2026-06-07 08:22 |
+| Commit | [`44337ff937c79e2f7a929a40607af36bfd7e0122`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/44337ff937c79e2f7a929a40607af36bfd7e0122) |
+| İş akışı | [Run 27086779866](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27086779866) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.135+137 (2026-05-19)
+## 1.0.138+140 (2026-06-07)
 
-### FLUTTER_CURSOR_PROMPT parite — tam paket
+### Canlı fal ve sesli oda düzeltmeleri
 
-- Canlı beğeni: `POST /api/video-streams/{id}/like` (TikTok +1/tap)
-- Video PK: `POST/GET …/pk-battle` (create/accept/reject/score/end)
-- Co-broadcast: davet listesi, invite, accept/decline
-- Falcı oturumu: `POST /api/fortune-tellers/session` + WebRTC signal poll
-- Rumuz: `POST …/presence` body `{ nickname }`
-- WebRTC signaling: `video_webrtc_signal_service.dart` (HTTP poll)
+- Canlı fal: danışan onay + bekleme ekranı; Kabul/Beklet/Reddet yalnızca falcıya düşer
+- Falcı gelen istek dinleyicisi (incoming sessions poll)
+- Sesli oda: Android gri boş ekran (BackdropFilter) giderildi, bağlanma göstergesi
+- Profil: Falcı ol / Ajans ol kısayolları
+- API: `sessions/incoming`, session status, teller respond
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
