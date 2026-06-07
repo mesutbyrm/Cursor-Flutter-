@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/quick_action_tile.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
@@ -343,6 +344,26 @@ class ProfileBranchQuickActions extends StatelessWidget {
               const Color(0xFF101820).withValues(alpha: 0.95),
             ],
             onTap: () => context.push('/voice-rooms'),
+          ),
+        ],
+        [
+          QuickActionTile(
+            icon: Icons.workspace_premium_rounded,
+            label: 'Falcı\nol',
+            gradient: [
+              const Color(0xFF3D2A10).withValues(alpha: 0.95),
+              const Color(0xFF1A1208).withValues(alpha: 0.95),
+            ],
+            onTap: () => openNativeSitePath(context, '/falci-ol'),
+          ),
+          QuickActionTile(
+            icon: Icons.business_center_rounded,
+            label: 'Ajans\nol',
+            gradient: [
+              const Color(0xFF1A2838).withValues(alpha: 0.95),
+              const Color(0xFF0E141C).withValues(alpha: 0.95),
+            ],
+            onTap: () => openNativeSitePath(context, '/ajans-ol'),
           ),
         ],
       ],

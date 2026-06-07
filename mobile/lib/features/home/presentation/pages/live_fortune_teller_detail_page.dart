@@ -70,7 +70,10 @@ class _LiveFortuneTellerDetailPageState
     setState(() => _booking = true);
     try {
       final remote = ref.read(homeRemoteProvider);
-      final created = await remote.createFortuneTellerSession(teller.id);
+      final created = await remote.createFortuneTellerSession(
+        teller.id,
+        tellerUserId: teller.trtcUserId,
+      );
       if (!mounted) return;
       if (created == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -83,6 +86,9 @@ class _LiveFortuneTellerDetailPageState
         teller: teller,
         durationMinutes: opt.minutes,
         totalJeton: opt.totalJeton,
+        tellerUserId: created.tellerUserId ?? teller.trtcUserId,
+        clientId: created.clientId,
+        isClient: created.isClient,
       );
       ref.read(videoWebrtcSignalServiceProvider).start(
             streamId: session.sessionId,
