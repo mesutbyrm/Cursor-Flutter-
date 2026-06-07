@@ -50,6 +50,23 @@ class VoiceRoomEntity extends Equatable {
 
   String get displayTitle => nameTr.trim().isEmpty ? 'Sohbet Odası' : nameTr.trim();
 
+  /// Riverpod oturum anahtarı — online sayısı değişince provider yeniden kurulmasın.
+  VoiceRoomEntity get stableSessionKey => VoiceRoomEntity(
+        id: id,
+        slug: slug,
+        nameTr: nameTr,
+        descTr: descTr,
+        rulesTr: rulesTr,
+        icon: icon,
+        backgroundImageUrl: backgroundImageUrl,
+        ownerName: ownerName,
+        ownerAvatarUrl: ownerAvatarUrl,
+        ownerId: ownerId,
+        activeDjId: activeDjId,
+        djUserIds: djUserIds,
+        recentUserAvatars: recentUserAvatars,
+      );
+
   @override
   List<Object?> get props => [
         id,

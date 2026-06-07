@@ -22,7 +22,7 @@ class HomeSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 4, 12, 2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

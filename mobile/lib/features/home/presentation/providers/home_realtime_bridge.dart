@@ -22,7 +22,7 @@ class HomeRealtimeBridge {
   void start() {
     if (!Env.useNextAuth) return;
     _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 20), (_) => _tick());
+    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _tick());
   }
 
   void _tick() {

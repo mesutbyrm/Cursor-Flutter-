@@ -44,6 +44,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       backgroundColor: DiscoverPremiumVisual.backgroundBottom,
       body: CosmicGalaxyBackground(
         showVignette: true,
+        animate: false,
         child: RefreshIndicator(
           color: DiscoverPremiumVisual.primary,
           backgroundColor: HomePalette.darkBackground,

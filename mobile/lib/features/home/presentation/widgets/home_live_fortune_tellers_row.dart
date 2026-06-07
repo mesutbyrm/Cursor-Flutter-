@@ -86,7 +86,7 @@ class HomeLiveFortuneTellersRow extends ConsumerWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
               child: _QuickActions(),
             ),
           ],

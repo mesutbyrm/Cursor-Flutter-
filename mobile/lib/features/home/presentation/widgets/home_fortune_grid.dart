@@ -45,7 +45,7 @@ class HomeFortuneGrid extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
           child: HomeGlassCard(
             onTap: () => context.push('/fortune/types'),
             padding: const EdgeInsets.symmetric(vertical: 14),
