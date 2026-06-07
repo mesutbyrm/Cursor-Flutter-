@@ -105,6 +105,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   @override
   void initState() {
     super.initState();
+    if (widget.room.apiRoomKey.isNotEmpty) {
+      _pinnedLiveSession = widget.room.stableSessionKey;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.room.apiRoomKey.isEmpty) {
         unawaited(ref.read(voiceRoomsProvider.future));
@@ -128,8 +131,15 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     return w;
   }
 
+  VoiceRoomEntity _displayRoom(List<VoiceRoomEntity>? rooms) {
+    final synced = _roomSynced(rooms);
+    if (synced.apiRoomKey.isNotEmpty) return synced;
+    if (widget.room.apiRoomKey.isNotEmpty) return widget.room;
+    return synced;
+  }
+
   VoiceRoomEntity _effectiveRoom() {
-    return _roomSynced(ref.read(voiceRoomsProvider).valueOrNull);
+    return _displayRoom(ref.read(voiceRoomsProvider).valueOrNull);
   }
 
   @override
@@ -137,6 +147,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _giftSub?.cancel();
     _messageCtrl.dispose();
     _messageFocus.dispose();
+    unawaited(_audio?.leave());
     _audio?.dispose();
     super.dispose();
   }
@@ -233,7 +244,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     setState(() => _loginError = null);
 
-    final room = _effectiveRoom();
+    var room = _effectiveRoom();
+    if (room.apiRoomKey.isEmpty && widget.room.apiRoomKey.isNotEmpty) {
+      room = widget.room;
+      _pinnedLiveSession = room.stableSessionKey;
+    }
     if (room.apiRoomKey.isEmpty) {
       if (mounted) {
         setState(() {
@@ -382,7 +397,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
     return VoiceRoomPermissions.forUser(
       user: user,
-      room: widget.room,
+      room: _effectiveRoom(),
       selfPresence: self,
     );
   }
@@ -717,11 +732,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   @override
   Widget build(BuildContext context) {
-    final synced = _roomSynced(ref.watch(voiceRoomsProvider).valueOrNull);
-    final room = synced.apiRoomKey.isNotEmpty ? synced : widget.room;
+    final room = _displayRoom(ref.watch(voiceRoomsProvider).valueOrNull);
     final session = _resolveSession(room);
     final live = ref.watch(voiceRoomLiveProvider(session));
-    final roomReady = room.apiRoomKey.isNotEmpty;
     final ui = ref.watch(voiceRoomUiProvider);
     final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
     final online = live.onlineCountFor(room);
@@ -839,44 +852,41 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       child: Scaffold(
         backgroundColor: VoiceRoomTokens.bgDeep,
         resizeToAvoidBottomInset: true,
-        extendBodyBehindAppBar: true,
         body: Stack(
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
-            if (!roomReady)
-              Positioned.fill(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const CircularProgressIndicator(
-                        color: VoiceRoomTokens.neonPurple,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Oda yükleniyor…',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.75),
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              Positioned.fill(
-                child: Column(
-                  children: [
-                    Flexible(
-                      child: SingleChildScrollView(
-                        physics: const ClampingScrollPhysics(),
-                        child: SafeArea(
-                          bottom: false,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
+            Column(
+              children: [
+                Expanded(
+                  child: SafeArea(
+                    bottom: false,
+                    child: Column(
+                      children: [
+                        if (room.apiRoomKey.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: VoiceRoomTokens.neonPurple,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'Oda bilgisi yükleniyor…',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.75),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         if (_loginError != null)
                           Material(
                             color: AppThemeColors.liveRed.withValues(alpha: 0.18),
@@ -949,6 +959,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             isOwner: isOwner,
                           ),
                         ),
+                        Expanded(
+                          child: ListView(
+                            padding: EdgeInsets.zero,
+                            physics: const ClampingScrollPhysics(),
+                            children: [
                         if (live.error != null)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1080,29 +1095,87 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             ],
                           ),
                         ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.bottomLeft,
-                        child: VoiceWebChatOverlay(
-                          messages: live.messages,
-                          hideOfficialJoinInChat: staffBanner != null,
-                          maxHeight: chatMaxH,
-                          onUserTap: (id, _) {
-                            for (final e in live.presence) {
-                              if (e.id == id) {
-                                _openUser(e);
-                                break;
+                        Align(
+                          alignment: Alignment.bottomLeft,
+                          child: VoiceWebChatOverlay(
+                            messages: live.messages,
+                            hideOfficialJoinInChat: staffBanner != null,
+                            maxHeight: chatMaxH,
+                            onUserTap: (id, _) {
+                              for (final e in live.presence) {
+                                if (e.id == id) {
+                                  _openUser(e);
+                                  break;
+                                }
                               }
-                            }
-                          },
+                            },
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                AnimatedPadding(
+                  duration: const Duration(milliseconds: 100),
+                  curve: Curves.easeOutCubic,
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.viewInsetsOf(context).bottom,
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        VoiceWebChatInputBar(
+                          controller: _messageCtrl,
+                          focusNode: _messageFocus,
+                          sending: live.sending,
+                          onSend: () => _sendChatMessage(room),
+                        ),
+                        if (!keyboardOpen)
+                          VoiceWebBottomNav(
+                            micOn: _micOn,
+                            micEnabled: _audioReady,
+                            headphonesOn: ui.headphonesOn,
+                            onHome: _leave,
+                            onSpeaker: () {
+                              ref
+                                  .read(voiceRoomUiProvider.notifier)
+                                  .toggleHeadphones();
+                              _audio?.setHeadphonesOn(
+                                ref.read(voiceRoomUiProvider).headphonesOn,
+                              );
+                            },
+                            onMic: () {
+                              if (!_audioReady) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Mikrofon için ses bağlantısı gerekli',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+                              final next = !_micOn;
+                              _audio?.setMicEnabled(next);
+                              setState(() => _micOn = next);
+                            },
+                            onCoins: () => openJetonStore(context, ref: ref),
+                            onSettings: () => _openHubSettings(
+                              context,
+                              room: room,
+                              live: live,
+                              perms: perms,
+                              isOwner: isOwner,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
             VoiceGiftFlightOverlay(
               events: flightQueue,
               enabled: ui.giftAnimationsEnabled,
@@ -1146,67 +1219,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               ),
           ],
         ),
-        bottomNavigationBar: roomReady
-            ? AnimatedPadding(
-                duration: const Duration(milliseconds: 100),
-                curve: Curves.easeOutCubic,
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.viewInsetsOf(context).bottom,
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      VoiceWebChatInputBar(
-                        controller: _messageCtrl,
-                        focusNode: _messageFocus,
-                        sending: live.sending,
-                        onSend: () => _sendChatMessage(room),
-                      ),
-                      if (!keyboardOpen)
-                        VoiceWebBottomNav(
-                          micOn: _micOn,
-                          micEnabled: _audioReady,
-                          headphonesOn: ui.headphonesOn,
-                          onHome: _leave,
-                          onSpeaker: () {
-                            ref
-                                .read(voiceRoomUiProvider.notifier)
-                                .toggleHeadphones();
-                            _audio?.setHeadphonesOn(
-                              ref.read(voiceRoomUiProvider).headphonesOn,
-                            );
-                          },
-                          onMic: () {
-                            if (!_audioReady) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Mikrofon için ses bağlantısı gerekli',
-                                  ),
-                                ),
-                              );
-                              return;
-                            }
-                            final next = !_micOn;
-                            _audio?.setMicEnabled(next);
-                            setState(() => _micOn = next);
-                          },
-                          onCoins: () => openJetonStore(context, ref: ref),
-                          onSettings: () => _openHubSettings(
-                            context,
-                            room: room,
-                            live: live,
-                            perms: perms,
-                            isOwner: isOwner,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              )
-            : null,
       ),
     );
   }

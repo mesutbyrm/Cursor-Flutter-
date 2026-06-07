@@ -338,7 +338,16 @@ class _SavedFavoritesTab extends ConsumerWidget {
         if (room != null) {
           unawaited(openVoiceRoomWithVipGate(context, ref, room));
         } else {
-          context.push('/voice-room/${f.targetId}');
+          unawaited(() async {
+            final loaded =
+                await ref.read(voiceRoomByIdProvider(f.targetId).future);
+            if (!context.mounted) return;
+            if (loaded != null) {
+              await openVoiceRoomWithVipGate(context, ref, loaded);
+            } else {
+              context.push('/voice-room/${f.targetId}');
+            }
+          }());
         }
       default:
         if (f.url != null && f.url!.startsWith('/')) {

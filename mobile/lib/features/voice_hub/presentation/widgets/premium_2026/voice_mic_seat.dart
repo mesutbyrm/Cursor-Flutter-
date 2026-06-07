@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
@@ -134,6 +135,10 @@ class VoiceMicSeat extends StatelessWidget {
     );
 
     if (!speaking && !isHost) return avatar;
+
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return avatar;
+    }
 
     return VoiceAudioWaveRing(
       size: size,
