@@ -8,6 +8,7 @@ import 'api_endpoints.dart';
 import 'cookie_jar_provider.dart';
 import 'payment_request_interceptor.dart';
 import 'token_storage.dart';
+import 'voice_room_api_log_interceptor.dart';
 
 bool _isPublicAuthPath(String path) {
   return path == ApiEndpoints.authMobileLogin ||
@@ -43,6 +44,7 @@ final dioProvider = Provider<Dio>((ref) {
 
   dio.interceptors.add(CookieManager(cookieJar));
   dio.interceptors.add(PaymentRequestInterceptor());
+  dio.interceptors.add(VoiceRoomApiLogInterceptor());
 
   dio.interceptors.add(
     InterceptorsWrapper(

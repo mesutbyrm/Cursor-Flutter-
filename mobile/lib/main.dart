@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app/app.dart';
+import 'features/voice_hub/data/services/voice_room_debug_log.dart';
 import 'core/firebase/firebase_bootstrap.dart';
 import 'core/network/cookie_jar_provider.dart';
 import 'core/onesignal/onesignal_bootstrap.dart';
@@ -37,11 +38,14 @@ Future<void> main() async {
 
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
-    debugPrint('FlutterError: ${details.exceptionAsString()}');
+    VoiceRoomDebugLog.recordFlutterError(
+      details.exception,
+      details.stack,
+    );
   };
 
   PlatformDispatcher.instance.onError = (error, stack) {
-    debugPrint('Uncaught: $error\n$stack');
+    VoiceRoomDebugLog.recordPlatformError(error, stack);
     return true;
   };
 
@@ -67,6 +71,6 @@ Future<void> main() async {
         ),
       );
     },
-    (error, stack) => debugPrint('Zone error: $error\n$stack'),
+    (error, stack) => VoiceRoomDebugLog.recordZoneError(error, stack),
   );
 }

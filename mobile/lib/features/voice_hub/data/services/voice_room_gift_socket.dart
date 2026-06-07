@@ -39,9 +39,20 @@ class VoiceRoomGiftSocket {
           VoiceRoomSocketHelper.baseOptions(bearerToken: token).build(),
         );
         _socket!
-          ..onConnect((_) => VoiceRoomSocketHelper.emitJoinRooms(_socket, _joinKeys))
-          ..onReconnect((_) =>
-              VoiceRoomSocketHelper.emitJoinRooms(_socket, _joinKeys))
+          ..onConnect((_) {
+            VoiceRoomDebugLog.log('socket.connect', {
+              'rooms': _joinKeys.join(','),
+              'kind': 'gift',
+            });
+            VoiceRoomSocketHelper.emitJoinRooms(_socket, _joinKeys);
+          })
+          ..onDisconnect((_) => VoiceRoomDebugLog.log('socket.disconnect', {
+                'kind': 'gift',
+              }))
+          ..onReconnect((_) {
+            VoiceRoomDebugLog.log('socket.reconnect', {'kind': 'gift'});
+            VoiceRoomSocketHelper.emitJoinRooms(_socket, _joinKeys);
+          })
           ..on('gift', (data) => _emit(data, roomId))
           ..on('giftSent', (data) => _emit(data, roomId))
           ..on('dj', (data) => _emitDj(data))
@@ -49,7 +60,15 @@ class VoiceRoomGiftSocket {
           ..on('QUEUE_UPDATED', (data) => _emitDj(data))
           ..on('CURRENT_SONG_CHANGED', (data) => _emitDj(data))
           ..connect();
+        VoiceRoomDebugLog.log('socket.connecting', {
+          'origin': Env.siteOrigin,
+          'kind': 'gift',
+        });
       } catch (e) {
+        VoiceRoomDebugLog.log('socket.error', {
+          'error': e.toString(),
+          'kind': 'gift',
+        });
         debugPrint('Voice gift socket: $e');
       }
     });

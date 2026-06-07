@@ -12,12 +12,11 @@ import '../../../core/network/token_storage.dart';
 import '../../../core/widgets/cached_cover_image.dart';
 import '../../../core/navigation/wallet_navigation.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/widgets/discover_tab_layout.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../live/domain/entities/live_gift_event.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/presentation/providers/live_providers.dart';
-import '../domain/entities/chat_room_message.dart';
+import '../data/services/voice_room_debug_log.dart';
 import '../domain/voice_official_join.dart';
 import '../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
@@ -32,6 +31,7 @@ import 'providers/pk_battle_remote_provider.dart';
 import 'utils/voice_room_image_prefetch.dart';
 import 'providers/voice_gift_providers.dart';
 import 'providers/voice_room_audio_providers.dart';
+import 'providers/voice_room_diagnostic_provider.dart';
 import 'providers/voice_room_ui_provider.dart';
 import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
@@ -57,6 +57,7 @@ import 'widgets/voice_room/voice_room_action_row.dart';
 import 'widgets/voice_room/voice_room_music_mini_player.dart';
 import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
 import 'widgets/voice_room/voice_room_music_request_flash.dart';
+import 'widgets/voice_room_error_boundary.dart';
 
 /// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
@@ -109,7 +110,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       _pinnedLiveSession = widget.room.stableSessionKey;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.room.apiRoomKey.isEmpty) {
+      final roomKey = widget.room.apiRoomKey;
+      VoiceRoomDebugLog.routeEnter(
+        roomId: roomKey.isNotEmpty ? roomKey : widget.room.id,
+        slug: widget.room.slug,
+        source: 'rtc_page',
+      );
+      ref.read(voiceRoomDiagnosticProvider.notifier).resetForRoom(
+            roomKey.isNotEmpty ? roomKey : widget.room.id,
+          );
+      unawaited(_logJwtStatus());
+      if (roomKey.isEmpty) {
         unawaited(ref.read(voiceRoomsProvider.future));
       }
       _joinRoom();
@@ -150,6 +161,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     unawaited(_audio?.leave());
     _audio?.dispose();
     super.dispose();
+  }
+
+  Future<void> _logJwtStatus() async {
+    final token = await ref.read(tokenStorageProvider).readAccess();
+    final hasJwt = token != null && token.isNotEmpty;
+    VoiceRoomDebugLog.jwtStatus(
+      hasToken: hasJwt,
+      tokenLength: token?.length,
+    );
+    ref.read(voiceRoomDiagnosticProvider.notifier).setJwt(hasJwt: hasJwt);
   }
 
   Future<void> _prefetchRoomImages() async {
@@ -286,21 +307,30 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         _audio?.setMicEnabled(true);
       }
       if (mounted) {
+        ref.read(voiceRoomDiagnosticProvider.notifier).setTrtc(
+              roomId: room.trtcRoomId,
+              result: 1,
+            );
+        ref.read(voiceRoomDiagnosticProvider.notifier).setAudioReady(true);
         setState(() {
           _audioJoining = false;
           _audioReady = true;
           _micOn = _audio!.micOn;
         });
         _startGiftRealtime();
+        ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(true);
         _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
         _maybeShowVipEntrance(user);
         unawaited(_connectPkBattle());
       }
     } catch (e) {
       if (mounted) {
+        final msg = ApiException.userMessage(e);
+        ref.read(voiceRoomDiagnosticProvider.notifier).setError(msg);
+        ref.read(voiceRoomDiagnosticProvider.notifier).setAudioReady(false);
         setState(() {
           _audioJoining = false;
-          _audioError = ApiException.userMessage(e);
+          _audioError = msg;
         });
         _startGiftRealtime();
         _maybeShowVipEntrance(user);
@@ -735,6 +765,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final room = _displayRoom(ref.watch(voiceRoomsProvider).valueOrNull);
     final session = _resolveSession(room);
     final live = ref.watch(voiceRoomLiveProvider(session));
+    final diagnostic = ref.watch(voiceRoomDiagnosticProvider);
     final ui = ref.watch(voiceRoomUiProvider);
     final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
     final online = live.onlineCountFor(room);
@@ -964,6 +995,30 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             padding: EdgeInsets.zero,
                             physics: const ClampingScrollPhysics(),
                             children: [
+                        if (live.loading && live.presence.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            child: Row(
+                              children: [
+                                const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: VoiceRoomTokens.neonPurple,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Katılımcılar yükleniyor…',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.white.withValues(alpha: 0.65),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         if (live.error != null)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -976,6 +1031,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
+                          ),
+                        if (diagnostic.uiBuildError != null)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: VoiceRoomDiagnosticCard(state: diagnostic),
                           ),
                         if (!keyboardOpen)
                           VoiceStaffEntranceMarquee(

@@ -68,6 +68,7 @@ import '../../features/voice_hub/presentation/pages/pk_result_page.dart';
 import '../../features/voice_hub/presentation/pages/voice_pk_battle_page.dart';
 import '../../features/voice_hub/presentation/voice_room_route_page.dart';
 import '../../features/voice_hub/presentation/voice_room_rtc_page.dart';
+import '../../features/voice_hub/presentation/widgets/voice_room_error_boundary.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
 import '../../features/home/presentation/pages/live_fortune_teller_detail_page.dart';
 import '../../features/home/presentation/pages/live_fortune_session_page.dart';
@@ -524,7 +525,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final room = state.extra as VoiceRoomEntity?;
           if (room != null) {
-            return VoiceRoomRtcPage(room: room);
+            final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+            return VoiceRoomErrorBoundary(
+              roomId: key,
+              child: VoiceRoomRtcPage(room: room),
+            );
           }
           final id = state.pathParameters['id'] ?? '';
           return VoiceRoomRoutePage(roomId: id);
