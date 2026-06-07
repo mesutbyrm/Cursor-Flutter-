@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import 'profile_glass.dart';
 
 class ProfileBroadcasterPanel extends StatelessWidget {
@@ -40,7 +42,7 @@ class ProfileBroadcasterPanel extends StatelessWidget {
         Row(
           children: [
             for (var i = 0; i < items.length; i++) ...[
-              if (i > 0) const SizedBox(width: 8),
+              if (i > 0) SizedBox(width: 8),
               Expanded(
                 child: _BroadcasterTile(
                   icon: items[i].icon,
@@ -79,25 +81,25 @@ class _BroadcasterTile extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: AppColors.accentPurple.withValues(alpha: 0.2),
+              color: AppThemeColors.accentPurple.withValues(alpha: 0.2),
             ),
             child: Icon(
               icon,
               size: 22,
-              color: AppColors.accentPurple.withValues(alpha: 0.95),
+              color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             label,
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w700,
               height: 1.15,
-              color: AppColors.textSecondary,
+              color: context.colors.onSurfaceVariant,
             ),
           ),
         ],

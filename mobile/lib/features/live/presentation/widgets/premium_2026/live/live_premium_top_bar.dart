@@ -1,9 +1,11 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/ui/premium/live_badge.dart';
 import '../../../../../../core/widgets/user_avatar.dart';
 import '../../../../domain/entities/live_broadcast_session.dart';
@@ -19,6 +21,7 @@ class LivePremiumTopBar extends StatelessWidget {
     required this.onFollow,
     required this.onClose,
     this.onBack,
+    this.onProfileTap,
   });
 
   final LiveBroadcastSession session;
@@ -28,10 +31,11 @@ class LivePremiumTopBar extends StatelessWidget {
   final VoidCallback onFollow;
   final VoidCallback onClose;
   final VoidCallback? onBack;
+  final VoidCallback? onProfileTap;
 
   @override
   Widget build(BuildContext context) {
-    final viewers = session.viewerCount > 0 ? session.viewerCount : 4892;
+    final viewers = session.viewerCount;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(22),
@@ -42,8 +46,8 @@ class LivePremiumTopBar extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.42),
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: AppColors.accentPink.withValues(alpha: 0.35)),
-            boxShadow: AppColors.glowShadow(AppColors.accentPurple, blur: 14),
+            border: Border.all(color: AppThemeColors.accentPink.withValues(alpha: 0.35)),
+            boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPurple, blur: 14),
           ),
           child: Row(
             children: [
@@ -54,7 +58,10 @@ class LivePremiumTopBar extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 ),
-              UserAvatar(url: session.avatarUrl, radius: 20),
+              GestureDetector(
+                onTap: onProfileTap,
+                child: UserAvatar(url: session.avatarUrl, radius: 20),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -74,7 +81,7 @@ class LivePremiumTopBar extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: AppColors.textMuted.withValues(alpha: 0.95),
+                        color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
                         fontSize: 11,
                       ),
                     ),
@@ -137,9 +144,9 @@ class _FollowButton extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            gradient: AppColors.brandGradient,
+            gradient: context.colors.brandGradient,
             borderRadius: BorderRadius.circular(14),
-            boxShadow: AppColors.glowShadow(AppColors.accentPink, blur: 12),
+            boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: 12),
           ),
           child: loading
               ? const SizedBox(

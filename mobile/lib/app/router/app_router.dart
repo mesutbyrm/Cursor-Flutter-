@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,7 +10,10 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
+import '../../features/content_hub/presentation/pages/content_hub_page.dart';
+import '../../features/favorites/presentation/pages/favorites_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
+import '../../features/search/presentation/pages/global_search_page.dart';
 import '../../features/fortune/domain/entities/fortune_type_entity.dart';
 import '../../features/fortune/presentation/data/fortune_catalog.dart';
 import '../../features/fortune/presentation/pages/daily_fortune_open_page.dart';
@@ -54,11 +58,21 @@ import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/profile_transactions_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/shell/presentation/main_shell_page.dart';
+import '../../features/live/domain/entities/live_stream_entity.dart';
 import '../../features/live/domain/entities/voice_room_entity.dart';
+import '../../features/live/presentation/pages/live_pk_battle_page.dart';
+import '../../features/live/presentation/pages/live_pk_invite_page.dart';
+import '../../features/voice_hub/presentation/pages/pk_history_page.dart';
+import '../../features/voice_hub/presentation/pages/pk_invite_page.dart';
+import '../../features/voice_hub/presentation/pages/pk_result_page.dart';
 import '../../features/voice_hub/presentation/pages/voice_pk_battle_page.dart';
 import '../../features/voice_hub/presentation/voice_room_route_page.dart';
 import '../../features/voice_hub/presentation/voice_room_rtc_page.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
+import '../../features/home/presentation/pages/live_fortune_teller_detail_page.dart';
+import '../../features/home/presentation/pages/live_fortune_session_page.dart';
+import '../../features/home/presentation/pages/live_fortune_tellers_page.dart';
+import '../../features/home/domain/entities/live_fortune_session_entity.dart';
 import '../../features/vip_gold/presentation/pages/vip_gold_hub_page.dart';
 import '../../core/navigation/app_page_transitions.dart';
 
@@ -77,10 +91,14 @@ class RouterRefresh extends ChangeNotifier {
   final Ref _ref;
 }
 
+/// Push / global modal sheet'ler için kök navigator.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final goRouterProvider = Provider<GoRouter>((ref) {
   final refresh = RouterRefresh(ref);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     refreshListenable: refresh,
     redirect: (context, state) {
@@ -432,11 +450,70 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => CanlifalWebRoute.fromState(state),
       ),
       GoRoute(
+        path: '/content-hub',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const ContentHubPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/search',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const GlobalSearchPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/favorites',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const FavoritesPage(),
+        ),
+      ),
+      GoRoute(
         path: '/vip-gold',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const VipGoldHubPage(),
         ),
+      ),
+      GoRoute(
+        path: '/canli-falcilar',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const LiveFortuneTellersPage(),
+        ),
+        routes: [
+          GoRoute(
+            path: ':id',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              return AppPageTransitions.fadeSlide(
+                key: state.pageKey,
+                child: LiveFortuneTellerDetailPage(tellerId: id),
+              );
+            },
+            routes: [
+              GoRoute(
+                path: 'session',
+                pageBuilder: (context, state) {
+                  final session = state.extra as LiveFortuneSessionEntity?;
+                  if (session == null) {
+                    final id = state.pathParameters['id'] ?? '';
+                    return AppPageTransitions.fadeSlide(
+                      key: state.pageKey,
+                      child: LiveFortuneTellerDetailPage(tellerId: id),
+                    );
+                  }
+                  return AppPageTransitions.fadeSlide(
+                    key: state.pageKey,
+                    child: LiveFortuneSessionPage(session: session),
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: '/voice-rooms',
@@ -464,7 +541,52 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               return VoiceRoomRoutePage(roomId: id);
             },
           ),
+          GoRoute(
+            path: 'pk-invite',
+            builder: (context, state) {
+              final room = state.extra as VoiceRoomEntity?;
+              if (room == null) {
+                return VoiceRoomRoutePage(roomId: state.pathParameters['id'] ?? '');
+              }
+              return PkInvitePage(room: room);
+            },
+          ),
         ],
+      ),
+      GoRoute(
+        path: '/live/pk-invite',
+        builder: (context, state) {
+          final session = state.extra as LiveBroadcastSession?;
+          if (session == null) return const LiveBroadcastPrepPage();
+          return LivePkInvitePage(session: session);
+        },
+      ),
+      GoRoute(
+        path: '/live/pk',
+        builder: (context, state) {
+          final extra = state.extra;
+          LiveBroadcastSession? session;
+          LiveStreamEntity? opponent;
+          if (extra is LiveBroadcastSession) {
+            session = extra;
+          } else if (extra is Map) {
+            session = extra['session'] as LiveBroadcastSession?;
+            opponent = extra['opponent'] as LiveStreamEntity?;
+          }
+          if (session == null) return const LiveBroadcastPrepPage();
+          return LivePkBattlePage(session: session, opponentStream: opponent);
+        },
+      ),
+      GoRoute(
+        path: '/pk/history',
+        builder: (context, state) {
+          final type = state.uri.queryParameters['type'];
+          return PkHistoryPage(battleType: type);
+        },
+      ),
+      GoRoute(
+        path: '/pk/result',
+        builder: (context, state) => const PkResultPage(),
       ),
     ],
   );

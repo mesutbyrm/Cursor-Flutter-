@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../../core/widgets/lazy_paginated_list_view.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/domain/entities/user_entity.dart';
-import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../feed/presentation/widgets/discover/discover_background.dart';
 
 enum ProfileFollowTab { followers, following }
 
@@ -30,7 +32,7 @@ class ProfileFollowListPage extends ConsumerWidget {
         : ProfileRemoteDataSource(ref.watch(dioProvider)).following(userId);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: tab == ProfileFollowTab.followers ? 'Takipçi' : 'Takip',
@@ -55,18 +57,47 @@ class ProfileFollowListPage extends ConsumerWidget {
                       : 'Henüz kimseyi takip etmiyorsun.',
                 );
               }
-              return ListView.separated(
+              return LazyPaginatedListView(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                 itemCount: users.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
                 itemBuilder: (context, i) {
                   final u = users[i];
-                  return ListTile(
-                    leading: UserAvatar(url: u.avatarUrl, radius: 22),
-                    title: Text(u.display),
-                    subtitle: Text('@${u.username}'),
-                    trailing: const Icon(Icons.chevron_right_rounded),
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: ProGlassListTile(
                     onTap: () => context.push('/user/${u.id}'),
+                    child: Row(
+                      children: [
+                        UserAvatar(url: u.avatarUrl, radius: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                u.display,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Text(
+                                '@${u.username}',
+                                style: TextStyle(
+                                  color: context.colors.onSurfaceMuted
+                                      .withValues(alpha: 0.85),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: context.colors.onSurfaceMuted.withValues(alpha: 0.6),
+                        ),
+                      ],
+                    ),
+                  ),
                   );
                 },
               );

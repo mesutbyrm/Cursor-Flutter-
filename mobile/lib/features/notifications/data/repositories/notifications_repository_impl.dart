@@ -15,9 +15,9 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   Future<List<AppNotificationEntity>> fetch() async {
     if (Env.useMobileAuth) {
       try {
-        final items = await _canlifal.fetchActivity();
-        if (items.isNotEmpty) {
-          return items.map(_activityToNotification).toList();
+        final page = await _canlifal.fetchActivity();
+        if (page.items.isNotEmpty) {
+          return page.items.map(_activityToNotification).toList();
         }
       } catch (_) {}
     }
@@ -38,6 +38,12 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
 
   @override
   Future<void> markRead(String id) async {
+    if (Env.useMobileAuth) {
+      try {
+        await _canlifal.markActivityRead(id);
+        return;
+      } catch (_) {}
+    }
     try {
       await _remote.markRead(id);
     } catch (_) {}

@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../theme/voice_room_tokens.dart';
 
 /// Web alt navigasyon — Ana Sayfa, Hoparlör, merkez mikrofon, Jeton, Ayarlar.
@@ -32,13 +32,10 @@ class VoiceWebBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
 
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-        child: Container(
+    return Container(
           padding: EdgeInsets.fromLTRB(8, 10, 8, bottom + 10),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.72),
+            color: Colors.black.withValues(alpha: 0.88),
             border: Border(
               top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
             ),
@@ -70,7 +67,7 @@ class VoiceWebBottomNav extends StatelessWidget {
               _NavItem(
                 icon: Icons.monetization_on_rounded,
                 label: 'Jeton Yükle',
-                color: AppColors.diamondBlue,
+                color: AppThemeColors.diamondBlue,
                 onTap: onCoins,
               ),
               _NavItem(
@@ -81,8 +78,6 @@ class VoiceWebBottomNav extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
     );
   }
 }
@@ -217,24 +212,30 @@ class _CenterMicButtonState extends State<_CenterMicButton>
   }
 }
 
-/// Sağ kenar yüzen kısayollar.
+/// Sağ kenar — ‹ oda araçları, ♫ müzik isteği (canlifal.com).
 class VoiceWebFloatingRail extends StatelessWidget {
   const VoiceWebFloatingRail({
     super.key,
-    this.onAudience,
+    this.onTools,
     this.onMusic,
+    this.onGift,
   });
 
-  final VoidCallback? onAudience;
+  final VoidCallback? onTools;
   final VoidCallback? onMusic;
+  final VoidCallback? onGift;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _FloatBtn(icon: Icons.person_rounded, onTap: onAudience),
-        const SizedBox(height: 10),
+        _FloatBtn(icon: Icons.chevron_left_rounded, onTap: onTools),
+        const SizedBox(height: 8),
+        if (onGift != null) ...[
+          _FloatBtn(icon: Icons.card_giftcard_rounded, onTap: onGift),
+          const SizedBox(height: 8),
+        ],
         _FloatBtn(icon: Icons.queue_music_rounded, onTap: onMusic),
       ],
     );
@@ -256,13 +257,13 @@ class _FloatBtn extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: Container(
-          width: 44,
-          height: 44,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
           ),
-          child: Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 22),
+          child: Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 18),
         ),
       ),
     );

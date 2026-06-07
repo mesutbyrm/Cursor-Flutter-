@@ -1,3 +1,4 @@
+import '../../../../core/pagination/paged_result.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../entities/profile_stats_entity.dart';
@@ -21,7 +22,11 @@ abstract class ProfileRepository {
   Future<ProfileStatsEntity> myStats();
   Future<List<GiftReceivedSummaryEntity>> giftsReceivedSummary();
   Future<List<BroadcastHistoryItemEntity>> broadcastHistory();
+  Future<PagedResult<BroadcastHistoryItemEntity>> broadcastHistoryPage({
+    int page,
+  });
   Future<List<ProfileActivityItemEntity>> myActivity();
+  Future<PagedResult<ProfileActivityItemEntity>> myActivityPage({int page});
   Future<void> markAllActivityRead();
   Future<List<UserEntity>> followers(String userId);
   Future<List<UserEntity>> following(String userId);
@@ -34,5 +39,8 @@ abstract class WalletRepository {
   Future<PaymentConfigEntity> paymentConfig();
   Future<void> submitPaymentRequest(Map<String, dynamic> body);
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests();
+  Future<PagedResult<CfcPaymentRequestEntity>> myPaymentRequestsPage({
+    int page,
+  });
   Future<ReferralInfoEntity> referralInfo();
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
 import 'app_spacing.dart';
+import 'app_theme_colors.dart';
 
 /// Material 3 ThemeExtension — premium gradient / glow / layout token'ları.
 @immutable
@@ -27,12 +27,20 @@ class CanlifalTokens extends ThemeExtension<CanlifalTokens> {
   final double radiusChip;
 
   static const dark = CanlifalTokens(
-    brandGradient: AppColors.brandGradient,
-    fabGradient: AppColors.fabGradient,
-    coinGradient: AppColors.coinCapsuleGradient,
-    navBarBackground: AppColors.surfaceGlass,
+    brandGradient: LinearGradient(
+      colors: [AppThemeColors.accentPink, AppThemeColors.accentPurple],
+    ),
+    fabGradient: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [Color(0xFFFF4EC8), Color(0xFFD52DFF)],
+    ),
+    coinGradient: LinearGradient(
+      colors: [Color(0xFF2A1548), Color(0xFF1A0F32)],
+    ),
+    navBarBackground: Color(0x8C1E1E36),
     glassBorder: Color(0x40B832FF),
-    liveBadgeColor: AppColors.liveRed,
+    liveBadgeColor: AppThemeColors.liveRed,
     radiusCard: AppSpacing.radiusLg,
     radiusChip: AppSpacing.radiusMd,
   );
@@ -41,7 +49,11 @@ class CanlifalTokens extends ThemeExtension<CanlifalTokens> {
     brandGradient: LinearGradient(
       colors: [Color(0xFFE91E63), Color(0xFF9C27B0)],
     ),
-    fabGradient: AppColors.fabGradient,
+    fabGradient: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [Color(0xFFFF4EC8), Color(0xFFD52DFF)],
+    ),
     coinGradient: LinearGradient(
       colors: [Color(0xFFF3E8FF), Color(0xFFE8DEF8)],
     ),
@@ -78,20 +90,6 @@ class CanlifalTokens extends ThemeExtension<CanlifalTokens> {
   @override
   CanlifalTokens lerp(ThemeExtension<CanlifalTokens>? other, double t) {
     if (other is! CanlifalTokens) return this;
-    return CanlifalTokens(
-      brandGradient: brandGradient,
-      fabGradient: fabGradient,
-      coinGradient: coinGradient,
-      navBarBackground: Color.lerp(navBarBackground, other.navBarBackground, t)!,
-      glassBorder: Color.lerp(glassBorder, other.glassBorder, t)!,
-      liveBadgeColor: Color.lerp(liveBadgeColor, other.liveBadgeColor, t)!,
-      radiusCard: radiusCard,
-      radiusChip: radiusChip,
-    );
+    return t < 0.5 ? this : other;
   }
-}
-
-extension CanlifalTokensX on BuildContext {
-  CanlifalTokens get tokens =>
-      Theme.of(this).extension<CanlifalTokens>() ?? CanlifalTokens.dark;
 }

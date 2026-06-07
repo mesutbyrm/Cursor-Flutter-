@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_palette.dart';
 import '../data/fortune_catalog.dart';
 import '../widgets/fortune_mystic_background.dart';
 import '../widgets/fortune_hub_type_card.dart';
@@ -21,9 +21,9 @@ class FortuneTypesAllPage extends StatelessWidget {
     };
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0118),
+        backgroundColor: context.palette.surface,
         elevation: 0,
         title: Text(
           'Fal Türleri',

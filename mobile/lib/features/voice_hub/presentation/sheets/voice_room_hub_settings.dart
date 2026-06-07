@@ -1,8 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
@@ -97,6 +99,48 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
     showVoiceYoutubeSongSheet(context, ref, room: widget.room);
   }
 
+  Future<void> _changeNickname() async {
+    final controller = TextEditingController();
+    final err = await showDialog<String?>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Oda rumuzu'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'Sohbette görünecek rumuz',
+            border: OutlineInputBorder(),
+          ),
+          maxLength: 32,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: const Text('Kaydet'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || err == null) return;
+    final message = await ref
+        .read(voiceRoomLiveProvider(widget.room).notifier)
+        .updateRoomNickname(err);
+    if (!mounted) return;
+    if (message != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Rumuz güncellendi')),
+      );
+    }
+  }
+
   void _openRoomCommands() {
     showModalBottomSheet(
       context: context,
@@ -117,7 +161,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
               'Moderatör ve oda sahibi için (canlifal.com ile uyumlu)',
               style: TextStyle(
                 fontSize: 11,
-                color: AppColors.textMuted.withValues(alpha: 0.9),
+                color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
               ),
             ),
             const SizedBox(height: 12),
@@ -155,13 +199,13 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
   }
 
   static const _roomCommands = [
-    ('/duyuru', Icons.campaign_rounded, 'Oda duyurusu yayınla'),
-    ('/temizle', Icons.cleaning_services_rounded, 'Sohbet akışını temizle'),
-    ('/kick', Icons.person_remove_rounded, 'Kullanıcıyı odadan çıkar'),
-    ('/ban', Icons.block_rounded, 'Kullanıcıyı yasakla'),
-    ('/unban', Icons.lock_open_rounded, 'Yasağı kaldır'),
-    ('/dj', Icons.headphones_rounded, 'DJ yetkisi ver / al'),
-    ('/muzik', Icons.queue_music_rounded, 'Müzik kuyruğunu yönet'),
+    ('!duyuru', Icons.campaign_rounded, 'Oda duyurusu yayınla'),
+    ('!temizle', Icons.cleaning_services_rounded, 'Sohbet akışını temizle'),
+    ('!kick', Icons.person_remove_rounded, 'Kullanıcıyı odadan çıkar'),
+    ('!ban', Icons.block_rounded, 'Kullanıcıyı yasakla'),
+    ('!unban', Icons.lock_open_rounded, 'Yasağı kaldır'),
+    ('!dj', Icons.headphones_rounded, 'DJ yetkisi ver / al'),
+    ('!muzik', Icons.queue_music_rounded, 'Müzik kuyruğunu yönet'),
   ];
 
   Future<void> _applyBackground(String url) async {
@@ -200,7 +244,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                   'DJ eklemek için oda sahibi veya moderatör olun',
                   style: TextStyle(
                     fontSize: 11,
-                    color: AppColors.textMuted.withValues(alpha: 0.9),
+                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                   ),
                 ),
               Expanded(
@@ -216,7 +260,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                           ? IconButton(
                               icon: Icon(
                                 isDj ? Icons.remove_circle_outline : Icons.add_circle_outline,
-                                color: isDj ? AppColors.liveRed : AppColors.onlineGreen,
+                                color: isDj ? AppThemeColors.liveRed : AppThemeColors.onlineGreen,
                               ),
                               onPressed: () async {
                                 final ctrl = ref.read(
@@ -287,12 +331,18 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
               onTap: _openRoomSettings,
             ),
             ListTile(
-              leading: const Icon(Icons.queue_music_rounded, color: AppColors.accentPink),
+              leading: const Icon(Icons.queue_music_rounded, color: AppThemeColors.accentPink),
               title: const Text('Şarkı isteği'),
               subtitle: Text(
                 'YouTube ara · ${widget.live.dj.musicRequestCost} jeton / istek',
               ),
               onTap: _openSongRequest,
+            ),
+            ListTile(
+              leading: const Icon(Icons.badge_rounded, color: VoiceRoomTokens.neonBlue),
+              title: const Text('Rumuz değiştir'),
+              subtitle: const Text('Sohbette görünen oda adınız'),
+              onTap: _changeNickname,
             ),
             ListTile(
               leading: const Icon(Icons.terminal_rounded, color: VoiceRoomTokens.neonBlue),
@@ -301,7 +351,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
               onTap: _openRoomCommands,
             ),
             ListTile(
-              leading: const Icon(Icons.headphones_rounded, color: AppColors.coinGold),
+              leading: const Icon(Icons.headphones_rounded, color: AppThemeColors.coinGold),
               title: Text('DJ (${widget.live.dj.djCount}/${widget.live.dj.maxDj})'),
               subtitle: const Text('DJ ekle veya çıkar'),
               onTap: _openDjManage,

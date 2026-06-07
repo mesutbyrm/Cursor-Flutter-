@@ -1,8 +1,10 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../trtc/presentation/trtc_room_manager.dart';
 
 /// Alt cam giriş çubuğu + yayıncı kontrolleri.
@@ -39,7 +41,7 @@ class LivePremiumBottomBar extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.5),
             border: Border(
-              top: BorderSide(color: AppColors.accentPink.withValues(alpha: 0.25)),
+              top: BorderSide(color: AppThemeColors.accentPink.withValues(alpha: 0.25)),
             ),
           ),
           child: Column(
@@ -70,7 +72,7 @@ class LivePremiumBottomBar extends StatelessWidget {
                       _MiniControl(
                         icon: Icons.stop_circle_rounded,
                         label: 'Bitir',
-                        color: AppColors.liveRed,
+                        color: AppThemeColors.liveRed,
                         onTap: onEnd,
                       ),
                   ],
@@ -112,7 +114,7 @@ class LivePremiumBottomBar extends StatelessWidget {
                     IconButton(
                       onPressed: onGift,
                       icon: const Icon(Icons.card_giftcard_rounded,
-                          color: AppColors.coinGold),
+                          color: AppThemeColors.coinGold),
                     ),
                   Material(
                     color: Colors.transparent,
@@ -123,9 +125,9 @@ class LivePremiumBottomBar extends StatelessWidget {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          gradient: AppColors.brandGradient,
+                          gradient: context.colors.brandGradient,
                           borderRadius: BorderRadius.circular(20),
-                          boxShadow: AppColors.glowShadow(AppColors.accentPink),
+                          boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink),
                         ),
                         child: const Icon(Icons.send_rounded, color: Colors.white),
                       ),

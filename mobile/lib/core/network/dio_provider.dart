@@ -6,6 +6,7 @@ import '../config/env.dart';
 import 'api_exception.dart';
 import 'api_endpoints.dart';
 import 'cookie_jar_provider.dart';
+import 'payment_request_interceptor.dart';
 import 'token_storage.dart';
 
 bool _isPublicAuthPath(String path) {
@@ -41,6 +42,7 @@ final dioProvider = Provider<Dio>((ref) {
   );
 
   dio.interceptors.add(CookieManager(cookieJar));
+  dio.interceptors.add(PaymentRequestInterceptor());
 
   dio.interceptors.add(
     InterceptorsWrapper(
@@ -190,6 +192,33 @@ ApiException _mapDio(DioException e) {
     }
     return ApiException(
       'Bağlantı kurulamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.',
+      statusCode: code,
+    );
+  }
+
+  if (code == 405) {
+    return ApiException(
+      'Bu işlem sunucuda desteklenmiyor (405). Uygulamayı güncelleyin veya web sürümünü deneyin.',
+      statusCode: code,
+    );
+  }
+  if (code == 404) {
+    return ApiException(
+      'İstenen kaynak bulunamadı (404).',
+      statusCode: code,
+    );
+  }
+
+  if (e.type == DioExceptionType.receiveTimeout ||
+      e.type == DioExceptionType.sendTimeout) {
+    return ApiException(
+      'Sunucu yanıt vermedi (zaman aşımı). Bağlantınızı kontrol edip tekrar deneyin.',
+      statusCode: code,
+    );
+  }
+  if (e.type == DioExceptionType.connectionTimeout) {
+    return ApiException(
+      'Sunucuya bağlanılamadı (zaman aşımı). İnternet bağlantınızı kontrol edin.',
       statusCode: code,
     );
   }

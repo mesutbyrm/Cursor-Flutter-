@@ -2,9 +2,11 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../profile/presentation/widgets/premium/profile_glass.dart';
 
@@ -43,19 +45,19 @@ class VoiceRoomTopBar extends StatelessWidget {
             color: Colors.black.withValues(alpha: 0.45),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: AppColors.accentPurple.withValues(alpha: 0.35),
+              color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
             ),
           ),
           child: Row(
             children: [
               IconButton(
                 onPressed: onBack,
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               ),
               _RoomAvatar(url: room.ownerAvatarUrl, icon: room.icon),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,33 +69,33 @@ class VoiceRoomTopBar extends StatelessWidget {
                             room.displayTitle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 14,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.coinGold.withValues(alpha: 0.2),
+                            color: AppThemeColors.coinGold.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: AppColors.coinGold.withValues(alpha: 0.5),
+                              color: AppThemeColors.coinGold.withValues(alpha: 0.5),
                             ),
                           ),
                           child: Text(
                             isCurrentUserOwner ? 'BENİM ODAM' : 'Sahip · $ownerLabel',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 7,
                               fontWeight: FontWeight.w900,
-                              color: AppColors.coinGold,
+                              color: AppThemeColors.coinGold,
                             ),
                           ),
                         ),
@@ -108,8 +110,8 @@ class VoiceRoomTopBar extends StatelessWidget {
                       },
                       child: Text(
                         'ID: $shortId',
-                        style: const TextStyle(
-                          color: AppColors.textMuted,
+                        style: TextStyle(
+                          color: context.colors.onSurfaceMuted,
                           fontSize: 10,
                         ),
                       ),
@@ -122,7 +124,7 @@ class VoiceRoomTopBar extends StatelessWidget {
                 _HeaderIcon(icon: Icons.share_outlined, onTap: onShare!),
               _HeaderIcon(
                 icon: Icons.power_settings_new_rounded,
-                color: AppColors.liveRed,
+                color: AppThemeColors.liveRed,
                 onTap: onExit,
               ),
             ],
@@ -146,16 +148,16 @@ class _RoomAvatar extends StatelessWidget {
       height: 40,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.accentPink, width: 2),
-        boxShadow: AppColors.glowShadow(AppColors.accentPink, blur: 10),
+        border: Border.all(color: AppThemeColors.accentPink, width: 2),
+        boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: 10),
       ),
       child: ClipOval(
         child: url != null && url!.isNotEmpty
             ? CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover)
             : ColoredBox(
-                color: AppColors.bgPurpleGlow,
+                color: context.colors.surfaceContainer,
                 child: Center(
-                  child: Text(icon ?? '💬', style: const TextStyle(fontSize: 20)),
+                  child: Text(icon ?? '💬', style: TextStyle(fontSize: 20)),
                 ),
               ),
       ),
@@ -178,11 +180,11 @@ class _OnlineChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.people_alt_rounded, size: 14, color: AppColors.accentCyan),
-            const SizedBox(width: 4),
+            Icon(Icons.people_alt_rounded, size: 14, color: AppThemeColors.accentCyan),
+            SizedBox(width: 4),
             Text(
               '$count',
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
             ),
           ],
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../theme/app_colors.dart';
 
 /// Cam yüzeyli ikon butonu — bildirim, ayarlar.
 class PremiumIconButton extends StatelessWidget {
@@ -35,7 +36,7 @@ class PremiumIconButton extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: AppColors.textSecondary.withValues(alpha: 0.95),
+                color: context.colors.onSurfaceVariant.withValues(alpha: 0.95),
                 size: size * 0.58,
               ),
               if (showBadge || badgeCount > 0)
@@ -50,10 +51,10 @@ class PremiumIconButton extends StatelessWidget {
                           ),
                           constraints: const BoxConstraints(minWidth: 16),
                           decoration: BoxDecoration(
-                            color: AppColors.liveRed,
+                            color: AppThemeColors.liveRed,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: AppColors.background,
+                              color: context.scaffoldBg,
                               width: 1.5,
                             ),
                           ),
@@ -72,10 +73,10 @@ class PremiumIconButton extends StatelessWidget {
                           width: 9,
                           height: 9,
                           decoration: BoxDecoration(
-                            color: AppColors.liveRed,
+                            color: AppThemeColors.liveRed,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: AppColors.background,
+                              color: context.scaffoldBg,
                               width: 1.5,
                             ),
                           ),

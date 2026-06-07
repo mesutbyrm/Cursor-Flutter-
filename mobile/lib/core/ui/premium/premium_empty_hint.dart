@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../theme/app_colors.dart';
 
 /// Bölüm boş / hata durumu — tek satır metin + isteğe bağlı retry.
 class PremiumEmptyHint extends StatelessWidget {
@@ -24,7 +24,7 @@ class PremiumEmptyHint extends StatelessWidget {
             message,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textMuted,
+                  color: context.colors.onSurfaceMuted,
                   height: 1.35,
                 ),
           ),

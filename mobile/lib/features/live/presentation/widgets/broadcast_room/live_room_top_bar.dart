@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/ui/premium/live_badge.dart';
 import '../../../../../core/ui/premium/premium_glass_surface.dart';
 import '../../../../../core/widgets/user_avatar.dart';
@@ -31,22 +33,22 @@ class LiveRoomTopBar extends StatelessWidget {
       child: Row(
         children: [
           UserAvatar(url: session.avatarUrl, radius: 18),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   session.streamerName ?? 'Yayıncı',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 13,
                   ),
                 ),
-                const Text(
+                Text(
                   '12.5K beğeni',
                   style: TextStyle(
-                    color: AppColors.textMuted,
+                    color: context.colors.onSurfaceMuted,
                     fontSize: 10,
                   ),
                 ),
@@ -55,12 +57,12 @@ class LiveRoomTopBar extends StatelessWidget {
           ),
           if (!session.isHost && !following)
             Material(
-              color: AppColors.accentPink,
+              color: AppThemeColors.accentPink,
               borderRadius: BorderRadius.circular(12),
               child: InkWell(
                 onTap: onFollow,
                 borderRadius: BorderRadius.circular(12),
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   child: Text(
                     '+ Takip Et',
@@ -72,23 +74,23 @@ class LiveRoomTopBar extends StatelessWidget {
                 ),
               ),
             ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           const LiveBadge(compact: true),
-          const SizedBox(width: 6),
+          SizedBox(width: 6),
           Text(
             time,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Row(
             children: [
-              const Icon(Icons.visibility_rounded, size: 14),
-              const SizedBox(width: 4),
+              Icon(Icons.visibility_rounded, size: 14),
+              SizedBox(width: 4),
               Text(
                 _formatViewers(
-                  session.viewerCount > 0 ? session.viewerCount : 4892,
+                  session.viewerCount,
                 ),
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 12,
                 ),
@@ -97,7 +99,7 @@ class LiveRoomTopBar extends StatelessWidget {
           ),
           IconButton(
             onPressed: onClose,
-            icon: const Icon(Icons.close_rounded, size: 22),
+            icon: Icon(Icons.close_rounded, size: 22),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),

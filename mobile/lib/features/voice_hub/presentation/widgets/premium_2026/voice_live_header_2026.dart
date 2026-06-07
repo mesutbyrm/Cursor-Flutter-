@@ -2,9 +2,11 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../theme/voice_room_tokens.dart';
 
@@ -116,8 +118,8 @@ class VoiceLiveHeader2026 extends StatelessWidget {
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: onlineCount > 0
-                              ? AppColors.onlineGreen
-                              : AppColors.textMuted,
+                              ? AppThemeColors.onlineGreen
+                              : context.colors.onSurfaceMuted,
                         ),
                       ),
                     ],
@@ -142,7 +144,7 @@ class VoiceLiveHeader2026 extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
                 onPressed: onExit,
                 icon: const Icon(Icons.power_settings_new_rounded,
-                    color: AppColors.liveRed, size: 22),
+                    color: AppThemeColors.liveRed, size: 22),
               ),
             ],
           ),
@@ -197,7 +199,7 @@ class VoiceLiveHeader2026 extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.diamondBlue.withValues(alpha: 0.45)),
+        border: Border.all(color: AppThemeColors.diamondBlue.withValues(alpha: 0.45)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -209,7 +211,7 @@ class VoiceLiveHeader2026 extends StatelessWidget {
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 10,
-              color: AppColors.diamondBlue,
+              color: AppThemeColors.diamondBlue,
             ),
           ),
         ],

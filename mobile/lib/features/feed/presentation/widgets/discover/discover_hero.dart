@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/canlifal_tokens.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 class DiscoverHeroHeadline extends StatelessWidget {
   const DiscoverHeroHeadline({super.key});

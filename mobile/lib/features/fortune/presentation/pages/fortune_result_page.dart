@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover/discover_icon_button.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../social/domain/entities/share_fortune_input.dart';
@@ -60,7 +60,7 @@ class _FortuneResultPageState extends ConsumerState<FortuneResultPage> {
     final type = result.type;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: FortuneMysticBackground(
         child: Column(
           children: [
@@ -84,7 +84,7 @@ class _FortuneResultPageState extends ConsumerState<FortuneResultPage> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.ios_share_rounded),
-                    color: AppColors.textPrimary,
+                    color: context.colors.onSurface,
                     onPressed: () => showFortuneShareSheet(context, result),
                   ),
                 ],
@@ -120,8 +120,8 @@ class _FortuneResultPageState extends ConsumerState<FortuneResultPage> {
                       padding: const EdgeInsets.all(18),
                       child: Text(
                         result.detail,
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
+                        style: TextStyle(
+                          color: context.colors.onSurfaceVariant,
                           height: 1.5,
                           fontSize: 15,
                         ),
@@ -148,10 +148,20 @@ class _FortuneResultPageState extends ConsumerState<FortuneResultPage> {
                               child: _LuckyChip(
                                 label: 'Şanslı renk',
                                 value: result.luckyColor!,
-                                color: AppColors.accentCyan,
+                                color: context.accentCyan,
                               ),
                             ),
                         ],
+                      ),
+                    ],
+                    if (result.recordId != null) ...[
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => context.push(
+                          '/fortune/history/${result.recordId}',
+                        ),
+                        icon: const Icon(Icons.history_rounded),
+                        label: const Text('Geçmişte görüntüle'),
                       ),
                     ],
                     const SizedBox(height: 24),
@@ -171,7 +181,7 @@ class _FortuneResultPageState extends ConsumerState<FortuneResultPage> {
                     OutlinedButton(
                       onPressed: () => context.go('/fortune'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textSecondary,
+                        foregroundColor: context.colors.onSurfaceVariant,
                         minimumSize: const Size.fromHeight(48),
                       ),
                       child: const Text('Diğer fallara göz at'),
@@ -212,7 +222,7 @@ class _LuckyChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: AppColors.textMuted.withValues(alpha: 0.9),
+              color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
               fontSize: 11,
             ),
           ),

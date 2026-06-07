@@ -38,24 +38,34 @@ class VoiceRoomEntity extends Equatable {
 
   int get displayOnline => onlineCount > 0 ? onlineCount : userCount;
 
-  /// Chat / presence / DJ — canlifal.com API önce Prisma `id` ile çalışır (slug `ilhamperisi-` gibi).
-  String get apiRoomKey {
-    final i = id.trim();
-    final s = slug.trim();
-    if (i.isNotEmpty) return i;
-    if (s.isNotEmpty) return s;
-    return '';
-  }
+  /// REST / Socket — yalnızca Prisma `id` (cuid); slug kullanılmaz.
+  String get apiRoomKey => id.trim();
 
-  /// İkinci deneme anahtarı (id/slug farklıysa).
-  String? get apiRoomAlternateKey {
-    final s = slug.trim();
+  /// Tencent TRTC kanal adı — web ile aynı: `voice_room_{id}`.
+  String get trtcRoomId {
     final i = id.trim();
-    if (s.isNotEmpty && i.isNotEmpty && s != i) return s;
-    return null;
+    if (i.isEmpty) return '';
+    return 'voice_room_$i';
   }
 
   String get displayTitle => nameTr.trim().isEmpty ? 'Sohbet Odası' : nameTr.trim();
+
+  /// Riverpod oturum anahtarı — online sayısı değişince provider yeniden kurulmasın.
+  VoiceRoomEntity get stableSessionKey => VoiceRoomEntity(
+        id: id,
+        slug: slug,
+        nameTr: nameTr,
+        descTr: descTr,
+        rulesTr: rulesTr,
+        icon: icon,
+        backgroundImageUrl: backgroundImageUrl,
+        ownerName: ownerName,
+        ownerAvatarUrl: ownerAvatarUrl,
+        ownerId: ownerId,
+        activeDjId: activeDjId,
+        djUserIds: djUserIds,
+        recentUserAvatars: recentUserAvatars,
+      );
 
   @override
   List<Object?> get props => [

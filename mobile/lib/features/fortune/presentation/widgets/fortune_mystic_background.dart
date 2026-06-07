@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/premium_2026/premium_immersive_background.dart';
 
 /// Fal sayfaları — 2026 immersive mesh + mistik glow.
@@ -25,7 +25,7 @@ class FortuneMysticBackground extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.accentPurple.withValues(alpha: 0.32),
+                    color: AppThemeColors.accentPurple.withValues(alpha: 0.32),
                     blurRadius: 80,
                   ),
                 ],
@@ -42,7 +42,7 @@ class FortuneMysticBackground extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.accentCyan.withValues(alpha: 0.18),
+                    color: AppThemeColors.accentCyan.withValues(alpha: 0.18),
                     blurRadius: 70,
                   ),
                 ],

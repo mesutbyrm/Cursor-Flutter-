@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../../core/theme/app_colors.dart';
 
 /// Çift dokunuş kalpleri + sürekli yüzen tepkiler.
 class LiveFloatingHeartsOverlay extends StatefulWidget {
@@ -62,9 +62,9 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
     setState(() {
       for (var i = 0; i < count; i++) {
         final colors = [
-          AppColors.accentPink,
+          AppThemeColors.accentPink,
           const Color(0xFFFF6B9D),
-          AppColors.liveRed,
+          AppThemeColors.liveRed,
           Colors.white,
         ];
         _hearts.add(_HeartParticle(

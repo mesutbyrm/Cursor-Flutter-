@@ -6,10 +6,23 @@ import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/entities/voice_room_entity.dart';
 import '../../domain/repositories/live_repository.dart';
 import '../../data/datasources/live_remote_datasource.dart';
+import '../../data/datasources/live_stream_extras_datasource.dart';
 import '../../data/repositories/live_repository_impl.dart';
+import '../../data/services/video_webrtc_signal_service.dart';
 
 final liveRemoteProvider = Provider<LiveRemoteDataSource>((ref) {
   return LiveRemoteDataSource(ref.watch(dioProvider));
+});
+
+final liveStreamExtrasProvider = Provider<LiveStreamExtrasDataSource>((ref) {
+  return LiveStreamExtrasDataSource(ref.watch(dioProvider));
+});
+
+final videoWebrtcSignalServiceProvider =
+    Provider<VideoWebrtcSignalService>((ref) {
+  final s = VideoWebrtcSignalService(ref.watch(liveStreamExtrasProvider));
+  ref.onDispose(s.dispose);
+  return s;
 });
 
 final liveRepositoryProvider = Provider<LiveRepository>((ref) {
@@ -26,6 +39,23 @@ final voiceRoomsProvider = FutureProvider<List<VoiceRoomEntity>>((ref) async {
 
 final voiceRoomByIdProvider =
     FutureProvider.autoDispose.family<VoiceRoomEntity?, String>((ref, id) async {
+  final needle = id.trim().toLowerCase();
+  if (needle.isEmpty) return null;
+  final cached = ref.watch(voiceRoomsProvider).valueOrNull;
+  if (cached != null) {
+    String norm(String s) =>
+        s.trim().toLowerCase().replaceAll(RegExp(r'-+$'), '');
+    for (final r in cached) {
+      if (r.id == id ||
+          r.slug == id ||
+          r.id.toLowerCase() == needle ||
+          r.slug.toLowerCase() == needle ||
+          norm(r.slug) == norm(id) ||
+          norm(r.id) == norm(id)) {
+        return r;
+      }
+    }
+  }
   return ref.watch(liveRepositoryProvider).fetchVoiceRoomById(id);
 });
 

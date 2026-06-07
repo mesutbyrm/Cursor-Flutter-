@@ -1,11 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
@@ -73,7 +73,7 @@ Future<void> showVoiceRoomGiftPickerLegacy(
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppColors.bgPurpleGlow,
+    backgroundColor: context.colors.surfaceContainer,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -88,7 +88,7 @@ Future<void> showVoiceRoomGiftPickerLegacy(
             maxChildSize: 0.92,
             builder: (context, scroll) {
               return gifts.when(
-                loading: () => const Padding(
+                loading: () => Padding(
                   padding: EdgeInsets.all(32),
                   child: Center(child: CircularProgressIndicator()),
                 ),
@@ -98,7 +98,7 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                 ),
                 data: (list) {
                   if (list.isEmpty) {
-                    return const Padding(
+                    return Padding(
                       padding: EdgeInsets.all(24),
                       child: Text('Hediye listesi boş'),
                     );
@@ -110,20 +110,20 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                         child: Text(
                           'Hediye gönder · $receiver',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.symmetric(horizontal: 20),
                         child: Text(
                           'Jeton bakiyenizden düşülür. Oda sohbetinde herkese görünür.',
-                          style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                          style: TextStyle(color: context.colors.onSurfaceMuted, fontSize: 12),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Expanded(
                         child: GridView.builder(
                           controller: scroll,
@@ -142,13 +142,20 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                               gift: g,
                               onTap: () async {
                                 try {
-                                  await ref.read(chatRoomGiftsRemoteProvider).sendGift(
-                                        roomId: room.id,
-                                        giftTypeId: g.id,
-                                      );
                                   final user = ref
                                       .read(authControllerProvider)
                                       .valueOrNull;
+                                  final roomKey = room.apiRoomKey.isNotEmpty
+                                      ? room.apiRoomKey
+                                      : room.id;
+                                  await ref.read(chatRoomGiftsRemoteProvider).sendGift(
+                                        roomId: roomKey,
+                                        giftTypeId: g.id,
+                                        senderName: user?.display ?? 'Sen',
+                                        receiverName:
+                                            room.ownerName ?? 'Yayıncı',
+                                        receiverId: room.ownerId,
+                                      );
                                   final raw = LiveGiftEvent(
                                     id: 'local-${DateTime.now().microsecondsSinceEpoch}',
                                     senderId: user?.id,
@@ -234,8 +241,8 @@ class _GiftTile extends StatelessWidget {
               if (url.isNotEmpty)
                 CachedNetworkImage(imageUrl: url, height: 36, width: 36)
               else
-                const Icon(Icons.card_giftcard_rounded, size: 32),
-              const SizedBox(height: 6),
+                Icon(Icons.card_giftcard_rounded, size: 32),
+              SizedBox(height: 6),
               Text(
                 PremiumGiftCatalog2026.displayName(
                   gift.id,
@@ -243,11 +250,11 @@ class _GiftTile extends StatelessWidget {
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
               ),
               Text(
                 '${gift.price} jeton',
-                style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                style: TextStyle(fontSize: 10, color: context.colors.onSurfaceMuted),
               ),
             ],
           ),

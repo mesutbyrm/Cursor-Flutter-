@@ -1,8 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/ui/premium_2026/premium_motion.dart';
+import 'discover_premium_visual.dart';
 import '../../../domain/discover_category.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../voice_hub/presentation/widgets/premium_2026/voice_discover_2026.dart';
@@ -37,7 +38,8 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard> {
     final h = widget.compact ? 200.0 : 220.0;
     final isVip = matchesDiscoverCategory(widget.room, 'vip');
 
-    return GestureDetector(
+    return RepaintBoundary(
+      child: GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),
       onTapCancel: () => setState(() => _pressed = false),
@@ -51,19 +53,13 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard> {
           width: widget.width,
           height: h,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF9B4DFF).withValues(
-                  alpha: _pressed ? 0.5 : 0.28,
-                ),
-                blurRadius: _pressed ? 22 : 14,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            borderRadius:
+                BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+            boxShadow: DiscoverPremiumVisual.cardGlow(pressed: _pressed),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius:
+                BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -143,6 +139,7 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard> {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -160,7 +157,7 @@ class _OnlinePill extends StatelessWidget {
         color: Colors.black.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.onlineGreen.withValues(alpha: 0.6),
+          color: AppThemeColors.onlineGreen.withValues(alpha: 0.6),
         ),
       ),
       child: Row(
@@ -172,7 +169,7 @@ class _OnlinePill extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: count > 0
-                  ? AppColors.onlineGreen
+                  ? AppThemeColors.onlineGreen
                   : Colors.white.withValues(alpha: 0.35),
             ),
           ),

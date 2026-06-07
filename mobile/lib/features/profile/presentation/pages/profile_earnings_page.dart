@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../providers/profile_providers.dart';
@@ -16,7 +18,7 @@ class ProfileEarningsPage extends ConsumerWidget {
     final stats = ref.watch(profileStatsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Kazançlarım',
@@ -79,7 +81,7 @@ class _EarningCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.accentCyan, size: 28),
+          Icon(icon, color: AppThemeColors.accentCyan, size: 28),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -104,7 +106,7 @@ class _EarningCard extends StatelessWidget {
                   hint,
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textMuted.withValues(alpha: 0.9),
+                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                   ),
                 ),
               ],

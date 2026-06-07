@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../theme/app_colors.dart';
 
 class DiscoverSegmentedTabs extends StatelessWidget implements PreferredSizeWidget {
   const DiscoverSegmentedTabs({
@@ -26,17 +27,17 @@ class DiscoverSegmentedTabs extends StatelessWidget implements PreferredSizeWidg
           color: Colors.white.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.accentPurple.withValues(alpha: 0.25),
+            color: AppThemeColors.accentPurple.withValues(alpha: 0.25),
           ),
         ),
         child: TabBar(
           controller: controller,
           indicator: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            gradient: AppColors.brandGradient,
+            gradient: context.colors.brandGradient,
           ),
           labelColor: Colors.white,
-          unselectedLabelColor: AppColors.textMuted,
+          unselectedLabelColor: context.colors.onSurfaceMuted,
           labelStyle: const TextStyle(
             fontWeight: FontWeight.w800,
             fontSize: 12,

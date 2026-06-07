@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/chat_room_presence.dart';
+import '../../../../live/domain/entities/voice_room_entity.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/widgets/vip_badge.dart';
 import '../../theme/voice_room_tokens.dart';
-import '../premium/voice_neon_avatar.dart';
 import 'voice_audio_wave_ring.dart';
+import 'voice_seat_avatar_frame.dart';
 
 /// Tek mikrofon koltuğu — boş, kilitli veya dolu.
 class VoiceMicSeat extends StatelessWidget {
@@ -18,6 +19,8 @@ class VoiceMicSeat extends StatelessWidget {
     this.size = 56,
     this.isHost = false,
     this.locked = false,
+    this.room,
+    this.djUserIds = const [],
     this.onTap,
   });
 
@@ -27,6 +30,8 @@ class VoiceMicSeat extends StatelessWidget {
   final double size;
   final bool isHost;
   final bool locked;
+  final VoiceRoomEntity? room;
+  final List<String> djUserIds;
   final VoidCallback? onTap;
 
   @override
@@ -50,13 +55,19 @@ class VoiceMicSeat extends StatelessWidget {
         Stack(
           clipBehavior: Clip.none,
           children: [
-            VoiceNeonAvatar(
-              url: user!.image,
-              size: size,
-              speaking: speaking,
-              showCrown: isHost,
-              roleLabel: null,
+            GestureDetector(
               onTap: onTap,
+              child: VoiceSeatAvatarFrame(
+                imageUrl: user!.image,
+                size: size,
+                role: SeatAvatarRoleResolver.resolve(
+                  user: user!,
+                  isHost: isHost,
+                  isRoomDj: djUserIds.contains(user!.id) ||
+                      room?.djUserIds.contains(user!.id) == true,
+                ),
+                speaking: speaking,
+              ),
             ),
             if (vip && !isHost)
               Positioned(
@@ -170,7 +181,7 @@ class _EmptySeat extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.04),
               border: Border.all(
                 color: locked
-                    ? AppColors.textMuted.withValues(alpha: 0.35)
+                    ? context.colors.onSurfaceMuted.withValues(alpha: 0.35)
                     : VoiceRoomTokens.neonPurple.withValues(alpha: 0.55),
                 width: 1.8,
                 strokeAlign: BorderSide.strokeAlignInside,
@@ -186,7 +197,7 @@ class _EmptySeat extends StatelessWidget {
             ),
             child: Icon(
               locked ? Icons.lock_rounded : Icons.add_rounded,
-              color: locked ? AppColors.textMuted : Colors.white54,
+              color: locked ? context.colors.onSurfaceMuted : Colors.white54,
               size: size * 0.32,
             ),
           ),
@@ -197,7 +208,7 @@ class _EmptySeat extends StatelessWidget {
               fontSize: size > 50 ? 10 : 9,
               fontWeight: FontWeight.w700,
               color: locked
-                  ? AppColors.textMuted.withValues(alpha: 0.7)
+                  ? context.colors.onSurfaceMuted.withValues(alpha: 0.7)
                   : Colors.white.withValues(alpha: 0.38),
             ),
           ),

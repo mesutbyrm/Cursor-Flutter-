@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/premium_gift_catalog_2026.dart';
 
 /// Lottie/Rive yokken TikTok kalitesinde 3D-benzeri hediye illüstrasyonu.
@@ -85,7 +85,7 @@ class _RocketPainter extends _PremiumPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [Colors.white, AppColors.accentPink, AppColors.accentPurple],
+        colors: [Colors.white, AppThemeColors.accentPink, AppThemeColors.accentPurple],
       ).createShader(Rect.fromCenter(center: c, width: size.width * 0.35, height: size.height * 0.55));
     final path = Path()
       ..moveTo(c.dx, size.height * 0.12)
@@ -99,11 +99,11 @@ class _RocketPainter extends _PremiumPainter {
     canvas.drawCircle(
       Offset(c.dx, c.dy - size.height * 0.02),
       size.width * 0.06,
-      Paint()..color = AppColors.diamondBlue.withValues(alpha: 0.9),
+      Paint()..color = AppThemeColors.diamondBlue.withValues(alpha: 0.9),
     );
     final flame = Paint()
       ..shader = RadialGradient(
-        colors: [AppColors.coinGold, AppColors.accentPink, Colors.transparent],
+        colors: [AppThemeColors.coinGold, AppThemeColors.accentPink, Colors.transparent],
       ).createShader(Rect.fromLTWH(c.dx - 30, size.height * 0.72, 60, 50));
     canvas.drawOval(
       Rect.fromCenter(
@@ -131,16 +131,16 @@ class _GalaxyPainter extends _PremiumPainter {
       canvas.drawCircle(
         p,
         1.2 + rand.nextDouble() * 2.2,
-        Paint()..color = [AppColors.accentPink, AppColors.diamondBlue, Colors.white][i % 3].withValues(alpha: 0.5 + rand.nextDouble() * 0.5),
+        Paint()..color = [AppThemeColors.accentPink, AppThemeColors.diamondBlue, Colors.white][i % 3].withValues(alpha: 0.5 + rand.nextDouble() * 0.5),
       );
     }
     final swirl = Paint()
       ..shader = SweepGradient(
         colors: [
-          AppColors.accentPurple,
-          AppColors.accentPink,
-          AppColors.diamondBlue,
-          AppColors.accentPurple,
+          AppThemeColors.accentPurple,
+          AppThemeColors.accentPink,
+          AppThemeColors.diamondBlue,
+          AppThemeColors.accentPurple,
         ],
       ).createShader(Rect.fromCircle(center: center, radius: size.width * 0.38))
       ..style = PaintingStyle.stroke
@@ -166,23 +166,23 @@ class _LionPainter extends _PremiumPainter {
     final c = Offset(size.width / 2, size.height * 0.52);
     final gold = Paint()
       ..shader = LinearGradient(
-        colors: [AppColors.coinGold, const Color(0xFFB8860B)],
+        colors: [AppThemeColors.coinGold, const Color(0xFFB8860B)],
       ).createShader(Rect.fromCircle(center: c, radius: size.width * 0.38));
     canvas.drawCircle(c, size.width * 0.36, gold);
     for (var i = 0; i < 14; i++) {
       final a = i / 14 * math.pi * 2;
       final tip = c + Offset(math.cos(a) * size.width * 0.42, math.sin(a) * size.width * 0.42);
-      canvas.drawLine(c, tip, Paint()..color = AppColors.coinGold.withValues(alpha: 0.75)..strokeWidth = 5);
+      canvas.drawLine(c, tip, Paint()..color = AppThemeColors.coinGold.withValues(alpha: 0.75)..strokeWidth = 5);
     }
     canvas.drawCircle(
       Offset(c.dx - size.width * 0.1, c.dy - size.height * 0.04),
       size.width * 0.05,
-      Paint()..color = AppColors.diamondBlue,
+      Paint()..color = AppThemeColors.diamondBlue,
     );
     canvas.drawCircle(
       Offset(c.dx + size.width * 0.1, c.dy - size.height * 0.04),
       size.width * 0.05,
-      Paint()..color = AppColors.diamondBlue,
+      Paint()..color = AppThemeColors.diamondBlue,
     );
     canvas.drawCircle(c, size.width * 0.4, Paint()..color = glow.withValues(alpha: 0.22)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22));
   }
@@ -203,7 +203,7 @@ class _CarPainter extends _PremiumPainter {
       body,
       Paint()
         ..shader = LinearGradient(
-          colors: [AppColors.accentPink, AppColors.accentPurple],
+          colors: [AppThemeColors.accentPink, AppThemeColors.accentPurple],
         ).createShader(body.outerRect),
     );
     canvas.drawCircle(Offset(w * 0.28, h * 0.72), w * 0.1, Paint()..color = const Color(0xFF1A1A24));
@@ -228,7 +228,7 @@ class _DiamondPainter extends _PremiumPainter {
       path,
       Paint()
         ..shader = LinearGradient(
-          colors: [Colors.white, AppColors.diamondBlue, AppColors.accentPurple],
+          colors: [Colors.white, AppThemeColors.diamondBlue, AppThemeColors.accentPurple],
         ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
     );
     canvas.drawPath(path, Paint()..color = Colors.white.withValues(alpha: 0.35)..style = PaintingStyle.stroke..strokeWidth = 2);
@@ -244,7 +244,7 @@ class _HeartPainter extends _PremiumPainter {
     final c = Offset(size.width / 2, size.height * 0.55);
     final paint = Paint()
       ..shader = RadialGradient(
-        colors: [AppColors.accentPink, const Color(0xFFE91E63)],
+        colors: [AppThemeColors.accentPink, const Color(0xFFE91E63)],
       ).createShader(Rect.fromCircle(center: c, radius: size.width * 0.4));
     final path = Path()
       ..moveTo(c.dx, size.height * 0.78)
@@ -278,7 +278,7 @@ class _CrownPainter extends _PremiumPainter {
       ..lineTo(w * 0.82, size.height * 0.62)
       ..close();
     final gold = Paint()
-      ..shader = LinearGradient(colors: [AppColors.coinGold, const Color(0xFFFFE082)]).createShader(Rect.fromLTWH(0, 0, w, size.height));
+      ..shader = LinearGradient(colors: [AppThemeColors.coinGold, const Color(0xFFFFE082)]).createShader(Rect.fromLTWH(0, 0, w, size.height));
     canvas.drawPath(peaks, gold);
     canvas.drawPath(base, gold);
     canvas.drawCircle(Offset(w * 0.5, size.height * 0.48), w * 0.4, Paint()..color = glow.withValues(alpha: 0.22)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22));
@@ -303,7 +303,7 @@ class _YachtPainter extends _PremiumPainter {
     );
     canvas.drawRect(
       Rect.fromLTWH(w * 0.42, h * 0.28, w * 0.08, h * 0.36),
-      Paint()..color = AppColors.accentPurple,
+      Paint()..color = AppThemeColors.accentPurple,
     );
     canvas.drawPath(
       Path()
@@ -311,7 +311,7 @@ class _YachtPainter extends _PremiumPainter {
         ..lineTo(w * 0.72, h * 0.42)
         ..lineTo(w * 0.46, h * 0.42)
         ..close(),
-      Paint()..color = AppColors.accentPink.withValues(alpha: 0.9),
+      Paint()..color = AppThemeColors.accentPink.withValues(alpha: 0.9),
     );
     canvas.drawCircle(Offset(w * 0.5, h * 0.5), w * 0.42, Paint()..color = glow.withValues(alpha: 0.2)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 24));
   }

@@ -1,5 +1,288 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.146+148 (2026-06-07)
+
+### Sesli oda gri ekran (v2)
+
+- Riverpod erken `return` kaldırıldı — tüm `ref.listen`/`ref.watch` her karede tutarlı
+- Üst panel `SingleChildScrollView` ile kaydırılabilir (küçük ekranda layout taşması)
+- Tam ekran ses bağlantı overlay'i kaldırıldı — UI ses bağlanırken görünür kalır
+- `stableSessionKey` sabitlenerek canlı provider yeniden kurulması engellendi
+- Android koltuk çerçevesinde `MaskFilter.blur` yerine düz stroke
+
+## 1.0.143+145 (2026-06-07)
+
+### Ana sayfa — onaylı mockup (piksel uyumlu)
+
+- HomeHeader, StoriesSection, LiveBroadcastSection, VoiceRoomSection
+- TrendingVideoSection, FortuneSection, MoreFortunesButton
+- BottomNavigationWidget: Ana Sayfa, Canlı, Odalar, Jeton, Profil
+- Arka plan #0B0B15, bölüm sırası mockup ile birebir
+
+## 1.0.142+144 (2026-06-07)
+
+### Ana sayfa sıkılık + sesli oda gri ekran + kaydırma performansı
+
+- Bölüm başlıkları arası boşluk azaltıldı (sıkı dikey akış)
+- Ana sayfa galaksi arka planı statik — animasyon/blur kapatıldı (kaydırma takılması)
+- Sesli oda: canlı oturum provider'ı sabit oda kimliğiyle (online sayısı değişince yeniden kurulmuyor)
+- Sesli oda: üst panel kaydırılabilir — küçük ekranda taşma/gri ekran giderildi
+- Odaya girerken `voiceRoomsProvider` invalidate kaldırıldı
+
+## 1.0.141+143 (2026-06-07)
+
+### Ana sayfa — Canlı Yayındakiler
+
+- Yatay kaydırmalı büyük 16:9 canlı yayın kartları (neon glow)
+- Kırmızı CANLI rozeti, sağ üst izleyici sayısı, alt yayıncı adı + başlık + kategori
+- Web ile aynı `GET /api/video-streams` endpoint; yayın yoksa bölüm gizlenir
+- CachedNetworkImage + lazy list; ilk 5 önizleme önceden yüklenir
+- Bölüm sırası: Hikâyeler → Canlı Yayındakiler → Sesli Sohbet → … → Keşfet → Fan Club → Gold
+
+## 1.0.140+142 (2026-06-07)
+
+### Sesli oda + canlı fal davet
+
+- Sesli oda: tam ekran bağlanma overlay kaldırıldı (odaya giriş engelleniyordu)
+- Falcı daveti: push bildirimi → uygulama içi Kabul/Beklet/Reddet sheet (global host)
+- OneSignal ön planda fal isteği sheet açar; bildirim yalnızca bilgi amaçlı
+- Davet sheet BackdropFilter kaldırıldı (Android gri boş sheet)
+
+## 1.0.139+141 (2026-06-07)
+
+### Sesli oda gri ekran — Android düzeltmesi (2. tur)
+
+- Kalan `BackdropFilter` kaldırıldı: duyuru, aksiyon satırı, VoiceGlass
+- Sohbet overlay `ShaderMask` → gradient fade (Android uyumlu)
+- Oda UI `Positioned.fill` ile tam ekran layout
+- Oda kimliği senkronizasyonu + favorilerden `extra` ile giriş
+- `voiceRoomByIdProvider` önce önbellekten oda arar
+
+## 1.0.138+140 (2026-06-07)
+
+### Canlı fal ve sesli oda düzeltmeleri
+
+- Canlı fal: danışan onay + bekleme ekranı; Kabul/Beklet/Reddet yalnızca falcıya düşer
+- Falcı gelen istek dinleyicisi (incoming sessions poll)
+- Sesli oda: Android gri boş ekran (BackdropFilter) giderildi, bağlanma göstergesi
+- Profil: Falcı ol / Ajans ol kısayolları
+- API: `sessions/incoming`, session status, teller respond
+
+## 1.0.135+137 (2026-05-19)
+
+### FLUTTER_CURSOR_PROMPT parite — tam paket
+
+- Canlı beğeni: `POST /api/video-streams/{id}/like` (TikTok +1/tap)
+- Video PK: `POST/GET …/pk-battle` (create/accept/reject/score/end)
+- Co-broadcast: davet listesi, invite, accept/decline
+- Falcı oturumu: `POST /api/fortune-tellers/session` + WebRTC signal poll
+- Rumuz: `POST …/presence` body `{ nickname }`
+- WebRTC signaling: `video_webrtc_signal_service.dart` (HTTP poll)
+
+## 1.0.134+136 (2026-05-19)
+
+### Müzik isteği oynatma düzeltmesi
+
+- `[SONG_REQUEST_FREE] videoId|başlık` sohbet satırı parse edilir; anında oynatma + sunucu senkronu
+- `!istek` sonrası kademeli yeniden senkron (300 ms–3 sn)
+- Kuyruk dolu ama `playing: false` ise mobil YouTube yedek URL ile çalmayı dener
+- API: Piped çözümleme başarısızsa YouTube watch URL ile kuyruk başlatılır; `nowPlaying` kuyruk başında gösterilir
+
+## 1.0.131+133 (2026-05-19)
+
+### Müzik sistemi — web paritesi
+
+- Müzik Aç: web gibi blur’lu modal (`YouTube Müzik`), sayfa değişmez
+- DJ senkron: SSE/socket `dj` payload, öncelikli kuyruk (10 jeton), ücretsiz `!istek` (sunucu)
+- Oynatma: kuyruk merge düzeltmesi, YouTube yedek URL, hata mesajları
+- API mirror: `priority`, `skipPayment`, zengin `QUEUE_UPDATED` socket olayları
+
+## 1.0.130+132 (2026-05-19)
+
+### Sesli oda müzik senkronu (web ↔ mobil)
+
+- DJ durumu: `GET /music-queue` öncelikli; `GET /song-request` artık `playing: false` ile ezmez
+- Oynatma: YouTube yedek URL + akış çözümü; hata mesajı gösterilir
+- Sohbet: «şu an çalıyor» mesajında anında senkron
+- Mini player: gerçek oynatıcı durumunu yansıtır
+- API mirror SSE: `type: dj` olayları (3 sn)
+
+## 1.0.129+131 (2026-05-19)
+
+### Backend parite (API mirror + Flutter)
+
+- Müzik arama: yalnızca `GET /api/music/search` (JWT); Piped/Invidious istemci araması kaldırıldı
+- API mirror: mobil auth, TRTC usersig, stories, reports, referral, users search, sosyal beğeni/yorum, DM GET, video-streams list/end, SSE
+- Next.js referans: `docs/nextjs/app-api-music-search-route.ts` — canlifal.com’a deploy için
+- Üretim: `YOUTUBE_API_KEY` Vercel’de tanımlanmalı (`/api/music/search` şu an 404)
+
+## 1.0.128+130 (2026-06-04)
+
+### Müzik arama ve !istek
+
+- YouTube arama: canlifal API + Piped + Invidious **paralel** (18 sn API beklemesi kaldırıldı)
+- Zaman aşımı: kullanıcıya Türkçe mesaj; ham `TimeoutException` gösterilmez
+- `!istek şarkı`: boş komutta kullanım uyarısı; yerel arama başarısızsa sunucuya iletme
+- Oda içi duyuru: aranıyor / eklendi / sunucuya iletiliyor flaşları
+
+## 1.0.127+129 (2026-05-19)
+
+### Google ile giriş
+
+- `GOOGLE_SERVER_CLIENT_ID`: dart-define veya `google-services.json` Web client (`client_type: 3`)
+- `GoogleAuthConfig` + net hata mesajları (SHA-1, yapılandırma eksik)
+- `POST /api/auth/mobile-google` — düz JSON ve `{ success, data }` sarmalayıcı
+- CI: `print-firebase-dart-defines.sh` APK’ya otomatik Web client ID ekler
+- Kurulum: `docs/GOOGLE_SIGNIN_SETUP_TR.md`
+
+## 1.0.126+128 (2026-05-19)
+
+### Canlı yayın ve hediye
+
+- Yayın oluşturma: esnek `streamId` ayrıştırma, `live-started` uç sabiti, `[Live]` debug logları
+- TRTC: `{ success, data }` sarmalayıcı, `sdkAppId`/`userSig` doğrulama
+- Prep: kamera/mikrofon izni önce; `useMobileAuth` ile `POST /api/video-streams`
+- Hediye: `senderName` / `receiverName` gönderimi; poll 4 sn
+- Analiz: `docs/LIVE_STREAM_FLUTTER_ANALYSIS.md`
+
+### Hata düzeltmeleri (sesli oda / API)
+
+- **Müzik araması:** Popüler şarkılara `videoId` eklendi; Piped/Invidious kapalıyken de sonuç döner (ör. Müslüm Gürses)
+- YouTube arama: önce JWT ile `/api/youtube/search`; 401’de net oturum mesajı
+- Oda komutları UI: `/` → `!` (sunucu ile uyumlu)
+- API: `prisma generate` postinstall; `/api/youtube/search` optionalAuth
+
+## 1.0.125+127 (2026-05-19)
+
+### WhatsApp jeton ödemesi — zaman aşımı düzeltmesi
+
+- `POST /api/payment/requests`: 22 sn dış zaman aşımı kaldırıldı; istek başına 45 sn `receiveTimeout`
+- Gövde artık `Map` olarak gönderiliyor (web ile aynı JSON; çift kodlama riski yok)
+- Oturum yoksa anında anlamlı hata; 4xx/5xx sunucu mesajı snackbar’da
+- Debug: `[Payment]` logları (URL, method, JWT varlığı, status, süre)
+- API: ödeme talebi 201 yanıtı bildirimler tamamlanmadan döner (mobil zaman aşımı önlenir)
+
+## 1.0.119+121 (2026-05-19)
+
+### Birleşik sürüm (main + sesli oda senkron)
+
+- **PR #87** Oda Komutları, Şarkı İsteği, DJ Yönetimi (zaten main’de)
+- **PR #91–#93** Komut/YouTube, müzik kuyruk, native API uyumu
+- **PR #95** Web ↔ Flutter sesli oda senkronu, YouTube API önceliği
+- Sosyal: beğeni, yorum, paylaşım, hikâye (önceki dal)
+
+## 1.0.118+120 (2026-05-19)
+
+### Sesli oda — web ↔ Flutter senkronizasyonu
+
+- Socket.IO: JWT (`Authorization` + `auth.token`), `id` ve `slug` ile çift `joinRoom`
+- Hediye socket aynı düzeltmeler
+- TRTC: önce `id`, gerekirse `slug` ile UserSig (web ile aynı oda)
+- Sohbet/presence yenileme 3 sn
+- YouTube arama: önce oturumlu `/api/youtube/search`, sonra Piped/Invidious
+- API: `emitChatRoomMessage` hem `room:{id}` hem `room:{slug}` kanallarına yayın
+
+## 1.0.117+119 (2026-05-19)
+
+### Tam native işlevsellik (canlifal.com)
+
+- Sosyal: beğeni (`POST .../likes`), yorumlar (sheet + API), paylaşım (`share_plus`)
+- Hikâye: galeriden görsel → `POST /api/stories`
+- Akış: `/api/stories` boşsa `/api/social/posts` yedek
+- Takipçi listesi: `/api/users/:id/follow` + `/api/user/followers`
+- Takip toggle: `/api/users` ve `/api/user` yolları
+- Bildirim okundu: `PATCH /api/user/activity` + `notificationIds`
+- OTP sayfası production’da şifre sıfırlamaya yönlendirir
+- Gönderi: `likedByMe`, beğeni/yorum sayısı düzeltmesi
+
+## 1.0.116+118 (2026-05-19)
+
+### Native canlifal.com API uyumu (WebView yok)
+
+- Şifre sıfırlama: `POST /api/auth/forgot-password` (native ekran)
+- DM: `conversations` / `requests` ayrıştırma; mobil `GET /api/messages`
+- Takip: `POST /api/users/:id/follow` toggle
+- Profil: `PATCH /api/me` (`name`, `image`)
+- Canlı: `/api/video-streams`; sesli odalar her zaman `/api/chat/rooms`
+- Okunmamış mesaj: `GET /api/messages?unreadCount=true`
+- Site yolları → `native_site_routes` (şifre sıfırlama dahil)
+
+## 1.0.109+111 (2026-06-02)
+
+### Sesli sohbet odası (canlifal.com UI)
+
+- 2×5 mikrofon ızgarası, kalıcı duyuru kutusu, sağ yüzen ‹ araçlar + ♫ müzik
+- YouTube şarkı arama/istek (jeton), DJ API düzeltmeleri
+- Sohbet: ardışık mesaj bekleme kaldırıldı
+- Moderatör: yasaklı kelime listesi API
+
+## 1.0.108+110 (2026-06-02)
+
+### Ana sayfa — canlifal.com düzeni (native)
+
+- Keşfet sekmesi: dikey akış — Hikâyeler, Canlı Yayınlar, Sesli Odalar, Trend Videolar, Fan Club, Fal & Tarot, Popüler Falcılar, Keşfet grid, Gold Üyelikler
+- REST API (`/api/trend-videos`, canlı, sohbet odaları, falcılar, üyelik paketleri) — WebView yok
+- 2026 cam/glow tasarım, 24px kartlar
+
+## 1.0.107+109 (2026-06-02)
+
+### Keşfet ve sesli oda — premium görsel (yapı aynı)
+
+- Ana sekme yeniden **Keşfet (`/feed`)** — DiscoverPremiumFeed; bölüm sırası korunur
+- Mor/pembe palet (#7B2FF7, #B84DFF, #FF4FD8), 24px cam kartlar, LiquidGlass
+- VoiceDiscoverHub2026 aynı görsel dil; WebView kaldırıldı, native yönlendirme
+
+## 1.0.101+103 (2026-05-31)
+
+### Tema sistemi (production)
+
+- Tek kaynak: `app_theme_colors.dart` — light/dark tüm token'lar
+- **SharedPreferences** ile kalıcı tema (Açık / Koyu / Sistem)
+- Material 3: dialog, bottom sheet, snackbar, AppBar, buton, input
+- `ThemedGlassCard` — koyu modda glassmorphism, açık modda premium gölge
+- `context.colors` extension — sabit renk yerine tema
+- Profil → Tema seçici (anında güncelleme, yeniden başlatma gerekmez)
+
+## 1.0.100+102 (2026-05-31)
+
+### Dark / Light Mode
+
+- `AppTheme.light()` / `AppTheme.dark()` — Material 3 tam tema
+- `AppPalette` ThemeExtension — yüzey ve metin renkleri
+- Kalıcı tema: Hive (`app_theme_mode`) — Açık / Koyu / Sistem
+- Profil → Görünüm: `ThemeModeSelector` (segmented)
+- Ana kabuk ve sayfalar `scaffoldBackgroundColor` ile tema uyumlu
+- Durum çubuğu ikonları temaya göre ayarlanır
+
+## 1.0.99+101 (2026-05-31)
+
+### API sayfalama + Pro Glass mağaza / fal
+
+- API: `activity`, `broadcast-history`, `payment/requests` — `page` / `limit` / `pagination`
+- Mobil: canlı yayınlar, işlemler, yayın geçmişi, profil paylaşımları — sunucu sayfalı `AsyncNotifier`
+- Jeton / CFC mağazası: `ProGlassCard` paket kartları, kullanım kartı, CFC geçmişi
+- Fal hub: `FortuneGlassCard` → Pro Glass cam yüzey
+
+## 1.0.98+100 (2026-05-31)
+
+### Performans + Pro Glass (devam)
+
+- Canlı yayınlar, sohbet mesajları, takip listesi, profil ızgarası: lazy pagination
+- `CachedCoverImage` — kalan `Image.network` kullanımları kaldırıldı
+- Sohbet: eski mesajlar yukarı kaydırınca yüklenir; cam üst bar (`ProGlassTopBar`)
+- `LazyPaginatedListView` — genel amaçlı sayfalı liste bileşeni
+
+## 1.0.97+99 (2026-05-31)
+
+### Performans + Pro Glass UI
+
+- `ListPerf` sabitleri, `RepaintBoundary`, lazy liste (`LazyVisibleListController`)
+- Mesajlar / bildirimler: sayfalı görünür liste (24’lük artış, scroll’da yükleme)
+- Ses keşfet hub: `ListView.builder` + lazy oda satırları (eager map kaldırıldı)
+- Riverpod: `currentUserIdProvider` — sosyal kartlarda dar rebuild
+- `ProGlassCard` / `DiscoverGlassCard` blur glassmorphism
+- Keşfet oda yenileme aralığı 15 sn (pil / FPS)
+
 ## 1.0.96+98 (2026-05-31)
 
 ### Sesli oda, ödeme, jeton/CFC, sohbet düzeltmeleri

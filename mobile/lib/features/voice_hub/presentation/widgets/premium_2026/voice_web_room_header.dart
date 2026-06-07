@@ -2,9 +2,11 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../theme/voice_room_tokens.dart';
 
@@ -39,18 +41,15 @@ class VoiceWebRoomHeader extends StatelessWidget {
         ? room.apiRoomKey.substring(0, 10)
         : room.apiRoomKey;
 
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
+    return Container(
           padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.black.withValues(alpha: 0.55),
-                Colors.black.withValues(alpha: 0.15),
+                Colors.black.withValues(alpha: 0.72),
+                Colors.black.withValues(alpha: 0.28),
               ],
             ),
           ),
@@ -115,7 +114,7 @@ class VoiceWebRoomHeader extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textMuted.withValues(alpha: 0.95),
+                          color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
                           letterSpacing: 0.3,
                         ),
                       ),
@@ -135,13 +134,11 @@ class VoiceWebRoomHeader extends StatelessWidget {
               ),
               _GlassIconBtn(
                 icon: Icons.power_settings_new_rounded,
-                color: AppColors.liveRed,
+                color: AppThemeColors.liveRed,
                 onTap: onExit,
               ),
             ],
           ),
-        ),
-      ),
     );
   }
 }
@@ -172,7 +169,7 @@ class _OnlineChip extends StatelessWidget {
               Icon(
                 Icons.people_alt_rounded,
                 size: 16,
-                color: count > 0 ? AppColors.onlineGreen : AppColors.textMuted,
+                color: count > 0 ? AppThemeColors.onlineGreen : context.colors.onSurfaceMuted,
               ),
               const SizedBox(width: 4),
               Text(
@@ -180,7 +177,7 @@ class _OnlineChip extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
-                  color: count > 0 ? AppColors.onlineGreen : AppColors.textMuted,
+                  color: count > 0 ? AppThemeColors.onlineGreen : context.colors.onSurfaceMuted,
                 ),
               ),
             ],
@@ -310,7 +307,7 @@ class VoiceWebRoomInfoPill extends StatelessWidget {
                     shortId,
                     style: TextStyle(
                       fontSize: 9,
-                      color: AppColors.textMuted.withValues(alpha: 0.9),
+                      color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                     ),
                   ),
                 ],
@@ -319,7 +316,7 @@ class VoiceWebRoomInfoPill extends StatelessWidget {
               Icon(
                 Icons.copy_rounded,
                 size: 12,
-                color: AppColors.textMuted.withValues(alpha: 0.7),
+                color: context.colors.onSurfaceMuted.withValues(alpha: 0.7),
               ),
             ],
           ),

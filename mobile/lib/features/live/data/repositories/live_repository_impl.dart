@@ -32,14 +32,24 @@ class LiveRepositoryImpl implements LiveRepository {
     String? description,
     String? category,
     List<String>? tags,
+    String? thumbnailUrl,
   }) =>
       _remote.createVideoStream(
         title: title,
         description: description,
         category: category,
         tags: tags,
+        thumbnailUrl: thumbnailUrl,
       );
 
   @override
   Future<void> endVideoStream(String streamId) => _remote.endVideoStream(streamId);
+
+  @override
+  Future<int> joinVideoStream(String streamId) =>
+      _remote.joinVideoStream(streamId);
+
+  @override
+  Future<void> leaveVideoStream(String streamId) =>
+      _remote.leaveVideoStream(streamId);
 }

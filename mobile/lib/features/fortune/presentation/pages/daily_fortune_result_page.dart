@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../social/domain/entities/share_fortune_input.dart';
 import '../../../social/presentation/providers/social_providers.dart';
@@ -80,7 +82,7 @@ class _DailyFortuneResultPageState extends ConsumerState<DailyFortuneResultPage>
     const gold = Color(0xFFD4AF37);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: FortuneMysticBackground(
         child: Column(
           children: [
@@ -103,15 +105,15 @@ class _DailyFortuneResultPageState extends ConsumerState<DailyFortuneResultPage>
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: AppColors.accentPurple.withValues(alpha: 0.5),
+                          color: AppThemeColors.accentPurple.withValues(alpha: 0.5),
                         ),
                         gradient: const LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [Color(0xFF2A1548), Color(0xFF12081F)],
                         ),
-                        boxShadow: AppColors.glowShadow(
-                          AppColors.accentPurple,
+                        boxShadow: AppThemeColors.glowShadow(
+                          AppThemeColors.accentPurple,
                           blur: 18,
                         ),
                       ),
@@ -149,7 +151,7 @@ class _DailyFortuneResultPageState extends ConsumerState<DailyFortuneResultPage>
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.accentPurple.withValues(alpha: 0.35),
+                          color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
                         ),
                         color: const Color(0xFF1A0B2E).withValues(alpha: 0.85),
                       ),
@@ -157,7 +159,7 @@ class _DailyFortuneResultPageState extends ConsumerState<DailyFortuneResultPage>
                         result.detail,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: AppColors.textSecondary.withValues(alpha: 0.95),
+                          color: context.colors.onSurfaceVariant.withValues(alpha: 0.95),
                           fontSize: 13,
                           height: 1.45,
                         ),
@@ -262,7 +264,7 @@ class _LuckyStatBox extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.accentPurple.withValues(alpha: 0.35),
+          color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
         ),
         color: const Color(0xFF1A0B2E).withValues(alpha: 0.9),
       ),
@@ -272,7 +274,7 @@ class _LuckyStatBox extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 11,
-              color: AppColors.accentPurple.withValues(alpha: 0.95),
+              color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
               fontWeight: FontWeight.w600,
             ),
           ),

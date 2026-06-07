@@ -39,6 +39,42 @@ model User {
   cfcPaymentRequests  CfcPaymentRequest[]
   conversationsA      Conversation[] @relation("ConversationUserA")
   conversationsB      Conversation[] @relation("ConversationUserB")
+  fortunes              UserFortune[]
+  favorites             UserFavorite[]
+}
+
+/// Mobil / web fal geçmişi kaydı.
+model UserFortune {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  slug        String?
+  question    String?
+  answer      String?
+  summary     String?
+  detail      String?
+  luckyNumber Int?
+  luckyColor  String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// Kullanıcı favorileri (profil, gönderi, fal, içerik linki).
+model UserFavorite {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetType String
+  targetId   String
+  title      String?
+  url        String?
+  imageUrl   String?
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, targetType, targetId])
+  @@index([userId, createdAt])
 }
 
 model SocialPost {
@@ -56,10 +92,36 @@ model SocialPost {
   commentsCount  Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  likes          SocialPostLike[]
+  comments       SocialPostComment[]
 
   @@index([authorId])
   @@index([createdAt])
   @@index([postType, createdAt])
+}
+
+model SocialPostLike {
+  id        String     @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime   @default(now())
+  post      SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+}
+
+model SocialPostComment {
+  id        String     @id @default(cuid())
+  postId    String
+  authorId  String
+  content   String
+  createdAt DateTime   @default(now())
+  post      SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@index([authorId])
 }
 
 model Follow {
@@ -224,4 +286,92 @@ model AppNotification {
 
   @@index([userId, read, createdAt])
   @@index([createdAt])
+}
+
+/// PK (Battle) oturumu — sesli oda veya canlı yayın.
+model PKBattle {
+  id                  String          @id @default(cuid())
+  battleType          String
+  voiceRoomId         String?
+  opponentVoiceRoomId String?
+  liveStreamId        String?
+  opponentLiveStreamId String?
+  challengerId        String
+  opponentId          String?
+  status              String          @default("pending")
+  startTime           DateTime?
+  endTime             DateTime?
+  winnerId            String?
+  challengerScore     Int             @default(0)
+  opponentScore       Int             @default(0)
+  durationSeconds     Int             @default(300)
+  targetScore         Int             @default(150000)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  participants        PKParticipant[]
+  gifts               PKGift[]
+  result              PKResult?
+
+  @@index([battleType, status])
+  @@index([voiceRoomId, status])
+  @@index([opponentVoiceRoomId, status])
+  @@index([liveStreamId, status])
+  @@index([opponentLiveStreamId, status])
+  @@index([challengerId, createdAt])
+  @@index([opponentId, createdAt])
+}
+
+/// PK katılımcısı (challenger / opponent tarafı).
+model PKParticipant {
+  id          String   @id @default(cuid())
+  battleId    String
+  battle      PKBattle @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  userId      String
+  side        String
+  roomId      String?
+  streamId    String?
+  score       Int      @default(0)
+  winStreak   Int      @default(0)
+  displayName String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+
+  @@unique([battleId, side])
+  @@index([userId])
+  @@index([roomId])
+  @@index([streamId])
+}
+
+/// PK sırasında gönderilen hediye → puan kaydı.
+model PKGift {
+  id          String   @id @default(cuid())
+  battleId    String
+  battle      PKBattle @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  giftEventId String?
+  senderId    String?
+  senderName  String
+  side        String
+  giftSlug    String
+  giftName    String?
+  quantity    Int      @default(1)
+  points      Int
+  createdAt   DateTime @default(now())
+
+  @@index([battleId, createdAt])
+  @@index([senderId, createdAt])
+}
+
+/// PK sonucu — geçmiş ve şampiyon rozeti.
+model PKResult {
+  id                   String   @id @default(cuid())
+  battleId             String   @unique
+  battle               PKBattle @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  winnerId             String?
+  winnerSide           String?
+  challengerFinalScore Int
+  opponentFinalScore   Int
+  championBadge        Boolean  @default(true)
+  createdAt            DateTime @default(now())
+
+  @@index([winnerId, createdAt])
 }

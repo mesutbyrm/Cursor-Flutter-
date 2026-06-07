@@ -1,9 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../feed/presentation/widgets/discover/discover_section_header.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
@@ -25,7 +27,7 @@ class SocialActiveRooms extends ConsumerWidget {
 
     final chips = _buildChips(live.valueOrNull, rooms.valueOrNull);
     if (chips.isEmpty && live.isLoading) {
-      return const SizedBox(
+      return SizedBox(
         height: 140,
         child: Center(
           child: SizedBox(
@@ -61,10 +63,10 @@ class SocialActiveRooms extends ConsumerWidget {
                   Icon(
                     Icons.mic_rounded,
                     size: 18,
-                    color: AppColors.accentPurple.withValues(alpha: 0.95),
+                    color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
                   ),
-                  const SizedBox(width: 8),
-                  const Text(
+                  SizedBox(width: 8),
+                  Text(
                     'Sesli sohbet odaları',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
@@ -74,19 +76,19 @@ class SocialActiveRooms extends ConsumerWidget {
                   const Spacer(),
                   TextButton(
                     onPressed: () => context.go('/live'),
-                    child: const Text('Tümü'),
+                    child: Text('Tümü'),
                   ),
                 ],
               ),
             ),
-          if (!embeddedInFeed) const SizedBox(height: 10),
+          if (!embeddedInFeed) SizedBox(height: 10),
           SizedBox(
             height: 118,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: display.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 16),
+              separatorBuilder: (_, _) => SizedBox(width: 16),
               itemBuilder: (ctx, i) => _ActiveRoomChip(
                 chip: display[i],
                 onTap: () => _openChip(context, ref, display[i]),
@@ -153,28 +155,28 @@ class SocialActiveRooms extends ConsumerWidget {
           kind: _ActiveRoomKind.demo,
           name: 'Medyum Elif',
           viewers: 1200,
-          ringColor: AppColors.accentPurple,
+          ringColor: AppThemeColors.accentPurple,
         ),
         _ActiveRoomChipData(
           id: 'demo-2',
           kind: _ActiveRoomKind.demo,
           name: 'Tarot Rüya',
           viewers: 856,
-          ringColor: AppColors.liveRed,
+          ringColor: AppThemeColors.liveRed,
         ),
         _ActiveRoomChipData(
           id: 'demo-3',
           kind: _ActiveRoomKind.demo,
           name: 'Astro Ayşe',
           viewers: 642,
-          ringColor: AppColors.diamondBlue,
+          ringColor: AppThemeColors.diamondBlue,
         ),
         _ActiveRoomChipData(
           id: 'demo-4',
           kind: _ActiveRoomKind.demo,
           name: 'Kahve Usta',
           viewers: 410,
-          ringColor: AppColors.coinGold,
+          ringColor: AppThemeColors.coinGold,
         ),
         _ActiveRoomChipData(
           id: 'demo-5',
@@ -186,10 +188,10 @@ class SocialActiveRooms extends ConsumerWidget {
       ];
 
   static const _ringPalette = [
-    AppColors.accentPurple,
-    AppColors.liveRed,
-    AppColors.diamondBlue,
-    AppColors.coinGold,
+    AppThemeColors.accentPurple,
+    AppThemeColors.liveRed,
+    AppThemeColors.diamondBlue,
+    AppThemeColors.coinGold,
     Color(0xFFFF8C42),
   ];
 
@@ -266,7 +268,7 @@ class _ActiveRoomChip extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(color: chip.ringColor, width: 2.5),
-                    boxShadow: AppColors.glowShadow(chip.ringColor, blur: 12),
+                    boxShadow: AppThemeColors.glowShadow(chip.ringColor, blur: 12),
                   ),
                   child: _Avatar(url: chip.avatarUrl, name: chip.name),
                 ),
@@ -277,10 +279,10 @@ class _ActiveRoomChip extends StatelessWidget {
                     width: 14,
                     height: 14,
                     decoration: BoxDecoration(
-                      color: AppColors.onlineGreen,
+                      color: AppThemeColors.onlineGreen,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppColors.background,
+                        color: context.scaffoldBg,
                         width: 2,
                       ),
                     ),
@@ -288,19 +290,19 @@ class _ActiveRoomChip extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               chip.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: context.colors.onSurface,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -309,13 +311,13 @@ class _ActiveRoomChip extends StatelessWidget {
                   size: 12,
                   color: chip.ringColor.withValues(alpha: 0.95),
                 ),
-                const SizedBox(width: 2),
+                SizedBox(width: 2),
                 Text(
                   _formatViewers(chip.viewers),
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textMuted.withValues(alpha: 0.95),
+                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
                   ),
                 ),
               ],

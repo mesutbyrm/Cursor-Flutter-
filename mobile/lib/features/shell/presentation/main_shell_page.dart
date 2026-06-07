@@ -8,7 +8,8 @@ import '../../../core/widgets/exit_confirm_dialog.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../messages/presentation/providers/messages_providers.dart';
 import '../../notifications/presentation/providers/notifications_providers.dart';
-import 'discover_bottom_bar.dart';
+import '../../home/presentation/theme/home_approved_design.dart';
+import '../../home/presentation/widgets/approved/bottom_navigation_widget.dart';
 
 class MainShellPage extends ConsumerStatefulWidget {
   const MainShellPage({super.key, required this.navigationShell});
@@ -27,6 +28,19 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
       index,
       initialLocation: index == widget.navigationShell.currentIndex,
     );
+  }
+
+  HomeBottomTab _activeTab(int shellIndex) {
+    switch (shellIndex) {
+      case 0:
+        return HomeBottomTab.home;
+      case 2:
+        return HomeBottomTab.live;
+      case 4:
+        return HomeBottomTab.profile;
+      default:
+        return HomeBottomTab.home;
+    }
   }
 
   @override
@@ -69,13 +83,15 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
         );
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: HomeApprovedDesign.background,
         body: widget.navigationShell,
-        extendBody: true,
-        bottomNavigationBar: DiscoverBottomBar(
-          currentIndex: widget.navigationShell.currentIndex,
-          onTap: _goBranch,
-          onFabTap: () => openLiveFromFab(context),
+        bottomNavigationBar: BottomNavigationWidget(
+          activeTab: _activeTab(widget.navigationShell.currentIndex),
+          onHome: () => _goBranch(0),
+          onLive: () => _goBranch(2),
+          onRooms: () => context.push('/voice-rooms'),
+          onJeton: () => context.push('/jeton-store'),
+          onProfile: () => _goBranch(4),
         ),
       ),
     );

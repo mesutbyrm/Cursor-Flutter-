@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_palette.dart';
+import '../../../../../core/widgets/theme_mode_selector.dart';
 import 'profile_glass.dart';
 
 class ProfileSettingsMenu extends StatelessWidget {
@@ -39,6 +40,21 @@ class ProfileSettingsMenu extends StatelessWidget {
         onTap: onNotifications ?? () => context.push('/notifications'),
       ),
       (
+        icon: Icons.bookmark_outline_rounded,
+        label: 'Favoriler',
+        onTap: () => context.push('/favorites'),
+      ),
+      (
+        icon: Icons.search_rounded,
+        label: 'Kullanıcı Ara',
+        onTap: () => context.push('/search'),
+      ),
+      (
+        icon: Icons.menu_book_rounded,
+        label: 'Blog & Rüya',
+        onTap: () => context.push('/content-hub'),
+      ),
+      (
         icon: Icons.help_outline_rounded,
         label: 'Yardım & Destek',
         onTap: onHelp ?? () {},
@@ -50,10 +66,14 @@ class ProfileSettingsMenu extends StatelessWidget {
       ),
     ];
 
+    final palette = context.palette;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
+        const ThemeModeSelector(),
+        const SizedBox(height: 12),
         ProfileGlass(
           padding: EdgeInsets.zero,
           child: Column(
@@ -68,7 +88,7 @@ class ProfileSettingsMenu extends StatelessWidget {
                   Divider(
                     height: 1,
                     indent: 52,
-                    color: Colors.white.withValues(alpha: 0.06),
+                    color: palette.divider,
                   ),
               ],
             ],
@@ -92,6 +112,7 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -100,20 +121,21 @@ class _SettingsTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              Icon(icon, size: 22, color: AppColors.textSecondary),
+              Icon(icon, size: 22, color: palette.textSecondary),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
+                    color: palette.textPrimary,
                   ),
                 ),
               ),
               Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.textMuted.withValues(alpha: 0.7),
+                color: palette.iconMuted,
               ),
             ],
           ),

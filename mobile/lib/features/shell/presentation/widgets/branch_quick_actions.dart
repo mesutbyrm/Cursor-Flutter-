@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/quick_action_tile.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
@@ -18,6 +19,15 @@ class SocialBranchQuickActions extends StatelessWidget {
       rows: [
         [
           QuickActionTile(
+            icon: Icons.videocam_rounded,
+            label: 'Canlı Yayın\nAç',
+            gradient: [
+              AppColors.liveRed.withValues(alpha: 0.55),
+              AppColors.accentPink.withValues(alpha: 0.35),
+            ],
+            onTap: () => context.push('/live/prep'),
+          ),
+          QuickActionTile(
             icon: Icons.person_add_alt_1_rounded,
             label: 'Arkadaşlarını\ndavet et',
             gradient: [
@@ -26,6 +36,8 @@ class SocialBranchQuickActions extends StatelessWidget {
             ],
             onTap: () => context.push('/invite-friends'),
           ),
+        ],
+        [
           QuickActionTile(
             icon: Icons.monetization_on_rounded,
             label: 'Jeton\nyükle',
@@ -35,8 +47,6 @@ class SocialBranchQuickActions extends StatelessWidget {
             ],
             onTap: () => context.push('/jeton-store'),
           ),
-        ],
-        [
           QuickActionTile(
             icon: Icons.home_rounded,
             label: 'Ana\nakış',
@@ -46,6 +56,8 @@ class SocialBranchQuickActions extends StatelessWidget {
             ],
             onTap: () => context.go('/feed'),
           ),
+        ],
+        [
           QuickActionTile(
             icon: Icons.graphic_eq_rounded,
             label: 'Sesli\nodalar',
@@ -74,6 +86,15 @@ class LiveStreamsBranchQuickActions extends StatelessWidget {
       rows: [
         [
           QuickActionTile(
+            icon: Icons.videocam_rounded,
+            label: 'Canlı Yayın\nAç',
+            gradient: [
+              AppColors.liveRed.withValues(alpha: 0.55),
+              AppColors.accentPink.withValues(alpha: 0.35),
+            ],
+            onTap: () => context.push('/live/prep'),
+          ),
+          QuickActionTile(
             icon: Icons.monetization_on_rounded,
             label: 'Jeton\nyükle',
             gradient: [
@@ -82,6 +103,8 @@ class LiveStreamsBranchQuickActions extends StatelessWidget {
             ],
             onTap: () => context.push('/jeton-store'),
           ),
+        ],
+        [
           QuickActionTile(
             icon: Icons.card_giftcard_rounded,
             label: 'Davet\npaylaş',
@@ -91,8 +114,6 @@ class LiveStreamsBranchQuickActions extends StatelessWidget {
             ],
             onTap: () => context.push('/invite-friends'),
           ),
-        ],
-        [
           QuickActionTile(
             icon: Icons.forum_rounded,
             label: 'Sosyal\nakış',
@@ -323,6 +344,26 @@ class ProfileBranchQuickActions extends StatelessWidget {
               const Color(0xFF101820).withValues(alpha: 0.95),
             ],
             onTap: () => context.push('/voice-rooms'),
+          ),
+        ],
+        [
+          QuickActionTile(
+            icon: Icons.workspace_premium_rounded,
+            label: 'Falcı\nol',
+            gradient: [
+              const Color(0xFF3D2A10).withValues(alpha: 0.95),
+              const Color(0xFF1A1208).withValues(alpha: 0.95),
+            ],
+            onTap: () => openNativeSitePath(context, '/falci-ol'),
+          ),
+          QuickActionTile(
+            icon: Icons.business_center_rounded,
+            label: 'Ajans\nol',
+            gradient: [
+              const Color(0xFF1A2838).withValues(alpha: 0.95),
+              const Color(0xFF0E141C).withValues(alpha: 0.95),
+            ],
+            onTap: () => openNativeSitePath(context, '/ajans-ol'),
           ),
         ],
       ],

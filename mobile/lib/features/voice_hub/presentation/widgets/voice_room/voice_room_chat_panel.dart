@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../domain/entities/chat_room_message.dart';
 
 class VoiceRoomChatPanel extends StatelessWidget {
@@ -45,9 +47,9 @@ class _ChatRow extends StatelessWidget {
           child: Center(
             child: Text(
               message.content,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
-                color: AppColors.textMuted,
+                color: context.colors.onSurfaceMuted,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -70,10 +72,10 @@ class _TextRow extends StatelessWidget {
   final ChatRoomMessage message;
 
   Color _nameColor(ChatRoomUserRef? u) {
-    if (u?.isBroadcaster == true) return AppColors.coinGold;
+    if (u?.isBroadcaster == true) return AppThemeColors.coinGold;
     final role = u?.chatRole;
-    if (role == 'vip') return AppColors.accentCyan;
-    return AppColors.accentPink;
+    if (role == 'vip') return AppThemeColors.accentCyan;
+    return AppThemeColors.accentPink;
   }
 
   @override
@@ -85,11 +87,11 @@ class _TextRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _Avatar(url: u?.image),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: RichText(
               text: TextSpan(
-                style: const TextStyle(fontSize: 11, height: 1.35),
+                style: TextStyle(fontSize: 11, height: 1.35),
                 children: [
                   TextSpan(
                     text: u?.displayName ?? 'Kullanıcı',
@@ -105,10 +107,10 @@ class _TextRow extends StatelessWidget {
                         margin: const EdgeInsets.only(left: 6),
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                         decoration: BoxDecoration(
-                          color: AppColors.accentPurple.withValues(alpha: 0.4),
+                          color: AppThemeColors.accentPurple.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Yayıncı',
                           style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800),
                         ),
@@ -117,7 +119,7 @@ class _TextRow extends StatelessWidget {
                   const TextSpan(text: '  '),
                   TextSpan(
                     text: message.content,
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: context.colors.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -142,20 +144,20 @@ class _GiftRow extends StatelessWidget {
       child: Row(
         children: [
           _Avatar(url: message.user?.image),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: Text(
               message.content,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: AppColors.accentPink,
+                color: AppThemeColors.accentPink,
               ),
             ),
           ),
           Text(
             '${message.giftEmoji ?? '🎁'} x$count',
-            style: const TextStyle(fontSize: 28),
+            style: TextStyle(fontSize: 28),
           ),
         ],
       ),
@@ -175,14 +177,14 @@ class _Avatar extends StatelessWidget {
       height: 28,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.accentPurple.withValues(alpha: 0.5)),
+        border: Border.all(color: AppThemeColors.accentPurple.withValues(alpha: 0.5)),
       ),
       child: ClipOval(
         child: url != null && url!.isNotEmpty
             ? CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover)
-            : const ColoredBox(
-                color: AppColors.bgPurpleGlow,
-                child: Icon(Icons.person, size: 16, color: Colors.white54),
+            : ColoredBox(
+                color: AppThemeColors.dark.surfaceContainer,
+                child: const Icon(Icons.person, size: 16, color: Colors.white54),
               ),
       ),
     );

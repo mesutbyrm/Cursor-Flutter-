@@ -59,7 +59,7 @@ class _SocialPageState extends ConsumerState<SocialPage> {
     final bottom = MediaQuery.paddingOf(context).bottom + 88;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../gifts/widgets/live_gift_panel.dart';
 
 class LiveRoomSideActions extends StatelessWidget {
@@ -74,7 +74,7 @@ class LiveRoomSideButton extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: Colors.black.withValues(alpha: 0.4),
                 border: Border.all(
-                  color: AppColors.accentPurple.withValues(alpha: 0.35),
+                  color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
                 ),
               ),
               child: Icon(icon, color: Colors.white, size: 24),

@@ -51,6 +51,7 @@ class FortuneReadingResult {
     required this.detail,
     this.luckyNumber,
     this.luckyColor,
+    this.recordId,
   });
 
   final FortuneTypeEntity type;
@@ -58,4 +59,7 @@ class FortuneReadingResult {
   final String detail;
   final int? luckyNumber;
   final String? luckyColor;
+
+  /// Sunucuya kaydedilen fal kaydı (`POST /api/user/fortunes`).
+  final String? recordId;
 }

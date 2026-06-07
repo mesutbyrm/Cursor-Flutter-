@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../../theme/app_colors.dart';
 
 /// Ortak sayfa iskeleti — gradient arka plan, güvenli alan, düşük nesting.
 class PremiumScaffold extends StatelessWidget {
@@ -25,7 +25,7 @@ class PremiumScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: extendBody,
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: appBar,
       bottomNavigationBar: bottomNavigationBar,
       floatingActionButton: floatingActionButton,
@@ -51,13 +51,13 @@ class _PremiumBackgroundGlow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DecoratedBox(
+    return DecoratedBox(
       decoration: BoxDecoration(
         gradient: RadialGradient(
           center: Alignment(-0.6, -0.9),
           radius: 1.4,
-          colors: [AppColors.bgPurpleGlow, AppColors.background],
-          stops: [0, 0.55],
+          colors: [context.colors.surfaceContainer, context.scaffoldBg],
+          stops: const [0, 0.55],
         ),
       ),
       child: DecoratedBox(

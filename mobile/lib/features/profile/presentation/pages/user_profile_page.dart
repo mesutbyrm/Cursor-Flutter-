@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
@@ -56,13 +58,13 @@ class UserProfilePage extends ConsumerWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: AppColors.brandGradient,
+                        gradient: context.colors.brandGradient,
                       ),
                       child: UserAvatar(url: user.avatarUrl, radius: 36),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,8 +75,8 @@ class UserProfilePage extends ConsumerWidget {
                           ),
                           Text(
                             '@${user.username}',
-                            style: const TextStyle(
-                              color: AppColors.textMuted,
+                            style: TextStyle(
+                              color: context.colors.onSurfaceMuted,
                               fontSize: 14,
                             ),
                           ),
@@ -84,7 +86,7 @@ class UserProfilePage extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
               LiquidGlassCard(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -99,7 +101,7 @@ class UserProfilePage extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               if (!isSelf) ...[
                 Row(
                   children: [
@@ -118,7 +120,7 @@ class UserProfilePage extends ConsumerWidget {
                           minimumSize: const Size.fromHeight(52),
                           backgroundColor: user.isFollowing
                               ? Colors.white.withValues(alpha: 0.12)
-                              : AppColors.accentPink,
+                              : AppThemeColors.accentPink,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -126,25 +128,25 @@ class UserProfilePage extends ConsumerWidget {
                         ),
                         child: Text(
                           user.isFollowing ? 'Takipten çık' : 'Takip et',
-                          style: const TextStyle(fontWeight: FontWeight.w800),
+                          style: TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => _openDirectMessage(context, ref),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(52),
-                          foregroundColor: AppColors.accentCyan,
+                          foregroundColor: AppThemeColors.accentCyan,
                           side: BorderSide(
-                            color: AppColors.accentCyan.withValues(alpha: 0.65),
+                            color: AppThemeColors.accentCyan.withValues(alpha: 0.65),
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Mesaj',
                           style: TextStyle(fontWeight: FontWeight.w800),
                         ),
@@ -163,13 +165,13 @@ class UserProfilePage extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Bu sizin profiliniz',
                     style: TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
               if (user.bio != null && user.bio!.isNotEmpty) ...[
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
                 LiquidGlassCard(
                   child: Text(
                     user.bio!,
@@ -179,7 +181,7 @@ class UserProfilePage extends ConsumerWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               const Row(
                 children: [
                   Icon(Icons.grid_on_rounded, size: 20),
@@ -218,15 +220,15 @@ class _Stat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w900,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+          style: TextStyle(color: context.colors.onSurfaceMuted, fontSize: 13),
         ),
       ],
     );

@@ -117,6 +117,24 @@ function requestPayload(row: {
   };
 }
 
+/** GET /api/referral — davet bilgisi */
+walletRouter.get("/referral", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.userId! } });
+  if (!user) return jsonError(res, 404, "Kullanıcı bulunamadı");
+  const code = user.id.slice(-8).toUpperCase();
+  const origin = (process.env.PUBLIC_SITE_URL ?? "https://canlifal.com").replace(
+    /\/$/,
+    "",
+  );
+  return res.status(200).json({
+    referralCode: code,
+    referralLink: `${origin}/davet?ref=${code}`,
+    referralUrl: `${origin}/davet?ref=${code}`,
+    referralCreditsEarned: 0,
+    inviteCount: 0,
+  });
+});
+
 /** GET /api/me — mobil profil + bakiye (canlifal.com Flutter dokümanı) */
 walletRouter.get("/me", requireAuth, async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.userId! } });
@@ -280,35 +298,58 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
   const notifType =
     requestType === "jeton" ? "jeton_payment_request" : "cfc_payment_request";
 
-  await createNotification({
-    userId,
-    title: userTitle,
-    body: userBody,
-    type: notifType,
-    data: notifData,
-    targetPath: userPath,
-    targetId: row.id,
-    urgent: true,
-  });
-
-  void notifyStaffPaymentPending({
-    paymentRequestId: row.id,
-    requestType: requestType as "jeton" | "cfc",
-    amountLabel: userBody,
-    method,
-  });
+  // Yanıtı geciktirmemek için bildirimleri yanıttan sonra gönder (mobil zaman aşımı).
+  void (async () => {
+    try {
+      await createNotification({
+        userId,
+        title: userTitle,
+        body: userBody,
+        type: notifType,
+        data: notifData,
+        targetPath: userPath,
+        targetId: row.id,
+        urgent: true,
+      });
+      await notifyStaffPaymentPending({
+        paymentRequestId: row.id,
+        requestType: requestType as "jeton" | "cfc",
+        amountLabel: userBody,
+        method,
+      });
+    } catch (err) {
+      console.error("[payment/requests] post-create notify failed", err);
+    }
+  })();
 
   return res.status(201).json(requestPayload(row));
 });
 
 /** GET /api/payment/requests — kullanıcının talepleri */
 walletRouter.get("/payment/requests", requireAuth, async (req, res) => {
-  const rows = await prisma.cfcPaymentRequest.findMany({
-    where: { userId: req.userId! },
-    orderBy: { createdAt: "desc" },
-    take: 50,
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+  const skip = (page - 1) * limit;
+  const where = { userId: req.userId! };
+
+  const [total, rows] = await Promise.all([
+    prisma.cfcPaymentRequest.count({ where }),
+    prisma.cfcPaymentRequest.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const requests = rows.map((r) => requestPayload(r));
+
+  return res.status(200).json({
+    requests,
+    items: requests,
+    pagination: { page, limit, total, totalPages },
   });
-  return res.status(200).json(rows.map((r) => requestPayload(r)));
 });
 
 /** GET /api/admin/cfc-payment-requests */

@@ -11,6 +11,27 @@ import {
 
 export const profileExtrasRouter = Router();
 
+/** GET /api/users/search?q= — kullanıcı araması */
+profileExtrasRouter.get("/search", requireAuth, async (req, res) => {
+  const q = String(req.query.q ?? "").trim();
+  if (q.length < 2) {
+    return res.status(200).json({ users: [], items: [] });
+  }
+  const rows = await prisma.user.findMany({
+    where: {
+      OR: [
+        { username: { contains: q, mode: "insensitive" } },
+        { displayName: { contains: q, mode: "insensitive" } },
+        { email: { contains: q, mode: "insensitive" } },
+      ],
+    },
+    take: 24,
+    orderBy: { followerCount: "desc" },
+  });
+  const users = rows.map((u) => publicUserPayload(u));
+  return res.status(200).json({ users, items: users });
+});
+
 profileExtrasRouter.get("/lookup/:username", async (req, res) => {
   const username = req.params.username.replace(/^@/, "").trim().toLowerCase();
   const user = await prisma.user.findFirst({

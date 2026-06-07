@@ -18,7 +18,7 @@ Future<void> prefetchVoiceRoomImages(
   final dpr = MediaQuery.devicePixelRatioOf(context);
   final cacheW = (mq.width * dpr).round().clamp(360, 1440);
 
-  for (final url in urls.take(48)) {
+  for (final url in urls.take(6)) {
     if (!context.mounted) return;
     try {
       await precacheImage(

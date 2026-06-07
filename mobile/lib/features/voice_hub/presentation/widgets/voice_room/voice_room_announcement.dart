@@ -1,8 +1,8 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 
 /// Duyuru kutusu — oda açıklaması (canlifal.com `descTr`).
 class VoiceRoomAnnouncement extends StatelessWidget {
@@ -17,50 +17,46 @@ class VoiceRoomAnnouncement extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
+    return Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppColors.accentPurple.withValues(alpha: 0.35),
-                AppColors.bgPurpleGlow.withValues(alpha: 0.55),
+                AppThemeColors.accentPurple.withValues(alpha: 0.42),
+                Colors.black.withValues(alpha: 0.72),
               ],
             ),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: AppColors.accentPurple.withValues(alpha: 0.45),
+              color: AppThemeColors.accentPurple.withValues(alpha: 0.45),
             ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.campaign_rounded, color: AppColors.accentPink, size: 22),
-              const SizedBox(width: 10),
+              Icon(Icons.campaign_rounded, color: AppThemeColors.accentPink, size: 22),
+              SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Duyuru',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 12,
-                        color: AppColors.accentPink,
+                        color: AppThemeColors.accentPink,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       text,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textSecondary,
+                        color: context.colors.onSurfaceVariant,
                         height: 1.35,
                       ),
                     ),
@@ -69,21 +65,19 @@ class VoiceRoomAnnouncement extends StatelessWidget {
               ),
               IconButton(
                 onPressed: () {},
-                icon: const Icon(Icons.edit_outlined, size: 16, color: AppColors.textMuted),
+                icon: Icon(Icons.edit_outlined, size: 16, color: context.colors.onSurfaceMuted),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
               ),
               if (onDismiss != null)
                 IconButton(
                   onPressed: onDismiss,
-                  icon: const Icon(Icons.close_rounded, size: 16, color: AppColors.textMuted),
+                  icon: Icon(Icons.close_rounded, size: 16, color: context.colors.onSurfaceMuted),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 ),
             ],
           ),
-        ),
-      ),
     );
   }
 }
@@ -110,7 +104,7 @@ class VoiceRoomSystemBanner extends StatelessWidget {
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
         textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+        style: TextStyle(fontSize: 10, color: context.colors.onSurfaceVariant),
       ),
     );
   }

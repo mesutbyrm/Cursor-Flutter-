@@ -1,36 +1,36 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-/// Premium modal bottom sheet — koyu cam, yuvarlak üst köşe.
+/// Premium modal bottom sheet — tema uyumlu cam / yüzey.
 Future<T?> showPremiumBottomSheet<T>({
   required BuildContext context,
   required Widget child,
   bool isScrollControlled = true,
 }) {
+  final c = context.colors;
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled,
     backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.55),
+    barrierColor: c.barrier,
     builder: (ctx) {
+      final theme = Theme.of(ctx);
       return Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.viewInsetsOf(ctx).bottom,
         ),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.98),
+            color: c.bottomSheetBackground,
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(AppSpacing.radiusXl),
             ),
             border: Border(
-              top: BorderSide(
-                color: AppColors.accentPurple.withValues(alpha: 0.35),
-              ),
+              top: BorderSide(color: c.glassBorder),
             ),
-            boxShadow: AppColors.glowShadow(AppColors.accentPink, blur: 32),
+            boxShadow: c.elevatedShadow,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -40,12 +40,15 @@ Future<T?> showPremiumBottomSheet<T>({
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.textMuted.withValues(alpha: 0.5),
+                  color: c.onSurfaceMuted.withValues(alpha: 0.45),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               const SizedBox(height: 8),
-              child,
+              Theme(
+                data: theme,
+                child: child,
+              ),
             ],
           ),
         ),

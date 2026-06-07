@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../profile/presentation/widgets/jeton_store_widgets.dart';
 import '../../domain/membership_package_entity.dart';
@@ -45,42 +47,42 @@ class PremiumMembershipHeader extends StatelessWidget {
             color: Colors.white.withValues(alpha: 0.08),
             shape: const CircleBorder(),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+              icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
               onPressed: onBack,
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         Container(
           width: 72,
           height: 72,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            color: AppColors.coinGold,
-            boxShadow: AppColors.glowShadow(AppColors.coinGold, blur: 16),
+            color: AppThemeColors.coinGold,
+            boxShadow: AppThemeColors.glowShadow(AppThemeColors.coinGold, blur: 16),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.workspace_premium_rounded,
             color: Color(0xFF1A1030),
             size: 40,
           ),
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         Text(
           title,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 26,
             letterSpacing: -0.5,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           subtitle,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: AppColors.textMuted.withValues(alpha: 0.95),
+            color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
             fontSize: 14,
             height: 1.35,
           ),
@@ -137,18 +139,18 @@ class _FeatureBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         color: Colors.white.withValues(alpha: 0.05),
         border: Border.all(
-          color: AppColors.coinGold.withValues(alpha: 0.4),
+          color: AppThemeColors.coinGold.withValues(alpha: 0.4),
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 18, color: AppColors.coinGold),
-          const SizedBox(width: 8),
+          Icon(icon, size: 18, color: AppThemeColors.coinGold),
+          SizedBox(width: 8),
           Flexible(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
               ),
@@ -185,49 +187,49 @@ class PremiumActiveMembershipCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: AppColors.coinGold.withValues(alpha: 0.7),
+              color: AppThemeColors.coinGold.withValues(alpha: 0.7),
             ),
-            color: AppColors.coinGold.withValues(alpha: 0.1),
+            color: AppThemeColors.coinGold.withValues(alpha: 0.1),
           ),
           child: Row(
             children: [
               Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.coinGold,
+                  color: AppThemeColors.coinGold,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.workspace_premium_rounded,
                   color: Color(0xFF1A1030),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Zaten ${tierLabel.toUpperCase()} üyesiniz',
-                      style: const TextStyle(
-                        color: AppColors.coinGold,
+                      style: TextStyle(
+                        color: AppThemeColors.coinGold,
                         fontWeight: FontWeight.w900,
                         fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       '$daysRemaining gününüz kaldı — uzatmak için dokunun',
                       style: TextStyle(
-                        color: AppColors.textSecondary.withValues(alpha: 0.95),
+                        color: context.colors.onSurfaceVariant.withValues(alpha: 0.95),
                         fontSize: 12,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.coinGold),
+              Icon(Icons.chevron_right_rounded, color: AppThemeColors.coinGold),
             ],
           ),
         ),
@@ -250,22 +252,22 @@ class PremiumBalanceLines extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _line(Icons.monetization_on_rounded, 'Jeton Bakiyeniz:', '$jeton', AppColors.coinGold),
-        const SizedBox(height: 8),
-        _line(Icons.auto_awesome_rounded, 'CFC Bakiyeniz:', '$cfc', const Color(0xFFD8B4FE)),
+        _line(context, Icons.monetization_on_rounded, 'Jeton Bakiyeniz:', '$jeton', AppThemeColors.coinGold),
+        SizedBox(height: 8),
+        _line(context, Icons.auto_awesome_rounded, 'CFC Bakiyeniz:', '$cfc', const Color(0xFFD8B4FE)),
       ],
     );
   }
 
-  Widget _line(IconData icon, String label, String value, Color color) {
+  Widget _line(BuildContext context, IconData icon, String label, String value, Color color) {
     return Row(
       children: [
         Icon(icon, size: 20, color: color),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Text(
           label,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
+          style: TextStyle(
+            color: context.colors.onSurfaceVariant,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -325,7 +327,7 @@ class PremiumTierCard extends StatelessWidget {
               ),
             ),
             if (active) ...[
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 '${package.title} üyesiniz, ${package.daysRemaining ?? 0} gün kaldı, uzatın',
                 style: TextStyle(
@@ -334,7 +336,7 @@ class PremiumTierCard extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Wrap(
               spacing: 6,
               runSpacing: 6,
@@ -351,11 +353,11 @@ class PremiumTierCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(
               '${package.priceJeton} Jeton',
-              style: const TextStyle(
-                color: AppColors.coinGold,
+              style: TextStyle(
+                color: AppThemeColors.coinGold,
                 fontWeight: FontWeight.w900,
                 fontSize: 18,
               ),
@@ -417,7 +419,7 @@ class PremiumTierCard extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.accentPink,
+                        color: AppThemeColors.accentPink,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Row(
@@ -446,11 +448,11 @@ class PremiumTierCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _TierIcon(accent: accent),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(child: details),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     button,
                   ],
                 )
@@ -459,9 +461,9 @@ class PremiumTierCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     _TierIcon(accent: accent),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(child: details),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     button,
                   ],
                 ),
@@ -520,7 +522,7 @@ class _TagPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
+          SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(

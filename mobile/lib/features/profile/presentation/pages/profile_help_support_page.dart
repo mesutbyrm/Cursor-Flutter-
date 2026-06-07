@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,7 +7,6 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/util/json_util.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -93,7 +93,7 @@ class _ProfileHelpSupportPageState extends ConsumerState<ProfileHelpSupportPage>
     final user = ref.watch(authControllerProvider).valueOrNull;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Yardım & Destek',
@@ -105,14 +105,14 @@ class _ProfileHelpSupportPageState extends ConsumerState<ProfileHelpSupportPage>
                 'Merhaba ${user?.display ?? ""}, sorununuzu yazın. '
                 'Ekibimiz @${user?.username ?? "kullanici"} bilgisiyle yanıtlar.',
                 style: TextStyle(
-                  color: AppColors.textSecondary.withValues(alpha: 0.95),
+                  color: context.colors.onSurfaceVariant.withValues(alpha: 0.95),
                   height: 1.4,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 'İletişim: ${Env.siteOrigin}/destek',
-                style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                style: TextStyle(fontSize: 12, color: context.colors.onSurfaceMuted),
               ),
               const SizedBox(height: 16),
               TextField(

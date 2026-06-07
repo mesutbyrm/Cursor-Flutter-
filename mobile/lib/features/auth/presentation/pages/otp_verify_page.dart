@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/config/env.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../widgets/auth_shell.dart';
 
 /// 6 haneli OTP doğrulama — premium PIN girişi.
@@ -18,6 +21,17 @@ class OtpVerifyPage extends StatefulWidget {
 class _OtpVerifyPageState extends State<OtpVerifyPage> {
   final _controllers = List.generate(6, (_) => TextEditingController());
   final _nodes = List.generate(6, (_) => FocusNode());
+
+  @override
+  void initState() {
+    super.initState();
+    if (Env.useMobileAuth) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.go('/auth/forgot-password');
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -71,7 +85,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                 ? '$email adresine gönderilen 6 haneli kod'
                 : 'E-postanıza gönderilen 6 haneli kod',
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(6, (i) {
@@ -83,10 +97,10 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                   textAlign: TextAlign.center,
                   keyboardType: TextInputType.number,
                   maxLength: 1,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: context.colors.onSurface,
                   ),
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
@@ -96,13 +110,13 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: AppColors.accentPurple.withValues(alpha: 0.35),
+                        color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: AppColors.accentPink,
+                        color: AppThemeColors.accentPink,
                         width: 2,
                       ),
                     ),
@@ -112,12 +126,12 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
               );
             }),
           ),
-          const SizedBox(height: 28),
+          SizedBox(height: 28),
           AuthPrimaryButton(
             label: 'Doğrula',
             onPressed: _code.length == 6 ? _verify : null,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           AuthTextLink(
             label: 'Kodu tekrar gönder',
             onPressed: () {

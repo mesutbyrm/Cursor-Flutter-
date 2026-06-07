@@ -1,36 +1,30 @@
 import 'package:flutter/material.dart';
 
-/// Tek renk kaynağı — TikTok × Bigo × Discord × Instagram premium koyu palet.
+import 'app_theme_colors.dart';
+
+/// Marka ve semantik renkler — yüzey/metin için [AppThemeColors] / `context.colors`.
 abstract final class AppColors {
-  // Surfaces
+  static const Color accentPink = AppThemeColors.accentPink;
+  static const Color accentPurple = AppThemeColors.accentPurple;
+  static const Color accentCyan = AppThemeColors.accentCyan;
+  static const Color liveRed = AppThemeColors.liveRed;
+  static const Color onlineGreen = AppThemeColors.onlineGreen;
+  static const Color diamondBlue = AppThemeColors.diamondBlue;
+  static const Color coinGold = AppThemeColors.coinGold;
+  static const Color warning = Color(0xFFFFB347);
+
+  // Geriye dönük koyu sabitler (yeni kod: context.colors)
   static const Color background = Color(0xFF0B0B1E);
   static const Color backgroundElevated = Color(0xFF12121F);
   static const Color surface = Color(0xFF14141C);
   static const Color surfaceElevated = Color(0xFF1C1C26);
   static const Color surfaceGlass = Color(0xCC12121F);
-
-  // Glow backgrounds (discover)
   static const Color bgPurpleGlow = Color(0xFF1A0F3D);
   static const Color bgBlueGlow = Color(0xFF0A1A2E);
-
-  // Brand accents (unified pink — eski AppTheme #FE2C55 ile uyumlu)
-  static const Color accentPink = Color(0xFFFE2C55);
-  static const Color accentPurple = Color(0xFFB832FF);
-  static const Color accentCyan = Color(0xFF25F4EE);
-
-  // Semantic
-  static const Color liveRed = Color(0xFFFF3B5C);
-  static const Color onlineGreen = Color(0xFF3DFF6E);
-  static const Color diamondBlue = Color(0xFF5B8CFF);
-  static const Color coinGold = Color(0xFFFFD54F);
-  static const Color warning = Color(0xFFFFB347);
-
-  // Text
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFFB8B8C8);
   static const Color textMuted = Color(0xFF6E6E82);
 
-  // Gradients
   static const LinearGradient brandGradient = LinearGradient(
     colors: [accentPink, accentPurple],
   );
@@ -49,7 +43,6 @@ abstract final class AppColors {
         BoxShadow(
           color: color.withValues(alpha: 0.45),
           blurRadius: blur,
-          spreadRadius: 0,
         ),
       ];
 }

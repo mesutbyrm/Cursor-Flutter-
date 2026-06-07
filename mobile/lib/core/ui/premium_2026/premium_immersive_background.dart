@@ -37,17 +37,24 @@ class _NoiseOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return IgnorePointer(
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.white.withValues(alpha: 0.02),
-              Colors.transparent,
-              Colors.black.withValues(alpha: 0.12),
-            ],
+            colors: isDark
+                ? [
+                    Colors.white.withValues(alpha: 0.02),
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.12),
+                  ]
+                : [
+                    Colors.white.withValues(alpha: 0.35),
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.04),
+                  ],
           ),
         ),
       ),

@@ -1,10 +1,18 @@
+import 'dart:ui';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/ui/premium_2026/liquid_glass.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
+import '../../../../../core/navigation/wallet_navigation.dart';
+import '../../../../../core/performance/list_perf.dart';
+import '../../../../../core/providers/auth_selectors.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
@@ -39,7 +47,9 @@ class VoiceDiscoverHub2026 extends ConsumerStatefulWidget {
 
 class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
   final _searchCtrl = TextEditingController();
+  final _scroll = ScrollController();
   String _tab = 'discover';
+  int _visibleRooms = ListPerf.defaultPageSize;
 
   static const _tabs = [
     _DiscoverTab(id: 'discover', label: 'Keşfet', icon: Icons.explore_rounded),
@@ -64,9 +74,35 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+  }
+
+  @override
   void dispose() {
     _searchCtrl.dispose();
+    _scroll.removeListener(_onScroll);
+    _scroll.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    if (_scroll.position.pixels >=
+        _scroll.position.maxScrollExtent - ListPerf.preloadThresholdPx) {
+      final total = _filtered.length;
+      if (_visibleRooms < total) {
+        setState(() {
+          _visibleRooms = (_visibleRooms + ListPerf.defaultPageSize)
+              .clamp(0, total);
+        });
+      }
+    }
+  }
+
+  void _resetVisibleRooms() {
+    _visibleRooms = ListPerf.defaultPageSize.clamp(0, _filtered.length);
   }
 
   List<VoiceRoomEntity> get _filtered {
@@ -102,12 +138,33 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     };
   }
 
+  _DiscoverMetrics _metrics(BuildContext context) {
+    final w = MediaQuery.sizeOf(context).width;
+    final compact = w < 360;
+    final tablet = w >= 600;
+    return _DiscoverMetrics(
+      horizontalPad: tablet ? 24.0 : (compact ? 12.0 : 16.0),
+      popularCardWidth: (w * 0.44).clamp(148.0, 200.0),
+      popularRowHeight: tablet ? 240.0 : 220.0,
+      bannerHeight: (w * 0.36).clamp(128.0, 168.0),
+      gridColumns: tablet ? 4 : (w >= 400 ? 4 : 3),
+      storiesHeight: tablet ? 116.0 : 108.0,
+      sectionTitleSize: tablet ? 20.0 : 18.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(authControllerProvider).valueOrNull;
-    final coins = ref.watch(coinBalanceProvider).valueOrNull ?? user?.coinBalance ?? 0;
-    final name = user?.display ?? 'Misafir';
-    final avatar = user?.avatarUrl;
+    final metrics = _metrics(context);
+    final coinBalance =
+        (ref.watch(coinBalanceProvider).valueOrNull ??
+            ref.watch(currentUserCoinBalanceProvider));
+    final name = ref.watch(
+      authControllerProvider.select((a) => a.valueOrNull?.display ?? 'Misafir'),
+    );
+    final avatar = ref.watch(
+      authControllerProvider.select((a) => a.valueOrNull?.avatarUrl),
+    );
     final vipRooms = widget.rooms.where((r) => r.isVipGoldRoom).take(8).toList();
     final popular = [...widget.rooms]
       ..sort((a, b) => b.displayOnline.compareTo(a.displayOnline));
@@ -117,175 +174,300 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(height: widget.topPadding),
-        _DiscoverHeader(
-          userName: name,
-          avatarUrl: avatar,
-          coins: coins,
-          onNotifications: () => context.push('/notifications'),
-          onCoins: () => context.push('/jeton-store'),
+        RepaintBoundary(
+          child: _DiscoverHeader(
+            userName: name,
+            avatarUrl: avatar,
+            coins: coinBalance ?? 0,
+            horizontalPad: metrics.horizontalPad,
+            onNotifications: () => context.push('/notifications'),
+            onCoins: () => openJetonStore(context, ref: ref),
+          ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          padding: EdgeInsets.fromLTRB(metrics.horizontalPad, 12, metrics.horizontalPad, 0),
           child: _SearchBar(
             controller: _searchCtrl,
             onChanged: (v) {
               widget.onSearchChanged(v);
-              setState(() {});
+              setState(_resetVisibleRooms);
             },
           ),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 40,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _tabs.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (context, i) {
-              final t = _tabs[i];
-              final active = _tab == t.id;
-              return _TabChip(
-                tab: t,
-                active: active,
-                onTap: () {
-                  if (t.id == 'vip') {
-                    context.push('/vip-gold');
-                    return;
-                  }
-                  if (t.id == 'pk' && widget.rooms.isNotEmpty) {
-                    final r = widget.rooms.first;
-                    context.push('/voice-room/${r.apiRoomKey}/pk', extra: r);
-                    return;
-                  }
-                  setState(() => _tab = t.id);
-                },
-              );
-            },
+        RepaintBoundary(
+          child: SizedBox(
+            height: 40,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: metrics.horizontalPad),
+              itemCount: _tabs.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, i) {
+                final t = _tabs[i];
+                final active = _tab == t.id;
+                return _TabChip(
+                  tab: t,
+                  active: active,
+                  onTap: () {
+                    if (t.id == 'vip') {
+                      context.push('/vip-gold');
+                      return;
+                    }
+                    if (t.id == 'pk' && widget.rooms.isNotEmpty) {
+                      final r = widget.rooms.first;
+                      context.push('/voice-room/${r.apiRoomKey}/pk', extra: r);
+                      return;
+                    }
+                    setState(() {
+                      _tab = t.id;
+                      _resetVisibleRooms();
+                    });
+                  },
+                );
+              },
+            ),
           ),
         ),
         const SizedBox(height: 14),
-        _LiveStoriesRow(
-          live: live,
-          onOpenRoom: () => showOpenVoiceChatRoomFlow(context, ref),
-          onStreamTap: (s) => openLiveFromDiscover(context, ref, s),
+        RepaintBoundary(
+          child: _LiveStoriesRow(
+            live: live,
+            height: metrics.storiesHeight,
+            horizontalPad: metrics.horizontalPad,
+            onOpenRoom: () => showOpenVoiceChatRoomFlow(context, ref),
+            onStreamTap: (s) => openLiveFromDiscover(context, ref, s),
+          ),
         ),
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-            children: [
-              _NightBanner(
-                onJoin: widget.rooms.isNotEmpty
-                    ? () => widget.onRoomTap(widget.rooms.first)
-                    : null,
-              ),
-              const SizedBox(height: 22),
-              _SectionTitle(title: 'Popüler Odalar', action: 'Tümü'),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 220,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: popular.take(10).length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (context, i) => _PopularRoomCard(
-                    room: popular[i],
-                    index: i,
-                    onTap: () => widget.onRoomTap(popular[i]),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 22),
-              _SectionTitle(title: 'Canlı Yayınlar', action: 'Tümü'),
-              const SizedBox(height: 10),
-              if (live.isEmpty)
-                Text(
-                  'Şu an canlı yayın yok',
-                  style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.9)),
-                )
-              else
-                SizedBox(
-                  height: 140,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: live.length.clamp(0, 12),
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (context, i) => _LiveStreamCard(
-                      stream: live[i],
-                      onTap: () => openLiveFromDiscover(context, ref, live[i]),
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 22),
-              _SectionTitle(title: 'Kategoriler', action: null),
-              const SizedBox(height: 10),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 0.82,
-                ),
-                itemCount: _gridCats.length,
-                itemBuilder: (context, i) {
-                  final c = _gridCats[i];
-                  final count = _roomCountForCat(c.id);
-                  return _CategoryIconTile(
-                    cat: c,
-                    roomLabel: count > 0 ? '${VoiceLiveHeader2026Format.count(count)} oda' : '—',
-                    onTap: () {
-                      if (c.id == 'vip') {
-                        context.push('/vip-gold');
-                      } else {
-                        setState(() => _tab = c.id == 'night' ? 'discover' : c.id);
-                      }
-                    },
-                  );
-                },
-              ),
-              if (vipRooms.isNotEmpty) ...[
-                const SizedBox(height: 22),
-                _SectionTitle(title: 'VIP Odalar', action: 'Tümü'),
-                const SizedBox(height: 10),
-                SizedBox(
-                  height: 120,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: vipRooms.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (context, i) => _VipRoomCard(
-                      room: vipRooms[i],
-                      onTap: () => widget.onRoomTap(vipRooms[i]),
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 16),
-              Text(
-                'Tüm odalar · ${_filtered.length}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textMuted.withValues(alpha: 0.95),
-                ),
-              ),
-              const SizedBox(height: 10),
-              ..._filtered.map(
-                (r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _CompactRoomRow(
-                    room: r,
-                    onTap: () => widget.onRoomTap(r),
-                  ),
-                ),
-              ),
-            ],
+          child: ListView.builder(
+            controller: _scroll,
+            cacheExtent: ListPerf.cacheExtent,
+            padding: EdgeInsets.fromLTRB(
+              metrics.horizontalPad,
+              16,
+              metrics.horizontalPad,
+              100,
+            ),
+            itemCount: _listChildCount(
+              popular: popular,
+              live: live,
+              vipRooms: vipRooms,
+            ),
+            itemBuilder: (context, index) => _buildListChild(
+              context,
+              index: index,
+              metrics: metrics,
+              popular: popular,
+              live: live,
+              vipRooms: vipRooms,
+            ),
           ),
         ),
       ],
     );
+  }
+
+  int _listChildCount({
+    required List<VoiceRoomEntity> popular,
+    required List<LiveStreamEntity> live,
+    required List<VoiceRoomEntity> vipRooms,
+  }) {
+    var n = 8; // banner, titles, horizontals, grid, footer label
+    final roomVisible = _visibleRooms.clamp(0, _filtered.length);
+    return n + roomVisible + (_visibleRooms < _filtered.length ? 1 : 0);
+  }
+
+  Widget _buildListChild(
+    BuildContext context, {
+    required int index,
+    required _DiscoverMetrics metrics,
+    required List<VoiceRoomEntity> popular,
+    required List<LiveStreamEntity> live,
+    required List<VoiceRoomEntity> vipRooms,
+  }) {
+    var i = index;
+    if (i == 0) {
+      return _NightBanner(
+        height: metrics.bannerHeight,
+        onJoin: widget.rooms.isNotEmpty
+            ? () => widget.onRoomTap(widget.rooms.first)
+            : null,
+      );
+    }
+    i--;
+    if (i == 0) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 22, bottom: 10),
+        child: _SectionTitle(
+          title: 'Popüler Odalar',
+          action: 'Tümü',
+          fontSize: metrics.sectionTitleSize,
+        ),
+      );
+    }
+    i--;
+    if (i == 0) {
+      return SizedBox(
+        height: metrics.popularRowHeight,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: popular.take(10).length,
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (context, j) => _PopularRoomCard(
+            room: popular[j],
+            index: j,
+            width: metrics.popularCardWidth,
+            onTap: () => widget.onRoomTap(popular[j]),
+          ),
+        ),
+      );
+    }
+    i--;
+    if (i == 0) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 22, bottom: 10),
+        child: _SectionTitle(
+          title: 'Canlı Yayınlar',
+          action: 'Tümü',
+          fontSize: metrics.sectionTitleSize,
+        ),
+      );
+    }
+    i--;
+    if (i == 0) {
+      if (live.isEmpty) {
+        return Text(
+          'Şu an canlı yayın yok',
+          style: TextStyle(color: context.colors.onSurfaceMuted.withValues(alpha: 0.9)),
+        );
+      }
+      return SizedBox(
+        height: 140,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: live.length.clamp(0, 12),
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (context, j) => _LiveStreamCard(
+            stream: live[j],
+            onTap: () => openLiveFromDiscover(context, ref, live[j]),
+          ),
+        ),
+      );
+    }
+    i--;
+    if (i == 0) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 22, bottom: 10),
+        child: _SectionTitle(
+          title: 'Kategoriler',
+          action: null,
+          fontSize: metrics.sectionTitleSize,
+        ),
+      );
+    }
+    i--;
+    if (i == 0) {
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: metrics.gridColumns,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: metrics.gridColumns >= 4 ? 0.82 : 0.88,
+        ),
+        itemCount: _gridCats.length,
+        itemBuilder: (context, j) {
+          final c = _gridCats[j];
+          final count = _roomCountForCat(c.id);
+          return _CategoryIconTile(
+            cat: c,
+            roomLabel: count > 0 ? '${VoiceLiveHeader2026Format.count(count)} oda' : '—',
+            onTap: () {
+              if (c.id == 'vip') {
+                context.push('/vip-gold');
+              } else {
+                setState(() {
+                  _tab = c.id == 'night' ? 'discover' : c.id;
+                  _resetVisibleRooms();
+                });
+              }
+            },
+          );
+        },
+      );
+    }
+    i--;
+    if (vipRooms.isNotEmpty) {
+      if (i == 0) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 22, bottom: 10),
+          child: _SectionTitle(
+            title: 'VIP Odalar',
+            action: 'Tümü',
+            fontSize: metrics.sectionTitleSize,
+          ),
+        );
+      }
+      i--;
+      if (i == 0) {
+        return SizedBox(
+          height: 120,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: vipRooms.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, j) => _VipRoomCard(
+              room: vipRooms[j],
+              onTap: () => widget.onRoomTap(vipRooms[j]),
+            ),
+          ),
+        );
+      }
+      i--;
+    }
+    if (i == 0) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 16, bottom: 10),
+        child: Text(
+          'Tüm odalar · ${_filtered.length}',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
+          ),
+        ),
+      );
+    }
+    i--;
+    final roomIndex = i;
+    final visible = _visibleRooms.clamp(0, _filtered.length);
+    if (roomIndex < visible) {
+      final r = _filtered[roomIndex];
+      return ListPerf.repaint(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: _CompactRoomRow(
+            room: r,
+            onTap: () => widget.onRoomTap(r),
+          ),
+        ),
+      );
+    }
+    if (roomIndex == visible && _visibleRooms < _filtered.length) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   int _roomCountForCat(String id) {
@@ -312,6 +494,26 @@ void openLiveFromDiscover(
   openLiveStreamNative(context, ref, stream);
 }
 
+class _DiscoverMetrics {
+  const _DiscoverMetrics({
+    required this.horizontalPad,
+    required this.popularCardWidth,
+    required this.popularRowHeight,
+    required this.bannerHeight,
+    required this.gridColumns,
+    required this.storiesHeight,
+    required this.sectionTitleSize,
+  });
+
+  final double horizontalPad;
+  final double popularCardWidth;
+  final double popularRowHeight;
+  final double bannerHeight;
+  final int gridColumns;
+  final double storiesHeight;
+  final double sectionTitleSize;
+}
+
 class _DiscoverTab {
   const _DiscoverTab({required this.id, required this.label, required this.icon});
   final String id;
@@ -332,6 +534,7 @@ class _DiscoverHeader extends StatelessWidget {
     required this.userName,
     required this.avatarUrl,
     required this.coins,
+    required this.horizontalPad,
     required this.onNotifications,
     required this.onCoins,
   });
@@ -339,14 +542,27 @@ class _DiscoverHeader extends StatelessWidget {
   final String userName;
   final String? avatarUrl;
   final int coins;
+  final double horizontalPad;
   final VoidCallback onNotifications;
   final VoidCallback onCoins;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 12, 0),
-      child: Row(
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: DiscoverPremiumVisual.glassBlur,
+          sigmaY: DiscoverPremiumVisual.glassBlur,
+        ),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(horizontalPad, 8, horizontalPad - 4, 10),
+          decoration: BoxDecoration(
+            color: DiscoverPremiumVisual.glassFill,
+            border: Border(
+              bottom: BorderSide(color: DiscoverPremiumVisual.glassBorder),
+            ),
+          ),
+          child: Row(
         children: [
           Stack(
             clipBehavior: Clip.none,
@@ -405,7 +621,7 @@ class _DiscoverHeader extends StatelessWidget {
                   'Premium keşfet',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textMuted.withValues(alpha: 0.95),
+                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
                   ),
                 ),
               ],
@@ -439,6 +655,8 @@ class _DiscoverHeader extends StatelessWidget {
             icon: const Icon(Icons.notifications_none_rounded),
           ),
         ],
+          ),
+        ),
       ),
     );
   }
@@ -452,26 +670,23 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
+    return LiquidGlass(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      borderRadius: BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+      blur: DiscoverPremiumVisual.glassBlur,
       child: Row(
         children: [
-          Icon(Icons.search_rounded, color: Colors.white.withValues(alpha: 0.5)),
+          Icon(Icons.search_rounded, color: Colors.white.withValues(alpha: 0.65)),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
               controller: controller,
               onChanged: onChanged,
-              style: const TextStyle(fontSize: 14),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               decoration: InputDecoration(
                 hintText: 'Oda, kullanıcı veya kategori ara…',
                 hintStyle: TextStyle(
-                  color: AppColors.textMuted.withValues(alpha: 0.85),
+                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
                   fontSize: 13,
                 ),
                 border: InputBorder.none,
@@ -503,14 +718,15 @@ class _TabChip extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            gradient: active ? VoiceRoomTokens.fabGradient : null,
-            color: active ? null : Colors.white.withValues(alpha: 0.06),
+            gradient: active ? DiscoverPremiumVisual.brandGradient : null,
+            color: active ? null : DiscoverPremiumVisual.glassFill,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: active
-                  ? Colors.transparent
-                  : Colors.white.withValues(alpha: 0.12),
+                  ? DiscoverPremiumVisual.secondary.withValues(alpha: 0.35)
+                  : DiscoverPremiumVisual.glassBorder,
             ),
+            boxShadow: active ? DiscoverPremiumVisual.cardGlow(pressed: true) : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -536,21 +752,25 @@ class _TabChip extends StatelessWidget {
 class _LiveStoriesRow extends StatelessWidget {
   const _LiveStoriesRow({
     required this.live,
+    required this.height,
+    required this.horizontalPad,
     required this.onOpenRoom,
     required this.onStreamTap,
   });
 
   final List<LiveStreamEntity> live;
+  final double height;
+  final double horizontalPad;
   final VoidCallback onOpenRoom;
   final ValueChanged<LiveStreamEntity> onStreamTap;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 108,
+      height: height,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.symmetric(horizontal: horizontalPad),
         children: [
           _StoryOpenRoom(onTap: onOpenRoom),
           const SizedBox(width: 12),
@@ -579,8 +799,8 @@ class _StoryOpenRoom extends StatelessWidget {
             height: 64,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: VoiceRoomTokens.fabGradient,
-              boxShadow: VoiceRoomTokens.neonGlow(VoiceRoomTokens.neonPurple),
+              gradient: DiscoverPremiumVisual.brandGradient,
+              boxShadow: DiscoverPremiumVisual.cardGlow(),
             ),
             child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
           ),
@@ -613,7 +833,7 @@ class _StoryLiveItem extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
-                colors: [AppColors.liveRed, VoiceRoomTokens.neonPink],
+                colors: [AppThemeColors.liveRed, VoiceRoomTokens.neonPink],
               ),
             ),
             child: CircleAvatar(
@@ -632,7 +852,7 @@ class _StoryLiveItem extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.liveRed,
+              color: AppThemeColors.liveRed,
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Text(
@@ -655,7 +875,7 @@ class _StoryLiveItem extends StatelessWidget {
             VoiceLiveHeader2026Format.count(stream.viewerCount),
             style: TextStyle(
               fontSize: 9,
-              color: AppColors.textMuted.withValues(alpha: 0.9),
+              color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
             ),
           ),
         ],
@@ -665,19 +885,24 @@ class _StoryLiveItem extends StatelessWidget {
 }
 
 class _NightBanner extends StatelessWidget {
-  const _NightBanner({required this.onJoin});
+  const _NightBanner({required this.height, required this.onJoin});
+
+  final double height;
   final VoidCallback? onJoin;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 140,
+      height: height,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
         gradient: const LinearGradient(
-          colors: [Color(0xFF5B2D9E), Color(0xFF1A0B3D)],
+          colors: [
+            DiscoverPremiumVisual.primary,
+            DiscoverPremiumVisual.backgroundMid,
+          ],
         ),
-        boxShadow: VoiceRoomTokens.neonGlow(VoiceRoomTokens.neonPurple, blur: 18),
+        boxShadow: DiscoverPremiumVisual.cardGlow(),
       ),
       child: Stack(
         children: [
@@ -734,10 +959,15 @@ class _NightBanner extends StatelessWidget {
 }
 
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.title, this.action});
+  const _SectionTitle({
+    required this.title,
+    this.action,
+    this.fontSize = 18,
+  });
 
   final String title;
   final String? action;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -745,7 +975,7 @@ class _SectionTitle extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: fontSize),
         ),
         const Spacer(),
         if (action != null)
@@ -754,7 +984,7 @@ class _SectionTitle extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 12,
-              color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.95),
+              color: DiscoverPremiumVisual.secondary.withValues(alpha: 0.95),
             ),
           ),
       ],
@@ -766,11 +996,13 @@ class _PopularRoomCard extends StatelessWidget {
   const _PopularRoomCard({
     required this.room,
     required this.index,
+    required this.width,
     required this.onTap,
   });
 
   final VoiceRoomEntity room;
   final int index;
+  final double width;
   final VoidCallback onTap;
 
   String get _badge => switch (index % 4) {
@@ -781,7 +1013,7 @@ class _PopularRoomCard extends StatelessWidget {
       };
 
   Color get _badgeColor => switch (_badge) {
-        'Sıcak' => AppColors.liveRed,
+        'Sıcak' => AppThemeColors.liveRed,
         'VIP' => VipGoldTokens.goldMid,
         'Gece' => VoiceRoomTokens.neonPurple,
         _ => VoiceRoomTokens.neonBlue,
@@ -791,19 +1023,23 @@ class _PopularRoomCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = room.backgroundImageUrl;
     return SizedBox(
-      width: 160,
+      width: width,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius:
+              BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              color: Colors.white.withValues(alpha: 0.06),
+              borderRadius:
+                  BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+              color: DiscoverPremiumVisual.glassFill,
+              boxShadow: DiscoverPremiumVisual.cardGlow(),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius:
+                  BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -864,7 +1100,7 @@ class _PopularRoomCard extends StatelessWidget {
                         Row(
                           children: [
                             Icon(Icons.people_alt_rounded,
-                                size: 12, color: AppColors.onlineGreen),
+                                size: 12, color: AppThemeColors.onlineGreen),
                             const SizedBox(width: 4),
                             Text(
                               VoiceLiveHeader2026Format.count(room.displayOnline),
@@ -918,9 +1154,19 @@ class _LiveStreamCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+          borderRadius:
+              BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius:
+                  BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+              boxShadow: DiscoverPremiumVisual.cardGlow(
+                color: AppThemeColors.liveRed,
+              ),
+            ),
+            child: ClipRRect(
+            borderRadius:
+                BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -962,7 +1208,7 @@ class _LiveStreamCard extends StatelessWidget {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.liveRed,
+                              color: AppThemeColors.liveRed,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: const Text(
@@ -1006,6 +1252,7 @@ class _LiveStreamCard extends StatelessWidget {
               ],
             ),
           ),
+          ),
         ),
       ),
     );
@@ -1029,13 +1276,14 @@ class _CategoryIconTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            color: DiscoverPremiumVisual.glassFill,
+            borderRadius: BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+            border: Border.all(color: DiscoverPremiumVisual.glassBorder),
+            boxShadow: DiscoverPremiumVisual.cardGlow(color: cat.color),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1056,7 +1304,7 @@ class _CategoryIconTile extends StatelessWidget {
                 roomLabel,
                 style: TextStyle(
                   fontSize: 8,
-                  color: AppColors.textMuted.withValues(alpha: 0.85),
+                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
                 ),
               ),
             ],
@@ -1081,10 +1329,13 @@ class _VipRoomCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius:
+              BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius:
+                  BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+              boxShadow: DiscoverPremiumVisual.cardGlow(color: VipGoldTokens.goldMid),
               gradient: LinearGradient(
                 colors: [
                   VipGoldTokens.goldDeep.withValues(alpha: 0.5),
@@ -1173,10 +1424,16 @@ class _CompactRoomRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
         child: Container(
           padding: const EdgeInsets.all(12),
-          decoration: VoiceRoomTokens.glassCard(radius: 14),
+          decoration: BoxDecoration(
+            color: DiscoverPremiumVisual.glassFill,
+            borderRadius:
+                BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+            border: Border.all(color: DiscoverPremiumVisual.glassBorder),
+            boxShadow: DiscoverPremiumVisual.cardGlow(),
+          ),
           child: Row(
             children: [
               Text(room.icon ?? '🎤', style: const TextStyle(fontSize: 28)),
@@ -1193,7 +1450,7 @@ class _CompactRoomRow extends StatelessWidget {
                       '${VoiceLiveHeader2026Format.count(room.displayOnline)} çevrimiçi',
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textMuted.withValues(alpha: 0.9),
+                        color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                       ),
                     ),
                   ],

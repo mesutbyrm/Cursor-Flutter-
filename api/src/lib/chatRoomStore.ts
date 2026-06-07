@@ -2,6 +2,10 @@ import { randomUUID } from "node:crypto";
 import type { User } from "@prisma/client";
 import { prisma } from "./prisma";
 import {
+  searchMusicViaYoutubeApi,
+  toLegacyYoutubeHits,
+} from "./youtubeMusicSearch";
+import {
   canModerateRank,
   fullControlRank,
   parseStaffRank,
@@ -57,10 +61,10 @@ const SITE_BACKGROUNDS = [
   "https://canlifal.com/images/voice-bg-4.jpg",
   "https://canlifal.com/images/voice-bg-5.jpg",
   "https://canlifal.com/images/voice-bg-6.jpg",
-  "https://canlifal.com/images/chat-bg-1.jpg",
-  "https://canlifal.com/images/chat-bg-2.jpg",
-  "https://canlifal.com/uploads/voice-bg/default.jpg",
-  "https://canlifal.com/apple-touch-icon.png",
+  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80",
+  "https://images.unsplash.com/photo-1579546929518-9e396f3cc760?w=1200&q=80",
+  "https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&q=80",
+  "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=1200&q=80",
 ];
 
 const rooms: ChatRoomRow[] = [
@@ -88,6 +92,7 @@ const messages = new Map<string, ChatRoomMessageRow[]>();
 const presence = new Map<string, Map<string, ChatPresenceRow>>();
 const speakRequests = new Map<string, Set<string>>();
 const roomBans = new Map<string, Set<string>>();
+const roomBannedWords = new Map<string, Set<string>>();
 const djByRoom = new Map<
   string,
   { activeDjId: string | null; musicUrl: string | null; playing: boolean }
@@ -281,7 +286,11 @@ export function unbanRoomUser(roomId: string, actor: User, targetUserId: string)
   return { ok: true as const };
 }
 
-export async function joinPresence(roomId: string, user: User) {
+export async function joinPresence(
+  roomId: string,
+  user: User,
+  opts?: { nickname?: string | null },
+) {
   const room = getChatRoom(roomId);
   if (!room) return null;
   if (isRoomBanned(roomId, user.id)) {
@@ -295,8 +304,12 @@ export async function joinPresence(roomId: string, user: User) {
       : priv.dj
         ? "dj"
         : "listener";
+  const customNick = opts?.nickname?.trim().slice(0, 32);
+  const base = toChatUser(user, chatRole);
   const row: ChatPresenceRow = {
-    ...toChatUser(user, chatRole),
+    ...base,
+    nickname: customNick || base.nickname,
+    name: customNick || base.name,
     seatIndex: priv.owner || priv.admin ? 1 : null,
     isSpeaking: priv.owner || priv.admin,
     joinedAt: Date.now(),
@@ -351,7 +364,7 @@ function tryHandleRoomCommand(
 ): ChatRoomMessageRow | null {
   let cmd = raw.trim();
   if (cmd.startsWith("!")) cmd = `/${cmd.slice(1)}`;
-  if (!cmd.startsWith("/")) return null;
+  else if (!cmd.startsWith("/")) return null;
   const priv = roomPrivileges(actor, room);
   const parts = cmd.split(/\s+/).filter(Boolean);
   const head = (parts[0] ?? "").toLowerCase();
@@ -383,6 +396,77 @@ function tryHandleRoomCommand(
 
   if (head === "/muzik" || head === "/music") {
     return system("🎵 Müzik kuyruğu «Müzik Aç» veya DJ ayarlarından yönetilir.");
+  }
+
+  if (head === "/istek") {
+    const song = parts.slice(1).join(" ").trim();
+    if (!song) {
+      return system(
+        "🎵 Şarkı isteği: sağdaki ♫ veya «Müzik Aç» ile ara. Her istek 10 jeton.",
+      );
+    }
+    return system(
+      `🎵 Şarkı isteği alındı: «${song}» — işleniyor…`,
+    );
+  }
+
+  if (head === "/kural" || head === "/kurallar") {
+    const rules =
+      room.rules?.trim() ||
+      room.descTr?.trim() ||
+      "Saygılı olun, spam yapmayın, reklam yasaktır.";
+    return system(`📜 Oda kuralları:\n${rules}`);
+  }
+
+  if (head === "/bilgi") {
+    return system(
+      `ℹ️ Oda: ${room.nameTr} · ID: ${room.slug}\nÇevrimiçi: ${room.onlineCount}`,
+    );
+  }
+
+  if (head === "/yardim" || head === "/help") {
+    return system(
+      "📖 Komutlar: !istek, !kural, !bilgi, !yardım · Yetkililer: !ban, !sessiz, !at, !temizle, !duyuru, !yetki",
+    );
+  }
+
+  if (head === "/ban") {
+    if (!priv.canModerate && !priv.owner) {
+      return system("⚠️ Ban için yetkiniz yok.");
+    }
+    const target = parts[1]?.replace(/^@/, "") ?? "";
+    if (!target) return system("⚠️ Kullanım: !ban kullanıcı");
+    return system(`⛔ Ban isteği: ${target} (mobil: kullanıcı menüsünden onaylayın)`);
+  }
+
+  if (head === "/at" || head === "/kick") {
+    if (!priv.canModerate && !priv.owner) {
+      return system("⚠️ Atma için yetkiniz yok.");
+    }
+    const target = parts[1]?.replace(/^@/, "") ?? "";
+    if (!target) return system("⚠️ Kullanım: !at kullanıcı");
+    return system(`👢 ${target} odadan atıldı (simülasyon — REST ban önerilir)`);
+  }
+
+  if (head === "/sessiz" || head === "/mute") {
+    if (!priv.canModerate && !priv.owner) {
+      return system("⚠️ Susturma için yetkiniz yok.");
+    }
+    const target = parts[1]?.replace(/^@/, "") ?? "";
+    if (!target) return system("⚠️ Kullanım: !sessiz kullanıcı");
+    return system(`🔇 ${target} 30 dakika susturuldu (kayıt)`);
+  }
+
+  if (head === "/yetki") {
+    if (!priv.canModerate && !priv.owner) {
+      return system("⚠️ Rol vermek için yetkiniz yok.");
+    }
+    const target = parts[1]?.replace(/^@/, "") ?? "";
+    const sym = parts[2] ?? "";
+    if (!target || !sym) {
+      return system("⚠️ Kullanım: !yetki kullanıcı sembol (~ % & @ +)");
+    }
+    return system(`✅ ${target} rol sembolü: ${sym}`);
   }
 
   return null;
@@ -445,6 +529,48 @@ export async function createVoiceChatRoom(
   return { ok: true as const, room: row, newBalance: dbUser.coins - cost };
 }
 
+function bannedWordsForRoom(roomId: string) {
+  const id = resolveRoomId(roomId);
+  let set = roomBannedWords.get(id);
+  if (!set) {
+    set = new Set();
+    roomBannedWords.set(id, set);
+  }
+  return set;
+}
+
+export function listRoomBannedWords(roomId: string): string[] {
+  return [...bannedWordsForRoom(roomId)].sort();
+}
+
+export function addRoomBannedWord(roomId: string, actor: User, word: string) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  const priv = roomPrivileges(actor, room);
+  if (!priv.canModerate) return { ok: false as const, error: "Yetki yok" };
+  const w = word.trim().toLowerCase();
+  if (w.length < 2) return { ok: false as const, error: "Kelime çok kısa" };
+  bannedWordsForRoom(roomId).add(w);
+  return { ok: true as const, words: listRoomBannedWords(roomId) };
+}
+
+export function removeRoomBannedWord(roomId: string, actor: User, word: string) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  const priv = roomPrivileges(actor, room);
+  if (!priv.canModerate) return { ok: false as const, error: "Yetki yok" };
+  bannedWordsForRoom(roomId).delete(word.trim().toLowerCase());
+  return { ok: true as const, words: listRoomBannedWords(roomId) };
+}
+
+function containsBannedWord(roomId: string, text: string) {
+  const lower = text.toLowerCase();
+  for (const w of bannedWordsForRoom(roomId)) {
+    if (w.length >= 2 && lower.includes(w)) return true;
+  }
+  return false;
+}
+
 export async function addTextMessage(roomId: string, user: User, content: string) {
   const trimmed = content.trim();
   if (!trimmed) return null;
@@ -452,8 +578,58 @@ export async function addTextMessage(roomId: string, user: User, content: string
   const room = getChatRoom(roomId);
   if (!room) return null;
   const priv = roomPrivileges(user, room);
+  let cmd = trimmed;
+  if (cmd.startsWith("!")) cmd = `/${cmd.slice(1)}`;
+  const head = (cmd.split(/\s+/).filter(Boolean)[0] ?? "").toLowerCase();
+  if (head === "/istek") {
+    const song = cmd.replace(/^\/istek\s*/i, "").trim();
+    if (song.length >= 2) {
+      const hits = await searchYoutube(song);
+      if (hits.length > 0) {
+        const hit = hits[0]!;
+        const result = await requestMusicQueue(roomId, user, {
+          title: hit.title,
+          youtubeUrl: hit.url,
+          thumbUrl: hit.thumbUrl ?? null,
+          skipPayment: true,
+          priority: false,
+        });
+        if (result.ok) {
+          return pushMessage(roomId, {
+            id: randomUUID(),
+            content: trimmed,
+            createdAt: new Date().toISOString(),
+            user: toChatUser(
+              user,
+              priv.admin ? "admin" : priv.owner ? "owner" : "listener",
+            ),
+          });
+        }
+        return pushMessage(roomId, {
+          id: randomUUID(),
+          content: `⚠️ ${result.error ?? "Şarkı isteği başarısız"}`,
+          createdAt: new Date().toISOString(),
+          user: toChatUser(user, "listener"),
+        });
+      }
+      return pushMessage(roomId, {
+        id: randomUUID(),
+        content: `⚠️ «${song}» için sonuç bulunamadı.`,
+        createdAt: new Date().toISOString(),
+        user: toChatUser(user, "listener"),
+      });
+    }
+  }
   const commandRow = tryHandleRoomCommand(room, user, roomId, trimmed);
   if (commandRow) return commandRow;
+  if (!priv.canModerate && containsBannedWord(roomId, trimmed)) {
+    return pushMessage(roomId, {
+      id: randomUUID(),
+      content: "⚠️ Mesajınız yasaklı kelime içeriyor.",
+      createdAt: new Date().toISOString(),
+      user: toChatUser(user, "listener"),
+    });
+  }
   const row = pushMessage(roomId, {
     id: randomUUID(),
     content: trimmed,
@@ -508,31 +684,62 @@ export function getDjState(roomId: string, user: User | null) {
       p.chatRole === "admin" ||
       (room?.djUserIds.includes(p.id) ?? false),
   );
+  const settings = getRoomMusicSettings(roomId);
+  const queue = listMusicQueue(roomId);
+  const playing = Boolean(
+    dj.playing && (dj.musicUrl || queue.length > 0),
+  );
+  const isDj =
+    Boolean(priv?.dj) ||
+    (room?.djUserIds.includes(user?.id ?? "") ?? false);
+  const canRequestMusic =
+    settings.musicEnabled &&
+    Boolean(
+      user &&
+        (isDj ||
+          priv?.owner ||
+          priv?.admin ||
+          (user.coins ?? 0) >= settings.musicRequestCost),
+    );
   return {
     djUsers,
     activeDjId: dj.activeDjId,
     musicUrl: dj.musicUrl,
-    playing: dj.playing,
+    playing,
+    backgroundImage: room?.backgroundImage ?? null,
     ownerPresent: room?.ownerId
       ? roomMap(roomId).has(room.ownerId)
       : false,
     canPlayMusic: Boolean(priv?.owner || priv?.admin || priv?.dj),
+    canRequestMusic,
     isOwner: Boolean(priv?.owner),
-    musicQueue: listMusicQueue(roomId),
-    musicRequestCost: MUSIC_REQUEST_JETON,
+    musicQueue: queue,
+    nowPlaying: queue.length > 0 ? queue[0]! : null,
+    musicRequestCost: settings.musicRequestCost,
+    maxMusicQueue: settings.maxQueueLength,
+    musicEnabled: settings.musicEnabled,
     maxDj: 5,
   };
 }
 
-export function setDjMusic(roomId: string, user: User, musicUrl: string | null, playing: boolean) {
+export async function setDjMusic(
+  roomId: string,
+  user: User,
+  musicUrl: string | null,
+  playing: boolean,
+) {
   const room = getChatRoom(roomId);
   if (!room) return null;
   const priv = roomPrivileges(user, room);
   if (!priv.owner && !priv.admin && !priv.dj) return null;
+  let resolved = musicUrl;
+  if (resolved && /youtube\.com|youtu\.be/i.test(resolved)) {
+    resolved = (await resolveYoutubeStreamUrl(resolved)) ?? resolved;
+  }
   const next = {
     activeDjId: user.id,
-    musicUrl,
-    playing: playing && Boolean(musicUrl),
+    musicUrl: resolved,
+    playing: playing && Boolean(resolved),
   };
   const key = resolveRoomId(roomId);
   djByRoom.set(key, next);
@@ -559,6 +766,68 @@ export async function loadUser(userId: string | undefined) {
 }
 
 export const MUSIC_REQUEST_JETON = 10;
+export const DEFAULT_MAX_MUSIC_QUEUE = 20;
+
+export type RoomMusicSettings = {
+  musicEnabled: boolean;
+  musicRequestCost: number;
+  maxQueueLength: number;
+};
+
+const musicSettingsByRoom = new Map<string, RoomMusicSettings>();
+
+export function getRoomMusicSettings(roomId: string): RoomMusicSettings {
+  const key = resolveRoomId(roomId);
+  return (
+    musicSettingsByRoom.get(key) ?? {
+      musicEnabled: true,
+      musicRequestCost: MUSIC_REQUEST_JETON,
+      maxQueueLength: DEFAULT_MAX_MUSIC_QUEUE,
+    }
+  );
+}
+
+export function setRoomMusicSettings(
+  roomId: string,
+  actor: User,
+  input: Partial<RoomMusicSettings>,
+) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  const priv = roomPrivileges(actor, room);
+  if (!priv.owner) return { ok: false as const, error: "Yalnızca oda sahibi ayarlayabilir" };
+  const key = resolveRoomId(roomId);
+  const prev = getRoomMusicSettings(roomId);
+  const next: RoomMusicSettings = {
+    musicEnabled: input.musicEnabled ?? prev.musicEnabled,
+    musicRequestCost: Math.min(
+      500,
+      Math.max(1, input.musicRequestCost ?? prev.musicRequestCost),
+    ),
+    maxQueueLength: Math.min(
+      50,
+      Math.max(1, input.maxQueueLength ?? prev.maxQueueLength),
+    ),
+  };
+  musicSettingsByRoom.set(key, next);
+  return { ok: true as const, settings: next };
+}
+
+export const POPULAR_MUSIC_SUGGESTIONS = [
+  {
+    title: "Tutamıyorum Zamanı",
+    artist: "Müslüm Gürses",
+    query: "Müslüm Gürses Tutamıyorum Zamanı",
+    videoId: "c9Fq8_Q5Wx8",
+  },
+  { title: "Beni Yak", artist: "Duman", query: "Duman Beni Yak", videoId: "v0Kpfr2E3W0" },
+  { title: "Yalan", artist: "Tarkan", query: "Tarkan Yalan", videoId: "nboC0smLRsE" },
+  { title: "Gülümse", artist: "Sezen Aksu", query: "Sezen Aksu Gülümse", videoId: "0p8yZ7-m3eY" },
+  { title: "Aşk", artist: "Tarkan", query: "Tarkan Aşk", videoId: "1VRmoDGxiWQ" },
+  { title: "Kum Gibi", artist: "Ahmet Kaya", query: "Ahmet Kaya Kum Gibi", videoId: "4sakaTjeb50" },
+  { title: "Islak Islak", artist: "Ferdi Tayfur", query: "Ferdi Tayfur Islak Islak", videoId: "m1Q9Z8v5_2E" },
+  { title: "Şımarık", artist: "Tarkan", query: "Tarkan Şımarık", videoId: "7LZG9RXx0pY" },
+];
 
 export type MusicQueueItem = {
   id: string;
@@ -567,6 +836,8 @@ export type MusicQueueItem = {
   thumbUrl?: string | null;
   requestedBy: ChatRoomUser;
   createdAt: string;
+  giftTo?: string | null;
+  note?: string | null;
 };
 
 const musicQueues = new Map<string, MusicQueueItem[]>();
@@ -588,21 +859,56 @@ export function listMusicQueue(roomId: string) {
 export async function requestMusicQueue(
   roomId: string,
   user: User,
-  input: { title: string; youtubeUrl: string; thumbUrl?: string | null },
+  input: {
+    title: string;
+    youtubeUrl: string;
+    thumbUrl?: string | null;
+    giftTo?: string | null;
+    note?: string | null;
+    /** Ücretli müzik ikonu isteği — çalan şarkının hemen arkasına */
+    priority?: boolean;
+    /** Chat !istek — jeton düşülmez */
+    skipPayment?: boolean;
+  },
 ) {
   const room = getChatRoom(roomId);
   if (!room) return { ok: false as const, error: "Oda bulunamadı" };
   const url = input.youtubeUrl.trim();
   if (!url) return { ok: false as const, error: "YouTube bağlantısı gerekli" };
+  const settings = getRoomMusicSettings(roomId);
+  if (!settings.musicEnabled) {
+    return { ok: false as const, error: "DJ sistemi bu odada kapalı" };
+  }
+  const priv = roomPrivileges(user, room);
+  const isDj =
+    priv.dj || priv.owner || priv.admin || room.djUserIds.includes(user.id);
   const dbUser = await loadUser(user.id);
   if (!dbUser) return { ok: false as const, error: "Oturum gerekli" };
-  if (dbUser.coins < MUSIC_REQUEST_JETON) {
-    return { ok: false as const, error: `Yetersiz jeton (${MUSIC_REQUEST_JETON} gerekli)` };
+  const cost = settings.musicRequestCost;
+  const skipPayment = input.skipPayment === true || isDj;
+  if (!skipPayment && dbUser.coins < cost) {
+    return {
+      ok: false as const,
+      error: `Bu şarkıyı istemek için en az ${cost} jeton gerekli.`,
+    };
   }
-  const updated = await prisma.user.update({
-    where: { id: user.id },
-    data: { coins: { decrement: MUSIC_REQUEST_JETON } },
-  });
+  const listBefore = musicQueueList(roomId);
+  if (listBefore.length >= settings.maxQueueLength) {
+    return {
+      ok: false as const,
+      error: `Kuyruk dolu (maks. ${settings.maxQueueLength})`,
+    };
+  }
+  let newBalance = dbUser.coins;
+  if (!skipPayment) {
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: { coins: { decrement: cost } },
+    });
+    newBalance = updated.coins;
+  }
+  const giftTo = input.giftTo?.trim() || null;
+  const note = input.note?.trim() || null;
   const item: MusicQueueItem = {
     id: randomUUID(),
     title: input.title.trim() || "Şarkı",
@@ -610,23 +916,136 @@ export async function requestMusicQueue(
     thumbUrl: input.thumbUrl ?? null,
     requestedBy: toChatUser(user, "listener"),
     createdAt: new Date().toISOString(),
+    giftTo,
+    note,
   };
   const list = musicQueueList(roomId);
-  list.push(item);
-  if (list.length > 50) list.splice(0, list.length - 50);
-  const canonical = resolveRoomId(roomId);
+  const key = resolveRoomId(roomId);
+  const djNow = djByRoom.get(key);
+  const wasPlaying = Boolean(djNow?.playing && djNow.musicUrl);
+  const usePriority = input.priority === true && !isDj;
+  let queuePosition: number;
+  if (usePriority && wasPlaying && list.length > 0) {
+    list.splice(1, 0, item);
+    queuePosition = 2;
+  } else if (usePriority && !wasPlaying) {
+    list.unshift(item);
+    queuePosition = 1;
+  } else {
+    list.push(item);
+    queuePosition = list.length;
+  }
+  if (list.length > settings.maxQueueLength) {
+    list.splice(0, list.length - settings.maxQueueLength);
+  }
+  const canonical = key;
+  const displayName = item.requestedBy.name;
+  if (usePriority) {
+    pushMessage(canonical, {
+      id: randomUUID(),
+      content: `⚡ Öncelikli istek: «${item.title}» (çalan şarkının ardından)`,
+      createdAt: new Date().toISOString(),
+      user: item.requestedBy,
+    });
+  }
   pushMessage(canonical, {
     id: randomUUID(),
-    content: `🎵 ${item.requestedBy.name} sıraya ekledi: ${item.title} (−${MUSIC_REQUEST_JETON} jeton)`,
+    content: `🎵 ${displayName} "${item.title}" şarkısını istedi.`,
     createdAt: new Date().toISOString(),
     user: item.requestedBy,
   });
+  if (giftTo) {
+    pushMessage(canonical, {
+      id: randomUUID(),
+      content: `🎁 ${displayName} bu şarkıyı tüm odaya armağan etti.`,
+      createdAt: new Date().toISOString(),
+      user: item.requestedBy,
+    });
+  }
+  pushMessage(canonical, {
+    id: randomUUID(),
+    content: `📀 Şarkı kuyruğa eklendi.`,
+    createdAt: new Date().toISOString(),
+    user: item.requestedBy,
+  });
+  pushMessage(canonical, {
+    id: randomUUID(),
+    content: `🔢 Sıra: #${queuePosition}`,
+    createdAt: new Date().toISOString(),
+    user: item.requestedBy,
+  });
+  await tryStartMusicFromQueue(roomId);
+  const dj = djByRoom.get(key);
   return {
     ok: true as const,
     item,
     queue: [...list],
-    newBalance: updated.coins,
+    queuePosition,
+    startedImmediately: !wasPlaying && queuePosition === 1,
+    newBalance,
+    musicUrl: dj?.musicUrl ?? null,
+    playing: dj?.playing ?? false,
   };
+}
+
+function canManageMusicQueue(user: User, room: ChatRoomRow) {
+  const priv = roomPrivileges(user, room);
+  return priv.owner || priv.canModerate || priv.admin || priv.dj;
+}
+
+export async function skipMusicQueue(roomId: string, user: User) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  if (!canManageMusicQueue(user, room)) {
+    return { ok: false as const, error: "Şarkı atlama yetkisi yok" };
+  }
+  await advanceMusicQueue(roomId);
+  pushMessage(resolveRoomId(roomId), {
+    id: randomUUID(),
+    content: `⏭️ ${user.displayName ?? user.username} şarkıyı atladı.`,
+    createdAt: new Date().toISOString(),
+  });
+  return { ok: true as const, queue: listMusicQueue(roomId) };
+}
+
+export function removeMusicQueueItem(
+  roomId: string,
+  user: User,
+  itemId: string,
+) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  if (!canManageMusicQueue(user, room)) {
+    return { ok: false as const, error: "Yetki yok" };
+  }
+  const list = musicQueueList(roomId);
+  const idx = list.findIndex((i) => i.id === itemId);
+  if (idx < 0) return { ok: false as const, error: "Şarkı bulunamadı" };
+  const removed = list.splice(idx, 1)[0];
+  pushMessage(resolveRoomId(roomId), {
+    id: randomUUID(),
+    content: `🗑️ Kuyruktan kaldırıldı: ${removed.title}`,
+    createdAt: new Date().toISOString(),
+  });
+  return { ok: true as const, queue: [...list] };
+}
+
+export function clearMusicQueue(roomId: string, user: User) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  if (!canManageMusicQueue(user, room)) {
+    return { ok: false as const, error: "Yetki yok" };
+  }
+  const list = musicQueueList(roomId);
+  list.splice(0, list.length);
+  const key = resolveRoomId(roomId);
+  djByRoom.set(key, { activeDjId: null, musicUrl: null, playing: false });
+  pushMessage(key, {
+    id: randomUUID(),
+    content: `🧹 Müzik kuyruğu temizlendi.`,
+    createdAt: new Date().toISOString(),
+  });
+  return { ok: true as const, queue: [] as MusicQueueItem[] };
 }
 
 export function addRoomDj(roomId: string, actor: User, targetUserId: string) {
@@ -668,59 +1087,103 @@ export type YoutubeSearchHit = {
   url: string;
   thumbUrl?: string;
   uploader?: string;
+  duration?: string;
 };
 
 export async function searchYoutube(query: string): Promise<YoutubeSearchHit[]> {
-  const q = query.trim();
-  if (q.length < 2) return [];
-  if (/youtube\.com|youtu\.be/i.test(q)) {
-    const id = extractYoutubeId(q);
-    if (!id) return [];
-    return [
-      {
-        videoId: id,
-        title: "YouTube bağlantısı",
-        url: `https://www.youtube.com/watch?v=${id}`,
-        thumbUrl: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-      },
-    ];
-  }
   try {
-    const res = await fetch(
-      `https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(q)}&filter=music_songs`,
-      { headers: { Accept: "application/json" } },
-    );
-    if (!res.ok) return [];
-    const data = (await res.json()) as { items?: Array<Record<string, unknown>> };
-    const items = data.items ?? [];
-    return items.slice(0, 12).flatMap((row) => {
-      const rawUrl = String(row.url ?? "");
-      let id = "";
-      const vMatch = rawUrl.match(/[?&]v=([a-zA-Z0-9_-]{6,})/);
-      if (vMatch) id = vMatch[1];
-      else if (rawUrl.startsWith("/")) {
-        const parts = rawUrl.split("/").filter(Boolean);
-        id = parts[parts.length - 1] ?? "";
-      } else {
-        id = String(row.id ?? "");
-      }
-      id = id.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 11);
-      if (id.length < 6) return [];
-      return [
-        {
-          videoId: id,
-          title: String(row.title ?? "Video"),
-          url: `https://www.youtube.com/watch?v=${id}`,
-          thumbUrl: row.thumbnail
-            ? String((row.thumbnail as string) ?? "")
-            : `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-          uploader: row.uploaderName ? String(row.uploaderName) : undefined,
-        },
-      ];
-    });
+    return toLegacyYoutubeHits(await searchMusicViaYoutubeApi(query));
   } catch {
     return [];
   }
+}
+
+const PIPED_API_HOSTS = [
+  "https://pipedapi.kavin.rocks",
+  "https://pipedapi.adminforge.de",
+  "https://pipedapi.syncpundit.io",
+  "https://pipedapi.leptons.xyz",
+];
+
+async function resolveViaPipedHost(
+  host: string,
+  videoId: string,
+): Promise<string | null> {
+  try {
+    const res = await fetch(`${host}/streams/${videoId}`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      audioStreams?: Array<{ url?: string; bitrate?: number }>;
+      audioOnly?: Array<{ url?: string; bitrate?: number }>;
+    };
+    const streams = [...(data.audioStreams ?? []), ...(data.audioOnly ?? [])];
+    if (streams.length === 0) return null;
+    streams.sort((a, b) => (b.bitrate ?? 0) - (a.bitrate ?? 0));
+    const url = streams[0]?.url;
+    return url && url.startsWith("http") ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+export function youtubeWatchUrl(videoId: string) {
+  return `https://www.youtube.com/watch?v=${videoId}`;
+}
+
+export async function resolveYoutubeStreamUrl(
+  youtubeUrlOrId: string,
+): Promise<string | null> {
+  const id =
+    extractYoutubeId(youtubeUrlOrId) ??
+    (youtubeUrlOrId.length <= 15 ? youtubeUrlOrId : null);
+  if (!id) return null;
+  for (const host of PIPED_API_HOSTS) {
+    const stream = await resolveViaPipedHost(host, id);
+    if (stream) return stream;
+  }
+  return null;
+}
+
+export async function tryStartMusicFromQueue(roomId: string) {
+  const key = resolveRoomId(roomId);
+  const current = djByRoom.get(key);
+  if (current?.playing && current.musicUrl) return current;
+  const list = musicQueueList(roomId);
+  if (list.length === 0) return current ?? null;
+  const next = list[0]!;
+  const rawUrl = next.youtubeUrl.trim();
+  const videoId =
+    extractYoutubeId(rawUrl) ??
+    (rawUrl.length <= 15 && !rawUrl.includes("/") ? rawUrl : null);
+  const watchUrl = videoId
+    ? rawUrl.startsWith("http")
+      ? rawUrl
+      : youtubeWatchUrl(videoId)
+    : rawUrl || null;
+  const stream = watchUrl ? await resolveYoutubeStreamUrl(watchUrl) : null;
+  const playbackUrl = stream ?? watchUrl;
+  if (!playbackUrl) return current ?? null;
+  const nextDj = {
+    activeDjId: next.requestedBy.id,
+    musicUrl: playbackUrl,
+    playing: true,
+  };
+  djByRoom.set(key, nextDj);
+  return nextDj;
+}
+
+export async function advanceMusicQueue(roomId: string, user?: User) {
+  const room = getChatRoom(roomId);
+  if (user && room && !canManageMusicQueue(user, room)) {
+    return null;
+  }
+  const key = resolveRoomId(roomId);
+  const list = musicQueueList(roomId);
+  if (list.length > 0) list.shift();
+  djByRoom.set(key, { activeDjId: null, musicUrl: null, playing: false });
+  return tryStartMusicFromQueue(roomId);
 }
 
 function extractYoutubeId(raw: string) {

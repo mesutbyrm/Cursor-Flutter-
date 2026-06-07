@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../core/theme/app_colors.dart';
 
 /// «Yazıyor…» animasyonu — Discord tarzı üç nokta.
 class ChatTypingIndicator extends StatelessWidget {
@@ -24,7 +26,7 @@ class ChatTypingIndicator extends StatelessWidget {
           Text(
             '$label…',
             style: TextStyle(
-              color: AppColors.textMuted.withValues(alpha: 0.9),
+              color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -46,7 +48,7 @@ class _Dot extends StatelessWidget {
       width: 6,
       height: 6,
       decoration: BoxDecoration(
-        color: AppColors.accentPink,
+        color: AppThemeColors.accentPink,
         shape: BoxShape.circle,
       ),
     )

@@ -6,6 +6,7 @@ class LiveStreamEntity extends Equatable {
     required this.title,
     this.streamerName,
     this.thumbnailUrl,
+    this.category,
     this.viewerCount = 0,
     this.isLive = true,
     this.hostUserId,
@@ -15,6 +16,7 @@ class LiveStreamEntity extends Equatable {
   final String title;
   final String? streamerName;
   final String? thumbnailUrl;
+  final String? category;
   final int viewerCount;
   final bool isLive;
   /// Yayıncının TRTC / kullanıcı kimliği (`user.id` from API).
@@ -26,6 +28,7 @@ class LiveStreamEntity extends Equatable {
         title,
         streamerName,
         thumbnailUrl,
+        category,
         viewerCount,
         isLive,
         hostUserId,

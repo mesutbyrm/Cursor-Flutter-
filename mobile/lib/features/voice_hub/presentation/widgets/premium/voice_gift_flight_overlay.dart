@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../../live/domain/entities/live_gift_event.dart';
 import '../../theme/voice_room_tokens.dart';
@@ -37,15 +37,16 @@ class _VoiceGiftFlightOverlayState extends State<VoiceGiftFlightOverlay>
   @override
   void initState() {
     super.initState();
-    _ambientTimer = Timer.periodic(const Duration(milliseconds: 700), (_) {
+    _ambientTimer = Timer.periodic(const Duration(milliseconds: 1400), (_) {
       if (!widget.enabled || !mounted) return;
+      if (_active.isEmpty && _ambient.isEmpty) return;
       setState(() {
         _ambient.add(_AmbientParticle(
           id: _rand.nextInt(1 << 30),
           emoji: const ['✨', '💖', '🌹', '⭐', '🎁'][_rand.nextInt(5)],
           x: _rand.nextDouble(),
         ));
-        if (_ambient.length > 12) _ambient.removeAt(0);
+        if (_ambient.length > 8) _ambient.removeAt(0);
       });
     });
   }
@@ -178,7 +179,7 @@ class _GiftFlightBubble extends StatelessWidget {
             'x${event.combo}',
             style: const TextStyle(
               fontWeight: FontWeight.w900,
-              color: AppColors.coinGold,
+              color: AppThemeColors.coinGold,
               fontSize: 14,
             ),
           ),

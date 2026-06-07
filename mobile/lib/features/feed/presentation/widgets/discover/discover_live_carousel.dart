@@ -1,10 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import '../discover_premium_2026/discover_premium_visual.dart';
 import '../../../../../core/ui/premium/live_badge.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
@@ -30,13 +33,13 @@ class _DiscoverLiveCarouselState extends ConsumerState<DiscoverLiveCarousel> {
     return live.when(
       loading: () => SizedBox(
         height: AppSpacing.liveCardHeight + 48,
-        child: const Center(
+        child: Center(
           child: SizedBox(
             width: 28,
             height: 28,
             child: CircularProgressIndicator(
               strokeWidth: 2.5,
-              color: AppColors.accentPink,
+              color: AppThemeColors.accentPink,
             ),
           ),
         ),
@@ -87,7 +90,7 @@ class _LiveRowSection extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: streams.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => SizedBox(width: 12),
             itemBuilder: (ctx, i) {
               final stream = streams[i];
               return _LiveBroadcastCard(
@@ -97,9 +100,9 @@ class _LiveRowSection extends StatelessWidget {
             },
           ),
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         _PageDots(count: streams.length, index: pageIndex),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
       ],
     );
   }
@@ -154,13 +157,13 @@ class _DemoLiveSection extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: _homeLiveCount,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => SizedBox(width: 12),
             itemBuilder: (ctx, i) => _DemoLiveCard(demo: _demos[i]),
           ),
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         _PageDots(count: _homeLiveCount, index: 0),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
       ],
     );
   }
@@ -248,20 +251,17 @@ class _LiveCardShell extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          borderRadius:
+              BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.accentPink.withValues(alpha: 0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+              borderRadius:
+              BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
+              boxShadow: DiscoverPremiumVisual.cardGlow(),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+              borderRadius:
+              BorderRadius.circular(DiscoverPremiumVisual.cardRadius),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -308,21 +308,21 @@ class _LiveCardShell extends StatelessWidget {
                           children: [
                             Text(
                               name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 16,
                                 color: Colors.white,
                               ),
                             ),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Icon(
                               Icons.verified_rounded,
                               size: 16,
-                              color: AppColors.accentCyan.withValues(alpha: 0.9),
+                              color: AppThemeColors.accentCyan.withValues(alpha: 0.9),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         Text(
                           category,
                           maxLines: 1,
@@ -332,7 +332,7 @@ class _LiveCardShell extends StatelessWidget {
                             color: Colors.white.withValues(alpha: 0.75),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Row(
                           children: [
                             Icon(
@@ -340,16 +340,16 @@ class _LiveCardShell extends StatelessWidget {
                               size: 14,
                               color: Colors.white.withValues(alpha: 0.8),
                             ),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               _formatCount(viewers),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            SizedBox(width: 10),
                             _AvatarStack(extra: extraViewers),
                           ],
                         ),
@@ -372,12 +372,12 @@ class _LiveCardShell extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-AppColors.accentPurple.withValues(alpha: 0.5),
-AppColors.background,
+            AppThemeColors.accentPurple.withValues(alpha: 0.5),
+            AppThemeColors.dark.scaffoldBackground,
           ],
         ),
       ),
-      child: const Center(
+      child: Center(
         child: Icon(Icons.live_tv_rounded, color: Colors.white54, size: 48),
       ),
     );
@@ -406,7 +406,7 @@ class _AvatarStack extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.background, width: 1.5),
+                border: Border.all(color: context.scaffoldBg, width: 1.5),
               ),
               child: UserAvatar(
                 radius: 11,
@@ -419,7 +419,7 @@ class _AvatarStack extends StatelessWidget {
           offset: const Offset(-30, 0),
           child: Text(
             '+$extra',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: Colors.white,
@@ -441,9 +441,9 @@ class _AudioVisualizer extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         _bar(10),
-        const SizedBox(width: 3),
+        SizedBox(width: 3),
         _bar(16),
-        const SizedBox(width: 3),
+        SizedBox(width: 3),
         _bar(8),
       ],
     );
@@ -454,9 +454,9 @@ class _AudioVisualizer extends StatelessWidget {
       width: 4,
       height: h,
       decoration: BoxDecoration(
-        color: AppColors.accentPink,
+        color: AppThemeColors.accentPink,
         borderRadius: BorderRadius.circular(2),
-        boxShadow: AppColors.glowShadow(AppColors.accentPink, blur: 8),
+        boxShadow: AppThemeColors.glowShadow(AppThemeColors.accentPink, blur: 8),
       ),
     );
   }
@@ -482,7 +482,7 @@ class _PageDots extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(4),
             color: active
-                ? AppColors.accentPink
+                ? AppThemeColors.accentPink
                 : Colors.white.withValues(alpha: 0.18),
           ),
         );

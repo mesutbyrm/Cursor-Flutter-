@@ -22,7 +22,13 @@ import '../gifts/widgets/floating_gift_particles.dart';
 import '../gifts/widgets/gift_fullscreen_overlay.dart';
 import '../gifts/widgets/gift_notification_stack.dart';
 import '../providers/live_providers.dart';
-import '../providers/live_room_interaction_provider.dart';
+import '../../data/services/video_webrtc_signal_service.dart';
+import '../providers/co_broadcast_provider.dart';
+import '../providers/live_room_interaction_provider.dart'
+    show LiveRoomInteractionNotifier, LiveRoomInteractionState, liveRoomInteractionProvider;
+import '../providers/live_room_providers.dart';
+import '../providers/live_video_pk_provider.dart';
+import '../widgets/broadcast_room/live_pk_score_bar.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
 import '../widgets/premium_2026/live_premium_2026.dart';
@@ -50,17 +56,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   var _rtcReady = false;
   String? _rtcError;
   final _chat = TextEditingController();
-  final _messages = <LiveRoomChatMessage>[
-    const LiveRoomChatMessage(
-      user: 'Ayşe',
-      text: 'Merhaba! Yayına hoş geldin 💜',
-    ),
-    const LiveRoomChatMessage(
-      user: 'Sistem',
-      text: 'Canlı yayına hoş geldin',
-      isSystem: true,
-    ),
-  ];
 
   late Timer _timer;
   Duration _elapsed = Duration.zero;
@@ -68,6 +63,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   final _heartsKey = GlobalKey<LiveFloatingHeartsOverlayState>();
   Key _localPreviewKey = UniqueKey();
   var _leaving = false;
+  VideoWebrtcSignalService? _signalService;
 
   @override
   void initState() {
@@ -76,9 +72,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       if (mounted) setState(() => _elapsed += const Duration(seconds: 1));
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(liveRoomInteractionProvider.notifier).reset(initialLikes: 12500);
+      final streamId = widget.session.streamId?.trim();
+      if (streamId != null && streamId.isNotEmpty) {
+        ref.read(liveRoomInteractionProvider(streamId).notifier)
+          ..reset(initialLikes: 0)
+          ..loadInitialLikeCount();
+      }
       _initTrtc();
       _initGifts();
+      _initStreamExtras();
     });
   }
 
@@ -123,6 +125,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         audioOnly: false,
         expectedAnchorUserId: anchorHint,
       );
+      if (widget.session.isHost) {
+        _trtc.setMicEnabled(widget.session.initialMicOn);
+        _trtc.setCameraEnabled(widget.session.initialCameraOn);
+      }
       if (mounted) setState(() => _rtcReady = true);
     } catch (e) {
       if (mounted) {
@@ -133,6 +139,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
 
   @override
   void dispose() {
+    _signalService?.stop();
     _timer.cancel();
     _chat.dispose();
     _trtc.dispose();
@@ -169,13 +176,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     }
   }
 
+  LiveRoomInteractionNotifier? _interactionNotifier() {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return null;
+    return ref.read(liveRoomInteractionProvider(streamId).notifier);
+  }
+
   Future<void> _onFollow() async {
     final hostId = widget.session.hostUserId;
+    final notifier = _interactionNotifier();
     if (hostId == null || hostId.isEmpty) {
-      ref.read(liveRoomInteractionProvider.notifier).setFollowing(true);
+      notifier?.setFollowing(true);
       return;
     }
-    final notifier = ref.read(liveRoomInteractionProvider.notifier);
+    if (notifier == null) return;
     notifier.setFollowLoading(true);
     try {
       await ref.read(profileRepositoryProvider).follow(hostId);
@@ -191,8 +205,40 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     }
   }
 
+  void _initStreamExtras() {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    if (widget.session.isHost) {
+      unawaited(ref.read(coBroadcastProvider.notifier).refresh());
+    }
+    _signalService = ref.read(videoWebrtcSignalServiceProvider);
+    _signalService?.start(streamId: streamId);
+  }
+
   void _onDoubleTapHeart() {
-    ref.read(liveRoomInteractionProvider.notifier).burstHearts(likes: 3);
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    ref.read(liveRoomInteractionProvider(streamId).notifier).burstHearts(
+          likes: 1,
+        );
+  }
+
+  Future<void> _openPkPanel() async {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    final pk = ref.read(liveVideoPkProvider(streamId).notifier);
+    await pk.create();
+    if (!mounted) return;
+    final state = ref.read(liveVideoPkProvider(streamId));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          state.battle != null
+              ? 'PK başlatıldı (${state.status})'
+              : (state.error ?? 'PK başlatılamadı'),
+        ),
+      ),
+    );
   }
 
   String _fmtLikes(int n) {
@@ -248,13 +294,63 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     return '$h:$m:$s';
   }
 
+  void _openHostProfile(BuildContext context, LiveBroadcastSession s) {
+    final handle = s.streamerHandle?.trim();
+    if (handle != null && handle.isNotEmpty) {
+      context.push('/profile/${Uri.encodeComponent(handle)}');
+      return;
+    }
+    final id = s.hostUserId;
+    if (id != null && id.isNotEmpty) {
+      context.push('/profile/user/$id');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final s = widget.session;
+    final baseSession = widget.session;
+    final streamId = baseSession.streamId?.trim();
+    final hasStream = streamId != null && streamId.isNotEmpty;
+    final roomState =
+        hasStream ? ref.watch(liveRoomProvider(streamId)) : const LiveRoomState();
+    final s = baseSession.copyWith(viewerCount: roomState.viewerCount);
     final top = MediaQuery.paddingOf(context).top;
     final giftCtrl = ref.watch(liveGiftControllerProvider);
     final user = ref.watch(authControllerProvider).valueOrNull;
-    final interaction = ref.watch(liveRoomInteractionProvider);
+    final interaction = hasStream
+        ? ref.watch(liveRoomInteractionProvider(streamId))
+        : const LiveRoomInteractionState();
+    final pkState = hasStream ? ref.watch(liveVideoPkProvider(streamId)) : null;
+
+    if (hasStream) {
+      ref.listen(liveRoomProvider(streamId), (prev, next) {
+        if (next.streamEnded && !(prev?.streamEnded ?? false) && !s.isHost) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (!mounted) return;
+          await showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Yayın sona erdi'),
+              content: const Text('Yayıncı yayını kapattı.'),
+              actions: [
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Tamam'),
+                ),
+              ],
+            ),
+          );
+          if (!mounted) return;
+          if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+            widget.onSwipeClose!();
+          } else {
+            context.go('/live');
+          }
+        });
+        }
+      });
+    }
 
     ref.listen<LiveGiftController>(liveGiftControllerProvider, (prev, next) {
       final ev = next.activeFullscreen;
@@ -264,7 +360,21 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           emoji,
           count: 6 + ev.combo.clamp(0, 12).toInt(),
         );
-        ref.read(liveRoomInteractionProvider.notifier).burstHearts(likes: 2);
+        if (hasStream) {
+          ref
+              .read(liveRoomInteractionProvider(streamId).notifier)
+              .pulseHeartsVisual();
+          final battle = ref.read(liveVideoPkProvider(streamId)).battle;
+          if (battle != null && battle['status'] == 'active') {
+            final score = (ev.coinCost * ev.quantity).clamp(1, 9999);
+            unawaited(
+              ref.read(liveVideoPkProvider(streamId).notifier).addScore(
+                    score: score,
+                    rightSide: false,
+                  ),
+            );
+          }
+        }
       }
     });
 
@@ -301,26 +411,57 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                       followLoading: interaction.followLoading,
                       onFollow: _onFollow,
                       onClose: () => _confirmEnd(context),
+                      onProfileTap: s.hostUserId != null || s.streamerHandle != null
+                          ? () => _openHostProfile(context, s)
+                          : null,
                       onBack: widget.embeddedInSwipe
                           ? () => widget.onSwipeClose?.call()
                           : null,
                     ),
                   ),
-                  if (s.isHost)
+                  if (hasStream && pkState?.battle != null)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                      child: Row(
-                        children: [
-                          _HostBadge(
-                            icon: Icons.emoji_events_rounded,
-                            label: 'Haftalık #12',
+                      child: LivePkScoreBar(
+                        leftScore: pkState!.leftScore,
+                        rightScore: pkState.rightScore,
+                        status: pkState.status,
+                        isHost: s.isHost,
+                        onAccept: () => ref
+                            .read(liveVideoPkProvider(streamId).notifier)
+                            .accept(),
+                        onReject: () => ref
+                            .read(liveVideoPkProvider(streamId).notifier)
+                            .reject(),
+                        onEnd: () => ref
+                            .read(liveVideoPkProvider(streamId).notifier)
+                            .end(),
+                      ),
+                    )
+                  else if (s.isHost)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: _openPkPanel,
+                          style: TextButton.styleFrom(
+                            backgroundColor: Colors.black.withValues(alpha: 0.35),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                           ),
-                          const SizedBox(width: 8),
-                          _HostBadge(
-                            icon: Icons.explore_rounded,
-                            label: 'Keşfet',
+                          icon: const Icon(
+                            Icons.sports_mma_rounded,
+                            color: Colors.white,
+                            size: 16,
                           ),
-                        ],
+                          label: const Text(
+                            'PK Başlat',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ),
                       ),
                     ),
                   const Spacer(),
@@ -337,7 +478,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                                 events: giftCtrl.notifications,
                               ),
                               const SizedBox(height: 8),
-                              LivePremiumChatFeed(messages: _messages),
+                              LivePremiumChatFeed(
+                                messages: roomState.messages.isEmpty
+                                    ? const [
+                                        LiveRoomChatMessage(
+                                          user: 'Sistem',
+                                          text: 'Canlı yayına hoş geldin',
+                                          isSystem: true,
+                                        ),
+                                      ]
+                                    : roomState.messages,
+                              ),
                             ],
                           ),
                         ),
@@ -383,11 +534,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                     onGift: () => giftCtrl.setPanelOpen(true),
                     onSend: () {
                       final t = _chat.text.trim();
-                      if (t.isEmpty) return;
-                      setState(() {
-                        _messages.add(LiveRoomChatMessage(user: 'Sen', text: t));
-                        _chat.clear();
-                      });
+                      if (t.isEmpty || streamId == null || streamId.isEmpty) {
+                        return;
+                      }
+                      _chat.clear();
+                      unawaited(
+                        ref.read(liveRoomProvider(streamId).notifier).sendMessage(
+                              t,
+                              selfName: user?.display ?? 'Sen',
+                            ),
+                      );
                     },
                     onEnd: s.isHost ? () => _confirmEnd(context) : null,
                   ),

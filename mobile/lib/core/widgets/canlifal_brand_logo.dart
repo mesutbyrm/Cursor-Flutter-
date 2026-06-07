@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import '../theme/app_colors.dart';
 import 'canlifal_logo.dart';
 
 /// Mockup uyumlu marka görselleri — şeffaf PNG, yoksa vektör yedek.
@@ -65,7 +66,7 @@ class CanlifalAuthTitle extends StatelessWidget {
       shaderCallback: (b) => const LinearGradient(
         colors: [
           Color(0xFFE9D5FF),
-          AppColors.accentPurple,
+          AppThemeColors.accentPurple,
           Color(0xFF7C3AED),
         ],
       ).createShader(b),

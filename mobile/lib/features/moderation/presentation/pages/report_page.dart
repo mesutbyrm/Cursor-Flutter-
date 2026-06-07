@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/ui/premium/premium.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -73,21 +75,21 @@ class _ReportPageState extends ConsumerState<ReportPage> {
           if (widget.target.contextLabel != null) ...[
             Text(
               widget.target.contextLabel!,
-              style: const TextStyle(
-                color: AppColors.textMuted,
+              style: TextStyle(
+                color: context.colors.onSurfaceMuted,
                 fontSize: 13,
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
           ],
-          const Text(
+          Text(
             'Neden bildiriyorsunuz?',
             style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 15,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -97,59 +99,59 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                   label: Text(r.label),
                   selected: _reason == r,
                   onSelected: (_) => setState(() => _reason = r),
-                  selectedColor: AppColors.accentPink.withValues(alpha: 0.35),
+                  selectedColor: AppThemeColors.accentPink.withValues(alpha: 0.35),
                   checkmarkColor: Colors.white,
                   labelStyle: TextStyle(
-                    color: _reason == r ? Colors.white : AppColors.textSecondary,
+                    color: _reason == r ? Colors.white : context.colors.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),
                   side: BorderSide(
-                    color: AppColors.accentPurple.withValues(alpha: 0.35),
+                    color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 24),
-          const Text(
+          SizedBox(height: 24),
+          Text(
             'Ek açıklama (isteğe bağlı)',
             style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 15,
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           TextField(
             controller: _details,
             maxLines: 4,
             maxLength: 500,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: 'Kısa açıklama yazın…',
-              hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.8)),
+              hintStyle: TextStyle(color: context.colors.onSurfaceMuted.withValues(alpha: 0.8)),
               filled: true,
               fillColor: Colors.white.withValues(alpha: 0.06),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                 borderSide: BorderSide(
-                  color: AppColors.accentPurple.withValues(alpha: 0.3),
+                  color: AppThemeColors.accentPurple.withValues(alpha: 0.3),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 28),
+          SizedBox(height: 28),
           NeonButton(
             label: _submitting ? 'Gönderiliyor…' : 'Raporu gönder',
             icon: Icons.flag_rounded,
             onPressed: _submitting ? null : _submit,
             expand: true,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'Yanlış veya kötü niyetli raporlar hesabınızı kısıtlayabilir.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: AppColors.textMuted.withValues(alpha: 0.85),
+              color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
               fontSize: 12,
               height: 1.4,
             ),

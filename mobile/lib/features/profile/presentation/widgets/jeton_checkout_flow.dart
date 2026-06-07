@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/jeton_payment_request.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../../admin/presentation/providers/admin_providers.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
-import '../pages/cfc_purchase_page.dart';
+import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 
 /// Jeton satın alma — mockup: ödeme yöntemi → WhatsApp / Papara / Havale.
@@ -109,7 +111,7 @@ class _JetonPaymentMethodPage extends ConsumerWidget {
             const _TrustFooter(),
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('İptal', style: TextStyle(color: AppColors.textMuted)),
+              child: Text('İptal', style: TextStyle(color: context.colors.onSurfaceMuted)),
             ),
             const SizedBox(height: 8),
           ],
@@ -191,7 +193,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     };
     final headerColor = switch (widget.method) {
       _JetonPayMethod.whatsapp => const Color(0xFF25D366),
-      _JetonPayMethod.papara => AppColors.accentPurple,
+      _JetonPayMethod.papara => AppThemeColors.accentPurple,
       _JetonPayMethod.bank => const Color(0xFF60A5FA),
     };
 
@@ -229,7 +231,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
                   'Butona tıklayarak WhatsApp üzerinden sipariş verin. '
                   'Mesaj otomatik hazırlanır ve talep admin paneline düşer.',
                   style: TextStyle(
-                    color: AppColors.textMuted.withValues(alpha: 0.95),
+                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
                     height: 1.4,
                     fontSize: 14,
                   ),
@@ -292,7 +294,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
                 child: FilledButton(
                   onPressed: _submitting ? null : _submitAndClose,
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.accentPurple,
+                    backgroundColor: AppThemeColors.accentPurple,
                     minimumSize: const Size.fromHeight(52),
                   ),
                   child: _submitting
@@ -332,10 +334,11 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
             package: widget.package,
             method: _methodApi,
             notes: widget.paymentNotes,
+            senderLabel: _userLabel,
           );
     await ref.read(walletRepositoryProvider).submitPaymentRequest(body);
     ref.invalidate(walletBalancesProvider);
-    ref.invalidate(cfcPaymentRequestsProvider);
+    ref.invalidate(paymentRequestsNotifierProvider);
     ref.invalidate(adminPaymentRequestsProvider);
     ref.invalidate(adminPaymentNotificationsProvider);
     ref.invalidate(notificationsListProvider);
@@ -441,7 +444,7 @@ class _SheetHeader extends StatelessWidget {
                     subtitle!,
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textMuted.withValues(alpha: 0.9),
+                      color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
                     ),
                   ),
               ],
@@ -498,9 +501,9 @@ class _PackageSummaryCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.person_outline_rounded,
-                      size: 14, color: AppColors.textMuted.withValues(alpha: 0.9)),
+                      size: 14, color: context.colors.onSurfaceMuted.withValues(alpha: 0.9)),
                   const SizedBox(width: 4),
-                  Text(userLabel, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                  Text(userLabel, style: TextStyle(fontSize: 12, color: context.colors.onSurfaceMuted)),
                 ],
               ),
             ],
@@ -622,7 +625,7 @@ class _SectionDivider extends StatelessWidget {
           const Expanded(child: Divider(color: Colors.white12)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+            child: Text(label, style: TextStyle(color: context.colors.onSurfaceMuted, fontSize: 12)),
           ),
           const Expanded(child: Divider(color: Colors.white12)),
         ],
@@ -643,7 +646,7 @@ class _InfoCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF1A0B2E),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.accentPurple.withValues(alpha: 0.35)),
+        border: Border.all(color: AppThemeColors.accentPurple.withValues(alpha: 0.35)),
       ),
       child: child,
     );
@@ -661,10 +664,10 @@ class _RowLabel extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textMuted)),
+        Text(label, style: TextStyle(color: context.colors.onSurfaceMuted)),
         Text(value,
             style: TextStyle(
-                fontWeight: FontWeight.w800, color: valueColor ?? AppColors.textPrimary)),
+                fontWeight: FontWeight.w800, color: valueColor ?? context.colors.onSurface)),
       ],
     );
   }
@@ -682,7 +685,7 @@ class _UserInfoCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundColor: AppColors.accentPurple,
+            backgroundColor: AppThemeColors.accentPurple,
             child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
                 style: const TextStyle(fontWeight: FontWeight.w800)),
           ),
@@ -691,7 +694,7 @@ class _UserInfoCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(name, style: const TextStyle(fontWeight: FontWeight.w800)),
-              Text(email, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+              Text(email, style: TextStyle(fontSize: 12, color: context.colors.onSurfaceMuted)),
             ],
           ),
         ],
@@ -714,7 +717,7 @@ class _CopyDetailCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: const TextStyle(color: AppColors.textMuted)),
+              Text(label, style: TextStyle(color: context.colors.onSurfaceMuted)),
               TextButton.icon(
                 onPressed: () async {
                   await Clipboard.setData(ClipboardData(text: value));
@@ -760,7 +763,7 @@ class _BankDetailCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('IBAN:', style: TextStyle(color: AppColors.textMuted)),
+                  Text('IBAN:', style: TextStyle(color: context.colors.onSurfaceMuted)),
                   TextButton.icon(
                     onPressed: () async {
                       await Clipboard.setData(ClipboardData(text: config.bankIban));

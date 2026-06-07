@@ -3,11 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/performance/list_perf.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
+import '../providers/chat_messages_list_notifier.dart';
 import '../providers/messages_providers.dart';
 import '../widgets/chat_composer.dart';
 import '../widgets/chat_message_bubble.dart';
@@ -34,15 +37,20 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   @override
   void initState() {
     super.initState();
+    _scroll.addListener(_onScroll);
     _poll = Timer.periodic(const Duration(seconds: 8), (_) {
       if (!mounted) return;
-      ref.invalidate(chatMessagesProvider(widget.conversationId));
+      ref
+          .read(chatMessagesListNotifierProvider(widget.conversationId)
+              .notifier)
+          .refresh();
     });
   }
 
   @override
   void dispose() {
     _poll?.cancel();
+    _scroll.removeListener(_onScroll);
     _typingHideTimer?.cancel();
     _typingEmitTimer?.cancel();
     _text.dispose();
@@ -50,10 +58,25 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     super.dispose();
   }
 
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    if (_scroll.position.pixels <= ListPerf.preloadThresholdPx) {
+      ref
+          .read(chatMessagesListNotifierProvider(widget.conversationId)
+              .notifier)
+          .loadOlder();
+    }
+  }
+
   void _scrollToEnd() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!_scroll.hasClients) return;
-      _scroll.jumpTo(_scroll.position.maxScrollExtent);
+      final max = _scroll.position.maxScrollExtent;
+      await _scroll.animateTo(
+        max,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
     });
   }
 
@@ -79,7 +102,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           .read(messagesRepositoryProvider)
           .sendMessage(widget.conversationId, t);
       _text.clear();
-      ref.invalidate(chatMessagesProvider(widget.conversationId));
+      await ref
+          .read(chatMessagesListNotifierProvider(widget.conversationId)
+              .notifier)
+          .refresh();
       ref.invalidate(conversationsProvider);
       _scrollToEnd();
     } finally {
@@ -89,47 +115,51 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    final msgs = ref.watch(chatMessagesProvider(widget.conversationId));
+    final msgs =
+        ref.watch(chatMessagesListNotifierProvider(widget.conversationId));
 
-    ref.listen(chatMessagesProvider(widget.conversationId), (_, next) {
+    ref.listen(chatMessagesListNotifierProvider(widget.conversationId),
+        (_, next) {
       next.whenData((_) => _scrollToEnd());
     });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: Column(
           children: [
             SizedBox(height: MediaQuery.paddingOf(context).top + 4),
-            Padding(
-              padding: const EdgeInsets.only(left: 4, right: 12),
-              child: Row(
-                children: [
-                  DiscoverIconButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onPressed: () => Navigator.of(context).maybePop(),
-                  ),
-                  Expanded(
-                    child: DiscoverTabHeader(
-                      title: 'Sohbet',
-                      subtitle: 'Çevrimiçi',
-                      actions: [
-                        DiscoverIconButton(
-                          icon: Icons.flag_outlined,
-                          tooltip: 'Sohbeti bildir',
-                          onPressed: () => openReportFlow(
-                            context,
-                            ReportTarget(
-                              type: ReportTargetType.conversation,
-                              targetId: widget.conversationId,
-                              displayTitle: 'Sohbet',
+            ProGlassTopBar(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 4, right: 12),
+                child: Row(
+                  children: [
+                    DiscoverIconButton(
+                      icon: Icons.arrow_back_ios_new_rounded,
+                      onPressed: () => Navigator.of(context).maybePop(),
+                    ),
+                    Expanded(
+                      child: DiscoverTabHeader(
+                        title: 'Sohbet',
+                        subtitle: 'Çevrimiçi',
+                        actions: [
+                          DiscoverIconButton(
+                            icon: Icons.flag_outlined,
+                            tooltip: 'Sohbeti bildir',
+                            onPressed: () => openReportFlow(
+                              context,
+                              ReportTarget(
+                                type: ReportTargetType.conversation,
+                                targetId: widget.conversationId,
+                                displayTitle: 'Sohbet',
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             Expanded(
@@ -139,19 +169,48 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   icon: Icons.chat_bubble_outline,
                   message: e.toString(),
                 ),
-                data: (rows) {
-                  if (rows.isEmpty) {
+                data: (state) {
+                  if (state.all.isEmpty) {
                     return const DiscoverEmptyState(
                       icon: Icons.waving_hand_rounded,
                       message: 'Mesaj yok — ilk mesajı gönder.',
                     );
                   }
+                  final rows = state.visible;
+                  final showOlder = state.hasMore;
                   return ListView.builder(
                     controller: _scroll,
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                    itemCount: rows.length,
+                    physics: ListPerf.listPhysics,
+                    cacheExtent: ListPerf.cacheExtent,
+                    itemCount: rows.length + (showOlder ? 1 : 0),
                     itemBuilder: (ctx, i) {
-                      return ChatMessageBubble(message: rows[i]);
+                      if (showOlder && i == 0) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Center(
+                            child: TextButton.icon(
+                              onPressed: () => ref
+                                  .read(
+                                    chatMessagesListNotifierProvider(
+                                      widget.conversationId,
+                                    ).notifier,
+                                  )
+                                  .loadOlder(),
+                              icon: const Icon(Icons.expand_less_rounded),
+                              label: Text(
+                                state.olderHiddenCount > 0
+                                    ? '${state.olderHiddenCount} eski mesaj'
+                                    : 'Daha fazla yükle',
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      final idx = showOlder ? i - 1 : i;
+                      return ListPerf.repaint(
+                        ChatMessageBubble(message: rows[idx]),
+                      );
                     },
                   );
                 },
