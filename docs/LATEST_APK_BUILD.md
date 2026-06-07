@@ -2,23 +2,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.141+143` |
-| Tarih (UTC) | 2026-06-07 12:51 |
-| Commit | [`0f3259019d00fcf987329a89fb94a6f7f0afa631`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/0f3259019d00fcf987329a89fb94a6f7f0afa631) |
-| İş akışı | [Run 27092561884](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27092561884) |
+| Sürüm | `1.0.142+144` |
+| Tarih (UTC) | 2026-06-07 14:25 |
+| Commit | [`5437076887f38cadeeaa8e5fdabf13cb058855a7`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/5437076887f38cadeeaa8e5fdabf13cb058855a7) |
+| İş akışı | [Run 27094730517](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27094730517) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.141+143 (2026-06-07)
+## 1.0.142+144 (2026-06-07)
 
-### Ana sayfa — Canlı Yayındakiler
+### Ana sayfa sıkılık + sesli oda gri ekran + kaydırma performansı
 
-- Yatay kaydırmalı büyük 16:9 canlı yayın kartları (neon glow)
-- Kırmızı CANLI rozeti, sağ üst izleyici sayısı, alt yayıncı adı + başlık + kategori
-- Web ile aynı `GET /api/video-streams` endpoint; yayın yoksa bölüm gizlenir
-- CachedNetworkImage + lazy list; ilk 5 önizleme önceden yüklenir
-- Bölüm sırası: Hikâyeler → Canlı Yayındakiler → Sesli Sohbet → … → Keşfet → Fan Club → Gold
+- Bölüm başlıkları arası boşluk azaltıldı (sıkı dikey akış)
+- Ana sayfa galaksi arka planı statik — animasyon/blur kapatıldı (kaydırma takılması)
+- Sesli oda: canlı oturum provider'ı sabit oda kimliğiyle (online sayısı değişince yeniden kurulmuyor)
+- Sesli oda: üst panel kaydırılabilir — küçük ekranda taşma/gri ekran giderildi
+- Odaya girerken `voiceRoomsProvider` invalidate kaldırıldı
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
