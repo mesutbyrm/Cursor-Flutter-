@@ -11,7 +11,7 @@ class VoiceRoomDjPlayer {
   VoiceRoomDjPlayer(this._resolver)
       : _player = AudioPlayer(playerId: 'voice_room_dj') {
     _player.setReleaseMode(ReleaseMode.stop);
-    unawaited(_initPlayer());
+    _initFuture = _initPlayer();
     _player.onPlayerComplete.listen((_) {
       onTrackComplete?.call();
     });
@@ -40,6 +40,7 @@ class VoiceRoomDjPlayer {
 
   final YoutubeStreamResolver _resolver;
   final AudioPlayer _player;
+  late final Future<void> _initFuture;
   final ValueNotifier<VoiceRoomDjPlayback> playback =
       ValueNotifier(const VoiceRoomDjPlayback());
   String? _currentUrl;
@@ -79,6 +80,7 @@ class VoiceRoomDjPlayer {
     required bool playing,
     bool muted = false,
   }) async {
+    await _initFuture;
     if (muted || !playing || musicUrl == null || musicUrl.isEmpty) {
       await stop();
       return false;
@@ -94,8 +96,13 @@ class VoiceRoomDjPlayer {
         fallbackYoutubeUrl,
     ];
 
-    for (final candidate in candidates) {
-      final source = await _resolveSource(candidate);
+    final resolved = await Future.wait(
+      candidates.map((c) => _resolveSource(c)),
+    );
+
+    for (var i = 0; i < candidates.length; i++) {
+      final candidate = candidates[i];
+      final source = resolved[i];
       debugPrint(
         'DJ sync: candidate=$candidate streamUrl=$source '
         'playState=$playing playerState=${_player.state}',
@@ -109,7 +116,9 @@ class VoiceRoomDjPlayer {
       try {
         await VoiceRoomMusicAudioSession.activateForPlayback();
         _currentUrl = source;
-        await _player.stop();
+        if (_player.state == PlayerState.playing) {
+          await _player.stop();
+        }
         await _player.setVolume(1.0);
         await _player.play(UrlSource(source));
         playback.value = VoiceRoomDjPlayback(

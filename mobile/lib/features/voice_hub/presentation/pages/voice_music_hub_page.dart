@@ -532,7 +532,12 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
       child: VoiceGlass(
         borderRadius: 14,
         borderColor: selected ? AppThemeColors.accentPink : null,
-        onTap: () => setState(() => _selected = hit),
+        onTap: () {
+          setState(() => _selected = hit);
+          unawaited(
+            ref.read(youtubeStreamResolverProvider).prefetch(hit.url),
+          );
+        },
         padding: const EdgeInsets.all(8),
         child: Row(
           children: [
