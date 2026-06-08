@@ -56,7 +56,7 @@ import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_action_row.dart';
 import 'widgets/voice_room/voice_room_music_mini_player.dart';
-import 'widgets/voice_room/voice_room_entry_notification.dart';
+import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
 import 'widgets/voice_room/voice_room_music_request_flash.dart';
 import 'widgets/voice_room_error_boundary.dart';
 
@@ -189,16 +189,27 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
     if (text.isEmpty) return;
     _messageCtrl.clear();
-    unawaited(() async {
-      await ref.read(voiceRoomLiveProvider(_sessionRoom).notifier).sendMessage(text);
-      if (!mounted) return;
-      final err = ref.read(voiceRoomLiveProvider(_sessionRoom)).error;
-      if (err != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(err)),
-        );
-      }
-    }());
+    _messageFocus.requestFocus();
+    unawaited(
+      ref.read(voiceRoomLiveProvider(_sessionRoom).notifier).sendMessage(text),
+    );
+  }
+
+  void _toggleMic() {
+    if (_audio == null || !_audioReady) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ses bağlantısı hazır değil')),
+      );
+      return;
+    }
+    final next = !_micOn;
+    _audio?.setMicEnabled(next);
+    setState(() => _micOn = next);
+  }
+
+  void _toggleHeadphones() {
+    ref.read(voiceRoomUiProvider.notifier).toggleHeadphones();
+    _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
   }
 
   void _startGiftRealtime() {
@@ -589,14 +600,49 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
   }
 
-  void _openUser(ChatRoomPresence user) {
+  void _openUser(
+    ChatRoomPresence user, {
+    VoiceRoomPermissions? perms,
+    VoiceRoomEntity? room,
+    bool? isOwner,
+  }) {
+    final auth = ref.read(authControllerProvider).valueOrNull;
+    final owner = isOwner ??
+        _isRoomOwner(auth?.id ?? '', auth?.username ?? '');
+    final liveState = ref.read(voiceRoomLiveProvider(_sessionRoom));
+    ChatRoomPresence? selfPresence;
+    if (auth != null) {
+      for (final p in liveState.presence) {
+        if (p.id == auth.id) {
+          selfPresence = p;
+          break;
+        }
+      }
+    }
+    final permissions = perms ??
+        VoiceRoomPermissions.forUser(
+          user: auth,
+          room: room ?? _effectiveRoom(),
+          selfPresence: selfPresence,
+        );
+    final isDj = (room ?? _effectiveRoom()).djUserIds.contains(user.id) ||
+        user.chatRole == 'dj';
+    if (permissions.canModerate || owner) {
+      showVoiceUserModerationSheet(
+        context,
+        ref: ref,
+        room: room ?? _effectiveRoom(),
+        user: user,
+        perms: permissions,
+        isOwner: owner,
+        isDj: isDj,
+      );
+      return;
+    }
     showVoiceUserProfileSheet(
       context,
       user: user,
-      isOwner: _isRoomOwner(
-        ref.read(authControllerProvider).valueOrNull?.id ?? '',
-        ref.read(authControllerProvider).valueOrNull?.username ?? '',
-      ),
+      isOwner: owner,
     );
   }
 
@@ -627,7 +673,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     ChatRoomPresence? occupant,
   }) async {
     if (occupant != null) {
-      _openUser(occupant);
+      _openUser(occupant, perms: perms, room: room, isOwner: perms.isRoomOwner);
       return;
     }
     if (perms.canAssignSeats) {
@@ -853,6 +899,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           ref.read(voiceRoomLiveProvider(session).notifier).refresh(includeDj: true),
         );
       }
+      if (prev?.headphonesOn != next.headphonesOn && _audioReady) {
+        _audio?.setHeadphonesOn(next.headphonesOn);
+      }
     });
 
     ref.listen(authControllerProvider, (prev, next) {
@@ -1062,11 +1111,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             ),
                           ),
                         ),
-                        if (!keyboardOpen) ...[
-                          VoiceRoomEntryNotificationCard(
+                        if (!keyboardOpen)
+                          VoiceStaffEntranceMarquee(
                             message: staffBanner,
                             roomName: room.nameTr,
                           ),
+                        if (!keyboardOpen)
                           VoiceRoomPersistentDuyuru(
                             roomKey: room.apiRoomKey.isNotEmpty
                                 ? room.apiRoomKey
@@ -1083,20 +1133,26 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                     )
                                 : null,
                           ),
-                          VoiceWebChatOverlay(
-                            messages: live.messages,
-                            hideOfficialJoinInChat: staffBanner != null,
-                            maxHeight: chatMaxH,
-                            embedded: true,
-                            onUserTap: (id, _) {
-                              for (final e in live.presence) {
-                                if (e.id == id) {
-                                  _openUser(e);
-                                  break;
-                                }
+                        VoiceWebChatOverlay(
+                          messages: live.messages,
+                          hideOfficialJoinInChat: staffBanner != null,
+                          maxHeight: chatMaxH,
+                          embedded: true,
+                          onUserTap: (id, _) {
+                            for (final e in live.presence) {
+                              if (e.id == id) {
+                                _openUser(
+                                  e,
+                                  perms: perms,
+                                  room: room,
+                                  isOwner: isOwner,
+                                );
+                                break;
                               }
-                            },
-                          ),
+                            }
+                          },
+                        ),
+                        if (!keyboardOpen) ...[
                           const SizedBox(height: 4),
                           if (showDjControls)
                             Padding(
@@ -1188,26 +1244,28 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     ),
                   ),
                 ),
-                AnimatedPadding(
-                  duration: const Duration(milliseconds: 100),
-                  curve: Curves.easeOutCubic,
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.viewInsetsOf(context).bottom,
+                VoiceRoomSpecFooter(
+                  controller: _messageCtrl,
+                  focusNode: _messageFocus,
+                  coinBalance: jeton,
+                  onSend: () => _sendChatMessage(room),
+                  onHome: () => context.go('/voice-rooms'),
+                  onToggleAudioOutput: _toggleHeadphones,
+                  headphonesOn: ui.headphonesOn,
+                  onMicToggle: _toggleMic,
+                  micOn: _micOn,
+                  micEnabled: _audioReady,
+                  onRoomSettings: () => _openHubSettings(
+                    context,
+                    room: room,
+                    live: live,
+                    perms: perms,
+                    isOwner: isOwner,
                   ),
-                  child: VoiceRoomSpecFooter(
-                    controller: _messageCtrl,
-                    focusNode: _messageFocus,
-                    coinBalance: jeton,
-                    sending: live.sending,
-                    onSend: () => _sendChatMessage(room),
-                    onRefresh: () => ref
-                        .read(voiceRoomLiveProvider(session).notifier)
-                        .refresh(includeDj: true),
-                    onShare: _shareRoom,
-                    onTopUp: () => openJetonStore(context, ref: ref),
-                    onGiftTap: () =>
-                        showPremiumVoiceGiftShop(context, ref, room: room),
-                  ),
+                  onUserSettings: () => showVoiceEffectsSheet(context, ref),
+                  onTopUp: () => openJetonStore(context, ref: ref),
+                  onGiftTap: () =>
+                      showPremiumVoiceGiftShop(context, ref, room: room),
                 ),
               ],
             ),

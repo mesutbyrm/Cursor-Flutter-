@@ -90,7 +90,9 @@ class _VoiceSeatAvatarFrameState extends State<VoiceSeatAvatarFrame>
 
   @override
   Widget build(BuildContext context) {
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    if (!kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android &&
+        widget.role == SeatAvatarRole.guest) {
       return _androidSimpleAvatar();
     }
 

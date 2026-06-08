@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.153+155 (2026-06-08)
+
+### Sesli oda UX — alt bar, sohbet, moderasyon
+
+- Alt bar: Ana Sayfa, hoparlör/kulaklık, mikrofon, oda/profil ayarları, jeton
+- Klavye açıkken sohbet görünür; gönder butonu dönmez (anında yeni mesaj)
+- Giriş bildirimi: Gold/yetkili için kayan marquee (canlifal.com)
+- Sohbet filtresi: giriş/çıkış, !komutlar, !istek ve teknik müzik logları gizli
+- Yetkili/Gold kullanıcı adları gradyan efektli
+- Kullanıcı dokunuşu: at, sustur, ses ver, DJ yap/çıkar (moderasyon sheet)
+- Host koltuğu: sahip yoksa en yetkili kullanıcı
+- VIP/yetkili koltuk çerçeveleri Android'de de aktif
+- Sağ panel oku küçültüldü
+
 ## 1.0.152+154 (2026-06-08)
 
 ### Sesli oda — Riverpod provider hatası düzeltmesi
