@@ -9,6 +9,7 @@ class VoiceRoomActionRow extends StatelessWidget {
     super.key,
     required this.dj,
     this.showMusicCard = true,
+    this.showDjCard = true,
     this.showPkCard = false,
     this.pkActive = false,
     this.onMusicTap,
@@ -18,6 +19,7 @@ class VoiceRoomActionRow extends StatelessWidget {
 
   final ChatRoomDjState dj;
   final bool showMusicCard;
+  final bool showDjCard;
   final bool showPkCard;
   final bool pkActive;
   final VoidCallback? onMusicTap;
@@ -77,7 +79,8 @@ class VoiceRoomActionRow extends StatelessWidget {
       );
     }
 
-    tiles.add(
+    if (showDjCard) {
+      tiles.add(
       Expanded(
         child: _ActionTile(
           onTap: onDjTap,
@@ -113,6 +116,7 @@ class VoiceRoomActionRow extends StatelessWidget {
         ),
       ),
     );
+    }
 
     if (showPkCard) {
       tiles.add(

@@ -217,28 +217,37 @@ class _WebChatLine extends StatelessWidget {
     final tier = VipTier.fromMembership(user?.membership);
     final vip = user?.isBroadcaster == true || tier.index >= VipTier.gold.index;
 
+    final nameColor = vip ? VoiceRoomTokens.gold : VoiceRoomTokens.neonPink;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
+      padding: const EdgeInsets.only(bottom: 6),
       child: GestureDetector(
         onTap: user != null ? () => onUserTap?.call(user.id, name) : null,
-        child: RichText(
-          text: TextSpan(
-            style: const TextStyle(
-              fontSize: 13,
-              height: 1.4,
-              color: Colors.white,
-              shadows: [Shadow(color: Colors.black87, blurRadius: 10)],
-            ),
-            children: [
-              TextSpan(
-                text: '$name ',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: vip ? VoiceRoomTokens.gold : VoiceRoomTokens.neonPink,
-                ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.38),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          ),
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontSize: 12,
+                height: 1.35,
+                color: Colors.white,
               ),
-              TextSpan(text: message.content),
-            ],
+              children: [
+                TextSpan(
+                  text: '$name ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: nameColor,
+                  ),
+                ),
+                TextSpan(text: message.content),
+              ],
+            ),
           ),
         ),
       ),

@@ -49,6 +49,24 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
         final remaining = isPlaying && pb.duration.inMilliseconds > 0
             ? _format(pb.remaining)
             : (isQueuedOnly ? 'Sırada' : '—:—');
+        String djName = 'Admin';
+        if (dj.activeDjId != null) {
+          for (final u in dj.djUsers) {
+            if (u.id == dj.activeDjId) {
+              djName = u.displayName;
+              break;
+            }
+          }
+        } else if (dj.djUsers.isNotEmpty) {
+          djName = dj.djUsers.first.displayName;
+        }
+        final elapsed = isPlaying && pb.duration.inMilliseconds > 0
+            ? _format(pb.position)
+            : '00:00';
+        final total = isPlaying && pb.duration.inMilliseconds > 0
+            ? _format(pb.duration)
+            : (track.duration ?? '—:—');
+
         return Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
           child: VoiceGlass(
@@ -57,9 +75,21 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
             onTap: onTap,
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(10, 6, 10, 0),
+                  child: Text(
+                    'Şu An Çalan',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 11,
+                      color: AppThemeColors.coinGold,
+                    ),
+                  ),
+                ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 6, 4, 5),
+                  padding: const EdgeInsets.fromLTRB(8, 4, 4, 5),
                   child: Row(
                     children: [
                       ClipRRect(
@@ -96,17 +126,25 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                                 ),
                               ),
                             Text(
-                              'İsteyen: ${track.requestedBy?.displayName ?? '—'} · $remaining',
+                              'DJ: $djName',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 8,
-                                color: isQueuedOnly
-                                    ? AppThemeColors.accentCyan
-                                        .withValues(alpha: 0.9)
-                                    : Colors.white.withValues(alpha: 0.55),
+                                fontSize: 9,
+                                color: Colors.white.withValues(alpha: 0.62),
                               ),
                             ),
+                            if (isQueuedOnly)
+                              Text(
+                                remaining,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 8,
+                                  color: AppThemeColors.accentCyan
+                                      .withValues(alpha: 0.9),
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -170,17 +208,41 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                     ],
                   ),
                 ),
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(14),
-                  ),
-                  child: LinearProgressIndicator(
-                    value: isQueuedOnly ? null : progress,
-                    minHeight: 2,
-                    backgroundColor: Colors.white12,
-                    color: isQueuedOnly
-                        ? AppThemeColors.accentCyan.withValues(alpha: 0.7)
-                        : AppThemeColors.accentPink,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 6),
+                  child: Row(
+                    children: [
+                      Text(
+                        elapsed,
+                        style: TextStyle(
+                          fontSize: 8,
+                          color: Colors.white.withValues(alpha: 0.55),
+                        ),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: isQueuedOnly ? null : progress,
+                              minHeight: 3,
+                              backgroundColor: Colors.white12,
+                              color: isQueuedOnly
+                                  ? AppThemeColors.accentCyan.withValues(alpha: 0.7)
+                                  : AppThemeColors.accentPink,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        total,
+                        style: TextStyle(
+                          fontSize: 8,
+                          color: Colors.white.withValues(alpha: 0.55),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

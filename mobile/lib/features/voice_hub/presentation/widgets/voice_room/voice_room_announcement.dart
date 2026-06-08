@@ -10,74 +10,129 @@ class VoiceRoomAnnouncement extends StatelessWidget {
     super.key,
     required this.text,
     this.onDismiss,
+    this.onEdit,
+    this.progress,
+    this.autoCloseLabel,
   });
 
   final String text;
   final VoidCallback? onDismiss;
+  final VoidCallback? onEdit;
+  final double? progress;
+  final String? autoCloseLabel;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppThemeColors.accentPurple.withValues(alpha: 0.42),
-                Colors.black.withValues(alpha: 0.72),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppThemeColors.accentPurple.withValues(alpha: 0.48),
+            Colors.black.withValues(alpha: 0.72),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppThemeColors.accentPurple.withValues(alpha: 0.45),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 8, 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.campaign_rounded,
+                  color: AppThemeColors.coinGold,
+                  size: 22,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Duyuru',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                          color: AppThemeColors.coinGold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        text,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: context.colors.onSurfaceVariant,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (onEdit != null)
+                  IconButton(
+                    onPressed: onEdit,
+                    icon: Icon(
+                      Icons.edit_outlined,
+                      size: 16,
+                      color: context.colors.onSurfaceMuted,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  ),
+                if (onDismiss != null)
+                  IconButton(
+                    onPressed: onDismiss,
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 16,
+                      color: context.colors.onSurfaceMuted,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  ),
               ],
             ),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: AppThemeColors.accentPurple.withValues(alpha: 0.45),
-            ),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.campaign_rounded, color: AppThemeColors.accentPink, size: 22),
-              SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+          if (autoCloseLabel != null || progress != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (autoCloseLabel != null)
                     Text(
-                      'Duyuru',
+                      autoCloseLabel!,
                       style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                        color: AppThemeColors.accentPink,
+                        fontSize: 9,
+                        color: AppThemeColors.coinGold.withValues(alpha: 0.85),
                       ),
                     ),
-                    SizedBox(height: 4),
-                    Text(
-                      text,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: context.colors.onSurfaceVariant,
-                        height: 1.35,
+                  if (progress != null) ...[
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress!.clamp(0.0, 1.0),
+                        minHeight: 3,
+                        backgroundColor: Colors.white12,
+                        color: AppThemeColors.coinGold,
                       ),
                     ),
                   ],
-                ),
+                ],
               ),
-              IconButton(
-                onPressed: () {},
-                icon: Icon(Icons.edit_outlined, size: 16, color: context.colors.onSurfaceMuted),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-              ),
-              if (onDismiss != null)
-                IconButton(
-                  onPressed: onDismiss,
-                  icon: Icon(Icons.close_rounded, size: 16, color: context.colors.onSurfaceMuted),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                ),
-            ],
-          ),
+            ),
+        ],
+      ),
     );
   }
 }

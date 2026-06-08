@@ -1,5 +1,18 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.150+152 (2026-06-07)
+
+### Sesli oda UI — tasarım referansına pixel-parity
+
+- Üst bar: oda paneli butonu, mevcut galeri/ayarlar/çıkış düzeni korundu
+- Sağ kaydırma paneli: Kurallar, Yetkiler, Jeton, Yasaklı Kelimeler, Ücretli Şarkı İste
+- Duyuru: günde bir kez, 5 sn progress çubuğu, sahip düzenleme
+- Giriş şeridi: kayan marquee animasyonu
+- Şu An Çalan + Sıradaki Şarkılar inline kuyruk bölümü
+- Sohbet: koyu şeffaf balonlar, rol renkli kullanıcı adları
+- Alt bar: mesaj + gönder + hediye; jeton, yenile, paylaş, jeton yükle
+- DJ/Müzik kartları yalnızca oda sahibi ve DJ kullanıcılarına görünür
+
 ## 1.0.149+151 (2026-06-07)
 
 ### Sesli oda — teşhis + gri ekran yerine hata UI

@@ -21,6 +21,7 @@ class VoiceWebRoomHeader extends StatelessWidget {
     this.onAudience,
     this.onGallery,
     this.onSettings,
+    this.onRoomPanel,
     this.roomAvatarUrl,
     this.verified = true,
   });
@@ -32,6 +33,7 @@ class VoiceWebRoomHeader extends StatelessWidget {
   final VoidCallback? onAudience;
   final VoidCallback? onGallery;
   final VoidCallback? onSettings;
+  final VoidCallback? onRoomPanel;
   final String? roomAvatarUrl;
   final bool verified;
 
@@ -131,6 +133,10 @@ class VoiceWebRoomHeader extends StatelessWidget {
               _GlassIconBtn(
                 icon: Icons.settings_rounded,
                 onTap: onSettings,
+              ),
+              _GlassIconBtn(
+                icon: Icons.meeting_room_outlined,
+                onTap: onRoomPanel,
               ),
               _GlassIconBtn(
                 icon: Icons.power_settings_new_rounded,
