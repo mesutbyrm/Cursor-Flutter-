@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../vip_gold/domain/voice_room_access.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/domain/entities/voice_room_sort.dart';
 import '../../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
+import '../../../../voice_hub/presentation/utils/open_voice_chat_room_flow.dart';
 import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
@@ -47,11 +49,12 @@ class VoiceRoomSection extends ConsumerWidget {
           ),
         ],
       ),
-      error: (_, __) => _content(context, ref, _fallbackRooms),
+      error: (e, _) => _emptyState(context, ref, message: ApiException.userMessage(e)),
       data: (items) {
-        final sorted = items.isEmpty
-            ? _fallbackRooms
-            : sortVoiceRoomsByPopularity(items).take(12).toList();
+        if (items.isEmpty) {
+          return _emptyState(context, ref);
+        }
+        final sorted = sortVoiceRoomsByPopularity(items).take(12).toList();
         return _content(context, ref, sorted);
       },
     );
@@ -64,11 +67,27 @@ class VoiceRoomSection extends ConsumerWidget {
   ) {
     return Column(
       children: [
-        HomeSectionTitle(
-          emoji: '🎙️',
-          title: 'Sesli Sohbet Odaları',
-          actionLabel: 'Tüm Odalar >',
-          onAction: () => context.push('/voice-rooms'),
+        Row(
+          children: [
+            Expanded(
+              child: HomeSectionTitle(
+                emoji: '🎙️',
+                title: 'Sesli Sohbet Odaları',
+                actionLabel: 'Tüm Odalar >',
+                onAction: () => context.push('/voice-rooms'),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () => showOpenVoiceChatRoomFlow(context, ref),
+              icon: const Icon(Icons.add_rounded, size: 16),
+              label: const Text('Oda Aç'),
+              style: TextButton.styleFrom(
+                foregroundColor: HomeApprovedDesign.purple,
+                textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+              ),
+            ),
+            const SizedBox(width: 4),
+          ],
         ),
         SizedBox(
           height: HomeApprovedDesign.voiceCardH,
@@ -79,9 +98,7 @@ class VoiceRoomSection extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(width: 10),
             itemBuilder: (context, i) => _VoiceRoomCard(
               room: rooms[i],
-              onTap: rooms[i].id.startsWith('demo-')
-                  ? () => context.push('/voice-rooms')
-                  : () => openVoiceRoomWithVipGate(context, ref, rooms[i]),
+              onTap: () => openVoiceRoomWithVipGate(context, ref, rooms[i]),
             ),
           ),
         ),
@@ -89,24 +106,67 @@ class VoiceRoomSection extends ConsumerWidget {
     );
   }
 
-  static const _fallbackRooms = [
-    VoiceRoomEntity(
-      id: 'demo-1',
-      slug: 'demo-tarot',
-      nameTr: 'Tarot Sohbet',
-      descTr: 'Müzik • Sohbet',
-      onlineCount: 24,
-      icon: '🔮',
-    ),
-    VoiceRoomEntity(
-      id: 'demo-2',
-      slug: 'demo-kahve',
-      nameTr: 'Kahve Falı Odası',
-      descTr: 'Fal • Sohbet',
-      onlineCount: 18,
-      icon: '☕',
-    ),
-  ];
+  static Widget _emptyState(
+    BuildContext context,
+    WidgetRef ref, {
+    String? message,
+  }) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: HomeSectionTitle(
+                emoji: '🎙️',
+                title: 'Sesli Sohbet Odaları',
+                actionLabel: 'Tüm Odalar >',
+                onAction: () => context.push('/voice-rooms'),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () => showOpenVoiceChatRoomFlow(context, ref),
+              icon: const Icon(Icons.add_rounded, size: 16),
+              label: const Text('Oda Aç'),
+              style: TextButton.styleFrom(
+                foregroundColor: HomeApprovedDesign.purple,
+                textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+              ),
+            ),
+            const SizedBox(width: 4),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            HomeApprovedDesign.hPad,
+            8,
+            HomeApprovedDesign.hPad,
+            16,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                message ?? 'Henüz oda yok. İlk sesli sohbet odanızı açın.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: HomeApprovedDesign.textMuted.withValues(alpha: 0.9),
+                ),
+              ),
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                onPressed: () => showOpenVoiceChatRoomFlow(context, ref),
+                icon: const Icon(Icons.mic_rounded),
+                label: const Text('Sesli Oda Aç · 100 Jeton'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: HomeApprovedDesign.purple,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _VoiceRoomCard extends StatelessWidget {

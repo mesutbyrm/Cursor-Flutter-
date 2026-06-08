@@ -45,7 +45,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
             ),
             const SizedBox(height: 8),
             Text(
-              'Normal oda $normalCost jeton · VIP oda $vipCost jeton',
+              'Sesli oda açma: $normalCost jeton\nVIP oda açma: $vipCost jeton / ay',
               style: TextStyle(
                 color: ctx.colors.onSurfaceMuted.withValues(alpha: 0.95),
                 fontSize: 13,
@@ -77,7 +77,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
             OutlinedButton.icon(
               onPressed: () => Navigator.pop(ctx, _OpenRoomChoice.vip),
               icon: const Icon(Icons.workspace_premium_rounded),
-              label: Text('VIP oda aç · $vipCost jeton'),
+              label: Text('VIP oda aç · $vipCost jeton/ay'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppThemeColors.coinGold,
                 side: const BorderSide(color: AppThemeColors.coinGold),

@@ -42,6 +42,7 @@ import 'utils/voice_music_access.dart';
 import '../../profile/presentation/providers/profile_providers.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
+import 'utils/voice_room_responsive_metrics.dart';
 import 'widgets/premium/voice_gift_flight_overlay.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
@@ -858,12 +859,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         : (speakingIds.isNotEmpty ? speakingIds.first : null);
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
     final staffBanner = live.enterBanner;
-    final viewInsets = MediaQuery.viewInsetsOf(context);
-    final keyboardOpen = viewInsets.bottom > 0;
-    final mq = MediaQuery.sizeOf(context);
-    final chatMaxH = keyboardOpen
-        ? (mq.height * 0.22).clamp(96.0, 160.0)
-        : (mq.height * 0.28).clamp(120.0, 220.0);
+    final metrics = VoiceRoomResponsiveMetrics.of(context);
+    final keyboardOpen = metrics.keyboardOpen;
+    final chatMaxH = metrics.chatBlockH;
     final duyuru = ((room.descTr ?? room.rulesTr)?.trim().isNotEmpty == true)
         ? (room.descTr ?? room.rulesTr)!.trim()
         : 'Sohbet odasına hoş geldiniz. Saygılı olun, keyifli sohbetler!';
@@ -1065,10 +1063,21 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ),
                         ),
                         Expanded(
-                          child: ListView(
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final m = VoiceRoomResponsiveMetrics.of(context);
+                              return SingleChildScrollView(
                             padding: EdgeInsets.zero,
-                            physics: const ClampingScrollPhysics(),
-                            children: [
+                            physics: keyboardOpen
+                                ? const ClampingScrollPhysics()
+                                : const NeverScrollableScrollPhysics(),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
                         if (live.loading && live.presence.isEmpty)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -1144,7 +1153,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                     )
                                 : null,
                           ),
-                        VoiceWebChatOverlay(
+                        SizedBox(
+                          height: chatMaxH,
+                          child: VoiceWebChatOverlay(
                           messages: live.messages,
                           hideOfficialJoinInChat: staffBanner != null,
                           maxHeight: chatMaxH,
@@ -1163,8 +1174,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             }
                           },
                         ),
+                        ),
                         if (!keyboardOpen) ...[
-                          const SizedBox(height: 4),
+                          SizedBox(height: m.sectionGap),
                           if (showDjControls)
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1261,12 +1273,24 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               message: staffBanner,
                               roomName: room.nameTr,
                             ),
-                          VoiceRoomMusicQueueSection(
-                            dj: live.dj,
-                            coinCost: live.dj.musicRequestCost,
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight: m.musicBlockH,
+                            ),
+                            child: SingleChildScrollView(
+                              physics: const ClampingScrollPhysics(),
+                              child: VoiceRoomMusicQueueSection(
+                                dj: live.dj,
+                                coinCost: live.dj.musicRequestCost,
+                              ),
+                            ),
                           ),
                         ],
-                            ],
+                                ],
+                              ),
+                            ),
+                          );
+                            },
                           ),
                         ),
                       ],
