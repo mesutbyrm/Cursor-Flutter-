@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-/// YouTube watch URL → doğrudan ses akışı (site API + Piped + Invidious).
+/// YouTube watch URL → doğrudan ses akışı (Piped → Invidious; site API varsa dener).
 class YoutubeStreamResolver {
   YoutubeStreamResolver(this._dio);
 
@@ -8,22 +8,45 @@ class YoutubeStreamResolver {
 
   static final _youtubeHost = RegExp(r'youtube\.com|youtu\.be', caseSensitive: false);
 
+  static const _cacheTtl = Duration(hours: 2);
+
   static const _pipedHosts = [
     'https://pipedapi.kavin.rocks',
     'https://pipedapi.adminforge.de',
-    'https://pipedapi.syncpundit.io',
-    'https://pipedapi.leptons.xyz',
-    'https://pipedapi.in.projectsegfau.lt',
   ];
 
   static const _invidiousHosts = [
-    'https://invidious.nerdvpn.de',
     'https://invidious.privacyredirect.com',
     'https://invidious.fdn.fr',
-    'https://invidious.dhus.de',
   ];
 
-  bool needsResolve(String url) => _youtubeHost.hasMatch(url);
+  final Map<String, _StreamCacheEntry> _cache = {};
+
+  bool needsResolve(String url) {
+    if (isDirectPlayableUrl(url)) return false;
+    return _youtubeHost.hasMatch(url);
+  }
+
+  static bool isDirectPlayableUrl(String url) {
+    final u = url.trim().toLowerCase();
+    if (u.isEmpty || !u.startsWith('http')) return false;
+    if (_youtubeHost.hasMatch(u)) return false;
+    if (u.contains('googlevideo.com') || u.contains('youtube.com/api/')) {
+      return true;
+    }
+    return u.contains('.m3u8') ||
+        u.contains('mime=audio') ||
+        u.endsWith('.mp3') ||
+        u.endsWith('.m4a') ||
+        u.endsWith('.aac') ||
+        u.endsWith('.ogg') ||
+        u.endsWith('.opus');
+  }
+
+  void invalidate(String musicUrl) {
+    final id = videoIdFrom(musicUrl);
+    if (id != null) _cache.remove(id);
+  }
 
   String? videoIdFrom(String url) {
     final trimmed = url.trim();
@@ -40,25 +63,52 @@ class YoutubeStreamResolver {
     }
   }
 
+  Future<String?> prefetch(String musicUrl) => resolvePlayableUrl(musicUrl);
+
   Future<String?> resolvePlayableUrl(String musicUrl) async {
     if (musicUrl.isEmpty) return null;
+    if (isDirectPlayableUrl(musicUrl)) return musicUrl;
     if (!_youtubeHost.hasMatch(musicUrl)) return musicUrl;
 
-    final fromApi = await _resolveViaSiteApi(musicUrl);
-    if (fromApi != null) return fromApi;
-
     final id = videoIdFrom(musicUrl);
+    if (id != null && id.isNotEmpty) {
+      final cached = _cache[id];
+      if (cached != null &&
+          DateTime.now().difference(cached.at) < _cacheTtl) {
+        return cached.url;
+      }
+    }
+
+    final fromApi = await _resolveViaSiteApi(musicUrl);
+    if (fromApi != null) {
+      _remember(id, fromApi);
+      return fromApi;
+    }
+
     if (id == null || id.isEmpty) return null;
 
     for (final host in _pipedHosts) {
-      final url = await _resolveViaPiped(host, id);
-      if (url != null) return url;
+      final piped = await _resolveViaPiped(host, id);
+      if (piped != null) {
+        _remember(id, piped);
+        return piped;
+      }
     }
+
     for (final host in _invidiousHosts) {
-      final url = await _resolveViaInvidious(host, id);
-      if (url != null) return url;
+      final inv = await _resolveViaInvidious(host, id);
+      if (inv != null) {
+        _remember(id, inv);
+        return inv;
+      }
     }
+
     return null;
+  }
+
+  void _remember(String? id, String url) {
+    if (id == null || id.isEmpty || !url.startsWith('http')) return;
+    _cache[id] = _StreamCacheEntry(url: url, at: DateTime.now());
   }
 
   Future<String?> _resolveViaSiteApi(String musicUrl) async {
@@ -66,6 +116,7 @@ class YoutubeStreamResolver {
       final res = await _dio.get<dynamic>(
         '/api/chat/youtube-stream',
         queryParameters: {'url': musicUrl},
+        options: Options(receiveTimeout: const Duration(seconds: 8)),
       );
       final data = res.data;
       if (data is Map) {
@@ -82,7 +133,7 @@ class YoutubeStreamResolver {
         '$host/streams/$id',
         options: Options(
           headers: {'Accept': 'application/json'},
-          receiveTimeout: const Duration(seconds: 12),
+          receiveTimeout: const Duration(seconds: 5),
         ),
       );
       final data = res.data;
@@ -112,7 +163,7 @@ class YoutubeStreamResolver {
         '$host/api/v1/videos/$id',
         options: Options(
           headers: {'Accept': 'application/json'},
-          receiveTimeout: const Duration(seconds: 12),
+          receiveTimeout: const Duration(seconds: 5),
         ),
       );
       final data = res.data;
@@ -136,4 +187,11 @@ class YoutubeStreamResolver {
     } catch (_) {}
     return null;
   }
+}
+
+class _StreamCacheEntry {
+  const _StreamCacheEntry({required this.url, required this.at});
+
+  final String url;
+  final DateTime at;
 }

@@ -36,7 +36,20 @@ class LiveGiftsRemoteDataSource {
       ApiEndpoints.videoStreamGiftsCatalog,
       query: {'platform': platform.queryValue},
     );
-    final data = _unwrap(res.data);
+    return _parseGiftTypeList(_unwrap(res.data));
+  }
+
+  Future<List<LiveVideoGiftType>> fetchGiftTypesFromGiftsApi({
+    GiftPlatform platform = GiftPlatform.mobile,
+  }) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.giftsCatalog,
+      query: {'platform': platform.queryValue},
+    );
+    return _parseGiftTypeList(_unwrap(res.data));
+  }
+
+  List<LiveVideoGiftType> _parseGiftTypeList(dynamic data) {
     if (data is! List) return const [];
     return data
         .map((e) => LiveVideoGiftType.fromGift(GiftEntity.fromJson(

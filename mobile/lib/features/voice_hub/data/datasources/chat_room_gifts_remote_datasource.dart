@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
@@ -15,7 +13,13 @@ class ChatRoomGiftsRemoteDataSource {
   final Dio _dio;
   final LiveGiftsRemoteDataSource _liveGifts;
 
-  Future<List<LiveVideoGiftType>> fetchGiftTypes() => _liveGifts.fetchGiftTypes();
+  Future<List<LiveVideoGiftType>> fetchGiftTypes() async {
+    try {
+      return await _liveGifts.fetchGiftTypes();
+    } catch (_) {
+      return _liveGifts.fetchGiftTypesFromGiftsApi();
+    }
+  }
 
   Future<void> sendGift({
     required String roomId,
@@ -24,11 +28,11 @@ class ChatRoomGiftsRemoteDataSource {
     String? senderName,
     String? receiverName,
     String? receiverId,
-    String platform = 'flutter',
+    String platform = 'mobile',
   }) async {
     await _dio.safePost<dynamic>(
       ApiEndpoints.chatRoomGifts(roomId),
-      data: jsonEncode({
+      data: {
         'giftTypeId': giftTypeId,
         'quantity': quantity,
         if (senderName != null && senderName.isNotEmpty) 'senderName': senderName,
@@ -36,8 +40,7 @@ class ChatRoomGiftsRemoteDataSource {
           'receiverName': receiverName,
         if (receiverId != null && receiverId.isNotEmpty) 'receiverId': receiverId,
         'platform': platform,
-      }),
-      options: Options(contentType: 'application/json'),
+      },
     );
   }
 
