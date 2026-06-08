@@ -24,7 +24,7 @@ class ChatRoomGiftsRemoteDataSource {
     String? senderName,
     String? receiverName,
     String? receiverId,
-    String platform = 'flutter',
+    String platform = 'mobile',
   }) async {
     await _dio.safePost<dynamic>(
       ApiEndpoints.chatRoomGifts(roomId),

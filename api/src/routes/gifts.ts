@@ -112,7 +112,8 @@ const sendSchema = z.object({
   quantity: z.coerce.number().int().min(1).max(999).default(1),
   senderName: z.string().max(64).optional(),
   receiverName: z.string().max(64).optional(),
-  platform: z.enum(["mobile", "web"]).default("mobile"),
+  receiverId: z.string().min(1).optional(),
+  platform: z.enum(["mobile", "web", "flutter"]).default("mobile"),
 });
 
 /** POST /api/video-streams/:streamId/gifts */
@@ -126,14 +127,22 @@ export async function sendStreamGift(
   if (!parsed.success) {
     return fail(res, 400, "VALIDATION_ERROR", "Geçersiz hediye", parsed.error.flatten());
   }
-  const { giftTypeId, quantity, senderName, receiverName, platform } = parsed.data;
+  const {
+    giftTypeId,
+    quantity,
+    senderName,
+    receiverName,
+    receiverId: bodyReceiverId,
+    platform,
+  } = parsed.data;
+  const giftPlatform = platform === "flutter" ? "mobile" : platform;
 
   const gift = await prisma.gift.findFirst({
     where: {
       enabled: true,
       AND: [
         { OR: [{ slug: giftTypeId }, { id: giftTypeId }] },
-        { OR: [{ platform: "all" }, { platform }] },
+        { OR: [{ platform: "all" }, { platform: giftPlatform }] },
       ],
     },
   });
@@ -159,8 +168,8 @@ export async function sendStreamGift(
 
   const combo = await resolveCombo(streamId, userId, gift.id, quantity);
 
-  let receiverId: string | null = null;
-  if (receiverName && receiverName !== "Yayıncı") {
+  let receiverId: string | null = bodyReceiverId?.trim() || null;
+  if (!receiverId && receiverName && receiverName !== "Yayıncı") {
     const recv = await prisma.user.findFirst({
       where: {
         OR: [
@@ -298,14 +307,22 @@ export async function sendRoomGift(
   if (!parsed.success) {
     return fail(res, 400, "VALIDATION_ERROR", "Geçersiz hediye", parsed.error.flatten());
   }
-  const { giftTypeId, quantity, senderName, receiverName, platform } = parsed.data;
+  const {
+    giftTypeId,
+    quantity,
+    senderName,
+    receiverName,
+    receiverId: bodyReceiverId,
+    platform,
+  } = parsed.data;
+  const giftPlatform = platform === "flutter" ? "mobile" : platform;
 
   const gift = await prisma.gift.findFirst({
     where: {
       enabled: true,
       AND: [
         { OR: [{ slug: giftTypeId }, { id: giftTypeId }] },
-        { OR: [{ platform: "all" }, { platform }] },
+        { OR: [{ platform: "all" }, { platform: giftPlatform }] },
       ],
     },
   });
@@ -331,8 +348,8 @@ export async function sendRoomGift(
 
   const combo = await resolveComboRoom(roomId, userId, gift.id, quantity);
 
-  let receiverId: string | null = null;
-  if (receiverName && receiverName !== "Yayıncı") {
+  let receiverId: string | null = bodyReceiverId?.trim() || null;
+  if (!receiverId && receiverName && receiverName !== "Yayıncı") {
     const recv = await prisma.user.findFirst({
       where: {
         OR: [

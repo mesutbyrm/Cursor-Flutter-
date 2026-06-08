@@ -96,17 +96,18 @@ class VoiceRoomDjPlayer {
         fallbackYoutubeUrl,
     ];
 
-    for (var attempt = 0; attempt < 3; attempt++) {
+    for (var attempt = 0; attempt < 2; attempt++) {
       if (attempt > 0) {
         for (final c in candidates) {
           _resolver.invalidate(c);
         }
-        await Future<void>.delayed(Duration(milliseconds: 320 * attempt));
+        await Future<void>.delayed(const Duration(milliseconds: 400));
       }
 
-      final resolved = await Future.wait(
-        candidates.map((c) => _resolveSource(c)),
-      );
+      final resolved = <String?>[];
+      for (final c in candidates) {
+        resolved.add(await _resolveSource(c));
+      }
 
       for (var i = 0; i < candidates.length; i++) {
         final candidate = candidates[i];
@@ -153,7 +154,9 @@ class VoiceRoomDjPlayer {
   }
 
   Future<String?> _resolveSource(String musicUrl) async {
-    if (!_resolver.needsResolve(musicUrl)) return musicUrl;
+    if (!_resolver.needsResolve(musicUrl)) {
+      return YoutubeStreamResolver.wrapForMobilePlayback(musicUrl);
+    }
     return _resolver.resolvePlayableUrl(musicUrl);
   }
 
