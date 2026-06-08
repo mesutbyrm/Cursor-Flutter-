@@ -222,7 +222,8 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       final player = ref.read(voiceRoomDjPlayerProvider);
       player.onTrackComplete = () => unawaited(_onDjTrackComplete());
     });
-    _schedulePoll();
+  // build() tamamlanmadan state okunmaz — ilk poll SSE kapalı varsayımıyla.
+    _schedulePoll(sseConnected: false);
     _presenceHeartbeat = Timer.periodic(const Duration(seconds: 45), (_) {
       if (!state.sseConnected && state.selfInRoom) {
         unawaited(_presenceHeartbeatTick());
@@ -381,10 +382,10 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     );
   }
 
-  void _schedulePoll() {
+  void _schedulePoll({bool? sseConnected}) {
     _poll?.cancel();
     _pollTick = 0;
-    final sse = state.sseConnected;
+    final sse = sseConnected ?? state.sseConnected;
     final interval = sse ? 15 : 8;
     _poll = Timer.periodic(Duration(seconds: interval), (_) {
       if (_pollPaused) return;

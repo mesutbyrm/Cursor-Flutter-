@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.152+154 (2026-06-08)
+
+### Sesli oda — Riverpod provider hatası düzeltmesi
+
+- `VoiceRoomLiveController.build()` içinde `state` hazır olmadan okuma kaldırıldı
+- "Tried to read the state of an uninitialized provider" gri hata ekranı giderildi
+- Sağ panel aynı oturum anahtarını (`stableSessionKey`) kullanır
+
 ## 1.0.151+153 (2026-06-07)
 
 ### Sesli oda UI — layout parity v2

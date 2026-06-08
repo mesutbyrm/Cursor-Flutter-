@@ -1220,7 +1220,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             PremiumGiftFullscreenOverlay(event: _fullscreenGift),
             if (!keyboardOpen)
               VoiceRoomRightSlidePanel(
-                room: room,
+                room: session,
                 perms: perms,
                 isOwner: isOwner,
               ),
