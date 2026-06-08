@@ -19,8 +19,10 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
     this.onSkip,
     this.onPlayPause,
     this.onStop,
+    this.onMuteToggle,
     this.canModerate = false,
     this.canControl = false,
+    this.musicMuted = false,
   });
 
   final ChatRoomDjState dj;
@@ -28,8 +30,10 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
   final VoidCallback? onSkip;
   final VoidCallback? onPlayPause;
   final VoidCallback? onStop;
+  final VoidCallback? onMuteToggle;
   final bool canModerate;
   final bool canControl;
+  final bool musicMuted;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -178,6 +182,25 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                           icon: Icon(
                             Icons.stop_rounded,
                             color: Colors.white.withValues(alpha: 0.85),
+                            size: 18,
+                          ),
+                        ),
+                      if (canControl && onMuteToggle != null)
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 30,
+                            minHeight: 30,
+                          ),
+                          onPressed: onMuteToggle,
+                          icon: Icon(
+                            musicMuted
+                                ? Icons.volume_off_rounded
+                                : Icons.volume_up_rounded,
+                            color: musicMuted
+                                ? AppThemeColors.liveRed.withValues(alpha: 0.9)
+                                : Colors.white.withValues(alpha: 0.85),
                             size: 18,
                           ),
                         ),

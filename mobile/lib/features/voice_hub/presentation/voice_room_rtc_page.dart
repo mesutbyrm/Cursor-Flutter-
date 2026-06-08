@@ -57,7 +57,6 @@ import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_action_row.dart';
 import 'widgets/voice_room/voice_room_music_mini_player.dart';
 import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
-import 'widgets/voice_room/voice_room_music_request_flash.dart';
 import 'widgets/voice_room_error_boundary.dart';
 
 /// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
@@ -462,9 +461,23 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
   }
 
-  void _openPkInvite(VoiceRoomEntity room) {
+  Future<void> _openPkInvite(VoiceRoomEntity room) async {
     final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-    context.push('/voice-room/$key/pk-invite', extra: room);
+    if (key.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Oda bilgisi yüklenemedi — PK başlatılamadı')),
+      );
+      return;
+    }
+    try {
+      await context.push('/voice-room/$key/pk-invite', extra: room.stableSessionKey);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
   }
 
   void _openActivePk(VoiceRoomEntity room) {
@@ -832,6 +845,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           perms: perms,
           jetonBalance: jeton,
         );
+    final canControlMusic = perms.canManageDj ||
+        isOwner ||
+        live.dj.canPlayMusic;
     final speakingIds = <String>{
       for (final p in live.presence)
         if (p.isSpeaking) p.id,
@@ -860,7 +876,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         }
       }
     }
-    final headerAvatar = ownerPresence?.image ?? room.ownerAvatarUrl;
+    final headerAvatar = ownerPresence?.image;
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(session), (prev, next) {
       if (prev?.error != next.error && next.error != null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1112,11 +1128,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ),
                         ),
                         if (!keyboardOpen)
-                          VoiceStaffEntranceMarquee(
-                            message: staffBanner,
-                            roomName: room.nameTr,
-                          ),
-                        if (!keyboardOpen)
                           VoiceRoomPersistentDuyuru(
                             roomKey: room.apiRoomKey.isNotEmpty
                                 ? room.apiRoomKey
@@ -1185,7 +1196,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                   if (active?.isActive == true) {
                                     _openActivePk(room);
                                   } else {
-                                    _openPkInvite(room);
+                                    unawaited(_openPkInvite(room));
                                   }
                                 },
                               ),
@@ -1193,9 +1204,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           VoiceRoomMusicMiniPlayer(
                             dj: live.dj,
                             canModerate: perms.canModerate || isOwner,
-                            canControl: perms.canManageDj ||
-                                isOwner ||
-                                live.dj.canPlayMusic,
+                            canControl: canControlMusic,
                             onTap: showMusicCard
                                 ? () => showVoiceMusicHubPage(
                                       context,
@@ -1228,13 +1237,33 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                     .read(voiceRoomLiveProvider(_sessionRoom).notifier)
                                     .skipMusic()
                                 : null,
+                            musicMuted: !ui.backgroundMusicEnabled,
+                            onMuteToggle: canControlMusic
+                                ? () {
+                                    final notifier =
+                                        ref.read(voiceRoomUiProvider.notifier);
+                                    notifier.toggleBackgroundMusic();
+                                    final enabled = ref
+                                        .read(voiceRoomUiProvider)
+                                        .backgroundMusicEnabled;
+                                    unawaited(
+                                      ref
+                                          .read(
+                                            voiceRoomLiveProvider(session).notifier,
+                                          )
+                                          .toggleBackgroundMusic(enabled),
+                                    );
+                                  }
+                                : null,
                           ),
+                          if (!keyboardOpen)
+                            VoiceStaffEntranceMarquee(
+                              message: staffBanner,
+                              roomName: room.nameTr,
+                            ),
                           VoiceRoomMusicQueueSection(
                             dj: live.dj,
                             coinCost: live.dj.musicRequestCost,
-                          ),
-                          VoiceRoomMusicRequestFlash(
-                            message: live.musicRequestFlash,
                           ),
                         ],
                             ],

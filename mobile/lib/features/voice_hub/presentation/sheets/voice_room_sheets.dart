@@ -560,7 +560,7 @@ class _RoomSettingsSheet extends StatelessWidget {
                       final enabled = !state.backgroundMusicEnabled;
                       notifier.toggleBackgroundMusic();
                       final err = await ref
-                          .read(voiceRoomLiveProvider(room).notifier)
+                          .read(voiceRoomLiveProvider(room.stableSessionKey).notifier)
                           .toggleBackgroundMusic(enabled);
                       if (context.mounted && err != null) {
                         ScaffoldMessenger.of(context).showSnackBar(

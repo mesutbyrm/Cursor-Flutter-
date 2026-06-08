@@ -25,7 +25,7 @@ Future<void> showVoiceYoutubeSongSheet(
   VoiceRoomPermissions? perms,
   bool? isOwner,
 }) {
-  final live = ref.read(voiceRoomLiveProvider(room));
+  final live = ref.read(voiceRoomLiveProvider(room.stableSessionKey));
   final user = ref.read(authControllerProvider).valueOrNull;
   final resolvedPerms = perms ??
       VoiceMusicAccess.permissionsFor(
@@ -73,7 +73,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
   Future<void> _loadQueueMeta() async {
     try {
       final data = await ref
-          .read(voiceRoomLiveProvider(widget.room).notifier)
+          .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
           .fetchMusicQueue();
       if (mounted) setState(() => _cost = data.cost);
     } catch (_) {}
@@ -112,7 +112,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
     });
     try {
       final hits = await ref
-          .read(voiceRoomLiveProvider(widget.room).notifier)
+          .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
           .searchYoutube(q.trim());
       if (mounted) {
         setState(() {
@@ -136,7 +136,9 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
     setState(() => _submitting = true);
     String? err;
     try {
-      err = await ref.read(voiceRoomLiveProvider(widget.room).notifier).requestMusic(
+      err = await ref
+          .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
+          .requestMusic(
             title: hit.title,
             youtubeUrl: hit.url,
             thumbUrl: hit.thumbUrl,

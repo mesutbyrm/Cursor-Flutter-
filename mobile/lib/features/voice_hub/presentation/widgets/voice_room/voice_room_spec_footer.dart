@@ -153,18 +153,22 @@ class VoiceRoomSpecFooter extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
-                _IconAction(
-                  icon: Icons.home_rounded,
-                  label: 'Ana Sayfa',
-                  onTap: onHome,
+                Expanded(
+                  child: _IconAction(
+                    icon: Icons.home_rounded,
+                    label: 'Ana Sayfa',
+                    onTap: onHome,
+                  ),
                 ),
-                _IconAction(
-                  icon: headphonesOn
-                      ? Icons.headphones_rounded
-                      : Icons.volume_up_rounded,
-                  label: headphonesOn ? 'Kulaklık' : 'Hoparlör',
-                  onTap: onToggleAudioOutput,
-                  active: headphonesOn,
+                Expanded(
+                  child: _IconAction(
+                    icon: headphonesOn
+                        ? Icons.headphones_rounded
+                        : Icons.volume_up_rounded,
+                    label: headphonesOn ? 'Kulaklık' : 'Hoparlör',
+                    onTap: onToggleAudioOutput,
+                    active: headphonesOn,
+                  ),
                 ),
                 Expanded(
                   child: Center(
@@ -191,47 +195,54 @@ class VoiceRoomSpecFooter extends StatelessWidget {
                     ),
                   ),
                 ),
-                _IconAction(
-                  icon: Icons.meeting_room_rounded,
-                  label: 'Oda',
-                  onTap: onRoomSettings,
+                Expanded(
+                  child: _IconAction(
+                    icon: Icons.meeting_room_rounded,
+                    label: 'Oda',
+                    onTap: onRoomSettings,
+                  ),
                 ),
-                _IconAction(
-                  icon: Icons.person_rounded,
-                  label: 'Profil',
-                  onTap: onUserSettings,
+                Expanded(
+                  child: _IconAction(
+                    icon: Icons.person_rounded,
+                    label: 'Profil',
+                    onTap: onUserSettings,
+                  ),
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _formatCoins(coinBalance),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 9,
-                        color: AppThemeColors.diamondBlue,
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _formatCoins(coinBalance),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 9,
+                          color: AppThemeColors.diamondBlue,
+                        ),
                       ),
-                    ),
-                    Material(
-                      color: VoiceRoomTokens.neonPurple,
-                      borderRadius: BorderRadius.circular(14),
-                      child: InkWell(
-                        onTap: onTopUp,
+                      Material(
+                        color: VoiceRoomTokens.neonPurple,
                         borderRadius: BorderRadius.circular(14),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                          child: Text(
-                            'Jeton Yükle',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 8,
-                              color: Colors.white,
+                        child: InkWell(
+                          onTap: onTopUp,
+                          borderRadius: BorderRadius.circular(14),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                            child: Text(
+                              'Jeton Yükle',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 8,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -274,9 +285,10 @@ class _IconAction extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        padding: const EdgeInsets.symmetric(vertical: 2),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(
               icon,

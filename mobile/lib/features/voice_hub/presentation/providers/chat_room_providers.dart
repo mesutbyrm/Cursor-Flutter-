@@ -751,23 +751,36 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       userName: msg.user?.displayName ?? msg.user?.name,
     );
     if (line == null) return;
-    final key = '${msg.id}:$line';
-    if (_shownMusicRequestFlashKeys.contains(key)) return;
-    _shownMusicRequestFlashKeys.add(key);
-    state = state.copyWith(musicRequestFlash: line);
-    _musicRequestFlashTimer?.cancel();
-    _musicRequestFlashTimer = Timer(const Duration(seconds: 8), () {
-      state = state.copyWith(clearMusicRequestFlash: true);
-    });
+    _appendSongRequestChatLine(line, dedupeKey: msg.id);
   }
 
   void _showMusicRequestFlashLine(String line) {
     if (line.trim().isEmpty) return;
-    state = state.copyWith(musicRequestFlash: line);
-    _musicRequestFlashTimer?.cancel();
-    _musicRequestFlashTimer = Timer(const Duration(seconds: 8), () {
-      state = state.copyWith(clearMusicRequestFlash: true);
-    });
+    _appendSongRequestChatLine(line);
+  }
+
+  void _appendSongRequestChatLine(String line, {String? dedupeKey}) {
+    final key = dedupeKey ?? line;
+    if (_shownMusicRequestFlashKeys.contains(key)) return;
+    _shownMusicRequestFlashKeys.add(key);
+    final id = 'song-chat-$key';
+    if (state.messages.any((m) => m.id == id)) return;
+    final chatLine = ChatRoomMessage(
+      id: id,
+      content: line,
+      createdAt: DateTime.now(),
+      user: msgUserFromFlash(line),
+    );
+    state = state.copyWith(
+      messages: [...state.messages, chatLine],
+      clearMusicRequestFlash: true,
+    );
+  }
+
+  ChatRoomUserRef? msgUserFromFlash(String line) {
+    final m = RegExp(r'^🎵\s*([^:]+)\s+şarkı').firstMatch(line);
+    if (m == null) return null;
+    return ChatRoomUserRef(id: 'system', name: m.group(1)!.trim());
   }
 
   Future<String?> _submitMusicRequestByTitle(String title) async {
@@ -1260,19 +1273,37 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     bool skipPayment = false,
   }) async {
     try {
+      var resolvedUrl = youtubeUrl.trim();
+      var resolvedThumb = thumbUrl;
+      var resolvedVideoId = videoId;
+      if (resolvedUrl.isEmpty && title.trim().length >= 2) {
+        final hits =
+            await ref.read(chatRoomRemoteProvider).searchYoutube(title.trim());
+        if (hits.isEmpty) {
+          return '«${title.trim()}» için YouTube sonucu bulunamadı.';
+        }
+        final hit = hits.first;
+        resolvedUrl = hit.url;
+        resolvedThumb ??= hit.thumbUrl;
+        resolvedVideoId ??= hit.videoId;
+      }
+      if (resolvedUrl.isEmpty) {
+        return 'Geçerli bir şarkı seçin veya arayın.';
+      }
       VoiceRoomDebugLog.log('music.request', {
         'title': title,
         'priority': priority,
         'skipPayment': skipPayment,
+        'youtubeUrl': resolvedUrl,
       });
       final result = await ref
           .read(chatRoomRemoteProvider)
           .requestMusic(
             roomKey: _roomKey,
             title: title,
-            youtubeUrl: youtubeUrl,
-            thumbUrl: thumbUrl,
-            videoId: videoId,
+            youtubeUrl: resolvedUrl,
+            thumbUrl: resolvedThumb,
+            videoId: resolvedVideoId,
             giftTo: giftTo,
             note: note,
             priority: priority,
