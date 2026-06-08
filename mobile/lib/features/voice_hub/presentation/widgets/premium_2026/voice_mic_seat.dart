@@ -137,7 +137,7 @@ class VoiceMicSeat extends StatelessWidget {
     if (!speaking && !isHost) return avatar;
 
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return avatar;
+      return _AndroidSpeakingGlow(active: speaking || isHost, child: avatar);
     }
 
     return VoiceAudioWaveRing(
@@ -156,6 +156,77 @@ String? _levelLabel(ChatRoomPresence user) {
   final seat = user.seatIndex;
   if (seat != null && seat > 1) return 'Lv$seat';
   return null;
+}
+
+class _AndroidSpeakingGlow extends StatefulWidget {
+  const _AndroidSpeakingGlow({required this.active, required this.child});
+
+  final bool active;
+  final Widget child;
+
+  @override
+  State<_AndroidSpeakingGlow> createState() => _AndroidSpeakingGlowState();
+}
+
+class _AndroidSpeakingGlowState extends State<_AndroidSpeakingGlow>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(covariant _AndroidSpeakingGlow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _sync();
+  }
+
+  void _sync() {
+    if (widget.active) {
+      _pulse.repeat(reverse: true);
+    } else {
+      _pulse.stop();
+      _pulse.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.active) return widget.child;
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (context, child) {
+        final glow = 4 + _pulse.value * 6;
+        return Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: VoiceRoomTokens.gold.withValues(alpha: 0.35 + _pulse.value * 0.25),
+                blurRadius: glow,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: child,
+        );
+      },
+      child: widget.child,
+    );
+  }
 }
 
 class _EmptySeat extends StatelessWidget {
