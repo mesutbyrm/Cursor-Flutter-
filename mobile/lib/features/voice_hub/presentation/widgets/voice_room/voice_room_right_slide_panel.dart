@@ -46,16 +46,50 @@ class _VoiceRoomRightSlidePanelState
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (_expanded)
-            SizedBox(
-              width: panelW,
-              child: _PanelBody(
-                room: widget.room,
-                perms: widget.perms,
-                isOwner: widget.isOwner,
-                onClose: () => setState(() => _expanded = false),
-              ),
-            ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.centerRight,
+            child: _expanded
+                ? SizedBox(
+                    width: panelW,
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: _PanelBody(
+                            room: widget.room,
+                            perms: widget.perms,
+                            isOwner: widget.isOwner,
+                            onClose: () => setState(() => _expanded = false),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+                          child: FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: VoiceRoomTokens.neonPurple,
+                              minimumSize: const Size.fromHeight(42),
+                            ),
+                            onPressed: () => showVoiceYoutubeSongSheet(
+                              context,
+                              ref,
+                              room: widget.room,
+                            ),
+                            icon: const Icon(Icons.music_note_rounded, size: 18),
+                            label: const Text(
+                              'Ücretli Şarkı İste',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox(width: 0, height: 0),
+          ),
           GestureDetector(
             onTap: () => setState(() => _expanded = !_expanded),
             child: Container(
@@ -227,23 +261,6 @@ class _PanelBodyState extends ConsumerState<_PanelBody> {
                     ),
                   ),
           ],
-          const SizedBox(height: 14),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              backgroundColor: VoiceRoomTokens.neonPurple,
-              minimumSize: const Size.fromHeight(42),
-            ),
-            onPressed: () => showVoiceYoutubeSongSheet(
-              context,
-              ref,
-              room: widget.room,
-            ),
-            icon: const Icon(Icons.music_note_rounded, size: 18),
-            label: const Text(
-              'Ücretli Şarkı İste',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
-            ),
-          ),
         ],
       ),
     );

@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
-import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
@@ -34,7 +31,9 @@ class VoiceWebOwnerStage extends StatelessWidget {
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width;
         final gap = 6.0;
-        final cell = ((w - gap * 4) / 5).clamp(40.0, 56.0);
+        final panelReserve = 36.0;
+        final row1W = w - panelReserve;
+        final cell = ((row1W - gap * 3) / 4).clamp(40.0, 56.0);
         final rowH = cell + 20;
         final gridH = rowH * 2 + gap;
 
@@ -44,23 +43,30 @@ class VoiceWebOwnerStage extends StatelessWidget {
         return SizedBox(
           height: gridH.clamp(112.0, 176.0),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.only(left: 8, right: 4),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _seatRow(
-                  seats: seats,
-                  displayStart: 1,
-                  internalStart: 1,
-                  size: cell,
-                  gap: gap,
-                  hostSeat: 1,
+                Row(
+                  children: [
+                    Expanded(
+                      child: _seatRow(
+                        seats: seats,
+                        displayNums: const [1, 2, 3, 4],
+                        internalNums: const [1, 2, 3, 4],
+                        size: cell,
+                        gap: gap,
+                        hostSeat: 1,
+                      ),
+                    ),
+                    SizedBox(width: panelReserve - 8),
+                  ],
                 ),
                 SizedBox(height: gap),
                 _seatRow(
                   seats: seats,
-                  displayStart: 6,
-                  internalStart: 6,
+                  displayNums: const [6, 7, 8, 9, 10],
+                  internalNums: const [6, 7, 8, 9, 10],
                   size: cell,
                   gap: gap,
                 ),
@@ -96,17 +102,17 @@ class VoiceWebOwnerStage extends StatelessWidget {
 
   Widget _seatRow({
     required Map<int, ChatRoomPresence> seats,
-    required int displayStart,
-    required int internalStart,
+    required List<int> displayNums,
+    required List<int> internalNums,
     required double size,
     required double gap,
     int? hostSeat,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: List.generate(5, (col) {
-        final internal = internalStart + col;
-        final displayNum = displayStart + col;
+      children: List.generate(displayNums.length, (col) {
+        final internal = internalNums[col];
+        final displayNum = displayNums[col];
         final user = seats[internal];
         return VoiceMicSeat(
           user: user,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/theme/app_theme_colors.dart';
+import '../../theme/voice_room_tokens.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../providers/chat_room_providers.dart';
@@ -182,13 +183,8 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                         ),
                       if (isPlaying)
                         Padding(
-                          padding: const EdgeInsets.only(right: 2),
-                          child: Icon(
-                            Icons.graphic_eq_rounded,
-                            size: 14,
-                            color: AppThemeColors.accentPink
-                                .withValues(alpha: 0.95),
-                          ),
+                          padding: const EdgeInsets.only(right: 4),
+                          child: _MusicVisualizer(active: true),
                         ),
                       if (canModerate && onSkip != null)
                         IconButton(
@@ -268,5 +264,66 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
     final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$m:$s';
+  }
+}
+
+class _MusicVisualizer extends StatefulWidget {
+  const _MusicVisualizer({required this.active});
+
+  final bool active;
+
+  @override
+  State<_MusicVisualizer> createState() => _MusicVisualizerState();
+}
+
+class _MusicVisualizerState extends State<_MusicVisualizer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 520),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _pulse,
+        builder: (context, _) {
+          return Row(
+            children: List.generate(5, (i) {
+              final wave = widget.active
+                  ? 0.35 + ((_pulse.value + i * 0.18) % 1.0) * 0.65
+                  : 0.2;
+              final h = 4.0 + wave * 14.0;
+              return Container(
+                width: 3,
+                height: h,
+                margin: const EdgeInsets.only(left: 2),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(2),
+                  gradient: const LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [VoiceRoomTokens.neonPink, VoiceRoomTokens.neonPurple],
+                  ),
+                ),
+              );
+            }),
+          );
+        },
+      ),
+    );
   }
 }

@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.151+153 (2026-06-07)
+
+### Sesli oda UI — layout parity v2
+
+- Koltuk ızgarası: üst sıra 1–4, alt sıra 6–10 (sağ panel alanı)
+- Giriş bildirimi kartı + duyuru + sohbet + müzik sırası (tasarım referansı)
+- Sohbet: rol ikonları, İSTEK rozeti, gömülü liste
+- Sağ panel: Ücretli Şarkı İste butonu panel altında
+- Android konuşma altın glow animasyonu
+- Şu an çalan: frekans çubukları görselleştirici
+
 ## 1.0.150+152 (2026-06-07)
 
 ### Sesli oda UI — tasarım referansına pixel-parity

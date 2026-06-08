@@ -56,7 +56,7 @@ import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_action_row.dart';
 import 'widgets/voice_room/voice_room_music_mini_player.dart';
-import 'widgets/voice_room/voice_staff_entrance_marquee.dart';
+import 'widgets/voice_room/voice_room_entry_notification.dart';
 import 'widgets/voice_room/voice_room_music_request_flash.dart';
 import 'widgets/voice_room_error_boundary.dart';
 
@@ -1046,11 +1046,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: VoiceRoomDiagnosticCard(state: diagnostic),
                           ),
-                        if (!keyboardOpen)
-                          VoiceStaffEntranceMarquee(
-                            message: staffBanner,
-                            roomName: room.nameTr,
-                          ),
                         VoiceWebOwnerStage(
                           room: room,
                           presence: live.presence,
@@ -1068,6 +1063,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ),
                         ),
                         if (!keyboardOpen) ...[
+                          VoiceRoomEntryNotificationCard(
+                            message: staffBanner,
+                            roomName: room.nameTr,
+                          ),
                           VoiceRoomPersistentDuyuru(
                             roomKey: room.apiRoomKey.isNotEmpty
                                 ? room.apiRoomKey
@@ -1084,6 +1083,57 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                     )
                                 : null,
                           ),
+                          VoiceWebChatOverlay(
+                            messages: live.messages,
+                            hideOfficialJoinInChat: staffBanner != null,
+                            maxHeight: chatMaxH,
+                            embedded: true,
+                            onUserTap: (id, _) {
+                              for (final e in live.presence) {
+                                if (e.id == id) {
+                                  _openUser(e);
+                                  break;
+                                }
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 4),
+                          if (showDjControls)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: VoiceRoomActionRow(
+                                dj: live.dj,
+                                showMusicCard: showMusicCard,
+                                showDjCard: showDjControls,
+                                showPkCard: isOwner,
+                                pkActive:
+                                    ref.watch(pkBattleRemoteProvider)?.isActive ==
+                                        true,
+                                onMusicTap: () => showVoiceMusicHubPage(
+                                  context,
+                                  ref,
+                                  room: room,
+                                  perms: perms,
+                                  isOwner: isOwner,
+                                ),
+                                onDjTap: () => showVoiceRoomDjSheet(
+                                  context,
+                                  ref,
+                                  room: room,
+                                  live: live,
+                                  perms: perms,
+                                  isOwner: isOwner,
+                                ),
+                                onPkTap: () {
+                                  final active = ref.read(pkBattleRemoteProvider);
+                                  if (active?.isActive == true) {
+                                    _openActivePk(room);
+                                  } else {
+                                    _openPkInvite(room);
+                                  }
+                                },
+                              ),
+                            ),
                           VoiceRoomMusicMiniPlayer(
                             dj: live.dj,
                             canModerate: perms.canModerate || isOwner,
@@ -1123,42 +1173,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                     .skipMusic()
                                 : null,
                           ),
-                          if (showDjControls)
-                            Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: VoiceRoomActionRow(
-                              dj: live.dj,
-                              showMusicCard: showMusicCard,
-                              showDjCard: showDjControls,
-                              showPkCard: isOwner,
-                              pkActive:
-                                  ref.watch(pkBattleRemoteProvider)?.isActive ==
-                                      true,
-                              onMusicTap: () => showVoiceMusicHubPage(
-                                context,
-                                ref,
-                                room: room,
-                                perms: perms,
-                                isOwner: isOwner,
-                              ),
-                              onDjTap: () => showVoiceRoomDjSheet(
-                                context,
-                                ref,
-                                room: room,
-                                live: live,
-                                perms: perms,
-                                isOwner: isOwner,
-                              ),
-                              onPkTap: () {
-                                final active = ref.read(pkBattleRemoteProvider);
-                                if (active?.isActive == true) {
-                                  _openActivePk(room);
-                                } else {
-                                  _openPkInvite(room);
-                                }
-                              },
-                            ),
-                          ),
                           VoiceRoomMusicQueueSection(
                             dj: live.dj,
                             coinCost: live.dj.musicRequestCost,
@@ -1168,22 +1182,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           ),
                         ],
                             ],
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.bottomLeft,
-                          child: VoiceWebChatOverlay(
-                            messages: live.messages,
-                            hideOfficialJoinInChat: staffBanner != null,
-                            maxHeight: chatMaxH,
-                            onUserTap: (id, _) {
-                              for (final e in live.presence) {
-                                if (e.id == id) {
-                                  _openUser(e);
-                                  break;
-                                }
-                              }
-                            },
                           ),
                         ),
                       ],
