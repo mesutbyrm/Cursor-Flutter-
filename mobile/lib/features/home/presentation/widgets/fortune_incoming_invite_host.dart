@@ -8,11 +8,12 @@ import '../../../../app/router/app_router.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
+import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../providers/fortune_incoming_invite_provider.dart';
 import '../providers/home_providers.dart';
 import 'live_fortune_invite_sheet.dart';
 
-/// Uygulama genelinde falcı davet sheet'i — push ve poll kaynaklı.
+/// Uygulama genelinde falcı davet popup'ı — push ve poll kaynaklı.
 class FortuneIncomingInviteHost extends ConsumerStatefulWidget {
   const FortuneIncomingInviteHost({super.key, required this.child});
 
@@ -32,7 +33,7 @@ class _FortuneIncomingInviteHostState
   @override
   void initState() {
     super.initState();
-    _poll = Timer.periodic(const Duration(seconds: 4), (_) => _pollApi());
+    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _pollApi());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _pollApi();
       _tryPresentNext();
@@ -45,6 +46,18 @@ class _FortuneIncomingInviteHostState
     super.dispose();
   }
 
+  bool _isPendingInvite(FortuneIncomingSession session) {
+    final status = session.status.toLowerCase();
+    final response = session.tellerResponse.toLowerCase();
+    if (response == 'accepted' ||
+        response == 'rejected' ||
+        status == 'active' ||
+        status == 'ended') {
+      return false;
+    }
+    return response == 'pending' || status == 'pending' || status == 'waiting';
+  }
+
   Future<void> _pollApi() async {
     if (!mounted || _presenting) return;
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -54,6 +67,7 @@ class _FortuneIncomingInviteHostState
         await ref.read(homeRemoteProvider).fetchIncomingFortuneSessions();
     if (!mounted) return;
     for (final req in incoming) {
+      if (!_isPendingInvite(req)) continue;
       ref.read(fortuneIncomingInviteProvider.notifier).enqueue(req);
     }
     await _tryPresentNext();
@@ -112,11 +126,20 @@ class _FortuneIncomingInviteHostState
           );
       if (!mounted || !ok) return;
 
+      final user = ref.read(authControllerProvider).valueOrNull;
       final tellerId = req.tellerId.trim();
-      final teller = tellerId.isNotEmpty
-          ? await ref.read(homeRemoteProvider).fetchLiveFortuneTeller(tellerId)
-          : null;
-      if (!mounted || teller == null) return;
+      LiveFortuneTellerEntity? teller;
+      if (tellerId.isNotEmpty) {
+        teller = await ref.read(homeRemoteProvider).fetchLiveFortuneTeller(tellerId);
+      }
+      teller ??= LiveFortuneTellerEntity(
+        id: tellerId.isNotEmpty ? tellerId : (user?.id ?? 'teller'),
+        userId: user?.id,
+        name: user?.displayName?.trim().isNotEmpty == true
+            ? user!.displayName!.trim()
+            : (user?.username ?? 'Falcı'),
+        isOnline: true,
+      );
 
       final session = LiveFortuneSessionEntity(
         sessionId: req.sessionId,

@@ -9,17 +9,36 @@ Future<bool?> showLiveFortuneTellerInviteSheet(
   required int durationMinutes,
   required int totalJeton,
 }) {
-  return showModalBottomSheet<bool>(
+  return showGeneralDialog<bool>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    isDismissible: false,
-    builder: (ctx) => _LiveFortuneInviteSheet(
-      clientName: clientName,
-      category: category,
-      durationMinutes: durationMinutes,
-      totalJeton: totalJeton,
+    barrierDismissible: false,
+    barrierLabel: 'Canlı fal daveti',
+    barrierColor: Colors.black.withValues(alpha: 0.72),
+    transitionDuration: const Duration(milliseconds: 280),
+    pageBuilder: (ctx, _, __) => Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Material(
+          color: Colors.transparent,
+          child: _LiveFortuneInviteSheet(
+            clientName: clientName,
+            category: category,
+            durationMinutes: durationMinutes,
+            totalJeton: totalJeton,
+          ),
+        ),
+      ),
     ),
+    transitionBuilder: (ctx, anim, _, child) {
+      final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+      return FadeTransition(
+        opacity: curve,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.92, end: 1).animate(curve),
+          child: child,
+        ),
+      );
+    },
   );
 }
 

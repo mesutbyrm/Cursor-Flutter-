@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../voice_hub/presentation/utils/open_voice_chat_room_flow.dart';
+
 import '../../../../../core/ui/premium/live_badge.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../domain/entities/live_fortune_teller_entity.dart';
@@ -45,13 +47,11 @@ class LiveFortuneTellersSection extends ConsumerWidget {
           const _QuickActions(),
         ],
       ),
-      error: (_, __) => _content(context, _fallbackTellers),
+      error: (e, _) => _emptyState(context, message: '$e'),
       data: (items) {
         final online = items.where((t) => t.isOnline).toList();
-        final list = (online.isNotEmpty ? online : items);
-        if (list.isEmpty) {
-          return _content(context, _fallbackTellers);
-        }
+        final list = online.isNotEmpty ? online : items;
+        if (list.isEmpty) return _emptyState(context);
         return _content(context, list.take(12).toList());
       },
     );
@@ -82,29 +82,32 @@ class LiveFortuneTellersSection extends ConsumerWidget {
     );
   }
 
-  static final _fallbackTellers = [
-    const LiveFortuneTellerEntity(
-      id: 'demo-1',
-      name: 'Ayşe',
-      isOnline: true,
-      rating: 4.9,
-      category: 'Tarot',
-    ),
-    const LiveFortuneTellerEntity(
-      id: 'demo-2',
-      name: 'Mehmet',
-      isOnline: true,
-      rating: 4.8,
-      category: 'Kahve',
-    ),
-    const LiveFortuneTellerEntity(
-      id: 'demo-3',
-      name: 'Zeynep',
-      isOnline: true,
-      rating: 5.0,
-      category: 'Astroloji',
-    ),
-  ];
+  static Widget _emptyState(BuildContext context, {String? message}) {
+    return Column(
+      children: [
+        HomeSectionTitle(
+          emoji: '🔮',
+          title: 'Canlı Falcılar',
+          actionLabel: 'Tümünü Gör >',
+          onAction: () => context.push('/canli-falcilar'),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: HomeApprovedDesign.hPad,
+            vertical: 12,
+          ),
+          child: Text(
+            message ?? 'Şu an çevrimiçi falcı yok.',
+            style: TextStyle(
+              fontSize: 13,
+              color: HomeApprovedDesign.textMuted.withValues(alpha: 0.9),
+            ),
+          ),
+        ),
+        const _QuickActions(),
+      ],
+    );
+  }
 }
 
 class _TellerOrb extends StatelessWidget {
@@ -186,11 +189,11 @@ class _TellerOrb extends StatelessWidget {
   }
 }
 
-class _QuickActions extends StatelessWidget {
+class _QuickActions extends ConsumerWidget {
   const _QuickActions();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
       child: Row(
@@ -206,8 +209,8 @@ class _QuickActions extends StatelessWidget {
           Expanded(
             child: _Chip(
               icon: Icons.mic_rounded,
-              label: 'Sesli Sohbet',
-              onTap: () => context.push('/voice-rooms'),
+              label: 'Oda Aç',
+              onTap: () => showOpenVoiceChatRoomFlow(context, ref),
             ),
           ),
           const SizedBox(width: 8),
