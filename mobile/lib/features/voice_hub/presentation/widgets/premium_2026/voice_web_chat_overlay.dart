@@ -19,6 +19,8 @@ class VoiceWebChatOverlay extends StatelessWidget {
     this.hideOfficialJoinInChat = false,
     this.maxHeight = 220,
     this.embedded = false,
+    this.welcomeMarquee,
+    this.roomName,
   });
 
   final List<ChatRoomMessage> messages;
@@ -26,6 +28,8 @@ class VoiceWebChatOverlay extends StatelessWidget {
   final bool hideOfficialJoinInChat;
   final double maxHeight;
   final bool embedded;
+  final String? welcomeMarquee;
+  final String? roomName;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +47,32 @@ class VoiceWebChatOverlay extends StatelessWidget {
         : visible;
 
     if (slice.isEmpty) {
+      final marquee = welcomeMarquee?.trim();
+      if (marquee != null && marquee.isNotEmpty) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Sohbet odasına hoş geldiniz — mesajınızı yazın',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.white.withValues(alpha: 0.45),
+                ),
+              ),
+              const SizedBox(height: 6),
+              _WelcomeEntranceMarquee(
+                message: VoiceOfficialJoin.formatEntranceBanner(
+                  marquee,
+                  roomName: roomName,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Text(
@@ -81,8 +111,9 @@ class VoiceWebChatOverlay extends StatelessWidget {
 
     if (embedded) {
       return RepaintBoundary(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxHeight),
+        child: SizedBox(
+          height: maxHeight,
+          width: double.infinity,
           child: list,
         ),
       );
@@ -502,6 +533,91 @@ class VoiceWebChatInputBar extends StatelessWidget {
               ),
             ],
           ),
+    );
+  }
+}
+
+/// Hoş geldin alanında sağdan sola kayan giriş şeridi.
+class _WelcomeEntranceMarquee extends StatefulWidget {
+  const _WelcomeEntranceMarquee({required this.message});
+
+  final String message;
+
+  @override
+  State<_WelcomeEntranceMarquee> createState() => _WelcomeEntranceMarqueeState();
+}
+
+class _WelcomeEntranceMarqueeState extends State<_WelcomeEntranceMarquee>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _scroll;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 9),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final line = widget.message.trim();
+    if (line.isEmpty) return const SizedBox.shrink();
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.35),
+          border: Border.all(color: VoiceRoomTokens.gold.withValues(alpha: 0.35)),
+        ),
+        child: SizedBox(
+          height: 28,
+          child: AnimatedBuilder(
+            animation: _scroll,
+            builder: (context, _) {
+              return OverflowBox(
+                maxWidth: double.infinity,
+                alignment: Alignment.centerLeft,
+                child: Transform.translate(
+                  offset: Offset(-_scroll.value * 140, 0),
+                  child: Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          line,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 11,
+                            color: VoiceRoomTokens.gold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 40),
+                      Text(
+                        line,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                          color: VoiceRoomTokens.gold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
     );
   }
 }

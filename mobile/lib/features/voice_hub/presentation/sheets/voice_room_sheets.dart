@@ -98,11 +98,16 @@ Future<void> showVoiceUserProfileSheet(
   BuildContext context, {
   required ChatRoomPresence user,
   required bool isOwner,
+  VoidCallback? onGift,
 }) {
   return showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => _UserProfileSheet(user: user, isOwner: isOwner),
+    builder: (ctx) => _UserProfileSheet(
+      user: user,
+      isOwner: isOwner,
+      onGift: onGift,
+    ),
   );
 }
 
@@ -720,6 +725,7 @@ Future<void> showVoiceUserModerationSheet(
   required VoiceRoomPermissions perms,
   required bool isOwner,
   required bool isDj,
+  VoidCallback? onGift,
 }) {
   final roomKey = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
   final ctrl = ref.read(voiceRoomLiveProvider(room.stableSessionKey).notifier);
@@ -762,6 +768,16 @@ Future<void> showVoiceUserModerationSheet(
             ],
           ),
           const SizedBox(height: 12),
+          if (onGift != null)
+            _ModAction(
+              icon: Icons.card_giftcard_rounded,
+              label: 'Hediye gönder',
+              color: AppThemeColors.coinGold,
+              onTap: () {
+                Navigator.pop(ctx);
+                onGift();
+              },
+            ),
           if (perms.canModerate || isOwner) ...[
             _ModAction(
               icon: Icons.block_rounded,
@@ -878,10 +894,15 @@ class _ModAction extends StatelessWidget {
 }
 
 class _UserProfileSheet extends StatelessWidget {
-  const _UserProfileSheet({required this.user, required this.isOwner});
+  const _UserProfileSheet({
+    required this.user,
+    required this.isOwner,
+    this.onGift,
+  });
 
   final ChatRoomPresence user;
   final bool isOwner;
+  final VoidCallback? onGift;
 
   @override
   Widget build(BuildContext context) {
@@ -911,6 +932,16 @@ class _UserProfileSheet extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
+                if (onGift != null)
+                  IconButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      onGift!();
+                    },
+                    icon: const Icon(Icons.card_giftcard_rounded),
+                    tooltip: 'Hediye gönder',
+                    color: AppThemeColors.coinGold,
+                  ),
                 if (isOwner)
                   IconButton(
                     onPressed: () {},
@@ -941,6 +972,14 @@ Future<void> showPremiumVoiceGiftShop(
   BuildContext context,
   WidgetRef ref, {
   required VoiceRoomEntity room,
+  List<ChatRoomPresence> seatedUsers = const [],
+  ChatRoomPresence? initialReceiver,
 }) {
-  return showVoiceRoomGiftPicker(context, ref, room: room);
+  return showVoiceRoomGiftPicker(
+    context,
+    ref,
+    room: room,
+    seatedUsers: seatedUsers,
+    initialReceiver: initialReceiver,
+  );
 }
