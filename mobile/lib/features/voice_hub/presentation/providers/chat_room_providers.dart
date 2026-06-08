@@ -361,7 +361,11 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         state = state.copyWith(messages: [...state.messages, msg]);
         _onMusicRelatedChatMessage(msg);
         if (msg.kind == ChatMessageKind.systemJoin &&
-            VoiceOfficialJoin.isOfficialEntrance(msg.content) &&
+            VoiceOfficialJoin.isEntranceWorthy(
+              content: msg.content,
+              membership: msg.user?.membership,
+              chatRole: msg.user?.chatRole,
+            ) &&
             _markEntranceOnce(msg.content)) {
           _showEnterBanner(msg.content);
         }
@@ -698,12 +702,26 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       'nowPlaying': effectiveDj.nowPlaying?.title,
     });
     final player = ref.read(voiceRoomDjPlayerProvider);
-    final ok = await player.sync(
+    var ok = await player.sync(
       musicUrl: playbackUrl,
       fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
       playing: shouldPlay,
       muted: muted,
     );
+    if (shouldPlay && !ok) {
+      ref.read(youtubeStreamResolverProvider).invalidate(playbackUrl);
+      final fallback = effectiveDj.youtubeFallbackSource;
+      if (fallback != null) {
+        ref.read(youtubeStreamResolverProvider).invalidate(fallback);
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      ok = await player.sync(
+        musicUrl: playbackUrl,
+        fallbackYoutubeUrl: fallback,
+        playing: shouldPlay,
+        muted: muted,
+      );
+    }
     VoiceRoomDebugLog.log(
       ok ? 'music.player.started' : 'music.player.failed',
       {'url': playbackUrl},

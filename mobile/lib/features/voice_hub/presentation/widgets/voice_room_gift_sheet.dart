@@ -13,6 +13,7 @@ import '../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../domain/entities/chat_room_presence.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/chat_room_gifts_remote_datasource.dart';
 import '../providers/chat_room_providers.dart';
@@ -36,6 +37,8 @@ Future<void> showVoiceRoomGiftPicker(
   BuildContext context,
   WidgetRef ref, {
   required VoiceRoomEntity room,
+  List<ChatRoomPresence> seatedUsers = const [],
+  ChatRoomPresence? initialReceiver,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -47,6 +50,8 @@ Future<void> showVoiceRoomGiftPicker(
         builder: (context, ref, _) {
           return VoicePremiumGiftPanel2026(
             room: room,
+            seatedUsers: seatedUsers,
+            initialReceiver: initialReceiver,
             onClose: () => Navigator.pop(context),
             onSent: (raw) {
               final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);

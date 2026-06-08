@@ -1,16 +1,18 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-/// YouTube watch URL → doğrudan ses akışı (site API + Piped + Invidious).
+/// YouTube watch URL → doğrudan ses akışı (site API + explode + Piped + Invidious).
 class YoutubeStreamResolver {
   YoutubeStreamResolver(this._dio);
 
   final Dio _dio;
+  YoutubeExplode? _explode;
 
   static final _youtubeHost = RegExp(r'youtube\.com|youtu\.be', caseSensitive: false);
 
-  static const _cacheTtl = Duration(hours: 3);
+  static const _cacheTtl = Duration(hours: 2);
 
   static const _pipedHosts = [
     'https://pipedapi.kavin.rocks',
@@ -18,6 +20,8 @@ class YoutubeStreamResolver {
     'https://pipedapi.syncpundit.io',
     'https://pipedapi.leptons.xyz',
     'https://pipedapi.in.projectsegfau.lt',
+    'https://pipedapi.moomoo.me',
+    'https://api.piped.projectsegfau.lt',
   ];
 
   static const _invidiousHosts = [
@@ -25,11 +29,35 @@ class YoutubeStreamResolver {
     'https://invidious.privacyredirect.com',
     'https://invidious.fdn.fr',
     'https://invidious.dhus.de',
+    'https://invidious.io.lol',
+    'https://inv.tux.pizza',
   ];
 
   final Map<String, _StreamCacheEntry> _cache = {};
 
-  bool needsResolve(String url) => _youtubeHost.hasMatch(url);
+  bool needsResolve(String url) {
+    if (isDirectPlayableUrl(url)) return false;
+    return _youtubeHost.hasMatch(url);
+  }
+
+  static bool isDirectPlayableUrl(String url) {
+    final u = url.trim().toLowerCase();
+    if (u.isEmpty || !u.startsWith('http')) return false;
+    if (_youtubeHost.hasMatch(u)) return false;
+    return u.contains('googlevideo.com') ||
+        u.contains('.m3u8') ||
+        u.contains('mime=audio') ||
+        u.endsWith('.mp3') ||
+        u.endsWith('.m4a') ||
+        u.endsWith('.aac') ||
+        u.endsWith('.ogg') ||
+        u.endsWith('.opus');
+  }
+
+  void invalidate(String musicUrl) {
+    final id = videoIdFrom(musicUrl);
+    if (id != null) _cache.remove(id);
+  }
 
   String? videoIdFrom(String url) {
     final trimmed = url.trim();
@@ -51,6 +79,7 @@ class YoutubeStreamResolver {
 
   Future<String?> resolvePlayableUrl(String musicUrl) async {
     if (musicUrl.isEmpty) return null;
+    if (isDirectPlayableUrl(musicUrl)) return musicUrl;
     if (!_youtubeHost.hasMatch(musicUrl)) return musicUrl;
 
     final id = videoIdFrom(musicUrl);
@@ -62,30 +91,25 @@ class YoutubeStreamResolver {
       }
     }
 
-    final fromApi = await _resolveViaSiteApi(musicUrl);
-    if (fromApi != null) {
-      _remember(id, fromApi);
-      return fromApi;
-    }
+    final futures = <Future<String?>>[
+      _resolveViaSiteApi(musicUrl),
+      if (id != null && id.isNotEmpty) _resolveViaExplode(id),
+      if (id != null && id.isNotEmpty)
+        _firstSuccess(
+          _pipedHosts.map((h) => _resolveViaPiped(h, id)),
+          timeout: const Duration(seconds: 8),
+        ),
+      if (id != null && id.isNotEmpty)
+        _firstSuccess(
+          _invidiousHosts.map((h) => _resolveViaInvidious(h, id)),
+          timeout: const Duration(seconds: 8),
+        ),
+    ];
 
-    if (id == null || id.isEmpty) return null;
-
-    final piped = await _firstSuccess(
-      _pipedHosts.map((h) => _resolveViaPiped(h, id)),
-      timeout: const Duration(seconds: 6),
-    );
-    if (piped != null) {
-      _remember(id, piped);
-      return piped;
-    }
-
-    final invidious = await _firstSuccess(
-      _invidiousHosts.map((h) => _resolveViaInvidious(h, id)),
-      timeout: const Duration(seconds: 6),
-    );
-    if (invidious != null) {
-      _remember(id, invidious);
-      return invidious;
+    final winner = await _firstSuccess(futures, timeout: const Duration(seconds: 12));
+    if (winner != null) {
+      _remember(id, winner);
+      return winner;
     }
     return null;
   }
@@ -127,17 +151,31 @@ class YoutubeStreamResolver {
   }
 
   Future<String?> _resolveViaSiteApi(String musicUrl) async {
+    for (var i = 0; i < 2; i++) {
+      try {
+        final res = await _dio.get<dynamic>(
+          '/api/chat/youtube-stream',
+          queryParameters: {'url': musicUrl},
+          options: Options(receiveTimeout: const Duration(seconds: 10)),
+        );
+        final data = res.data;
+        if (data is Map) {
+          final stream = data['streamUrl'] ?? data['url'];
+          if (stream is String && stream.startsWith('http')) return stream;
+        }
+      } catch (_) {}
+      if (i == 0) await Future<void>.delayed(const Duration(milliseconds: 350));
+    }
+    return null;
+  }
+
+  Future<String?> _resolveViaExplode(String id) async {
     try {
-      final res = await _dio.get<dynamic>(
-        '/api/chat/youtube-stream',
-        queryParameters: {'url': musicUrl},
-        options: Options(receiveTimeout: const Duration(seconds: 8)),
-      );
-      final data = res.data;
-      if (data is Map) {
-        final stream = data['streamUrl'] ?? data['url'];
-        if (stream is String && stream.startsWith('http')) return stream;
-      }
+      _explode ??= YoutubeExplode();
+      final manifest = await _explode!.videos.streamsClient.getManifest(id);
+      final audio = manifest.audioOnly.withHighestBitrate();
+      final url = audio.url.toString();
+      if (url.startsWith('http')) return url;
     } catch (_) {}
     return null;
   }
@@ -148,7 +186,7 @@ class YoutubeStreamResolver {
         '$host/streams/$id',
         options: Options(
           headers: {'Accept': 'application/json'},
-          receiveTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 6),
         ),
       );
       final data = res.data;
@@ -178,7 +216,7 @@ class YoutubeStreamResolver {
         '$host/api/v1/videos/$id',
         options: Options(
           headers: {'Accept': 'application/json'},
-          receiveTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 6),
         ),
       );
       final data = res.data;
@@ -201,6 +239,11 @@ class YoutubeStreamResolver {
       return best;
     } catch (_) {}
     return null;
+  }
+
+  void dispose() {
+    _explode?.close();
+    _explode = null;
   }
 }
 

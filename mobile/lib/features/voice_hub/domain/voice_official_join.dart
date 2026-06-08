@@ -31,6 +31,7 @@ abstract final class VoiceOfficialJoin {
         upper.contains('ADMIN') ||
         upper.contains('STAFF') ||
         upper.contains('VIP') ||
+        upper.contains('GOLD') ||
         upper.contains('KURUCU') ||
         upper.contains('FOUNDER') ||
         upper.contains(' SOP ') ||
@@ -38,6 +39,28 @@ abstract final class VoiceOfficialJoin {
         raw.startsWith('&') ||
         raw.startsWith('@') ||
         raw.startsWith('%');
+  }
+
+  /// Yetkili, Gold veya VIP girişleri — kayan şerit için.
+  static bool isEntranceWorthy({
+    required String content,
+    String? membership,
+    String? chatRole,
+  }) {
+    if (isOfficialEntrance(content)) return true;
+    final m = membership?.toLowerCase() ?? '';
+    if (m.contains('gold') || m.contains('vip') || m.contains('premium')) {
+      return true;
+    }
+    final role = chatRole?.toLowerCase() ?? '';
+    return role == 'admin' ||
+        role == 'owner' ||
+        role == 'dj' ||
+        role == 'moderator' ||
+        role == 'superadmin' ||
+        role == 'founder' ||
+        role == 'sop' ||
+        role == 'op';
   }
 
   static String? latestEntranceBanner(Iterable<String> contents) {
