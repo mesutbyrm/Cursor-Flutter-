@@ -1,4 +1,3 @@
-import '../../../../core/auth/voice_staff_rank.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 
@@ -39,8 +38,8 @@ class VoiceRoomSeatLayout {
       }
     }
 
-    // Koltuk 1: oda sahibi veya (sahip yoksa) en yetkili kullanıcı.
-    var hostUser = ownerUser ?? _highestAuthority(presence, ownerId: ownerId);
+    // Koltuk 1: yalnızca odada bulunan oda sahibi; sahip yoksa boş kalır.
+    final hostUser = ownerUser;
     if (hostUser != null) {
       final displaced = bySeat[1];
       if (displaced != null && displaced.id != hostUser.id) {
@@ -48,22 +47,18 @@ class VoiceRoomSeatLayout {
       }
       bySeat[1] = hostUser;
       withoutSeat.remove(hostUser);
-    } else {
-      final onOne = bySeat[1];
-      if (onOne != null) {
-        withoutSeat.add(onOne);
-      }
-      bySeat.remove(1);
-    }
-
-    // Host 1 dışındaki koltuktaysa oradan çıkar (tekrar atanacak).
-    if (hostUser != null) {
       for (final entry in bySeat.entries.toList()) {
         if (entry.key != 1 && entry.value.id == hostUser.id) {
           withoutSeat.add(entry.value);
           bySeat.remove(entry.key);
         }
       }
+    } else {
+      final onOne = bySeat[1];
+      if (onOne != null) {
+        withoutSeat.add(onOne);
+      }
+      bySeat.remove(1);
     }
 
     // Kalan kullanıcıları 2–11’e doldur (sahip hariç).
@@ -85,30 +80,5 @@ class VoiceRoomSeatLayout {
     }
 
     return bySeat;
-  }
-
-  static ChatRoomPresence? _highestAuthority(
-    List<ChatRoomPresence> presence, {
-    String? ownerId,
-  }) {
-    ChatRoomPresence? best;
-    var bestPower = -1;
-    for (final u in presence) {
-      if (ownerId != null && u.id == ownerId) continue;
-      final rank = VoiceStaffRankParser.resolve(
-        username: u.nickname ?? u.name,
-        chatRole: u.chatRole,
-      );
-      var power = VoiceStaffRankParser.powerLevel(rank);
-      if (u.chatRole == 'owner' || u.chatRole == 'founder') {
-        power = 120;
-      }
-      if (power > bestPower) {
-        bestPower = power;
-        best = u;
-      }
-    }
-    if (bestPower <= 0) return null;
-    return best;
   }
 }

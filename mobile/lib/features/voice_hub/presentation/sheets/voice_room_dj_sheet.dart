@@ -71,7 +71,8 @@ class _DjDialogState extends ConsumerState<_DjDialog> {
   Future<void> _toggleDj(ChatRoomPresence user, bool add) async {
     if (!_canManage || _busy) return;
     setState(() => _busy = true);
-    final ctrl = ref.read(voiceRoomLiveProvider(widget.room).notifier);
+    final ctrl =
+        ref.read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier);
     final err = add
         ? await ctrl.addRoomDj(user.id)
         : await ctrl.removeRoomDj(user.id);

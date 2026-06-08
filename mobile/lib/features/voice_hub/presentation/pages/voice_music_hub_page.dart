@@ -135,7 +135,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _liveSub = ref.listenManual(
-        voiceRoomLiveProvider(widget.room),
+        voiceRoomLiveProvider(widget.room.stableSessionKey),
         (prev, next) {
           if (prev?.dj.musicQueue.length != next.dj.musicQueue.length ||
               prev?.dj.playing != next.dj.playing ||
@@ -150,7 +150,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
   Future<void> _reloadQueue() async {
     try {
       final data = await ref
-          .read(voiceRoomLiveProvider(widget.room).notifier)
+          .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
           .fetchMusicQueue();
       if (mounted) {
         setState(() {
@@ -196,7 +196,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
     });
     try {
       final hits = await ref
-          .read(voiceRoomLiveProvider(widget.room).notifier)
+          .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
           .searchYoutube(q);
       if (!mounted || gen != _searchGen) return;
       setState(() {
@@ -217,7 +217,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
     if (hit == null || _submitting) return;
     final balances = ref.read(walletBalancesProvider).valueOrNull;
     final jeton = VoiceMusicAccess.jetonFromBalances(balances);
-    final djState = ref.read(voiceRoomLiveProvider(widget.room)).dj;
+    final djState = ref.read(voiceRoomLiveProvider(widget.room.stableSessionKey)).dj;
     if (!VoiceMusicAccess.canRequestSongs(
       dj: djState,
       perms: widget.perms,
@@ -234,7 +234,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
     setState(() => _submitting = true);
     final isDjFree = widget.perms.canManageDj || djState.canPlayMusic;
     final queueHint = await ref
-        .read(voiceRoomLiveProvider(widget.room).notifier)
+        .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
         .requestMusic(
           title: hit.title,
           youtubeUrl: hit.url,
@@ -260,7 +260,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
   }
 
   Future<void> _openHostSettings() async {
-    final live = ref.read(voiceRoomLiveProvider(widget.room));
+    final live = ref.read(voiceRoomLiveProvider(widget.room.stableSessionKey));
     var enabled = live.dj.musicEnabled;
     var cost = live.dj.musicRequestCost;
     var maxQ = live.dj.maxMusicQueue;
@@ -320,7 +320,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
               onPressed: () async {
                 Navigator.pop(ctx);
                 final err = await ref
-                    .read(voiceRoomLiveProvider(widget.room).notifier)
+                    .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
                     .updateMusicSettings(
                       musicEnabled: enabled,
                       musicRequestCost: cost,
@@ -342,7 +342,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
   Widget build(BuildContext context) {
     final balances = ref.watch(walletBalancesProvider).valueOrNull;
     final jeton = VoiceMusicAccess.jetonFromBalances(balances);
-    final live = ref.watch(voiceRoomLiveProvider(widget.room));
+    final live = ref.watch(voiceRoomLiveProvider(widget.room.stableSessionKey));
     final canMod = widget.perms.canModerate || widget.isOwner;
 
     return PopScope(
@@ -401,7 +401,9 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
                 top: kToolbarHeight + 32,
                 bottom: _tabIndex == 0 ? 88 : 0,
               ),
-              child: _tabIndex == 0 ? _buildSearchTab(jeton, live.dj) : _buildQueueTab(canMod),
+              child: _tabIndex == 0
+                  ? _buildSearchTab(jeton, live.dj)
+                  : _buildQueueTab(canMod),
             ),
           ),
         ],
@@ -419,75 +421,105 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
   }
 
   Widget _buildSearchTab(int jeton, ChatRoomDjState dj) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        VoiceGlass(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          child: TextField(
-            controller: _queryCtrl,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'Şarkı, sanatçı veya albüm ara…',
-              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.45)),
-              border: InputBorder.none,
-              icon: const Icon(Icons.search_rounded, color: Colors.white54),
-              suffixIcon: _searching
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    )
-                  : null,
-            ),
-            onChanged: _onQueryChanged,
-          ),
-        ),
-        if (_error != null) ...[
-          const SizedBox(height: 8),
-          Text(_error!, style: const TextStyle(color: AppThemeColors.liveRed, fontSize: 12)),
-        ],
-        if (_hits.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          _sectionTitle('Sonuçlar'),
-          ..._hits.map(_hitTile),
-        ] else if (!_searching && _queryCtrl.text.trim().length < 2) ...[
-          const SizedBox(height: 32),
-          Center(
-            child: Text(
-              'Müzik aramak için yukarıya yazın',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.white.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-        ],
-        const SizedBox(height: 12),
-        SwitchListTile(
-          title: const Text('Tüm odaya armağan', style: TextStyle(color: Colors.white)),
-          value: _giftMode,
-          onChanged: (v) => setState(() => _giftMode = v),
-        ),
-        if (_giftMode)
-          VoiceGlass(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: VoiceGlass(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: TextField(
-              controller: _giftCtrl,
+              controller: _queryCtrl,
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                hintText: 'Alıcı kullanıcı adı (opsiyonel)',
+              decoration: InputDecoration(
+                hintText: 'Şarkı, sanatçı veya albüm ara…',
+                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.45)),
                 border: InputBorder.none,
+                icon: const Icon(Icons.search_rounded, color: Colors.white54),
+                suffixIcon: _searching
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : null,
               ),
+              onChanged: _onQueryChanged,
             ),
           ),
-        const SizedBox(height: 8),
-        Text(
-          'Bakiye: $jeton Jeton · İstek: $_cost 💎 · Kuyruk: ${_queue.length}/$_maxQueue',
-          style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.55)),
+        ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(
+              _error!,
+              style: const TextStyle(color: AppThemeColors.liveRed, fontSize: 12),
+            ),
+          ),
+        Expanded(
+          child: _hits.isNotEmpty
+              ? ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  children: [
+                    _sectionTitle('Sonuçlar (${_hits.length})'),
+                    ..._hits.map(_hitTile),
+                  ],
+                )
+              : Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      _searching
+                          ? 'Aranıyor…'
+                          : _queryCtrl.text.trim().length >= 2
+                              ? 'Sonuç bulunamadı'
+                              : 'Müzik aramak için yukarıya yazın',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Column(
+            children: [
+              SwitchListTile(
+                dense: true,
+                title: const Text(
+                  'Tüm odaya armağan',
+                  style: TextStyle(color: Colors.white, fontSize: 13),
+                ),
+                value: _giftMode,
+                onChanged: (v) => setState(() => _giftMode = v),
+              ),
+              if (_giftMode)
+                VoiceGlass(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: TextField(
+                    controller: _giftCtrl,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      hintText: 'Alıcı kullanıcı adı (opsiyonel)',
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+              Text(
+                'Bakiye: $jeton Jeton · İstek: $_cost 💎 · Kuyruk: ${_queue.length}/$_maxQueue',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white.withValues(alpha: 0.55),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -560,7 +592,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
                 TextButton.icon(
                   onPressed: () async {
                     final err = await ref
-                        .read(voiceRoomLiveProvider(widget.room).notifier)
+                        .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
                         .skipMusic();
                     if (err != null && mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
@@ -573,7 +605,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
                 TextButton.icon(
                   onPressed: () async {
                     final err = await ref
-                        .read(voiceRoomLiveProvider(widget.room).notifier)
+                        .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
                         .clearMusicQueue();
                     if (err != null && mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
@@ -642,7 +674,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
                                 icon: const Icon(Icons.delete_outline_rounded, color: Colors.white54),
                                 onPressed: () async {
                                   await ref
-                                      .read(voiceRoomLiveProvider(widget.room).notifier)
+                                      .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
                                       .removeQueueItem(item.id);
                                   await _reloadQueue();
                                 },

@@ -93,15 +93,15 @@ class _VoiceRoomRightSlidePanelState
           GestureDetector(
             onTap: () => setState(() => _expanded = !_expanded),
             child: Container(
-              width: 20,
-              margin: const EdgeInsets.symmetric(vertical: 28),
+              width: 14,
+              margin: const EdgeInsets.symmetric(vertical: 32),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.55),
+                color: Colors.black.withValues(alpha: 0.5),
                 borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(14),
+                  left: Radius.circular(10),
                 ),
                 border: Border.all(
-                  color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.45),
+                  color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.35),
                 ),
               ),
               child: Column(
@@ -111,8 +111,8 @@ class _VoiceRoomRightSlidePanelState
                     _expanded
                         ? Icons.chevron_right_rounded
                         : Icons.chevron_left_rounded,
-                    color: Colors.white.withValues(alpha: 0.9),
-                    size: 14,
+                    color: Colors.white.withValues(alpha: 0.85),
+                    size: 11,
                   ),
                 ],
               ),
@@ -153,7 +153,7 @@ class _PanelBodyState extends ConsumerState<_PanelBody> {
 
   Future<void> _loadWords() async {
     final words = await ref
-        .read(voiceRoomLiveProvider(widget.room).notifier)
+        .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
         .fetchBannedWords();
     if (mounted) {
       setState(() {

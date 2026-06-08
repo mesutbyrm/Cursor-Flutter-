@@ -15,6 +15,8 @@ abstract final class VoiceChatMessageFilters {
 
     if (message.kind == ChatMessageKind.gift) return true;
 
+    if (_isSongRequestAnnouncement(content)) return true;
+
     if (_isTechnicalMusicLine(content)) return false;
     if (VoiceMusicSync.isIstekCommand(content)) return false;
     if (_isIstekEcho(content)) return false;
@@ -48,10 +50,16 @@ abstract final class VoiceChatMessageFilters {
         c.contains('QUEUE_UPDATE');
   }
 
+  static bool _isSongRequestAnnouncement(String content) {
+    final lower = content.toLowerCase();
+    if (content.startsWith('🎵') && lower.contains('şarkı')) return true;
+    return lower.contains('şarkı isteği gönderdi') ||
+        lower.contains('şarkı istedi:') ||
+        lower.contains('sıraya eklendi');
+  }
+
   static bool _isIstekEcho(String content) {
     final lower = content.toLowerCase();
-    return lower.startsWith('!istek') ||
-        lower.contains('şarkı isteği gönderdi') ||
-        lower.contains('şarkı isteği:');
+    return lower.startsWith('!istek') || lower.contains('şarkı isteği:');
   }
 }
