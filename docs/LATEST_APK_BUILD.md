@@ -2,24 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.151+153` |
-| Tarih (UTC) | 2026-06-08 11:03 |
-| Commit | [`755436afd5f32f199357eeb80907b5303d6f55a1`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/755436afd5f32f199357eeb80907b5303d6f55a1) |
-| İş akışı | [Run 27132220778](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27132220778) |
+| Sürüm | `1.0.152+154` |
+| Tarih (UTC) | 2026-06-08 11:48 |
+| Commit | [`42124d1e9d28b67020fc81366a042a8af598fe53`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/42124d1e9d28b67020fc81366a042a8af598fe53) |
+| İş akışı | [Run 27134448176](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27134448176) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.151+153 (2026-06-07)
+## 1.0.152+154 (2026-06-08)
 
-### Sesli oda UI — layout parity v2
+### Sesli oda — Riverpod provider hatası düzeltmesi
 
-- Koltuk ızgarası: üst sıra 1–4, alt sıra 6–10 (sağ panel alanı)
-- Giriş bildirimi kartı + duyuru + sohbet + müzik sırası (tasarım referansı)
-- Sohbet: rol ikonları, İSTEK rozeti, gömülü liste
-- Sağ panel: Ücretli Şarkı İste butonu panel altında
-- Android konuşma altın glow animasyonu
-- Şu an çalan: frekans çubukları görselleştirici
+- `VoiceRoomLiveController.build()` içinde `state` hazır olmadan okuma kaldırıldı
+- "Tried to read the state of an uninitialized provider" gri hata ekranı giderildi
+- Sağ panel aynı oturum anahtarını (`stableSessionKey`) kullanır
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
