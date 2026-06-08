@@ -712,6 +712,171 @@ Future<void> showVoiceUserManagementSheet(
   );
 }
 
+Future<void> showVoiceUserModerationSheet(
+  BuildContext context, {
+  required WidgetRef ref,
+  required VoiceRoomEntity room,
+  required ChatRoomPresence user,
+  required VoiceRoomPermissions perms,
+  required bool isOwner,
+  required bool isDj,
+}) {
+  final roomKey = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+  final ctrl = ref.read(voiceRoomLiveProvider(room.stableSessionKey).notifier);
+
+  return showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => VoiceGlass(
+      borderRadius: 24,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              VoiceNeonAvatar(url: user.image, size: 44),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.displayName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      user.chatRole ?? 'dinleyici',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: context.colors.onSurfaceMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (perms.canModerate || isOwner) ...[
+            _ModAction(
+              icon: Icons.block_rounded,
+              label: 'Odadan at',
+              color: AppThemeColors.liveRed,
+              onTap: () async {
+                Navigator.pop(ctx);
+                try {
+                  await ref.read(chatRoomRemoteProvider).banUser(
+                        roomKey: roomKey,
+                        userId: user.id,
+                        reason: 'Oda moderasyonu',
+                      );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${user.displayName} atıldı')),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(e.toString())),
+                    );
+                  }
+                }
+              },
+            ),
+            _ModAction(
+              icon: Icons.mic_off_rounded,
+              label: 'Sustur',
+              onTap: () async {
+                Navigator.pop(ctx);
+                await ctrl.sendMessage('!sustur ${user.nickname ?? user.name}');
+              },
+            ),
+            _ModAction(
+              icon: Icons.record_voice_over_rounded,
+              label: 'Ses ver',
+              onTap: () async {
+                Navigator.pop(ctx);
+                for (var seat = 2; seat <= 11; seat++) {
+                  final err = await ctrl.assignSeat(
+                    seatIndex: seat,
+                    userId: user.id,
+                  );
+                  if (err == null) break;
+                }
+              },
+            ),
+            _ModAction(
+              icon: isDj ? Icons.headset_off_rounded : Icons.headphones_rounded,
+              label: isDj ? 'DJ\'den çıkar' : 'DJ yap',
+              onTap: () async {
+                Navigator.pop(ctx);
+                final err = isDj
+                    ? await ctrl.removeRoomDj(user.id)
+                    : await ctrl.addRoomDj(user.id);
+                if (context.mounted && err != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(err)),
+                  );
+                }
+              },
+            ),
+            _ModAction(
+              icon: Icons.admin_panel_settings_outlined,
+              label: 'Yetki ver',
+              onTap: () {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Yetki komutları: !op !admin !sop'),
+                  ),
+                );
+              },
+            ),
+          ],
+          _ModAction(
+            icon: Icons.person_outline_rounded,
+            label: 'Profili gör',
+            onTap: () {
+              Navigator.pop(ctx);
+              context.push('/user/${user.id}');
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _ModAction extends StatelessWidget {
+  const _ModAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      dense: true,
+      leading: Icon(icon, color: color ?? Colors.white70, size: 20),
+      title: Text(label, style: const TextStyle(fontSize: 13)),
+      onTap: onTap,
+    );
+  }
+}
+
 class _UserProfileSheet extends StatelessWidget {
   const _UserProfileSheet({required this.user, required this.isOwner});
 

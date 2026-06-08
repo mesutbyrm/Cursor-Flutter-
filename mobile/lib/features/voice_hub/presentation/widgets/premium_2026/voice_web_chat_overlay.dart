@@ -7,6 +7,8 @@ import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import '../../../domain/voice_official_join.dart';
 import '../../theme/voice_room_tokens.dart';
+import '../../utils/voice_chat_message_filters.dart';
+import '../../../../../core/auth/voice_staff_rank.dart';
 
 /// Web tarzı şeffaf sohbet — arka plan üzerinde yüzen mesajlar.
 class VoiceWebChatOverlay extends StatelessWidget {
@@ -28,15 +30,13 @@ class VoiceWebChatOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final visible = messages.where((m) {
+      if (!VoiceChatMessageFilters.shouldShow(m)) return false;
       if (hideOfficialJoinInChat &&
           m.kind == ChatMessageKind.systemJoin &&
           VoiceOfficialJoin.isOfficialEntrance(m.content)) {
         return false;
       }
-      return m.kind == ChatMessageKind.text ||
-          m.kind == ChatMessageKind.gift ||
-          m.kind == ChatMessageKind.systemJoin ||
-          m.kind == ChatMessageKind.systemLeave;
+      return m.kind == ChatMessageKind.text || m.kind == ChatMessageKind.gift;
     }).toList();
     final slice = visible.length > 40
         ? visible.sublist(visible.length - 40)
@@ -243,7 +243,12 @@ class _WebChatLine extends StatelessWidget {
     final tier = VipTier.fromMembership(user?.membership);
     final vip = user?.isBroadcaster == true || tier.index >= VipTier.gold.index;
 
-    final nameColor = _usernameColor(user, vip);
+    final rank = VoiceStaffRankParser.resolve(
+      username: user?.nickname ?? user?.name,
+      chatRole: user?.chatRole,
+    );
+    final styled = _isStyledName(user, vip, rank);
+    final nameColor = _usernameColor(user, vip, rank);
     final showIstek = _isIstekLine(message.content);
 
     return Padding(
@@ -255,7 +260,11 @@ class _WebChatLine extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.38),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            border: Border.all(
+              color: styled
+                  ? nameColor.withValues(alpha: 0.35)
+                  : Colors.white.withValues(alpha: 0.08),
+            ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,11 +278,12 @@ class _WebChatLine extends StatelessWidget {
                       color: Colors.white,
                     ),
                     children: [
-                      TextSpan(
-                        text: '$name ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: _StyledUsername(
+                          name: '$name ',
                           color: nameColor,
+                          styled: styled,
                         ),
                       ),
                       TextSpan(text: message.content),
@@ -311,11 +321,76 @@ bool _isIstekLine(String content) {
   return c.startsWith('!istek') || c.contains('şarkı isteği');
 }
 
-Color _usernameColor(ChatRoomUserRef? user, bool vip) {
+bool _isStyledName(
+  ChatRoomUserRef? user,
+  bool vip,
+  VoiceStaffRank rank,
+) {
+  if (vip) return true;
+  if (user?.chatRole == 'owner' || user?.chatRole == 'founder') return true;
+  return VoiceStaffRankParser.powerLevel(rank) >=
+      VoiceStaffRankParser.powerLevel(VoiceStaffRank.op);
+}
+
+Color _usernameColor(ChatRoomUserRef? user, bool vip, VoiceStaffRank rank) {
+  if (user?.chatRole == 'owner' || user?.chatRole == 'founder') {
+    return VoiceRoomTokens.gold;
+  }
+  if (VoiceStaffRankParser.powerLevel(rank) >=
+      VoiceStaffRankParser.powerLevel(VoiceStaffRank.admin)) {
+    return VoiceRoomTokens.gold;
+  }
+  if (VoiceStaffRankParser.canModerate(rank)) return VoiceRoomTokens.neonPurple;
   if (user?.chatRole == 'dj') return VoiceRoomTokens.neonPink;
   if (user?.isBroadcaster == true) return VoiceRoomTokens.neonBlue;
   if (vip) return VoiceRoomTokens.gold;
   return const Color(0xFF4ADE80);
+}
+
+class _StyledUsername extends StatelessWidget {
+  const _StyledUsername({
+    required this.name,
+    required this.color,
+    required this.styled,
+  });
+
+  final String name;
+  final Color color;
+  final bool styled;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!styled) {
+      return Text(
+        name,
+        style: TextStyle(
+          fontWeight: FontWeight.w900,
+          fontSize: 12,
+          color: color,
+        ),
+      );
+    }
+    return ShaderMask(
+      shaderCallback: (bounds) => LinearGradient(
+        colors: [
+          color,
+          color.withValues(alpha: 0.75),
+          VoiceRoomTokens.neonPink.withValues(alpha: 0.9),
+        ],
+      ).createShader(bounds),
+      child: Text(
+        name,
+        style: const TextStyle(
+          fontWeight: FontWeight.w900,
+          fontSize: 12,
+          color: Colors.white,
+          shadows: [
+            Shadow(color: Colors.black87, blurRadius: 6),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 IconData _joinIcon(String content) {

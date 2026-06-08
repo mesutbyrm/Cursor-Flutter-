@@ -38,7 +38,6 @@ class VoiceWebOwnerStage extends StatelessWidget {
         final gridH = rowH * 2 + gap;
 
         final seats = VoiceRoomSeatLayout(room: room, presence: presence).build();
-        _ensureOwnerOnSeatOne(seats);
 
         return SizedBox(
           height: gridH.clamp(112.0, 176.0),
@@ -76,28 +75,6 @@ class VoiceWebOwnerStage extends StatelessWidget {
         );
       },
     );
-  }
-
-  void _ensureOwnerOnSeatOne(Map<int, ChatRoomPresence> seats) {
-    if (seats.containsKey(1)) return;
-    final ownerId = room.ownerId;
-    ChatRoomPresence? ownerUser;
-    if (ownerId != null) {
-      for (final p in presence) {
-        if (p.id == ownerId) {
-          ownerUser = p;
-          break;
-        }
-      }
-    }
-    ownerUser ??= ChatRoomPresence(
-      id: ownerId ?? 'owner',
-      name: room.ownerName ?? 'Admin',
-      image: room.ownerAvatarUrl,
-      chatRole: 'owner',
-      seatIndex: 1,
-    );
-    seats[1] = ownerUser;
   }
 
   Widget _seatRow({

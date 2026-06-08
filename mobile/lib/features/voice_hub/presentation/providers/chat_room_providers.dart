@@ -840,7 +840,13 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
 
     if (_isLocalHelpCommand(trimmed)) {
       VoiceRoomDebugLog.log('chat.command.local_help', {'cmd': trimmed});
-      state = state.copyWith(openCommandsPanel: true, clearError: true);
+      state = state.copyWith(
+        openCommandsPanel: true,
+        clearError: true,
+        messages: state.messages
+            .where((m) => m.id.startsWith('local-') || m.content != trimmed)
+            .toList(),
+      );
       return;
     }
 
@@ -894,7 +900,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         : null;
 
     state = state.copyWith(
-      sending: true,
       messages: optimistic != null
           ? [...state.messages, optimistic]
           : state.messages,
@@ -963,8 +968,6 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
             : state.messages,
         error: ApiException.userMessage(e),
       );
-    } finally {
-      state = state.copyWith(sending: false);
     }
   }
 
