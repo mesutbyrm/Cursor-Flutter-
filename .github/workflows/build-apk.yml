@@ -1,5 +1,8 @@
 # APK derleme + GitHub Release (ubuntu + Flutter action, Android SDK dahil).
 # Sabit indirme: releases/download/apk-latest/canlifal-mobile-release.apk
+#
+# Not: Artifact depolama kotası aşıldığında iş akışı başarısız olmasın diye
+# APK doğrudan GitHub Release'e yüklenir; artifact adımı isteğe bağlıdır.
 
 name: Build release APK
 
@@ -16,10 +19,11 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
-  build:
-    name: Build APK
+  build-and-publish:
+    name: Build and publish APK
     runs-on: ubuntu-latest
     timeout-minutes: 60
     defaults:
@@ -29,6 +33,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Eski workflow artifact'larını temizle
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          ids=$(gh api "repos/${{ github.repository }}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.expired==false) | .id' 2>/dev/null | head -30)
+          for id in $ids; do
+            gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/${id}" 2>/dev/null || true
+          done
 
       - name: Java 17
         uses: actions/setup-java@v4
@@ -93,29 +109,9 @@ jobs:
             canlifal-mobile-release.apk
           ls -la canlifal-mobile-release.apk
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: canlifal-social-release-apk
-          path: canlifal-mobile-release.apk
-          if-no-files-found: error
-
-  publish:
-    name: Publish GitHub Release
-    needs: build
-    runs-on: ubuntu-latest
-    if: success()
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: İndir APK
-        uses: actions/download-artifact@v4
-        with:
-          name: canlifal-social-release-apk
-
       - name: Sürüm notları hazırla
         id: notes
+        working-directory: ${{ github.workspace }}
         run: |
           set -eux
           VERSION=$(grep -E '^version:' mobile/pubspec.yaml | head -1 | sed 's/version:[[:space:]]*//')
@@ -145,11 +141,18 @@ jobs:
           make_latest: true
           overwrite_files: true
 
+      - name: Sürüm etiketi (v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: canlifal-mobile-release.apk
+
       - name: Bildirim dosyası (docs/LATEST_APK_BUILD.md)
         if: github.ref == 'refs/heads/main'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: ${{ github.workspace }}
         run: |
           set -eux
           mkdir -p docs
@@ -177,8 +180,11 @@ jobs:
           git pull --rebase origin main 2>/dev/null || git pull --no-rebase origin main -X ours || true
           git push origin main 2>/dev/null || true
 
-      - name: Sürüm etiketi (v*)
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+      - name: Upload APK artifact (isteğe bağlı)
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
         with:
-          files: canlifal-mobile-release.apk
+          name: canlifal-social-release-apk
+          path: canlifal-mobile-release.apk
+          retention-days: 1
+          if-no-files-found: error
