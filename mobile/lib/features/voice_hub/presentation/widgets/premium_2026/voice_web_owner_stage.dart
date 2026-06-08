@@ -5,7 +5,7 @@ import '../../../domain/entities/chat_room_presence.dart';
 import '../../utils/voice_room_seat_layout.dart';
 import 'voice_mic_seat.dart';
 
-/// canlifal.com: 2×5 (10) mikrofon koltuğu — 1. koltuk Admin.
+/// canlifal.com: sol Admin (koltuk 1) + sağda 2×5 (koltuk 2–11).
 class VoiceWebOwnerStage extends StatelessWidget {
   const VoiceWebOwnerStage({
     super.key,
@@ -20,7 +20,6 @@ class VoiceWebOwnerStage extends StatelessWidget {
   final List<ChatRoomPresence> presence;
   final String? speakingUserId;
   final void Function(ChatRoomPresence user)? onUserTap;
-  /// [internalSeatIndex] 2–11; [user] dolu koltukta dolu kullanıcı.
   final void Function(int internalSeatIndex, ChatRoomPresence? user)? onSeatTap;
 
   @override
@@ -30,44 +29,60 @@ class VoiceWebOwnerStage extends StatelessWidget {
         final w = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width;
-        final gap = 6.0;
-        final panelReserve = 36.0;
-        final row1W = w - panelReserve;
-        final cell = ((row1W - gap * 3) / 4).clamp(40.0, 56.0);
+        const gap = 6.0;
+        const hPad = 8.0;
+        final innerW = w - hPad * 2;
+        final hostSize = (innerW * 0.17).clamp(52.0, 72.0);
+        final gridW = innerW - hostSize - gap;
+        final cell = ((gridW - gap * 4) / 5).clamp(34.0, 50.0);
         final rowH = cell + 20;
         final gridH = rowH * 2 + gap;
+        final totalH = gridH.clamp(112.0, 176.0);
 
         final seats = VoiceRoomSeatLayout(room: room, presence: presence).build();
+        _ensureOwnerOnSeatOne(seats);
+        final host = seats[1];
 
         return SizedBox(
-          height: gridH.clamp(112.0, 176.0),
+          height: totalH,
           child: Padding(
-            padding: const EdgeInsets.only(left: 8, right: 4),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: hPad),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _seatRow(
+                VoiceMicSeat(
+                  user: host,
+                  seatIndex: 1,
+                  size: hostSize,
+                  isHost: true,
+                  room: room,
+                  djUserIds: room.djUserIds,
+                  speaking:
+                      speakingUserId == host?.id || host?.isSpeaking == true,
+                  onTap: () => onSeatTap?.call(1, host),
+                ),
+                const SizedBox(width: gap),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _seatRow(
                         seats: seats,
-                        displayNums: const [1, 2, 3, 4],
-                        internalNums: const [1, 2, 3, 4],
+                        displayNums: const [2, 3, 4, 5, 6],
+                        internalNums: const [2, 3, 4, 5, 6],
                         size: cell,
                         gap: gap,
-                        hostSeat: 1,
                       ),
-                    ),
-                    SizedBox(width: panelReserve - 8),
-                  ],
-                ),
-                SizedBox(height: gap),
-                _seatRow(
-                  seats: seats,
-                  displayNums: const [6, 7, 8, 9, 10],
-                  internalNums: const [6, 7, 8, 9, 10],
-                  size: cell,
-                  gap: gap,
+                      const SizedBox(height: gap),
+                      _seatRow(
+                        seats: seats,
+                        displayNums: const [7, 8, 9, 10, 11],
+                        internalNums: const [7, 8, 9, 10, 11],
+                        size: cell,
+                        gap: gap,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -77,16 +92,37 @@ class VoiceWebOwnerStage extends StatelessWidget {
     );
   }
 
+  void _ensureOwnerOnSeatOne(Map<int, ChatRoomPresence> seats) {
+    if (seats.containsKey(1)) return;
+    final ownerId = room.ownerId;
+    ChatRoomPresence? ownerUser;
+    if (ownerId != null) {
+      for (final p in presence) {
+        if (p.id == ownerId) {
+          ownerUser = p;
+          break;
+        }
+      }
+    }
+    ownerUser ??= ChatRoomPresence(
+      id: ownerId ?? 'owner',
+      name: room.ownerName ?? 'Admin',
+      image: room.ownerAvatarUrl,
+      chatRole: 'owner',
+      seatIndex: 1,
+    );
+    seats[1] = ownerUser;
+  }
+
   Widget _seatRow({
     required Map<int, ChatRoomPresence> seats,
     required List<int> displayNums,
     required List<int> internalNums,
     required double size,
     required double gap,
-    int? hostSeat,
   }) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(displayNums.length, (col) {
         final internal = internalNums[col];
         final displayNum = displayNums[col];
@@ -95,7 +131,6 @@ class VoiceWebOwnerStage extends StatelessWidget {
           user: user,
           seatIndex: displayNum,
           size: size,
-          isHost: hostSeat != null && displayNum == hostSeat,
           room: room,
           djUserIds: room.djUserIds,
           speaking: speakingUserId == user?.id || user?.isSpeaking == true,

@@ -505,15 +505,11 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
           muted: !ui.backgroundMusicEnabled,
         );
         playDjInBackground = sig != _lastDjPlaybackSignature;
-        final prefetch = dj.playbackSource;
-        if (prefetch != null && prefetch.isNotEmpty) {
-          unawaited(
-            ref.read(youtubeStreamResolverProvider).prefetch(prefetch),
-          );
-        }
       }
       presence = _mergeSelf(presence);
-      final messages = _mergeMessages(state.messages, fetchedMsgs);
+      final previousMessages = state.messages;
+      final messages = _mergeMessages(previousMessages, fetchedMsgs);
+      _scanEntrancesFromMessages(previousMessages, messages);
       state = state.copyWith(
         messages: messages,
         presence: presence,
@@ -892,6 +888,27 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     }
   }
 
+  void _scanEntrancesFromMessages(
+    List<ChatRoomMessage> previous,
+    List<ChatRoomMessage> merged,
+  ) {
+    final prevIds = previous.map((m) => m.id).toSet();
+    for (final m in merged) {
+      if (prevIds.contains(m.id)) continue;
+      if (m.kind != ChatMessageKind.systemJoin) continue;
+      if (!VoiceOfficialJoin.isEntranceWorthy(
+        content: m.content,
+        membership: m.user?.membership,
+        chatRole: m.user?.chatRole,
+      )) {
+        continue;
+      }
+      if (_markEntranceOnce(m.content)) {
+        _showEnterBanner(m.content);
+      }
+    }
+  }
+
   void _showEnterBanner(String raw) {
     final formatted = VoiceOfficialJoin.formatEntranceBanner(
       raw,
@@ -900,7 +917,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     if (formatted.isEmpty) return;
     state = state.copyWith(enterBanner: formatted);
     _enterBannerTimer?.cancel();
-    _enterBannerTimer = Timer(const Duration(seconds: 5), () {
+    _enterBannerTimer = Timer(const Duration(seconds: 8), () {
       state = state.copyWith(clearEnterBanner: true);
     });
   }

@@ -122,6 +122,63 @@ chatRoomsRouter.get("/youtube-stream", optionalAuth, async (req, res) => {
   return res.status(200).json({ streamUrl, url: streamUrl });
 });
 
+/** GET /api/chat/youtube-audio — googlevideo akışı (Referer ile proxy; mobil oynatıcı) */
+chatRoomsRouter.get("/youtube-audio", optionalAuth, async (req, res) => {
+  const url = String(req.query.url ?? "");
+  if (!url.startsWith("http")) {
+    return fail(res, 400, "INVALID_URL", "Geçersiz akış adresi");
+  }
+  if (!/googlevideo\.com|youtube\.com\/api\//i.test(url)) {
+    return fail(res, 400, "INVALID_URL", "Yalnızca YouTube CDN akışları desteklenir");
+  }
+  const range = req.headers.range;
+  const upstreamHeaders: Record<string, string> = {
+    Referer: "https://www.youtube.com/",
+    Origin: "https://www.youtube.com",
+    "User-Agent":
+      "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
+  };
+  if (typeof range === "string" && range.length > 0) {
+    upstreamHeaders.Range = range;
+  }
+  try {
+    const upstream = await fetch(url, { headers: upstreamHeaders });
+    if (!upstream.ok) {
+      return fail(
+        res,
+        upstream.status,
+        "UPSTREAM_ERROR",
+        "Akış yüklenemedi",
+      );
+    }
+    res.status(upstream.status);
+    const passHeaders = [
+      "content-type",
+      "content-length",
+      "content-range",
+      "accept-ranges",
+    ];
+    for (const h of passHeaders) {
+      const v = upstream.headers.get(h);
+      if (v) res.setHeader(h, v);
+    }
+    if (!upstream.body) {
+      return res.end();
+    }
+    const { Readable } = await import("node:stream");
+    const { pipeline } = await import("node:stream/promises");
+    const nodeStream = Readable.fromWeb(
+      upstream.body as import("stream/web").ReadableStream,
+    );
+    await pipeline(nodeStream, res);
+  } catch {
+    if (!res.headersSent) {
+      return fail(res, 502, "PROXY_ERROR", "Akış aktarılamadı");
+    }
+    res.end();
+  }
+});
+
 chatRoomsRouter.get("/music/popular", optionalAuth, async (_req, res) => {
   return res.status(200).json({ items: POPULAR_MUSIC_SUGGESTIONS });
 });

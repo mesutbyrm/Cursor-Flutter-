@@ -1,14 +1,13 @@
-import 'dart:async';
-
 import 'package:dio/dio.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-/// YouTube watch URL → doğrudan ses akışı (site API + explode + Piped + Invidious).
+import '../../../core/config/env.dart';
+
+/// YouTube watch URL → doğrudan ses akışı (site API → Piped → Invidious).
+/// googlevideo URL'leri mobilde API proxy üzerinden oynatılır (Referer gerekir).
 class YoutubeStreamResolver {
   YoutubeStreamResolver(this._dio);
 
   final Dio _dio;
-  YoutubeExplode? _explode;
 
   static final _youtubeHost = RegExp(r'youtube\.com|youtu\.be', caseSensitive: false);
 
@@ -17,20 +16,11 @@ class YoutubeStreamResolver {
   static const _pipedHosts = [
     'https://pipedapi.kavin.rocks',
     'https://pipedapi.adminforge.de',
-    'https://pipedapi.syncpundit.io',
-    'https://pipedapi.leptons.xyz',
-    'https://pipedapi.in.projectsegfau.lt',
-    'https://pipedapi.moomoo.me',
-    'https://api.piped.projectsegfau.lt',
   ];
 
   static const _invidiousHosts = [
-    'https://invidious.nerdvpn.de',
     'https://invidious.privacyredirect.com',
     'https://invidious.fdn.fr',
-    'https://invidious.dhus.de',
-    'https://invidious.io.lol',
-    'https://inv.tux.pizza',
   ];
 
   final Map<String, _StreamCacheEntry> _cache = {};
@@ -74,12 +64,28 @@ class YoutubeStreamResolver {
     }
   }
 
-  /// Arama/istek öncesi akışı önbelleğe alır.
   Future<String?> prefetch(String musicUrl) => resolvePlayableUrl(musicUrl);
+
+  /// googlevideo CDN — audioplayers Referer gönderemez; API proxy kullan.
+  static String wrapForMobilePlayback(String url) {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty || !trimmed.startsWith('http')) return trimmed;
+    final lower = trimmed.toLowerCase();
+    if (lower.contains('/api/chat/youtube-audio')) return trimmed;
+    if (!lower.contains('googlevideo.com') &&
+        !lower.contains('youtube.com/api/')) {
+      return trimmed;
+    }
+    var base = Env.apiBaseUrl.trim();
+    if (base.endsWith('/')) base = base.substring(0, base.length - 1);
+    return '$base/api/chat/youtube-audio?url=${Uri.encodeComponent(trimmed)}';
+  }
 
   Future<String?> resolvePlayableUrl(String musicUrl) async {
     if (musicUrl.isEmpty) return null;
-    if (isDirectPlayableUrl(musicUrl)) return musicUrl;
+    if (isDirectPlayableUrl(musicUrl)) {
+      return wrapForMobilePlayback(musicUrl);
+    }
     if (!_youtubeHost.hasMatch(musicUrl)) return musicUrl;
 
     final id = videoIdFrom(musicUrl);
@@ -91,26 +97,33 @@ class YoutubeStreamResolver {
       }
     }
 
-    final futures = <Future<String?>>[
-      _resolveViaSiteApi(musicUrl),
-      if (id != null && id.isNotEmpty) _resolveViaExplode(id),
-      if (id != null && id.isNotEmpty)
-        _firstSuccess(
-          _pipedHosts.map((h) => _resolveViaPiped(h, id)),
-          timeout: const Duration(seconds: 8),
-        ),
-      if (id != null && id.isNotEmpty)
-        _firstSuccess(
-          _invidiousHosts.map((h) => _resolveViaInvidious(h, id)),
-          timeout: const Duration(seconds: 8),
-        ),
-    ];
-
-    final winner = await _firstSuccess(futures, timeout: const Duration(seconds: 12));
-    if (winner != null) {
-      _remember(id, winner);
-      return winner;
+    final fromApi = await _resolveViaSiteApi(musicUrl);
+    if (fromApi != null) {
+      final wrapped = wrapForMobilePlayback(fromApi);
+      _remember(id, wrapped);
+      return wrapped;
     }
+
+    if (id == null || id.isEmpty) return null;
+
+    for (final host in _pipedHosts) {
+      final piped = await _resolveViaPiped(host, id);
+      if (piped != null) {
+        final wrapped = wrapForMobilePlayback(piped);
+        _remember(id, wrapped);
+        return wrapped;
+      }
+    }
+
+    for (final host in _invidiousHosts) {
+      final inv = await _resolveViaInvidious(host, id);
+      if (inv != null) {
+        final wrapped = wrapForMobilePlayback(inv);
+        _remember(id, wrapped);
+        return wrapped;
+      }
+    }
+
     return null;
   }
 
@@ -119,63 +132,18 @@ class YoutubeStreamResolver {
     _cache[id] = _StreamCacheEntry(url: url, at: DateTime.now());
   }
 
-  Future<String?> _firstSuccess(
-    Iterable<Future<String?>> futures, {
-    required Duration timeout,
-  }) async {
-    if (futures.isEmpty) return null;
-    final completer = Completer<String?>();
-    var pending = 0;
-    for (final future in futures) {
-      pending++;
-      future.then((value) {
-        if (value != null && value.isNotEmpty && !completer.isCompleted) {
-          completer.complete(value);
-        }
-        pending--;
-        if (pending == 0 && !completer.isCompleted) {
-          completer.complete(null);
-        }
-      }).catchError((_) {
-        pending--;
-        if (pending == 0 && !completer.isCompleted) {
-          completer.complete(null);
-        }
-      });
-    }
-    try {
-      return await completer.future.timeout(timeout, onTimeout: () => null);
-    } catch (_) {
-      return null;
-    }
-  }
-
   Future<String?> _resolveViaSiteApi(String musicUrl) async {
-    for (var i = 0; i < 2; i++) {
-      try {
-        final res = await _dio.get<dynamic>(
-          '/api/chat/youtube-stream',
-          queryParameters: {'url': musicUrl},
-          options: Options(receiveTimeout: const Duration(seconds: 10)),
-        );
-        final data = res.data;
-        if (data is Map) {
-          final stream = data['streamUrl'] ?? data['url'];
-          if (stream is String && stream.startsWith('http')) return stream;
-        }
-      } catch (_) {}
-      if (i == 0) await Future<void>.delayed(const Duration(milliseconds: 350));
-    }
-    return null;
-  }
-
-  Future<String?> _resolveViaExplode(String id) async {
     try {
-      _explode ??= YoutubeExplode();
-      final manifest = await _explode!.videos.streamsClient.getManifest(id);
-      final audio = manifest.audioOnly.withHighestBitrate();
-      final url = audio.url.toString();
-      if (url.startsWith('http')) return url;
+      final res = await _dio.get<dynamic>(
+        '/api/chat/youtube-stream',
+        queryParameters: {'url': musicUrl},
+        options: Options(receiveTimeout: const Duration(seconds: 8)),
+      );
+      final data = res.data;
+      if (data is Map) {
+        final stream = data['streamUrl'] ?? data['url'];
+        if (stream is String && stream.startsWith('http')) return stream;
+      }
     } catch (_) {}
     return null;
   }
@@ -186,7 +154,7 @@ class YoutubeStreamResolver {
         '$host/streams/$id',
         options: Options(
           headers: {'Accept': 'application/json'},
-          receiveTimeout: const Duration(seconds: 6),
+          receiveTimeout: const Duration(seconds: 5),
         ),
       );
       final data = res.data;
@@ -216,7 +184,7 @@ class YoutubeStreamResolver {
         '$host/api/v1/videos/$id',
         options: Options(
           headers: {'Accept': 'application/json'},
-          receiveTimeout: const Duration(seconds: 6),
+          receiveTimeout: const Duration(seconds: 5),
         ),
       );
       final data = res.data;
@@ -239,11 +207,6 @@ class YoutubeStreamResolver {
       return best;
     } catch (_) {}
     return null;
-  }
-
-  void dispose() {
-    _explode?.close();
-    _explode = null;
   }
 }
 
