@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../app/router/app_router.dart';
 import '../../home/presentation/theme/home_approved_design.dart';
@@ -65,29 +64,35 @@ class AppBottomNavHost extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(goRouterProvider);
-    final location =
-        GoRouter.of(context).routerDelegate.currentConfiguration.uri.path;
-    final showNav = shouldShowBottomNav(location);
-    if (!showNav) return child;
+    final router = ref.watch(goRouterProvider);
+    // MaterialApp.builder bağlamında GoRouter.of(context) çalışmaz — provider kullan.
+    return ListenableBuilder(
+      listenable: router.routerDelegate,
+      builder: (context, _) {
+        final location =
+            router.routerDelegate.currentConfiguration.uri.path;
+        final showNav = shouldShowBottomNav(location);
+        if (!showNav) return child;
 
-    final tab = activeTabFor(location);
+        final tab = activeTabFor(location);
 
-    return ColoredBox(
-      color: HomeApprovedDesign.background,
-      child: Column(
-        children: [
-          Expanded(child: child),
-          BottomNavigationWidget(
-            activeTab: tab,
-            onHome: () => context.go('/feed'),
-            onLive: () => context.go('/live'),
-            onRooms: () => context.push('/voice-rooms'),
-            onJeton: () => context.push('/jeton-store'),
-            onProfile: () => context.go('/profile'),
+        return ColoredBox(
+          color: HomeApprovedDesign.background,
+          child: Column(
+            children: [
+              Expanded(child: child),
+              BottomNavigationWidget(
+                activeTab: tab,
+                onHome: () => router.go('/feed'),
+                onLive: () => router.go('/live'),
+                onRooms: () => router.push('/voice-rooms'),
+                onJeton: () => router.push('/jeton-store'),
+                onProfile: () => router.go('/profile'),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
