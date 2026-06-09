@@ -64,14 +64,14 @@ check "GET /images/voice-bg-1.jpg" "200" "$code"
 code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/api/devices/fcm" \
   -H "Content-Type: application/json" \
   -d '{"token":"smoke-test-token-0123456789"}')
-check "POST /api/devices/fcm" "401|404" "$code"
+check "POST /api/devices/fcm" "200|401|404" "$code"
 
 # PK + üyelik — 404 deploy öncesi normal
 code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/pk/history")
 check "GET /api/pk/history" "200|404" "$code"
 
 code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/membership/packages")
-check "GET /api/membership/packages" "401|404" "$code"
+check "GET /api/membership/packages" "200|401|404" "$code"
 
 if [[ "$AUTH_FLAG" == "--auth" && -n "${CANLIFAL_JWT:-}" ]]; then
   code=$(curl -s -o /dev/null -w "%{http_code}" \

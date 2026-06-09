@@ -4,14 +4,15 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../data/youtube_stream_resolver.dart';
+import '../audio/voice_room_dj_stream_loader.dart';
 import '../audio/voice_room_music_audio_session.dart';
 
-/// Oda arka plan müziği — DJ API `musicUrl` ile senkron (web iframe yerine stream URL).
+/// Oda arka plan müziği — DJ API `musicUrl` ile senkron (web iframe yerine stream).
 class VoiceRoomDjPlayer {
-  VoiceRoomDjPlayer(this._resolver)
+  VoiceRoomDjPlayer(this._resolver, this._streamLoader)
       : _player = AudioPlayer(playerId: 'voice_room_dj') {
     _player.setReleaseMode(ReleaseMode.stop);
-    unawaited(_initPlayer());
+    _initFuture = _initPlayer();
     _player.onPlayerComplete.listen((_) {
       onTrackComplete?.call();
     });
@@ -39,10 +40,12 @@ class VoiceRoomDjPlayer {
   }
 
   final YoutubeStreamResolver _resolver;
+  final VoiceRoomDjStreamLoader _streamLoader;
   final AudioPlayer _player;
+  late final Future<void> _initFuture;
   final ValueNotifier<VoiceRoomDjPlayback> playback =
       ValueNotifier(const VoiceRoomDjPlayback());
-  String? _currentUrl;
+  String? _currentKey;
   void Function()? onTrackComplete;
 
   Future<void> _initPlayer() async {
@@ -72,13 +75,13 @@ class VoiceRoomDjPlayer {
     }
   }
 
-  /// Oynatma başarılıysa `true` döner.
   Future<bool> sync({
     String? musicUrl,
     String? fallbackYoutubeUrl,
     required bool playing,
     bool muted = false,
   }) async {
+    await _initFuture;
     if (muted || !playing || musicUrl == null || musicUrl.isEmpty) {
       await stop();
       return false;
@@ -94,34 +97,56 @@ class VoiceRoomDjPlayer {
         fallbackYoutubeUrl,
     ];
 
-    for (final candidate in candidates) {
-      final source = await _resolveSource(candidate);
-      debugPrint(
-        'DJ sync: candidate=$candidate streamUrl=$source '
-        'playState=$playing playerState=${_player.state}',
-      );
-      if (source == null || source.isEmpty) continue;
+    for (var attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0) {
+        for (final c in candidates) {
+          _resolver.invalidate(c);
+          _streamLoader.invalidate(c);
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+      }
 
-      final alreadyPlaying =
-          _currentUrl == source && _player.state == PlayerState.playing;
-      if (alreadyPlaying) return true;
+      for (final candidate in candidates) {
+        final resolved = await _resolveSource(candidate);
+        if (resolved == null || resolved.isEmpty) continue;
 
-      try {
-        await VoiceRoomMusicAudioSession.activateForPlayback();
-        _currentUrl = source;
-        await _player.stop();
-        await _player.setVolume(1.0);
-        await _player.play(UrlSource(source));
-        playback.value = VoiceRoomDjPlayback(
-          position: Duration.zero,
-          duration: playback.value.duration,
-          playing: true,
-        );
-        debugPrint('DJ play ok: audioUrl=$source playerState=${_player.state}');
-        return true;
-      } catch (e) {
-        debugPrint('DJ play error ($candidate): $e');
-        _currentUrl = null;
+        final playable = await _streamLoader.preparePlaybackSource(resolved);
+        if (playable == null || playable.isEmpty) continue;
+
+        if (_currentKey == playable && _player.state == PlayerState.playing) {
+          return true;
+        }
+
+        try {
+          await VoiceRoomMusicAudioSession.activateForPlayback();
+          _currentKey = playable;
+          if (_player.state == PlayerState.playing) {
+            await _player.stop();
+          }
+          await _player.setVolume(1.0);
+
+          final source = playable.startsWith('/')
+              ? DeviceFileSource(playable, mimeType: _mimeForPath(playable))
+              : UrlSource(
+                  playable,
+                  mimeType: _mimeForUrl(playable),
+                );
+
+          await _player.play(source);
+          await Future<void>.delayed(const Duration(milliseconds: 320));
+          if (_player.state == PlayerState.playing) {
+            playback.value = VoiceRoomDjPlayback(
+              position: Duration.zero,
+              duration: playback.value.duration,
+              playing: true,
+            );
+            debugPrint('DJ play ok: $playable');
+            return true;
+          }
+        } catch (e) {
+          debugPrint('DJ play error ($candidate): $e');
+          _currentKey = null;
+        }
       }
     }
 
@@ -132,6 +157,28 @@ class VoiceRoomDjPlayer {
   Future<String?> _resolveSource(String musicUrl) async {
     if (!_resolver.needsResolve(musicUrl)) return musicUrl;
     return _resolver.resolvePlayableUrl(musicUrl);
+  }
+
+  static String? _mimeForUrl(String url) {
+    final u = url.toLowerCase();
+    if (u.contains('mime=audio%2Fwebm') || u.contains('audio/webm')) {
+      return 'audio/webm';
+    }
+    if (u.contains('mime=audio%2Fmp4') ||
+        u.contains('audio/mp4') ||
+        u.endsWith('.m4a')) {
+      return 'audio/mp4';
+    }
+    if (u.endsWith('.mp3')) return 'audio/mpeg';
+    if (u.endsWith('.opus')) return 'audio/opus';
+    return null;
+  }
+
+  static String? _mimeForPath(String path) {
+    if (path.endsWith('.mp3')) return 'audio/mpeg';
+    if (path.endsWith('.m4a')) return 'audio/mp4';
+    if (path.endsWith('.webm')) return 'audio/webm';
+    return 'audio/mp4';
   }
 
   Future<void> pause() async {
@@ -148,7 +195,7 @@ class VoiceRoomDjPlayer {
   }
 
   Future<void> resume() async {
-    if (_currentUrl == null) return;
+    if (_currentKey == null) return;
     try {
       await VoiceRoomMusicAudioSession.activateForPlayback();
       await _player.resume();
@@ -163,7 +210,7 @@ class VoiceRoomDjPlayer {
   }
 
   Future<void> stop() async {
-    _currentUrl = null;
+    _currentKey = null;
     try {
       await _player.stop();
       playback.value = const VoiceRoomDjPlayback();

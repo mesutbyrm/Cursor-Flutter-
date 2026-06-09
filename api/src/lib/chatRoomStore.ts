@@ -54,8 +54,9 @@ export type ChatRoomRow = {
   rules?: string;
 };
 
-const SITE_BACKGROUNDS = Array.from({ length: 20 }, (_, i) =>
-  `https://canlifal.com/images/voice-bg-${i + 1}.jpg`,
+const SITE_BACKGROUNDS = Array.from(
+  { length: 20 },
+  (_, i) => `https://canlifal.com/images/voice-bg-${i + 1}.jpg`,
 );
 
 const rooms: ChatRoomRow[] = [
