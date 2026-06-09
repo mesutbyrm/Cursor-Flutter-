@@ -13,7 +13,7 @@ Bu Flutter mirror (`api/`) ile **birebir** senkron tutulmalı.
 |------------------|------------------|
 | `api/src/lib/pkBattleService.ts` | `lib/pk/pkBattleService.ts` |
 | `api/src/lib/pkCache.ts` | `lib/pk/pkCache.ts` |
-| `api/src/routes/pk_battles.ts` | `lib/pk/pkBattleRoutes.ts` (handler export) |
+| `api/src/routes/pk_battles.ts` (handler export) | `lib/pk/pkBattleHandlers.ts` — veya `docs/nextjs/pk/lib/pkBattleHandlers.ts` referans |
 | `api/src/socket/giftHub.ts` | mevcut Socket.IO sunucunuza `emitPkBattleEvent` ekleyin |
 
 `pkBattleService.ts` içinde `prisma` import yolunu web projenize göre düzeltin (`@/lib/prisma`).
