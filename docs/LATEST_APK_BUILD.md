@@ -2,22 +2,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.163+165` |
-| Tarih (UTC) | 2026-06-09 16:22 |
-| Commit | [`35668ffad0e8fe1e94d2aff37d9f53ed6541e49b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/35668ffad0e8fe1e94d2aff37d9f53ed6541e49b) |
-| İş akışı | [Run 27218882444](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27218882444) |
+| Sürüm | `1.0.164+166` |
+| Tarih (UTC) | 2026-06-09 17:23 |
+| Commit | [`381370f9e9d174182159aa67c41ed6030f7796f6`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/381370f9e9d174182159aa67c41ed6030f7796f6) |
+| İş akışı | [Run 27222336798](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27222336798) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.163+165 (2026-06-09)
+## 1.0.164+166 (2026-06-09)
 
-### Birleştirme + temizlik
+### Sesli oda müzik çalmama düzeltmesi
 
-- Web parite paketi `main`'e alındı
-- Kullanılmayan deprecated Socket.IO chat servisi kaldırıldı
-- 100+ agent debug `.txt` çıktısı silindi
-- GitHub PR/dal temizlik otomasyonu
+- Üretim `/api/chat/youtube-stream` watch URL fallback döndüğünde artık oynatılmaya çalışılmaz
+- Piped/Invidious ile gerçek ses akışı çözülür (`videoId` parametresi)
+- googlevideo akışları yerel indirme ile oynatılır (kırık youtube-audio proxy atlanır)
+- Ek Piped mirror hostları
+- `apk-latest` yayını için 1.0.164+166 release APK derlemesi tetiklenir
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
