@@ -43,7 +43,6 @@ class VoiceRoomDjPlayer {
       config: const audio.AudioServiceConfig(
         androidNotificationChannelId: 'com.mesutbyrm.canlifal.voice_music',
         androidNotificationChannelName: 'Canlifal sesli oda müziği',
-        androidNotificationOngoing: true,
         androidStopForegroundOnPause: false,
         preloadArtwork: true,
       ),
