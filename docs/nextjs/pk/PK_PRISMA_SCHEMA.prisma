@@ -1,0 +1,85 @@
+// canlifal.com — PK modelleri (prisma/schema.prisma ile birleştirin)
+
+model PKBattle {
+  id                   String          @id @default(cuid())
+  battleType           String
+  voiceRoomId          String?
+  opponentVoiceRoomId  String?
+  liveStreamId         String?
+  opponentLiveStreamId String?
+  challengerId         String
+  opponentId           String?
+  status               String          @default("pending")
+  startTime            DateTime?
+  endTime              DateTime?
+  winnerId             String?
+  challengerScore      Int             @default(0)
+  opponentScore        Int             @default(0)
+  durationSeconds      Int             @default(300)
+  targetScore          Int             @default(150000)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  participants         PKParticipant[]
+  gifts                PKGift[]
+  result               PKResult?
+
+  @@index([battleType, status])
+  @@index([voiceRoomId, status])
+  @@index([opponentVoiceRoomId, status])
+  @@index([liveStreamId, status])
+  @@index([opponentLiveStreamId, status])
+  @@index([challengerId, createdAt])
+  @@index([opponentId, createdAt])
+}
+
+model PKParticipant {
+  id          String   @id @default(cuid())
+  battleId    String
+  battle      PKBattle @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  userId      String
+  side        String
+  roomId      String?
+  streamId    String?
+  score       Int      @default(0)
+  winStreak   Int      @default(0)
+  displayName String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+
+  @@unique([battleId, side])
+  @@index([userId])
+  @@index([roomId])
+  @@index([streamId])
+}
+
+model PKGift {
+  id          String   @id @default(cuid())
+  battleId    String
+  battle      PKBattle @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  giftEventId String?
+  senderId    String?
+  senderName  String
+  side        String
+  giftSlug    String
+  giftName    String?
+  quantity    Int      @default(1)
+  points      Int
+  createdAt   DateTime @default(now())
+
+  @@index([battleId, createdAt])
+  @@index([senderId, createdAt])
+}
+
+model PKResult {
+  id                   String   @id @default(cuid())
+  battleId             String   @unique
+  battle               PKBattle @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  winnerId             String?
+  winnerSide           String?
+  challengerFinalScore Int
+  opponentFinalScore   Int
+  championBadge        Boolean  @default(true)
+  createdAt            DateTime @default(now())
+
+  @@index([winnerId, createdAt])
+}

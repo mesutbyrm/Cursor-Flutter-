@@ -40,7 +40,7 @@ Bu klasör, **canlifal.com** web reposuna kopyalanacak üretim route referanslar
 | Oda arka planları | `voice_room_background_catalog.dart` | `GET /api/chat/rooms/backgrounds` |
 | Push token | `push_registrar.dart` | `POST /api/devices/fcm` |
 | Üyelik | `membership_remote_datasource.dart` | `GET /api/membership/packages` |
-| PK Battle | `pk_battle_remote_datasource.dart` | `api/src/routes/pk_battles.ts` (çoklu route) |
+| PK Battle | `pk_battle_remote_datasource.dart` | **`docs/nextjs/pk/`** (8 route + Prisma + Socket) |
 
 ## api/ mirror
 
