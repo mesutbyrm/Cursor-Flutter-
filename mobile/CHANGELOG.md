@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.167+169 (2026-06-09)
+
+### Sesli oda müzik — audio_service entegrasyonu
+
+- Web ile aynı `/music-queue`, `/song-request`, SSE ve Socket.IO müzik senkron akışı korunur
+- DJ müzik oynatıcı `just_audio` + `audio_service` tabanlı arka plan media session'a taşındı
+- Android notification / media button ve iOS background audio desteği eklendi
+- Mini player gerçek background playback state, süre, ilerleme ve media metadata bilgisini izler
+
 ## 1.0.166+168 (2026-06-09)
 
 ### Sesli oda müzik web paritesi

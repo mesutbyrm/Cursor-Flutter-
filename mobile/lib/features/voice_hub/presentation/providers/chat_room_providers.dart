@@ -715,6 +715,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     var ok = await player.sync(
       musicUrl: playbackUrl,
       fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
+      nowPlaying: effectiveDj.nowPlaying,
       playing: shouldPlay,
       muted: muted,
     );
@@ -728,6 +729,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       ok = await player.sync(
         musicUrl: playbackUrl,
         fallbackYoutubeUrl: fallback,
+        nowPlaying: effectiveDj.nowPlaying,
         playing: shouldPlay,
         muted: muted,
       );

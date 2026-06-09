@@ -1,12 +1,5 @@
 package com.mesutbyrm.canlifal
 
-import io.flutter.embedding.android.FlutterActivity
-import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.plugins.GeneratedPluginRegistrant
+import com.ryanheise.audioservice.AudioServiceActivity
 
-class MainActivity : FlutterActivity() {
-    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
-        GeneratedPluginRegistrant.registerWith(flutterEngine)
-        super.configureFlutterEngine(flutterEngine)
-    }
-}
+class MainActivity : AudioServiceActivity()
