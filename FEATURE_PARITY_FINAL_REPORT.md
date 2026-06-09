@@ -16,11 +16,12 @@ Onemli kisit:
 - Yeni backend, yeni API ve yeni database tablosu eklenmedi.
 - Flutter varsayilan backend'i `https://canlifal.com` olarak kaldi.
 
-## Bu turda uygulanan kod degisikligi
+## Bu turda uygulanan kod degisikligi ve yeniden kontrol
 
 | Alan | Sorun | Duzeltme | Dosya | Test durumu |
 |---|---|---|---|---|
-| Profil / takipci listesi | Flutter baska kullanicinin takipcilerini alirken once `/api/users/{id}/follow` yolunu deniyordu. Bu yol takip toggle endpoint'i olarak yorumlanabilir ve web API liste sozlesmesiyle uyumlu degildi. | Endpoint `/api/users/{id}/followers` olarak duzeltildi. | `mobile/lib/core/network/api_endpoints.dart` | CI Analyze + APK build bekleniyor |
+| Profil / takipci listesi | Flutter baska kullanicinin takipcilerini alirken once `/api/users/{id}/follow` yolunu deniyordu. Bu yol takip toggle endpoint'i olarak yorumlanabilir ve web API liste sozlesmesiyle uyumlu degildi. | Endpoint `/api/users/{id}/followers` olarak duzeltildi. | `mobile/lib/core/network/api_endpoints.dart` | CI Analyze + APK build basarili (`27239091897`) |
+| 2026-06-09 22:33 tekrar taramasi | Listelenen moduller tekrar tarandi. Bu repoda gercek web kaynak kodu olmadigi icin yeni satir-satir web farki dogrulanamadi. Flutter tarafinda onceki turda duzeltilen takipci endpoint'i halen `/followers` yolunu kullaniyor. | Yeni API/DB eklenmedi; ek güvenli kod farki bulunmadi. | `FEATURE_PARITY_FINAL_REPORT.md` | Dokuman guncellemesi |
 
 ## Tamamlanan / web API sozlesmesiyle esitlenen moduller
 
@@ -65,12 +66,9 @@ dogrulanamiyor veya Flutter tarafinda henuz native karsilik yok:
 
 Son basarili APK:
 
-- Surum: `1.0.167+169`
-- Run: <https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27236304678>
+- Surum: `1.0.168+170`
+- Run: <https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27239091897>
 - Durum: `Dependencies`, `Analyze`, `Build release APK`, release publish basarili
-
-Bu raporla birlikte kaynak surum `1.0.168+170` olarak yukseltildi ve yeni APK
-CI tetiklenecek.
 
 ## %100 parite icin kalan blockerlar
 
