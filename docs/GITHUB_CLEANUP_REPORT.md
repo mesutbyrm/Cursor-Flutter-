@@ -1,131 +1,74 @@
-# GitHub Temizlik Raporu (yerel analiz)
+# GitHub Temizlik Raporu
 
-Oluşturulma: 2026-06-09 12:58 UTC
-Kaynak: yerel `git branch -r` (API erişimi gerekmez)
+Oluşturulma: 2026-06-09 16:05 UTC
+Mod: APPLIED
+Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
-Son birleşen PR (main geçmişi): **#136**
 
 ## Özet
 
-| Metrik | Adet | Aksiyon |
-|--------|------|---------|
-| `cursor/*` merged into `main` | 110 | Remote silinebilir |
-| `cursor/*` not merged | 35 | İncele / kapat veya main'e al |
-| Aktif geliştirme dalı | `main` | Koru |
+| Metrik | Adet |
+|--------|------|
+| Kapatılan PR | 0 |
+| Silinen remote dal | 0 |
+| Kalan açık PR | 22 |
+| Korunan / aktif dal | 11 |
 
-## Silinmeye aday remote dallar (merged)
+## Kapatılan PR'lar
 
-```
-cursor/admin-payment-notifications-7009
-cursor/android-internet-permission-763b
-cursor/apk-build-fix-7009
-cursor/app-fixes-splash-social-push-7009
-cursor/auth-chat-freezed-7009
-cursor/auth-error-messages-763b
-cursor/auth-premium-2026-7009
-cursor/auth-social-ux-7009
-cursor/canlifal-apk-download-15de
-cursor/canlifal-flutter-api-7009
-cursor/canlifal-official-config-7009
-cursor/canlifal-social-flutter-763b
-cursor/cfc-jeton-split-7009
-cursor/daily-fortune-flow-7009
-cursor/discover-premium-2026-7009
-cursor/feed-live-fab-round-7009
-cursor/fix-all-errors-7009
-cursor/fix-apk-build-quota-7009
-cursor/fix-apk-publish-7009
-cursor/fix-ci-analyze-warning-7009
-cursor/fix-ci-build-apk-7009
-cursor/fix-ci-errors-7009
-cursor/fix-ci-export-path-7009
-cursor/fix-commands-youtube-payment-7009
-cursor/fix-env-update-7009
-cursor/fix-google-oauth-apk-7009
-cursor/fix-music-search-istek-7009
-cursor/fix-voice-payment-chat-7009
-cursor/fix-voice-payment-stories-7009
-cursor/fix-voice-room-provider-7009
-cursor/flutter-api-docs-7009
-cursor/flutter-full-audit-7009
-cursor/flutter-parity-full-7009
-cursor/fortune-hub-types-grid-7009
-cursor/fortune-type-showcase-cards-7009
-cursor/full-backend-parity-7009
-cursor/full-parity-all-7009
-cursor/gift-premium-2026-7009
-cursor/gift-system-7009
-cursor/home-canli-falcilar-7009
-cursor/home-feed-nav-ui-7009
-cursor/home-live-broadcasts-redesign-7009
-cursor/home-live-google-fixes-7009
-cursor/home-live-profile-763b
-cursor/home-pixel-perfect-ui-7009
-cursor/home-profile-jeton-invite-ad85
-cursor/home-sections-voice-fix-7009
-cursor/home-spacing-voice-perf-7009
-cursor/home-stats-stories-grid-7009
-cursor/jeton-packages-fallback-ui-7009
-... ve 60 dal daha
-```
+| PR | Neden |
+|----|-------|
+| — | — |
 
-## Birleşmemiş cursor dalları (inceleme gerekir)
+## Silinen dallar (cursor/*)
 
-```
-cursor/admin-yonetici-odeme-7009
-cursor/android-package-mesutbyrm-7009
-cursor/apk-downloads-release-763b
-cursor/auth-mockup-ui-7009
-cursor/canlifal-api-endpoints-e12f
-cursor/canlifal-flutter-app-1c13
-cursor/canlifal-flutter-social-7009
-cursor/canlifal-native-ui-15de
-cursor/dev-env-setup-c87f
-cursor/dev-setup-agents-md-0a58
-cursor/docs-apk-107-7009
-cursor/fix-blank-startup-7009
-cursor/fix-ci-app-theme-7009
-cursor/fix-install-script-a24d
-cursor/fortune-tarot-hub-7009
-cursor/freezed-dtos-7009
-cursor/home-social-auth-ui-763b
-cursor/home-voice-gold-stats-7009
-cursor/live-voice-apk-fixes-763b
-cursor/merge-pr12-shell-jeton-ad85
-cursor/music-playback-fix-7009
-cursor/nav-social-subscriptions-7009
-cursor/perf-glass-7009
-cursor/premium-design-system-7009
-cursor/premium-home-page-a24d
-cursor/rest-api-jwt-512d
-cursor/rest-api-jwt-auth-9821
-cursor/setup-dev-environment-a24d
-cursor/theme-mode-7009
-cursor/v105-changelog-ad85
-cursor/voice-music-gift-ux-7009
-cursor/voice-music-instant-play-7009
-cursor/voice-premium-2026-ui-7009
-cursor/voice-responsive-nav-fortune-7009
-cursor/youtube-api-key-env-7009
-```
+| Dal | Neden |
+|-----|-------|
+| — | — |
 
-## Bilinen eski açık PR'lar (manuel/CI kapatma)
+## Kalan açık PR'lar
 
-`docs/OPEN_PRS_TRIAGE.md` — #1–3, 6, 16–17, 19, 21, 24, 33, 37, 62–64 main'de; kapatılmalı.
+| PR | Head | Base | Not |
+|----|------|------|-----|
+| #79 | cursor/theme-mode-7009 | main | draft=false | Dark / Light / System tema modu |
+| #77 | cursor/perf-glass-7009 | main | draft=false | Performance + Pro Glass UI (lazy lists, 60 FPS focus) |
+| #33 | cursor/android-package-mesutbyrm-7009 | main | draft=false | chore(mobile): Android paket adı com.mesutbyrm.canlifal |
+| #24 | cursor/fortune-tarot-hub-7009 | main | draft=false | feat(mobile): Fal & Tarot premium hub (1.0.23+25) |
+| #21 | cursor/freezed-dtos-7009 | main | draft=false | feat(mobile): Freezed DTOs for Post, Conversation, Message (1.0.20+22) |
+| #19 | cursor/nav-social-subscriptions-7009 | main | draft=false | Navbar: Sosyal; profilde Abonelikler (1.0.10+11) |
+| #17 | cursor/premium-home-page-a24d | main | draft=false | feat(mobile): Premium ana sayfa + otomatik APK versiyon sistemi |
+| #16 | cursor/live-voice-apk-fixes-763b | main | draft=false | Canlifal: sesli sohbet neon UI + API, shell jeton/davet hızlı işlemler (v1.0.4 hattı) |
+| #6 | cursor/canlifal-native-ui-15de | main | draft=false | Replace WebView shell with native Canlifal UI |
+| #3 | cursor/dev-setup-agents-md-0a58 | main | draft=false | Add AGENTS.md with Cursor Cloud development environment instructions |
+| #1 | cursor/canlifal-flutter-app-1c13 | main | draft=false | Add Canlifal Flutter app shell |
+| #79 | cursor/theme-mode-7009 | main | draft=false | Dark / Light / System tema modu |
+| #77 | cursor/perf-glass-7009 | main | draft=false | Performance + Pro Glass UI (lazy lists, 60 FPS focus) |
+| #33 | cursor/android-package-mesutbyrm-7009 | main | draft=false | chore(mobile): Android paket adı com.mesutbyrm.canlifal |
+| #24 | cursor/fortune-tarot-hub-7009 | main | draft=false | feat(mobile): Fal & Tarot premium hub (1.0.23+25) |
+| #21 | cursor/freezed-dtos-7009 | main | draft=false | feat(mobile): Freezed DTOs for Post, Conversation, Message (1.0.20+22) |
+| #19 | cursor/nav-social-subscriptions-7009 | main | draft=false | Navbar: Sosyal; profilde Abonelikler (1.0.10+11) |
+| #17 | cursor/premium-home-page-a24d | main | draft=false | feat(mobile): Premium ana sayfa + otomatik APK versiyon sistemi |
+| #16 | cursor/live-voice-apk-fixes-763b | main | draft=false | Canlifal: sesli sohbet neon UI + API, shell jeton/davet hızlı işlemler (v1.0.4 hattı) |
+| #6 | cursor/canlifal-native-ui-15de | main | draft=false | Replace WebView shell with native Canlifal UI |
+| #3 | cursor/dev-setup-agents-md-0a58 | main | draft=false | Add AGENTS.md with Cursor Cloud development environment instructions |
+| #1 | cursor/canlifal-flutter-app-1c13 | main | draft=false | Add Canlifal Flutter app shell |
 
-## Uygulama
+## Aktif / korunan dallar
 
-```bash
-# CI (önerilen)
-# Actions → GitHub cleanup → Run workflow
+- cursor/android-package-mesutbyrm-7009 — open PR head
+- cursor/canlifal-flutter-app-1c13 — open PR head
+- cursor/canlifal-native-ui-15de — open PR head
+- cursor/dev-setup-agents-md-0a58 — open PR head
+- cursor/fortune-tarot-hub-7009 — open PR head
+- cursor/freezed-dtos-7009 — open PR head
+- cursor/live-voice-apk-fixes-763b — open PR head
+- cursor/nav-social-subscriptions-7009 — open PR head
+- cursor/perf-glass-7009 — open PR head
+- cursor/premium-home-page-a24d — open PR head
+- cursor/theme-mode-7009 — open PR head
 
-# Yerel (GH_TOKEN ile)
-DRY_RUN=1 bash scripts/github-cleanup.sh
-bash scripts/github-cleanup.sh
-```
+## İş akışı kuralları
 
-## İş akışı
-
-- PR otomatik açılmaz
-- Geliştirme doğrudan `main` üzerinde
-- Haftalık `github-cleanup.yml` birleşmiş PR/dalları temizler
+- PR otomatik **açılmaz**
+- Geliştirme doğrudan `main` (veya `ACTIVE_CURSOR_BRANCHES`) üzerinde
+- Bu betik haftalık CI veya `workflow_dispatch` ile çalıştırılır
