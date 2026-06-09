@@ -66,9 +66,14 @@ close_pr() {
     log "DRY  close PR #$num — $reason"
   else
     # REST API — yorum gerektirmez (Cursor App'te pull_requests izni yoksa GraphQL başarısız olur)
-    if ! gh api --method PATCH "/repos/${REPO}/pulls/${num}" -f state=closed >/dev/null 2>&1; then
-      gh pr close "$num" --repo "$REPO" 2>/dev/null || log "WARN could not close PR #$num"
+    if gh api --method PATCH "/repos/${REPO}/pulls/${num}" -f state=closed >/dev/null 2>&1; then
+      echo "#$num|$reason" >>"$CLOSED_LOG"
+    elif gh pr close "$num" --repo "$REPO" 2>/dev/null; then
+      echo "#$num|$reason" >>"$CLOSED_LOG"
+    else
+      log "WARN could not close PR #$num — $reason"
     fi
+    return 0
   fi
   echo "#$num|$reason" >>"$CLOSED_LOG"
 }
@@ -142,6 +147,12 @@ close_merged_prs() {
     age_days=$(( (now_epoch - updated_epoch) / 86400 ))
     if [[ "$draft" == "true" && "$age_days" -gt 60 ]]; then
       close_pr "$num" "draft PR ${age_days} gündür güncellenmedi (abandoned)"
+      continue
+    fi
+
+    # Eski cursor/* PR'ları kapat (main doğrudan geliştirme — PR birikimini önle)
+    if [[ "$head" == cursor/* && "$age_days" -gt 7 ]]; then
+      close_pr "$num" "eski cursor dalı PR (${age_days} gün, obsolete)"
       continue
     fi
 
