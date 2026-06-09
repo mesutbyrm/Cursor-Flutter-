@@ -49,10 +49,6 @@ dependencies:
   google_sign_in: ^6.3.0
   audio_session: ^0.2.3
 
-dependency_overrides:
-  tencent_rtc_sdk:
-    path: packages/tencent_rtc_sdk
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

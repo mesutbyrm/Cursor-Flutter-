@@ -1493,9 +1493,10 @@ packages:
   tencent_rtc_sdk:
     dependency: "direct main"
     description:
-      path: "packages/tencent_rtc_sdk"
-      relative: true
-    source: path
+      name: tencent_rtc_sdk
+      sha256: "928b91ff2642b7e254aba2f4228b8c273aae34357fe4a74e7172aabf604d3df5"
+      url: "https://pub.dev"
+    source: hosted
     version: "13.2.2"
   term_glyph:
     dependency: transitive
