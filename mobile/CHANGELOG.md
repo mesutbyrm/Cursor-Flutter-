@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.166+168 (2026-06-09)
+
+### Sesli oda müzik web paritesi
+
+- Mobil müzik araması web API sonuç vermezse doğrudan YouTube istemci aramasına düşer
+- Web’den gelen YouTube watch URL/Piped başarısızsa mobil doğrudan audio stream manifest çözmeyi dener
+- DJ playback web kuyruğu ile aynı `music-queue` / `song-request` senkronunu korur
+
 ## 1.0.165+167 (2026-06-09)
 
 ### Sesli oda müzik + arka plan düzeltmesi

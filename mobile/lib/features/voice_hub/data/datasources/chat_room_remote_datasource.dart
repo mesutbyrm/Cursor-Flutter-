@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
@@ -22,6 +23,9 @@ class ChatRoomRemoteDataSource {
 
   final Dio _dio;
   final YoutubeMusicSearchCache _searchCache;
+  final YoutubeExplode _youtube = YoutubeExplode();
+
+  void close() => _youtube.close();
 
   static String messagesPath(String roomId) =>
       '/api/chat/rooms/$roomId/messages';
@@ -438,6 +442,13 @@ class ChatRoomRemoteDataSource {
 
   String? _formatDuration(dynamic raw) {
     if (raw == null) return null;
+    if (raw is Duration) {
+      final sec = raw.inSeconds;
+      if (sec <= 0) return null;
+      final m = sec ~/ 60;
+      final s = sec % 60;
+      return '$m:${s.toString().padLeft(2, '0')}';
+    }
     if (raw is String && raw.contains(':')) return raw;
     final sec = raw is num ? raw.round() : int.tryParse(raw.toString());
     if (sec == null || sec <= 0) return null;
@@ -521,6 +532,17 @@ class ChatRoomRemoteDataSource {
       return catalogHits;
     }
 
+    final clientHits = await _searchYoutubeWithClient(q);
+    if (clientHits.isNotEmpty) {
+      _searchCache.put(q, clientHits);
+      VoiceRoomDebugLog.log('music.search.client_ok', {
+        'q': q,
+        'count': clientHits.length,
+        'ms': DateTime.now().difference(started).inMilliseconds,
+      });
+      return clientHits;
+    }
+
     VoiceRoomDebugLog.log('music.search.empty', {
       'q': q,
       if (backendError != null) 'backendError': '$backendError',
@@ -600,6 +622,37 @@ class ChatRoomRemoteDataSource {
       if (hit != null) withIds.add(hit);
     }
     return withIds;
+  }
+
+  Future<List<YoutubeSearchHit>> _searchYoutubeWithClient(String q) async {
+    try {
+      final videos = await _youtube.search
+          .getVideos(q)
+          .timeout(const Duration(seconds: 10));
+      final hits = <YoutubeSearchHit>[];
+      for (final video in videos.take(10)) {
+        if (video.isLive) continue;
+        final id = video.id.value;
+        if (id.length < 6) continue;
+        hits.add(
+          YoutubeSearchHit(
+            videoId: id,
+            title: video.title,
+            url: video.url,
+            thumbUrl: video.thumbnails.mediumResUrl,
+            uploader: video.author,
+            duration: _formatDuration(video.duration),
+          ),
+        );
+      }
+      return hits;
+    } catch (e) {
+      VoiceRoomDebugLog.log('music.search.client_fail', {
+        'q': q,
+        'error': '$e',
+      });
+      return const [];
+    }
   }
 
   /// Üretimde komut işlenmezse sohbeti temizlemek için dene.

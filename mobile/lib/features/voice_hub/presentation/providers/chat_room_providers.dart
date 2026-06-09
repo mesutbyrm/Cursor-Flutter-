@@ -35,7 +35,9 @@ import 'voice_room_diagnostic_provider.dart';
 import 'voice_room_ui_provider.dart';
 
 final youtubeStreamResolverProvider = Provider<YoutubeStreamResolver>((ref) {
-  return YoutubeStreamResolver(ref.watch(dioProvider));
+  final resolver = YoutubeStreamResolver(ref.watch(dioProvider));
+  ref.onDispose(resolver.close);
+  return resolver;
 });
 
 final youtubeMusicSearchCacheProvider = Provider<YoutubeMusicSearchCache>((ref) {
@@ -43,10 +45,12 @@ final youtubeMusicSearchCacheProvider = Provider<YoutubeMusicSearchCache>((ref) 
 });
 
 final chatRoomRemoteProvider = Provider<ChatRoomRemoteDataSource>((ref) {
-  return ChatRoomRemoteDataSource(
+  final remote = ChatRoomRemoteDataSource(
     ref.watch(dioProvider),
     searchCache: ref.watch(youtubeMusicSearchCacheProvider),
   );
+  ref.onDispose(remote.close);
+  return remote;
 });
 
 final voiceRoomSseServiceProvider = Provider<VoiceRoomSseService>((ref) {

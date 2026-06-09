@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 /// YouTube watch URL → doğrudan ses akışı (site API → Piped → Invidious).
 /// googlevideo URL'leri mobilde API proxy veya stream loader ile oynatılır.
@@ -6,6 +7,7 @@ class YoutubeStreamResolver {
   YoutubeStreamResolver(this._dio);
 
   final Dio _dio;
+  final YoutubeExplode _youtube = YoutubeExplode();
 
   static final _youtubeHost = RegExp(r'youtube\.com|youtu\.be', caseSensitive: false);
 
@@ -98,6 +100,8 @@ class YoutubeStreamResolver {
 
   Future<String?> prefetch(String musicUrl) => resolvePlayableUrl(musicUrl);
 
+  void close() => _youtube.close();
+
   Future<String?> resolvePlayableUrl(String musicUrl) async {
     if (musicUrl.isEmpty) return null;
     if (isDirectPlayableUrl(musicUrl)) {
@@ -140,6 +144,13 @@ class YoutubeStreamResolver {
         _remember(id, wrapped);
         return wrapped;
       }
+    }
+
+    final local = await _resolveViaYoutubeExplode(id);
+    if (local != null) {
+      final wrapped = wrapForMobilePlayback(local);
+      _remember(id, wrapped);
+      return wrapped;
     }
 
     return null;
@@ -236,6 +247,24 @@ class YoutubeStreamResolver {
       return best;
     } catch (_) {}
     return null;
+  }
+
+  Future<String?> _resolveViaYoutubeExplode(String id) async {
+    try {
+      final manifest = await _youtube.videos.streamsClient
+          .getManifest(VideoId(id), requireWatchPage: false)
+          .timeout(const Duration(seconds: 12));
+      final audio = manifest.audioOnly.toList()
+        ..sort(
+          (a, b) => b.bitrate.bitsPerSecond.compareTo(
+            a.bitrate.bitsPerSecond,
+          ),
+        );
+      if (audio.isEmpty) return null;
+      return audio.first.url.toString();
+    } catch (_) {
+      return null;
+    }
   }
 }
 
