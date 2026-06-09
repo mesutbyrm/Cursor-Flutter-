@@ -8,7 +8,8 @@ Güncelleme: 2026-05-19. Bu repo `api/` altında Express mirror; **canlifal.com*
 |--------|--------|-----|
 | Flutter | ✅ `GET /api/music/search` | Piped/Invidious kaldırıldı (1.0.129+131) |
 | API mirror | ✅ `api/src/routes/music.ts` | `YOUTUBE_API_KEY` gerekli |
-| canlifal.com | ⚠️ 404 | `docs/nextjs/app-api-music-search-route.ts` → `app/api/music/search/route.ts` |
+| canlifal.com | ✅ route var (401 oturumsuz) | `YOUTUBE_API_KEY` + JWT; deploy: `docs/DEPLOY_P0.md` |
+| YouTube stream | ⚠️ | `GET /api/chat/youtube-stream` prod **404** — `docs/nextjs/app-api-chat-youtube-stream-route.ts` |
 
 **Vercel / sunucu `.env`:**
 ```env
@@ -19,7 +20,7 @@ YOUTUBE_API_KEY=AIza...
 
 | Endpoint | Mirror | Prod |
 |----------|--------|------|
-| `POST /api/trtc/usersig` | ✅ | ⚠️ 500 — `TRTC_SDK_APP_ID`, `TRTC_SECRET_KEY` eksik |
+| `POST /api/trtc/usersig` | ✅ | ✅ 200 (env doğruysa); `docs/nextjs/app-api-trtc-usersig-route.ts` |
 
 ## Mesajlaşma (P1)
 

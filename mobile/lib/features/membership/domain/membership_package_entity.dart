@@ -13,14 +13,24 @@ class MembershipPackageEntity {
   });
 
   factory MembershipPackageEntity.fromJson(Map<String, dynamic> json) {
+    final tier = json['tier']?.toString().trim();
     return MembershipPackageEntity(
-      id: json['id']?.toString() ?? '',
-      title: json['title']?.toString() ?? '',
+      id: (tier != null && tier.isNotEmpty ? tier : json['id'])?.toString() ??
+          '',
+      title: (json['title'] ?? json['name'] ?? json['nameEn'])?.toString() ??
+          '',
       durationDays: asInt(json['durationDays'] ?? json['duration_days'] ?? 30),
-      priceJeton: asInt(json['priceJeton'] ?? json['price_jeton'] ?? 0),
-      bonusJeton: asInt(json['bonusJeton'] ?? json['bonus_jeton'] ?? 0),
-      falDiscountPercent:
-          asInt(json['falDiscountPercent'] ?? json['fal_discount_percent']),
+      priceJeton: asInt(
+        json['priceJeton'] ?? json['price'] ?? json['price_jeton'],
+      ),
+      bonusJeton: asInt(
+        json['bonusJeton'] ?? json['bonusJetons'] ?? json['bonus_jeton'],
+      ),
+      falDiscountPercent: asInt(
+        json['falDiscountPercent'] ??
+            json['discountPercent'] ??
+            json['fal_discount_percent'],
+      ),
       isActive: json['isActive'] == true || json['is_active'] == true,
       daysRemaining: json['daysRemaining'] != null
           ? asInt(json['daysRemaining'])

@@ -1,18 +1,25 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../fortune/presentation/data/fortune_catalog.dart';
-import '../theme/home_palette.dart';
+import '../../domain/entities/home_fortune_card_entity.dart';
+import '../providers/home_providers.dart';
 import 'home_glass_card.dart';
 import 'home_section_header.dart';
 
-/// Fal & Tarot — 2×4 grid (canlifal.com).
-class HomeFortuneGrid extends StatelessWidget {
+/// Fal & Tarot — 2×4 grid (canlifal.com API + yerel katalog yedek).
+class HomeFortuneGrid extends ConsumerWidget {
   const HomeFortuneGrid({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final entries = FortuneCatalog.hubFortuneTypes;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final apiAsync = ref.watch(homeFortuneCardsProvider);
+    final entries = apiAsync.maybeWhen(
+      data: (cards) => _tilesFromApi(cards),
+      orElse: () => _tilesFromCatalog(),
+    );
 
     return Column(
       children: [
@@ -36,10 +43,11 @@ class HomeFortuneGrid extends StatelessWidget {
             itemBuilder: (_, i) {
               final e = entries[i];
               return _FortuneTile(
-                emoji: e.type.emoji,
-                title: e.type.title,
-                accent: e.type.accent,
-                onTap: () => context.push('/fortune/${e.type.slug}'),
+                emoji: e.emoji,
+                title: e.title,
+                accent: e.accent,
+                imageUrl: e.imageUrl,
+                onTap: () => context.push('/fortune/${e.slug}'),
               );
             },
           ),
@@ -71,6 +79,51 @@ class HomeFortuneGrid extends StatelessWidget {
       ],
     );
   }
+
+  List<_FortuneTileData> _tilesFromApi(List<HomeFortuneCardEntity> cards) {
+    final active = cards.where((c) => c.title.isNotEmpty).take(8).toList();
+    if (active.isEmpty) return _tilesFromCatalog();
+    return active.map((c) {
+      final slug = c.navigationSlug;
+      final catalog = FortuneCatalog.bySlug(slug);
+      return _FortuneTileData(
+        slug: slug,
+        title: c.title,
+        emoji: c.icon.isNotEmpty ? c.icon : (catalog?.emoji ?? '🔮'),
+        accent: catalog?.accent ?? c.accent,
+        imageUrl: c.imageUrl,
+      );
+    }).toList();
+  }
+
+  List<_FortuneTileData> _tilesFromCatalog() {
+    return FortuneCatalog.hubFortuneTypes
+        .map(
+          (e) => _FortuneTileData(
+            slug: e.type.slug,
+            title: e.type.title,
+            emoji: e.type.emoji,
+            accent: e.type.accent,
+          ),
+        )
+        .toList();
+  }
+}
+
+class _FortuneTileData {
+  const _FortuneTileData({
+    required this.slug,
+    required this.title,
+    required this.emoji,
+    required this.accent,
+    this.imageUrl,
+  });
+
+  final String slug;
+  final String title;
+  final String emoji;
+  final Color accent;
+  final String? imageUrl;
 }
 
 class _FortuneTile extends StatelessWidget {
@@ -79,15 +132,18 @@ class _FortuneTile extends StatelessWidget {
     required this.title,
     required this.accent,
     required this.onTap,
+    this.imageUrl,
   });
 
   final String emoji;
   final String title;
   final Color accent;
   final VoidCallback onTap;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
+    final img = imageUrl?.trim();
     return HomeGlassCard(
       onTap: onTap,
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
@@ -103,7 +159,20 @@ class _FortuneTile extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 26)),
+          if (img != null && img.startsWith('http'))
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: CachedNetworkImage(
+                imageUrl: img,
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+                errorWidget: (_, __, ___) =>
+                    Text(emoji, style: const TextStyle(fontSize: 26)),
+              ),
+            )
+          else
+            Text(emoji, style: const TextStyle(fontSize: 26)),
           const SizedBox(height: 6),
           Text(
             title,

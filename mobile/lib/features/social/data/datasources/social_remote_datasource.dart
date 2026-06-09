@@ -247,7 +247,7 @@ class SocialRemoteDataSource {
     );
   }
 
-  /// GET `/api/stories` — `storyGroups` hikâye halkaları (web ana akış ile aynı).
+  /// GET `/api/stories` — birincil (prod). `/api/social/stories` yalnızca yedek.
   Future<List<SocialStoryRingEntity>> fetchStoryRings() async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.feed,
