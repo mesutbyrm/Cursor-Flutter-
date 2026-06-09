@@ -218,11 +218,23 @@ class ChatRoomRemoteDataSource {
 
   Future<List<String>> fetchBackgrounds() async {
     final urls = <String>[];
+    final seen = <String>{};
+    void addUrl(String url) {
+      final trimmed = url.trim();
+      if (trimmed.isEmpty || !trimmed.startsWith('http')) return;
+      if (seen.add(trimmed)) urls.add(trimmed);
+    }
+
     try {
-      final res = await _dio.safeGet<dynamic>(backgroundsPath());
+      final res = await _dio.safeGet<dynamic>(
+        backgroundsPath(),
+        query: {'limit': VoiceRoomBackgroundCatalog.count},
+      );
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       final raw = map['backgrounds'] ?? map['items'] ?? map['data'];
-      urls.addAll(VoiceRoomBackgroundCatalog.parseApiList(raw));
+      for (final url in VoiceRoomBackgroundCatalog.parseApiList(raw)) {
+        addUrl(url);
+      }
     } catch (_) {}
     if (urls.isEmpty) {
       return VoiceRoomBackgroundCatalog.siteDefaults();
@@ -464,6 +476,7 @@ class ChatRoomRemoteDataSource {
       return cached;
     }
 
+    Object? backendError;
     try {
       final hits = await _searchMusicViaBackend(q);
       if (hits.isNotEmpty) {
@@ -476,6 +489,7 @@ class ChatRoomRemoteDataSource {
         return hits;
       }
     } on ApiException catch (e) {
+      backendError = e;
       VoiceRoomDebugLog.log('music.search.fail', {
         'q': q,
         'status': e.statusCode,
@@ -487,11 +501,29 @@ class ChatRoomRemoteDataSource {
           'Müzik araması sunucuda yapılandırılmamış. Lütfen daha sonra tekrar deneyin.',
         );
       }
-      rethrow;
+    } catch (e) {
+      backendError = e;
+      VoiceRoomDebugLog.log('music.search.fail', {
+        'q': q,
+        'error': '$e',
+        'ms': DateTime.now().difference(started).inMilliseconds,
+      });
+    }
+
+    final catalogHits = await _searchYoutubeFromPopularCatalog(q);
+    if (catalogHits.isNotEmpty) {
+      _searchCache.put(q, catalogHits);
+      VoiceRoomDebugLog.log('music.search.catalog_ok', {
+        'q': q,
+        'count': catalogHits.length,
+        'ms': DateTime.now().difference(started).inMilliseconds,
+      });
+      return catalogHits;
     }
 
     VoiceRoomDebugLog.log('music.search.empty', {
       'q': q,
+      if (backendError != null) 'backendError': '$backendError',
       'ms': DateTime.now().difference(started).inMilliseconds,
     });
     throw const ApiException('Şarkı bulunamadı. Farklı bir arama deneyin.');
@@ -515,10 +547,13 @@ class ChatRoomRemoteDataSource {
     } on TimeoutException {
       throw const ApiException('Arama zaman aşımına uğradı. Tekrar deneyin.');
     } on DioException catch (e) {
-      throw _mapDioForYoutube(e);
+      final status = e.response?.statusCode;
+      if (status == 401 || status == 503) {
+        throw _mapDioForYoutube(e);
+      }
     }
 
-    // Eski backend yolu — yalnızca birincil endpoint 404 ise.
+    // Eski backend yolu — üretimde /api/music/search eksik/404 dönebilir.
     try {
       final res = await _dio
           .get<dynamic>(
@@ -528,7 +563,8 @@ class ChatRoomRemoteDataSource {
           .timeout(const Duration(seconds: 8));
       return _parseYoutubeHits(res.data);
     } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return const [];
+      final status = e.response?.statusCode;
+      if (status == 404) return const [];
       throw _mapDioForYoutube(e);
     }
   }

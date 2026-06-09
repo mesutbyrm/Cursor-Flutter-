@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.165+167 (2026-06-09)
+
+### Sesli oda müzik + arka plan düzeltmesi
+
+- Müzik aramasında 404 sonucu kullanıcıya taşımadan eski YouTube endpoint'i ve popüler katalog fallback'i denenir
+- YouTube stream çözümlenemediğinde üst/bottom hata yazısı spam'i kaldırılır
+- Oda arka plan listesi canlı API görsel alanlarını daha dayanıklı parse eder
+- Arka plan seçimi ekranda anında uygulanır ve cache eski görselde takılı kalmaz
+
 ## 1.0.164+166 (2026-06-09)
 
 ### Sesli oda müzik çalmama düzeltmesi

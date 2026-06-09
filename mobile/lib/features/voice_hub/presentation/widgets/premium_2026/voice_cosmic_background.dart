@@ -50,6 +50,7 @@ class _VoiceCosmicBackgroundState extends State<VoiceCosmicBackground>
         ),
         if (widget.imageUrl != null && widget.imageUrl!.isNotEmpty)
           CachedNetworkImage(
+            key: ValueKey(widget.imageUrl),
             imageUrl: widget.imageUrl!,
             fit: BoxFit.cover,
             fadeInDuration: Duration.zero,

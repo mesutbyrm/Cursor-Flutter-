@@ -123,6 +123,7 @@ class VoiceRoomLiveState {
     String? musicRequestFlash,
     bool clearMusicRequestFlash = false,
     String? backgroundUrl,
+    bool clearBackgroundUrl = false,
     bool? selfInRoom,
     bool? sseConnected,
     bool? openCommandsPanel,
@@ -140,7 +141,8 @@ class VoiceRoomLiveState {
       musicRequestFlash: clearMusicRequestFlash
           ? null
           : (musicRequestFlash ?? this.musicRequestFlash),
-      backgroundUrl: backgroundUrl ?? this.backgroundUrl,
+      backgroundUrl:
+          clearBackgroundUrl ? null : (backgroundUrl ?? this.backgroundUrl),
       selfInRoom: selfInRoom ?? this.selfInRoom,
       sseConnected: sseConnected ?? this.sseConnected,
       openCommandsPanel: clearOpenCommandsPanel
@@ -736,11 +738,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       _lastDjPlaybackSignature = _djPlaybackSignature(effectiveDj, muted: muted);
     } else {
       _lastDjPlaybackSignature = null;
-      state = state.copyWith(
-        dj: effectiveDj,
-        error:
-            'Müzik yüklenemedi. Birkaç saniye sonra yenileyin veya DJ şarkıyı tekrar seçsin.',
-      );
+      state = state.copyWith(dj: effectiveDj, clearError: true);
       return effectiveDj;
     }
     return effectiveDj;
@@ -1213,15 +1211,24 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   }
 
   Future<String?> setRoomBackground(String url) async {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return 'Arka plan seçilemedi.';
+    final previous = state.backgroundUrl;
+    state = state.copyWith(backgroundUrl: trimmed, clearError: true);
     try {
       await ref.read(chatRoomRemoteProvider).setRoomBackground(
-            roomKey: _roomKey,
-            backgroundImage: url,
+            roomKey: _roomKey.isNotEmpty ? _roomKey : arg.id,
+            alternateKey: arg.slug,
+            backgroundImage: trimmed,
           );
-      state = state.copyWith(backgroundUrl: url);
       ref.invalidate(voiceRoomsProvider);
       return null;
     } catch (e) {
+      state = state.copyWith(
+        backgroundUrl: previous,
+        clearBackgroundUrl: previous == null,
+        error: ApiException.userMessage(e),
+      );
       return ApiException.userMessage(e);
     }
   }

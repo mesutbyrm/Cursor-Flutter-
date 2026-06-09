@@ -31,7 +31,16 @@ abstract final class VoiceRoomBackgroundCatalog {
     if (e is String) return _normalizeUrl(e);
     if (e is Map) {
       final m = Map<String, dynamic>.from(e);
-      for (final key in ['url', 'image', 'backgroundImage', 'src', 'href']) {
+      for (final key in [
+        'url',
+        'image',
+        'imageUrl',
+        'background',
+        'backgroundImage',
+        'backgroundUrl',
+        'src',
+        'href',
+      ]) {
         final v = m[key]?.toString();
         if (v != null && v.isNotEmpty) return _normalizeUrl(v);
       }
