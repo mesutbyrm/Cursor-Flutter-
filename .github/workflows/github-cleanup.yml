@@ -63,4 +63,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/GITHUB_CLEANUP_REPORT.md
           git commit -m "chore(ci): GitHub cleanup report [skip ci]"
-          git push
+          git pull --rebase origin main
+          git push origin main
