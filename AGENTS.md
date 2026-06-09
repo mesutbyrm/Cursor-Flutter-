@@ -1,5 +1,14 @@
 # Canlifal — Agent talimatları
 
+## Git iş akışı (zorunlu)
+
+- **PR otomatik açma** — Agent'lar Pull Request oluşturmaz.
+- **Review isteği yok** — Otomatik review / onay beklenmez.
+- **Doğrudan commit** — Değişiklikler aktif geliştirme dalına (`main`) commit edilir.
+- **Doğrudan push** — Başarılı değişikliklerden sonra `git push origin main`.
+- **Dal temizliği** — Birleşmiş `cursor/*` dalları haftalık `github-cleanup.yml` ile silinir; manuel PR birikimine izin verilmez.
+- **Temizlik betiği** — `bash scripts/github-cleanup.sh` (CI: Actions → GitHub cleanup).
+
 ## Üretim envanteri (canlifal.com)
 
 Bu repo, **canlifal.com** (Next.js 14 + Prisma + PostgreSQL) platformunun **Flutter mobil istemcisidir**. Yeni özellik, hata düzeltmesi veya refactor öncesi ilgili sistemin üretim sözleşmesine uy; mevcut akışları kırma.

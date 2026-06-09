@@ -1,41 +1,50 @@
-# Açık PR’lar — durum (main: 1.0.95+97)
+# GitHub PR / dal temizliği
 
-GitHub’da **15 açık PR** var (58 adet değil). **#58 birleştirildi.**
+> **Güncel rapor:** [`GITHUB_CLEANUP_REPORT.md`](./GITHUB_CLEANUP_REPORT.md)  
+> **Otomasyon:** `.github/workflows/github-cleanup.yml` + `scripts/github-cleanup.sh`
 
-## Tamamlandı
+## Politika
 
-| PR | Başlık | Durum |
-|----|--------|--------|
-| **#58** | Premium 2026 UI — Liquid Glass | **main’de** (`d41141d`) |
-| **#62–#64** | Premium 2026 PART 1–3 (auth, keşfet, ses) | **main’de** (1.0.95+97) |
+| Kural | Açıklama |
+|-------|----------|
+| PR açma | Agent'lar PR **açmaz** — doğrudan `main` |
+| Temizlik | Haftalık CI + `workflow_dispatch` |
+| Korunan dal | Yalnızca `main` (aktif geliştirme) |
 
-## Kapatılabilir (main’de zaten var / eski)
+## Bilinen eski açık PR'lar (kapatılmalı)
 
-Elle kapatın: GitHub → Pull requests → Close pull request
+Main'de zaten birleşmiş veya obsolete — CI temizliği veya elle **Close**:
 
 | PR | Neden |
 |----|--------|
 | 1–3 | İlk kurulum / AGENTS — eski |
-| 6 | Native UI — main’de mevcut |
+| 6 | Native UI — main'de |
 | 16–17 | Eski sesli oda / premium home |
-| 19 | Navbar — eski sürüm |
+| 19 | Navbar — eski |
 | 21, 24 | Freezed / fal hub — main geçti |
-| 33 | Android paket adı — main’de `com.mesutbyrm.canlifal` |
-| 37 | Scroll/refresh — kısmen main’de |
+| 33 | Android paket adı — main'de |
+| 37 | Scroll/refresh — kısmen main'de |
+| 62–64 | Premium 2026 PART 1–3 — main'de |
 
-## Kapatılabilir (Premium 2026 serisi — main’de birleşti)
+Son birleşen PR (yerel main): **#136** (`cursor/voice-room-fixes-v2-7009`).
 
-| PR | Başlık | Not |
-|----|--------|-----|
-| 62 | Auth PART 1 | main’de — Close pull request |
-| 63 | Discover PART 2 | main’de — Close pull request |
-| 64 | Voice room PART 3 | main’de — Close pull request |
+## Remote dal durumu (yerel analiz)
 
-## main kırmızı X
+| Kategori | Adet | Aksiyon |
+|----------|------|---------|
+| `cursor/*` merged into main | ~110 | Remote sil |
+| `cursor/*` not merged | ~35 | İncele; obsolete ise PR kapat + dal sil |
 
-GitHub **Billing** — Actions çalışmıyor. Bkz. `docs/GITHUB_ACTIONS_CI.md`.
+Birleşmemiş dalların çoğu eski deneme (native UI, JWT auth, premium home). Aktif parite işi `cursor/p1-fcm-pk-membership-7009` üzerindeyse önce `main`'e merge edin, sonra dalı silin.
 
-## APK
+## Uygulama
 
-- Kod: **1.0.95+97**
-- İndirilen apk-latest: hâlâ **1.0.91+93** (CI derlemesi yok)
+```bash
+# Önce dry-run
+DRY_RUN=1 bash scripts/github-cleanup.sh
+
+# Uygula (GH_TOKEN veya gh auth)
+bash scripts/github-cleanup.sh
+```
+
+GitHub Actions kotası: bkz. `docs/GITHUB_ACTIONS_CI.md`.
