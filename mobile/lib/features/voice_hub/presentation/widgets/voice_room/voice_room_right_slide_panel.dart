@@ -41,7 +41,7 @@ class _VoiceRoomRightSlidePanelState
     return Positioned(
       top: MediaQuery.paddingOf(context).top + 88,
       right: 0,
-      bottom: bottom + 140,
+      bottom: bottom + 220,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
 
-/// YouTube watch URL → doğrudan ses akışı (Piped → Invidious; site API varsa dener).
+import '../../../core/config/env.dart';
+
+/// YouTube watch URL → doğrudan ses akışı (site API → Piped → Invidious).
+/// googlevideo URL'leri mobilde API proxy veya stream loader ile oynatılır.
 class YoutubeStreamResolver {
   YoutubeStreamResolver(this._dio);
 
@@ -43,6 +46,21 @@ class YoutubeStreamResolver {
         u.endsWith('.opus');
   }
 
+  /// googlevideo CDN — audioplayers Referer gönderemez; API proxy kullan.
+  static String wrapForMobilePlayback(String url) {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty || !trimmed.startsWith('http')) return trimmed;
+    final lower = trimmed.toLowerCase();
+    if (lower.contains('/api/chat/youtube-audio')) return trimmed;
+    if (!lower.contains('googlevideo.com') &&
+        !lower.contains('youtube.com/api/')) {
+      return trimmed;
+    }
+    var base = Env.apiBaseUrl.trim();
+    if (base.endsWith('/')) base = base.substring(0, base.length - 1);
+    return '$base/api/chat/youtube-audio?url=${Uri.encodeComponent(trimmed)}';
+  }
+
   void invalidate(String musicUrl) {
     final id = videoIdFrom(musicUrl);
     if (id != null) _cache.remove(id);
@@ -67,7 +85,9 @@ class YoutubeStreamResolver {
 
   Future<String?> resolvePlayableUrl(String musicUrl) async {
     if (musicUrl.isEmpty) return null;
-    if (isDirectPlayableUrl(musicUrl)) return musicUrl;
+    if (isDirectPlayableUrl(musicUrl)) {
+      return wrapForMobilePlayback(musicUrl);
+    }
     if (!_youtubeHost.hasMatch(musicUrl)) return musicUrl;
 
     final id = videoIdFrom(musicUrl);
@@ -81,8 +101,9 @@ class YoutubeStreamResolver {
 
     final fromApi = await _resolveViaSiteApi(musicUrl);
     if (fromApi != null) {
-      _remember(id, fromApi);
-      return fromApi;
+      final wrapped = wrapForMobilePlayback(fromApi);
+      _remember(id, wrapped);
+      return wrapped;
     }
 
     if (id == null || id.isEmpty) return null;
@@ -90,16 +111,18 @@ class YoutubeStreamResolver {
     for (final host in _pipedHosts) {
       final piped = await _resolveViaPiped(host, id);
       if (piped != null) {
-        _remember(id, piped);
-        return piped;
+        final wrapped = wrapForMobilePlayback(piped);
+        _remember(id, wrapped);
+        return wrapped;
       }
     }
 
     for (final host in _invidiousHosts) {
       final inv = await _resolveViaInvidious(host, id);
       if (inv != null) {
-        _remember(id, inv);
-        return inv;
+        final wrapped = wrapForMobilePlayback(inv);
+        _remember(id, wrapped);
+        return wrapped;
       }
     }
 

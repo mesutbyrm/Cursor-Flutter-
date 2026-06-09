@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/ui/premium/live_badge.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
@@ -46,11 +47,11 @@ class LiveBroadcastSection extends ConsumerWidget {
           ),
         ],
       ),
-      error: (_, __) => _content(context, ref, _fallbackStreams),
+      error: (e, _) => _emptyOrError(context, ApiException.userMessage(e)),
       data: (items) {
         final live = items.where((s) => s.isLive).toList();
         final list = live.isNotEmpty ? live : items;
-        if (list.isEmpty) return _content(context, ref, _fallbackStreams);
+        if (list.isEmpty) return _emptyOrError(context, null);
         return _content(context, ref, list.take(12).toList());
       },
     );
@@ -79,9 +80,7 @@ class LiveBroadcastSection extends ConsumerWidget {
             itemBuilder: (context, i) => _LiveCard(
               stream: streams[i],
               eager: i < 5,
-              onTap: streams[i].id.startsWith('demo-')
-                  ? () => context.go('/live')
-                  : () => openLiveStreamNative(context, ref, streams[i]),
+              onTap: () => openLiveStreamNative(context, ref, streams[i]),
             ),
           ),
         ),
@@ -89,29 +88,31 @@ class LiveBroadcastSection extends ConsumerWidget {
     );
   }
 
-  static const _fallbackStreams = [
-    LiveStreamEntity(
-      id: 'demo-1',
-      title: 'Tarot Canlı Yayın',
-      streamerName: 'Ayşe',
-      viewerCount: 128,
-      isLive: true,
-    ),
-    LiveStreamEntity(
-      id: 'demo-2',
-      title: 'Kahve Falı',
-      streamerName: 'Mehmet',
-      viewerCount: 86,
-      isLive: true,
-    ),
-    LiveStreamEntity(
-      id: 'demo-3',
-      title: 'Astroloji Sohbet',
-      streamerName: 'Zeynep',
-      viewerCount: 54,
-      isLive: true,
-    ),
-  ];
+  static Widget _emptyOrError(BuildContext context, String? message) {
+    return Column(
+      children: [
+        HomeSectionTitle(
+          emoji: '🔥',
+          title: 'Canlı Yayındakiler',
+          actionLabel: 'Tümünü Gör >',
+          onAction: () => context.go('/live'),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: HomeApprovedDesign.hPad,
+            vertical: 12,
+          ),
+          child: Text(
+            message ?? 'Şu an canlı yayın yok.',
+            style: TextStyle(
+              fontSize: 13,
+              color: HomeApprovedDesign.textMuted.withValues(alpha: 0.9),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _LiveCard extends StatelessWidget {
@@ -192,25 +193,6 @@ class _LiveCard extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 5,
-                            vertical: 1,
-                          ),
-                          decoration: BoxDecoration(
-                            color: HomeApprovedDesign.purple.withValues(alpha: 0.85),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            '⭐ 62',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),
                           ),

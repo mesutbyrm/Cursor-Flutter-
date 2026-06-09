@@ -39,7 +39,14 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final track = dj.nowPlaying ??
         (dj.musicQueue.isNotEmpty ? dj.musicQueue.first : null);
-    if (track == null) return const SizedBox.shrink();
+    if (track == null && !dj.playing) return const SizedBox.shrink();
+    final displayTrack = track ??
+        MusicQueueItem(
+          id: 'loading',
+          title: 'Müzik yükleniyor…',
+          youtubeUrl: dj.musicUrl ?? '',
+          createdAt: DateTime.now(),
+        );
 
     final playback = ref.watch(voiceRoomDjPlayerProvider).playback;
     final isQueuedOnly = !dj.playing && !playback.value.playing;
@@ -70,7 +77,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
             : '00:00';
         final total = isPlaying && pb.duration.inMilliseconds > 0
             ? _format(pb.duration)
-            : (track.duration ?? '—:—');
+            : (displayTrack.duration ?? '—:—');
 
         return Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
@@ -102,7 +109,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                         child: SizedBox(
                           width: 36,
                           height: 36,
-                          child: _thumb(track),
+                          child: _thumb(displayTrack),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -111,7 +118,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              track.title,
+                              displayTrack.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -120,9 +127,9 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                                 color: Colors.white,
                               ),
                             ),
-                            if (track.artistLine.isNotEmpty)
+                            if (displayTrack.artistLine.isNotEmpty)
                               Text(
-                                track.artistLine,
+                                displayTrack.artistLine,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(

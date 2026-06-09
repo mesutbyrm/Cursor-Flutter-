@@ -16,6 +16,7 @@ import '../../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../../live/domain/entities/live_gift_event.dart';
 import '../../../../live/domain/entities/live_gift_type.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
+import '../../../domain/entities/chat_room_presence.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../providers/chat_room_providers.dart';
 import '../voice_room_gift_sheet.dart';
@@ -27,11 +28,15 @@ class VoicePremiumGiftPanel2026 extends ConsumerStatefulWidget {
     required this.room,
     required this.onClose,
     required this.onSent,
+    this.seatedUsers = const [],
+    this.initialReceiver,
   });
 
   final VoiceRoomEntity room;
   final VoidCallback onClose;
   final void Function(LiveGiftEvent event) onSent;
+  final List<ChatRoomPresence> seatedUsers;
+  final ChatRoomPresence? initialReceiver;
 
   @override
   ConsumerState<VoicePremiumGiftPanel2026> createState() =>
@@ -46,6 +51,27 @@ class _VoicePremiumGiftPanel2026State
   int _qty = 1;
   bool _sending = false;
   _GiftCategory _category = _GiftCategory.all;
+  ChatRoomPresence? _receiver;
+
+  @override
+  void initState() {
+    super.initState();
+    _receiver = _pickInitialReceiver();
+  }
+
+  ChatRoomPresence? _pickInitialReceiver() {
+    if (widget.initialReceiver != null) return widget.initialReceiver;
+    if (widget.seatedUsers.isNotEmpty) return widget.seatedUsers.first;
+    if (widget.room.ownerId != null && widget.room.ownerId!.isNotEmpty) {
+      return ChatRoomPresence(
+        id: widget.room.ownerId!,
+        name: widget.room.ownerName ?? 'Yayıncı',
+        image: widget.room.ownerAvatarUrl,
+        chatRole: 'owner',
+      );
+    }
+    return null;
+  }
 
   List<LiveVideoGiftType> _filterGifts(List<LiveVideoGiftType> list) {
     return switch (_category) {
@@ -135,6 +161,41 @@ class _VoicePremiumGiftPanel2026State
                   ],
                 ),
               ),
+              if (widget.seatedUsers.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Kime gönderilsin?',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 72,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: widget.seatedUsers.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 8),
+                          itemBuilder: (context, i) {
+                            final u = widget.seatedUsers[i];
+                            final selected = _receiver?.id == u.id;
+                            return _RecipientChip(
+                              user: u,
+                              selected: selected,
+                              onTap: () => setState(() => _receiver = u),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -194,7 +255,8 @@ class _VoicePremiumGiftPanel2026State
 
   Future<void> _send(List<LiveVideoGiftType> catalog) async {
     final g = _selected;
-    if (g == null || _sending) return;
+    final receiver = _receiver ?? _pickInitialReceiver();
+    if (g == null || _sending || receiver == null) return;
     setState(() => _sending = true);
     try {
       final user = ref.read(authControllerProvider).valueOrNull;
@@ -206,14 +268,14 @@ class _VoicePremiumGiftPanel2026State
             giftTypeId: g.id,
             quantity: _qty,
             senderName: user?.display ?? 'Sen',
-            receiverName: widget.room.ownerName ?? 'Yayıncı',
-            receiverId: widget.room.ownerId,
+            receiverName: receiver.displayName,
+            receiverId: receiver.id,
           );
       final raw = LiveGiftEvent(
         id: 'local-${DateTime.now().microsecondsSinceEpoch}',
         senderId: user?.id,
         senderName: user?.display ?? 'Sen',
-        receiverName: widget.room.ownerName ?? 'Oda sahibi',
+        receiverName: receiver.displayName,
         giftId: g.id,
         giftName: PremiumGiftCatalog2026.displayName(
           g.id,
@@ -596,5 +658,67 @@ class _SendButton extends StatelessWidget {
       ),
     );
     return fullWidth ? btn : btn;
+  }
+}
+
+class _RecipientChip extends StatelessWidget {
+  const _RecipientChip({
+    required this.user,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final ChatRoomPresence user;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 64,
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selected
+                      ? AppThemeColors.accentPink
+                      : Colors.white24,
+                  width: selected ? 2 : 1,
+                ),
+              ),
+              child: CircleAvatar(
+                radius: 22,
+                backgroundImage:
+                    user.image != null ? NetworkImage(user.image!) : null,
+                child: user.image == null
+                    ? Text(
+                        user.displayName.isNotEmpty
+                            ? user.displayName[0].toUpperCase()
+                            : '?',
+                      )
+                    : null,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              user.displayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
+                color: selected ? Colors.white : Colors.white70,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

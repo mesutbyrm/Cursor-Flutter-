@@ -1,0 +1,149 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../live/domain/entities/voice_room_entity.dart';
+import '../../pages/voice_music_hub_page.dart';
+import '../../providers/chat_room_providers.dart';
+import '../../sheets/voice_room_dj_sheet.dart';
+import '../../utils/voice_room_permissions.dart';
+import '../../utils/voice_room_responsive_metrics.dart';
+import 'voice_room_action_row.dart';
+import 'voice_room_music_mini_player.dart';
+import 'voice_room_music_queue_section.dart';
+import 'voice_staff_entrance_marquee.dart';
+
+/// Müzik / DJ / kuyruk — mesaj kutusunun hemen üstünde sabit blok.
+class VoiceRoomBottomDock extends ConsumerWidget {
+  const VoiceRoomBottomDock({
+    super.key,
+    required this.room,
+    required this.session,
+    required this.live,
+    required this.perms,
+    required this.isOwner,
+    required this.showDjControls,
+    required this.showMusicCard,
+    required this.canControlMusic,
+    required this.musicMuted,
+    required this.pkActive,
+    required this.staffBanner,
+    required this.onPkTap,
+    required this.onMuteToggle,
+  });
+
+  final VoiceRoomEntity room;
+  final VoiceRoomEntity session;
+  final VoiceRoomLiveState live;
+  final VoiceRoomPermissions perms;
+  final bool isOwner;
+  final bool showDjControls;
+  final bool showMusicCard;
+  final bool canControlMusic;
+  final bool musicMuted;
+  final bool pkActive;
+  final String? staffBanner;
+  final VoidCallback onPkTap;
+  final VoidCallback onMuteToggle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final m = VoiceRoomResponsiveMetrics.of(context);
+
+    return RepaintBoundary(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Colors.black.withValues(alpha: 0.55),
+            ],
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showDjControls)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: m.horizontalPad),
+                child: VoiceRoomActionRow(
+                  dj: live.dj,
+                  showMusicCard: showMusicCard,
+                  showDjCard: showDjControls,
+                  showPkCard: isOwner,
+                  pkActive: pkActive,
+                  onMusicTap: () => showVoiceMusicHubPage(
+                    context,
+                    ref,
+                    room: room,
+                    perms: perms,
+                    isOwner: isOwner,
+                  ),
+                  onDjTap: () => showVoiceRoomDjSheet(
+                    context,
+                    ref,
+                    room: room,
+                    live: live,
+                    perms: perms,
+                    isOwner: isOwner,
+                  ),
+                  onPkTap: onPkTap,
+                ),
+              ),
+            VoiceRoomMusicMiniPlayer(
+              dj: live.dj,
+              canModerate: perms.canModerate || isOwner,
+              canControl: canControlMusic,
+              onTap: showMusicCard
+                  ? () => showVoiceMusicHubPage(
+                        context,
+                        ref,
+                        room: room,
+                        perms: perms,
+                        isOwner: isOwner,
+                      )
+                  : null,
+              onPlayPause: () {
+                final ctrl =
+                    ref.read(voiceRoomLiveProvider(session).notifier);
+                final playing = live.dj.playing ||
+                    ref
+                        .read(voiceRoomDjPlayerProvider)
+                        .playback
+                        .value
+                        .playing;
+                if (playing) {
+                  unawaited(ctrl.pauseMusic());
+                } else {
+                  unawaited(ctrl.resumeMusic());
+                }
+              },
+              onStop: () => unawaited(
+                ref.read(voiceRoomLiveProvider(session).notifier).stopMusic(),
+              ),
+              onSkip: (perms.canModerate || isOwner)
+                  ? () => ref
+                      .read(voiceRoomLiveProvider(session).notifier)
+                      .skipMusic()
+                  : null,
+              musicMuted: musicMuted,
+              onMuteToggle: canControlMusic ? onMuteToggle : null,
+            ),
+            VoiceStaffEntranceMarquee(
+              message: staffBanner,
+              roomName: room.nameTr,
+            ),
+            VoiceRoomMusicQueueSection(
+              dj: live.dj,
+              coinCost: live.dj.musicRequestCost,
+              maxItems: 3,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
