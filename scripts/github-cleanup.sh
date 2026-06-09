@@ -65,10 +65,15 @@ close_pr() {
   if [[ "$DRY_RUN" == "1" ]]; then
     log "DRY  close PR #$num — $reason"
   else
-    gh pr close "$num" --repo "$REPO" \
-      --comment "Otomatik kapatma (github-cleanup): $reason" 2>/dev/null \
-      || gh pr close "$num" --repo "$REPO" 2>/dev/null \
-      || true
+    # REST API — yorum gerektirmez (Cursor App'te pull_requests izni yoksa GraphQL başarısız olur)
+    if gh api --method PATCH "/repos/${REPO}/pulls/${num}" -f state=closed >/dev/null 2>&1; then
+      echo "#$num|$reason" >>"$CLOSED_LOG"
+    elif gh pr close "$num" --repo "$REPO" 2>/dev/null; then
+      echo "#$num|$reason" >>"$CLOSED_LOG"
+    else
+      log "WARN could not close PR #$num — $reason"
+    fi
+    return 0
   fi
   echo "#$num|$reason" >>"$CLOSED_LOG"
 }
@@ -108,7 +113,7 @@ close_merged_prs() {
   count="$(echo "$pr_json" | jq 'length')"
   log "Açık PR sayısı: $count"
 
-  echo "$pr_json" | jq -c '.[]' | while read -r pr; do
+  while read -r pr; do
     local num head base title draft updated
     num="$(echo "$pr" | jq -r '.number')"
     head="$(echo "$pr" | jq -r '.headRefName')"
@@ -145,8 +150,18 @@ close_merged_prs() {
       continue
     fi
 
+    # cursor/* PR'ları kapat (main doğrudan geliştirme — aktif dal whitelist dışında)
+    if [[ "$head" == cursor/* ]]; then
+      if is_protected_branch "$head" || [[ ",${ACTIVE_CURSOR}," == *",${head},"* ]]; then
+        echo "$branch|open PR head (active)" >>"$ACTIVE_LOG"
+      else
+        close_pr "$num" "cursor/* obsolete PR (${age_days} gün, main doğrudan geliştirme)"
+        continue
+      fi
+    fi
+
     echo "#$num|$head|$base|draft=$draft|$title" >>"$REMAINING_LOG"
-  done
+  done < <(echo "$pr_json" | jq -c '.[]')
 }
 
 delete_merged_cursor_branches() {
@@ -246,6 +261,9 @@ main() {
   fetch_refs
   close_merged_prs
   delete_merged_cursor_branches
+  # Dal silindikten sonra yetim PR'ları kapat (ikinci geçiş)
+  git fetch origin --prune
+  close_merged_prs
   delete_local_merged_branches
   write_report
   log "=== Tamamlandı ==="
