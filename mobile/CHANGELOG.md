@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.168+170 (2026-06-09)
+
+### Feature parity — profil takipçi endpoint düzeltmesi
+
+- Başka kullanıcı takipçi listesi web API sözleşmesine göre `/api/users/{id}/followers` yoluna taşındı
+- Flutter profil takipçi ekranı artık yanlış toggle endpoint'i (`/follow`) yerine liste endpoint'ini dener
+- `FEATURE_PARITY_FINAL_REPORT.md` ile kalan %100 parite engelleri ve tamamlanan modüller raporlandı
+
 ## 1.0.167+169 (2026-06-09)
 
 ### Sesli oda müzik — audio_service entegrasyonu

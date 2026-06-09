@@ -104,7 +104,8 @@ abstract final class ApiEndpoints {
   static const userFollowing = '/api/user/following';
 
   /// Başka kullanıcının takipçileri (dizi döner).
-  static String userPublicFollowers(String userId) => '/api/users/$userId/follow';
+  static String userPublicFollowers(String userId) =>
+      '/api/users/$userId/followers';
   /// canlifal.com ana sayfa canlı yayın listesi (JSON dizi).
   static const videoStreams = '/api/video-streams';
   /// Sesli / metin sohbet odaları (web `/sohbet/{slug}`).
