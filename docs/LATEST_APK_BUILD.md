@@ -2,27 +2,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.153+155` |
-| Tarih (UTC) | 2026-06-08 12:50 |
-| Commit | [`95732847169cb61d47e3f591dcd61a91e81b262c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/95732847169cb61d47e3f591dcd61a91e81b262c) |
-| İş akışı | [Run 27137636629](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27137636629) |
-| APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
+| Sürüm | **1.0.162+164** |
+| Dal | `cursor/p1-fcm-pk-membership-7009` |
+| Derleme | Cloud Agent yerel `flutter build apk --release` |
+| Tarih | 2026-06-09 |
+| APK boyutu | ~132 MB |
+| Yerel yol | `mobile/build/app/outputs/flutter-apk/app-release.apk` |
 
 ## Özellikler
 
-## 1.0.153+155 (2026-06-08)
+- Web parite: fal kartları API, üyelik prod parse, voice-bg katalog
+- Sesli oda: DJ stream loader, hediye mobile platform
+- Deploy docs: PK Battle tam paket (`docs/nextjs/pk/`)
 
-### Sesli oda UX — alt bar, sohbet, moderasyon
+## İndirme
 
-- Alt bar: Ana Sayfa, hoparlör/kulaklık, mikrofon, oda/profil ayarları, jeton
-- Klavye açıkken sohbet görünür; gönder butonu dönmez (anında yeni mesaj)
-- Giriş bildirimi: Gold/yetkili için kayan marquee (canlifal.com)
-- Sohbet filtresi: giriş/çıkış, !komutlar, !istek ve teknik müzik logları gizli
-- Yetkili/Gold kullanıcı adları gradyan efektli
-- Kullanıcı dokunuşu: at, sustur, ses ver, DJ yap/çıkar (moderasyon sheet)
-- Host koltuğu: sahip yoksa en yetkili kullanıcı
-- VIP/yetkili koltuk çerçeveleri Android'de de aktif
-- Sağ panel oku küçültüldü
-
-
-_Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
+- **CI (main push sonrası):** https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
+- **Workflow:** https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml

@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.162+164 (2026-06-09)
+
+### Web ↔ Flutter parite + sesli oda
+
+- Parite deploy dokümantasyonu (müzik, TRTC, arka plan, FCM, üyelik, PK)
+- Ana sayfa fal kartları: `GET /api/homepage-fortune-cards` entegrasyonu
+- Üyelik paketleri: prod API alan eşlemesi (`name`, `price`, `tier`)
+- Sesli oda arka plan: `voice-bg-1..20` web kataloğu
+- DJ müzik: `VoiceRoomDjStreamLoader` (googlevideo Referer)
+- Hediye: `platform: mobile`, JSON body düzeltmesi
+- PK deploy paketi: `docs/nextjs/pk/` (8 route + Prisma + Socket)
+
 ## 1.0.153+155 (2026-06-08)
 
 ### Sesli oda UX — alt bar, sohbet, moderasyon
