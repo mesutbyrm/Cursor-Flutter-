@@ -113,7 +113,7 @@ close_merged_prs() {
   count="$(echo "$pr_json" | jq 'length')"
   log "Açık PR sayısı: $count"
 
-  echo "$pr_json" | jq -c '.[]' | while read -r pr; do
+  while read -r pr; do
     local num head base title draft updated
     num="$(echo "$pr" | jq -r '.number')"
     head="$(echo "$pr" | jq -r '.headRefName')"
@@ -150,14 +150,18 @@ close_merged_prs() {
       continue
     fi
 
-    # Eski cursor/* PR'ları kapat (main doğrudan geliştirme — PR birikimini önle)
-    if [[ "$head" == cursor/* && "$age_days" -gt 7 ]]; then
-      close_pr "$num" "eski cursor dalı PR (${age_days} gün, obsolete)"
-      continue
+    # cursor/* PR'ları kapat (main doğrudan geliştirme — aktif dal whitelist dışında)
+    if [[ "$head" == cursor/* ]]; then
+      if is_protected_branch "$head" || [[ ",${ACTIVE_CURSOR}," == *",${head},"* ]]; then
+        echo "$branch|open PR head (active)" >>"$ACTIVE_LOG"
+      else
+        close_pr "$num" "cursor/* obsolete PR (${age_days} gün, main doğrudan geliştirme)"
+        continue
+      fi
     fi
 
     echo "#$num|$head|$base|draft=$draft|$title" >>"$REMAINING_LOG"
-  done
+  done < <(echo "$pr_json" | jq -c '.[]')
 }
 
 delete_merged_cursor_branches() {
