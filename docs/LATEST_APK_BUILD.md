@@ -2,20 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | **1.0.163+165** |
-| Dal | `main` |
-| Tarih | 2026-06-09 |
+| Sürüm | `1.0.163+165` |
+| Tarih (UTC) | 2026-06-09 16:22 |
+| Commit | [`35668ffad0e8fe1e94d2aff37d9f53ed6541e49b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/35668ffad0e8fe1e94d2aff37d9f53ed6541e49b) |
+| İş akışı | [Run 27218882444](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27218882444) |
+| APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
-## Özellikler (1.0.163+165)
+## Özellikler
 
-- Web parite: fal kartları API, üyelik prod parse, voice-bg katalog (20 arka plan)
-- Sesli oda: DJ stream loader, YouTube resolver + proxy, hediye mobile platform
-- PK / FCM / membership deploy referansları (`docs/DEPLOY_PARITY_INDEX.md`)
-- Deprecated Socket.IO chat servisi kaldırıldı (SSE kullanılıyor)
+## 1.0.163+165 (2026-06-09)
 
-## İndirme
+### Birleştirme + temizlik
 
-- **CI (main push sonrası):** https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk
-- **Workflow:** https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml
+- Web parite paketi `main`'e alındı
+- Kullanılmayan deprecated Socket.IO chat servisi kaldırıldı
+- 100+ agent debug `.txt` çıktısı silindi
+- GitHub PR/dal temizlik otomasyonu
+
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
