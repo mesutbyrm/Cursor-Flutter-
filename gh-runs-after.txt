@@ -1,2 +1,0 @@
-in_progress		Merge pull request #45 from mesutbyrm/cursor/fix-ci-analyze-warning-7009	Build release APK	main	push	26340758254	1m45s	2026-05-23T18:51:10Z
-completed	success	Merge pull request #45 from mesutbyrm/cursor/fix-ci-analyze-warning-7009	CI	main	push	26340758262	1m1s	2026-05-23T18:51:10Z

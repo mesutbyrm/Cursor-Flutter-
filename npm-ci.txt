@@ -1,5 +1,0 @@
-  run `npm fund` for details
-
-found 0 vulnerabilities
-│    npm i @prisma/client@latest                          │
-└─────────────────────────────────────────────────────────┘

@@ -1,7 +1,0 @@
-        ...
-    }
-Font asset "CupertinoIcons.ttf" was tree-shaken, reducing it from 257628 to 848 bytes (99.7% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
-Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 35300 bytes (97.9% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
-Running Gradle task 'assembleRelease'...                           47.1s
-✓ Built build/app/outputs/flutter-apk/app-release.apk (100.0MB)
--rw-r--r-- 1 ubuntu ubuntu 99981506 May 25 03:27 /opt/cursor/artifacts/canlifal-mobile-1.0.83+85-release.apk

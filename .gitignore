@@ -44,3 +44,18 @@ mobile/ios/Runner.xcworkspace/xcuserdata/
 mobile/ios/Runner.xcodeproj/xcuserdata/
 dist/
 *.apk
+
+# Agent / debug çıktıları (kök ve scripts)
+/*-out.txt
+/*_out.txt
+/git-*.txt
+/gh-*.txt
+/analyze*.txt
+/apk-*.txt
+/ci-*.txt
+/release-*.txt
+/run*.txt
+/review-state.txt
+/.gh-*.txt
+/.main-*.txt
+/workflow-trigger.txt

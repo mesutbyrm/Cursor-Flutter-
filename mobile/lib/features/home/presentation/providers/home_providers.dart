@@ -6,6 +6,7 @@ import '../../../social/presentation/providers/social_providers.dart';
 import '../../data/datasources/home_remote_datasource.dart';
 import '../../data/repositories/home_repository_impl.dart';
 import '../../domain/entities/home_banner_entity.dart';
+import '../../domain/entities/home_fortune_card_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
 import '../../domain/entities/home_trend_video_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
@@ -29,6 +30,11 @@ final homeRepositoryProvider = Provider<HomeRepository>((ref) {
 
 final homeBannersProvider = FutureProvider<List<HomeBannerEntity>>((ref) async {
   return ref.watch(homeRepositoryProvider).fetchBanners();
+});
+
+final homeFortuneCardsProvider =
+    FutureProvider<List<HomeFortuneCardEntity>>((ref) async {
+  return ref.watch(homeRemoteProvider).fetchHomepageFortuneCards();
 });
 
 final homeLiveFortuneTellersProvider =

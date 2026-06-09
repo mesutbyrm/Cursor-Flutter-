@@ -1,2 +1,0 @@
-[!] No Android SDK found. Try setting the ANDROID_HOME environment variable.
-EXIT:1

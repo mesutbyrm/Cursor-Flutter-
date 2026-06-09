@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../core/config/env.dart';
 
 /// YouTube watch URL → doğrudan ses akışı (site API → Piped → Invidious).
-/// googlevideo URL'leri mobilde API proxy üzerinden oynatılır (Referer gerekir).
+/// googlevideo URL'leri mobilde API proxy veya stream loader ile oynatılır.
 class YoutubeStreamResolver {
   YoutubeStreamResolver(this._dio);
 
@@ -34,14 +34,31 @@ class YoutubeStreamResolver {
     final u = url.trim().toLowerCase();
     if (u.isEmpty || !u.startsWith('http')) return false;
     if (_youtubeHost.hasMatch(u)) return false;
-    return u.contains('googlevideo.com') ||
-        u.contains('.m3u8') ||
+    if (u.contains('googlevideo.com') || u.contains('youtube.com/api/')) {
+      return true;
+    }
+    return u.contains('.m3u8') ||
         u.contains('mime=audio') ||
         u.endsWith('.mp3') ||
         u.endsWith('.m4a') ||
         u.endsWith('.aac') ||
         u.endsWith('.ogg') ||
         u.endsWith('.opus');
+  }
+
+  /// googlevideo CDN — audioplayers Referer gönderemez; API proxy kullan.
+  static String wrapForMobilePlayback(String url) {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty || !trimmed.startsWith('http')) return trimmed;
+    final lower = trimmed.toLowerCase();
+    if (lower.contains('/api/chat/youtube-audio')) return trimmed;
+    if (!lower.contains('googlevideo.com') &&
+        !lower.contains('youtube.com/api/')) {
+      return trimmed;
+    }
+    var base = Env.apiBaseUrl.trim();
+    if (base.endsWith('/')) base = base.substring(0, base.length - 1);
+    return '$base/api/chat/youtube-audio?url=${Uri.encodeComponent(trimmed)}';
   }
 
   void invalidate(String musicUrl) {
@@ -65,21 +82,6 @@ class YoutubeStreamResolver {
   }
 
   Future<String?> prefetch(String musicUrl) => resolvePlayableUrl(musicUrl);
-
-  /// googlevideo CDN — audioplayers Referer gönderemez; API proxy kullan.
-  static String wrapForMobilePlayback(String url) {
-    final trimmed = url.trim();
-    if (trimmed.isEmpty || !trimmed.startsWith('http')) return trimmed;
-    final lower = trimmed.toLowerCase();
-    if (lower.contains('/api/chat/youtube-audio')) return trimmed;
-    if (!lower.contains('googlevideo.com') &&
-        !lower.contains('youtube.com/api/')) {
-      return trimmed;
-    }
-    var base = Env.apiBaseUrl.trim();
-    if (base.endsWith('/')) base = base.substring(0, base.length - 1);
-    return '$base/api/chat/youtube-audio?url=${Uri.encodeComponent(trimmed)}';
-  }
 
   Future<String?> resolvePlayableUrl(String musicUrl) async {
     if (musicUrl.isEmpty) return null;

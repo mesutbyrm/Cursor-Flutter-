@@ -11,4 +11,4 @@ cd /workspace
   head -6 mobile/pubspec.yaml
   echo "=== REMOTE BRANCHES (cursor) ==="
   git branch -r | grep cursor | tail -15
-} > /workspace/review-state.txt 2>&1
+} > "${TMPDIR:-/tmp}/canlifal-review-state.txt" 2>&1

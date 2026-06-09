@@ -27,6 +27,7 @@ import '../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/youtube_stream_resolver.dart';
+import '../audio/voice_room_dj_stream_loader.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import '../services/voice_room_dj_player.dart';
 import 'voice_gift_providers.dart';
@@ -54,8 +55,15 @@ final voiceRoomSseServiceProvider = Provider<VoiceRoomSseService>((ref) {
   return s;
 });
 
+final voiceRoomDjStreamLoaderProvider = Provider<VoiceRoomDjStreamLoader>((ref) {
+  return VoiceRoomDjStreamLoader(ref.watch(dioProvider));
+});
+
 final voiceRoomDjPlayerProvider = Provider<VoiceRoomDjPlayer>((ref) {
-  final p = VoiceRoomDjPlayer(ref.watch(youtubeStreamResolverProvider));
+  final p = VoiceRoomDjPlayer(
+    ref.watch(youtubeStreamResolverProvider),
+    ref.watch(voiceRoomDjStreamLoaderProvider),
+  );
   ref.onDispose(p.dispose);
   return p;
 });
@@ -1192,24 +1200,12 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
   Future<String?> stopMusic() => clearMusicQueue();
 
   Future<String?> toggleBackgroundMusic(bool enabled) async {
-    final dj = state.dj;
     try {
       if (enabled) {
-        await ref.read(chatRoomRemoteProvider).updateDj(
-              roomKey: _roomKey,
-              musicUrl: dj.musicUrl ??
-                  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-              playing: true,
-            );
+        await _applyDjPlayback(state.dj);
       } else {
-        await ref.read(chatRoomRemoteProvider).updateDj(
-              roomKey: _roomKey,
-              musicUrl: dj.musicUrl,
-              playing: false,
-            );
         await ref.read(voiceRoomDjPlayerProvider).stop();
       }
-      await refresh();
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

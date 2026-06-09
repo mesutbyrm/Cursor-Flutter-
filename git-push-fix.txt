@@ -1,2 +1,0 @@
-To https://github.com/mesutbyrm/Cursor-Flutter-
-   577a23f..422dc8f  main -> main

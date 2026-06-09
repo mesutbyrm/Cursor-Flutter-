@@ -1,3 +1,0 @@
-cursor/auth-social-ux-7009
-281d95f feat: anlık OneSignal push — mesaj, ödeme, canlı yayın
-cffb9c2 feat: native Google/TikTok auth, DM start, voice room UX

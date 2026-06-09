@@ -7,6 +7,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../domain/voice_room_background_catalog.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
@@ -215,28 +216,18 @@ class ChatRoomRemoteDataSource {
     });
   }
 
-  static const _fallbackBackgrounds = [
-    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80',
-    'https://images.unsplash.com/photo-1579546929518-9e396f3cc760?w=1200&q=80',
-    'https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&q=80',
-    'https://canlifal.com/images/voice-bg-1.jpg',
-    'https://canlifal.com/images/voice-bg-2.jpg',
-  ];
-
   Future<List<String>> fetchBackgrounds() async {
-    final urls = <String>{..._fallbackBackgrounds};
+    final urls = <String>[];
     try {
       final res = await _dio.safeGet<dynamic>(backgroundsPath());
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
-      final raw = map['backgrounds'] ?? map['items'];
-      if (raw is List) {
-        for (final e in raw) {
-          final s = e.toString();
-          if (s.isNotEmpty) urls.add(s);
-        }
-      }
+      final raw = map['backgrounds'] ?? map['items'] ?? map['data'];
+      urls.addAll(VoiceRoomBackgroundCatalog.parseApiList(raw));
     } catch (_) {}
-    return urls.toList();
+    if (urls.isEmpty) {
+      return VoiceRoomBackgroundCatalog.siteDefaults();
+    }
+    return urls;
   }
 
   Future<void> advanceMusicQueue(
@@ -343,7 +334,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePatch<dynamic>(
         roomBackgroundPath(key),
-        data: jsonEncode({'backgroundImage': backgroundImage}),
+        data: {'backgroundImage': backgroundImage},
       );
     });
   }

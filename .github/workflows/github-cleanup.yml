@@ -1,0 +1,66 @@
+# Haftalık GitHub temizliği: birleşmiş PR'ları kapat, cursor/* dallarını sil.
+# PR AÇMAZ — yalnızca kapatma ve dal silme.
+
+name: GitHub cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (rapor only, değişiklik yok)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+  push:
+    branches:
+      - main
+  schedule:
+    # Her Pazartesi 04:00 UTC
+    - cron: '0 4 * * 1'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: github-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Close stale PRs and delete merged branches
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run cleanup script
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+          BASE_BRANCH: main
+          KEEP_BRANCHES: main
+          # Aktif geliştirme dalı varsa virgülle ekleyin (ör. cursor/feature-7009)
+          ACTIVE_CURSOR_BRANCHES: ''
+        run: |
+          chmod +x scripts/github-cleanup.sh
+          bash scripts/github-cleanup.sh
+
+      - name: Commit cleanup report
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          if git diff --quiet docs/GITHUB_CLEANUP_REPORT.md 2>/dev/null; then
+            echo "No report changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/GITHUB_CLEANUP_REPORT.md
+          git commit -m "chore(ci): GitHub cleanup report [skip ci]"
+          git push

@@ -1,4 +1,0 @@
-in_progress		fix(mobile): CI — AppColors.bgCard ve yinelenen import	Build release APK	main	push	26318304241	2m53s	2026-05-23T00:24:08Z
-completed	success	fix(mobile): CI — AppColors.bgCard ve yinelenen import	CI	main	push	26318304297	1m20s	2026-05-23T00:24:08Z
-completed	failure	Build release APK	Build release APK	main	workflow_dispatch	26318297339	2m13s	2026-05-23T00:23:50Z
-completed	failure	Merge pull request #36 from mesutbyrm/cursor/auth-social-ux-7009	CI	main	push	26318128379	1m21s	2026-05-23T00:18:40Z

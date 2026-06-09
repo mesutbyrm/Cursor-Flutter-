@@ -1,6 +1,0 @@
-Analyzing fortune, app_router.dart...
-
-   info - lib/features/fortune/presentation/pages/daily_fortune_result_page.dart:62:9 - Unnecessary use of string interpolation. Try replacing the string literal with the variable name. - unnecessary_string_interpolations
-
-1 issue found.
-EXIT:0
