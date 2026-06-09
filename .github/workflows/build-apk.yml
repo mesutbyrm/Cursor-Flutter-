@@ -97,8 +97,22 @@ jobs:
           if [[ -f android/app/google-services.json ]]; then
             DEFINES=$(bash ../scripts/print-firebase-dart-defines.sh || true)
           fi
+          (
+            while true; do
+              echo "Gradle release build still running: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+              sleep 60
+            done
+          ) &
+          KEEPALIVE_PID=$!
+          trap 'kill "$KEEPALIVE_PID" 2>/dev/null || true' EXIT
           # shellcheck disable=SC2086
+          set +e
           flutter build apk --release $DEFINES
+          EC=$?
+          set -e
+          kill "$KEEPALIVE_PID" 2>/dev/null || true
+          wait "$KEEPALIVE_PID" 2>/dev/null || true
+          exit "$EC"
         env:
           GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Xmx3g
 
