@@ -2,22 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.167+169` |
-| Tarih (UTC) | 2026-06-09 21:37 |
-| Commit | [`36c5726b0ea22a8855cd8b33e50cc5a29e370eae`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/36c5726b0ea22a8855cd8b33e50cc5a29e370eae) |
-| İş akışı | [Run 27236304678](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27236304678) |
+| Sürüm | `1.0.168+170` |
+| Tarih (UTC) | 2026-06-09 22:32 |
+| Commit | [`5f272a452b5bd79b0eedb29e7ed7151fc149b00b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/5f272a452b5bd79b0eedb29e7ed7151fc149b00b) |
+| İş akışı | [Run 27239091897](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27239091897) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.167+169 (2026-06-09)
+## 1.0.168+170 (2026-06-09)
 
-### Sesli oda müzik — audio_service entegrasyonu
+### Feature parity — profil takipçi endpoint düzeltmesi
 
-- Web ile aynı `/music-queue`, `/song-request`, SSE ve Socket.IO müzik senkron akışı korunur
-- DJ müzik oynatıcı `just_audio` + `audio_service` tabanlı arka plan media session'a taşındı
-- Android notification / media button ve iOS background audio desteği eklendi
-- Mini player gerçek background playback state, süre, ilerleme ve media metadata bilgisini izler
+- Başka kullanıcı takipçi listesi web API sözleşmesine göre `/api/users/{id}/followers` yoluna taşındı
+- Flutter profil takipçi ekranı artık yanlış toggle endpoint'i (`/follow`) yerine liste endpoint'ini dener
+- `FEATURE_PARITY_FINAL_REPORT.md` ile kalan %100 parite engelleri ve tamamlanan modüller raporlandı
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
