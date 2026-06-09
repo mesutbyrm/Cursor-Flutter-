@@ -9,6 +9,7 @@ Bu klasör, **canlifal.com** web reposuna kopyalanacak üretim route referanslar
    - `lib/youtubeMusicSearch.ts`
    - `lib/trtcUserSig.ts`
    - `lib/resolveYoutubeStream.ts`
+   - `lib/voiceRoomBackgrounds.ts`
 
 2. Route dosyalarını App Router yoluna taşıın:
 
@@ -17,6 +18,7 @@ Bu klasör, **canlifal.com** web reposuna kopyalanacak üretim route referanslar
 | `app-api-music-search-route.ts` | `app/api/music/search/route.ts` |
 | `app-api-trtc-usersig-route.ts` | `app/api/trtc/usersig/route.ts` |
 | `app-api-chat-youtube-stream-route.ts` | `app/api/chat/youtube-stream/route.ts` |
+| `app-api-chat-rooms-backgrounds-route.ts` | `app/api/chat/rooms/backgrounds/route.ts` |
 
 3. `verifyApiAuth.ts` içinde `verifyWebSession` fonksiyonunu mevcut NextAuth `getServerSession` ile doldurun.
 
@@ -33,6 +35,7 @@ Bu klasör, **canlifal.com** web reposuna kopyalanacak üretim route referanslar
 | Müzik arama | `chat_room_remote_datasource.dart` | `GET /api/music/search` |
 | TRTC oda | `trtc_remote_datasource.dart` | `POST /api/trtc/usersig` |
 | Stream çözümleme | `youtube_stream_resolver.dart` | `GET /api/chat/youtube-stream` |
+| Oda arka planları | `voice_room_background_catalog.dart` | `GET /api/chat/rooms/backgrounds` |
 
 ## api/ mirror
 

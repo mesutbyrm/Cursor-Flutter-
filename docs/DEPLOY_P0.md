@@ -104,6 +104,10 @@ Ek APK gerekmez; mevcut sürüm zaten şu uçları kullanır:
 | Stream 404 | Route deploy edilmedi | `app/api/chat/youtube-stream/route.ts` ekle |
 | Flutter ses çalmıyor | googlevideo Referer | `VoiceRoomDjStreamLoader` yerel indirme kullanır; stream API yine de önerilir |
 
+## İlgili: P1 arka planlar
+
+Sesli oda arka plan kataloğu: `docs/DEPLOY_P1_BACKGROUNDS.md`
+
 ## Yerel mirror testi
 
 ```bash

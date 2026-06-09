@@ -54,18 +54,9 @@ export type ChatRoomRow = {
   rules?: string;
 };
 
-const SITE_BACKGROUNDS = [
-  "https://canlifal.com/images/voice-bg-1.jpg",
-  "https://canlifal.com/images/voice-bg-2.jpg",
-  "https://canlifal.com/images/voice-bg-3.jpg",
-  "https://canlifal.com/images/voice-bg-4.jpg",
-  "https://canlifal.com/images/voice-bg-5.jpg",
-  "https://canlifal.com/images/voice-bg-6.jpg",
-  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80",
-  "https://images.unsplash.com/photo-1579546929518-9e396f3cc760?w=1200&q=80",
-  "https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&q=80",
-  "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=1200&q=80",
-];
+const SITE_BACKGROUNDS = Array.from({ length: 20 }, (_, i) =>
+  `https://canlifal.com/images/voice-bg-${i + 1}.jpg`,
+);
 
 const rooms: ChatRoomRow[] = [
   {

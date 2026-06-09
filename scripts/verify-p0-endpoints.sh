@@ -38,6 +38,15 @@ code=$(curl -s -o /dev/null -w "%{http_code}" \
   "$BASE/api/chat/youtube-stream?videoId=dQw4w9WgXcQ")
 check "GET /api/chat/youtube-stream" "200|404" "$code"
 
+# Oda arka plan kataloğu — 200 veya 404 (Flutter statik fallback kullanır)
+code=$(curl -s -o /dev/null -w "%{http_code}" \
+  "$BASE/api/chat/rooms/backgrounds")
+check "GET /api/chat/rooms/backgrounds" "200|404" "$code"
+
+code=$(curl -s -o /dev/null -w "%{http_code}" \
+  "$BASE/images/voice-bg-1.jpg")
+check "GET /images/voice-bg-1.jpg" "200" "$code"
+
 if [[ "$AUTH_FLAG" == "--auth" && -n "${CANLIFAL_JWT:-}" ]]; then
   code=$(curl -s -o /dev/null -w "%{http_code}" \
     "$BASE/api/music/search?q=test" \
