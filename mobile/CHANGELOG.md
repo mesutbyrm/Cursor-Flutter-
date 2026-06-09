@@ -8,6 +8,7 @@
 - Piped/Invidious ile gerçek ses akışı çözülür (`videoId` parametresi)
 - googlevideo akışları yerel indirme ile oynatılır (kırık youtube-audio proxy atlanır)
 - Ek Piped mirror hostları
+- `apk-latest` yayını için 1.0.164+166 release APK derlemesi tetiklenir
 
 ## 1.0.163+165 (2026-06-09)
 
