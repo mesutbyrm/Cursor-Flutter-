@@ -15,7 +15,9 @@ class VoiceRoomDjStreamLoader {
   static bool needsLocalDownload(String url) {
     final u = url.trim().toLowerCase();
     if (!u.startsWith('http')) return false;
-    return u.contains('googlevideo.com') || u.contains('youtube.com/api/');
+    return u.contains('googlevideo.com') ||
+        u.contains('youtube.com/api/') ||
+        u.contains('/api/chat/youtube-audio');
   }
 
   Future<String?> preparePlaybackSource(String streamUrl) async {

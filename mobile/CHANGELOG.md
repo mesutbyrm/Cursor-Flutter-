@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.164+166 (2026-06-09)
+
+### Sesli oda müzik çalmama düzeltmesi
+
+- Üretim `/api/chat/youtube-stream` watch URL fallback döndüğünde artık oynatılmaya çalışılmaz
+- Piped/Invidious ile gerçek ses akışı çözülür (`videoId` parametresi)
+- googlevideo akışları yerel indirme ile oynatılır (kırık youtube-audio proxy atlanır)
+- Ek Piped mirror hostları
+
 ## 1.0.163+165 (2026-06-09)
 
 ### Birleştirme + temizlik

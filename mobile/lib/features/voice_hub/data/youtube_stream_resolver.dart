@@ -1,7 +1,5 @@
 import 'package:dio/dio.dart';
 
-import '../../../core/config/env.dart';
-
 /// YouTube watch URL → doğrudan ses akışı (site API → Piped → Invidious).
 /// googlevideo URL'leri mobilde API proxy veya stream loader ile oynatılır.
 class YoutubeStreamResolver {
@@ -16,6 +14,8 @@ class YoutubeStreamResolver {
   static const _pipedHosts = [
     'https://pipedapi.kavin.rocks',
     'https://pipedapi.adminforge.de',
+    'https://pipedapi.syncpundit.io',
+    'https://pipedapi.leptons.xyz',
   ];
 
   static const _invidiousHosts = [
@@ -46,7 +46,7 @@ class YoutubeStreamResolver {
         u.endsWith('.opus');
   }
 
-  /// googlevideo CDN — audioplayers Referer gönderemez; API proxy kullan.
+  /// googlevideo → yerel indirme (VoiceRoomDjStreamLoader). Proxy yalnızca deploy edilmişse.
   static String wrapForMobilePlayback(String url) {
     final trimmed = url.trim();
     if (trimmed.isEmpty || !trimmed.startsWith('http')) return trimmed;
@@ -56,9 +56,24 @@ class YoutubeStreamResolver {
         !lower.contains('youtube.com/api/')) {
       return trimmed;
     }
-    var base = Env.apiBaseUrl.trim();
-    if (base.endsWith('/')) base = base.substring(0, base.length - 1);
-    return '$base/api/chat/youtube-audio?url=${Uri.encodeComponent(trimmed)}';
+    // Üretimde /api/chat/youtube-audio sık 404 — önce doğrudan CDN + stream loader
+    return trimmed;
+  }
+
+  static bool isYoutubePageUrl(String url) {
+    final u = url.trim().toLowerCase();
+    if (u.isEmpty) return false;
+    if (!u.contains('youtube.com') && !u.contains('youtu.be')) return false;
+    if (u.contains('googlevideo.com')) return false;
+    return u.contains('watch?v=') ||
+        u.contains('youtu.be/') ||
+        u.contains('/shorts/') ||
+        RegExp(r'youtube\.com/v/').hasMatch(u);
+  }
+
+  static bool isDirectAudioStreamUrl(String url) {
+    if (isYoutubePageUrl(url)) return false;
+    return isDirectPlayableUrl(url);
   }
 
   void invalidate(String musicUrl) {
@@ -88,8 +103,9 @@ class YoutubeStreamResolver {
     if (isDirectPlayableUrl(musicUrl)) {
       return wrapForMobilePlayback(musicUrl);
     }
-    if (!_youtubeHost.hasMatch(musicUrl)) return musicUrl;
-
+    if (!isYoutubePageUrl(musicUrl) && !_youtubeHost.hasMatch(musicUrl)) {
+      return musicUrl;
+    }
     final id = videoIdFrom(musicUrl);
     if (id != null && id.isNotEmpty) {
       final cached = _cache[id];
@@ -136,15 +152,26 @@ class YoutubeStreamResolver {
 
   Future<String?> _resolveViaSiteApi(String musicUrl) async {
     try {
+      final id = videoIdFrom(musicUrl);
       final res = await _dio.get<dynamic>(
         '/api/chat/youtube-stream',
-        queryParameters: {'url': musicUrl},
-        options: Options(receiveTimeout: const Duration(seconds: 8)),
+        queryParameters: {
+          if (id != null && id.isNotEmpty) 'videoId': id,
+          'url': musicUrl,
+        },
+        options: Options(receiveTimeout: const Duration(seconds: 10)),
       );
       final data = res.data;
       if (data is Map) {
-        final stream = data['streamUrl'] ?? data['url'];
-        if (stream is String && stream.startsWith('http')) return stream;
+        for (final key in ['streamUrl', 'url', 'audioUrl']) {
+          final stream = data[key];
+          if (stream is String &&
+              stream.startsWith('http') &&
+              isDirectAudioStreamUrl(stream)) {
+            return stream;
+          }
+        }
+        // Üretim fallback: watch URL dönerse yok say (Piped dene)
       }
     } catch (_) {}
     return null;

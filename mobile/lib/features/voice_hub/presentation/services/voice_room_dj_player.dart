@@ -155,7 +155,6 @@ class VoiceRoomDjPlayer {
   }
 
   Future<String?> _resolveSource(String musicUrl) async {
-    if (!_resolver.needsResolve(musicUrl)) return musicUrl;
     return _resolver.resolvePlayableUrl(musicUrl);
   }
 
