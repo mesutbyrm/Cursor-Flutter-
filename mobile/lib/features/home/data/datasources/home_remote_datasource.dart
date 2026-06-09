@@ -5,6 +5,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/home_banner_entity.dart';
+import '../../domain/entities/home_fortune_card_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
 import '../../domain/entities/home_trend_video_entity.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
@@ -516,6 +517,37 @@ class HomeRemoteDataSource {
     final v = pick(m, keys);
     if (v is num) return v.toDouble();
     return double.tryParse(v?.toString() ?? '') ?? 0;
+  }
+
+  /// canlifal.com ana sayfa fal vitrin — web `/` ile aynı kart listesi.
+  Future<List<HomeFortuneCardEntity>> fetchHomepageFortuneCards() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.homepageFortuneCards);
+      final items = _itemsFromBody(res.data, keys: const ['cards', 'items']);
+      if (items.isEmpty) return const [];
+      return items
+          .map((j) => _mapHomeFortuneCard(j))
+          .where((c) => c.title.isNotEmpty)
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  HomeFortuneCardEntity _mapHomeFortuneCard(Map<String, dynamic> m) {
+    final href = _str(m, const ['href', 'url', 'link']) ?? '';
+    var slug = _str(m, const ['slug', 'fortuneSlug']) ?? '';
+    if (slug.isEmpty && href.contains('/')) {
+      slug = href.split('/').where((s) => s.isNotEmpty).last;
+    }
+    return HomeFortuneCardEntity(
+      id: _str(m, const ['id']) ?? slug,
+      title: _str(m, const ['name', 'title']) ?? '',
+      slug: slug,
+      icon: _str(m, const ['icon', 'emoji']) ?? '🔮',
+      imageUrl: _str(m, const ['image', 'imageUrl', 'thumbnail']),
+      routePath: href.isNotEmpty ? href : null,
+    );
   }
 
   int? _parseColorInt(dynamic v) {

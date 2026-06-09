@@ -34,6 +34,8 @@ Authorization: Bearer <JWT>
 
 Yalnızca oda sahibi / admin (sunucu tarafı yetki kontrolü).
 
+Sıradaki: [DEPLOY_P1_FCM.md](./DEPLOY_P1_FCM.md)
+
 ## Doğrulama
 
 ```bash

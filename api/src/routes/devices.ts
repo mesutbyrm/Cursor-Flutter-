@@ -17,7 +17,10 @@ devicesRouter.post("/fcm", requireAuth, async (req, res) => {
       error: "Geçersiz FCM token",
     });
   }
-  const platform = (req.body?.platform as string | undefined) ?? "unknown";
+  const platformRaw =
+    (req.body?.platform as string | undefined)?.trim() || "unknown";
+  const provider = (req.body?.provider as string | undefined)?.trim();
+  const platform = provider ? `${provider}:${platformRaw}` : platformRaw;
 
   await prisma.devicePushToken.upsert({
     where: { token },
