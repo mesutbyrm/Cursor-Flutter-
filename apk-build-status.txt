@@ -1,9 +1,0 @@
-
-* main Build release APK · 26318304241
-Triggered via push about 5 minutes ago
-
-JOBS
-* Build APK (ID 77482079160)
-
-For more information about the job, try: gh run view --job=77482079160
-View this run on GitHub: https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/26318304241

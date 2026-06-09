@@ -1,3 +1,0 @@
-in_progress		fix(mobile): CI — AppColors.bgCard ve yinelenen import	Build release APK	main	push	26318304241	15m36s	2026-05-23T00:24:08Z
-completed	success	fix(mobile): CI — AppColors.bgCard ve yinelenen import	CI	main	push	26318304297	1m20s	2026-05-23T00:24:08Z
-completed	failure	Build release APK	Build release APK	main	workflow_dispatch	26318297339	2m13s	2026-05-23T00:23:50Z

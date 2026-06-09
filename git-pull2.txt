@@ -1,6 +1,0 @@
-From https://github.com/mesutbyrm/Cursor-Flutter-
- * branch            main       -> FETCH_HEAD
-Updating 3aa3aec..89cf559
-Fast-forward
- docs/LATEST_APK_BUILD.md | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)

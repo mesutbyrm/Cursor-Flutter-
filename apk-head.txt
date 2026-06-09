@@ -1,8 +1,0 @@
-HTTP/2 404 
-date: Sat, 23 May 2026 13:26:49 GMT
-content-type: text/plain; charset=utf-8
-vary: X-PJAX, X-PJAX-Container, Turbo-Visit, Turbo-Frame, X-Requested-With,Accept-Encoding, Accept, X-Requested-With
-cache-control: no-cache
-strict-transport-security: max-age=31536000; includeSubdomains; preload
-x-frame-options: deny
-x-content-type-options: nosniff

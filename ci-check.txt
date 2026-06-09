@@ -1,8 +1,0 @@
-completed	failure	Merge pull request #36 from mesutbyrm/cursor/auth-social-ux-7009	CI	main	push	26318128379	1m21s	2026-05-23T00:18:40Z
-in_progress		Merge pull request #36 from mesutbyrm/cursor/auth-social-ux-7009	Build release APK	main	push	26318128410	2m38s	2026-05-23T00:19:47Z
-completed	success	feat: anlık OneSignal push — mesaj, ödeme, canlı yayın	Build release APK	main	push	26315152445	16m43s	2026-05-22T22:32:20Z
-completed	success	feat: anlık OneSignal push — mesaj, ödeme, canlı yayın	CI	main	push	26315152414	1m1s	2026-05-22T22:32:20Z
-completed	success	feat(api): OneSignal REST push (env anahtarları, uygulama bildirimler…	Build release APK	main	push	26314532621	15m12s	2026-05-22T22:13:45Z
-completed	failure	Merge pull request #36 from mesutbyrm/cursor/auth-social-ux-7009	CI	main	push	26318128379	1m21s	2026-05-23T00:18:40Z
-completed	failure	fix(ci): apk-latest yayını + sürüm 1.0.46+48	CI	main	push	26308742361	3s	2026-05-22T19:50:08Z
-completed	failure	Merge pull request #32 from mesutbyrm/cursor/admin-payment-notificati…	Build release APK	main	push	26288047410	14m36s	2026-05-22T20:51:58Z

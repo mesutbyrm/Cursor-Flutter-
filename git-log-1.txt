@@ -1,6 +1,0 @@
-ce79452 feat(mobile): PART 7 VIP/Gold premium system
-## cursor/vip-gold-premium-2026-7009...origin/cursor/vip-gold-premium-2026-7009
-?? .agent-build-apk.sh
-?? .agent-ci-check.sh
-?? .agent-gh-release.sh
-?? .agent-git-branch.sh

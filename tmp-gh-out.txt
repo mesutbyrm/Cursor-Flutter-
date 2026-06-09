@@ -1,1 +1,0 @@
-bash: /workspace/tmp-gh-check.sh: No such file or directory

@@ -1,6 +1,0 @@
-in_progress		Build release APK	Build release APK	main	workflow_dispatch	26311458272	6m43s	2026-05-22T20:53:50Z
-in_progress		Build release APK	Build release APK	main	workflow_dispatch	26311453265	6m50s	2026-05-22T20:53:43Z
-in_progress		Build release APK	Build release APK	main	workflow_dispatch	26311328361	9m54s	2026-05-22T20:50:39Z
-in_progress		fix(ci): apk-latest yayını + sürüm 1.0.46+48	Build release APK	main	push	26308742271	9m26s	2026-05-22T20:51:07Z
-completed	success	Merge pull request #34 from mesutbyrm/cursor/onesignal-integration-7009	Build release APK	main	push	26307382876	21s	2026-05-22T20:50:49Z
-completed	success	Merge branch 'cursor/cfc-jeton-split-7009'	Build release APK	main	push	26296457168	16m48s	2026-05-22T15:23:38Z

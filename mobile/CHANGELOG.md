@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.163+165 (2026-06-09)
+
+### Birleştirme + temizlik
+
+- Web parite paketi `main`'e alındı
+- Kullanılmayan deprecated Socket.IO chat servisi kaldırıldı
+- 100+ agent debug `.txt` çıktısı silindi
+- GitHub PR/dal temizlik otomasyonu
+
 ## 1.0.162+164 (2026-06-09)
 
 ### Web ↔ Flutter parite + sesli oda
