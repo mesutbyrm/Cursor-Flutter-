@@ -96,7 +96,8 @@ class VoiceRoomBottomDock extends ConsumerWidget {
             VoiceRoomMusicMiniPlayer(
               dj: live.dj,
               canModerate: perms.canModerate || isOwner,
-              canControl: canControlMusic,
+              canControl: true,
+              showClose: true,
               onTap: showMusicCard
                   ? () => showVoiceMusicHubPage(
                         context,
@@ -109,28 +110,40 @@ class VoiceRoomBottomDock extends ConsumerWidget {
               onPlayPause: () {
                 final ctrl =
                     ref.read(voiceRoomLiveProvider(session).notifier);
+                final player = ref.read(voiceRoomDjPlayerProvider);
                 final playing = live.dj.playing ||
-                    ref
-                        .read(voiceRoomDjPlayerProvider)
-                        .playback
-                        .value
-                        .playing;
-                if (playing) {
-                  unawaited(ctrl.pauseMusic());
+                    player.playback.value.playing;
+                if (canControlMusic) {
+                  if (playing) {
+                    unawaited(ctrl.pauseMusic());
+                  } else {
+                    unawaited(ctrl.resumeMusic());
+                  }
+                } else if (playing) {
+                  unawaited(player.pauseLocal());
                 } else {
-                  unawaited(ctrl.resumeMusic());
+                  unawaited(player.resumeLocal());
                 }
               },
-              onStop: () => unawaited(
-                ref.read(voiceRoomLiveProvider(session).notifier).stopMusic(),
-              ),
+              onStop: canControlMusic
+                  ? () => unawaited(
+                      ref
+                          .read(voiceRoomLiveProvider(session).notifier)
+                          .stopMusic(),
+                    )
+                  : null,
+              onPrevious: () =>
+                  ref.read(voiceRoomDjPlayerProvider).seekToStart(),
               onSkip: (perms.canModerate || isOwner)
                   ? () => ref
                       .read(voiceRoomLiveProvider(session).notifier)
                       .skipMusic()
                   : null,
+              onClose: () => unawaited(
+                ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer(),
+              ),
               musicMuted: musicMuted,
-              onMuteToggle: canControlMusic ? onMuteToggle : null,
+              onMuteToggle: onMuteToggle,
             ),
             VoiceStaffEntranceMarquee(
               message: staffBanner,

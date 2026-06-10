@@ -8,8 +8,11 @@ import '../../data/youtube_stream_resolver.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../audio/voice_room_dj_stream_loader.dart';
 import '../audio/voice_room_music_audio_session.dart';
+import 'voice_room_music_control_delegate.dart';
 
 /// Oda arka plan müziği — DJ API `musicUrl` ile senkron (web iframe yerine stream).
+///
+/// Yığın: [just_audio] + [audio_service] (just_audio_background ile aynı bildirim modeli).
 class VoiceRoomDjPlayer {
   VoiceRoomDjPlayer(this._resolver, this._streamLoader);
 
@@ -20,8 +23,10 @@ class VoiceRoomDjPlayer {
   final ValueNotifier<VoiceRoomDjPlayback> playback =
       ValueNotifier(const VoiceRoomDjPlayback());
   String? _currentKey;
+  bool _muted = false;
   void Function()? _onTrackComplete;
   StreamSubscription<VoiceRoomDjPlayback>? _playbackSub;
+  VoiceRoomMusicControlDelegate? controlDelegate;
 
   void Function()? get onTrackComplete => _onTrackComplete;
 
@@ -39,12 +44,19 @@ class VoiceRoomDjPlayer {
   Future<VoiceRoomAudioHandler> _initHandler() async {
     await VoiceRoomMusicAudioSession.ensureConfigured();
     final handler = await audio.AudioService.init(
-      builder: () => VoiceRoomAudioHandler(onTrackComplete: _onTrackComplete),
+      builder: () => VoiceRoomAudioHandler(
+        onTrackComplete: _onTrackComplete,
+        delegateProvider: () => controlDelegate,
+      ),
       config: const audio.AudioServiceConfig(
         androidNotificationChannelId: 'com.mesutbyrm.canlifal.voice_music',
         androidNotificationChannelName: 'Canlifal sesli oda müziği',
+        androidNotificationChannelDescription:
+            'Sesli sohbet odası DJ müziği ve medya kontrolleri',
         androidStopForegroundOnPause: false,
         preloadArtwork: true,
+        fastForwardInterval: Duration(seconds: 10),
+        rewindInterval: Duration(seconds: 10),
       ),
     ) as VoiceRoomAudioHandler;
     _handler = handler;
@@ -61,9 +73,11 @@ class VoiceRoomDjPlayer {
     required bool playing,
     bool muted = false,
   }) async {
+    _muted = muted;
     final handler = await _ensureHandler();
-    if (muted || !playing || musicUrl == null || musicUrl.isEmpty) {
-      await stop();
+
+    if (!playing || musicUrl == null || musicUrl.isEmpty) {
+      if (!playing) await stop();
       return false;
     }
 
@@ -93,7 +107,7 @@ class VoiceRoomDjPlayer {
         final playable = await _streamLoader.preparePlaybackSource(resolved);
         if (playable == null || playable.isEmpty) continue;
 
-        if (_currentKey == playable && handler.isPlaying) {
+        if (_currentKey == playable && handler.isPlaying && !_muted) {
           return true;
         }
 
@@ -107,8 +121,9 @@ class VoiceRoomDjPlayer {
               fallbackUrl: candidate,
             ),
           );
+          await handler.setVolume(_muted ? 0.0 : 1.0);
           await Future<void>.delayed(const Duration(milliseconds: 320));
-          if (handler.isPlaying) {
+          if (handler.isPlaying || handler.hasLoadedSource) {
             debugPrint('DJ play ok: $playable');
             return true;
           }
@@ -127,28 +142,65 @@ class VoiceRoomDjPlayer {
     return _resolver.resolvePlayableUrl(musicUrl);
   }
 
+  Future<void> setMuted(bool muted) async {
+    _muted = muted;
+    try {
+      final handler = await _ensureHandler();
+      await handler.setVolume(muted ? 0.0 : 1.0);
+      if (muted) {
+        await handler.pauseLocal();
+      } else if (_currentKey != null) {
+        await handler.playLocal();
+      }
+    } catch (e) {
+      debugPrint('DJ mute: $e');
+    }
+  }
+
+  Future<void> pauseLocal() async {
+    try {
+      final handler = await _ensureHandler();
+      await handler.pauseLocal();
+    } catch (e) {
+      debugPrint('DJ pauseLocal: $e');
+    }
+  }
+
   Future<void> pause() async {
     try {
       final handler = await _ensureHandler();
-      await handler.pause();
+      await handler.pauseLocal();
     } catch (e) {
       debugPrint('DJ pause: $e');
     }
   }
 
-  Future<void> resume() async {
+  Future<void> resumeLocal() async {
     if (_currentKey == null) return;
     try {
       await VoiceRoomMusicAudioSession.activateForPlayback();
       final handler = await _ensureHandler();
-      await handler.play();
+      await handler.setVolume(_muted ? 0.0 : 1.0);
+      await handler.playLocal();
     } catch (e) {
-      debugPrint('DJ resume: $e');
+      debugPrint('DJ resumeLocal: $e');
+    }
+  }
+
+  Future<void> resume() async => resumeLocal();
+
+  Future<void> seekToStart() async {
+    try {
+      final handler = await _ensureHandler();
+      await handler.seek(Duration.zero);
+    } catch (e) {
+      debugPrint('DJ seekToStart: $e');
     }
   }
 
   Future<void> stop() async {
     _currentKey = null;
+    _muted = false;
     try {
       final handler = await _ensureHandler();
       await handler.stop();
@@ -156,16 +208,29 @@ class VoiceRoomDjPlayer {
     } catch (_) {}
   }
 
-  void dispose() {
+  Future<void> shutdown() async {
+    controlDelegate = null;
     onTrackComplete = null;
+    await stop();
+    try {
+      await audio.AudioService.stop();
+    } catch (_) {}
+  }
+
+  void dispose() {
+    unawaited(shutdown());
     unawaited(_handler?.disposeHandler() ?? Future<void>.value());
     unawaited(_playbackSub?.cancel());
     playback.dispose();
   }
 }
 
-class VoiceRoomAudioHandler extends audio.BaseAudioHandler with audio.SeekHandler {
-  VoiceRoomAudioHandler({this.onTrackComplete}) {
+class VoiceRoomAudioHandler extends audio.BaseAudioHandler
+    with audio.SeekHandler {
+  VoiceRoomAudioHandler({
+    this.onTrackComplete,
+    required VoiceRoomMusicControlDelegate? Function() delegateProvider,
+  }) : _delegateProvider = delegateProvider {
     _init();
   }
 
@@ -174,16 +239,20 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler with audio.SeekHandle
       ValueNotifier(const VoiceRoomDjPlayback());
   final StreamController<VoiceRoomDjPlayback> _playbackController =
       StreamController<VoiceRoomDjPlayback>.broadcast();
+  final VoiceRoomMusicControlDelegate? Function() _delegateProvider;
 
   Stream<VoiceRoomDjPlayback> get playbackValueStream =>
       _playbackController.stream;
 
   bool get isPlaying => _player.playing;
+  bool get hasLoadedSource => _currentSource != null;
 
   void Function()? onTrackComplete;
   bool _completionFired = false;
   String? _currentSource;
   audio.MediaItem? _currentMediaItem;
+
+  VoiceRoomMusicControlDelegate? get _delegate => _delegateProvider();
 
   void _init() {
     _player.durationStream.listen((duration) {
@@ -206,7 +275,9 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler with audio.SeekHandle
       if (state == ja.ProcessingState.completed && !_completionFired) {
         _completionFired = true;
         _emitPlayback(_playbackValue.value.copyWith(playing: false));
-        _broadcastPlaybackState(processingState: audio.AudioProcessingState.completed);
+        _broadcastPlaybackState(
+          processingState: audio.AudioProcessingState.completed,
+        );
         onTrackComplete?.call();
       } else {
         _broadcastPlaybackState(processingState: _mapProcessingState(state));
@@ -232,20 +303,41 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler with audio.SeekHandle
       await _player.setAudioSource(audioSource);
       _emitPlayback(const VoiceRoomDjPlayback());
     }
-    await _player.setVolume(1.0);
-    await play();
+    await playLocal();
   }
 
-  @override
-  Future<void> play() async {
+  Future<void> playLocal() async {
     await _player.play();
     _broadcastPlaybackState();
   }
 
-  @override
-  Future<void> pause() async {
+  Future<void> pauseLocal() async {
     await _player.pause();
     _broadcastPlaybackState();
+  }
+
+  Future<void> setVolume(double volume) async {
+    await _player.setVolume(volume.clamp(0.0, 1.0));
+  }
+
+  @override
+  Future<void> play() async {
+    final delegate = _delegate;
+    if (delegate?.syncServerControls == true && delegate?.onPlay != null) {
+      await delegate!.onPlay!();
+      return;
+    }
+    await playLocal();
+  }
+
+  @override
+  Future<void> pause() async {
+    final delegate = _delegate;
+    if (delegate?.syncServerControls == true && delegate?.onPause != null) {
+      await delegate!.onPause!();
+      return;
+    }
+    await pauseLocal();
   }
 
   @override
@@ -257,6 +349,15 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler with audio.SeekHandle
 
   @override
   Future<void> stop() async {
+    final delegate = _delegate;
+    if (delegate?.onStop != null) {
+      await delegate!.onStop!();
+      return;
+    }
+    await stopLocal();
+  }
+
+  Future<void> stopLocal() async {
     _currentSource = null;
     _completionFired = false;
     _currentMediaItem = null;
@@ -273,8 +374,28 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler with audio.SeekHandle
     );
   }
 
+  @override
+  Future<void> skipToNext() async {
+    final delegate = _delegate;
+    if (delegate?.onSkipToNext != null) {
+      await delegate!.onSkipToNext!();
+      return;
+    }
+    await super.skipToNext();
+  }
+
+  @override
+  Future<void> skipToPrevious() async {
+    final delegate = _delegate;
+    if (delegate?.onSkipToPrevious != null) {
+      await delegate!.onSkipToPrevious!();
+      return;
+    }
+    await seek(Duration.zero);
+  }
+
   Future<void> disposeHandler() async {
-    await stop();
+    await stopLocal();
     await _player.dispose();
     _playbackValue.dispose();
     await _playbackController.close();
@@ -288,19 +409,25 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler with audio.SeekHandle
   }
 
   void _broadcastPlaybackState({audio.AudioProcessingState? processingState}) {
-    final controls = _player.playing
-        ? [audio.MediaControl.pause, audio.MediaControl.stop]
-        : [audio.MediaControl.play, audio.MediaControl.stop];
+    final playing = _player.playing;
+    final controls = <audio.MediaControl>[
+      audio.MediaControl.skipToPrevious,
+      playing ? audio.MediaControl.pause : audio.MediaControl.play,
+      audio.MediaControl.skipToNext,
+      audio.MediaControl.stop,
+    ];
     playbackState.add(
       playbackState.value.copyWith(
         controls: controls,
         systemActions: const {
           audio.MediaAction.seek,
+          audio.MediaAction.seekForward,
+          audio.MediaAction.seekBackward,
         },
-        androidCompactActionIndices: const [0, 1],
+        androidCompactActionIndices: const [0, 1, 2],
         processingState:
             processingState ?? _mapProcessingState(_player.processingState),
-        playing: _player.playing,
+        playing: playing,
         updatePosition: _player.position,
         bufferedPosition: _player.bufferedPosition,
         speed: _player.speed,

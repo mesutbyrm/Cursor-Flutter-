@@ -30,6 +30,7 @@ import '../../data/youtube_stream_resolver.dart';
 import '../audio/voice_room_dj_stream_loader.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import '../services/voice_room_dj_player.dart';
+import '../services/voice_room_music_control_delegate.dart';
 import 'voice_gift_providers.dart';
 import 'voice_room_diagnostic_provider.dart';
 import 'voice_room_ui_provider.dart';
@@ -223,9 +224,11 @@ class VoiceRoomLiveController
     return true;
   }
 
+  Object? _roomKeepAliveLink;
+
   @override
   VoiceRoomLiveState build(VoiceRoomEntity room) {
-    ref.keepAlive();
+    _roomKeepAliveLink = ref.keepAlive();
     ref.onDispose(() {
       _poll?.cancel();
       _presenceHeartbeat?.cancel();
@@ -234,7 +237,23 @@ class VoiceRoomLiveController
       _giftSocket?.disconnect();
       _leavePresence();
       ref.read(voiceRoomSseServiceProvider).disconnect();
-      ref.read(voiceRoomDjPlayerProvider).stop();
+      final player = ref.read(voiceRoomDjPlayerProvider);
+      final stillPlaying =
+          player.playback.value.playing ||
+          state.dj.playing ||
+          state.dj.nowPlaying != null;
+      final session = ref.read(voiceRoomMusicSessionProvider);
+      if (stillPlaying && !session.dismissed && _roomKeepAliveLink != null) {
+        ref.read(voiceRoomMusicSessionProvider.notifier).onRoomDetached(
+          room: arg,
+          dj: state.dj,
+          canSyncServer: _canControlMusic(),
+          keepAliveLink: _roomKeepAliveLink!,
+        );
+        _wireMusicControls();
+      } else {
+        _closeRoomKeepAlive();
+      }
     });
     Future.microtask(() async {
       await VoiceRoomMusicAudioSession.ensureConfigured();
@@ -246,6 +265,7 @@ class VoiceRoomLiveController
       _startGiftSocket();
       final player = ref.read(voiceRoomDjPlayerProvider);
       player.onTrackComplete = () => unawaited(_onDjTrackComplete());
+      _wireMusicControls();
     });
     // build() tamamlanmadan state okunmaz — ilk poll SSE kapalı varsayımıyla.
     _schedulePoll(sseConnected: false);
@@ -666,6 +686,55 @@ class VoiceRoomLiveController
 
   void _commitDjUi(ChatRoomDjState dj) {
     state = state.copyWith(dj: dj, clearError: true);
+    ref.read(voiceRoomMusicSessionProvider.notifier).syncFromRoom(
+      room: arg,
+      dj: dj,
+      canSyncServer: _canControlMusic(),
+    );
+  }
+
+  void _closeRoomKeepAlive() {
+    final link = _roomKeepAliveLink;
+    _roomKeepAliveLink = null;
+    if (link == null) return;
+    try {
+      (link as dynamic).close();
+    } catch (_) {}
+  }
+
+  void _wireMusicControls() {
+    final canSync = _canControlMusic();
+    ref.read(voiceRoomDjPlayerProvider).controlDelegate =
+        VoiceRoomMusicControlDelegate(
+          syncServerControls: canSync,
+          onPlay: () async {
+            if (canSync) {
+              await resumeMusic();
+            } else {
+              await ref.read(voiceRoomDjPlayerProvider).resumeLocal();
+            }
+          },
+          onPause: () async {
+            if (canSync) {
+              await pauseMusic();
+            } else {
+              await ref.read(voiceRoomDjPlayerProvider).pauseLocal();
+            }
+          },
+          onStop: () async {
+            if (canSync) {
+              await stopMusic();
+            } else {
+              await ref
+                  .read(voiceRoomMusicSessionProvider.notifier)
+                  .closePlayer();
+            }
+          },
+          onSkipToNext: canSync ? () async => skipMusic() : null,
+          onSkipToPrevious: () async {
+            await ref.read(voiceRoomDjPlayerProvider).seekToStart();
+          },
+        );
   }
 
   Future<void> _playDjInBackground(ChatRoomDjState dj) async {
@@ -1372,10 +1441,11 @@ class VoiceRoomLiveController
           .read(chatRoomRemoteProvider)
           .updateDj(
             roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
             musicUrl: state.dj.musicUrl,
             playing: false,
           );
-      await ref.read(voiceRoomDjPlayerProvider).pause();
+      await ref.read(voiceRoomDjPlayerProvider).pauseLocal();
       state = state.copyWith(dj: state.dj.copyWith(playing: false));
       return null;
     } catch (e) {
@@ -1392,6 +1462,7 @@ class VoiceRoomLiveController
           .read(chatRoomRemoteProvider)
           .updateDj(
             roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
             musicUrl: state.dj.musicUrl ?? url,
             playing: true,
           );
@@ -1407,10 +1478,10 @@ class VoiceRoomLiveController
 
   Future<String?> toggleBackgroundMusic(bool enabled) async {
     try {
+      final player = ref.read(voiceRoomDjPlayerProvider);
+      await player.setMuted(!enabled);
       if (enabled) {
         await _applyDjPlayback(state.dj);
-      } else {
-        await ref.read(voiceRoomDjPlayerProvider).stop();
       }
       return null;
     } catch (e) {
@@ -1490,7 +1561,10 @@ class VoiceRoomLiveController
 
   Future<String?> skipMusic() async {
     try {
-      await ref.read(chatRoomRemoteProvider).skipMusicQueue(roomKey: _roomKey);
+      await ref.read(chatRoomRemoteProvider).skipMusicQueue(
+        roomKey: _roomKey,
+        alternateKey: _musicAlternateKey,
+      );
       await refresh();
       return null;
     } catch (e) {
@@ -1512,7 +1586,10 @@ class VoiceRoomLiveController
 
   Future<String?> clearMusicQueue() async {
     try {
-      await ref.read(chatRoomRemoteProvider).clearMusicQueue(roomKey: _roomKey);
+      await ref.read(chatRoomRemoteProvider).clearMusicQueue(
+        roomKey: _roomKey,
+        alternateKey: _musicAlternateKey,
+      );
       await ref.read(voiceRoomDjPlayerProvider).stop();
       await refresh();
       return null;
@@ -1791,6 +1868,159 @@ class _ParsedRoomCommand {
     );
   }
 }
+
+/// Sesli odadan çıkınca da süren müzik oturumu — global mini player.
+class VoiceRoomMusicSessionState {
+  const VoiceRoomMusicSessionState({
+    this.room,
+    this.dj = const ChatRoomDjState(),
+    this.visible = false,
+    this.dismissed = false,
+    this.canSyncServer = false,
+  });
+
+  final VoiceRoomEntity? room;
+  final ChatRoomDjState dj;
+  final bool visible;
+  final bool dismissed;
+  final bool canSyncServer;
+
+  bool get hasActiveMusic =>
+      !dismissed &&
+      (dj.playing || dj.nowPlaying != null || dj.musicQueue.isNotEmpty);
+
+  VoiceRoomMusicSessionState copyWith({
+    VoiceRoomEntity? room,
+    bool clearRoom = false,
+    ChatRoomDjState? dj,
+    bool? visible,
+    bool? dismissed,
+    bool? canSyncServer,
+  }) {
+    return VoiceRoomMusicSessionState(
+      room: clearRoom ? null : (room ?? this.room),
+      dj: dj ?? this.dj,
+      visible: visible ?? this.visible,
+      dismissed: dismissed ?? this.dismissed,
+      canSyncServer: canSyncServer ?? this.canSyncServer,
+    );
+  }
+}
+
+class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState> {
+  Object? _detachedKeepAlive;
+  Timer? _syncTimer;
+
+  @override
+  VoiceRoomMusicSessionState build() {
+    ref.onDispose(_disposeSession);
+    return const VoiceRoomMusicSessionState();
+  }
+
+  void _disposeSession() {
+    _syncTimer?.cancel();
+    _syncTimer = null;
+    _closeDetachedKeepAlive();
+  }
+
+  void syncFromRoom({
+    required VoiceRoomEntity room,
+    required ChatRoomDjState dj,
+    required bool canSyncServer,
+  }) {
+    final playing =
+        dj.playing ||
+        ref.read(voiceRoomDjPlayerProvider).playback.value.playing;
+    final hasTrack = dj.nowPlaying != null || dj.musicQueue.isNotEmpty;
+    if (!playing && !hasTrack) {
+      if (state.room?.id == room.id && !state.dismissed) {
+        state = state.copyWith(visible: false, dj: dj);
+      }
+      return;
+    }
+    state = state.copyWith(
+      room: room,
+      dj: dj,
+      visible: !state.dismissed,
+      canSyncServer: canSyncServer,
+      dismissed: false,
+    );
+    _ensureBackgroundSync(room);
+  }
+
+  void onRoomDetached({
+    required VoiceRoomEntity room,
+    required ChatRoomDjState dj,
+    required bool canSyncServer,
+    required Object keepAliveLink,
+  }) {
+    final player = ref.read(voiceRoomDjPlayerProvider);
+    final stillPlaying =
+        player.playback.value.playing || dj.playing || dj.nowPlaying != null;
+    if (!stillPlaying || state.dismissed) {
+      _tryCloseKeepAlive(keepAliveLink);
+      return;
+    }
+    _detachedKeepAlive = keepAliveLink;
+    state = state.copyWith(
+      room: room,
+      dj: dj,
+      visible: !state.dismissed,
+      canSyncServer: canSyncServer,
+    );
+    _ensureBackgroundSync(room);
+  }
+
+  void _ensureBackgroundSync(VoiceRoomEntity room) {
+    _syncTimer?.cancel();
+    _syncTimer = Timer.periodic(const Duration(seconds: 18), (_) async {
+      if (state.dismissed || state.room?.id != room.id) return;
+      try {
+        await ref
+            .read(voiceRoomLiveProvider(room.stableSessionKey).notifier)
+            .refresh(includeDj: true);
+        final live = ref.read(voiceRoomLiveProvider(room.stableSessionKey));
+        state = state.copyWith(dj: live.dj);
+        if (!live.dj.playing &&
+            live.dj.nowPlaying == null &&
+            live.dj.musicQueue.isEmpty &&
+            !ref.read(voiceRoomDjPlayerProvider).playback.value.playing) {
+          await closePlayer();
+        }
+      } catch (_) {}
+    });
+  }
+
+  Future<void> closePlayer() async {
+    _syncTimer?.cancel();
+    _syncTimer = null;
+    await ref.read(voiceRoomDjPlayerProvider).stop();
+    state = state.copyWith(
+      visible: false,
+      dismissed: true,
+      clearRoom: true,
+      dj: const ChatRoomDjState(),
+    );
+    _closeDetachedKeepAlive();
+  }
+
+  void _closeDetachedKeepAlive() {
+    final link = _detachedKeepAlive;
+    _detachedKeepAlive = null;
+    if (link != null) _tryCloseKeepAlive(link);
+  }
+
+  void _tryCloseKeepAlive(Object link) {
+    try {
+      (link as dynamic).close();
+    } catch (_) {}
+  }
+}
+
+final voiceRoomMusicSessionProvider =
+    NotifierProvider<VoiceRoomMusicSessionNotifier, VoiceRoomMusicSessionState>(
+      VoiceRoomMusicSessionNotifier.new,
+    );
 
 final voiceRoomLiveProvider = NotifierProvider.autoDispose
     .family<VoiceRoomLiveController, VoiceRoomLiveState, VoiceRoomEntity>(

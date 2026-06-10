@@ -10,6 +10,8 @@ import '../core/theme/app_theme.dart';
 import '../features/auth/presentation/pages/splash_page.dart';
 import '../features/home/presentation/widgets/fortune_incoming_invite_host.dart';
 import '../features/shell/presentation/app_bottom_nav_host.dart';
+import '../features/voice_hub/presentation/widgets/voice_room/voice_room_global_music_bar.dart';
+import '../features/voice_hub/presentation/widgets/voice_room_music_lifecycle_host.dart';
 import 'router/app_router.dart';
 
 class CanlifalApp extends ConsumerWidget {
@@ -20,8 +22,9 @@ class CanlifalApp extends ConsumerWidget {
     final router = ref.watch(goRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
 
-    return PushLifecycleListener(
-      child: MaterialApp.router(
+    return VoiceRoomMusicLifecycleHost(
+      child: PushLifecycleListener(
+        child: MaterialApp.router(
         title: 'Canlifal',
         debugShowCheckedModeBanner: false,
         scrollBehavior: const ModernSocialScrollBehavior(),
@@ -41,14 +44,28 @@ class CanlifalApp extends ConsumerWidget {
                   brightness == Brightness.dark ? Brightness.dark : Brightness.light,
             ),
           );
+          final routerLocation =
+              router.routerDelegate.currentConfiguration.uri.path;
+          final showGlobalMusic =
+              VoiceRoomGlobalMusicBar.shouldShowForRoute(routerLocation);
           return FortuneIncomingInviteHost(
             child: AppBottomNavHost(
-              // Router ilk karede null dönebilir; boş gri ekran yerine splash.
-              child: child ?? const SplashPage(),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  child ?? const SplashPage(),
+                  if (showGlobalMusic)
+                    const Align(
+                      alignment: Alignment.bottomCenter,
+                      child: VoiceRoomGlobalMusicBar(),
+                    ),
+                ],
+              ),
             ),
           );
         },
         routerConfig: router,
+      ),
       ),
     );
   }

@@ -17,23 +17,29 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
     required this.dj,
     this.onTap,
     this.onSkip,
+    this.onPrevious,
     this.onPlayPause,
     this.onStop,
+    this.onClose,
     this.onMuteToggle,
     this.canModerate = false,
     this.canControl = false,
     this.musicMuted = false,
+    this.showClose = false,
   });
 
   final ChatRoomDjState dj;
   final VoidCallback? onTap;
   final VoidCallback? onSkip;
+  final VoidCallback? onPrevious;
   final VoidCallback? onPlayPause;
   final VoidCallback? onStop;
+  final VoidCallback? onClose;
   final VoidCallback? onMuteToggle;
   final bool canModerate;
   final bool canControl;
   final bool musicMuted;
+  final bool showClose;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -160,6 +166,22 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      if (canControl && onPrevious != null)
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 28,
+                            minHeight: 28,
+                          ),
+                          onPressed: onPrevious,
+                          tooltip: 'Başa sar',
+                          icon: Icon(
+                            Icons.skip_previous_rounded,
+                            color: Colors.white.withValues(alpha: 0.9),
+                            size: 18,
+                          ),
+                        ),
                       if (canControl && onPlayPause != null)
                         IconButton(
                           visualDensity: VisualDensity.compact,
@@ -169,6 +191,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                             minHeight: 30,
                           ),
                           onPressed: onPlayPause,
+                          tooltip: isPlaying ? 'Duraklat' : 'Oynat',
                           icon: Icon(
                             isPlaying
                                 ? Icons.pause_rounded
@@ -186,6 +209,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                             minHeight: 30,
                           ),
                           onPressed: onStop,
+                          tooltip: 'Kuyruğu durdur',
                           icon: Icon(
                             Icons.stop_rounded,
                             color: Colors.white.withValues(alpha: 0.85),
@@ -201,6 +225,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                             minHeight: 30,
                           ),
                           onPressed: onMuteToggle,
+                          tooltip: musicMuted ? 'Sesi aç' : 'Sesi kapat',
                           icon: Icon(
                             musicMuted
                                 ? Icons.volume_off_rounded
@@ -216,7 +241,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                           padding: const EdgeInsets.only(right: 4),
                           child: _MusicVisualizer(active: true),
                         ),
-                      if (canModerate && onSkip != null)
+                      if (canControl && onSkip != null)
                         IconButton(
                           visualDensity: VisualDensity.compact,
                           padding: EdgeInsets.zero,
@@ -225,10 +250,27 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                             minHeight: 30,
                           ),
                           onPressed: onSkip,
+                          tooltip: 'Sonraki şarkı',
                           icon: const Icon(
                             Icons.skip_next_rounded,
                             color: Colors.white,
                             size: 20,
+                          ),
+                        ),
+                      if (showClose && onClose != null)
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 28,
+                            minHeight: 28,
+                          ),
+                          onPressed: onClose,
+                          tooltip: 'Müziği kapat',
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: Colors.white.withValues(alpha: 0.8),
+                            size: 18,
                           ),
                         ),
                     ],
