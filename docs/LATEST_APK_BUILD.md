@@ -2,21 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.173+175` |
-| Tarih (UTC) | 2026-06-10 02:41 |
-| Commit | [`ec62056f3e6f2dd861e97b0ffa8ce05aadd4dc02`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ec62056f3e6f2dd861e97b0ffa8ce05aadd4dc02) |
-| İş akışı | [Run 27248704892](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27248704892) |
+| Sürüm | `1.0.174+176` |
+| Tarih (UTC) | 2026-06-10 03:18 |
+| Commit | [`a85f13ab814a04acd79851282e4e4b73faba5e5f`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a85f13ab814a04acd79851282e4e4b73faba5e5f) |
+| İş akışı | [Run 27249989551](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27249989551) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.173+175 (2026-06-10)
+## 1.0.174+176 (2026-06-10)
 
-### Canlı yayın + PK parity
+### Canlı yayın + PK audit
 
-- Canlı yayın `PK Başlat` artık web/API sözleşmesi gibi önce rakip yayın seçme ekranına gider
-- Eski desteklenmeyen `action: score` PK çağrısı kaldırıldı; skor web gibi hediye entegrasyonu ve remote refresh ile senkronize edilir
-- `LIVE_PK_PARITY_REPORT.md` ile yayın başlatma/kapatma, PK daveti, savaş, skor, hediye ve sonuç parity durumu raporlandı
+- PK action payload'ından web API sözleşmesinde olmayan eski `score` / `side` alanları kaldırıldı
+- PK skor hesaplama akışı sadece hediye entegrasyonu ve remote battle state ile senkronize edilir
+- `LIVE_PK_AUDIT_REPORT.md` ile yayın başlatma/kapatma, PK daveti/kabul/skor/hediye/sonuç akışı denetlendi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
