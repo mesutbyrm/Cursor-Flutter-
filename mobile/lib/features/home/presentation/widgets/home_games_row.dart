@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
-import '../../domain/entities/home_game_entity.dart' show DailyRewardEntity, HomeGameEntity;
+import '../../domain/entities/home_game_entity.dart' show DailyRewardEntity;
 import '../providers/home_providers.dart';
 import '../theme/home_palette.dart';
 import 'home_section_header.dart';

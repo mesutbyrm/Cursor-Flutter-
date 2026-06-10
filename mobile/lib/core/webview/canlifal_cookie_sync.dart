@@ -1,5 +1,4 @@
 import 'package:cookie_jar/cookie_jar.dart';
-import 'package:dio/dio.dart';
 
 /// WebView kaldırıldı — çerez senkronu yalnızca Dio [CookieJar] üzerinden.
 Future<void> applyPersistCookiesToWebView(CookieJar jar, String origin) async {

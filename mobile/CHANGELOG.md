@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.172+174 (2026-06-10)
+
+### Flutter sağlık denetimi + import temizliği
+
+- `HEALTH_CHECK_REPORT.md` ile modül sağlığı, analyzer uyarıları, runtime/null-safety/performance riskleri raporlandı
+- Düşük riskli kullanılmayan ve duplicate import uyarıları temizlendi
+- Home/content/core UI modüllerinde davranış değiştirmeyen statik analiz iyileştirmeleri yapıldı
+
 ## 1.0.171+173 (2026-06-10)
 
 ### Hediye parity — ses efektleri

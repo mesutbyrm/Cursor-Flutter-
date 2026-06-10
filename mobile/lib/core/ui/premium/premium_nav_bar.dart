@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 import '../../theme/app_spacing.dart';
-import '../../theme/canlifal_tokens.dart';
 import 'gradient_fab.dart';
 
 /// Alt navigasyon — BackdropFilter yok (performans), cam yüzey.

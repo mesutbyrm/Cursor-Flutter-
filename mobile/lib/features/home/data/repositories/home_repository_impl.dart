@@ -1,4 +1,3 @@
-import '../../../feed/domain/entities/post_entity.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/domain/repositories/live_repository.dart';

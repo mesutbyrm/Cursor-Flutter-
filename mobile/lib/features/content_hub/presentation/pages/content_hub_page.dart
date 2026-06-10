@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
