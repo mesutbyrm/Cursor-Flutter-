@@ -2,21 +2,24 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.174+176` |
-| Tarih (UTC) | 2026-06-10 03:18 |
-| Commit | [`a85f13ab814a04acd79851282e4e4b73faba5e5f`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a85f13ab814a04acd79851282e4e4b73faba5e5f) |
-| İş akışı | [Run 27249989551](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27249989551) |
+| Sürüm | `1.0.176+178` |
+| Tarih (UTC) | 2026-06-10 07:29 |
+| Commit | [`74f316cdac218f687e7d26fa8b77e0e808eec0dd`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/74f316cdac218f687e7d26fa8b77e0e808eec0dd) |
+| İş akışı | [Run 27259429869](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27259429869) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.174+176 (2026-06-10)
+## 1.0.176+178 (2026-06-10)
 
-### Canlı yayın + PK audit
+### Web parite — oyun/içerik hub, sesli oda komutları ve canlı yayın araçları
 
-- PK action payload'ından web API sözleşmesinde olmayan eski `score` / `side` alanları kaldırıldı
-- PK skor hesaplama akışı sadece hediye entegrasyonu ve remote battle state ile senkronize edilir
-- `LIVE_PK_AUDIT_REPORT.md` ile yayın başlatma/kapatma, PK daveti/kabul/skor/hediye/sonuç akışı denetlendi
+- Oyunlar, rüya, blog, ünlüler, fan club ve reklamla kredi için native hub girişleri eklendi
+- Ana sayfada `/api/games` oyun/etkinlik satırı yeniden görünür hale getirildi ve keşfet kartları doğru native merkezlere bağlandı
+- Sesli sohbet `!ban`, `!unban`, `!at`/`!kick`, `!sessiz`/`!mute`, `!yetki`, `!dj`, `!muzik`, `!temizle` komutları için web bot mesajına ek olarak mobil REST fallback katmanı eklendi
+- `!istek` chat komutu web ile uyumlu mesaj gönderimini korur; sunucu kuyruğa eklemezse mobil `song-request` fallback'i dener
+- Canlı yayın hazırlığında özel/resim modu/arka plan ayarları create payload'a taşındı
+- Canlı yayın odasına paylaşım, görsel mod katmanı ve yayıncı araçları (görsel, arka plan, co-broadcast yenileme, auto-close kontrolü) eklendi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
