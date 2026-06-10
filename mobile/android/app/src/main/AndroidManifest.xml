@@ -57,6 +57,7 @@
             android:name="com.ryanheise.audioservice.AudioService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback"
+            android:stopWithTask="true"
             tools:ignore="Instantiatable">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />
