@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.179+181 (2026-06-10)
+
+### Oyun parite — native oyun merkezi ve polling oda ekranı
+
+- Webdeki çok oyunculu ve mini oyunların tamamını kapsayan Flutter oyun katalog fallback'i eklendi
+- `/games-hub` artık native oyun merkezi olarak oyun listesi, açık odalar, liderlik/mini skor/turnuva özetlerini gösterir
+- Oda oluşturma, otomatik eşleşme, odaya katılma ve oyun sohbeti mevcut web API'leriyle bağlandı
+- `/games-room/:id` oyun odası ekranı 5 saniyelik HTTP polling ile oda state/sonuç/chat bilgisini günceller
+- `GAME_PARITY_REPORT.md` ile oyun listesi, giriş, Jeton, skor, sonuç ve realtime kapsamı raporlandı
+
 ## 1.0.178+180 (2026-06-10)
 
 ### Sosyal parite — hikaye grupları ve story fallback

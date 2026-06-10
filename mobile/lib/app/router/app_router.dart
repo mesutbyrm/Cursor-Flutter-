@@ -26,6 +26,8 @@ import '../../features/fortune/presentation/pages/fortune_session_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
+import '../../features/games/presentation/pages/game_room_page.dart';
+import '../../features/games/presentation/pages/games_hub_page.dart';
 import '../../features/gifts/presentation/pages/gift_send_page.dart';
 import '../../features/live/domain/entities/live_broadcast_session.dart';
 import '../../features/live/presentation/pages/live_broadcast_prep_page.dart';
@@ -454,8 +456,19 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/games-hub',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
-          child: const NativeFeatureHubPage(kind: NativeFeatureHubKind.games),
+          child: const GamesHubPage(),
         ),
+      ),
+      GoRoute(
+        path: '/games-room/:id',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          final title = state.uri.queryParameters['title'];
+          return AppPageTransitions.fadeSlide(
+            key: state.pageKey,
+            child: GameRoomPage(roomId: id, title: title),
+          );
+        },
       ),
       GoRoute(
         path: '/dreams-hub',

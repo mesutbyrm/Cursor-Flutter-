@@ -83,6 +83,16 @@ abstract final class ApiEndpoints {
   static const gameMiniScores = '/api/games/mini-scores';
   static const tournaments = '/api/tournaments';
   static const tournamentsJoin = '/api/tournaments/join';
+  static String gameRoom(String roomId) => '/api/games/room/$roomId';
+  static String gameRoomJoin(String roomId) => '/api/games/room/$roomId/join';
+  static String gameRoomChat(String roomId) => '/api/games/room/$roomId/chat';
+  static String gameRoomViewers(String roomId) =>
+      '/api/games/room/$roomId/viewers';
+  static const gameSosCreate = '/api/games/sos/create';
+  static String gameSos(String gameId) => '/api/games/sos/$gameId';
+  static String gameSosChat(String gameId) => '/api/games/sos/$gameId/chat';
+  static String gameSosViewers(String gameId) =>
+      '/api/games/sos/$gameId/viewers';
 
   /// Günlük ödüller.
   static const homeDailyRewards = '/api/daily-rewards';
