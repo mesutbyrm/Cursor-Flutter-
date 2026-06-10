@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.180+182 (2026-06-10)
+
+### Fal & Tarot parite — web fal API bağlantıları
+
+- Kahve Falı, Tarot ve Yıldızname oturumları artık önce web `/api/fortunes/*` endpointlerini dener
+- Kredi/Jeton yetersizliği durumunda Jeton mağazası ve üyelik ekranına yönlendiren satın alma sheet'i eklendi
+- `Yıldızname` katalog başlığı ve slug alias'ları weble uyumlu hale getirildi
+- `/fortune/ready` hazır yorumlar ekranı ve `/fortune/history/:id` fal geçmişi detay route'u eklendi
+- `FORTUNE_PARITY_REPORT.md` ile Kahve Falı, Tarot, Yıldızname, hazır yorum, geçmiş ve satın alma kapsamı raporlandı
+
 ## 1.0.179+181 (2026-06-10)
 
 ### Oyun parite — native oyun merkezi ve polling oda ekranı

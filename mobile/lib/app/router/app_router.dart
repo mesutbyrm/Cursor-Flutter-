@@ -20,9 +20,11 @@ import '../../features/fortune/domain/entities/fortune_type_entity.dart';
 import '../../features/fortune/presentation/data/fortune_catalog.dart';
 import '../../features/fortune/presentation/pages/daily_fortune_open_page.dart';
 import '../../features/fortune/presentation/pages/daily_fortune_result_page.dart';
+import '../../features/fortune/presentation/pages/fortune_detail_page.dart';
 import '../../features/fortune/presentation/pages/fortune_type_intro_page.dart';
 import '../../features/fortune/presentation/pages/fortune_result_page.dart';
 import '../../features/fortune/presentation/pages/fortune_session_page.dart';
+import '../../features/fortune/presentation/pages/fortune_ready_readings_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
@@ -202,6 +204,24 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                           key: state.pageKey,
                           child: const FortuneTypesAllPage(),
                         ),
+                  ),
+                  GoRoute(
+                    path: 'ready',
+                    pageBuilder: (context, state) =>
+                        AppPageTransitions.fadeSlide(
+                          key: state.pageKey,
+                          child: const FortuneReadyReadingsPage(),
+                        ),
+                  ),
+                  GoRoute(
+                    path: 'history/:id',
+                    pageBuilder: (context, state) {
+                      final id = state.pathParameters['id'] ?? '';
+                      return AppPageTransitions.fadeSlide(
+                        key: state.pageKey,
+                        child: FortuneDetailPage(fortuneId: id),
+                      );
+                    },
                   ),
                   GoRoute(
                     path: ':slug',

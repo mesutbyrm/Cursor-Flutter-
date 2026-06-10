@@ -44,21 +44,19 @@ class FortuneTarotHubPage extends ConsumerWidget {
                     crossAxisSpacing: 10,
                     childAspectRatio: 0.72,
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, i) {
-                      final entry = FortuneCatalog.hubFortuneTypes[i];
-                      final slug = entry.type.slug;
-                      return FortuneHubTypeCard(
-                        type: entry.type,
-                        subtitle: entry.subtitle,
-                        onTap: () => context.push('/fortune/$slug'),
-                      );
-                    },
-                    childCount: FortuneCatalog.hubFortuneTypes.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, i) {
+                    final entry = FortuneCatalog.hubFortuneTypes[i];
+                    final slug = entry.type.slug;
+                    return FortuneHubTypeCard(
+                      type: entry.type,
+                      subtitle: entry.subtitle,
+                      onTap: () => context.push('/fortune/$slug'),
+                    );
+                  }, childCount: FortuneCatalog.hubFortuneTypes.length),
                 ),
               ),
               SliverToBoxAdapter(child: _RecentReadingsSection()),
+              SliverToBoxAdapter(child: _QuickFortuneActions()),
               SliverToBoxAdapter(child: _AiSuggestionBanner()),
               SliverToBoxAdapter(child: _PremiumBanner()),
               SliverToBoxAdapter(child: SizedBox(height: bottom + 100)),
@@ -122,15 +120,15 @@ class _RecentReadingsSection extends StatelessWidget {
                           item.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: PremiumTypography.title(context).copyWith(
-                            fontSize: 13,
-                          ),
+                          style: PremiumTypography.title(
+                            context,
+                          ).copyWith(fontSize: 13),
                         ),
                         Text(
                           '${item.type} · ${item.date}',
-                          style: PremiumTypography.label(context).copyWith(
-                            fontSize: 11,
-                          ),
+                          style: PremiumTypography.label(
+                            context,
+                          ).copyWith(fontSize: 11),
                         ),
                       ],
                     ),
@@ -151,6 +149,72 @@ class _RecentItem {
   final String title;
   final String type;
   final String date;
+}
+
+class _QuickFortuneActions extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: FortuneGlassCard(
+              onTap: () => context.push('/fortune/ready'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('✨', style: TextStyle(fontSize: 28)),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Hazır Yorumlar',
+                    style: PremiumTypography.title(
+                      context,
+                    ).copyWith(fontSize: 14),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Kahve, Tarot ve Yıldızname örnekleri',
+                    style: TextStyle(
+                      color: context.colors.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: FortuneGlassCard(
+              onTap: () => context.push('/favorites'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('🗂️', style: TextStyle(fontSize: 28)),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Fal Geçmişi',
+                    style: PremiumTypography.title(
+                      context,
+                    ).copyWith(fontSize: 14),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Kaydedilen fal ve favoriler',
+                    style: TextStyle(
+                      color: context.colors.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _AiSuggestionBanner extends StatelessWidget {
@@ -175,55 +239,58 @@ class _AiSuggestionBanner extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(4),
             child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.12),
-              ),
-              child: Icon(Icons.smart_toy_rounded, color: Colors.white),
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'AI ÖNERİSİ',
-                    style: PremiumTypography.label(context).copyWith(
-                      letterSpacing: 0.8,
-                      fontWeight: FontWeight.w900,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.12),
+                  ),
+                  child: Icon(Icons.smart_toy_rounded, color: Colors.white),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'AI ÖNERİSİ',
+                        style: PremiumTypography.label(context).copyWith(
+                          letterSpacing: 0.8,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Bugün senin için Tarot ve Yıldız Falı uygun görünüyor…',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 12,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 8),
+                TextButton(
+                  onPressed: () => context.push('/fortune/tarot'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.white.withValues(alpha: 0.15),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
                     ),
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Bugün senin için Tarot ve Yıldız Falı uygun görünüyor…',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 12,
-                      height: 1.3,
-                    ),
+                  child: Text(
+                    'KEŞFET →',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11),
                   ),
-                ],
-              ),
-            ),
-            SizedBox(width: 8),
-            TextButton(
-              onPressed: () => context.push('/fortune/tarot'),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.white.withValues(alpha: 0.15),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              ),
-              child: Text(
-                'KEŞFET →',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11),
-              ),
-            ),
-          ],
+                ),
+              ],
             ),
           ),
         ),
@@ -265,17 +332,16 @@ class _PremiumBanner extends StatelessWidget {
                     children: [
                       Text(
                         "PREMIUM'A GEÇ",
-                        style: PremiumTypography.title(context).copyWith(
-                          color: AppThemeColors.coinGold,
-                        ),
+                        style: PremiumTypography.title(
+                          context,
+                        ).copyWith(color: AppThemeColors.coinGold),
                       ),
                       SizedBox(height: 4),
                       Text(
                         'Sınırsız fal, reklamsız deneyim ve özel yorumlar.',
-                        style: PremiumTypography.body(context).copyWith(
-                          fontSize: 12,
-                          height: 1.3,
-                        ),
+                        style: PremiumTypography.body(
+                          context,
+                        ).copyWith(fontSize: 12, height: 1.3),
                       ),
                     ],
                   ),
@@ -318,7 +384,11 @@ class _PremiumBanner extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: AppThemeColors.coinGold.withValues(alpha: 0.9)),
+        Icon(
+          icon,
+          size: 14,
+          color: AppThemeColors.coinGold.withValues(alpha: 0.9),
+        ),
         SizedBox(width: 4),
         Text(
           label,

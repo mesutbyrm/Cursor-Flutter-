@@ -1,4 +1,5 @@
 import '../../../../core/pagination/paged_result.dart';
+import '../entities/fortune_type_entity.dart';
 import '../entities/user_fortune_entity.dart';
 
 class SaveFortuneInput {
@@ -24,7 +25,17 @@ class SaveFortuneInput {
 }
 
 abstract class FortuneRepository {
-  Future<PagedResult<UserFortuneEntity>> history({int page = 1, int limit = 20});
+  Future<FortuneReadingResult> readFortune({
+    required FortuneTypeEntity type,
+    String? userInput,
+    bool? yesNoChoice,
+    DateTime? birthDate,
+  });
+
+  Future<PagedResult<UserFortuneEntity>> history({
+    int page = 1,
+    int limit = 20,
+  });
 
   Future<UserFortuneEntity> detail(String fortuneId);
 
