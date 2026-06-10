@@ -19,7 +19,7 @@ import '../../domain/entities/popular_music_suggestion.dart';
 
 class ChatRoomRemoteDataSource {
   ChatRoomRemoteDataSource(this._dio, {YoutubeMusicSearchCache? searchCache})
-      : _searchCache = searchCache ?? YoutubeMusicSearchCache();
+    : _searchCache = searchCache ?? YoutubeMusicSearchCache();
 
   final Dio _dio;
   final YoutubeMusicSearchCache _searchCache;
@@ -78,7 +78,8 @@ class ChatRoomRemoteDataSource {
     final map = _unwrapMap(body) ?? (body is Map ? asJsonMap(body) : null);
     dynamic raw;
     if (map != null) {
-      raw = map['users'] ??
+      raw =
+          map['users'] ??
           map['presence'] ??
           map['members'] ??
           map['onlineUsers'] ??
@@ -179,10 +180,7 @@ class ChatRoomRemoteDataSource {
     });
   }
 
-  Future<void> leavePresence(
-    String roomKey, {
-    String? alternateKey,
-  }) async {
+  Future<void> leavePresence(String roomKey, {String? alternateKey}) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safeDelete<dynamic>(presencePath(key));
     });
@@ -246,10 +244,7 @@ class ChatRoomRemoteDataSource {
     return urls;
   }
 
-  Future<void> advanceMusicQueue(
-    String roomKey, {
-    String? alternateKey,
-  }) async {
+  Future<void> advanceMusicQueue(String roomKey, {String? alternateKey}) async {
     await skipMusicQueue(roomKey: roomKey, alternateKey: alternateKey);
   }
 
@@ -258,9 +253,7 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      await _dio.safePost<dynamic>(
-        '/api/chat/rooms/$key/music-queue/advance',
-      );
+      await _dio.safePost<dynamic>('/api/chat/rooms/$key/music-queue/advance');
     });
   }
 
@@ -333,9 +326,10 @@ class ChatRoomRemoteDataSource {
       if (raw is List && raw.isNotEmpty) {
         return raw
             .whereType<Map>()
-            .map((e) => PopularMusicSuggestion.fromJson(
-                  Map<String, dynamic>.from(e),
-                ))
+            .map(
+              (e) =>
+                  PopularMusicSuggestion.fromJson(Map<String, dynamic>.from(e)),
+            )
             .toList();
       }
     } catch (_) {}
@@ -355,10 +349,7 @@ class ChatRoomRemoteDataSource {
     });
   }
 
-  Future<void> requestSpeak(
-    String roomKey, {
-    String? alternateKey,
-  }) async {
+  Future<void> requestSpeak(String roomKey, {String? alternateKey}) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(speakRequestPath(key));
     });
@@ -469,10 +460,7 @@ class ChatRoomRemoteDataSource {
   List<YoutubeSearchHit> _parseYoutubeHits(dynamic body) {
     dynamic raw;
     if (body is Map) {
-      raw = body['items'] ??
-          body['videos'] ??
-          body['results'] ??
-          body['data'];
+      raw = body['items'] ?? body['videos'] ?? body['results'] ?? body['data'];
       if (raw is Map) {
         raw = raw['items'] ?? raw['videos'] ?? raw['results'];
       }
@@ -486,16 +474,16 @@ class ChatRoomRemoteDataSource {
       final m = Map<String, dynamic>.from(e);
       final vid = m['videoId']?.toString() ?? m['id']?.toString() ?? '';
       if (vid.isEmpty) continue;
-      final url = m['url']?.toString() ??
-          'https://www.youtube.com/watch?v=$vid';
+      final url =
+          m['url']?.toString() ?? 'https://www.youtube.com/watch?v=$vid';
       out.add(
         YoutubeSearchHit(
           videoId: vid,
           title: m['title']?.toString() ?? 'Video',
           url: url,
-          thumbUrl: m['thumbUrl']?.toString() ??
-              m['thumbnail']?.toString(),
-          uploader: m['uploader']?.toString() ??
+          thumbUrl: m['thumbUrl']?.toString() ?? m['thumbnail']?.toString(),
+          uploader:
+              m['uploader']?.toString() ??
               m['channelTitle']?.toString() ??
               m['channel']?.toString(),
           duration: _formatDuration(m['duration']),
@@ -619,10 +607,7 @@ class ChatRoomRemoteDataSource {
   Future<List<YoutubeSearchHit>> _searchMusicViaBackend(String q) async {
     try {
       final res = await _dio
-          .get<dynamic>(
-            musicSearchPath(),
-            queryParameters: {'q': q},
-          )
+          .get<dynamic>(musicSearchPath(), queryParameters: {'q': q})
           .timeout(const Duration(seconds: 8));
       final data = res.data;
       if (data is String &&
@@ -667,7 +652,9 @@ class ChatRoomRemoteDataSource {
     return ApiException(msg, statusCode: status);
   }
 
-  Future<List<YoutubeSearchHit>> _searchYoutubeFromPopularCatalog(String q) async {
+  Future<List<YoutubeSearchHit>> _searchYoutubeFromPopularCatalog(
+    String q,
+  ) async {
     final lower = q.toLowerCase();
     final popular = await fetchPopularMusic();
     final matches = popular
@@ -733,28 +720,36 @@ class ChatRoomRemoteDataSource {
   }
 
   Future<
-      ({
-        List<MusicQueueItem> queue,
-        int cost,
-        int maxMusicQueue,
-        bool musicEnabled,
-        MusicQueueItem? nowPlaying,
-        bool? playing,
-        bool? canRequestMusic,
-        String? musicUrl,
-      })> fetchMusicQueue(
-    String roomKey, {
-    String? alternateKey,
-  }) async {
+    ({
+      List<MusicQueueItem> queue,
+      int cost,
+      int maxMusicQueue,
+      bool musicEnabled,
+      MusicQueueItem? nowPlaying,
+      bool? playing,
+      bool? canRequestMusic,
+      String? musicUrl,
+    })
+  >
+  fetchMusicQueue(String roomKey, {String? alternateKey}) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       Response<dynamic>? res;
       for (final path in [
         '/api/chat/rooms/$key/music-queue',
         songRequestPath(key),
+        '/api/chat/rooms/$key/music',
+        djPath(key),
       ]) {
         try {
           res = await _dio.safeGet<dynamic>(path);
-          break;
+          final parsed = _parseMusicQueueResponse(res.data);
+          if (parsed.queue.isNotEmpty ||
+              parsed.nowPlaying != null ||
+              parsed.musicUrl != null ||
+              parsed.musicEnabled == false) {
+            return parsed;
+          }
+          continue;
         } on Object {
           continue;
         }
@@ -762,56 +757,89 @@ class ChatRoomRemoteDataSource {
       if (res == null) {
         throw const ApiException('Müzik kuyruğu alınamadı');
       }
-      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
-      final raw = map['queue'] ?? map['musicQueue'] ?? map['items'];
-      final queue = <MusicQueueItem>[];
-      if (raw is List) {
-        for (final e in raw) {
-          if (e is Map) {
-            queue.add(MusicQueueItem.fromJson(Map<String, dynamic>.from(e)));
-          }
-        }
-      }
-      final cost = map['cost'] as int? ??
-          map['musicRequestCost'] as int? ??
-          10;
-      MusicQueueItem? nowPlaying;
-      if (map.containsKey('nowPlaying')) {
-        final np = map['nowPlaying'];
-        if (np is Map) {
-          nowPlaying = MusicQueueItem.fromJson(Map<String, dynamic>.from(np));
-        }
-      } else if (map['playing'] == true && queue.isNotEmpty) {
-        nowPlaying = queue.first;
-      }
-      final hasPlaying = map.containsKey('playing');
-      final hasCanRequest = map.containsKey('canRequestMusic');
-      final musicUrlRaw = map['musicUrl']?.toString();
-      return (
-        queue: queue,
-        cost: cost,
-        maxMusicQueue: map['maxMusicQueue'] as int? ?? 20,
-        musicEnabled: map['musicEnabled'] != false,
-        nowPlaying: nowPlaying,
-        playing: hasPlaying ? map['playing'] == true : null,
-        canRequestMusic:
-            hasCanRequest ? map['canRequestMusic'] == true : null,
-        musicUrl: musicUrlRaw != null && musicUrlRaw.isNotEmpty
-            ? musicUrlRaw
-            : null,
-      );
+      return _parseMusicQueueResponse(res.data);
     });
   }
 
+  ({
+    List<MusicQueueItem> queue,
+    int cost,
+    int maxMusicQueue,
+    bool musicEnabled,
+    MusicQueueItem? nowPlaying,
+    bool? playing,
+    bool? canRequestMusic,
+    String? musicUrl,
+  })
+  _parseMusicQueueResponse(dynamic body) {
+    final map = _unwrapMap(body) ?? asJsonMap(body);
+    final raw = pick(map, [
+      'queue',
+      'musicQueue',
+      'items',
+      'songs',
+      'requests',
+    ]);
+    final queue = <MusicQueueItem>[];
+    if (raw is List) {
+      for (final e in raw) {
+        if (e is Map) {
+          queue.add(MusicQueueItem.fromJson(Map<String, dynamic>.from(e)));
+        }
+      }
+    }
+    MusicQueueItem? nowPlaying;
+    final np = pick(map, [
+      'nowPlaying',
+      'currentSong',
+      'currentTrack',
+      'playingItem',
+      'activeItem',
+    ]);
+    if (np is Map) {
+      nowPlaying = MusicQueueItem.fromJson(Map<String, dynamic>.from(np));
+    } else if ((map['playing'] == true || map['isPlaying'] == true) &&
+        queue.isNotEmpty) {
+      nowPlaying = queue.first;
+    }
+    final musicUrlRaw = pick(map, [
+      'musicUrl',
+      'streamUrl',
+      'audioUrl',
+      'url',
+    ])?.toString();
+    final playingRaw = pick(map, ['playing', 'isPlaying']);
+    final canRequestRaw = pick(map, ['canRequestMusic', 'canRequest']);
+    return (
+      queue: queue,
+      cost: asInt(pick(map, ['cost', 'musicRequestCost', 'requestCost'])) == 0
+          ? 10
+          : asInt(pick(map, ['cost', 'musicRequestCost', 'requestCost'])),
+      maxMusicQueue:
+          asInt(pick(map, ['maxMusicQueue', 'maxQueueLength', 'limit'])) == 0
+          ? 20
+          : asInt(pick(map, ['maxMusicQueue', 'maxQueueLength', 'limit'])),
+      musicEnabled: pick(map, ['musicEnabled', 'enabled']) != false,
+      nowPlaying: nowPlaying,
+      playing: playingRaw == null ? null : playingRaw == true,
+      canRequestMusic: canRequestRaw == null ? null : canRequestRaw == true,
+      musicUrl: musicUrlRaw != null && musicUrlRaw.isNotEmpty
+          ? musicUrlRaw
+          : null,
+    );
+  }
+
   Future<
-      ({
-        MusicQueueItem? item,
-        List<MusicQueueItem> queue,
-        int? newBalance,
-        int? queuePosition,
-        String? musicUrl,
-        bool playing,
-      })> requestMusic({
+    ({
+      MusicQueueItem? item,
+      List<MusicQueueItem> queue,
+      int? newBalance,
+      int? queuePosition,
+      String? musicUrl,
+      bool playing,
+    })
+  >
+  requestMusic({
     required String roomKey,
     String? alternateKey,
     required String title,
@@ -838,8 +866,7 @@ class ChatRoomRemoteDataSource {
         'youtubeUrl': youtubeUrl,
         if (vid != null) 'videoId': vid,
         if (thumbUrl != null) 'thumbUrl': thumbUrl,
-        if (giftTo != null && giftTo.trim().isNotEmpty)
-          'giftTo': giftTo.trim(),
+        if (giftTo != null && giftTo.trim().isNotEmpty) 'giftTo': giftTo.trim(),
         if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
         if (priority) 'priority': true,
         if (skipPayment) 'skipPayment': true,
@@ -861,11 +888,17 @@ class ChatRoomRemoteDataSource {
       }
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       MusicQueueItem? item;
-      final itemRaw = map['item'];
+      final itemRaw = pick(map, ['item', 'request', 'song', 'track']);
       if (itemRaw is Map) {
         item = MusicQueueItem.fromJson(Map<String, dynamic>.from(itemRaw));
       }
-      final queueRaw = map['queue'] ?? map['musicQueue'] ?? map['items'];
+      final queueRaw = pick(map, [
+        'queue',
+        'musicQueue',
+        'items',
+        'songs',
+        'requests',
+      ]);
       final queue = <MusicQueueItem>[];
       if (queueRaw is List) {
         for (final e in queueRaw) {
@@ -874,26 +907,38 @@ class ChatRoomRemoteDataSource {
           }
         }
       }
-      final balance = map['newBalance'] as int? ?? map['coinBalance'] as int?;
-      final position = map['queuePosition'] as int?;
-      final musicUrlRaw = map['musicUrl']?.toString();
-      final playing = map['playing'] == true;
+      final balance = asInt(
+        pick(map, ['newBalance', 'coinBalance', 'balance']),
+      );
+      final position = asInt(pick(map, ['queuePosition', 'position', 'rank']));
+      final musicUrlRaw = pick(map, [
+        'musicUrl',
+        'streamUrl',
+        'audioUrl',
+        'url',
+      ])?.toString();
+      final playing = map['playing'] == true || map['isPlaying'] == true;
+      final fallbackQueue = queue.isEmpty
+          ? await fetchMusicQueue(key, alternateKey: null)
+          : null;
       VoiceRoomDebugLog.log('music.queue.add.ok', {
         'room': key,
         'playing': playing,
-        'queueLen': queue.length,
-        'position': position,
+        'queueLen': queue.isNotEmpty
+            ? queue.length
+            : fallbackQueue?.queue.length,
+        'position': position == 0 ? null : position,
         'hasUrl': musicUrlRaw != null && musicUrlRaw.isNotEmpty,
       });
       return (
         item: item,
-        queue: queue,
-        newBalance: balance,
-        queuePosition: position,
+        queue: queue.isNotEmpty ? queue : (fallbackQueue?.queue ?? const []),
+        newBalance: balance == 0 ? null : balance,
+        queuePosition: position == 0 ? null : position,
         musicUrl: musicUrlRaw != null && musicUrlRaw.isNotEmpty
             ? musicUrlRaw
-            : null,
-        playing: playing,
+            : fallbackQueue?.musicUrl,
+        playing: playing || fallbackQueue?.playing == true,
       );
     });
   }
@@ -920,11 +965,7 @@ class ChatRoomRemoteDataSource {
       } on ApiException catch (e) {
         if (e.statusCode != 405 && e.statusCode != 404) rethrow;
       }
-      await _dio.safePost<dynamic>(
-        seatsPath(key),
-        data: body,
-        options: opts,
-      );
+      await _dio.safePost<dynamic>(seatsPath(key), data: body, options: opts);
     });
   }
 
@@ -1048,16 +1089,18 @@ class ChatRoomRemoteDataSource {
     required String content,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final res = await _dio.safePost<dynamic>(
-        messagesPath(key),
-        data: jsonEncode({
-          'content': content,
-          'body': content,
-          'message': content,
-          'text': content,
-        }),
-        options: Options(contentType: 'application/json'),
-      ).timeout(const Duration(seconds: 15));
+      final res = await _dio
+          .safePost<dynamic>(
+            messagesPath(key),
+            data: jsonEncode({
+              'content': content,
+              'body': content,
+              'message': content,
+              'text': content,
+            }),
+            options: Options(contentType: 'application/json'),
+          )
+          .timeout(const Duration(seconds: 15));
       final code = res.statusCode ?? 0;
       if (code >= 200 && code < 300) {
         final body = res.data;
