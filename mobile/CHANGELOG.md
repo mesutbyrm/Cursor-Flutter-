@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.182+184 (2026-06-10)
+
+### Sesli oda — `!istek` müzik düzeltmesi
+
+- `!istek` artık önce YouTube araması yapıp `song-request` API ile kuyruğa ekliyor (sohbet mesajına güvenmiyor)
+- Kuyruk eşleşmesi yalnızca oynatılabilir YouTube URL’si olan parçalar için sayılıyor
+- DJ/müzik API çağrılarında oda slug yedek anahtarı (`alternateKey`) kullanılıyor
+- Başarısız arama/kuyruk durumunda yanıltıcı “iletildi” mesajı gösterilmiyor
+
 ## 1.0.181+183 (2026-06-10)
 
 ### Oyun Merkezi — premium native hub
