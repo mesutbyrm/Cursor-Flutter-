@@ -2,24 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.176+178` |
-| Tarih (UTC) | 2026-06-10 07:29 |
-| Commit | [`74f316cdac218f687e7d26fa8b77e0e808eec0dd`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/74f316cdac218f687e7d26fa8b77e0e808eec0dd) |
-| İş akışı | [Run 27259429869](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27259429869) |
+| Sürüm | `1.0.177+179` |
+| Tarih (UTC) | 2026-06-10 08:50 |
+| Commit | [`2115e4eb2abc3189e3ff5bc2f328426721bead8b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/2115e4eb2abc3189e3ff5bc2f328426721bead8b) |
+| İş akışı | [Run 27263492524](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27263492524) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.176+178 (2026-06-10)
+## 1.0.177+179 (2026-06-10)
 
-### Web parite — oyun/içerik hub, sesli oda komutları ve canlı yayın araçları
+### Web parite — native API liste hub'ları
 
-- Oyunlar, rüya, blog, ünlüler, fan club ve reklamla kredi için native hub girişleri eklendi
-- Ana sayfada `/api/games` oyun/etkinlik satırı yeniden görünür hale getirildi ve keşfet kartları doğru native merkezlere bağlandı
-- Sesli sohbet `!ban`, `!unban`, `!at`/`!kick`, `!sessiz`/`!mute`, `!yetki`, `!dj`, `!muzik`, `!temizle` komutları için web bot mesajına ek olarak mobil REST fallback katmanı eklendi
-- `!istek` chat komutu web ile uyumlu mesaj gönderimini korur; sunucu kuyruğa eklemezse mobil `song-request` fallback'i dener
-- Canlı yayın hazırlığında özel/resim modu/arka plan ayarları create payload'a taşındı
-- Canlı yayın odasına paylaşım, görsel mod katmanı ve yayıncı araçları (görsel, arka plan, co-broadcast yenileme, auto-close kontrolü) eklendi
+- Oyunlar, rüya, blog, ünlüler ve fan club hub ekranları artık canlifal.com API listelerini native kartlar olarak çeker
+- API yanıtları `items`, `data`, `games`, `dreams`, `symbols`, `posts`, `celebrities`, `fanClubs` gibi üretim alias'larıyla parse edilir
+- API boş/geçici hatalı dönerse kullanıcı boş ekrana düşmez; native aksiyon kartları görünmeye devam eder
+- Bu parça, web'de var olup Flutter'da sadece statik giriş olan içerik sistemlerini ilk native veri katmanına taşır
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
