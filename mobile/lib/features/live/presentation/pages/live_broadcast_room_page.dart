@@ -224,21 +224,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   }
 
   Future<void> _openPkPanel() async {
-    final streamId = widget.session.streamId?.trim();
-    if (streamId == null || streamId.isEmpty) return;
-    final pk = ref.read(liveVideoPkProvider(streamId).notifier);
-    await pk.create();
-    if (!mounted) return;
-    final state = ref.read(liveVideoPkProvider(streamId));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          state.battle != null
-              ? 'PK başlatıldı (${state.status})'
-              : (state.error ?? 'PK başlatılamadı'),
-        ),
-      ),
-    );
+    await context.push('/live/pk-invite', extra: widget.session);
   }
 
   String _fmtLikes(int n) {
@@ -366,13 +352,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
               .pulseHeartsVisual();
           final battle = ref.read(liveVideoPkProvider(streamId)).battle;
           if (battle != null && battle['status'] == 'active') {
-            final score = (ev.coinCost * ev.quantity).clamp(1, 9999);
-            unawaited(
-              ref.read(liveVideoPkProvider(streamId).notifier).addScore(
-                    score: score,
-                    rightSide: false,
-                  ),
-            );
+            unawaited(ref.read(liveVideoPkProvider(streamId).notifier).refresh());
           }
         }
       }

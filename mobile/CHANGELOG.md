@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.173+175 (2026-06-10)
+
+### Canlı yayın + PK parity
+
+- Canlı yayın `PK Başlat` artık web/API sözleşmesi gibi önce rakip yayın seçme ekranına gider
+- Eski desteklenmeyen `action: score` PK çağrısı kaldırıldı; skor web gibi hediye entegrasyonu ve remote refresh ile senkronize edilir
+- `LIVE_PK_PARITY_REPORT.md` ile yayın başlatma/kapatma, PK daveti, savaş, skor, hediye ve sonuç parity durumu raporlandı
+
 ## 1.0.172+174 (2026-06-10)
 
 ### Flutter sağlık denetimi + import temizliği

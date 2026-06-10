@@ -93,18 +93,6 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   Future<void> reject() => _action('reject');
   Future<void> end() => _action('end');
 
-  Future<void> addScore({required int score, required bool rightSide}) async {
-    try {
-      final battle = await _remote.pkAction(
-        streamId: arg,
-        action: 'score',
-        score: score,
-        side: rightSide ? 'right' : 'left',
-      );
-      state = state.copyWith(battle: battle);
-    } catch (_) {}
-  }
-
   Future<void> _action(String action) async {
     state = state.copyWith(loading: true, clearError: true);
     try {
