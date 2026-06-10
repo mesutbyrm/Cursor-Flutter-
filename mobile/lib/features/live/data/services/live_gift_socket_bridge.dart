@@ -42,6 +42,13 @@ class LiveGiftSocketBridge {
             LiveDebugLog.log('socket.stream.join', {'streamId': streamId});
             _socket?.emit('joinStream', {'streamId': streamId});
           })
+          ..onDisconnect((_) {
+            LiveDebugLog.log('socket.stream.disconnect', {'streamId': streamId});
+          })
+          ..onReconnect((_) {
+            LiveDebugLog.log('socket.stream.rejoin', {'streamId': streamId});
+            _socket?.emit('joinStream', {'streamId': streamId});
+          })
           ..on('gift', (data) => _emitGift(data, streamId, onEvent))
           ..on('giftSent', (data) => _emitGift(data, streamId, onEvent))
           ..on('streamMessage', (data) => _emitChat(data, onChat))

@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.169+171 (2026-06-09)
+
+### Socket parity — oda ve canlı yayın senkronu
+
+- Sesli oda Socket.IO listener'larına `chatMessage`, `message`, `roomMessage`, `roomUsers`, `presenceUpdated`, `userJoined`, `userLeft` eklendi
+- Socket reconnect sonrası oda/yayın/PK kanallarına yeniden join davranışı güçlendirildi
+- Disconnect sırasında `leaveRoom`, `leaveStream`, `leavePk` emitleri eklendi
+- `SOCKET_PARITY_REPORT.md` ile web ↔ Flutter socket/TRTC parite durumu raporlandı
+
 ## 1.0.168+170 (2026-06-09)
 
 ### Feature parity — profil takipçi endpoint düzeltmesi

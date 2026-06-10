@@ -94,6 +94,19 @@ class PkBattleSocketService {
   }
 
   void disconnect() {
+    for (final roomId in _roomKeys) {
+      if (_socket?.connected == true) {
+        _socket?.emit('leaveRoom', {'roomId': roomId});
+      }
+    }
+    final sid = _streamId?.trim();
+    if (sid != null && sid.isNotEmpty && _socket?.connected == true) {
+      _socket?.emit('leaveStream', {'streamId': sid});
+    }
+    final bid = _battleId?.trim();
+    if (bid != null && bid.isNotEmpty && _socket?.connected == true) {
+      _socket?.emit('leavePk', {'battleId': bid});
+    }
     _socket?.dispose();
     _socket = null;
     _onUpdate = null;

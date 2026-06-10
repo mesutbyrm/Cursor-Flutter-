@@ -430,6 +430,36 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         ref.read(voiceRoomGiftRealtimeProvider).publishRemote(event);
       },
       onDjUpdate: (payload) => unawaited(_applyDjRealtimePayload(payload)),
+      onMessage: (msg) {
+        final exists = state.messages.any((m) => m.id == msg.id);
+        if (exists) return;
+        state = state.copyWith(messages: [...state.messages, msg]);
+        _onMusicRelatedChatMessage(msg);
+        if (msg.kind == ChatMessageKind.systemJoin &&
+            VoiceOfficialJoin.isEntranceWorthy(
+              content: msg.content,
+              membership: msg.user?.membership,
+              chatRole: msg.user?.chatRole,
+            ) &&
+            _markEntranceOnce(msg.content)) {
+          _showEnterBanner(msg.content);
+        }
+      },
+      onPresence: (users) {
+        final merged = _mergeSelf(users);
+        state = state.copyWith(
+          presence: merged,
+          selfInRoom: true,
+        );
+        ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(true);
+        ref.read(voiceRoomDiagnosticProvider.notifier).setPresence(
+              joined: true,
+              count: merged.length,
+            );
+      },
+      onConnectionChanged: (connected) {
+        ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(connected);
+      },
       accessToken: storage.readAccess,
     );
   }
