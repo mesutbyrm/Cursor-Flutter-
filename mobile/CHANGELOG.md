@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.174+176 (2026-06-10)
+
+### Canlı yayın + PK audit
+
+- PK action payload'ından web API sözleşmesinde olmayan eski `score` / `side` alanları kaldırıldı
+- PK skor hesaplama akışı sadece hediye entegrasyonu ve remote battle state ile senkronize edilir
+- `LIVE_PK_AUDIT_REPORT.md` ile yayın başlatma/kapatma, PK daveti/kabul/skor/hediye/sonuç akışı denetlendi
+
 ## 1.0.173+175 (2026-06-10)
 
 ### Canlı yayın + PK parity

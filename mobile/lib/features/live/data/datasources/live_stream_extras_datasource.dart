@@ -53,8 +53,6 @@ class LiveStreamExtrasDataSource {
     required String action,
     String? opponentStreamId,
     String? opponentId,
-    int score = 1,
-    String side = 'left',
   }) async {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamPkBattle(streamId),
@@ -62,8 +60,6 @@ class LiveStreamExtrasDataSource {
         'action': action,
         if (opponentStreamId != null) 'opponentStreamId': opponentStreamId,
         if (opponentId != null) 'opponentId': opponentId,
-        'score': score,
-        'side': side,
       },
     );
     return _unwrapBattle(res.data);
