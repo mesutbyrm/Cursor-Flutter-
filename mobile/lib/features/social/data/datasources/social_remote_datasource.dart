@@ -168,12 +168,9 @@ class SocialRemoteDataSource {
     final m = _unwrapBody(body) ?? (body is Map ? asJsonMap(body) : null);
     if (m == null) return (liked: true, likesCount: 0);
     return (
-      liked: m['liked'] == true ||
-          m['isLiked'] == true ||
-          m['likedByMe'] == true,
-      likesCount: asInt(
-        pick(m, ['likesCount', 'likeCount', 'likes', 'count']),
-      ),
+      liked:
+          m['liked'] == true || m['isLiked'] == true || m['likedByMe'] == true,
+      likesCount: asInt(pick(m, ['likesCount', 'likeCount', 'likes', 'count'])),
     );
   }
 
@@ -211,7 +208,9 @@ class SocialRemoteDataSource {
       list = pick(m, ['comments', 'items', 'data']) ?? body;
     }
     if (list is! List) return const [];
-    return asJsonList(list).map(_commentFromMap).where((c) => c.id.isNotEmpty).toList();
+    return asJsonList(
+      list,
+    ).map(_commentFromMap).where((c) => c.id.isNotEmpty).toList();
   }
 
   SocialCommentEntity _commentFromMap(dynamic raw) {
@@ -230,20 +229,34 @@ class SocialRemoteDataSource {
 
   /// POST `/api/stories` — görsel hikâye (multipart).
   Future<void> createStoryImage(String imagePath) async {
-    final form = FormData.fromMap({
-      'image': await MultipartFile.fromFile(
-        imagePath,
-        filename: 'story_${DateTime.now().millisecondsSinceEpoch}.jpg',
-      ),
-      'media': await MultipartFile.fromFile(
-        imagePath,
-        filename: 'story_${DateTime.now().millisecondsSinceEpoch}.jpg',
-      ),
-    });
-    await _dio.safePost<dynamic>(
-      ApiEndpoints.feed,
-      data: form,
-      options: Options(contentType: 'multipart/form-data'),
+    Object? lastError;
+    for (final path in [ApiEndpoints.feed, ApiEndpoints.userStory]) {
+      try {
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final form = FormData.fromMap({
+          'image': await MultipartFile.fromFile(
+            imagePath,
+            filename: 'story_$now.jpg',
+          ),
+          'media': await MultipartFile.fromFile(
+            imagePath,
+            filename: 'story_$now.jpg',
+          ),
+          'mediaType': 'image',
+          'type': 'image',
+        });
+        await _dio.safePost<dynamic>(
+          path,
+          data: form,
+          options: Options(contentType: 'multipart/form-data'),
+        );
+        return;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    throw ApiException(
+      ApiException.userMessage(lastError ?? 'Hikâye paylaşılamadı'),
     );
   }
 
@@ -289,28 +302,55 @@ class SocialRemoteDataSource {
       if (gm.isEmpty) continue;
 
       final userRaw = pick(gm, ['user', 'author', 'owner', 'profile']);
-      final userMap =
-          userRaw is Map ? asJsonMap(userRaw) : <String, dynamic>{};
+      final userMap = userRaw is Map ? asJsonMap(userRaw) : <String, dynamic>{};
       if (userMap.isEmpty) continue;
 
       final user = UserDto.fromJson(userMap).toEntity();
       if (user.id.isEmpty) continue;
 
+      final stories = <SocialStoryItemEntity>[];
       String? preview;
       final storiesRaw = pick(gm, ['stories', 'items', 'data', 'posts']);
       if (storiesRaw is List && storiesRaw.isNotEmpty) {
-        final first = asJsonMap(storiesRaw.first);
-        preview = pick(first, [
-          'mediaUrl',
-          'media_url',
-          'thumbnailUrl',
-          'imageUrl',
-          'videoUrl',
-        ]) as String?;
+        for (final raw in storiesRaw) {
+          final story = _storyItemFromMap(asJsonMap(raw));
+          if (story != null) stories.add(story);
+        }
+        if (stories.isNotEmpty) preview = stories.first.mediaUrl;
       }
 
-      rings.add(SocialStoryRingEntity(user: user, previewUrl: preview));
+      rings.add(
+        SocialStoryRingEntity(
+          user: user,
+          previewUrl: preview,
+          stories: stories,
+        ),
+      );
     }
     return rings;
+  }
+
+  SocialStoryItemEntity? _storyItemFromMap(Map<String, dynamic> json) {
+    final media = pick(json, [
+      'mediaUrl',
+      'media_url',
+      'thumbnailUrl',
+      'imageUrl',
+      'image',
+      'videoUrl',
+      'url',
+    ])?.toString();
+    if (media == null || media.trim().isEmpty) return null;
+    return SocialStoryItemEntity(
+      id:
+          pick(json, ['id', '_id', 'storyId'])?.toString() ??
+          media.hashCode.toString(),
+      mediaUrl: media,
+      type: pick(json, ['type', 'mediaType'])?.toString() ?? 'image',
+      caption: pick(json, ['caption', 'text', 'content'])?.toString(),
+      createdAt: DateTime.tryParse(
+        pick(json, ['createdAt', 'created_at'])?.toString() ?? '',
+      ),
+    );
   }
 }

@@ -40,6 +40,7 @@ abstract final class ApiEndpoints {
 
   // --- Uygulama API (çerez veya Bearer) ---
   static const feed = '/api/stories';
+
   /// canlifal.com sosyal akış (web `/sosyal` ile aynı veri).
   static const socialPosts = '/api/social/posts';
   static const socialStories = '/api/social/stories';
@@ -126,7 +127,8 @@ abstract final class ApiEndpoints {
   static String socialPostDelete(String id) => '/api/social/posts/$id';
 
   /// Beğeni toggle — POST (canlifal.com).
-  static String socialPostLikes(String postId) => '/api/social/posts/$postId/likes';
+  static String socialPostLikes(String postId) =>
+      '/api/social/posts/$postId/likes';
 
   static String socialPostComments(String postId) =>
       '/api/social/posts/$postId/comments';
@@ -138,8 +140,10 @@ abstract final class ApiEndpoints {
   /// Başka kullanıcının takipçileri (dizi döner).
   static String userPublicFollowers(String userId) =>
       '/api/users/$userId/followers';
+
   /// canlifal.com ana sayfa canlı yayın listesi (JSON dizi).
   static const videoStreams = '/api/video-streams';
+
   /// Sesli / metin sohbet odaları (web `/sohbet/{slug}`).
   static const chatRooms = '/api/chat/rooms';
 
@@ -176,12 +180,13 @@ abstract final class ApiEndpoints {
   static String pkBattleReject(String battleId) =>
       '/api/pk/battles/$battleId/reject';
 
-  static String pkBattleEnd(String battleId) =>
-      '/api/pk/battles/$battleId/end';
+  static String pkBattleEnd(String battleId) => '/api/pk/battles/$battleId/end';
 
   static const musicSearch = '/api/music/search';
+
   /// Oturumlu kullanıcı profili (takipçi, bio, görsel — NextAuth çerezi).
   static const userSiteProfile = '/api/user/profile';
+
   /// Jeton / kredi bakiyesi (NextAuth).
   static const userCredits = '/api/user/credits';
 
@@ -196,12 +201,14 @@ abstract final class ApiEndpoints {
   static const adminCfcPaymentRequests = '/api/admin/cfc-payment-requests';
   static const adminCfcPaymentPatch = '/api/admin/cfc-payment-requests';
   static const adminCfcSettings = '/api/admin/cfc-settings';
+
   /// Geriye dönük
   static const adminPaymentRequests = '/api/admin/payment-requests';
   static const adminNotifications = '/api/admin/notifications';
 
   /// Arkadaş daveti — bağlantı veya kod (oturum gerekir).
   static const referral = '/api/referral';
+
   /// Diğer ortamlar için genel canlı listesi.
   static const liveStreams = '/api/live';
 
@@ -214,7 +221,8 @@ abstract final class ApiEndpoints {
 
   static String videoStream(String streamId) => '/api/video-streams/$streamId';
 
-  static String videoStreamEnd(String streamId) => '/api/video-streams/$streamId/end';
+  static String videoStreamEnd(String streamId) =>
+      '/api/video-streams/$streamId/end';
 
   static String videoStreamJoin(String streamId) =>
       '/api/video-streams/$streamId/join';
@@ -289,6 +297,8 @@ abstract final class ApiEndpoints {
   static const userFavorites = '/api/user/favorites';
 
   static String userFavoriteDelete(String id) => '/api/user/favorites/$id';
+
+  static const userStory = '/api/user/story';
 
   /// Yayın geçmişi (site dokümanı: `/api/user/broadcast-history`).
   static const userBroadcastHistory = '/api/user/broadcast-history';
