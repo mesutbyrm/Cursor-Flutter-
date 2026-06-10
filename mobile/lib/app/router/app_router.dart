@@ -10,6 +10,7 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
+import '../../features/content_hub/domain/native_feature_item.dart';
 import '../../features/content_hub/presentation/pages/content_hub_page.dart';
 import '../../features/content_hub/presentation/pages/native_feature_hub_page.dart';
 import '../../features/favorites/presentation/pages/favorites_page.dart';
@@ -85,10 +86,7 @@ class RouterRefresh extends ChangeNotifier {
       authControllerProvider,
       (_, _) => notifyListeners(),
     );
-    _ref.listen<bool>(
-      guestModeProvider,
-      (_, _) => notifyListeners(),
-    );
+    _ref.listen<bool>(guestModeProvider, (_, _) => notifyListeners());
   }
 
   final Ref _ref;
@@ -115,7 +113,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       final authed = auth.valueOrNull != null;
       final guest = ref.read(guestModeProvider);
-      final publicAuthPages = loc == '/login' ||
+      final publicAuthPages =
+          loc == '/login' ||
           loc == '/register' ||
           loc.startsWith('/auth/forgot-password') ||
           loc == '/auth/otp-verify';
@@ -127,14 +126,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/splash',
-        builder: (context, state) => const SplashPage(),
-      ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginPage(),
-      ),
+      GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
+      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterPage(),
@@ -150,9 +143,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/auth/otp-verify',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
-          child: OtpVerifyPage(
-            email: state.extra as String?,
-          ),
+          child: OtpVerifyPage(email: state.extra as String?),
         ),
       ),
       StatefulShellRoute.indexedStack(
@@ -176,12 +167,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'create',
-                    pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-                      key: state.pageKey,
-                      child: SocialCreatePostPage(
-                        initialCaption: state.extra as String?,
-                      ),
-                    ),
+                    pageBuilder: (context, state) =>
+                        AppPageTransitions.fadeSlide(
+                          key: state.pageKey,
+                          child: SocialCreatePostPage(
+                            initialCaption: state.extra as String?,
+                          ),
+                        ),
                   ),
                 ],
               ),
@@ -203,10 +195,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'types',
-                    pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-                      key: state.pageKey,
-                      child: const FortuneTypesAllPage(),
-                    ),
+                    pageBuilder: (context, state) =>
+                        AppPageTransitions.fadeSlide(
+                          key: state.pageKey,
+                          child: const FortuneTypesAllPage(),
+                        ),
                   ),
                   GoRoute(
                     path: ':slug',
@@ -216,8 +209,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       final child = type == null
                           ? const FortuneTarotHubPage()
                           : type.isDaily
-                              ? DailyFortuneOpenPage(type: type)
-                              : FortuneTypeIntroPage(type: type);
+                          ? DailyFortuneOpenPage(type: type)
+                          : FortuneTypeIntroPage(type: type);
                       return AppPageTransitions.fadeSlide(
                         key: state.pageKey,
                         child: child,
@@ -245,8 +238,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                           final child = result == null
                               ? const FortuneTarotHubPage()
                               : result.type.isDaily
-                                  ? DailyFortuneResultPage(result: result)
-                                  : FortuneResultPage(result: result);
+                              ? DailyFortuneResultPage(result: result)
+                              : FortuneResultPage(result: result);
                           return AppPageTransitions.fadeSlide(
                             key: state.pageKey,
                             child: child,
@@ -283,10 +276,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final child = session == null
               ? const LiveBroadcastPrepPage()
               : LiveBroadcastRoomPage(session: session);
-          return AppPageTransitions.fadeSlide(
-            key: state.pageKey,
-            child: child,
-          );
+          return AppPageTransitions.fadeSlide(key: state.pageKey, child: child);
         },
       ),
       GoRoute(
@@ -296,10 +286,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final child = args == null || args.streams.isEmpty
               ? const LivePage()
               : LiveSwipeViewerPage(args: args);
-          return AppPageTransitions.fadeSlide(
-            key: state.pageKey,
-            child: child,
-          );
+          return AppPageTransitions.fadeSlide(key: state.pageKey, child: child);
         },
       ),
       GoRoute(
@@ -449,10 +436,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   ),
                 )
               : ReportPage(target: target);
-          return AppPageTransitions.fadeSlide(
-            key: state.pageKey,
-            child: child,
-          );
+          return AppPageTransitions.fadeSlide(key: state.pageKey, child: child);
         },
       ),
       GoRoute(
@@ -606,7 +590,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final room = state.extra as VoiceRoomEntity?;
               if (room == null) {
-                return VoiceRoomRoutePage(roomId: state.pathParameters['id'] ?? '');
+                return VoiceRoomRoutePage(
+                  roomId: state.pathParameters['id'] ?? '',
+                );
               }
               return PkInvitePage(room: room);
             },

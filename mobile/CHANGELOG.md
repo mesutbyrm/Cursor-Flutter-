@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.177+179 (2026-06-10)
+
+### Web parite — native API liste hub'ları
+
+- Oyunlar, rüya, blog, ünlüler ve fan club hub ekranları artık canlifal.com API listelerini native kartlar olarak çeker
+- API yanıtları `items`, `data`, `games`, `dreams`, `symbols`, `posts`, `celebrities`, `fanClubs` gibi üretim alias'larıyla parse edilir
+- API boş/geçici hatalı dönerse kullanıcı boş ekrana düşmez; native aksiyon kartları görünmeye devam eder
+- Bu parça, web'de var olup Flutter'da sadece statik giriş olan içerik sistemlerini ilk native veri katmanına taşır
+
 ## 1.0.176+178 (2026-06-10)
 
 ### Web parite — oyun/içerik hub, sesli oda komutları ve canlı yayın araçları
