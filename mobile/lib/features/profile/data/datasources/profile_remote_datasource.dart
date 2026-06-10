@@ -261,6 +261,34 @@ class WalletRemoteDataSource {
     );
   }
 
+  Future<int> watchAdCredit() async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.userWatchAd,
+      data: const {'platform': 'mobile', 'source': 'growth_hub'},
+    );
+    final body = res.data;
+    if (body is Map) {
+      final map = _unwrap(body);
+      final credited = asInt(
+        pick(map, [
+          'creditsEarned',
+          'credit',
+          'credits',
+          'reward',
+          'amount',
+          'jeton',
+          'cfc',
+        ]),
+      );
+      if (credited > 0) return credited;
+      final balance = asInt(
+        pick(map, ['newBalance', 'balance', 'jetonBalance', 'cfcBalance']),
+      );
+      if (balance > 0) return balance;
+    }
+    return 0;
+  }
+
   /// Site ödeme ayarları — API dolu alanları korur, yalnız boş alanları tamamlar.
   Future<PaymentConfigEntity> paymentConfig() async {
     final res = await _dio.safeGet<dynamic>(ApiEndpoints.paymentConfig);

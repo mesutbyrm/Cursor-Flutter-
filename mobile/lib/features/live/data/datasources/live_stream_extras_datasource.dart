@@ -176,4 +176,66 @@ class LiveStreamExtrasDataSource {
     if (raw is Map) return Map<String, dynamic>.from(raw);
     return null;
   }
+
+  Future<void> banViewer({
+    required String streamId,
+    required String userId,
+    String? reason,
+  }) async {
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.videoStreamBan(streamId),
+      data: {'userId': userId, if (reason != null) 'reason': reason},
+    );
+  }
+
+  Future<void> muteViewer({
+    required String streamId,
+    required String userId,
+    int minutes = 30,
+    String? reason,
+  }) async {
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.videoStreamMute(streamId),
+      data: {
+        'userId': userId,
+        'minutes': minutes,
+        'durationMinutes': minutes,
+        if (reason != null) 'reason': reason,
+      },
+    );
+  }
+
+  Future<void> addModerator({
+    required String streamId,
+    required String userId,
+  }) async {
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.videoStreamModerator(streamId),
+      data: {'userId': userId},
+    );
+  }
+
+  Future<void> setBroadcastImage({
+    required String streamId,
+    required String imageUrl,
+  }) async {
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.videoStreamImage(streamId),
+      data: {'imageUrl': imageUrl, 'broadcastImage': imageUrl},
+    );
+  }
+
+  Future<void> setBackground({
+    required String streamId,
+    required String backgroundUrl,
+  }) async {
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.videoStreamBackground(streamId),
+      data: {'backgroundUrl': backgroundUrl, 'imageUrl': backgroundUrl},
+    );
+  }
+
+  Future<void> triggerAutoClose(String streamId) async {
+    await _dio.safePost<dynamic>(ApiEndpoints.videoStreamAutoClose(streamId));
+  }
 }

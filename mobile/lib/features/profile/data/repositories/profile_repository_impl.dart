@@ -140,4 +140,7 @@ class WalletRepositoryImpl implements WalletRepository {
 
   @override
   Future<ReferralInfoEntity> referralInfo() => _remote.referralInfo();
+
+  @override
+  Future<int> watchAdCredit() => _remote.watchAdCredit();
 }

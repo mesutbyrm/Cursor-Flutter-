@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -227,6 +229,104 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     await context.push('/live/pk-invite', extra: widget.session);
   }
 
+  Future<void> _openHostTools() async {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF151522),
+      showDragHandle: true,
+      builder: (ctx) {
+        Future<void> run(Future<void> Function() action, String ok) async {
+          try {
+            await action();
+            if (!ctx.mounted) return;
+            Navigator.pop(ctx);
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok)));
+          } catch (e) {
+            if (!ctx.mounted) return;
+            ScaffoldMessenger.of(ctx).showSnackBar(
+              SnackBar(content: Text(ApiException.userMessage(e))),
+            );
+          }
+        }
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const ListTile(
+                  title: Text(
+                    'Yayın Araçları',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  subtitle: Text('Web canlı yayın özellikleriyle uyumlu hızlı işlemler'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.image_rounded),
+                  title: const Text('Resim modunu kapak görseliyle güncelle'),
+                  onTap: () => run(
+                    () => ref.read(liveStreamExtrasProvider).setBroadcastImage(
+                          streamId: streamId,
+                          imageUrl: widget.session.coverImageUrl ??
+                              widget.session.avatarUrl ??
+                              'https://canlifal.com/apple-touch-icon.png',
+                        ),
+                    'Yayın görseli güncellendi.',
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.wallpaper_rounded),
+                  title: const Text('Canlifal arka planı uygula'),
+                  onTap: () => run(
+                    () => ref.read(liveStreamExtrasProvider).setBackground(
+                          streamId: streamId,
+                          backgroundUrl: widget.session.backgroundUrl ??
+                              'https://canlifal.com/apple-touch-icon.png',
+                        ),
+                    'Yayın arka planı güncellendi.',
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.group_add_rounded),
+                  title: const Text('Co-broadcast davetlerini yenile'),
+                  onTap: () => run(
+                    () async {
+                      await ref.read(coBroadcastProvider.notifier).refresh();
+                    },
+                    'Ortak yayın davetleri yenilendi.',
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.timer_off_rounded),
+                  title: const Text('Auto-close kontrolü çalıştır'),
+                  onTap: () => run(
+                    () => ref.read(liveStreamExtrasProvider).triggerAutoClose(streamId),
+                    'Auto-close kontrolü tetiklendi.',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _shareLive() async {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    final url = 'https://canlifal.com/sohbet/video/broadcast/$streamId';
+    await SharePlus.instance.share(
+      ShareParams(
+        text: '${widget.session.title}\n$url',
+        subject: 'Canlifal canlı yayını',
+      ),
+    );
+  }
+
   String _fmtLikes(int n) {
     if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
     if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
@@ -234,11 +334,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   }
 
   Widget _videoLayer(LiveBroadcastSession s) {
+    if (s.isImageMode && s.coverImageUrl?.trim().isNotEmpty == true) {
+      return _imageModeLayer(s);
+    }
     if (!_rtcReady) {
       return Stack(
         fit: StackFit.expand,
         children: [
-          const LiveRoomVideoBackground(),
+          _imageModeLayer(s),
           if (_rtcError != null)
             Center(
               child: Padding(
@@ -273,6 +376,35 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     );
   }
 
+  Widget _imageModeLayer(LiveBroadcastSession s) {
+    final image = s.coverImageUrl?.trim();
+    final bg = s.backgroundUrl?.trim();
+    final url = image?.isNotEmpty == true ? image : bg;
+    if (url == null || url.isEmpty) return const LiveRoomVideoBackground();
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        CachedNetworkImage(
+          imageUrl: url,
+          fit: BoxFit.cover,
+          errorWidget: (_, _, _) => const LiveRoomVideoBackground(),
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withValues(alpha: 0.15),
+                Colors.black.withValues(alpha: 0.62),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   String get _timeLabel {
     final h = _elapsed.inHours.toString().padLeft(2, '0');
     final m = _elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -283,12 +415,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   void _openHostProfile(BuildContext context, LiveBroadcastSession s) {
     final handle = s.streamerHandle?.trim();
     if (handle != null && handle.isNotEmpty) {
-      context.push('/profile/${Uri.encodeComponent(handle)}');
+      context.push('/user/${Uri.encodeComponent(handle)}');
       return;
     }
     final id = s.hostUserId;
     if (id != null && id.isNotEmpty) {
-      context.push('/profile/user/$id');
+      context.push('/user/$id');
     }
   }
 
@@ -395,7 +527,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                           ? () => _openHostProfile(context, s)
                           : null,
                       onBack: widget.embeddedInSwipe
-                          ? () => widget.onSwipeClose?.call()
+                          ? () => unawaited(_confirmEnd(context))
                           : null,
                     ),
                   ),
@@ -423,24 +555,51 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          onPressed: _openPkPanel,
-                          style: TextButton.styleFrom(
-                            backgroundColor: Colors.black.withValues(alpha: 0.35),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextButton.icon(
+                              onPressed: _openPkPanel,
+                              style: TextButton.styleFrom(
+                                backgroundColor:
+                                    Colors.black.withValues(alpha: 0.35),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.sports_mma_rounded,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              label: const Text(
+                                'PK Başlat',
+                                style: TextStyle(color: Colors.white, fontSize: 12),
+                              ),
                             ),
-                          ),
-                          icon: const Icon(
-                            Icons.sports_mma_rounded,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          label: const Text(
-                            'PK Başlat',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          ),
+                            const SizedBox(width: 8),
+                            TextButton.icon(
+                              onPressed: _openHostTools,
+                              style: TextButton.styleFrom(
+                                backgroundColor:
+                                    Colors.black.withValues(alpha: 0.35),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.tune_rounded,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              label: const Text(
+                                'Araçlar',
+                                style: TextStyle(color: Colors.white, fontSize: 12),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -481,6 +640,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                           shareLabel: 'Paylaş',
                           onLike: _onDoubleTapHeart,
                           onGift: () => giftCtrl.setPanelOpen(true),
+                          onShare: _shareLive,
                           onReport: s.streamId != null && s.streamId!.isNotEmpty
                               ? () => openReportFlow(
                                     context,
@@ -550,10 +710,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   }
 
   Future<void> _confirmEnd(BuildContext context) async {
-    if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
-      widget.onSwipeClose!();
-      return;
-    }
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

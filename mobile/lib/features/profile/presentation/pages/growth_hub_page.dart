@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/native_site_routes.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
@@ -102,6 +103,7 @@ class GrowthHubPage extends ConsumerWidget {
                   _RoadmapHintCard(
                     onVip: () => context.push('/vip-gold'),
                     onInvite: () => context.push('/invite-friends'),
+                    onAdReward: () => _claimAdReward(context, ref),
                   ),
                 ]),
               ),
@@ -142,11 +144,33 @@ class GrowthHubPage extends ConsumerWidget {
     if (route == '/voice-rooms' ||
         route == '/invite-friends' ||
         route == '/profile/gifts' ||
+        route == '/ad-rewards' ||
         route == '/vip-gold') {
       context.push(route);
       return;
     }
     openNativeSitePath(context, route);
+  }
+
+  static Future<void> _claimAdReward(BuildContext context, WidgetRef ref) async {
+    try {
+      final reward = await ref.read(watchAdCreditProvider.future);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            reward > 0
+                ? 'Reklam ödülü işlendi: +$reward'
+                : 'Reklam ödülü işlendi, bakiyeniz yenileniyor.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
   }
 }
 
@@ -516,10 +540,12 @@ class _RoadmapHintCard extends StatelessWidget {
   const _RoadmapHintCard({
     required this.onVip,
     required this.onInvite,
+    required this.onAdReward,
   });
 
   final VoidCallback onVip;
   final VoidCallback onInvite;
+  final VoidCallback onAdReward;
 
   @override
   Widget build(BuildContext context) {
@@ -564,6 +590,12 @@ class _RoadmapHintCard extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: onAdReward,
+            icon: const Icon(Icons.play_circle_fill_rounded),
+            label: const Text('Reklam izle, ödül kazan'),
           ),
         ],
       ),

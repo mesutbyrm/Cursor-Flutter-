@@ -108,6 +108,16 @@ class GrowthProgressEntity extends Equatable {
           route: '/profile/gifts',
           icon: '💎',
         ),
+        const GrowthTaskEntity(
+          id: 'watch-ad-credit',
+          title: 'Reklam izleyerek ödül kazan',
+          description: 'Web’deki reklamla kredi akışını mobil görev merkezinden başlat.',
+          current: 0,
+          target: 1,
+          rewardLabel: 'Kredi/Jeton',
+          route: '/ad-rewards',
+          icon: '▶️',
+        ),
       ],
       badges: [
         GrowthBadgeEntity(

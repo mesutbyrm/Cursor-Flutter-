@@ -18,6 +18,9 @@ class LiveBroadcastSession {
     this.hostUserId,
     this.initialMicOn = true,
     this.initialCameraOn = true,
+    this.isImageMode = false,
+    this.coverImageUrl,
+    this.backgroundUrl,
   });
 
   final String title;
@@ -34,6 +37,9 @@ class LiveBroadcastSession {
   final String? hostUserId;
   final bool initialMicOn;
   final bool initialCameraOn;
+  final bool isImageMode;
+  final String? coverImageUrl;
+  final String? backgroundUrl;
 
   factory LiveBroadcastSession.fromStream(LiveStreamEntity stream) {
     return LiveBroadcastSession(
@@ -46,6 +52,7 @@ class LiveBroadcastSession {
       viewerCount: stream.viewerCount,
       trtc: null,
       hostUserId: stream.hostUserId,
+      coverImageUrl: stream.thumbnailUrl,
     );
   }
 
@@ -56,6 +63,9 @@ class LiveBroadcastSession {
     bool? initialMicOn,
     bool? initialCameraOn,
     int? viewerCount,
+    bool? isImageMode,
+    String? coverImageUrl,
+    String? backgroundUrl,
   }) {
     return LiveBroadcastSession(
       title: title,
@@ -72,6 +82,9 @@ class LiveBroadcastSession {
       hostUserId: hostUserId ?? this.hostUserId,
       initialMicOn: initialMicOn ?? this.initialMicOn,
       initialCameraOn: initialCameraOn ?? this.initialCameraOn,
+      isImageMode: isImageMode ?? this.isImageMode,
+      coverImageUrl: coverImageUrl ?? this.coverImageUrl,
+      backgroundUrl: backgroundUrl ?? this.backgroundUrl,
     );
   }
 
@@ -83,6 +96,9 @@ class LiveBroadcastSession {
     String? streamerName,
     String? streamerHandle,
     String? avatarUrl,
+    bool isImageMode = false,
+    String? coverImageUrl,
+    String? backgroundUrl,
   }) {
     return LiveBroadcastSession(
       title: title,
@@ -94,6 +110,9 @@ class LiveBroadcastSession {
       streamerName: streamerName ?? 'Cemre',
       streamerHandle: streamerHandle ?? 'cemreofficial',
       avatarUrl: avatarUrl,
+      isImageMode: isImageMode,
+      coverImageUrl: coverImageUrl,
+      backgroundUrl: backgroundUrl,
       trtc: null,
     );
   }
