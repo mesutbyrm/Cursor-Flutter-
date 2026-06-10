@@ -32,13 +32,18 @@ class MusicQueueItem extends Equatable {
       id: json['id']?.toString() ?? videoId ?? '',
       title: json['title']?.toString() ?? 'Şarkı',
       youtubeUrl: url,
-      thumbUrl: json['thumbUrl']?.toString(),
+      thumbUrl: json['thumbUrl']?.toString() ??
+          json['thumbnail']?.toString() ??
+          json['image']?.toString(),
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.now(),
       requestedBy: user,
       giftTo: json['giftTo']?.toString(),
       note: json['note']?.toString(),
-      uploader: json['uploader']?.toString() ?? json['artist']?.toString(),
+      uploader: json['uploader']?.toString() ??
+          json['channelTitle']?.toString() ??
+          json['channel']?.toString() ??
+          json['artist']?.toString(),
       duration: json['duration']?.toString(),
     );
   }
@@ -86,8 +91,12 @@ class YoutubeSearchHit extends Equatable {
           : (vid.isNotEmpty
               ? 'https://www.youtube.com/watch?v=$vid'
               : ''),
-      thumbUrl: json['thumbUrl']?.toString(),
-      uploader: json['uploader']?.toString() ?? json['channel']?.toString(),
+      thumbUrl: json['thumbUrl']?.toString() ??
+          json['thumbnail']?.toString() ??
+          json['image']?.toString(),
+      uploader: json['uploader']?.toString() ??
+          json['channelTitle']?.toString() ??
+          json['channel']?.toString(),
       duration: json['duration']?.toString(),
     );
   }

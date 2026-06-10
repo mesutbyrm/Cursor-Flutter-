@@ -698,7 +698,7 @@ class ChatRoomRemoteDataSource {
         throw const ApiException('Müzik kuyruğu alınamadı');
       }
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
-      final raw = map['queue'] ?? map['items'];
+      final raw = map['queue'] ?? map['musicQueue'] ?? map['items'];
       final queue = <MusicQueueItem>[];
       if (raw is List) {
         for (final e in raw) {
@@ -800,7 +800,7 @@ class ChatRoomRemoteDataSource {
       if (itemRaw is Map) {
         item = MusicQueueItem.fromJson(Map<String, dynamic>.from(itemRaw));
       }
-      final queueRaw = map['queue'];
+      final queueRaw = map['queue'] ?? map['musicQueue'] ?? map['items'];
       final queue = <MusicQueueItem>[];
       if (queueRaw is List) {
         for (final e in queueRaw) {

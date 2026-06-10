@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.170+172 (2026-06-10)
+
+### Müzik parity — web response alias uyumu
+
+- Müzik kuyruğu yanıtlarında `queue`, `musicQueue`, `items` alanları birlikte desteklenir
+- Şarkı kapak görseli için `thumbUrl`, `thumbnail`, `image` alias'ları okunur
+- Kanal/sanatçı bilgisi için `uploader`, `channelTitle`, `channel`, `artist` alias'ları okunur
+- `MUSIC_PARITY_REPORT.md` ile web ↔ Flutter müzik sistemi parite durumu raporlandı
+
 ## 1.0.169+171 (2026-06-09)
 
 ### Socket parity — oda ve canlı yayın senkronu
