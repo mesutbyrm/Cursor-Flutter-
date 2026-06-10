@@ -28,6 +28,9 @@ import '../../features/fortune/presentation/pages/fortune_ready_readings_page.da
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
+import '../../features/games/presentation/game_center/pages/game_center_leaderboard_page.dart';
+import '../../features/games/presentation/game_center/pages/game_center_page.dart';
+import '../../features/games/presentation/game_center/pages/game_play_pages.dart';
 import '../../features/games/presentation/pages/game_room_page.dart';
 import '../../features/games/presentation/pages/games_hub_page.dart';
 import '../../features/gifts/presentation/pages/gift_send_page.dart';
@@ -476,8 +479,94 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/games-hub',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
-          child: const GamesHubPage(),
+          child: const GameCenterPage(),
         ),
+        routes: [
+          GoRoute(
+            path: 'leaderboard',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const GameCenterLeaderboardPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'wheel',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const WheelOfFortunePage(),
+            ),
+          ),
+          GoRoute(
+            path: 'quiz',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const QuizGamePage(),
+            ),
+          ),
+          GoRoute(
+            path: 'word-duel',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const WordDuelPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'love-match',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const LoveMatchPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'backgammon',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const BackgammonPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'live-quiz',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const LiveQuizRoomPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'pk-prediction',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PkPredictionPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'bingo',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const LiveBingoPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'treasure',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const TreasureChestPage(),
+            ),
+          ),
+          GoRoute(
+            path: 'lucky-dice',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const LuckyDicePage(),
+            ),
+          ),
+          GoRoute(
+            path: 'lobby',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const GamesHubPage(),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/games-room/:id',

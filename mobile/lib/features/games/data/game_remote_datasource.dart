@@ -94,12 +94,35 @@ class GameRemoteDataSource {
     );
   }
 
-  Future<List<GameScoreItem>> fetchLeaderboard() async {
+  Future<List<GameScoreItem>> fetchLeaderboard({String period = 'weekly'}) async {
     try {
-      final res = await _dio.safePost<dynamic>(ApiEndpoints.gameLeaderboard);
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.gameLeaderboard,
+        data: {'period': period, 'range': period},
+      );
       return _scores(res.data);
     } catch (_) {
       return const [];
+    }
+  }
+
+  Future<void> saveGameResult({
+    required String gameId,
+    required int score,
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.gameMiniScores,
+        data: {
+          'gameId': gameId,
+          'score': score,
+          'type': 'game-center',
+          ...?metadata,
+        },
+      );
+    } catch (_) {
+      await saveMiniScore(gameId: gameId, score: score);
     }
   }
 

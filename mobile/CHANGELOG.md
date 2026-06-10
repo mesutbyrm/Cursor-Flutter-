@@ -1,5 +1,18 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.181+183 (2026-06-10)
+
+### Oyun Merkezi — premium native hub
+
+- Yeni `GameCenterPage`: Popüler oyunlar, canlı oyunlar, ödüllü oyunlar ve liderlik tablosu
+- Oyunlar: Kader Çarkı, Bilgi Yarışması, Kelime Düellosu, Aşk Uyumu, Tavla
+- Canlı: Oda Bilgi Yarışması, PK Tahmin, Canlı Tombala (API oda oluşturma/katılma)
+- Ödüller: Günlük Hazine Sandığı, Şanslı Zar, Günlük Görevler (`/profile/growth`)
+- Liderlik: Günlük / haftalık / aylık sekmeler, podium görünümü
+- Ana sayfaya `Oyun Merkezi` CTA kartı + liderlik önizlemesi + hızlı oyun chip'leri
+- Clean Architecture: repository pattern, jeton kontrolü, skor kaydı (`/api/games/mini-scores`)
+- UI: Lottie hero, shimmer, pull-to-refresh, Hero animasyonları, dark/light tema
+
 ## 1.0.180+182 (2026-06-10)
 
 ### Fal & Tarot parite — web fal API bağlantıları
