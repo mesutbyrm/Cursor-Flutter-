@@ -11,7 +11,7 @@ import '../../providers/game_providers.dart';
 final gameCenterRepositoryProvider = Provider<GameCenterRepository>((ref) {
   return GameCenterRepositoryImpl(
     games: ref.watch(gameRemoteProvider),
-    profile: ref.watch(walletRemoteProvider),
+    wallet: ref.watch(walletRemoteProvider),
   );
 });
 
