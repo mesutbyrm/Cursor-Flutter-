@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../../gifts/domain/gift_rarity.dart';
 import '../../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../../gifts/presentation/widgets/premium_2026/premium_gift_icon.dart';
@@ -271,6 +272,7 @@ class _VoicePremiumGiftPanel2026State
             receiverName: receiver.displayName,
             receiverId: receiver.id,
           );
+      await ref.read(giftSoundServiceProvider).playFor(g.toEntity());
       final raw = LiveGiftEvent(
         id: 'local-${DateTime.now().microsecondsSinceEpoch}',
         senderId: user?.id,

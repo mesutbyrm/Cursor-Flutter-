@@ -7,6 +7,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../gifts/domain/premium_gift_catalog_2026.dart';
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
@@ -161,6 +162,9 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                                             room.ownerName ?? 'Yayıncı',
                                         receiverId: room.ownerId,
                                       );
+                                  await ref
+                                      .read(giftSoundServiceProvider)
+                                      .playFor(g.toEntity());
                                   final raw = LiveGiftEvent(
                                     id: 'local-${DateTime.now().microsecondsSinceEpoch}',
                                     senderId: user?.id,

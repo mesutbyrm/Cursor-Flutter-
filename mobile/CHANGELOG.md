@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.171+173 (2026-06-10)
+
+### Hediye parity — ses efektleri
+
+- Sesli oda premium hediye panelinde gönderim sonrası web/canlı yayın ile aynı hediye ses/haptic geri bildirimi çalışır
+- Legacy sesli oda hediye picker da aynı `GiftSoundService` akışını kullanır
+- `GIFT_PARITY_REPORT.md` ile hediye gönderme/alma/jeton/animasyon/ses parity durumu raporlandı
+
 ## 1.0.170+172 (2026-06-10)
 
 ### Müzik parity — web response alias uyumu
