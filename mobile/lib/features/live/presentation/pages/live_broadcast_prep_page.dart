@@ -43,7 +43,13 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
     'Flaş': false,
     'Konum': false,
     'Özel': false,
+    'Resim Modu': false,
   };
+  String? _backgroundUrl;
+  static const _backgrounds = [
+    'https://canlifal.com/apple-touch-icon.png',
+    'https://canlifal.com/favicon.ico',
+  ];
 
   static const _categories = [
     ('Sohbet', Icons.chat_bubble_rounded),
@@ -75,10 +81,11 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
 
     setState(() => _starting = true);
     try {
-      final wantCamera = _settings['Kamera'] ?? true;
+      final imageMode = _settings['Resim Modu'] ?? false;
+      final wantCamera = (_settings['Kamera'] ?? true) && !imageMode;
       final wantMic = _settings['Mikrofon'] ?? true;
-      if (!wantMic && !wantCamera) {
-        throw StateError('Yayın için en az mikrofon veya kamera açık olmalı');
+      if (!wantMic && !wantCamera && !imageMode) {
+        throw StateError('Yayın için en az mikrofon veya kamera/resim modu açık olmalı');
       }
       final permsOk = await TrtcRoomManager.requestPermissions(video: wantCamera);
       if (!permsOk) {
@@ -95,6 +102,9 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
               category: _category,
               tags: _tags,
               thumbnailUrl: user.avatarUrl,
+              isPrivate: _settings['Özel'] ?? false,
+              isImageMode: imageMode,
+              backgroundUrl: _backgroundUrl,
             );
       }
 
@@ -112,6 +122,9 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         streamerName: user.display,
         streamerHandle: user.username,
         avatarUrl: user.avatarUrl,
+        isImageMode: imageMode,
+        coverImageUrl: user.avatarUrl,
+        backgroundUrl: _backgroundUrl,
       ).copyWith(
         streamId: roomId,
         trtc: trtc,
@@ -163,7 +176,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                   ),
                   DiscoverIconButton(
                     icon: Icons.settings_rounded,
-                    onPressed: () {},
+                    onPressed: _showAdvancedSettings,
                   ),
                 ],
               ),
@@ -346,8 +359,53 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         'Güzellik' => Icons.face_retouching_natural_rounded,
         'Flaş' => Icons.flash_on_rounded,
         'Konum' => Icons.location_on_rounded,
+        'Resim Modu' => Icons.image_rounded,
         _ => Icons.lock_rounded,
       };
+
+  Future<void> _showAdvancedSettings() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: context.colors.bottomSheetBackground,
+      showDragHandle: true,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Web uyumlu yayın ayarları',
+              style: TextStyle(
+                color: context.colors.onSurface,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 12),
+            for (final url in _backgrounds)
+              RadioListTile<String>(
+                value: url,
+                groupValue: _backgroundUrl,
+                title: Text(url.contains('apple') ? 'Canlifal mor arka plan' : 'Canlifal koyu arka plan'),
+                subtitle: Text(url),
+                onChanged: (v) {
+                  setState(() => _backgroundUrl = v);
+                  Navigator.pop(ctx);
+                },
+              ),
+            TextButton(
+              onPressed: () {
+                setState(() => _backgroundUrl = null);
+                Navigator.pop(ctx);
+              },
+              child: const Text('Arka planı temizle'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 InputDecoration authLikeDecoration(String label, {String? counter}) {

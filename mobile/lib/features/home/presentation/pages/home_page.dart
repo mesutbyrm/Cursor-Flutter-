@@ -15,6 +15,7 @@ import '../widgets/approved/more_fortunes_button.dart';
 import '../widgets/approved/stories_section.dart';
 import '../widgets/approved/trending_video_section.dart';
 import '../widgets/approved/voice_room_section.dart';
+import '../widgets/home_games_row.dart';
 
 /// Onaylı ana sayfa mockup — piksel uyumlu bölüm sırası.
 class HomePage extends ConsumerStatefulWidget {
@@ -58,6 +59,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             const SliverToBoxAdapter(child: FortuneSection()),
             const SliverToBoxAdapter(child: TrendingVideoSection()),
             const SliverToBoxAdapter(child: DiscoverSection()),
+            const SliverToBoxAdapter(child: HomeGamesRow()),
             const SliverToBoxAdapter(child: FanClubSection()),
             const SliverToBoxAdapter(child: GoldSection()),
             const SliverToBoxAdapter(child: MoreFortunesButton()),

@@ -290,6 +290,9 @@ class LiveRemoteDataSource {
     String? category,
     List<String>? tags,
     String? thumbnailUrl,
+    bool isPrivate = false,
+    bool isImageMode = false,
+    String? backgroundUrl,
   }) async {
     final started = DateTime.now();
     LiveDebugLog.log('create.request', {'title': title});
@@ -306,6 +309,13 @@ class LiveRemoteDataSource {
           'thumbnailUrl': thumbnailUrl,
         if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
           'coverUrl': thumbnailUrl,
+        if (thumbnailUrl != null && thumbnailUrl.isNotEmpty)
+          'broadcastImage': thumbnailUrl,
+        if (backgroundUrl != null && backgroundUrl.isNotEmpty)
+          'backgroundUrl': backgroundUrl,
+        'isPrivate': isPrivate,
+        'private': isPrivate,
+        'isImageMode': isImageMode,
         'requestType': 'live',
         'status': 'live',
       },

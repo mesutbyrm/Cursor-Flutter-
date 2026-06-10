@@ -56,7 +56,7 @@ abstract final class HomeSiteCatalog {
       label: 'Oyunlar',
       icon: Icons.sports_esports_rounded,
       gradient: [Color(0xFF3B82F6), Color(0xFF1E3A8A)],
-      route: '/fortune',
+      route: '/games-hub',
     ),
     HomeDiscoverTile(
       id: 'trends',
@@ -70,14 +70,14 @@ abstract final class HomeSiteCatalog {
       label: 'Ünlüler',
       icon: Icons.star_rounded,
       gradient: [Color(0xFFFBBF24), Color(0xFFB45309)],
-      route: '/social',
+      route: '/celebrities-hub',
     ),
     HomeDiscoverTile(
       id: 'fanclub',
       label: 'Fan Club',
       icon: Icons.favorite_rounded,
       gradient: [Color(0xFFFF4FD8), Color(0xFF7B2FF7)],
-      route: '/fan-club',
+      route: '/fan-club-hub',
     ),
     HomeDiscoverTile(
       id: 'invite',
@@ -101,7 +101,7 @@ abstract final class HomeSiteCatalog {
       title: 'Fenerbahçe',
       subtitle: 'Fan Club',
       imageUrl: 'https://canlifal.com/apple-touch-icon.png',
-      route: '/fan-club',
+      route: '/fan-club-hub',
       memberCount: 12400,
     ),
     HomeFanClubItem(
@@ -109,7 +109,7 @@ abstract final class HomeSiteCatalog {
       title: 'Galatasaray',
       subtitle: 'Fan Club',
       imageUrl: 'https://canlifal.com/favicon.ico',
-      route: '/fan-club',
+      route: '/fan-club-hub',
       memberCount: 15800,
     ),
     HomeFanClubItem(
@@ -117,7 +117,7 @@ abstract final class HomeSiteCatalog {
       title: 'Arda Güler',
       subtitle: 'Resmi Fan',
       imageUrl: 'https://canlifal.com/apple-touch-icon.png',
-      route: '/fan-club',
+      route: '/fan-club-hub',
       memberCount: 9200,
     ),
     HomeFanClubItem(
@@ -125,7 +125,7 @@ abstract final class HomeSiteCatalog {
       title: 'Burak Özçivit',
       subtitle: 'Fan Club',
       imageUrl: 'https://canlifal.com/favicon.ico',
-      route: '/fan-club',
+      route: '/fan-club-hub',
       memberCount: 6100,
     ),
   ];

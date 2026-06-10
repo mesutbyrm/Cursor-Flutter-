@@ -376,6 +376,12 @@ class ChatRoomRemoteDataSource {
   static String banPath(String roomId, String userId) =>
       '/api/chat/rooms/$roomId/bans/$userId';
 
+  static String kickPath(String roomId) => '/api/chat/rooms/$roomId/kick';
+
+  static String mutePath(String roomId) => '/api/chat/rooms/$roomId/mute';
+
+  static String rolePath(String roomId) => '/api/chat/rooms/$roomId/roles';
+
   Future<void> banUser({
     required String roomKey,
     String? alternateKey,
@@ -398,6 +404,65 @@ class ChatRoomRemoteDataSource {
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safeDelete<dynamic>(banPath(key, userId));
+    });
+  }
+
+  Future<void> kickUser({
+    required String roomKey,
+    String? alternateKey,
+    required String userId,
+    String? reason,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        kickPath(key),
+        data: jsonEncode({
+          'userId': userId,
+          if (reason != null) 'reason': reason,
+        }),
+        options: Options(contentType: 'application/json'),
+      );
+    });
+  }
+
+  Future<void> muteUser({
+    required String roomKey,
+    String? alternateKey,
+    required String userId,
+    int minutes = 30,
+    String? reason,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        mutePath(key),
+        data: jsonEncode({
+          'userId': userId,
+          'minutes': minutes,
+          'durationMinutes': minutes,
+          if (reason != null) 'reason': reason,
+        }),
+        options: Options(contentType: 'application/json'),
+      );
+    });
+  }
+
+  Future<void> assignRole({
+    required String roomKey,
+    String? alternateKey,
+    required String userId,
+    required String roleSymbol,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        rolePath(key),
+        data: jsonEncode({
+          'userId': userId,
+          'role': roleSymbol,
+          'symbol': roleSymbol,
+          'roleSymbol': roleSymbol,
+        }),
+        options: Options(contentType: 'application/json'),
+      );
     });
   }
 

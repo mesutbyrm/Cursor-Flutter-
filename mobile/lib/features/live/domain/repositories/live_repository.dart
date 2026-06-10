@@ -20,6 +20,9 @@ abstract class LiveRepository {
     String? category,
     List<String>? tags,
     String? thumbnailUrl,
+    bool isPrivate = false,
+    bool isImageMode = false,
+    String? backgroundUrl,
   });
 
   Future<void> endVideoStream(String streamId);

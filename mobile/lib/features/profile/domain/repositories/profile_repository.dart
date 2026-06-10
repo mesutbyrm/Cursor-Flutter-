@@ -43,4 +43,5 @@ abstract class WalletRepository {
     int page,
   });
   Future<ReferralInfoEntity> referralInfo();
+  Future<int> watchAdCredit();
 }

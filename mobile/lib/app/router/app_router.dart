@@ -11,6 +11,7 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../features/content_hub/presentation/pages/content_hub_page.dart';
+import '../../features/content_hub/presentation/pages/native_feature_hub_page.dart';
 import '../../features/favorites/presentation/pages/favorites_page.dart';
 import '../../features/feed/presentation/pages/feed_page.dart';
 import '../../features/search/presentation/pages/global_search_page.dart';
@@ -52,6 +53,7 @@ import '../../features/profile/presentation/pages/profile_edit_page.dart';
 import '../../features/profile/presentation/pages/profile_equipment_page.dart';
 import '../../features/profile/presentation/pages/profile_follow_list_page.dart';
 import '../../features/profile/presentation/pages/profile_gifts_page.dart';
+import '../../features/profile/presentation/pages/growth_hub_page.dart';
 import '../../features/profile/presentation/pages/profile_help_support_page.dart';
 import '../../features/profile/presentation/pages/profile_payment_notice_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
@@ -382,6 +384,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ProfileGiftsPage(),
       ),
       GoRoute(
+        path: '/profile/growth',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const GrowthHubPage(),
+        ),
+      ),
+      GoRoute(
         path: '/profile/security',
         builder: (context, state) => const ProfileAccountSecurityPage(),
       ),
@@ -455,6 +464,52 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const ContentHubPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/games-hub',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const NativeFeatureHubPage(kind: NativeFeatureHubKind.games),
+        ),
+      ),
+      GoRoute(
+        path: '/dreams-hub',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const NativeFeatureHubPage(kind: NativeFeatureHubKind.dreams),
+        ),
+      ),
+      GoRoute(
+        path: '/blog-hub',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const NativeFeatureHubPage(kind: NativeFeatureHubKind.blog),
+        ),
+      ),
+      GoRoute(
+        path: '/celebrities-hub',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const NativeFeatureHubPage(
+            kind: NativeFeatureHubKind.celebrities,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/fan-club-hub',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const NativeFeatureHubPage(kind: NativeFeatureHubKind.fanClub),
+        ),
+      ),
+      GoRoute(
+        path: '/ad-rewards',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const NativeFeatureHubPage(
+            kind: NativeFeatureHubKind.adRewards,
+          ),
         ),
       ),
       GoRoute(

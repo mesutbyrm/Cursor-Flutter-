@@ -1030,6 +1030,17 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
               content: trimmed,
             );
         await _syncMusicFromServerIfNeeded();
+        if (!_musicLooksQueued(song)) {
+          final fallback = await requestMusic(
+            title: song,
+            youtubeUrl: '',
+            priority: false,
+            skipPayment: true,
+          );
+          if (fallback != null && fallback.isNotEmpty) {
+            _showMusicRequestFlashLine('🎵 $fallback');
+          }
+        }
         state = state.copyWith(sending: false);
         _showMusicRequestFlashLine('✅ «$song» isteği iletildi');
       } catch (e) {
@@ -1113,6 +1124,7 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
       }
       if (VoiceOfficialJoin.looksLikeRoomCommand(trimmed) ||
           VoiceMusicSync.isQueueUpdateMessage(trimmed)) {
+        unawaited(_applyRoomCommandFallback(trimmed));
         unawaited(_syncMusicFromServerIfNeeded());
       }
     } on TimeoutException {
@@ -1130,6 +1142,112 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
         error: ApiException.userMessage(e),
       );
     }
+  }
+
+  bool _musicLooksQueued(String song) {
+    final needle = song.trim().toLowerCase();
+    if (needle.isEmpty) return false;
+    bool match(String? value) =>
+        value != null && value.toLowerCase().contains(needle);
+    final dj = state.dj;
+    if (match(dj.nowPlaying?.title) || match(dj.nowPlaying?.youtubeUrl)) {
+      return true;
+    }
+    return dj.musicQueue.any((item) => match(item.title) || match(item.youtubeUrl));
+  }
+
+  Future<void> _applyRoomCommandFallback(String raw) async {
+    final command = _ParsedRoomCommand.tryParse(raw);
+    if (command == null) return;
+    final remote = ref.read(chatRoomRemoteProvider);
+    final target = command.target == null ? null : _resolvePresence(command.target!);
+    try {
+      switch (command.name) {
+        case 'ban':
+          if (target == null) return;
+          await remote.banUser(
+            roomKey: _roomKey,
+            alternateKey: arg.slug,
+            userId: target.id,
+            reason: command.reason,
+          );
+          break;
+        case 'unban':
+          if (target == null) return;
+          await remote.unbanUser(
+            roomKey: _roomKey,
+            alternateKey: arg.slug,
+            userId: target.id,
+          );
+          break;
+        case 'at':
+        case 'kick':
+          if (target == null) return;
+          await remote.kickUser(
+            roomKey: _roomKey,
+            alternateKey: arg.slug,
+            userId: target.id,
+            reason: command.reason,
+          );
+          break;
+        case 'sessiz':
+        case 'sustur':
+        case 'mute':
+          if (target == null) return;
+          await remote.muteUser(
+            roomKey: _roomKey,
+            alternateKey: arg.slug,
+            userId: target.id,
+            minutes: command.minutes ?? 30,
+            reason: command.reason,
+          );
+          break;
+        case 'yetki':
+          if (target == null || command.roleSymbol == null) return;
+          await remote.assignRole(
+            roomKey: _roomKey,
+            alternateKey: arg.slug,
+            userId: target.id,
+            roleSymbol: command.roleSymbol!,
+          );
+          break;
+        case 'dj':
+          if (target == null) return;
+          await addRoomDj(target.id);
+          break;
+        case 'muzik':
+          await _syncMusicFromServerIfNeeded();
+          break;
+        case 'temizle':
+          if (_permissions().canModerate || _permissions().isRoomOwner) {
+            await remote.tryClearRoomMessages(roomKey: _roomKey);
+            _applyLocalChatClear();
+          }
+          break;
+        default:
+          return;
+      }
+      await refresh();
+    } catch (e) {
+      VoiceRoomDebugLog.log('chat.command.fallback.fail', {
+        'command': raw,
+        'error': ApiException.userMessage(e),
+      });
+    }
+  }
+
+  ChatRoomPresence? _resolvePresence(String target) {
+    final raw = target.trim().replaceFirst(RegExp(r'^@'), '').toLowerCase();
+    if (raw.isEmpty) return null;
+    for (final user in state.presence) {
+      final keys = [
+        user.id,
+        user.name,
+        user.nickname,
+      ].whereType<String>().map((e) => e.trim().toLowerCase());
+      if (keys.any((key) => key == raw || key.contains(raw))) return user;
+    }
+    return null;
   }
 
   Future<void> _recoverAfterSendTimeout({
@@ -1577,6 +1695,54 @@ class VoiceRoomLiveController extends AutoDisposeFamilyNotifier<
     } catch (e) {
       return ApiException.userMessage(e);
     }
+  }
+}
+
+class _ParsedRoomCommand {
+  const _ParsedRoomCommand({
+    required this.name,
+    this.target,
+    this.reason,
+    this.roleSymbol,
+    this.minutes,
+  });
+
+  final String name;
+  final String? target;
+  final String? reason;
+  final String? roleSymbol;
+  final int? minutes;
+
+  static _ParsedRoomCommand? tryParse(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.length < 2 ||
+        (!trimmed.startsWith('!') && !trimmed.startsWith('/'))) {
+      return null;
+    }
+    final parts = trimmed.substring(1).split(RegExp(r'\s+'));
+    if (parts.isEmpty) return null;
+    final name = parts.first.toLowerCase();
+    final args = parts.skip(1).toList();
+    String? target = args.isNotEmpty ? args.first : null;
+    String? roleSymbol;
+    int? minutes;
+    if (name == 'yetki' && args.length >= 2) {
+      roleSymbol = args[1];
+    }
+    if ({'sessiz', 'sustur', 'mute'}.contains(name) && args.length >= 2) {
+      minutes = int.tryParse(args[1].replaceAll(RegExp(r'[^0-9]'), ''));
+    }
+    final reasonStart = (name == 'yetki' || minutes != null) ? 2 : 1;
+    final reason = args.length > reasonStart
+        ? args.skip(reasonStart).join(' ').trim()
+        : null;
+    return _ParsedRoomCommand(
+      name: name,
+      target: target,
+      roleSymbol: roleSymbol,
+      minutes: minutes,
+      reason: reason != null && reason.isNotEmpty ? reason : null,
+    );
   }
 }
 

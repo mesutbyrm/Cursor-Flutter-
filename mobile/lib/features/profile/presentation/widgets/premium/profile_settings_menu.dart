@@ -45,6 +45,11 @@ class ProfileSettingsMenu extends StatelessWidget {
         onTap: () => context.push('/favorites'),
       ),
       (
+        icon: Icons.emoji_events_outlined,
+        label: 'Görevler & Rozetler',
+        onTap: () => context.push('/profile/growth'),
+      ),
+      (
         icon: Icons.search_rounded,
         label: 'Kullanıcı Ara',
         onTap: () => context.push('/search'),

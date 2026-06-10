@@ -69,6 +69,13 @@ final referralInfoProvider = FutureProvider<ReferralInfoEntity>((ref) async {
   return ref.watch(walletRepositoryProvider).referralInfo();
 });
 
+final watchAdCreditProvider = FutureProvider.autoDispose<int>((ref) async {
+  final reward = await ref.watch(walletRepositoryProvider).watchAdCredit();
+  ref.invalidate(walletBalancesProvider);
+  ref.invalidate(coinBalanceProvider);
+  return reward;
+});
+
 final profileStatsProvider = FutureProvider<ProfileStatsEntity>((ref) async {
   return ref.watch(profileRepositoryProvider).myStats();
 });

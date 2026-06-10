@@ -199,10 +199,45 @@ abstract final class FortuneCatalog {
   }
 
   static FortuneTypeEntity? bySlug(String slug) {
-    if (dailyFortune.slug == slug) return dailyFortune;
+    final normalized = _slugAliases[slug.trim().toLowerCase()] ??
+        slug.trim().toLowerCase();
+    if (dailyFortune.slug == normalized || dailyFortune.id == normalized) {
+      return dailyFortune;
+    }
     for (final t in types) {
-      if (t.slug == slug) return t;
+      if (t.slug == normalized || t.id == normalized) return t;
     }
     return null;
   }
+
+  static const _slugAliases = {
+    'daily': 'gunluk-fal',
+    'gunluk': 'gunluk-fal',
+    'günlük-fal': 'gunluk-fal',
+    'tarot-fali': 'tarot',
+    'tarot-falı': 'tarot',
+    'love': 'ask-fali',
+    'ask-uyumu': 'ask-fali',
+    'kahve': 'kahve-fali',
+    'coffee': 'kahve-fali',
+    'coffee-image': 'kahve-fali',
+    'kahve-fali-image': 'kahve-fali',
+    'kahve-falı': 'kahve-fali',
+    'burc-yorumu': 'yildiz-haritasi',
+    'horoscope': 'yildiz-haritasi',
+    'dogum-haritasi': 'yildiz-haritasi',
+    'birthchart': 'yildiz-haritasi',
+    'palm': 'el-fali',
+    'katina-fali': 'katina',
+    'angel': 'melek-kartlari',
+    'melek-kartlari-fali': 'melek-kartlari',
+    'numerology': 'numeroloji',
+    'ruya': 'ruya-tabiri',
+    'ruya-yorumu': 'ruya-tabiri',
+    'dream': 'ruya-tabiri',
+    'yesno': 'evet-hayir',
+    'evet-hayır': 'evet-hayir',
+    'istihare': 'pendul',
+    'istikhara': 'pendul',
+  };
 }

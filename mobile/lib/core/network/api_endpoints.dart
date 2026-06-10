@@ -74,9 +74,41 @@ abstract final class ApiEndpoints {
 
   /// Oyunlar ve etkinlikler.
   static const homeGames = '/api/games';
+  static const gameRooms = '/api/games/rooms';
+  static const gameAutoMatch = '/api/games/auto-match';
+  static const gameLeaderboard = '/api/games/leaderboard';
+  static const gameHistory = '/api/games/history';
+  static const gameProfile = '/api/games/profile';
+  static const gameMiniScores = '/api/games/mini-scores';
+  static const tournaments = '/api/tournaments';
+  static const tournamentsJoin = '/api/tournaments/join';
 
   /// Günlük ödüller.
   static const homeDailyRewards = '/api/daily-rewards';
+  static const userDailyTasks = '/api/user/daily-tasks';
+  static const userAchievements = '/api/user/achievements';
+  static const userWatchAd = '/api/user/watch-ad';
+
+  static const dreams = '/api/dreams';
+  static const dreamSymbols = '/api/dream-symbols';
+  static const dreamContest = '/api/dream-contest';
+  static const dreamDiary = '/api/dream-diary';
+  static const dreamStats = '/api/dream-stats';
+  static const weeklyDreamReport = '/api/weekly-dream-report';
+
+  static const blog = '/api/blog';
+  static const blogCategories = '/api/blog/categories';
+  static const blogRecent = '/api/blog/recent';
+  static String blogPost(String slug) => '/api/blog/$slug';
+
+  static const celebrities = '/api/celebrities';
+  static String celebrity(String id) => '/api/celebrities/$id';
+  static String celebrityFollow(String id) => '/api/celebrities/$id/follow';
+  static String celebrityPosts(String id) => '/api/celebrities/$id/posts';
+  static const fanClubs = '/api/fan-clubs';
+  static String fanClubJoin(String id) => '/api/fan-clubs/$id/join';
+  static String fanClubPosts(String id) => '/api/fan-clubs/$id/posts';
+  static String fanClubPolls(String id) => '/api/fan-clubs/$id/polls';
 
   /// Ana sayfa trend videolar (canlifal.com).
   static const trendVideos = '/api/trend-videos';
@@ -216,6 +248,24 @@ abstract final class ApiEndpoints {
 
   static const coBroadcastInvites = '/api/user/co-broadcast-invites';
 
+  static String videoStreamBan(String streamId) =>
+      '/api/video-streams/$streamId/ban';
+
+  static String videoStreamMute(String streamId) =>
+      '/api/video-streams/$streamId/mute';
+
+  static String videoStreamModerator(String streamId) =>
+      '/api/video-streams/$streamId/moderator';
+
+  static String videoStreamImage(String streamId) =>
+      '/api/video-streams/$streamId/image';
+
+  static String videoStreamBackground(String streamId) =>
+      '/api/video-streams/$streamId/background';
+
+  static String videoStreamAutoClose(String streamId) =>
+      '/api/video-streams/$streamId/auto-close';
+
   static const giftsCatalog = '/api/gifts';
 
   static String userProfile(String userId) => '/api/users/$userId';
@@ -230,6 +280,8 @@ abstract final class ApiEndpoints {
 
   /// Oturumlu kullanıcının fal geçmişi.
   static const userFortunes = '/api/user/fortunes';
+
+  static String fortuneReading(String slug) => '/api/fortunes/$slug';
 
   static String userFortuneDetail(String fortuneId) =>
       '/api/user/fortunes/$fortuneId';

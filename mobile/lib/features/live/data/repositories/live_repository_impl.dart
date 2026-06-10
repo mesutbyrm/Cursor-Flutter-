@@ -33,6 +33,9 @@ class LiveRepositoryImpl implements LiveRepository {
     String? category,
     List<String>? tags,
     String? thumbnailUrl,
+    bool isPrivate = false,
+    bool isImageMode = false,
+    String? backgroundUrl,
   }) =>
       _remote.createVideoStream(
         title: title,
@@ -40,6 +43,9 @@ class LiveRepositoryImpl implements LiveRepository {
         category: category,
         tags: tags,
         thumbnailUrl: thumbnailUrl,
+        isPrivate: isPrivate,
+        isImageMode: isImageMode,
+        backgroundUrl: backgroundUrl,
       );
 
   @override
