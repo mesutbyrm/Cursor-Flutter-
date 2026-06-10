@@ -5,6 +5,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/pagination/paged_result.dart';
 import '../../../../core/util/json_util.dart';
+import '../../domain/entities/fortune_type_entity.dart';
 import '../../domain/entities/user_fortune_entity.dart';
 import '../../domain/repositories/fortune_repository.dart';
 
@@ -12,6 +13,63 @@ class FortuneRemoteDataSource {
   FortuneRemoteDataSource(this._dio);
 
   final Dio _dio;
+
+  Future<FortuneReadingResult> readFortune({
+    required FortuneTypeEntity type,
+    String? userInput,
+    bool? yesNoChoice,
+    DateTime? birthDate,
+  }) async {
+    final path = ApiEndpoints.fortuneReading(_apiSlugFor(type.slug));
+    final input = userInput?.trim();
+    final res = await _dio.safePost<dynamic>(
+      path,
+      data: {
+        'type': type.slug,
+        'fortuneType': type.title,
+        'slug': type.slug,
+        if (input != null && input.isNotEmpty) ...{
+          'question': input,
+          'text': input,
+          'dream': input,
+          'note': input,
+        },
+        if (yesNoChoice != null) 'answer': yesNoChoice ? 'yes' : 'no',
+        if (birthDate != null) 'birthDate': birthDate.toIso8601String(),
+        'platform': 'mobile',
+      },
+    );
+    final map = _unwrapMap(res.data);
+    final summary =
+        pick(map, [
+          'summary',
+          'answer',
+          'result',
+          'title',
+          'shortText',
+          'message',
+        ])?.toString() ??
+        'Fal yorumun hazır.';
+    final detail =
+        pick(map, [
+          'detail',
+          'interpretation',
+          'reading',
+          'content',
+          'text',
+          'description',
+          'longText',
+        ])?.toString() ??
+        summary;
+    return FortuneReadingResult(
+      type: type,
+      summary: summary,
+      detail: detail,
+      luckyNumber: _optionalInt(pick(map, ['luckyNumber', 'number'])),
+      luckyColor: pick(map, ['luckyColor', 'color'])?.toString(),
+      recordId: pick(map, ['id', 'fortuneId', 'recordId'])?.toString(),
+    );
+  }
 
   Future<PagedResult<UserFortuneEntity>> history({
     int page = 1,
@@ -64,6 +122,36 @@ class FortuneRemoteDataSource {
     return _row(res.data);
   }
 
+  Map<String, dynamic> _unwrapMap(dynamic body) {
+    if (body is Map) {
+      final map = asJsonMap(body);
+      if (map['success'] == true && map['data'] is Map) {
+        return asJsonMap(map['data']);
+      }
+      final fortune = pick(map, ['fortune', 'reading', 'result']);
+      if (fortune is Map) return asJsonMap(fortune);
+      return map;
+    }
+    return const {};
+  }
+
+  String _apiSlugFor(String slug) {
+    return switch (slug) {
+      'tarot' => 'tarot-fali',
+      'kahve-fali' => 'kahve-fali',
+      'yildiz-haritasi' => 'burc-yorumu',
+      'yildizname' => 'dogum-haritasi',
+      'ask-fali' => 'ask-uyumu',
+      'ruya-tabiri' => 'ruya-yorumu',
+      'evet-hayir' => 'evet-hayir',
+      'melek-kartlari' => 'melek-kartlari',
+      'numeroloji' => 'numeroloji',
+      'el-fali' => 'el-fali',
+      'katina' => 'katina',
+      _ => slug,
+    };
+  }
+
   PagedResult<UserFortuneEntity>? _parseList(
     dynamic body,
     int page,
@@ -84,8 +172,9 @@ class FortuneRemoteDataSource {
     }
 
     final items = raw.map(_row).where((f) => f.id.isNotEmpty).toList();
-    final hasMore =
-        total != null ? page * limit < total : items.length >= limit;
+    final hasMore = total != null
+        ? page * limit < total
+        : items.length >= limit;
     return PagedResult(items: items, hasMore: hasMore);
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/widgets/discover/discover_icon_button.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
@@ -56,41 +57,93 @@ class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage>
   Future<void> _submit() async {
     if (_loading) return;
     if (type.kind == FortuneSessionKind.yesNo && _yesNo == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Evet veya Hayır seçin')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Evet veya Hayır seçin')));
       return;
     }
     setState(() => _loading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 900));
-    var result = _service.generate(
-      type,
-      userInput: _input.text,
-      yesNoChoice: _yesNo,
-    );
     final authed = ref.read(authControllerProvider).valueOrNull;
+    var usedRemote = false;
+    FortuneReadingResult result;
+    try {
+      if (authed != null) {
+        result = await ref
+            .read(fortuneRepositoryProvider)
+            .readFortune(
+              type: type,
+              userInput: _input.text,
+              yesNoChoice: _yesNo,
+              birthDate: _birthDate,
+            );
+        usedRemote = true;
+      } else {
+        await Future<void>.delayed(const Duration(milliseconds: 900));
+        result = _service.generate(
+          type,
+          userInput: _input.text,
+          yesNoChoice: _yesNo,
+        );
+      }
+    } catch (e) {
+      final msg = ApiException.userMessage(e);
+      final lower = msg.toLowerCase();
+      final needsPurchase =
+          lower.contains('kredi') ||
+          lower.contains('jeton') ||
+          lower.contains('credit') ||
+          lower.contains('bakiye') ||
+          (e is ApiException && e.statusCode == 402);
+      if (needsPurchase) {
+        if (mounted) setState(() => _loading = false);
+        if (mounted) _showPurchasePrompt(msg);
+        return;
+      }
+      result = _service.generate(
+        type,
+        userInput: _input.text,
+        yesNoChoice: _yesNo,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Canlı yorum API geçici yanıt vermedi, hazır yorum gösterildi: $msg',
+            ),
+          ),
+        );
+      }
+    }
     if (authed != null) {
       try {
-        final saved = await ref.read(fortuneRepositoryProvider).save(
-              SaveFortuneInput(
-                type: type.title,
-                slug: type.slug,
-                question: _input.text.trim().isEmpty ? null : _input.text.trim(),
-                summary: result.summary,
-                detail: result.detail,
-                answer: result.summary,
-                luckyNumber: result.luckyNumber,
-                luckyColor: result.luckyColor,
-              ),
-            );
-        result = FortuneReadingResult(
-          type: result.type,
-          summary: result.summary,
-          detail: result.detail,
-          luckyNumber: result.luckyNumber,
-          luckyColor: result.luckyColor,
-          recordId: saved.id,
-        );
+        final saved = result.recordId != null && usedRemote
+            ? null
+            : await ref
+                  .read(fortuneRepositoryProvider)
+                  .save(
+                    SaveFortuneInput(
+                      type: type.title,
+                      slug: type.slug,
+                      question: _input.text.trim().isEmpty
+                          ? null
+                          : _input.text.trim(),
+                      summary: result.summary,
+                      detail: result.detail,
+                      answer: result.summary,
+                      luckyNumber: result.luckyNumber,
+                      luckyColor: result.luckyColor,
+                    ),
+                  );
+        if (saved != null) {
+          result = FortuneReadingResult(
+            type: result.type,
+            summary: result.summary,
+            detail: result.detail,
+            luckyNumber: result.luckyNumber,
+            luckyColor: result.luckyColor,
+            recordId: saved.id,
+          );
+        }
         ref.invalidate(fortuneHistoryProvider);
       } catch (_) {
         // API yoksa yerel sonuç yine gösterilir.
@@ -98,9 +151,48 @@ class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage>
     }
     if (!mounted) return;
     setState(() => _loading = false);
-    context.push(
-      '/fortune/${type.slug}/result',
-      extra: result,
+    context.push('/fortune/${type.slug}/result', extra: result);
+  }
+
+  Future<void> _showPurchasePrompt(String message) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Fal için bakiye gerekiyor',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 8),
+              Text(message),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  context.push('/jeton-store');
+                },
+                icon: const Icon(Icons.toll_rounded),
+                label: const Text('Jeton yükle'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  context.push('/premium-membership');
+                },
+                icon: const Icon(Icons.workspace_premium_rounded),
+                label: const Text('Üyelik avantajlarını gör'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -246,17 +338,17 @@ class _VisualForType extends StatelessWidget {
         FortuneSessionKind.tarotCards => _TarotVisual(type: type, pulse: pulse),
         FortuneSessionKind.loveHeart => _LoveVisual(type: type, pulse: pulse),
         FortuneSessionKind.coffeeCup => _CoffeeVisual(type: type),
-        FortuneSessionKind.zodiacWheel => _ZodiacVisual(type: type, pulse: pulse),
+        FortuneSessionKind.zodiacWheel => _ZodiacVisual(
+          type: type,
+          pulse: pulse,
+        ),
         FortuneSessionKind.palmScan => _PalmVisual(type: type),
         FortuneSessionKind.dreamText => _DreamInput(input: input),
         FortuneSessionKind.numberInput => _DateInput(
-            birthDate: birthDate,
-            onPick: onPickDate,
-          ),
-        FortuneSessionKind.yesNo => _YesNoVisual(
-            yesNo: yesNo,
-            onPick: onYesNo,
-          ),
+          birthDate: birthDate,
+          onPick: onPickDate,
+        ),
+        FortuneSessionKind.yesNo => _YesNoVisual(yesNo: yesNo, onPick: onYesNo),
         FortuneSessionKind.pendulum => _PendulumVisual(pulse: pulse),
         FortuneSessionKind.runeStone => _RuneVisual(type: type),
         _ => _GenericVisual(type: type, pulse: pulse),
@@ -275,9 +367,11 @@ class _TarotVisual extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(type.description,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: context.colors.onSurfaceVariant)),
+        Text(
+          type.description,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: context.colors.onSurfaceVariant),
+        ),
         SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -330,9 +424,11 @@ class _LoveVisual extends StatelessWidget {
           child: Text(type.emoji, style: TextStyle(fontSize: 80)),
         ),
         SizedBox(height: 12),
-        Text(type.description,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: context.colors.onSurfaceVariant)),
+        Text(
+          type.description,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: context.colors.onSurfaceVariant),
+        ),
       ],
     );
   }
@@ -360,9 +456,11 @@ class _CoffeeVisual extends StatelessWidget {
           child: Text('☕', style: TextStyle(fontSize: 56)),
         ),
         SizedBox(height: 16),
-        Text(type.description,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: context.colors.onSurfaceVariant)),
+        Text(
+          type.description,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: context.colors.onSurfaceVariant),
+        ),
       ],
     );
   }
@@ -391,15 +489,15 @@ class _ZodiacVisual extends StatelessWidget {
               ),
               boxShadow: AppThemeColors.glowShadow(type.accent),
             ),
-            child: Center(
-              child: Text('✨', style: TextStyle(fontSize: 56)),
-            ),
+            child: Center(child: Text('✨', style: TextStyle(fontSize: 56))),
           ),
         ),
         SizedBox(height: 12),
-        Text(type.description,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: context.colors.onSurfaceVariant)),
+        Text(
+          type.description,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: context.colors.onSurfaceVariant),
+        ),
       ],
     );
   }
@@ -414,17 +512,22 @@ class _PalmVisual extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(Icons.pan_tool_alt_rounded,
-            size: 100, color: type.accent.withValues(alpha: 0.9)),
+        Icon(
+          Icons.pan_tool_alt_rounded,
+          size: 100,
+          color: type.accent.withValues(alpha: 0.9),
+        ),
         SizedBox(height: 12),
         Text(
           'Avucunu ekrana hizala',
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         SizedBox(height: 8),
-        Text(type.description,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: context.colors.onSurfaceVariant)),
+        Text(
+          type.description,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: context.colors.onSurfaceVariant),
+        ),
       ],
     );
   }
@@ -453,9 +556,7 @@ class _DreamInput extends StatelessWidget {
             hintText: 'Gece gördüğün rüyayı yaz…',
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.06),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
       ],
@@ -487,7 +588,9 @@ class _DateInput extends StatelessWidget {
           label: Text(label),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppThemeColors.accentCyan,
-            side: BorderSide(color: AppThemeColors.accentCyan.withValues(alpha: 0.5)),
+            side: BorderSide(
+              color: AppThemeColors.accentCyan.withValues(alpha: 0.5),
+            ),
             padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
           ),
         ),
@@ -567,7 +670,9 @@ class _YesNoButton extends StatelessWidget {
               color: selected ? color : Colors.white24,
               width: selected ? 2 : 1,
             ),
-            boxShadow: selected ? AppThemeColors.glowShadow(color, blur: 14) : null,
+            boxShadow: selected
+                ? AppThemeColors.glowShadow(color, blur: 14)
+                : null,
           ),
           alignment: Alignment.center,
           child: Text(
@@ -597,7 +702,13 @@ class _PendulumVisual extends StatelessWidget {
         children: [
           const Text('🔮', style: TextStyle(fontSize: 64)),
           const SizedBox(height: 8),
-          Text('|', style: TextStyle(color: context.colors.onSurfaceMuted, fontSize: 24)),
+          Text(
+            '|',
+            style: TextStyle(
+              color: context.colors.onSurfaceMuted,
+              fontSize: 24,
+            ),
+          ),
           const Text('◆', style: TextStyle(color: AppThemeColors.accentCyan)),
         ],
       ),
@@ -627,9 +738,11 @@ class _RuneVisual extends StatelessWidget {
           child: Text(type.emoji, style: TextStyle(fontSize: 40)),
         ),
         SizedBox(height: 12),
-        Text(type.description,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: context.colors.onSurfaceVariant)),
+        Text(
+          type.description,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: context.colors.onSurfaceVariant),
+        ),
       ],
     );
   }
@@ -649,9 +762,11 @@ class _GenericVisual extends StatelessWidget {
         children: [
           Text(type.emoji, style: TextStyle(fontSize: 72)),
           SizedBox(height: 12),
-          Text(type.description,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: context.colors.onSurfaceVariant)),
+          Text(
+            type.description,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: context.colors.onSurfaceVariant),
+          ),
         ],
       ),
     );

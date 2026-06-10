@@ -66,7 +66,7 @@ abstract final class FortuneCatalog {
     FortuneTypeEntity(
       id: 'yildiz',
       slug: 'yildiz-haritasi',
-      title: 'Yıldız Falı',
+      title: 'Yıldızname',
       description: 'Burç haritan ve gökyüzü rehberin',
       emoji: '✨',
       accent: Color(0xFF38BDF8),
@@ -199,8 +199,8 @@ abstract final class FortuneCatalog {
   }
 
   static FortuneTypeEntity? bySlug(String slug) {
-    final normalized = _slugAliases[slug.trim().toLowerCase()] ??
-        slug.trim().toLowerCase();
+    final normalized =
+        _slugAliases[slug.trim().toLowerCase()] ?? slug.trim().toLowerCase();
     if (dailyFortune.slug == normalized || dailyFortune.id == normalized) {
       return dailyFortune;
     }
@@ -224,6 +224,9 @@ abstract final class FortuneCatalog {
     'kahve-fali-image': 'kahve-fali',
     'kahve-falı': 'kahve-fali',
     'burc-yorumu': 'yildiz-haritasi',
+    'yildizname': 'yildiz-haritasi',
+    'yildizname-fali': 'yildiz-haritasi',
+    'yıldızname': 'yildiz-haritasi',
     'horoscope': 'yildiz-haritasi',
     'dogum-haritasi': 'yildiz-haritasi',
     'birthchart': 'yildiz-haritasi',
