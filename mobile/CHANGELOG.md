@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.178+180 (2026-06-10)
+
+### Sosyal parite — hikaye grupları ve story fallback
+
+- Canlifal web `storyGroups` yanıtındaki birden fazla hikaye öğesi Flutter modeline taşındı
+- Hikaye görüntüleyici artık aynı kullanıcı halkasındaki tüm story öğelerini ileri/geri gezebilir
+- Story caption ve ilerleme göstergesi eklendi
+- Hikaye oluşturma `POST /api/stories` başarısız olursa web kullanıcı endpoint'i olan `POST /api/user/story` fallback'ini dener
+- `SOCIAL_PARITY_REPORT.md` ile sosyal akış, beğeni, yorum, takip, profil, hikaye ve kalan sosyal gap'ler raporlandı
+
 ## 1.0.177+179 (2026-06-10)
 
 ### Web parite — native API liste hub'ları
