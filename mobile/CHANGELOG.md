@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.175+177 (2026-06-10)
+
+### Ürün büyüme roadmap + görev/rozet merkezi
+
+- `PRODUCT_IMPROVEMENT_REPORT.md` ile öneriler kullanıcı memnuniyeti, gelir, geliştirme maliyeti, teknik risk ve bakım maliyetine göre puanlandı
+- En yüksek faydalı ilk faz özelliği olarak profil menüsüne `Görevler & Rozetler` büyüme merkezi eklendi
+- Yeni ekran mevcut günlük ödül, profil istatistiği, cüzdan/VIP ve davet verilerinden XP, seviye, görev ilerlemesi ve rozet albümü üretir
+- Yeni API veya database tablosu eklenmeden mevcut Canlifal web/backend sözleşmesi korundu
+
 ## 1.0.174+176 (2026-06-10)
 
 ### Canlı yayın + PK audit

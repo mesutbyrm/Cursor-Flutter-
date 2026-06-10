@@ -52,6 +52,15 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push('/jeton-store');
     return;
   }
+  if (p == '/profile/growth' ||
+      p.contains('gorev') ||
+      p.contains('görev') ||
+      p.contains('reward') ||
+      p.contains('odul') ||
+      p.contains('ödül')) {
+    context.push('/profile/growth');
+    return;
+  }
   if (p == '/profile' || p.contains('profil')) {
     context.go('/profile');
     return;

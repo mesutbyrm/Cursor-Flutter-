@@ -52,6 +52,7 @@ import '../../features/profile/presentation/pages/profile_edit_page.dart';
 import '../../features/profile/presentation/pages/profile_equipment_page.dart';
 import '../../features/profile/presentation/pages/profile_follow_list_page.dart';
 import '../../features/profile/presentation/pages/profile_gifts_page.dart';
+import '../../features/profile/presentation/pages/growth_hub_page.dart';
 import '../../features/profile/presentation/pages/profile_help_support_page.dart';
 import '../../features/profile/presentation/pages/profile_payment_notice_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
@@ -380,6 +381,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/gifts',
         builder: (context, state) => const ProfileGiftsPage(),
+      ),
+      GoRoute(
+        path: '/profile/growth',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const GrowthHubPage(),
+        ),
       ),
       GoRoute(
         path: '/profile/security',
