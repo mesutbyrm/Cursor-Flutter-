@@ -177,6 +177,13 @@ class VoiceRoomLiveController
   /// Prisma cuid — slug değil.
   String get _roomKey => arg.apiRoomKey;
 
+  /// Bazı DJ/müzik uçları slug ile de çalışır (cuid 404).
+  String? get _musicAlternateKey {
+    final slug = arg.slug.trim();
+    if (slug.isEmpty || slug == _roomKey) return null;
+    return slug;
+  }
+
   DateTime? get _lastMessageAt {
     if (state.messages.isEmpty) return null;
     return state.messages
@@ -519,8 +526,11 @@ class VoiceRoomLiveController
       if (includeDj) {
         try {
           final pair = await Future.wait([
-            remote.fetchDj(_roomKey),
-            remote.fetchMusicQueue(_roomKey),
+            remote.fetchDj(_roomKey, alternateKey: _musicAlternateKey),
+            remote.fetchMusicQueue(
+              _roomKey,
+              alternateKey: _musicAlternateKey,
+            ),
           ]);
           final djBase = pair[0] as ChatRoomDjState;
           final mq =
@@ -538,7 +548,10 @@ class VoiceRoomLiveController
           dj = _mergeMusicQueueRecord(djBase, mq);
         } catch (_) {
           try {
-            dj = await remote.fetchDj(_roomKey);
+            dj = await remote.fetchDj(
+              _roomKey,
+              alternateKey: _musicAlternateKey,
+            );
           } catch (_) {}
           dj = await _mergeMusicQueueIntoDj(dj);
         }
@@ -614,7 +627,10 @@ class VoiceRoomLiveController
     try {
       final mq = await ref
           .read(chatRoomRemoteProvider)
-          .fetchMusicQueue(_roomKey);
+          .fetchMusicQueue(
+            _roomKey,
+            alternateKey: _musicAlternateKey,
+          );
       return _mergeMusicQueueRecord(dj, mq);
     } catch (_) {
       return dj;
@@ -788,8 +804,14 @@ class VoiceRoomLiveController
     try {
       VoiceRoomDebugLog.log('music.sync.start', {'room': _roomKey});
       final pair = await Future.wait([
-        ref.read(chatRoomRemoteProvider).fetchDj(_roomKey),
-        ref.read(chatRoomRemoteProvider).fetchMusicQueue(_roomKey),
+        ref.read(chatRoomRemoteProvider).fetchDj(
+          _roomKey,
+          alternateKey: _musicAlternateKey,
+        ),
+        ref.read(chatRoomRemoteProvider).fetchMusicQueue(
+          _roomKey,
+          alternateKey: _musicAlternateKey,
+        ),
       ]);
       var dj = _mergeMusicQueueRecord(
         pair[0] as ChatRoomDjState,
@@ -823,11 +845,13 @@ class VoiceRoomLiveController
     }
   }
 
-  Future<void> _syncMusicFromServerIfNeeded() async {
-    final player = ref.read(voiceRoomDjPlayerProvider);
-    if (player.playback.value.playing) return;
-    await Future<void>.delayed(const Duration(milliseconds: 700));
-    if (ref.read(voiceRoomDjPlayerProvider).playback.value.playing) return;
+  Future<void> _syncMusicFromServerIfNeeded({bool force = false}) async {
+    if (!force) {
+      final player = ref.read(voiceRoomDjPlayerProvider);
+      if (player.playback.value.playing) return;
+      await Future<void>.delayed(const Duration(milliseconds: 700));
+      if (ref.read(voiceRoomDjPlayerProvider).playback.value.playing) return;
+    }
     await _syncMusicFromServer();
   }
 
@@ -861,7 +885,7 @@ class VoiceRoomLiveController
     );
     _commitDjUi(dj);
     unawaited(_playDjInBackground(dj));
-    unawaited(_syncMusicFromServerIfNeeded());
+    unawaited(_syncMusicFromServerIfNeeded(force: true));
   }
 
   void _onMusicRelatedChatMessage(ChatRoomMessage msg) {
@@ -914,7 +938,11 @@ class VoiceRoomLiveController
     return ChatRoomUserRef(id: 'system', name: m.group(1)!.trim());
   }
 
-  Future<String?> _submitMusicRequestByTitle(String title) async {
+  Future<String?> _submitMusicRequestByTitle(
+    String title, {
+    bool skipPayment = false,
+    bool priority = true,
+  }) async {
     final q = title.trim();
     if (q.length < 2) return 'Şarkı adı çok kısa.';
     try {
@@ -928,6 +956,8 @@ class VoiceRoomLiveController
         youtubeUrl: hit.url,
         thumbUrl: hit.thumbUrl,
         videoId: hit.videoId,
+        skipPayment: skipPayment,
+        priority: priority,
       );
     } catch (e) {
       return ApiException.userMessage(e);
@@ -1023,28 +1053,28 @@ class VoiceRoomLiveController
         return;
       }
       state = state.copyWith(sending: true, clearError: true);
-      _showMusicRequestFlashLine('🔍 «$song» sunucuda aranıyor…');
-      VoiceRoomDebugLog.log('music.istek.server', {'song': song});
+      _showMusicRequestFlashLine('🔍 «$song» aranıyor…');
+      VoiceRoomDebugLog.log('music.istek.search', {'song': song});
       try {
-        VoiceRoomDebugLog.log('music.istek.send', {'song': song});
-        await ref
-            .read(chatRoomRemoteProvider)
-            .sendMessage(roomKey: _roomKey, content: trimmed);
-        await Future<void>.delayed(const Duration(milliseconds: 700));
-        await _syncMusicFromServer();
-        if (!_musicLooksQueued(song)) {
-          final fallback = await requestMusic(
-            title: song,
-            youtubeUrl: '',
-            priority: false,
-            skipPayment: true,
-          );
-          if (fallback != null && fallback.isNotEmpty) {
-            _showMusicRequestFlashLine('🎵 $fallback');
-          }
+        final queueError = await _submitMusicRequestByTitle(
+          song,
+          skipPayment: true,
+          priority: false,
+        );
+        if (queueError != null && queueError.isNotEmpty) {
+          state = state.copyWith(sending: false, error: queueError);
+          _showMusicRequestFlashLine('⚠️ $queueError');
+          return;
         }
+        unawaited(
+          ref
+              .read(chatRoomRemoteProvider)
+              .sendMessage(roomKey: _roomKey, content: trimmed)
+              .catchError((_) {}),
+        );
+        await _syncMusicFromServerIfNeeded(force: true);
         state = state.copyWith(sending: false);
-        _showMusicRequestFlashLine('✅ «$song» isteği iletildi');
+        _showMusicRequestFlashLine('✅ «$song» kuyruğa eklendi');
       } catch (e) {
         state = state.copyWith(
           sending: false,
@@ -1145,6 +1175,14 @@ class VoiceRoomLiveController
     }
   }
 
+  bool _musicItemHasPlayableUrl(MusicQueueItem? item) {
+    final url = item?.youtubeUrl.trim() ?? '';
+    return url.isNotEmpty &&
+        (url.contains('youtube') ||
+            url.contains('youtu.be') ||
+            url.startsWith('http'));
+  }
+
   bool _musicLooksQueued(String song) {
     final needle = song.trim().toLowerCase();
     if (needle.isEmpty) return false;
@@ -1158,11 +1196,15 @@ class VoiceRoomLiveController
             (tokens.isNotEmpty &&
                 tokens.every((token) => value.toLowerCase().contains(token))));
     final dj = state.dj;
-    if (match(dj.nowPlaying?.title) || match(dj.nowPlaying?.youtubeUrl)) {
+    final now = dj.nowPlaying;
+    if (_musicItemHasPlayableUrl(now) &&
+        (match(now?.title) || match(now?.youtubeUrl))) {
       return true;
     }
     return dj.musicQueue.any(
-      (item) => match(item.title) || match(item.youtubeUrl),
+      (item) =>
+          _musicItemHasPlayableUrl(item) &&
+          (match(item.title) || match(item.youtubeUrl)),
     );
   }
 
@@ -1574,6 +1616,7 @@ class VoiceRoomLiveController
           .read(chatRoomRemoteProvider)
           .requestMusic(
             roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
             title: title,
             youtubeUrl: resolvedUrl,
             thumbUrl: resolvedThumb,

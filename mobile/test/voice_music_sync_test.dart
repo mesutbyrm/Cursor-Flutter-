@@ -22,6 +22,19 @@ void main() {
     });
   });
 
+  group('VoiceMusicSync.parseIstekSongTitle', () {
+    test('parses artist and song from !istek command', () {
+      expect(
+        VoiceMusicSync.parseIstekSongTitle('!istek Tarkan - Kış Güneşi'),
+        'Tarkan - Kış Güneşi',
+      );
+    });
+
+    test('returns null when song title missing', () {
+      expect(VoiceMusicSync.parseIstekSongTitle('!istek'), isNull);
+    });
+  });
+
   group('VoiceMusicSync.isQueueUpdateMessage', () {
     test('detects SONG_REQUEST_FREE lines', () {
       expect(
