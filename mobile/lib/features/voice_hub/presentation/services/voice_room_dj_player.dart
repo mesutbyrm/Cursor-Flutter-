@@ -295,23 +295,6 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
       _emitPlayback(_playbackValue.value.copyWith(playing: playing));
       _broadcastPlaybackState();
     });
-    _player.playbackEventStream.listen((event) {
-      if (event.processingState == ja.ProcessingState.idle &&
-          event.playing == false &&
-          _currentSource != null) {
-        // idle between tracks — normal
-      }
-    });
-    _player.playerStateStream.listen((state) {
-      if (state.processingState == ja.ProcessingState.failed) {
-        VoiceRoomMusicPipelineLog.justAudioError(
-          StateError('player_state_failed'),
-          StackTrace.current,
-          phase: 'playerStateStream',
-          url: _currentSource,
-        );
-      }
-    });
     _player.processingStateStream.listen((state) {
       if (state == ja.ProcessingState.completed && !_completionFired) {
         _completionFired = true;
