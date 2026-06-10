@@ -12,6 +12,8 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_debug_log.dart';
+import '../../data/services/exo_player_probe.dart';
+import '../../data/services/voice_room_music_pipeline_log.dart';
 import '../../data/services/voice_room_gift_socket.dart';
 import '../../data/services/voice_room_sse_service.dart';
 import '../../data/youtube_music_search_cache.dart';
@@ -671,7 +673,31 @@ class VoiceRoomLiveController
     })
     mq,
   ) {
-    return dj.mergeMusicQueue(
+    if ((mq.musicUrl == null || mq.musicUrl!.isEmpty) &&
+        mq.queue.isNotEmpty &&
+        (mq.playing == true || dj.playing)) {
+      VoiceRoomMusicPipelineLog.mergeWarning(
+        roomId: _roomKey,
+        message: 'music-queue musicUrl boş ama kuyruk/playing var',
+        fetchDjMusicUrl: dj.musicUrl,
+        fetchQueueMusicUrl: mq.musicUrl,
+        fetchDjPlaying: dj.playing,
+        fetchQueuePlaying: mq.playing,
+      );
+    }
+    if (dj.musicUrl != null &&
+        dj.musicUrl!.isNotEmpty &&
+        (mq.musicUrl == null || mq.musicUrl!.isEmpty)) {
+      VoiceRoomMusicPipelineLog.mergeWarning(
+        roomId: _roomKey,
+        message: 'fetchDj musicUrl korunuyor — music-queue musicUrl null',
+        fetchDjMusicUrl: dj.musicUrl,
+        fetchQueueMusicUrl: mq.musicUrl,
+        fetchDjPlaying: dj.playing,
+        fetchQueuePlaying: mq.playing,
+      );
+    }
+    final merged = dj.mergeMusicQueue(
       queue: mq.queue,
       nowPlaying: mq.nowPlaying,
       playing: mq.playing,
@@ -682,6 +708,14 @@ class VoiceRoomLiveController
       musicUrl: mq.musicUrl,
       overwriteNowPlaying: mq.nowPlaying != null,
     );
+    VoiceRoomMusicPipelineLog.compareDjState(
+      stage: 'mergeMusicQueue',
+      roomId: _roomKey,
+      endpoint: '/api/chat/rooms/$_roomKey/music-queue',
+      dj: merged,
+      shouldPlay: merged.playing && merged.playbackSource != null,
+    );
+    return merged;
   }
 
   void _commitDjUi(ChatRoomDjState dj) {
@@ -811,6 +845,23 @@ class VoiceRoomLiveController
     final effectiveDj = _djWithQueuePlaybackFallback(dj);
     final playbackUrl = effectiveDj.playbackSource;
     final shouldPlay = effectiveDj.playing && playbackUrl != null;
+    if (effectiveDj.playing && playbackUrl == null) {
+      VoiceRoomMusicPipelineLog.nullMusicUrl(
+        reason: 'playbackSource_null_while_playing',
+        caller: '_applyDjPlayback',
+        playing: effectiveDj.playing,
+        queueLen: effectiveDj.musicQueue.length,
+        hasNowPlaying: effectiveDj.nowPlaying != null,
+        detail:
+            'dj.musicUrl=${effectiveDj.musicUrl} np.youtube=${effectiveDj.nowPlaying?.youtubeUrl}',
+      );
+    }
+    VoiceRoomMusicPipelineLog.compareDjState(
+      stage: 'applyDjPlayback',
+      roomId: _roomKey,
+      dj: effectiveDj,
+      shouldPlay: shouldPlay,
+    );
     VoiceRoomDebugLog.log('music.player.sync', {
       'roomId': _roomKey,
       'musicId': effectiveDj.nowPlaying?.id,
@@ -850,6 +901,26 @@ class VoiceRoomLiveController
     VoiceRoomDebugLog.log(ok ? 'music.player.started' : 'music.player.failed', {
       'url': playbackUrl,
     });
+    if (shouldPlay && !ok && playbackUrl != null) {
+      VoiceRoomMusicPipelineLog.compareFields(
+        stage: 'play_failed',
+        roomId: _roomKey,
+        serverMusicUrl: effectiveDj.musicUrl,
+        nowPlayingYoutube: effectiveDj.nowPlaying?.youtubeUrl,
+        videoId: VoiceRoomMusicPipelineLog.videoIdFromItem(
+          effectiveDj.nowPlaying,
+        ),
+        playbackSource: playbackUrl,
+        youtubeFallback: effectiveDj.youtubeFallbackSource,
+        playing: effectiveDj.playing,
+        shouldPlay: shouldPlay,
+      );
+      unawaited(ExoPlayerProbe.testUrlIfAndroid(playbackUrl));
+      final fallback = effectiveDj.youtubeFallbackSource;
+      if (fallback != null && fallback != playbackUrl) {
+        unawaited(ExoPlayerProbe.testUrlIfAndroid(fallback));
+      }
+    }
     if (shouldPlay && ok) {
       _lastDjPlaybackSignature = _djPlaybackSignature(
         effectiveDj,
@@ -1142,6 +1213,23 @@ class VoiceRoomLiveController
               .catchError((_) {}),
         );
         await _syncMusicFromServerIfNeeded(force: true);
+        final djAfter = state.dj;
+        VoiceRoomMusicPipelineLog.istekSubmitted(
+          song: song,
+          roomId: _roomKey,
+          requestEndpoint:
+              '/api/chat/rooms/$_roomKey/song-request',
+          responseMusicUrl: djAfter.musicUrl,
+          responsePlaying: djAfter.playing,
+          queuePosition: djAfter.queuePositionFor(djAfter.nowPlaying?.id),
+        );
+        VoiceRoomMusicPipelineLog.compareDjState(
+          stage: 'istek_after_sync',
+          roomId: _roomKey,
+          endpoint: '/api/chat/rooms/$_roomKey/music-queue',
+          dj: djAfter,
+          shouldPlay: djAfter.playing && djAfter.playbackSource != null,
+        );
         state = state.copyWith(sending: false);
         _showMusicRequestFlashLine('✅ «$song» kuyruğa eklendi');
       } catch (e) {
@@ -1714,6 +1802,14 @@ class VoiceRoomLiveController
         'queuePos': result.queuePosition,
         'hasUrl': result.musicUrl != null,
       });
+      VoiceRoomMusicPipelineLog.istekSubmitted(
+        song: title,
+        roomId: _roomKey,
+        requestEndpoint: '/api/chat/rooms/$_roomKey/song-request',
+        responseMusicUrl: result.musicUrl,
+        responsePlaying: result.playing,
+        queuePosition: result.queuePosition,
+      );
       final queue = result.queue.isNotEmpty
           ? result.queue
           : state.dj.musicQueue;

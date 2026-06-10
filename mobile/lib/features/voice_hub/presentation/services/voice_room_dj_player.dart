@@ -4,6 +4,7 @@ import 'package:audio_service/audio_service.dart' as audio;
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart' as ja;
 
+import '../../data/services/voice_room_music_pipeline_log.dart';
 import '../../data/youtube_stream_resolver.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../audio/voice_room_dj_stream_loader.dart';
@@ -120,6 +121,8 @@ class VoiceRoomDjPlayer {
               nowPlaying,
               fallbackUrl: candidate,
             ),
+            inputMusicUrl: musicUrl,
+            candidateLabel: candidate,
           );
           await handler.setVolume(_muted ? 0.0 : 1.0);
           await Future<void>.delayed(const Duration(milliseconds: 320));
@@ -127,7 +130,28 @@ class VoiceRoomDjPlayer {
             debugPrint('DJ play ok: $playable');
             return true;
           }
-        } catch (e) {
+          VoiceRoomMusicPipelineLog.justAudioError(
+            StateError('play_not_started_after_setSource'),
+            StackTrace.current,
+            phase: 'sync_verify',
+            url: playable,
+          );
+        } on ja.PlayerException catch (e, st) {
+          VoiceRoomMusicPipelineLog.justAudioError(
+            e,
+            st,
+            phase: 'sync_PlayerException',
+            url: candidate,
+          );
+          debugPrint('DJ play error ($candidate): $e');
+          _currentKey = null;
+        } catch (e, st) {
+          VoiceRoomMusicPipelineLog.justAudioError(
+            e,
+            st,
+            phase: 'sync',
+            url: candidate,
+          );
           debugPrint('DJ play error ($candidate): $e');
           _currentKey = null;
         }
@@ -271,6 +295,23 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
       _emitPlayback(_playbackValue.value.copyWith(playing: playing));
       _broadcastPlaybackState();
     });
+    _player.playbackEventStream.listen((event) {
+      if (event.processingState == ja.ProcessingState.idle &&
+          event.playing == false &&
+          _currentSource != null) {
+        // idle between tracks — normal
+      }
+    });
+    _player.playerStateStream.listen((state) {
+      if (state.processingState == ja.ProcessingState.failed) {
+        VoiceRoomMusicPipelineLog.justAudioError(
+          StateError('player_state_failed'),
+          StackTrace.current,
+          phase: 'playerStateStream',
+          url: _currentSource,
+        );
+      }
+    });
     _player.processingStateStream.listen((state) {
       if (state == ja.ProcessingState.completed && !_completionFired) {
         _completionFired = true;
@@ -288,6 +329,8 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
   Future<void> playSource(
     String source, {
     required VoiceRoomAudioMetadata metadata,
+    String? inputMusicUrl,
+    String? candidateLabel,
   }) async {
     _completionFired = false;
     if (_currentSource != source) {
@@ -296,18 +339,57 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
       _currentMediaItem = item;
       mediaItem.add(item);
       queue.add([item]);
+      final sourceType = source.startsWith('/') ? 'file' : 'uri';
+      VoiceRoomMusicPipelineLog.beforeSetAudioSource(
+        sourceUrl: source,
+        sourceType: sourceType,
+        metadataTitle: metadata.title,
+      );
+      VoiceRoomMusicPipelineLog.compareFields(
+        stage: 'pre_setAudioSource',
+        roomId: 'local',
+        serverMusicUrl: inputMusicUrl ?? candidateLabel,
+        playbackSource: candidateLabel ?? inputMusicUrl,
+        resolvedStreamUrl: source,
+        videoId: VoiceRoomMusicPipelineLog.videoIdFromUrl(
+          candidateLabel ?? inputMusicUrl ?? '',
+        ),
+      );
       final audioSource = source.startsWith('/')
           ? ja.AudioSource.file(source, tag: item)
           : ja.AudioSource.uri(Uri.parse(source), tag: item);
       await _player.stop();
-      await _player.setAudioSource(audioSource);
+      try {
+        await _player.setAudioSource(audioSource);
+      } on ja.PlayerException catch (e, st) {
+        VoiceRoomMusicPipelineLog.justAudioError(
+          e,
+          st,
+          phase: 'setAudioSource',
+          url: source,
+        );
+        rethrow;
+      }
       _emitPlayback(const VoiceRoomDjPlayback());
     }
     await playLocal();
   }
 
   Future<void> playLocal() async {
-    await _player.play();
+    VoiceRoomMusicPipelineLog.playEntered(
+      sourceUrl: _currentSource ?? '(none)',
+    );
+    try {
+      await _player.play();
+    } on ja.PlayerException catch (e, st) {
+      VoiceRoomMusicPipelineLog.justAudioError(
+        e,
+        st,
+        phase: 'play()',
+        url: _currentSource,
+      );
+      rethrow;
+    }
     _broadcastPlaybackState();
   }
 

@@ -13,6 +13,7 @@ import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../services/voice_room_debug_log.dart';
+import '../services/voice_room_music_pipeline_log.dart';
 import '../youtube_music_search_cache.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
@@ -191,8 +192,31 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      final res = await _dio.safeGet<dynamic>(djPath(key));
+      final endpoint = djPath(key);
+      final res = await _dio.safeGet<dynamic>(endpoint);
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final np = map['nowPlaying'];
+      final npMap = np is Map ? Map<String, dynamic>.from(np) : null;
+      VoiceRoomMusicPipelineLog.apiResponse(
+        endpoint: endpoint,
+        method: 'GET',
+        caller: 'fetchDj',
+        statusCode: res.statusCode,
+        musicUrl: map['musicUrl']?.toString() ?? map['url']?.toString(),
+        videoId: VoiceRoomMusicPipelineLog.videoIdFromUrl(
+          npMap?['youtubeUrl']?.toString() ??
+              npMap?['url']?.toString() ??
+              '',
+        ),
+        playing: map['playing'] == true || map['isPlaying'] == true,
+        rawPlayingField: '${map['playing']}/${map['isPlaying']}',
+        nowPlayingTitle: npMap?['title']?.toString(),
+        nowPlayingYoutube: npMap?['youtubeUrl']?.toString(),
+        queueLen: () {
+          final q = map['musicQueue'] ?? map['queue'];
+          return q is List ? q.length : null;
+        }(),
+      );
       if (map.isEmpty) return const ChatRoomDjState();
       return ChatRoomDjState.fromJson(map);
     });
@@ -743,14 +767,42 @@ class ChatRoomRemoteDataSource {
         try {
           res = await _dio.safeGet<dynamic>(path);
           final parsed = _parseMusicQueueResponse(res.data);
+          VoiceRoomMusicPipelineLog.apiResponse(
+            endpoint: path,
+            method: 'GET',
+            caller: 'fetchMusicQueue',
+            statusCode: res.statusCode,
+            musicUrl: parsed.musicUrl,
+            videoId: VoiceRoomMusicPipelineLog.videoIdFromItem(
+              parsed.nowPlaying,
+            ),
+            playing: parsed.playing,
+            nowPlayingTitle: parsed.nowPlaying?.title,
+            nowPlayingYoutube: parsed.nowPlaying?.youtubeUrl,
+            queueLen: parsed.queue.length,
+          );
           if (parsed.queue.isNotEmpty ||
               parsed.nowPlaying != null ||
               parsed.musicUrl != null ||
               parsed.musicEnabled == false) {
             return parsed;
           }
+          VoiceRoomMusicPipelineLog.nullMusicUrl(
+            reason: 'endpoint_empty_payload',
+            endpoint: path,
+            caller: 'fetchMusicQueue',
+            playing: parsed.playing,
+            queueLen: parsed.queue.length,
+            detail: 'queue+nowPlaying+musicUrl all empty',
+          );
           continue;
-        } on Object {
+        } on Object catch (e) {
+          VoiceRoomMusicPipelineLog.nullMusicUrl(
+            reason: 'endpoint_request_failed',
+            endpoint: path,
+            caller: 'fetchMusicQueue',
+            detail: '$e',
+          );
           continue;
         }
       }
@@ -873,15 +925,17 @@ class ChatRoomRemoteDataSource {
       });
       final opts = Options(contentType: 'application/json');
       Response<dynamic> res;
+      var usedEndpoint = songRequestPath(key);
       try {
         res = await _dio.safePost<dynamic>(
-          songRequestPath(key),
+          usedEndpoint,
           data: body,
           options: opts,
         );
       } on Object {
+        usedEndpoint = '/api/chat/rooms/$key/music-queue';
         res = await _dio.safePost<dynamic>(
-          '/api/chat/rooms/$key/music-queue',
+          usedEndpoint,
           data: body,
           options: opts,
         );
@@ -930,6 +984,32 @@ class ChatRoomRemoteDataSource {
         'position': position == 0 ? null : position,
         'hasUrl': musicUrlRaw != null && musicUrlRaw.isNotEmpty,
       });
+      VoiceRoomMusicPipelineLog.apiResponse(
+        endpoint: usedEndpoint,
+        method: 'POST',
+        caller: 'requestMusic',
+        statusCode: res.statusCode,
+        musicUrl: musicUrlRaw,
+        videoId: vid,
+        playing: playing,
+        nowPlayingTitle: item?.title,
+        nowPlayingYoutube: item?.youtubeUrl,
+        queueLen: queue.isNotEmpty
+            ? queue.length
+            : fallbackQueue?.queue.length,
+      );
+      if (musicUrlRaw == null || musicUrlRaw.isEmpty) {
+        VoiceRoomMusicPipelineLog.nullMusicUrl(
+          reason: 'song_request_no_stream_resolved',
+          endpoint: usedEndpoint,
+          caller: 'requestMusic',
+          playing: playing,
+          queueLen: queue.length,
+          hasNowPlaying: item != null,
+          detail:
+              'Sunucu kuyruğa ekledi ama musicUrl null — web tryStartMusicFromQueue stream çözemedi olabilir',
+        );
+      }
       return (
         item: item,
         queue: queue.isNotEmpty ? queue : (fallbackQueue?.queue ?? const []),

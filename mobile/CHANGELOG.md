@@ -1,5 +1,18 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.184+186 (2026-06-10)
+
+### Müzik veri hattı teşhis logları (`[MusicPipeline]`)
+
+- `!istek` / `song-request` / `music-queue` / `dj` yanıtlarında `musicUrl`, `videoId`, endpoint loglanır
+- `musicUrl` null nedenleri (`musicUrl.null`) — sunucu stream çözemedi, merge çakışması vb.
+- `fields.compare` — `musicUrl` vs `playbackSource` vs `nowPlaying.youtubeUrl`
+- `setAudioSource.before` + `play.entered` — oynatıcıya girmeden önce URL
+- `just_audio.error` — `PlayerException` ve diğer hatalar
+- `exo.probe` — Android ExoPlayer ile URL doğrudan test (MethodChannel)
+
+Logcat filtresi: `MusicPipeline` veya `VoiceRoom`
+
 ## 1.0.183+185 (2026-06-10)
 
 ### Sesli oda müzik oynatıcı — tam medya kontrolü
