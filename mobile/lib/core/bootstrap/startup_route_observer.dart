@@ -6,9 +6,10 @@ import 'app_startup_log.dart';
 class StartupRouteObserver extends NavigatorObserver {
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    final modal = route is ModalRoute<dynamic> ? route : null;
     AppStartupLog.log(
       'didPush ${route.settings.name ?? route.runtimeType} '
-      'barrier=${route.barrierColor} opaque=${route.opaque}',
+      'barrier=${modal?.barrierColor} opaque=${modal?.opaque ?? true}',
     );
     super.didPush(route, previousRoute);
   }
