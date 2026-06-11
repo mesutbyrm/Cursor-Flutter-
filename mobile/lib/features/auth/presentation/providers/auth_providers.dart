@@ -63,7 +63,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   }
 
   Future<void> login(String email, String password) async {
-    state = const AsyncValue.loading().copyWithPrevious(state);
+    state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
     state = await AsyncValue.guard(() async {
       final u = await ref.read(authRepositoryProvider).login(
             email: email,
@@ -83,7 +83,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     String? birthTime,
     String language = 'tr',
   }) async {
-    state = const AsyncValue.loading().copyWithPrevious(state);
+    state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
     state = await AsyncValue.guard(() async {
       final u = await ref.read(authRepositoryProvider).register(
             email: email,
@@ -100,7 +100,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   }
 
   Future<void> loginWithGoogle() async {
-    state = const AsyncValue.loading().copyWithPrevious(state);
+    state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
     state = await AsyncValue.guard(() async {
       final u = await ref.read(authRepositoryProvider).loginWithGoogle();
       return _withSiteProfile(u);
@@ -108,7 +108,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   }
 
   Future<void> loginWithTikTok() async {
-    state = const AsyncValue.loading().copyWithPrevious(state);
+    state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
     state = await AsyncValue.guard(() async {
       final u = await ref.read(authRepositoryProvider).loginWithTikTok();
       return _withSiteProfile(u);
