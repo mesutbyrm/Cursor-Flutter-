@@ -2,24 +2,26 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.191+193` |
-| Tarih (UTC) | 2026-06-11 21:55 |
-| Commit | [`5d9b66c68f18401be3f07c061c6a8a9a198eef02`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/5d9b66c68f18401be3f07c061c6a8a9a198eef02) |
-| İş akışı | [Run 27379364303](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27379364303) |
+| Sürüm | `1.0.192+194` |
+| Tarih (UTC) | 2026-06-11 23:34 |
+| Commit | [`bd9f2c528dff6e4b424e781fe4f87061b2bb4576`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/bd9f2c528dff6e4b424e781fe4f87061b2bb4576) |
+| İş akışı | [Run 27383845645](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27383845645) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.191+193 (2026-06-11)
+## 1.0.192+194 (2026-06-11)
 
-### Giriş ekranı — Android gri overlay (5. tur)
+### Giriş ekranı — Android gri overlay (6. tur)
 
-- **StartupOverlayGuard:** açılışta 1.5 sn boyunca kök navigator’daki takılı `PopupRoute` barrier’larını tekrarlı temizler
-- **AUTH_FINISH** sonrası ve route değişiminde overlay temizliği; `APP_START` / `AUTH_START` / `OVERLAY_SHOW|HIDE` logları
-- `/splash` rotası kaldırıldı — yalnızca redirect (`/login` veya `/feed`); çift navigasyon riski giderildi
-- `FortuneIncomingInviteHost`: auth yüklenirken ve giriş/kayıt rotalarında dialog açmaz
-- `MaterialApp.builder`: router `child == null` iken koyu arka plan (boş gri kare önlenir)
-- `LoginPage`: auth bitince overlay temizliği (tek seferlik guard kaldırıldı)
+- **RouterRefresh:** yalnızca oturum kontrolü bitince veya kullanıcı kimliği değişince `notifyListeners` — gereksiz go_router yenilemesi ve takılı modal barrier riski azaltıldı
+- **NavigatorModalSanitizer:** `MaterialApp.builder` içinde; auth rotalarında 3 sn boyunca kök navigator’daki popup/barrier temizliği
+- **StartupOverlayGuard** kaldırıldı (MaterialApp dışında navigator null kalıyordu)
+- Auth rotalarında `FortuneIncomingInviteHost` / `AppBottomNavHost` devre dışı
+- `AuthPremiumShell` tüm platformlarda opak `AuthPlainShell` (blur/cam yok)
+- `LoginPage`: tam ekran bootstrapping kilidi kaldırıldı — form her zaman görünür, üstte ince progress
+- Şifre sıfırlama / OTP: `AuthPremiumShell` + opak alanlar (`AuthShell` / LiquidGlass kaldırıldı)
+- Android `pageTransitionsTheme`: `FadeUpwardsPageTransitionsBuilder` (Cupertino scrim yerine)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
