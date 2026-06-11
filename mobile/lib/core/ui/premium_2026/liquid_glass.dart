@@ -1,5 +1,7 @@
+import 'dart:io' show Platform;
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
@@ -9,6 +11,9 @@ import 'premium_motion.dart';
 
 /// iOS Liquid Glass + glassmorphism yüzey.
 class LiquidGlass extends StatelessWidget {
+  /// Android'de ImageFilter.blur tam ekran gri/bulanık katman yapabiliyor —
+  /// tıpkı CosmicGalaxyBackground._useOrbBlur gibi devre dışı bırak.
+  static bool get _platformSupportsBlur => kIsWeb || !Platform.isAndroid;
   const LiquidGlass({
     super.key,
     required this.child,
@@ -36,7 +41,7 @@ class LiquidGlass extends StatelessWidget {
     final c = context.colors;
     final radius = borderRadius ?? BorderRadius.circular(t.radiusLiquid);
     final fill = elevated ? t.glassFillElevated : t.glassFill;
-    final effectiveBlur = c.useGlassBlur ? blur : 0.0;
+    final effectiveBlur = (c.useGlassBlur && _platformSupportsBlur) ? blur : 0.0;
     final border = gradientBorder ??
         LinearGradient(
           begin: Alignment.topLeft,
