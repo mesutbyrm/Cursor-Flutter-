@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-06-11 12:14 UTC
+Oluşturulma: 2026-06-11 13:20 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -24,7 +24,7 @@ Base: `main`
 
 | Dal | Neden |
 |-----|-------|
-| cursor/fix-android-grey-overlay-27d1 | merged into main |
+| cursor/fix-login-gray-screen-f28a | merged into main |
 
 ## Kalan açık PR'lar
 
