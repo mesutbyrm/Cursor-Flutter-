@@ -2,24 +2,24 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.190+192` |
-| Tarih (UTC) | 2026-06-11 18:59 |
-| Commit | [`1e9b0542a27d9dc02b18a0c58fc32bb0b52e267a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1e9b0542a27d9dc02b18a0c58fc32bb0b52e267a) |
-| İş akışı | [Run 27370005181](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27370005181) |
+| Sürüm | `1.0.191+193` |
+| Tarih (UTC) | 2026-06-11 21:55 |
+| Commit | [`5d9b66c68f18401be3f07c061c6a8a9a198eef02`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/5d9b66c68f18401be3f07c061c6a8a9a198eef02) |
+| İş akışı | [Run 27379364303](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27379364303) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.190+192 (2026-06-11)
+## 1.0.191+193 (2026-06-11)
 
-### Giriş ekranı — Android gri overlay (4. tur, kök neden)
+### Giriş ekranı — Android gri overlay (5. tur)
 
-- **Kök neden:** `/splash` → `/login` GoRouter geçişinde Navigator üstünde kalan modal barrier + olası yarım dialog
-- `initialLocation: '/login'` — soğuk açılışta splash yığını kaldırıldı
-- Auth rotaları: `NoTransitionPage` (sıfır süre, scrim yok)
-- `LoginPage`: mount sonrası `StuckOverlayGuard` ile takılı `PopupRoute` temizliği
-- `StartupRouteObserver` + `[AppStartup]` logları (route push/pop/barrier)
-- `FortuneIncomingInviteHost`: oturum yokken dialog açmaz
+- **StartupOverlayGuard:** açılışta 1.5 sn boyunca kök navigator’daki takılı `PopupRoute` barrier’larını tekrarlı temizler
+- **AUTH_FINISH** sonrası ve route değişiminde overlay temizliği; `APP_START` / `AUTH_START` / `OVERLAY_SHOW|HIDE` logları
+- `/splash` rotası kaldırıldı — yalnızca redirect (`/login` veya `/feed`); çift navigasyon riski giderildi
+- `FortuneIncomingInviteHost`: auth yüklenirken ve giriş/kayıt rotalarında dialog açmaz
+- `MaterialApp.builder`: router `child == null` iken koyu arka plan (boş gri kare önlenir)
+- `LoginPage`: auth bitince overlay temizliği (tek seferlik guard kaldırıldı)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
