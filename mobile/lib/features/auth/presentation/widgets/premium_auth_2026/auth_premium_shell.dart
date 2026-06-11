@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
@@ -30,9 +33,12 @@ class AuthPremiumShell extends StatelessWidget {
     final maxW = (mq.size.width - 40).clamp(280.0, 420.0);
     final logoSize = (mq.size.width * 0.22).clamp(72.0, 96.0);
 
+    final glassBlur = !kIsWeb && Platform.isAndroid ? 0.0 : 24.0;
+
     return Scaffold(
       backgroundColor: const Color(0xFF05050D),
       body: CosmicGalaxyBackground(
+        animate: !(!kIsWeb && Platform.isAndroid),
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -93,7 +99,7 @@ class AuthPremiumShell extends StatelessWidget {
                               child: LiquidGlass(
                                 padding: const EdgeInsets.fromLTRB(22, 26, 22, 28),
                                 borderRadius: BorderRadius.circular(32),
-                                blur: 24,
+                                blur: glassBlur,
                                 elevated: true,
                                 child: child,
                               ),

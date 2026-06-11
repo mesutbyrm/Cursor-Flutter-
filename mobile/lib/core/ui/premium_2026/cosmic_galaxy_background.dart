@@ -1,6 +1,8 @@
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
@@ -26,6 +28,9 @@ class CosmicGalaxyBackground extends StatefulWidget {
 class _CosmicGalaxyBackgroundState extends State<CosmicGalaxyBackground>
     with SingleTickerProviderStateMixin {
   late final AnimationController _drift;
+
+  /// Android'de ImageFilter.blur tam ekran gri/bulanık katman yapabiliyor.
+  static bool get _useOrbBlur => !kIsWeb && !Platform.isAndroid;
 
   static const _galaxy = LinearGradient(
     begin: Alignment.topLeft,
@@ -77,16 +82,26 @@ class _CosmicGalaxyBackgroundState extends State<CosmicGalaxyBackground>
       children: [
         const DecoratedBox(decoration: BoxDecoration(gradient: _galaxy)),
         if (widget.animate) ...[
-          Positioned(top: -90, right: -50, child: _neonOrb(AppThemeColors.accentPurple, 240)),
+          Positioned(
+            top: -90,
+            right: -50,
+            child: _useOrbBlur
+                ? _neonOrb(AppThemeColors.accentPurple, 240)
+                : _staticOrb(AppThemeColors.accentPurple, 240),
+          ),
           Positioned(
             bottom: h * 0.12,
             left: -70,
-            child: _neonOrb(const Color(0xFFFF2D7A), 200),
+            child: _useOrbBlur
+                ? _neonOrb(const Color(0xFFFF2D7A), 200)
+                : _staticOrb(const Color(0xFFFF2D7A), 200),
           ),
           Positioned(
             top: h * 0.32,
             left: w * 0.15,
-            child: _neonOrb(AppThemeColors.accentCyan, 130, opacity: 0.22),
+            child: _useOrbBlur
+                ? _neonOrb(AppThemeColors.accentCyan, 130, opacity: 0.22)
+                : _staticOrb(AppThemeColors.accentCyan, 130, opacity: 0.22),
           ),
           AnimatedBuilder(
             animation: _drift,

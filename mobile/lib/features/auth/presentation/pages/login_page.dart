@@ -40,6 +40,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
+    final bootstrapping = auth.isLoading && !auth.hasValue;
+    if (bootstrapping) {
+      return const AuthPremiumShell(
+        heroLogo: true,
+        topTitle: 'Hoş geldin',
+        topSubtitle: 'Oturum kontrol ediliyor…',
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: Center(
+            child: SizedBox(
+              width: 36,
+              height: 36,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            ),
+          ),
+        ),
+      );
+    }
+    final formBusy = auth.isLoading;
     ref.listen(authControllerProvider, (prev, next) {
       next.whenOrNull(
         data: (user) {
@@ -63,14 +82,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             AuthSocialSection(
-              busy: auth.isLoading,
+              busy: formBusy,
               googleLabel: 'Google ile Giriş yap',
-              onGoogle: auth.isLoading
+              onGoogle: formBusy
                   ? null
                   : () => ref
                       .read(authControllerProvider.notifier)
                       .loginWithGoogle(),
-              onTikTok: auth.isLoading
+              onTikTok: formBusy
                   ? null
                   : () => ref
                       .read(authControllerProvider.notifier)
@@ -112,8 +131,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             const SizedBox(height: 8),
             AuthNeonButton(
               label: 'Giriş Yap',
-              loading: auth.isLoading,
-              onPressed: auth.isLoading
+              loading: formBusy,
+              onPressed: formBusy
                   ? null
                   : () async {
                       if (!_form.currentState!.validate()) return;

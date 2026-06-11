@@ -1,6 +1,9 @@
+import 'dart:io' show Platform;
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
@@ -41,6 +44,10 @@ class _SplashPageState extends ConsumerState<SplashPage>
     );
 
     _fadeCtrl.forward();
+    Future<void>.delayed(const Duration(seconds: 10), () {
+      if (!mounted) return;
+      context.go('/login');
+    });
   }
 
   @override
@@ -59,6 +66,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
       backgroundColor: const Color(0xFF05050D),
       body: CosmicGalaxyBackground(
         showVignette: false,
+        animate: !(!kIsWeb && Platform.isAndroid),
         child: FadeTransition(
           opacity: _fade,
           child: SafeArea(
@@ -148,22 +156,24 @@ class _SplashPageState extends ConsumerState<SplashPage>
   }
 
   Widget _logoGlow(double size) {
-    return ImageFiltered(
-      imageFilter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
-      child: Container(
-        width: size * 1.4,
-        height: size * 1.4,
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              Color(0x55FF2D7A),
-              Color(0x339B4DFF),
-              Colors.transparent,
-            ],
-          ),
+    final glow = Container(
+      width: size * 1.4,
+      height: size * 1.4,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            Color(0x55FF2D7A),
+            Color(0x339B4DFF),
+            Colors.transparent,
+          ],
         ),
       ),
+    );
+    if (!kIsWeb && Platform.isAndroid) return glow;
+    return ImageFiltered(
+      imageFilter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
+      child: glow,
     );
   }
 }

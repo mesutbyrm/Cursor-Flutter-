@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.187+189 (2026-06-10)
+
+### Giriş ekranı — Android gri overlay düzeltmesi
+
+- `CosmicGalaxyBackground`: Android'de `ImageFilter.blur` kapatıldı (tam ekran gri katman)
+- `AuthPremiumShell` / splash: Android'de cam blur ve orb animasyonu devre dışı
+- Oturum kontrolü 12s zaman aşımı — sonsuz yüklemede login'e düşer
+- Splash 10s sonra login'e yönlendirme yedeği
+
 ## 1.0.186+188 (2026-06-10)
 
 ### Sesli oda müzik — web görünümü + hızlı oynatma

@@ -45,12 +45,22 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   }
 
   Future<UserEntity?> _resolvedUser() async {
-    final base = await _sessionUser();
-    return _withSiteProfile(base);
+    try {
+      final base = await _sessionUser().timeout(const Duration(seconds: 10));
+      return await _withSiteProfile(base).timeout(const Duration(seconds: 8));
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
-  Future<UserEntity?> build() async => _resolvedUser();
+  Future<UserEntity?> build() async {
+    try {
+      return await _resolvedUser().timeout(const Duration(seconds: 12));
+    } catch (_) {
+      return null;
+    }
+  }
 
   Future<void> login(String email, String password) async {
     state = const AsyncValue.loading();

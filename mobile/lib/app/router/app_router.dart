@@ -114,7 +114,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final auth = ref.read(authControllerProvider);
 
       if (loc == '/splash') {
-        if (auth.isLoading) return null;
+        if (auth.isLoading && !auth.hasError) return null;
         return auth.valueOrNull != null ? '/feed' : '/login';
       }
 
