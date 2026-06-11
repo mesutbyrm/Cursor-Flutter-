@@ -24,7 +24,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _clearStuckOverlays('mount'));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _clearStuckOverlays('mount');
+    });
   }
 
   void _clearStuckOverlays(String reason) {
@@ -54,7 +56,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
-    final bootstrapping = auth.isLoading && !auth.hasValue;
+    final formBusy = ref.watch(authUserActionBusyProvider);
+    final sessionChecking = auth.isLoading && !auth.hasValue;
 
     ref.listen(authControllerProvider, (prev, next) {
       final wasLoading = prev?.isLoading ?? true;
@@ -75,34 +78,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       );
     });
 
-    if (bootstrapping) {
-      return const AuthPremiumShell(
-        heroLogo: true,
-        topTitle: 'Hoş geldin',
-        topSubtitle: 'Oturum kontrol ediliyor…',
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 24),
-          child: Center(
-            child: SizedBox(
-              width: 36,
-              height: 36,
-              child: CircularProgressIndicator(strokeWidth: 2.5),
-            ),
-          ),
-        ),
-      );
-    }
-    final formBusy = ref.watch(authUserActionBusyProvider);
-
     return AuthPremiumShell(
       heroLogo: true,
       topTitle: 'Hoş geldin',
-      topSubtitle: 'Sesli odalara katıl, fal dünyasını keşfet.',
+      topSubtitle: sessionChecking
+          ? 'Oturum kontrol ediliyor…'
+          : 'Sesli odalara katıl, fal dünyasını keşfet.',
       child: Form(
         key: _form,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (sessionChecking)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: LinearProgressIndicator(
+                  minHeight: 2,
+                  backgroundColor: Color(0x22FFFFFF),
+                  color: Color(0xFF9B4DFF),
+                ),
+              ),
             AuthSocialSection(
               busy: formBusy,
               googleLabel: 'Google ile Giriş yap',

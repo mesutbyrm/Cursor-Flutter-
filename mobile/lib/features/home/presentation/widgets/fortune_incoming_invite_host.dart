@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/bootstrap/auth_route_paths.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
@@ -30,21 +31,13 @@ class _FortuneIncomingInviteHostState
   var _presenting = false;
   final Set<String> _dismissed = {};
 
-  static const _blockedPaths = {
-    '/login',
-    '/register',
-    '/splash',
-    '/auth/forgot-password',
-    '/auth/otp-verify',
-  };
-
   bool _mayPresentInvites() {
     final auth = ref.read(authControllerProvider);
     if (auth.isLoading) return false;
     if (auth.valueOrNull == null) return false;
     final router = ref.read(goRouterProvider);
     final path = router.routerDelegate.currentConfiguration.uri.path;
-    return !_blockedPaths.contains(path);
+    return !AuthRoutePaths.isPublicAuthPath(path);
   }
 
   @override

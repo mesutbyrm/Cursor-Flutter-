@@ -92,9 +92,26 @@ class RouterRefresh extends ChangeNotifier {
   RouterRefresh(this._ref) {
     _ref.listen<AsyncValue<dynamic>>(
       authControllerProvider,
-      (_, _) => notifyListeners(),
+      (prev, next) {
+        final prevLoading = prev?.isLoading ?? true;
+        final nextLoading = next.isLoading;
+        final prevUser = prev?.valueOrNull;
+        final nextUser = next.valueOrNull;
+
+        // İlk oturum kontrolü bittiğinde veya kullanıcı kimliği değişince yenile.
+        // Her loading tick'te notify → go_router yığınında takılı modal barrier riski.
+        if (prevLoading && !nextLoading) {
+          notifyListeners();
+          return;
+        }
+        if (!nextLoading && prevUser != nextUser) {
+          notifyListeners();
+        }
+      },
     );
-    _ref.listen<bool>(guestModeProvider, (_, _) => notifyListeners());
+    _ref.listen<bool>(guestModeProvider, (prev, next) {
+      if (prev != next) notifyListeners();
+    });
   }
 
   final Ref _ref;
@@ -147,31 +164,19 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/login',
-        pageBuilder: (context, state) => AppPageTransitions.none(
-          key: state.pageKey,
-          child: const LoginPage(),
-        ),
+        builder: (context, state) => const LoginPage(),
       ),
       GoRoute(
         path: '/register',
-        pageBuilder: (context, state) => AppPageTransitions.none(
-          key: state.pageKey,
-          child: const RegisterPage(),
-        ),
+        builder: (context, state) => const RegisterPage(),
       ),
       GoRoute(
         path: '/auth/forgot-password',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: const ForgotPasswordPage(),
-        ),
+        builder: (context, state) => const ForgotPasswordPage(),
       ),
       GoRoute(
         path: '/auth/otp-verify',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
-          key: state.pageKey,
-          child: OtpVerifyPage(email: state.extra as String?),
-        ),
+        builder: (context, state) => OtpVerifyPage(email: state.extra as String?),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

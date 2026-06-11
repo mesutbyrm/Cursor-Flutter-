@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../providers/auth_providers.dart';
-import '../widgets/auth_shell.dart';
+import '../widgets/premium_auth_2026/premium_auth_2026.dart';
 
 /// Şifre sıfırlama — canlifal.com native API (e-posta bağlantısı).
 class ForgotPasswordPage extends ConsumerStatefulWidget {
@@ -62,42 +61,36 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
-    return AuthShell(
+    return AuthPremiumShell(
       showBack: true,
-      child: AuthFormCard(
-        child: Form(
-          key: _form,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const AuthBrandHeader(
-                title: 'Şifreni sıfırla',
-                subtitle:
-                    'E-postana güvenli bir sıfırlama bağlantısı göndereceğiz.',
-              ),
-              const SizedBox(height: 24),
-              TextFormField(
-                controller: _email,
-                keyboardType: TextInputType.emailAddress,
-                style: TextStyle(color: context.colors.onSurface),
-                decoration: authInputDecoration(
-                  labelText: 'E-posta',
-                  prefixIcon: Icons.mail_outline_rounded,
-                ),
-                validator: (v) =>
-                    v != null && v.contains('@') ? null : 'Geçerli e-posta girin',
-              ),
-              const SizedBox(height: 22),
-              AuthPrimaryButton(
-                label: _loading ? 'Gönderiliyor…' : 'Bağlantı gönder',
-                onPressed: _loading ? null : _continue,
-              ),
-              AuthTextLink(
-                label: 'Girişe dön',
-                onPressed: () => context.go('/login'),
-              ),
-            ],
-          ),
+      onBack: () => context.pop(),
+      topTitle: 'Şifreni sıfırla',
+      topSubtitle: 'E-postana güvenli bir sıfırlama bağlantısı göndereceğiz.',
+      child: Form(
+        key: _form,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AuthFloatingField(
+              controller: _email,
+              label: 'E-posta',
+              hint: 'ornek@email.com',
+              prefixIcon: Icons.mail_outline_rounded,
+              keyboardType: TextInputType.emailAddress,
+              validator: (v) =>
+                  v != null && v.contains('@') ? null : 'Geçerli e-posta girin',
+            ),
+            const SizedBox(height: 22),
+            AuthNeonButton(
+              label: _loading ? 'Gönderiliyor…' : 'Bağlantı gönder',
+              loading: _loading,
+              onPressed: _loading ? null : _continue,
+            ),
+            AuthTextLinkPremium(
+              label: 'Girişe dön',
+              onPressed: () => context.go('/login'),
+            ),
+          ],
         ),
       ),
     );

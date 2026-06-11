@@ -36,11 +36,12 @@ class AppTheme {
       scaffoldBackgroundColor: c.scaffoldBackground,
       colorScheme: c.toColorScheme(),
       extensions: [tokens, p26, palette],
-      pageTransitionsTheme: const PageTransitionsTheme(
+      pageTransitionsTheme: PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          // Android: Cupertino geçişi soğuk açılışta gri modal scrim bırakabiliyor.
+          TargetPlatform.android: const FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: const CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: const CupertinoPageTransitionsBuilder(),
         },
       ),
     );

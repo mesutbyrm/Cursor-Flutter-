@@ -18,8 +18,7 @@ class RegisterPage extends ConsumerStatefulWidget {
   ConsumerState<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _RegisterPageState extends ConsumerState<RegisterPage>
-    with SingleTickerProviderStateMixin {
+class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _form = GlobalKey<FormState>();
   final _displayName = TextEditingController();
   final _username = TextEditingController();
@@ -30,23 +29,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
   TimeOfDay? _birthTime;
   String _language = 'tr';
 
-  late final AnimationController _enterCtrl;
-  late final Animation<double> _enterFade;
-
-  @override
-  void initState() {
-    super.initState();
-    _enterCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 520),
-    );
-    _enterFade = CurvedAnimation(parent: _enterCtrl, curve: Curves.easeOutCubic);
-    _enterCtrl.forward();
-  }
-
   @override
   void dispose() {
-    _enterCtrl.dispose();
     _displayName.dispose();
     _username.dispose();
     _email.dispose();
@@ -115,14 +99,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
       );
     });
 
-    return FadeTransition(
-      opacity: _enterFade,
-      child: AuthPremiumShell(
-        showBack: true,
-        onBack: () => context.pop(),
-        topTitle: 'Hesap oluştur',
-        topSubtitle: 'Dakikalar içinde topluluğa katıl.',
-        child: Form(
+    return AuthPremiumShell(
+      showBack: true,
+      onBack: () => context.pop(),
+      topTitle: 'Hesap oluştur',
+      topSubtitle: 'Dakikalar içinde topluluğa katıl.',
+      child: Form(
           key: _form,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -285,7 +267,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
             ],
           ),
         ),
-      ),
     );
   }
 }
