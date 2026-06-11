@@ -7,7 +7,6 @@ import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/otp_verify_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
-import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../features/content_hub/domain/native_feature_item.dart';
@@ -113,22 +112,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     observers: [StartupRouteObserver()],
     refreshListenable: refresh,
     redirect: (context, state) {
+      final path = state.uri.path;
       final loc = state.matchedLocation;
       final auth = ref.read(authControllerProvider);
 
-      if (loc == '/splash' || loc == '/login' || loc == '/register') {
+      if (path == '/splash') {
+        final target = auth.valueOrNull != null ? '/feed' : '/login';
+        AppStartupLog.route('/splash', target, reason: 'legacy splash → auth');
+        return target;
+      }
+
+      if (loc == '/login' || loc == '/register') {
         AppStartupLog.auth(
           loading: auth.isLoading,
           hasUser: auth.valueOrNull != null,
           hasError: auth.hasError,
         );
-      }
-
-      if (loc == '/splash') {
-        if (auth.isLoading && !auth.hasError) return null;
-        final target = auth.valueOrNull != null ? '/feed' : '/login';
-        AppStartupLog.route('/splash', target, reason: 'auth resolved');
-        return target;
       }
 
       final authed = auth.valueOrNull != null;
@@ -146,13 +145,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/splash',
-        pageBuilder: (context, state) => AppPageTransitions.none(
-          key: state.pageKey,
-          child: const SplashPage(),
-        ),
-      ),
       GoRoute(
         path: '/login',
         pageBuilder: (context, state) => AppPageTransitions.none(

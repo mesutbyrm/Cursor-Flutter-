@@ -30,13 +30,29 @@ class _FortuneIncomingInviteHostState
   var _presenting = false;
   final Set<String> _dismissed = {};
 
+  static const _blockedPaths = {
+    '/login',
+    '/register',
+    '/splash',
+    '/auth/forgot-password',
+    '/auth/otp-verify',
+  };
+
+  bool _mayPresentInvites() {
+    final auth = ref.read(authControllerProvider);
+    if (auth.isLoading) return false;
+    if (auth.valueOrNull == null) return false;
+    final router = ref.read(goRouterProvider);
+    final path = router.routerDelegate.currentConfiguration.uri.path;
+    return !_blockedPaths.contains(path);
+  }
+
   @override
   void initState() {
     super.initState();
     _poll = Timer.periodic(const Duration(seconds: 3), (_) => _pollApi());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = ref.read(authControllerProvider).valueOrNull;
-      if (user == null) return;
+      if (!_mayPresentInvites()) return;
       _pollApi();
       _tryPresentNext();
     });
@@ -61,9 +77,7 @@ class _FortuneIncomingInviteHostState
   }
 
   Future<void> _pollApi() async {
-    if (!mounted || _presenting) return;
-    final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null) return;
+    if (!mounted || _presenting || !_mayPresentInvites()) return;
 
     final incoming =
         await ref.read(homeRemoteProvider).fetchIncomingFortuneSessions();
@@ -76,8 +90,7 @@ class _FortuneIncomingInviteHostState
   }
 
   Future<void> _tryPresentNext() async {
-    if (!mounted || _presenting) return;
-    if (ref.read(authControllerProvider).valueOrNull == null) return;
+    if (!mounted || _presenting || !_mayPresentInvites()) return;
     final next = ref.read(fortuneIncomingInviteProvider.notifier).takeNext();
     if (next == null) return;
     if (_dismissed.contains(next.sessionId)) {
@@ -88,7 +101,7 @@ class _FortuneIncomingInviteHostState
   }
 
   Future<void> _presentInvite(FortuneIncomingSession req) async {
-    if (!mounted) return;
+    if (!mounted || !_mayPresentInvites()) return;
     _presenting = true;
     try {
       final navCtx = rootNavigatorKey.currentContext;
@@ -172,7 +185,7 @@ class _FortuneIncomingInviteHostState
   Widget build(BuildContext context) {
     ref.listen<List<FortuneIncomingSession>>(fortuneIncomingInviteProvider,
         (prev, next) {
-      if (next.isNotEmpty && !_presenting) {
+      if (next.isNotEmpty && !_presenting && _mayPresentInvites()) {
         unawaited(_tryPresentNext());
       }
     });

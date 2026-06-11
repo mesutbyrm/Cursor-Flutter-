@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../app/router/app_router.dart';
 import '../../../../core/bootstrap/app_startup_log.dart';
 import '../../../../core/bootstrap/stuck_overlay_guard.dart';
 import '../../../../core/config/env.dart';
@@ -21,19 +20,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _form = GlobalKey<FormState>();
-  var _clearedStuckOverlay = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _onLoginMounted());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _clearStuckOverlays('mount'));
   }
 
-  void _onLoginMounted() {
-    if (!mounted || _clearedStuckOverlay) return;
-    _clearedStuckOverlay = true;
-    AppStartupLog.log('LoginPage mounted — clearing orphan popup routes');
-    StuckOverlayGuard.dismissPopupRoutes(rootNavigatorKey);
+  void _clearStuckOverlays(String reason) {
+    if (!mounted) return;
+    AppStartupLog.log('LoginPage overlay clear ($reason)');
+    StuckOverlayGuard.dismissRoot(reason: 'login-$reason');
   }
 
   @override
@@ -58,6 +55,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
     final bootstrapping = auth.isLoading && !auth.hasValue;
+
+    ref.listen(authControllerProvider, (prev, next) {
+      final wasLoading = prev?.isLoading ?? true;
+      if (wasLoading && !next.isLoading) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _clearStuckOverlays('auth-finish');
+        });
+      }
+      next.whenOrNull(
+        data: (user) {
+          if (user != null) {
+            ref.read(guestModeProvider.notifier).state = false;
+          }
+        },
+        error: (e, _) => ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        ),
+      );
+    });
+
     if (bootstrapping) {
       return const AuthPremiumShell(
         heroLogo: true,
@@ -76,18 +93,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       );
     }
     final formBusy = ref.watch(authUserActionBusyProvider);
-    ref.listen(authControllerProvider, (prev, next) {
-      next.whenOrNull(
-        data: (user) {
-          if (user != null) {
-            ref.read(guestModeProvider.notifier).state = false;
-          }
-        },
-        error: (e, _) => ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        ),
-      );
-    });
 
     return AuthPremiumShell(
       heroLogo: true,

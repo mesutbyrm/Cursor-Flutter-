@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/bootstrap/app_startup_log.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/onesignal/onesignal_bootstrap.dart';
 import '../../../../core/network/cookie_jar_provider.dart';
@@ -55,9 +56,13 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
   @override
   Future<UserEntity?> build() async {
+    AppStartupLog.authStart();
     try {
-      return await _resolvedUser().timeout(const Duration(seconds: 12));
+      final user = await _resolvedUser().timeout(const Duration(seconds: 12));
+      AppStartupLog.authFinish(hasUser: user != null);
+      return user;
     } catch (_) {
+      AppStartupLog.authFinish(hasUser: false, error: true);
       return null;
     }
   }

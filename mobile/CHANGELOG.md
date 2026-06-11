@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.191+193 (2026-06-11)
+
+### Giriş ekranı — Android gri overlay (5. tur)
+
+- **StartupOverlayGuard:** açılışta 1.5 sn boyunca kök navigator’daki takılı `PopupRoute` barrier’larını tekrarlı temizler
+- **AUTH_FINISH** sonrası ve route değişiminde overlay temizliği; `APP_START` / `AUTH_START` / `OVERLAY_SHOW|HIDE` logları
+- `/splash` rotası kaldırıldı — yalnızca redirect (`/login` veya `/feed`); çift navigasyon riski giderildi
+- `FortuneIncomingInviteHost`: auth yüklenirken ve giriş/kayıt rotalarında dialog açmaz
+- `MaterialApp.builder`: router `child == null` iken koyu arka plan (boş gri kare önlenir)
+- `LoginPage`: auth bitince overlay temizliği (tek seferlik guard kaldırıldı)
+
 ## 1.0.190+192 (2026-06-11)
 
 ### Giriş ekranı — Android gri overlay (4. tur, kök neden)

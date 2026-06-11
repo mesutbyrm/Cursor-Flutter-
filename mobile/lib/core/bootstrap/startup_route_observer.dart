@@ -7,10 +7,17 @@ class StartupRouteObserver extends NavigatorObserver {
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     final modal = route is ModalRoute<dynamic> ? route : null;
+    final barrier = modal?.barrierColor;
     AppStartupLog.log(
       'didPush ${route.settings.name ?? route.runtimeType} '
-      'barrier=${modal?.barrierColor} opaque=${modal?.opaque ?? true}',
+      'barrier=$barrier opaque=${modal?.opaque ?? true}',
     );
+    if (route is PopupRoute || (barrier != null && barrier.a > 0)) {
+      AppStartupLog.overlayShow(
+        source: route.runtimeType.toString(),
+        detail: 'barrier=$barrier',
+      );
+    }
     super.didPush(route, previousRoute);
   }
 
@@ -19,6 +26,9 @@ class StartupRouteObserver extends NavigatorObserver {
     AppStartupLog.log(
       'didPop ${route.settings.name ?? route.runtimeType}',
     );
+    if (route is PopupRoute) {
+      AppStartupLog.overlayHide(reason: 'didPop-${route.runtimeType}');
+    }
     super.didPop(route, previousRoute);
   }
 
