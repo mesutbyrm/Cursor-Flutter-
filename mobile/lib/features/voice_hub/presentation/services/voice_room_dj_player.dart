@@ -113,64 +113,30 @@ class VoiceRoomDjPlayer {
         final playable = await _streamLoader.preparePlaybackSource(resolved);
         if (playable == null || playable.isEmpty) continue;
 
-        if (_currentKey == playable && handler.isPlaying && !_muted) {
+        final targets = <String>[playable];
+        if (await _attemptPlay(
+          handler: handler,
+          targets: targets,
+          nowPlaying: nowPlaying,
+          musicUrl: musicUrl,
+          candidate: candidate,
+        )) {
           return true;
         }
 
-        try {
-          await VoiceRoomMusicAudioSession.activateForPlayback();
-          _currentKey = playable;
-          await handler.playSource(
-            playable,
-            metadata: VoiceRoomAudioMetadata.fromQueueItem(
-              nowPlaying,
-              fallbackUrl: candidate,
-            ),
-            inputMusicUrl: musicUrl,
-            candidateLabel: candidate,
-          );
-          await handler.setVolume(_muted ? 0.0 : 1.0);
-          final started = await handler.waitUntilPlaying(
-            timeout: const Duration(seconds: 4),
-          );
-          diagnostics.value = handler.diagnostics.copyWith(
-            serverMusicUrl: musicUrl,
-            playbackSource: candidate,
-            resolvedStreamUrl: playable,
-            muted: _muted,
-            lastPhase: started ? 'sync_ok' : 'sync_verify_failed',
-          );
-          if (started) {
-            debugPrint('DJ play ok: $playable');
-            return true;
+        if (VoiceRoomDjStreamLoader.needsLocalDownload(playable)) {
+          final local = await _streamLoader.downloadFallback(playable);
+          if (local != null && local != playable) {
+            if (await _attemptPlay(
+              handler: handler,
+              targets: [local],
+              nowPlaying: nowPlaying,
+              musicUrl: musicUrl,
+              candidate: candidate,
+            )) {
+              return true;
+            }
           }
-          VoiceRoomMusicPipelineLog.justAudioError(
-            StateError(
-              'play_not_started processing=${handler.diagnostics.processingState} '
-              'playing=${handler.isPlaying} muted=$_muted',
-            ),
-            StackTrace.current,
-            phase: 'sync_verify',
-            url: playable,
-          );
-        } on ja.PlayerException catch (e, st) {
-          VoiceRoomMusicPipelineLog.justAudioError(
-            e,
-            st,
-            phase: 'sync_PlayerException',
-            url: candidate,
-          );
-          debugPrint('DJ play error ($candidate): $e');
-          _currentKey = null;
-        } catch (e, st) {
-          VoiceRoomMusicPipelineLog.justAudioError(
-            e,
-            st,
-            phase: 'sync',
-            url: candidate,
-          );
-          debugPrint('DJ play error ($candidate): $e');
-          _currentKey = null;
         }
       }
     }
@@ -181,6 +147,76 @@ class VoiceRoomDjPlayer {
 
   Future<String?> _resolveSource(String musicUrl) async {
     return _resolver.resolvePlayableUrl(musicUrl);
+  }
+
+  Future<bool> _attemptPlay({
+    required VoiceRoomAudioHandler handler,
+    required List<String> targets,
+    required MusicQueueItem? nowPlaying,
+    required String? musicUrl,
+    required String candidate,
+  }) async {
+    for (final target in targets) {
+      if (_currentKey == target && handler.isPlaying && !_muted) {
+        return true;
+      }
+      try {
+        await VoiceRoomMusicAudioSession.activateForPlayback();
+        _currentKey = target;
+        await handler.playSource(
+          target,
+          metadata: VoiceRoomAudioMetadata.fromQueueItem(
+            nowPlaying,
+            fallbackUrl: candidate,
+          ),
+          inputMusicUrl: musicUrl,
+          candidateLabel: candidate,
+        );
+        await handler.setVolume(_muted ? 0.0 : 1.0);
+        final started = await handler.waitUntilPlaying(
+          timeout: const Duration(seconds: 6),
+        );
+        diagnostics.value = handler.diagnostics.copyWith(
+          serverMusicUrl: musicUrl,
+          playbackSource: candidate,
+          resolvedStreamUrl: target,
+          muted: _muted,
+          lastPhase: started ? 'sync_ok' : 'sync_verify_failed',
+        );
+        if (started) {
+          debugPrint('DJ play ok: $target');
+          return true;
+        }
+        VoiceRoomMusicPipelineLog.justAudioError(
+          StateError(
+            'play_not_started processing=${handler.diagnostics.processingState} '
+            'playing=${handler.isPlaying} muted=$_muted',
+          ),
+          StackTrace.current,
+          phase: 'sync_verify',
+          url: target,
+        );
+      } on ja.PlayerException catch (e, st) {
+        VoiceRoomMusicPipelineLog.justAudioError(
+          e,
+          st,
+          phase: 'sync_PlayerException',
+          url: target,
+        );
+        debugPrint('DJ play error ($target): $e');
+        _currentKey = null;
+      } catch (e, st) {
+        VoiceRoomMusicPipelineLog.justAudioError(
+          e,
+          st,
+          phase: 'sync',
+          url: target,
+        );
+        debugPrint('DJ play error ($target): $e');
+        _currentKey = null;
+      }
+    }
+    return false;
   }
 
   Future<void> setMuted(bool muted) async {
@@ -471,9 +507,17 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
           candidateLabel ?? inputMusicUrl ?? '',
         ),
       );
+      final useYtHeaders = !source.startsWith('/') &&
+          VoiceRoomDjStreamLoader.needsLocalDownload(source);
       final audioSource = source.startsWith('/')
           ? ja.AudioSource.file(source, tag: item)
-          : ja.AudioSource.uri(Uri.parse(source), tag: item);
+          : ja.AudioSource.uri(
+              Uri.parse(source),
+              tag: item,
+              headers: useYtHeaders
+                  ? VoiceRoomDjStreamLoader.youtubeStreamHeaders
+                  : null,
+            );
       await _player.stop();
       _diagnostics = _diagnostics.copyWith(
         resolvedStreamUrl: source,

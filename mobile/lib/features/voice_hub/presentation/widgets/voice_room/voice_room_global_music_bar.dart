@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../providers/chat_room_providers.dart';
 import '../../providers/voice_room_ui_provider.dart';
-import 'voice_room_music_mini_player.dart';
+import 'voice_room_web_music_bar.dart';
 
 /// Sesli odadan çıkıldığında altta görünen global müzik çubuğu.
 class VoiceRoomGlobalMusicBar extends ConsumerWidget {
@@ -22,6 +22,14 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final path = GoRouter.of(context)
+        .routerDelegate
+        .currentConfiguration
+        .uri
+        .path;
+    if (!shouldShowForRoute(path)) {
+      return const SizedBox.shrink();
+    }
     final session = ref.watch(voiceRoomMusicSessionProvider);
     final playback = ref.watch(voiceRoomDjPlayerProvider).playback;
     final muted = !ref.watch(voiceRoomUiProvider).backgroundMusicEnabled;
@@ -42,13 +50,9 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
       color: Colors.transparent,
       child: SafeArea(
         top: false,
-        child: VoiceRoomMusicMiniPlayer(
+        child: VoiceRoomWebMusicBar(
           dj: session.dj,
-          canModerate: canSync,
-          canControl: true,
           musicMuted: muted,
-          showClose: true,
-          onTap: () => context.push('/voice-room/${room.apiRoomKey}', extra: room),
           onPlayPause: () {
             final player = ref.read(voiceRoomDjPlayerProvider);
             final isPlaying =
@@ -67,20 +71,6 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
               unawaited(player.resumeLocal());
             }
           },
-          onStop: canSync
-              ? () => unawaited(
-                  ref
-                      .read(voiceRoomLiveProvider(room.stableSessionKey).notifier)
-                      .stopMusic(),
-                )
-              : null,
-          onSkip: canSync
-              ? () => ref
-                  .read(voiceRoomLiveProvider(room.stableSessionKey).notifier)
-                  .skipMusic()
-              : null,
-          onPrevious: () =>
-              ref.read(voiceRoomDjPlayerProvider).seekToStart(),
           onClose: () => unawaited(
             ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer(),
           ),

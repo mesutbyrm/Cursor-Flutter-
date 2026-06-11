@@ -4,13 +4,20 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// googlevideo akışları Referer gerektirir — audioplayers başlık gönderemez.
-/// Dio ile önbelleğe indirip yerel dosyadan oynatılır (üretimde proxy gerekmez).
+/// googlevideo akışları Referer gerektirir.
+/// Önce HTTP stream (web gibi); başarısız olursa yerel önbelleğe indirilir.
 class VoiceRoomDjStreamLoader {
   VoiceRoomDjStreamLoader(this._dio);
 
   final Dio _dio;
   final Map<String, _CacheEntry> _cache = {};
+
+  static const youtubeStreamHeaders = <String, String>{
+    'Referer': 'https://www.youtube.com/',
+    'Origin': 'https://www.youtube.com',
+    'User-Agent':
+        'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+  };
 
   static bool needsLocalDownload(String url) {
     final u = url.trim().toLowerCase();
@@ -20,10 +27,16 @@ class VoiceRoomDjStreamLoader {
         u.contains('/api/chat/youtube-audio');
   }
 
+  /// Web ile aynı: doğrudan stream URL (googlevideo dahil). İndirme yedek.
   Future<String?> preparePlaybackSource(String streamUrl) async {
     final trimmed = streamUrl.trim();
     if (trimmed.isEmpty) return null;
-    if (!needsLocalDownload(trimmed)) return trimmed;
+    return trimmed;
+  }
+
+  Future<String?> downloadFallback(String streamUrl) async {
+    final trimmed = streamUrl.trim();
+    if (trimmed.isEmpty || !needsLocalDownload(trimmed)) return null;
 
     final key = trimmed;
     final cached = _cache[key];
@@ -35,9 +48,7 @@ class VoiceRoomDjStreamLoader {
 
     try {
       final dir = await getTemporaryDirectory();
-      final file = File(
-        '${dir.path}/dj_${key.hashCode.abs()}.audio',
-      );
+      final file = File('${dir.path}/dj_${key.hashCode.abs()}.audio');
       if (await file.exists() && await file.length() > 1024) {
         _cache[key] = _CacheEntry(file.path, DateTime.now());
         return file.path;
@@ -47,12 +58,7 @@ class VoiceRoomDjStreamLoader {
         trimmed,
         file.path,
         options: Options(
-          headers: const {
-            'Referer': 'https://www.youtube.com/',
-            'Origin': 'https://www.youtube.com',
-            'User-Agent':
-                'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
-          },
+          headers: youtubeStreamHeaders,
           receiveTimeout: const Duration(seconds: 50),
           followRedirects: true,
         ),

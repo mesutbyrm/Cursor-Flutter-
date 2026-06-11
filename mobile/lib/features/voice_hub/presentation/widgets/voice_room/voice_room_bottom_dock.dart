@@ -10,8 +10,8 @@ import '../../sheets/voice_room_dj_sheet.dart';
 import '../../utils/voice_room_permissions.dart';
 import '../../utils/voice_room_responsive_metrics.dart';
 import 'voice_room_action_row.dart';
-import 'voice_room_music_mini_player.dart';
 import 'voice_room_music_queue_section.dart';
+import 'voice_room_web_music_bar.dart';
 import 'voice_staff_entrance_marquee.dart';
 
 /// Müzik / DJ / kuyruk — mesaj kutusunun hemen üstünde sabit blok.
@@ -95,20 +95,8 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                 ),
               ),
             if (!musicDismissed)
-              VoiceRoomMusicMiniPlayer(
+              VoiceRoomWebMusicBar(
               dj: live.dj,
-              canModerate: perms.canModerate || isOwner,
-              canControl: true,
-              showClose: true,
-              onTap: showMusicCard
-                  ? () => showVoiceMusicHubPage(
-                        context,
-                        ref,
-                        room: room,
-                        perms: perms,
-                        isOwner: isOwner,
-                      )
-                  : null,
               onPlayPause: () {
                 final ctrl =
                     ref.read(voiceRoomLiveProvider(session).notifier);
@@ -127,20 +115,6 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                   unawaited(player.resumeLocal());
                 }
               },
-              onStop: canControlMusic
-                  ? () => unawaited(
-                      ref
-                          .read(voiceRoomLiveProvider(session).notifier)
-                          .stopMusic(),
-                    )
-                  : null,
-              onPrevious: () =>
-                  ref.read(voiceRoomDjPlayerProvider).seekToStart(),
-              onSkip: (perms.canModerate || isOwner)
-                  ? () => ref
-                      .read(voiceRoomLiveProvider(session).notifier)
-                      .skipMusic()
-                  : null,
               onClose: () => unawaited(
                 ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer(),
               ),
@@ -151,11 +125,12 @@ class VoiceRoomBottomDock extends ConsumerWidget {
               message: staffBanner,
               roomName: room.nameTr,
             ),
-            VoiceRoomMusicQueueSection(
-              dj: live.dj,
-              coinCost: live.dj.musicRequestCost,
-              maxItems: 3,
-            ),
+            if (!live.dj.playing && live.dj.nowPlaying == null)
+              VoiceRoomMusicQueueSection(
+                dj: live.dj,
+                coinCost: live.dj.musicRequestCost,
+                maxItems: 3,
+              ),
           ],
         ),
       ),

@@ -271,7 +271,7 @@ class VoiceRoomLiveController
     });
     // build() tamamlanmadan state okunmaz — ilk poll SSE kapalı varsayımıyla.
     _schedulePoll(sseConnected: false);
-    _presenceHeartbeat = Timer.periodic(const Duration(seconds: 45), (_) {
+    _presenceHeartbeat = Timer.periodic(const Duration(seconds: 20), (_) {
       if (!state.sseConnected && state.selfInRoom) {
         unawaited(_presenceHeartbeatTick());
       }
@@ -437,11 +437,14 @@ class VoiceRoomLiveController
     _poll?.cancel();
     _pollTick = 0;
     final sse = sseConnected ?? state.sseConnected;
-    final interval = sse ? 15 : 8;
+    final musicActive =
+        state.dj.playing || state.dj.nowPlaying != null;
+    final interval = sse ? (musicActive ? 5 : 12) : 6;
     _poll = Timer.periodic(Duration(seconds: interval), (_) {
       if (_pollPaused) return;
       _pollTick++;
-      final fullDj = !sse || (_pollTick % 3 == 0);
+      final djActive = state.dj.playing || state.dj.nowPlaying != null;
+      final fullDj = !sse || djActive || (_pollTick % 2 == 0);
       unawaited(refresh(includeDj: fullDj));
     });
   }
@@ -719,12 +722,18 @@ class VoiceRoomLiveController
   }
 
   void _commitDjUi(ChatRoomDjState dj) {
+    final wasMusicActive =
+        state.dj.playing || state.dj.nowPlaying != null;
     state = state.copyWith(dj: dj, clearError: true);
     ref.read(voiceRoomMusicSessionProvider.notifier).syncFromRoom(
       room: arg,
       dj: dj,
       canSyncServer: _canControlMusic(),
     );
+    final musicActive = dj.playing || dj.nowPlaying != null;
+    if (musicActive != wasMusicActive) {
+      _schedulePoll();
+    }
   }
 
   void _closeRoomKeepAlive() {
@@ -1219,6 +1228,7 @@ class VoiceRoomLiveController
               .catchError((_) {}),
         );
         await _syncMusicFromServerIfNeeded(force: true);
+        unawaited(_playDjInBackground(state.dj));
         final djAfter = state.dj;
         VoiceRoomMusicPipelineLog.istekSubmitted(
           song: song,
@@ -1808,6 +1818,11 @@ class VoiceRoomLiveController
         'queuePos': result.queuePosition,
         'hasUrl': result.musicUrl != null,
       });
+      if (result.musicUrl != null && result.musicUrl!.isNotEmpty) {
+        unawaited(
+          ref.read(youtubeStreamResolverProvider).prefetch(result.musicUrl!),
+        );
+      }
       VoiceRoomMusicPipelineLog.istekSubmitted(
         song: title,
         roomId: _roomKey,
