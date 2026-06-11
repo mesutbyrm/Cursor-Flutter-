@@ -7,17 +7,13 @@ import '../ui/premium_2026/premium_motion.dart';
 /// Premium sayfa geçişleri — iOS Cupertino + TikTok fade-slide.
 abstract final class AppPageTransitions {
   /// Auth splash/login — geçiş animasyonu gri scrim bırakabiliyor (Android).
-  static CustomTransitionPage<T> none<T>({
+  static NoTransitionPage<T> none<T>({
     required LocalKey? key,
     required Widget child,
   }) {
-    return CustomTransitionPage<T>(
+    return NoTransitionPage<T>(
       key: key,
       child: child,
-      transitionDuration: Duration.zero,
-      reverseTransitionDuration: Duration.zero,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-          child,
     );
   }
 

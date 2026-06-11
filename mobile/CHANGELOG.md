@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.190+192 (2026-06-11)
+
+### Giriş ekranı — Android gri overlay (4. tur, kök neden)
+
+- **Kök neden:** `/splash` → `/login` GoRouter geçişinde Navigator üstünde kalan modal barrier + olası yarım dialog
+- `initialLocation: '/login'` — soğuk açılışta splash yığını kaldırıldı
+- Auth rotaları: `NoTransitionPage` (sıfır süre, scrim yok)
+- `LoginPage`: mount sonrası `StuckOverlayGuard` ile takılı `PopupRoute` temizliği
+- `StartupRouteObserver` + `[AppStartup]` logları (route push/pop/barrier)
+- `FortuneIncomingInviteHost`: oturum yokken dialog açmaz
+
 ## 1.0.189+191 (2026-06-11)
 
 ### Giriş ekranı — Android gri overlay (3. tur)

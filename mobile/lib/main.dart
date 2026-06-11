@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app/app.dart';
+import 'core/bootstrap/app_startup_log.dart';
 import 'features/voice_hub/data/services/voice_room_debug_log.dart';
 import 'core/firebase/firebase_bootstrap.dart';
 import 'core/network/cookie_jar_provider.dart';
@@ -17,6 +18,7 @@ import 'core/storage/theme_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppStartupLog.log('main() begin');
 
   try {
     await LocalCache.init();
@@ -31,7 +33,9 @@ Future<void> main() async {
   }
 
   await OneSignalBootstrap.init();
+  AppStartupLog.log('OneSignal init done');
   await FirebaseBootstrap.init();
+  AppStartupLog.log('Firebase init done');
 
   // Ağ yokken font indirme bazı cihazlarda açılışta çökme yapabiliyor.
   GoogleFonts.config.allowRuntimeFetching = false;
@@ -64,6 +68,7 @@ Future<void> main() async {
 
   runZonedGuarded(
     () {
+      AppStartupLog.log('runApp');
       runApp(
         ProviderScope(
           overrides: [cookieJarProvider.overrideWithValue(jar!)],

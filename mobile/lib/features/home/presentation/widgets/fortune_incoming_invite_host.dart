@@ -35,6 +35,8 @@ class _FortuneIncomingInviteHostState
     super.initState();
     _poll = Timer.periodic(const Duration(seconds: 3), (_) => _pollApi());
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = ref.read(authControllerProvider).valueOrNull;
+      if (user == null) return;
       _pollApi();
       _tryPresentNext();
     });
@@ -75,6 +77,7 @@ class _FortuneIncomingInviteHostState
 
   Future<void> _tryPresentNext() async {
     if (!mounted || _presenting) return;
+    if (ref.read(authControllerProvider).valueOrNull == null) return;
     final next = ref.read(fortuneIncomingInviteProvider.notifier).takeNext();
     if (next == null) return;
     if (_dismissed.contains(next.sessionId)) {

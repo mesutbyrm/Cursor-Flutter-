@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/app_router.dart';
+import '../../../../core/bootstrap/app_startup_log.dart';
+import '../../../../core/bootstrap/stuck_overlay_guard.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../providers/auth_providers.dart';
@@ -18,6 +21,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _form = GlobalKey<FormState>();
+  var _clearedStuckOverlay = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onLoginMounted());
+  }
+
+  void _onLoginMounted() {
+    if (!mounted || _clearedStuckOverlay) return;
+    _clearedStuckOverlay = true;
+    AppStartupLog.log('LoginPage mounted — clearing orphan popup routes');
+    StuckOverlayGuard.dismissPopupRoutes(rootNavigatorKey);
+  }
 
   @override
   void dispose() {

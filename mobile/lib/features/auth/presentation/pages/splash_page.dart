@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/bootstrap/app_startup_log.dart';
 import '../../../../core/ui/platform_blur.dart';
 import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../../core/widgets/canlifal_brand_logo.dart';
+import '../providers/auth_providers.dart';
 import '../widgets/premium_auth_2026/auth_premium_loading.dart';
 
 /// Premium 2026 açılış — galaksi, neon glow, logo pulse, parçacıklar.
@@ -45,6 +47,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
     _fadeCtrl.forward();
     Future<void>.delayed(const Duration(seconds: 10), () {
       if (!mounted) return;
+      AppStartupLog.route('/splash', '/login', reason: '10s fallback');
       context.go('/login');
     });
   }
@@ -58,6 +61,14 @@ class _SplashPageState extends ConsumerState<SplashPage>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authControllerProvider, (prev, next) {
+      if (next.isLoading && !next.hasError) return;
+      if (!mounted) return;
+      final target = next.valueOrNull != null ? '/feed' : '/login';
+      AppStartupLog.route('/splash', target, reason: 'auth listener');
+      context.go(target);
+    });
+
     final mq = MediaQuery.of(context);
     final logoSize = (mq.size.width * 0.38).clamp(120.0, 168.0);
 

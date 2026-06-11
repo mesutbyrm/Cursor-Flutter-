@@ -85,6 +85,8 @@ import '../../features/home/presentation/pages/live_fortune_session_page.dart';
 import '../../features/home/presentation/pages/live_fortune_tellers_page.dart';
 import '../../features/home/domain/entities/live_fortune_session_entity.dart';
 import '../../features/vip_gold/presentation/pages/vip_gold_hub_page.dart';
+import '../../core/bootstrap/app_startup_log.dart';
+import '../../core/bootstrap/startup_route_observer.dart';
 import '../../core/navigation/app_page_transitions.dart';
 
 class RouterRefresh extends ChangeNotifier {
@@ -107,15 +109,26 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: '/splash',
+    initialLocation: '/login',
+    observers: [StartupRouteObserver()],
     refreshListenable: refresh,
     redirect: (context, state) {
       final loc = state.matchedLocation;
       final auth = ref.read(authControllerProvider);
 
+      if (loc == '/splash' || loc == '/login' || loc == '/register') {
+        AppStartupLog.auth(
+          loading: auth.isLoading,
+          hasUser: auth.valueOrNull != null,
+          hasError: auth.hasError,
+        );
+      }
+
       if (loc == '/splash') {
         if (auth.isLoading && !auth.hasError) return null;
-        return auth.valueOrNull != null ? '/feed' : '/login';
+        final target = auth.valueOrNull != null ? '/feed' : '/login';
+        AppStartupLog.route('/splash', target, reason: 'auth resolved');
+        return target;
       }
 
       final authed = auth.valueOrNull != null;
