@@ -128,14 +128,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               AuthSocialSection(
-                busy: auth.isLoading,
+                busy: auth.isRefreshing,
                 googleLabel: 'Google ile Kayıt ol',
-                onGoogle: auth.isLoading
+                onGoogle: auth.isRefreshing
                     ? null
                     : () => ref
                         .read(authControllerProvider.notifier)
                         .loginWithGoogle(),
-                onTikTok: auth.isLoading
+                onTikTok: auth.isRefreshing
                     ? null
                     : () => ref
                         .read(authControllerProvider.notifier)
@@ -245,8 +245,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
               const SizedBox(height: 20),
               AuthNeonButton(
                 label: 'Kayıt ol',
-                loading: auth.isLoading,
-                onPressed: auth.isLoading ? null : _submitRegister,
+                loading: auth.isRefreshing,
+                onPressed: auth.isRefreshing ? null : _submitRegister,
               ),
               AuthTextLinkPremium(
                 label: 'Zaten hesabın var mı? Giriş yap',

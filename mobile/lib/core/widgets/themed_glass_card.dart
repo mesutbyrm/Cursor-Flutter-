@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../performance/list_perf.dart';
 import '../theme/app_spacing.dart';
+import '../ui/platform_blur.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 /// Premium cam / kart — koyu modda glassmorphism, açık modda yumuşak gölge.
@@ -31,7 +32,8 @@ class ThemedGlassCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final radius = borderRadius ?? BorderRadius.circular(AppSpacing.radiusLg);
-    final sigma = blur ?? (c.useGlassBlur ? 18.0 : 0.0);
+    final sigma = blur ??
+        (c.useGlassBlur && PlatformBlur.supportsBackdropBlur ? 18.0 : 0.0);
     final shadows = elevated ? c.elevatedShadow : c.cardShadow;
 
     Widget content = Container(
@@ -49,7 +51,7 @@ class ThemedGlassCard extends StatelessWidget {
       child: child,
     );
 
-    if (c.useGlassBlur && sigma > 0) {
+    if (PlatformBlur.supportsBackdropBlur && c.useGlassBlur && sigma > 0) {
       content = ClipRRect(
         borderRadius: radius,
         child: BackdropFilter(

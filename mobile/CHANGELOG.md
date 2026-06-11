@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.188+190 (2026-06-11)
+
+### Giriş ekranı — Android gri overlay (2. tur)
+
+- `PlatformBlur`: Android'de tüm cam/blur bileşenlerinde merkezi blur kapatma
+- `LiquidGlass`: blur kapalıyken opak yüzey (yarı saydam gri yıkama yok)
+- `ThemedGlassCard` / `ProGlass` / `PremiumGlassSurface`: Android blur guard
+- Auth: giriş sırasında form görünür kalır (`copyWithPrevious`); `isRefreshing` ile kilit
+
 ## 1.0.187+189 (2026-06-10)
 
 ### Giriş ekranı — Android gri overlay düzeltmesi

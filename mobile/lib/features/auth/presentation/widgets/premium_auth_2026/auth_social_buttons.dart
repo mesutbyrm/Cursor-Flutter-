@@ -1,11 +1,9 @@
-import 'dart:io' show Platform;
-
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 import '../../../../../core/config/env.dart';
+import '../../../../../core/ui/platform_blur.dart';
 import '../../../../../core/ui/premium_2026/liquid_glass.dart';
 import '../../../../../core/ui/premium_2026/premium_motion.dart';
 import '../google_sign_in_button.dart';
@@ -114,8 +112,7 @@ class _AuthGlassSocialButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final enabled = onPressed != null;
 
-    // Android'de BackdropFilter tam ekran gri yapar — blur'ü kapat.
-    final blurValue = (!kIsWeb && Platform.isAndroid) ? 0.0 : 16.0;
+    final blurValue = PlatformBlur.supportsBackdropBlur ? 16.0 : 0.0;
     final glass = Opacity(
         opacity: enabled ? 1 : 0.55,
         child: LiquidGlass(

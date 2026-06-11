@@ -1,10 +1,10 @@
-import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+
+import '../platform_blur.dart';
 
 
 /// Karanlık galaksi gradient + neon orb + yüzen parçacıklar (auth / splash).
@@ -29,8 +29,7 @@ class _CosmicGalaxyBackgroundState extends State<CosmicGalaxyBackground>
     with SingleTickerProviderStateMixin {
   late final AnimationController _drift;
 
-  /// Android'de ImageFilter.blur tam ekran gri/bulanık katman yapabiliyor.
-  static bool get _useOrbBlur => !kIsWeb && !Platform.isAndroid;
+  static bool get _useOrbBlur => PlatformBlur.supportsBackdropBlur;
 
   static const _galaxy = LinearGradient(
     begin: Alignment.topLeft,

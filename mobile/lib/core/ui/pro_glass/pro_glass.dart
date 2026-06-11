@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../performance/list_perf.dart';
+import '../platform_blur.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import '../../widgets/themed_glass_card.dart';
 import '../premium_2026/premium_motion.dart';
@@ -33,7 +34,8 @@ class ProGlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final effectiveBlur = c.useGlassBlur ? blur : 0.0;
+    final effectiveBlur =
+        c.useGlassBlur && PlatformBlur.supportsBackdropBlur ? blur : 0.0;
     Widget card = ThemedGlassCard(
       padding: padding,
       margin: margin,
@@ -107,7 +109,8 @@ class ProGlassTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final sigma = c.useGlassBlur ? 20.0 : 0.0;
+    final sigma =
+        c.useGlassBlur && PlatformBlur.supportsBackdropBlur ? 20.0 : 0.0;
     Widget bar = Container(
       height: height,
       decoration: BoxDecoration(

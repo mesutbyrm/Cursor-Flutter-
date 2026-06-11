@@ -1,19 +1,15 @@
-import 'dart:io' show Platform;
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import '../platform_blur.dart';
 import 'premium_2026_tokens.dart';
 import 'premium_motion.dart';
 
 /// iOS Liquid Glass + glassmorphism yüzey.
 class LiquidGlass extends StatelessWidget {
-  /// Android'de ImageFilter.blur tam ekran gri/bulanık katman yapabiliyor —
-  /// tıpkı CosmicGalaxyBackground._useOrbBlur gibi devre dışı bırak.
-  static bool get _platformSupportsBlur => kIsWeb || !Platform.isAndroid;
   const LiquidGlass({
     super.key,
     required this.child,
@@ -40,8 +36,12 @@ class LiquidGlass extends StatelessWidget {
     final t = context.p26;
     final c = context.colors;
     final radius = borderRadius ?? BorderRadius.circular(t.radiusLiquid);
-    final fill = elevated ? t.glassFillElevated : t.glassFill;
-    final effectiveBlur = (c.useGlassBlur && _platformSupportsBlur) ? blur : 0.0;
+    final blurEnabled = c.useGlassBlur && PlatformBlur.supportsBackdropBlur;
+    final effectiveBlur = blurEnabled ? blur : 0.0;
+    // Android: blur kapalıyken yarı saydam fill gri yıkama yapar — opak yüzey.
+    final fill = blurEnabled
+        ? (elevated ? t.glassFillElevated : t.glassFill)
+        : (elevated ? const Color(0xFF1E1638) : const Color(0xFF18102C));
     final border = gradientBorder ??
         LinearGradient(
           begin: Alignment.topLeft,

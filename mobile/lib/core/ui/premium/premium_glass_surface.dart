@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import '../../theme/app_spacing.dart';
+import '../platform_blur.dart';
 
 /// Glassmorphism yüzey — blur isteğe bağlı (performans için `blur: 0`).
 class PremiumGlassSurface extends StatelessWidget {
@@ -39,7 +40,7 @@ class PremiumGlassSurface extends StatelessWidget {
       child: child,
     );
 
-    if (blur <= 0) {
+    if (!PlatformBlur.supportsBackdropBlur || blur <= 0) {
       return ClipRRect(borderRadius: radius, child: content);
     }
 
