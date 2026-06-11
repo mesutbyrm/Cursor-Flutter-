@@ -23,6 +23,8 @@ class VoiceRoomDjPlayer {
   VoiceRoomAudioHandler? _handler;
   final ValueNotifier<VoiceRoomDjPlayback> playback =
       ValueNotifier(const VoiceRoomDjPlayback());
+  final ValueNotifier<VoiceRoomMusicDiagnostics> diagnostics =
+      ValueNotifier(const VoiceRoomMusicDiagnostics());
   String? _currentKey;
   bool _muted = false;
   void Function()? _onTrackComplete;
@@ -61,6 +63,9 @@ class VoiceRoomDjPlayer {
       ),
     ) as VoiceRoomAudioHandler;
     _handler = handler;
+    handler.onDiagnosticsChanged = (value) {
+      diagnostics.value = value;
+    };
     _playbackSub = handler.playbackValueStream.listen((value) {
       playback.value = value;
     });
@@ -125,13 +130,25 @@ class VoiceRoomDjPlayer {
             candidateLabel: candidate,
           );
           await handler.setVolume(_muted ? 0.0 : 1.0);
-          await Future<void>.delayed(const Duration(milliseconds: 320));
-          if (handler.isPlaying || handler.hasLoadedSource) {
+          final started = await handler.waitUntilPlaying(
+            timeout: const Duration(seconds: 4),
+          );
+          diagnostics.value = handler.diagnostics.copyWith(
+            serverMusicUrl: musicUrl,
+            playbackSource: candidate,
+            resolvedStreamUrl: playable,
+            muted: _muted,
+            lastPhase: started ? 'sync_ok' : 'sync_verify_failed',
+          );
+          if (started) {
             debugPrint('DJ play ok: $playable');
             return true;
           }
           VoiceRoomMusicPipelineLog.justAudioError(
-            StateError('play_not_started_after_setSource'),
+            StateError(
+              'play_not_started processing=${handler.diagnostics.processingState} '
+              'playing=${handler.isPlaying} muted=$_muted',
+            ),
             StackTrace.current,
             phase: 'sync_verify',
             url: playable,
@@ -229,6 +246,7 @@ class VoiceRoomDjPlayer {
       final handler = await _ensureHandler();
       await handler.stop();
       playback.value = const VoiceRoomDjPlayback();
+      diagnostics.value = const VoiceRoomMusicDiagnostics();
     } catch (_) {}
   }
 
@@ -246,6 +264,52 @@ class VoiceRoomDjPlayer {
     unawaited(_handler?.disposeHandler() ?? Future<void>.value());
     unawaited(_playbackSub?.cancel());
     playback.dispose();
+    diagnostics.dispose();
+  }
+}
+
+/// Mini player altında gösterilen oynatma teşhis bilgisi.
+class VoiceRoomMusicDiagnostics {
+  const VoiceRoomMusicDiagnostics({
+    this.serverMusicUrl,
+    this.playbackSource,
+    this.resolvedStreamUrl,
+    this.processingState,
+    this.isPlaying,
+    this.muted,
+    this.lastError,
+    this.lastPhase,
+  });
+
+  final String? serverMusicUrl;
+  final String? playbackSource;
+  final String? resolvedStreamUrl;
+  final String? processingState;
+  final bool? isPlaying;
+  final bool? muted;
+  final String? lastError;
+  final String? lastPhase;
+
+  VoiceRoomMusicDiagnostics copyWith({
+    String? serverMusicUrl,
+    String? playbackSource,
+    String? resolvedStreamUrl,
+    String? processingState,
+    bool? isPlaying,
+    bool? muted,
+    String? lastError,
+    String? lastPhase,
+  }) {
+    return VoiceRoomMusicDiagnostics(
+      serverMusicUrl: serverMusicUrl ?? this.serverMusicUrl,
+      playbackSource: playbackSource ?? this.playbackSource,
+      resolvedStreamUrl: resolvedStreamUrl ?? this.resolvedStreamUrl,
+      processingState: processingState ?? this.processingState,
+      isPlaying: isPlaying ?? this.isPlaying,
+      muted: muted ?? this.muted,
+      lastError: lastError ?? this.lastError,
+      lastPhase: lastPhase ?? this.lastPhase,
+    );
   }
 }
 
@@ -270,13 +334,46 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
 
   bool get isPlaying => _player.playing;
   bool get hasLoadedSource => _currentSource != null;
+  VoiceRoomMusicDiagnostics get diagnostics => _diagnostics;
 
   void Function()? onTrackComplete;
+  void Function(VoiceRoomMusicDiagnostics diagnostics)? onDiagnosticsChanged;
   bool _completionFired = false;
   String? _currentSource;
   audio.MediaItem? _currentMediaItem;
+  VoiceRoomMusicDiagnostics _diagnostics = const VoiceRoomMusicDiagnostics();
 
   VoiceRoomMusicControlDelegate? get _delegate => _delegateProvider();
+
+  void _publishDiagnostics() {
+    onDiagnosticsChanged?.call(_diagnostics);
+  }
+
+  Future<bool> waitUntilPlaying({required Duration timeout}) async {
+    final deadline = DateTime.now().add(timeout);
+    while (DateTime.now().isBefore(deadline)) {
+      _refreshDiagnostics();
+      if (_player.playing &&
+          (_player.processingState == ja.ProcessingState.ready ||
+              _player.processingState == ja.ProcessingState.buffering)) {
+        return true;
+      }
+      if (_player.processingState == ja.ProcessingState.completed) {
+        return false;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+    }
+    _refreshDiagnostics();
+    return _player.playing;
+  }
+
+  void _refreshDiagnostics() {
+    _diagnostics = _diagnostics.copyWith(
+      processingState: _player.processingState.name,
+      isPlaying: _player.playing,
+    );
+    _publishDiagnostics();
+  }
 
   void _init() {
     _player.durationStream.listen((duration) {
@@ -296,6 +393,13 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
       _broadcastPlaybackState();
     });
     _player.processingStateStream.listen((state) {
+      _refreshDiagnostics();
+      VoiceRoomMusicPipelineLog.playState(
+        playing: _player.playing,
+        processingState: state.name,
+        positionMs: _player.position.inMilliseconds,
+        url: _currentSource,
+      );
       if (state == ja.ProcessingState.completed && !_completionFired) {
         _completionFired = true;
         _emitPlayback(_playbackValue.value.copyWith(playing: false));
@@ -305,6 +409,35 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
         onTrackComplete?.call();
       } else {
         _broadcastPlaybackState(processingState: _mapProcessingState(state));
+      }
+    });
+    _player.playbackEventStream.listen(
+      (event) {
+        if (event.processingState == ja.ProcessingState.completed) return;
+      },
+      onError: (Object e, StackTrace st) {
+        _diagnostics = _diagnostics.copyWith(
+          lastError: e.toString(),
+          lastPhase: 'playbackEventStream',
+        );
+        VoiceRoomMusicPipelineLog.justAudioError(
+          e,
+          st,
+          phase: 'playbackEventStream',
+          url: _currentSource,
+        );
+      },
+    );
+    _player.playerStateStream.listen((state) {
+      _refreshDiagnostics();
+      if (state.processingState == ja.ProcessingState.loading ||
+          state.processingState == ja.ProcessingState.buffering) {
+        VoiceRoomMusicPipelineLog.playState(
+          playing: state.playing,
+          processingState: state.processingState.name,
+          positionMs: state.position.inMilliseconds,
+          url: _currentSource,
+        );
       }
     });
   }
@@ -342,6 +475,13 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
           ? ja.AudioSource.file(source, tag: item)
           : ja.AudioSource.uri(Uri.parse(source), tag: item);
       await _player.stop();
+      _diagnostics = _diagnostics.copyWith(
+        resolvedStreamUrl: source,
+        playbackSource: candidateLabel ?? inputMusicUrl,
+        serverMusicUrl: inputMusicUrl,
+        lastPhase: 'setAudioSource',
+      );
+      _publishDiagnostics();
       try {
         await _player.setAudioSource(audioSource);
       } on ja.PlayerException catch (e, st) {
@@ -364,7 +504,18 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
     );
     try {
       await _player.play();
+      _refreshDiagnostics();
+      VoiceRoomMusicPipelineLog.playState(
+        playing: _player.playing,
+        processingState: _player.processingState.name,
+        positionMs: _player.position.inMilliseconds,
+        url: _currentSource,
+      );
     } on ja.PlayerException catch (e, st) {
+      _diagnostics = _diagnostics.copyWith(
+        lastError: e.toString(),
+        lastPhase: 'play()',
+      );
       VoiceRoomMusicPipelineLog.justAudioError(
         e,
         st,

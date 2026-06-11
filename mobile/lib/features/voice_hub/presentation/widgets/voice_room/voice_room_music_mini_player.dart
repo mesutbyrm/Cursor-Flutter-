@@ -54,12 +54,53 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
           createdAt: DateTime.now(),
         );
 
-    final playback = ref.watch(voiceRoomDjPlayerProvider).playback;
+    final player = ref.watch(voiceRoomDjPlayerProvider);
+    final playback = player.playback;
+    final diagnostics = player.diagnostics;
     final isQueuedOnly = !dj.playing && !playback.value.playing;
 
     return ValueListenableBuilder<VoiceRoomDjPlayback>(
       valueListenable: playback,
       builder: (context, pb, _) {
+        return ValueListenableBuilder<VoiceRoomMusicDiagnostics>(
+          valueListenable: diagnostics,
+          builder: (context, diag, __) {
+            return _buildPlayer(
+              context,
+              pb: pb,
+              diag: diag,
+              displayTrack: displayTrack,
+              isQueuedOnly: isQueuedOnly,
+              djName: _resolveDjName(dj),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _resolveDjName(ChatRoomDjState dj) {
+    String djName = 'Admin';
+    if (dj.activeDjId != null) {
+      for (final u in dj.djUsers) {
+        if (u.id == dj.activeDjId) {
+          return u.displayName;
+        }
+      }
+    } else if (dj.djUsers.isNotEmpty) {
+      djName = dj.djUsers.first.displayName;
+    }
+    return djName;
+  }
+
+  Widget _buildPlayer(
+    BuildContext context, {
+    required VoiceRoomDjPlayback pb,
+    required VoiceRoomMusicDiagnostics diag,
+    required MusicQueueItem displayTrack,
+    required bool isQueuedOnly,
+    required String djName,
+  }) {
         final isPlaying = dj.playing || pb.playing;
         final progress = isPlaying && pb.duration.inMilliseconds > 0
             ? pb.progress
@@ -67,17 +108,6 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
         final remaining = isPlaying && pb.duration.inMilliseconds > 0
             ? _format(pb.remaining)
             : (isQueuedOnly ? 'Sırada' : '—:—');
-        String djName = 'Admin';
-        if (dj.activeDjId != null) {
-          for (final u in dj.djUsers) {
-            if (u.id == dj.activeDjId) {
-              djName = u.displayName;
-              break;
-            }
-          }
-        } else if (dj.djUsers.isNotEmpty) {
-          djName = dj.djUsers.first.displayName;
-        }
         final elapsed = isPlaying && pb.duration.inMilliseconds > 0
             ? _format(pb.position)
             : '00:00';
@@ -85,24 +115,35 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
             ? _format(pb.duration)
             : (displayTrack.duration ?? '—:—');
 
+        final debugUrl = diag.resolvedStreamUrl ??
+            diag.playbackSource ??
+            dj.musicUrl ??
+            displayTrack.youtubeUrl;
+        final debugLine = _debugLine(diag, debugUrl);
+
         return Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
           child: VoiceGlass(
             borderRadius: 14,
             padding: EdgeInsets.zero,
-            onTap: onTap,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(10, 6, 10, 0),
-                  child: Text(
-                    'Şu An Çalan',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 11,
-                      color: AppThemeColors.coinGold,
+                InkWell(
+                  onTap: onTap,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(14),
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.fromLTRB(10, 6, 10, 0),
+                    child: Text(
+                      'Şu An Çalan',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 11,
+                        color: AppThemeColors.coinGold,
+                      ),
                     ),
                   ),
                 ),
@@ -110,6 +151,12 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(8, 4, 4, 5),
                   child: Row(
                     children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: onTap,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Row(
+                            children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: SizedBox(
@@ -164,6 +211,10 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                                 ),
                               ),
                           ],
+                        ),
+                      ),
+                            ],
+                          ),
                         ),
                       ),
                       if (canControl && onPrevious != null)
@@ -276,6 +327,21 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                     ],
                   ),
                 ),
+                if (debugLine != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 2),
+                    child: Text(
+                      debugLine,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 7,
+                        height: 1.2,
+                        fontFamily: 'monospace',
+                        color: Colors.white.withValues(alpha: 0.45),
+                      ),
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 6),
                   child: Row(
@@ -317,8 +383,33 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
             ),
           ),
         );
-      },
-    );
+  }
+
+  String? _debugLine(VoiceRoomMusicDiagnostics diag, String? url) {
+    final parts = <String>[];
+    if (url != null && url.isNotEmpty) {
+      parts.add('url=${_shortUrl(url)}');
+    }
+    if (diag.processingState != null) {
+      parts.add('state=${diag.processingState}');
+    }
+    if (diag.isPlaying != null) {
+      parts.add('playing=${diag.isPlaying}');
+    }
+    if (diag.muted == true) {
+      parts.add('muted');
+    }
+    if (diag.lastError != null && diag.lastError!.isNotEmpty) {
+      parts.add('err=${_shortUrl(diag.lastError!)}');
+    }
+    if (parts.isEmpty) return null;
+    return parts.join(' · ');
+  }
+
+  String _shortUrl(String raw) {
+    final s = raw.trim();
+    if (s.length <= 72) return s;
+    return '${s.substring(0, 36)}…${s.substring(s.length - 28)}';
   }
 
   Widget _thumb(MusicQueueItem track) {

@@ -183,6 +183,20 @@ abstract final class VoiceRoomMusicPipelineLog {
     });
   }
 
+  static void playState({
+    required bool playing,
+    required String processingState,
+    int? positionMs,
+    String? url,
+  }) {
+    _emit('player.state', {
+      'playing': playing,
+      'processing': processingState,
+      if (positionMs != null) 'posMs': positionMs,
+      if (url != null) 'url': url,
+    });
+  }
+
   static void justAudioError(
     Object error,
     StackTrace? stack, {

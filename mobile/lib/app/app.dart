@@ -44,24 +44,29 @@ class CanlifalApp extends ConsumerWidget {
                   brightness == Brightness.dark ? Brightness.dark : Brightness.light,
             ),
           );
-          final routerLocation =
-              router.routerDelegate.currentConfiguration.uri.path;
-          final showGlobalMusic =
-              VoiceRoomGlobalMusicBar.shouldShowForRoute(routerLocation);
-          return FortuneIncomingInviteHost(
-            child: AppBottomNavHost(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  child ?? const SplashPage(),
-                  if (showGlobalMusic)
-                    const Align(
-                      alignment: Alignment.bottomCenter,
-                      child: VoiceRoomGlobalMusicBar(),
-                    ),
-                ],
-              ),
-            ),
+          return ListenableBuilder(
+            listenable: router.routerDelegate,
+            builder: (context, _) {
+              final routerLocation =
+                  router.routerDelegate.currentConfiguration.uri.path;
+              final showGlobalMusic =
+                  VoiceRoomGlobalMusicBar.shouldShowForRoute(routerLocation);
+              return FortuneIncomingInviteHost(
+                child: AppBottomNavHost(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      child ?? const SplashPage(),
+                      if (showGlobalMusic)
+                        const Align(
+                          alignment: Alignment.bottomCenter,
+                          child: VoiceRoomGlobalMusicBar(),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
           );
         },
         routerConfig: router,

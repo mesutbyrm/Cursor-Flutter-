@@ -50,6 +50,7 @@ class VoiceRoomBottomDock extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final m = VoiceRoomResponsiveMetrics.of(context);
+    final musicDismissed = ref.watch(voiceRoomMusicSessionProvider).dismissed;
 
     return RepaintBoundary(
       child: DecoratedBox(
@@ -93,7 +94,8 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                   onPkTap: onPkTap,
                 ),
               ),
-            VoiceRoomMusicMiniPlayer(
+            if (!musicDismissed)
+              VoiceRoomMusicMiniPlayer(
               dj: live.dj,
               canModerate: perms.canModerate || isOwner,
               canControl: true,

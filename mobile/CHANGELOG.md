@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.185+187 (2026-06-10)
+
+### Müzik oynatma — ses + çift player + X kapat
+
+- **Çift mini player:** Sesli odadayken global çubuk artık route değişiminde gizlenir (`ListenableBuilder`)
+- **X kapat:** `dismissed` bayrağı sunucu senkronunda sıfırlanmaz; oda içi player gizlenir; yeni şarkıda otomatik açılır
+- **Sessiz oynatma:** `AudioSession` `gain` + `mixWithOthers` (TRTC altında duck kaldırıldı)
+- **play() doğrulama:** `waitUntilPlaying` — yalnızca `hasLoadedSource` ile başarı sayılmaz
+- **Loglar:** `player.state`, `playbackEventStream` hataları, `play_not_started` teşhisi
+- **Debug satırı:** Mini player altında gerçek stream URL + processing state + hata özeti
+
 ## 1.0.184+186 (2026-06-10)
 
 ### Müzik veri hattı teşhis logları (`[MusicPipeline]`)

@@ -14,7 +14,10 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
 
   static bool shouldShowForRoute(String location) {
     final path = Uri.tryParse(location)?.path ?? location;
-    return !path.startsWith('/voice-room/');
+    if (path == '/voice-room' || path.startsWith('/voice-room/')) {
+      return false;
+    }
+    return true;
   }
 
   @override

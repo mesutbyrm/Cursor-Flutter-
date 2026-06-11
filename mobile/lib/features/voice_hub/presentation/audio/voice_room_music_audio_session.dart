@@ -14,12 +14,15 @@ class VoiceRoomMusicAudioSession {
         const AudioSessionConfiguration.music().copyWith(
           avAudioSessionCategoryOptions:
               AVAudioSessionCategoryOptions.mixWithOthers,
-          androidAudioFocusGainType:
-              AndroidAudioFocusGainType.gainTransientMayDuck,
+          // TRTC/LiveKit ile aynı anda çalabilsin; transient duck müziği susturuyordu.
+          androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
+          androidWillPauseWhenDucked: false,
         ),
       );
       _configured = true;
-      debugPrint('VoiceRoomMusicAudioSession: configured (mixWithOthers)');
+      debugPrint(
+        'VoiceRoomMusicAudioSession: configured (gain + mixWithOthers)',
+      );
     } catch (e) {
       debugPrint('VoiceRoomMusicAudioSession configure: $e');
     }

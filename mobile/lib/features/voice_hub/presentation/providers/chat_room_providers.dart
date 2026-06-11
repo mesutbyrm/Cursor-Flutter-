@@ -835,6 +835,12 @@ class VoiceRoomLiveController
   Future<ChatRoomDjState> _applyDjPlayback(ChatRoomDjState dj) async {
     final ui = ref.read(voiceRoomUiProvider);
     final muted = !ui.backgroundMusicEnabled;
+    final session = ref.read(voiceRoomMusicSessionProvider);
+    if (session.dismissed) {
+      await ref.read(voiceRoomDjPlayerProvider).stop();
+      _lastDjPlaybackSignature = _djPlaybackSignature(dj, muted: muted);
+      return dj;
+    }
 
     if (!dj.musicEnabled) {
       await ref.read(voiceRoomDjPlayerProvider).stop();
@@ -2034,14 +2040,23 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
       }
       return;
     }
+    final prevTrackId = state.dj.nowPlaying?.id;
+    final newTrackId = dj.nowPlaying?.id;
+    final trackChanged =
+        newTrackId != null &&
+        newTrackId.isNotEmpty &&
+        newTrackId != prevTrackId;
+    final dismissed = trackChanged ? false : state.dismissed;
     state = state.copyWith(
       room: room,
       dj: dj,
-      visible: !state.dismissed,
+      visible: !dismissed,
       canSyncServer: canSyncServer,
-      dismissed: false,
+      dismissed: dismissed,
     );
-    _ensureBackgroundSync(room);
+    if (!dismissed) {
+      _ensureBackgroundSync(room);
+    }
   }
 
   void onRoomDetached({
