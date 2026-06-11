@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-06-11 09:56 UTC
+Oluşturulma: 2026-06-11 11:23 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
