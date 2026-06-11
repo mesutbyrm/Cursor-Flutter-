@@ -2,24 +2,24 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.185+187` |
-| Tarih (UTC) | 2026-06-11 09:28 |
-| Commit | [`075c8f04678080b18d6feea670788996521a03ac`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/075c8f04678080b18d6feea670788996521a03ac) |
-| İş akışı | [Run 27336045353](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27336045353) |
+| Sürüm | `1.0.186+188` |
+| Tarih (UTC) | 2026-06-11 10:53 |
+| Commit | [`04aad93a6defc0c7e1d1c5d9951846150c8e93b2`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/04aad93a6defc0c7e1d1c5d9951846150c8e93b2) |
+| İş akışı | [Run 27338858550](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27338858550) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.185+187 (2026-06-10)
+## 1.0.186+188 (2026-06-10)
 
-### Müzik oynatma — ses + çift player + X kapat
+### Sesli oda müzik — web görünümü + hızlı oynatma
 
-- **Çift mini player:** Sesli odadayken global çubuk artık route değişiminde gizlenir (`ListenableBuilder`)
-- **X kapat:** `dismissed` bayrağı sunucu senkronunda sıfırlanmaz; oda içi player gizlenir; yeni şarkıda otomatik açılır
-- **Sessiz oynatma:** `AudioSession` `gain` + `mixWithOthers` (TRTC altında duck kaldırıldı)
-- **play() doğrulama:** `waitUntilPlaying` — yalnızca `hasLoadedSource` ile başarı sayılmaz
-- **Loglar:** `player.state`, `playbackEventStream` hataları, `play_not_started` teşhisi
-- **Debug satırı:** Mini player altında gerçek stream URL + processing state + hata özeti
+- Tek kompakt **web müzik şeridi** (`VoiceRoomWebMusicBar`): dalga + «Şu an çalıyor» + turuncu pause + mor ses + kırmızı X
+- Oda içinde çift mini player kaldırıldı; global bar sesli odada kesinlikle gizlenir
+- googlevideo **stream-first** (Referer başlıkları); başarısızsa yerel indirme yedeği
+- `!istek` sonrası anında `_playDjInBackground`; sunucu `musicUrl` prefetch
+- Müzik aktifken poll 5s; presence heartbeat 20s (web/app kullanıcıları daha hızlı görünür)
+- Çalarken inline kuyruk listesi gizlenir (web gibi)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
