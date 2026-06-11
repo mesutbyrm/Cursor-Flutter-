@@ -101,7 +101,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
 
   @override
   Widget build(BuildContext context) {
-    final auth = ref.watch(authControllerProvider);
+    final formBusy = ref.watch(authUserActionBusyProvider);
     ref.listen(authControllerProvider, (prev, next) {
       next.whenOrNull(
         data: (user) {
@@ -128,14 +128,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               AuthSocialSection(
-                busy: auth.isRefreshing,
+                busy: formBusy,
                 googleLabel: 'Google ile Kayıt ol',
-                onGoogle: auth.isRefreshing
+                onGoogle: formBusy
                     ? null
                     : () => ref
                         .read(authControllerProvider.notifier)
                         .loginWithGoogle(),
-                onTikTok: auth.isRefreshing
+                onTikTok: formBusy
                     ? null
                     : () => ref
                         .read(authControllerProvider.notifier)
@@ -245,8 +245,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
               const SizedBox(height: 20),
               AuthNeonButton(
                 label: 'Kayıt ol',
-                loading: auth.isRefreshing,
-                onPressed: auth.isRefreshing ? null : _submitRegister,
+                loading: formBusy,
+                onPressed: formBusy ? null : _submitRegister,
               ),
               AuthTextLinkPremium(
                 label: 'Zaten hesabın var mı? Giriş yap',

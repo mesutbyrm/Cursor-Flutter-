@@ -58,8 +58,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         ),
       );
     }
-    // Yalnızca kullanıcı girişi sırasında — arka plan oturum kontrolünde form kilitlenmesin.
-    final formBusy = auth.isRefreshing;
+    final formBusy = ref.watch(authUserActionBusyProvider);
     ref.listen(authControllerProvider, (prev, next) {
       next.whenOrNull(
         data: (user) {

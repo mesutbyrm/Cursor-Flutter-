@@ -81,28 +81,27 @@ class _SplashPageState extends ConsumerState<SplashPage>
                   children: [
                     ScaleTransition(
                       scale: _pulse,
-                      child: Hero(
-                        tag: 'auth_brand_logo',
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF9B4DFF)
-                                    .withValues(alpha: 0.45),
-                                blurRadius: 48,
-                                spreadRadius: 4,
-                              ),
-                              BoxShadow(
-                                color: const Color(0xFFFF2D7A)
-                                    .withValues(alpha: 0.28),
-                                blurRadius: 64,
-                                spreadRadius: -8,
-                              ),
-                            ],
-                          ),
-                          child: CanlifalBrandLogo.appIcon(size: logoSize),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: PlatformBlur.supportsBackdropBlur
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(0xFF9B4DFF)
+                                        .withValues(alpha: 0.45),
+                                    blurRadius: 48,
+                                    spreadRadius: 4,
+                                  ),
+                                  BoxShadow(
+                                    color: const Color(0xFFFF2D7A)
+                                        .withValues(alpha: 0.28),
+                                    blurRadius: 64,
+                                    spreadRadius: -8,
+                                  ),
+                                ]
+                              : const [],
                         ),
+                        child: CanlifalBrandLogo.appIcon(size: logoSize),
                       ),
                     ),
                     const SizedBox(height: 28),

@@ -63,14 +63,19 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   }
 
   Future<void> login(String email, String password) async {
-    state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
-    state = await AsyncValue.guard(() async {
-      final u = await ref.read(authRepositoryProvider).login(
-            email: email,
-            password: password,
-          );
-      return _withSiteProfile(u);
-    });
+    ref.read(authUserActionBusyProvider.notifier).state = true;
+    try {
+      state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
+      state = await AsyncValue.guard(() async {
+        final u = await ref.read(authRepositoryProvider).login(
+              email: email,
+              password: password,
+            );
+        return _withSiteProfile(u);
+      });
+    } finally {
+      ref.read(authUserActionBusyProvider.notifier).state = false;
+    }
   }
 
   Future<void> register({
@@ -83,36 +88,51 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     String? birthTime,
     String language = 'tr',
   }) async {
-    state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
-    state = await AsyncValue.guard(() async {
-      final u = await ref.read(authRepositoryProvider).register(
-            email: email,
-            password: password,
-            displayName: displayName,
-            username: username,
-            phone: phone,
-            birthDate: birthDate,
-            birthTime: birthTime,
-            language: language,
-          );
-      return _withSiteProfile(u);
-    });
+    ref.read(authUserActionBusyProvider.notifier).state = true;
+    try {
+      state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
+      state = await AsyncValue.guard(() async {
+        final u = await ref.read(authRepositoryProvider).register(
+              email: email,
+              password: password,
+              displayName: displayName,
+              username: username,
+              phone: phone,
+              birthDate: birthDate,
+              birthTime: birthTime,
+              language: language,
+            );
+        return _withSiteProfile(u);
+      });
+    } finally {
+      ref.read(authUserActionBusyProvider.notifier).state = false;
+    }
   }
 
   Future<void> loginWithGoogle() async {
-    state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
-    state = await AsyncValue.guard(() async {
-      final u = await ref.read(authRepositoryProvider).loginWithGoogle();
-      return _withSiteProfile(u);
-    });
+    ref.read(authUserActionBusyProvider.notifier).state = true;
+    try {
+      state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
+      state = await AsyncValue.guard(() async {
+        final u = await ref.read(authRepositoryProvider).loginWithGoogle();
+        return _withSiteProfile(u);
+      });
+    } finally {
+      ref.read(authUserActionBusyProvider.notifier).state = false;
+    }
   }
 
   Future<void> loginWithTikTok() async {
-    state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
-    state = await AsyncValue.guard(() async {
-      final u = await ref.read(authRepositoryProvider).loginWithTikTok();
-      return _withSiteProfile(u);
-    });
+    ref.read(authUserActionBusyProvider.notifier).state = true;
+    try {
+      state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
+      state = await AsyncValue.guard(() async {
+        final u = await ref.read(authRepositoryProvider).loginWithTikTok();
+        return _withSiteProfile(u);
+      });
+    } finally {
+      ref.read(authUserActionBusyProvider.notifier).state = false;
+    }
   }
 
   Future<void> logout() async {
@@ -130,6 +150,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
 /// Misafir gezinme — oturum açmadan keşfet / feed (sınırlı).
 final guestModeProvider = StateProvider<bool>((ref) => false);
+
+/// Kullanıcı tetiklemeli giriş/kayıt — arka plan oturum kontrolünden ayrı.
+final authUserActionBusyProvider = StateProvider<bool>((ref) => false);
 
 final authControllerProvider =
     AsyncNotifierProvider<AuthController, UserEntity?>(AuthController.new);

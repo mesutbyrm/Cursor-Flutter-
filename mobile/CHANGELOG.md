@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.189+191 (2026-06-11)
+
+### Giriş ekranı — Android gri overlay (3. tur)
+
+- `AuthPlainShell`: Android'de cam/blur/hero tamamen kaldırıldı — opak form kartı
+- Auth rotaları (`/splash`, `/login`, `/register`): geçiş animasyonu kapalı (Cupertino scrim)
+- `app.dart`: splash yedeği kaldırıldı (çift katman riski)
+- Giriş kilidi yalnızca kullanıcı işleminde (`authUserActionBusyProvider`)
+
 ## 1.0.188+190 (2026-06-11)
 
 ### Giriş ekranı — Android gri overlay (2. tur)

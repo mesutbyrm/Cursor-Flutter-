@@ -7,7 +7,6 @@ import '../core/providers/theme_mode_provider.dart';
 import '../core/push/push_lifecycle_listener.dart';
 import '../core/scroll/modern_social_scroll_behavior.dart';
 import '../core/theme/app_theme.dart';
-import '../features/auth/presentation/pages/splash_page.dart';
 import '../features/home/presentation/widgets/fortune_incoming_invite_host.dart';
 import '../features/shell/presentation/app_bottom_nav_host.dart';
 import '../features/voice_hub/presentation/widgets/voice_room/voice_room_global_music_bar.dart';
@@ -56,7 +55,7 @@ class CanlifalApp extends ConsumerWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      child ?? const SplashPage(),
+                      if (child != null) child!,
                       if (showGlobalMusic)
                         const Align(
                           alignment: Alignment.bottomCenter,

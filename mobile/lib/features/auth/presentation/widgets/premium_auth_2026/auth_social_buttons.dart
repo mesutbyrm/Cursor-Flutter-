@@ -112,32 +112,53 @@ class _AuthGlassSocialButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final enabled = onPressed != null;
 
-    final blurValue = PlatformBlur.supportsBackdropBlur ? 16.0 : 0.0;
-    final glass = Opacity(
+    final row = Row(
+      children: [
+        Icon(icon, color: Colors.white, size: 22),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: context.colors.onSurface,
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
+          ),
+        ),
+        if (trailing != null) trailing!,
+      ],
+    );
+
+    final Widget glass;
+    if (!PlatformBlur.supportsBackdropBlur) {
+      glass = Opacity(
+        opacity: enabled ? 1 : 0.55,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            color: const Color(0xFF1E1638),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.14),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            child: row,
+          ),
+        ),
+      );
+    } else {
+      glass = Opacity(
         opacity: enabled ? 1 : 0.55,
         child: LiquidGlass(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           borderRadius: BorderRadius.circular(18),
-          blur: blurValue,
-          child: Row(
-            children: [
-              Icon(icon, color: Colors.white, size: 22),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: context.colors.onSurface,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-              if (trailing != null) trailing!,
-            ],
-          ),
+          blur: 16.0,
+          child: row,
         ),
       );
+    }
 
     if (!enabled) return glass;
 
