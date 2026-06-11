@@ -64,7 +64,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
       builder: (context, pb, _) {
         return ValueListenableBuilder<VoiceRoomMusicDiagnostics>(
           valueListenable: diagnostics,
-          builder: (context, diag, __) {
+          builder: (context, diag, _) {
             return _buildPlayer(
               context,
               pb: pb,

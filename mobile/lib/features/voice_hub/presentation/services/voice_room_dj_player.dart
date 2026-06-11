@@ -435,7 +435,7 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
         VoiceRoomMusicPipelineLog.playState(
           playing: state.playing,
           processingState: state.processingState.name,
-          positionMs: state.position.inMilliseconds,
+          positionMs: _player.position.inMilliseconds,
           url: _currentSource,
         );
       }
