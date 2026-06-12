@@ -166,25 +166,40 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginPage(),
+        pageBuilder: (context, state) => AppPageTransitions.none(
+          key: state.pageKey,
+          child: const LoginPage(),
+        ),
       ),
       GoRoute(
         path: '/register',
-        builder: (context, state) => const RegisterPage(),
+        pageBuilder: (context, state) => AppPageTransitions.none(
+          key: state.pageKey,
+          child: const RegisterPage(),
+        ),
       ),
       GoRoute(
         path: '/auth/forgot-password',
-        builder: (context, state) => const ForgotPasswordPage(),
+        pageBuilder: (context, state) => AppPageTransitions.none(
+          key: state.pageKey,
+          child: const ForgotPasswordPage(),
+        ),
       ),
       GoRoute(
         path: '/auth/reset-password',
-        builder: (context, state) => ResetPasswordPage(
-          token: state.uri.queryParameters['token'],
+        pageBuilder: (context, state) => AppPageTransitions.none(
+          key: state.pageKey,
+          child: ResetPasswordPage(
+            token: state.uri.queryParameters['token'],
+          ),
         ),
       ),
       GoRoute(
         path: '/auth/otp-verify',
-        builder: (context, state) => OtpVerifyPage(email: state.extra as String?),
+        pageBuilder: (context, state) => AppPageTransitions.none(
+          key: state.pageKey,
+          child: OtpVerifyPage(email: state.extra as String?),
+        ),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

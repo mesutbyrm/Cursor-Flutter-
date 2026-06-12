@@ -11,10 +11,13 @@ class NavigatorModalSanitizer extends StatefulWidget {
   const NavigatorModalSanitizer({
     super.key,
     required this.active,
+    this.postAuthFeed = false,
     required this.child,
   });
 
   final bool active;
+  /// Oturum açılışı sonrası /feed'e geçişte kalan modal barrier temizliği.
+  final bool postAuthFeed;
   final Widget child;
 
   @override
@@ -26,10 +29,12 @@ class _NavigatorModalSanitizerState extends State<NavigatorModalSanitizer> {
   Timer? _timer;
   var _ticks = 0;
 
+  bool get _shouldScrub => widget.active || widget.postAuthFeed;
+
   @override
   void initState() {
     super.initState();
-    if (widget.active) {
+    if (_shouldScrub) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrub('post-frame'));
       _armTimer();
     }
@@ -38,11 +43,16 @@ class _NavigatorModalSanitizerState extends State<NavigatorModalSanitizer> {
   @override
   void didUpdateWidget(covariant NavigatorModalSanitizer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.active && !oldWidget.active) {
+    final wasScrubbing = oldWidget.active || oldWidget.postAuthFeed;
+    if (_shouldScrub && !wasScrubbing) {
       _ticks = 0;
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrub('activated'));
       _armTimer();
-    } else if (!widget.active) {
+    } else if (_shouldScrub && (widget.postAuthFeed && !oldWidget.postAuthFeed)) {
+      _ticks = 0;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrub('post-auth'));
+      _armTimer();
+    } else if (!_shouldScrub) {
       _timer?.cancel();
     }
   }
@@ -56,7 +66,7 @@ class _NavigatorModalSanitizerState extends State<NavigatorModalSanitizer> {
   void _armTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(milliseconds: 75), (_) {
-      if (!mounted || !widget.active || _ticks >= 48) {
+      if (!mounted || !_shouldScrub || _ticks >= 48) {
         _timer?.cancel();
         return;
       }

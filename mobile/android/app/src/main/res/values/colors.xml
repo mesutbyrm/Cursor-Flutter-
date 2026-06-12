@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Flutter scaffold / auth shell — gri sistem arka planı yerine -->
+    <color name="canlifal_window_background">#FF05050D</color>
+    <color name="canlifal_launch_background">#FF0A0618</color>
+</resources>

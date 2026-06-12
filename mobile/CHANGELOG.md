@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.194+196 (2026-06-12)
+
+### Açılış gri ekran düzeltmesi (7. tur)
+
+- **Android native:** `drawable-v21/launch_background` artık `#0A0618` (API 21+ cihazlarda `?colorBackground` gri flash giderildi)
+- **NormalTheme:** pencere arka planı `@color/canlifal_window_background` (`#05050D`) — Flutter yüklenirken gri sistem rengi yok
+- **Auth rotaları:** `NoTransitionPage` geri eklendi (`/login`, `/register`, şifre sıfırlama, OTP) — geçiş scrim’i önlenir
+- **NavigatorModalSanitizer:** ilk 4 sn + oturum açılışı sonrası `/feed` geçişinde barrier temizliği
+
 ## 1.0.193+195 (2026-06-11)
 
 ### API dokümantasyonu ve gap analizi
