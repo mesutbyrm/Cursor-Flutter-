@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import '../auth_navigation.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -101,7 +101,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
     return AuthPremiumShell(
       showBack: true,
-      onBack: () => context.pop(),
+      onBack: () => AuthNavigation.back(context),
       topTitle: 'Hesap oluştur',
       topSubtitle: 'Dakikalar içinde topluluğa katıl.',
       child: Form(
@@ -232,7 +232,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               ),
               AuthTextLinkPremium(
                 label: 'Zaten hesabın var mı? Giriş yap',
-                onPressed: () => context.pop(),
+                onPressed: () => AuthNavigation.back(context),
               ),
               const SizedBox(height: 12),
               Row(

@@ -12,6 +12,7 @@ import '../core/providers/theme_mode_provider.dart';
 import '../core/push/push_lifecycle_listener.dart';
 import '../core/scroll/modern_social_scroll_behavior.dart';
 import '../core/theme/app_theme.dart';
+import '../features/auth/presentation/auth_flow_app.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
 import '../features/home/presentation/widgets/fortune_incoming_invite_host.dart';
 import '../features/shell/presentation/app_bottom_nav_host.dart';
@@ -27,23 +28,54 @@ class CanlifalApp extends ConsumerStatefulWidget {
 }
 
 class _CanlifalAppState extends ConsumerState<CanlifalApp> {
-  Timer? _startupTimer;
-  var _inStartupWindow = true;
-  var _authResolvedOnFeed = false;
-
   @override
   void initState() {
     super.initState();
     AppStartupLog.appStart();
+    ref.listenManual<bool>(guestModeProvider, (prev, next) {
+      if (prev == next || next != true) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final authed = ref.read(authControllerProvider).valueOrNull != null;
+        if (authed) return;
+        ref.read(goRouterProvider).go('/feed');
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = ref.watch(authControllerProvider);
+    final guest = ref.watch(guestModeProvider);
+    final authed = auth.valueOrNull != null;
+
+    // Oturumsuz: go_router kullanma — girişte takılı ModalBarrier (gri katman) önlenir.
+    if (!authed && !guest) {
+      return const AuthFlowApp();
+    }
+
+    return const _MainShellApp();
+  }
+}
+
+/// Oturumlu veya misafir — go_router ana uygulama.
+class _MainShellApp extends ConsumerStatefulWidget {
+  const _MainShellApp();
+
+  @override
+  ConsumerState<_MainShellApp> createState() => _MainShellAppState();
+}
+
+class _MainShellAppState extends ConsumerState<_MainShellApp> {
+  Timer? _startupTimer;
+  var _inStartupWindow = true;
+
+  @override
+  void initState() {
+    super.initState();
     _startupTimer = Timer(const Duration(seconds: 4), () {
       if (!mounted) return;
       setState(() => _inStartupWindow = false);
-    });
-    ref.listenManual<AsyncValue<dynamic>>(authControllerProvider, (prev, next) {
-      if (prev?.isLoading == true && !next.isLoading && next.hasValue) {
-        if (!mounted) return;
-        setState(() => _authResolvedOnFeed = true);
-      }
     });
   }
 
@@ -57,6 +89,7 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(goRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
+
     return VoiceRoomMusicLifecycleHost(
       child: PushLifecycleListener(
         child: MaterialApp.router(
@@ -90,10 +123,7 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
                     AuthRoutePaths.isPublicAuthPath(routerLocation);
                 final showGlobalMusic =
                     VoiceRoomGlobalMusicBar.shouldShowForRoute(routerLocation);
-                final onFeed = routerLocation == '/feed';
-                final scrubOverlays = isAuthRoute ||
-                    _inStartupWindow ||
-                    (_authResolvedOnFeed && onFeed);
+                final scrubOverlays = isAuthRoute || _inStartupWindow;
 
                 var body = child ?? const ColoredBox(color: Color(0xFF05050D));
 
@@ -104,7 +134,6 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
 
                 body = NavigatorModalSanitizer(
                   active: scrubOverlays,
-                  postAuthFeed: _authResolvedOnFeed && onFeed,
                   child: body,
                 );
 

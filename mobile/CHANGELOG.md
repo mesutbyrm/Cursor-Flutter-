@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.196+198 (2026-06-12)
+
+### Giriş gri katman — kalıcı çözüm (AuthFlowApp)
+
+- **Kök neden:** go_router `refreshListenable` + oturum kontrolü giriş ekranında takılı `ModalBarrier` (yarı saydam gri katman) bırakıyordu; overlay temizliği yeterli değildi
+- **AuthFlowApp:** Oturumsuz kullanıcı için ayrı `MaterialApp` + sıfır geçişli `Navigator` — go_router devre dışı
+- **Ana uygulama:** Yalnızca oturumlu veya misafir modunda `MaterialApp.router`; `initialLocation: /feed`
+- **AuthNavigation:** Login/register/forgot/OTP sayfaları hem AuthFlow hem go_router ile çalışır
+- go_router `refreshListenable` → yalnızca misafir modu (`GuestModeRefresh`); auth loading sırasında redirect atlanır
+
 ## 1.0.195+197 (2026-06-12)
 
 ### Giriş ekranı — gri yarı saydam katman (kök neden)

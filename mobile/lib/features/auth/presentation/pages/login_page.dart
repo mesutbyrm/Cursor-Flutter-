@@ -2,12 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../../../core/bootstrap/app_startup_log.dart';
 import '../../../../core/bootstrap/stuck_overlay_guard.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
+import '../auth_navigation.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/premium_auth_2026/premium_auth_2026.dart';
 
@@ -69,7 +68,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   void _continueAsGuest() {
     ref.read(guestModeProvider.notifier).state = true;
-    context.go('/feed');
   }
 
   @override
@@ -162,7 +160,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               alignment: Alignment.centerRight,
               child: AuthTextLinkPremium(
                 label: 'Şifremi unuttum',
-                onPressed: () => context.push('/auth/forgot-password'),
+                onPressed: () => AuthNavigation.toForgotPassword(context),
               ),
             ),
             const SizedBox(height: 8),
@@ -182,7 +180,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             const SizedBox(height: 6),
             AuthTextLinkPremium(
               label: 'Hesabın yok mu? Kayıt ol',
-              onPressed: () => context.push('/register'),
+              onPressed: () => AuthNavigation.toRegister(context),
             ),
             if (!Env.hasTikTokLogin) ...[
               const SizedBox(height: 4),

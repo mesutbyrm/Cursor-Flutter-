@@ -1,8 +1,7 @@
 import 'package:canlifal_social/core/config/env.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
-
+import '../auth_navigation.dart';
 import '../widgets/premium_auth_2026/premium_auth_2026.dart';
 
 /// 6 haneli OTP doğrulama — premium PIN girişi.
@@ -25,7 +24,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
     if (Env.useMobileAuth) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        context.go('/auth/forgot-password');
+        AuthNavigation.toForgotPassword(context);
       });
     }
   }
@@ -63,7 +62,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
         ),
       ),
     );
-    context.go('/login');
+    AuthNavigation.toLogin(context);
   }
 
   @override
@@ -72,7 +71,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
 
     return AuthPremiumShell(
       showBack: true,
-      onBack: () => context.pop(),
+      onBack: () => AuthNavigation.back(context),
       topTitle: 'Kodu gir',
       topSubtitle: email.isNotEmpty
           ? '$email adresine gönderilen 6 haneli kod'

@@ -88,60 +88,14 @@ import '../../features/vip_gold/presentation/pages/vip_gold_hub_page.dart';
 import '../../core/bootstrap/app_startup_log.dart';
 import '../../core/bootstrap/auth_redirect.dart';
 import '../../core/bootstrap/startup_route_observer.dart';
-import '../../core/bootstrap/stuck_overlay_guard.dart';
 import '../../core/navigation/app_page_transitions.dart';
-import '../../features/auth/domain/entities/user_entity.dart';
 
-class RouterRefresh extends ChangeNotifier {
-  RouterRefresh(this._ref) {
-    _ref.listen<AsyncValue<UserEntity?>>(
-      authControllerProvider,
-      (prev, next) {
-        final prevLoading = prev?.isLoading ?? true;
-        final nextLoading = next.isLoading;
-        final prevUser = prev?.valueOrNull;
-        final nextUser = next.valueOrNull;
-
-        // Oturum kontrolü bittiğinde yalnızca redirect hedefi değişecekse yenile.
-        // /login'de kalırken notify → go_router geçiş barrier'ı (gri katman) bırakıyor.
-        if (prevLoading && !nextLoading) {
-          _onAuthSettled(next);
-          return;
-        }
-        if (!nextLoading && prevUser != nextUser) {
-          _onAuthSettled(next);
-        }
-      },
-    );
-    _ref.listen<bool>(guestModeProvider, (prev, next) {
-      if (prev != next && _shouldRefreshRouter(_ref.read(authControllerProvider))) {
-        notifyListeners();
-      }
+/// Misafir modu değişince redirect yeniden değerlendirilir.
+class GuestModeRefresh extends ChangeNotifier {
+  GuestModeRefresh(Ref ref) {
+    ref.listen<bool>(guestModeProvider, (prev, next) {
+      if (prev != next) notifyListeners();
     });
-  }
-
-  final Ref _ref;
-
-  void _onAuthSettled(AsyncValue<UserEntity?> auth) {
-    if (_shouldRefreshRouter(auth)) {
-      notifyListeners();
-      return;
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      StuckOverlayGuard.dismissRoot(reason: 'auth-settled-no-redirect');
-    });
-  }
-
-  bool _shouldRefreshRouter(AsyncValue<UserEntity?> auth) {
-    final router = _ref.read(goRouterProvider);
-    final config = router.routerDelegate.currentConfiguration;
-    if (config.matches.isEmpty) return false;
-    return AuthRedirect.wouldChangeLocation(
-      path: config.uri.path,
-      matchedLocation: config.last.matchedLocation,
-      auth: auth,
-      guest: _ref.read(guestModeProvider),
-    );
   }
 }
 
@@ -149,17 +103,19 @@ class RouterRefresh extends ChangeNotifier {
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final goRouterProvider = Provider<GoRouter>((ref) {
-  final refresh = RouterRefresh(ref);
+  final guestRefresh = GuestModeRefresh(ref);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: '/login',
+    initialLocation: '/feed',
     observers: [StartupRouteObserver()],
-    refreshListenable: refresh,
+    refreshListenable: guestRefresh,
     redirect: (context, state) {
       final path = state.uri.path;
       final loc = state.matchedLocation;
       final auth = ref.read(authControllerProvider);
+
+      if (auth.isLoading) return null;
 
       if (path == '/splash') {
         final target = AuthRedirect.targetFor(

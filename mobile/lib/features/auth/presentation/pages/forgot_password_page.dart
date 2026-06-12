@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../../../core/config/env.dart';
+import '../auth_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/premium_auth_2026/premium_auth_2026.dart';
@@ -31,7 +30,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     final email = _email.text.trim();
 
     if (!Env.useMobileAuth) {
-      context.push('/auth/otp-verify', extra: email);
+      AuthNavigation.toOtpVerify(context, email: email);
       return;
     }
 
@@ -48,7 +47,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           duration: Duration(seconds: 5),
         ),
       );
-      context.go('/login');
+      AuthNavigation.toLogin(context);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -63,7 +62,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return AuthPremiumShell(
       showBack: true,
-      onBack: () => context.pop(),
+      onBack: () => AuthNavigation.back(context),
       topTitle: 'Şifreni sıfırla',
       topSubtitle: 'E-postana güvenli bir sıfırlama bağlantısı göndereceğiz.',
       child: Form(
@@ -88,7 +87,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
             ),
             AuthTextLinkPremium(
               label: 'Girişe dön',
-              onPressed: () => context.go('/login'),
+              onPressed: () => AuthNavigation.toLogin(context),
             ),
           ],
         ),

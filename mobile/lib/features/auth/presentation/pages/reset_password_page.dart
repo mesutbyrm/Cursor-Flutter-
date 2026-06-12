@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../../../core/network/api_exception.dart';
+import '../auth_navigation.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/premium_auth_2026/premium_auth_2026.dart';
 
@@ -48,7 +47,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Şifreniz güncellendi. Giriş yapabilirsiniz.')),
       );
-      context.go('/login');
+      AuthNavigation.toLogin(context);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -65,7 +64,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
 
     return AuthPremiumShell(
       showBack: true,
-      onBack: () => context.go('/login'),
+      onBack: () => AuthNavigation.toLogin(context),
       topTitle: 'Yeni şifre',
       topSubtitle: hasToken
           ? 'Hesabın için güçlü bir şifre belirle.'
@@ -101,7 +100,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
             ),
             AuthTextLinkPremium(
               label: 'Girişe dön',
-              onPressed: () => context.go('/login'),
+              onPressed: () => AuthNavigation.toLogin(context),
             ),
           ],
         ),
