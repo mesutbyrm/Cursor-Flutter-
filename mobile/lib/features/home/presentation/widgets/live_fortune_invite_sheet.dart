@@ -15,7 +15,6 @@ Future<bool?> showLiveFortuneTellerInviteSheet(
     barrierLabel: 'Canlı fal daveti',
     barrierColor: Colors.black.withValues(alpha: 0.72),
     transitionDuration: Duration.zero,
-    reverseTransitionDuration: Duration.zero,
     pageBuilder: (ctx, _, __) => Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),

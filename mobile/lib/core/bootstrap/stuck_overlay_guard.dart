@@ -30,39 +30,12 @@ abstract final class StuckOverlayGuard {
       popped++;
     }
 
-    final barriers = scrubStuckOverlayBarriers(nav, reason: reason);
-
     AppStartupLog.overlayHide(
       reason: reason,
       popped: popped,
       canStillPop: nav.canPop(),
-      note: barriers > 0 ? 'barriers=$barriers' : null,
     );
-    return popped + barriers;
-  }
-
-  /// Geçiş animasyonu yarım kalınca overlay'de yetim [ModalBarrier] kalabilir.
-  static int scrubStuckOverlayBarriers(
-    NavigatorState nav, {
-    String reason = 'barrier-scrub',
-  }) {
-    final overlay = nav.overlay;
-    if (overlay == null) return 0;
-
-    var removed = 0;
-    for (final entry in List<OverlayEntry>.from(overlay.entries)) {
-      if (entry.widget is! ModalBarrier) continue;
-      entry.remove();
-      removed++;
-    }
-
-    if (removed > 0) {
-      AppStartupLog.overlayHide(
-        reason: reason,
-        note: 'orphan-barriers=$removed canPop=${nav.canPop()}',
-      );
-    }
-    return removed;
+    return popped;
   }
 
   static bool _shouldPopTopRoute(NavigatorState nav) {
