@@ -16,6 +16,8 @@ abstract final class ApiEndpoints {
   static const authMobileTiktok = '/api/auth/mobile-tiktok';
   static const authMobileRefresh = '/api/auth/mobile-refresh';
   static const authForgotPassword = '/api/auth/forgot-password';
+  static const authResetPassword = '/api/auth/reset-password';
+  static const authChangePassword = '/api/auth/change-password';
   static const me = '/api/me';
   static const meStats = '/api/users/me/stats';
   static const meGiftsReceived = '/api/users/me/gifts-received';
@@ -111,6 +113,20 @@ abstract final class ApiEndpoints {
   static const blogCategories = '/api/blog/categories';
   static const blogRecent = '/api/blog/recent';
   static String blogPost(String slug) => '/api/blog/$slug';
+  static const blogLike = '/api/blog/like';
+  static const blogFavorite = '/api/blog/favorite';
+  static const blogComments = '/api/blog/comments';
+
+  /// Ajans sistemi (canlifal.com §17).
+  static const agencyMy = '/api/agency/my';
+  static const agencyApply = '/api/agency/apply';
+  static const agencyMembers = '/api/agency/members';
+  static const agencyInvite = '/api/agency/invite';
+  static const agencyJoin = '/api/agency/join';
+  static const agencyEarnings = '/api/agency/earnings';
+  static const agencyLeaderboard = '/api/agency/leaderboard';
+  static const agencyWithdrawals = '/api/agency/withdrawals';
+  static const agencyTasks = '/api/agency/tasks';
 
   static const celebrities = '/api/celebrities';
   static String celebrity(String id) => '/api/celebrities/$id';
@@ -303,6 +319,17 @@ abstract final class ApiEndpoints {
 
   static String userFortuneDetail(String fortuneId) =>
       '/api/user/fortunes/$fortuneId';
+
+  static String userFortunePin(String fortuneId) =>
+      '/api/user/fortunes/$fortuneId/pin';
+
+  static String userFortuneRate(String fortuneId) =>
+      '/api/user/fortunes/$fortuneId/rate';
+
+  static const tellerGifts = '/api/teller/gifts';
+
+  static const dailyLogin = '/api/daily-login';
+  static const dailyMissions = '/api/daily-missions';
 
   static const userFavorites = '/api/user/favorites';
 

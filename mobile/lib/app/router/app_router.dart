@@ -7,6 +7,7 @@ import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/otp_verify_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../features/content_hub/domain/native_feature_item.dart';
@@ -153,6 +154,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           loc == '/login' ||
           loc == '/register' ||
           loc.startsWith('/auth/forgot-password') ||
+          loc.startsWith('/auth/reset-password') ||
           loc == '/auth/otp-verify';
       final canlifalWeb = loc == '/canlifal-web';
       if (!authed && !guest && !publicAuthPages && !canlifalWeb) {
@@ -173,6 +175,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/auth/forgot-password',
         builder: (context, state) => const ForgotPasswordPage(),
+      ),
+      GoRoute(
+        path: '/auth/reset-password',
+        builder: (context, state) => ResetPasswordPage(
+          token: state.uri.queryParameters['token'],
+        ),
       ),
       GoRoute(
         path: '/auth/otp-verify',

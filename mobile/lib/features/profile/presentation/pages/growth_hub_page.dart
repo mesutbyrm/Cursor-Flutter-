@@ -11,6 +11,7 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../home/domain/entities/home_game_entity.dart';
 import '../../../home/presentation/providers/home_providers.dart';
+import '../../data/datasources/achievements_remote_datasource.dart';
 import '../../domain/entities/growth_progress_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../providers/profile_providers.dart';
@@ -26,6 +27,7 @@ class GrowthHubPage extends ConsumerWidget {
     final rewardsAsync = ref.watch(homeDailyRewardsProvider);
     final walletAsync = ref.watch(walletBalancesProvider);
     final referralAsync = ref.watch(referralInfoProvider);
+    final achievementsAsync = ref.watch(userAchievementsProvider);
 
     final user = auth.valueOrNull;
     final stats = statsAsync.valueOrNull ?? const ProfileStatsEntity();
@@ -99,6 +101,29 @@ class GrowthHubPage extends ConsumerWidget {
                     ),
                   ),
                   _BadgeWrap(badges: progress.badges),
+                  achievementsAsync.when(
+                    data: (apiBadges) {
+                      if (apiBadges.isEmpty) return const SizedBox.shrink();
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 20),
+                          const ProfileSectionTitle(title: 'Sunucu rozetleri'),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              for (final a in apiBadges)
+                                _ApiAchievementChip(achievement: a),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
+                  ),
                   const SizedBox(height: 20),
                   _RoadmapHintCard(
                     onVip: () => context.push('/vip-gold'),
@@ -119,12 +144,14 @@ class GrowthHubPage extends ConsumerWidget {
     ref.invalidate(homeDailyRewardsProvider);
     ref.invalidate(walletBalancesProvider);
     ref.invalidate(referralInfoProvider);
+    ref.invalidate(userAchievementsProvider);
     await Future.wait([
       _ignore(ref.read(authControllerProvider.notifier).refreshMe()),
       _ignore(ref.read(profileStatsProvider.future)),
       _ignore(ref.read(homeDailyRewardsProvider.future)),
       _ignore(ref.read(walletBalancesProvider.future)),
       _ignore(ref.read(referralInfoProvider.future)),
+      _ignore(ref.read(userAchievementsProvider.future)),
     ]);
   }
 
@@ -596,6 +623,58 @@ class _RoadmapHintCard extends StatelessWidget {
             onPressed: onAdReward,
             icon: const Icon(Icons.play_circle_fill_rounded),
             label: const Text('Reklam izle, ödül kazan'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ApiAchievementChip extends StatelessWidget {
+  const _ApiAchievementChip({required this.achievement});
+
+  final AchievementEntity achievement;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final accent = achievement.unlocked
+        ? AppThemeColors.onlineGreen
+        : AppThemeColors.coinGold;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(achievement.icon ?? '🏅', style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                achievement.title,
+                style: TextStyle(
+                  color: c.onSurface,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                ),
+              ),
+              if (achievement.description != null)
+                Text(
+                  achievement.description!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: c.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
+                ),
+            ],
           ),
         ],
       ),

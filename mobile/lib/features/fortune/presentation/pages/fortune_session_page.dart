@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/token_storage.dart';
 import '../../../../core/widgets/discover/discover_icon_button.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
@@ -32,6 +33,7 @@ class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage>
   final _input = TextEditingController();
   final _service = FortuneReadingService();
   var _loading = false;
+  String _streamPreview = '';
   bool? _yesNo;
   DateTime? _birthDate;
   late AnimationController _pulse;
@@ -62,21 +64,59 @@ class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage>
       ).showSnackBar(const SnackBar(content: Text('Evet veya Hayır seçin')));
       return;
     }
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _streamPreview = '';
+    });
     final authed = ref.read(authControllerProvider).valueOrNull;
     var usedRemote = false;
-    FortuneReadingResult result;
+    FortuneReadingResult? result;
     try {
       if (authed != null) {
-        result = await ref
-            .read(fortuneRepositoryProvider)
-            .readFortune(
-              type: type,
-              userInput: _input.text,
-              yesNoChoice: _yesNo,
-              birthDate: _birthDate,
-            );
-        usedRemote = true;
+        final accessToken = await ref.read(tokenStorageProvider).readAccess();
+        var streamed = false;
+        if (accessToken != null && accessToken.trim().isNotEmpty) {
+          try {
+            var text = '';
+            String? fortuneId;
+            await for (final update
+                in ref.read(fortuneRepositoryProvider).streamFortune(
+                      type: type,
+                      userInput: _input.text,
+                      yesNoChoice: _yesNo,
+                      birthDate: _birthDate,
+                      accessToken: accessToken,
+                    )) {
+              text = update.text;
+              fortuneId = update.fortuneId ?? fortuneId;
+              if (mounted) {
+                setState(() => _streamPreview = text);
+              }
+              if (update.done) break;
+            }
+            if (text.trim().isNotEmpty) {
+              streamed = true;
+              usedRemote = true;
+              result = FortuneReadingResult(
+                type: type,
+                summary: text.length > 120 ? '${text.substring(0, 120)}…' : text,
+                detail: text,
+                recordId: fortuneId,
+              );
+            }
+          } catch (_) {
+            streamed = false;
+          }
+        }
+        if (!streamed) {
+          result = await ref.read(fortuneRepositoryProvider).readFortune(
+                type: type,
+                userInput: _input.text,
+                yesNoChoice: _yesNo,
+                birthDate: _birthDate,
+              );
+          usedRemote = true;
+        }
       } else {
         await Future<void>.delayed(const Duration(milliseconds: 900));
         result = _service.generate(
@@ -114,9 +154,14 @@ class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage>
         );
       }
     }
+    if (result == null) {
+      if (mounted) setState(() => _loading = false);
+      return;
+    }
+    final finalResult = result;
     if (authed != null) {
       try {
-        final saved = result.recordId != null && usedRemote
+        final saved = finalResult.recordId != null && usedRemote
             ? null
             : await ref
                   .read(fortuneRepositoryProvider)
@@ -127,20 +172,20 @@ class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage>
                       question: _input.text.trim().isEmpty
                           ? null
                           : _input.text.trim(),
-                      summary: result.summary,
-                      detail: result.detail,
-                      answer: result.summary,
-                      luckyNumber: result.luckyNumber,
-                      luckyColor: result.luckyColor,
+                      summary: finalResult.summary,
+                      detail: finalResult.detail,
+                      answer: finalResult.summary,
+                      luckyNumber: finalResult.luckyNumber,
+                      luckyColor: finalResult.luckyColor,
                     ),
                   );
         if (saved != null) {
           result = FortuneReadingResult(
-            type: result.type,
-            summary: result.summary,
-            detail: result.detail,
-            luckyNumber: result.luckyNumber,
-            luckyColor: result.luckyColor,
+            type: finalResult.type,
+            summary: finalResult.summary,
+            detail: finalResult.detail,
+            luckyNumber: finalResult.luckyNumber,
+            luckyColor: finalResult.luckyColor,
             recordId: saved.id,
           );
         }
@@ -150,8 +195,11 @@ class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage>
       }
     }
     if (!mounted) return;
-    setState(() => _loading = false);
-    context.push('/fortune/${type.slug}/result', extra: result);
+    setState(() {
+      _loading = false;
+      _streamPreview = '';
+    });
+    context.push('/fortune/${type.slug}/result', extra: result ?? finalResult);
   }
 
   Future<void> _showPurchasePrompt(String message) async {
@@ -268,6 +316,28 @@ class _FortuneSessionPageState extends ConsumerState<FortuneSessionPage>
                         if (d != null) setState(() => _birthDate = d);
                       },
                     ),
+                    if (_streamPreview.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: type.accent.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Text(
+                          _streamPreview,
+                          style: TextStyle(
+                            color: context.colors.onSurface.withValues(alpha: 0.92),
+                            height: 1.45,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
                     SizedBox(height: 28),
                     SizedBox(
                       width: double.infinity,

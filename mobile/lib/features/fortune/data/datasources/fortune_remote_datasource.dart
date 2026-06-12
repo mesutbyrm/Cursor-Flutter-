@@ -8,11 +8,64 @@ import '../../../../core/util/json_util.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 import '../../domain/entities/user_fortune_entity.dart';
 import '../../domain/repositories/fortune_repository.dart';
+import '../services/fortune_sse_service.dart';
 
 class FortuneRemoteDataSource {
   FortuneRemoteDataSource(this._dio);
 
   final Dio _dio;
+  final FortuneSseService _sse = FortuneSseService();
+
+  Map<String, dynamic> _fortuneBody({
+    required FortuneTypeEntity type,
+    String? userInput,
+    bool? yesNoChoice,
+    DateTime? birthDate,
+  }) {
+    final input = userInput?.trim();
+    return {
+      'type': type.slug,
+      'fortuneType': type.title,
+      'slug': type.slug,
+      if (input != null && input.isNotEmpty) ...{
+        'question': input,
+        'text': input,
+        'dream': input,
+        'note': input,
+      },
+      if (yesNoChoice != null) 'answer': yesNoChoice ? 'yes' : 'no',
+      if (birthDate != null) 'birthDate': birthDate.toIso8601String(),
+      'platform': 'mobile',
+    };
+  }
+
+  Stream<FortuneStreamUpdate> streamFortune({
+    required FortuneTypeEntity type,
+    String? userInput,
+    bool? yesNoChoice,
+    DateTime? birthDate,
+    required String accessToken,
+  }) async* {
+    final slug = _apiSlugFor(type.slug);
+    final body = _fortuneBody(
+      type: type,
+      userInput: userInput,
+      yesNoChoice: yesNoChoice,
+      birthDate: birthDate,
+    );
+    await for (final chunk in _sse.streamReading(
+      apiSlug: slug,
+      body: body,
+      accessToken: accessToken,
+    )) {
+      yield FortuneStreamUpdate(
+        text: chunk.content,
+        fortuneId: chunk.fortuneId,
+        done: chunk.done,
+      );
+      if (chunk.done) return;
+    }
+  }
 
   Future<FortuneReadingResult> readFortune({
     required FortuneTypeEntity type,
@@ -21,23 +74,14 @@ class FortuneRemoteDataSource {
     DateTime? birthDate,
   }) async {
     final path = ApiEndpoints.fortuneReading(_apiSlugFor(type.slug));
-    final input = userInput?.trim();
     final res = await _dio.safePost<dynamic>(
       path,
-      data: {
-        'type': type.slug,
-        'fortuneType': type.title,
-        'slug': type.slug,
-        if (input != null && input.isNotEmpty) ...{
-          'question': input,
-          'text': input,
-          'dream': input,
-          'note': input,
-        },
-        if (yesNoChoice != null) 'answer': yesNoChoice ? 'yes' : 'no',
-        if (birthDate != null) 'birthDate': birthDate.toIso8601String(),
-        'platform': 'mobile',
-      },
+      data: _fortuneBody(
+        type: type,
+        userInput: userInput,
+        yesNoChoice: yesNoChoice,
+        birthDate: birthDate,
+      ),
     );
     final map = _unwrapMap(res.data);
     final summary =

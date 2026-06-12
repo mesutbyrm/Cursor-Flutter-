@@ -10,6 +10,22 @@ class FortuneRepositoryImpl implements FortuneRepository {
   final FortuneRemoteDataSource _remote;
 
   @override
+  Stream<FortuneStreamUpdate> streamFortune({
+    required FortuneTypeEntity type,
+    String? userInput,
+    bool? yesNoChoice,
+    DateTime? birthDate,
+    required String accessToken,
+  }) =>
+      _remote.streamFortune(
+        type: type,
+        userInput: userInput,
+        yesNoChoice: yesNoChoice,
+        birthDate: birthDate,
+        accessToken: accessToken,
+      );
+
+  @override
   Future<FortuneReadingResult> readFortune({
     required FortuneTypeEntity type,
     String? userInput,

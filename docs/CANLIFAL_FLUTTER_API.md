@@ -1,7 +1,9 @@
 # Canlifal — Flutter API (mobil)
 
 **Tam doküman (canlifal.com):** https://canlifal.com/canlifal-flutter-api-docs.txt  
-**Repo kopyası:** [`canlifal-flutter-api-docs.txt`](canlifal-flutter-api-docs.txt) — `scripts/sync-canlifal-config.sh` ile güncellenir.
+**Repo kopyası:** [`FLUTTER_API_DOCS.md`](FLUTTER_API_DOCS.md) (güncel) · [`canlifal-flutter-api-docs.txt`](canlifal-flutter-api-docs.txt) — `scripts/sync-canlifal-config.sh` ile senkron.
+
+**Gap analizi:** [`FLUTTER_GAP_ANALYSIS.md`](FLUTTER_GAP_ANALYSIS.md)
 
 ## İstek başlıkları
 

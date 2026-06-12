@@ -1,5 +1,20 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.193+195 (2026-06-11)
+
+### API dokümantasyonu ve gap analizi
+
+- `docs/FLUTTER_API_DOCS.md` — tam API referansı (300+ endpoint)
+- `docs/FLUTTER_GAP_ANALYSIS.md` — web/mobil eksik modül özeti
+
+### Kritik / yüksek öncelik uygulamaları
+
+- **Fal SSE:** `FortuneSseService` — oturumlu kullanıcıda `POST /api/fortunes/*` LLM akışı; `FortuneSessionPage` canlı metin önizlemesi
+- **Reset password:** `/auth/reset-password?token=` native sayfa + `POST /api/auth/reset-password`
+- **Achievements:** `AchievementsRemoteDataSource` + Growth Hub sunucu rozetleri
+- **api_endpoints:** ajans, blog like/favorite, teller gifts, fortune pin/rate, auth reset/change
+- `.gitignore`: `curl-*.json`, `t-*.json`, `ci-runs.json`
+
 ## 1.0.192+194 (2026-06-11)
 
 ### Giriş ekranı — Android gri overlay (6. tur)

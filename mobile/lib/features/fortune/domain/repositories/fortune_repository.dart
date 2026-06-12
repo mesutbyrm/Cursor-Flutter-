@@ -24,7 +24,28 @@ class SaveFortuneInput {
   final String? luckyColor;
 }
 
+/// SSE fal akışı parçası.
+class FortuneStreamUpdate {
+  const FortuneStreamUpdate({
+    required this.text,
+    this.fortuneId,
+    this.done = false,
+  });
+
+  final String text;
+  final String? fortuneId;
+  final bool done;
+}
+
 abstract class FortuneRepository {
+  Stream<FortuneStreamUpdate> streamFortune({
+    required FortuneTypeEntity type,
+    String? userInput,
+    bool? yesNoChoice,
+    DateTime? birthDate,
+    required String accessToken,
+  });
+
   Future<FortuneReadingResult> readFortune({
     required FortuneTypeEntity type,
     String? userInput,
