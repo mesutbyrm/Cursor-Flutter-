@@ -23,7 +23,7 @@ abstract final class StuckOverlayGuard {
     String reason = 'manual',
   }) {
     var popped = 0;
-    for (var guard = 0; guard < 16; guard++) {
+    for (var guard = 0; guard < 24; guard++) {
       if (!nav.canPop()) break;
       if (!_shouldPopTopRoute(nav)) break;
       nav.pop();

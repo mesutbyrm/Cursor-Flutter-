@@ -102,12 +102,17 @@ class GuestModeRefresh extends ChangeNotifier {
 /// Push / global modal sheet'ler için kök navigator.
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
+/// Her oturum açılışında go_router sıfırdan — yetim ModalBarrier önlenir.
+final shellSessionProvider = StateProvider<int>((ref) => 0);
+
 final goRouterProvider = Provider<GoRouter>((ref) {
+  ref.watch(shellSessionProvider);
   final guestRefresh = GuestModeRefresh(ref);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: '/feed',
+    // /feed ile başlamak shell'i oturumsuz yükleyip /login redirect'inde gri barrier bırakıyordu.
+    initialLocation: '/login',
     observers: [StartupRouteObserver()],
     refreshListenable: guestRefresh,
     redirect: (context, state) {

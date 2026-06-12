@@ -14,6 +14,7 @@ import '../core/providers/theme_mode_provider.dart';
 import '../core/push/push_lifecycle_listener.dart';
 import '../core/scroll/modern_social_scroll_behavior.dart';
 import '../core/theme/app_theme.dart';
+import '../features/auth/presentation/auth_flow_app.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
 import '../features/home/presentation/widgets/fortune_incoming_invite_host.dart';
 import '../features/shell/presentation/app_bottom_nav_host.dart';
@@ -29,24 +30,10 @@ class CanlifalApp extends ConsumerStatefulWidget {
 }
 
 class _CanlifalAppState extends ConsumerState<CanlifalApp> {
-  Timer? _startupTimer;
-  Timer? _postAuthTimer;
-  var _inStartupWindow = true;
-  var _postAuthScrub = false;
-
   @override
   void initState() {
     super.initState();
     AppStartupLog.appStart();
-
-    if (ref.read(authControllerProvider).valueOrNull != null) {
-      _beginPostAuthScrub();
-    }
-
-    _startupTimer = Timer(const Duration(seconds: 12), () {
-      if (!mounted) return;
-      setState(() => _inStartupWindow = false);
-    });
 
     ref.listenManual<bool>(guestModeProvider, (prev, next) {
       if (prev == next || next != true) return;
@@ -61,29 +48,80 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
     ref.listenManual(authControllerProvider, (prev, next) {
       final wasAuthed = prev?.valueOrNull != null;
       final nowAuthed = next.valueOrNull != null;
-      final wasLoading = prev?.isLoading ?? true;
-      final nowLoading = next.isLoading;
-
       if (!wasAuthed && nowAuthed) {
         ref.read(guestModeProvider.notifier).state = false;
-        _beginPostAuthScrub();
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          StuckOverlayGuard.dismissAll(reason: 'auth-login');
-          ref.read(goRouterProvider).go('/feed');
-        });
-      } else if (wasAuthed && !nowAuthed && !ref.read(guestModeProvider)) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          ref.read(goRouterProvider).go('/login');
-        });
-      } else if (wasLoading && !nowLoading) {
+        // go_router AuthFlowApp sırasında oluşturulmasın; ana kabuk mount'ta sıfırdan açılır.
+        ref.read(shellSessionProvider.notifier).state++;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = ref.watch(authControllerProvider);
+    final guest = ref.watch(guestModeProvider);
+    final authed = auth.valueOrNull != null;
+
+    // Oturumsuz: go_router yok — /feed shell + redirect gri ModalBarrier bırakıyordu.
+    if (!authed && !guest) {
+      return const AuthFlowApp();
+    }
+
+    return const _MainShellApp();
+  }
+}
+
+/// Oturumlu veya misafir — go_router ana uygulama.
+class _MainShellApp extends ConsumerStatefulWidget {
+  const _MainShellApp();
+
+  @override
+  ConsumerState<_MainShellApp> createState() => _MainShellAppState();
+}
+
+class _MainShellAppState extends ConsumerState<_MainShellApp> {
+  Timer? _startupTimer;
+  Timer? _postAuthTimer;
+  var _inStartupWindow = true;
+  var _postAuthScrub = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _beginPostAuthScrub();
+    _startupTimer = Timer(const Duration(seconds: 12), () {
+      if (!mounted) return;
+      setState(() => _inStartupWindow = false);
+    });
+
+    ref.listenManual(authControllerProvider, (prev, next) {
+      final wasLoading = prev?.isLoading ?? true;
+      if (wasLoading && !next.isLoading) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           _applyAuthRedirect(next);
         });
       }
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onShellReady());
+  }
+
+  void _onShellReady() {
+    if (!mounted) return;
+    StuckOverlayGuard.dismissAll(reason: 'main-shell-ready');
+    final authed = ref.read(authControllerProvider).valueOrNull != null;
+    final guest = ref.read(guestModeProvider);
+    if (!authed && !guest) return;
+
+    final router = ref.read(goRouterProvider);
+    final path = router.routerDelegate.currentConfiguration.uri.path;
+    if (AuthRoutePaths.isPublicAuthPath(path) ||
+        path == '/splash' ||
+        path.isEmpty ||
+        path == '/') {
+      router.go('/feed');
+    }
   }
 
   void _applyAuthRedirect(AsyncValue<dynamic> auth) {
@@ -98,6 +136,9 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
     if (target != null && target != path) {
       AppStartupLog.route(path, target, reason: 'auth-settled');
       router.go(target);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        StuckOverlayGuard.dismissAll(reason: 'post-redirect');
+      });
     }
   }
 

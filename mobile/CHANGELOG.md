@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.199+202 (2026-06-12)
+
+### Gri katman — giriş + ana sayfa (regresyon düzeltmesi)
+
+- **Kök neden:** Tek `MaterialApp` ile `initialLocation: /feed` → shell önce yükleniyor, `/login` redirect'i yetim `ModalBarrier` bırakıyordu; girişte `goRouter` AuthFlow dışında erken oluşturuluyordu
+- **AuthFlowApp geri:** oturumsuz kullanıcıda go_router yok (giriş gri ekranı çözümü)
+- **`shellSessionProvider`:** her oturum açılışında yeni go_router — temiz navigator
+- **`initialLocation: /login`:** shell oturumsuz yüklenmez
+- **MainShellApp:** mount sonrası `/feed` + 15 sn overlay scrub
+
 ## 1.0.198+201 (2026-06-12)
 
 - CI: `overlay.entries` API uyumsuzluğu — route-pop temizliği korunur

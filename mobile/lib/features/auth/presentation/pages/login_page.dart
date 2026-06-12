@@ -49,6 +49,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void _clearStuckOverlays(String reason) {
     if (!mounted) return;
     AppStartupLog.log('LoginPage overlay clear ($reason)');
+    final nav = Navigator.maybeOf(context);
+    if (nav != null) {
+      StuckOverlayGuard.dismissNavigator(nav, reason: 'login-$reason');
+    }
     StuckOverlayGuard.dismissRoot(reason: 'login-$reason');
   }
 
