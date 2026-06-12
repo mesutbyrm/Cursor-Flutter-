@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-06-12 09:48 UTC
+Oluşturulma: 2026-06-12 13:08 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -10,7 +10,7 @@ Base: `main`
 | Metrik | Adet |
 |--------|------|
 | Kapatılan PR | 0 |
-| Silinen remote dal | 1 |
+| Silinen remote dal | 0 |
 | Kalan açık PR | 0 |
 | Korunan / aktif dal | 0 |
 
@@ -24,7 +24,7 @@ Base: `main`
 
 | Dal | Neden |
 |-----|-------|
-| cursor/fix-gray-startup-screen-0a80 | merged into main |
+| — | — |
 
 ## Kalan açık PR'lar
 
