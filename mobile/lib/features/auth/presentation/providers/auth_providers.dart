@@ -81,13 +81,13 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     AppStartupLog.authStart();
     _cancelBootWatchdog();
     _bootWatchdog = Timer(_bootTimeout + const Duration(seconds: 2), () {
-      if (!ref.mounted) return;
       final current = state;
       if (current.isLoading && !current.hasValue) {
         AppStartupLog.authFinish(hasUser: false, error: true);
         state = const AsyncValue.data(null);
       }
     });
+    ref.onDispose(_cancelBootWatchdog);
 
     try {
       final user = await LoadingTimeout.run(
