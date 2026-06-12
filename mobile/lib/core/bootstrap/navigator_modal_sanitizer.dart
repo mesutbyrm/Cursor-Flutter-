@@ -12,12 +12,14 @@ class NavigatorModalSanitizer extends StatefulWidget {
     super.key,
     required this.active,
     this.postAuthFeed = false,
+    this.aggressive = false,
     required this.child,
   });
 
   final bool active;
   /// Oturum açılışı sonrası /feed'e geçişte kalan modal barrier temizliği.
   final bool postAuthFeed;
+  final bool aggressive;
   final Widget child;
 
   @override
@@ -66,7 +68,12 @@ class _NavigatorModalSanitizerState extends State<NavigatorModalSanitizer> {
   void _armTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(milliseconds: 75), (_) {
-      if (!mounted || !_shouldScrub || _ticks >= 64) {
+      if (!mounted || !_shouldScrub) {
+        _timer?.cancel();
+        return;
+      }
+      final maxTicks = widget.aggressive ? 240 : 64;
+      if (_ticks >= maxTicks) {
         _timer?.cancel();
         return;
       }
@@ -84,6 +91,7 @@ class _NavigatorModalSanitizerState extends State<NavigatorModalSanitizer> {
         reason: reason,
         nested: nested != keyNav ? nested : null,
         overlayContext: ctx,
+        aggressive: widget.aggressive,
       );
       return;
     }

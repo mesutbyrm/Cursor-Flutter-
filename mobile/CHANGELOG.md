@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.201+204 (2026-06-12)
+
+### Giriş sonrası gri overlay — kök neden (go_router erken mount)
+
+- **Kök neden:** `MainShellApp` oturum kontrolü bitmeden `/feed` ile mount oluyordu; go_router `ModalBarrier` bırakıyor, oturum açılınca overlay kalksa da barrier kalıyordu
+- **Çözüm:** Oturum kontrolü / giriş bitene kadar yalnızca `AuthFlowApp` — go_router hiç oluşturulmaz
+- **Oturum açılışı:** `shellSessionProvider++` ile temiz go_router; `FeedBarrierWatchdog` + agresif `StuckOverlayGuard`
+- **Ana sayfa:** 45 sn boyunca barrier izleme ve otomatik temizlik
+
 ## 1.0.200+203 (2026-06-12)
 
 ### Giriş sonrası gri overlay — kalıcı düzeltme (tek MaterialApp)

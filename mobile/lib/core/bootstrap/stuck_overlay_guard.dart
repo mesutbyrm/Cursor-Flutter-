@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../app/router/app_router.dart';
 import 'app_startup_log.dart';
@@ -21,16 +22,16 @@ abstract final class StuckOverlayGuard {
   static int dismissNavigator(
     NavigatorState nav, {
     String reason = 'manual',
+    bool aggressive = false,
   }) {
     var popped = 0;
     for (var guard = 0; guard < 24; guard++) {
       if (!nav.canPop()) break;
-      if (!_shouldPopTopRoute(nav)) break;
+      if (!aggressive && !_shouldPopTopRoute(nav)) break;
       nav.pop();
       popped++;
     }
 
-    final barriers = 0;
     final overlay = nav.overlay;
     if (overlay != null && overlay.mounted) {
       final removed = _scrubOrphanModalBarriers(overlay.context, nav: nav);
@@ -47,7 +48,6 @@ abstract final class StuckOverlayGuard {
       reason: reason,
       popped: popped,
       canStillPop: nav.canPop(),
-      note: barriers > 0 ? 'barriers=$barriers' : null,
     );
     return popped;
   }
@@ -80,28 +80,74 @@ abstract final class StuckOverlayGuard {
     return result;
   }
 
+  /// Tüm uygulama ağacında yetim barrier ara (kök + iç overlay'ler).
+  static int scrubEntireAppTree({String reason = 'tree'}) {
+    var removed = 0;
+    final root = WidgetsBinding.instance.rootElement;
+    if (root != null) {
+      void visit(Element element) {
+        if (element.widget is ModalBarrier) {
+          if (_removeOverlayEntryFor(element)) removed++;
+        }
+        element.visitChildren(visit);
+      }
+
+      visit(root);
+    }
+
+    for (final nav in _collectNavigators()) {
+      removed += dismissNavigator(nav, reason: '$reason-nav', aggressive: true);
+    }
+
+    if (removed > 0) {
+      AppStartupLog.overlayHide(reason: reason, note: 'tree-removed=$removed');
+    }
+    return removed;
+  }
+
+  static List<NavigatorState> _collectNavigators() {
+    final result = <NavigatorState>[];
+    final rootNav = rootNavigatorKey.currentState;
+    if (rootNav != null) result.add(rootNav);
+
+    final root = WidgetsBinding.instance.rootElement;
+    if (root == null) return result;
+
+    void visit(Element element) {
+      final state = element;
+      if (state is StatefulElement && state.state is NavigatorState) {
+        final nav = state.state as NavigatorState;
+        if (!result.contains(nav)) result.add(nav);
+      }
+      element.visitChildren(visit);
+    }
+
+    root.visitChildren(visit);
+    return result;
+  }
+
   /// [_OverlayEntryWidget] — private API; yalnızca yetim barrier temizliği.
   static bool _removeOverlayEntryFor(Element barrierElement) {
     Element? overlayEntryElement;
     barrierElement.visitAncestorElements((ancestor) {
       final typeName = ancestor.widget.runtimeType.toString();
-      if (typeName == '_OverlayEntryWidget' ||
-          typeName == 'OverlayEntryWidget') {
+      if (typeName.contains('OverlayEntry')) {
         overlayEntryElement = ancestor;
         return false;
       }
       return true;
     });
     final current = overlayEntryElement;
-    if (current == null) return false;
-    try {
-      final entry = (current.widget as dynamic).entry as OverlayEntry?;
-      if (entry != null && entry.mounted) {
-        entry.remove();
-        return true;
+    if (current != null) {
+      try {
+        final entry = (current.widget as dynamic).entry as OverlayEntry?;
+        if (entry != null && entry.mounted) {
+          entry.remove();
+          return true;
+        }
+      } catch (_) {
+        return false;
       }
-    } catch (_) {
-      return false;
     }
     return false;
   }
@@ -126,24 +172,28 @@ abstract final class StuckOverlayGuard {
     return top;
   }
 
-  static int dismissRoot({String reason = 'root'}) {
+  static int dismissRoot({
+    String reason = 'root',
+    bool aggressive = false,
+  }) {
     final nav = rootNavigatorKey.currentState;
     if (nav == null) {
       AppStartupLog.overlayHide(reason: reason, note: 'nav-null');
       return 0;
     }
-    return dismissNavigator(nav, reason: reason);
+    return dismissNavigator(nav, reason: reason, aggressive: aggressive);
   }
 
-  /// Kök + iç navigator + overlay context (yetim barrier).
+  /// Kök + iç navigator + tüm uygulama ağacı.
   static int dismissAll({
     String reason = 'all',
     NavigatorState? nested,
     BuildContext? overlayContext,
+    bool aggressive = false,
   }) {
-    var total = dismissRoot(reason: '$reason-root');
+    var total = dismissRoot(reason: '$reason-root', aggressive: aggressive);
     if (nested != null && nested != rootNavigatorKey.currentState) {
-      total += dismissNavigator(nested, reason: '$reason-nested');
+      total += dismissNavigator(nested, reason: '$reason-nested', aggressive: aggressive);
     }
     final contexts = <BuildContext>{};
     final rootCtx = overlayContext ?? rootNavigatorKey.currentContext;
@@ -158,6 +208,44 @@ abstract final class StuckOverlayGuard {
         nav: rootNavigatorKey.currentState,
       );
     }
+    total += scrubEntireAppTree(reason: '$reason-tree');
     return total;
+  }
+
+  /// /feed üzerinde sürekli barrier izleme — post-frame döngüsü.
+  static void armFeedBarrierWatch({
+    required VoidCallback onDone,
+    Duration maxDuration = const Duration(seconds: 45),
+  }) {
+    final started = DateTime.now();
+    void tick(Duration _) {
+      final elapsed = DateTime.now().difference(started);
+      final removed = dismissAll(reason: 'feed-watch', aggressive: true);
+      final barriersLeft = _barrierCount();
+      if (barriersLeft == 0 || elapsed >= maxDuration) {
+        onDone();
+        return;
+      }
+      if (removed > 0 || elapsed < maxDuration) {
+        SchedulerBinding.instance.scheduleFrameCallback(tick);
+      } else {
+        onDone();
+      }
+    }
+
+    SchedulerBinding.instance.scheduleFrameCallback(tick);
+  }
+
+  static int _barrierCount() {
+    var count = 0;
+    final root = WidgetsBinding.instance.rootElement;
+    if (root == null) return 0;
+    void visit(Element element) {
+      if (element.widget is ModalBarrier) count++;
+      element.visitChildren(visit);
+    }
+
+    visit(root);
+    return count;
   }
 }

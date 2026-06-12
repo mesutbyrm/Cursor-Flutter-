@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/bootstrap/app_startup_log.dart';
 import '../core/bootstrap/auth_route_paths.dart';
 import '../core/bootstrap/auth_redirect.dart';
-import '../core/bootstrap/auth_route_paths.dart';
+import '../core/bootstrap/feed_barrier_watchdog.dart';
 import '../core/bootstrap/navigator_modal_sanitizer.dart';
 import '../core/bootstrap/stuck_overlay_guard.dart';
 import '../core/l10n/app_localizations_config.dart';
@@ -42,7 +42,7 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
         if (!mounted) return;
         final authed = ref.read(authControllerProvider).valueOrNull != null;
         if (authed) return;
-        ref.read(goRouterProvider).go('/feed');
+        ref.read(shellSessionProvider.notifier).state++;
       });
     });
 
@@ -51,9 +51,9 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
       final nowAuthed = next.valueOrNull != null;
       if (!wasAuthed && nowAuthed) {
         ref.read(guestModeProvider.notifier).state = false;
+        ref.read(shellSessionProvider.notifier).state++;
       }
       if (wasAuthed && !nowAuthed) {
-        // Çıkış: go_router sıfırla — yetim ModalBarrier temizlenir.
         ref.read(shellSessionProvider.notifier).state++;
       }
     });
@@ -63,18 +63,15 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
     final guest = ref.watch(guestModeProvider);
+    final bootstrapDone = !auth.isLoading || auth.hasValue;
     final authed = auth.valueOrNull != null;
-    final showAuthOverlay = !authed && !guest;
 
-    // Tek MaterialApp — AuthFlowApp üst katman; ağaç değişimi yetim barrier bırakmaz.
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const _MainShellApp(),
-        if (showAuthOverlay)
-          const Positioned.fill(child: AuthFlowApp()),
-      ],
-    );
+    // Oturum kontrolü veya giriş: go_router mount ETME — barrier /feed'de oluşuyordu.
+    if (!bootstrapDone || (!authed && !guest)) {
+      return const AuthFlowApp();
+    }
+
+    return const _MainShellApp();
   }
 }
 
@@ -95,7 +92,8 @@ class _MainShellAppState extends ConsumerState<_MainShellApp> {
   @override
   void initState() {
     super.initState();
-    _startupTimer = Timer(const Duration(seconds: 12), () {
+    _beginPostAuthScrub();
+    _startupTimer = Timer(const Duration(seconds: 20), () {
       if (!mounted) return;
       setState(() => _inStartupWindow = false);
     });
@@ -126,16 +124,15 @@ class _MainShellAppState extends ConsumerState<_MainShellApp> {
   void _onShellReady() {
     if (!mounted) return;
     _scrubAllLayers('main-shell-ready');
-    final authed = ref.read(authControllerProvider).valueOrNull != null;
-    final guest = ref.read(guestModeProvider);
-    if (!authed && !guest) return;
-
     final router = ref.read(goRouterProvider);
     final path = router.routerDelegate.currentConfiguration.uri.path;
     if (AuthRoutePaths.isPublicAuthPath(path)) {
       router.go('/feed');
     }
-    for (var i = 1; i <= 8; i++) {
+    StuckOverlayGuard.armFeedBarrierWatch(onDone: () {
+      if (mounted) _scrubAllLayers('feed-watch-done');
+    });
+    for (var i = 1; i <= 12; i++) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _scrubAllLayers('main-shell-frame-$i');
       });
@@ -148,6 +145,7 @@ class _MainShellAppState extends ConsumerState<_MainShellApp> {
       reason: reason,
       nested: ctx != null ? Navigator.maybeOf(ctx) : null,
       overlayContext: ctx,
+      aggressive: true,
     );
   }
 
@@ -175,7 +173,7 @@ class _MainShellAppState extends ConsumerState<_MainShellApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrubAllLayers('post-auth-scrub');
     });
-    _postAuthTimer = Timer(const Duration(seconds: 30), () {
+    _postAuthTimer = Timer(const Duration(seconds: 45), () {
       if (!mounted) return;
       setState(() => _postAuthScrub = false);
     });
@@ -226,10 +224,10 @@ class _MainShellAppState extends ConsumerState<_MainShellApp> {
                     AuthRoutePaths.isPublicAuthPath(routerLocation);
                 final showGlobalMusic =
                     VoiceRoomGlobalMusicBar.shouldShowForRoute(routerLocation);
-                final scrubOverlays =
-                    isAuthRoute || _inStartupWindow || _postAuthScrub;
                 final onFeed = routerLocation == '/feed' ||
                     routerLocation.startsWith('/feed/');
+                final scrubOverlays =
+                    isAuthRoute || _inStartupWindow || _postAuthScrub || onFeed;
 
                 var body = child ?? const ColoredBox(color: Color(0xFF05050D));
 
@@ -238,9 +236,14 @@ class _MainShellAppState extends ConsumerState<_MainShellApp> {
                   body = AppBottomNavHost(child: body);
                 }
 
+                if (onFeed) {
+                  body = FeedBarrierWatchdog(child: body);
+                }
+
                 body = NavigatorModalSanitizer(
                   active: scrubOverlays,
                   postAuthFeed: _postAuthScrub && onFeed,
+                  aggressive: onFeed || _postAuthScrub,
                   child: body,
                 );
 
