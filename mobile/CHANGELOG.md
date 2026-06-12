@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.198+200 (2026-06-12)
+
+### Giriş sonrası ana sayfa gri katman — kalıcı düzeltme
+
+- **Kök neden:** `AuthFlowApp` → `MainShellApp` geçişinde ikinci `MaterialApp` mount + yetim `ModalBarrier`; `postAuth` scrub giriş anında tetiklenmiyordu
+- **Tek `MaterialApp.router`:** Oturum açılınca ağaç değişmiyor; `go('/feed')` ile geçiş
+- **`scrubStuckOverlayBarriers` geri:** overlay'deki yetim barrier widget'ları kaldırılır
+- **Giriş sonrası 15 sn** agresif overlay temizliği (mount + auth listener)
+- **Fal daveti:** girişten 4 sn sonra açılır; sıfır geçişli dialog (yalnızca scrim kalmaz)
+
 ## 1.0.197+199 (2026-06-12)
 
 ### Ana sayfa gri katman — giriş sonrası

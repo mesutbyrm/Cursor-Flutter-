@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/bootstrap/app_startup_log.dart';
+import '../core/bootstrap/auth_redirect.dart';
 import '../core/bootstrap/auth_route_paths.dart';
 import '../core/bootstrap/navigator_modal_sanitizer.dart';
 import '../core/bootstrap/stuck_overlay_guard.dart';
@@ -13,7 +14,6 @@ import '../core/providers/theme_mode_provider.dart';
 import '../core/push/push_lifecycle_listener.dart';
 import '../core/scroll/modern_social_scroll_behavior.dart';
 import '../core/theme/app_theme.dart';
-import '../features/auth/presentation/auth_flow_app.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
 import '../features/home/presentation/widgets/fortune_incoming_invite_host.dart';
 import '../features/shell/presentation/app_bottom_nav_host.dart';
@@ -29,10 +29,25 @@ class CanlifalApp extends ConsumerStatefulWidget {
 }
 
 class _CanlifalAppState extends ConsumerState<CanlifalApp> {
+  Timer? _startupTimer;
+  Timer? _postAuthTimer;
+  var _inStartupWindow = true;
+  var _postAuthScrub = false;
+
   @override
   void initState() {
     super.initState();
     AppStartupLog.appStart();
+
+    if (ref.read(authControllerProvider).valueOrNull != null) {
+      _beginPostAuthScrub();
+    }
+
+    _startupTimer = Timer(const Duration(seconds: 12), () {
+      if (!mounted) return;
+      setState(() => _inStartupWindow = false);
+    });
+
     ref.listenManual<bool>(guestModeProvider, (prev, next) {
       if (prev == next || next != true) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -42,58 +57,59 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
         ref.read(goRouterProvider).go('/feed');
       });
     });
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    final auth = ref.watch(authControllerProvider);
-    final guest = ref.watch(guestModeProvider);
-    final authed = auth.valueOrNull != null;
-
-    // Oturumsuz: go_router kullanma — girişte takılı ModalBarrier (gri katman) önlenir.
-    if (!authed && !guest) {
-      return const AuthFlowApp();
-    }
-
-    return const _MainShellApp();
-  }
-}
-
-/// Oturumlu veya misafir — go_router ana uygulama.
-class _MainShellApp extends ConsumerStatefulWidget {
-  const _MainShellApp();
-
-  @override
-  ConsumerState<_MainShellApp> createState() => _MainShellAppState();
-}
-
-class _MainShellAppState extends ConsumerState<_MainShellApp> {
-  Timer? _startupTimer;
-  Timer? _postAuthTimer;
-  var _inStartupWindow = true;
-  var _postAuthScrub = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      StuckOverlayGuard.dismissRoot(reason: 'main-shell-mount');
-    });
-    _startupTimer = Timer(const Duration(seconds: 8), () {
-      if (!mounted) return;
-      setState(() => _inStartupWindow = false);
-    });
     ref.listenManual(authControllerProvider, (prev, next) {
-      if (prev?.valueOrNull != null || next.valueOrNull == null) return;
-      _postAuthTimer?.cancel();
-      setState(() => _postAuthScrub = true);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        StuckOverlayGuard.dismissRoot(reason: 'post-auth-mount');
-      });
-      _postAuthTimer = Timer(const Duration(seconds: 6), () {
-        if (!mounted) return;
-        setState(() => _postAuthScrub = false);
-      });
+      final wasAuthed = prev?.valueOrNull != null;
+      final nowAuthed = next.valueOrNull != null;
+      final wasLoading = prev?.isLoading ?? true;
+      final nowLoading = next.isLoading;
+
+      if (!wasAuthed && nowAuthed) {
+        ref.read(guestModeProvider.notifier).state = false;
+        _beginPostAuthScrub();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          StuckOverlayGuard.dismissAll(reason: 'auth-login');
+          ref.read(goRouterProvider).go('/feed');
+        });
+      } else if (wasAuthed && !nowAuthed && !ref.read(guestModeProvider)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ref.read(goRouterProvider).go('/login');
+        });
+      } else if (wasLoading && !nowLoading) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _applyAuthRedirect(next);
+        });
+      }
+    });
+  }
+
+  void _applyAuthRedirect(AsyncValue<dynamic> auth) {
+    final router = ref.read(goRouterProvider);
+    final path = router.routerDelegate.currentConfiguration.uri.path;
+    final target = AuthRedirect.targetFor(
+      path: path,
+      matchedLocation: path,
+      user: auth.valueOrNull,
+      guest: ref.read(guestModeProvider),
+    );
+    if (target != null && target != path) {
+      AppStartupLog.route(path, target, reason: 'auth-settled');
+      router.go(target);
+    }
+  }
+
+  void _beginPostAuthScrub() {
+    _postAuthTimer?.cancel();
+    setState(() => _postAuthScrub = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      StuckOverlayGuard.dismissAll(reason: 'post-auth-scrub');
+    });
+    _postAuthTimer = Timer(const Duration(seconds: 15), () {
+      if (!mounted) return;
+      setState(() => _postAuthScrub = false);
     });
   }
 
@@ -144,8 +160,8 @@ class _MainShellAppState extends ConsumerState<_MainShellApp> {
                     VoiceRoomGlobalMusicBar.shouldShowForRoute(routerLocation);
                 final scrubOverlays =
                     isAuthRoute || _inStartupWindow || _postAuthScrub;
-                final onFeed =
-                    routerLocation == '/feed' || routerLocation.startsWith('/feed/');
+                final onFeed = routerLocation == '/feed' ||
+                    routerLocation.startsWith('/feed/');
 
                 var body = child ?? const ColoredBox(color: Color(0xFF05050D));
 

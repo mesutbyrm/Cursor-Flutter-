@@ -28,10 +28,13 @@ class FortuneIncomingInviteHost extends ConsumerStatefulWidget {
 class _FortuneIncomingInviteHostState
     extends ConsumerState<FortuneIncomingInviteHost> {
   Timer? _poll;
+  Timer? _readyTimer;
   var _presenting = false;
+  var _inviteUiReady = false;
   final Set<String> _dismissed = {};
 
   bool _mayPresentInvites() {
+    if (!_inviteUiReady) return false;
     final auth = ref.read(authControllerProvider);
     if (auth.isLoading) return false;
     if (auth.valueOrNull == null) return false;
@@ -43,17 +46,22 @@ class _FortuneIncomingInviteHostState
   @override
   void initState() {
     super.initState();
-    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _pollApi());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_mayPresentInvites()) return;
-      _pollApi();
-      _tryPresentNext();
+    // Giriş sonrası geçiş barrier'ı otursun; hemen dialog açma (yalnızca scrim kalır).
+    _readyTimer = Timer(const Duration(seconds: 4), () {
+      if (!mounted) return;
+      setState(() => _inviteUiReady = true);
+      if (_mayPresentInvites()) {
+        unawaited(_pollApi());
+        unawaited(_tryPresentNext());
+      }
     });
+    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _pollApi());
   }
 
   @override
   void dispose() {
     _poll?.cancel();
+    _readyTimer?.cancel();
     super.dispose();
   }
 

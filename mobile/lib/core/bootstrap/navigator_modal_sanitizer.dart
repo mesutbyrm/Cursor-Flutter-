@@ -77,8 +77,12 @@ class _NavigatorModalSanitizerState extends State<NavigatorModalSanitizer> {
 
   void _scrub(String reason) {
     final keyNav = rootNavigatorKey.currentState;
+    final nested = Navigator.maybeOf(context);
     if (keyNav != null) {
-      StuckOverlayGuard.dismissPopupRoutes(rootNavigatorKey, reason: reason);
+      StuckOverlayGuard.dismissAll(
+        reason: reason,
+        nested: nested != keyNav ? nested : null,
+      );
       return;
     }
     final ctxNav = Navigator.maybeOf(context, rootNavigator: true);

@@ -14,7 +14,8 @@ Future<bool?> showLiveFortuneTellerInviteSheet(
     barrierDismissible: false,
     barrierLabel: 'Canlı fal daveti',
     barrierColor: Colors.black.withValues(alpha: 0.72),
-    transitionDuration: const Duration(milliseconds: 280),
+    transitionDuration: Duration.zero,
+    reverseTransitionDuration: Duration.zero,
     pageBuilder: (ctx, _, __) => Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -29,16 +30,7 @@ Future<bool?> showLiveFortuneTellerInviteSheet(
         ),
       ),
     ),
-    transitionBuilder: (ctx, anim, _, child) {
-      final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
-      return FadeTransition(
-        opacity: curve,
-        child: ScaleTransition(
-          scale: Tween<double>(begin: 0.92, end: 1).animate(curve),
-          child: child,
-        ),
-      );
-    },
+    transitionBuilder: (ctx, _, __, child) => child,
   );
 }
 
