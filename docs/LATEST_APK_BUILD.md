@@ -2,23 +2,24 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.199+202` |
-| Tarih (UTC) | 2026-06-12 20:24 |
-| Commit | [`ae1d7f3e41fb581173f89cec06a949be6b10b975`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ae1d7f3e41fb581173f89cec06a949be6b10b975) |
-| İş akışı | [Run 27440512464](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27440512464) |
+| Sürüm | `1.0.200+203` |
+| Tarih (UTC) | 2026-06-12 20:44 |
+| Commit | [`3d4d965de55d1fdffd86cd292ab204ace40e6c94`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3d4d965de55d1fdffd86cd292ab204ace40e6c94) |
+| İş akışı | [Run 27441466506](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27441466506) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.199+202 (2026-06-12)
+## 1.0.200+203 (2026-06-12)
 
-### Gri katman — giriş + ana sayfa (regresyon düzeltmesi)
+### Giriş sonrası gri overlay — kalıcı düzeltme (tek MaterialApp)
 
-- **Kök neden:** Tek `MaterialApp` ile `initialLocation: /feed` → shell önce yükleniyor, `/login` redirect'i yetim `ModalBarrier` bırakıyordu; girişte `goRouter` AuthFlow dışında erken oluşturuluyordu
-- **AuthFlowApp geri:** oturumsuz kullanıcıda go_router yok (giriş gri ekranı çözümü)
-- **`shellSessionProvider`:** her oturum açılışında yeni go_router — temiz navigator
-- **`initialLocation: /login`:** shell oturumsuz yüklenmez
-- **MainShellApp:** mount sonrası `/feed` + 15 sn overlay scrub
+- **Kök neden:** `AuthFlowApp` ↔ `MainShellApp` ağaç değişimi ikinci `MaterialApp` mount ediyor; go_router geçişinden yetim `ModalBarrier` ana sayfada kalıyordu
+- **Tek kabuk:** `_MainShellApp` her zaman mount; oturumsuzda `AuthFlowApp` üst katman overlay (go_router yok, barrier yok)
+- **`auth_redirect`:** oturumsuz kullanıcı `/login`'e yönlendirilmez — shell `/feed`'de kalır, giriş overlay ile
+- **`initialLocation: /feed`** sabit; `AuthRefresh` ile oturum açılınca `/login` → `/feed` redirect
+- **`StuckOverlayGuard`:** `canPop` kilidi kaldırıldı; yetim barrier temizliği güçlendirildi
+- **Giriş sonrası scrub:** overlay kalkınca 30 sn agresif modal temizliği
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
