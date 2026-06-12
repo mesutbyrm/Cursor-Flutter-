@@ -82,23 +82,26 @@ abstract final class StuckOverlayGuard {
 
   /// [_OverlayEntryWidget] — private API; yalnızca yetim barrier temizliği.
   static bool _removeOverlayEntryFor(Element barrierElement) {
-    Element? current = barrierElement.parent;
-    while (current != null) {
-      final typeName = current.widget.runtimeType.toString();
+    Element? overlayEntryElement;
+    barrierElement.visitAncestorElements((ancestor) {
+      final typeName = ancestor.widget.runtimeType.toString();
       if (typeName == '_OverlayEntryWidget' ||
           typeName == 'OverlayEntryWidget') {
-        try {
-          final entry = (current.widget as dynamic).entry as OverlayEntry?;
-          if (entry != null && entry.mounted) {
-            entry.remove();
-            return true;
-          }
-        } catch (_) {
-          return false;
-        }
+        overlayEntryElement = ancestor;
         return false;
       }
-      current = current.parent;
+      return true;
+    });
+    final current = overlayEntryElement;
+    if (current == null) return false;
+    try {
+      final entry = (current.widget as dynamic).entry as OverlayEntry?;
+      if (entry != null && entry.mounted) {
+        entry.remove();
+        return true;
+      }
+    } catch (_) {
+      return false;
     }
     return false;
   }
