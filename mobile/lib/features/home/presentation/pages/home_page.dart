@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/bootstrap/stuck_overlay_guard.dart';
 import '../providers/home_providers.dart';
 import '../providers/home_realtime_bridge.dart';
 import '../theme/home_approved_design.dart';
@@ -27,11 +30,35 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
+  Timer? _overlayScrubTimer;
+  var _overlayScrubTicks = 0;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      StuckOverlayGuard.dismissRoot(reason: 'home-mount');
       ref.read(homeRealtimeBridgeProvider).start();
+    });
+    _armOverlayScrub();
+  }
+
+  @override
+  void dispose() {
+    _overlayScrubTimer?.cancel();
+    super.dispose();
+  }
+
+  void _armOverlayScrub() {
+    _overlayScrubTimer?.cancel();
+    _overlayScrubTicks = 0;
+    _overlayScrubTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      if (!mounted || _overlayScrubTicks >= 40) {
+        _overlayScrubTimer?.cancel();
+        return;
+      }
+      _overlayScrubTicks++;
+      StuckOverlayGuard.dismissRoot(reason: 'home-scrub-$_overlayScrubTicks');
     });
   }
 

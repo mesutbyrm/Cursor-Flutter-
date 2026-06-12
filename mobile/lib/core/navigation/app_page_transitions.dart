@@ -4,6 +4,22 @@ import 'package:go_router/go_router.dart';
 
 import '../ui/premium_2026/premium_motion.dart';
 
+/// Android varsayılan geçişleri modal barrier/scrim bırakabiliyor — barrier yok.
+class NoBarrierPageTransitionsBuilder extends PageTransitionsBuilder {
+  const NoBarrierPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return FadeTransition(opacity: animation, child: child);
+  }
+}
+
 /// Premium sayfa geçişleri — iOS Cupertino + TikTok fade-slide.
 abstract final class AppPageTransitions {
   /// Auth splash/login — geçiş animasyonu gri scrim bırakabiliyor (Android).

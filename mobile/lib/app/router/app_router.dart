@@ -184,15 +184,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) {
-          return MainShellPage(navigationShell: navigationShell);
+        pageBuilder: (context, state, navigationShell) {
+          return AppPageTransitions.none(
+            key: state.pageKey,
+            child: MainShellPage(navigationShell: navigationShell),
+          );
         },
         branches: [
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: '/feed',
-                builder: (context, state) => const FeedPage(),
+                pageBuilder: (context, state) => AppPageTransitions.none(
+                  key: state.pageKey,
+                  child: const FeedPage(),
+                ),
               ),
             ],
           ),
@@ -200,7 +206,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/social',
-                builder: (context, state) => const SocialPage(),
+                pageBuilder: (context, state) => AppPageTransitions.none(
+                  key: state.pageKey,
+                  child: const SocialPage(),
+                ),
                 routes: [
                   GoRoute(
                     path: 'create',
@@ -220,7 +229,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/live',
-                builder: (context, state) => const LivePage(),
+                pageBuilder: (context, state) => AppPageTransitions.none(
+                  key: state.pageKey,
+                  child: const LivePage(),
+                ),
               ),
             ],
           ),
@@ -228,7 +240,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/fortune',
-                builder: (context, state) => const FortuneTarotHubPage(),
+                pageBuilder: (context, state) => AppPageTransitions.none(
+                  key: state.pageKey,
+                  child: const FortuneTarotHubPage(),
+                ),
                 routes: [
                   GoRoute(
                     path: 'types',
@@ -311,7 +326,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/profile',
-                builder: (context, state) => const ProfilePage(),
+                pageBuilder: (context, state) => AppPageTransitions.none(
+                  key: state.pageKey,
+                  child: const ProfilePage(),
+                ),
               ),
             ],
           ),

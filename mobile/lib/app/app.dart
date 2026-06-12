@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/bootstrap/app_startup_log.dart';
 import '../core/bootstrap/auth_route_paths.dart';
 import '../core/bootstrap/navigator_modal_sanitizer.dart';
+import '../core/bootstrap/stuck_overlay_guard.dart';
 import '../core/l10n/app_localizations_config.dart';
 import '../core/providers/theme_mode_provider.dart';
 import '../core/push/push_lifecycle_listener.dart';
@@ -68,20 +69,38 @@ class _MainShellApp extends ConsumerStatefulWidget {
 
 class _MainShellAppState extends ConsumerState<_MainShellApp> {
   Timer? _startupTimer;
+  Timer? _postAuthTimer;
   var _inStartupWindow = true;
+  var _postAuthScrub = false;
 
   @override
   void initState() {
     super.initState();
-    _startupTimer = Timer(const Duration(seconds: 4), () {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      StuckOverlayGuard.dismissRoot(reason: 'main-shell-mount');
+    });
+    _startupTimer = Timer(const Duration(seconds: 8), () {
       if (!mounted) return;
       setState(() => _inStartupWindow = false);
+    });
+    ref.listenManual(authControllerProvider, (prev, next) {
+      if (prev?.valueOrNull != null || next.valueOrNull == null) return;
+      _postAuthTimer?.cancel();
+      setState(() => _postAuthScrub = true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        StuckOverlayGuard.dismissRoot(reason: 'post-auth-mount');
+      });
+      _postAuthTimer = Timer(const Duration(seconds: 6), () {
+        if (!mounted) return;
+        setState(() => _postAuthScrub = false);
+      });
     });
   }
 
   @override
   void dispose() {
     _startupTimer?.cancel();
+    _postAuthTimer?.cancel();
     super.dispose();
   }
 
@@ -123,7 +142,10 @@ class _MainShellAppState extends ConsumerState<_MainShellApp> {
                     AuthRoutePaths.isPublicAuthPath(routerLocation);
                 final showGlobalMusic =
                     VoiceRoomGlobalMusicBar.shouldShowForRoute(routerLocation);
-                final scrubOverlays = isAuthRoute || _inStartupWindow;
+                final scrubOverlays =
+                    isAuthRoute || _inStartupWindow || _postAuthScrub;
+                final onFeed =
+                    routerLocation == '/feed' || routerLocation.startsWith('/feed/');
 
                 var body = child ?? const ColoredBox(color: Color(0xFF05050D));
 
@@ -134,6 +156,7 @@ class _MainShellAppState extends ConsumerState<_MainShellApp> {
 
                 body = NavigatorModalSanitizer(
                   active: scrubOverlays,
+                  postAuthFeed: _postAuthScrub && onFeed,
                   child: body,
                 );
 

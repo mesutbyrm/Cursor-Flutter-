@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/bootstrap/shell_prefetch.dart';
+import '../../../core/bootstrap/stuck_overlay_guard.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/exit_confirm_dialog.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
@@ -22,6 +25,40 @@ class MainShellPage extends ConsumerStatefulWidget {
 
 class _MainShellPageState extends ConsumerState<MainShellPage> {
   var _prefetched = false;
+  Timer? _overlayScrubTimer;
+  var _overlayScrubTicks = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _clearStuckOverlays('mount'));
+    _armOverlayScrub();
+  }
+
+  @override
+  void dispose() {
+    _overlayScrubTimer?.cancel();
+    super.dispose();
+  }
+
+  void _armOverlayScrub() {
+    _overlayScrubTimer?.cancel();
+    _overlayScrubTicks = 0;
+    _overlayScrubTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      if (!mounted || _overlayScrubTicks >= 48) {
+        _overlayScrubTimer?.cancel();
+        return;
+      }
+      _overlayScrubTicks++;
+      _clearStuckOverlays('scrub-$_overlayScrubTicks');
+    });
+  }
+
+  void _clearStuckOverlays(String reason) {
+    if (!mounted) return;
+    final nested = Navigator.maybeOf(context);
+    StuckOverlayGuard.dismissAll(reason: 'main-shell-$reason', nested: nested);
+  }
 
   void _goBranch(int index) {
     widget.navigationShell.goBranch(

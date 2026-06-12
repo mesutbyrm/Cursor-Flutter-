@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../navigation/app_page_transitions.dart';
 import 'app_palette.dart';
 import 'app_spacing.dart';
 import 'app_theme_colors.dart';
@@ -36,12 +37,12 @@ class AppTheme {
       scaffoldBackgroundColor: c.scaffoldBackground,
       colorScheme: c.toColorScheme(),
       extensions: [tokens, p26, palette],
-      pageTransitionsTheme: PageTransitionsTheme(
+      pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
-          // Android: Cupertino geçişi soğuk açılışta gri modal scrim bırakabiliyor.
-          TargetPlatform.android: const FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.iOS: const CupertinoPageTransitionsBuilder(),
-          TargetPlatform.macOS: const CupertinoPageTransitionsBuilder(),
+          // Android: FadeUpwards / Cupertino geçişleri gri modal barrier bırakabiliyor.
+          TargetPlatform.android: NoBarrierPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
         },
       ),
     );

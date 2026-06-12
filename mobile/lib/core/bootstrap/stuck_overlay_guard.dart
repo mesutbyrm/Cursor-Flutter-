@@ -66,4 +66,16 @@ abstract final class StuckOverlayGuard {
     }
     return dismissNavigator(nav, reason: reason);
   }
+
+  /// Kök + isteğe bağlı iç navigator — shell dallarındaki barrier için.
+  static int dismissAll({
+    String reason = 'all',
+    NavigatorState? nested,
+  }) {
+    var popped = dismissRoot(reason: '$reason-root');
+    if (nested != null) {
+      popped += dismissNavigator(nested, reason: '$reason-nested');
+    }
+    return popped;
+  }
 }
