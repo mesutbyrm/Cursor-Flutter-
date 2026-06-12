@@ -2,24 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.200+203` |
-| Tarih (UTC) | 2026-06-12 20:44 |
-| Commit | [`3d4d965de55d1fdffd86cd292ab204ace40e6c94`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3d4d965de55d1fdffd86cd292ab204ace40e6c94) |
-| İş akışı | [Run 27441466506](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27441466506) |
+| Sürüm | `1.0.201+204` |
+| Tarih (UTC) | 2026-06-12 21:10 |
+| Commit | [`79878ac762c52119dbb946c3aaac05fffefba64b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/79878ac762c52119dbb946c3aaac05fffefba64b) |
+| İş akışı | [Run 27442763135](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27442763135) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.200+203 (2026-06-12)
+## 1.0.201+204 (2026-06-12)
 
-### Giriş sonrası gri overlay — kalıcı düzeltme (tek MaterialApp)
+### Giriş sonrası gri overlay — kök neden (go_router erken mount)
 
-- **Kök neden:** `AuthFlowApp` ↔ `MainShellApp` ağaç değişimi ikinci `MaterialApp` mount ediyor; go_router geçişinden yetim `ModalBarrier` ana sayfada kalıyordu
-- **Tek kabuk:** `_MainShellApp` her zaman mount; oturumsuzda `AuthFlowApp` üst katman overlay (go_router yok, barrier yok)
-- **`auth_redirect`:** oturumsuz kullanıcı `/login`'e yönlendirilmez — shell `/feed`'de kalır, giriş overlay ile
-- **`initialLocation: /feed`** sabit; `AuthRefresh` ile oturum açılınca `/login` → `/feed` redirect
-- **`StuckOverlayGuard`:** `canPop` kilidi kaldırıldı; yetim barrier temizliği güçlendirildi
-- **Giriş sonrası scrub:** overlay kalkınca 30 sn agresif modal temizliği
+- **Kök neden:** `MainShellApp` oturum kontrolü bitmeden `/feed` ile mount oluyordu; go_router `ModalBarrier` bırakıyor, oturum açılınca overlay kalksa da barrier kalıyordu
+- **Çözüm:** Oturum kontrolü / giriş bitene kadar yalnızca `AuthFlowApp` — go_router hiç oluşturulmaz
+- **Oturum açılışı:** `shellSessionProvider++` ile temiz go_router; `FeedBarrierWatchdog` + agresif `StuckOverlayGuard`
+- **Ana sayfa:** 45 sn boyunca barrier izleme ve otomatik temizlik
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
