@@ -6,9 +6,17 @@ void openNativeSitePath(BuildContext context, String path) {
   final p = path.trim();
   if (p.isEmpty) return;
 
-  if (p.startsWith('/auth/forgot-password') ||
-      p.startsWith('/auth/reset-password') ||
-      p.startsWith('/sifre-sifirla')) {
+  if (p.startsWith('/auth/reset-password') || p.startsWith('/sifre-sifirla')) {
+    final uri = Uri.tryParse(p.startsWith('http') ? p : 'https://canlifal.com$p');
+    final token = uri?.queryParameters['token'];
+    context.push(
+      token != null && token.isNotEmpty
+          ? '/auth/reset-password?token=${Uri.encodeComponent(token)}'
+          : '/auth/reset-password',
+    );
+    return;
+  }
+  if (p.startsWith('/auth/forgot-password')) {
     context.push('/auth/forgot-password');
     return;
   }

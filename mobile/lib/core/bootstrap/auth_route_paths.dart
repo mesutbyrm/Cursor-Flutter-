@@ -5,6 +5,7 @@ abstract final class AuthRoutePaths {
     '/register',
     '/splash',
     '/auth/forgot-password',
+    '/auth/reset-password',
     '/auth/otp-verify',
   };
 

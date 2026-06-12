@@ -11,11 +11,21 @@ import '../../domain/entities/payment_config_entity.dart';
 import '../../domain/entities/referral_info_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../../data/datasources/canlifal_user_api_datasource.dart';
+import '../../data/datasources/achievements_remote_datasource.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
 import '../../data/repositories/profile_repository_impl.dart';
 
 final profileRemoteProvider = Provider<ProfileRemoteDataSource>((ref) {
   return ProfileRemoteDataSource(ref.watch(dioProvider));
+});
+
+final achievementsRemoteProvider = Provider<AchievementsRemoteDataSource>((ref) {
+  return AchievementsRemoteDataSource(ref.watch(dioProvider));
+});
+
+final userAchievementsProvider =
+    FutureProvider<List<AchievementEntity>>((ref) async {
+  return ref.watch(achievementsRemoteProvider).fetchAchievements();
 });
 
 final canlifalUserApiProvider = Provider<CanlifalUserApiDataSource>((ref) {

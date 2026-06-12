@@ -16,5 +16,9 @@ abstract class AuthRepository {
   Future<UserEntity> loginWithTikTok();
   Future<UserEntity?> currentUser();
   Future<void> requestPasswordReset(String email);
+  Future<void> resetPassword({
+    required String token,
+    required String password,
+  });
   Future<void> logout();
 }
