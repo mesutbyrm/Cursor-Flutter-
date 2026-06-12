@@ -77,11 +77,13 @@ class _NavigatorModalSanitizerState extends State<NavigatorModalSanitizer> {
 
   void _scrub(String reason) {
     final keyNav = rootNavigatorKey.currentState;
-    final nested = Navigator.maybeOf(context);
+    final ctx = rootNavigatorKey.currentContext;
+    final nested = ctx != null ? Navigator.maybeOf(ctx) : null;
     if (keyNav != null) {
       StuckOverlayGuard.dismissAll(
         reason: reason,
         nested: nested != keyNav ? nested : null,
+        overlayContext: ctx,
       );
       return;
     }

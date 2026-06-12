@@ -58,7 +58,10 @@ class _HomePageState extends ConsumerState<HomePage> {
         return;
       }
       _overlayScrubTicks++;
-      StuckOverlayGuard.dismissRoot(reason: 'home-scrub-$_overlayScrubTicks');
+      StuckOverlayGuard.dismissAll(
+        reason: 'home-scrub-$_overlayScrubTicks',
+        overlayContext: context,
+      );
     });
   }
 

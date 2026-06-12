@@ -4,7 +4,7 @@ import '../../features/auth/domain/entities/user_entity.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import 'auth_route_paths.dart';
 
-/// go_router redirect — tek kaynak; [RouterRefresh] yalnızca hedef değişince tetiklenir.
+/// go_router redirect — tek kaynak; [AuthRefresh] yalnızca hedef değişince tetiklenir.
 abstract final class AuthRedirect {
   static String? targetFor({
     required String path,
@@ -13,7 +13,7 @@ abstract final class AuthRedirect {
     required bool guest,
   }) {
     if (path == '/splash') {
-      return user != null ? '/feed' : '/login';
+      return '/feed';
     }
 
     final authed = user != null;
@@ -25,8 +25,9 @@ abstract final class AuthRedirect {
         matchedLocation == '/auth/otp-verify';
     final canlifalWeb = matchedLocation == '/canlifal-web';
 
+    // Oturumsuz: AuthFlowApp overlay kabuğu gösterir — /login redirect ModalBarrier bırakıyordu.
     if (!authed && !guest && !publicAuthPages && !canlifalWeb) {
-      return '/login';
+      return null;
     }
     if (authed && publicAuthPages) return '/feed';
     return null;

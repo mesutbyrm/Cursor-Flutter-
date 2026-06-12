@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.200+203 (2026-06-12)
+
+### Giriş sonrası gri overlay — kalıcı düzeltme (tek MaterialApp)
+
+- **Kök neden:** `AuthFlowApp` ↔ `MainShellApp` ağaç değişimi ikinci `MaterialApp` mount ediyor; go_router geçişinden yetim `ModalBarrier` ana sayfada kalıyordu
+- **Tek kabuk:** `_MainShellApp` her zaman mount; oturumsuzda `AuthFlowApp` üst katman overlay (go_router yok, barrier yok)
+- **`auth_redirect`:** oturumsuz kullanıcı `/login`'e yönlendirilmez — shell `/feed`'de kalır, giriş overlay ile
+- **`initialLocation: /feed`** sabit; `AuthRefresh` ile oturum açılınca `/login` → `/feed` redirect
+- **`StuckOverlayGuard`:** `canPop` kilidi kaldırıldı; yetim barrier temizliği güçlendirildi
+- **Giriş sonrası scrub:** overlay kalkınca 30 sn agresif modal temizliği
+
 ## 1.0.199+202 (2026-06-12)
 
 ### Gri katman — giriş + ana sayfa (regresyon düzeltmesi)

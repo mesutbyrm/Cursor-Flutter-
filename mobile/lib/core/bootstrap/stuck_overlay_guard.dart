@@ -30,12 +30,77 @@ abstract final class StuckOverlayGuard {
       popped++;
     }
 
+    final barriers = 0;
+    final overlay = nav.overlay;
+    if (overlay != null && overlay.mounted) {
+      final removed = _scrubOrphanModalBarriers(overlay.context, nav: nav);
+      AppStartupLog.overlayHide(
+        reason: reason,
+        popped: popped,
+        canStillPop: nav.canPop(),
+        note: removed > 0 ? 'orphan-barriers=$removed' : null,
+      );
+      return popped + removed;
+    }
+
     AppStartupLog.overlayHide(
       reason: reason,
       popped: popped,
       canStillPop: nav.canPop(),
+      note: barriers > 0 ? 'barriers=$barriers' : null,
     );
     return popped;
+  }
+
+  /// Kök navigator'da pop edilemeyen yetim [ModalBarrier] katmanları.
+  static int _scrubOrphanModalBarriers(
+    BuildContext overlayContext, {
+    NavigatorState? nav,
+  }) {
+    final barriers = _collectModalBarrierElements(overlayContext);
+    if (barriers.isEmpty) return 0;
+
+    var removed = 0;
+    for (final barrier in barriers) {
+      if (_removeOverlayEntryFor(barrier)) removed++;
+    }
+    return removed;
+  }
+
+  static List<Element> _collectModalBarrierElements(BuildContext context) {
+    final result = <Element>[];
+    void visit(Element element) {
+      if (element.widget is ModalBarrier) {
+        result.add(element);
+      }
+      element.visitChildren(visit);
+    }
+
+    context.visitChildElements(visit);
+    return result;
+  }
+
+  /// [_OverlayEntryWidget] — private API; yalnızca yetim barrier temizliği.
+  static bool _removeOverlayEntryFor(Element barrierElement) {
+    Element? current = barrierElement.parent;
+    while (current != null) {
+      final typeName = current.widget.runtimeType.toString();
+      if (typeName == '_OverlayEntryWidget' ||
+          typeName == 'OverlayEntryWidget') {
+        try {
+          final entry = (current.widget as dynamic).entry as OverlayEntry?;
+          if (entry != null && entry.mounted) {
+            entry.remove();
+            return true;
+          }
+        } catch (_) {
+          return false;
+        }
+        return false;
+      }
+      current = current.parent;
+    }
+    return false;
   }
 
   static bool _shouldPopTopRoute(NavigatorState nav) {
@@ -67,15 +132,29 @@ abstract final class StuckOverlayGuard {
     return dismissNavigator(nav, reason: reason);
   }
 
-  /// Kök + isteğe bağlı iç navigator — shell dallarındaki barrier için.
+  /// Kök + iç navigator + overlay context (yetim barrier).
   static int dismissAll({
     String reason = 'all',
     NavigatorState? nested,
+    BuildContext? overlayContext,
   }) {
-    var popped = dismissRoot(reason: '$reason-root');
-    if (nested != null) {
-      popped += dismissNavigator(nested, reason: '$reason-nested');
+    var total = dismissRoot(reason: '$reason-root');
+    if (nested != null && nested != rootNavigatorKey.currentState) {
+      total += dismissNavigator(nested, reason: '$reason-nested');
     }
-    return popped;
+    final contexts = <BuildContext>{};
+    final rootCtx = overlayContext ?? rootNavigatorKey.currentContext;
+    if (rootCtx != null) contexts.add(rootCtx);
+    final rootOverlay = rootCtx != null ? Overlay.maybeOf(rootCtx) : null;
+    if (rootOverlay != null && rootOverlay.mounted) {
+      contexts.add(rootOverlay.context);
+    }
+    for (final ctx in contexts) {
+      total += _scrubOrphanModalBarriers(
+        ctx,
+        nav: rootNavigatorKey.currentState,
+      );
+    }
+    return total;
   }
 }

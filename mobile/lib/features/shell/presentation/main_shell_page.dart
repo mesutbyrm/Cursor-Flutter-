@@ -57,7 +57,11 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
   void _clearStuckOverlays(String reason) {
     if (!mounted) return;
     final nested = Navigator.maybeOf(context);
-    StuckOverlayGuard.dismissAll(reason: 'main-shell-$reason', nested: nested);
+    StuckOverlayGuard.dismissAll(
+      reason: 'main-shell-$reason',
+      nested: nested,
+      overlayContext: context,
+    );
   }
 
   void _goBranch(int index) {
@@ -115,7 +119,6 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
           context,
           onLogout: () async {
             await ref.read(authControllerProvider.notifier).logout();
-            if (context.mounted) context.go('/login');
           },
         );
       },

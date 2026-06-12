@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/bootstrap/app_startup_log.dart';
+import '../core/bootstrap/auth_route_paths.dart';
 import '../core/bootstrap/auth_redirect.dart';
 import '../core/bootstrap/auth_route_paths.dart';
 import '../core/bootstrap/navigator_modal_sanitizer.dart';
@@ -50,7 +51,9 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
       final nowAuthed = next.valueOrNull != null;
       if (!wasAuthed && nowAuthed) {
         ref.read(guestModeProvider.notifier).state = false;
-        // go_router AuthFlowApp sırasında oluşturulmasın; ana kabuk mount'ta sıfırdan açılır.
+      }
+      if (wasAuthed && !nowAuthed) {
+        // Çıkış: go_router sıfırla — yetim ModalBarrier temizlenir.
         ref.read(shellSessionProvider.notifier).state++;
       }
     });
@@ -61,13 +64,17 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
     final auth = ref.watch(authControllerProvider);
     final guest = ref.watch(guestModeProvider);
     final authed = auth.valueOrNull != null;
+    final showAuthOverlay = !authed && !guest;
 
-    // Oturumsuz: go_router yok — /feed shell + redirect gri ModalBarrier bırakıyordu.
-    if (!authed && !guest) {
-      return const AuthFlowApp();
-    }
-
-    return const _MainShellApp();
+    // Tek MaterialApp — AuthFlowApp üst katman; ağaç değişimi yetim barrier bırakmaz.
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const _MainShellApp(),
+        if (showAuthOverlay)
+          const Positioned.fill(child: AuthFlowApp()),
+      ],
+    );
   }
 }
 
@@ -88,13 +95,22 @@ class _MainShellAppState extends ConsumerState<_MainShellApp> {
   @override
   void initState() {
     super.initState();
-    _beginPostAuthScrub();
     _startupTimer = Timer(const Duration(seconds: 12), () {
       if (!mounted) return;
       setState(() => _inStartupWindow = false);
     });
 
     ref.listenManual(authControllerProvider, (prev, next) {
+      final wasAuthed = prev?.valueOrNull != null;
+      final nowAuthed = next.valueOrNull != null;
+      if (!wasAuthed && nowAuthed) {
+        _beginPostAuthScrub();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _scrubAllLayers('auth-success');
+        });
+      }
+
       final wasLoading = prev?.isLoading ?? true;
       if (wasLoading && !next.isLoading) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -109,19 +125,30 @@ class _MainShellAppState extends ConsumerState<_MainShellApp> {
 
   void _onShellReady() {
     if (!mounted) return;
-    StuckOverlayGuard.dismissAll(reason: 'main-shell-ready');
+    _scrubAllLayers('main-shell-ready');
     final authed = ref.read(authControllerProvider).valueOrNull != null;
     final guest = ref.read(guestModeProvider);
     if (!authed && !guest) return;
 
     final router = ref.read(goRouterProvider);
     final path = router.routerDelegate.currentConfiguration.uri.path;
-    if (AuthRoutePaths.isPublicAuthPath(path) ||
-        path == '/splash' ||
-        path.isEmpty ||
-        path == '/') {
+    if (AuthRoutePaths.isPublicAuthPath(path)) {
       router.go('/feed');
     }
+    for (var i = 1; i <= 8; i++) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _scrubAllLayers('main-shell-frame-$i');
+      });
+    }
+  }
+
+  void _scrubAllLayers(String reason) {
+    final ctx = rootNavigatorKey.currentContext;
+    StuckOverlayGuard.dismissAll(
+      reason: reason,
+      nested: ctx != null ? Navigator.maybeOf(ctx) : null,
+      overlayContext: ctx,
+    );
   }
 
   void _applyAuthRedirect(AsyncValue<dynamic> auth) {
@@ -137,7 +164,7 @@ class _MainShellAppState extends ConsumerState<_MainShellApp> {
       AppStartupLog.route(path, target, reason: 'auth-settled');
       router.go(target);
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        StuckOverlayGuard.dismissAll(reason: 'post-redirect');
+        _scrubAllLayers('post-redirect');
       });
     }
   }
@@ -146,9 +173,9 @@ class _MainShellAppState extends ConsumerState<_MainShellApp> {
     _postAuthTimer?.cancel();
     setState(() => _postAuthScrub = true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      StuckOverlayGuard.dismissAll(reason: 'post-auth-scrub');
+      _scrubAllLayers('post-auth-scrub');
     });
-    _postAuthTimer = Timer(const Duration(seconds: 15), () {
+    _postAuthTimer = Timer(const Duration(seconds: 30), () {
       if (!mounted) return;
       setState(() => _postAuthScrub = false);
     });

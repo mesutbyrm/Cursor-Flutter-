@@ -9,6 +9,7 @@ import '../../features/auth/presentation/pages/otp_verify_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../../features/auth/domain/entities/user_entity.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../features/content_hub/domain/native_feature_item.dart';
 import '../../features/content_hub/presentation/pages/content_hub_page.dart';
@@ -99,6 +100,18 @@ class GuestModeRefresh extends ChangeNotifier {
   }
 }
 
+/// Oturum değişince redirect (ör. /login → /feed) yeniden değerlendirilir.
+class AuthRefresh extends ChangeNotifier {
+  AuthRefresh(Ref ref) {
+    ref.listen<AsyncValue<UserEntity?>>(authControllerProvider, (prev, next) {
+      if (prev?.valueOrNull != next.valueOrNull ||
+          prev?.isLoading != next.isLoading) {
+        notifyListeners();
+      }
+    });
+  }
+}
+
 /// Push / global modal sheet'ler için kök navigator.
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -108,13 +121,15 @@ final shellSessionProvider = StateProvider<int>((ref) => 0);
 final goRouterProvider = Provider<GoRouter>((ref) {
   ref.watch(shellSessionProvider);
   final guestRefresh = GuestModeRefresh(ref);
+  final authRefresh = AuthRefresh(ref);
+  // Her zaman /feed — oturumsuz kullanıcıda AuthFlowApp overlay; /login redirect barrier bırakmaz.
+  const initialLocation = '/feed';
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    // /feed ile başlamak shell'i oturumsuz yükleyip /login redirect'inde gri barrier bırakıyordu.
-    initialLocation: '/login',
+    initialLocation: initialLocation,
     observers: [StartupRouteObserver()],
-    refreshListenable: guestRefresh,
+    refreshListenable: Listenable.merge([guestRefresh, authRefresh]),
     redirect: (context, state) {
       final path = state.uri.path;
       final loc = state.matchedLocation;
