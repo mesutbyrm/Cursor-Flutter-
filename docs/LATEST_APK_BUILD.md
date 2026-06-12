@@ -2,28 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.193+195` |
-| Tarih (UTC) | 2026-06-12 08:10 |
-| Commit | [`b6c503d8180b143e224d69d39d2b722114d34f47`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b6c503d8180b143e224d69d39d2b722114d34f47) |
-| İş akışı | [Run 27402890117](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27402890117) |
+| Sürüm | `1.0.194+196` |
+| Tarih (UTC) | 2026-06-12 11:01 |
+| Commit | [`36c09d79294b088956b5b71091d9f5e9be306a49`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/36c09d79294b088956b5b71091d9f5e9be306a49) |
+| İş akışı | [Run 27411125733](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27411125733) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.193+195 (2026-06-11)
+## 1.0.194+196 (2026-06-12)
 
-### API dokümantasyonu ve gap analizi
+### Açılış gri ekran düzeltmesi (7. tur)
 
-- `docs/FLUTTER_API_DOCS.md` — tam API referansı (300+ endpoint)
-- `docs/FLUTTER_GAP_ANALYSIS.md` — web/mobil eksik modül özeti
-
-### Kritik / yüksek öncelik uygulamaları
-
-- **Fal SSE:** `FortuneSseService` — oturumlu kullanıcıda `POST /api/fortunes/*` LLM akışı; `FortuneSessionPage` canlı metin önizlemesi
-- **Reset password:** `/auth/reset-password?token=` native sayfa + `POST /api/auth/reset-password`
-- **Achievements:** `AchievementsRemoteDataSource` + Growth Hub sunucu rozetleri
-- **api_endpoints:** ajans, blog like/favorite, teller gifts, fortune pin/rate, auth reset/change
-- `.gitignore`: `curl-*.json`, `t-*.json`, `ci-runs.json`
+- **Android native:** `drawable-v21/launch_background` artık `#0A0618` (API 21+ cihazlarda `?colorBackground` gri flash giderildi)
+- **NormalTheme:** pencere arka planı `@color/canlifal_window_background` (`#05050D`) — Flutter yüklenirken gri sistem rengi yok
+- **Auth rotaları:** `NoTransitionPage` geri eklendi (`/login`, `/register`, şifre sıfırlama, OTP) — geçiş scrim’i önlenir
+- **NavigatorModalSanitizer:** ilk 4 sn + oturum açılışı sonrası `/feed` geçişinde barrier temizliği
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
