@@ -86,12 +86,15 @@ import '../../features/home/presentation/pages/live_fortune_tellers_page.dart';
 import '../../features/home/domain/entities/live_fortune_session_entity.dart';
 import '../../features/vip_gold/presentation/pages/vip_gold_hub_page.dart';
 import '../../core/bootstrap/app_startup_log.dart';
+import '../../core/bootstrap/auth_redirect.dart';
 import '../../core/bootstrap/startup_route_observer.dart';
+import '../../core/bootstrap/stuck_overlay_guard.dart';
 import '../../core/navigation/app_page_transitions.dart';
+import '../../features/auth/domain/entities/user_entity.dart';
 
 class RouterRefresh extends ChangeNotifier {
   RouterRefresh(this._ref) {
-    _ref.listen<AsyncValue<dynamic>>(
+    _ref.listen<AsyncValue<UserEntity?>>(
       authControllerProvider,
       (prev, next) {
         final prevLoading = prev?.isLoading ?? true;
@@ -99,23 +102,47 @@ class RouterRefresh extends ChangeNotifier {
         final prevUser = prev?.valueOrNull;
         final nextUser = next.valueOrNull;
 
-        // İlk oturum kontrolü bittiğinde veya kullanıcı kimliği değişince yenile.
-        // Her loading tick'te notify → go_router yığınında takılı modal barrier riski.
+        // Oturum kontrolü bittiğinde yalnızca redirect hedefi değişecekse yenile.
+        // /login'de kalırken notify → go_router geçiş barrier'ı (gri katman) bırakıyor.
         if (prevLoading && !nextLoading) {
-          notifyListeners();
+          _onAuthSettled(next);
           return;
         }
         if (!nextLoading && prevUser != nextUser) {
-          notifyListeners();
+          _onAuthSettled(next);
         }
       },
     );
     _ref.listen<bool>(guestModeProvider, (prev, next) {
-      if (prev != next) notifyListeners();
+      if (prev != next && _shouldRefreshRouter(_ref.read(authControllerProvider))) {
+        notifyListeners();
+      }
     });
   }
 
   final Ref _ref;
+
+  void _onAuthSettled(AsyncValue<UserEntity?> auth) {
+    if (_shouldRefreshRouter(auth)) {
+      notifyListeners();
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      StuckOverlayGuard.dismissRoot(reason: 'auth-settled-no-redirect');
+    });
+  }
+
+  bool _shouldRefreshRouter(AsyncValue<UserEntity?> auth) {
+    final router = _ref.read(goRouterProvider);
+    final config = router.routerDelegate.currentConfiguration;
+    if (config.matches.isEmpty) return false;
+    return AuthRedirect.wouldChangeLocation(
+      path: config.uri.path,
+      matchedLocation: config.last.matchedLocation,
+      auth: auth,
+      guest: _ref.read(guestModeProvider),
+    );
+  }
 }
 
 /// Push / global modal sheet'ler için kök navigator.
@@ -135,8 +162,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final auth = ref.read(authControllerProvider);
 
       if (path == '/splash') {
-        final target = auth.valueOrNull != null ? '/feed' : '/login';
-        AppStartupLog.route('/splash', target, reason: 'legacy splash → auth');
+        final target = AuthRedirect.targetFor(
+          path: path,
+          matchedLocation: loc,
+          user: auth.valueOrNull,
+          guest: ref.read(guestModeProvider),
+        );
+        if (target != null) {
+          AppStartupLog.route('/splash', target, reason: 'legacy splash → auth');
+        }
         return target;
       }
 
@@ -148,20 +182,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         );
       }
 
-      final authed = auth.valueOrNull != null;
-      final guest = ref.read(guestModeProvider);
-      final publicAuthPages =
-          loc == '/login' ||
-          loc == '/register' ||
-          loc.startsWith('/auth/forgot-password') ||
-          loc.startsWith('/auth/reset-password') ||
-          loc == '/auth/otp-verify';
-      final canlifalWeb = loc == '/canlifal-web';
-      if (!authed && !guest && !publicAuthPages && !canlifalWeb) {
-        return '/login';
-      }
-      if (authed && publicAuthPages) return '/feed';
-      return null;
+      return AuthRedirect.targetFor(
+        path: path,
+        matchedLocation: loc,
+        user: auth.valueOrNull,
+        guest: ref.read(guestModeProvider),
+      );
     },
     routes: [
       GoRoute(

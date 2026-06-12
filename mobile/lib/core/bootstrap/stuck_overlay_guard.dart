@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/router/app_router.dart';
 import 'app_startup_log.dart';
 
-/// Yarım kalmış dialog / bottom sheet katmanlarını temizler.
+/// Yarım kalmış dialog / bottom sheet / geçiş barrier katmanlarını temizler.
 abstract final class StuckOverlayGuard {
   /// Üstteki [PopupRoute] veya görünür modal barrier katmanlarını kaldırır.
   static int dismissPopupRoutes(
@@ -30,12 +30,39 @@ abstract final class StuckOverlayGuard {
       popped++;
     }
 
+    final barriers = scrubStuckOverlayBarriers(nav, reason: reason);
+
     AppStartupLog.overlayHide(
       reason: reason,
       popped: popped,
       canStillPop: nav.canPop(),
+      note: barriers > 0 ? 'barriers=$barriers' : null,
     );
-    return popped;
+    return popped + barriers;
+  }
+
+  /// Tek sayfa yığınında kalan geçiş [ModalBarrier] — giriş gri ekranı kök nedeni.
+  static int scrubStuckOverlayBarriers(
+    NavigatorState nav, {
+    String reason = 'barrier-scrub',
+  }) {
+    final overlay = nav.overlay;
+    if (overlay == null) return 0;
+
+    var removed = 0;
+    for (final entry in List<OverlayEntry>.from(overlay.entries)) {
+      if (entry.widget is! ModalBarrier) continue;
+      entry.remove();
+      removed++;
+    }
+
+    if (removed > 0) {
+      AppStartupLog.overlayHide(
+        reason: reason,
+        note: 'orphan-barriers=$removed canPop=${nav.canPop()}',
+      );
+    }
+    return removed;
   }
 
   static bool _shouldPopTopRoute(NavigatorState nav) {
@@ -58,6 +85,12 @@ abstract final class StuckOverlayGuard {
     return top;
   }
 
-  static int dismissRoot({String reason = 'root'}) =>
-      dismissPopupRoutes(rootNavigatorKey, reason: reason);
+  static int dismissRoot({String reason = 'root'}) {
+    final nav = rootNavigatorKey.currentState;
+    if (nav == null) {
+      AppStartupLog.overlayHide(reason: reason, note: 'nav-null');
+      return 0;
+    }
+    return dismissNavigator(nav, reason: reason);
+  }
 }

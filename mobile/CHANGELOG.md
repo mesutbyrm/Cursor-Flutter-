@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.195+197 (2026-06-12)
+
+### Giriş ekranı — gri yarı saydam katman (kök neden)
+
+- **Kök neden:** Oturum kontrolü bitince `RouterRefresh` gereksiz `notifyListeners` → go_router yenilemesi tek sayfa yığınında takılı `ModalBarrier` (gri katman) bırakıyordu
+- **RouterRefresh:** Yalnızca redirect hedefi değişecekse yenile; aksi halde `StuckOverlayGuard` ile barrier temizle
+- **StuckOverlayGuard:** `scrubStuckOverlayBarriers` — overlay'deki yetim `ModalBarrier` widget'larını kaldırır
+- **AuthRedirect:** redirect mantığı tek dosyada (`auth_redirect.dart`)
+- **LoadingTimeout:** oturum / giriş / kayıt / `me()` için zaman aşımı + `ApiException`
+- **AuthController:** 14 sn boot watchdog — loading sonsuza kalmaz
+- **LoginPage:** auth bitince 4 sn periyodik overlay temizliği
+
 ## 1.0.194+196 (2026-06-12)
 
 ### Açılış gri ekran düzeltmesi (7. tur)

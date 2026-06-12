@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/bootstrap/app_startup_log.dart';
@@ -5,6 +7,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/onesignal/onesignal_bootstrap.dart';
 import '../../../../core/network/cookie_jar_provider.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/loading_timeout.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
@@ -31,15 +34,29 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 class AuthController extends AsyncNotifier<UserEntity?> {
-  Future<UserEntity?> _sessionUser() =>
-      ref.read(authRepositoryProvider).currentUser();
+  static const _sessionTimeout = Duration(seconds: 10);
+  static const _profileTimeout = Duration(seconds: 8);
+  static const _bootTimeout = Duration(seconds: 12);
+  static const _actionTimeout = Duration(seconds: 30);
+
+  Timer? _bootWatchdog;
+
+  Future<UserEntity?> _sessionUser() => LoadingTimeout.run(
+        ref.read(authRepositoryProvider).currentUser(),
+        timeout: _sessionTimeout,
+        message: 'Oturum kontrolü zaman aşımına uğradı',
+      );
 
   Future<UserEntity?> _withSiteProfile(UserEntity? base) async {
     if (base == null) return null;
     if (Env.useMobileAuth) return base;
     if (!Env.useNextAuth) return base;
     try {
-      return await ref.read(profileRemoteProvider).mySiteProfile();
+      return await LoadingTimeout.run(
+        ref.read(profileRemoteProvider).mySiteProfile(),
+        timeout: _profileTimeout,
+        message: 'Profil yüklenemedi',
+      );
     } catch (_) {
       return base;
     }
@@ -47,23 +64,44 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
   Future<UserEntity?> _resolvedUser() async {
     try {
-      final base = await _sessionUser().timeout(const Duration(seconds: 10));
-      return await _withSiteProfile(base).timeout(const Duration(seconds: 8));
+      final base = await _sessionUser();
+      return await _withSiteProfile(base);
     } catch (_) {
       return null;
     }
   }
 
+  void _cancelBootWatchdog() {
+    _bootWatchdog?.cancel();
+    _bootWatchdog = null;
+  }
+
   @override
   Future<UserEntity?> build() async {
     AppStartupLog.authStart();
+    _cancelBootWatchdog();
+    _bootWatchdog = Timer(_bootTimeout + const Duration(seconds: 2), () {
+      if (!ref.mounted) return;
+      final current = state;
+      if (current.isLoading && !current.hasValue) {
+        AppStartupLog.authFinish(hasUser: false, error: true);
+        state = const AsyncValue.data(null);
+      }
+    });
+
     try {
-      final user = await _resolvedUser().timeout(const Duration(seconds: 12));
+      final user = await LoadingTimeout.run(
+        _resolvedUser(),
+        timeout: _bootTimeout,
+        message: 'Oturum kontrolü zaman aşımına uğradı',
+      );
       AppStartupLog.authFinish(hasUser: user != null);
       return user;
     } catch (_) {
       AppStartupLog.authFinish(hasUser: false, error: true);
       return null;
+    } finally {
+      _cancelBootWatchdog();
     }
   }
 
@@ -72,10 +110,14 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     try {
       state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
       state = await AsyncValue.guard(() async {
-        final u = await ref.read(authRepositoryProvider).login(
-              email: email,
-              password: password,
-            );
+        final u = await LoadingTimeout.run(
+          ref.read(authRepositoryProvider).login(
+                email: email,
+                password: password,
+              ),
+          timeout: _actionTimeout,
+          message: 'Giriş zaman aşımına uğradı',
+        );
         return _withSiteProfile(u);
       });
     } finally {
@@ -97,16 +139,20 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     try {
       state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
       state = await AsyncValue.guard(() async {
-        final u = await ref.read(authRepositoryProvider).register(
-              email: email,
-              password: password,
-              displayName: displayName,
-              username: username,
-              phone: phone,
-              birthDate: birthDate,
-              birthTime: birthTime,
-              language: language,
-            );
+        final u = await LoadingTimeout.run(
+          ref.read(authRepositoryProvider).register(
+                email: email,
+                password: password,
+                displayName: displayName,
+                username: username,
+                phone: phone,
+                birthDate: birthDate,
+                birthTime: birthTime,
+                language: language,
+              ),
+          timeout: _actionTimeout,
+          message: 'Kayıt zaman aşımına uğradı',
+        );
         return _withSiteProfile(u);
       });
     } finally {
@@ -119,7 +165,11 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     try {
       state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
       state = await AsyncValue.guard(() async {
-        final u = await ref.read(authRepositoryProvider).loginWithGoogle();
+        final u = await LoadingTimeout.run(
+          ref.read(authRepositoryProvider).loginWithGoogle(),
+          timeout: _actionTimeout,
+          message: 'Google girişi zaman aşımına uğradı',
+        );
         return _withSiteProfile(u);
       });
     } finally {
@@ -132,7 +182,11 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     try {
       state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
       state = await AsyncValue.guard(() async {
-        final u = await ref.read(authRepositoryProvider).loginWithTikTok();
+        final u = await LoadingTimeout.run(
+          ref.read(authRepositoryProvider).loginWithTikTok(),
+          timeout: _actionTimeout,
+          message: 'TikTok girişi zaman aşımına uğradı',
+        );
         return _withSiteProfile(u);
       });
     } finally {
@@ -149,7 +203,13 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
   Future<void> refreshMe() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(_resolvedUser);
+    state = await AsyncValue.guard(
+      () => LoadingTimeout.run(
+        _resolvedUser(),
+        timeout: _bootTimeout,
+        message: 'Oturum yenilenemedi',
+      ),
+    );
   }
 }
 

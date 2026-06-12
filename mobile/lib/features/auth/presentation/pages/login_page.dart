@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,12 +22,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _form = GlobalKey<FormState>();
+  Timer? _overlayScrubTimer;
+  var _overlayScrubTicks = 0;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _clearStuckOverlays('mount');
+      _armOverlayScrub();
+    });
+  }
+
+  void _armOverlayScrub() {
+    _overlayScrubTimer?.cancel();
+    _overlayScrubTicks = 0;
+    _overlayScrubTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      if (!mounted || _overlayScrubTicks >= 40) {
+        _overlayScrubTimer?.cancel();
+        return;
+      }
+      _overlayScrubTicks++;
+      _clearStuckOverlays('scrub-$_overlayScrubTicks');
     });
   }
 
@@ -37,6 +55,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   void dispose() {
+    _overlayScrubTimer?.cancel();
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -64,6 +83,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       if (wasLoading && !next.isLoading) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _clearStuckOverlays('auth-finish');
+          _armOverlayScrub();
         });
       }
       next.whenOrNull(

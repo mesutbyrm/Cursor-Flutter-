@@ -1,5 +1,6 @@
 import 'package:cookie_jar/cookie_jar.dart';
 
+import '../../../../core/network/loading_timeout.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -109,7 +110,11 @@ class AuthRepositoryImpl implements AuthRepository {
       return null;
     }
     try {
-      final me = await _remote.me();
+      final me = await LoadingTimeout.run(
+        _remote.me(),
+        timeout: const Duration(seconds: 8),
+        message: 'Oturum doğrulanamadı',
+      );
       final um = _userMap(me) ?? me;
       final dto = UserDto.fromJson(um);
       return dto.toEntity(role: dto.roleFrom(um));

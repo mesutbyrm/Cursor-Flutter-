@@ -66,7 +66,7 @@ class _NavigatorModalSanitizerState extends State<NavigatorModalSanitizer> {
   void _armTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(milliseconds: 75), (_) {
-      if (!mounted || !_shouldScrub || _ticks >= 48) {
+      if (!mounted || !_shouldScrub || _ticks >= 64) {
         _timer?.cancel();
         return;
       }
