@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.207+210 (2026-06-13)
+
+### Giriş sonrası gri overlay — mimari düzeltme (kök neden)
+
+- **Kök neden:** `MaterialApp.builder` Stack'inde `AuthFlowOverlay` + altta `/feed` go_router — girişte overlay kalkınca kök navigator'da yetim `ModalBarrier` kalıyordu
+- **Çözüm:** Auth overlay kaldırıldı; oturumsuz kullanıcı `go_router` `/login` rotasında (`AuthGatewayHost`, iç Navigator yok)
+- `RouterAuthRefresh` — giriş başarılı → redirect `/feed` (tek geçiş, barrier yok)
+- `shellSession++` girişte kaldırıldı; `FeedBarrierWatchdog` / `NavigatorModalSanitizer` kaldırıldı
+- Misafir modu: `/login` → `/feed` redirect
+
 ## 1.0.206+209 (2026-06-13)
 
 ### Giriş sonrası gri overlay — 5 sn kök overlay zorla temizlik + teşhis

@@ -8,7 +8,7 @@ import 'pages/register_page.dart';
 import 'pages/reset_password_page.dart';
 import 'widgets/premium_auth_2026/auth_premium_loading.dart';
 
-/// Auth overlay sayfa hedefleri — iç [Navigator] yok (yetim ModalBarrier önlenir).
+/// Auth gateway sayfa hedefleri — iç [Navigator] yok.
 enum AuthOverlayRoute {
   login,
   register,
@@ -17,7 +17,7 @@ enum AuthOverlayRoute {
   resetPassword,
 }
 
-/// Overlay içi sayfa geçişi — [Navigator.push] / ModalRoute kullanılmaz.
+/// /login rotası içi sayfa geçişi — [Navigator.push] kullanılmaz.
 class AuthOverlayController extends InheritedWidget {
   const AuthOverlayController({
     super.key,
@@ -40,17 +40,6 @@ class AuthOverlayController extends InheritedWidget {
       route != oldWidget.route;
 }
 
-/// Auth overlay içindeyken [AuthNavigation] go_router yerine bu kapsamı kullanır.
-class AuthOverlayScope extends InheritedWidget {
-  const AuthOverlayScope({super.key, required super.child});
-
-  @override
-  bool updateShouldNotify(AuthOverlayScope oldWidget) => false;
-
-  static bool isActive(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<AuthOverlayScope>() != null;
-}
-
 /// Oturum kontrolü — opak yükleme katmanı.
 class AuthBootstrapOverlay extends StatelessWidget {
   const AuthBootstrapOverlay({super.key});
@@ -64,15 +53,15 @@ class AuthBootstrapOverlay extends StatelessWidget {
   }
 }
 
-/// Oturumsuz kullanıcı — üst katman (iç Navigator YOK).
-class AuthFlowOverlay extends StatefulWidget {
-  const AuthFlowOverlay({super.key});
+/// Giriş akışı — go_router `/login` rotasında; builder Stack overlay değil.
+class AuthGatewayHost extends StatefulWidget {
+  const AuthGatewayHost({super.key});
 
   @override
-  State<AuthFlowOverlay> createState() => _AuthFlowOverlayState();
+  State<AuthGatewayHost> createState() => _AuthGatewayHostState();
 }
 
-class _AuthFlowOverlayState extends State<AuthFlowOverlay> {
+class _AuthGatewayHostState extends State<AuthGatewayHost> {
   AuthOverlayRoute _route = AuthOverlayRoute.login;
   String? _email;
   String? _resetToken;
@@ -106,22 +95,20 @@ class _AuthFlowOverlayState extends State<AuthFlowOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return AuthOverlayScope(
-      child: AuthOverlayController(
-        route: _route,
-        onNavigate: _navigate,
-        onBack: _back,
-        child: Theme(
-          data: AppTheme.dark(),
-          child: Material(
-            color: const Color(0xFF05050D),
-            child: _pageFor(_route),
-          ),
+    return AuthOverlayController(
+      route: _route,
+      onNavigate: _navigate,
+      onBack: _back,
+      child: Theme(
+        data: AppTheme.dark(),
+        child: Material(
+          color: const Color(0xFF05050D),
+          child: _pageFor(_route),
         ),
       ),
     );
   }
 }
 
-@Deprecated('AuthFlowOverlay kullanın')
-typedef AuthFlowApp = AuthFlowOverlay;
+@Deprecated('AuthGatewayHost kullanın')
+typedef AuthFlowOverlay = AuthGatewayHost;

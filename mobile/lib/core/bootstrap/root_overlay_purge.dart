@@ -87,9 +87,9 @@ abstract final class RootOverlayPurge {
     }
 
     // 2) Kök overlay'deki barrier içeren OverlayEntry'leri zorla kaldır
-    final entries = _collectRootOverlayEntryElements(overlay);
-    for (var i = entries.length - 1; i >= 0; i--) {
-      final item = entries[i];
+    final entryElements = _collectRootOverlayEntryElements(overlay);
+    for (var i = entryElements.length - 1; i >= 0; i--) {
+      final item = entryElements[i];
       if (!item.hasModalBarrier) continue;
       final attribution = _attributeBarrierInEntry(item, nav);
       AppStartupLog.log(

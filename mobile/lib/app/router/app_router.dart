@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/auth_flow_app.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
-import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/otp_verify_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
@@ -90,35 +90,36 @@ import '../../core/bootstrap/auth_redirect.dart';
 import '../../core/bootstrap/startup_route_observer.dart';
 import '../../core/navigation/app_page_transitions.dart';
 
-/// Misafir modu değişince redirect yeniden değerlendirilir.
-class GuestModeRefresh extends ChangeNotifier {
-  GuestModeRefresh(Ref ref) {
+/// Misafir + oturum değişince redirect yeniden değerlendirilir.
+class RouterAuthRefresh extends ChangeNotifier {
+  RouterAuthRefresh(Ref ref) {
     ref.listen<bool>(guestModeProvider, (prev, next) {
       if (prev != next) notifyListeners();
+    });
+    ref.listen<AsyncValue<dynamic>>(authControllerProvider, (prev, next) {
+      if (prev?.valueOrNull != next.valueOrNull) notifyListeners();
     });
   }
 }
 
-/// Oturum değişince redirect — kaldırıldı: girişte go_router yenilemesi ModalBarrier bırakıyordu.
-/// Oturum UI: AuthFlowOverlay; çıkışta shellSessionProvider ile router sıfırlanır.
+/// Oturum UI: go_router `/login`; çıkışta shellSessionProvider router sıfırlar.
 
 /// Push / global modal sheet'ler için kök navigator.
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
-/// Her oturum açılışında go_router sıfırdan — yetim ModalBarrier önlenir.
+/// Çıkış / misafir geçişinde go_router sıfırdan.
 final shellSessionProvider = StateProvider<int>((ref) => 0);
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   ref.watch(shellSessionProvider);
-  final guestRefresh = GuestModeRefresh(ref);
-  // Her zaman /feed — oturumsuzda AuthFlowOverlay üst katman; /login go_router barrier yok.
-  const initialLocation = '/feed';
+  final authRefresh = RouterAuthRefresh(ref);
+  const initialLocation = '/login';
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: initialLocation,
     observers: [StartupRouteObserver()],
-    refreshListenable: guestRefresh,
+    refreshListenable: authRefresh,
     redirect: (context, state) {
       final path = state.uri.path;
       final loc = state.matchedLocation;
@@ -159,7 +160,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/login',
         pageBuilder: (context, state) => AppPageTransitions.none(
           key: state.pageKey,
-          child: const LoginPage(),
+          child: const AuthGatewayHost(),
         ),
       ),
       GoRoute(

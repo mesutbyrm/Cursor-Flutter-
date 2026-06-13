@@ -4,7 +4,7 @@ import '../../features/auth/domain/entities/user_entity.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import 'auth_route_paths.dart';
 
-/// go_router redirect — tek kaynak; [AuthRefresh] yalnızca hedef değişince tetiklenir.
+/// go_router redirect — tek kaynak.
 abstract final class AuthRedirect {
   static String? targetFor({
     required String path,
@@ -25,10 +25,15 @@ abstract final class AuthRedirect {
         matchedLocation == '/auth/otp-verify';
     final canlifalWeb = matchedLocation == '/canlifal-web';
 
-    // Oturumsuz: AuthFlowOverlay üst katman — go_router /login redirect barrier bırakıyordu.
+    // Misafir — keşfet / feed.
+    if (!authed && guest && publicAuthPages) {
+      return '/feed';
+    }
+
+    // Oturumsuz: go_router /login — MaterialApp.builder overlay YOK (yetim barrier önlenir).
     if (!authed && !guest) {
-      if (publicAuthPages) return '/feed';
-      if (!canlifalWeb) return null;
+      if (!publicAuthPages && !canlifalWeb) return '/login';
+      return null;
     }
     if (authed && publicAuthPages) return '/feed';
     return null;
