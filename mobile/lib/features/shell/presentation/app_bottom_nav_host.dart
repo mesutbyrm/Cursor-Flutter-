@@ -7,9 +7,14 @@ import '../../home/presentation/widgets/approved/bottom_navigation_widget.dart';
 
 /// Sesli sohbet odası (RTC) dışındaki sayfalarda alt navigasyon.
 class AppBottomNavHost extends ConsumerWidget {
-  const AppBottomNavHost({super.key, required this.child});
+  const AppBottomNavHost({
+    super.key,
+    required this.child,
+    required this.location,
+  });
 
   final Widget child;
+  final String location;
 
   static bool hidesBottomNav(String location) {
     final path = Uri.tryParse(location)?.path ?? location;
@@ -65,34 +70,26 @@ class AppBottomNavHost extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(goRouterProvider);
-    // MaterialApp.builder bağlamında GoRouter.of(context) çalışmaz — provider kullan.
-    return ListenableBuilder(
-      listenable: router.routerDelegate,
-      builder: (context, _) {
-        final location =
-            router.routerDelegate.currentConfiguration.uri.path;
-        final showNav = shouldShowBottomNav(location);
-        if (!showNav) return child;
+    final showNav = shouldShowBottomNav(location);
+    if (!showNav) return child;
 
-        final tab = activeTabFor(location);
+    final tab = activeTabFor(location);
 
-        return ColoredBox(
-          color: HomeApprovedDesign.background,
-          child: Column(
-            children: [
-              Expanded(child: child),
-              BottomNavigationWidget(
-                activeTab: tab,
-                onHome: () => router.go('/feed'),
-                onLive: () => router.go('/live'),
-                onRooms: () => router.push('/voice-rooms'),
-                onJeton: () => router.push('/jeton-store'),
-                onProfile: () => router.go('/profile'),
-              ),
-            ],
+    return ColoredBox(
+      color: HomeApprovedDesign.background,
+      child: Column(
+        children: [
+          Expanded(child: child),
+          BottomNavigationWidget(
+            activeTab: tab,
+            onHome: () => router.go('/feed'),
+            onLive: () => router.go('/live'),
+            onRooms: () => router.push('/voice-rooms'),
+            onJeton: () => router.push('/jeton-store'),
+            onProfile: () => router.go('/profile'),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }

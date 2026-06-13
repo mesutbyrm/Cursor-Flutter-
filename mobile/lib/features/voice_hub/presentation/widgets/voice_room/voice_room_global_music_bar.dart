@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../providers/chat_room_providers.dart';
 import '../../providers/voice_room_ui_provider.dart';
@@ -10,7 +9,10 @@ import 'voice_room_web_music_bar.dart';
 
 /// Sesli odadan çıkıldığında altta görünen global müzik çubuğu.
 class VoiceRoomGlobalMusicBar extends ConsumerWidget {
-  const VoiceRoomGlobalMusicBar({super.key});
+  const VoiceRoomGlobalMusicBar({super.key, required this.routePath});
+
+  /// MaterialApp.builder Stack'inde GoRouter.of(context) yok — dışarıdan verilir.
+  final String routePath;
 
   static bool shouldShowForRoute(String location) {
     final path = Uri.tryParse(location)?.path ?? location;
@@ -22,12 +24,7 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final path = GoRouter.of(context)
-        .routerDelegate
-        .currentConfiguration
-        .uri
-        .path;
-    if (!shouldShowForRoute(path)) {
+    if (!shouldShowForRoute(routePath)) {
       return const SizedBox.shrink();
     }
     final session = ref.watch(voiceRoomMusicSessionProvider);

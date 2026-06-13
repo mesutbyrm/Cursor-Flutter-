@@ -244,19 +244,13 @@ abstract final class StuckOverlayGuard {
     return total;
   }
 
-  /// Giriş sonrası yetim barrier — yalnızca tespit edilirse temizle (agresif döngü yok).
+  /// Giriş sonrası yetim barrier — yalnızca pop edilebilir dialog route'ları kapatır.
+  /// Private overlay API kullanılmaz (çift remove → gri ekran).
   static int recoverOrphanBarriersOnce({String reason = 'recover-once'}) {
     final before = _barrierCount();
     if (before == 0) return 0;
 
-    var removed = popDialogRoutes(rootNavigatorKey, reason: reason);
-    final overlay = rootNavigatorKey.currentState?.overlay;
-    if (overlay != null && overlay.mounted) {
-      removed += _scrubOrphanModalBarriers(
-        overlay.context,
-        nav: rootNavigatorKey.currentState,
-      );
-    }
+    final removed = popDialogRoutes(rootNavigatorKey, reason: reason);
     final after = _barrierCount();
     if (before != after || removed > 0) {
       AppStartupLog.overlayHide(

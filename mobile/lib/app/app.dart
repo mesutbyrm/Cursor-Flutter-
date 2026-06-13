@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/bootstrap/app_startup_log.dart';
-import '../core/bootstrap/auth_route_paths.dart';
 import '../core/bootstrap/root_overlay_purge.dart';
 import '../core/l10n/app_localizations_config.dart';
 import '../core/providers/theme_mode_provider.dart';
@@ -12,11 +11,9 @@ import '../core/scroll/modern_social_scroll_behavior.dart';
 import '../core/theme/app_theme.dart';
 import '../features/auth/presentation/auth_flow_app.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
-import '../features/home/presentation/widgets/fortune_incoming_invite_host.dart';
-import '../features/shell/presentation/app_bottom_nav_host.dart';
-import '../features/voice_hub/presentation/widgets/voice_room/voice_room_global_music_bar.dart';
 import '../features/voice_hub/presentation/widgets/voice_room_music_lifecycle_host.dart';
 import 'router/app_router.dart';
+import 'widgets/main_app_shell.dart';
 
 class CanlifalApp extends ConsumerStatefulWidget {
   const CanlifalApp({super.key});
@@ -121,36 +118,8 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
               ),
             );
 
-            return ListenableBuilder(
-              listenable: router.routerDelegate,
-              builder: (context, _) {
-                final routerLocation =
-                    router.routerDelegate.currentConfiguration.uri.path;
-                final isAuthRoute =
-                    AuthRoutePaths.isPublicAuthPath(routerLocation);
-                final showGlobalMusic =
-                    VoiceRoomGlobalMusicBar.shouldShowForRoute(routerLocation);
-
-                var body =
-                    child ?? const ColoredBox(color: Color(0xFF05050D));
-
-                if (!isAuthRoute) {
-                  body = FortuneIncomingInviteHost(child: body);
-                  body = AppBottomNavHost(child: body);
-                }
-
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    body,
-                    if (showGlobalMusic && !isAuthRoute)
-                      const Align(
-                        alignment: Alignment.bottomCenter,
-                        child: VoiceRoomGlobalMusicBar(),
-                      ),
-                  ],
-                );
-              },
+            return MainAppShell(
+              child: child ?? const ColoredBox(color: Color(0xFF05050D)),
             );
           },
           routerConfig: router,
