@@ -106,18 +106,27 @@ class RouterAuthRefresh extends ChangeNotifier {
   }
 }
 
-/// Oturum UI: go_router `/login`; çıkışta shellSessionProvider router sıfırlar.
+/// Oturum açılışı / kapanışı / misafir: [shellSessionProvider] ile temiz go_router.
 
 /// Push / global modal sheet'ler için kök navigator.
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
-/// Çıkış / misafir geçişinde go_router sıfırdan.
+/// Giriş, çıkış veya misafir geçişinde go_router sıfırdan — yetim ModalBarrier önlenir.
 final shellSessionProvider = StateProvider<int>((ref) => 0);
+
+/// `/login` → `/feed` redirect yetim barrier bırakır; oturumlu kullanıcı doğrudan `/feed`.
+String resolveShellInitialLocation(Ref ref) {
+  final auth = ref.read(authControllerProvider);
+  final guest = ref.read(guestModeProvider);
+  if (auth.isLoading && !auth.hasValue) return '/login';
+  if (auth.valueOrNull != null || guest) return '/feed';
+  return '/login';
+}
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   ref.watch(shellSessionProvider);
   final authRefresh = RouterAuthRefresh(ref);
-  const initialLocation = '/login';
+  final initialLocation = resolveShellInitialLocation(ref);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,

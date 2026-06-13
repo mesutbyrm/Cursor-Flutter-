@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.210+213 (2026-06-13)
+
+### Giriş sonrası gri overlay — yetim ModalBarrier (kök neden)
+
+- **Kök neden:** go_router redirect `/login` → `/feed` kök navigator overlay'inde tema rengi `0x8C000000` yetim `ModalBarrier` bırakıyordu (içerik görünür, dokunma engelli, geri tuşu çalışır). `RootOverlayPurge` / `StuckOverlayGuard.purgeAfterLogin` private overlay API ile durumu kötüleştiriyordu
+- **Çözüm:** Giriş ve kayıtlı oturum açılışında `shellSessionProvider++` — yeni `GoRouter` doğrudan `initialLocation: /feed` (redirect yok)
+- `MaterialApp.router` `ValueKey('shell-$session')` — navigator overlay sıfırlanır
+- Bildirim izni sonrası yalnızca güvenli `popDialogRoutes` (agresif scrub kaldırıldı)
+- Post-login 5 sn zorla purge kaldırıldı
+
 ## 1.0.209+212 (2026-06-13)
 
 ### Giriş sonrası gri overlay — login navigasyon sadeleştirme

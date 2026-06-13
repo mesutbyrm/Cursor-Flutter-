@@ -9,7 +9,6 @@ import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/home/presentation/providers/fortune_incoming_invite_provider.dart';
 import '../../features/messages/presentation/providers/messages_providers.dart';
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
-import '../bootstrap/root_overlay_purge.dart';
 import '../bootstrap/stuck_overlay_guard.dart';
 import '../onesignal/onesignal_bootstrap.dart';
 import 'push_navigation_handler.dart';
@@ -126,13 +125,8 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
   }
 
   void _clearStuckBarriers(String reason) {
-    RootOverlayPurge.logRootOverlaySnapshot(reason: reason);
-    for (var i = 0; i <= 2; i++) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        StuckOverlayGuard.purgeAfterLogin(reason: '$reason-$i');
-      });
-    }
+    // Yalnızca gerçek dialog route'ları pop — private overlay scrub yetim barrier üretir.
+    StuckOverlayGuard.popDialogRoutes(rootNavigatorKey, reason: reason);
   }
 
   @override

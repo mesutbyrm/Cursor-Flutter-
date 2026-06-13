@@ -43,18 +43,10 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
       final nowAuthed = next.valueOrNull != null;
       if (!wasAuthed && nowAuthed) {
         // guestMode AuthController._clearGuestModeOnSuccess içinde sıfırlanır.
-        // Yalnızca go_router redirect /login → /feed; manuel go yok.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          RootOverlayPurge.logRootOverlaySnapshot(reason: 'post-login');
-          RootOverlayPurge.forcePurgeRootNavigatorOverlay(reason: 'post-login');
-        });
-        RootOverlayPurge.schedulePostLoginForcePurge(
-          delay: const Duration(seconds: 5),
-        );
+        // Redirect /login → /feed yetim ModalBarrier bırakır — router sıfırdan /feed.
+        ref.read(shellSessionProvider.notifier).state++;
       }
       if (wasAuthed && !nowAuthed) {
-        RootOverlayPurge.cancelScheduledPurge();
         BarrierRouteJournal.clear();
         ref.read(shellSessionProvider.notifier).state++;
       }
@@ -62,15 +54,10 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
   }
 
   @override
-  void dispose() {
-    RootOverlayPurge.cancelScheduledPurge();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final shellSession = ref.watch(shellSessionProvider);
     final router = ref.watch(goRouterProvider);
 
     final bootstrapDone = !auth.isLoading || auth.hasValue;
@@ -79,6 +66,7 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
     return VoiceRoomMusicLifecycleHost(
       child: PushLifecycleListener(
         child: MaterialApp.router(
+          key: ValueKey('shell-$shellSession'),
           title: 'Canlifal',
           debugShowCheckedModeBanner: false,
           scrollBehavior: const ModernSocialScrollBehavior(),
