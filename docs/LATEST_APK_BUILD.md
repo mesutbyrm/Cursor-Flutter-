@@ -2,24 +2,24 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.212+215` |
-| Tarih (UTC) | 2026-06-13 17:40 |
-| Commit | [`b033929af950c78cb834f2b7d2cd14f8ed82dfdd`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b033929af950c78cb834f2b7d2cd14f8ed82dfdd) |
-| İş akışı | [Run 27473935877](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27473935877) |
+| Sürüm | `1.0.213+216` |
+| Tarih (UTC) | 2026-06-13 18:24 |
+| Commit | [`5f54a6ff6d277e630c2e656a6f0c7c3ab1fe1352`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/5f54a6ff6d277e630c2e656a6f0c7c3ab1fe1352) |
+| İş akışı | [Run 27474955017](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27474955017) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.212+215 (2026-06-13)
+## 1.0.213+216 (2026-06-13)
 
-### Giriş sonrası gri overlay — çift MaterialApp + izin kaldırma
+### Giriş sonrası gri ekran — kanıtlanmış kök neden
 
-- **Kök neden (güncel):** Oturumsuzken `MaterialApp.router` arka planda `/feed` shell yüklüyordu; girişte navigator yeniden kurulurken yetim `ModalBarrier` kalıyordu. Giriş sonrası otomatik bildirim izni dialogu da barrier ile çakışıyordu
-- **Çözüm:** Oturumsuz → ayrı `MaterialApp` (yalnızca `AuthGatewayHost`, **go_router yok**). Oturum açılınca tamamen yeni `MaterialApp.router` mount
-- Girişte otomatik bildirim izni kaldırıldı (Bildirimler sayfası banner'ı ile açılır)
-- `resetRootNavigatorKey` — oturum değişiminde temiz navigator
-- `FeedTouchRecovery` — ana kabuk mount sonrası yetim barrier tek seferlik kurtarma
-- `refreshListenable` / `RouterAuthRefresh` kaldırıldı
+- **Kök neden:** `app.dart` `MaterialApp.router` builder içindeki `ListenableBuilder(router.routerDelegate)` — GoRouter ilk mount sırasında build fazında `notifyListeners` tetikliyor → `setState() called during build` → overlay/barrier bozulması → tema `ModalBarrier` (`0x8C000000`) dokunmayı kesiyor
+- **İkincil:** `FeedTouchRecovery` / `StuckOverlayGuard._scrubOrphanModalBarriers` private overlay API ile `OverlayEntry` çift kaldırıyor → `OverlayEntry should be removed only once`
+- **Çözüm:** `MainAppShell` — route dinleyicisi `addListener` ile post-frame; `ListenableBuilder` kaldırıldı
+- `VoiceRoomGlobalMusicBar` — `GoRouter.of(context)` yerine `routePath` parametresi (builder Stack'inde GoRouter yok)
+- `AppBottomNavHost` — `location` parametresi; `ListenableBuilder` kaldırıldı
+- `FeedTouchRecovery` kaldırıldı (agresif scrub gri ekranı kötüleştiriyordu)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
