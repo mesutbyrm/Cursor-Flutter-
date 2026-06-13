@@ -9,7 +9,6 @@ import '../../features/auth/presentation/pages/otp_verify_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
-import '../../features/auth/domain/entities/user_entity.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../features/content_hub/domain/native_feature_item.dart';
 import '../../features/content_hub/presentation/pages/content_hub_page.dart';
@@ -100,17 +99,8 @@ class GuestModeRefresh extends ChangeNotifier {
   }
 }
 
-/// Oturum değişince redirect (ör. /login → /feed) yeniden değerlendirilir.
-class AuthRefresh extends ChangeNotifier {
-  AuthRefresh(Ref ref) {
-    ref.listen<AsyncValue<UserEntity?>>(authControllerProvider, (prev, next) {
-      if (prev?.valueOrNull != next.valueOrNull ||
-          prev?.isLoading != next.isLoading) {
-        notifyListeners();
-      }
-    });
-  }
-}
+/// Oturum değişince redirect — kaldırıldı: girişte go_router yenilemesi ModalBarrier bırakıyordu.
+/// Oturum UI: AuthFlowOverlay; çıkışta shellSessionProvider ile router sıfırlanır.
 
 /// Push / global modal sheet'ler için kök navigator.
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -121,7 +111,6 @@ final shellSessionProvider = StateProvider<int>((ref) => 0);
 final goRouterProvider = Provider<GoRouter>((ref) {
   ref.watch(shellSessionProvider);
   final guestRefresh = GuestModeRefresh(ref);
-  final authRefresh = AuthRefresh(ref);
   // Her zaman /feed — oturumsuzda AuthFlowOverlay üst katman; /login go_router barrier yok.
   const initialLocation = '/feed';
 
@@ -129,7 +118,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: rootNavigatorKey,
     initialLocation: initialLocation,
     observers: [StartupRouteObserver()],
-    refreshListenable: Listenable.merge([guestRefresh, authRefresh]),
+    refreshListenable: guestRefresh,
     redirect: (context, state) {
       final path = state.uri.path;
       final loc = state.matchedLocation;

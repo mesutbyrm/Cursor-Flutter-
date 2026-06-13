@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.204+207 (2026-06-12)
+
+### Giriş sonrası gri overlay — bildirim izni + go_router yenileme
+
+- **Kök neden:** Giriş anında `AuthRefresh` go_router'ı yeniliyordu (geçiş barrier); eşzamanlı `OneSignal.requestPermission` + `popDialogRoutes` sistem dialogu ile çakışıp yetim `ModalBarrier` bırakıyordu
+- **`AuthRefresh` kaldırıldı** — oturum UI `AuthFlowOverlay` ile; çıkışta `shellSessionProvider` router sıfırlar
+- **Bildirim izni gecikmeli** (~2.8 sn) — ana sayfa otursun, sonra sistem dialogu; bitince güvenli barrier temizliği
+- Giriş anında agresif `popDialogRoutes` kaldırıldı
+
 ## 1.0.203+206 (2026-06-12)
 
 ### Giriş sonrası gri overlay — kök neden #2 (overlay scrub + IndexedStack)
