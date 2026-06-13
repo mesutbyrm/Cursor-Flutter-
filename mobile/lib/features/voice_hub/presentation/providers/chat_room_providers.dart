@@ -268,9 +268,9 @@ class VoiceRoomLiveController
       final player = ref.read(voiceRoomDjPlayerProvider);
       player.onTrackComplete = () => unawaited(_onDjTrackComplete());
       _wireMusicControls();
+      // build() bitmeden state okunamaz — poll yalnızca microtask içinde.
+      _schedulePoll(sseConnected: false);
     });
-    // build() tamamlanmadan state okunmaz — ilk poll SSE kapalı varsayımıyla.
-    _schedulePoll(sseConnected: false);
     _presenceHeartbeat = Timer.periodic(const Duration(seconds: 20), (_) {
       if (!state.sseConnected && state.selfInRoom) {
         unawaited(_presenceHeartbeatTick());
@@ -433,13 +433,13 @@ class VoiceRoomLiveController
         );
   }
 
-  void _schedulePoll({bool? sseConnected}) {
+  void _schedulePoll({bool? sseConnected, bool? musicActive}) {
     _poll?.cancel();
     _pollTick = 0;
     final sse = sseConnected ?? state.sseConnected;
-    final musicActive =
-        state.dj.playing || state.dj.nowPlaying != null;
-    final interval = sse ? (musicActive ? 5 : 12) : 6;
+    final active = musicActive ??
+        (state.dj.playing || state.dj.nowPlaying != null);
+    final interval = sse ? (active ? 5 : 12) : 6;
     _poll = Timer.periodic(Duration(seconds: interval), (_) {
       if (_pollPaused) return;
       _pollTick++;

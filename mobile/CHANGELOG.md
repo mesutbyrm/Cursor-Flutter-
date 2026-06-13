@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.214+217 (2026-06-13)
+
+### Sesli oda — "uninitialized provider" hatası
+
+- **Kök neden:** `VoiceRoomLiveController.build()` içinde `return` öncesi `_schedulePoll()` → `state.dj` okunuyordu → `Bad state: Tried to read the state of an uninitialized provider`
+- **Dosya:** `chat_room_providers.dart` satır 273 (`_schedulePoll` build sırasında)
+- **Çözüm:** İlk poll `Future.microtask` içine taşındı (build tamamlandıktan sonra)
+
 ## 1.0.213+216 (2026-06-13)
 
 ### Giriş sonrası gri ekran — kanıtlanmış kök neden
