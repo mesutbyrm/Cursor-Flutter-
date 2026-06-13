@@ -2,22 +2,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.201+204` |
-| Tarih (UTC) | 2026-06-12 21:10 |
-| Commit | [`79878ac762c52119dbb946c3aaac05fffefba64b`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/79878ac762c52119dbb946c3aaac05fffefba64b) |
-| İş akışı | [Run 27442763135](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27442763135) |
+| Sürüm | `1.0.202+205` |
+| Tarih (UTC) | 2026-06-13 07:09 |
+| Commit | [`a97f2bef863dbc4e71bd1f672aee4504d676e628`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a97f2bef863dbc4e71bd1f672aee4504d676e628) |
+| İş akışı | [Run 27459740910](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27459740910) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.201+204 (2026-06-12)
+## 1.0.202+205 (2026-06-12)
 
-### Giriş sonrası gri overlay — kök neden (go_router erken mount)
+### Giriş sonrası gri overlay — tek MaterialApp.router (kalıcı)
 
-- **Kök neden:** `MainShellApp` oturum kontrolü bitmeden `/feed` ile mount oluyordu; go_router `ModalBarrier` bırakıyor, oturum açılınca overlay kalksa da barrier kalıyordu
-- **Çözüm:** Oturum kontrolü / giriş bitene kadar yalnızca `AuthFlowApp` — go_router hiç oluşturulmaz
-- **Oturum açılışı:** `shellSessionProvider++` ile temiz go_router; `FeedBarrierWatchdog` + agresif `StuckOverlayGuard`
-- **Ana sayfa:** 45 sn boyunca barrier izleme ve otomatik temizlik
+- **Kök neden:** Giriş sonrası `AuthFlowApp` ↔ `MainShellApp` ağaç değişimi ikinci `MaterialApp` mount ediyordu; go_router ilk kez burada oluşunca yetim `ModalBarrier` ana sayfada kalıyordu
+- **Çözüm:** Uygulama başından itibaren tek `MaterialApp.router`; oturumsuzda `AuthFlowOverlay` üst katman (ayrı MaterialApp yok)
+- **`AuthOverlayScope`:** Giriş ekranları go_router yerine overlay Navigator kullanır — `/register` push barrier oluşturmaz
+- **`auth_redirect`:** Oturumsuz `/login` → `/feed` (overlay girişi gösterir); go_router auth redirect barrier kaldırıldı
+- Agresif scrub/watchdog katmanları kaldırıldı (semptom tedavisi yerine mimari düzeltme)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
