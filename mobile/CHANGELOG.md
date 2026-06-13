@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.211+214 (2026-06-13)
+
+### Giriş sonrası gri overlay — kök mimari düzeltme
+
+- **Kök neden:** `/login` go_router rotasından `/feed` shell rotasına geçiş (redirect veya shellSession) kök overlay'de tema `ModalBarrier` (`0x8C000000`) bırakıyordu — içerik görünür, dokunma ölü
+- **Çözüm:** Giriş/kayıt UI artık **go_router rotası değil** — `MaterialApp.builder` içinde `AuthGatewayHost` widget'ı; oturum açılınca yalnızca builder yenilenir, **navigasyon yok**, barrier oluşmaz
+- `/login`, `/register`, `/auth/forgot-password` → `/feed` redirect (derin link / OTP / şifre sıfırlama sayfaları korunur)
+- `RouterAuthRefresh` oturum dinleyicisi kaldırıldı (redirect yarışı yok); `initialLocation` her zaman `/feed`
+- Girişte `shellSession++` kaldırıldı (çıkış + misafir modunda kalır)
+
 ## 1.0.210+213 (2026-06-13)
 
 ### Giriş sonrası gri overlay — yetim ModalBarrier (kök neden)

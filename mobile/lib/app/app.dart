@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/bootstrap/app_startup_log.dart';
+import '../core/bootstrap/auth_redirect.dart';
 import '../core/bootstrap/auth_route_paths.dart';
 import '../core/bootstrap/root_overlay_purge.dart';
 import '../core/l10n/app_localizations_config.dart';
@@ -41,11 +42,6 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
     ref.listenManual(authControllerProvider, (prev, next) {
       final wasAuthed = prev?.valueOrNull != null;
       final nowAuthed = next.valueOrNull != null;
-      if (!wasAuthed && nowAuthed) {
-        // guestMode AuthController._clearGuestModeOnSuccess içinde sıfırlanır.
-        // Redirect /login → /feed yetim ModalBarrier bırakır — router sıfırdan /feed.
-        ref.read(shellSessionProvider.notifier).state++;
-      }
       if (wasAuthed && !nowAuthed) {
         BarrierRouteJournal.clear();
         ref.read(shellSessionProvider.notifier).state++;
@@ -56,12 +52,14 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
+    final guest = ref.watch(guestModeProvider);
     final themeMode = ref.watch(themeModeProvider);
     final shellSession = ref.watch(shellSessionProvider);
     final router = ref.watch(goRouterProvider);
 
     final bootstrapDone = !auth.isLoading || auth.hasValue;
     final showBootstrap = !bootstrapDone;
+    final authed = auth.valueOrNull != null;
 
     return VoiceRoomMusicLifecycleHost(
       child: PushLifecycleListener(
@@ -94,6 +92,18 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
               builder: (context, _) {
                 final routerLocation =
                     router.routerDelegate.currentConfiguration.uri.path;
+
+                if (showBootstrap) {
+                  return const AuthBootstrapOverlay();
+                }
+
+                // Giriş ekranı go_router rotası değil — route geçişi / ModalBarrier yok.
+                if (!authed && !guest) {
+                  if (!AuthRedirect.isDeepLinkAuthPath(routerLocation)) {
+                    return const AuthGatewayHost();
+                  }
+                }
+
                 final isAuthRoute =
                     AuthRoutePaths.isPublicAuthPath(routerLocation);
                 final showGlobalMusic =
@@ -116,7 +126,6 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
                         alignment: Alignment.bottomCenter,
                         child: VoiceRoomGlobalMusicBar(),
                       ),
-                    if (showBootstrap) const AuthBootstrapOverlay(),
                   ],
                 );
               },

@@ -1,11 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/domain/entities/user_entity.dart';
-import '../../features/auth/presentation/providers/auth_providers.dart';
 import 'auth_route_paths.dart';
 
 /// go_router redirect — tek kaynak.
 abstract final class AuthRedirect {
+  /// E-posta / OTP derin linkleri — go_router sayfası; builder gateway değil.
+  static bool isDeepLinkAuthPath(String path) =>
+      path.startsWith('/auth/reset-password') || path == '/auth/otp-verify';
+
   static String? targetFor({
     required String path,
     required String matchedLocation,
@@ -17,25 +20,26 @@ abstract final class AuthRedirect {
     }
 
     final authed = user != null;
-    final publicAuthPages =
+    final legacyAuthEntry =
         matchedLocation == '/login' ||
         matchedLocation == '/register' ||
-        matchedLocation.startsWith('/auth/forgot-password') ||
-        matchedLocation.startsWith('/auth/reset-password') ||
-        matchedLocation == '/auth/otp-verify';
+        matchedLocation.startsWith('/auth/forgot-password');
     final canlifalWeb = matchedLocation == '/canlifal-web';
 
     // Misafir — keşfet / feed.
-    if (!authed && guest && publicAuthPages) {
+    if (!authed && guest && legacyAuthEntry) {
       return '/feed';
     }
 
-    // Oturumsuz: go_router /login — MaterialApp.builder overlay YOK (yetim barrier önlenir).
+    // Oturumsuz: giriş UI MaterialApp.builder'da (route geçişi / barrier yok).
     if (!authed && !guest) {
-      if (!publicAuthPages && !canlifalWeb) return '/login';
-      return null;
+      if (canlifalWeb || isDeepLinkAuthPath(matchedLocation)) return null;
+      if (legacyAuthEntry || matchedLocation == '/feed') return null;
+      return '/feed';
     }
-    if (authed && publicAuthPages) return '/feed';
+    if (authed && (legacyAuthEntry || isDeepLinkAuthPath(matchedLocation))) {
+      return '/feed';
+    }
     return null;
   }
 

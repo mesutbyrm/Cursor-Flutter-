@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/auth/presentation/auth_flow_app.dart';
-import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/otp_verify_page.dart';
-import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/canlifal_web/presentation/canlifal_web_view_page.dart';
@@ -90,14 +87,11 @@ import '../../core/bootstrap/auth_redirect.dart';
 import '../../core/bootstrap/startup_route_observer.dart';
 import '../../core/navigation/app_page_transitions.dart';
 
-/// Misafir + oturum değişince redirect yeniden değerlendirilir (tek bildirim).
+/// Misafir modu değişince redirect yeniden değerlendirilir.
 class RouterAuthRefresh extends ChangeNotifier {
   RouterAuthRefresh(Ref ref) {
     ref.listen<bool>(guestModeProvider, (prev, next) {
       if (prev != next) _notifyOnce();
-    });
-    ref.listen<AsyncValue<dynamic>>(authControllerProvider, (prev, next) {
-      if (prev?.valueOrNull != next.valueOrNull) _notifyOnce();
     });
   }
 
@@ -106,31 +100,21 @@ class RouterAuthRefresh extends ChangeNotifier {
   }
 }
 
-/// Oturum açılışı / kapanışı / misafir: [shellSessionProvider] ile temiz go_router.
+/// Çıkış / misafir geçişinde go_router sıfırdan.
 
 /// Push / global modal sheet'ler için kök navigator.
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
-/// Giriş, çıkış veya misafir geçişinde go_router sıfırdan — yetim ModalBarrier önlenir.
+/// Giriş, çıkış veya misafir geçişinde go_router sıfırdan.
 final shellSessionProvider = StateProvider<int>((ref) => 0);
-
-/// `/login` → `/feed` redirect yetim barrier bırakır; oturumlu kullanıcı doğrudan `/feed`.
-String resolveShellInitialLocation(Ref ref) {
-  final auth = ref.read(authControllerProvider);
-  final guest = ref.read(guestModeProvider);
-  if (auth.isLoading && !auth.hasValue) return '/login';
-  if (auth.valueOrNull != null || guest) return '/feed';
-  return '/login';
-}
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   ref.watch(shellSessionProvider);
   final authRefresh = RouterAuthRefresh(ref);
-  final initialLocation = resolveShellInitialLocation(ref);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: initialLocation,
+    initialLocation: '/feed',
     observers: [StartupRouteObserver()],
     refreshListenable: authRefresh,
     redirect: (context, state) {
@@ -174,24 +158,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/login',
-        pageBuilder: (context, state) => AppPageTransitions.none(
-          key: state.pageKey,
-          child: const AuthGatewayHost(),
-        ),
+        redirect: (context, state) => '/feed',
       ),
       GoRoute(
         path: '/register',
-        pageBuilder: (context, state) => AppPageTransitions.none(
-          key: state.pageKey,
-          child: const RegisterPage(),
-        ),
+        redirect: (context, state) => '/feed',
       ),
       GoRoute(
         path: '/auth/forgot-password',
-        pageBuilder: (context, state) => AppPageTransitions.none(
-          key: state.pageKey,
-          child: const ForgotPasswordPage(),
-        ),
+        redirect: (context, state) => '/feed',
       ),
       GoRoute(
         path: '/auth/reset-password',
