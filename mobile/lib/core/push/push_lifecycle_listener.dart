@@ -9,13 +9,12 @@ import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/home/presentation/providers/fortune_incoming_invite_provider.dart';
 import '../../features/messages/presentation/providers/messages_providers.dart';
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
-import '../bootstrap/stuck_overlay_guard.dart';
 import '../onesignal/onesignal_bootstrap.dart';
 import 'push_navigation_handler.dart';
-import 'push_notification_service.dart';
 import 'push_registrar.dart';
 
-/// Oturum açıldığında FCM kaydı; bildirim izni gecikmeli (giriş geçişi + sistem dialog).
+/// Oturum açıldığında FCM kaydı. Bildirim izni otomatik istenmez (gri barrier riski);
+/// kullanıcı Bildirimler sayfasındaki banner ile açar.
 class PushLifecycleListener extends ConsumerStatefulWidget {
   const PushLifecycleListener({super.key, required this.child});
 
@@ -27,9 +26,6 @@ class PushLifecycleListener extends ConsumerStatefulWidget {
 }
 
 class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
-  Timer? _permissionTimer;
-  var _permissionScheduled = false;
-
   @override
   void initState() {
     super.initState();
@@ -54,8 +50,6 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
     ref.listenManual<AsyncValue<dynamic>>(authControllerProvider, (prev, next) {
       final user = next.valueOrNull;
       if (user == null) {
-        _permissionTimer?.cancel();
-        _permissionScheduled = false;
         if (prev?.valueOrNull != null) {
           unawaited(OneSignalBootstrap.logout());
         }
@@ -64,18 +58,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
 
       unawaited(OneSignalBootstrap.login(user.id));
       ref.read(pushRegistrarProvider).registerIfPossible();
-
-      final justLoggedIn = prev?.valueOrNull == null;
-      if (justLoggedIn && !_permissionScheduled) {
-        _scheduleNotificationPermission();
-      }
     });
-  }
-
-  @override
-  void dispose() {
-    _permissionTimer?.cancel();
-    super.dispose();
   }
 
   void _onPushReceived() {
@@ -84,49 +67,6 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
     ref.invalidate(conversationsProvider);
     ref.invalidate(adminPaymentNotificationsProvider);
     ref.invalidate(adminPaymentRequestsProvider);
-  }
-
-  /// Giriş animasyonu + overlay kalktıktan sonra izin iste; bitince barrier temizle.
-  void _scheduleNotificationPermission() {
-    _permissionScheduled = true;
-    _permissionTimer?.cancel();
-    _permissionTimer = Timer(const Duration(milliseconds: 2800), () async {
-      if (!mounted) return;
-      if (ref.read(authControllerProvider).valueOrNull == null) return;
-
-      if (_alreadyGranted()) {
-        await ref.read(pushRegistrarProvider).registerIfPossible();
-        _clearStuckBarriers('already-granted');
-        return;
-      }
-
-      await _requestNotificationPermission();
-      if (!mounted) return;
-      _clearStuckBarriers('after-permission');
-    });
-  }
-
-  bool _alreadyGranted() {
-    if (OneSignalBootstrap.isReady) {
-      return OneSignalBootstrap.permissionGranted;
-    }
-    return PushNotificationService.instance.permissionGranted;
-  }
-
-  Future<void> _requestNotificationPermission() async {
-    if (OneSignalBootstrap.isReady) {
-      final granted = await OneSignalBootstrap.requestPermission();
-      if (granted && mounted) {
-        await ref.read(pushRegistrarProvider).registerIfPossible();
-      }
-      return;
-    }
-    await PushNotificationService.instance.requestSystemPermission();
-  }
-
-  void _clearStuckBarriers(String reason) {
-    // Yalnızca gerçek dialog route'ları pop — private overlay scrub yetim barrier üretir.
-    StuckOverlayGuard.popDialogRoutes(rootNavigatorKey, reason: reason);
   }
 
   @override

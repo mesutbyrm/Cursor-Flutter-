@@ -47,7 +47,7 @@ class FirebaseBootstrap {
       await PushNotificationService.instance.init();
 
       if (!kIsWeb && !OneSignalBootstrap.isReady) {
-        await PushNotificationService.instance.requestSystemPermission();
+        // İzin giriş sonrası otomatik istenmez — ModalBarrier / gri ekran riski.
         final token = await messaging!.getToken();
         if (token != null) {
           debugPrint('FCM token: ${token.substring(0, 12)}…');

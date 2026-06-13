@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.212+215 (2026-06-13)
+
+### Giriş sonrası gri overlay — çift MaterialApp + izin kaldırma
+
+- **Kök neden (güncel):** Oturumsuzken `MaterialApp.router` arka planda `/feed` shell yüklüyordu; girişte navigator yeniden kurulurken yetim `ModalBarrier` kalıyordu. Giriş sonrası otomatik bildirim izni dialogu da barrier ile çakışıyordu
+- **Çözüm:** Oturumsuz → ayrı `MaterialApp` (yalnızca `AuthGatewayHost`, **go_router yok**). Oturum açılınca tamamen yeni `MaterialApp.router` mount
+- Girişte otomatik bildirim izni kaldırıldı (Bildirimler sayfası banner'ı ile açılır)
+- `resetRootNavigatorKey` — oturum değişiminde temiz navigator
+- `FeedTouchRecovery` — ana kabuk mount sonrası yetim barrier tek seferlik kurtarma
+- `refreshListenable` / `RouterAuthRefresh` kaldırıldı
+
 ## 1.0.211+214 (2026-06-13)
 
 ### Giriş sonrası gri overlay — kök mimari düzeltme

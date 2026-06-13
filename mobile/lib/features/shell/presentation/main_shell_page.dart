@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/bootstrap/feed_touch_recovery.dart';
 import '../../../core/bootstrap/shell_prefetch.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/exit_confirm_dialog.dart';
@@ -83,7 +84,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
       },
       child: Scaffold(
         backgroundColor: HomeApprovedDesign.background,
-        body: widget.navigationShell,
+        body: FeedTouchRecovery(child: widget.navigationShell),
         bottomNavigationBar: BottomNavigationWidget(
           activeTab: _activeTab(widget.navigationShell.currentIndex),
           onHome: () => _goBranch(0),

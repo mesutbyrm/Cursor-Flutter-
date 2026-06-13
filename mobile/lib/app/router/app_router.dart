@@ -87,36 +87,24 @@ import '../../core/bootstrap/auth_redirect.dart';
 import '../../core/bootstrap/startup_route_observer.dart';
 import '../../core/navigation/app_page_transitions.dart';
 
-/// Misafir modu değişince redirect yeniden değerlendirilir.
-class RouterAuthRefresh extends ChangeNotifier {
-  RouterAuthRefresh(Ref ref) {
-    ref.listen<bool>(guestModeProvider, (prev, next) {
-      if (prev != next) _notifyOnce();
-    });
-  }
+/// Push / global modal sheet'ler için kök navigator (oturum değişince yenilenir).
+GlobalKey<NavigatorState> rootNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'root-nav-0');
 
-  void _notifyOnce() {
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-  }
+void resetRootNavigatorKey(int session) {
+  rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root-nav-$session');
 }
-
-/// Çıkış / misafir geçişinde go_router sıfırdan.
-
-/// Push / global modal sheet'ler için kök navigator.
-final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// Giriş, çıkış veya misafir geçişinde go_router sıfırdan.
 final shellSessionProvider = StateProvider<int>((ref) => 0);
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   ref.watch(shellSessionProvider);
-  final authRefresh = RouterAuthRefresh(ref);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/feed',
     observers: [StartupRouteObserver()],
-    refreshListenable: authRefresh,
     redirect: (context, state) {
       final path = state.uri.path;
       final loc = state.matchedLocation;

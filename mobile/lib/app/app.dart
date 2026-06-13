@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/bootstrap/app_startup_log.dart';
-import '../core/bootstrap/auth_redirect.dart';
 import '../core/bootstrap/auth_route_paths.dart';
 import '../core/bootstrap/root_overlay_purge.dart';
 import '../core/l10n/app_localizations_config.dart';
@@ -36,15 +35,23 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
       if (prev == next || next != true) return;
       final authed = ref.read(authControllerProvider).valueOrNull != null;
       if (authed) return;
+      resetRootNavigatorKey(ref.read(shellSessionProvider.notifier).state + 1);
       ref.read(shellSessionProvider.notifier).state++;
     });
 
     ref.listenManual(authControllerProvider, (prev, next) {
       final wasAuthed = prev?.valueOrNull != null;
       final nowAuthed = next.valueOrNull != null;
+      if (!wasAuthed && nowAuthed) {
+        final session = ref.read(shellSessionProvider) + 1;
+        resetRootNavigatorKey(session);
+        ref.read(shellSessionProvider.notifier).state = session;
+      }
       if (wasAuthed && !nowAuthed) {
         BarrierRouteJournal.clear();
-        ref.read(shellSessionProvider.notifier).state++;
+        final session = ref.read(shellSessionProvider) + 1;
+        resetRootNavigatorKey(session);
+        ref.read(shellSessionProvider.notifier).state = session;
       }
     });
   }
@@ -54,17 +61,44 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
     final auth = ref.watch(authControllerProvider);
     final guest = ref.watch(guestModeProvider);
     final themeMode = ref.watch(themeModeProvider);
-    final shellSession = ref.watch(shellSessionProvider);
-    final router = ref.watch(goRouterProvider);
 
     final bootstrapDone = !auth.isLoading || auth.hasValue;
-    final showBootstrap = !bootstrapDone;
     final authed = auth.valueOrNull != null;
+    final showMainShell = bootstrapDone && (authed || guest);
+
+    if (!bootstrapDone) {
+      return MaterialApp(
+        title: 'Canlifal',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.dark(),
+        home: const AuthBootstrapOverlay(),
+      );
+    }
+
+    // Oturumsuz: go_router YOK — arka planda /feed shell yüklenmez, barrier oluşmaz.
+    if (!showMainShell) {
+      return MaterialApp(
+        key: const ValueKey('auth-only'),
+        title: 'Canlifal',
+        debugShowCheckedModeBanner: false,
+        scrollBehavior: const ModernSocialScrollBehavior(),
+        locale: AppLocalizationsConfig.locale,
+        supportedLocales: AppLocalizationsConfig.supportedLocales,
+        localizationsDelegates: AppLocalizationsConfig.delegates,
+        theme: AppTheme.light(),
+        darkTheme: AppTheme.dark(),
+        themeMode: themeMode,
+        home: const AuthGatewayHost(),
+      );
+    }
+
+    final shellSession = ref.watch(shellSessionProvider);
+    final router = ref.watch(goRouterProvider);
 
     return VoiceRoomMusicLifecycleHost(
       child: PushLifecycleListener(
         child: MaterialApp.router(
-          key: ValueKey('shell-$shellSession'),
+          key: ValueKey('main-$shellSession'),
           title: 'Canlifal',
           debugShowCheckedModeBanner: false,
           scrollBehavior: const ModernSocialScrollBehavior(),
@@ -92,18 +126,6 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
               builder: (context, _) {
                 final routerLocation =
                     router.routerDelegate.currentConfiguration.uri.path;
-
-                if (showBootstrap) {
-                  return const AuthBootstrapOverlay();
-                }
-
-                // Giriş ekranı go_router rotası değil — route geçişi / ModalBarrier yok.
-                if (!authed && !guest) {
-                  if (!AuthRedirect.isDeepLinkAuthPath(routerLocation)) {
-                    return const AuthGatewayHost();
-                  }
-                }
-
                 final isAuthRoute =
                     AuthRoutePaths.isPublicAuthPath(routerLocation);
                 final showGlobalMusic =
