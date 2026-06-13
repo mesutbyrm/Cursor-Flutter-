@@ -7,6 +7,7 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/ui/platform_blur.dart';
 import '../../../../../core/ui/premium_2026/liquid_glass.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
@@ -548,13 +549,12 @@ class _DiscoverHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: DiscoverPremiumVisual.glassBlur,
-          sigmaY: DiscoverPremiumVisual.glassBlur,
-        ),
-        child: Container(
+    return SafeBackdropFilter(
+      filter: ImageFilter.blur(
+        sigmaX: DiscoverPremiumVisual.glassBlur,
+        sigmaY: DiscoverPremiumVisual.glassBlur,
+      ),
+      child: Container(
           padding: EdgeInsets.fromLTRB(horizontalPad, 8, horizontalPad - 4, 10),
           decoration: BoxDecoration(
             color: DiscoverPremiumVisual.glassFill,
@@ -655,8 +655,6 @@ class _DiscoverHeader extends StatelessWidget {
             icon: const Icon(Icons.notifications_none_rounded),
           ),
         ],
-          ),
-        ),
       ),
     );
   }

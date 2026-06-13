@@ -103,13 +103,30 @@ class _LivePageState extends ConsumerState<LivePage>
                 controller: _tab,
                 children: [
                   _LiveStreamsTab(scrollController: _liveScroll),
-                  const _VoiceTab(),
+                  _LazyVoiceTab(tabController: _tab),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _LazyVoiceTab extends StatelessWidget {
+  const _LazyVoiceTab({required this.tabController});
+
+  final TabController tabController;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: tabController,
+      builder: (context, _) {
+        if (tabController.index != 1) return const SizedBox.shrink();
+        return const _VoiceTab();
+      },
     );
   }
 }

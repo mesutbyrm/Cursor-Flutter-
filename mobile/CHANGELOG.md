@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.208+211 (2026-06-13)
+
+### Giriş sonrası gri overlay — Android BackdropFilter + lazy shell
+
+- **Kök neden:** `StatefulShellRoute.indexedStack` tüm sekmeleri (Canlı → Sesli Sohbet hub) girişte önceden yüklüyordu; `VoiceDiscoverHub2026` içindeki korumasız `BackdropFilter` Android'de tam ekran gri katman oluşturuyordu (ModalBarrier değil — purge işe yaramıyordu)
+- **Çözüm:** `StatefulShellRoute` (yalnızca aktif sekme yüklenir); `SafeBackdropFilter` (`PlatformBlur` koruması); Canlı sekmesinde sesli oda hub'ı yalnızca "Sohbet" sekmesi seçilince yüklenir
+- `premium_liquid_nav_bar` ve `discover_premium_header` blur koruması
+
 ## 1.0.207+210 (2026-06-13)
 
 ### Giriş sonrası gri overlay — mimari düzeltme (kök neden)

@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import '../../theme/app_spacing.dart';
+import '../platform_blur.dart';
 import '../premium/gradient_fab.dart';
 import 'premium_2026_tokens.dart';
 import 'premium_motion.dart';
@@ -34,7 +35,7 @@ class PremiumLiquidNavBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(t.radiusLiquid),
-        child: BackdropFilter(
+        child: SafeBackdropFilter(
           filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: DecoratedBox(
             decoration: BoxDecoration(

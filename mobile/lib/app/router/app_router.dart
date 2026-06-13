@@ -193,7 +193,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           child: OtpVerifyPage(email: state.extra as String?),
         ),
       ),
-      StatefulShellRoute.indexedStack(
+      // indexedStack tüm sekmeleri önceden yükler; Android BackdropFilter gri ekran yapar.
+      StatefulShellRoute(
         pageBuilder: (context, state, navigationShell) {
           return AppPageTransitions.none(
             key: state.pageKey,

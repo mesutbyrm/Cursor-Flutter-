@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/ui/platform_blur.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/ui/premium/premium.dart';
 import 'discover_premium_visual.dart';
@@ -28,8 +29,7 @@ class DiscoverPremiumHeader extends ConsumerWidget {
     final coinLabel = NumberFormat.decimalPattern('tr').format(coins);
 
     return RepaintBoundary(
-      child: ClipRect(
-      child: BackdropFilter(
+      child: SafeBackdropFilter(
         filter: ImageFilter.blur(
           sigmaX: DiscoverPremiumVisual.glassBlur,
           sigmaY: DiscoverPremiumVisual.glassBlur,
@@ -98,7 +98,6 @@ class DiscoverPremiumHeader extends ConsumerWidget {
           ),
         ),
       ),
-    ),
     );
   }
 }
