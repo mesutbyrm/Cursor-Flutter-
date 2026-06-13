@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.205+208 (2026-06-12)
+
+### Giriş sonrası gri overlay — iç Navigator kaldırıldı (kök neden)
+
+- **Kök neden:** `AuthFlowOverlay` içindeki iç `Navigator` + `PageRouteBuilder` geçişleri, overlay ağaçtan kalkınca kök overlay'de yetim `ModalBarrier` bırakıyordu (dokunma engelli, geri tuşu çalışır)
+- **Çözüm:** Auth overlay sayfa geçişi state tabanlı (`AuthOverlayRoute`); iç `Navigator.push` / `ModalRoute` yok
+- **Giriş sonrası:** `shellSessionProvider++` ile temiz go_router; `purgeAfterLogin` + `NavigatorModalSanitizer` + `FeedBarrierWatchdog`
+- **Bildirim izni** sonrası `purgeAfterLogin` (yalnızca `popDialogRoutes` değil)
+
 ## 1.0.204+207 (2026-06-12)
 
 ### Giriş sonrası gri overlay — bildirim izni + go_router yenileme

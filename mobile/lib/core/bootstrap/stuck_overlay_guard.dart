@@ -162,7 +162,8 @@ abstract final class StuckOverlayGuard {
     Element? overlayEntryElement;
     barrierElement.visitAncestorElements((ancestor) {
       final typeName = ancestor.widget.runtimeType.toString();
-      if (typeName.contains('OverlayEntry')) {
+      if (typeName.contains('OverlayEntry') ||
+          typeName == '_OverlayEntryWidget') {
         overlayEntryElement = ancestor;
         return false;
       }
@@ -241,6 +242,33 @@ abstract final class StuckOverlayGuard {
     }
     total += scrubEntireAppTree(reason: '$reason-tree');
     return total;
+  }
+
+  /// Giriş sonrası yetim barrier temizliği + teşhis logu.
+  static void purgeAfterLogin({String reason = 'post-login'}) {
+    final before = _barrierCount();
+    final popped = popDialogRoutes(rootNavigatorKey, reason: reason);
+    var scrubbed = 0;
+    final overlay = rootNavigatorKey.currentState?.overlay;
+    if (overlay != null && overlay.mounted) {
+      scrubbed = _scrubOrphanModalBarriers(overlay.context);
+    }
+    final root = WidgetsBinding.instance.rootElement;
+    if (root != null) {
+      void visit(Element element) {
+        if (element.widget is ModalBarrier) {
+          if (_removeOverlayEntryFor(element)) scrubbed++;
+        }
+        element.visitChildren(visit);
+      }
+
+      visit(root);
+    }
+    final after = _barrierCount();
+    AppStartupLog.log(
+      'POST_LOGIN_PURGE reason=$reason before=$before popped=$popped '
+      'scrubbed=$scrubbed after=$after canPop=${rootNavigatorKey.currentState?.canPop()}',
+    );
   }
 
   /// /feed üzerinde sürekli barrier izleme — post-frame döngüsü.

@@ -125,13 +125,10 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
   }
 
   void _clearStuckBarriers(String reason) {
-    for (var i = 0; i <= 3; i++) {
+    for (var i = 0; i <= 4; i++) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        StuckOverlayGuard.popDialogRoutes(
-          rootNavigatorKey,
-          reason: '$reason-$i',
-        );
+        StuckOverlayGuard.purgeAfterLogin(reason: '$reason-$i');
       });
     }
   }
