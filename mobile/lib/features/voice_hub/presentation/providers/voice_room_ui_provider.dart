@@ -95,3 +95,15 @@ final voiceRoomUiProvider =
     NotifierProvider<VoiceRoomUiNotifier, VoiceRoomUiState>(
   VoiceRoomUiNotifier.new,
 );
+
+/// Sesli oda RTC ekranı ön plandayken global mini player gösterilmez.
+final voiceRoomRtcForegroundProvider = StateProvider<bool>((ref) => false);
+
+/// [VoiceRoomRtcPage] mount — sayfa dispose olunca [voiceRoomRtcForegroundProvider] sıfırlanır.
+final voiceRoomForegroundLifecycleProvider =
+    Provider.autoDispose.family<void, String>((ref, roomKey) {
+  ref.read(voiceRoomRtcForegroundProvider.notifier).state = true;
+  ref.onDispose(() {
+    ref.read(voiceRoomRtcForegroundProvider.notifier).state = false;
+  });
+});

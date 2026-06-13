@@ -6,8 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../providers/voice_room_ui_provider.dart';
 import 'voice_room_web_music_bar.dart';
-
-/// Sesli odadan çıkıldığında altta görünen global müzik çubuğu.
 class VoiceRoomGlobalMusicBar extends ConsumerWidget {
   const VoiceRoomGlobalMusicBar({super.key, required this.routePath});
 
@@ -15,7 +13,8 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
   final String routePath;
 
   static bool shouldShowForRoute(String location) {
-    final path = Uri.tryParse(location)?.path ?? location;
+    var path = Uri.tryParse(location)?.path ?? location;
+    if (!path.startsWith('/')) path = '/$path';
     if (path == '/voice-room' || path.startsWith('/voice-room/')) {
       return false;
     }
@@ -24,6 +23,9 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(voiceRoomRtcForegroundProvider)) {
+      return const SizedBox.shrink();
+    }
     if (!shouldShowForRoute(routePath)) {
       return const SizedBox.shrink();
     }

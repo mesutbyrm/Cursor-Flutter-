@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.215+218 (2026-06-13)
+
+### Sesli oda — çift müzik player
+
+- **Kök neden:** Oda içi `VoiceRoomBottomDock` + global `VoiceRoomGlobalMusicBar` aynı anda `VoiceRoomWebMusicBar` render ediyordu
+- **Çözüm:** RTC sayfası açıkken `voiceRoomRtcForegroundProvider` ile global player gizlenir; debug URL satırı yalnızca debug modda
+
 ## 1.0.214+217 (2026-06-13)
 
 ### Sesli oda — "uninitialized provider" hatası

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -97,6 +98,7 @@ class VoiceRoomBottomDock extends ConsumerWidget {
             if (!musicDismissed)
               VoiceRoomWebMusicBar(
               dj: live.dj,
+              showDebug: kDebugMode,
               onPlayPause: () {
                 final ctrl =
                     ref.read(voiceRoomLiveProvider(session).notifier);

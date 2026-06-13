@@ -855,6 +855,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   Widget build(BuildContext context) {
     final room = _displayRoom(ref.watch(voiceRoomsProvider).valueOrNull);
     final session = _resolveSession(room);
+    ref.watch(
+      voiceRoomForegroundLifecycleProvider(
+        session.apiRoomKey.isNotEmpty ? session.apiRoomKey : widget.room.id,
+      ),
+    );
     final live = ref.watch(voiceRoomLiveProvider(session));
     final diagnostic = ref.watch(voiceRoomDiagnosticProvider);
     final ui = ref.watch(voiceRoomUiProvider);
