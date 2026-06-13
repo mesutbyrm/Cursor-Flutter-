@@ -6,7 +6,7 @@
 
 - **Kök neden:** `LoginPage` / `HomePage` / `MainShellPage` giriş sırasında kök navigator overlay'inde `StuckOverlayGuard` çalıştırıyordu; private API ile barrier temizliği yetim `ModalBarrier` bırakıyordu
 - **Çözüm:** Tüm periyodik overlay scrub kaldırıldı; girişte `authController` global loading state'i kapatıldı (`authUserActionBusyProvider` yeterli)
-- **Shell:** `StatefulShellRoute.indexedStack` → `StatefulShellRoute` (yalnızca aktif sekme mount — arka planda modal riski yok)
+- **Shell:** `StatefulShellRoute` denendi; go_router 15 API uyumsuz — scrub düzeltmesi yeterli
 - **Giriş sonrası:** Güvenli `popDialogRoutes` (yalnızca dialog route pop, private overlay API yok)
 
 ## 1.0.202+205 (2026-06-12)
