@@ -656,6 +656,7 @@ class _DiscoverHeader extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

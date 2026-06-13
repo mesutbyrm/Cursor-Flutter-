@@ -195,6 +195,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       // indexedStack tüm sekmeleri önceden yükler; Android BackdropFilter gri ekran yapar.
       StatefulShellRoute(
+        navigatorContainerBuilder: (context, navigationShell, children) {
+          return children[navigationShell.currentIndex];
+        },
         pageBuilder: (context, state, navigationShell) {
           return AppPageTransitions.none(
             key: state.pageKey,
