@@ -2,23 +2,24 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.211+214` |
-| Tarih (UTC) | 2026-06-13 16:01 |
-| Commit | [`937764b7cf4c9c29e6e37113c287b846bca5c046`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/937764b7cf4c9c29e6e37113c287b846bca5c046) |
-| İş akışı | [Run 27471497450](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27471497450) |
+| Sürüm | `1.0.212+215` |
+| Tarih (UTC) | 2026-06-13 17:40 |
+| Commit | [`b033929af950c78cb834f2b7d2cd14f8ed82dfdd`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b033929af950c78cb834f2b7d2cd14f8ed82dfdd) |
+| İş akışı | [Run 27473935877](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27473935877) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.211+214 (2026-06-13)
+## 1.0.212+215 (2026-06-13)
 
-### Giriş sonrası gri overlay — kök mimari düzeltme
+### Giriş sonrası gri overlay — çift MaterialApp + izin kaldırma
 
-- **Kök neden:** `/login` go_router rotasından `/feed` shell rotasına geçiş (redirect veya shellSession) kök overlay'de tema `ModalBarrier` (`0x8C000000`) bırakıyordu — içerik görünür, dokunma ölü
-- **Çözüm:** Giriş/kayıt UI artık **go_router rotası değil** — `MaterialApp.builder` içinde `AuthGatewayHost` widget'ı; oturum açılınca yalnızca builder yenilenir, **navigasyon yok**, barrier oluşmaz
-- `/login`, `/register`, `/auth/forgot-password` → `/feed` redirect (derin link / OTP / şifre sıfırlama sayfaları korunur)
-- `RouterAuthRefresh` oturum dinleyicisi kaldırıldı (redirect yarışı yok); `initialLocation` her zaman `/feed`
-- Girişte `shellSession++` kaldırıldı (çıkış + misafir modunda kalır)
+- **Kök neden (güncel):** Oturumsuzken `MaterialApp.router` arka planda `/feed` shell yüklüyordu; girişte navigator yeniden kurulurken yetim `ModalBarrier` kalıyordu. Giriş sonrası otomatik bildirim izni dialogu da barrier ile çakışıyordu
+- **Çözüm:** Oturumsuz → ayrı `MaterialApp` (yalnızca `AuthGatewayHost`, **go_router yok**). Oturum açılınca tamamen yeni `MaterialApp.router` mount
+- Girişte otomatik bildirim izni kaldırıldı (Bildirimler sayfası banner'ı ile açılır)
+- `resetRootNavigatorKey` — oturum değişiminde temiz navigator
+- `FeedTouchRecovery` — ana kabuk mount sonrası yetim barrier tek seferlik kurtarma
+- `refreshListenable` / `RouterAuthRefresh` kaldırıldı
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
