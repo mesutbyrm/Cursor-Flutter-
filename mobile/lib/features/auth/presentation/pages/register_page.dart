@@ -88,11 +88,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     final formBusy = ref.watch(authUserActionBusyProvider);
     ref.listen(authControllerProvider, (prev, next) {
       next.whenOrNull(
-        data: (user) {
-          if (user != null) {
-            ref.read(guestModeProvider.notifier).state = false;
-          }
-        },
         error: (e, _) => ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),
         ),

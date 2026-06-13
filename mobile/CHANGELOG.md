@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.209+212 (2026-06-13)
+
+### Giriş sonrası gri overlay — login navigasyon sadeleştirme
+
+- Tam ekran loading dialog yok; `authUserActionBusyProvider` + buton içi `CircularProgressIndicator` (try/finally garantili)
+- Giriş başarısı: yalnızca go_router redirect `/login` → `/feed` — sayfa içi `context.go` / çift navigasyon kaldırıldı
+- `guestMode` sıfırlama merkezi: `AuthController._clearGuestModeOnSuccess` (login/register listener tekrarı yok)
+- `RouterAuthRefresh` post-frame tek bildirim; redirect aynı hedefe tekrarlanmaz
+
 ## 1.0.208+211 (2026-06-13)
 
 ### Giriş sonrası gri overlay — Android BackdropFilter + lazy shell

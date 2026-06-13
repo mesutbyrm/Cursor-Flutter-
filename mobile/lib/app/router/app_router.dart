@@ -90,15 +90,19 @@ import '../../core/bootstrap/auth_redirect.dart';
 import '../../core/bootstrap/startup_route_observer.dart';
 import '../../core/navigation/app_page_transitions.dart';
 
-/// Misafir + oturum değişince redirect yeniden değerlendirilir.
+/// Misafir + oturum değişince redirect yeniden değerlendirilir (tek bildirim).
 class RouterAuthRefresh extends ChangeNotifier {
   RouterAuthRefresh(Ref ref) {
     ref.listen<bool>(guestModeProvider, (prev, next) {
-      if (prev != next) notifyListeners();
+      if (prev != next) _notifyOnce();
     });
     ref.listen<AsyncValue<dynamic>>(authControllerProvider, (prev, next) {
-      if (prev?.valueOrNull != next.valueOrNull) notifyListeners();
+      if (prev?.valueOrNull != next.valueOrNull) _notifyOnce();
     });
+  }
+
+  void _notifyOnce() {
+    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
   }
 }
 
@@ -148,12 +152,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         );
       }
 
-      return AuthRedirect.targetFor(
+      final target = AuthRedirect.targetFor(
         path: path,
         matchedLocation: loc,
         user: auth.valueOrNull,
         guest: ref.read(guestModeProvider),
       );
+      if (target == null || target == loc || target == path) return null;
+      AppStartupLog.route(loc, target, reason: 'auth redirect');
+      return target;
     },
     routes: [
       GoRoute(

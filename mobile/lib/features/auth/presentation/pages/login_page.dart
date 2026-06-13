@@ -6,6 +6,9 @@ import '../auth_navigation.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/premium_auth_2026/premium_auth_2026.dart';
 
+/// Giriş — tam ekran loading dialog yok; [authUserActionBusyProvider] ile buton
+/// içi spinner. Başarılı oturumda yalnızca go_router redirect `/feed` (manuel
+/// context.go/push yok — çift navigasyon ve yetim barrier önlenir).
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
@@ -43,11 +46,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     ref.listen(authControllerProvider, (prev, next) {
       next.whenOrNull(
-        data: (user) {
-          if (user != null) {
-            ref.read(guestModeProvider.notifier).state = false;
-          }
-        },
         error: (e, _) => ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),
         ),
@@ -118,7 +116,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               alignment: Alignment.centerRight,
               child: AuthTextLinkPremium(
                 label: 'Şifremi unuttum',
-                onPressed: () => AuthNavigation.toForgotPassword(context),
+                onPressed: () {
+                  if (formBusy) return;
+                  AuthNavigation.toForgotPassword(context);
+                },
               ),
             ),
             const SizedBox(height: 8),
@@ -138,7 +139,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             const SizedBox(height: 6),
             AuthTextLinkPremium(
               label: 'Hesabın yok mu? Kayıt ol',
-              onPressed: () => AuthNavigation.toRegister(context),
+              onPressed: () {
+                if (formBusy) return;
+                AuthNavigation.toRegister(context);
+              },
             ),
             if (!Env.hasTikTokLogin) ...[
               const SizedBox(height: 4),

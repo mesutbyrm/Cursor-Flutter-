@@ -42,8 +42,8 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
       final wasAuthed = prev?.valueOrNull != null;
       final nowAuthed = next.valueOrNull != null;
       if (!wasAuthed && nowAuthed) {
-        ref.read(guestModeProvider.notifier).state = false;
-        // go_router redirect /login → /feed; kalan barrier varsa temizle.
+        // guestMode AuthController._clearGuestModeOnSuccess içinde sıfırlanır.
+        // Yalnızca go_router redirect /login → /feed; manuel go yok.
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           RootOverlayPurge.logRootOverlaySnapshot(reason: 'post-login');

@@ -106,8 +106,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   }
 
   Future<void> login(String email, String password) async {
-    ref.read(authUserActionBusyProvider.notifier).state = true;
-    try {
+    await _runUserAction(() async {
       state = await AsyncValue.guard(() async {
         final u = await LoadingTimeout.run(
           ref.read(authRepositoryProvider).login(
@@ -119,9 +118,8 @@ class AuthController extends AsyncNotifier<UserEntity?> {
         );
         return _withSiteProfile(u);
       });
-    } finally {
-      ref.read(authUserActionBusyProvider.notifier).state = false;
-    }
+      _clearGuestModeOnSuccess();
+    });
   }
 
   Future<void> register({
@@ -134,8 +132,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     String? birthTime,
     String language = 'tr',
   }) async {
-    ref.read(authUserActionBusyProvider.notifier).state = true;
-    try {
+    await _runUserAction(() async {
       state = await AsyncValue.guard(() async {
         final u = await LoadingTimeout.run(
           ref.read(authRepositoryProvider).register(
@@ -153,14 +150,12 @@ class AuthController extends AsyncNotifier<UserEntity?> {
         );
         return _withSiteProfile(u);
       });
-    } finally {
-      ref.read(authUserActionBusyProvider.notifier).state = false;
-    }
+      _clearGuestModeOnSuccess();
+    });
   }
 
   Future<void> loginWithGoogle() async {
-    ref.read(authUserActionBusyProvider.notifier).state = true;
-    try {
+    await _runUserAction(() async {
       state = await AsyncValue.guard(() async {
         final u = await LoadingTimeout.run(
           ref.read(authRepositoryProvider).loginWithGoogle(),
@@ -169,14 +164,12 @@ class AuthController extends AsyncNotifier<UserEntity?> {
         );
         return _withSiteProfile(u);
       });
-    } finally {
-      ref.read(authUserActionBusyProvider.notifier).state = false;
-    }
+      _clearGuestModeOnSuccess();
+    });
   }
 
   Future<void> loginWithTikTok() async {
-    ref.read(authUserActionBusyProvider.notifier).state = true;
-    try {
+    await _runUserAction(() async {
       state = await AsyncValue.guard(() async {
         final u = await LoadingTimeout.run(
           ref.read(authRepositoryProvider).loginWithTikTok(),
@@ -185,12 +178,12 @@ class AuthController extends AsyncNotifier<UserEntity?> {
         );
         return _withSiteProfile(u);
       });
-    } finally {
-      ref.read(authUserActionBusyProvider.notifier).state = false;
-    }
+      _clearGuestModeOnSuccess();
+    });
   }
 
   Future<void> logout() async {
+    ref.read(authUserActionBusyProvider.notifier).state = false;
     ref.read(guestModeProvider.notifier).state = false;
     await OneSignalBootstrap.logout();
     await ref.read(authRepositoryProvider).logout();
@@ -206,6 +199,22 @@ class AuthController extends AsyncNotifier<UserEntity?> {
         message: 'Oturum yenilenemedi',
       ),
     );
+  }
+
+  /// Tam ekran loading dialog yok — yalnızca buton içi spinner.
+  Future<void> _runUserAction(Future<void> Function() action) async {
+    ref.read(authUserActionBusyProvider.notifier).state = true;
+    try {
+      await action();
+    } finally {
+      ref.read(authUserActionBusyProvider.notifier).state = false;
+    }
+  }
+
+  void _clearGuestModeOnSuccess() {
+    if (state.valueOrNull != null) {
+      ref.read(guestModeProvider.notifier).state = false;
+    }
   }
 }
 
