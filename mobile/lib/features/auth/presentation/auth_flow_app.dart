@@ -11,7 +11,7 @@ import 'widgets/premium_auth_2026/auth_premium_loading.dart';
 
 /// Auth overlay içindeyken [AuthNavigation] go_router yerine bu navigator'ı kullanır.
 class AuthOverlayScope extends InheritedWidget {
-  const AuthOverlayScope({super.key, required this.child});
+  const AuthOverlayScope({super.key, required super.child});
 
   @override
   bool updateShouldNotify(AuthOverlayScope oldWidget) => false;
