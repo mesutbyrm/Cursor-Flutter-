@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.206+209 (2026-06-13)
+
+### Giriş sonrası gri overlay — 5 sn kök overlay zorla temizlik + teşhis
+
+- Login başarılı **5 saniye** sonra kök `navigator.overlay` içindeki tüm `ModalBarrier` içeren `OverlayEntry`'ler zorla kaldırılır
+- Debug log: `Overlay entries before purge:` / `Overlay entries after purge:` + kalan widget sınıf adları
+- `BarrierRouteJournal` — barrier oluşturan route'ların kaydı (`didPush`/`didPop`)
+- `Remaining blocking widgets on screen:` — ekranda kalan `ModalBarrier` / `AbsorbPointer` tam sınıf adı ve route atfı
+
 ## 1.0.205+208 (2026-06-12)
 
 ### Giriş sonrası gri overlay — iç Navigator kaldırıldı (kök neden)

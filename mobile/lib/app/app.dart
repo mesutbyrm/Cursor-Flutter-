@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/bootstrap/app_startup_log.dart';
 import '../core/bootstrap/auth_route_paths.dart';
 import '../core/bootstrap/navigator_modal_sanitizer.dart';
+import '../core/bootstrap/root_overlay_purge.dart';
 import '../core/bootstrap/stuck_overlay_guard.dart';
 import '../core/l10n/app_localizations_config.dart';
 import '../core/providers/theme_mode_provider.dart';
@@ -47,36 +47,45 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
       final nowAuthed = next.valueOrNull != null;
       if (!wasAuthed && nowAuthed) {
         ref.read(guestModeProvider.notifier).state = false;
-        // Temiz go_router — önceki oturumdan kalan ModalBarrier önlenir.
         ref.read(shellSessionProvider.notifier).state++;
         _beginPostLoginScrub();
       }
       if (wasAuthed && !nowAuthed) {
+        RootOverlayPurge.cancelScheduledPurge();
+        BarrierRouteJournal.clear();
         ref.read(shellSessionProvider.notifier).state++;
         if (mounted) setState(() => _postAuthScrub = false);
       }
     });
   }
 
-  /// Giriş sonrası yetim dialog / ModalBarrier temizliği — birkaç kare boyunca.
+  @override
+  void dispose() {
+    RootOverlayPurge.cancelScheduledPurge();
+    super.dispose();
+  }
+
+  /// Giriş sonrası teşhis + 5 sn sonra kök overlay zorla temizlik.
   void _beginPostLoginScrub() {
     if (!mounted) return;
     setState(() => _postAuthScrub = true);
 
-    for (var i = 0; i < 8; i++) {
-      SchedulerBinding.instance.scheduleFrameCallback((_) {
-        if (!mounted) return;
-        StuckOverlayGuard.purgeAfterLogin(reason: 'post-login-$i');
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      RootOverlayPurge.logRootOverlaySnapshot(reason: 'post-login+0frame');
+      StuckOverlayGuard.purgeAfterLogin(reason: 'post-login-0');
+    });
 
-    StuckOverlayGuard.armFeedBarrierWatch(
-      onDone: () {
-        if (!mounted) return;
-        StuckOverlayGuard.purgeAfterLogin(reason: 'post-login-watch-done');
-        setState(() => _postAuthScrub = false);
-      },
+    // Login başarılı + 5 sn → kök navigator overlay zorla temizle
+    RootOverlayPurge.schedulePostLoginForcePurge(
+      delay: const Duration(seconds: 5),
     );
+
+    // 5 sn purge bitince scrub modunu kapat
+    Future<void>.delayed(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      setState(() => _postAuthScrub = false);
+    });
   }
 
   @override

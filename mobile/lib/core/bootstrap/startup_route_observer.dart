@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_startup_log.dart';
+import 'root_overlay_purge.dart';
 
 /// Navigator yığını — gri overlay / takılı modal teşhisi.
 class StartupRouteObserver extends NavigatorObserver {
@@ -13,6 +14,7 @@ class StartupRouteObserver extends NavigatorObserver {
       'barrier=$barrier opaque=${modal?.opaque ?? true}',
     );
     if (route is PopupRoute || (barrier != null && barrier.a > 0)) {
+      BarrierRouteJournal.recordPush(route);
       AppStartupLog.overlayShow(
         source: route.runtimeType.toString(),
         detail: 'barrier=$barrier',
@@ -26,6 +28,7 @@ class StartupRouteObserver extends NavigatorObserver {
     AppStartupLog.log(
       'didPop ${route.settings.name ?? route.runtimeType}',
     );
+    BarrierRouteJournal.recordPop(route);
     if (route is PopupRoute) {
       AppStartupLog.overlayHide(reason: 'didPop-${route.runtimeType}');
     }
@@ -37,6 +40,7 @@ class StartupRouteObserver extends NavigatorObserver {
     AppStartupLog.log(
       'didRemove ${route.settings.name ?? route.runtimeType}',
     );
+    BarrierRouteJournal.recordPop(route);
     super.didRemove(route, previousRoute);
   }
 

@@ -125,7 +125,8 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
   }
 
   void _clearStuckBarriers(String reason) {
-    for (var i = 0; i <= 4; i++) {
+    RootOverlayPurge.logRootOverlaySnapshot(reason: reason);
+    for (var i = 0; i <= 2; i++) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         StuckOverlayGuard.purgeAfterLogin(reason: '$reason-$i');
