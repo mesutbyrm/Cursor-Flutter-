@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../app/router/app_router.dart';
 import 'app_startup_log.dart';
