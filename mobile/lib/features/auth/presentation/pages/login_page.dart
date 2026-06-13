@@ -1,9 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/bootstrap/app_startup_log.dart';
-import '../../../../core/bootstrap/stuck_overlay_guard.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../auth_navigation.dart';
@@ -21,44 +17,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _form = GlobalKey<FormState>();
-  Timer? _overlayScrubTimer;
-  var _overlayScrubTicks = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _clearStuckOverlays('mount');
-      _armOverlayScrub();
-    });
-  }
-
-  void _armOverlayScrub() {
-    _overlayScrubTimer?.cancel();
-    _overlayScrubTicks = 0;
-    _overlayScrubTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
-      if (!mounted || _overlayScrubTicks >= 40) {
-        _overlayScrubTimer?.cancel();
-        return;
-      }
-      _overlayScrubTicks++;
-      _clearStuckOverlays('scrub-$_overlayScrubTicks');
-    });
-  }
-
-  void _clearStuckOverlays(String reason) {
-    if (!mounted) return;
-    AppStartupLog.log('LoginPage overlay clear ($reason)');
-    final nav = Navigator.maybeOf(context);
-    if (nav != null) {
-      StuckOverlayGuard.dismissNavigator(nav, reason: 'login-$reason');
-    }
-    StuckOverlayGuard.dismissRoot(reason: 'login-$reason');
-  }
 
   @override
   void dispose() {
-    _overlayScrubTimer?.cancel();
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -81,13 +42,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final sessionChecking = auth.isLoading && !auth.hasValue;
 
     ref.listen(authControllerProvider, (prev, next) {
-      final wasLoading = prev?.isLoading ?? true;
-      if (wasLoading && !next.isLoading) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _clearStuckOverlays('auth-finish');
-          _armOverlayScrub();
-        });
-      }
       next.whenOrNull(
         data: (user) {
           if (user != null) {

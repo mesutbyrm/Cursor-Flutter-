@@ -108,7 +108,6 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   Future<void> login(String email, String password) async {
     ref.read(authUserActionBusyProvider.notifier).state = true;
     try {
-      state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
       state = await AsyncValue.guard(() async {
         final u = await LoadingTimeout.run(
           ref.read(authRepositoryProvider).login(
@@ -137,7 +136,6 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   }) async {
     ref.read(authUserActionBusyProvider.notifier).state = true;
     try {
-      state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
       state = await AsyncValue.guard(() async {
         final u = await LoadingTimeout.run(
           ref.read(authRepositoryProvider).register(
@@ -163,7 +161,6 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   Future<void> loginWithGoogle() async {
     ref.read(authUserActionBusyProvider.notifier).state = true;
     try {
-      state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
       state = await AsyncValue.guard(() async {
         final u = await LoadingTimeout.run(
           ref.read(authRepositoryProvider).loginWithGoogle(),
@@ -180,7 +177,6 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   Future<void> loginWithTikTok() async {
     ref.read(authUserActionBusyProvider.notifier).state = true;
     try {
-      state = AsyncValue<UserEntity?>.loading().copyWithPrevious(state);
       state = await AsyncValue.guard(() async {
         final u = await LoadingTimeout.run(
           ref.read(authRepositoryProvider).loginWithTikTok(),

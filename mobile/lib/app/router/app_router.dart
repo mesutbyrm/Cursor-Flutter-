@@ -203,7 +203,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           child: OtpVerifyPage(email: state.extra as String?),
         ),
       ),
-      StatefulShellRoute.indexedStack(
+      StatefulShellRoute(
         pageBuilder: (context, state, navigationShell) {
           return AppPageTransitions.none(
             key: state.pageKey,

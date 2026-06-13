@@ -6,6 +6,37 @@ import 'app_startup_log.dart';
 
 /// Yarım kalmış dialog / bottom sheet / geçiş barrier katmanlarını temizler.
 abstract final class StuckOverlayGuard {
+  /// Üstteki dialog / bottom-sheet route'larını güvenli şekilde kapatır.
+  /// Private overlay API kullanmaz — yetim barrier oluşturmaz.
+  static int popDialogRoutes(
+    GlobalKey<NavigatorState> navigatorKey, {
+    String reason = 'pop-dialogs',
+  }) {
+    final nav = navigatorKey.currentState;
+    if (nav == null) return 0;
+    var popped = 0;
+    for (var guard = 0; guard < 12; guard++) {
+      if (!nav.canPop()) break;
+      final route = _topRoute(nav);
+      if (route == null || !_isDialogRoute(route)) break;
+      nav.pop();
+      popped++;
+    }
+    if (popped > 0) {
+      AppStartupLog.overlayHide(reason: reason, popped: popped);
+    }
+    return popped;
+  }
+
+  static bool _isDialogRoute(Route<dynamic> route) {
+    if (route is PopupRoute) return true;
+    if (route is ModalRoute) {
+      final barrier = route.barrierColor;
+      return barrier != null && barrier.a > 0;
+    }
+    return false;
+  }
+
   /// Üstteki [PopupRoute] veya görünür modal barrier katmanlarını kaldırır.
   static int dismissPopupRoutes(
     GlobalKey<NavigatorState> navigatorKey, {

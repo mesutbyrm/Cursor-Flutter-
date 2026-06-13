@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/bootstrap/app_startup_log.dart';
 import '../core/bootstrap/auth_route_paths.dart';
-import '../core/bootstrap/auth_redirect.dart';
+import '../core/bootstrap/stuck_overlay_guard.dart';
 import '../core/l10n/app_localizations_config.dart';
 import '../core/providers/theme_mode_provider.dart';
 import '../core/push/push_lifecycle_listener.dart';
@@ -43,11 +43,24 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
       final nowAuthed = next.valueOrNull != null;
       if (!wasAuthed && nowAuthed) {
         ref.read(guestModeProvider.notifier).state = false;
+        _schedulePostLoginDialogCleanup();
       }
       if (wasAuthed && !nowAuthed) {
         ref.read(shellSessionProvider.notifier).state++;
       }
     });
+  }
+
+  void _schedulePostLoginDialogCleanup() {
+    for (var i = 0; i <= 4; i++) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        StuckOverlayGuard.popDialogRoutes(
+          rootNavigatorKey,
+          reason: 'post-login-$i',
+        );
+      });
+    }
   }
 
   @override

@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.203+206 (2026-06-12)
+
+### Giriş sonrası gri overlay — kök neden #2 (overlay scrub + IndexedStack)
+
+- **Kök neden:** `LoginPage` / `HomePage` / `MainShellPage` giriş sırasında kök navigator overlay'inde `StuckOverlayGuard` çalıştırıyordu; private API ile barrier temizliği yetim `ModalBarrier` bırakıyordu
+- **Çözüm:** Tüm periyodik overlay scrub kaldırıldı; girişte `authController` global loading state'i kapatıldı (`authUserActionBusyProvider` yeterli)
+- **Shell:** `StatefulShellRoute.indexedStack` → `StatefulShellRoute` (yalnızca aktif sekme mount — arka planda modal riski yok)
+- **Giriş sonrası:** Güvenli `popDialogRoutes` (yalnızca dialog route pop, private overlay API yok)
+
 ## 1.0.202+205 (2026-06-12)
 
 ### Giriş sonrası gri overlay — tek MaterialApp.router (kalıcı)
