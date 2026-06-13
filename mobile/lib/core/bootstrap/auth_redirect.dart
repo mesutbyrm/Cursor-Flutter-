@@ -25,9 +25,10 @@ abstract final class AuthRedirect {
         matchedLocation == '/auth/otp-verify';
     final canlifalWeb = matchedLocation == '/canlifal-web';
 
-    // Oturumsuz: AuthFlowApp overlay kabuğu gösterir — /login redirect ModalBarrier bırakıyordu.
-    if (!authed && !guest && !publicAuthPages && !canlifalWeb) {
-      return null;
+    // Oturumsuz: AuthFlowOverlay üst katman — go_router /login redirect barrier bırakıyordu.
+    if (!authed && !guest) {
+      if (publicAuthPages) return '/feed';
+      if (!canlifalWeb) return null;
     }
     if (authed && publicAuthPages) return '/feed';
     return null;

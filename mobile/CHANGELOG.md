@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.202+205 (2026-06-12)
+
+### Giriş sonrası gri overlay — tek MaterialApp.router (kalıcı)
+
+- **Kök neden:** Giriş sonrası `AuthFlowApp` ↔ `MainShellApp` ağaç değişimi ikinci `MaterialApp` mount ediyordu; go_router ilk kez burada oluşunca yetim `ModalBarrier` ana sayfada kalıyordu
+- **Çözüm:** Uygulama başından itibaren tek `MaterialApp.router`; oturumsuzda `AuthFlowOverlay` üst katman (ayrı MaterialApp yok)
+- **`AuthOverlayScope`:** Giriş ekranları go_router yerine overlay Navigator kullanır — `/register` push barrier oluşturmaz
+- **`auth_redirect`:** Oturumsuz `/login` → `/feed` (overlay girişi gösterir); go_router auth redirect barrier kaldırıldı
+- Agresif scrub/watchdog katmanları kaldırıldı (semptom tedavisi yerine mimari düzeltme)
+
 ## 1.0.201+204 (2026-06-12)
 
 ### Giriş sonrası gri overlay — kök neden (go_router erken mount)

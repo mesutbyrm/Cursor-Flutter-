@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'auth_flow_app.dart';
 import 'pages/forgot_password_page.dart';
 import 'pages/login_page.dart';
 import 'pages/otp_verify_page.dart';
 import 'pages/register_page.dart';
 import 'pages/reset_password_page.dart';
 
-/// Auth ekranları — go_router veya bağımsız [Navigator] ile uyumlu.
+/// Auth ekranları — overlay Navigator veya go_router (derin link).
 abstract final class AuthNavigation {
+  static bool _useOverlayNavigator(BuildContext context) =>
+      AuthOverlayScope.isActive(context);
+
   static bool _hasGoRouter(BuildContext context) =>
-      GoRouter.maybeOf(context) != null;
+      !_useOverlayNavigator(context) && GoRouter.maybeOf(context) != null;
 
   static Route<T> instantRoute<T>(Widget child, RouteSettings settings) {
     return PageRouteBuilder<T>(

@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/l10n/app_localizations_config.dart';
-import '../../../core/scroll/modern_social_scroll_behavior.dart';
 import '../../../core/theme/app_theme.dart';
 import 'auth_navigation.dart';
 import 'pages/forgot_password_page.dart';
@@ -10,25 +7,49 @@ import 'pages/login_page.dart';
 import 'pages/otp_verify_page.dart';
 import 'pages/register_page.dart';
 import 'pages/reset_password_page.dart';
+import 'widgets/premium_auth_2026/auth_premium_loading.dart';
 
-/// Oturumsuz kullanıcı — go_router YOK (ModalBarrier / gri katman riski sıfır).
-class AuthFlowApp extends ConsumerWidget {
-  const AuthFlowApp({super.key});
+/// Auth overlay içindeyken [AuthNavigation] go_router yerine bu navigator'ı kullanır.
+class AuthOverlayScope extends InheritedWidget {
+  const AuthOverlayScope({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return MaterialApp(
-      title: 'Canlifal',
-      debugShowCheckedModeBanner: false,
-      scrollBehavior: const ModernSocialScrollBehavior(),
-      locale: AppLocalizationsConfig.locale,
-      supportedLocales: AppLocalizationsConfig.supportedLocales,
-      localizationsDelegates: AppLocalizationsConfig.delegates,
-      theme: AppTheme.dark(),
-      darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.dark,
-      onGenerateRoute: _onGenerateRoute,
-      initialRoute: '/login',
+  bool updateShouldNotify(AuthOverlayScope oldWidget) => false;
+
+  static bool isActive(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<AuthOverlayScope>() != null;
+}
+
+/// Oturum kontrolü — opak yükleme katmanı (ayrı MaterialApp yok).
+class AuthBootstrapOverlay extends StatelessWidget {
+  const AuthBootstrapOverlay({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Material(
+      color: Color(0xFF05050D),
+      child: Center(child: AuthPremiumLoading(size: 52)),
+    );
+  }
+}
+
+/// Oturumsuz kullanıcı — üst katman Navigator (MaterialApp.router altında).
+class AuthFlowOverlay extends StatelessWidget {
+  const AuthFlowOverlay({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AuthOverlayScope(
+      child: Theme(
+        data: AppTheme.dark(),
+        child: Material(
+          color: const Color(0xFF05050D),
+          child: Navigator(
+            onGenerateRoute: _onGenerateRoute,
+            initialRoute: '/login',
+          ),
+        ),
+      ),
     );
   }
 
@@ -60,3 +81,7 @@ class AuthFlowApp extends ConsumerWidget {
     }
   }
 }
+
+/// Geriye dönük isim — artık overlay; ayrı MaterialApp kullanılmaz.
+@Deprecated('AuthFlowOverlay kullanın')
+typedef AuthFlowApp = AuthFlowOverlay;

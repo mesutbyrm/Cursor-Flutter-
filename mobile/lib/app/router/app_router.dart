@@ -122,7 +122,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   ref.watch(shellSessionProvider);
   final guestRefresh = GuestModeRefresh(ref);
   final authRefresh = AuthRefresh(ref);
-  // Her zaman /feed — oturumsuz kullanıcıda AuthFlowApp overlay; /login redirect barrier bırakmaz.
+  // Her zaman /feed — oturumsuzda AuthFlowOverlay üst katman; /login go_router barrier yok.
   const initialLocation = '/feed';
 
   return GoRouter(
