@@ -33,12 +33,15 @@ import { requireAuth } from "./middleware/requireAuth";
 import { jsonError } from "./lib/jsonError";
 import { fail } from "./lib/response";
 import { pkBattlesRouter } from "./routes/pk_battles";
+import { shortVideosRouter } from "./routes/short_videos";
 import { initGiftSocket } from "./socket/giftHub";
+import path from "node:path";
 
 const app = express();
 app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN?.split(",") ?? true, credentials: true }));
 app.use(express.json({ limit: "512kb" }));
+app.use("/uploads/shorts", express.static(path.join(process.cwd(), "uploads", "shorts")));
 
 const v1 = express.Router();
 v1.get("/health", (_req, res) => {
@@ -71,6 +74,7 @@ app.use("/api/stories", storiesRouter);
 app.use("/api/social/stories", storiesRouter);
 app.use("/api/reports", reportsRouter);
 app.use("/api/pk", pkBattlesRouter);
+app.use("/api/short-videos", shortVideosRouter);
 
 /** @deprecated — GET /api/music/search kullanın */
 app.get("/api/youtube/search", requireAuth, async (req, res) => {

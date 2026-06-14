@@ -39,6 +39,8 @@ import '../../features/live/presentation/pages/live_page.dart';
 import '../../features/live/presentation/pages/live_swipe_viewer_page.dart';
 import '../../features/social/presentation/pages/social_create_post_page.dart';
 import '../../features/social/presentation/pages/social_page.dart';
+import '../../features/shorts/presentation/pages/shorts_feed_page.dart';
+import '../../features/shorts/presentation/pages/shorts_upload_page.dart';
 import '../../features/messages/presentation/pages/chat_page.dart';
 import '../../features/messages/presentation/pages/conversations_page.dart';
 import '../../features/moderation/domain/entities/report_target.dart';
@@ -515,6 +517,24 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           child: const ContentHubPage(),
         ),
+      ),
+      GoRoute(
+        path: '/shorts',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: ShortsFeedPage(
+            initialVideoId: state.uri.queryParameters['videoId'],
+          ),
+        ),
+        routes: [
+          GoRoute(
+            path: 'upload',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const ShortsUploadPage(),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/games-hub',

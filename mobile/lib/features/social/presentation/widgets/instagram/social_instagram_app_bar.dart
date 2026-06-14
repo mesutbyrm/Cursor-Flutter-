@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/theme/canlifal_tokens.dart';
@@ -46,6 +46,12 @@ class SocialInstagramAppBar extends ConsumerWidget {
             ),
           ),
           const Spacer(),
+          PremiumIconButton(
+            icon: Icons.play_circle_outline,
+            size: 40,
+            onTap: () => context.push('/shorts'),
+          ),
+          const SizedBox(width: 4),
           PremiumIconButton(
             icon: Icons.add_box_outlined,
             size: 40,

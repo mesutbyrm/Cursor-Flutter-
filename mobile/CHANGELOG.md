@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.219+222 (2026-06-13)
+
+### Kısa videolar (TikTok tarzı)
+
+- Dikey tam ekran feed: yukarı/aşağı kaydırma, otomatik oynatma, sonraki video ön yükleme
+- Galeriden MP4 yükleme (max 15 sn, 10 MB), önizleme + açıklama
+- Beğeni, yorum, paylaş, profil; ≥3 sn izlenince görüntülenme sayımı
+- Videolar Cloudflare R2 CDN URL'lerinden doğrudan oynatılır (backend yalnızca metadata)
+- API: `GET/POST /api/short-videos/*` (yerel mirror + mobil uçlar)
+- Sosyal sekmesinde kısa video girişi
+
 ## 1.0.218+221 (2026-06-13)
 
 ### Sesli oda — müzik (2. tur) + !temizle + X + ok

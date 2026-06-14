@@ -41,6 +41,8 @@ model User {
   conversationsB      Conversation[] @relation("ConversationUserB")
   fortunes              UserFortune[]
   favorites             UserFavorite[]
+  shortVideos           ShortVideo[]
+  shortVideoComments    ShortVideoComment[]
 }
 
 /// Mobil / web fal geçmişi kaydı.
@@ -374,4 +376,64 @@ model PKResult {
   createdAt            DateTime @default(now())
 
   @@index([winnerId, createdAt])
+}
+
+/// TikTok tarzı kısa videolar — dosyalar Cloudflare R2/CDN; burada yalnızca metadata.
+model ShortVideo {
+  id            String              @id @default(cuid())
+  userId        String
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videoUrl      String
+  thumbnailUrl  String?
+  description   String?
+  durationSec   Float?
+  viewsCount    Int                 @default(0)
+  likesCount    Int                 @default(0)
+  commentsCount Int                 @default(0)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  likes         ShortVideoLike[]
+  comments      ShortVideoComment[]
+  views         ShortVideoView[]
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("short_videos")
+}
+
+model ShortVideoLike {
+  id        String     @id @default(cuid())
+  videoId   String
+  userId    String
+  video     ShortVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+
+  @@unique([videoId, userId])
+  @@index([videoId])
+  @@index([userId])
+}
+
+model ShortVideoComment {
+  id        String     @id @default(cuid())
+  videoId   String
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  video     ShortVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+
+  @@index([videoId, createdAt])
+  @@index([userId])
+}
+
+/// Kullanıcı başına tek izlenme sayımı (≥3 sn).
+model ShortVideoView {
+  id        String     @id @default(cuid())
+  videoId   String
+  userId    String
+  video     ShortVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+
+  @@unique([videoId, userId])
+  @@index([videoId])
 }

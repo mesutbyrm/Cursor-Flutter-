@@ -367,4 +367,15 @@ abstract final class ApiEndpoints {
 
   /// @deprecated — `musicSearch` kullanın.
   static const youtubeSearch = '/api/youtube/search';
+
+  // --- Kısa videolar (TikTok tarzı, R2 CDN) ---
+  static const shortVideos = '/api/short-videos';
+  static const shortVideosUpload = '/api/short-videos/upload';
+  static String shortVideoLike(String id) => '/api/short-videos/$id/like';
+  static String shortVideoComments(String id) =>
+      '/api/short-videos/$id/comments';
+  static String shortVideoView(String id) => '/api/short-videos/$id/view';
+  static String shortVideoDelete(String id) => '/api/short-videos/$id';
+  static String shortVideosByUser(String userId) =>
+      '/api/short-videos/user/$userId';
 }
