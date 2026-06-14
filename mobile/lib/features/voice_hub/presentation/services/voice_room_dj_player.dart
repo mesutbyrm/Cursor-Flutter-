@@ -113,7 +113,15 @@ class VoiceRoomDjPlayer {
         final playable = await _streamLoader.preparePlaybackSource(resolved);
         if (playable == null || playable.isEmpty) continue;
 
-        final targets = <String>[playable];
+        VoiceRoomMusicPipelineLog.backendAudioUrl(
+          audioUrl: playable,
+          stage: 'sync_resolved',
+          candidate: candidate,
+        );
+
+        final targets = await _streamLoader.buildPlaybackTargets(playable);
+        if (targets.isEmpty) continue;
+
         if (await _attemptPlay(
           handler: handler,
           targets: targets,
@@ -122,21 +130,6 @@ class VoiceRoomDjPlayer {
           candidate: candidate,
         )) {
           return true;
-        }
-
-        if (VoiceRoomDjStreamLoader.needsLocalDownload(playable)) {
-          final local = await _streamLoader.downloadFallback(playable);
-          if (local != null && local != playable) {
-            if (await _attemptPlay(
-              handler: handler,
-              targets: [local],
-              nowPlaying: nowPlaying,
-              musicUrl: musicUrl,
-              candidate: candidate,
-            )) {
-              return true;
-            }
-          }
         }
       }
     }
@@ -187,14 +180,15 @@ class VoiceRoomDjPlayer {
           debugPrint('DJ play ok: $target');
           return true;
         }
-        VoiceRoomMusicPipelineLog.justAudioError(
-          StateError(
-            'play_not_started processing=${handler.diagnostics.processingState} '
-            'playing=${handler.isPlaying} muted=$_muted',
-          ),
-          StackTrace.current,
-          phase: 'sync_verify',
+        _currentKey = null;
+        await handler.invalidateLoadedSource();
+        VoiceRoomMusicPipelineLog.playResult(
+          started: false,
           url: target,
+          processingState: handler.diagnostics.processingState,
+          playing: handler.isPlaying,
+          durationMs: handler.currentDurationMs,
+          detail: 'waitUntilPlaying_timeout',
         );
       } on ja.PlayerException catch (e, st) {
         VoiceRoomMusicPipelineLog.justAudioError(
@@ -205,6 +199,7 @@ class VoiceRoomDjPlayer {
         );
         debugPrint('DJ play error ($target): $e');
         _currentKey = null;
+        await handler.invalidateLoadedSource();
       } catch (e, st) {
         VoiceRoomMusicPipelineLog.justAudioError(
           e,
@@ -214,6 +209,7 @@ class VoiceRoomDjPlayer {
         );
         debugPrint('DJ play error ($target): $e');
         _currentKey = null;
+        await handler.invalidateLoadedSource();
       }
     }
     return false;
@@ -370,6 +366,11 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
 
   bool get isPlaying => _player.playing;
   bool get hasLoadedSource => _currentSource != null;
+  int? get currentDurationMs {
+    final d = _player.duration;
+    if (d == null) return null;
+    return d.inMilliseconds;
+  }
   VoiceRoomMusicDiagnostics get diagnostics => _diagnostics;
 
   void Function()? onTrackComplete;
@@ -389,18 +390,58 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
     final deadline = DateTime.now().add(timeout);
     while (DateTime.now().isBefore(deadline)) {
       _refreshDiagnostics();
+      final state = _player.processingState;
       if (_player.playing &&
-          (_player.processingState == ja.ProcessingState.ready ||
-              _player.processingState == ja.ProcessingState.buffering)) {
+          (state == ja.ProcessingState.ready ||
+              state == ja.ProcessingState.buffering)) {
+        VoiceRoomMusicPipelineLog.playResult(
+          started: true,
+          url: _currentSource ?? '(none)',
+          processingState: state.name,
+          playing: true,
+          durationMs: currentDurationMs,
+        );
         return true;
       }
-      if (_player.processingState == ja.ProcessingState.completed) {
+      if (state == ja.ProcessingState.completed) {
         return false;
       }
       await Future<void>.delayed(const Duration(milliseconds: 120));
     }
     _refreshDiagnostics();
-    return _player.playing;
+    final state = _player.processingState;
+    final ok = _player.playing &&
+        (state == ja.ProcessingState.ready ||
+            state == ja.ProcessingState.buffering);
+    VoiceRoomMusicPipelineLog.playResult(
+      started: ok,
+      url: _currentSource ?? '(none)',
+      processingState: state.name,
+      playing: _player.playing,
+      durationMs: currentDurationMs,
+      detail: ok ? null : 'deadline',
+    );
+    return ok;
+  }
+
+  Future<void> invalidateLoadedSource() async {
+    _currentSource = null;
+    _currentMediaItem = null;
+    _completionFired = false;
+    try {
+      await _player.stop();
+    } catch (_) {}
+    _emitPlayback(const VoiceRoomDjPlayback());
+    mediaItem.add(null);
+    queue.add(const []);
+    _broadcastPlaybackState(
+      processingState: audio.AudioProcessingState.idle,
+    );
+    VoiceRoomMusicPipelineLog.audioService(
+      action: 'invalidateLoadedSource',
+      playing: false,
+      processingState: 'idle',
+    );
   }
 
   void _refreshDiagnostics() {
@@ -414,11 +455,21 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
   void _init() {
     _player.durationStream.listen((duration) {
       final d = duration ?? Duration.zero;
+      VoiceRoomMusicPipelineLog.durationValue(
+        durationMs: duration?.inMilliseconds,
+        url: _currentSource,
+        source: 'durationStream',
+      );
       _emitPlayback(_playbackValue.value.copyWith(duration: d));
       final current = _currentMediaItem;
       if (current != null && d > Duration.zero) {
         _currentMediaItem = current.copyWith(duration: d);
         mediaItem.add(_currentMediaItem);
+        VoiceRoomMusicPipelineLog.audioService(
+          action: 'mediaItem.duration',
+          title: current.title,
+          durationMs: d.inMilliseconds,
+        );
       }
     });
     _player.positionStream.listen((position) {
@@ -450,6 +501,14 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
     _player.playbackEventStream.listen(
       (event) {
         if (event.processingState == ja.ProcessingState.completed) return;
+        VoiceRoomMusicPipelineLog.playbackEvent(
+          processingState: event.processingState.name,
+          playing: _player.playing,
+          positionMs: event.updatePosition.inMilliseconds,
+          bufferedMs: event.bufferedPosition.inMilliseconds,
+          durationMs: event.duration?.inMilliseconds,
+          url: _currentSource,
+        );
       },
       onError: (Object e, StackTrace st) {
         _diagnostics = _diagnostics.copyWith(
@@ -466,15 +525,12 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
     );
     _player.playerStateStream.listen((state) {
       _refreshDiagnostics();
-      if (state.processingState == ja.ProcessingState.loading ||
-          state.processingState == ja.ProcessingState.buffering) {
-        VoiceRoomMusicPipelineLog.playState(
-          playing: state.playing,
-          processingState: state.processingState.name,
-          positionMs: _player.position.inMilliseconds,
-          url: _currentSource,
-        );
-      }
+      VoiceRoomMusicPipelineLog.playerStateStreamEvent(
+        playing: state.playing,
+        processingState: state.processingState.name,
+        positionMs: _player.position.inMilliseconds,
+        url: _currentSource,
+      );
     });
   }
 
@@ -485,12 +541,12 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
     String? candidateLabel,
   }) async {
     _completionFired = false;
-    if (_currentSource != source) {
+    final needsReload = _currentSource != source ||
+        _player.processingState == ja.ProcessingState.idle ||
+        _player.processingState == ja.ProcessingState.completed;
+    if (needsReload) {
       _currentSource = source;
       final item = metadata.toMediaItem(source);
-      _currentMediaItem = item;
-      mediaItem.add(item);
-      queue.add([item]);
       final sourceType = source.startsWith('/') ? 'file' : 'uri';
       VoiceRoomMusicPipelineLog.beforeSetAudioSource(
         sourceUrl: source,
@@ -508,7 +564,8 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
         ),
       );
       final useYtHeaders = !source.startsWith('/') &&
-          VoiceRoomDjStreamLoader.needsLocalDownload(source);
+          (VoiceRoomDjStreamLoader.needsLocalDownload(source) ||
+              source.contains('/api/chat/youtube-audio'));
       final audioSource = source.startsWith('/')
           ? ja.AudioSource.file(source, tag: item)
           : ja.AudioSource.uri(
@@ -528,7 +585,30 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
       _publishDiagnostics();
       try {
         await _player.setAudioSource(audioSource);
+        final dur = _player.duration;
+        VoiceRoomMusicPipelineLog.setAudioSourceResult(
+          url: source,
+          ok: true,
+          processingState: _player.processingState.name,
+          durationMs: dur?.inMilliseconds,
+          playing: _player.playing,
+        );
+        _currentMediaItem = item;
+        mediaItem.add(item);
+        queue.add([item]);
+        VoiceRoomMusicPipelineLog.audioService(
+          action: 'mediaItem.publish',
+          title: metadata.title,
+          playing: _player.playing,
+          processingState: _player.processingState.name,
+          durationMs: dur?.inMilliseconds,
+        );
       } on ja.PlayerException catch (e, st) {
+        VoiceRoomMusicPipelineLog.setAudioSourceResult(
+          url: source,
+          ok: false,
+          error: e.toString(),
+        );
         VoiceRoomMusicPipelineLog.justAudioError(
           e,
           st,
@@ -537,7 +617,11 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
         );
         rethrow;
       }
-      _emitPlayback(const VoiceRoomDjPlayback());
+      _emitPlayback(
+        VoiceRoomDjPlayback(
+          duration: _player.duration ?? Duration.zero,
+        ),
+      );
     }
     await playLocal();
   }
@@ -553,7 +637,17 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
         playing: _player.playing,
         processingState: _player.processingState.name,
         positionMs: _player.position.inMilliseconds,
+        durationMs: currentDurationMs,
         url: _currentSource,
+        source: 'playLocal',
+      );
+      VoiceRoomMusicPipelineLog.audioService(
+        action: 'playLocal',
+        title: _currentMediaItem?.title,
+        playing: _player.playing,
+        processingState: _player.processingState.name,
+        positionMs: _player.position.inMilliseconds,
+        durationMs: currentDurationMs,
       );
     } on ja.PlayerException catch (e, st) {
       _diagnostics = _diagnostics.copyWith(

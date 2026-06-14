@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.216+219 (2026-06-13)
+
+### Sesli oda — müzik çalmama (googlevideo / 00:00)
+
+- **Kök neden:** İlk oynatma başarısız olunca `_currentSource` sıfırlanmıyordu; yeniden denemede `setAudioSource` atlanıyor, player `idle` + süre `00:00` kalıyordu
+- **Kök neden 2:** Android medya bildirimi akış yüklenmeden açılıyordu (başlık görünür, ses yok)
+- **Çözüm:** `invalidateLoadedSource()` — başarısızlıkta kaynak ve bildirim temizlenir
+- Android googlevideo sırası: yerel indirme → `/api/chat/youtube-audio` proxy → doğrudan CDN
+- `mediaItem` yalnızca `setAudioSource` başarılı olduktan sonra yayınlanır
+- `[MusicPipeline]` logları: `backend.audioUrl`, `setAudioSource.result`, `duration`, `playerStateStream`, `playbackEvent`, `audioService`, `play.result`
+
 ## 1.0.215+218 (2026-06-13)
 
 ### Sesli oda — çift müzik player

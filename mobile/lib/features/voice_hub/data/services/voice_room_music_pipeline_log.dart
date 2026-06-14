@@ -187,13 +187,131 @@ abstract final class VoiceRoomMusicPipelineLog {
     required bool playing,
     required String processingState,
     int? positionMs,
+    int? durationMs,
     String? url,
+    String? source,
   }) {
     _emit('player.state', {
       'playing': playing,
       'processing': processingState,
       if (positionMs != null) 'posMs': positionMs,
+      if (durationMs != null) 'durMs': durationMs,
       if (url != null) 'url': url,
+      if (source != null) 'via': source,
+    });
+  }
+
+  /// Backend / çözümlenmiş akış URL'si (audioUrl).
+  static void backendAudioUrl({
+    required String audioUrl,
+    String? roomId,
+    String? stage,
+    String? candidate,
+  }) {
+    _emit('backend.audioUrl', {
+      if (roomId != null) 'room': roomId,
+      if (stage != null) 'stage': stage,
+      'audioUrl': audioUrl,
+      if (candidate != null) 'candidate': candidate,
+    });
+  }
+
+  /// `setAudioSource` / `setUrl` tamamlandıktan sonra süre ve durum.
+  static void setAudioSourceResult({
+    required String url,
+    required bool ok,
+    String? processingState,
+    int? durationMs,
+    bool? playing,
+    String? error,
+  }) {
+    _emit('setAudioSource.result', {
+      'url': url,
+      'ok': ok,
+      if (processingState != null) 'processing': processingState,
+      if (durationMs != null) 'durMs': durationMs,
+      if (playing != null) 'playing': playing,
+      if (error != null) 'error': error,
+    });
+  }
+
+  static void durationValue({
+    required int? durationMs,
+    String? url,
+    String? source,
+  }) {
+    _emit('duration', {
+      'durMs': durationMs ?? -1,
+      if (url != null) 'url': url,
+      if (source != null) 'via': source,
+    });
+  }
+
+  static void playbackEvent({
+    required String processingState,
+    required bool playing,
+    int? positionMs,
+    int? bufferedMs,
+    int? durationMs,
+    String? url,
+  }) {
+    _emit('playbackEvent', {
+      'processing': processingState,
+      'playing': playing,
+      if (positionMs != null) 'posMs': positionMs,
+      if (bufferedMs != null) 'bufMs': bufferedMs,
+      if (durationMs != null) 'durMs': durationMs,
+      if (url != null) 'url': url,
+    });
+  }
+
+  static void playerStateStreamEvent({
+    required bool playing,
+    required String processingState,
+    int? positionMs,
+    String? url,
+  }) {
+    _emit('playerStateStream', {
+      'playing': playing,
+      'processing': processingState,
+      if (positionMs != null) 'posMs': positionMs,
+      if (url != null) 'url': url,
+    });
+  }
+
+  static void audioService({
+    required String action,
+    String? title,
+    bool? playing,
+    String? processingState,
+    int? positionMs,
+    int? durationMs,
+  }) {
+    _emit('audioService', {
+      'action': action,
+      if (title != null) 'title': title,
+      if (playing != null) 'playing': playing,
+      if (processingState != null) 'processing': processingState,
+      if (positionMs != null) 'posMs': positionMs,
+      if (durationMs != null) 'durMs': durationMs,
+    });
+  }
+
+  static void playResult({
+    required bool started,
+    required String url,
+    String? processingState,
+    bool? playing,
+    int? durationMs,
+    String? detail,
+  }) {
+    _emit('play.result', {
+      'started': started,
+      'url': url,
+      if (processingState != null) 'processing': processingState,
+      if (playing != null) 'playing': playing,
+      if (durationMs != null) 'durMs': durationMs,
+      if (detail != null) 'detail': detail,
     });
   }
 

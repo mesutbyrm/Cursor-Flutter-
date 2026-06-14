@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../../../core/config/env.dart';
+
 /// googlevideo akışları Referer gerektirir.
 /// Önce HTTP stream (web gibi); başarısız olursa yerel önbelleğe indirilir.
 class VoiceRoomDjStreamLoader {
@@ -32,6 +34,43 @@ class VoiceRoomDjStreamLoader {
     final trimmed = streamUrl.trim();
     if (trimmed.isEmpty) return null;
     return trimmed;
+  }
+
+  /// Üretim proxy — googlevideo için Referer sunucuda eklenir.
+  static String? proxyPlaybackUrl(String streamUrl) {
+    final trimmed = streamUrl.trim();
+    if (!needsLocalDownload(trimmed)) return null;
+    final base = Env.siteOrigin;
+    return '$base/api/chat/youtube-audio?url=${Uri.encodeComponent(trimmed)}';
+  }
+
+  /// Oynatma deneme sırası — Android googlevideo: önce yerel/proxy, sonra doğrudan CDN.
+  Future<List<String>> buildPlaybackTargets(String streamUrl) async {
+    final trimmed = streamUrl.trim();
+    if (trimmed.isEmpty) return const [];
+
+    final targets = <String>[];
+    final seen = <String>{};
+
+    void add(String? url) {
+      final u = url?.trim();
+      if (u == null || u.isEmpty || !seen.add(u)) return;
+      targets.add(u);
+    }
+
+    if (!kIsWeb && Platform.isAndroid && needsLocalDownload(trimmed)) {
+      add(await downloadFallback(trimmed));
+      add(proxyPlaybackUrl(trimmed));
+    }
+
+    add(trimmed);
+
+    if (!kIsWeb && Platform.isAndroid && needsLocalDownload(trimmed)) {
+      // Doğrudan CDN başarısız olursa tekrar indirme dene.
+      add(await downloadFallback(trimmed));
+    }
+
+    return targets;
   }
 
   Future<String?> downloadFallback(String streamUrl) async {
