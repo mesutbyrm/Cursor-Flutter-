@@ -51,8 +51,10 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
           valueListenable: diagnostics,
           builder: (context, diag, _) {
             final audioActive = pb.playing;
-            final showPlaying = audioActive || dj.playing;
-            final elapsed = pb.duration.inMilliseconds > 0
+            final hasDuration = pb.duration.inMilliseconds > 0;
+            final showPlaying =
+                audioActive || (dj.playing && hasDuration);
+            final elapsed = hasDuration
                 ? _format(pb.position)
                 : '00:00';
             final statusLabel = showPlaying

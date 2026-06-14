@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.217+220 (2026-06-13)
+
+### Sesli oda — müzik çalmama + X kapat + eski şarkı
+
+- **YouTube önce:** Oynatma sırası web gibi — önce `nowPlaying.youtubeUrl` / videoId çözümle, sonra sunucu CDN
+- **Eski şarkı:** Yeni istekte `state.dj.musicUrl` artık taşınmıyor; parça değişince eski googlevideo URL temizlenir
+- **X kapat:** `closeMusicPlayer()` — yerel durdur + DJ/owner ise sunucu kuyruğu temizle
+- **UI:** Süre gelmeden «Şu an çalıyor» gösterilmez; oynatma başarısızsa `playing: false`
+- `youtube_explode` ikinci deneme `requireWatchPage: true`
+
 ## 1.0.216+219 (2026-06-13)
 
 ### Sesli oda — müzik çalmama (googlevideo / 00:00)

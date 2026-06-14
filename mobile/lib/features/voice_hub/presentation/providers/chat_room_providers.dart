@@ -859,8 +859,10 @@ class VoiceRoomLiveController
 
     final effectiveDj = _djWithQueuePlaybackFallback(dj);
     final playbackUrl = effectiveDj.playbackSource;
-    final shouldPlay = effectiveDj.playing && playbackUrl != null;
-    if (effectiveDj.playing && playbackUrl == null) {
+    final resolveSeed = effectiveDj.playbackResolveSeed;
+    final shouldPlay =
+        effectiveDj.playing && (playbackUrl != null || resolveSeed != null);
+    if (effectiveDj.playing && playbackUrl == null && resolveSeed == null) {
       VoiceRoomMusicPipelineLog.nullMusicUrl(
         reason: 'playbackSource_null_while_playing',
         caller: '_applyDjPlayback',
@@ -893,13 +895,16 @@ class VoiceRoomLiveController
     final player = ref.read(voiceRoomDjPlayerProvider);
     var ok = await player.sync(
       musicUrl: playbackUrl,
+      resolveSeed: resolveSeed,
       fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
       nowPlaying: effectiveDj.nowPlaying,
       playing: shouldPlay,
       muted: muted,
     );
     if (shouldPlay && !ok) {
-      ref.read(youtubeStreamResolverProvider).invalidate(playbackUrl);
+      ref.read(youtubeStreamResolverProvider).invalidate(
+        resolveSeed ?? playbackUrl ?? '',
+      );
       final fallback = effectiveDj.youtubeFallbackSource;
       if (fallback != null) {
         ref.read(youtubeStreamResolverProvider).invalidate(fallback);
@@ -907,6 +912,7 @@ class VoiceRoomLiveController
       await Future<void>.delayed(const Duration(milliseconds: 500));
       ok = await player.sync(
         musicUrl: playbackUrl,
+        resolveSeed: resolveSeed,
         fallbackYoutubeUrl: fallback,
         nowPlaying: effectiveDj.nowPlaying,
         playing: shouldPlay,
@@ -948,8 +954,9 @@ class VoiceRoomLiveController
       );
     } else {
       _lastDjPlaybackSignature = null;
-      state = state.copyWith(dj: effectiveDj, clearError: true);
-      return effectiveDj;
+      final failedDj = effectiveDj.copyWith(playing: false);
+      state = state.copyWith(dj: failedDj, clearError: true);
+      return failedDj;
     }
     return effectiveDj;
   }
@@ -1702,6 +1709,38 @@ class VoiceRoomLiveController
     }
   }
 
+  /// X / kapat — yerel oynatıcıyı durdur; DJ/owner ise sunucu kuyruğunu da temizle.
+  Future<void> closeMusicPlayer() async {
+    await ref.read(voiceRoomDjPlayerProvider).stop();
+    if (_canControlMusic()) {
+      try {
+        await ref.read(chatRoomRemoteProvider).clearMusicQueue(
+          roomKey: _roomKey,
+          alternateKey: _musicAlternateKey,
+        );
+        await refresh();
+      } catch (_) {
+        state = state.copyWith(
+          dj: state.dj.copyWith(
+            playing: false,
+            clearNowPlaying: true,
+            clearMusicUrl: true,
+            musicQueue: const [],
+          ),
+        );
+      }
+    } else {
+      state = state.copyWith(
+        dj: state.dj.copyWith(
+          playing: false,
+          clearNowPlaying: true,
+          clearMusicUrl: true,
+        ),
+      );
+    }
+    ref.read(voiceRoomMusicSessionProvider.notifier).dismissAfterClose();
+  }
+
   Future<String?> updateMusicSettings({
     bool? musicEnabled,
     int? musicRequestCost,
@@ -1849,8 +1888,10 @@ class VoiceRoomLiveController
         musicQueue: queue,
         nowPlaying: nowPlaying,
         playing: shouldPlay,
-        musicUrl:
-            result.musicUrl ?? nowPlaying?.youtubeUrl ?? state.dj.musicUrl,
+        musicUrl: result.musicUrl ?? nowPlaying?.youtubeUrl,
+        clearMusicUrl:
+            result.musicUrl == null &&
+            nowPlaying?.id != state.dj.nowPlaying?.id,
       );
       if (result.musicUrl != null && result.musicUrl!.isNotEmpty) {
         dj = ChatRoomDjState(
@@ -2125,6 +2166,18 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
       visible: false,
       dismissed: true,
       clearRoom: true,
+      dj: const ChatRoomDjState(),
+    );
+    _closeDetachedKeepAlive();
+  }
+
+  /// Oda içi X — live controller sunucuyu durdurduktan sonra UI'yı gizle.
+  void dismissAfterClose() {
+    _syncTimer?.cancel();
+    _syncTimer = null;
+    state = state.copyWith(
+      visible: false,
+      dismissed: true,
       dj: const ChatRoomDjState(),
     );
     _closeDetachedKeepAlive();

@@ -250,21 +250,22 @@ class YoutubeStreamResolver {
   }
 
   Future<String?> _resolveViaYoutubeExplode(String id) async {
-    try {
-      final manifest = await _youtube.videos.streamsClient
-          .getManifest(VideoId(id), requireWatchPage: false)
-          .timeout(const Duration(seconds: 12));
-      final audio = manifest.audioOnly.toList()
-        ..sort(
-          (a, b) => b.bitrate.bitsPerSecond.compareTo(
-            a.bitrate.bitsPerSecond,
-          ),
-        );
-      if (audio.isEmpty) return null;
-      return audio.first.url.toString();
-    } catch (_) {
-      return null;
+    for (final requireWatch in [false, true]) {
+      try {
+        final manifest = await _youtube.videos.streamsClient
+            .getManifest(VideoId(id), requireWatchPage: requireWatch)
+            .timeout(const Duration(seconds: 15));
+        final audio = manifest.audioOnly.toList()
+          ..sort(
+            (a, b) => b.bitrate.bitsPerSecond.compareTo(
+              a.bitrate.bitsPerSecond,
+            ),
+          );
+        if (audio.isEmpty) continue;
+        return audio.first.url.toString();
+      } catch (_) {}
     }
+    return null;
   }
 }
 

@@ -95,7 +95,9 @@ class ChatRoomDjState {
   ChatRoomDjState copyWith({
     bool? playing,
     String? musicUrl,
+    bool clearMusicUrl = false,
     MusicQueueItem? nowPlaying,
+    bool clearNowPlaying = false,
     List<MusicQueueItem>? musicQueue,
   }) {
     return ChatRoomDjState(
@@ -105,11 +107,11 @@ class ChatRoomDjState {
       canPlayMusic: canPlayMusic,
       canRequestMusic: canRequestMusic,
       isOwner: isOwner,
-      musicUrl: musicUrl ?? this.musicUrl,
+      musicUrl: clearMusicUrl ? null : (musicUrl ?? this.musicUrl),
       backgroundImage: backgroundImage,
       playing: playing ?? this.playing,
       musicQueue: musicQueue ?? this.musicQueue,
-      nowPlaying: nowPlaying ?? this.nowPlaying,
+      nowPlaying: clearNowPlaying ? null : (nowPlaying ?? this.nowPlaying),
       musicRequestCost: musicRequestCost,
       maxMusicQueue: maxMusicQueue,
       musicEnabled: musicEnabled,
@@ -131,9 +133,12 @@ class ChatRoomDjState {
     final resolvedNowPlaying = overwriteNowPlaying
         ? nowPlaying
         : (nowPlaying ?? this.nowPlaying);
+    final trackChanged = overwriteNowPlaying &&
+        nowPlaying != null &&
+        nowPlaying.id != this.nowPlaying?.id;
     final resolvedMusicUrl = musicUrl?.trim().isNotEmpty == true
         ? musicUrl
-        : this.musicUrl;
+        : (trackChanged ? null : this.musicUrl);
     return ChatRoomDjState(
       djUsers: djUsers,
       activeDjId: activeDjId,
@@ -157,6 +162,19 @@ class ChatRoomDjState {
     if (itemId == null) return musicQueue.length;
     final idx = musicQueue.indexWhere((e) => e.id == itemId);
     return idx >= 0 ? idx + 1 : musicQueue.length;
+  }
+
+  /// Mobil çözümleme için tercih edilen kaynak — web gibi önce YouTube watch/videoId.
+  String? get playbackResolveSeed {
+    final np = nowPlaying?.youtubeUrl.trim() ?? '';
+    if (np.isNotEmpty) return np;
+    if (musicQueue.isNotEmpty) {
+      final first = musicQueue.first.youtubeUrl.trim();
+      if (first.isNotEmpty) return first;
+    }
+    final direct = musicUrl?.trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    return null;
   }
 
   /// Oynatılacak URL — önce sunucunun çözdüğü doğrudan akış, yoksa YouTube watch (mobil çözer).

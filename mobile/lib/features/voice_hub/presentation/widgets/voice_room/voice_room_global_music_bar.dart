@@ -70,9 +70,20 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
               unawaited(player.resumeLocal());
             }
           },
-          onClose: () => unawaited(
-            ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer(),
-          ),
+          onClose: () {
+            final room = session.room;
+            if (room != null) {
+              unawaited(
+                ref
+                    .read(voiceRoomLiveProvider(room.stableSessionKey).notifier)
+                    .closeMusicPlayer(),
+              );
+            } else {
+              unawaited(
+                ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer(),
+              );
+            }
+          },
           onMuteToggle: () {
             final notifier = ref.read(voiceRoomUiProvider.notifier);
             notifier.toggleBackgroundMusic();

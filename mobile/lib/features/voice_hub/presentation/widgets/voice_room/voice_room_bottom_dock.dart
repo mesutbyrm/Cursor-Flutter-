@@ -118,7 +118,9 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                 }
               },
               onClose: () => unawaited(
-                ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer(),
+                ref
+                    .read(voiceRoomLiveProvider(session).notifier)
+                    .closeMusicPlayer(),
               ),
               musicMuted: musicMuted,
               onMuteToggle: onMuteToggle,

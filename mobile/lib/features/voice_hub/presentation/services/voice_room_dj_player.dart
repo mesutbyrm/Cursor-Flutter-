@@ -74,6 +74,7 @@ class VoiceRoomDjPlayer {
 
   Future<bool> sync({
     String? musicUrl,
+    String? resolveSeed,
     String? fallbackYoutubeUrl,
     MusicQueueItem? nowPlaying,
     required bool playing,
@@ -82,20 +83,53 @@ class VoiceRoomDjPlayer {
     _muted = muted;
     final handler = await _ensureHandler();
 
-    if (!playing || musicUrl == null || musicUrl.isEmpty) {
-      if (!playing) await stop();
+    if (!playing) {
+      await stop();
       return false;
     }
 
     await VoiceRoomMusicAudioSession.ensureConfigured();
 
-    final candidates = <String>[
-      musicUrl,
-      if (fallbackYoutubeUrl != null &&
-          fallbackYoutubeUrl.isNotEmpty &&
-          fallbackYoutubeUrl != musicUrl)
-        fallbackYoutubeUrl,
-    ];
+    final candidates = <String>[];
+    void addCandidate(String? url) {
+      final trimmed = url?.trim();
+      if (trimmed == null || trimmed.isEmpty) return;
+      if (!candidates.contains(trimmed)) candidates.add(trimmed);
+    }
+
+    // Web gibi: önce YouTube watch / videoId çözümle, sonra sunucu CDN.
+    addCandidate(resolveSeed);
+    addCandidate(fallbackYoutubeUrl);
+    if (nowPlaying != null) {
+      addCandidate(nowPlaying.youtubeUrl);
+      final videoId = VoiceRoomMusicPipelineLog.videoIdFromUrl(
+        nowPlaying.youtubeUrl,
+      );
+      if (videoId != null) {
+        addCandidate('https://www.youtube.com/watch?v=$videoId');
+      }
+    }
+    addCandidate(musicUrl);
+
+    if (candidates.isEmpty) {
+      VoiceRoomMusicPipelineLog.nullMusicUrl(
+        reason: 'sync_no_candidates',
+        caller: 'VoiceRoomDjPlayer.sync',
+        playing: playing,
+        hasNowPlaying: nowPlaying != null,
+      );
+      return false;
+    }
+
+    VoiceRoomMusicPipelineLog.compareFields(
+      stage: 'sync_candidates',
+      roomId: 'local',
+      serverMusicUrl: musicUrl,
+      playbackSource: resolveSeed ?? musicUrl,
+      youtubeFallback: fallbackYoutubeUrl,
+      playing: playing,
+      shouldPlay: playing,
+    );
 
     for (var attempt = 0; attempt < 2; attempt++) {
       if (attempt > 0) {
