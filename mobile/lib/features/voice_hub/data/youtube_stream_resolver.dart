@@ -104,55 +104,72 @@ class YoutubeStreamResolver {
 
   Future<String?> resolvePlayableUrl(String musicUrl) async {
     if (musicUrl.isEmpty) return null;
-    if (isDirectPlayableUrl(musicUrl)) {
+
+    final id = videoIdFrom(musicUrl);
+
+    // googlevideo linkleri kısa ömürlü — doğrudan aday olarak kullanma; watch/videoId ile yenile.
+    if (isDirectPlayableUrl(musicUrl) &&
+        !musicUrl.toLowerCase().contains('googlevideo.com')) {
       return wrapForMobilePlayback(musicUrl);
     }
-    if (!isYoutubePageUrl(musicUrl) && !_youtubeHost.hasMatch(musicUrl)) {
+
+    if (!isYoutubePageUrl(musicUrl) &&
+        !_youtubeHost.hasMatch(musicUrl) &&
+        !musicUrl.toLowerCase().contains('googlevideo.com')) {
       return musicUrl;
     }
-    final id = videoIdFrom(musicUrl);
+
     if (id != null && id.isNotEmpty) {
-      final cached = _cache[id];
-      if (cached != null &&
-          DateTime.now().difference(cached.at) < _cacheTtl) {
-        return cached.url;
+      final fresh = await resolveByVideoId(id);
+      if (fresh != null) return fresh;
+    }
+
+    return null;
+  }
+
+  /// videoId ile tüm kaynakları paralel dene (web Piped sırası).
+  Future<String?> resolveByVideoId(String id) async {
+    final trimmed = id.trim();
+    if (trimmed.isEmpty) return null;
+
+    final cached = _cache[trimmed];
+    if (cached != null &&
+        DateTime.now().difference(cached.at) < const Duration(minutes: 8) &&
+        !cached.url.contains('googlevideo.com')) {
+      return cached.url;
+    }
+
+    final watchUrl = 'https://www.youtube.com/watch?v=$trimmed';
+    final results = await Future.wait<String?>([
+      _resolveViaSiteApi(watchUrl),
+      _resolveViaPipedParallel(trimmed),
+      _resolveViaInvidiousParallel(trimmed),
+      _resolveViaYoutubeExplode(trimmed),
+    ]);
+
+    for (final stream in results) {
+      if (stream != null && stream.startsWith('http')) {
+        final wrapped = wrapForMobilePlayback(stream);
+        _remember(trimmed, wrapped);
+        return wrapped;
       }
     }
+    return null;
+  }
 
-    final fromApi = await _resolveViaSiteApi(musicUrl);
-    if (fromApi != null) {
-      final wrapped = wrapForMobilePlayback(fromApi);
-      _remember(id, wrapped);
-      return wrapped;
-    }
-
-    if (id == null || id.isEmpty) return null;
-
+  Future<String?> _resolveViaPipedParallel(String id) async {
     for (final host in _pipedHosts) {
       final piped = await _resolveViaPiped(host, id);
-      if (piped != null) {
-        final wrapped = wrapForMobilePlayback(piped);
-        _remember(id, wrapped);
-        return wrapped;
-      }
+      if (piped != null) return piped;
     }
+    return null;
+  }
 
+  Future<String?> _resolveViaInvidiousParallel(String id) async {
     for (final host in _invidiousHosts) {
       final inv = await _resolveViaInvidious(host, id);
-      if (inv != null) {
-        final wrapped = wrapForMobilePlayback(inv);
-        _remember(id, wrapped);
-        return wrapped;
-      }
+      if (inv != null) return inv;
     }
-
-    final local = await _resolveViaYoutubeExplode(id);
-    if (local != null) {
-      final wrapped = wrapForMobilePlayback(local);
-      _remember(id, wrapped);
-      return wrapped;
-    }
-
     return null;
   }
 

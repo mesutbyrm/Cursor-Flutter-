@@ -107,6 +107,10 @@ class VoiceRoomDjPlayer {
       );
       if (videoId != null) {
         addCandidate('https://www.youtube.com/watch?v=$videoId');
+        final byId = await _resolver.resolveByVideoId(videoId);
+        if (byId != null && byId.isNotEmpty) {
+          addCandidate(byId);
+        }
       }
     }
     addCandidate(musicUrl);
@@ -173,7 +177,18 @@ class VoiceRoomDjPlayer {
   }
 
   Future<String?> _resolveSource(String musicUrl) async {
-    return _resolver.resolvePlayableUrl(musicUrl);
+    final trimmed = musicUrl.trim();
+    if (trimmed.contains('googlevideo.com') &&
+        YoutubeStreamResolver.isDirectPlayableUrl(trimmed)) {
+      return trimmed;
+    }
+    if (trimmed.contains('/api/chat/youtube-audio')) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('/')) {
+      return trimmed;
+    }
+    return _resolver.resolvePlayableUrl(trimmed);
   }
 
   Future<bool> _attemptPlay({

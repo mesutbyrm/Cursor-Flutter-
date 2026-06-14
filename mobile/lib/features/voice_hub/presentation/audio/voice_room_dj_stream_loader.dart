@@ -44,7 +44,7 @@ class VoiceRoomDjStreamLoader {
     return '$base/api/chat/youtube-audio?url=${Uri.encodeComponent(trimmed)}';
   }
 
-  /// Oynatma deneme sırası — Android googlevideo: önce yerel/proxy, sonra doğrudan CDN.
+  /// Android: önce proxy, sonra indirme, en son doğrudan CDN.
   Future<List<String>> buildPlaybackTargets(String streamUrl) async {
     final trimmed = streamUrl.trim();
     if (trimmed.isEmpty) return const [];
@@ -58,15 +58,16 @@ class VoiceRoomDjStreamLoader {
       targets.add(u);
     }
 
-    if (!kIsWeb && Platform.isAndroid && needsLocalDownload(trimmed)) {
-      add(await downloadFallback(trimmed));
+    final isYtCdn = needsLocalDownload(trimmed);
+
+    if (!kIsWeb && Platform.isAndroid && isYtCdn) {
       add(proxyPlaybackUrl(trimmed));
+      add(await downloadFallback(trimmed));
     }
 
     add(trimmed);
 
-    if (!kIsWeb && Platform.isAndroid && needsLocalDownload(trimmed)) {
-      // Doğrudan CDN başarısız olursa tekrar indirme dene.
+    if (!kIsWeb && Platform.isAndroid && isYtCdn) {
       add(await downloadFallback(trimmed));
     }
 
@@ -98,7 +99,7 @@ class VoiceRoomDjStreamLoader {
         file.path,
         options: Options(
           headers: youtubeStreamHeaders,
-          receiveTimeout: const Duration(seconds: 50),
+          receiveTimeout: const Duration(seconds: 90),
           followRedirects: true,
         ),
       );

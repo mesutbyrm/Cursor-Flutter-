@@ -93,28 +93,25 @@ class _VoiceRoomRightSlidePanelState
           GestureDetector(
             onTap: () => setState(() => _expanded = !_expanded),
             child: Container(
-              width: 14,
-              margin: const EdgeInsets.symmetric(vertical: 32),
+              width: 10,
+              height: 40,
+              margin: const EdgeInsets.only(top: 96),
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.5),
                 borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(10),
+                  left: Radius.circular(8),
                 ),
                 border: Border.all(
                   color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.35),
                 ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _expanded
-                        ? Icons.chevron_right_rounded
-                        : Icons.chevron_left_rounded,
-                    color: Colors.white.withValues(alpha: 0.85),
-                    size: 11,
-                  ),
-                ],
+              alignment: Alignment.center,
+              child: Icon(
+                _expanded
+                    ? Icons.chevron_right_rounded
+                    : Icons.chevron_left_rounded,
+                color: Colors.white.withValues(alpha: 0.85),
+                size: 9,
               ),
             ),
           ),

@@ -845,7 +845,7 @@ class VoiceRoomLiveController
     final ui = ref.read(voiceRoomUiProvider);
     final muted = !ui.backgroundMusicEnabled;
     final session = ref.read(voiceRoomMusicSessionProvider);
-    if (session.dismissed) {
+    if (session.dismissed || session.userDismissedPlayer) {
       await ref.read(voiceRoomDjPlayerProvider).stop();
       _lastDjPlaybackSignature = _djPlaybackSignature(dj, muted: muted);
       return dj;
@@ -1179,16 +1179,19 @@ class VoiceRoomLiveController
   }
 
   void _applyLocalChatClear() {
+    _shownMusicRequestFlashKeys.clear();
     state = state.copyWith(
-      messages: state.messages
-          .where(
-            (m) =>
-                m.kind != ChatMessageKind.text ||
-                m.content.contains('temizlendi') ||
-                m.content.toUpperCase().contains('DUYURU'),
-          )
-          .toList(),
+      messages: state.messages.where((m) {
+        if (m.id.startsWith('song-chat-')) return false;
+        if (VoiceMusicSync.isQueueUpdateMessage(m.content)) return false;
+        if (m.kind != ChatMessageKind.text) return false;
+        if (m.content.contains('temizlendi')) return true;
+        if (m.content.toUpperCase().contains('DUYURU')) return true;
+        return false;
+      }).toList(),
+      clearMusicRequestFlash: true,
     );
+    unawaited(closeMusicPlayer());
   }
 
   Future<void> sendMessage(String text) async {
@@ -1208,6 +1211,7 @@ class VoiceRoomLiveController
     }
 
     if (VoiceMusicSync.isIstekCommand(trimmed)) {
+      ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
       final song = VoiceMusicSync.parseIstekSongTitle(trimmed);
       if (song == null || song.isEmpty) {
         state = state.copyWith(error: 'Kullanım: !istek Sanatçı - Şarkı adı');
@@ -1711,6 +1715,7 @@ class VoiceRoomLiveController
 
   /// X / kapat — yerel oynatıcıyı durdur; DJ/owner ise sunucu kuyruğunu da temizle.
   Future<void> closeMusicPlayer() async {
+    ref.read(voiceRoomMusicSessionProvider.notifier).markUserDismissed();
     await ref.read(voiceRoomDjPlayerProvider).stop();
     if (_canControlMusic()) {
       try {
@@ -2034,6 +2039,7 @@ class VoiceRoomMusicSessionState {
     this.dj = const ChatRoomDjState(),
     this.visible = false,
     this.dismissed = false,
+    this.userDismissedPlayer = false,
     this.canSyncServer = false,
   });
 
@@ -2041,10 +2047,13 @@ class VoiceRoomMusicSessionState {
   final ChatRoomDjState dj;
   final bool visible;
   final bool dismissed;
+  /// Kullanıcı X ile kapattı — sunucu hâlâ çalsa bile mini player açılmasın.
+  final bool userDismissedPlayer;
   final bool canSyncServer;
 
   bool get hasActiveMusic =>
       !dismissed &&
+      !userDismissedPlayer &&
       (dj.playing || dj.nowPlaying != null || dj.musicQueue.isNotEmpty);
 
   VoiceRoomMusicSessionState copyWith({
@@ -2053,6 +2062,7 @@ class VoiceRoomMusicSessionState {
     ChatRoomDjState? dj,
     bool? visible,
     bool? dismissed,
+    bool? userDismissedPlayer,
     bool? canSyncServer,
   }) {
     return VoiceRoomMusicSessionState(
@@ -2060,6 +2070,7 @@ class VoiceRoomMusicSessionState {
       dj: dj ?? this.dj,
       visible: visible ?? this.visible,
       dismissed: dismissed ?? this.dismissed,
+      userDismissedPlayer: userDismissedPlayer ?? this.userDismissedPlayer,
       canSyncServer: canSyncServer ?? this.canSyncServer,
     );
   }
@@ -2090,6 +2101,29 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
         dj.playing ||
         ref.read(voiceRoomDjPlayerProvider).playback.value.playing;
     final hasTrack = dj.nowPlaying != null || dj.musicQueue.isNotEmpty;
+
+    if (state.userDismissedPlayer) {
+      if (!playing && !hasTrack) {
+        state = state.copyWith(
+          userDismissedPlayer: false,
+          dismissed: false,
+          visible: false,
+          room: room,
+          dj: dj,
+          canSyncServer: canSyncServer,
+        );
+      } else {
+        state = state.copyWith(
+          room: room,
+          dj: dj,
+          visible: false,
+          dismissed: true,
+          canSyncServer: canSyncServer,
+        );
+      }
+      return;
+    }
+
     if (!playing && !hasTrack) {
       if (state.room?.id == room.id && !state.dismissed) {
         state = state.copyWith(visible: false, dj: dj);
@@ -2113,6 +2147,11 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
     if (!dismissed) {
       _ensureBackgroundSync(room);
     }
+  }
+
+  void clearUserDismissed() {
+    if (!state.userDismissedPlayer) return;
+    state = state.copyWith(userDismissedPlayer: false, dismissed: false);
   }
 
   void onRoomDetached({
@@ -2171,16 +2210,24 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
     _closeDetachedKeepAlive();
   }
 
-  /// Oda içi X — live controller sunucuyu durdurduktan sonra UI'yı gizle.
   void dismissAfterClose() {
     _syncTimer?.cancel();
     _syncTimer = null;
     state = state.copyWith(
       visible: false,
       dismissed: true,
+      userDismissedPlayer: true,
       dj: const ChatRoomDjState(),
     );
     _closeDetachedKeepAlive();
+  }
+
+  void markUserDismissed() {
+    state = state.copyWith(
+      userDismissedPlayer: true,
+      dismissed: true,
+      visible: false,
+    );
   }
 
   void _closeDetachedKeepAlive() {

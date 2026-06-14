@@ -15,7 +15,8 @@ class VoiceRoomMusicAudioSession {
           avAudioSessionCategoryOptions:
               AVAudioSessionCategoryOptions.mixWithOthers,
           // TRTC/LiveKit ile aynı anda çalabilsin; transient duck müziği susturuyordu.
-          androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
+          androidAudioFocusGainType:
+              AndroidAudioFocusGainType.gainTransientMayDuck,
           androidWillPauseWhenDucked: false,
         ),
       );

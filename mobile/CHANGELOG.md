@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.218+221 (2026-06-13)
+
+### Sesli oda — müzik (2. tur) + !temizle + X + ok
+
+- **googlevideo süresi dolmuş URL** artık doğrudan oynatılmıyor; videoId ile taze stream (Piped/API/explode paralel)
+- Android sırası: **canlifal proxy → indirme → CDN**; indirme zaman aşımı 90s
+- **X mini player:** `userDismissedPlayer` — kapatınca sunucu senkronu geri açmaz
+- **!temizle:** Müzik/istek sohbet satırları + mini player + kuyruk temizlenir
+- Sağ panel ok sekmesi dikeyde küçültüldü (40px)
+- TRTC ile çakışma: `gainTransientMayDuck` ses odağı
+
 ## 1.0.217+220 (2026-06-13)
 
 ### Sesli oda — müzik çalmama + X kapat + eski şarkı
