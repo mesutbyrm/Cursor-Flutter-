@@ -9,7 +9,7 @@ import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
 
-/// Onaylı mockup — kare trend video küçük resimleri.
+/// Ana sayfa — yüklenen kısa videolar (R2/CDN). YouTube trend içeriği gösterilmez.
 class TrendingVideoSection extends ConsumerWidget {
   const TrendingVideoSection({super.key});
 
@@ -24,13 +24,15 @@ class TrendingVideoSection extends ConsumerWidget {
             emoji: '🔥',
             title: 'Trend Videolar',
             actionLabel: 'Tümünü Gör >',
-            onAction: () => context.go('/social'),
+            onAction: () => context.push('/shorts'),
           ),
           SizedBox(
             height: HomeApprovedDesign.trendThumb,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+              padding: const EdgeInsets.symmetric(
+                horizontal: HomeApprovedDesign.hPad,
+              ),
               itemCount: 3,
               separatorBuilder: (_, __) => const SizedBox(width: 10),
               itemBuilder: (_, __) => const PremiumSkeleton(
@@ -44,10 +46,10 @@ class TrendingVideoSection extends ConsumerWidget {
           ),
         ],
       ),
-      error: (_, __) => _content(context, _fallbackVideos),
+      error: (_, __) => const SizedBox.shrink(),
       data: (items) {
-        final list = items.isNotEmpty ? items : _fallbackVideos;
-        return _content(context, list);
+        if (items.isEmpty) return const SizedBox.shrink();
+        return _content(context, items);
       },
     );
   }
@@ -59,7 +61,7 @@ class TrendingVideoSection extends ConsumerWidget {
           emoji: '🔥',
           title: 'Trend Videolar',
           actionLabel: 'Tümünü Gör >',
-          onAction: () => context.go('/social'),
+          onAction: () => context.push('/shorts'),
         ),
         SizedBox(
           height: HomeApprovedDesign.trendThumb,
@@ -70,34 +72,13 @@ class TrendingVideoSection extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(width: 10),
             itemBuilder: (_, i) => _TrendThumb(
               video: videos[i],
-              onTap: () => context.go('/social'),
+              onTap: () => context.push('/shorts?videoId=${videos[i].id}'),
             ),
           ),
         ),
       ],
     );
   }
-
-  static const _fallbackVideos = [
-    HomeTrendVideoEntity(
-      id: 'demo-1',
-      title: 'Tarot Rehberi',
-      channelName: 'Canlifal',
-      viewCount: 2400,
-    ),
-    HomeTrendVideoEntity(
-      id: 'demo-2',
-      title: 'Kahve Falı',
-      channelName: 'Canlifal',
-      viewCount: 1800,
-    ),
-    HomeTrendVideoEntity(
-      id: 'demo-3',
-      title: 'Astroloji',
-      channelName: 'Canlifal',
-      viewCount: 920,
-    ),
-  ];
 }
 
 class _TrendThumb extends StatelessWidget {
@@ -118,7 +99,7 @@ class _TrendThumb extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              if (video.thumbnailUrl != null)
+              if (video.thumbnailUrl != null && video.thumbnailUrl!.isNotEmpty)
                 CachedNetworkImage(
                   imageUrl: video.thumbnailUrl!,
                   fit: BoxFit.cover,

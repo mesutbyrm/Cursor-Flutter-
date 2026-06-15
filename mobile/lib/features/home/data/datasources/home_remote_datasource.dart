@@ -273,6 +273,20 @@ class HomeRemoteDataSource {
   }
 
   Future<List<HomeTrendVideoEntity>> fetchTrendVideos() async {
+    // Öncelik: kullanıcıların yüklediği kısa videolar (R2/CDN).
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.shortVideos,
+        query: {'limit': 12},
+      );
+      final shorts = _shortVideosFromBody(res.data)
+          .map(_mapShortVideoToTrend)
+          .where((v) => v.id.isNotEmpty && !v.isYoutubeSource)
+          .toList();
+      if (shorts.isNotEmpty) return shorts;
+    } catch (_) {}
+
+    // Eski trend-videos: YouTube kaynaklarını gösterme.
     for (final path in [ApiEndpoints.trendVideos]) {
       try {
         final res = await _dio.safeGet<dynamic>(path);
@@ -283,12 +297,52 @@ class HomeRemoteDataSource {
         if (items.isNotEmpty) {
           return items
               .map(_mapTrendVideo)
-              .where((v) => v.id.isNotEmpty)
+              .where((v) => v.id.isNotEmpty && !v.isYoutubeSource)
               .toList();
         }
       } catch (_) {}
     }
     return const [];
+  }
+
+  List<dynamic> _shortVideosFromBody(dynamic body) {
+    if (body is! Map) return const [];
+    final m = asJsonMap(body);
+    final data = m['success'] == true && m['data'] is Map
+        ? asJsonMap(m['data'])
+        : m;
+    final raw = data['videos'];
+    if (raw is List) return raw;
+    return const [];
+  }
+
+  HomeTrendVideoEntity _mapShortVideoToTrend(dynamic raw) {
+    final m = asJsonMap(raw);
+    final authorRaw = pick(m, ['author', 'user']);
+    var channel = 'Canlifal';
+    if (authorRaw is Map) {
+      final am = asJsonMap(authorRaw);
+      channel = _str(am, ['displayName', 'username', 'name']) ?? channel;
+    }
+    final desc = _str(m, ['description', 'caption'])?.trim();
+    final dur = pick(m, ['durationSec', 'duration_sec']);
+    var durationStr = '';
+    if (dur is num && dur > 0) {
+      final sec = dur.round();
+      final m = sec ~/ 60;
+      final s = sec % 60;
+      durationStr = '$m:${s.toString().padLeft(2, '0')}';
+    }
+    return HomeTrendVideoEntity(
+      id: _str(m, ['id', '_id']) ?? '',
+      title: (desc != null && desc.isNotEmpty) ? desc : channel,
+      channelName: channel,
+      thumbnailUrl: _str(m, ['thumbnailUrl', 'thumbnail_url', 'thumbnail']),
+      duration: durationStr,
+      viewCount: asInt(pick(m, ['viewsCount', 'views_count', 'viewCount'])),
+      videoUrl: _str(m, ['videoUrl', 'video_url']),
+      badge: 'YENİ',
+    );
   }
 
   Future<int?> fetchUnreadNotifications() async {
@@ -457,6 +511,13 @@ class HomeRemoteDataSource {
     final m = asJsonMap(raw);
     final badges = ['POPÜLER', 'EZEL', 'YENİ', 'TREND'];
     final idx = m.hashCode.abs() % badges.length;
+    final videoUrl = _str(m, [
+      'videoUrl',
+      'video_url',
+      'playbackUrl',
+      'url',
+      'youtubeUrl',
+    ]);
     return HomeTrendVideoEntity(
       id: _str(m, ['id', '_id']) ?? '',
       title: _str(m, ['title', 'name', 'content']) ?? 'Video',
@@ -473,6 +534,7 @@ class HomeRemoteDataSource {
       duration: _str(m, ['duration', 'length']) ?? '0:30',
       badge: _str(m, ['badge', 'tag', 'label']) ?? badges[idx],
       viewCount: asInt(pick(m, ['viewCount', 'views', 'viewers'])),
+      videoUrl: videoUrl,
     );
   }
 

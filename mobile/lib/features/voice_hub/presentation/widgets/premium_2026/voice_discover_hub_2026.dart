@@ -211,10 +211,6 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
                   tab: t,
                   active: active,
                   onTap: () {
-                    if (t.id == 'vip') {
-                      context.push('/vip-gold');
-                      return;
-                    }
                     if (t.id == 'pk' && widget.rooms.isNotEmpty) {
                       final r = widget.rooms.first;
                       context.push('/voice-room/${r.apiRoomKey}/pk', extra: r);
@@ -386,14 +382,10 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
             cat: c,
             roomLabel: count > 0 ? '${VoiceLiveHeader2026Format.count(count)} oda' : '—',
             onTap: () {
-              if (c.id == 'vip') {
-                context.push('/vip-gold');
-              } else {
-                setState(() {
-                  _tab = c.id == 'night' ? 'discover' : c.id;
-                  _resetVisibleRooms();
-                });
-              }
+              setState(() {
+                _tab = c.id == 'night' ? 'discover' : c.id;
+                _resetVisibleRooms();
+              });
             },
           );
         },

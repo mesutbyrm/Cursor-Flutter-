@@ -27,7 +27,7 @@ class HomeTrendVideosRow extends ConsumerWidget {
             HomeSectionHeader(
               title: 'Trend Videolar',
               leadingDotColor: const Color(0xFFFF4FD8),
-              onTrailing: () => context.go('/social'),
+              onTrailing: () => context.push('/shorts'),
             ),
             SizedBox(
               height: 168,
@@ -36,7 +36,10 @@ class HomeTrendVideosRow extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: items.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (_, i) => _TrendVideoCard(video: items[i]),
+                itemBuilder: (_, i) => GestureDetector(
+                  onTap: () => context.push('/shorts?videoId=${items[i].id}'),
+                  child: _TrendVideoCard(video: items[i]),
+                ),
               ),
             ),
           ],

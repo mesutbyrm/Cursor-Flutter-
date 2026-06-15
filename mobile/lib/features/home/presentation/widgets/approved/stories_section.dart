@@ -22,20 +22,23 @@ class StoriesSection extends ConsumerWidget {
     final ringsAsync = ref.watch(socialStoryRingsProvider);
     final me = ref.watch(authControllerProvider).valueOrNull;
 
-    return SizedBox(
-      height: HomeApprovedDesign.storySize + 36,
-      child: ringsAsync.when(
-        loading: () => const Center(
-          child: SizedBox(
-            width: 22,
-            height: 22,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-        error: (_, __) => const SizedBox.shrink(),
-        data: (rings) {
-          final others = rings.where((r) => r.user.id != me?.id).toList();
-          return ListView(
+    return ringsAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (rings) {
+        final withStories = rings
+            .where(
+              (r) =>
+                  r.stories.isNotEmpty ||
+                  (r.previewUrl?.trim().isNotEmpty ?? false),
+            )
+            .toList();
+        if (withStories.isEmpty) return const SizedBox.shrink();
+        final others =
+            withStories.where((r) => r.user.id != me?.id).toList();
+        return SizedBox(
+          height: HomeApprovedDesign.storySize + 36,
+          child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
             children: [
@@ -47,9 +50,9 @@ class StoriesSection extends ConsumerWidget {
                 ),
               ),
             ],
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

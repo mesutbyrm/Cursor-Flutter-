@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.220+223 (2026-06-14)
+
+### Ana sayfa + sesli oda
+
+- **Trend Videolar:** Yüklenen kısa videolar (`/api/short-videos`) gösterilir; YouTube trend içeriği ve demo kartlar kaldırıldı; boşsa bölüm gizlenir; tıklanınca `/shorts` açılır
+- **Hikayeler:** Aktif hikâye yoksa ana sayfa hikâye şeridi gizlenir (hikâye eklenince otomatik görünür)
+- **Oda aç / VIP oda:** Giriş kontrolü; oda sahibi VIP kapısını atlar; VIP sekmesi artık VIP odaları filtreler; boş oda listesinde «Oda Aç» butonu
+
 ## 1.0.219+222 (2026-06-13)
 
 ### Kısa videolar (TikTok tarzı)

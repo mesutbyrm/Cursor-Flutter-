@@ -18,6 +18,8 @@ class VoiceRoomEntity extends Equatable {
     this.activeDjId,
     this.djUserIds = const [],
     this.recentUserAvatars = const [],
+    this.isVip,
+    this.roomType,
   });
 
   final String id;
@@ -35,6 +37,8 @@ class VoiceRoomEntity extends Equatable {
   final String? activeDjId;
   final List<String> djUserIds;
   final List<String> recentUserAvatars;
+  final bool? isVip;
+  final String? roomType;
 
   int get displayOnline => onlineCount > 0 ? onlineCount : userCount;
 
@@ -65,6 +69,8 @@ class VoiceRoomEntity extends Equatable {
         activeDjId: activeDjId,
         djUserIds: djUserIds,
         recentUserAvatars: recentUserAvatars,
+        isVip: isVip,
+        roomType: roomType,
       );
 
   @override
@@ -84,5 +90,7 @@ class VoiceRoomEntity extends Equatable {
         activeDjId,
         djUserIds,
         recentUserAvatars,
+        isVip,
+        roomType,
       ];
 }

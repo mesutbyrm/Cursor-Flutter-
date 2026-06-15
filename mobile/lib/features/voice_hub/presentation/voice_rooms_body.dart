@@ -9,7 +9,7 @@ import '../../../core/widgets/discover_tab_layout.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/domain/entities/voice_room_sort.dart';
 import '../../live/presentation/providers/live_providers.dart';
-import 'theme/voice_room_tokens.dart';
+import 'utils/open_voice_chat_room_flow.dart';
 import '../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import 'widgets/premium_2026/voice_discover_hub_2026.dart';
 
@@ -54,9 +54,11 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
       ),
       data: (list) {
         if (list.isEmpty) {
-          return const DiscoverEmptyState(
+          return DiscoverEmptyState(
             icon: Icons.nights_stay_rounded,
-            message: 'Henüz oda yok.\nYeni sesli sohbet odaları burada görünecek.',
+            message: 'Henüz oda yok.\nİlk sesli sohbet odasını sen aç!',
+            actionLabel: 'Oda Aç',
+            action: () => showOpenVoiceChatRoomFlow(context, ref),
           );
         }
 

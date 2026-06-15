@@ -7,6 +7,7 @@ class HomeTrendVideoEntity {
     this.duration = '',
     this.badge,
     this.viewCount = 0,
+    this.videoUrl,
   });
 
   final String id;
@@ -16,4 +17,13 @@ class HomeTrendVideoEntity {
   final String duration;
   final String? badge;
   final int viewCount;
+  /// CDN MP4 — kısa video akışına yönlendirme için.
+  final String? videoUrl;
+
+  bool get isYoutubeSource {
+    final hay = '${videoUrl ?? ''} ${thumbnailUrl ?? ''} ${title.toLowerCase()}';
+    return hay.contains('youtube') ||
+        hay.contains('youtu.be') ||
+        hay.contains('googlevideo');
+  }
 }

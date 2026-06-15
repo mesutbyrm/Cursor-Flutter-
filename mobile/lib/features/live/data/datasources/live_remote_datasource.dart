@@ -418,6 +418,12 @@ class LiveRemoteDataSource {
     }
     final slug = pick(json, ['slug'])?.toString() ?? '';
     final rawId = pick(json, ['id', '_id', 'roomId'])?.toString() ?? '';
+    final isVipRaw = pick(json, ['isVip', 'vip']);
+    final isVip = isVipRaw == true ||
+        isVipRaw == 1 ||
+        isVipRaw == 'true' ||
+        isVipRaw == '1';
+    final roomType = pick(json, ['roomType', 'type'])?.toString();
     return VoiceRoomEntity(
       id: rawId,
       slug: slug,
@@ -435,6 +441,8 @@ class LiveRemoteDataSource {
       activeDjId: pick(json, ['activeDjId'])?.toString(),
       djUserIds: djIds,
       recentUserAvatars: recent,
+      isVip: isVip ? true : null,
+      roomType: roomType,
     );
   }
 }

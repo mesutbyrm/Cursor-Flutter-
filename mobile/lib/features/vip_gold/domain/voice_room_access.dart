@@ -6,6 +6,9 @@ extension VoiceRoomAccess on VoiceRoomEntity {
       '${nameTr.toLowerCase()} ${slug.toLowerCase()} ${descTr?.toLowerCase() ?? ''}';
 
   bool get isVipGoldRoom {
+    if (isVip == true) return true;
+    final type = roomType?.toLowerCase().trim();
+    if (type == 'vip' || type == 'gold' || type == 'premium') return true;
     final t = _haystack;
     return t.contains('vip') ||
         t.contains('gold') ||

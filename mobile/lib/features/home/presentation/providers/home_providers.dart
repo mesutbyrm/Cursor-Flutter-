@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../social/presentation/providers/social_providers.dart';
+import '../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../data/datasources/home_remote_datasource.dart';
 import '../../data/repositories/home_repository_impl.dart';
 import '../../domain/entities/home_banner_entity.dart';
@@ -143,6 +144,7 @@ Future<void> refreshHomeData(WidgetRef ref) async {
   ref.invalidate(homeDailyRewardsProvider);
   ref.invalidate(homeTrendVideosProvider);
   ref.invalidate(socialStoryRingsProvider);
+  ref.invalidate(shortsFeedProvider);
   await Future.wait([
     ref.refresh(homeBannersProvider.future),
     ref.refresh(homeLiveFortuneTellersProvider.future),

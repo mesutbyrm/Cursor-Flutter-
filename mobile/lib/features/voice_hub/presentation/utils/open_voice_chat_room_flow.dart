@@ -14,6 +14,12 @@ import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 
 /// canlifal.com — sesli sohbet odası aç (normal 100 / VIP 5000 jeton).
 Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) async {
+  final user = ref.read(authControllerProvider).valueOrNull;
+  if (user == null) {
+    if (context.mounted) context.push('/login');
+    return;
+  }
+
   const normalCost = LiveRemoteDataSource.voiceRoomNormalOpenJetonCost;
   const vipCost = LiveRemoteDataSource.voiceRoomVipOpenJetonCost;
   int balance = 0;
@@ -154,7 +160,12 @@ Future<void> _createAndEnter(
         ),
       ),
     );
-    await openVoiceRoomWithVipGate(context, ref, room);
+    await openVoiceRoomWithVipGate(
+      context,
+      ref,
+      room,
+      skipVipGateForOwner: true,
+    );
   } catch (e) {
     if (!context.mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
