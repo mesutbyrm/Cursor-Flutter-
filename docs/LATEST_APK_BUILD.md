@@ -2,24 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.219+222` |
-| Tarih (UTC) | 2026-06-14 09:44 |
-| Commit | [`2a728fc4c0bf863d6173c54e3797332041182f14`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/2a728fc4c0bf863d6173c54e3797332041182f14) |
-| İş akışı | [Run 27494769746](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27494769746) |
+| Sürüm | `1.0.220+223` |
+| Tarih (UTC) | 2026-06-15 10:11 |
+| Commit | [`103891538f6d95c42124bcbc7b4c002051f1f465`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/103891538f6d95c42124bcbc7b4c002051f1f465) |
+| İş akışı | [Run 27538686169](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27538686169) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.219+222 (2026-06-13)
+## 1.0.220+223 (2026-06-14)
 
-### Kısa videolar (TikTok tarzı)
+### Ana sayfa + sesli oda
 
-- Dikey tam ekran feed: yukarı/aşağı kaydırma, otomatik oynatma, sonraki video ön yükleme
-- Galeriden MP4 yükleme (max 15 sn, 10 MB), önizleme + açıklama
-- Beğeni, yorum, paylaş, profil; ≥3 sn izlenince görüntülenme sayımı
-- Videolar Cloudflare R2 CDN URL'lerinden doğrudan oynatılır (backend yalnızca metadata)
-- API: `GET/POST /api/short-videos/*` (yerel mirror + mobil uçlar)
-- Sosyal sekmesinde kısa video girişi
+- **Trend Videolar:** Yüklenen kısa videolar (`/api/short-videos`) gösterilir; YouTube trend içeriği ve demo kartlar kaldırıldı; boşsa bölüm gizlenir; tıklanınca `/shorts` açılır
+- **Hikayeler:** Aktif hikâye yoksa ana sayfa hikâye şeridi gizlenir (hikâye eklenince otomatik görünür)
+- **Oda aç / VIP oda:** Giriş kontrolü; oda sahibi VIP kapısını atlar; VIP sekmesi artık VIP odaları filtreler; boş oda listesinde «Oda Aç» butonu
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
