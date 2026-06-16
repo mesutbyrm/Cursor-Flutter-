@@ -2050,7 +2050,7 @@ class VoiceRoomLiveController
       VoiceRoomMusicPipelineLog.istekSubmitted(
         song: title,
         roomId: _roomKey,
-        requestEndpoint: '/api/chat/rooms/$_roomKey/song-request',
+        requestEndpoint: '/api/chat/rooms/$_roomKey/music',
         responseMusicUrl: result.musicUrl,
         responsePlaying: result.playing,
         queuePosition: result.queuePosition,

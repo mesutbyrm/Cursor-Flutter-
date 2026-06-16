@@ -36,6 +36,11 @@ class ChatRoomRemoteDataSource {
 
   static String djPath(String roomId) => '/api/chat/rooms/$roomId/dj';
 
+  static String musicPath(String roomId) => '/api/chat/rooms/$roomId/music';
+
+  static String moderationPath(String roomId) =>
+      '/api/chat/rooms/$roomId/moderation';
+
   static String backgroundsPath() => '/api/chat/rooms/backgrounds';
 
   static String speakRequestPath(String roomId) =>
@@ -164,18 +169,26 @@ class ChatRoomRemoteDataSource {
     String roomKey, {
     String? alternateKey,
     String? nickname,
+    int? seatIndex,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final nick = nickname?.trim();
+      final body = <String, dynamic>{};
+      if (nick != null && nick.isNotEmpty) body['nickname'] = nick;
+      if (seatIndex != null && seatIndex > 0) body['seatIndex'] = seatIndex;
       final res = await _dio.safePost<dynamic>(
         presencePath(key),
-        data: nick != null && nick.isNotEmpty ? {'nickname': nick} : null,
+        data: body.isEmpty ? null : jsonEncode(body),
+        options: body.isEmpty
+            ? null
+            : Options(contentType: 'application/json'),
       );
       final list = _presenceList(res.data);
       VoiceRoomDebugLog.log('api.presence.post', {
         'roomId': key,
         'status': res.statusCode,
         'count': list.length,
+        if (seatIndex != null) 'seatIndex': seatIndex,
       });
       return list;
     });
@@ -183,6 +196,12 @@ class ChatRoomRemoteDataSource {
 
   Future<void> leavePresence(String roomKey, {String? alternateKey}) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _dio.safeDelete<dynamic>('${presencePath(key)}?leave=1');
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
       await _dio.safeDelete<dynamic>(presencePath(key));
     });
   }
@@ -229,6 +248,14 @@ class ChatRoomRemoteDataSource {
     required bool playing,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      if (!playing) {
+        try {
+          await _dio.safeDelete<dynamic>(musicPath(key));
+          return fetchDj(key);
+        } on ApiException catch (e) {
+          if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        }
+      }
       final res = await _dio.safePost<dynamic>(
         djPath(key),
         data: jsonEncode({
@@ -306,6 +333,12 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _dio.safeDelete<dynamic>(musicPath(key));
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
       await _dio.safeDelete<dynamic>('/api/chat/rooms/$key/music-queue');
     });
   }
@@ -405,6 +438,27 @@ class ChatRoomRemoteDataSource {
 
   static String rolePath(String roomId) => '/api/chat/rooms/$roomId/roles';
 
+  Future<void> _postModeration({
+    required String roomKey,
+    required String action,
+    required String targetUserId,
+    String? role,
+    String? reason,
+    int? duration,
+  }) async {
+    await _dio.safePost<dynamic>(
+      moderationPath(roomKey),
+      data: jsonEncode({
+        'action': action,
+        'targetUserId': targetUserId,
+        if (role != null && role.isNotEmpty) 'role': role,
+        if (reason != null && reason.isNotEmpty) 'reason': reason,
+        if (duration != null) 'duration': duration,
+      }),
+      options: Options(contentType: 'application/json'),
+    );
+  }
+
   Future<void> banUser({
     required String roomKey,
     String? alternateKey,
@@ -412,6 +466,17 @@ class ChatRoomRemoteDataSource {
     String? reason,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _postModeration(
+          roomKey: key,
+          action: 'ban_user',
+          targetUserId: userId,
+          reason: reason,
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
       await _dio.safePost<dynamic>(
         banPath(key, userId),
         data: jsonEncode({if (reason != null) 'reason': reason}),
@@ -437,6 +502,17 @@ class ChatRoomRemoteDataSource {
     String? reason,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _postModeration(
+          roomKey: key,
+          action: 'kick_user',
+          targetUserId: userId,
+          reason: reason,
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
       await _dio.safePost<dynamic>(
         kickPath(key),
         data: jsonEncode({
@@ -456,6 +532,18 @@ class ChatRoomRemoteDataSource {
     String? reason,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _postModeration(
+          roomKey: key,
+          action: 'mute_user',
+          targetUserId: userId,
+          reason: reason,
+          duration: minutes,
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
       await _dio.safePost<dynamic>(
         mutePath(key),
         data: jsonEncode({
@@ -476,6 +564,17 @@ class ChatRoomRemoteDataSource {
     required String roleSymbol,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _postModeration(
+          roomKey: key,
+          action: 'set_role',
+          targetUserId: userId,
+          role: roleSymbol,
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
       await _dio.safePost<dynamic>(
         rolePath(key),
         data: jsonEncode({
@@ -767,9 +866,9 @@ class ChatRoomRemoteDataSource {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       Response<dynamic>? res;
       for (final path in [
+        musicPath(key),
         '/api/chat/rooms/$key/music-queue',
         songRequestPath(key),
-        '/api/chat/rooms/$key/music',
         djPath(key),
       ]) {
         try {
@@ -906,6 +1005,7 @@ class ChatRoomRemoteDataSource {
     required String youtubeUrl,
     String? thumbUrl,
     String? videoId,
+    String? duration,
     String? giftTo,
     String? note,
     bool priority = true,
@@ -914,12 +1014,13 @@ class ChatRoomRemoteDataSource {
       final vid = videoId?.trim().isNotEmpty == true
           ? videoId!.trim()
           : _extractYoutubeId(youtubeUrl);
+      final durationSec = _durationToSeconds(duration);
       VoiceRoomDebugLog.log('music.queue.add', {
         'room': key,
         'title': title,
         'priority': priority,
       });
-      final body = jsonEncode({
+      final legacyBody = jsonEncode({
         'title': title,
         'youtubeUrl': youtubeUrl,
         if (vid != null) 'videoId': vid,
@@ -927,23 +1028,38 @@ class ChatRoomRemoteDataSource {
         if (giftTo != null && giftTo.trim().isNotEmpty) 'giftTo': giftTo.trim(),
         if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
         if (priority) 'priority': true,
+        if (durationSec != null) 'duration': durationSec,
+      });
+      final productionBody = jsonEncode({
+        'title': title,
+        if (vid != null) 'videoId': vid,
+        if (durationSec != null) 'duration': durationSec,
       });
       final opts = Options(contentType: 'application/json');
       Response<dynamic> res;
-      var usedEndpoint = songRequestPath(key);
+      var usedEndpoint = musicPath(key);
       try {
         res = await _dio.safePost<dynamic>(
           usedEndpoint,
-          data: body,
+          data: productionBody,
           options: opts,
         );
       } on Object {
-        usedEndpoint = '/api/chat/rooms/$key/music-queue';
-        res = await _dio.safePost<dynamic>(
-          usedEndpoint,
-          data: body,
-          options: opts,
-        );
+        usedEndpoint = songRequestPath(key);
+        try {
+          res = await _dio.safePost<dynamic>(
+            usedEndpoint,
+            data: legacyBody,
+            options: opts,
+          );
+        } on Object {
+          usedEndpoint = '/api/chat/rooms/$key/music-queue';
+          res = await _dio.safePost<dynamic>(
+            usedEndpoint,
+            data: legacyBody,
+            options: opts,
+          );
+        }
       }
       final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
       MusicQueueItem? item;
@@ -1105,7 +1221,13 @@ class ChatRoomRemoteDataSource {
       } on ApiException catch (e) {
         if (e.statusCode != 405 && e.statusCode != 404) rethrow;
       }
-      await _dio.safePost<dynamic>(seatsPath(key), data: body, options: opts);
+      try {
+        await _dio.safePost<dynamic>(seatsPath(key), data: body, options: opts);
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 405 && e.statusCode != 404) rethrow;
+      }
+      await _dio.safePost<dynamic>(presencePath(key), data: body, options: opts);
     });
   }
 
@@ -1152,6 +1274,21 @@ class ChatRoomRemoteDataSource {
     throw const ApiException('DJ güncellenemedi. Tekrar deneyin.');
   }
 
+  Future<List<String>> _postDjAction({
+    required String roomKey,
+    required String action,
+    required String userId,
+  }) async {
+    final res = await _dio.safePost<dynamic>(
+      djPath(roomKey),
+      data: jsonEncode({'action': action, 'userId': userId}),
+      options: Options(contentType: 'application/json'),
+    );
+    final ids = _parseDjUserIdsResponse(res.data);
+    if (ids.isNotEmpty) return ids;
+    return _fetchDjUserIdsAfterMutation(roomKey);
+  }
+
   Future<List<String>> addRoomDj({
     required String roomKey,
     String? alternateKey,
@@ -1160,6 +1297,16 @@ class ChatRoomRemoteDataSource {
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       ApiException? restError;
+      try {
+        return await _postDjAction(
+          roomKey: key,
+          action: 'add_dj',
+          userId: targetUserId,
+        );
+      } on ApiException catch (e) {
+        restError = e;
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
       try {
         final res = await _dio.safePost<dynamic>(
           '/api/chat/rooms/$key/dj/$targetUserId',
@@ -1176,9 +1323,8 @@ class ChatRoomRemoteDataSource {
           targetUserId: targetUserId,
           targetLabel: targetLabel,
         );
-      } catch (e) {
-        if (restError != null) throw restError;
-        rethrow;
+      } catch (_) {
+        throw restError;
       }
     });
   }
@@ -1191,6 +1337,16 @@ class ChatRoomRemoteDataSource {
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       ApiException? restError;
+      try {
+        return await _postDjAction(
+          roomKey: key,
+          action: 'remove_dj',
+          userId: targetUserId,
+        );
+      } on ApiException catch (e) {
+        restError = e;
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
       try {
         final res = await _dio.safeDelete<dynamic>(
           '/api/chat/rooms/$key/dj/$targetUserId',
@@ -1207,9 +1363,8 @@ class ChatRoomRemoteDataSource {
           targetUserId: targetUserId,
           targetLabel: targetLabel,
         );
-      } catch (e) {
-        if (restError != null) throw restError;
-        rethrow;
+      } catch (_) {
+        throw restError;
       }
     });
   }
@@ -1268,6 +1423,28 @@ class ChatRoomRemoteDataSource {
       }
       return const [];
     });
+  }
+
+  int? _durationToSeconds(String? duration) {
+    final raw = duration?.trim();
+    if (raw == null || raw.isEmpty) return null;
+    final direct = int.tryParse(raw);
+    if (direct != null && direct > 0) return direct;
+    final parts = raw.split(':');
+    if (parts.length == 2) {
+      final m = int.tryParse(parts[0]);
+      final s = int.tryParse(parts[1]);
+      if (m != null && s != null && m >= 0 && s >= 0) return m * 60 + s;
+    }
+    if (parts.length == 3) {
+      final h = int.tryParse(parts[0]);
+      final m = int.tryParse(parts[1]);
+      final s = int.tryParse(parts[2]);
+      if (h != null && m != null && s != null) {
+        return h * 3600 + m * 60 + s;
+      }
+    }
+    return null;
   }
 
   String? _extractYoutubeId(String url) {

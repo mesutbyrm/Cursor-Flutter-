@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.224+227 (2026-06-12)
+
+### Sesli oda — canlifal.com üretim API uyumu
+
+- **DJ:** `POST /dj` ile `{ action: add_dj|remove_dj, userId }` (birincil); yerel `/dj/:id` ve `!dj` yedeği
+- **Müzik:** `GET/POST/DELETE /music` birincil (`videoId`, `title`, `duration`); `song-request` / `music-queue` yedeği
+- **Moderasyon:** `POST /moderation` (`ban_user`, `kick_user`, `mute_user`, `set_role`) birincil
+- **Presence:** `DELETE /presence?leave=1`; koltuk atama için `POST /presence { seatIndex }` yedeği
+- **Roller:** `%` admin (5) > `~` founder (4) > `&` sop (3) > `@` op (2) > `+` voice (1) hiyerarşisi
+
 ## 1.0.223+226 (2026-06-16)
 
 ### Sesli oda — YouTube çalma + DJ üretim uyumu
