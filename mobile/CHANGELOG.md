@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.227+230 (2026-06-12)
+
+### Premium Fortune — modern fal uygulaması (MVVM)
+
+- **Mimari:** `premium_fortune/` modülü — MVVM + Clean Architecture (domain/data/presentation)
+- **Firebase:** Auth, Firestore, Storage entegrasyonu (demo mod: SharedPreferences yedek)
+- **OpenAI:** Kahve falı (görsel), tarot, rüya tabiri, doğum haritası AI yorumları
+- **Modüller:** Auth (e-posta, Google, Apple), kahve falı, tarot, canlı falcı, sohbet, cüzdan, oyunlar, astroloji, rüya, admin panel
+- **Tasarım:** Premium koyu tema, cam kartlar, alt navigasyon, animasyonlu geçişler
+- **Ödeme:** Stripe/Iyzico soyut katmanı + kupon kodları (HOSGELDIN, FAL2026)
+- **Rota:** `/premium` — ana uygulamadan bağımsız premium deneyim
+
 ## 1.0.226+229 (2026-06-12)
 
 ### Sesli oda — tam teknik dokümantasyon uyumu
