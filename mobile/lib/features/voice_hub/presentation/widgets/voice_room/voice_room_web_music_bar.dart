@@ -167,7 +167,7 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
                               ],
                             ),
                           ),
-                          if (canControlMusic && onPlayPause != null)
+                          if (onPlayPause != null)
                             _BarIconButton(
                               onPressed: onPlayPause,
                               color: const Color(0xFFFF9800),

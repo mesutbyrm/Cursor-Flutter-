@@ -40,6 +40,7 @@ import {
   POPULAR_MUSIC_SUGGESTIONS,
   addRoomDj,
   removeRoomDj,
+  assignSeat,
   MUSIC_REQUEST_JETON,
   listRoomBannedWords,
   addRoomBannedWord,
@@ -479,7 +480,8 @@ chatRoomsRouter.post("/rooms/:roomId/dj/:targetUserId", requireAuth, async (req,
   if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
   const result = addRoomDj(req.params.roomId, user, req.params.targetUserId);
   if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error ?? "Yetki yok");
-  return ok(res, { djUserIds: result.djUserIds });
+  emitChatRoomDjUpdate(req.params.roomId);
+  return ok(res, { djUserIds: result.djUserIds, success: true });
 });
 
 chatRoomsRouter.delete("/rooms/:roomId/dj/:targetUserId", requireAuth, async (req, res) => {
@@ -487,7 +489,43 @@ chatRoomsRouter.delete("/rooms/:roomId/dj/:targetUserId", requireAuth, async (re
   if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
   const result = removeRoomDj(req.params.roomId, user, req.params.targetUserId);
   if (!result.ok) return fail(res, 403, "FORBIDDEN", result.error ?? "Yetki yok");
-  return ok(res, { djUserIds: result.djUserIds });
+  emitChatRoomDjUpdate(req.params.roomId);
+  return ok(res, { djUserIds: result.djUserIds, success: true });
+});
+
+async function handleAssignSeat(
+  req: { params: { roomId: string }; body?: Record<string, unknown>; userId?: string },
+  res: import("express").Response,
+) {
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+  const seatIndex =
+    typeof req.body?.seatIndex === "number"
+      ? req.body.seatIndex
+      : Number(req.body?.seatIndex ?? 0);
+  const targetUserId =
+    typeof req.body?.userId === "string"
+      ? req.body.userId
+      : typeof req.body?.targetUserId === "string"
+        ? req.body.targetUserId
+        : undefined;
+  const result = assignSeat(req.params.roomId, user, seatIndex, targetUserId);
+  if (!result.ok) {
+    return fail(res, 403, "FORBIDDEN", result.error ?? "Koltuk atanamadı");
+  }
+  emitChatRoomPresence(
+    req.params.roomId,
+    result.presence as unknown as Record<string, unknown>[],
+  );
+  return res.status(200).json({ success: true, presence: result.presence });
+}
+
+chatRoomsRouter.patch("/rooms/:roomId/seats", requireAuth, async (req, res) => {
+  return handleAssignSeat(req, res);
+});
+
+chatRoomsRouter.post("/rooms/:roomId/seats", requireAuth, async (req, res) => {
+  return handleAssignSeat(req, res);
 });
 
 /** GET /api/chat/rooms/:roomId/stream — SSE (Flutter birincil kanal) */

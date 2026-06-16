@@ -726,6 +726,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         room: room,
         live: live,
         seatIndex: internalSeatIndex,
+        perms: perms,
       );
       return;
     }
@@ -751,12 +752,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     required VoiceRoomEntity room,
     required VoiceRoomLiveState live,
     required int seatIndex,
+    required VoiceRoomPermissions perms,
   }) async {
     final self = ref.read(authControllerProvider).valueOrNull;
+    final ctrl = ref.read(voiceRoomLiveProvider(_sessionRoom).notifier);
     final onStage = voiceWebOnStageIds(room: room, presence: live.presence);
     final candidates = live.presence
         .where((p) => !onStage.contains(p.id) || p.seatIndex == seatIndex)
         .toList();
+    final canManageDj =
+        perms.isRoomOwner || perms.isSiteAdmin;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -779,9 +784,20 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 title: const Text('Bu koltuğa otur'),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  final err = await ref
-                      .read(voiceRoomLiveProvider(_sessionRoom).notifier)
-                      .assignSeat(seatIndex: seatIndex);
+                  final err = await ctrl.assignSeat(seatIndex: seatIndex);
+                  if (context.mounted && err != null) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(err)));
+                  }
+                },
+              ),
+            if (canManageDj && self != null)
+              ListTile(
+                leading: const Icon(Icons.headphones_rounded),
+                title: const Text('Kendimi DJ yap'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final err = await ctrl.addRoomDj(self.id);
                   if (context.mounted && err != null) {
                     ScaffoldMessenger.of(context)
                         .showSnackBar(SnackBar(content: Text(err)));
@@ -799,14 +815,27 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                       : null,
                 ),
                 title: Text(p.displayName),
+                trailing: canManageDj
+                    ? IconButton(
+                        icon: const Icon(Icons.headphones_rounded, size: 20),
+                        tooltip: 'DJ yap',
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          final err = await ctrl.addRoomDj(p.id);
+                          if (context.mounted && err != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(err)),
+                            );
+                          }
+                        },
+                      )
+                    : null,
                 onTap: () async {
                   Navigator.pop(ctx);
-                  final err = await ref
-                      .read(voiceRoomLiveProvider(_sessionRoom).notifier)
-                      .assignSeat(
-                        seatIndex: seatIndex,
-                        userId: p.id,
-                      );
+                  final err = await ctrl.assignSeat(
+                    seatIndex: seatIndex,
+                    userId: p.id,
+                  );
                   if (context.mounted && err != null) {
                     ScaffoldMessenger.of(context)
                         .showSnackBar(SnackBar(content: Text(err)));
@@ -875,12 +904,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         live.dj.canPlayMusic ||
         (user != null && room.djUserIds.contains(user.id));
     final showDjControls = isOwner || isDj;
-    final showMusicCard = showDjControls &&
-        VoiceMusicAccess.canShowMusicCard(
-          dj: live.dj,
-          perms: perms,
-          jetonBalance: jeton,
-        );
+    final showMusicCard = VoiceMusicAccess.canShowMusicCard(
+      dj: live.dj,
+      perms: perms,
+      jetonBalance: jeton,
+    );
     final canControlMusic = live.dj.canControlMusic ||
         (user != null && live.dj.nowPlaying?.requestedBy?.id == user.id) ||
         perms.isRoomOwner ||

@@ -34,7 +34,7 @@ class ChatRoomDjState {
     final canPlay = json['canPlayMusic'] == true ||
         json['canControlMusic'] == true ||
         json['canDj'] == true;
-    final canRequest = json['canRequestMusic'] == true || canPlay;
+    final canRequest = json['canRequestMusic'] == true;
     final queueRaw = json['musicQueue'] ?? json['queue'] ?? json['items'];
     final queue = <MusicQueueItem>[];
     if (queueRaw is List) {

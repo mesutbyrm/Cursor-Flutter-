@@ -81,7 +81,7 @@ class VoiceRoomBottomDock extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (showDjControls)
+            if (showDjControls || showMusicCard)
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: m.horizontalPad),
                 child: VoiceRoomActionRow(

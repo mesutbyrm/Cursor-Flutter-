@@ -24,11 +24,7 @@ abstract final class VoiceMusicAccess {
   }) {
     if (!dj.musicEnabled) return false;
     if (dj.canRequestMusic) return true;
-    return canShowMusicCard(
-      dj: dj,
-      perms: perms,
-      jetonBalance: jetonBalance,
-    );
+    return jetonBalance >= dj.musicRequestCost;
   }
 
   static int jetonFromBalances(WalletBalances? balances) =>

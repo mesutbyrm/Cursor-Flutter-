@@ -674,6 +674,35 @@ export function approveSpeak(roomId: string, userId: string) {
   return p;
 }
 
+export function assignSeat(
+  roomId: string,
+  actor: User,
+  seatIndex: number,
+  targetUserId?: string,
+) {
+  const room = getChatRoom(roomId);
+  if (!room) return { ok: false as const, error: "Oda bulunamadı" };
+  const seat = Math.max(1, Math.min(11, Math.floor(seatIndex)));
+  const targetId = (targetUserId?.trim() || actor.id).trim();
+  const priv = roomPrivileges(actor, room);
+  const self = targetId === actor.id;
+  if (!self && !priv.owner && !priv.canModerate) {
+    return { ok: false as const, error: "Koltuk atama yetkisi yok" };
+  }
+  let p = roomMap(roomId).get(targetId);
+  if (!p) {
+    if (self) {
+      joinPresence(roomId, actor);
+      p = roomMap(roomId).get(targetId);
+    }
+  }
+  if (!p) return { ok: false as const, error: "Kullanıcı odada değil" };
+  p.seatIndex = seat;
+  p.isSpeaking = seat >= 1;
+  roomMap(roomId).set(targetId, p);
+  return { ok: true as const, presence: listPresence(roomId) };
+}
+
 export function getDjState(roomId: string, user: User | null) {
   const room = getChatRoom(roomId);
   const key = resolveRoomId(roomId);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
@@ -66,7 +67,26 @@ class _DjDialogState extends ConsumerState<_DjDialog> {
     }).toList();
   }
 
-  bool get _canManage => widget.isOwner || widget.perms.canManageDj;
+  bool get _canManage =>
+      widget.isOwner ||
+      widget.perms.canManageDj ||
+      widget.perms.isSiteAdmin ||
+      widget.perms.isRoomOwner;
+
+  Future<void> _addSelfAsDj() async {
+    final self = ref.read(authControllerProvider).valueOrNull;
+    if (self == null || !_canManage || _busy) return;
+    for (final p in widget.live.presence) {
+      if (p.id == self.id) {
+        await _toggleDj(p, true);
+        return;
+      }
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Önce odaya katılın')),
+    );
+  }
 
   Future<void> _toggleDj(ChatRoomPresence user, bool add) async {
     if (!_canManage || _busy) return;
@@ -121,6 +141,8 @@ class _DjDialogState extends ConsumerState<_DjDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final self = ref.watch(authControllerProvider).valueOrNull;
+    final selfIsDj = self != null && _djIds.contains(self.id);
     final djCount = widget.live.dj.djCount;
     final ownerInRoom = widget.room.ownerId != null &&
         widget.live.presence.any((p) => p.id == widget.room.ownerId);
@@ -227,13 +249,14 @@ class _DjDialogState extends ConsumerState<_DjDialog> {
                     style: TextStyle(color: Color(0xFF25F4EE)),
                   ),
                 ),
-                if (_eligible.isEmpty)
-                  Text(
-                    'Eklenebilecek kullanıcı yok',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.white.withValues(alpha: 0.45),
+                if (self != null && !selfIsDj)
+                  TextButton.icon(
+                    onPressed: _busy ? null : _addSelfAsDj,
+                    icon: const Icon(Icons.person_add_alt_1_rounded,
+                        color: Color(0xFF25F4EE)),
+                    label: const Text(
+                      'Kendimi DJ yap',
+                      style: TextStyle(color: Color(0xFF25F4EE)),
                     ),
                   ),
               ],

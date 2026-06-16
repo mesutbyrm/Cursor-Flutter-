@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.222+225 (2026-06-16)
+
+### Sesli oda — DJ + !istek + çalma düzeltmeleri
+
+- **!istek:** DJ yetkisi gerekmez; yeterli jetonu olan herkes istek gönderebilir
+- **Üretim uyumu:** `music-request-by-query` yoksa otomatik `searchYoutube` + `song-request` yedeği
+- **Çalma:** İstek sonrası kuyruk varsa oynatıcı otomatik başlar; «İsteyen» alanı doldurulur
+- **Müzik Aç:** Yalnızca DJ/owner değil, jetonu yeterli kullanıcılar da görebilir
+- **DJ +:** Koltuk atama sayfasında «DJ yap»; DJ panelinde «Kendimi DJ yap»; API `PATCH/POST .../seats`
+- **DJ ekleme:** Sunucu `emitChatRoomDjUpdate` ile anlık güncelleme
+
 ## 1.0.221+224 (2026-06-14)
 
 ### Sesli oda — müzik sistemi (yeniden yazım)

@@ -33,17 +33,11 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
     final playback = ref.watch(voiceRoomDjPlayerProvider).playback;
     final muted = !ref.watch(voiceRoomUiProvider).backgroundMusicEnabled;
 
-    if (!session.visible || session.room == null) {
+    if (session.room == null || !session.hasActiveMusic) {
       return const SizedBox.shrink();
     }
-    final playing =
-        session.dj.playing || playback.value.playing || session.dj.nowPlaying != null;
-    if (!playing && session.dj.musicQueue.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
     final room = session.room!;
-    final canSync = session.canSyncServer;
+    final canControl = session.dj.canControlMusic || session.canSyncServer;
 
     return Material(
       color: Colors.transparent,
@@ -51,12 +45,13 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
         top: false,
         child: VoiceRoomWebMusicBar(
           dj: session.dj,
+          canControlMusic: canControl,
           musicMuted: muted,
           onPlayPause: () {
             final player = ref.read(voiceRoomDjPlayerProvider);
             final isPlaying =
                 session.dj.playing || player.playback.value.playing;
-            if (canSync) {
+            if (canControl) {
               final ctrl =
                   ref.read(voiceRoomLiveProvider(room.stableSessionKey).notifier);
               if (isPlaying) {
