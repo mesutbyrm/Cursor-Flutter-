@@ -2,23 +2,25 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.224+227` |
-| Tarih (UTC) | 2026-06-16 10:20 |
-| Commit | [`09b2060452573cf74de6bbe4ae992a23f776f4c3`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/09b2060452573cf74de6bbe4ae992a23f776f4c3) |
-| İş akışı | [Run 27610198187](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27610198187) |
+| Sürüm | `1.0.225+228` |
+| Tarih (UTC) | 2026-06-16 11:24 |
+| Commit | [`ed85c05c93cf231173073a9df43663764c1fae69`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ed85c05c93cf231173073a9df43663764c1fae69) |
+| İş akışı | [Run 27613560738](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27613560738) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.224+227 (2026-06-12)
+## 1.0.225+228 (2026-06-12)
 
-### Sesli oda — canlifal.com üretim API uyumu
+### Sesli oda — üretim dokümantasyonu uyumu
 
-- **DJ:** `POST /dj` ile `{ action: add_dj|remove_dj, userId }` (birincil); yerel `/dj/:id` ve `!dj` yedeği
-- **Müzik:** `GET/POST/DELETE /music` birincil (`videoId`, `title`, `duration`); `song-request` / `music-queue` yedeği
-- **Moderasyon:** `POST /moderation` (`ban_user`, `kick_user`, `mute_user`, `set_role`) birincil
-- **Presence:** `DELETE /presence?leave=1`; koltuk atama için `POST /presence { seatIndex }` yedeği
-- **Roller:** `%` admin (5) > `~` founder (4) > `&` sop (3) > `@` op (2) > `+` voice (1) hiyerarşisi
+- **!istek:** `GET /api/youtube/search` → `POST song-request` + `skipPayment: true` (jeton gerekmez)
+- **Şarkı isteği:** `song-request` birincil; `dedication`, `duration` (m:ss), `skipPayment` alanları
+- **DJ kontrolü:** `POST /music` yalnızca DJ müzik kontrolünde; `set_active_dj` API + DJ panelinde yıldız
+- **SSE:** `type: messages` toplu mesaj olayları işlenir
+- **Presence:** 30 sn heartbeat (üretim sözleşmesi)
+- **Mesaj poll:** `?after=` (since yedeği)
+- **Moderasyon:** `unban_user` / `unmute_user` → `POST /moderation`
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
