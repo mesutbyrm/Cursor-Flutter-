@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.231+234 (2026-06-12)
+
+### Müzik — YouTube öncelikli oynatma
+
+- DJ müziği artık sunucunun kısa ömürlü `googlevideo.com` linklerine güvenmiyor
+- Oynatma girişi her zaman YouTube watch / videoId (`nowPlaying`, kuyruk, `!istek` araması)
+- Mobil tarafta Piped / Invidious / youtube_explode ile akış çözülüyor; süresi dolmuş CDN sessizliği önlenir
+
 ## 1.0.230+233 (2026-06-12)
 
 ### Hata düzeltmeleri — sesli oda bağlantısı ve DJ müziği

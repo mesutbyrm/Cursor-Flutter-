@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart' as ja;
 
 import '../../data/services/voice_room_music_pipeline_log.dart';
+import '../../domain/entities/chat_room_dj_state.dart';
 import '../../data/youtube_stream_resolver.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../audio/voice_room_dj_stream_loader.dart';
@@ -94,23 +95,26 @@ class VoiceRoomDjPlayer {
     void addCandidate(String? url) {
       final trimmed = url?.trim();
       if (trimmed == null || trimmed.isEmpty) return;
+      if (ChatRoomDjState.isEphemeralStreamUrl(trimmed)) {
+        final watch = ChatRoomDjState.youtubePlaybackSeed(trimmed);
+        if (watch != null && !candidates.contains(watch)) {
+          candidates.add(watch);
+        }
+        return;
+      }
       if (!candidates.contains(trimmed)) candidates.add(trimmed);
     }
 
-    // Web gibi: önce YouTube watch / videoId çözümle, sonra sunucu CDN.
+    // YouTube watch / videoId ile mobil çözümleme — sunucu googlevideo doğrudan kullanılmaz.
     addCandidate(resolveSeed);
     addCandidate(fallbackYoutubeUrl);
     if (nowPlaying != null) {
       addCandidate(nowPlaying.youtubeUrl);
       final videoId = VoiceRoomMusicPipelineLog.videoIdFromUrl(
         nowPlaying.youtubeUrl,
-      );
+      ) ?? ChatRoomDjState.videoIdFromLoose(nowPlaying.youtubeUrl);
       if (videoId != null) {
         addCandidate('https://www.youtube.com/watch?v=$videoId');
-        final byId = await _resolver.resolveByVideoId(videoId);
-        if (byId != null && byId.isNotEmpty) {
-          addCandidate(byId);
-        }
       }
     }
     addCandidate(musicUrl);
@@ -178,15 +182,10 @@ class VoiceRoomDjPlayer {
 
   Future<String?> _resolveSource(String musicUrl) async {
     final trimmed = musicUrl.trim();
-    if (trimmed.contains('googlevideo.com') &&
-        YoutubeStreamResolver.isDirectPlayableUrl(trimmed)) {
-      final videoId = VoiceRoomMusicPipelineLog.videoIdFromUrl(trimmed) ??
-          _resolver.videoIdFrom(trimmed);
-      if (videoId != null && videoId.isNotEmpty) {
-        final fresh = await _resolver.resolveByVideoId(videoId);
-        if (fresh != null && fresh.isNotEmpty) return fresh;
-      }
-      return trimmed;
+    if (ChatRoomDjState.isEphemeralStreamUrl(trimmed)) {
+      final watch = ChatRoomDjState.youtubePlaybackSeed(trimmed);
+      if (watch != null) return _resolver.resolvePlayableUrl(watch);
+      return null;
     }
     if (trimmed.contains('/api/chat/youtube-audio')) {
       return trimmed;

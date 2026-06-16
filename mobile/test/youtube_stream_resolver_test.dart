@@ -6,7 +6,7 @@ import 'package:canlifal_social/features/voice_hub/domain/entities/music_queue_i
 
 void main() {
   group('ChatRoomDjState playback', () {
-    test('playbackResolveSeed prefers nowPlaying youtube', () {
+    test('playbackResolveSeed prefers nowPlaying youtube over server googlevideo', () {
       final dj = ChatRoomDjState(
         musicUrl: 'https://rr1---sn.googlevideo.com/videoplayback?id=old',
         nowPlaying: MusicQueueItem(
@@ -20,6 +20,19 @@ void main() {
       expect(
         dj.playbackResolveSeed,
         'https://www.youtube.com/watch?v=NEWVIDEO12',
+      );
+      expect(dj.playbackSource, dj.playbackResolveSeed);
+    });
+
+    test('playbackSource ignores server googlevideo when only musicUrl set', () {
+      final dj = ChatRoomDjState(
+        musicUrl:
+            'https://rr3---sn-abc.googlevideo.com/videoplayback?v=dQw4w9WgXcQ',
+        playing: true,
+      );
+      expect(
+        dj.playbackResolveSeed,
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
       );
     });
   });

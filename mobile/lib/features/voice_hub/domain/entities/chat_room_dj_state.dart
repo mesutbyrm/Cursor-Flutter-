@@ -171,34 +171,59 @@ class ChatRoomDjState {
     return idx >= 0 ? idx + 1 : musicQueue.length;
   }
 
-  /// Mobil çözümleme için tercih edilen kaynak — web gibi önce YouTube watch/videoId.
-  String? get playbackResolveSeed {
-    final np = nowPlaying?.youtubeUrl.trim() ?? '';
-    if (np.isNotEmpty) return np;
-    if (musicQueue.isNotEmpty) {
-      final first = musicQueue.first.youtubeUrl.trim();
-      if (first.isNotEmpty) return first;
+  /// Sunucunun kısa ömürlü YouTube CDN linkleri — mobilde doğrudan oynatılmaz.
+  static bool isEphemeralStreamUrl(String url) {
+    final lower = url.trim().toLowerCase();
+    return lower.contains('googlevideo.com') || lower.contains('youtube.com/api/');
+  }
+
+  /// Herhangi bir kaynaktan YouTube watch URL'si (mobil çözümleme girişi).
+  static String? youtubePlaybackSeed(String? url) {
+    final trimmed = url?.trim() ?? '';
+    if (trimmed.isEmpty) return null;
+    if (_isYoutubeWatchUrl(trimmed)) return trimmed;
+    final id = videoIdFromLoose(trimmed);
+    if (id != null && id.isNotEmpty) {
+      return 'https://www.youtube.com/watch?v=$id';
     }
-    final direct = musicUrl?.trim();
-    if (direct != null && direct.isNotEmpty) return direct;
+    if (isEphemeralStreamUrl(trimmed)) return null;
+    return trimmed;
+  }
+
+  static String? videoIdFromLoose(String url) {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return null;
+    if (trimmed.length <= 15 && !trimmed.contains('/')) return trimmed;
+    final watch = RegExp(r'(?:v=|youtu\.be/)([a-zA-Z0-9_-]{6,})').firstMatch(trimmed);
+    if (watch != null) return watch.group(1);
+    try {
+      final u = Uri.parse(trimmed);
+      if (u.host.contains('googlevideo.com')) {
+        return u.queryParameters['v'] ?? u.queryParameters['id'];
+      }
+    } catch (_) {}
     return null;
   }
 
-  /// Oynatılacak URL — önce sunucunun çözdüğü doğrudan akış, yoksa YouTube watch (mobil çözer).
-  String? get playbackSource {
-    final direct = musicUrl?.trim();
-    if (direct != null && direct.isNotEmpty) {
-      if (!_isYoutubeWatchUrl(direct)) return direct;
-    }
+  /// Mobil çözümleme — YouTube watch / videoId (sunucu googlevideo değil).
+  String? get playbackResolveSeed {
     final np = nowPlaying?.youtubeUrl.trim() ?? '';
-    if (np.isNotEmpty) return np;
-    if (direct != null && direct.isNotEmpty) return direct;
+    if (np.isNotEmpty) {
+      final seed = youtubePlaybackSeed(np);
+      if (seed != null) return seed;
+    }
     if (musicQueue.isNotEmpty) {
       final first = musicQueue.first.youtubeUrl.trim();
-      if (first.isNotEmpty) return first;
+      if (first.isNotEmpty) {
+        final seed = youtubePlaybackSeed(first);
+        if (seed != null) return seed;
+      }
     }
-    return null;
+    return youtubePlaybackSeed(musicUrl);
   }
+
+  /// Oynatma girişi — her zaman YouTube watch; sunucu CDN'i atlanır.
+  String? get playbackSource => playbackResolveSeed;
 
   /// YouTube watch URL — akış çözümü mobilde yapılır (web iframe farkı).
   String? get youtubeFallbackSource {

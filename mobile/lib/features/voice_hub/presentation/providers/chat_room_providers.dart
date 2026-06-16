@@ -607,9 +607,9 @@ class VoiceRoomLiveController
 
   String _djPlaybackSignature(ChatRoomDjState dj, {required bool muted}) {
     final effective = _djWithQueuePlaybackFallback(dj);
-    final url = effective.playbackSource ?? '';
-    return '${effective.playing}|$url|${effective.musicUrl}|'
-        '${effective.nowPlaying?.id}|${effective.musicQueue.length}|'
+    final url = effective.playbackResolveSeed ?? '';
+    return '${effective.playing}|$url|${effective.nowPlaying?.id}|'
+        '${effective.musicQueue.length}|'
         '${effective.musicEnabled}|$muted';
   }
 
@@ -1010,11 +1010,10 @@ class VoiceRoomLiveController
     }
 
     final effectiveDj = _djWithQueuePlaybackFallback(dj);
-    final playbackUrl = effectiveDj.playbackSource;
     final resolveSeed = effectiveDj.playbackResolveSeed;
-    final shouldPlay =
-        effectiveDj.playing && (playbackUrl != null || resolveSeed != null);
-    if (effectiveDj.playing && playbackUrl == null && resolveSeed == null) {
+    final playbackUrl = resolveSeed;
+    final shouldPlay = effectiveDj.playing && resolveSeed != null;
+    if (effectiveDj.playing && resolveSeed == null) {
       VoiceRoomMusicPipelineLog.nullMusicUrl(
         reason: 'playbackSource_null_while_playing',
         caller: '_applyDjPlayback',
