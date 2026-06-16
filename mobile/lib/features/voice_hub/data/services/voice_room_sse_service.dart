@@ -222,6 +222,19 @@ class VoiceRoomSseService {
           _onMessage?.call(msg);
         }
         return;
+      case VoiceRoomSseKind.messages:
+        final batch = map['messages'];
+        if (batch is List) {
+          VoiceRoomDebugLog.log('sse.messages', {'count': batch.length});
+          for (final raw in batch) {
+            if (raw is! Map) continue;
+            final msg = ChatRoomMessage.fromJson(
+              Map<String, dynamic>.from(raw),
+            );
+            if (msg.content.isNotEmpty) _onMessage?.call(msg);
+          }
+        }
+        return;
       case VoiceRoomSseKind.gift:
         return;
       case VoiceRoomSseKind.dj:

@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.225+228 (2026-06-12)
+
+### Sesli oda — üretim dokümantasyonu uyumu
+
+- **!istek:** `GET /api/youtube/search` → `POST song-request` + `skipPayment: true` (jeton gerekmez)
+- **Şarkı isteği:** `song-request` birincil; `dedication`, `duration` (m:ss), `skipPayment` alanları
+- **DJ kontrolü:** `POST /music` yalnızca DJ müzik kontrolünde; `set_active_dj` API + DJ panelinde yıldız
+- **SSE:** `type: messages` toplu mesaj olayları işlenir
+- **Presence:** 30 sn heartbeat (üretim sözleşmesi)
+- **Mesaj poll:** `?after=` (since yedeği)
+- **Moderasyon:** `unban_user` / `unmute_user` → `POST /moderation`
+
 ## 1.0.224+227 (2026-06-12)
 
 ### Sesli oda — canlifal.com üretim API uyumu

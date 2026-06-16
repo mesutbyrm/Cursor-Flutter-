@@ -326,8 +326,8 @@ class VoiceRoomLiveController
       // build() bitmeden state okunamaz — poll yalnızca microtask içinde.
       _schedulePoll(sseConnected: false);
     });
-    _presenceHeartbeat = Timer.periodic(const Duration(seconds: 20), (_) {
-      if (!state.sseConnected && state.selfInRoom) {
+    _presenceHeartbeat = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (state.selfInRoom) {
         unawaited(_presenceHeartbeatTick());
       }
     });
@@ -1192,21 +1192,24 @@ class VoiceRoomLiveController
   Future<String?> _submitMusicRequestByTitle(
     String title, {
     bool priority = true,
+    bool skipPayment = false,
   }) async {
     final q = title.trim();
     if (q.length < 2) return 'Şarkı adı çok kısa.';
 
     final user = ref.read(authControllerProvider).valueOrNull;
     final perms = _permissions();
-    final jeton = VoiceMusicAccess.jetonFromBalances(
-      ref.read(walletBalancesProvider).valueOrNull,
-    );
-    if (!VoiceMusicAccess.canRequestSongs(
-      dj: state.dj,
-      perms: perms,
-      jetonBalance: jeton,
-    )) {
-      return 'Şarkı isteği gönderebilmek için en az ${state.dj.musicRequestCost} jetona sahip olmalısınız.';
+    if (!skipPayment) {
+      final jeton = VoiceMusicAccess.jetonFromBalances(
+        ref.read(walletBalancesProvider).valueOrNull,
+      );
+      if (!VoiceMusicAccess.canRequestSongs(
+        dj: state.dj,
+        perms: perms,
+        jetonBalance: jeton,
+      )) {
+        return 'Şarkı isteği gönderebilmek için en az ${state.dj.musicRequestCost} jetona sahip olmalısınız.';
+      }
     }
 
     try {
@@ -1219,47 +1222,73 @@ class VoiceRoomLiveController
         bool playing,
       }) result;
 
-      try {
-        result = await ref
-            .read(chatRoomRemoteProvider)
-            .requestMusicByQuery(
-              roomKey: _roomKey,
-              alternateKey: _musicAlternateKey,
-              query: q,
-            )
-            .timeout(
-              const Duration(seconds: 22),
-              onTimeout: () =>
-                  throw TimeoutException('Şarkı isteği zaman aşımı'),
-            );
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      if (skipPayment) {
         final hits = await ref.read(chatRoomRemoteProvider).searchYoutube(q);
         if (hits.isEmpty) {
           return '«$q» için sonuç bulunamadı.';
         }
         final hit = hits.first;
-        final err = await requestMusic(
-          title: hit.title,
-          youtubeUrl: hit.url,
-          thumbUrl: hit.thumbUrl,
-          videoId: hit.videoId,
-          priority: priority,
-        );
-        if (err != null) return err;
-        await _syncMusicFromServerIfNeeded(force: true);
-        var dj = _djWithQueuePlaybackFallback(
-          state.dj.copyWith(playing: true),
-        );
-        if (user != null && dj.nowPlaying != null) {
-          dj = dj.copyWith(
-            nowPlaying: _musicItemWithRequester(dj.nowPlaying!, user),
+        result = await ref
+            .read(chatRoomRemoteProvider)
+            .requestMusic(
+              roomKey: _roomKey,
+              alternateKey: _musicAlternateKey,
+              title: hit.title,
+              youtubeUrl: hit.url,
+              thumbUrl: hit.thumbUrl,
+              videoId: hit.videoId,
+              duration: hit.duration,
+              priority: priority,
+              skipPayment: true,
+            )
+            .timeout(
+              const Duration(seconds: 22),
+              onTimeout: () => throw TimeoutException('Şarkı isteği zaman aşımı'),
+            );
+      } else {
+        try {
+          result = await ref
+              .read(chatRoomRemoteProvider)
+              .requestMusicByQuery(
+                roomKey: _roomKey,
+                alternateKey: _musicAlternateKey,
+                query: q,
+              )
+              .timeout(
+                const Duration(seconds: 22),
+                onTimeout: () =>
+                    throw TimeoutException('Şarkı isteği zaman aşımı'),
+              );
+        } on ApiException catch (e) {
+          if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+          final hits = await ref.read(chatRoomRemoteProvider).searchYoutube(q);
+          if (hits.isEmpty) {
+            return '«$q» için sonuç bulunamadı.';
+          }
+          final hit = hits.first;
+          final err = await requestMusic(
+            title: hit.title,
+            youtubeUrl: hit.url,
+            thumbUrl: hit.thumbUrl,
+            videoId: hit.videoId,
+            duration: hit.duration,
+            priority: priority,
           );
+          if (err != null) return err;
+          await _syncMusicFromServerIfNeeded(force: true);
+          var dj = _djWithQueuePlaybackFallback(
+            state.dj.copyWith(playing: true),
+          );
+          if (user != null && dj.nowPlaying != null) {
+            dj = dj.copyWith(
+              nowPlaying: _musicItemWithRequester(dj.nowPlaying!, user),
+            );
+          }
+          _prefetchYoutubePlayback(dj);
+          state = state.copyWith(dj: dj);
+          await _playDjInBackground(dj);
+          return null;
         }
-        _prefetchYoutubePlayback(dj);
-        state = state.copyWith(dj: dj);
-        await _playDjInBackground(dj);
-        return null;
       }
 
       ref.invalidate(coinBalanceProvider);
@@ -1407,6 +1436,7 @@ class VoiceRoomLiveController
         final queueError = await _submitMusicRequestByTitle(
           song,
           priority: false,
+          skipPayment: true,
         );
         if (queueError != null && queueError.isNotEmpty) {
           state = state.copyWith(sending: false, error: queueError);
@@ -1989,14 +2019,17 @@ class VoiceRoomLiveController
     required String youtubeUrl,
     String? thumbUrl,
     String? videoId,
+    String? duration,
     String? giftTo,
     String? note,
     bool priority = true,
+    bool djMusicControl = false,
   }) async {
     try {
       var resolvedUrl = youtubeUrl.trim();
       var resolvedThumb = thumbUrl;
       var resolvedVideoId = videoId;
+      var resolvedDuration = duration;
       if (resolvedUrl.isEmpty && title.trim().length >= 2) {
         final hits = await ref
             .read(chatRoomRemoteProvider)
@@ -2008,6 +2041,7 @@ class VoiceRoomLiveController
         resolvedUrl = hit.url;
         resolvedThumb ??= hit.thumbUrl;
         resolvedVideoId ??= hit.videoId;
+        resolvedDuration ??= hit.duration;
       }
       if (resolvedUrl.isEmpty) {
         return 'Geçerli bir şarkı seçin veya arayın.';
@@ -2027,9 +2061,12 @@ class VoiceRoomLiveController
             youtubeUrl: resolvedUrl,
             thumbUrl: resolvedThumb,
             videoId: resolvedVideoId,
+            duration: resolvedDuration,
+            dedication: giftTo,
             giftTo: giftTo,
             note: note,
             priority: priority,
+            djMusicControl: djMusicControl,
           )
           .timeout(
             const Duration(seconds: 22),
@@ -2050,7 +2087,7 @@ class VoiceRoomLiveController
       VoiceRoomMusicPipelineLog.istekSubmitted(
         song: title,
         roomId: _roomKey,
-        requestEndpoint: '/api/chat/rooms/$_roomKey/music',
+          requestEndpoint: '/api/chat/rooms/$_roomKey/song-request',
         responseMusicUrl: result.musicUrl,
         responsePlaying: result.playing,
         queuePosition: result.queuePosition,
@@ -2157,6 +2194,20 @@ class VoiceRoomLiveController
           );
       await refresh();
       ref.invalidate(voiceRoomsProvider);
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> setActiveDj(String? targetUserId) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).setActiveDj(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            userId: targetUserId,
+          );
+      await refresh(includeDj: true);
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

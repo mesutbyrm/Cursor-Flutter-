@@ -6,6 +6,7 @@ enum VoiceRoomSseKind {
   userJoined,
   userLeft,
   message,
+  messages,
   gift,
   dj,
   unknown,
@@ -28,6 +29,8 @@ VoiceRoomSseKind voiceRoomSseKindFrom(String? raw) {
     case 'userleft':
     case 'leave':
       return VoiceRoomSseKind.userLeft;
+    case 'messages':
+      return VoiceRoomSseKind.messages;
     case 'message':
     case 'chatmessage':
     case 'roommessage':

@@ -103,6 +103,19 @@ class _DjDialogState extends ConsumerState<_DjDialog> {
     }
   }
 
+  Future<void> _setActiveDj(ChatRoomPresence user) async {
+    if (!_canManage || _busy) return;
+    setState(() => _busy = true);
+    final ctrl =
+        ref.read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier);
+    final err = await ctrl.setActiveDj(user.id);
+    if (mounted) setState(() => _busy = false);
+    if (!mounted) return;
+    if (err != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+    }
+  }
+
   Future<void> _pickDj() async {
     final eligible = _eligible;
     if (eligible.isEmpty) {
@@ -219,18 +232,47 @@ class _DjDialogState extends ConsumerState<_DjDialog> {
                 )
               else
                 ..._djUsers.map(
-                  (u) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: VoiceNeonAvatar(url: u.image, size: 36),
-                    title: Text(u.displayName, style: const TextStyle(fontSize: 13)),
-                    trailing: _canManage
-                        ? IconButton(
-                            icon: const Icon(Icons.remove_circle_outline,
-                                color: AppThemeColors.liveRed),
-                            onPressed: _busy ? null : () => _toggleDj(u, false),
-                          )
-                        : null,
-                  ),
+                  (u) {
+                    final isActive =
+                        widget.live.dj.activeDjId != null &&
+                        widget.live.dj.activeDjId == u.id;
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: VoiceNeonAvatar(url: u.image, size: 36),
+                      title: Text(
+                        isActive ? '${u.displayName} (aktif DJ)' : u.displayName,
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                      trailing: _canManage
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (ownerInRoom)
+                                  IconButton(
+                                    tooltip: 'Aktif DJ yap',
+                                    icon: Icon(
+                                      isActive
+                                          ? Icons.star_rounded
+                                          : Icons.star_outline_rounded,
+                                      color: isActive
+                                          ? VoiceRoomTokens.gold
+                                          : Colors.white54,
+                                    ),
+                                    onPressed: _busy || isActive
+                                        ? null
+                                        : () => _setActiveDj(u),
+                                  ),
+                                IconButton(
+                                  icon: const Icon(Icons.remove_circle_outline,
+                                      color: AppThemeColors.liveRed),
+                                  onPressed:
+                                      _busy ? null : () => _toggleDj(u, false),
+                                ),
+                              ],
+                            )
+                          : null,
+                    );
+                  },
                 ),
               if (_canManage) ...[
                 const SizedBox(height: 8),
