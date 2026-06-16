@@ -2,22 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.230+233` |
-| Tarih (UTC) | 2026-06-16 17:09 |
-| Commit | [`ee8c0b1a7c4d306eaddfadb93ed8a98e62b09a8a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ee8c0b1a7c4d306eaddfadb93ed8a98e62b09a8a) |
-| İş akışı | [Run 27634235123](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27634235123) |
+| Sürüm | `1.0.231+234` |
+| Tarih (UTC) | 2026-06-16 17:35 |
+| Commit | [`9ab7052eaf63bec2f6194e68e025e053970c155a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/9ab7052eaf63bec2f6194e68e025e053970c155a) |
+| İş akışı | [Run 27635724522](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27635724522) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.230+233 (2026-06-12)
+## 1.0.231+234 (2026-06-12)
 
-### Hata düzeltmeleri — sesli oda bağlantısı ve DJ müziği
+### Müzik — YouTube öncelikli oynatma
 
-- **Oda giriş döngüsü:** `voiceRoomLiveProvider` artık yalnızca oda kimliği (`liveKey`) ile tutulur; online sayısı / avatar güncellemelerinde presence+SSE kopmaz
-- **SSE:** Aynı odaya yeniden bağlanırken mevcut akış korunur
-- **Müzik:** Süresi dolmuş `googlevideo.com` URL'leri videoId ile yeniden çözülür; DJ SSE güncellemelerinde gereksiz oynatıcı yeniden başlatma azaltıldı
-- **Poll hataları:** Arka plan yenileme hataları artık SnackBar ile «bağlantı koptu» hissi vermez
+- DJ müziği artık sunucunun kısa ömürlü `googlevideo.com` linklerine güvenmiyor
+- Oynatma girişi her zaman YouTube watch / videoId (`nowPlaying`, kuyruk, `!istek` araması)
+- Mobil tarafta Piped / Invidious / youtube_explode ile akış çözülüyor; süresi dolmuş CDN sessizliği önlenir
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
