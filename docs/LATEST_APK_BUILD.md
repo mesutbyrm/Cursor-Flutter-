@@ -2,25 +2,24 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.221+224` |
-| Tarih (UTC) | 2026-06-16 04:58 |
-| Commit | [`22691c7770276c5c586e2cfcbacd54689ff3c9c2`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/22691c7770276c5c586e2cfcbacd54689ff3c9c2) |
-| İş akışı | [Run 27594868225](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27594868225) |
+| Sürüm | `1.0.222+225` |
+| Tarih (UTC) | 2026-06-16 07:00 |
+| Commit | [`985063062a18d725e5106d1d6ef8517603499766`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/985063062a18d725e5106d1d6ef8517603499766) |
+| İş akışı | [Run 27599650249](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27599650249) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.221+224 (2026-06-14)
+## 1.0.222+225 (2026-06-16)
 
-### Sesli oda — müzik sistemi (yeniden yazım)
+### Sesli oda — DJ + !istek + çalma düzeltmeleri
 
-- **!istek:** YouTube API ile arama; her istek **10 jeton** (sunucu doğrulaması, `skipPayment` kaldırıldı)
-- **Yetersiz jeton:** Uyarı + «Jeton Yükle» yönlendirmesi
-- **Kuyruk:** Oda başına sıra; çalan şarkı kesilmeden ekleme; otomatik sonraki parça (`/music-queue/complete`)
-- **Yetki:** Durdur/kapat — isteyen, oda sahibi, admin, süper admin; yetkisizde standart mesaj
-- **Oynatıcı:** Kapak, sanatçı, süre, isteyen, sırada N; duraklat / ses / kapat
-- **Veritabanı:** `music_queue` + `music_action_logs` (Prisma); işlem günlüğü (istek, jeton, oynatma, yetkisiz)
-- **API:** `POST .../music-request-by-query`, `POST .../music-queue/complete`, `canControlMusic` alanı
+- **!istek:** DJ yetkisi gerekmez; yeterli jetonu olan herkes istek gönderebilir
+- **Üretim uyumu:** `music-request-by-query` yoksa otomatik `searchYoutube` + `song-request` yedeği
+- **Çalma:** İstek sonrası kuyruk varsa oynatıcı otomatik başlar; «İsteyen» alanı doldurulur
+- **Müzik Aç:** Yalnızca DJ/owner değil, jetonu yeterli kullanıcılar da görebilir
+- **DJ +:** Koltuk atama sayfasında «DJ yap»; DJ panelinde «Kendimi DJ yap»; API `PATCH/POST .../seats`
+- **DJ ekleme:** Sunucu `emitChatRoomDjUpdate` ile anlık güncelleme
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
