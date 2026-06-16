@@ -92,7 +92,7 @@ class _DjDialogState extends ConsumerState<_DjDialog> {
     if (!_canManage || _busy) return;
     setState(() => _busy = true);
     final ctrl =
-        ref.read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier);
+        ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
     final err = add
         ? await ctrl.addRoomDj(user.id)
         : await ctrl.removeRoomDj(user.id);
@@ -107,7 +107,7 @@ class _DjDialogState extends ConsumerState<_DjDialog> {
     if (!_canManage || _busy) return;
     setState(() => _busy = true);
     final ctrl =
-        ref.read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier);
+        ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
     final err = await ctrl.setActiveDj(user.id);
     if (mounted) setState(() => _busy = false);
     if (!mounted) return;

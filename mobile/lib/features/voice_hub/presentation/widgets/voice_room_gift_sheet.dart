@@ -189,7 +189,7 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                                   if (context.mounted) {
                                     ref.invalidate(coinBalanceProvider);
                                     ref
-                                        .read(voiceRoomLiveProvider(room).notifier)
+                                        .read(voiceRoomLiveProvider(room.liveKey).notifier)
                                         .refresh();
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(

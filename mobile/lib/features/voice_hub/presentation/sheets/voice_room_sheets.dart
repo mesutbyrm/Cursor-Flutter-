@@ -565,7 +565,7 @@ class _RoomSettingsSheet extends StatelessWidget {
                       final enabled = !state.backgroundMusicEnabled;
                       notifier.toggleBackgroundMusic();
                       final err = await ref
-                          .read(voiceRoomLiveProvider(room.stableSessionKey).notifier)
+                          .read(voiceRoomLiveProvider(room.liveKey).notifier)
                           .toggleBackgroundMusic(enabled);
                       if (context.mounted && err != null) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -728,7 +728,7 @@ Future<void> showVoiceUserModerationSheet(
   VoidCallback? onGift,
 }) {
   final roomKey = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-  final ctrl = ref.read(voiceRoomLiveProvider(room.stableSessionKey).notifier);
+  final ctrl = ref.read(voiceRoomLiveProvider(room.liveKey).notifier);
 
   return showModalBottomSheet(
     context: context,

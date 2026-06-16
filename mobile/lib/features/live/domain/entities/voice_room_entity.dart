@@ -45,6 +45,9 @@ class VoiceRoomEntity extends Equatable {
   /// REST / Socket — yalnızca Prisma `id` (cuid); slug kullanılmaz.
   String get apiRoomKey => id.trim();
 
+  /// Riverpod `voiceRoomLiveProvider` ailesi — yalnızca oda kimliği (metadata değişince dispose olmasın).
+  String get liveKey => apiRoomKey;
+
   /// Tencent TRTC kanal adı — web ile aynı: `voice_room_{id}`.
   String get trtcRoomId {
     final i = id.trim();

@@ -115,7 +115,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
   Future<void> _loadWords() async {
     setState(() => _loadingWords = true);
     final words = await ref
-        .read(voiceRoomLiveProvider(widget.room).notifier)
+        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
         .fetchBannedWords();
     if (mounted) {
       setState(() {
@@ -126,7 +126,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
   }
 
   Future<void> _runCommand(String cmd) async {
-    await ref.read(voiceRoomLiveProvider(widget.room).notifier).sendMessage(cmd);
+    await ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier).sendMessage(cmd);
     if (!mounted) return;
     Navigator.pop(context);
   }
@@ -196,7 +196,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
     final w = _wordCtrl.text.trim();
     if (w.isEmpty) return;
     final err = await ref
-        .read(voiceRoomLiveProvider(widget.room).notifier)
+        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
         .addBannedWord(w);
     if (!mounted) return;
     if (err != null) {
@@ -209,7 +209,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
 
   Future<void> _removeWord(String w) async {
     final err = await ref
-        .read(voiceRoomLiveProvider(widget.room).notifier)
+        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
         .removeBannedWord(w);
     if (!mounted) return;
     if (err != null) {

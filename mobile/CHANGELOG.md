@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.230+233 (2026-06-12)
+
+### Hata düzeltmeleri — sesli oda bağlantısı ve DJ müziği
+
+- **Oda giriş döngüsü:** `voiceRoomLiveProvider` artık yalnızca oda kimliği (`liveKey`) ile tutulur; online sayısı / avatar güncellemelerinde presence+SSE kopmaz
+- **SSE:** Aynı odaya yeniden bağlanırken mevcut akış korunur
+- **Müzik:** Süresi dolmuş `googlevideo.com` URL'leri videoId ile yeniden çözülür; DJ SSE güncellemelerinde gereksiz oynatıcı yeniden başlatma azaltıldı
+- **Poll hataları:** Arka plan yenileme hataları artık SnackBar ile «bağlantı koptu» hissi vermez
+
 ## 1.0.229+232 (2026-06-12)
 
 ### Hata düzeltmeleri — sesli oda, müzik, jeton, ana sayfa

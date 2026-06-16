@@ -94,7 +94,7 @@ void showVoiceSpeakQueueSheet(
                               return;
                             }
                             final ctrl = ref
-                                .read(voiceRoomLiveProvider(room).notifier);
+                                .read(voiceRoomLiveProvider(room.liveKey).notifier);
                             final err = await ctrl.assignSeat(
                               seatIndex: seat,
                               userId: p.id,
@@ -108,7 +108,7 @@ void showVoiceSpeakQueueSheet(
                           onDj: perms.canManageDj
                               ? () async {
                                   final ctrl = ref.read(
-                                    voiceRoomLiveProvider(room).notifier,
+                                    voiceRoomLiveProvider(room.liveKey).notifier,
                                   );
                                   final err = await ctrl.addRoomDj(p.id);
                                   if (context.mounted && err != null) {

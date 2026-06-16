@@ -138,7 +138,7 @@ class _VoiceRoomToolsSheet extends ConsumerWidget {
             OutlinedButton.icon(
               onPressed: () {
                 Navigator.pop(context);
-                final live = ref.read(voiceRoomLiveProvider(room));
+                final live = ref.read(voiceRoomLiveProvider(room.liveKey));
                 showVoiceRoomHubSettingsSheet(
                   context,
                   ref,
@@ -269,7 +269,7 @@ class _BannedWordsSectionState extends ConsumerState<_BannedWordsSection> {
     setState(() => _loading = true);
     try {
       final words = await ref
-          .read(voiceRoomLiveProvider(widget.room).notifier)
+          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
           .fetchBannedWords();
       if (mounted) setState(() => _words = words);
     } finally {
@@ -281,7 +281,7 @@ class _BannedWordsSectionState extends ConsumerState<_BannedWordsSection> {
     final w = _wordCtrl.text.trim();
     if (w.isEmpty) return;
     final err = await ref
-        .read(voiceRoomLiveProvider(widget.room).notifier)
+        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
         .addBannedWord(w);
     if (!mounted) return;
     if (err != null) {
@@ -294,7 +294,7 @@ class _BannedWordsSectionState extends ConsumerState<_BannedWordsSection> {
 
   Future<void> _remove(String word) async {
     final err = await ref
-        .read(voiceRoomLiveProvider(widget.room).notifier)
+        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
         .removeBannedWord(word);
     if (!mounted) return;
     if (err != null) {

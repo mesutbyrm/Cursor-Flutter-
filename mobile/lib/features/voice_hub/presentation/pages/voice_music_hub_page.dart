@@ -135,7 +135,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _liveSub = ref.listenManual(
-        voiceRoomLiveProvider(widget.room.stableSessionKey),
+        voiceRoomLiveProvider(widget.room.liveKey),
         (prev, next) {
           if (prev?.dj.musicQueue.length != next.dj.musicQueue.length ||
               prev?.dj.playing != next.dj.playing ||
@@ -150,7 +150,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
   Future<void> _reloadQueue() async {
     try {
       final data = await ref
-          .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
+          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
           .fetchMusicQueue();
       if (mounted) {
         setState(() {
@@ -196,7 +196,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
     });
     try {
       final hits = await ref
-          .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
+          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
           .searchYoutube(q);
       if (!mounted || gen != _searchGen) return;
       setState(() {
@@ -217,7 +217,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
     if (hit == null || _submitting) return;
     final balances = ref.read(walletBalancesProvider).valueOrNull;
     final jeton = VoiceMusicAccess.jetonFromBalances(balances);
-    final djState = ref.read(voiceRoomLiveProvider(widget.room.stableSessionKey)).dj;
+    final djState = ref.read(voiceRoomLiveProvider(widget.room.liveKey)).dj;
     if (!VoiceMusicAccess.canRequestSongs(
       dj: djState,
       perms: widget.perms,
@@ -234,7 +234,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
     setState(() => _submitting = true);
     final isDjFree = widget.perms.canManageDj || djState.canPlayMusic;
     final queueHint = await ref
-        .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
+        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
         .requestMusic(
           title: hit.title,
           youtubeUrl: hit.url,
@@ -260,7 +260,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
   }
 
   Future<void> _openHostSettings() async {
-    final live = ref.read(voiceRoomLiveProvider(widget.room.stableSessionKey));
+    final live = ref.read(voiceRoomLiveProvider(widget.room.liveKey));
     var enabled = live.dj.musicEnabled;
     var cost = live.dj.musicRequestCost;
     var maxQ = live.dj.maxMusicQueue;
@@ -320,7 +320,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
               onPressed: () async {
                 Navigator.pop(ctx);
                 final err = await ref
-                    .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
+                    .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
                     .updateMusicSettings(
                       musicEnabled: enabled,
                       musicRequestCost: cost,
@@ -342,7 +342,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
   Widget build(BuildContext context) {
     final balances = ref.watch(walletBalancesProvider).valueOrNull;
     final jeton = VoiceMusicAccess.jetonFromBalances(balances);
-    final live = ref.watch(voiceRoomLiveProvider(widget.room.stableSessionKey));
+    final live = ref.watch(voiceRoomLiveProvider(widget.room.liveKey));
     final canMod = widget.perms.canModerate || widget.isOwner;
 
     return PopScope(
@@ -597,7 +597,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
                 TextButton.icon(
                   onPressed: () async {
                     final err = await ref
-                        .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
+                        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
                         .skipMusic();
                     if (err != null && mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
@@ -610,7 +610,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
                 TextButton.icon(
                   onPressed: () async {
                     final err = await ref
-                        .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
+                        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
                         .clearMusicQueue();
                     if (err != null && mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
@@ -679,7 +679,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
                                 icon: const Icon(Icons.delete_outline_rounded, color: Colors.white54),
                                 onPressed: () async {
                                   await ref
-                                      .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
+                                      .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
                                       .removeQueueItem(item.id);
                                   await _reloadQueue();
                                 },

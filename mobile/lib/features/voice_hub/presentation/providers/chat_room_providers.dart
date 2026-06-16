@@ -185,7 +185,7 @@ class VoiceRoomLiveState {
 }
 
 class VoiceRoomLiveController
-    extends AutoDisposeFamilyNotifier<VoiceRoomLiveState, VoiceRoomEntity> {
+    extends AutoDisposeFamilyNotifier<VoiceRoomLiveState, String> {
   Timer? _poll;
   Timer? _presenceHeartbeat;
   Timer? _enterBannerTimer;
@@ -209,11 +209,27 @@ class VoiceRoomLiveController
   }
 
   /// Prisma cuid — slug değil.
-  String get _roomKey => arg.apiRoomKey;
+  String get _roomKey => arg.trim();
+
+  VoiceRoomEntity get _roomMeta {
+    final key = _roomKey;
+    if (key.isEmpty) {
+      return const VoiceRoomEntity(id: '', slug: '', nameTr: 'Sohbet Odası');
+    }
+    final rooms = ref.read(voiceRoomsProvider).valueOrNull;
+    if (rooms != null) {
+      for (final r in rooms) {
+        if (r.apiRoomKey == key || r.id == key) return r;
+        final slug = r.slug.trim();
+        if (slug.isNotEmpty && slug == key) return r;
+      }
+    }
+    return VoiceRoomEntity(id: key, slug: key, nameTr: 'Sohbet Odası');
+  }
 
   /// Bazı DJ/müzik uçları slug ile de çalışır (cuid 404).
   String? get _musicAlternateKey {
-    final slug = arg.slug.trim();
+    final slug = _roomMeta.slug.trim();
     if (slug.isEmpty || slug == _roomKey) return null;
     return slug;
   }
@@ -240,7 +256,7 @@ class VoiceRoomLiveController
     List<ChatRoomPresence> presence,
   ) {
     final ids = <String>{
-      ...arg.djUserIds,
+      ..._roomMeta.djUserIds,
       ...dj.djUsers.map((u) => u.id),
       ...presence.where((p) => p.chatRole == 'dj').map((p) => p.id),
     };
@@ -305,7 +321,7 @@ class VoiceRoomLiveController
   }
 
   bool _markEntranceOnce(String raw) {
-    final key = VoiceOfficialJoin.entranceDedupeKey(raw, roomName: arg.nameTr);
+    final key = VoiceOfficialJoin.entranceDedupeKey(raw, roomName: _roomMeta.nameTr);
     if (_shownEntranceKeys.contains(key)) return false;
     _shownEntranceKeys.add(key);
     return true;
@@ -314,7 +330,8 @@ class VoiceRoomLiveController
   Object? _roomKeepAliveLink;
 
   @override
-  VoiceRoomLiveState build(VoiceRoomEntity room) {
+  VoiceRoomLiveState build(String roomKey) {
+    final room = _roomMeta;
     _roomKeepAliveLink = ref.keepAlive();
     ref.onDispose(() {
       _poll?.cancel();
@@ -332,7 +349,7 @@ class VoiceRoomLiveController
       final session = ref.read(voiceRoomMusicSessionProvider);
       if (stillPlaying && !session.dismissed && _roomKeepAliveLink != null) {
         ref.read(voiceRoomMusicSessionProvider.notifier).onRoomDetached(
-          room: arg,
+          room: _roomMeta,
           dj: state.dj,
           canSyncServer: _canControlMusic(),
           keepAliveLink: _roomKeepAliveLink!,
@@ -356,7 +373,7 @@ class VoiceRoomLiveController
       // build() bitmeden state okunamaz — poll yalnızca microtask içinde.
       _schedulePoll(sseConnected: false);
     });
-    _presenceHeartbeat = Timer.periodic(const Duration(seconds: 30), (_) {
+    _presenceHeartbeat = Timer.periodic(const Duration(seconds: 20), (_) {
       if (state.selfInRoom) {
         unawaited(_presenceHeartbeatTick());
       }
@@ -547,7 +564,7 @@ class VoiceRoomLiveController
     if (_roomKey.isEmpty) return;
     _giftSocket?.disconnect();
     final storage = ref.read(tokenStorageProvider);
-    final slug = arg.slug.trim();
+    final slug = _roomMeta.slug.trim();
     _giftSocket = VoiceRoomGiftSocket(ref.read(liveGiftsRemoteProvider));
     VoiceRoomDebugLog.log('socket.dj.subscribe', {'room': _roomKey});
     ref.read(voiceRoomGiftRealtimeProvider).setSocketPreferred(true);
@@ -620,7 +637,7 @@ class VoiceRoomLiveController
 
   Future<void> refresh({bool includeDj = true}) async {
     if (_roomKey.isEmpty) return;
-    final room = arg;
+    final room = _roomMeta;
     final remote = ref.read(chatRoomRemoteProvider);
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user != null && !state.selfInRoom) {
@@ -732,10 +749,7 @@ class VoiceRoomLiveController
         serverPermissions: serverPerms,
         myNickname: myNickname,
         roomMuted: roomMuted,
-        error: refreshError != null
-            ? ApiException.userMessage(refreshError!)
-            : null,
-        clearError: refreshError == null,
+        clearError: true,
         backgroundUrl: (bgFromDj != null && bgFromDj.isNotEmpty)
             ? bgFromDj
             : (state.backgroundUrl?.isNotEmpty == true)
@@ -770,7 +784,7 @@ class VoiceRoomLiveController
     try {
       final urls = await ref.read(chatRoomRemoteProvider).fetchBackgrounds();
       if (urls.isEmpty) return;
-      final roomBg = arg.backgroundImageUrl?.trim();
+      final roomBg = _roomMeta.backgroundImageUrl?.trim();
       final current = state.backgroundUrl?.trim();
       final pick = (current != null && current.isNotEmpty)
           ? current
@@ -860,7 +874,7 @@ class VoiceRoomLiveController
         state.dj.playing || state.dj.nowPlaying != null;
     state = state.copyWith(dj: dj, clearError: true);
     ref.read(voiceRoomMusicSessionProvider.notifier).syncFromRoom(
-      room: arg,
+      room: _roomMeta,
       dj: dj,
       canSyncServer: _canControlMusic(),
     );
@@ -963,7 +977,11 @@ class VoiceRoomLiveController
       dj = dj.copyWith(musicQueue: queue);
     }
     _commitDjUi(dj);
-    unawaited(_playDjInBackground(dj));
+    final ui = ref.read(voiceRoomUiProvider);
+    final sig = _djPlaybackSignature(dj, muted: !ui.backgroundMusicEnabled);
+    if (sig != _lastDjPlaybackSignature) {
+      unawaited(_playDjInBackground(dj));
+    }
   }
 
   ChatRoomDjState _djWithQueuePlaybackFallback(ChatRoomDjState dj) {
@@ -1465,7 +1483,7 @@ class VoiceRoomLiveController
   void _showEnterBanner(String raw) {
     final formatted = VoiceOfficialJoin.formatEntranceBanner(
       raw,
-      roomName: arg.nameTr,
+      roomName: _roomMeta.nameTr,
     );
     if (formatted.isEmpty) return;
     state = state.copyWith(enterBanner: formatted);
@@ -1488,7 +1506,7 @@ class VoiceRoomLiveController
     }
     return VoiceRoomPermissions.forUser(
       user: user,
-      room: arg,
+      room: _roomMeta,
       selfPresence: self,
       server: state.serverPermissions,
     );
@@ -1738,7 +1756,7 @@ class VoiceRoomLiveController
           if (target == null) return;
           await remote.banUser(
             roomKey: _roomKey,
-            alternateKey: arg.slug,
+            alternateKey: _roomMeta.slug,
             userId: target.id,
             reason: command.reason,
           );
@@ -1747,7 +1765,7 @@ class VoiceRoomLiveController
           if (target == null) return;
           await remote.unbanUser(
             roomKey: _roomKey,
-            alternateKey: arg.slug,
+            alternateKey: _roomMeta.slug,
             userId: target.id,
           );
           break;
@@ -1756,7 +1774,7 @@ class VoiceRoomLiveController
           if (target == null) return;
           await remote.kickUser(
             roomKey: _roomKey,
-            alternateKey: arg.slug,
+            alternateKey: _roomMeta.slug,
             userId: target.id,
             reason: command.reason,
           );
@@ -1767,7 +1785,7 @@ class VoiceRoomLiveController
           if (target == null) return;
           await remote.muteUser(
             roomKey: _roomKey,
-            alternateKey: arg.slug,
+            alternateKey: _roomMeta.slug,
             userId: target.id,
             minutes: command.minutes ?? 30,
             reason: command.reason,
@@ -1777,7 +1795,7 @@ class VoiceRoomLiveController
           if (target == null || command.roleSymbol == null) return;
           await remote.assignRole(
             roomKey: _roomKey,
-            alternateKey: arg.slug,
+            alternateKey: _roomMeta.slug,
             userId: target.id,
             roleSymbol: command.roleSymbol!,
           );
@@ -1816,7 +1834,7 @@ class VoiceRoomLiveController
           if (target == null) return;
           await remote.unmuteUser(
             roomKey: _roomKey,
-            alternateKey: arg.slug,
+            alternateKey: _roomMeta.slug,
             userId: target.id,
           );
           break;
@@ -1979,8 +1997,8 @@ class VoiceRoomLiveController
       await ref
           .read(chatRoomRemoteProvider)
           .setRoomBackground(
-            roomKey: _roomKey.isNotEmpty ? _roomKey : arg.id,
-            alternateKey: arg.slug,
+            roomKey: _roomKey.isNotEmpty ? _roomKey : _roomMeta.id,
+            alternateKey: _roomMeta.slug,
             backgroundImage: trimmed,
           );
       ref.invalidate(voiceRoomsProvider);
@@ -2597,9 +2615,9 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
       if (state.dismissed || state.room?.id != room.id) return;
       try {
         await ref
-            .read(voiceRoomLiveProvider(room.stableSessionKey).notifier)
+            .read(voiceRoomLiveProvider(room.liveKey).notifier)
             .refresh(includeDj: true);
-        final live = ref.read(voiceRoomLiveProvider(room.stableSessionKey));
+        final live = ref.read(voiceRoomLiveProvider(room.liveKey));
         state = state.copyWith(dj: live.dj);
         if (!live.dj.playing &&
             live.dj.nowPlaying == null &&
@@ -2663,6 +2681,6 @@ final voiceRoomMusicSessionProvider =
     );
 
 final voiceRoomLiveProvider = NotifierProvider.autoDispose
-    .family<VoiceRoomLiveController, VoiceRoomLiveState, VoiceRoomEntity>(
+    .family<VoiceRoomLiveController, VoiceRoomLiveState, String>(
       VoiceRoomLiveController.new,
     );

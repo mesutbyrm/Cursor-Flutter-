@@ -62,7 +62,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   }
 
   void _bootstrap() {
-    final live = ref.read(voiceRoomLiveProvider(widget.room));
+    final live = ref.read(voiceRoomLiveProvider(widget.room.liveKey));
     ref.read(pkBattleProvider.notifier).init(
           room: widget.room,
           presence: live.presence,
@@ -86,7 +86,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
   }
 
   void _startGiftRealtime() {
-    ref.read(voiceRoomLiveProvider(widget.room));
+    ref.read(voiceRoomLiveProvider(widget.room.liveKey));
     final service = ref.read(voiceRoomGiftRealtimeProvider);
     final r = widget.room;
     final key = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
@@ -122,7 +122,7 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
 
   @override
   Widget build(BuildContext context) {
-    final live = ref.watch(voiceRoomLiveProvider(widget.room));
+    final live = ref.watch(voiceRoomLiveProvider(widget.room.liveKey));
     final pk = ref.watch(pkBattleProvider);
     final remote = ref.watch(pkBattleRemoteProvider);
     final leadingLeft = pk.left.total >= pk.right.total;
@@ -377,7 +377,7 @@ class _PkQuickChatState extends ConsumerState<_PkQuickChat> {
             if (t.trim().isEmpty) return;
             _ctrl.clear();
             await ref
-                .read(voiceRoomLiveProvider(widget.room).notifier)
+                .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
                 .sendMessage(t);
             widget.onSent();
           },

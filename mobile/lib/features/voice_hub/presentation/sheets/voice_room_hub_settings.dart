@@ -73,7 +73,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
     setState(() => _loadingBg = true);
     try {
       final urls = await ref
-          .read(voiceRoomLiveProvider(widget.room).notifier)
+          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
           .fetchBackgrounds();
       if (mounted) setState(() => _backgrounds = urls);
     } finally {
@@ -127,7 +127,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
     );
     if (!mounted || err == null) return;
     final message = await ref
-        .read(voiceRoomLiveProvider(widget.room).notifier)
+        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
         .updateRoomNickname(err);
     if (!mounted) return;
     if (message != null) {
@@ -175,11 +175,11 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                 onTap: () async {
                   Navigator.pop(ctx);
                   await ref
-                      .read(voiceRoomLiveProvider(widget.room).notifier)
+                      .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
                       .sendMessage(c.$1);
                   if (!context.mounted) return;
                   final liveErr =
-                      ref.read(voiceRoomLiveProvider(widget.room)).error;
+                      ref.read(voiceRoomLiveProvider(widget.room.liveKey)).error;
                   if (liveErr != null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(liveErr)),
@@ -210,7 +210,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
 
   Future<void> _applyBackground(String url) async {
     final err = await ref
-        .read(voiceRoomLiveProvider(widget.room).notifier)
+        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
         .setRoomBackground(url);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -264,7 +264,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                               ),
                               onPressed: () async {
                                 final ctrl = ref.read(
-                                  voiceRoomLiveProvider(widget.room).notifier,
+                                  voiceRoomLiveProvider(widget.room.liveKey).notifier,
                                 );
                                 final err = isDj
                                     ? await ctrl.removeRoomDj(u.id)

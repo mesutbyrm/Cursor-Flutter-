@@ -180,6 +180,12 @@ class VoiceRoomDjPlayer {
     final trimmed = musicUrl.trim();
     if (trimmed.contains('googlevideo.com') &&
         YoutubeStreamResolver.isDirectPlayableUrl(trimmed)) {
+      final videoId = VoiceRoomMusicPipelineLog.videoIdFromUrl(trimmed) ??
+          _resolver.videoIdFrom(trimmed);
+      if (videoId != null && videoId.isNotEmpty) {
+        final fresh = await _resolver.resolveByVideoId(videoId);
+        if (fresh != null && fresh.isNotEmpty) return fresh;
+      }
       return trimmed;
     }
     if (trimmed.contains('/api/chat/youtube-audio')) {

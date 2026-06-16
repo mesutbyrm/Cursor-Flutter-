@@ -290,7 +290,7 @@ class _VoicePremiumGiftPanel2026State
         rarity: PremiumGiftCatalog2026.rarity(g.id),
       );
       ref.invalidate(coinBalanceProvider);
-      ref.read(voiceRoomLiveProvider(widget.room).notifier).refresh();
+      ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier).refresh();
       if (mounted) {
         widget.onSent(raw);
         widget.onClose();

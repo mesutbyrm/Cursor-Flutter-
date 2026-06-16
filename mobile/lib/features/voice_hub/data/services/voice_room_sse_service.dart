@@ -59,14 +59,20 @@ class VoiceRoomSseService {
     void Function(Map<String, dynamic> payload)? onDjUpdate,
     void Function(List<String> users)? onTyping,
   }) async {
+    final id = roomId.trim();
+    final sameRoom = !_stopped && _roomId == id && _bytesSub != null;
     _stopped = false;
-    _roomId = roomId.trim();
+    _roomId = id;
     _accessToken = accessToken;
     _onConnected = onConnected;
     _onMessage = onMessage;
     _onPresence = onPresence;
     _onDjUpdate = onDjUpdate;
     _onTyping = onTyping;
+    if (sameRoom) {
+      VoiceRoomDebugLog.log('sse.reuse', {'roomId': id});
+      return;
+    }
     await _openStream();
   }
 

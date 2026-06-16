@@ -53,7 +53,7 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
                 session.dj.playing || player.playback.value.playing;
             if (canControl) {
               final ctrl =
-                  ref.read(voiceRoomLiveProvider(room.stableSessionKey).notifier);
+                  ref.read(voiceRoomLiveProvider(room.liveKey).notifier);
               if (isPlaying) {
                 unawaited(ctrl.pauseMusic());
               } else {
@@ -70,7 +70,7 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
             if (room != null) {
               unawaited(
                 ref
-                    .read(voiceRoomLiveProvider(room.stableSessionKey).notifier)
+                    .read(voiceRoomLiveProvider(room.liveKey).notifier)
                     .closeMusicPlayer(),
               );
             } else {
@@ -85,7 +85,7 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
             final enabled = ref.read(voiceRoomUiProvider).backgroundMusicEnabled;
             unawaited(
               ref
-                  .read(voiceRoomLiveProvider(room.stableSessionKey).notifier)
+                  .read(voiceRoomLiveProvider(room.liveKey).notifier)
                   .toggleBackgroundMusic(enabled),
             );
           },

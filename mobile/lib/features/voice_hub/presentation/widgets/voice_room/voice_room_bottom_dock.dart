@@ -115,7 +115,7 @@ class VoiceRoomBottomDock extends ConsumerWidget {
               showDebug: kDebugMode,
               onPlayPause: () {
                 final ctrl =
-                    ref.read(voiceRoomLiveProvider(session).notifier);
+                    ref.read(voiceRoomLiveProvider(session.liveKey).notifier);
                 final player = ref.read(voiceRoomDjPlayerProvider);
                 final playing = live.dj.playing ||
                     player.playback.value.playing;
@@ -133,7 +133,7 @@ class VoiceRoomBottomDock extends ConsumerWidget {
               },
               onClose: () => unawaited(
                 ref
-                    .read(voiceRoomLiveProvider(session).notifier)
+                    .read(voiceRoomLiveProvider(session.liveKey).notifier)
                     .closeMusicPlayer(),
               ),
               musicMuted: musicMuted,

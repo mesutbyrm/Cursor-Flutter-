@@ -150,7 +150,7 @@ class _PanelBodyState extends ConsumerState<_PanelBody> {
 
   Future<void> _loadWords() async {
     final words = await ref
-        .read(voiceRoomLiveProvider(widget.room.stableSessionKey).notifier)
+        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
         .fetchBannedWords();
     if (mounted) {
       setState(() {
