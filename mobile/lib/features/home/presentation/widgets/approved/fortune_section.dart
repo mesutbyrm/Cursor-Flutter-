@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../fortune/domain/entities/fortune_type_entity.dart';
 import '../../../../fortune/presentation/data/fortune_catalog.dart';
+import '../../../domain/entities/home_fortune_card_entity.dart';
+import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
 
-/// Onaylı mockup — yatay Fal & Tarot kartları.
-class FortuneSection extends StatelessWidget {
+/// Web uyumlu — `GET /api/homepage-fortune-cards` + yerel katalog yedek.
+class FortuneSection extends ConsumerWidget {
   const FortuneSection({super.key});
 
   static const _displaySlugs = [
@@ -21,20 +23,20 @@ class FortuneSection extends StatelessWidget {
   static const _mockCounts = [2345, 1890, 1560, 1240, 980];
 
   @override
-  Widget build(BuildContext context) {
-    final entries = <({FortuneTypeEntity type, int count})>[];
-    for (var i = 0; i < _displaySlugs.length; i++) {
-      final type = FortuneCatalog.bySlug(_displaySlugs[i]);
-      if (type != null) {
-        entries.add((type: type, count: _mockCounts[i]));
-      }
-    }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final api = ref.watch(homeFortuneCardsProvider);
+    final entries = api.maybeWhen(
+      data: (cards) => cards.isNotEmpty ? _fromApi(cards) : _fromCatalog(),
+      orElse: _fromCatalog,
+    );
 
     return Column(
       children: [
-        const HomeSectionTitle(
+        HomeSectionTitle(
           emoji: '🔮',
           title: 'Fal & Tarot',
+          actionLabel: 'Tümü >',
+          onAction: () => context.go('/fortune'),
         ),
         SizedBox(
           height: HomeApprovedDesign.fortuneCardH,
@@ -46,17 +48,52 @@ class FortuneSection extends StatelessWidget {
             itemBuilder: (context, i) {
               final e = entries[i];
               return _FortuneCard(
-                emoji: e.type.emoji,
-                title: e.type.title,
+                emoji: e.emoji,
+                title: e.title,
                 count: e.count,
-                accent: e.type.accent,
-                onTap: () => context.push('/fortune/${e.type.slug}'),
+                accent: e.accent,
+                imageUrl: e.imageUrl,
+                onTap: () => context.push('/fortune/${e.slug}'),
               );
             },
           ),
         ),
       ],
     );
+  }
+
+  List<({String slug, String emoji, String title, int count, Color accent, String? imageUrl})>
+      _fromApi(List<HomeFortuneCardEntity> cards) {
+    return cards.take(8).map((c) {
+      final catalog = FortuneCatalog.bySlug(c.navigationSlug);
+      return (
+        slug: c.navigationSlug,
+        emoji: c.icon.isNotEmpty ? c.icon : (catalog?.emoji ?? '🔮'),
+        title: c.title,
+        count: 0,
+        accent: c.accent,
+        imageUrl: c.imageUrl,
+      );
+    }).toList();
+  }
+
+  List<({String slug, String emoji, String title, int count, Color accent, String? imageUrl})>
+      _fromCatalog() {
+    final out = <({String slug, String emoji, String title, int count, Color accent, String? imageUrl})>[];
+    for (var i = 0; i < _displaySlugs.length; i++) {
+      final type = FortuneCatalog.bySlug(_displaySlugs[i]);
+      if (type != null) {
+        out.add((
+          slug: type.slug,
+          emoji: type.emoji,
+          title: type.title,
+          count: _mockCounts[i],
+          accent: type.accent,
+          imageUrl: null,
+        ));
+      }
+    }
+    return out;
   }
 }
 
@@ -67,6 +104,7 @@ class _FortuneCard extends StatelessWidget {
     required this.count,
     required this.accent,
     required this.onTap,
+    this.imageUrl,
   });
 
   final String emoji;
@@ -74,6 +112,7 @@ class _FortuneCard extends StatelessWidget {
   final int count;
   final Color accent;
   final VoidCallback onTap;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +132,16 @@ class _FortuneCard extends StatelessWidget {
               spreadRadius: -2,
             ),
           ],
+          image: imageUrl != null && imageUrl!.isNotEmpty
+              ? DecorationImage(
+                  image: NetworkImage(imageUrl!),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Colors.black.withValues(alpha: 0.35),
+                    BlendMode.darken,
+                  ),
+                )
+              : null,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -110,14 +159,16 @@ class _FortuneCard extends StatelessWidget {
                 color: HomeApprovedDesign.textPrimary,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              '${_formatCount(count)} kişi',
-              style: const TextStyle(
-                fontSize: 9,
-                color: HomeApprovedDesign.textMuted,
+            if (count > 0) ...[
+              const SizedBox(height: 4),
+              Text(
+                '${_formatCount(count)} kişi',
+                style: const TextStyle(
+                  fontSize: 9,
+                  color: HomeApprovedDesign.textMuted,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

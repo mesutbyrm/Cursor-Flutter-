@@ -35,6 +35,7 @@ import 'providers/voice_room_diagnostic_provider.dart';
 import 'providers/voice_room_ui_provider.dart';
 import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
+import 'sheets/voice_room_speak_queue_sheet.dart';
 import 'sheets/voice_room_hub_settings.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'utils/voice_music_access.dart';
@@ -1144,12 +1145,20 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             perms: perms,
                             isOwner: isOwner,
                           ),
-                          onRoomPanel: () => showVoiceSpeakerListSheet(
-                            context,
-                            presence: live.presence,
-                            room: room,
-                            onUserTap: _openUser,
-                          ),
+                          onRoomPanel: perms.canAssignSeats
+                              ? () => showVoiceSpeakQueueSheet(
+                                    context,
+                                    ref,
+                                    room: session,
+                                    live: live,
+                                    perms: perms,
+                                  )
+                              : () => showVoiceSpeakerListSheet(
+                                    context,
+                                    presence: live.presence,
+                                    room: room,
+                                    onUserTap: _openUser,
+                                  ),
                         ),
                         Expanded(
                           child: Column(

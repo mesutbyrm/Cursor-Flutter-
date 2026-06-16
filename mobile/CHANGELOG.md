@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.228+231 (2026-06-12)
+
+### Web parite — ana sayfa ve sesli oda
+
+- **Ana sayfa:** Kampanya bannerları (`HomeBannerCarousel`), günlük burç şeridi, fal kartları `GET /api/homepage-fortune-cards`
+- **Sesli oda:** Moderatör «Konuşmacı sırası» paneli — dinleyicilere «Ses ver» (`assignSeat`)
+- **Dokümantasyon:** `docs/CANLIFAL_WEB_MOBILE_PARITY.md` — web ↔ mobil ekran/API eşlemesi
+
 ## 1.0.227+230 (2026-06-12)
 
 ### Premium Fortune — modern fal uygulaması (MVVM)

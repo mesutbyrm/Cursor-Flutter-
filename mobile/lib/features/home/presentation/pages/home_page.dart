@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/home_providers.dart';
 import '../providers/home_realtime_bridge.dart';
 import '../theme/home_approved_design.dart';
+import '../widgets/approved/home_horoscope_section.dart';
+import '../widgets/home_banner_carousel.dart';
 import '../widgets/approved/discover_section.dart';
 import '../widgets/approved/fan_club_section.dart';
 import '../widgets/approved/fortune_section.dart';
@@ -53,10 +55,12 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
           slivers: [
             const SliverToBoxAdapter(child: HomeHeader()),
+            const SliverToBoxAdapter(child: HomeBannerCarousel()),
             const SliverToBoxAdapter(child: StoriesSection()),
             const SliverToBoxAdapter(child: LiveBroadcastSection()),
             const SliverToBoxAdapter(child: VoiceRoomSection()),
             const SliverToBoxAdapter(child: LiveFortuneTellersSection()),
+            const SliverToBoxAdapter(child: HomeHoroscopeSection()),
             const SliverToBoxAdapter(child: FortuneSection()),
             const SliverToBoxAdapter(child: TrendingVideoSection()),
             const SliverToBoxAdapter(child: DiscoverSection()),
