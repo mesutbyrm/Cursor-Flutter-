@@ -2,25 +2,25 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.226+229` |
-| Tarih (UTC) | 2026-06-16 12:29 |
-| Commit | [`9111e106dac70ac97b20c865918381007a3f7e35`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/9111e106dac70ac97b20c865918381007a3f7e35) |
-| İş akışı | [Run 27616986352](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27616986352) |
+| Sürüm | `1.0.227+230` |
+| Tarih (UTC) | 2026-06-16 13:55 |
+| Commit | [`c490ea01151a395418c0eabc317da077523e462d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/c490ea01151a395418c0eabc317da077523e462d) |
+| İş akışı | [Run 27622033572](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27622033572) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.226+229 (2026-06-12)
+## 1.0.227+230 (2026-06-12)
 
-### Sesli oda — tam teknik dokümantasyon uyumu
+### Premium Fortune — modern fal uygulaması (MVVM)
 
-- **myPermissions:** `GET messages` yanıtından sunucu yetkileri okunur; kick/ban/mute/oda sessiz ayrı kontrol
-- **!istek / song-request:** Üretim akışı korunur (`skipPayment`, `dedication`, `duration`)
-- **Presence:** 30 sn heartbeat + `nickname`; koltuk indeksi 0–14
-- **SSE:** `messages` batch + `typing` kullanıcı listesi
-- **Müzik:** Çalarken `GET /music` ile sunucu auto-advance tetiklenir
-- **Moderasyon:** kick/ban/mute ayrı UI; `mute_room` / `unmute_room`; `PATCH song-request`
-- **Odalar:** `GET /api/chat/rooms?withCounts=true`; mesajlarda `after` + `limit=100`
+- **Mimari:** `premium_fortune/` modülü — MVVM + Clean Architecture (domain/data/presentation)
+- **Firebase:** Auth, Firestore, Storage entegrasyonu (demo mod: SharedPreferences yedek)
+- **OpenAI:** Kahve falı (görsel), tarot, rüya tabiri, doğum haritası AI yorumları
+- **Modüller:** Auth (e-posta, Google, Apple), kahve falı, tarot, canlı falcı, sohbet, cüzdan, oyunlar, astroloji, rüya, admin panel
+- **Tasarım:** Premium koyu tema, cam kartlar, alt navigasyon, animasyonlu geçişler
+- **Ödeme:** Stripe/Iyzico soyut katmanı + kupon kodları (HOSGELDIN, FAL2026)
+- **Rota:** `/premium` — ana uygulamadan bağımsız premium deneyim
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
