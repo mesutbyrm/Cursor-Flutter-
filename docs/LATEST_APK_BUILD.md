@@ -2,21 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.228+231` |
-| Tarih (UTC) | 2026-06-16 14:30 |
-| Commit | [`ca2a11a79ae437146325305270db383f80e286b3`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ca2a11a79ae437146325305270db383f80e286b3) |
-| İş akışı | [Run 27624294304](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27624294304) |
+| Sürüm | `1.0.229+232` |
+| Tarih (UTC) | 2026-06-16 15:17 |
+| Commit | [`41944140a222f0f0f17880a86a9a0e166e55b8ca`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/41944140a222f0f0f17880a86a9a0e166e55b8ca) |
+| İş akışı | [Run 27627228514](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27627228514) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.228+231 (2026-06-12)
+## 1.0.229+232 (2026-06-12)
 
-### Web parite — ana sayfa ve sesli oda
+### Hata düzeltmeleri — sesli oda, müzik, jeton, ana sayfa
 
-- **Ana sayfa:** Kampanya bannerları (`HomeBannerCarousel`), günlük burç şeridi, fal kartları `GET /api/homepage-fortune-cards`
-- **Sesli oda:** Moderatör «Konuşmacı sırası» paneli — dinleyicilere «Ses ver» (`assignSeat`)
-- **Dokümantasyon:** `docs/CANLIFAL_WEB_MOBILE_PARITY.md` — web ↔ mobil ekran/API eşlemesi
+- **Sesli / VIP oda açma:** Jeton bakiyesi kontrolü düzeltildi; oda kimliği boşsa liste yenilenir; `GET /api/chat/rooms/:id` ile doğrudan oda yükleme
+- **Müzik / !istek:** API zaman aşımı 45 sn; zaman aşımında kuyruk senkronu ile kurtarma; oynatıcı doğrulama 12 sn
+- **Jeton mağazası:** Son seçilen paket hatırlanır; «Ödeme Bildir» butonu; WhatsApp numara formatı (90…); dekont admin talebine eklenir
+- **Ana sayfa:** Hızlı erişim şeridi (Sesli Oda, Fal, Jeton, Oda Aç); bölüm sırası sadeleştirildi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
