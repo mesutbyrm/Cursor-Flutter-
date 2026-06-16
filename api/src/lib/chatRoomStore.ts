@@ -2,6 +2,18 @@ import { randomUUID } from "node:crypto";
 import type { User } from "@prisma/client";
 import { prisma } from "./prisma";
 import {
+  appendMusicItem,
+  advanceRoomQueue,
+  clearRoomQueue,
+  getMemoryQueue,
+  getRoomMusicItems,
+  logJetonDebit,
+  logUnauthorized,
+  markPlaying,
+  removeQueueItemById,
+} from "./musicQueueService";
+import { logMusicAction } from "./musicActionLog";
+import {
   searchMusicViaYoutubeApi,
   toLegacyYoutubeHits,
 } from "./youtubeMusicSearch";
@@ -583,7 +595,9 @@ export async function addTextMessage(roomId: string, user: User, content: string
           title: hit.title,
           youtubeUrl: hit.url,
           thumbUrl: hit.thumbUrl ?? null,
-          skipPayment: true,
+          artist: hit.uploader ?? null,
+          songName: hit.title,
+          duration: hit.duration ?? null,
           priority: false,
         });
         if (result.ok) {
@@ -678,21 +692,15 @@ export function getDjState(roomId: string, user: User | null) {
   );
   const settings = getRoomMusicSettings(roomId);
   const queue = listMusicQueue(roomId);
+  const nowPlaying = queue.length > 0 ? queue[0]! : null;
   const playing = Boolean(
     dj.playing && (dj.musicUrl || queue.length > 0),
   );
-  const isDj =
-    Boolean(priv?.dj) ||
-    (room?.djUserIds.includes(user?.id ?? "") ?? false);
   const canRequestMusic =
     settings.musicEnabled &&
-    Boolean(
-      user &&
-        (isDj ||
-          priv?.owner ||
-          priv?.admin ||
-          (user.coins ?? 0) >= settings.musicRequestCost),
-    );
+    Boolean(user && (user.coins ?? 0) >= settings.musicRequestCost);
+  const canControlMusic =
+    user && room ? canControlRoomMusic(user, room, nowPlaying) : false;
   return {
     djUsers,
     activeDjId: dj.activeDjId,
@@ -703,14 +711,16 @@ export function getDjState(roomId: string, user: User | null) {
       ? roomMap(roomId).has(room.ownerId)
       : false,
     canPlayMusic: Boolean(priv?.owner || priv?.admin || priv?.dj),
+    canControlMusic,
     canRequestMusic,
     isOwner: Boolean(priv?.owner),
     musicQueue: queue,
-    nowPlaying: queue.length > 0 ? queue[0]! : null,
+    nowPlaying,
     musicRequestCost: settings.musicRequestCost,
     maxMusicQueue: settings.maxQueueLength,
     musicEnabled: settings.musicEnabled,
     maxDj: 5,
+    queueLength: queue.length,
   };
 }
 
@@ -722,8 +732,27 @@ export async function setDjMusic(
 ) {
   const room = getChatRoom(roomId);
   if (!room) return null;
-  const priv = roomPrivileges(user, room);
-  if (!priv.owner && !priv.admin && !priv.dj) return null;
+  const queue = listMusicQueue(roomId);
+  const nowPlaying = queue[0] ?? null;
+  if (!playing) {
+    if (!canControlRoomMusic(user, room, nowPlaying)) {
+      await logUnauthorized({ roomId, user, attempted: "pause" });
+      return null;
+    }
+    await logMusicAction({
+      roomId: resolveRoomId(roomId),
+      userId: user.id,
+      username: user.username ?? user.displayName,
+      action: "pause",
+    });
+  } else {
+    await logMusicAction({
+      roomId: resolveRoomId(roomId),
+      userId: user.id,
+      username: user.username ?? user.displayName,
+      action: "resume",
+    });
+  }
   let resolved = musicUrl;
   if (resolved && /youtube\.com|youtu\.be/i.test(resolved)) {
     resolved = (await resolveYoutubeStreamUrl(resolved)) ?? resolved;
@@ -830,22 +859,80 @@ export type MusicQueueItem = {
   createdAt: string;
   giftTo?: string | null;
   note?: string | null;
+  artist?: string | null;
+  songName?: string | null;
+  youtubeId?: string | null;
+  duration?: string | null;
+  uploader?: string | null;
 };
 
-const musicQueues = new Map<string, MusicQueueItem[]>();
-
-function musicQueueList(roomIdOrSlug: string) {
-  const key = resolveRoomId(roomIdOrSlug);
-  let list = musicQueues.get(key);
-  if (!list) {
-    list = [];
-    musicQueues.set(key, list);
-  }
-  return list;
+function youtubeIdFromUrl(raw: string): string | null {
+  return extractYoutubeId(raw);
 }
 
-export function listMusicQueue(roomId: string) {
-  return [...musicQueueList(roomId)];
+function toApiMusicItem(row: {
+  id: string;
+  userId: string;
+  username: string | null;
+  artist: string | null;
+  songName: string;
+  youtubeId: string;
+  duration: string | null;
+  thumbUrl: string | null;
+  createdAt: Date;
+  status?: string;
+}): MusicQueueItem {
+  const watchUrl = youtubeWatchUrl(row.youtubeId);
+  return {
+    id: row.id,
+    title: row.songName,
+    songName: row.songName,
+    artist: row.artist,
+    uploader: row.artist ?? undefined,
+    youtubeUrl: watchUrl,
+    youtubeId: row.youtubeId,
+    thumbUrl: row.thumbUrl,
+    duration: row.duration,
+    requestedBy: {
+      id: row.userId,
+      name: row.username ?? "Kullanıcı",
+      nickname: row.username,
+    },
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+export function canControlRoomMusic(
+  user: User,
+  room: ChatRoomRow,
+  nowPlaying: MusicQueueItem | null | undefined,
+) {
+  const priv = roomPrivileges(user, room);
+  if (priv.owner || priv.admin) return true;
+  const r = (user.role ?? "").toLowerCase();
+  if (
+    r === "super_admin" ||
+    r === "superadmin" ||
+    r === "founder" ||
+    staffRankForUser(user) === "founder"
+  ) {
+    return true;
+  }
+  if (nowPlaying?.requestedBy?.id === user.id) return true;
+  return false;
+}
+
+export function listMusicQueue(roomId: string): MusicQueueItem[] {
+  const key = resolveRoomId(roomId);
+  const list = memoryQueueSnapshot(key);
+  const playing = list.find((i) => i.status === "playing");
+  const queued = list.filter((i) => i.status === "queued");
+  const rows = playing ? [playing, ...queued] : queued;
+  return rows.map(toApiMusicItem);
+}
+
+function memoryQueueSnapshot(roomId: string) {
+  return getMemoryQueue(resolveRoomId(roomId));
 }
 
 export async function requestMusicQueue(
@@ -857,10 +944,10 @@ export async function requestMusicQueue(
     thumbUrl?: string | null;
     giftTo?: string | null;
     note?: string | null;
-    /** Ücretli müzik ikonu isteği — çalan şarkının hemen arkasına */
+    artist?: string | null;
+    songName?: string | null;
+    duration?: string | null;
     priority?: boolean;
-    /** Chat !istek — jeton düşülmez */
-    skipPayment?: boolean;
   },
 ) {
   const room = getChatRoom(roomId);
@@ -871,107 +958,126 @@ export async function requestMusicQueue(
   if (!settings.musicEnabled) {
     return { ok: false as const, error: "DJ sistemi bu odada kapalı" };
   }
-  const priv = roomPrivileges(user, room);
-  const isDj =
-    priv.dj || priv.owner || priv.admin || room.djUserIds.includes(user.id);
   const dbUser = await loadUser(user.id);
   if (!dbUser) return { ok: false as const, error: "Oturum gerekli" };
   const cost = settings.musicRequestCost;
-  const skipPayment = input.skipPayment === true || isDj;
-  if (!skipPayment && dbUser.coins < cost) {
+  if (dbUser.coins < cost) {
     return {
       ok: false as const,
-      error: `Bu şarkıyı istemek için en az ${cost} jeton gerekli.`,
+      error:
+        "Şarkı isteği gönderebilmek için en az 10 jetona sahip olmalısınız.",
+      code: "INSUFFICIENT_JETON" as const,
     };
   }
-  const listBefore = musicQueueList(roomId);
+  await getRoomMusicItems(roomId);
+  const listBefore = memoryQueueSnapshot(roomId);
   if (listBefore.length >= settings.maxQueueLength) {
     return {
       ok: false as const,
       error: `Kuyruk dolu (maks. ${settings.maxQueueLength})`,
     };
   }
-  let newBalance = dbUser.coins;
-  if (!skipPayment) {
-    const updated = await prisma.user.update({
-      where: { id: user.id },
-      data: { coins: { decrement: cost } },
-    });
-    newBalance = updated.coins;
+
+  const videoId =
+    youtubeIdFromUrl(url) ??
+    (url.length <= 15 && !url.includes("/") ? url : null);
+  if (!videoId) {
+    return { ok: false as const, error: "Geçersiz YouTube bağlantısı" };
   }
-  const giftTo = input.giftTo?.trim() || null;
-  const note = input.note?.trim() || null;
-  const item: MusicQueueItem = {
-    id: randomUUID(),
-    title: input.title.trim() || "Şarkı",
-    youtubeUrl: url,
-    thumbUrl: input.thumbUrl ?? null,
-    requestedBy: toChatUser(user, "listener"),
-    createdAt: new Date().toISOString(),
-    giftTo,
-    note,
-  };
-  const list = musicQueueList(roomId);
+
+  const songName = (input.songName ?? input.title).trim() || "Şarkı";
+  const artist = input.artist?.trim() || null;
+
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data: { coins: { decrement: cost } },
+  });
+  const newBalance = updated.coins;
+  await logJetonDebit({
+    roomId,
+    user,
+    amount: cost,
+    balanceAfter: newBalance,
+    songName,
+  });
+
   const key = resolveRoomId(roomId);
   const djNow = djByRoom.get(key);
   const wasPlaying = Boolean(djNow?.playing && djNow.musicUrl);
-  const usePriority = input.priority === true && !isDj;
-  let queuePosition: number;
-  if (usePriority && wasPlaying && list.length > 0) {
-    list.splice(1, 0, item);
-    queuePosition = 2;
-  } else if (usePriority && !wasPlaying) {
-    list.unshift(item);
-    queuePosition = 1;
-  } else {
-    list.push(item);
-    queuePosition = list.length;
+
+  const row = await appendMusicItem({
+    roomId,
+    user,
+    artist,
+    songName,
+    youtubeId: videoId,
+    duration: input.duration ?? null,
+    thumbUrl: input.thumbUrl ?? null,
+  });
+
+  const giftTo = input.giftTo?.trim() || null;
+  const note = input.note?.trim() || null;
+  const usePriority = input.priority === true;
+  if (usePriority && wasPlaying) {
+    const mem = getMemoryQueue(roomId);
+    const idx = mem.findIndex((i) => i.id === row.id);
+    if (idx > 1) {
+      const [moved] = mem.splice(idx, 1);
+      mem.splice(1, 0, moved);
+    }
   }
-  if (list.length > settings.maxQueueLength) {
-    list.splice(0, list.length - settings.maxQueueLength);
-  }
-  const canonical = key;
+
+  const item = toApiMusicItem(row);
+  item.giftTo = giftTo;
+  item.note = note;
+  item.requestedBy = toChatUser(user, "listener");
+
+  const queueAfter = listMusicQueue(roomId);
+  const queuePosition =
+    queueAfter.findIndex((q) => q.id === item.id) + 1 || queueAfter.length;
   const displayName = item.requestedBy.name;
-  if (usePriority) {
-    pushMessage(canonical, {
+
+  if (usePriority && wasPlaying) {
+    pushMessage(key, {
       id: randomUUID(),
       content: `⚡ Öncelikli istek: «${item.title}» (çalan şarkının ardından)`,
       createdAt: new Date().toISOString(),
       user: item.requestedBy,
     });
   }
-  pushMessage(canonical, {
+  pushMessage(key, {
     id: randomUUID(),
     content: `🎵 ${displayName} "${item.title}" şarkısını istedi.`,
     createdAt: new Date().toISOString(),
     user: item.requestedBy,
   });
   if (giftTo) {
-    pushMessage(canonical, {
+    pushMessage(key, {
       id: randomUUID(),
       content: `🎁 ${displayName} bu şarkıyı tüm odaya armağan etti.`,
       createdAt: new Date().toISOString(),
       user: item.requestedBy,
     });
   }
-  pushMessage(canonical, {
+  pushMessage(key, {
     id: randomUUID(),
     content: `📀 Şarkı kuyruğa eklendi.`,
     createdAt: new Date().toISOString(),
     user: item.requestedBy,
   });
-  pushMessage(canonical, {
+  pushMessage(key, {
     id: randomUUID(),
     content: `🔢 Sıra: #${queuePosition}`,
     createdAt: new Date().toISOString(),
     user: item.requestedBy,
   });
+
   await tryStartMusicFromQueue(roomId);
   const dj = djByRoom.get(key);
   return {
     ok: true as const,
     item,
-    queue: [...list],
+    queue: listMusicQueue(roomId),
     queuePosition,
     startedImmediately: !wasPlaying && queuePosition === 1,
     newBalance,
@@ -988,8 +1094,18 @@ function canManageMusicQueue(user: User, room: ChatRoomRow) {
 export async function skipMusicQueue(roomId: string, user: User) {
   const room = getChatRoom(roomId);
   if (!room) return { ok: false as const, error: "Oda bulunamadı" };
-  if (!canManageMusicQueue(user, room)) {
-    return { ok: false as const, error: "Şarkı atlama yetkisi yok" };
+  const queue = listMusicQueue(roomId);
+  const nowPlaying = queue[0] ?? null;
+  if (!canControlRoomMusic(user, room, nowPlaying)) {
+    await logUnauthorized({
+      roomId,
+      user,
+      attempted: "skip",
+    });
+    return {
+      ok: false as const,
+      error: "Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.",
+    };
   }
   await advanceMusicQueue(roomId);
   pushMessage(resolveRoomId(roomId), {
@@ -1000,7 +1116,7 @@ export async function skipMusicQueue(roomId: string, user: User) {
   return { ok: true as const, queue: listMusicQueue(roomId) };
 }
 
-export function removeMusicQueueItem(
+export async function removeMusicQueueItem(
   roomId: string,
   user: User,
   itemId: string,
@@ -1010,26 +1126,33 @@ export function removeMusicQueueItem(
   if (!canManageMusicQueue(user, room)) {
     return { ok: false as const, error: "Yetki yok" };
   }
-  const list = musicQueueList(roomId);
-  const idx = list.findIndex((i) => i.id === itemId);
-  if (idx < 0) return { ok: false as const, error: "Şarkı bulunamadı" };
-  const removed = list.splice(idx, 1)[0];
+  const removed = await removeQueueItemById(roomId, itemId, user);
+  if (!removed) return { ok: false as const, error: "Şarkı bulunamadı" };
   pushMessage(resolveRoomId(roomId), {
     id: randomUUID(),
-    content: `🗑️ Kuyruktan kaldırıldı: ${removed.title}`,
+    content: `🗑️ Kuyruktan kaldırıldı: ${removed.songName}`,
     createdAt: new Date().toISOString(),
   });
-  return { ok: true as const, queue: [...list] };
+  return { ok: true as const, queue: listMusicQueue(roomId) };
 }
 
-export function clearMusicQueue(roomId: string, user: User) {
+export async function clearMusicQueue(roomId: string, user: User) {
   const room = getChatRoom(roomId);
   if (!room) return { ok: false as const, error: "Oda bulunamadı" };
-  if (!canManageMusicQueue(user, room)) {
-    return { ok: false as const, error: "Yetki yok" };
+  const queue = listMusicQueue(roomId);
+  const nowPlaying = queue[0] ?? null;
+  if (!canControlRoomMusic(user, room, nowPlaying)) {
+    await logUnauthorized({
+      roomId,
+      user,
+      attempted: "close",
+    });
+    return {
+      ok: false as const,
+      error: "Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.",
+    };
   }
-  const list = musicQueueList(roomId);
-  list.splice(0, list.length);
+  await clearRoomQueue(roomId, user);
   const key = resolveRoomId(roomId);
   djByRoom.set(key, { activeDjId: null, musicUrl: null, playing: false });
   pushMessage(key, {
@@ -1142,18 +1265,15 @@ export async function tryStartMusicFromQueue(roomId: string) {
   const key = resolveRoomId(roomId);
   const current = djByRoom.get(key);
   if (current?.playing && current.musicUrl) return current;
-  const list = musicQueueList(roomId);
-  if (list.length === 0) return current ?? null;
-  const next = list[0]!;
-  const rawUrl = next.youtubeUrl.trim();
-  const videoId =
-    extractYoutubeId(rawUrl) ??
-    (rawUrl.length <= 15 && !rawUrl.includes("/") ? rawUrl : null);
-  const watchUrl = videoId
-    ? rawUrl.startsWith("http")
-      ? rawUrl
-      : youtubeWatchUrl(videoId)
-    : rawUrl || null;
+  const { playing: playingRow, queued } = await getRoomMusicItems(roomId);
+  const nextRow = playingRow ?? queued[0] ?? null;
+  if (!nextRow) return current ?? null;
+  if (!playingRow && queued[0]) {
+    await markPlaying(roomId, queued[0].id);
+  }
+  const next = toApiMusicItem(nextRow);
+  const videoId = next.youtubeId ?? extractYoutubeId(next.youtubeUrl);
+  const watchUrl = videoId ? youtubeWatchUrl(videoId) : next.youtubeUrl.trim();
   const stream = watchUrl ? await resolveYoutubeStreamUrl(watchUrl) : null;
   const playbackUrl = stream ?? watchUrl;
   if (!playbackUrl) return current ?? null;
@@ -1168,14 +1288,44 @@ export async function tryStartMusicFromQueue(roomId: string) {
 
 export async function advanceMusicQueue(roomId: string, user?: User) {
   const room = getChatRoom(roomId);
-  if (user && room && !canManageMusicQueue(user, room)) {
-    return null;
+  if (user && room) {
+    const queue = listMusicQueue(roomId);
+    const nowPlaying = queue[0] ?? null;
+    if (!canControlRoomMusic(user, room, nowPlaying)) {
+      await logUnauthorized({ roomId, user, attempted: "advance" });
+      return null;
+    }
   }
   const key = resolveRoomId(roomId);
-  const list = musicQueueList(roomId);
-  if (list.length > 0) list.shift();
   djByRoom.set(key, { activeDjId: null, musicUrl: null, playing: false });
+  await advanceRoomQueue(roomId);
   return tryStartMusicFromQueue(roomId);
+}
+
+/** !istek ve müzik isteği — YouTube arama + kuyruk (tek giriş). */
+export async function requestMusicByQuery(
+  roomId: string,
+  user: User,
+  query: string,
+) {
+  const q = query.trim();
+  if (q.length < 2) {
+    return { ok: false as const, error: "Şarkı adı çok kısa" };
+  }
+  const hits = await searchYoutube(q);
+  if (hits.length === 0) {
+    return { ok: false as const, error: `«${q}» için sonuç bulunamadı.` };
+  }
+  const hit = hits[0]!;
+  return requestMusicQueue(roomId, user, {
+    title: hit.title,
+    youtubeUrl: hit.url,
+    thumbUrl: hit.thumbUrl ?? null,
+    artist: hit.uploader ?? null,
+    songName: hit.title,
+    duration: hit.duration ?? null,
+    priority: false,
+  });
 }
 
 function extractYoutubeId(raw: string) {

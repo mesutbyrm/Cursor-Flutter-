@@ -7,6 +7,7 @@ class ChatRoomDjState {
     this.activeDjId,
     this.ownerPresent = false,
     this.canPlayMusic = false,
+    this.canControlMusic = false,
     this.canRequestMusic = false,
     this.isOwner = false,
     this.musicUrl,
@@ -50,11 +51,13 @@ class ChatRoomDjState {
     } else if (json['playing'] == true && queue.isNotEmpty) {
       nowPlaying = queue.first;
     }
+    final canControl = json['canControlMusic'] == true || canPlay;
     return ChatRoomDjState(
       djUsers: users,
       activeDjId: json['activeDjId']?.toString() ?? json['djId']?.toString(),
       ownerPresent: json['ownerPresent'] == true,
       canPlayMusic: canPlay,
+      canControlMusic: canControl,
       canRequestMusic: canRequest,
       isOwner: json['isOwner'] == true,
       musicUrl: json['musicUrl']?.toString() ?? json['url']?.toString(),
@@ -78,6 +81,7 @@ class ChatRoomDjState {
   final String? activeDjId;
   final bool ownerPresent;
   final bool canPlayMusic;
+  final bool canControlMusic;
   final bool canRequestMusic;
   final bool isOwner;
   final String? musicUrl;
@@ -105,6 +109,7 @@ class ChatRoomDjState {
       activeDjId: activeDjId,
       ownerPresent: ownerPresent,
       canPlayMusic: canPlayMusic,
+      canControlMusic: canControlMusic,
       canRequestMusic: canRequestMusic,
       isOwner: isOwner,
       musicUrl: clearMusicUrl ? null : (musicUrl ?? this.musicUrl),
@@ -144,6 +149,7 @@ class ChatRoomDjState {
       activeDjId: activeDjId,
       ownerPresent: ownerPresent,
       canPlayMusic: canPlayMusic,
+      canControlMusic: canControlMusic,
       canRequestMusic: canRequestMusic ?? this.canRequestMusic,
       isOwner: isOwner,
       musicUrl: resolvedMusicUrl,

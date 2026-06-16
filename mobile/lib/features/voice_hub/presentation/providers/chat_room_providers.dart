@@ -508,6 +508,12 @@ class VoiceRoomLiveController
     }
   }
 
+  void clearError() {
+    if (state.error != null) {
+      state = state.copyWith(clearError: true);
+    }
+  }
+
   static bool _isLocalHelpCommand(String text) {
     final t = text.trim().toLowerCase();
     return t == '!yardım' ||
@@ -617,16 +623,11 @@ class VoiceRoomLiveController
   }
 
   Future<void> _onDjTrackComplete() async {
-    final perms = _permissions();
-    final canAdvance =
-        perms.canManageDj || perms.isRoomOwner || state.dj.canPlayMusic;
-    if (!canAdvance) {
-      VoiceRoomDebugLog.log('music.track_complete.listener_only');
-      return;
-    }
     try {
       VoiceRoomDebugLog.log('music.track_complete.advance');
-      await ref.read(chatRoomRemoteProvider).advanceMusicQueue(_roomKey);
+      await ref
+          .read(chatRoomRemoteProvider)
+          .completeMusicQueue(_roomKey, alternateKey: _musicAlternateKey);
       await refresh();
     } catch (e) {
       VoiceRoomDebugLog.log('music.track_complete.fail', {'error': '$e'});
@@ -1102,25 +1103,42 @@ class VoiceRoomLiveController
 
   Future<String?> _submitMusicRequestByTitle(
     String title, {
-    bool skipPayment = false,
     bool priority = true,
   }) async {
     final q = title.trim();
     if (q.length < 2) return 'Şarkı adı çok kısa.';
     try {
-      final hits = await ref.read(chatRoomRemoteProvider).searchYoutube(q);
-      if (hits.isEmpty) {
-        return '«$q» için sonuç bulunamadı. Müzik Aç ile tekrar deneyin.';
-      }
-      final hit = hits.first;
-      return requestMusic(
-        title: hit.title,
-        youtubeUrl: hit.url,
-        thumbUrl: hit.thumbUrl,
-        videoId: hit.videoId,
-        skipPayment: skipPayment,
-        priority: priority,
+      final result = await ref
+          .read(chatRoomRemoteProvider)
+          .requestMusicByQuery(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            query: q,
+          )
+          .timeout(
+            const Duration(seconds: 22),
+            onTimeout: () => throw TimeoutException('Şarkı isteği zaman aşımı'),
+          );
+      ref.invalidate(coinBalanceProvider);
+      ref.invalidate(walletBalancesProvider);
+      final queue = result.queue;
+      final nowPlaying = result.item ?? (queue.isNotEmpty ? queue.first : null);
+      var dj = state.dj.copyWith(
+        musicQueue: queue,
+        nowPlaying: nowPlaying,
+        playing: result.playing,
+        musicUrl: result.musicUrl ?? nowPlaying?.youtubeUrl,
       );
+      state = state.copyWith(dj: dj);
+      await _syncMusicFromServerIfNeeded(force: true);
+      unawaited(_playDjInBackground(state.dj));
+      return null;
+    } on ApiException catch (e) {
+      if (e.statusCode == 402 ||
+          e.message.toLowerCase().contains('jeton')) {
+        return 'Şarkı isteği gönderebilmek için en az 10 jetona sahip olmalısınız.';
+      }
+      return e.message;
     } catch (e) {
       return ApiException.userMessage(e);
     }
@@ -1224,7 +1242,6 @@ class VoiceRoomLiveController
       try {
         final queueError = await _submitMusicRequestByTitle(
           song,
-          skipPayment: true,
           priority: false,
         );
         if (queueError != null && queueError.isNotEmpty) {
@@ -1232,12 +1249,6 @@ class VoiceRoomLiveController
           _showMusicRequestFlashLine('⚠️ $queueError');
           return;
         }
-        unawaited(
-          ref
-              .read(chatRoomRemoteProvider)
-              .sendMessage(roomKey: _roomKey, content: trimmed)
-              .catchError((_) {}),
-        );
         await _syncMusicFromServerIfNeeded(force: true);
         unawaited(_playDjInBackground(state.dj));
         final djAfter = state.dj;
@@ -1545,12 +1556,18 @@ class VoiceRoomLiveController
   }
 
   bool _canControlMusic() {
+    if (state.dj.canControlMusic) return true;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final np = state.dj.nowPlaying;
+    if (user != null && np?.requestedBy?.id == user.id) return true;
     final perms = _permissions();
-    return perms.canManageDj || perms.isRoomOwner || state.dj.canPlayMusic;
+    return perms.isRoomOwner || perms.isSiteAdmin;
   }
 
   Future<String?> pauseMusic() async {
-    if (!_canControlMusic()) return 'Yetki yok';
+    if (!_canControlMusic()) {
+      return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
+    }
     try {
       await ref
           .read(chatRoomRemoteProvider)
@@ -1569,7 +1586,9 @@ class VoiceRoomLiveController
   }
 
   Future<String?> resumeMusic() async {
-    if (!_canControlMusic()) return 'Yetki yok';
+    if (!_canControlMusic()) {
+      return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
+    }
     final url = state.dj.playbackSource;
     if (url == null) return 'Çalınacak şarkı yok';
     try {
@@ -1809,7 +1828,6 @@ class VoiceRoomLiveController
     String? giftTo,
     String? note,
     bool priority = true,
-    bool skipPayment = false,
   }) async {
     try {
       var resolvedUrl = youtubeUrl.trim();
@@ -1834,7 +1852,6 @@ class VoiceRoomLiveController
       VoiceRoomDebugLog.log('music.request', {
         'title': title,
         'priority': priority,
-        'skipPayment': skipPayment,
         'youtubeUrl': resolvedUrl,
       });
       final result = await ref
@@ -1849,7 +1866,6 @@ class VoiceRoomLiveController
             giftTo: giftTo,
             note: note,
             priority: priority,
-            skipPayment: skipPayment,
           )
           .timeout(
             const Duration(seconds: 22),

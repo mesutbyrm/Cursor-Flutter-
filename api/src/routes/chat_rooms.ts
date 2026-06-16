@@ -28,6 +28,7 @@ import {
   unbanRoomUser,
   listMusicQueue,
   requestMusicQueue,
+  requestMusicByQuery,
   searchYoutube,
   resolveYoutubeStreamUrl,
   advanceMusicQueue,
@@ -230,18 +231,22 @@ chatRoomsRouter.post("/rooms/:roomId/song-request", requireAuth, async (req, res
         ? req.body.message
         : null;
   const priority = req.body?.priority === true;
-  const skipPayment = req.body?.skipPayment === true;
   const result = await requestMusicQueue(roomId, user, {
     title,
     youtubeUrl,
     thumbUrl,
     giftTo,
     note,
+    artist: typeof req.body?.artist === "string" ? req.body.artist : null,
+    songName: typeof req.body?.songName === "string" ? req.body.songName : title,
+    duration: typeof req.body?.duration === "string" ? req.body.duration : null,
     priority,
-    skipPayment,
   });
   if (!result.ok) {
-    const code = result.error?.includes("jeton") ? 402 : 400;
+    const code =
+      result.error?.includes("jeton") || (result as { code?: string }).code === "INSUFFICIENT_JETON"
+        ? 402
+        : 400;
     return fail(res, code, "BAD_REQUEST", result.error ?? "İstek başarısız");
   }
   emitChatRoomDjUpdate(roomId);
@@ -257,6 +262,64 @@ chatRoomsRouter.post("/rooms/:roomId/song-request", requireAuth, async (req, res
     queuePosition: result.queuePosition,
   });
 });
+
+chatRoomsRouter.post(
+  "/rooms/:roomId/music-request-by-query",
+  requireAuth,
+  async (req, res) => {
+    const roomId = req.params.roomId;
+    if (!getChatRoom(roomId)) {
+      return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+    }
+    const user = await loadUser(req.userId);
+    if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+    const query =
+      typeof req.body?.query === "string"
+        ? req.body.query
+        : typeof req.body?.q === "string"
+          ? req.body.q
+          : "";
+    const result = await requestMusicByQuery(roomId, user, query);
+    if (!result.ok) {
+      const code =
+        result.error?.includes("jeton") ||
+        (result as { code?: string }).code === "INSUFFICIENT_JETON"
+          ? 402
+          : 400;
+      return fail(res, code, "BAD_REQUEST", result.error ?? "İstek başarısız");
+    }
+    emitChatRoomDjUpdate(roomId);
+    return res.status(200).json({
+      success: true,
+      item: result.item,
+      queue: result.queue,
+      newBalance: result.newBalance,
+      coinBalance: result.newBalance,
+      cost: MUSIC_REQUEST_JETON,
+      musicUrl: result.musicUrl,
+      playing: result.playing,
+      queuePosition: result.queuePosition,
+    });
+  },
+);
+
+chatRoomsRouter.post(
+  "/rooms/:roomId/music-queue/complete",
+  requireAuth,
+  async (req, res) => {
+    const roomId = req.params.roomId;
+    if (!getChatRoom(roomId)) {
+      return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+    }
+    await advanceMusicQueue(roomId);
+    const user = await loadUser(req.userId);
+    emitChatRoomDjUpdate(roomId);
+    return res.status(200).json({
+      ...getDjState(roomId, user),
+      queue: listMusicQueue(roomId),
+    });
+  },
+);
 
 chatRoomsRouter.post(
   "/rooms/:roomId/music-queue/advance",
@@ -287,7 +350,7 @@ chatRoomsRouter.delete(
     const roomId = req.params.roomId;
     const user = await loadUser(req.userId);
     if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
-    const result = removeMusicQueueItem(roomId, user, req.params.itemId);
+    const result = await removeMusicQueueItem(roomId, user, req.params.itemId);
     if (!result.ok) {
       return fail(res, 403, "FORBIDDEN", result.error ?? "İşlem başarısız");
     }
@@ -303,7 +366,7 @@ chatRoomsRouter.delete(
     const roomId = req.params.roomId;
     const user = await loadUser(req.userId);
     if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
-    const result = clearMusicQueue(roomId, user);
+    const result = await clearMusicQueue(roomId, user);
     if (!result.ok) {
       return fail(res, 403, "FORBIDDEN", result.error ?? "İşlem başarısız");
     }
@@ -380,18 +443,22 @@ chatRoomsRouter.post("/rooms/:roomId/music-queue", requireAuth, async (req, res)
         ? req.body.message
         : null;
   const priority = req.body?.priority === true;
-  const skipPayment = req.body?.skipPayment === true;
   const result = await requestMusicQueue(roomId, user, {
     title,
     youtubeUrl,
     thumbUrl,
     giftTo,
     note,
+    artist: typeof req.body?.artist === "string" ? req.body.artist : null,
+    songName: typeof req.body?.songName === "string" ? req.body.songName : title,
+    duration: typeof req.body?.duration === "string" ? req.body.duration : null,
     priority,
-    skipPayment,
   });
   if (!result.ok) {
-    const code = result.error?.includes("jeton") ? 402 : 400;
+    const code =
+      result.error?.includes("jeton") || (result as { code?: string }).code === "INSUFFICIENT_JETON"
+        ? 402
+        : 400;
     return fail(res, code, "BAD_REQUEST", result.error ?? "İstek başarısız");
   }
   emitChatRoomDjUpdate(roomId);

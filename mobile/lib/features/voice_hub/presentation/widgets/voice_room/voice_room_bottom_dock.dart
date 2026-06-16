@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
+import '../../../domain/entities/chat_room_dj_state.dart';
+import '../../../domain/entities/music_queue_item.dart';
 import '../../pages/voice_music_hub_page.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../sheets/voice_room_dj_sheet.dart';
@@ -47,6 +49,15 @@ class VoiceRoomBottomDock extends ConsumerWidget {
   final String? staffBanner;
   final VoidCallback onPkTap;
   final VoidCallback onMuteToggle;
+
+  static List<MusicQueueItem> _waitingQueueItems(ChatRoomDjState dj) {
+    final npId = dj.nowPlaying?.id;
+    if (npId == null) {
+      if (dj.musicQueue.length <= 1) return const [];
+      return dj.musicQueue.sublist(1);
+    }
+    return dj.musicQueue.where((e) => e.id != npId).toList();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -100,6 +111,7 @@ class VoiceRoomBottomDock extends ConsumerWidget {
             if (!musicDismissed)
               VoiceRoomWebMusicBar(
               dj: live.dj,
+              canControlMusic: canControlMusic,
               showDebug: kDebugMode,
               onPlayPause: () {
                 final ctrl =
@@ -131,11 +143,11 @@ class VoiceRoomBottomDock extends ConsumerWidget {
               message: staffBanner,
               roomName: room.nameTr,
             ),
-            if (!live.dj.playing && live.dj.nowPlaying == null)
+            if (_waitingQueueItems(live.dj).isNotEmpty)
               VoiceRoomMusicQueueSection(
                 dj: live.dj,
                 coinCost: live.dj.musicRequestCost,
-                maxItems: 3,
+                maxItems: 5,
               ),
           ],
         ),

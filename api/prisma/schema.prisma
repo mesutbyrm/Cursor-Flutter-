@@ -437,3 +437,36 @@ model ShortVideoView {
   @@unique([videoId, userId])
   @@index([videoId])
 }
+
+/// Sesli oda müzik kuyruğu — oda başına sıralı şarkı istekleri.
+model MusicQueue {
+  id         String   @id @default(cuid())
+  roomId     String
+  userId     String
+  username   String?
+  artist     String?
+  songName   String
+  youtubeId  String
+  duration   String?
+  thumbUrl   String?
+  status     String   @default("queued")
+  createdAt  DateTime @default(now())
+
+  @@index([roomId, status, createdAt])
+  @@map("music_queue")
+}
+
+/// Müzik oynatıcı işlem günlüğü (istek, jeton, oynatma, yetkisiz deneme).
+model MusicActionLog {
+  id        String   @id @default(cuid())
+  roomId    String
+  userId    String?
+  username  String?
+  action    String
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  @@index([roomId, createdAt])
+  @@index([userId, createdAt])
+  @@map("music_action_logs")
+}

@@ -881,9 +881,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           perms: perms,
           jetonBalance: jeton,
         );
-    final canControlMusic = perms.canManageDj ||
-        isOwner ||
-        live.dj.canPlayMusic;
+    final canControlMusic = live.dj.canControlMusic ||
+        (user != null && live.dj.nowPlaying?.requestedBy?.id == user.id) ||
+        perms.isRoomOwner ||
+        perms.isSiteAdmin;
     final speakingIds = <String>{
       for (final p in live.presence)
         if (p.isSpeaking) p.id,
@@ -912,8 +913,33 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final headerAvatar = ownerPresence?.image;
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(session), (prev, next) {
       if (prev?.error != next.error && next.error != null && mounted) {
+        final err = next.error!;
+        if (err.contains('jeton')) {
+          showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Yetersiz jeton'),
+              content: Text(err),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Kapat'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    openJetonStore(context, ref: ref);
+                  },
+                  child: const Text('Jeton Yükle'),
+                ),
+              ],
+            ),
+          );
+          ref.read(voiceRoomLiveProvider(session).notifier).clearError();
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error!)),
+          SnackBar(content: Text(err)),
         );
       }
       if (next.openCommandsPanel && !(prev?.openCommandsPanel ?? false)) {

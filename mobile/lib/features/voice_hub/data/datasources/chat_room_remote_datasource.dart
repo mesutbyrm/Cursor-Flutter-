@@ -272,6 +272,14 @@ class ChatRoomRemoteDataSource {
     await skipMusicQueue(roomKey: roomKey, alternateKey: alternateKey);
   }
 
+  Future<void> completeMusicQueue(String roomKey, {String? alternateKey}) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        '/api/chat/rooms/$key/music-queue/complete',
+      );
+    });
+  }
+
   Future<void> skipMusicQueue({
     required String roomKey,
     String? alternateKey,
@@ -901,7 +909,6 @@ class ChatRoomRemoteDataSource {
     String? giftTo,
     String? note,
     bool priority = true,
-    bool skipPayment = false,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final vid = videoId?.trim().isNotEmpty == true
@@ -911,7 +918,6 @@ class ChatRoomRemoteDataSource {
         'room': key,
         'title': title,
         'priority': priority,
-        'skipPayment': skipPayment,
       });
       final body = jsonEncode({
         'title': title,
@@ -921,7 +927,6 @@ class ChatRoomRemoteDataSource {
         if (giftTo != null && giftTo.trim().isNotEmpty) 'giftTo': giftTo.trim(),
         if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
         if (priority) 'priority': true,
-        if (skipPayment) 'skipPayment': true,
       });
       final opts = Options(contentType: 'application/json');
       Response<dynamic> res;
@@ -1019,6 +1024,61 @@ class ChatRoomRemoteDataSource {
             ? musicUrlRaw
             : fallbackQueue?.musicUrl,
         playing: playing || fallbackQueue?.playing == true,
+      );
+    });
+  }
+
+  Future<
+    ({
+      MusicQueueItem? item,
+      List<MusicQueueItem> queue,
+      int? newBalance,
+      int? queuePosition,
+      String? musicUrl,
+      bool playing,
+    })
+  >
+  requestMusicByQuery({
+    required String roomKey,
+    String? alternateKey,
+    required String query,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final body = jsonEncode({'query': query.trim()});
+      final res = await _dio.safePost<dynamic>(
+        '/api/chat/rooms/$key/music-request-by-query',
+        data: body,
+        options: Options(contentType: 'application/json'),
+      );
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      MusicQueueItem? item;
+      final itemRaw = pick(map, ['item', 'request', 'song', 'track']);
+      if (itemRaw is Map) {
+        item = MusicQueueItem.fromJson(Map<String, dynamic>.from(itemRaw));
+      }
+      final queueRaw = pick(map, ['queue', 'musicQueue', 'items']);
+      final queue = <MusicQueueItem>[];
+      if (queueRaw is List) {
+        for (final e in queueRaw) {
+          if (e is Map) {
+            queue.add(MusicQueueItem.fromJson(Map<String, dynamic>.from(e)));
+          }
+        }
+      }
+      final balance = asInt(
+        pick(map, ['newBalance', 'coinBalance', 'balance']),
+      );
+      final position = asInt(pick(map, ['queuePosition', 'position', 'rank']));
+      final musicUrlRaw = pick(map, ['musicUrl', 'streamUrl', 'audioUrl'])
+          ?.toString();
+      final playing = map['playing'] == true || map['isPlaying'] == true;
+      return (
+        item: item,
+        queue: queue,
+        newBalance: balance == 0 ? null : balance,
+        queuePosition: position == 0 ? null : position,
+        musicUrl: musicUrlRaw,
+        playing: playing,
       );
     });
   }

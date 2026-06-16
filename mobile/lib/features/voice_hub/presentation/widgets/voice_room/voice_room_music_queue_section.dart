@@ -6,7 +6,7 @@ import '../../../domain/entities/music_queue_item.dart';
 import '../../theme/voice_room_tokens.dart';
 import '../premium/voice_glass.dart';
 
-/// Sıradaki şarkılar — oda ekranında inline kuyruk listesi.
+/// Sıradaki şarkılar — «Şu an çalan» hariç bekleyen parçalar.
 class VoiceRoomMusicQueueSection extends StatelessWidget {
   const VoiceRoomMusicQueueSection({
     super.key,
@@ -19,9 +19,18 @@ class VoiceRoomMusicQueueSection extends StatelessWidget {
   final int coinCost;
   final int maxItems;
 
+  List<MusicQueueItem> _waitingItems() {
+    final npId = dj.nowPlaying?.id;
+    if (npId == null) {
+      if (dj.musicQueue.length <= 1) return const [];
+      return dj.musicQueue.sublist(1);
+    }
+    return dj.musicQueue.where((e) => e.id != npId).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final queue = dj.musicQueue;
+    final queue = _waitingItems();
     if (queue.isEmpty) return const SizedBox.shrink();
 
     final visible = queue.take(maxItems).toList();
@@ -32,11 +41,11 @@ class VoiceRoomMusicQueueSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.only(left: 2, bottom: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 2, bottom: 6),
               child: Text(
-                'Sıradaki Şarkılar',
-                style: TextStyle(
+                'Sırada (${queue.length})',
+                style: const TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 12,
                   color: VoiceRoomTokens.gold,
@@ -74,6 +83,9 @@ class _QueueRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final artist = item.uploader?.trim().isNotEmpty == true
+        ? '${item.uploader} — '
+        : '';
     return VoiceGlass(
       borderRadius: 12,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -93,7 +105,7 @@ class _QueueRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.title,
+                  '$artist${item.title}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -103,7 +115,8 @@ class _QueueRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'İstek: ${item.requestedBy?.displayName ?? '—'}',
+                  'İsteyen: ${item.requestedBy?.displayName ?? '—'}'
+                  '${item.duration?.isNotEmpty == true ? ' • ${item.duration}' : ''}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -117,7 +130,11 @@ class _QueueRow extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.monetization_on_rounded, size: 12, color: AppThemeColors.coinGold),
+              const Icon(
+                Icons.monetization_on_rounded,
+                size: 12,
+                color: AppThemeColors.coinGold,
+              ),
               const SizedBox(width: 2),
               Text(
                 '$coinCost',
@@ -128,25 +145,6 @@ class _QueueRow extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.55),
-              ),
-            ),
-            child: const Text(
-              'Sırada',
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 9,
-                color: Colors.white,
-              ),
-            ),
           ),
         ],
       ),

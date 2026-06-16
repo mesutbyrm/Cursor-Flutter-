@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,7 +8,7 @@ import '../../../domain/entities/music_queue_item.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../services/voice_room_dj_player.dart';
 
-/// Web sesli oda ile aynı kompakt «Şu an çalıyor» şeridi — tek satır, pause/ses/kapat.
+/// Modern müzik oynatıcı — şu an çalan, isteyen, süre, kuyruk sayısı.
 class VoiceRoomWebMusicBar extends ConsumerWidget {
   const VoiceRoomWebMusicBar({
     super.key,
@@ -16,7 +17,8 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
     this.onMuteToggle,
     this.onClose,
     this.musicMuted = false,
-    this.showDebug = true,
+    this.canControlMusic = false,
+    this.showDebug = false,
   });
 
   final ChatRoomDjState dj;
@@ -24,13 +26,17 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
   final VoidCallback? onMuteToggle;
   final VoidCallback? onClose;
   final bool musicMuted;
+  final bool canControlMusic;
   final bool showDebug;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final track = dj.nowPlaying ??
         (dj.musicQueue.isNotEmpty ? dj.musicQueue.first : null);
-    if (track == null && !dj.playing) return const SizedBox.shrink();
+    final loading = track == null && dj.playing;
+    if (track == null && !dj.playing && !loading) {
+      return const SizedBox.shrink();
+    }
 
     final displayTrack = track ??
         MusicQueueItem(
@@ -39,6 +45,14 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
           youtubeUrl: dj.musicUrl ?? '',
           createdAt: DateTime.now(),
         );
+
+    final waitingCount = _waitingCount(dj);
+    final requester = displayTrack.requestedBy?.displayName ?? '—';
+    final artist = displayTrack.uploader?.trim().isNotEmpty == true
+        ? displayTrack.uploader!
+        : (displayTrack.artistLine.isNotEmpty
+            ? displayTrack.artistLine.split(' • ').first
+            : '');
 
     final player = ref.watch(voiceRoomDjPlayerProvider);
     final playback = player.playback;
@@ -53,59 +67,85 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
             final audioActive = pb.playing;
             final hasDuration = pb.duration.inMilliseconds > 0;
             final showPlaying =
-                audioActive || (dj.playing && hasDuration);
+                audioActive || (dj.playing && hasDuration) || loading;
             final elapsed = hasDuration
                 ? _format(pb.position)
                 : '00:00';
-            final statusLabel = showPlaying
-                ? '🎶 Şu an çalıyor • $elapsed'
-                : '🎶 Sırada bekliyor';
+            final total = displayTrack.duration?.isNotEmpty == true
+                ? displayTrack.duration!
+                : (hasDuration ? _format(pb.duration) : '—:—');
+            final progress = hasDuration && pb.duration.inMilliseconds > 0
+                ? pb.progress
+                : (loading ? null : 0.0);
 
             return Padding(
               padding: const EdgeInsets.fromLTRB(12, 4, 12, 6),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFF6A1B9A).withValues(alpha: 0.88),
-                      const Color(0xFF4A148C).withValues(alpha: 0.92),
+                      const Color(0xFF6A1B9A).withValues(alpha: 0.92),
+                      const Color(0xFF311B92).withValues(alpha: 0.95),
                     ],
                   ),
                   border: Border.all(
-                    color: AppThemeColors.accentPurple.withValues(alpha: 0.45),
+                    color: AppThemeColors.accentPurple.withValues(alpha: 0.5),
                   ),
                   boxShadow: AppThemeColors.glowShadow(
                     AppThemeColors.accentPurple,
-                    blur: 12,
+                    blur: 14,
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Row(
                         children: [
-                          _WaveBadge(active: showPlaying),
-                          const SizedBox(width: 8),
+                          if (loading)
+                            const SizedBox(
+                              width: 40,
+                              height: 40,
+                              child: Padding(
+                                padding: EdgeInsets.all(8),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            )
+                          else
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: SizedBox(
+                                width: 40,
+                                height: 40,
+                                child: _thumb(displayTrack),
+                              ),
+                            ),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  statusLabel,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  showPlaying
+                                      ? 'Şu An Çalıyor'
+                                      : 'Sırada',
                                   style: TextStyle(
                                     fontSize: 9,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white.withValues(alpha: 0.78),
+                                    fontWeight: FontWeight.w800,
+                                    color: AppThemeColors.coinGold
+                                        .withValues(alpha: 0.95),
                                   ),
                                 ),
                                 Text(
-                                  displayTrack.title,
+                                  artist.isNotEmpty
+                                      ? '$artist — ${displayTrack.title}'
+                                      : displayTrack.title,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
@@ -114,17 +154,27 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
                                     color: Colors.white,
                                   ),
                                 ),
+                                Text(
+                                  'İsteyen: $requester • $total'
+                                  '${waitingCount > 0 ? ' • Sırada: $waitingCount' : ''}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    color: Colors.white.withValues(alpha: 0.68),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                          if (onPlayPause != null)
+                          if (canControlMusic && onPlayPause != null)
                             _BarIconButton(
                               onPressed: onPlayPause,
                               color: const Color(0xFFFF9800),
                               icon: audioActive
                                   ? Icons.pause_rounded
                                   : Icons.play_arrow_rounded,
-                              tooltip: audioActive ? 'Duraklat' : 'Oynat',
+                              tooltip: audioActive ? 'Duraklat' : 'Devam et',
                             ),
                           if (onMuteToggle != null) ...[
                             const SizedBox(width: 4),
@@ -134,20 +184,56 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
                               icon: musicMuted
                                   ? Icons.volume_off_rounded
                                   : Icons.volume_up_rounded,
-                              tooltip: musicMuted ? 'Sesi aç' : 'Sesi kapat',
+                              tooltip: musicMuted ? 'Sesi aç' : 'Hoparlör',
                             ),
                           ],
-                          if (onClose != null) ...[
+                          if (canControlMusic && onClose != null) ...[
                             const SizedBox(width: 4),
                             _BarIconButton(
                               onPressed: onClose,
                               color: const Color(0xFFC62828),
                               icon: Icons.close_rounded,
-                              tooltip: 'Müziği kapat',
+                              tooltip: 'Kapat',
                             ),
                           ],
                         ],
                       ),
+                      if (showPlaying && !loading) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Text(
+                              elapsed,
+                              style: TextStyle(
+                                fontSize: 8,
+                                color: Colors.white.withValues(alpha: 0.55),
+                              ),
+                            ),
+                            Expanded(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 6),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: progress,
+                                    minHeight: 3,
+                                    backgroundColor: Colors.white12,
+                                    color: AppThemeColors.accentPink,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Text(
+                              total,
+                              style: TextStyle(
+                                fontSize: 8,
+                                color: Colors.white.withValues(alpha: 0.55),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       if (showDebug) ...[
                         const SizedBox(height: 4),
                         Text(
@@ -173,6 +259,25 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
     );
   }
 
+  int _waitingCount(ChatRoomDjState dj) {
+    final npId = dj.nowPlaying?.id;
+    if (npId == null) {
+      return dj.musicQueue.length > 1 ? dj.musicQueue.length - 1 : 0;
+    }
+    return dj.musicQueue.where((e) => e.id != npId).length;
+  }
+
+  Widget _thumb(MusicQueueItem track) {
+    final url = track.thumbUrl;
+    if (url != null && url.isNotEmpty) {
+      return CachedNetworkImage(imageUrl: url, fit: BoxFit.cover);
+    }
+    return ColoredBox(
+      color: AppThemeColors.accentPurple.withValues(alpha: 0.45),
+      child: const Icon(Icons.music_note_rounded, color: Colors.white54, size: 20),
+    );
+  }
+
   String _debugLine(
     VoiceRoomMusicDiagnostics diag,
     ChatRoomDjState dj,
@@ -181,14 +286,11 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
     final url = diag.resolvedStreamUrl ??
         diag.playbackSource ??
         dj.musicUrl ??
-        track.youtubeUrl ??
-        '';
+        track.youtubeUrl;
     final parts = <String>[
       if (url.isNotEmpty) 'url=${_short(url)}',
       if (diag.processingState != null) 'state=${diag.processingState}',
       if (diag.isPlaying != null) 'playing=${diag.isPlaying}',
-      if (diag.lastPhase != null) 'phase=${diag.lastPhase}',
-      if (diag.lastError != null) 'err=${_short(diag.lastError!)}',
     ];
     return parts.join(' · ');
   }
@@ -228,70 +330,11 @@ class _BarIconButton extends StatelessWidget {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(8),
         child: SizedBox(
-          width: 32,
-          height: 32,
+          width: 34,
+          height: 34,
           child: Icon(icon, color: Colors.white, size: 18),
         ),
       ),
-    );
-  }
-}
-
-class _WaveBadge extends StatefulWidget {
-  const _WaveBadge({required this.active});
-
-  final bool active;
-
-  @override
-  State<_WaveBadge> createState() => _WaveBadgeState();
-}
-
-class _WaveBadgeState extends State<_WaveBadge>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulse = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 480),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _pulse,
-      builder: (context, _) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(4, (i) {
-            final wave = widget.active
-                ? 0.35 + ((_pulse.value + i * 0.2) % 1.0) * 0.65
-                : 0.25;
-            return Container(
-              width: 3,
-              height: 6 + wave * 14,
-              margin: const EdgeInsets.only(right: 2),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(2),
-                gradient: const LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Color(0xFFFF0080), Color(0xFFB832FF)],
-                ),
-              ),
-            );
-          }),
-        );
-      },
     );
   }
 }
