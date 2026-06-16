@@ -188,6 +188,60 @@ class VoiceRoomLiveController
     return slug;
   }
 
+  String? _djChatLabel(String userId) {
+    for (final p in state.presence) {
+      if (p.id == userId) {
+        final nick = p.nickname?.trim();
+        if (nick != null && nick.isNotEmpty) return nick;
+        final name = p.name.trim();
+        if (name.isNotEmpty) return name;
+      }
+    }
+    final self = ref.read(authControllerProvider).valueOrNull;
+    if (self?.id == userId) {
+      final u = self!.username.trim();
+      if (u.isNotEmpty) return u;
+    }
+    return null;
+  }
+
+  ChatRoomDjState _enrichDjUsers(
+    ChatRoomDjState dj,
+    List<ChatRoomPresence> presence,
+  ) {
+    final ids = <String>{
+      ...arg.djUserIds,
+      ...dj.djUsers.map((u) => u.id),
+      ...presence.where((p) => p.chatRole == 'dj').map((p) => p.id),
+    };
+    if (ids.isEmpty) return dj;
+    final users = <ChatRoomUserRef>[];
+    for (final id in ids) {
+      final existing = dj.djUsers.where((u) => u.id == id).firstOrNull;
+      if (existing != null) {
+        users.add(existing);
+        continue;
+      }
+      final p = presence.where((x) => x.id == id).firstOrNull;
+      users.add(
+        ChatRoomUserRef(
+          id: id,
+          name: p?.displayName ?? 'DJ',
+          nickname: p?.nickname,
+          image: p?.image,
+          chatRole: 'dj',
+        ),
+      );
+    }
+    return dj.copyWith(djUsers: users);
+  }
+
+  void _prefetchYoutubePlayback(ChatRoomDjState dj) {
+    final seed = dj.playbackResolveSeed ?? dj.musicUrl;
+    if (seed == null || seed.trim().isEmpty) return;
+    unawaited(ref.read(youtubeStreamResolverProvider).prefetch(seed));
+  }
+
   DateTime? get _lastMessageAt {
     if (state.messages.isEmpty) return null;
     return state.messages
@@ -587,6 +641,8 @@ class VoiceRoomLiveController
           } catch (_) {}
           dj = await _mergeMusicQueueIntoDj(dj);
         }
+        dj = _enrichDjUsers(dj, presence);
+        _prefetchYoutubePlayback(dj);
         bgFromDj = dj.backgroundImage?.trim();
         final ui = ref.read(voiceRoomUiProvider);
         final sig = _djPlaybackSignature(dj, muted: !ui.backgroundMusicEnabled);
@@ -720,6 +776,7 @@ class VoiceRoomLiveController
       dj: merged,
       shouldPlay: merged.playing && merged.playbackSource != null,
     );
+    _prefetchYoutubePlayback(merged);
     return merged;
   }
 
@@ -956,6 +1013,13 @@ class VoiceRoomLiveController
       );
     } else {
       _lastDjPlaybackSignature = null;
+      final hasYoutube =
+          effectiveDj.playbackResolveSeed != null ||
+          effectiveDj.nowPlaying != null ||
+          effectiveDj.musicQueue.isNotEmpty;
+      if (hasYoutube) {
+        return effectiveDj.copyWith(playing: true);
+      }
       final failedDj = effectiveDj.copyWith(playing: false);
       state = state.copyWith(dj: failedDj, clearError: true);
       return failedDj;
@@ -1192,6 +1256,7 @@ class VoiceRoomLiveController
             nowPlaying: _musicItemWithRequester(dj.nowPlaying!, user),
           );
         }
+        _prefetchYoutubePlayback(dj);
         state = state.copyWith(dj: dj);
         await _playDjInBackground(dj);
         return null;
@@ -1221,6 +1286,13 @@ class VoiceRoomLiveController
         musicUrl: result.musicUrl ?? nowPlaying?.youtubeUrl,
       );
       dj = _djWithQueuePlaybackFallback(dj);
+      if (dj.musicUrl == null || dj.musicUrl!.isEmpty) {
+        final yt = dj.nowPlaying?.youtubeUrl ?? '';
+        if (yt.isNotEmpty) {
+          dj = dj.copyWith(musicUrl: yt);
+        }
+      }
+      _prefetchYoutubePlayback(dj);
       state = state.copyWith(dj: dj);
       await _syncMusicFromServerIfNeeded(force: true);
       await _playDjInBackground(state.dj);
@@ -1554,7 +1626,7 @@ class VoiceRoomLiveController
           break;
         case 'dj':
           if (target == null) return;
-          await addRoomDj(target.id);
+          await Future<void>.delayed(const Duration(milliseconds: 900));
           break;
         case 'muzik':
           await _syncMusicFromServerIfNeeded();
@@ -2025,6 +2097,8 @@ class VoiceRoomLiveController
           maxDj: dj.maxDj,
         );
       }
+      dj = _djWithQueuePlaybackFallback(dj);
+      _prefetchYoutubePlayback(dj);
       _commitDjUi(dj);
       unawaited(_playDjInBackground(dj));
       unawaited(_syncMusicFromServerIfNeeded());
@@ -2039,9 +2113,31 @@ class VoiceRoomLiveController
 
   Future<String?> addRoomDj(String targetUserId) async {
     try {
-      await ref
-          .read(chatRoomRemoteProvider)
-          .addRoomDj(roomKey: _roomKey, targetUserId: targetUserId);
+      final label = _djChatLabel(targetUserId);
+      final ids = await ref.read(chatRoomRemoteProvider).addRoomDj(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            targetUserId: targetUserId,
+            targetLabel: label,
+          );
+      final enriched = _enrichDjUsers(
+        state.dj,
+        state.presence,
+      ).copyWith(
+        djUsers: ids
+            .map(
+              (id) => state.dj.djUsers
+                      .where((u) => u.id == id)
+                      .firstOrNull ??
+                  ChatRoomUserRef(
+                    id: id,
+                    name: _djChatLabel(id) ?? 'DJ',
+                    chatRole: 'dj',
+                  ),
+            )
+            .toList(),
+      );
+      state = state.copyWith(dj: enriched);
       await refresh();
       ref.invalidate(voiceRoomsProvider);
       return null;
@@ -2052,10 +2148,15 @@ class VoiceRoomLiveController
 
   Future<String?> removeRoomDj(String targetUserId) async {
     try {
-      await ref
-          .read(chatRoomRemoteProvider)
-          .removeRoomDj(roomKey: _roomKey, targetUserId: targetUserId);
+      final label = _djChatLabel(targetUserId);
+      await ref.read(chatRoomRemoteProvider).removeRoomDj(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            targetUserId: targetUserId,
+            targetLabel: label,
+          );
       await refresh();
+      ref.invalidate(voiceRoomsProvider);
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

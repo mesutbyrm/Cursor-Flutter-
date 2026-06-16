@@ -1196,7 +1196,9 @@ export function addRoomDj(roomId: string, actor: User, targetUserId: string) {
   const room = getChatRoom(roomId);
   if (!room) return { ok: false as const, error: "Oda bulunamadı" };
   const priv = roomPrivileges(actor, room);
-  if (!priv.owner && !priv.admin) return { ok: false as const, error: "Yetki yok" };
+  if (!priv.owner && !priv.admin && !priv.canModerate) {
+    return { ok: false as const, error: "Yetki yok" };
+  }
   if (room.djUserIds.length >= 5 && !room.djUserIds.includes(targetUserId)) {
     return { ok: false as const, error: "En fazla 5 DJ" };
   }
@@ -1215,7 +1217,9 @@ export function removeRoomDj(roomId: string, actor: User, targetUserId: string) 
   const room = getChatRoom(roomId);
   if (!room) return { ok: false as const, error: "Oda bulunamadı" };
   const priv = roomPrivileges(actor, room);
-  if (!priv.owner && !priv.admin) return { ok: false as const, error: "Yetki yok" };
+  if (!priv.owner && !priv.admin && !priv.canModerate) {
+    return { ok: false as const, error: "Yetki yok" };
+  }
   room.djUserIds = room.djUserIds.filter((id) => id !== targetUserId);
   const p = roomMap(roomId).get(targetUserId);
   if (p && p.chatRole === "dj") {

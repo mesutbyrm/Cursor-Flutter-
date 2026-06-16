@@ -1109,28 +1109,77 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  List<String> _parseDjUserIdsResponse(dynamic body) {
+    final map = _unwrapMap(body) ?? asJsonMap(body);
+    final raw = map['djUserIds'];
+    if (raw is List) {
+      return raw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+    }
+    if (raw is String && raw.trim().startsWith('[')) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) {
+          return decoded
+              .map((e) => e.toString())
+              .where((s) => s.isNotEmpty)
+              .toList();
+        }
+      } catch (_) {}
+    }
+    return const [];
+  }
+
+  Future<List<String>> _fetchDjUserIdsAfterMutation(String roomKey) async {
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    final dj = await fetchDj(roomKey);
+    return dj.djUsers.map((u) => u.id).where((id) => id.isNotEmpty).toList();
+  }
+
+  Future<List<String>> _mutateDjViaChatCommand({
+    required String roomKey,
+    required String targetUserId,
+    required String? targetLabel,
+  }) async {
+    final label = targetLabel?.trim().replaceFirst(RegExp(r'^@'), '');
+    if (label == null || label.isEmpty) {
+      throw const ApiException(
+        'DJ işlemi için kullanıcı adı gerekli (üretim: !dj komutu).',
+      );
+    }
+    await sendMessage(roomKey: roomKey, content: '!dj @$label');
+    final ids = await _fetchDjUserIdsAfterMutation(roomKey);
+    if (ids.contains(targetUserId) || ids.isNotEmpty) return ids;
+    throw const ApiException('DJ güncellenemedi. Tekrar deneyin.');
+  }
+
   Future<List<String>> addRoomDj({
     required String roomKey,
     String? alternateKey,
     required String targetUserId,
+    String? targetLabel,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      Response<dynamic> res;
+      ApiException? restError;
       try {
-        res = await _dio.safePost<dynamic>(
+        final res = await _dio.safePost<dynamic>(
           '/api/chat/rooms/$key/dj/$targetUserId',
         );
-      } on Object {
-        res = await _dio.safePost<dynamic>(
-          djPath(key),
-          data: jsonEncode({'userId': targetUserId, 'action': 'add'}),
-          options: Options(contentType: 'application/json'),
-        );
+        final ids = _parseDjUserIdsResponse(res.data);
+        if (ids.isNotEmpty) return ids;
+      } on ApiException catch (e) {
+        restError = e;
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       }
-      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
-      final raw = map['djUserIds'];
-      if (raw is List) return raw.map((e) => e.toString()).toList();
-      return const [];
+      try {
+        return await _mutateDjViaChatCommand(
+          roomKey: key,
+          targetUserId: targetUserId,
+          targetLabel: targetLabel,
+        );
+      } catch (e) {
+        if (restError != null) throw restError;
+        rethrow;
+      }
     });
   }
 
@@ -1138,24 +1187,30 @@ class ChatRoomRemoteDataSource {
     required String roomKey,
     String? alternateKey,
     required String targetUserId,
+    String? targetLabel,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      Response<dynamic> res;
+      ApiException? restError;
       try {
-        res = await _dio.safeDelete<dynamic>(
+        final res = await _dio.safeDelete<dynamic>(
           '/api/chat/rooms/$key/dj/$targetUserId',
         );
-      } on Object {
-        res = await _dio.safePost<dynamic>(
-          djPath(key),
-          data: jsonEncode({'userId': targetUserId, 'action': 'remove'}),
-          options: Options(contentType: 'application/json'),
-        );
+        final ids = _parseDjUserIdsResponse(res.data);
+        if (ids.isNotEmpty || res.statusCode == 200) return ids;
+      } on ApiException catch (e) {
+        restError = e;
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       }
-      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
-      final raw = map['djUserIds'];
-      if (raw is List) return raw.map((e) => e.toString()).toList();
-      return const [];
+      try {
+        return await _mutateDjViaChatCommand(
+          roomKey: key,
+          targetUserId: targetUserId,
+          targetLabel: targetLabel,
+        );
+      } catch (e) {
+        if (restError != null) throw restError;
+        rethrow;
+      }
     });
   }
 

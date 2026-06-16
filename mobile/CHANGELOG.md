@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.223+226 (2026-06-16)
+
+### Sesli oda — YouTube çalma + DJ üretim uyumu
+
+- **Müzik:** Üretimdeki gibi YouTube watch URL (`musicUrl`) Piped/Explode ile çözülür; ilk hata sonrası oynatma durumu korunur
+- **!istek:** İstek sonrası videoId/watch URL ön yükleme ve otomatik çalma
+- **DJ ekleme:** Üretimde `POST /dj/:id` yok — `!dj @kullanıcı` sohbet komutu yedeği (eski hatalı `/dj` POST kaldırıldı)
+- **DJ listesi:** `room.djUserIds` + presence ile `djUsers` zenginleştirilir; DJ 1/5 sayacı güncellenir
+- **Moderasyon:** Oda sahibi / admin / moderatör DJ atayabilir (yerel API)
+
 ## 1.0.222+225 (2026-06-16)
 
 ### Sesli oda — DJ + !istek + çalma düzeltmeleri

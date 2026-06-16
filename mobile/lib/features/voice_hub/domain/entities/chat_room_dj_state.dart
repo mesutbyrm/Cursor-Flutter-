@@ -97,6 +97,7 @@ class ChatRoomDjState {
   int get djCount => djUsers.length;
 
   ChatRoomDjState copyWith({
+    List<ChatRoomUserRef>? djUsers,
     bool? playing,
     String? musicUrl,
     bool clearMusicUrl = false,
@@ -105,7 +106,7 @@ class ChatRoomDjState {
     List<MusicQueueItem>? musicQueue,
   }) {
     return ChatRoomDjState(
-      djUsers: djUsers,
+      djUsers: djUsers ?? this.djUsers,
       activeDjId: activeDjId,
       ownerPresent: ownerPresent,
       canPlayMusic: canPlayMusic,
