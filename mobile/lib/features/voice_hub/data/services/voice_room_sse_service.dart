@@ -42,6 +42,7 @@ class VoiceRoomSseService {
   void Function(ChatRoomMessage message)? _onMessage;
   void Function(List<ChatRoomPresence> users)? _onPresence;
   void Function(Map<String, dynamic> payload)? _onDjUpdate;
+  void Function(List<String> users)? _onTyping;
 
   /// Tam URL — log / teşhis için.
   static String streamUrlFor(String roomId) {
@@ -56,6 +57,7 @@ class VoiceRoomSseService {
     void Function(ChatRoomMessage message)? onMessage,
     void Function(List<ChatRoomPresence> users)? onPresence,
     void Function(Map<String, dynamic> payload)? onDjUpdate,
+    void Function(List<String> users)? onTyping,
   }) async {
     _stopped = false;
     _roomId = roomId.trim();
@@ -64,6 +66,7 @@ class VoiceRoomSseService {
     _onMessage = onMessage;
     _onPresence = onPresence;
     _onDjUpdate = onDjUpdate;
+    _onTyping = onTyping;
     await _openStream();
   }
 
@@ -202,6 +205,14 @@ class VoiceRoomSseService {
         _onConnected?.call();
         return;
       case VoiceRoomSseKind.typing:
+        final raw = map['users'];
+        if (raw is List) {
+          final names = raw
+              .map((e) => e.toString().trim())
+              .where((s) => s.isNotEmpty)
+              .toList();
+          if (names.isNotEmpty) _onTyping?.call(names);
+        }
         return;
       case VoiceRoomSseKind.presence:
       case VoiceRoomSseKind.userJoined:
@@ -302,6 +313,7 @@ class VoiceRoomSseService {
     _onConnected = null;
     _onMessage = null;
     _onDjUpdate = null;
+    _onTyping = null;
     _onPresence = null;
     await _closeStreamOnly();
     VoiceRoomDebugLog.log('sse.disconnect');

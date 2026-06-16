@@ -26,6 +26,7 @@ import '../utils/voice_room_permissions.dart';
 import '../utils/voice_music_access.dart';
 import '../widgets/voice_room/voice_room_music_request_flash.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -102,6 +103,10 @@ class VoiceRoomLiveState {
     this.selfInRoom = false,
     this.sseConnected = false,
     this.openCommandsPanel = false,
+    this.serverPermissions,
+    this.myNickname,
+    this.typingUsers = const [],
+    this.roomMuted = false,
   });
 
   final List<ChatRoomMessage> messages;
@@ -116,6 +121,12 @@ class VoiceRoomLiveState {
   final bool selfInRoom;
   final bool sseConnected;
   final bool openCommandsPanel;
+  final ChatRoomMyPermissions? serverPermissions;
+  final String? myNickname;
+  final List<String> typingUsers;
+  final bool roomMuted;
+
+  bool get isAnyoneTyping => typingUsers.isNotEmpty;
 
   int onlineCountFor(VoiceRoomEntity room) {
     if (presence.isNotEmpty) return presence.length;
@@ -140,6 +151,10 @@ class VoiceRoomLiveState {
     bool? sseConnected,
     bool? openCommandsPanel,
     bool clearOpenCommandsPanel = false,
+    ChatRoomMyPermissions? serverPermissions,
+    String? myNickname,
+    List<String>? typingUsers,
+    bool? roomMuted,
     bool clearError = false,
   }) {
     return VoiceRoomLiveState(
@@ -161,6 +176,10 @@ class VoiceRoomLiveState {
       openCommandsPanel: clearOpenCommandsPanel
           ? false
           : (openCommandsPanel ?? this.openCommandsPanel),
+      serverPermissions: serverPermissions ?? this.serverPermissions,
+      myNickname: myNickname ?? this.myNickname,
+      typingUsers: typingUsers ?? this.typingUsers,
+      roomMuted: roomMuted ?? this.roomMuted,
     );
   }
 }
@@ -177,6 +196,17 @@ class VoiceRoomLiveController
   VoiceRoomGiftSocket? _giftSocket;
   final Set<String> _shownEntranceKeys = {};
   final Set<String> _shownMusicRequestFlashKeys = {};
+  String? _presenceNickname;
+
+  String? _effectiveNickname(UserEntity? user) {
+    final server = state.myNickname?.trim();
+    if (server != null && server.isNotEmpty) return server;
+    final saved = _presenceNickname?.trim();
+    if (saved != null && saved.isNotEmpty) return saved;
+    final nick = user?.username.trim();
+    if (nick != null && nick.isNotEmpty) return nick;
+    return user?.display.trim();
+  }
 
   /// Prisma cuid — slug değil.
   String get _roomKey => arg.apiRoomKey;
@@ -366,9 +396,13 @@ class VoiceRoomLiveController
       VoiceRoomDebugLog.jwtStatus(hasToken: hasJwt, tokenLength: token?.length);
       ref.read(voiceRoomDiagnosticProvider.notifier).setJwt(hasJwt: hasJwt);
       VoiceRoomDebugLog.log('api.presence.join', {'room': _roomKey});
-      final joined = await ref
-          .read(chatRoomRemoteProvider)
-          .joinPresence(_roomKey);
+      final user = ref.read(authControllerProvider).valueOrNull;
+      final nick = _effectiveNickname(user);
+      _presenceNickname = nick;
+      final joined = await ref.read(chatRoomRemoteProvider).joinPresence(
+            _roomKey,
+            nickname: nick,
+          );
       final merged = _mergeSelf(joined);
       VoiceRoomDebugLog.log('api.presence.join.ok', {
         'count': merged.length,
@@ -419,9 +453,11 @@ class VoiceRoomLiveController
     if (_roomKey.isEmpty) return;
     try {
       VoiceRoomDebugLog.log('api.presence.heartbeat', {'room': _roomKey});
-      final list = await ref
-          .read(chatRoomRemoteProvider)
-          .joinPresence(_roomKey);
+      final user = ref.read(authControllerProvider).valueOrNull;
+      final list = await ref.read(chatRoomRemoteProvider).joinPresence(
+            _roomKey,
+            nickname: _effectiveNickname(user),
+          );
       final merged = _mergeSelf(list);
       state = state.copyWith(presence: merged, selfInRoom: true);
     } catch (e) {
@@ -484,6 +520,9 @@ class VoiceRoomLiveController
                 .read(voiceRoomDiagnosticProvider.notifier)
                 .setPresence(joined: true, count: merged.length);
             if (!wasSse) _schedulePoll();
+          },
+          onTyping: (users) {
+            state = state.copyWith(typingUsers: users);
           },
         );
   }
@@ -593,24 +632,57 @@ class VoiceRoomLiveController
       List<ChatRoomMessage> fetchedMsgs = state.messages;
       List<ChatRoomPresence> presence = state.presence;
       ChatRoomDjState dj = state.dj;
+      ChatRoomMyPermissions? serverPerms = state.serverPermissions;
+      String? myNickname = state.myNickname;
+      var roomMuted = state.roomMuted;
 
       final results = await Future.wait<Object?>([
         remote.fetchMessages(_roomKey, since: since).catchError((Object e) {
           refreshError ??= e;
-          return state.messages;
+          return (
+            messages: state.messages,
+            myPermissions: state.serverPermissions,
+            myNickname: state.myNickname,
+            roomMuted: state.roomMuted,
+          );
         }),
         remote.fetchPresence(_roomKey).catchError((Object e) {
           refreshError ??= e;
           return state.presence;
         }),
       ]);
-      fetchedMsgs = results[0]! as List<ChatRoomMessage>;
+      final msgResult = results[0]! as ({
+        List<ChatRoomMessage> messages,
+        ChatRoomMyPermissions? myPermissions,
+        String? myNickname,
+        bool? roomMuted,
+      });
+      fetchedMsgs = msgResult.messages;
+      serverPerms = msgResult.myPermissions ?? serverPerms;
+      myNickname = msgResult.myNickname ?? myNickname;
+      if (msgResult.roomMuted != null) roomMuted = msgResult.roomMuted!;
       presence = results[1]! as List<ChatRoomPresence>;
 
       String? bgFromDj;
       var playDjInBackground = false;
       if (includeDj) {
         try {
+          if (state.dj.playing || state.dj.nowPlaying != null) {
+            try {
+              final musicState = await remote.fetchMusicState(
+                _roomKey,
+                alternateKey: _musicAlternateKey,
+              );
+              dj = state.dj.copyWith(
+                musicQueue: musicState.queue.isNotEmpty
+                    ? musicState.queue
+                    : state.dj.musicQueue,
+                nowPlaying: musicState.nowPlaying ?? state.dj.nowPlaying,
+                playing: musicState.playing ?? state.dj.playing,
+                musicUrl: musicState.musicUrl ?? state.dj.musicUrl,
+              );
+            } catch (_) {}
+          }
           final pair = await Future.wait([
             remote.fetchDj(_roomKey, alternateKey: _musicAlternateKey),
             remote.fetchMusicQueue(
@@ -657,6 +729,9 @@ class VoiceRoomLiveController
         presence: presence,
         dj: includeDj ? dj : state.dj,
         loading: false,
+        serverPermissions: serverPerms,
+        myNickname: myNickname,
+        roomMuted: roomMuted,
         error: refreshError != null
             ? ApiException.userMessage(refreshError!)
             : null,
@@ -1386,7 +1461,27 @@ class VoiceRoomLiveController
       user: user,
       room: arg,
       selfPresence: self,
+      server: state.serverPermissions,
     );
+  }
+
+  Future<String?> toggleRoomMute({required bool mute}) async {
+    final perms = _permissions();
+    if (!perms.canMuteRoom && !perms.isRoomOwner && !perms.isSiteAdmin) {
+      return 'Oda sessize alma yetkiniz yok.';
+    }
+    try {
+      await ref.read(chatRoomRemoteProvider).muteRoom(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            mute: mute,
+          );
+      state = state.copyWith(roomMuted: mute);
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
   }
 
   void _applyLocalChatClear() {
@@ -1512,7 +1607,11 @@ class VoiceRoomLiveController
       try {
         sent = await ref
             .read(chatRoomRemoteProvider)
-            .sendMessage(roomKey: _roomKey, content: trimmed)
+            .sendMessage(
+              roomKey: _roomKey,
+              content: trimmed,
+              nickname: _effectiveNickname(user),
+            )
             .timeout(const Duration(seconds: 22));
       } on TimeoutException {
         rethrow;
@@ -1666,6 +1765,31 @@ class VoiceRoomLiveController
             await remote.tryClearRoomMessages(roomKey: _roomKey);
             _applyLocalChatClear();
           }
+          break;
+        case 'odasesiz':
+        case 'sessizoda':
+          if (_permissions().canMuteRoom ||
+              _permissions().isRoomOwner ||
+              _permissions().isSiteAdmin) {
+            await remote.muteRoom(roomKey: _roomKey, mute: true);
+          }
+          break;
+        case 'odaac':
+        case 'odases':
+          if (_permissions().canMuteRoom ||
+              _permissions().isRoomOwner ||
+              _permissions().isSiteAdmin) {
+            await remote.muteRoom(roomKey: _roomKey, mute: false);
+          }
+          break;
+        case 'unmute':
+        case 'susturma':
+          if (target == null) return;
+          await remote.unmuteUser(
+            roomKey: _roomKey,
+            alternateKey: arg.slug,
+            userId: target.id,
+          );
           break;
         default:
           return;

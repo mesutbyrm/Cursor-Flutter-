@@ -17,6 +17,7 @@ import '../services/voice_room_music_pipeline_log.dart';
 import '../youtube_music_search_cache.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
+import '../../domain/entities/chat_room_my_permissions.dart';
 
 class ChatRoomRemoteDataSource {
   ChatRoomRemoteDataSource(this._dio, {YoutubeMusicSearchCache? searchCache})
@@ -138,24 +139,59 @@ class ChatRoomRemoteDataSource {
     }
   }
 
-  Future<List<ChatRoomMessage>> fetchMessages(
+  Future<
+    ({
+      List<ChatRoomMessage> messages,
+      ChatRoomMyPermissions? myPermissions,
+      String? myNickname,
+      bool? roomMuted,
+    })
+  >
+  fetchMessages(
     String roomKey, {
     String? alternateKey,
     String? since,
+    int limit = 100,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final cursor = since?.trim();
-      final query = cursor != null && cursor.isNotEmpty
-          ? {'after': cursor, 'since': cursor}
-          : null;
+      final query = <String, dynamic>{
+        'limit': limit,
+        if (cursor != null && cursor.isNotEmpty) ...{
+          'after': cursor,
+          'since': cursor,
+        },
+      };
       final res = await _dio.safeGet<dynamic>(
         messagesPath(key),
         query: query,
       );
-      return _messageList(res.data)
+      final body = res.data;
+      final map = _unwrapMap(body) ?? (body is Map ? asJsonMap(body) : null);
+      ChatRoomMyPermissions? perms;
+      String? myNickname;
+      bool? roomMuted;
+      if (map != null) {
+        final rawPerms = map['myPermissions'];
+        if (rawPerms is Map) {
+          perms = ChatRoomMyPermissions.fromJson(
+            Map<String, dynamic>.from(rawPerms),
+          );
+        }
+        myNickname = map['myNickname']?.toString();
+        final muted = map['roomMuted'];
+        if (muted is bool) roomMuted = muted;
+      }
+      final messages = _messageList(body)
           .map(ChatRoomMessage.fromJson)
           .where((m) => m.id.isNotEmpty || m.content.isNotEmpty)
           .toList();
+      return (
+        messages: messages,
+        myPermissions: perms,
+        myNickname: myNickname,
+        roomMuted: roomMuted,
+      );
     });
   }
 
@@ -179,7 +215,7 @@ class ChatRoomRemoteDataSource {
       final nick = nickname?.trim();
       final body = <String, dynamic>{};
       if (nick != null && nick.isNotEmpty) body['nickname'] = nick;
-      if (seatIndex != null && seatIndex > 0) body['seatIndex'] = seatIndex;
+      if (seatIndex != null && seatIndex >= 0) body['seatIndex'] = seatIndex;
       final res = await _dio.safePost<dynamic>(
         presencePath(key),
         data: body.isEmpty ? null : jsonEncode(body),
@@ -347,6 +383,63 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  Future<void> muteRoom({
+    required String roomKey,
+    String? alternateKey,
+    bool mute = true,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _postModeration(
+          roomKey: key,
+          action: mute ? 'mute_room' : 'unmute_room',
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
+      await _dio.safePatch<dynamic>(
+        '/api/chat/rooms/$key/settings',
+        data: {'isMuted': mute},
+      );
+    });
+  }
+
+  Future<void> patchSongRequest({
+    required String roomKey,
+    String? alternateKey,
+    required String requestId,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePatch<dynamic>(
+        songRequestPath(key),
+        data: jsonEncode({'requestId': requestId}),
+        options: Options(contentType: 'application/json'),
+      );
+    });
+  }
+
+  Future<
+    ({
+      List<MusicQueueItem> queue,
+      MusicQueueItem? nowPlaying,
+      bool? playing,
+      String? musicUrl,
+    })
+  >
+  fetchMusicState(String roomKey, {String? alternateKey}) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(musicPath(key));
+      final parsed = _parseMusicQueueResponse(res.data);
+      return (
+        queue: parsed.queue,
+        nowPlaying: parsed.nowPlaying,
+        playing: parsed.playing,
+        musicUrl: parsed.musicUrl,
+      );
+    });
+  }
+
   Future<void> updateMusicSettings({
     required String roomKey,
     String? alternateKey,
@@ -445,7 +538,7 @@ class ChatRoomRemoteDataSource {
   Future<void> _postModeration({
     required String roomKey,
     required String action,
-    required String targetUserId,
+    String? targetUserId,
     String? role,
     String? reason,
     int? duration,
@@ -454,7 +547,8 @@ class ChatRoomRemoteDataSource {
       moderationPath(roomKey),
       data: jsonEncode({
         'action': action,
-        'targetUserId': targetUserId,
+        if (targetUserId != null && targetUserId.isNotEmpty)
+          'targetUserId': targetUserId,
         if (role != null && role.isNotEmpty) 'role': role,
         if (reason != null && reason.isNotEmpty) 'reason': reason,
         if (duration != null) 'duration': duration,
@@ -1564,16 +1658,16 @@ class ChatRoomRemoteDataSource {
     required String roomKey,
     String? alternateKey,
     required String content,
+    String? nickname,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final nick = nickname?.trim();
       final res = await _dio
           .safePost<dynamic>(
             messagesPath(key),
             data: jsonEncode({
               'content': content,
-              'body': content,
-              'message': content,
-              'text': content,
+              if (nick != null && nick.isNotEmpty) 'nickname': nick,
             }),
             options: Options(contentType: 'application/json'),
           )

@@ -1261,6 +1261,20 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             },
                           ),
                         ),
+                        if (live.isAnyoneTyping)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+                            child: Text(
+                              '${live.typingUsers.join(', ')} yazıyor…',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.white.withValues(alpha: 0.65),
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
                                       ],
                                     );
                                   },

@@ -58,7 +58,10 @@ class LiveRemoteDataSource {
 
   /// canlifal.com `/api/chat/rooms` — site ile aynı oda kartları.
   Future<List<VoiceRoomEntity>> fetchVoiceRooms() async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatRooms);
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.chatRooms,
+      query: const {'withCounts': 'true'},
+    );
     final body = res.data;
     dynamic list = body;
     if (body is Map<String, dynamic>) {

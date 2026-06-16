@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.226+229 (2026-06-12)
+
+### Sesli oda — tam teknik dokümantasyon uyumu
+
+- **myPermissions:** `GET messages` yanıtından sunucu yetkileri okunur; kick/ban/mute/oda sessiz ayrı kontrol
+- **!istek / song-request:** Üretim akışı korunur (`skipPayment`, `dedication`, `duration`)
+- **Presence:** 30 sn heartbeat + `nickname`; koltuk indeksi 0–14
+- **SSE:** `messages` batch + `typing` kullanıcı listesi
+- **Müzik:** Çalarken `GET /music` ile sunucu auto-advance tetiklenir
+- **Moderasyon:** kick/ban/mute ayrı UI; `mute_room` / `unmute_room`; `PATCH song-request`
+- **Odalar:** `GET /api/chat/rooms?withCounts=true`; mesajlarda `after` + `limit=100`
+
 ## 1.0.225+228 (2026-06-12)
 
 ### Sesli oda — üretim dokümantasyonu uyumu

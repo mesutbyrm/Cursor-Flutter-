@@ -1,9 +1,10 @@
 import '../../../../core/auth/voice_staff_rank.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
+import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/chat_room_presence.dart';
 
-/// Site admin (`admin` nick, `admin`/`superadmin` rol) her odada tam yetki.
+/// Site admin + oda içi IRC rolleri; sunucu `myPermissions` önceliklidir.
 class VoiceRoomPermissions {
   const VoiceRoomPermissions({
     required this.isSiteAdmin,
@@ -11,6 +12,12 @@ class VoiceRoomPermissions {
     required this.canModerate,
     required this.canManageDj,
     required this.canChangeBackground,
+    this.canMuteUsers = false,
+    this.canKickUsers = false,
+    this.canBanUsers = false,
+    this.canMuteRoom = false,
+    this.canGiveVoice = false,
+    this.canManageRoom = false,
   });
 
   final bool isSiteAdmin;
@@ -18,19 +25,24 @@ class VoiceRoomPermissions {
   final bool canModerate;
   final bool canManageDj;
   final bool canChangeBackground;
+  final bool canMuteUsers;
+  final bool canKickUsers;
+  final bool canBanUsers;
+  final bool canMuteRoom;
+  final bool canGiveVoice;
+  final bool canManageRoom;
 
   bool get hasFullAdmin => isSiteAdmin || isRoomOwner;
 
-  /// Boş koltuğa oturma (moderatör, DJ, oda sahibi).
-  bool get canTakeSeat => canModerate || isRoomOwner || canManageDj;
+  bool get canTakeSeat => canModerate || isRoomOwner || canManageDj || canGiveVoice;
 
-  /// Başkasını koltuğa oturtma (oda sahibi / moderasyon).
-  bool get canAssignSeats => isRoomOwner || canModerate;
+  bool get canAssignSeats => isRoomOwner || canManageRoom || canModerate;
 
   static VoiceRoomPermissions forUser({
     required UserEntity? user,
     required VoiceRoomEntity room,
     ChatRoomPresence? selfPresence,
+    ChatRoomMyPermissions? server,
   }) {
     if (user == null) {
       return const VoiceRoomPermissions(
@@ -42,37 +54,69 @@ class VoiceRoomPermissions {
       );
     }
 
+    if (server != null && server.canModerate) {
+      return VoiceRoomPermissions(
+        isSiteAdmin: server.isGlobalAdmin,
+        isRoomOwner: server.isRoomOwner,
+        canModerate: server.canModerate,
+        canManageDj: server.canManageRoom ||
+            server.isGlobalAdmin ||
+            server.isRoomOwner,
+        canChangeBackground: server.canManageRoom ||
+            server.isGlobalAdmin ||
+            server.isRoomOwner,
+        canMuteUsers: server.canMuteUsers,
+        canKickUsers: server.canKickUsers,
+        canBanUsers: server.canBanUsers,
+        canMuteRoom: server.canMuteRoom,
+        canGiveVoice: server.canGiveVoice,
+        canManageRoom: server.canManageRoom,
+      );
+    }
+
     final rank = VoiceStaffRankParser.resolve(
       username: user.username,
       role: user.role,
-      chatRole: selfPresence?.chatRole,
+      chatRole: selfPresence?.chatRole ?? server?.role,
     );
     final staffPower = VoiceStaffRankParser.powerLevel(rank);
-    final isSiteAdmin = staffPower >= VoiceStaffRankParser.powerLevel(VoiceStaffRank.admin) ||
+    final isSiteAdmin = server?.isGlobalAdmin == true ||
+        staffPower >= VoiceStaffRankParser.powerLevel(VoiceStaffRank.admin) ||
         selfPresence?.chatRole == 'admin' ||
-        selfPresence?.chatRole == 'founder' ||
-        selfPresence?.chatRole == 'sop';
+        selfPresence?.chatRole == 'superadmin';
 
     final uname = user.username.trim().toLowerCase();
-    final isRoomOwner = isSiteAdmin ||
+    final isRoomOwner = server?.isRoomOwner == true ||
+        isSiteAdmin ||
         staffPower >= VoiceStaffRankParser.powerLevel(VoiceStaffRank.founder) ||
         (room.ownerId != null && room.ownerId == user.id) ||
         room.slug.trim().toLowerCase() == uname;
 
     final isDj = room.djUserIds.contains(user.id) ||
-        selfPresence?.chatRole == 'dj' ||
-        VoiceStaffRankParser.canModerate(rank);
+        selfPresence?.chatRole == 'dj';
 
-    final canModerate = isSiteAdmin ||
+    final canMuteUsers = staffPower >=
+        VoiceStaffRankParser.powerLevel(VoiceStaffRank.op);
+    final canKickBan = staffPower >=
+        VoiceStaffRankParser.powerLevel(VoiceStaffRank.sop);
+    final canManageRoom = isSiteAdmin ||
         isRoomOwner ||
-        VoiceStaffRankParser.canModerate(rank);
+        staffPower >= VoiceStaffRankParser.powerLevel(VoiceStaffRank.founder);
+
+    final canModerate = canMuteUsers || canKickBan || canManageRoom;
 
     return VoiceRoomPermissions(
       isSiteAdmin: isSiteAdmin,
       isRoomOwner: isRoomOwner,
       canModerate: canModerate,
-      canManageDj: isSiteAdmin || isRoomOwner || isDj,
-      canChangeBackground: isSiteAdmin || isRoomOwner || canModerate,
+      canManageDj: isSiteAdmin || isRoomOwner || isDj || canManageRoom,
+      canChangeBackground: canManageRoom || canModerate,
+      canMuteUsers: canMuteUsers,
+      canKickUsers: canKickBan,
+      canBanUsers: canKickBan,
+      canMuteRoom: canKickBan,
+      canGiveVoice: canMuteUsers,
+      canManageRoom: canManageRoom,
     );
   }
 }

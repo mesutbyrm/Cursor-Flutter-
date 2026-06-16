@@ -1,7 +1,7 @@
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 
-/// 11 koltuk: 1 = oda sahibi, 2–11 misafir (web: 10’lu ızgara + sol admin).
+/// 15 koltuk: 0–14 (üretim); 1 = oda sahibi gösterimi.
 class VoiceRoomSeatLayout {
   VoiceRoomSeatLayout({
     required this.room,
@@ -11,9 +11,8 @@ class VoiceRoomSeatLayout {
   final VoiceRoomEntity room;
   final List<ChatRoomPresence> presence;
 
-  static const seatCount = 11;
+  static const seatCount = 15;
 
-  /// Koltuk numarası → kullanıcı; boş koltuklar map’te yok.
   Map<int, ChatRoomPresence> build() {
     final ownerId = room.ownerId;
     final bySeat = <int, ChatRoomPresence>{};
@@ -21,7 +20,7 @@ class VoiceRoomSeatLayout {
 
     for (final u in presence) {
       final idx = u.seatIndex;
-      if (idx != null && idx >= 1 && idx <= seatCount) {
+      if (idx != null && idx >= 0 && idx <= seatCount - 1) {
         bySeat.putIfAbsent(idx, () => u);
       } else {
         withoutSeat.add(u);
@@ -61,15 +60,15 @@ class VoiceRoomSeatLayout {
       bySeat.remove(1);
     }
 
-    // Kalan kullanıcıları 2–11’e doldur (sahip hariç).
-    var next = 2;
+    // Kalan kullanıcıları 0–14 arası boş koltuklara doldur (sahip hariç).
+    var next = 0;
     void place(ChatRoomPresence u) {
       if (hostUser != null && u.id == hostUser.id) return;
       if (ownerId != null && u.id == ownerId) return;
-      while (next <= seatCount && bySeat.containsKey(next)) {
+      while (next <= seatCount - 1 && bySeat.containsKey(next)) {
         next++;
       }
-      if (next <= seatCount) {
+      if (next <= seatCount - 1) {
         bySeat[next] = u;
         next++;
       }

@@ -778,55 +778,109 @@ Future<void> showVoiceUserModerationSheet(
                 onGift();
               },
             ),
-          if (perms.canModerate || isOwner) ...[
-            _ModAction(
-              icon: Icons.block_rounded,
-              label: 'Odadan at',
-              color: AppThemeColors.liveRed,
-              onTap: () async {
-                Navigator.pop(ctx);
-                try {
-                  await ref.read(chatRoomRemoteProvider).banUser(
-                        roomKey: roomKey,
-                        userId: user.id,
-                        reason: 'Oda moderasyonu',
+          if (perms.canKickUsers || perms.canBanUsers || isOwner) ...[
+            if (perms.canKickUsers || isOwner)
+              _ModAction(
+                icon: Icons.logout_rounded,
+                label: 'Odadan at (kick)',
+                color: AppThemeColors.liveRed,
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    await ref.read(chatRoomRemoteProvider).kickUser(
+                          roomKey: roomKey,
+                          userId: user.id,
+                          reason: 'Oda moderasyonu',
+                        );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${user.displayName} atıldı')),
                       );
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${user.displayName} atıldı')),
-                    );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString())),
+                      );
+                    }
                   }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(e.toString())),
-                    );
+                },
+              ),
+            if (perms.canBanUsers || isOwner)
+              _ModAction(
+                icon: Icons.block_rounded,
+                label: 'Banla',
+                color: AppThemeColors.liveRed,
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    await ref.read(chatRoomRemoteProvider).banUser(
+                          roomKey: roomKey,
+                          userId: user.id,
+                          reason: 'Oda moderasyonu',
+                        );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${user.displayName} yasaklandı'),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString())),
+                      );
+                    }
                   }
-                }
-              },
-            ),
-            _ModAction(
-              icon: Icons.mic_off_rounded,
-              label: 'Sustur',
-              onTap: () async {
-                Navigator.pop(ctx);
-                await ctrl.sendMessage('!sustur ${user.nickname ?? user.name}');
-              },
-            ),
-            _ModAction(
-              icon: Icons.record_voice_over_rounded,
-              label: 'Ses ver',
-              onTap: () async {
-                Navigator.pop(ctx);
-                for (var seat = 2; seat <= 11; seat++) {
-                  final err = await ctrl.assignSeat(
-                    seatIndex: seat,
-                    userId: user.id,
-                  );
-                  if (err == null) break;
-                }
-              },
-            ),
+                },
+              ),
+            if (perms.canMuteUsers || isOwner)
+              _ModAction(
+                icon: Icons.mic_off_rounded,
+                label: 'Sustur',
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    await ref.read(chatRoomRemoteProvider).muteUser(
+                          roomKey: roomKey,
+                          userId: user.id,
+                          minutes: 30,
+                          reason: 'Oda moderasyonu',
+                        );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${user.displayName} susturuldu'),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString())),
+                      );
+                    }
+                  }
+                },
+              ),
+            if (perms.canGiveVoice || isOwner)
+              _ModAction(
+                icon: Icons.record_voice_over_rounded,
+                label: 'Ses ver',
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  for (var seat = 0; seat <= 14; seat++) {
+                    final err = await ctrl.assignSeat(
+                      seatIndex: seat,
+                      userId: user.id,
+                    );
+                    if (err == null) break;
+                  }
+                },
+              ),
+          ],
+          if (perms.canManageDj || isOwner) ...[
             _ModAction(
               icon: isDj ? Icons.headset_off_rounded : Icons.headphones_rounded,
               label: isDj ? 'DJ\'den çıkar' : 'DJ yap',
@@ -842,6 +896,8 @@ Future<void> showVoiceUserModerationSheet(
                 }
               },
             ),
+          ],
+          if (perms.canModerate || isOwner)
             _ModAction(
               icon: Icons.admin_panel_settings_outlined,
               label: 'Yetki ver',
@@ -849,12 +905,11 @@ Future<void> showVoiceUserModerationSheet(
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Yetki komutları: !op !admin !sop'),
+                    content: Text('Yetki komutları: !yetki @kullanıcı % ~ & @ +'),
                   ),
                 );
               },
             ),
-          ],
           _ModAction(
             icon: Icons.person_outline_rounded,
             label: 'Profili gör',
