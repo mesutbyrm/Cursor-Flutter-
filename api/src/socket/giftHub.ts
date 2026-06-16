@@ -195,10 +195,17 @@ export function emitChatRoomDjUpdate(roomId: string) {
     event: "QUEUE_UPDATED",
     roomId: canonical,
     playing: dj.playing,
+    isPlaying: dj.playing,
     musicUrl: dj.musicUrl,
     nowPlaying: dj.nowPlaying,
+    currentTrack: dj.nowPlaying,
     musicQueue: dj.musicQueue,
+    queue: dj.musicQueue,
     queueLength: dj.musicQueue.length,
+    currentVideoId: dj.currentVideoId,
+    currentPosition: dj.currentPosition,
+    trackStartedAt: dj.trackStartedAt,
+    positionMs: dj.positionMs,
   };
   for (const key of voiceRoomTargets(roomId)) {
     io.to(voiceRoom(key)).emit("dj", payload);

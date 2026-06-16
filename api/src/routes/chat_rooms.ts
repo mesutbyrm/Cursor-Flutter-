@@ -60,6 +60,21 @@ import {
 
 export const chatRoomsRouter = Router();
 
+function bodyYoutubeUrl(body: Record<string, unknown>): string {
+  const videoId =
+    typeof body.videoId === "string" ? body.videoId.trim() : "";
+  if (typeof body.youtubeUrl === "string" && body.youtubeUrl.trim()) {
+    return body.youtubeUrl.trim();
+  }
+  if (typeof body.url === "string" && body.url.trim()) {
+    return body.url.trim();
+  }
+  if (videoId) {
+    return `https://www.youtube.com/watch?v=${videoId}`;
+  }
+  return "";
+}
+
 /** GET /api/chat/rooms — mobil ham dizi bekler */
 chatRoomsRouter.get("/rooms", async (_req, res) => {
   return res.status(200).json(listChatRooms());
@@ -185,6 +200,37 @@ chatRoomsRouter.get("/music/popular", optionalAuth, async (_req, res) => {
   return res.status(200).json({ items: POPULAR_MUSIC_SUGGESTIONS });
 });
 
+chatRoomsRouter.post(
+  "/rooms/:roomId/music-stream",
+  requireAuth,
+  async (req, res) => {
+    const roomId = req.params.roomId;
+    if (!getChatRoom(roomId)) {
+      return fail(res, 404, "NOT_FOUND", "Oda bulunamadı");
+    }
+    const videoId =
+      typeof req.body?.videoId === "string"
+        ? req.body.videoId.trim()
+        : String(req.query.videoId ?? "").trim();
+    const url =
+      typeof req.body?.youtubeUrl === "string"
+        ? req.body.youtubeUrl.trim()
+        : videoId
+          ? `https://www.youtube.com/watch?v=${videoId}`
+          : String(req.query.url ?? "").trim();
+    const streamUrl = await resolveYoutubeStreamUrl(url || videoId);
+    if (!streamUrl) {
+      return fail(res, 404, "NOT_FOUND", "Ses akışı oluşturulamadı");
+    }
+    return res.status(200).json({
+      streamUrl,
+      url: streamUrl,
+      videoId: videoId || null,
+      expiresInSec: 3600,
+    });
+  },
+);
+
 chatRoomsRouter.get("/rooms/:roomId/music-queue", optionalAuth, async (req, res) => {
   const roomId = req.params.roomId;
   if (!getChatRoom(roomId)) {
@@ -203,6 +249,11 @@ chatRoomsRouter.get("/rooms/:roomId/music-queue", optionalAuth, async (req, res)
     playing: dj.playing,
     musicUrl: dj.musicUrl ?? null,
     canRequestMusic: dj.canRequestMusic,
+    currentVideoId: dj.currentVideoId,
+    currentPosition: dj.currentPosition,
+    isPlaying: dj.isPlaying,
+    trackStartedAt: dj.trackStartedAt,
+    positionMs: dj.positionMs,
   });
 });
 
@@ -211,12 +262,7 @@ chatRoomsRouter.post("/rooms/:roomId/song-request", requireAuth, async (req, res
   const user = await loadUser(req.userId);
   if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
   const title = typeof req.body?.title === "string" ? req.body.title : "";
-  const youtubeUrl =
-    typeof req.body?.youtubeUrl === "string"
-      ? req.body.youtubeUrl
-      : typeof req.body?.url === "string"
-        ? req.body.url
-        : "";
+  const youtubeUrl = bodyYoutubeUrl(req.body ?? {});
   const thumbUrl =
     typeof req.body?.thumbUrl === "string" ? req.body.thumbUrl : null;
   const giftTo =
@@ -423,12 +469,7 @@ chatRoomsRouter.post("/rooms/:roomId/music-queue", requireAuth, async (req, res)
   const user = await loadUser(req.userId);
   if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
   const title = typeof req.body?.title === "string" ? req.body.title : "";
-  const youtubeUrl =
-    typeof req.body?.youtubeUrl === "string"
-      ? req.body.youtubeUrl
-      : typeof req.body?.url === "string"
-        ? req.body.url
-        : "";
+  const youtubeUrl = bodyYoutubeUrl(req.body ?? {});
   const thumbUrl =
     typeof req.body?.thumbUrl === "string" ? req.body.thumbUrl : null;
   const giftTo =
@@ -561,18 +602,24 @@ chatRoomsRouter.get("/rooms/:roomId/stream", optionalAuth, async (req, res) => {
         }
       }
       const dj = getDjState(roomId, null);
-      const sig = `${dj.playing}|${dj.musicUrl ?? ""}|${dj.nowPlaying?.id ?? ""}|${dj.musicQueue.length}`;
+      const sig = `${dj.playing}|${dj.musicUrl ?? ""}|${dj.nowPlaying?.id ?? ""}|${dj.musicQueue.length}|${dj.currentPosition ?? 0}`;
       if (sig != lastDjSig) {
         lastDjSig = sig;
         send({
           type: "dj",
           roomId: resolveRoomId(roomId),
           playing: dj.playing,
+          isPlaying: dj.playing,
           musicUrl: dj.musicUrl,
           nowPlaying: dj.nowPlaying,
+          currentTrack: dj.nowPlaying,
           musicQueue: dj.musicQueue,
           queue: dj.musicQueue,
           queueLength: dj.musicQueue.length,
+          currentVideoId: dj.currentVideoId,
+          currentPosition: dj.currentPosition,
+          trackStartedAt: dj.trackStartedAt,
+          positionMs: dj.positionMs,
         });
       }
     } catch {

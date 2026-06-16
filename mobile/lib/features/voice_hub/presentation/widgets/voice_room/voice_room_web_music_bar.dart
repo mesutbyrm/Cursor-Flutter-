@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,13 +11,15 @@ import '../../providers/chat_room_providers.dart';
 import '../../services/voice_room_dj_player.dart';
 
 /// Modern müzik oynatıcı — şu an çalan, isteyen, süre, kuyruk sayısı.
-class VoiceRoomWebMusicBar extends ConsumerWidget {
+class VoiceRoomWebMusicBar extends ConsumerStatefulWidget {
   const VoiceRoomWebMusicBar({
     super.key,
     required this.dj,
     this.onPlayPause,
+    this.onStop,
     this.onMuteToggle,
     this.onClose,
+    this.onQueueTap,
     this.musicMuted = false,
     this.canControlMusic = false,
     this.showDebug = false,
@@ -23,14 +27,25 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
 
   final ChatRoomDjState dj;
   final VoidCallback? onPlayPause;
+  final VoidCallback? onStop;
   final VoidCallback? onMuteToggle;
   final VoidCallback? onClose;
+  final VoidCallback? onQueueTap;
   final bool musicMuted;
   final bool canControlMusic;
   final bool showDebug;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VoiceRoomWebMusicBar> createState() =>
+      _VoiceRoomWebMusicBarState();
+}
+
+class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
+  double _volume = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final dj = widget.dj;
     final track = dj.nowPlaying ??
         (dj.musicQueue.isNotEmpty ? dj.musicQueue.first : null);
     final loading = track == null && dj.playing;
@@ -68,6 +83,7 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
             final hasDuration = pb.duration.inMilliseconds > 0;
             final showPlaying =
                 audioActive || (dj.playing && hasDuration) || loading;
+            final effectiveVolume = widget.musicMuted ? 0.0 : _volume;
             final elapsed = hasDuration
                 ? _format(pb.position)
                 : '00:00';
@@ -98,7 +114,7 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+                  padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -107,10 +123,10 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
                         children: [
                           if (loading)
                             const SizedBox(
-                              width: 40,
-                              height: 40,
+                              width: 56,
+                              height: 56,
                               child: Padding(
-                                padding: EdgeInsets.all(8),
+                                padding: EdgeInsets.all(12),
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   color: Colors.white70,
@@ -119,83 +135,138 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
                             )
                           else
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(10),
                               child: SizedBox(
-                                width: 40,
-                                height: 40,
+                                width: 56,
+                                height: 56,
                                 child: _thumb(displayTrack),
                               ),
                             ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  showPlaying
-                                      ? 'Şu An Çalıyor'
-                                      : 'Sırada',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppThemeColors.coinGold
-                                        .withValues(alpha: 0.95),
-                                  ),
-                                ),
-                                Text(
-                                  artist.isNotEmpty
-                                      ? '$artist — ${displayTrack.title}'
-                                      : displayTrack.title,
+                                  displayTrack.title,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w900,
-                                    fontSize: 12,
+                                    fontSize: 14,
                                     color: Colors.white,
                                   ),
                                 ),
+                                if (artist.isNotEmpty)
+                                  Text(
+                                    artist,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.white.withValues(alpha: 0.75),
+                                    ),
+                                  ),
                                 Text(
-                                  'İsteyen: $requester • $total'
+                                  'İsteyen: $requester'
                                   '${waitingCount > 0 ? ' • Sırada: $waitingCount' : ''}',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 9,
-                                    color: Colors.white.withValues(alpha: 0.68),
+                                    color: Colors.white.withValues(alpha: 0.62),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          if (onPlayPause != null)
+                          if (widget.onQueueTap != null && waitingCount > 0)
                             _BarIconButton(
-                              onPressed: onPlayPause,
+                              onPressed: widget.onQueueTap,
+                              color: const Color(0xFF4527A0),
+                              icon: Icons.queue_music_rounded,
+                              tooltip: 'Kuyruk',
+                            ),
+                          if (widget.onPlayPause != null) ...[
+                            const SizedBox(width: 4),
+                            _BarIconButton(
+                              onPressed: widget.onPlayPause,
                               color: const Color(0xFFFF9800),
                               icon: audioActive
                                   ? Icons.pause_rounded
                                   : Icons.play_arrow_rounded,
                               tooltip: audioActive ? 'Duraklat' : 'Devam et',
                             ),
-                          if (onMuteToggle != null) ...[
+                          ],
+                          if (widget.canControlMusic && widget.onStop != null) ...[
                             const SizedBox(width: 4),
                             _BarIconButton(
-                              onPressed: onMuteToggle,
-                              color: const Color(0xFF7B1FA2),
-                              icon: musicMuted
-                                  ? Icons.volume_off_rounded
-                                  : Icons.volume_up_rounded,
-                              tooltip: musicMuted ? 'Sesi aç' : 'Hoparlör',
+                              onPressed: widget.onStop,
+                              color: const Color(0xFF546E7A),
+                              icon: Icons.stop_rounded,
+                              tooltip: 'Durdur',
                             ),
                           ],
-                          if (canControlMusic && onClose != null) ...[
+                          if (widget.onMuteToggle != null) ...[
                             const SizedBox(width: 4),
                             _BarIconButton(
-                              onPressed: onClose,
+                              onPressed: widget.onMuteToggle,
+                              color: const Color(0xFF7B1FA2),
+                              icon: effectiveVolume <= 0
+                                  ? Icons.volume_off_rounded
+                                  : Icons.volume_up_rounded,
+                              tooltip: effectiveVolume <= 0 ? 'Sesi aç' : 'Sessiz',
+                            ),
+                          ],
+                          if (widget.onClose != null) ...[
+                            const SizedBox(width: 4),
+                            _BarIconButton(
+                              onPressed: widget.onClose,
                               color: const Color(0xFFC62828),
                               icon: Icons.close_rounded,
                               tooltip: 'Kapat',
                             ),
                           ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            effectiveVolume <= 0
+                                ? Icons.volume_off_rounded
+                                : Icons.volume_down_rounded,
+                            size: 14,
+                            color: Colors.white54,
+                          ),
+                          Expanded(
+                            child: SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                trackHeight: 2,
+                                thumbShape: const RoundSliderThumbShape(
+                                  enabledThumbRadius: 5,
+                                ),
+                              ),
+                              child: Slider(
+                                value: effectiveVolume,
+                                min: 0,
+                                max: 1,
+                                activeColor: AppThemeColors.accentPink,
+                                inactiveColor: Colors.white24,
+                                onChanged: widget.musicMuted
+                                    ? null
+                                    : (v) {
+                                        setState(() => _volume = v);
+                                        unawaited(player.setVolumeLevel(v));
+                                      },
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.volume_up_rounded,
+                            size: 14,
+                            color: Colors.white54,
+                          ),
                         ],
                       ),
                       if (showPlaying && !loading) ...[
@@ -234,7 +305,7 @@ class VoiceRoomWebMusicBar extends ConsumerWidget {
                           ],
                         ),
                       ],
-                      if (showDebug) ...[
+                      if (widget.showDebug) ...[
                         const SizedBox(height: 4),
                         Text(
                           _debugLine(diag, dj, displayTrack),

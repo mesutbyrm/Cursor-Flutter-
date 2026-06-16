@@ -17,6 +17,7 @@ import {
   searchMusicViaYoutubeApi,
   toLegacyYoutubeHits,
 } from "./youtubeMusicSearch";
+import { resolveStreamViaYtdlp } from "./ytdlpStreamResolver.js";
 import {
   canModerateRank,
   fullControlRank,
@@ -97,10 +98,74 @@ const presence = new Map<string, Map<string, ChatPresenceRow>>();
 const speakRequests = new Map<string, Set<string>>();
 const roomBans = new Map<string, Set<string>>();
 const roomBannedWords = new Map<string, Set<string>>();
-const djByRoom = new Map<
-  string,
-  { activeDjId: string | null; musicUrl: string | null; playing: boolean }
->();
+
+export type RoomDjPlaybackState = {
+  activeDjId: string | null;
+  musicUrl: string | null;
+  playing: boolean;
+  currentVideoId: string | null;
+  /** Oynatma başlangıç anı (ms) — duraklatılmış konum + geçen süre */
+  trackStartedAt: number | null;
+  /** Duraklatıldığında kayıtlı konum (ms) */
+  positionMs: number;
+};
+
+const djByRoom = new Map<string, RoomDjPlaybackState>();
+
+function emptyDjState(): RoomDjPlaybackState {
+  return {
+    activeDjId: null,
+    musicUrl: null,
+    playing: false,
+    currentVideoId: null,
+    trackStartedAt: null,
+    positionMs: 0,
+  };
+}
+
+function normalizeDjState(
+  raw?: Partial<RoomDjPlaybackState> | null,
+): RoomDjPlaybackState {
+  if (!raw) return emptyDjState();
+  return {
+    activeDjId: raw.activeDjId ?? null,
+    musicUrl: raw.musicUrl ?? null,
+    playing: Boolean(raw.playing),
+    currentVideoId: raw.currentVideoId ?? null,
+    trackStartedAt: raw.trackStartedAt ?? null,
+    positionMs: raw.positionMs ?? 0,
+  };
+}
+
+export function currentPlaybackPositionMs(dj: RoomDjPlaybackState): number {
+  if (!dj.playing || dj.trackStartedAt == null) return dj.positionMs;
+  return dj.positionMs + Math.max(0, Date.now() - dj.trackStartedAt);
+}
+
+export function exportPlaybackSync(dj: RoomDjPlaybackState) {
+  return {
+    currentVideoId: dj.currentVideoId,
+    currentPosition: currentPlaybackPositionMs(dj),
+    isPlaying: dj.playing,
+    trackStartedAt: dj.trackStartedAt,
+    positionMs: dj.positionMs,
+  };
+}
+
+function markDjPlaying(
+  prev: RoomDjPlaybackState,
+  patch: Partial<RoomDjPlaybackState>,
+): RoomDjPlaybackState {
+  const next = { ...prev, ...patch };
+  if (patch.playing === true && !prev.playing) {
+    next.trackStartedAt = Date.now();
+  }
+  if (patch.playing === false && prev.playing) {
+    next.positionMs = currentPlaybackPositionMs(prev);
+    next.trackStartedAt = null;
+  }
+  return next;
+}
 
 function roomMap(roomIdOrSlug: string) {
   const roomId = resolveRoomId(roomIdOrSlug);
@@ -706,11 +771,16 @@ export function assignSeat(
 export function getDjState(roomId: string, user: User | null) {
   const room = getChatRoom(roomId);
   const key = resolveRoomId(roomId);
-  const dj = djByRoom.get(key) ?? {
-    activeDjId: room?.activeDjId ?? null,
-    musicUrl: null,
-    playing: false,
-  };
+  const dj = normalizeDjState(
+    djByRoom.get(key) ?? {
+      activeDjId: room?.activeDjId ?? null,
+      musicUrl: null,
+      playing: false,
+      currentVideoId: null,
+      trackStartedAt: null,
+      positionMs: 0,
+    },
+  );
   const priv = room && user ? roomPrivileges(user, room) : null;
   const djUsers = listPresence(roomId).filter(
     (p) =>
@@ -750,6 +820,8 @@ export function getDjState(roomId: string, user: User | null) {
     musicEnabled: settings.musicEnabled,
     maxDj: 5,
     queueLength: queue.length,
+    ...exportPlaybackSync(dj),
+    currentTrack: nowPlaying,
   };
 }
 
@@ -782,16 +854,29 @@ export async function setDjMusic(
       action: "resume",
     });
   }
-  let resolved = musicUrl;
-  if (resolved && /youtube\.com|youtu\.be/i.test(resolved)) {
+  const key = resolveRoomId(roomId);
+  const prev = normalizeDjState(djByRoom.get(key));
+  let resolved = musicUrl ?? prev.musicUrl;
+  const videoId =
+    (resolved ? extractYoutubeId(resolved) : null) ??
+    prev.currentVideoId ??
+    (nowPlaying ? extractYoutubeId(nowPlaying.youtubeUrl) : null);
+  if (playing && videoId) {
+    resolved = (await resolveYoutubeStreamUrl(videoId)) ?? resolved;
+  } else if (resolved && /youtube\.com|youtu\.be/i.test(resolved)) {
     resolved = (await resolveYoutubeStreamUrl(resolved)) ?? resolved;
   }
-  const next = {
+  const next = markDjPlaying(prev, {
     activeDjId: user.id,
     musicUrl: resolved,
     playing: playing && Boolean(resolved),
-  };
-  const key = resolveRoomId(roomId);
+    currentVideoId: videoId,
+    ...(playing && !prev.playing ? { positionMs: prev.positionMs } : {}),
+    ...(!playing ? {} : {}),
+  });
+  if (playing && resolved && next.trackStartedAt == null) {
+    next.trackStartedAt = Date.now();
+  }
   djByRoom.set(key, next);
   return next;
 }
@@ -1183,7 +1268,7 @@ export async function clearMusicQueue(roomId: string, user: User) {
   }
   await clearRoomQueue(roomId, user);
   const key = resolveRoomId(roomId);
-  djByRoom.set(key, { activeDjId: null, musicUrl: null, playing: false });
+  djByRoom.set(key, emptyDjState());
   pushMessage(key, {
     id: randomUUID(),
     content: `🧹 Müzik kuyruğu temizlendi.`,
@@ -1287,6 +1372,8 @@ export async function resolveYoutubeStreamUrl(
     extractYoutubeId(youtubeUrlOrId) ??
     (youtubeUrlOrId.length <= 15 ? youtubeUrlOrId : null);
   if (!id) return null;
+  const ytdlp = await resolveStreamViaYtdlp(id);
+  if (ytdlp) return ytdlp;
   for (const host of PIPED_API_HOSTS) {
     const stream = await resolveViaPipedHost(host, id);
     if (stream) return stream;
@@ -1307,14 +1394,16 @@ export async function tryStartMusicFromQueue(roomId: string) {
   const next = toApiMusicItem(nextRow);
   const videoId = next.youtubeId ?? extractYoutubeId(next.youtubeUrl);
   const watchUrl = videoId ? youtubeWatchUrl(videoId) : next.youtubeUrl.trim();
-  const stream = watchUrl ? await resolveYoutubeStreamUrl(watchUrl) : null;
-  const playbackUrl = stream ?? watchUrl;
-  if (!playbackUrl) return current ?? null;
-  const nextDj = {
+  const stream = videoId ? await resolveYoutubeStreamUrl(videoId) : null;
+  if (!stream) return current ?? null;
+  const nextDj = markDjPlaying(normalizeDjState(current), {
     activeDjId: next.requestedBy.id,
-    musicUrl: playbackUrl,
+    musicUrl: stream,
     playing: true,
-  };
+    currentVideoId: videoId,
+    positionMs: 0,
+    trackStartedAt: Date.now(),
+  });
   djByRoom.set(key, nextDj);
   return nextDj;
 }
@@ -1330,7 +1419,7 @@ export async function advanceMusicQueue(roomId: string, user?: User) {
     }
   }
   const key = resolveRoomId(roomId);
-  djByRoom.set(key, { activeDjId: null, musicUrl: null, playing: false });
+  djByRoom.set(key, emptyDjState());
   await advanceRoomQueue(roomId);
   return tryStartMusicFromQueue(roomId);
 }

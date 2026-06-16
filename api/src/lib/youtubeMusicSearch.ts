@@ -76,9 +76,11 @@ async function fetchVideoDurations(
  */
 export async function searchMusicViaYoutubeApi(
   query: string,
+  options?: { maxResults?: number },
 ): Promise<MusicSearchItem[]> {
   const q = query.trim();
   if (q.length < 2) return [];
+  const maxResults = Math.min(12, Math.max(1, options?.maxResults ?? 12));
 
   const apiKey = getApiKey();
 
@@ -100,7 +102,7 @@ export async function searchMusicViaYoutubeApi(
   const searchUrl = new URL("https://www.googleapis.com/youtube/v3/search");
   searchUrl.searchParams.set("part", "snippet");
   searchUrl.searchParams.set("type", "video");
-  searchUrl.searchParams.set("maxResults", "12");
+  searchUrl.searchParams.set("maxResults", String(maxResults));
   searchUrl.searchParams.set("q", q);
   searchUrl.searchParams.set("key", apiKey);
 

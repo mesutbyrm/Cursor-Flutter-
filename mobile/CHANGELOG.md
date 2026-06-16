@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.232+235 (2026-06-12)
+
+### Müzik sistemi — sıfırdan yeniden yazım
+
+- **!istek:** YouTube Data API v3 ile ilk 5 sonuç; modern seçim ekranı
+- **Ses kaynağı:** videoId sunucuya gider; yt-dlp ile güncel stream URL; istemci yalnızca bu URL'yi oynatır
+- **Oynatıcı:** Kapak, süre, ilerleme çubuğu, play/pause/stop, sessiz, ses seviyesi, kapat (X)
+- **Bildirim:** just_audio + audio_service medya kontrolleri; kapatınca bildirim kalkar
+- **Oda senkronu:** currentPosition / isPlaying / currentVideoId SSE ile; geç katılan doğru konumdan başlar
+- **Kuyruk:** Tam kuyruk ekranı; DJ silme; sıradaki otomatik
+- **Yaşam döngüsü:** Odadan çıkınca müzik ve bildirim durur
+
 ## 1.0.231+234 (2026-06-12)
 
 ### Müzik — YouTube öncelikli oynatma

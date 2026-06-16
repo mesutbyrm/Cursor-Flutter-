@@ -18,7 +18,7 @@ musicRouter.get("/search", requireAuth, async (req, res) => {
     return jsonError(res, 400, "Arama en az 2 karakter olmalı");
   }
   try {
-    const items = await searchMusicViaYoutubeApi(q);
+    const items = await searchMusicViaYoutubeApi(q, { maxResults: 5 });
     return res.status(200).json({ items });
   } catch (e) {
     if (e instanceof YoutubeApiNotConfiguredError) {

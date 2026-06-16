@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
+import '../../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../../pages/voice_music_hub_page.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../sheets/voice_room_dj_sheet.dart';
@@ -131,6 +132,20 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                   unawaited(player.resumeLocal());
                 }
               },
+              onStop: canControlMusic
+                  ? () => unawaited(
+                        ref
+                            .read(voiceRoomLiveProvider(session.liveKey).notifier)
+                            .stopMusic(),
+                      )
+                  : null,
+              onQueueTap: () => showRoomMusicQueueSheet(
+                context,
+                ref,
+                liveKey: session.liveKey,
+                dj: live.dj,
+                canControlMusic: canControlMusic,
+              ),
               onClose: () => unawaited(
                 ref
                     .read(voiceRoomLiveProvider(session.liveKey).notifier)
@@ -139,16 +154,25 @@ class VoiceRoomBottomDock extends ConsumerWidget {
               musicMuted: musicMuted,
               onMuteToggle: onMuteToggle,
             ),
+            if (_waitingQueueItems(live.dj).isNotEmpty)
+              GestureDetector(
+                onTap: () => showRoomMusicQueueSheet(
+                  context,
+                  ref,
+                  liveKey: session.liveKey,
+                  dj: live.dj,
+                  canControlMusic: canControlMusic,
+                ),
+                child: VoiceRoomMusicQueueSection(
+                  dj: live.dj,
+                  coinCost: live.dj.musicRequestCost,
+                  maxItems: 5,
+                ),
+              ),
             VoiceStaffEntranceMarquee(
               message: staffBanner,
               roomName: room.nameTr,
             ),
-            if (_waitingQueueItems(live.dj).isNotEmpty)
-              VoiceRoomMusicQueueSection(
-                dj: live.dj,
-                coinCost: live.dj.musicRequestCost,
-                maxItems: 5,
-              ),
           ],
         ),
       ),

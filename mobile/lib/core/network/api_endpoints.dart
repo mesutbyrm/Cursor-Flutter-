@@ -210,6 +210,11 @@ abstract final class ApiEndpoints {
 
   static const musicSearch = '/api/music/search';
 
+  static String chatRoomMusicStream(String roomId) =>
+      '/api/chat/rooms/$roomId/music-stream';
+
+  static const chatYoutubeStream = '/api/chat/youtube-stream';
+
   /// Oturumlu kullanıcı profili (takipçi, bio, görsel — NextAuth çerezi).
   static const userSiteProfile = '/api/user/profile';
 

@@ -73,6 +73,40 @@ class VoiceRoomDjPlayer {
     return handler;
   }
 
+  /// Sunucu yt-dlp / stream URL — doğrudan oynat (YouTube çözümleme yok).
+  Future<bool> playServerStream({
+    required String streamUrl,
+    required bool playing,
+    Duration startPosition = Duration.zero,
+    MusicQueueItem? nowPlaying,
+    bool muted = false,
+  }) async {
+    _muted = muted;
+    final handler = await _ensureHandler();
+    if (!playing) {
+      await stop();
+      return false;
+    }
+    final url = streamUrl.trim();
+    if (!url.startsWith('http')) return false;
+    await VoiceRoomMusicAudioSession.ensureConfigured();
+    final playable = await _streamLoader.preparePlaybackSource(url);
+    if (playable == null || playable.isEmpty) return false;
+    final targets = await _streamLoader.buildPlaybackTargets(playable);
+    if (targets.isEmpty) return false;
+    final ok = await _attemptPlay(
+      handler: handler,
+      targets: targets,
+      nowPlaying: nowPlaying,
+      musicUrl: url,
+      candidate: url,
+    );
+    if (ok && startPosition > Duration.zero) {
+      await handler.seek(startPosition);
+    }
+    return ok;
+  }
+
   Future<bool> sync({
     String? musicUrl,
     String? resolveSeed,
@@ -80,7 +114,19 @@ class VoiceRoomDjPlayer {
     MusicQueueItem? nowPlaying,
     required bool playing,
     bool muted = false,
+    String? serverStreamUrl,
+    Duration? startPosition,
   }) async {
+    final direct = serverStreamUrl?.trim();
+    if (direct != null && direct.startsWith('http')) {
+      return playServerStream(
+        streamUrl: direct,
+        playing: playing,
+        startPosition: startPosition ?? Duration.zero,
+        nowPlaying: nowPlaying,
+        muted: muted,
+      );
+    }
     _muted = muted;
     final handler = await _ensureHandler();
 
@@ -96,48 +142,33 @@ class VoiceRoomDjPlayer {
       final trimmed = url?.trim();
       if (trimmed == null || trimmed.isEmpty) return;
       if (ChatRoomDjState.isEphemeralStreamUrl(trimmed)) {
-        final watch = ChatRoomDjState.youtubePlaybackSeed(trimmed);
-        if (watch != null && !candidates.contains(watch)) {
-          candidates.add(watch);
-        }
         return;
       }
       if (!candidates.contains(trimmed)) candidates.add(trimmed);
     }
 
-    // YouTube watch / videoId ile mobil çözümleme — sunucu googlevideo doğrudan kullanılmaz.
     addCandidate(resolveSeed);
     addCandidate(fallbackYoutubeUrl);
     if (nowPlaying != null) {
       addCandidate(nowPlaying.youtubeUrl);
       final videoId = VoiceRoomMusicPipelineLog.videoIdFromUrl(
-        nowPlaying.youtubeUrl,
-      ) ?? ChatRoomDjState.videoIdFromLoose(nowPlaying.youtubeUrl);
+            nowPlaying.youtubeUrl,
+          ) ??
+          ChatRoomDjState.videoIdFromLoose(nowPlaying.youtubeUrl);
       if (videoId != null) {
         addCandidate('https://www.youtube.com/watch?v=$videoId');
       }
     }
-    addCandidate(musicUrl);
 
     if (candidates.isEmpty) {
       VoiceRoomMusicPipelineLog.nullMusicUrl(
-        reason: 'sync_no_candidates',
+        reason: 'sync_no_candidates_use_server_stream',
         caller: 'VoiceRoomDjPlayer.sync',
         playing: playing,
         hasNowPlaying: nowPlaying != null,
       );
       return false;
     }
-
-    VoiceRoomMusicPipelineLog.compareFields(
-      stage: 'sync_candidates',
-      roomId: 'local',
-      serverMusicUrl: musicUrl,
-      playbackSource: resolveSeed ?? musicUrl,
-      youtubeFallback: fallbackYoutubeUrl,
-      playing: playing,
-      shouldPlay: playing,
-    );
 
     for (var attempt = 0; attempt < 2; attempt++) {
       if (attempt > 0) {
@@ -155,12 +186,6 @@ class VoiceRoomDjPlayer {
         final playable = await _streamLoader.preparePlaybackSource(resolved);
         if (playable == null || playable.isEmpty) continue;
 
-        VoiceRoomMusicPipelineLog.backendAudioUrl(
-          audioUrl: playable,
-          stage: 'sync_resolved',
-          candidate: candidate,
-        );
-
         final targets = await _streamLoader.buildPlaybackTargets(playable);
         if (targets.isEmpty) continue;
 
@@ -171,12 +196,15 @@ class VoiceRoomDjPlayer {
           musicUrl: musicUrl,
           candidate: candidate,
         )) {
+          if (startPosition != null && startPosition > Duration.zero) {
+            await handler.seek(startPosition);
+          }
           return true;
         }
       }
     }
 
-    debugPrint('DJ: oynatılamadı — musicUrl=$musicUrl');
+    debugPrint('DJ: oynatılamadı — sunucu stream gerekli');
     return false;
   }
 
@@ -315,6 +343,26 @@ class VoiceRoomDjPlayer {
   }
 
   Future<void> resume() async => resumeLocal();
+
+  Future<void> seekTo(Duration position) async {
+    try {
+      final handler = await _ensureHandler();
+      await handler.seek(position);
+    } catch (e) {
+      debugPrint('DJ seekTo: $e');
+    }
+  }
+
+  Future<void> setVolumeLevel(double volume) async {
+    final clamped = volume.clamp(0.0, 1.0);
+    _muted = clamped <= 0;
+    try {
+      final handler = await _ensureHandler();
+      await handler.setVolume(clamped);
+    } catch (e) {
+      debugPrint('DJ setVolume: $e');
+    }
+  }
 
   Future<void> seekToStart() async {
     try {

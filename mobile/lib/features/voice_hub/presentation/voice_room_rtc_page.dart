@@ -27,6 +27,7 @@ import '../domain/entities/chat_room_presence.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
 import 'audio/voice_room_audio_coordinator.dart';
 import 'providers/chat_room_providers.dart';
+import '../music/presentation/widgets/music_search_picker_sheet.dart';
 import 'providers/pk_battle_remote_provider.dart';
 import 'utils/voice_room_image_prefetch.dart';
 import 'providers/voice_gift_providers.dart';
@@ -978,6 +979,22 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           ),
         );
       }
+    });
+
+    ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
+      final q = next.pendingMusicSearchQuery;
+      if (q == null || q.isEmpty) return;
+      if (prev?.pendingMusicSearchQuery == q) return;
+      if (!mounted) return;
+      final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+      unawaited(() async {
+        final hit = await showMusicSearchPickerSheet(context, ref, query: q);
+        ctrl.clearPendingMusicSearch();
+        if (!mounted || hit == null) return;
+        final err = await ctrl.submitSelectedSong(hit);
+        if (!mounted || err == null) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      }());
     });
 
     ref.listen(pkBattleRemoteProvider, (prev, next) {
