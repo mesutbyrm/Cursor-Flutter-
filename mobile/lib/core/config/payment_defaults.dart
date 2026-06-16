@@ -19,6 +19,21 @@ abstract final class PaymentDefaults {
     minCfcAmount: 10,
   );
 
+  static String formatWhatsAppPhone(String raw) {
+    var digits = raw.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith('0')) digits = digits.substring(1);
+    if (digits.length == 10 && digits.startsWith('5')) {
+      digits = '90$digits';
+    }
+    if (digits.length == 11 && digits.startsWith('90')) {
+      return digits;
+    }
+    if (digits.length == 12 && digits.startsWith('90')) {
+      return digits;
+    }
+    return digits;
+  }
+
   static PaymentConfigEntity merge(PaymentConfigEntity? remote) {
     if (remote == null) return config;
     return PaymentConfigEntity(

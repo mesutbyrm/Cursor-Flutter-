@@ -232,12 +232,14 @@ class JetonPackageTile extends StatelessWidget {
     required this.priceText,
     required this.onTap,
     this.fullWidth = false,
+    this.selected = false,
   });
 
   final JetonPackageEntity package;
   final String priceText;
   final VoidCallback onTap;
   final bool fullWidth;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -253,7 +255,14 @@ class JetonPackageTile extends StatelessWidget {
         vertical: fullWidth ? 14 : 12,
       ),
       borderRadius: BorderRadius.circular(fullWidth ? 16 : 0),
-      child: Stack(
+      child: DecoratedBox(
+        decoration: selected
+            ? BoxDecoration(
+                borderRadius: BorderRadius.circular(fullWidth ? 14 : 0),
+                border: Border.all(color: AppThemeColors.coinGold, width: 2),
+              )
+            : const BoxDecoration(),
+        child: Stack(
             clipBehavior: Clip.none,
             children: [
               if (popular)
@@ -308,6 +317,7 @@ class JetonPackageTile extends StatelessWidget {
               ),
             ],
           ),
+      ),
     );
   }
 }

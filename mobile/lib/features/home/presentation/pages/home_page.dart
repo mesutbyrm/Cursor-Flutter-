@@ -5,6 +5,7 @@ import '../providers/home_providers.dart';
 import '../providers/home_realtime_bridge.dart';
 import '../theme/home_approved_design.dart';
 import '../widgets/approved/home_horoscope_section.dart';
+import '../widgets/approved/home_quick_actions.dart';
 import '../widgets/home_banner_carousel.dart';
 import '../widgets/approved/discover_section.dart';
 import '../widgets/approved/fan_club_section.dart';
@@ -56,18 +57,19 @@ class _HomePageState extends ConsumerState<HomePage> {
           slivers: [
             const SliverToBoxAdapter(child: HomeHeader()),
             const SliverToBoxAdapter(child: HomeBannerCarousel()),
-            const SliverToBoxAdapter(child: StoriesSection()),
-            const SliverToBoxAdapter(child: LiveBroadcastSection()),
+            const SliverToBoxAdapter(child: HomeQuickActions()),
             const SliverToBoxAdapter(child: VoiceRoomSection()),
             const SliverToBoxAdapter(child: LiveFortuneTellersSection()),
-            const SliverToBoxAdapter(child: HomeHoroscopeSection()),
             const SliverToBoxAdapter(child: FortuneSection()),
+            const SliverToBoxAdapter(child: StoriesSection()),
+            const SliverToBoxAdapter(child: HomeHoroscopeSection()),
+            const SliverToBoxAdapter(child: LiveBroadcastSection()),
             const SliverToBoxAdapter(child: TrendingVideoSection()),
             const SliverToBoxAdapter(child: DiscoverSection()),
-            const SliverToBoxAdapter(child: HomeGameCenterSection()),
-            const SliverToBoxAdapter(child: HomeGamesRow()),
             const SliverToBoxAdapter(child: FanClubSection()),
             const SliverToBoxAdapter(child: GoldSection()),
+            const SliverToBoxAdapter(child: HomeGameCenterSection()),
+            const SliverToBoxAdapter(child: HomeGamesRow()),
             const SliverToBoxAdapter(child: MoreFortunesButton()),
             SliverToBoxAdapter(child: SizedBox(height: 72 + bottom)),
           ],

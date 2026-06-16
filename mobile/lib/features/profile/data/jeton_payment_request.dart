@@ -7,8 +7,11 @@ Map<String, dynamic> buildJetonPaymentRequest({
   required String method,
   String? notes,
   String? senderLabel,
+  String? receiptReference,
 }) {
   final coins = package.coins > 0 ? package.coins : 1;
+  final receipt = receiptReference?.trim();
+  final baseNotes = notes ?? 'Jeton yükleme · $method';
   return {
     'requestType': 'jeton',
     'type': 'jeton',
@@ -20,7 +23,10 @@ Map<String, dynamic> buildJetonPaymentRequest({
     if (package.priceTry != null) 'priceTry': package.priceTry,
     if (senderLabel != null && senderLabel.trim().isNotEmpty)
       'senderInfo': senderLabel.trim(),
-    'notes': notes ?? 'Jeton yükleme · $method',
+    if (receipt != null && receipt.isNotEmpty) 'receiptReference': receipt,
+    'notes': receipt != null && receipt.isNotEmpty
+        ? '$baseNotes\nDekont: $receipt'
+        : baseNotes,
   };
 }
 

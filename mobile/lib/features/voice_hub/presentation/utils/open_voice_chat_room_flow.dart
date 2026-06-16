@@ -8,6 +8,7 @@ import '../../../../core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/data/datasources/live_remote_datasource.dart';
+import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../vip_gold/presentation/utils/open_voice_room_vip.dart';
@@ -104,7 +105,8 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
   if (choice == null || !context.mounted) return;
 
   final cost = choice == _OpenRoomChoice.vip ? vipCost : normalCost;
-  if (balance > 0 && balance < cost) {
+  final walletKnown = ref.read(walletBalancesProvider).hasValue;
+  if (walletKnown && balance < cost) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Yetersiz jeton ($cost gerekli, $balance mevcut).'),
@@ -137,18 +139,39 @@ Future<void> _createAndEnter(
 
   try {
     final user = ref.read(authControllerProvider).valueOrNull;
-    final room = await ref
+    var room = await ref
         .read(liveRepositoryProvider)
         .createVoiceChatRoom(
           vip: vip,
           roomName: user?.display ?? user?.username,
         )
         .timeout(
-          const Duration(seconds: 30),
+          const Duration(seconds: 45),
           onTimeout: () => throw Exception(
             'Oda açma zaman aşımı. İnternet bağlantınızı kontrol edin.',
           ),
         );
+    if (room.apiRoomKey.isEmpty) {
+      ref.invalidate(voiceRoomsProvider);
+      final rooms = await ref
+          .read(voiceRoomsProvider.future)
+          .timeout(const Duration(seconds: 20), onTimeout: () => <VoiceRoomEntity>[]);
+      final me = user?.id;
+      if (me != null && me.isNotEmpty) {
+        for (final r in rooms) {
+          if (r.ownerId == me && r.apiRoomKey.isNotEmpty) {
+            room = r;
+            break;
+          }
+        }
+      }
+    }
+    if (room.apiRoomKey.isEmpty) {
+      throw Exception(
+        'Oda oluşturuldu ancak oda kimliği alınamadı. '
+        'Birkaç saniye sonra Odalar listesinden tekrar deneyin.',
+      );
+    }
     ref.invalidate(voiceRoomsProvider);
     ref.invalidate(walletBalancesProvider);
     if (!context.mounted) return;

@@ -172,19 +172,59 @@ class LiveRemoteDataSource {
   }
 
   Future<VoiceRoomEntity?> fetchVoiceRoomById(String id) async {
-    final rooms = await fetchVoiceRooms();
-    final needle = id.trim().toLowerCase();
+    final needle = id.trim();
     if (needle.isEmpty) return null;
+
+    try {
+      final direct = await _fetchVoiceRoomDirect(needle);
+      if (direct != null && direct.apiRoomKey.isNotEmpty) return direct;
+    } catch (_) {}
+
+    final rooms = await fetchVoiceRooms();
+    final lower = needle.toLowerCase();
     String norm(String s) =>
         s.trim().toLowerCase().replaceAll(RegExp(r'-+$'), '');
     for (final r in rooms) {
       if (r.id == id ||
           r.slug == id ||
-          r.id.toLowerCase() == needle ||
-          r.slug.toLowerCase() == needle ||
+          r.id.toLowerCase() == lower ||
+          r.slug.toLowerCase() == lower ||
           norm(r.slug) == norm(id) ||
           norm(r.id) == norm(id)) {
         return r;
+      }
+    }
+    return null;
+  }
+
+  Future<VoiceRoomEntity?> _fetchVoiceRoomDirect(String id) async {
+    final paths = [
+      '/api/chat/rooms/$id',
+      '${ApiEndpoints.chatRooms}/$id',
+    ];
+    for (final path in paths) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final body = res.data;
+        if (body is! Map) continue;
+        final map = Map<String, dynamic>.from(body);
+        if (map['success'] == false) continue;
+        dynamic roomRaw = map['room'] ?? map['data'] ?? map;
+        if (roomRaw is Map && roomRaw['room'] is Map) {
+          roomRaw = roomRaw['room'];
+        }
+        if (roomRaw is Map) {
+          final entity = _mapVoiceRoom(asJsonMap(roomRaw));
+          if (entity.apiRoomKey.isNotEmpty) return entity;
+        }
+        if (map.containsKey('id') || map.containsKey('slug')) {
+          final entity = _mapVoiceRoom(map);
+          if (entity.apiRoomKey.isNotEmpty) return entity;
+        }
+      } on ApiException catch (e) {
+        if (e.statusCode == 404) continue;
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 404) continue;
       }
     }
     return null;
@@ -420,7 +460,7 @@ class LiveRemoteDataSource {
       } catch (_) {}
     }
     final slug = pick(json, ['slug'])?.toString() ?? '';
-    final rawId = pick(json, ['id', '_id', 'roomId'])?.toString() ?? '';
+    final rawId = pick(json, ['id', '_id', 'roomId', 'cuid'])?.toString() ?? '';
     final isVipRaw = pick(json, ['isVip', 'vip']);
     final isVip = isVipRaw == true ||
         isVipRaw == 1 ||

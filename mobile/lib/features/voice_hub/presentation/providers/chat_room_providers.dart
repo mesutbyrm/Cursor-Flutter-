@@ -1227,7 +1227,8 @@ class VoiceRoomLiveController
       id: id,
       content: line,
       createdAt: DateTime.now(),
-      user: msgUserFromFlash(line),
+      user: msgUserFromFlash(line) ??
+          const ChatRoomUserRef(id: 'system', name: 'Sistem'),
     );
     state = state.copyWith(
       messages: [...state.messages, chatLine],
@@ -1317,7 +1318,7 @@ class VoiceRoomLiveController
               skipPayment: true,
             )
             .timeout(
-              const Duration(seconds: 22),
+              const Duration(seconds: 45),
               onTimeout: () => throw TimeoutException('Şarkı isteği zaman aşımı'),
             );
       } else {
@@ -1330,7 +1331,7 @@ class VoiceRoomLiveController
                 query: q,
               )
               .timeout(
-                const Duration(seconds: 22),
+                const Duration(seconds: 45),
                 onTimeout: () =>
                     throw TimeoutException('Şarkı isteği zaman aşımı'),
               );
@@ -1401,6 +1402,8 @@ class VoiceRoomLiveController
       await _syncMusicFromServerIfNeeded(force: true);
       await _playDjInBackground(state.dj);
       return null;
+    } on TimeoutException {
+      return await _recoverMusicRequestAfterTimeout(title);
     } on ApiException catch (e) {
       if (e.statusCode == 402 ||
           e.message.toLowerCase().contains('jeton')) {
@@ -1408,8 +1411,34 @@ class VoiceRoomLiveController
       }
       return e.message;
     } catch (e) {
+      if (e is TimeoutException) {
+        return await _recoverMusicRequestAfterTimeout(title);
+      }
       return ApiException.userMessage(e);
     }
+  }
+
+  Future<String?> _recoverMusicRequestAfterTimeout(String title) async {
+    final needle = title.trim().toLowerCase();
+    if (needle.isEmpty) {
+      return 'İstek zaman aşımına uğradı. Bağlantınızı kontrol edip tekrar deneyin.';
+    }
+    try {
+      await _syncMusicFromServerIfNeeded(force: true);
+    } catch (_) {}
+    final haystack = [
+      state.dj.nowPlaying?.title ?? '',
+      ...state.dj.musicQueue.map((e) => e.title),
+    ].join(' ').toLowerCase();
+    if (haystack.contains(needle) ||
+        state.dj.musicQueue.any(
+          (e) => e.title.toLowerCase().contains(needle),
+        )) {
+      await _playDjInBackground(state.dj);
+      _showMusicRequestFlashLine('✅ «$title» kuyruğa eklendi');
+      return null;
+    }
+    return 'Sunucu yanıt vermedi; bağlantınızı kontrol edip tekrar deneyin.';
   }
 
   void _scanEntrancesFromMessages(
@@ -2193,7 +2222,7 @@ class VoiceRoomLiveController
             djMusicControl: djMusicControl,
           )
           .timeout(
-            const Duration(seconds: 22),
+            const Duration(seconds: 45),
             onTimeout: () => throw TimeoutException('Şarkı isteği zaman aşımı'),
           );
       ref.invalidate(coinBalanceProvider);

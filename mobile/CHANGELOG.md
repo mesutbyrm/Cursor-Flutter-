@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.229+232 (2026-06-12)
+
+### Hata düzeltmeleri — sesli oda, müzik, jeton, ana sayfa
+
+- **Sesli / VIP oda açma:** Jeton bakiyesi kontrolü düzeltildi; oda kimliği boşsa liste yenilenir; `GET /api/chat/rooms/:id` ile doğrudan oda yükleme
+- **Müzik / !istek:** API zaman aşımı 45 sn; zaman aşımında kuyruk senkronu ile kurtarma; oynatıcı doğrulama 12 sn
+- **Jeton mağazası:** Son seçilen paket hatırlanır; «Ödeme Bildir» butonu; WhatsApp numara formatı (90…); dekont admin talebine eklenir
+- **Ana sayfa:** Hızlı erişim şeridi (Sesli Oda, Fal, Jeton, Oda Aç); bölüm sırası sadeleştirildi
+
 ## 1.0.228+231 (2026-06-12)
 
 ### Web parite — ana sayfa ve sesli oda

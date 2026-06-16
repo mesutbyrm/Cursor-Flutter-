@@ -874,7 +874,7 @@ class ChatRoomRemoteDataSource {
             ApiEndpoints.youtubeSearch,
             queryParameters: {'q': q, 'query': q},
           )
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 15));
       final hits = _parseYoutubeHits(res.data);
       if (hits.isNotEmpty) return hits;
     } on TimeoutException {
@@ -889,7 +889,7 @@ class ChatRoomRemoteDataSource {
     try {
       final res = await _dio
           .get<dynamic>(musicSearchPath(), queryParameters: {'q': q})
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 15));
       final data = res.data;
       if (data is String &&
           (data.contains('<!DOCTYPE') || data.contains('<html'))) {
@@ -942,7 +942,7 @@ class ChatRoomRemoteDataSource {
     try {
       final videos = await _youtube.search
           .getVideos(q)
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 18));
       final hits = <YoutubeSearchHit>[];
       for (final video in videos.take(10)) {
         if (video.isLive) continue;
@@ -1671,7 +1671,7 @@ class ChatRoomRemoteDataSource {
             }),
             options: Options(contentType: 'application/json'),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 25));
       final code = res.statusCode ?? 0;
       if (code >= 200 && code < 300) {
         final body = res.data;

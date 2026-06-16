@@ -216,7 +216,7 @@ class VoiceRoomDjPlayer {
         );
         await handler.setVolume(_muted ? 0.0 : 1.0);
         final started = await handler.waitUntilPlaying(
-          timeout: const Duration(seconds: 6),
+          timeout: const Duration(seconds: 12),
         );
         diagnostics.value = handler.diagnostics.copyWith(
           serverMusicUrl: musicUrl,

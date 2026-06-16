@@ -10,6 +10,7 @@ import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/jeton_payment_request.dart';
+import '../../data/jeton_purchase_prefs.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../../admin/presentation/providers/admin_providers.dart';
@@ -166,6 +167,14 @@ class _JetonPaymentDetailPage extends ConsumerStatefulWidget {
 
 class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage> {
   var _submitting = false;
+  final _receiptCtrl = TextEditingController();
+  final _prefs = JetonPurchasePrefs();
+
+  @override
+  void dispose() {
+    _receiptCtrl.dispose();
+    super.dispose();
+  }
 
   String get _userLabel {
     final me = ref.read(authControllerProvider).valueOrNull;
@@ -274,6 +283,17 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
                 ),
               _UsernameWarning(username: _userLabel),
             ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: TextField(
+                controller: _receiptCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Dekont / referans (isteğe bağlı)',
+                  hintText: 'Dekont no, IBAN son hane veya link',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
             const Spacer(),
             if (widget.method == _JetonPayMethod.whatsapp)
               Padding(
@@ -307,7 +327,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
                           ),
                         )
                       : const Text(
-                          'Ödemeyi yaptım — talep gönder',
+                          'Ödeme Bildir',
                           style: TextStyle(fontWeight: FontWeight.w800),
                         ),
                 ),
@@ -324,6 +344,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
   }
 
   Future<void> _submitRequest() async {
+    final receipt = _receiptCtrl.text.trim();
     final body = widget.package.id.startsWith('membership_')
         ? buildMembershipPaymentRequest(
             package: widget.package,
@@ -335,8 +356,11 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
             method: _methodApi,
             notes: widget.paymentNotes,
             senderLabel: _userLabel,
+            receiptReference: receipt.isEmpty ? null : receipt,
           );
     await ref.read(walletRepositoryProvider).submitPaymentRequest(body);
+    await _prefs.saveLastPackageId(widget.package.id);
+    await _prefs.saveLastPaymentMethod(_methodApi);
     ref.invalidate(walletBalancesProvider);
     ref.invalidate(paymentRequestsNotifierProvider);
     ref.invalidate(adminPaymentRequestsProvider);
@@ -348,18 +372,33 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     setState(() => _submitting = true);
     try {
       await _submitRequest();
-      final phone = widget.config.whatsappNumber.replaceAll(RegExp(r'\D'), '');
+      final phone = PaymentDefaults.formatWhatsAppPhone(
+        widget.config.whatsappNumber,
+      );
+      final receipt = _receiptCtrl.text.trim();
+      final receiptPart = receipt.isNotEmpty ? ' · Dekont: $receipt' : '';
       final msg = Uri.encodeComponent(
         'Merhaba, ${widget.package.title} (${widget.package.coins} jeton) '
-        'satın almak istiyorum. Kullanıcı: $_userLabel · Açıklama: $_userLabel',
+        'satın almak istiyorum. Kullanıcı: $_userLabel$receiptPart',
       );
       final uri = Uri.parse('https://wa.me/$phone?text=$msg');
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'WhatsApp açılamadı. Numara: ${widget.config.whatsappNumber}',
+            ),
+          ),
+        );
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Talebiniz alındı')),
+          const SnackBar(
+            content: Text(
+              'Ödeme bildirimi gönderildi. Onay sonrası jeton bakiyenize yansır.',
+            ),
+          ),
         );
         widget.onDone();
         Navigator.of(context).pop(true);
