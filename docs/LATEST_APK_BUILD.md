@@ -2,22 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.229+232` |
-| Tarih (UTC) | 2026-06-16 15:17 |
-| Commit | [`41944140a222f0f0f17880a86a9a0e166e55b8ca`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/41944140a222f0f0f17880a86a9a0e166e55b8ca) |
-| İş akışı | [Run 27627228514](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27627228514) |
+| Sürüm | `1.0.230+233` |
+| Tarih (UTC) | 2026-06-16 17:09 |
+| Commit | [`ee8c0b1a7c4d306eaddfadb93ed8a98e62b09a8a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ee8c0b1a7c4d306eaddfadb93ed8a98e62b09a8a) |
+| İş akışı | [Run 27634235123](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27634235123) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.229+232 (2026-06-12)
+## 1.0.230+233 (2026-06-12)
 
-### Hata düzeltmeleri — sesli oda, müzik, jeton, ana sayfa
+### Hata düzeltmeleri — sesli oda bağlantısı ve DJ müziği
 
-- **Sesli / VIP oda açma:** Jeton bakiyesi kontrolü düzeltildi; oda kimliği boşsa liste yenilenir; `GET /api/chat/rooms/:id` ile doğrudan oda yükleme
-- **Müzik / !istek:** API zaman aşımı 45 sn; zaman aşımında kuyruk senkronu ile kurtarma; oynatıcı doğrulama 12 sn
-- **Jeton mağazası:** Son seçilen paket hatırlanır; «Ödeme Bildir» butonu; WhatsApp numara formatı (90…); dekont admin talebine eklenir
-- **Ana sayfa:** Hızlı erişim şeridi (Sesli Oda, Fal, Jeton, Oda Aç); bölüm sırası sadeleştirildi
+- **Oda giriş döngüsü:** `voiceRoomLiveProvider` artık yalnızca oda kimliği (`liveKey`) ile tutulur; online sayısı / avatar güncellemelerinde presence+SSE kopmaz
+- **SSE:** Aynı odaya yeniden bağlanırken mevcut akış korunur
+- **Müzik:** Süresi dolmuş `googlevideo.com` URL'leri videoId ile yeniden çözülür; DJ SSE güncellemelerinde gereksiz oynatıcı yeniden başlatma azaltıldı
+- **Poll hataları:** Arka plan yenileme hataları artık SnackBar ile «bağlantı koptu» hissi vermez
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
