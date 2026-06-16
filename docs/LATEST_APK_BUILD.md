@@ -2,25 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.227+230` |
-| Tarih (UTC) | 2026-06-16 13:55 |
-| Commit | [`c490ea01151a395418c0eabc317da077523e462d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/c490ea01151a395418c0eabc317da077523e462d) |
-| İş akışı | [Run 27622033572](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27622033572) |
+| Sürüm | `1.0.228+231` |
+| Tarih (UTC) | 2026-06-16 14:30 |
+| Commit | [`ca2a11a79ae437146325305270db383f80e286b3`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ca2a11a79ae437146325305270db383f80e286b3) |
+| İş akışı | [Run 27624294304](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27624294304) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.227+230 (2026-06-12)
+## 1.0.228+231 (2026-06-12)
 
-### Premium Fortune — modern fal uygulaması (MVVM)
+### Web parite — ana sayfa ve sesli oda
 
-- **Mimari:** `premium_fortune/` modülü — MVVM + Clean Architecture (domain/data/presentation)
-- **Firebase:** Auth, Firestore, Storage entegrasyonu (demo mod: SharedPreferences yedek)
-- **OpenAI:** Kahve falı (görsel), tarot, rüya tabiri, doğum haritası AI yorumları
-- **Modüller:** Auth (e-posta, Google, Apple), kahve falı, tarot, canlı falcı, sohbet, cüzdan, oyunlar, astroloji, rüya, admin panel
-- **Tasarım:** Premium koyu tema, cam kartlar, alt navigasyon, animasyonlu geçişler
-- **Ödeme:** Stripe/Iyzico soyut katmanı + kupon kodları (HOSGELDIN, FAL2026)
-- **Rota:** `/premium` — ana uygulamadan bağımsız premium deneyim
+- **Ana sayfa:** Kampanya bannerları (`HomeBannerCarousel`), günlük burç şeridi, fal kartları `GET /api/homepage-fortune-cards`
+- **Sesli oda:** Moderatör «Konuşmacı sırası» paneli — dinleyicilere «Ses ver» (`assignSeat`)
+- **Dokümantasyon:** `docs/CANLIFAL_WEB_MOBILE_PARITY.md` — web ↔ mobil ekran/API eşlemesi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
