@@ -9,9 +9,8 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../home/domain/entities/live_fortune_session_entity.dart';
 import '../../../home/domain/entities/live_fortune_teller_entity.dart';
-import '../../../home/presentation/pages/live_fortune_waiting_page.dart';
+import '../../../home/presentation/live_fortune/live_fortune_flow.dart';
 import '../../../home/presentation/providers/home_providers.dart';
 import '../../../home/presentation/widgets/live_fortune_broadcast_side_rail.dart';
 import '../../../home/presentation/widgets/live_fortune_client_booking_sheet.dart';
@@ -195,38 +194,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       totalJeton: opt.totalJeton,
     );
     if (!mounted || confirmed != true) return;
-    final displayName = user.displayName?.trim().isNotEmpty == true
-        ? user.displayName!.trim()
-        : user.username;
-    final created = await ref.read(homeRemoteProvider).createFortuneTellerSession(
-          teller.id,
-          tellerUserId: teller.userId ?? teller.trtcUserId,
-          clientName: displayName,
-          durationMinutes: opt.minutes,
-          totalJeton: opt.totalJeton,
-          fortuneType: teller.specialties.isNotEmpty
-              ? teller.specialties.first
-              : 'general',
-        );
-    if (!mounted || created == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fal isteği gönderilemedi')),
-      );
-      return;
-    }
-    final session = LiveFortuneSessionEntity(
-      sessionId: created.sessionId,
+    await LiveFortuneFlow.bookAndOpenWaiting(
+      context: context,
+      ref: ref,
       teller: teller,
       durationMinutes: opt.minutes,
       totalJeton: opt.totalJeton,
-      tellerUserId: created.tellerUserId ?? teller.trtcUserId,
-      clientId: created.clientId ?? user.id,
-      isClient: true,
-    );
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => LiveFortuneWaitingPage(session: session),
-      ),
+      fortuneType: teller.specialties.isNotEmpty
+          ? teller.specialties.first
+          : 'general',
     );
   }
 

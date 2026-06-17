@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.256+259 (2026-06-17)
+
+### Canlı falcı — baştan yazılmış akış
+
+- **Randevu:** Süre seç → Randevu Al → `POST /api/fortune-tellers/session` → bekleme ekranı
+- **Bekleme:** Admin reklamı (`GET /api/banners`); falcıya popup (Kabul / Beklet / Reddet)
+- **Kabul sonrası:** Danışana reklam geçişi (3 sn) → aktif seans
+- **Kapatma:** Danışan ve falcı iptal/kapat dediğinde onay + API `end` + güvenli çıkış
+- **Router:** `/canli-falcilar/:id/waiting` bekleme rotası eklendi
+
 ## 1.0.255+258 (2026-06-17)
 
 ### Canlı falcı — üretim oda API (`/api/room/*`)

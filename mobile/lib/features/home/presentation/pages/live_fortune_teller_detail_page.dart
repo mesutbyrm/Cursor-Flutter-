@@ -13,10 +13,10 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
+import '../live_fortune/live_fortune_flow.dart';
 import '../providers/home_providers.dart';
 import '../theme/home_palette.dart';
 import '../widgets/live_fortune_client_booking_sheet.dart';
-import 'live_fortune_waiting_page.dart';
 
 class LiveFortuneTellerDetailPage extends ConsumerStatefulWidget {
   const LiveFortuneTellerDetailPage({super.key, required this.tellerId});
@@ -47,7 +47,8 @@ class _LiveFortuneTellerDetailPageState
       (o) => o.minutes == _selectedMinutes,
       orElse: () => options[1],
     );
-    final balance = ref.read(coinBalanceProvider).valueOrNull ?? user.coinBalance;
+    final balance =
+        ref.read(coinBalanceProvider).valueOrNull ?? user.coinBalance;
     if (balance < opt.totalJeton) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -69,38 +70,15 @@ class _LiveFortuneTellerDetailPageState
 
     setState(() => _booking = true);
     try {
-      final remote = ref.read(homeRemoteProvider);
-      final displayName = user.displayName?.trim().isNotEmpty == true
-          ? user.displayName!.trim()
-          : user.username;
-      final created = await remote.createFortuneTellerSession(
-        teller.id,
-        tellerUserId: teller.userId ?? teller.trtcUserId,
-        clientName: displayName,
-        durationMinutes: opt.minutes,
-        totalJeton: opt.totalJeton,
-      );
-      if (!mounted) return;
-      if (created == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Oturum başlatılamadı')),
-        );
-        return;
-      }
-      final session = LiveFortuneSessionEntity(
-        sessionId: created.sessionId,
+      await LiveFortuneFlow.bookAndOpenWaiting(
+        context: context,
+        ref: ref,
         teller: teller,
         durationMinutes: opt.minutes,
         totalJeton: opt.totalJeton,
-        tellerUserId: created.tellerUserId ?? teller.trtcUserId,
-        clientId: created.clientId ?? user.id,
-        isClient: true,
-      );
-      if (!mounted) return;
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => LiveFortuneWaitingPage(session: session),
-        ),
+        fortuneType: teller.specialties.isNotEmpty
+            ? teller.specialties.first
+            : 'general',
       );
     } finally {
       if (mounted) setState(() => _booking = false);

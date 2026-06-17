@@ -12,6 +12,8 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/services/live_fortune_request_sse_service.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
+import '../live_fortune/live_fortune_close_dialog.dart';
+import '../live_fortune/live_fortune_flow.dart';
 import '../providers/fortune_incoming_invite_provider.dart';
 import '../providers/fortune_live_event_bus.dart';
 import '../providers/home_providers.dart';
@@ -241,11 +243,7 @@ class _FortuneIncomingInviteHostState
         }
         _dismissed.add(req.sessionId);
         if (mounted && navCtx.mounted) {
-          final router = GoRouter.of(navCtx);
-          while (router.canPop()) {
-            router.pop();
-          }
-          router.go('/');
+          liveFortuneExitToHome(navCtx);
         }
         return;
       }
@@ -280,13 +278,7 @@ class _FortuneIncomingInviteHostState
               req.sessionId,
               action: 'reject',
             );
-        if (navCtx.mounted) {
-          final router = GoRouter.of(navCtx);
-          while (router.canPop()) {
-            router.pop();
-          }
-          router.go('/');
-        }
+        if (navCtx.mounted) liveFortuneExitToHome(navCtx);
         return;
       }
 

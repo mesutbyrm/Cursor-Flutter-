@@ -82,6 +82,7 @@ import '../../features/voice_hub/presentation/voice_room_rtc_page.dart';
 import '../../features/voice_hub/presentation/widgets/voice_room_error_boundary.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
 import '../../features/home/presentation/pages/live_fortune_teller_detail_page.dart';
+import '../../features/home/presentation/pages/live_fortune_waiting_page.dart';
 import '../../features/home/presentation/pages/live_fortune_session_page.dart';
 import '../../features/home/presentation/pages/live_fortune_tellers_page.dart';
 import '../../features/home/domain/entities/live_fortune_session_entity.dart';
@@ -732,6 +733,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               );
             },
             routes: [
+              GoRoute(
+                path: 'waiting',
+                pageBuilder: (context, state) {
+                  final session = state.extra as LiveFortuneSessionEntity?;
+                  final id = state.pathParameters['id'] ?? '';
+                  if (session == null) {
+                    return AppPageTransitions.fadeSlide(
+                      key: state.pageKey,
+                      child: LiveFortuneTellerDetailPage(tellerId: id),
+                    );
+                  }
+                  return AppPageTransitions.fadeSlide(
+                    key: state.pageKey,
+                    child: LiveFortuneWaitingPage(session: session),
+                  );
+                },
+              ),
               GoRoute(
                 path: 'session',
                 pageBuilder: (context, state) {

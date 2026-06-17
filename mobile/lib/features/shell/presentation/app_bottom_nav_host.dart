@@ -31,6 +31,9 @@ class AppBottomNavHost extends ConsumerWidget {
     if (path.contains('/session') && path.startsWith('/canli-falcilar')) {
       return true;
     }
+    if (path.contains('/waiting') && path.startsWith('/canli-falcilar')) {
+      return true;
+    }
     return false;
   }
 
