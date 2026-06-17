@@ -12,9 +12,9 @@ import '../../domain/entities/live_fortune_session_entity.dart';
 import '../providers/home_providers.dart';
 import '../theme/home_palette.dart';
 import '../widgets/live_fortune_unavailable_dialog.dart';
-import 'live_fortune_admin_ad_panel.dart';
-import 'live_fortune_ad_transition_page.dart';
-import 'live_fortune_flow.dart';
+import '../live_fortune/live_fortune_admin_ad_panel.dart';
+import '../live_fortune/live_fortune_ad_transition_page.dart';
+import '../live_fortune/live_fortune_flow.dart';
 
 /// Danışan — randevu sonrası falcı kabulünü bekler; admin reklamı gösterilir.
 class LiveFortuneWaitingPage extends ConsumerStatefulWidget {

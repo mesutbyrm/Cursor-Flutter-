@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../home/domain/entities/live_fortune_session_entity.dart';
 import '../../../home/domain/entities/live_fortune_teller_entity.dart';
 import '../../../home/presentation/live_fortune/live_fortune_flow.dart';
 import '../../../home/presentation/providers/home_providers.dart';
