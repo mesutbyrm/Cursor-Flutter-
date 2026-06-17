@@ -2,29 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.233+236` |
-| Tarih (UTC) | 2026-06-17 04:06 |
-| Commit | [`8fea3bd8ed60ae7682ba2536aace2eb6d009b129`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8fea3bd8ed60ae7682ba2536aace2eb6d009b129) |
-| İş akışı | [Run 27664672212](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27664672212) |
+| Sürüm | `1.0.234+237` |
+| Tarih (UTC) | 2026-06-17 04:17 |
+| Commit | [`4b7b1e0d92f42ddcfa79c7f9d9f817d1ba7ca698`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/4b7b1e0d92f42ddcfa79c7f9d9f817d1ba7ca698) |
+| İş akışı | [Run 27665061908](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27665061908) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.233+236 (2026-06-12)
+## 1.0.234+237 (2026-06-12)
 
-### Müzik oynatma — ses gelmeme düzeltmesi
+### Müzik oynatma — bildirim ve senkron
 
-- Android'de googlevideo akışları artık önce canlifal.com `/api/chat/youtube-audio` proxy üzerinden oynatılıyor
-- Medya bildirimi yalnızca ses gerçekten başladıktan sonra gösteriliyor
-- `setAudioSource` / `play()` öncesi-sonrası ayrıntılı `[MusicPipeline]` logları
-- 3 saniye içinde ses başlamazsa teşhis logu; oynatıcıyı kapatan periyodik timeout kaldırıldı
-- Ses akışı alınamazsa / oynatma başarısızsa kullanıcıya hata mesajı
-- Audio focus `gain` + 3 denemeli yeniden aktivasyon
-
-### DJ yönetimi
-
-- Oda sahibi, admin ve moderatörler DJ + butonunu kullanabilir
-- DJ ekleme sonrası sunucu SSE ile tüm odaya yayınlar
+- `audio_service` artık yalnızca gerçek oynatma başlarken başlatılıyor (`stop()` bildirim açmıyor)
+- DJ SSE yükünde `djUserIds` / `djUsers` — odadaki herkes DJ listesini anında görür
+- Oda sahibi / admin / moderatör DJ paneli ve + butonuna erişir
+- Koltuklarda DJ rozeti `live.dj` ile birleşik güncellenir
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
