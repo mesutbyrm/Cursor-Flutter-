@@ -139,7 +139,7 @@ class LiveRemoteDataSource {
       );
     }
     final httpCode = res.statusCode ?? 0;
-    if (map['success'] != true && httpCode != 201) {
+    if (map['success'] != true && httpCode != 201 && httpCode != 200) {
       final err = (map['error'] ?? map['message'])?.toString().trim();
       if (err != null && err.isNotEmpty) {
         throw DioException(
@@ -149,14 +149,34 @@ class LiveRemoteDataSource {
       }
     }
     dynamic roomRaw = map['room'] ?? map['data'];
-    if (roomRaw is Map && roomRaw['room'] is Map) {
-      roomRaw = roomRaw['room'];
+    if (roomRaw is Map) {
+      final nested = asJsonMap(roomRaw);
+      if (nested['room'] is Map) {
+        roomRaw = nested['room'];
+      } else if (!nested.containsKey('id') &&
+          !nested.containsKey('slug') &&
+          !nested.containsKey('roomId')) {
+        final inner = pick(nested, ['room']);
+        if (inner is Map) roomRaw = inner;
+      }
     }
     if (roomRaw is Map) {
-      return _mapVoiceRoom(asJsonMap(roomRaw));
+      final entity = _mapVoiceRoom(asJsonMap(roomRaw));
+      if (entity.apiRoomKey.isNotEmpty) return entity;
     }
-    if (map.containsKey('id') || map.containsKey('slug')) {
-      return _mapVoiceRoom(map);
+    if (map.containsKey('id') || map.containsKey('slug') || map.containsKey('roomId')) {
+      final entity = _mapVoiceRoom(map);
+      if (entity.apiRoomKey.isNotEmpty) return entity;
+    }
+    final topRoomId = pick(map, ['roomId', 'id', 'cuid'])?.toString().trim();
+    if (topRoomId != null && topRoomId.isNotEmpty) {
+      final fetched = await fetchVoiceRoomById(topRoomId);
+      if (fetched != null && fetched.apiRoomKey.isNotEmpty) return fetched;
+      return VoiceRoomEntity(
+        id: topRoomId,
+        slug: pick(map, ['slug'])?.toString() ?? topRoomId,
+        nameTr: name?.trim().isNotEmpty == true ? name!.trim() : 'Sohbet Odası',
+      );
     }
     throw DioException(
       requestOptions: res.requestOptions,

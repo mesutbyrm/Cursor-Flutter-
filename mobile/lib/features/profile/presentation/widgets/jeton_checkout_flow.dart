@@ -1,14 +1,18 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../social/domain/entities/create_social_post_input.dart';
+import '../../../social/presentation/providers/social_providers.dart';
 import '../../data/jeton_payment_request.dart';
 import '../../data/jeton_purchase_prefs.dart';
 import '../../domain/entities/jeton_package_entity.dart';
@@ -167,14 +171,8 @@ class _JetonPaymentDetailPage extends ConsumerStatefulWidget {
 
 class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage> {
   var _submitting = false;
-  final _receiptCtrl = TextEditingController();
+  String? _receiptImagePath;
   final _prefs = JetonPurchasePrefs();
-
-  @override
-  void dispose() {
-    _receiptCtrl.dispose();
-    super.dispose();
-  }
 
   String get _userLabel {
     final me = ref.read(authControllerProvider).valueOrNull;
@@ -283,17 +281,6 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
                 ),
               _UsernameWarning(username: _userLabel),
             ],
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: TextField(
-                controller: _receiptCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Dekont / referans (isteğe bağlı)',
-                  hintText: 'Dekont no, IBAN son hane veya link',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ),
             const Spacer(),
             if (widget.method == _JetonPayMethod.whatsapp)
               Padding(
@@ -312,24 +299,15 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: FilledButton(
-                  onPressed: _submitting ? null : _submitAndClose,
+                  onPressed: _submitting ? null : _openPaymentNotifySheet,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppThemeColors.accentPurple,
                     minimumSize: const Size.fromHeight(52),
                   ),
-                  child: _submitting
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text(
-                          'Ödeme Bildir',
-                          style: TextStyle(fontWeight: FontWeight.w800),
-                        ),
+                  child: const Text(
+                    'Ödeme Bildir',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
                 ),
               ),
             TextButton(
@@ -343,8 +321,153 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     );
   }
 
-  Future<void> _submitRequest() async {
-    final receipt = _receiptCtrl.text.trim();
+  Future<String?> _uploadReceiptIfNeeded() async {
+    final path = _receiptImagePath;
+    if (path == null || path.isEmpty) return null;
+    try {
+      final post = await ref.read(socialRemoteProvider).createPost(
+            CreateSocialPostInput(imagePath: path, caption: '[JETON_DEKONT] $_userLabel'),
+          );
+      return post.mediaUrl;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _openPaymentNotifySheet() async {
+    final receiptRefCtrl = TextEditingController();
+    var localImage = _receiptImagePath;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF12081F),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              16,
+              20,
+              20 + MediaQuery.viewInsetsOf(ctx).bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Ödeme Bildir',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Dekont veya ekran görüntüsü ekleyin. Alanlar otomatik doldurulur.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: ctx.colors.onSurfaceMuted.withValues(alpha: 0.9),
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _InfoCard(
+                  child: Column(
+                    children: [
+                      _RowLabel('Jeton:', '${widget.package.coins}'),
+                      const Divider(height: 16, color: Colors.white12),
+                      _RowLabel('Tutar:', widget.priceText),
+                      const Divider(height: 16, color: Colors.white12),
+                      _RowLabel('Açıklama:', _userLabel),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final file = await ImagePicker().pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 80,
+                    );
+                    if (file == null) return;
+                    setSheetState(() => localImage = file.path);
+                    setState(() => _receiptImagePath = file.path);
+                  },
+                  icon: const Icon(Icons.attach_file_rounded),
+                  label: Text(
+                    localImage == null
+                        ? 'Dekont / ekran görüntüsü ekle'
+                        : 'Görsel seçildi — değiştir',
+                  ),
+                ),
+                if (localImage != null) ...[
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image(
+                      image: FileImage(File(localImage!)),
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                TextField(
+                  controller: receiptRefCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Ek referans (isteğe bağlı)',
+                    hintText: 'Dekont no veya işlem kodu',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: _submitting
+                      ? null
+                      : () async {
+                          Navigator.pop(ctx);
+                          setState(() => _receiptImagePath = localImage);
+                          await _submitAndClose(
+                            extraReceiptRef: receiptRefCtrl.text.trim(),
+                          );
+                        },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppThemeColors.accentPurple,
+                    minimumSize: const Size.fromHeight(50),
+                  ),
+                  child: _submitting
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Ödemeyi Bildir',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+    receiptRefCtrl.dispose();
+  }
+
+  Future<void> _submitRequest({String? extraReceiptRef}) async {
+    final uploaded = await _uploadReceiptIfNeeded();
+    final receiptParts = <String>[
+      if (uploaded != null && uploaded.isNotEmpty) uploaded,
+      if (extraReceiptRef != null && extraReceiptRef.isNotEmpty) extraReceiptRef,
+    ];
+    final receipt = receiptParts.join(' · ');
+    final autoNotes =
+        'Kullanıcı: $_userLabel · ${widget.package.coins} jeton · ${widget.priceText}';
     final body = widget.package.id.startsWith('membership_')
         ? buildMembershipPaymentRequest(
             package: widget.package,
@@ -354,7 +477,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
         : buildJetonPaymentRequest(
             package: widget.package,
             method: _methodApi,
-            notes: widget.paymentNotes,
+            notes: '$autoNotes\n${widget.paymentNotes ?? ''}'.trim(),
             senderLabel: _userLabel,
             receiptReference: receipt.isEmpty ? null : receipt,
           );
@@ -375,8 +498,8 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
       final phone = PaymentDefaults.formatWhatsAppPhone(
         widget.config.whatsappNumber,
       );
-      final receipt = _receiptCtrl.text.trim();
-      final receiptPart = receipt.isNotEmpty ? ' · Dekont: $receipt' : '';
+      final receiptPart =
+          _receiptImagePath != null ? ' · Dekont eklendi' : '';
       final msg = Uri.encodeComponent(
         'Merhaba, ${widget.package.title} (${widget.package.coins} jeton) '
         'satın almak istiyorum. Kullanıcı: $_userLabel$receiptPart',
@@ -414,22 +537,37 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     }
   }
 
-  Future<void> _submitAndClose() async {
+  Future<void> _showWaitDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.hourglass_top_rounded, color: AppThemeColors.coinGold),
+        title: const Text('Ödeme bildiriminiz alındı'),
+        content: const Text(
+          'Talebiniz admin paneline iletildi.\n\n'
+          'Onay süreci genellikle 5–10 dakika sürer. '
+          'Onaylandığında jetonlar hesabınıza yansır ve bildirim alırsınız.',
+          style: TextStyle(height: 1.4),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Tamam'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submitAndClose({String? extraReceiptRef}) async {
     setState(() => _submitting = true);
     try {
-      await _submitRequest();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Ödeme bildirimi gönderildi. Onay sonrası jeton bakiyenize yansır; '
-              'Bildirimler sekmesinden takip edebilirsiniz.',
-            ),
-          ),
-        );
-        widget.onDone();
-        Navigator.of(context).pop(true);
-      }
+      await _submitRequest(extraReceiptRef: extraReceiptRef);
+      if (!mounted) return;
+      await _showWaitDialog();
+      if (!mounted) return;
+      widget.onDone();
+      Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

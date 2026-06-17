@@ -1383,8 +1383,12 @@ class VoiceRoomLiveController
       state = state.copyWith(
         error: 'Şarkı oynatılamadı. Bağlantınızı kontrol edip tekrar deneyin.',
       );
+      if (videoId != null && videoId.isNotEmpty) {
+        ref.read(voiceRoomDjVideoFallbackProvider.notifier).state = videoId;
+      }
       _lastDjPlaybackSignature = null;
     } else if (shouldPlay && ok) {
+      ref.read(voiceRoomDjVideoFallbackProvider.notifier).state = null;
       _lastDjPlaybackSignature = _djPlaybackSignature(
         effectiveDj,
         muted: muted,
@@ -2918,6 +2922,9 @@ final voiceRoomMusicSessionProvider =
     NotifierProvider<VoiceRoomMusicSessionNotifier, VoiceRoomMusicSessionState>(
       VoiceRoomMusicSessionNotifier.new,
     );
+
+/// just_audio başarısız olunca YouTube video yedek oynatıcı (videoId).
+final voiceRoomDjVideoFallbackProvider = StateProvider<String?>((ref) => null);
 
 final voiceRoomLiveProvider = NotifierProvider.autoDispose
     .family<VoiceRoomLiveController, VoiceRoomLiveState, String>(

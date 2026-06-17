@@ -1,5 +1,5 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../fortune/presentation/data/fortune_catalog.dart';
@@ -7,6 +7,7 @@ import '../../../domain/entities/home_fortune_card_entity.dart';
 import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Web uyumlu — `GET /api/homepage-fortune-cards` + yerel katalog yedek.
 class FortuneSection extends ConsumerWidget {
@@ -19,8 +20,6 @@ class FortuneSection extends ConsumerWidget {
     'el-fali',
     'yildiz-haritasi',
   ];
-
-  static const _mockCounts = [2345, 1890, 1560, 1240, 980];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,11 +47,10 @@ class FortuneSection extends ConsumerWidget {
             itemBuilder: (context, i) {
               final e = entries[i];
               return _FortuneCard(
-                emoji: e.emoji,
                 title: e.title,
-                count: e.count,
                 accent: e.accent,
                 imageUrl: e.imageUrl,
+                emoji: e.emoji,
                 onTap: () => context.push('/fortune/${e.slug}'),
               );
             },
@@ -62,7 +60,7 @@ class FortuneSection extends ConsumerWidget {
     );
   }
 
-  List<({String slug, String emoji, String title, int count, Color accent, String? imageUrl})>
+  List<({String slug, String emoji, String title, Color accent, String? imageUrl})>
       _fromApi(List<HomeFortuneCardEntity> cards) {
     return cards.take(8).map((c) {
       final catalog = FortuneCatalog.bySlug(c.navigationSlug);
@@ -70,24 +68,22 @@ class FortuneSection extends ConsumerWidget {
         slug: c.navigationSlug,
         emoji: c.icon.isNotEmpty ? c.icon : (catalog?.emoji ?? '🔮'),
         title: c.title,
-        count: 0,
         accent: c.accent,
         imageUrl: c.imageUrl,
       );
     }).toList();
   }
 
-  List<({String slug, String emoji, String title, int count, Color accent, String? imageUrl})>
+  List<({String slug, String emoji, String title, Color accent, String? imageUrl})>
       _fromCatalog() {
-    final out = <({String slug, String emoji, String title, int count, Color accent, String? imageUrl})>[];
-    for (var i = 0; i < _displaySlugs.length; i++) {
-      final type = FortuneCatalog.bySlug(_displaySlugs[i]);
+    final out = <({String slug, String emoji, String title, Color accent, String? imageUrl})>[];
+    for (final slug in _displaySlugs) {
+      final type = FortuneCatalog.bySlug(slug);
       if (type != null) {
         out.add((
           slug: type.slug,
           emoji: type.emoji,
           title: type.title,
-          count: _mockCounts[i],
           accent: type.accent,
           imageUrl: null,
         ));
@@ -99,20 +95,20 @@ class FortuneSection extends ConsumerWidget {
 
 class _FortuneCard extends StatelessWidget {
   const _FortuneCard({
-    required this.emoji,
     required this.title,
-    required this.count,
     required this.accent,
     required this.onTap,
     this.imageUrl,
+    this.emoji = '🔮',
   });
 
-  final String emoji;
   final String title;
-  final int count;
   final Color accent;
   final VoidCallback onTap;
   final String? imageUrl;
+  final String emoji;
+
+  bool get _hasImage => imageUrl != null && imageUrl!.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -132,57 +128,68 @@ class _FortuneCard extends StatelessWidget {
               spreadRadius: -2,
             ),
           ],
-          image: imageUrl != null && imageUrl!.isNotEmpty
-              ? DecorationImage(
-                  image: NetworkImage(imageUrl!),
-                  fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                    Colors.black.withValues(alpha: 0.35),
-                    BlendMode.darken,
-                  ),
-                )
-              : null,
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 28)),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: HomeApprovedDesign.textPrimary,
-              ),
-            ),
-            if (count > 0) ...[
-              const SizedBox(height: 4),
-              Text(
-                '${_formatCount(count)} kişi',
-                style: const TextStyle(
-                  fontSize: 9,
-                  color: HomeApprovedDesign.textMuted,
+            if (_hasImage)
+              CachedNetworkImage(
+                imageUrl: imageUrl!,
+                fit: BoxFit.cover,
+              )
+            else
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      accent.withValues(alpha: 0.35),
+                      HomeApprovedDesign.surface,
+                    ],
+                  ),
+                ),
+                child: Center(
+                  child: Text(emoji, style: const TextStyle(fontSize: 32)),
                 ),
               ),
-            ],
+            if (_hasImage)
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.75),
+                    ],
+                  ),
+                ),
+              ),
+            Align(
+              alignment: _hasImage ? Alignment.bottomCenter : Alignment.center,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: _hasImage
+                        ? Colors.white
+                        : HomeApprovedDesign.textPrimary,
+                    height: 1.15,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
-  }
-
-  static String _formatCount(int n) {
-    final s = n.toString();
-    if (s.length <= 3) return s;
-    final buf = StringBuffer();
-    for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
-      buf.write(s[i]);
-    }
-    return buf.toString();
   }
 }
