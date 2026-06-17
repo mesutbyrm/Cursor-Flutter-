@@ -11,6 +11,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
     super.key,
     required this.room,
     required this.presence,
+    this.djUserIds,
     this.speakingUserId,
     this.onUserTap,
     this.onSeatTap,
@@ -18,9 +19,13 @@ class VoiceWebOwnerStage extends StatelessWidget {
 
   final VoiceRoomEntity room;
   final List<ChatRoomPresence> presence;
+  final List<String>? djUserIds;
   final String? speakingUserId;
   final void Function(ChatRoomPresence user)? onUserTap;
   final void Function(int internalSeatIndex, ChatRoomPresence? user)? onSeatTap;
+
+  List<String> get _effectiveDjIds =>
+      djUserIds ?? room.djUserIds;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +61,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
                   size: hostSize,
                   isHost: true,
                   room: room,
-                  djUserIds: room.djUserIds,
+                  djUserIds: _effectiveDjIds,
                   speaking:
                       speakingUserId == host?.id || host?.isSpeaking == true,
                   onTap: () => onSeatTap?.call(1, host),
@@ -132,7 +137,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
           seatIndex: displayNum,
           size: size,
           room: room,
-          djUserIds: room.djUserIds,
+          djUserIds: _effectiveDjIds,
           speaking: speakingUserId == user?.id || user?.isSpeaking == true,
           onTap: () => onSeatTap?.call(internal, user),
         );

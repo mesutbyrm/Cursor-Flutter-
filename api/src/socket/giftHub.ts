@@ -189,6 +189,7 @@ export function emitChatRoomMessage(
 export function emitChatRoomDjUpdate(roomId: string) {
   if (!io) return;
   const canonical = resolveRoomId(roomId);
+  const room = getChatRoom(roomId);
   const dj = getDjState(roomId, null);
   const payload = {
     type: "dj",
@@ -206,6 +207,9 @@ export function emitChatRoomDjUpdate(roomId: string) {
     currentPosition: dj.currentPosition,
     trackStartedAt: dj.trackStartedAt,
     positionMs: dj.positionMs,
+    djUserIds: room?.djUserIds ?? [],
+    djUsers: dj.djUsers,
+    activeDjId: dj.activeDjId,
   };
   for (const key of voiceRoomTargets(roomId)) {
     io.to(voiceRoom(key)).emit("dj", payload);

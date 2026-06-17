@@ -219,7 +219,11 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
   }
 
   void _openDjManage() {
-    final canManage = widget.perms.canManageDj;
+    final canManage = widget.perms.canManageDj ||
+        widget.perms.canManageRoom ||
+        widget.perms.isRoomOwner ||
+        widget.perms.isSiteAdmin ||
+        widget.isOwner;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

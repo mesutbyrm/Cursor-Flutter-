@@ -12,8 +12,10 @@ class VoiceRoomActionRow extends StatelessWidget {
     this.showDjCard = true,
     this.showPkCard = false,
     this.pkActive = false,
+    this.canManageDj = false,
     this.onMusicTap,
     this.onDjTap,
+    this.onDjAddTap,
     this.onPkTap,
   });
 
@@ -22,8 +24,10 @@ class VoiceRoomActionRow extends StatelessWidget {
   final bool showDjCard;
   final bool showPkCard;
   final bool pkActive;
+  final bool canManageDj;
   final VoidCallback? onMusicTap;
   final VoidCallback? onDjTap;
+  final VoidCallback? onDjAddTap;
   final VoidCallback? onPkTap;
 
   @override
@@ -99,7 +103,7 @@ class VoiceRoomActionRow extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'DJ ${dj.djCount}/5',
+                      'DJ ${dj.djCount}/${dj.maxDj}',
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 10,
@@ -111,6 +115,23 @@ class VoiceRoomActionRow extends StatelessWidget {
                   ],
                 ),
               ),
+              if (canManageDj && dj.djCount < dj.maxDj && onDjAddTap != null)
+                Material(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    onTap: onDjAddTap,
+                    borderRadius: BorderRadius.circular(10),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.add_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -232,7 +253,7 @@ class _DjAvatars extends StatelessWidget {
   Widget build(BuildContext context) {
     if (users.isEmpty) {
       return Text(
-        'Kuyruk boş',
+        'DJ ekle',
         style: TextStyle(
           fontSize: 8,
           color: Colors.white.withValues(alpha: 0.7),

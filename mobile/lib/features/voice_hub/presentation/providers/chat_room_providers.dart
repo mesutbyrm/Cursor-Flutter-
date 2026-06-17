@@ -1028,6 +1028,44 @@ class VoiceRoomLiveController
           .toList();
       dj = dj.copyWith(musicQueue: queue);
     }
+    if (payload['djUserIds'] is List) {
+      final ids = (payload['djUserIds'] as List)
+          .map((e) => e.toString())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      dj = _enrichDjUsers(
+        dj.copyWith(
+          djUsers: ids
+              .map(
+                (id) => dj.djUsers.where((u) => u.id == id).firstOrNull ??
+                    ChatRoomUserRef(
+                      id: id,
+                      name: _djChatLabel(id) ?? 'DJ',
+                      chatRole: 'dj',
+                    ),
+              )
+              .toList(),
+        ),
+        state.presence,
+      );
+    } else if (payload['djUsers'] is List) {
+      final users = (payload['djUsers'] as List)
+          .whereType<Map>()
+          .map(
+            (e) => ChatRoomUserRef(
+              id: (e['id'] ?? e['userId'] ?? '').toString(),
+              name: (e['name'] ?? e['displayName'] ?? 'DJ').toString(),
+              nickname: e['nickname']?.toString(),
+              image: e['image']?.toString() ?? e['avatarUrl']?.toString(),
+              chatRole: (e['chatRole'] ?? 'dj').toString(),
+            ),
+          )
+          .where((u) => u.id.isNotEmpty)
+          .toList();
+      if (users.isNotEmpty) {
+        dj = dj.copyWith(djUsers: users);
+      }
+    }
     _commitDjUi(dj);
     final sync = RoomPlaybackSync.fromPayload(payload);
     final ui = ref.read(voiceRoomUiProvider);

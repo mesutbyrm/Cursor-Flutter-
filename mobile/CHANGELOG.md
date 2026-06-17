@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.234+237 (2026-06-12)
+
+### Müzik oynatma — bildirim ve senkron
+
+- `audio_service` artık yalnızca gerçek oynatma başlarken başlatılıyor (`stop()` bildirim açmıyor)
+- DJ SSE yükünde `djUserIds` / `djUsers` — odadaki herkes DJ listesini anında görür
+- Oda sahibi / admin / moderatör DJ paneli ve + butonuna erişir
+- Koltuklarda DJ rozeti `live.dj` ile birleşik güncellenir
+
 ## 1.0.233+236 (2026-06-12)
 
 ### Müzik oynatma — ses gelmeme düzeltmesi

@@ -45,6 +45,18 @@ class VoiceRoomDjPlayer {
     return _handlerFuture = _initHandler();
   }
 
+  Future<VoiceRoomAudioHandler?> _handlerIfReady() async {
+    final existing = _handler;
+    if (existing != null) return existing;
+    final pending = _handlerFuture;
+    if (pending == null) return null;
+    try {
+      return await pending;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<VoiceRoomAudioHandler> _initHandler() async {
     await VoiceRoomMusicAudioSession.ensureConfigured();
     final handler = await audio.AudioService.init(
@@ -140,7 +152,6 @@ class VoiceRoomDjPlayer {
       );
     }
     _muted = muted;
-    final handler = await _ensureHandler();
 
     if (!playing) {
       await stop();
@@ -148,6 +159,8 @@ class VoiceRoomDjPlayer {
     }
 
     await VoiceRoomMusicAudioSession.ensureConfigured();
+
+    final handler = await _ensureHandler();
 
     final candidates = <String>[];
     void addCandidate(String? url) {
@@ -331,7 +344,8 @@ class VoiceRoomDjPlayer {
   Future<void> setMuted(bool muted) async {
     _muted = muted;
     try {
-      final handler = await _ensureHandler();
+      final handler = await _handlerIfReady();
+      if (handler == null) return;
       await handler.setVolume(muted ? 0.0 : 1.0);
       if (muted) {
         await handler.pauseLocal();
@@ -345,7 +359,8 @@ class VoiceRoomDjPlayer {
 
   Future<void> pauseLocal() async {
     try {
-      final handler = await _ensureHandler();
+      final handler = await _handlerIfReady();
+      if (handler == null) return;
       await handler.pauseLocal();
     } catch (e) {
       debugPrint('DJ pauseLocal: $e');
@@ -354,7 +369,8 @@ class VoiceRoomDjPlayer {
 
   Future<void> pause() async {
     try {
-      final handler = await _ensureHandler();
+      final handler = await _handlerIfReady();
+      if (handler == null) return;
       await handler.pauseLocal();
     } catch (e) {
       debugPrint('DJ pause: $e');
@@ -365,7 +381,7 @@ class VoiceRoomDjPlayer {
     if (_currentKey == null) return;
     try {
       await VoiceRoomMusicAudioSession.activateForPlayback();
-      final handler = await _ensureHandler();
+      final handler = await _handlerIfReady() ?? await _ensureHandler();
       await handler.setVolume(_muted ? 0.0 : 1.0);
       await handler.playLocal();
     } catch (e) {
@@ -377,7 +393,8 @@ class VoiceRoomDjPlayer {
 
   Future<void> seekTo(Duration position) async {
     try {
-      final handler = await _ensureHandler();
+      final handler = await _handlerIfReady();
+      if (handler == null) return;
       await handler.seek(position);
     } catch (e) {
       debugPrint('DJ seekTo: $e');
@@ -388,7 +405,8 @@ class VoiceRoomDjPlayer {
     final clamped = volume.clamp(0.0, 1.0);
     _muted = clamped <= 0;
     try {
-      final handler = await _ensureHandler();
+      final handler = await _handlerIfReady();
+      if (handler == null) return;
       await handler.setVolume(clamped);
     } catch (e) {
       debugPrint('DJ setVolume: $e');
@@ -397,7 +415,8 @@ class VoiceRoomDjPlayer {
 
   Future<void> seekToStart() async {
     try {
-      final handler = await _ensureHandler();
+      final handler = await _handlerIfReady();
+      if (handler == null) return;
       await handler.seek(Duration.zero);
     } catch (e) {
       debugPrint('DJ seekToStart: $e');
@@ -407,11 +426,12 @@ class VoiceRoomDjPlayer {
   Future<void> stop() async {
     _currentKey = null;
     _muted = false;
+    playback.value = const VoiceRoomDjPlayback();
+    diagnostics.value = const VoiceRoomMusicDiagnostics();
     try {
-      final handler = await _ensureHandler();
+      final handler = await _handlerIfReady();
+      if (handler == null) return;
       await handler.stop();
-      playback.value = const VoiceRoomDjPlayback();
-      diagnostics.value = const VoiceRoomMusicDiagnostics();
     } catch (_) {}
   }
 

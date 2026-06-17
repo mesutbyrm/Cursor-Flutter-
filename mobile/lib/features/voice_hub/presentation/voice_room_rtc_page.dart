@@ -900,8 +900,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
     final isDj = perms.canManageDj ||
         live.dj.canPlayMusic ||
-        (user != null && room.djUserIds.contains(user.id));
-    final showDjControls = isOwner || isDj;
+        (user != null && room.djUserIds.contains(user.id)) ||
+        live.dj.djUsers.any((u) => user != null && u.id == user.id);
+    final canManageDjPanel = isOwner ||
+        perms.canManageRoom ||
+        perms.canModerate ||
+        perms.canManageDj;
+    final showDjControls = canManageDjPanel || isDj;
     final showMusicCard = VoiceMusicAccess.canShowMusicCard(
       dj: live.dj,
       perms: perms,
@@ -936,7 +941,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         }
       }
     }
-    final headerAvatar = ownerPresence?.image;
+    final mergedDjIds = <String>{
+      ...room.djUserIds,
+      ...live.dj.djUsers.map((u) => u.id),
+    }.toList();
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
       if (prev?.error != next.error && next.error != null && mounted) {
         final err = next.error!;
@@ -1230,6 +1238,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         VoiceWebOwnerStage(
                           room: room,
                           presence: live.presence,
+                          djUserIds: mergedDjIds,
                           speakingUserId: speakingId,
                           onUserTap: _openUser,
                           onSeatTap: (seatIndex, user) => unawaited(

@@ -91,6 +91,11 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                   showDjCard: showDjControls,
                   showPkCard: isOwner,
                   pkActive: pkActive,
+                  canManageDj: perms.canManageDj ||
+                      perms.canManageRoom ||
+                      perms.isRoomOwner ||
+                      perms.isSiteAdmin ||
+                      isOwner,
                   onMusicTap: () => showVoiceMusicHubPage(
                     context,
                     ref,
@@ -99,6 +104,14 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                     isOwner: isOwner,
                   ),
                   onDjTap: () => showVoiceRoomDjSheet(
+                    context,
+                    ref,
+                    room: room,
+                    live: live,
+                    perms: perms,
+                    isOwner: isOwner,
+                  ),
+                  onDjAddTap: () => showVoiceRoomDjSheet(
                     context,
                     ref,
                     room: room,
