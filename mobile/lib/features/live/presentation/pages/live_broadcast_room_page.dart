@@ -204,6 +204,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           clientName: displayName,
           durationMinutes: opt.minutes,
           totalJeton: opt.totalJeton,
+          fortuneType: teller.specialties.isNotEmpty
+              ? teller.specialties.first
+              : 'general',
         );
     if (!mounted || created == null) {
       ScaffoldMessenger.of(context).showSnackBar(

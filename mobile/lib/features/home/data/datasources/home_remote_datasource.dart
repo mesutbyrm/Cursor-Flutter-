@@ -72,14 +72,21 @@ class HomeRemoteDataSource {
     String? clientName,
     int? durationMinutes,
     int? totalJeton,
+    String? fortuneType,
   }) async {
     final id = tellerId.trim();
     if (id.isEmpty) return null;
+    final duration = durationMinutes ?? 10;
+    final type = (fortuneType?.trim().isNotEmpty == true)
+        ? fortuneType!.trim()
+        : 'general';
     try {
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.fortuneTellerSession,
         data: {
           'tellerId': id,
+          'fortuneType': type,
+          'duration': duration,
           'fortuneTellerId': id,
           if (tellerUserId != null && tellerUserId.trim().isNotEmpty) ...{
             'tellerUserId': tellerUserId.trim(),
@@ -87,7 +94,7 @@ class HomeRemoteDataSource {
           },
           if (clientName != null && clientName.trim().isNotEmpty)
             'clientName': clientName.trim(),
-          if (durationMinutes != null) 'durationMinutes': durationMinutes,
+          'durationMinutes': duration,
           if (totalJeton != null) 'totalJeton': totalJeton,
         },
       );
@@ -142,6 +149,7 @@ class HomeRemoteDataSource {
     } catch (_) {}
 
     for (final path in [
+      ApiEndpoints.fortuneTellerSessionsWithStatus('pending'),
       ApiEndpoints.fortuneTellerSessions,
       ApiEndpoints.fortuneTellerIncomingSessions,
     ]) {
@@ -316,6 +324,8 @@ class HomeRemoteDataSource {
   Future<bool> endFortuneSession(String sessionId) async {
     final key = sessionId.trim();
     if (key.isEmpty) return false;
+    final roomEnded = await roomAction(key, 'end');
+    if (roomEnded != null) return true;
     for (final action in const ['end', 'leave', 'cancel', 'complete']) {
       final ok = await respondFortuneSession(key, action: action);
       if (ok) return true;
@@ -350,7 +360,7 @@ class HomeRemoteDataSource {
     }
   }
 
-  /// Seans süresi uzatma — `PATCH /api/fortune-tellers/sessions/{id}`.
+  /// Seans süresi uzatma — önce `PATCH /api/room/{id}` (`extend`).
   Future<bool> extendFortuneSession({
     required String sessionId,
     required int minutes,
@@ -358,6 +368,12 @@ class HomeRemoteDataSource {
   }) async {
     final key = sessionId.trim();
     if (key.isEmpty || minutes <= 0) return false;
+    final roomResult = await roomAction(
+      key,
+      'extend',
+      extra: {'minutes': minutes},
+    );
+    if (roomResult != null) return true;
     try {
       await _dio.safePatch<dynamic>(
         ApiEndpoints.fortuneTellerSessionPatch(key),
@@ -375,10 +391,118 @@ class HomeRemoteDataSource {
     }
   }
 
+  /// Falcı kullanıcı jetonundan süre ekler — `PATCH /api/room/{id}`.
+  Future<bool> tellerAddSessionTime({
+    required String sessionId,
+    required int minutes,
+  }) async {
+    final key = sessionId.trim();
+    if (key.isEmpty || minutes <= 0) return false;
+    final result = await roomAction(
+      key,
+      'teller_add_time',
+      extra: {'minutes': minutes},
+    );
+    return result != null;
+  }
+
+  /// `GET /api/room/{sessionId}` — oda + timer bilgisi.
+  Future<LiveFortuneRoomInfo?> fetchRoomInfo(String sessionId) async {
+    final key = sessionId.trim();
+    if (key.isEmpty) return null;
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.liveFortuneRoom(key));
+      final body = res.data;
+      if (body is! Map) return null;
+      final map = asJsonMap(body);
+      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+      return _mapRoomInfo(data, fallbackId: key);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// `PATCH /api/room/{sessionId}` — start_timer, ping, extend, end vb.
+  Future<Map<String, dynamic>?> roomAction(
+    String sessionId,
+    String action, {
+    Map<String, dynamic>? extra,
+  }) async {
+    final key = sessionId.trim();
+    final act = action.trim().toLowerCase();
+    if (key.isEmpty || act.isEmpty) return null;
+    try {
+      final res = await _dio.safePatch<dynamic>(
+        ApiEndpoints.liveFortuneRoom(key),
+        data: {
+          'action': act,
+          if (extra != null) ...extra,
+        },
+      );
+      final body = res.data;
+      if (body is Map) {
+        final map = asJsonMap(body);
+        return map['data'] is Map ? asJsonMap(map['data']) : map;
+      }
+      return <String, dynamic>{};
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<List<TellerChatMessage>> fetchRoomMessages(
+    String sessionId, {
+    String? afterIso,
+    String? myUserId,
+  }) async {
+    final key = sessionId.trim();
+    if (key.isEmpty) return const [];
+    try {
+      final path = afterIso != null && afterIso.isNotEmpty
+          ? '${ApiEndpoints.liveFortuneRoomMessages(key)}?after=${Uri.encodeComponent(afterIso)}'
+          : ApiEndpoints.liveFortuneRoomMessages(key);
+      final res = await _dio.safeGet<dynamic>(path);
+      final items = _itemsFromBody(res.data, keys: const [
+        'messages',
+        'items',
+        'data',
+      ]);
+      return items
+          .map((raw) => _mapRoomChatMessage(raw, myUserId: myUserId))
+          .where((m) => m.text.trim().isNotEmpty)
+          .toList(growable: false);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<bool> sendRoomMessage(String sessionId, String text) async {
+    final key = sessionId.trim();
+    final message = text.trim();
+    if (key.isEmpty || message.isEmpty) return false;
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.liveFortuneRoomMessages(key),
+        data: {'message': message},
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<List<TellerChatMessage>> fetchTellerChatMessages(
     String sessionId, {
     String? myUserId,
+    String? afterIso,
   }) async {
+    final roomMessages = await fetchRoomMessages(
+      sessionId,
+      afterIso: afterIso,
+      myUserId: myUserId,
+    );
+    if (roomMessages.isNotEmpty) return roomMessages;
+
     final key = sessionId.trim();
     if (key.isEmpty) return const [];
     try {
@@ -402,6 +526,8 @@ class HomeRemoteDataSource {
     final key = sessionId.trim();
     final message = text.trim();
     if (key.isEmpty || message.isEmpty) return false;
+    final roomOk = await sendRoomMessage(key, message);
+    if (roomOk) return true;
     try {
       await _dio.safePost<dynamic>(
         ApiEndpoints.tellerChat(key),
@@ -483,20 +609,33 @@ class HomeRemoteDataSource {
   Future<FortuneSessionStatusResult?> _fetchFortuneSessionStatusDirect(
     String sessionId,
   ) async {
-    try {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.fortuneTellerSessionStatus(sessionId),
-      );
-      final body = res.data;
-      if (body is! Map) return null;
-      final map = asJsonMap(body);
-      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      final sessionMap =
-          data['session'] is Map ? asJsonMap(data['session']) : data;
-      return _statusFromSessionMaps(data, sessionMap);
-    } catch (_) {
-      return null;
+    for (final path in [
+      ApiEndpoints.fortuneTellerSessionQuery(sessionId),
+      ApiEndpoints.fortuneTellerSessionStatus(sessionId),
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final body = res.data;
+        if (body is! Map) continue;
+        final map = asJsonMap(body);
+        final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+        final sessionMap =
+            data['session'] is Map ? asJsonMap(data['session']) : data;
+        final status = _statusFromSessionMaps(data, sessionMap);
+        if (status != null) return status;
+      } catch (_) {}
     }
+
+    final room = await fetchRoomInfo(sessionId);
+    if (room == null) return null;
+    return FortuneSessionStatusResult(
+      sessionId: room.sessionId,
+      status: room.status,
+      tellerResponse: room.status == 'active' ? 'accepted' : 'pending',
+      isClient: room.isUser,
+      trtcRoomId: room.roomId,
+      durationMinutes: room.maxMinutes,
+    );
   }
 
   FortuneSessionStatusResult? _statusFromSessionMaps(
@@ -524,10 +663,12 @@ class HomeRemoteDataSource {
       trtcRoomId: pick(data, ['trtcRoomId', 'roomId'])?.toString() ??
           pick(sessionMap, ['trtcRoomId', 'roomId'])?.toString(),
       durationMinutes: asInt(
-        pick(data, ['durationMinutes']) ?? pick(sessionMap, ['durationMinutes']),
+        pick(data, ['durationMinutes', 'maxMinutes', 'duration']) ??
+            pick(sessionMap, ['durationMinutes', 'maxMinutes', 'duration']),
       ),
       totalJeton: asInt(
-        pick(data, ['totalJeton']) ?? pick(sessionMap, ['totalJeton']),
+        pick(data, ['totalJeton', 'creditsCharged']) ??
+            pick(sessionMap, ['totalJeton', 'creditsCharged']),
       ),
     );
   }
@@ -599,6 +740,48 @@ class HomeRemoteDataSource {
     );
   }
 
+  TellerChatMessage _mapRoomChatMessage(
+    dynamic raw, {
+    String? myUserId,
+  }) {
+    return _mapTellerChatMessage(raw, myUserId: myUserId);
+  }
+
+  LiveFortuneRoomInfo? _mapRoomInfo(
+    Map<String, dynamic> data, {
+    required String fallbackId,
+  }) {
+    final id = _str(data, ['id', 'sessionId']) ?? fallbackId;
+    if (id.isEmpty) return null;
+    final timerRaw = pick(data, ['timerStartedAt'])?.toString();
+    DateTime? timerStartedAt;
+    if (timerRaw != null && timerRaw.isNotEmpty) {
+      timerStartedAt = DateTime.tryParse(timerRaw);
+    }
+    final user = asJsonMap(data['user']);
+    return LiveFortuneRoomInfo(
+      sessionId: id,
+      status: _str(data, ['status']) ?? 'active',
+      maxMinutes: () {
+        final v = asInt(pick(data, ['maxMinutes', 'durationMinutes', 'duration']));
+        return v > 0 ? v : 10;
+      }(),
+      timerStarted: data['timerStarted'] == true,
+      roomId: _str(data, ['roomId', 'trtcRoomId']),
+      timerStartedAt: timerStartedAt,
+      elapsedSeconds: asInt(pick(data, ['elapsedSeconds'])),
+      minutesUsed: asInt(pick(data, ['minutesUsed'])),
+      creditsPerMinute: () {
+        final v = asInt(pick(data, ['creditsPerMinute']));
+        return v > 0 ? v : 10;
+      }(),
+      peerId: _str(data, ['peerId']),
+      isUser: data['isUser'] == true || data['isTeller'] != true,
+      isTeller: data['isTeller'] == true,
+      userJetonBalance: asInt(pick(user, ['jetonBalance'])),
+    );
+  }
+
   FortuneIncomingSession _mapIncomingFortuneSession(dynamic raw) {
     final m = asJsonMap(raw);
     final client = asJsonMap(m['client'] ?? m['user'] ?? m['clientUser']);
@@ -636,7 +819,14 @@ class HomeRemoteDataSource {
         return v > 0 ? v : 10;
       }(),
       totalJeton: asInt(
-        pick(m, ['totalJeton', 'jeton', 'amount', 'cost', 'tokenAmount']),
+        pick(m, [
+          'totalJeton',
+          'jeton',
+          'amount',
+          'cost',
+          'tokenAmount',
+          'creditsCharged',
+        ]),
       ),
       category: _str(m, ['category', 'specialty', 'fortuneType', 'falType']) ??
           _str(teller, ['specialty']) ??

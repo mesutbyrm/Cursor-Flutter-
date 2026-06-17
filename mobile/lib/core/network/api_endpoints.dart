@@ -81,6 +81,23 @@ abstract final class ApiEndpoints {
   static String fortuneTellerSessionRespond(String sessionId) =>
       '/api/fortune-tellers/session/$sessionId/respond';
 
+  /// Üretim: `GET /api/fortune-tellers/session?sessionId=`
+  static String fortuneTellerSessionQuery(String sessionId) =>
+      '/api/fortune-tellers/session?sessionId=${Uri.encodeComponent(sessionId.trim())}';
+
+  /// Falcı bekleyen istekler — `GET ?status=pending`
+  static String fortuneTellerSessionsWithStatus(String status) =>
+      '$fortuneTellerSessions?status=${Uri.encodeComponent(status.trim())}';
+
+  /// Canlı fal oda — timer, ping, extend, end (üretim §9–13).
+  static String liveFortuneRoom(String sessionId) =>
+      '/api/room/${Uri.encodeComponent(sessionId.trim())}';
+
+  static String liveFortuneRoomMessages(String sessionId) =>
+      '${liveFortuneRoom(sessionId)}/messages';
+
+  static const liveFortuneRoomSignal = '/api/room/signal';
+
   static String fortuneTeller(String id) => '/api/fortune-tellers/$id';
 
   static const fortuneTellerMyProfile = '/api/fortune-tellers/my-profile';

@@ -265,10 +265,15 @@ class _FortuneIncomingInviteHostState
           );
       if (!mounted || !ok) return;
 
+      final roomPreview = await ref
+          .read(homeRemoteProvider)
+          .fetchRoomInfo(req.sessionId);
+      final clientJeton = roomPreview?.userJetonBalance ?? req.totalJeton;
+
       final startChoice = await showLiveFortuneSessionStartSheet(
         navCtx,
         clientName: req.clientName,
-        clientJetonBalance: req.totalJeton,
+        clientJetonBalance: clientJeton,
       );
       if (!mounted || startChoice == null) {
         await ref.read(homeRemoteProvider).respondFortuneSession(
@@ -286,12 +291,16 @@ class _FortuneIncomingInviteHostState
       }
 
       if (startChoice.durationMinutes > 0) {
-        await ref.read(homeRemoteProvider).extendFortuneSession(
+        await ref.read(homeRemoteProvider).tellerAddSessionTime(
               sessionId: req.sessionId,
               minutes: startChoice.durationMinutes,
-              totalJeton: startChoice.totalJeton,
             );
       }
+
+      await ref.read(homeRemoteProvider).roomAction(
+            req.sessionId,
+            'start_timer',
+          );
 
       final status = await ref
           .read(homeRemoteProvider)

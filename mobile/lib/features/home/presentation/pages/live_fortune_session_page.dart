@@ -41,27 +41,112 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
   String? _rtcError;
   var _leaving = false;
   var _sendingChat = false;
+  var _waitingForTimer = false;
+  var _timerStarted = false;
+  LiveFortuneRoomInfo? _room;
+  String? _lastChatAfter;
   late Duration _remaining;
   Timer? _tick;
   Timer? _chatPoll;
+  Timer? _ping;
+  Timer? _roomPoll;
   Key _localPreviewKey = UniqueKey();
 
   @override
   void initState() {
     super.initState();
     _remaining = Duration(minutes: widget.session.durationMinutes);
-    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      if (_remaining.inSeconds <= 0) {
-        unawaited(_onTimeUp());
-        return;
-      }
-      setState(() => _remaining -= const Duration(seconds: 1));
-    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_bootstrapRoom());
       unawaited(_joinRtc());
       _startChatPoll();
     });
+  }
+
+  Future<void> _bootstrapRoom() async {
+    await _syncRoomInfo(startTimerIfTeller: true);
+    _startTimers();
+  }
+
+  void _startTimers() {
+    _tick?.cancel();
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _leaving) return;
+      if (!_timerStarted) return;
+      final secs = _room?.remainingSeconds ?? _remaining.inSeconds - 1;
+      if (secs <= 0) {
+        unawaited(_onTimeUp());
+        return;
+      }
+      setState(() => _remaining = Duration(seconds: secs));
+    });
+
+    _ping?.cancel();
+    _ping = Timer.periodic(const Duration(seconds: 60), (_) => _sendPing());
+
+    _roomPoll?.cancel();
+    _roomPoll = Timer.periodic(const Duration(seconds: 8), (_) {
+      unawaited(_syncRoomInfo());
+    });
+  }
+
+  Future<void> _syncRoomInfo({bool startTimerIfTeller = false}) async {
+    if (!mounted || _leaving) return;
+    final remote = ref.read(homeRemoteProvider);
+    final info = await remote.fetchRoomInfo(widget.session.sessionId);
+    if (!mounted || info == null) return;
+
+    final wasTimerStarted = _timerStarted;
+    final maxMinutes = info.maxMinutes > 0
+        ? info.maxMinutes
+        : widget.session.durationMinutes;
+
+    if (startTimerIfTeller &&
+        !widget.session.isClient &&
+        !info.timerStarted) {
+      final result = await remote.roomAction(
+        widget.session.sessionId,
+        'start_timer',
+      );
+      if (result != null) {
+        final startedAtRaw = result['timerStartedAt']?.toString();
+        final startedAt = startedAtRaw != null
+            ? DateTime.tryParse(startedAtRaw)
+            : DateTime.now();
+        _room = info.copyWith(
+          timerStarted: true,
+          timerStartedAt: startedAt,
+          maxMinutes: maxMinutes,
+        );
+        _timerStarted = true;
+        _waitingForTimer = false;
+        _remaining = Duration(seconds: _room!.remainingSeconds);
+        if (mounted) setState(() {});
+        return;
+      }
+    }
+
+    _room = info.copyWith(maxMinutes: maxMinutes);
+    _timerStarted = info.timerStarted;
+    _waitingForTimer = widget.session.isClient && !info.timerStarted;
+    if (info.timerStarted) {
+      _remaining = Duration(seconds: info.remainingSeconds);
+    } else if (!wasTimerStarted) {
+      _remaining = Duration(minutes: maxMinutes);
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _sendPing() async {
+    if (!mounted || _leaving || !_timerStarted) return;
+    final result = await ref.read(homeRemoteProvider).roomAction(
+          widget.session.sessionId,
+          'ping',
+        );
+    if (!mounted || result == null) return;
+    if (result['timerStarted'] == true) {
+      await _syncRoomInfo();
+    }
   }
 
   void _startChatPoll() {
@@ -77,6 +162,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     final incoming = await remote.fetchTellerChatMessages(
       widget.session.sessionId,
       myUserId: user?.id,
+      afterIso: _lastChatAfter,
     );
     if (!mounted || incoming.isEmpty) return;
     var changed = false;
@@ -84,6 +170,10 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
       if (_seenChatIds.contains(msg.id)) continue;
       _seenChatIds.add(msg.id);
       _messages.add(msg);
+      final created = msg.createdAt?.toUtc().toIso8601String();
+      if (created != null && created.isNotEmpty) {
+        _lastChatAfter = created;
+      }
       changed = true;
     }
     if (changed && mounted) {
@@ -103,6 +193,8 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
   void dispose() {
     _tick?.cancel();
     _chatPoll?.cancel();
+    _ping?.cancel();
+    _roomPoll?.cancel();
     _chat.dispose();
     _chatScroll.dispose();
     _trtc.dispose();
@@ -130,10 +222,11 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
       return;
     }
     final isClient = widget.session.isClient;
+    final roomId = _room?.roomId ?? widget.session.trtcRoomId;
     try {
       final cred = await ref.read(trtcRemoteProvider).fetchUserSig(
             userId: user.id,
-            roomId: widget.session.trtcRoomId,
+            roomId: roomId,
           );
       await _trtc.join(
         credentials: cred,
@@ -149,7 +242,15 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
 
   Future<void> _onTimeUp() async {
     _tick?.cancel();
-    if (!mounted) return;
+    if (!mounted || _leaving) return;
+    if (widget.session.isClient) {
+      await _openExtendSheet();
+      if (!mounted || _leaving) return;
+      if (_remaining.inSeconds > 0) {
+        _startTimers();
+        return;
+      }
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Seans süresi doldu')),
     );
@@ -237,7 +338,15 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     if (!mounted) return;
     if (ok) {
       ref.invalidate(coinBalanceProvider);
-      setState(() => _remaining += Duration(minutes: choice.minutes));
+      await _syncRoomInfo();
+      if (!mounted) return;
+      setState(() {
+        final added = Duration(minutes: choice.minutes);
+        _remaining += added;
+        if (_room != null) {
+          _room = _room!.copyWith(maxMinutes: _room!.maxMinutes + choice.minutes);
+        }
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${choice.minutes} dakika eklendi')),
       );
@@ -325,6 +434,9 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     if (_leaving) return;
     _leaving = true;
     _chatPoll?.cancel();
+    _ping?.cancel();
+    _roomPoll?.cancel();
+    _tick?.cancel();
     await _trtc.leave();
     ref.read(videoWebrtcSignalServiceProvider).stop();
     await ref
@@ -354,6 +466,43 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
           fit: StackFit.expand,
           children: [
             Positioned.fill(child: _videoLayer()),
+            if (_waitingForTimer)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  child: Center(
+                    child: ProfileGlass(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 20,
+                      ),
+                      borderRadius: 20,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Falcı hazırlanıyor…',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Süre falcı başlattığında sayılacak',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withValues(alpha: 0.65),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             if (_rtcReady && widget.session.isClient)
               Positioned(
                 top: MediaQuery.paddingOf(context).top + 56,
@@ -449,7 +598,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'Bağlı',
+                                      _waitingForTimer ? 'Bekleniyor' : 'Bağlı',
                                       style: TextStyle(
                                         fontSize: 10,
                                         color: Colors.white.withValues(alpha: 0.7),

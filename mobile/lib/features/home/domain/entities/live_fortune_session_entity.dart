@@ -154,6 +154,88 @@ class LiveFortuneSessionEntity {
   }
 }
 
+/// `GET /api/room/{sessionId}` — sunucu oda durumu + timer.
+class LiveFortuneRoomInfo {
+  const LiveFortuneRoomInfo({
+    required this.sessionId,
+    required this.status,
+    required this.maxMinutes,
+    required this.timerStarted,
+    this.roomId,
+    this.timerStartedAt,
+    this.elapsedSeconds = 0,
+    this.minutesUsed = 0,
+    this.creditsPerMinute = 10,
+    this.peerId,
+    this.isUser = true,
+    this.isTeller = false,
+    this.userJetonBalance,
+  });
+
+  final String sessionId;
+  final String status;
+  final int maxMinutes;
+  final bool timerStarted;
+  final String? roomId;
+  final DateTime? timerStartedAt;
+  final int elapsedSeconds;
+  final int minutesUsed;
+  final int creditsPerMinute;
+  final String? peerId;
+  final bool isUser;
+  final bool isTeller;
+  final int? userJetonBalance;
+
+  int get remainingSeconds {
+    if (!timerStarted || timerStartedAt == null) {
+      return maxMinutes * 60;
+    }
+    final elapsed = DateTime.now().difference(timerStartedAt!).inSeconds;
+    return (maxMinutes * 60) - elapsed;
+  }
+
+  bool get isExpired => timerStarted && remainingSeconds <= 0;
+
+  String get formattedRemaining {
+    final r = remainingSeconds.clamp(0, maxMinutes * 60);
+    final m = r ~/ 60;
+    final s = r % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  LiveFortuneRoomInfo copyWith({
+    String? sessionId,
+    String? status,
+    int? maxMinutes,
+    bool? timerStarted,
+    String? roomId,
+    DateTime? timerStartedAt,
+    int? elapsedSeconds,
+    int? minutesUsed,
+    int? creditsPerMinute,
+    String? peerId,
+    bool? isUser,
+    bool? isTeller,
+    int? userJetonBalance,
+  }) {
+    return LiveFortuneRoomInfo(
+      sessionId: sessionId ?? this.sessionId,
+      status: status ?? this.status,
+      maxMinutes: maxMinutes ?? this.maxMinutes,
+      timerStarted: timerStarted ?? this.timerStarted,
+      roomId: roomId ?? this.roomId,
+      timerStartedAt: timerStartedAt ?? this.timerStartedAt,
+      elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
+      minutesUsed: minutesUsed ?? this.minutesUsed,
+      creditsPerMinute: creditsPerMinute ?? this.creditsPerMinute,
+      peerId: peerId ?? this.peerId,
+      isUser: isUser ?? this.isUser,
+      isTeller: isTeller ?? this.isTeller,
+      userJetonBalance: userJetonBalance ?? this.userJetonBalance,
+    );
+  }
+}
+
 /// Randevu süre seçenekleri (dakika → jeton/dk).
 class FortuneSessionDurationOption {
   const FortuneSessionDurationOption({

@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.255+258 (2026-06-17)
+
+### Canlı falcı — üretim oda API (`/api/room/*`)
+
+- **Oda:** `GET /api/room/{sessionId}` — timer, peerId, jeton bakiyesi
+- **Timer:** Falcı `start_timer`; her iki taraf 60 sn `ping`; client-side countdown sunucu `timerStartedAt` ile
+- **Sohbet:** `GET/POST /api/room/{sessionId}/messages` (teller-chat yedek)
+- **Süre:** Kullanıcı `extend`, falcı `teller_add_time`; seans bitişi `PATCH action: end`
+- **Seans oluşturma:** `fortuneType` + `duration` alanları; falcı poll `?status=pending`
+- **Bekleme:** Danışan «Falcı hazırlanıyor…» overlay'i timer başlayana kadar
+
 ## 1.0.254+257 (2026-06-17)
 
 ### Canlı yayın — izleyici Fal İste şeridi
