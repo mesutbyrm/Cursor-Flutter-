@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme_colors.dart';
@@ -12,6 +11,9 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/presentation/widgets/broadcast_room/live_room_video_background.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
+import '../widgets/live_fortune_extend_sheet.dart';
+import '../widgets/live_fortune_tip_sheet.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
@@ -186,6 +188,66 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     unawaited(_pollChat());
   }
 
+  Future<void> _openTipSheet() async {
+    final balance = ref.read(coinBalanceProvider).valueOrNull ??
+        ref.read(authControllerProvider).valueOrNull?.coinBalance ??
+        0;
+    final amount = await showLiveFortuneTipSheet(
+      context,
+      tellerName: widget.session.teller.name,
+      jetonBalance: balance,
+    );
+    if (!mounted || amount == null) return;
+    final ok = await ref.read(homeRemoteProvider).sendTellerTip(
+          sessionId: widget.session.sessionId,
+          amount: amount,
+          tellerId: widget.session.teller.id,
+          tellerUserId: widget.session.tellerUserId,
+        );
+    if (!mounted) return;
+    if (ok) {
+      ref.invalidate(coinBalanceProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$amount jeton bahşiş gönderildi')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bahşiş gönderilemedi')),
+      );
+    }
+  }
+
+  Future<void> _openExtendSheet() async {
+    final teller = widget.session.teller;
+    final perMin = teller.pricePerMinute > 0 ? teller.pricePerMinute : 10;
+    final balance = ref.read(coinBalanceProvider).valueOrNull ??
+        ref.read(authControllerProvider).valueOrNull?.coinBalance ??
+        0;
+    final choice = await showLiveFortuneExtendSheet(
+      context,
+      jetonBalance: balance,
+      jetonPerMinute: perMin,
+    );
+    if (!mounted || choice == null) return;
+    final ok = await ref.read(homeRemoteProvider).extendFortuneSession(
+          sessionId: widget.session.sessionId,
+          minutes: choice.minutes,
+          totalJeton: choice.jeton,
+        );
+    if (!mounted) return;
+    if (ok) {
+      ref.invalidate(coinBalanceProvider);
+      setState(() => _remaining += Duration(minutes: choice.minutes));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${choice.minutes} dakika eklendi')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Süre uzatılamadı')),
+      );
+    }
+  }
+
   Future<void> _confirmEnd() async {
     final ok = await showDialog<bool>(
       context: context,
@@ -292,6 +354,49 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
           fit: StackFit.expand,
           children: [
             Positioned.fill(child: _videoLayer()),
+            if (_rtcReady && widget.session.isClient)
+              Positioned(
+                top: MediaQuery.paddingOf(context).top + 56,
+                right: 12,
+                child: Material(
+                  elevation: 4,
+                  borderRadius: BorderRadius.circular(10),
+                  clipBehavior: Clip.antiAlias,
+                  child: SizedBox(
+                    width: 88,
+                    height: 120,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        TrtcLocalVideoView(
+                          key: _localPreviewKey,
+                          manager: _trtc,
+                        ),
+                        Positioned(
+                          right: 4,
+                          bottom: 4,
+                          child: Material(
+                            color: Colors.black54,
+                            shape: const CircleBorder(),
+                            child: InkWell(
+                              onTap: _rtcReady ? _trtc.switchCamera : null,
+                              customBorder: const CircleBorder(),
+                              child: const Padding(
+                                padding: EdgeInsets.all(4),
+                                child: Icon(
+                                  Icons.cameraswitch_rounded,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             SafeArea(
               child: Column(
                 children: [
@@ -373,17 +478,17 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
                           ),
                           const SizedBox(width: 6),
                           _TopChip(
-                            label: '+ Süre',
+                            label: 'Süre Ekle',
                             color: const Color(0xFFFFD54F),
                             foreground: Colors.black87,
-                            onTap: () => openJetonStore(context, ref: ref),
+                            onTap: _openExtendSheet,
                           ),
                           const SizedBox(width: 4),
                           _TopChip(
                             label: 'Bahşiş',
                             color: AppThemeColors.accentPink,
                             icon: Icons.card_giftcard_rounded,
-                            onTap: () => openJetonStore(context, ref: ref),
+                            onTap: _openTipSheet,
                           ),
                         ],
                       ),
@@ -426,7 +531,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               child: Text(
-                                'Henüz mesaj yok',
+                                'mesaj yok',
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: Colors.white.withValues(alpha: 0.45),

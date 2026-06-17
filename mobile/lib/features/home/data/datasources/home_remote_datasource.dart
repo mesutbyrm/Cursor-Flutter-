@@ -292,6 +292,8 @@ class HomeRemoteDataSource {
     } else if (normalized == 'reject' || normalized == 'decline') {
       final ok = await rejectLiveFalRequest(key);
       if (ok) return true;
+    } else if (normalized == 'hold') {
+      // Üretim: PATCH ile beklet.
     }
     try {
       await _dio.safePatch<dynamic>(
@@ -319,6 +321,58 @@ class HomeRemoteDataSource {
       if (ok) return true;
     }
     return false;
+  }
+
+  /// Falcıya bahşiş — `POST /api/teller/gifts`.
+  Future<bool> sendTellerTip({
+    required String sessionId,
+    required int amount,
+    String? tellerId,
+    String? tellerUserId,
+  }) async {
+    final key = sessionId.trim();
+    if (key.isEmpty || amount <= 0) return false;
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.tellerGifts,
+        data: {
+          'sessionId': key,
+          'amount': amount,
+          'jeton': amount,
+          'coins': amount,
+          if (tellerId != null) 'tellerId': tellerId,
+          if (tellerUserId != null) 'tellerUserId': tellerUserId,
+        },
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Seans süresi uzatma — `PATCH /api/fortune-tellers/sessions/{id}`.
+  Future<bool> extendFortuneSession({
+    required String sessionId,
+    required int minutes,
+    required int totalJeton,
+  }) async {
+    final key = sessionId.trim();
+    if (key.isEmpty || minutes <= 0) return false;
+    try {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.fortuneTellerSessionPatch(key),
+        data: {
+          'action': 'extend',
+          'durationMinutes': minutes,
+          'minutes': minutes,
+          'totalJeton': totalJeton,
+          'jeton': totalJeton,
+        },
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<List<TellerChatMessage>> fetchTellerChatMessages(

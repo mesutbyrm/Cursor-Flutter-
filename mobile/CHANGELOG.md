@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.252+255 (2026-06-17)
+
+### Canlı falcı — 8 ekranlı akış
+
+- **Bekleme:** Randevu sonrası reklam kartı + geri sayım; falcı profili üst bölümde
+- **Falcı daveti:** Kabul / Beklet / Reddet popup (süre, jeton, saat)
+- **Seans başlat:** Falcı kabul sonrası «Şimdi Başlat» veya süre seçimi popup'ı
+- **Seans:** PiP kamera, Süre Ekle ve Bahşiş jeton popup'ları (`/api/teller/gifts`, süre uzatma PATCH)
+- **Red:** Falcı kabul etmezse danışana «müsait değil, jeton iade» popup + ana sayfa; falcı da ana sayfaya döner
+
 ## 1.0.251+254 (2026-06-12)
 
 ### Canlı yayın — Agora + üretim API tam entegrasyon

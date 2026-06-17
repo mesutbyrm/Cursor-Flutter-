@@ -16,6 +16,8 @@ import '../providers/fortune_incoming_invite_provider.dart';
 import '../providers/fortune_live_event_bus.dart';
 import '../providers/home_providers.dart';
 import 'fortune_request_dialog.dart';
+import 'live_fortune_invite_action.dart';
+import 'live_fortune_session_start_sheet.dart';
 
 final liveFortuneRequestSseServiceProvider =
     Provider<LiveFortuneRequestSseService>((ref) {
@@ -230,10 +232,22 @@ class _FortuneIncomingInviteHostState
       );
       if (!mounted) return;
 
-      if (action != true) {
+      if (action == LiveFortuneInviteAction.reject || action == null) {
+        if (action == LiveFortuneInviteAction.reject) {
+          await ref.read(homeRemoteProvider).respondFortuneSession(
+                req.sessionId,
+                action: 'reject',
+              );
+        }
+        _dismissed.add(req.sessionId);
+        if (mounted && navCtx.mounted) navCtx.go('/feed');
+        return;
+      }
+
+      if (action == LiveFortuneInviteAction.hold) {
         await ref.read(homeRemoteProvider).respondFortuneSession(
               req.sessionId,
-              action: 'reject',
+              action: 'hold',
             );
         _dismissed.add(req.sessionId);
         return;
@@ -244,6 +258,28 @@ class _FortuneIncomingInviteHostState
             action: 'accept',
           );
       if (!mounted || !ok) return;
+
+      final startChoice = await showLiveFortuneSessionStartSheet(
+        navCtx,
+        clientName: req.clientName,
+        clientJetonBalance: req.totalJeton,
+      );
+      if (!mounted || startChoice == null) {
+        await ref.read(homeRemoteProvider).respondFortuneSession(
+              req.sessionId,
+              action: 'reject',
+            );
+        if (navCtx.mounted) navCtx.go('/feed');
+        return;
+      }
+
+      if (startChoice.durationMinutes > 0) {
+        await ref.read(homeRemoteProvider).extendFortuneSession(
+              sessionId: req.sessionId,
+              minutes: startChoice.durationMinutes,
+              totalJeton: startChoice.totalJeton,
+            );
+      }
 
       final status = await ref
           .read(homeRemoteProvider)
@@ -268,8 +304,12 @@ class _FortuneIncomingInviteHostState
       final session = LiveFortuneSessionEntity(
         sessionId: req.sessionId,
         teller: teller,
-        durationMinutes: status?.durationMinutes ?? req.durationMinutes,
-        totalJeton: status?.totalJeton ?? req.totalJeton,
+        durationMinutes: startChoice.durationMinutes > 0
+            ? startChoice.durationMinutes
+            : (status?.durationMinutes ?? req.durationMinutes),
+        totalJeton: startChoice.totalJeton > 0
+            ? startChoice.totalJeton
+            : (status?.totalJeton ?? req.totalJeton),
         tellerUserId: status?.tellerUserId ?? req.tellerUserId ?? teller.trtcUserId,
         clientId: req.clientId,
         isClient: false,
