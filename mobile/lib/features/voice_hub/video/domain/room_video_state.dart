@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../../music/domain/entities/room_playback_sync.dart';
+import 'youtube_video_id.dart';
 
 /// Tam ekran YouTube video müzik modu — oda senkron durumu.
 class RoomVideoState extends Equatable {
@@ -24,8 +25,7 @@ class RoomVideoState extends Equatable {
   final int? trackStartedAtMs;
   final MusicQueueItem? nowPlaying;
 
-  bool get hasActiveVideo =>
-      videoId != null && videoId!.trim().isNotEmpty;
+  bool get hasActiveVideo => YoutubeVideoId.isValid(videoId);
 
   int resolvedPositionMs({DateTime? now}) {
     if (!isPlaying || trackStartedAtMs == null) return positionMs;
@@ -65,22 +65,20 @@ class RoomVideoState extends Equatable {
     required ChatRoomDjState dj,
     RoomPlaybackSync? sync,
   }) {
-    final videoId = sync?.currentVideoId ??
-        ChatRoomDjState.videoIdFromLoose(
-          dj.nowPlaying?.youtubeUrl ??
-              dj.playbackResolveSeed ??
-              dj.musicUrl ??
-              '',
-        );
-    if (videoId == null || videoId.isEmpty) {
+    final videoId = YoutubeVideoId.fromDj(
+      currentVideoId: sync?.currentVideoId,
+      nowPlayingUrl: dj.nowPlaying?.youtubeUrl,
+    );
+    if (videoId == null) {
       return const RoomVideoState();
     }
     final np = dj.nowPlaying;
+    final playing = sync?.isPlaying ?? dj.playing;
     return RoomVideoState(
       videoId: videoId,
       title: np?.title,
       thumbUrl: np?.thumbUrl,
-      isPlaying: sync?.isPlaying ?? dj.playing,
+      isPlaying: playing,
       positionMs: sync?.currentPositionMs ?? 0,
       trackStartedAtMs: sync?.trackStartedAtMs,
       nowPlaying: np,

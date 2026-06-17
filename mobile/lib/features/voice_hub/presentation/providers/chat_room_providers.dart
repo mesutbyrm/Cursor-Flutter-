@@ -37,6 +37,7 @@ import '../audio/voice_room_dj_stream_loader.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import '../services/voice_room_dj_player.dart';
 import '../services/voice_room_music_control_delegate.dart';
+import '../../video/domain/youtube_video_id.dart';
 import '../../video/presentation/room_video_controller.dart';
 import 'voice_gift_providers.dart';
 import 'voice_room_diagnostic_provider.dart';
@@ -1327,15 +1328,13 @@ class VoiceRoomLiveController
       return dj.copyWith(playing: false);
     }
 
-    final effectiveDj = _djWithQueuePlaybackFallback(dj);
-    final videoId = sync?.currentVideoId ??
-        ChatRoomDjState.videoIdFromLoose(
-          effectiveDj.nowPlaying?.youtubeUrl ??
-              effectiveDj.playbackResolveSeed ??
-              '',
-        );
-    final shouldPlay =
-        effectiveDj.playing && videoId != null && videoId.isNotEmpty;
+    final effectiveDj = dj;
+    final videoId = YoutubeVideoId.fromDj(
+      currentVideoId: sync?.currentVideoId,
+      nowPlayingUrl: effectiveDj.nowPlaying?.youtubeUrl,
+    );
+    final shouldPlay = (sync?.isPlaying ?? effectiveDj.playing) &&
+        videoId != null;
 
     if (shouldPlay) {
       _syncRoomVideo(effectiveDj, sync: sync);
@@ -1798,9 +1797,25 @@ class VoiceRoomLiveController
         _showMusicRequestFlashLine('🎵 Kullanım: !istek Sanatçı - Şarkı adı');
         return;
       }
-      VoiceRoomDebugLog.log('music.istek.send', {'song': song});
+      VoiceRoomDebugLog.log('music.istek.api', {'song': song, 'room': _roomKey});
       ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
       _showMusicRequestFlashLine('🔍 «$song» aranıyor…');
+      state = state.copyWith(sending: true, clearError: true);
+      try {
+        final err = await _submitMusicRequestByTitle(song, priority: false);
+        state = state.copyWith(sending: false);
+        if (err != null) {
+          state = state.copyWith(error: err);
+          _showMusicRequestFlashLine('⚠️ $err');
+        } else {
+          _showMusicRequestFlashLine('✅ «$song» kuyruğa eklendi');
+        }
+      } catch (e) {
+        final msg = ApiException.userMessage(e);
+        state = state.copyWith(sending: false, error: msg);
+        _showMusicRequestFlashLine('⚠️ $msg');
+      }
+      return;
     } else if (_isLocalHelpCommand(trimmed)) {
       VoiceRoomDebugLog.log('chat.command.local_help', {'cmd': trimmed});
       state = state.copyWith(

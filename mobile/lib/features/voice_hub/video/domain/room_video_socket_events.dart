@@ -1,4 +1,5 @@
 import '../../music/domain/entities/room_playback_sync.dart';
+import 'youtube_video_id.dart';
 
 /// WebSocket / SSE video müzik olayları — `dj`, `music`, `roomVideo`.
 abstract final class RoomVideoSocketEvents {
@@ -33,13 +34,14 @@ abstract final class RoomVideoSocketEvents {
   }
 
   static RoomPlaybackSync? syncFromPayload(Map<String, dynamic> map) {
-    final videoId = map['currentVideoId']?.toString();
-    if (videoId == null || videoId.isEmpty) {
+    final videoId = YoutubeVideoId.normalize(map['currentVideoId']?.toString());
+    if (videoId == null) {
       final np = map['nowPlaying'];
       if (np is Map) {
-        final fromNp = np['videoId']?.toString() ??
-            np['youtubeUrl']?.toString();
-        if (fromNp == null || fromNp.isEmpty) return null;
+        final fromNp = YoutubeVideoId.normalize(
+          np['videoId']?.toString() ?? np['youtubeUrl']?.toString(),
+        );
+        if (fromNp == null && map['playing'] != true) return null;
       } else if (map['playing'] != true) {
         return null;
       }

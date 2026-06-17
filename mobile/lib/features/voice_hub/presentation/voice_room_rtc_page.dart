@@ -1074,10 +1074,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         body: Stack(
           fit: StackFit.expand,
           children: [
+            VoiceCosmicBackground(imageUrl: bgUrl),
             if (videoActive)
-              YoutubeVideoBackground(roomKey: _liveRoomKey)
-            else
-              VoiceCosmicBackground(imageUrl: bgUrl),
+              YoutubeVideoBackground(roomKey: _liveRoomKey),
             Column(
               children: [
                 Expanded(

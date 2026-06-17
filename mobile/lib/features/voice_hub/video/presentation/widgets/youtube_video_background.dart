@@ -2,13 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:youtube_player_iframe/youtube_player_iframe.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 import '../../../data/services/voice_room_debug_log.dart';
 import '../../domain/room_video_state.dart';
+import '../../domain/youtube_video_id.dart';
 import '../room_video_controller.dart';
 
-/// Tam ekran YouTube arka plan — koltuk/sohbet üst katmanında kalır.
+/// Tam ekran YouTube arka plan (WebView embed) — UI katmanının altında kalır.
 class YoutubeVideoBackground extends ConsumerStatefulWidget {
   const YoutubeVideoBackground({
     super.key,
@@ -23,92 +26,102 @@ class YoutubeVideoBackground extends ConsumerStatefulWidget {
 }
 
 class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground> {
-  YoutubePlayerController? _controller;
+  WebViewController? _controller;
+  WebViewWidget? _webView;
   String? _loadedVideoId;
   bool? _lastPlaying;
-  int _lastSeekMs = -1;
+  var _loadFailed = false;
 
   @override
   void dispose() {
-    _controller?.close();
+    _controller = null;
+    _webView = null;
     super.dispose();
   }
 
-  Future<void> _ensureController(String videoId) async {
-    if (_loadedVideoId == videoId && _controller != null) return;
-    await _controller?.close();
+  String _embedUrl(String videoId, {required bool playing, int startSec = 0}) {
+    final autoplay = playing ? 1 : 0;
+    final start = startSec.clamp(0, 86400);
+    return 'https://www.youtube.com/embed/$videoId'
+        '?autoplay=$autoplay&controls=0&playsinline=1&rel=0'
+        '&modestbranding=1&enablejsapi=1&start=$start';
+  }
+
+  Future<void> _ensureWebView(String videoId) async {
+    if (_loadedVideoId == videoId && _webView != null) return;
     _loadedVideoId = videoId;
-    _lastSeekMs = -1;
-    _controller = YoutubePlayerController(
-      params: const YoutubePlayerParams(
-        showControls: false,
-        showFullscreenButton: false,
-        enableCaption: false,
-        playsInline: true,
-        mute: false,
-        loop: false,
-        pointerEvents: PointerEvents.none,
-        strictRelatedVideos: true,
-      ),
+    _loadFailed = false;
+
+    late final PlatformWebViewControllerCreationParams params;
+    if (WebViewPlatform.instance is WebKitWebViewPlatform) {
+      params = WebKitWebViewControllerCreationParams(
+        allowsInlineMediaPlayback: true,
+        mediaTypesRequiringUserAction: const <PlaybackMediaTypes>{},
+      );
+    } else {
+      params = const PlatformWebViewControllerCreationParams();
+    }
+
+    final controller = WebViewController.fromPlatformCreationParams(params);
+    final platform = controller.platform;
+    if (platform is AndroidWebViewController) {
+      platform.setMediaPlaybackRequiresUserGesture(false);
+    }
+
+    await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+    await controller.setBackgroundColor(const Color(0x00000000));
+
+    late final PlatformWebViewWidgetCreationParams widgetParams;
+    if (WebViewPlatform.instance is AndroidWebViewPlatform) {
+      widgetParams = AndroidWebViewWidgetCreationParams(
+        controller: controller.platform,
+        displayWithHybridComposition: true,
+      );
+    } else {
+      widgetParams = PlatformWebViewWidgetCreationParams(
+        controller: controller.platform,
+      );
+    }
+
+    _controller = controller;
+    _webView = WebViewWidget.fromPlatformCreationParams(
+      params: widgetParams,
     );
     if (mounted) setState(() {});
   }
 
   Future<void> _syncPlayback(RoomVideoState video) async {
+    final videoId = YoutubeVideoId.normalize(video.videoId);
+    if (videoId == null) return;
+
+    await _ensureWebView(videoId);
     final ctrl = _controller;
-    if (ctrl == null || !video.hasActiveVideo) return;
-    final videoId = video.videoId!;
-    if (_loadedVideoId != videoId) {
-      await _ensureController(videoId);
-      final fresh = _controller;
-      if (fresh == null) return;
-      final startSec = (video.resolvedPositionMs() / 1000).floor();
+    if (ctrl == null) return;
+
+    final startSec = (video.resolvedPositionMs() / 1000).floor();
+    final needsReload = _lastPlaying != video.isPlaying ||
+        (_loadedVideoId == videoId && _lastPlaying == null);
+
+    if (needsReload || _loadedVideoId != videoId) {
       try {
-        await fresh.loadVideoById(
-          videoId: videoId,
-          startSeconds: startSec.clamp(0, 86400).toDouble(),
+        await ctrl.loadRequest(
+          Uri.parse(_embedUrl(videoId, playing: video.isPlaying, startSec: startSec)),
         );
-        _lastSeekMs = video.resolvedPositionMs();
         VoiceRoomDebugLog.log('roomVideo.player.load', {
           'videoId': videoId,
+          'playing': video.isPlaying,
           'startSec': startSec,
         });
+        _loadFailed = false;
       } catch (e, st) {
+        _loadFailed = true;
         VoiceRoomDebugLog.log('roomVideo.player.load_fail', {
           'error': e.toString(),
           'stack': st.toString().split('\n').take(2).join(' '),
         });
       }
     }
-
-    final targetMs = video.resolvedPositionMs();
-    if ((targetMs - _lastSeekMs).abs() > 2500) {
-      final sec = (targetMs / 1000).clamp(0, 86400).toDouble();
-      try {
-        await ctrl.seekTo(seconds: sec, allowSeekAhead: true);
-        _lastSeekMs = targetMs;
-      } catch (e) {
-        VoiceRoomDebugLog.log('roomVideo.player.seek_fail', {
-          'error': e.toString(),
-        });
-      }
-    }
-
-    if (_lastPlaying != video.isPlaying) {
-      _lastPlaying = video.isPlaying;
-      try {
-        if (video.isPlaying) {
-          await ctrl.playVideo();
-        } else {
-          await ctrl.pauseVideo();
-        }
-      } catch (e) {
-        VoiceRoomDebugLog.log('roomVideo.player.playback_fail', {
-          'error': e.toString(),
-          'playing': video.isPlaying,
-        });
-      }
-    }
+    _lastPlaying = video.isPlaying;
   }
 
   @override
@@ -121,53 +134,43 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     ref.listen<RoomVideoState>(roomVideoControllerProvider(widget.roomKey),
         (prev, next) {
       if (!next.hasActiveVideo) {
-        unawaited(_controller?.close());
         _controller = null;
+        _webView = null;
         _loadedVideoId = null;
         _lastPlaying = null;
+        _loadFailed = false;
         if (mounted) setState(() {});
         return;
       }
       unawaited(_syncPlayback(next));
     });
 
-    final videoId = video.videoId!;
-    if (_loadedVideoId != videoId) {
+    final videoId = YoutubeVideoId.normalize(video.videoId);
+    if (videoId == null) return const SizedBox.shrink();
+
+    if (_loadedVideoId != videoId || _webView == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        unawaited(_ensureController(videoId).then((_) => _syncPlayback(video)));
+        unawaited(_syncPlayback(video));
       });
-    } else if (_lastPlaying != video.isPlaying ||
-        (video.resolvedPositionMs() - _lastSeekMs).abs() > 2500) {
+    } else if (_lastPlaying != video.isPlaying) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) unawaited(_syncPlayback(video));
       });
     }
 
-    final ctrl = _controller;
-    if (ctrl == null) {
+    final web = _webView;
+    if (web == null || _loadFailed) {
       return _loadingPlaceholder(video);
     }
 
     return RepaintBoundary(
       child: IgnorePointer(
+        ignoring: true,
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Positioned.fill(
-              child: FittedBox(
-                fit: BoxFit.cover,
-                clipBehavior: Clip.hardEdge,
-                child: SizedBox(
-                  width: 16 / 9 * MediaQuery.sizeOf(context).height,
-                  height: MediaQuery.sizeOf(context).height,
-                  child: YoutubePlayer(
-                    controller: ctrl,
-                    aspectRatio: 16 / 9,
-                  ),
-                ),
-              ),
-            ),
+            Positioned.fill(child: web),
             Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -175,9 +178,9 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
+                      Colors.black.withValues(alpha: 0.3),
+                      Colors.black.withValues(alpha: 0.1),
                       Colors.black.withValues(alpha: 0.35),
-                      Colors.black.withValues(alpha: 0.15),
-                      Colors.black.withValues(alpha: 0.45),
                     ],
                   ),
                 ),
@@ -191,24 +194,24 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
 
   Widget _loadingPlaceholder(RoomVideoState video) {
     final thumb = video.thumbUrl?.trim();
-    return ColoredBox(
-      color: Colors.black,
-      child: thumb != null && thumb.isNotEmpty
-          ? Image.network(
-              thumb,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-              errorBuilder: (_, __, ___) => const Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          : const Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white54,
-              ),
-            ),
+    return IgnorePointer(
+      child: ColoredBox(
+        color: Colors.transparent,
+        child: thumb != null && thumb.isNotEmpty
+            ? Image.network(
+                thumb,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (_, e, _) {
+                  VoiceRoomDebugLog.log('roomVideo.thumb.fail', {
+                    'error': e.toString(),
+                  });
+                  return const SizedBox.shrink();
+                },
+              )
+            : const SizedBox.shrink(),
+      ),
     );
   }
 }

@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.240+243 (2026-06-12)
+
+### Video Müzik Modu — !istek ve siyah ekran düzeltmeleri
+
+- **!istek:** Artık sohbet yerine `music-request-by-query` API çağrılır — web ile aynı kuyruk/senkron
+- **Siyah ekran:** `youtube_player_iframe` kaldırıldı; WebView embed + hybrid composition (UI üstte kalır)
+- **Arka plan:** Kozmik arka plan her zaman görünür; video yalnızca üstüne bindirilir
+- **videoId:** Yalnızca geçerli 11 karakterlik YouTube ID ile video modu açılır (akış URL'leri hariç)
+
 ## 1.0.239+242 (2026-06-12)
 
 ### Video Müzik Modu — sesli sohbet odaları
