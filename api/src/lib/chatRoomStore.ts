@@ -1022,7 +1022,7 @@ export function canControlRoomMusic(
   nowPlaying: MusicQueueItem | null | undefined,
 ) {
   const priv = roomPrivileges(user, room);
-  if (priv.owner || priv.admin) return true;
+  if (priv.owner || priv.admin || priv.dj) return true;
   const r = (user.role ?? "").toLowerCase();
   if (
     r === "super_admin" ||

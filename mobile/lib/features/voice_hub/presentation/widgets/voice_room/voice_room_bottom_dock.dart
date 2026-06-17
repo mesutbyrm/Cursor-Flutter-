@@ -13,9 +13,9 @@ import '../../providers/chat_room_providers.dart';
 import '../../sheets/voice_room_dj_sheet.dart';
 import '../../utils/voice_room_permissions.dart';
 import '../../utils/voice_room_responsive_metrics.dart';
+import '../../../video/presentation/room_video_controller.dart';
 import 'voice_room_action_row.dart';
 import 'voice_room_music_queue_section.dart';
-import 'voice_room_web_music_bar.dart';
 import 'voice_staff_entrance_marquee.dart';
 
 /// Müzik / DJ / kuyruk — mesaj kutusunun hemen üstünde sabit blok.
@@ -63,9 +63,6 @@ class VoiceRoomBottomDock extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final m = VoiceRoomResponsiveMetrics.of(context);
-    final musicSession = ref.watch(voiceRoomMusicSessionProvider);
-    final musicDismissed =
-        musicSession.dismissed || musicSession.userDismissedPlayer;
 
     return RepaintBoundary(
       child: DecoratedBox(
@@ -122,51 +119,6 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                   onPkTap: onPkTap,
                 ),
               ),
-            if (!musicDismissed)
-              VoiceRoomWebMusicBar(
-              dj: live.dj,
-              canControlMusic: canControlMusic,
-              showDebug: kDebugMode,
-              onPlayPause: () {
-                final ctrl =
-                    ref.read(voiceRoomLiveProvider(session.liveKey).notifier);
-                final player = ref.read(voiceRoomDjPlayerProvider);
-                final playing = live.dj.playing ||
-                    player.playback.value.playing;
-                if (canControlMusic) {
-                  if (playing) {
-                    unawaited(ctrl.pauseMusic());
-                  } else {
-                    unawaited(ctrl.resumeMusic());
-                  }
-                } else if (playing) {
-                  unawaited(player.pauseLocal());
-                } else {
-                  unawaited(player.resumeLocal());
-                }
-              },
-              onStop: canControlMusic
-                  ? () => unawaited(
-                        ref
-                            .read(voiceRoomLiveProvider(session.liveKey).notifier)
-                            .stopMusic(),
-                      )
-                  : null,
-              onQueueTap: () => showRoomMusicQueueSheet(
-                context,
-                ref,
-                liveKey: session.liveKey,
-                dj: live.dj,
-                canControlMusic: canControlMusic,
-              ),
-              onClose: () => unawaited(
-                ref
-                    .read(voiceRoomLiveProvider(session.liveKey).notifier)
-                    .closeMusicPlayer(),
-              ),
-              musicMuted: musicMuted,
-              onMuteToggle: onMuteToggle,
-            ),
             if (_waitingQueueItems(live.dj).isNotEmpty)
               GestureDetector(
                 onTap: () => showRoomMusicQueueSheet(

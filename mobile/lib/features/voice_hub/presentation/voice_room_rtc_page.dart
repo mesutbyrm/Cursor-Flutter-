@@ -55,8 +55,10 @@ import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
-import 'widgets/voice_room/voice_room_dj_video_fallback.dart';
 import 'widgets/voice_room_error_boundary.dart';
+import '../video/presentation/widgets/room_video_overlay.dart';
+import '../video/presentation/widgets/youtube_video_background.dart';
+import '../video/presentation/room_video_controller.dart';
 
 /// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
@@ -917,9 +919,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       jetonBalance: jeton,
     );
     final canControlMusic = live.dj.canControlMusic ||
+        live.dj.canPlayMusic ||
         (user != null && live.dj.nowPlaying?.requestedBy?.id == user.id) ||
         perms.isRoomOwner ||
-        perms.isSiteAdmin;
+        perms.isSiteAdmin ||
+        isDj;
+    final videoState = ref.watch(roomVideoControllerProvider(_liveRoomKey));
+    final videoActive = videoState.hasActiveVideo;
     final speakingIds = <String>{
       for (final p in live.presence)
         if (p.isSpeaking) p.id,
@@ -1068,7 +1074,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            VoiceCosmicBackground(imageUrl: bgUrl),
+            if (videoActive)
+              YoutubeVideoBackground(roomKey: _liveRoomKey)
+            else
+              VoiceCosmicBackground(imageUrl: bgUrl),
             Column(
               children: [
                 Expanded(
@@ -1416,7 +1425,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   if (mounted) setState(() => _showVipEntrance = false);
                 },
               ),
-            const VoiceRoomDjVideoFallback(),
+            RoomVideoOverlay(
+              roomKey: _liveRoomKey,
+              perms: perms,
+              isDj: isDj,
+            ),
           ],
         ),
       ),

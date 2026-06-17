@@ -211,11 +211,19 @@ export function emitChatRoomDjUpdate(roomId: string) {
     djUsers: dj.djUsers,
     activeDjId: dj.activeDjId,
   };
+  const videoPayload = {
+    type: "roomVideo",
+    event: dj.playing ? "play" : dj.currentVideoId ? "pause" : "close",
+    action: dj.playing ? "play" : dj.currentVideoId ? "pause" : "close",
+    roomId: canonical,
+    ...payload,
+  };
   for (const key of voiceRoomTargets(roomId)) {
     io.to(voiceRoom(key)).emit("dj", payload);
     io.to(voiceRoom(key)).emit("music", payload);
     io.to(voiceRoom(key)).emit("QUEUE_UPDATED", payload);
     io.to(voiceRoom(key)).emit("CURRENT_SONG_CHANGED", payload);
+    io.to(voiceRoom(key)).emit("roomVideo", videoPayload);
   }
 }
 
