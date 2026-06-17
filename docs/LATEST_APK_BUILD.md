@@ -2,23 +2,25 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.248+251` |
-| Tarih (UTC) | 2026-06-17 16:45 |
-| Commit | [`1dcbac64bbd79624120a3fb397ac3b79885aea10`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1dcbac64bbd79624120a3fb397ac3b79885aea10) |
-| İş akışı | [Run 27704338918](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27704338918) |
+| Sürüm | `1.0.249+252` |
+| Tarih (UTC) | 2026-06-17 17:23 |
+| Commit | [`551db4768a687e2c5cd42cbc3b2769011efbf8eb`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/551db4768a687e2c5cd42cbc3b2769011efbf8eb) |
+| İş akışı | [Run 27706550385](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27706550385) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.248+251 (2026-06-12)
+## 1.0.249+252 (2026-06-12)
 
-### Canlı fal istekleri + sesli oda / PK
+### PK, alt bar, profil, ödeme, bildirimler
 
-- **Canlı fal:** `GET /api/live-fal/pending` (5 sn poll) + `POST …/accept|reject`
-- **SSE:** `fal_request`, `live_fal_request`, `fortune_request`, `private_fal_request` — otomatik `FortuneRequestDialog`
-- **Falcı SSE:** Oda sahibi odasına SSE; arka plandan dönüşte yeniden bağlanma; kopunca reconnect
-- **Sesli oda:** `apiRoomKey` boşken liste yenileme ile giriş düzeltmesi
-- **PK:** Bitmiş PK kaydı temizleme; «zaten aktif PK» hatasında sonlandırma / anlaşılır mesaj
+- **PK daveti:** Oda açılışında sunucudan PK durumu senkronu; askıda kayıt otomatik sonlandırma; «zaten aktif PK» hatasında yenileme
+- **Alt bar:** Ana sayfa yanında **Sosyal** sekmesi (`/social`); mikrofon → canlı yayın aç + video yükle
+- **Profil:** Takipçi/takip/yayın sayıları site profili + yayın geçmişi ile birleştirilir
+- **Hızlı işlemler:** Canlı yayın aç ve video yükle kısayolları
+- **Premium üyelik:** «Nasıl üye olurum?» adım kartı; satın alma akışı korundu
+- **Ödeme bildirimi:** Galeriden dekont seçimi; gönderimde admin bildirimi bayrağı
+- **Bildirimler:** `/api/notifications` + aktivite akışı birleşik liste; OneSignal kaydı korunur
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
