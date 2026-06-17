@@ -2,21 +2,25 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.238+241` |
-| Tarih (UTC) | 2026-06-17 07:04 |
-| Commit | [`6d0918e7ffe1ae7e1122ce15cebc98b2fd7e4445`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6d0918e7ffe1ae7e1122ce15cebc98b2fd7e4445) |
-| İş akışı | [Run 27671272328](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27671272328) |
+| Sürüm | `1.0.239+242` |
+| Tarih (UTC) | 2026-06-17 07:49 |
+| Commit | [`509d37c799e32cfe0983b5f5d810f208df56fc2d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/509d37c799e32cfe0983b5f5d810f208df56fc2d) |
+| İş akışı | [Run 27673427669](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27673427669) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.238+241 (2026-06-12)
+## 1.0.239+242 (2026-06-12)
 
-### Hata düzeltmeleri — video yedek, oda aç, ödeme bildir
+### Video Müzik Modu — sesli sohbet odaları
 
-- **Video yedek:** 96×96 sürüklenebilir mini oynatıcı; altta oynat/durdur/kapat; YouTube embed (WebView)
-- **Oda aç:** `POST /api/chat/rooms/create` + yedek `POST /api/chat/rooms`; mevcut oda varsa yönlendirme
-- **Ödeme bildir:** 2xx yanıt kabulü genişletildi; dekont yükleme zaman aşımı; otomatik açıklama alanı
+- **!istek sanatçı şarkı:** Mesaj backend'e gider; YouTube Data API v3 ile ilk uygun video bulunur ve `videoId` oda state'ine yazılır
+- **Tam ekran video:** Aktif video varken arka plan görseli yerine YouTube tam ekran oynatıcı (`youtube_player_iframe`)
+- **Katmanlar:** Koltuklar, sohbet, konuşan göstergeleri ve hediyeler videonun üzerinde kalır
+- **Yetkili kontroller:** Oda sahibi / admin / DJ — oynat, duraklat, kapat (WebSocket `roomVideo` + `dj` senkronu)
+- **Yeni giren:** `music-queue` / SSE / socket ile mevcut konumdan devam
+- **Mimari:** `RoomVideoState`, `RoomVideoController`, `RoomVideoOverlay`, `YoutubeVideoBackground`, `RoomVideoSocketEvents`
+- **Kaldırıldı:** Mini video yedek oynatıcı ve alt müzik şeridi (`VoiceRoomWebMusicBar`)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
