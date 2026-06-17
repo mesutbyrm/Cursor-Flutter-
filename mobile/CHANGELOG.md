@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.242+245 (2026-06-12)
+
+### Video Müzik — akıcı oynatma ve otomatik sıra
+
+- **Akıcılık:** YouTube IFrame API; oynat/durdur ve konum için tam sayfa yenileme yerine JS komutları (titreme giderildi)
+- **Parça bitişi:** Video bittiğinde otomatik `music-queue/complete` — sırada şarkı varsa geçiş, yoksa video kapanır
+- **Kontroller:** Oynat/durdur/kapat çubuğu koltukların **altında** (duyuru/sohbet üstünde)
+
 ## 1.0.241+244 (2026-06-12)
 
 ### Video Müzik — YouTube Hata 153 düzeltmesi

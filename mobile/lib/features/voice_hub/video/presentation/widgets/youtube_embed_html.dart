@@ -1,7 +1,8 @@
-/// YouTube iframe HTML — WebView Error 153 için Referer / origin zorunlu.
+/// YouTube IFrame API HTML — WebView Error 153 için Referer / origin zorunlu.
 abstract final class YoutubeEmbedHtml {
   static const refererOrigin = 'https://canlifal.com';
 
+  /// İlk yükleme: IFrame API ile oynatıcı oluşturur.
   static String build({
     required String videoId,
     required bool playing,
@@ -9,7 +10,7 @@ abstract final class YoutubeEmbedHtml {
   }) {
     final autoplay = playing ? 1 : 0;
     final start = startSec.clamp(0, 86400);
-    final origin = Uri.encodeComponent(refererOrigin);
+    final origin = refererOrigin;
     return '''
 <!DOCTYPE html>
 <html>
@@ -22,21 +23,80 @@ abstract final class YoutubeEmbedHtml {
       margin: 0; padding: 0; width: 100%; height: 100%;
       background: #000; overflow: hidden;
     }
-    iframe {
+    #player {
       position: fixed; inset: 0;
       width: 100%; height: 100%;
-      border: 0;
     }
   </style>
 </head>
 <body>
-  <iframe
-    src="https://www.youtube.com/embed/$videoId?autoplay=$autoplay&controls=0&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&start=$start&origin=$origin"
-    title="Canlifal video müzik"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    allowfullscreen
-    referrerpolicy="strict-origin-when-cross-origin">
-  </iframe>
+  <div id="player"></div>
+  <script>
+    var player = null;
+    var apiReady = false;
+
+    var tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+
+    function post(msg) {
+      try {
+        if (window.RoomVideoBridge) RoomVideoBridge.postMessage(msg);
+      } catch (e) {}
+    }
+
+    function onYouTubeIframeAPIReady() {
+      apiReady = true;
+      player = new YT.Player('player', {
+        videoId: '$videoId',
+        playerVars: {
+          autoplay: $autoplay,
+          controls: 0,
+          playsinline: 1,
+          rel: 0,
+          modestbranding: 1,
+          start: $start,
+          origin: '$origin',
+          enablejsapi: 1
+        },
+        events: {
+          onReady: function(e) {
+            post('ready');
+            if ($autoplay === 1) e.target.playVideo();
+          },
+          onStateChange: function(e) {
+            if (e.data === YT.PlayerState.ENDED) post('ended');
+            else if (e.data === YT.PlayerState.PLAYING) post('playing');
+            else if (e.data === YT.PlayerState.PAUSED) post('paused');
+          },
+          onError: function(e) { post('error:' + e.data); }
+        }
+      });
+    }
+
+    window.roomVideoCmd = function(json) {
+      try {
+        var cmd = JSON.parse(json);
+        if (!player || typeof player.getPlayerState !== 'function') return false;
+        if (cmd.action === 'load') {
+          player.loadVideoById({
+            videoId: cmd.videoId,
+            startSeconds: cmd.startSec || 0
+          });
+          if (!cmd.playing) setTimeout(function() { player.pauseVideo(); }, 120);
+        } else if (cmd.action === 'play') {
+          player.playVideo();
+        } else if (cmd.action === 'pause') {
+          player.pauseVideo();
+        } else if (cmd.action === 'seek') {
+          player.seekTo(cmd.sec || 0, true);
+          if (cmd.playing) player.playVideo();
+          else player.pauseVideo();
+        }
+        return true;
+      } catch (e) { return false; }
+    };
+  </script>
 </body>
 </html>
 ''';

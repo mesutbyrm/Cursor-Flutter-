@@ -965,10 +965,24 @@ class VoiceRoomLiveController
           .read(chatRoomRemoteProvider)
           .completeMusicQueue(_roomKey, alternateKey: _musicAlternateKey);
       await refresh();
+      final dj = state.dj;
+      final videoId = ChatRoomDjState.videoIdFromLoose(
+        dj.nowPlaying?.youtubeUrl ?? dj.playbackResolveSeed ?? '',
+      );
+      if (!dj.playing || videoId == null || dj.nowPlaying == null) {
+        ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+        _lastDjPlaybackSignature = _djPlaybackSignature(
+          dj,
+          muted: !ref.read(voiceRoomUiProvider).backgroundMusicEnabled,
+        );
+      }
     } catch (e) {
       VoiceRoomDebugLog.log('music.track_complete.fail', {'error': '$e'});
     }
   }
+
+  /// YouTube video modu — parça bittiğinde kuyruğu ilerlet.
+  Future<void> notifyVideoTrackEnded() => _onDjTrackComplete();
 
   Future<void> _warmBackgrounds() async {
     try {

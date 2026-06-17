@@ -1265,6 +1265,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             ),
                           ),
                         ),
+                        RoomVideoOverlay(
+                          roomKey: _liveRoomKey,
+                          perms: perms,
+                          isDj: isDj,
+                        ),
                         if (!keyboardOpen)
                           VoiceRoomPersistentDuyuru(
                             roomKey: room.apiRoomKey.isNotEmpty
@@ -1424,11 +1429,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   if (mounted) setState(() => _showVipEntrance = false);
                 },
               ),
-            RoomVideoOverlay(
-              roomKey: _liveRoomKey,
-              perms: perms,
-              isDj: isDj,
-            ),
           ],
         ),
       ),

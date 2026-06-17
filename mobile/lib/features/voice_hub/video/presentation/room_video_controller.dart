@@ -85,20 +85,11 @@ class RoomVideoController extends AutoDisposeFamilyNotifier<RoomVideoState, Stri
   }
 
   void _syncTicker(bool playing) {
+    // Video modunda yerel saniye ticker'ı WebView'i yeniden yükletmez;
+    // konum senkronu sunucu/SSE üzerinden gelir.
     if (!playing || !state.hasActiveVideo) {
       _stopTicker();
-      return;
     }
-    _positionTicker ??= Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!state.isPlaying || !state.hasActiveVideo) {
-        _stopTicker();
-        return;
-      }
-      state = state.copyWith(
-        positionMs: state.resolvedPositionMs(),
-        trackStartedAtMs: DateTime.now().millisecondsSinceEpoch,
-      );
-    });
   }
 
   void _stopTicker() {

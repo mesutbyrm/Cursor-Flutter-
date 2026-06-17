@@ -38,19 +38,15 @@ class RoomVideoOverlay extends ConsumerWidget {
     final title = video.title?.trim();
     final label = title != null && title.isNotEmpty ? title : 'Video Müzik';
 
-    return Positioned(
-      left: 12,
-      right: 12,
-      top: MediaQuery.paddingOf(context).top + 56,
-      child: IgnorePointer(
-        ignoring: false,
-        child: Material(
-          color: Colors.black.withValues(alpha: 0.42),
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Row(
-              children: [
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 2, 12, 4),
+      child: Material(
+        color: Colors.black.withValues(alpha: 0.42),
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            children: [
                 Icon(
                   video.isPlaying ? Icons.music_video_rounded : Icons.pause_circle_outline,
                   color: Colors.white.withValues(alpha: 0.9),
@@ -112,8 +108,7 @@ class RoomVideoOverlay extends ConsumerWidget {
                       ),
                     ),
                   ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
