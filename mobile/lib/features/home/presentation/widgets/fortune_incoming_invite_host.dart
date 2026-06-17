@@ -240,7 +240,13 @@ class _FortuneIncomingInviteHostState
               );
         }
         _dismissed.add(req.sessionId);
-        if (mounted && navCtx.mounted) navCtx.go('/feed');
+        if (mounted && navCtx.mounted) {
+          final router = GoRouter.of(navCtx);
+          while (router.canPop()) {
+            router.pop();
+          }
+          router.go('/');
+        }
         return;
       }
 
@@ -269,7 +275,13 @@ class _FortuneIncomingInviteHostState
               req.sessionId,
               action: 'reject',
             );
-        if (navCtx.mounted) navCtx.go('/feed');
+        if (navCtx.mounted) {
+          final router = GoRouter.of(navCtx);
+          while (router.canPop()) {
+            router.pop();
+          }
+          router.go('/');
+        }
         return;
       }
 

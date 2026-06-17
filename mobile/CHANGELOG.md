@@ -1,5 +1,19 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.254+257 (2026-06-17)
+
+### Canlı yayın — izleyici Fal İste şeridi
+
+- **Şerit:** İzleyici, Hediye, Fal İste, Rumuz, ses ve Çık butonları
+- **Bağlanıyor:** Yayına bağlanırken merkezde yükleme durumu
+
+## 1.0.253+256 (2026-06-17)
+
+### Canlı falcı — yayın + red yönlendirme
+
+- **Canlı yayın:** Fal kategorili yayın izlerken sağ şeritte «Fal İste» → randevu + bekleme akışı
+- **Red:** İade popup'ı «Ana Sayfaya Dön» ile `/` yönlendirmesi (danışan + falcı)
+
 ## 1.0.252+255 (2026-06-17)
 
 ### Canlı falcı — 8 ekranlı akış
@@ -9,6 +23,7 @@
 - **Seans başlat:** Falcı kabul sonrası «Şimdi Başlat» veya süre seçimi popup'ı
 - **Seans:** PiP kamera, Süre Ekle ve Bahşiş jeton popup'ları (`/api/teller/gifts`, süre uzatma PATCH)
 - **Red:** Falcı kabul etmezse danışana «müsait değil, jeton iade» popup + ana sayfa; falcı da ana sayfaya döner
+- **Canlı yayın:** Fal kategorili yayınlarda izleyiciye «Fal İste» butonu
 
 ## 1.0.251+254 (2026-06-12)
 

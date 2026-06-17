@@ -5,7 +5,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 
-/// Sağ dikey aksiyon şeridi — beğeni, hediye, paylaş.
+/// Sağ dikey aksiyon şeridi — beğeni, hediye, paylaş, fal iste.
 class LivePremiumSideRail extends StatelessWidget {
   const LivePremiumSideRail({
     super.key,
@@ -16,6 +16,8 @@ class LivePremiumSideRail extends StatelessWidget {
     required this.onGift,
     this.onShare,
     this.onReport,
+    this.onFortune,
+    this.fortuneLabel = 'Fal İste',
   });
 
   final String likeLabel;
@@ -25,6 +27,8 @@ class LivePremiumSideRail extends StatelessWidget {
   final VoidCallback onGift;
   final VoidCallback? onShare;
   final VoidCallback? onReport;
+  final VoidCallback? onFortune;
+  final String fortuneLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +52,18 @@ class LivePremiumSideRail extends StatelessWidget {
           glow: AppThemeColors.coinGold,
           onTap: onGift,
         ),
+        if (onFortune != null) ...[
+          const SizedBox(height: 14),
+          _RailButton(
+            icon: Icons.coffee_rounded,
+            label: fortuneLabel,
+            gradient: const LinearGradient(
+              colors: [Color(0xFF8D6E63), Color(0xFF5D4037)],
+            ),
+            glow: const Color(0xFF8D6E63),
+            onTap: onFortune,
+          ),
+        ],
         const SizedBox(height: 14),
         _RailButton(
           icon: Icons.share_rounded,
