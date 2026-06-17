@@ -20,6 +20,7 @@ import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../../admin/presentation/providers/admin_providers.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../notifications/presentation/providers/notifications_list_notifier.dart';
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 
