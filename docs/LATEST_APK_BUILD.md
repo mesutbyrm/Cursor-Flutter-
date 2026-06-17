@@ -2,25 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.237+240` |
-| Tarih (UTC) | 2026-06-17 06:19 |
-| Commit | [`7321beda03296773a54f62d5e5976213e83d8fb0`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/7321beda03296773a54f62d5e5976213e83d8fb0) |
-| İş akışı | [Run 27669386452](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27669386452) |
+| Sürüm | `1.0.238+241` |
+| Tarih (UTC) | 2026-06-17 07:04 |
+| Commit | [`6d0918e7ffe1ae7e1122ce15cebc98b2fd7e4445`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6d0918e7ffe1ae7e1122ce15cebc98b2fd7e4445) |
+| İş akışı | [Run 27671272328](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27671272328) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.237+240 (2026-06-12)
+## 1.0.238+241 (2026-06-12)
 
-### Ana sayfa + sesli oda + jeton ödeme
+### Hata düzeltmeleri — video yedek, oda aç, ödeme bildir
 
-- **Canlı Falcılar:** Sesli oda kartları gibi kare/yatay kartlar
-- **Canlı Yayındakiler:** Bölüm yukarı taşındı (hızlı aksiyonların hemen altı)
-- **Fal & Tarot:** Görsel kartlarda emoji/yazı bindirmesi kaldırıldı
-- **Günlük Burç:** Burç başına gradient kare ikonlar
-- **Sesli oda müziği:** Ses akışı başarısız olursa 96×96 video yedek oynatıcı
-- **Oda aç:** Web ile uyumlu yanıt ayrıştırma + `roomId` geri kazanımı
-- **Jeton Papara/Havale:** Ödeme bildir popup'ı, dekont görseli, otomatik alanlar, 5–10 dk bekleme mesajı; onay/red bildirim popup'ı
+- **Video yedek:** 96×96 sürüklenebilir mini oynatıcı; altta oynat/durdur/kapat; YouTube embed (WebView)
+- **Oda aç:** `POST /api/chat/rooms/create` + yedek `POST /api/chat/rooms`; mevcut oda varsa yönlendirme
+- **Ödeme bildir:** 2xx yanıt kabulü genişletildi; dekont yükleme zaman aşımı; otomatik açıklama alanı
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
