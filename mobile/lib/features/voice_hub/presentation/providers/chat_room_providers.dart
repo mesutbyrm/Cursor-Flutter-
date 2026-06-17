@@ -37,6 +37,7 @@ import '../audio/voice_room_dj_stream_loader.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import '../services/voice_room_dj_player.dart';
 import '../services/voice_room_music_control_delegate.dart';
+import '../../video/presentation/room_video_controller.dart';
 import 'voice_gift_providers.dart';
 import 'voice_room_diagnostic_provider.dart';
 import 'voice_room_ui_provider.dart';
@@ -539,6 +540,9 @@ class VoiceRoomLiveController
     await _leavePresence();
     await ref.read(voiceRoomSseServiceProvider).disconnect();
     await ref.read(voiceRoomDjPlayerProvider).stop();
+    if (_roomKey.isNotEmpty) {
+      ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+    }
     _closeRoomKeepAlive();
   }
 
@@ -663,6 +667,7 @@ class VoiceRoomLiveController
           },
           onDjUpdate: (payload) {
             if (payload != null && payload.isNotEmpty) {
+              _applyRoomVideoPayload(payload);
               unawaited(_applyDjRealtimePayload(payload));
             } else {
               unawaited(refresh(includeDj: true));
@@ -733,7 +738,10 @@ class VoiceRoomLiveController
       onEvent: (event) {
         ref.read(voiceRoomGiftRealtimeProvider).publishRemote(event);
       },
-      onDjUpdate: (payload) => unawaited(_applyDjRealtimePayload(payload)),
+      onDjUpdate: (payload) {
+        _applyRoomVideoPayload(payload);
+        unawaited(_applyDjRealtimePayload(payload));
+      },
       onMessage: (msg) {
         final exists = state.messages.any((m) => m.id == msg.id);
         if (exists) return;
@@ -762,6 +770,20 @@ class VoiceRoomLiveController
       },
       accessToken: storage.readAccess,
     );
+  }
+
+  void _syncRoomVideo(ChatRoomDjState dj, {RoomPlaybackSync? sync}) {
+    if (_roomKey.isEmpty) return;
+    ref
+        .read(roomVideoControllerProvider(_roomKey).notifier)
+        .applyDjState(dj, sync: sync);
+  }
+
+  void _applyRoomVideoPayload(Map<String, dynamic> payload) {
+    if (_roomKey.isEmpty) return;
+    ref
+        .read(roomVideoControllerProvider(_roomKey).notifier)
+        .applyDjPayload(payload);
   }
 
   String _djPlaybackSignature(ChatRoomDjState dj, {required bool muted}) {
@@ -1255,26 +1277,22 @@ class VoiceRoomLiveController
     }
     _commitDjUi(dj);
     final sync = RoomPlaybackSync.fromPayload(payload);
+    _syncRoomVideo(dj, sync: sync);
     final ui = ref.read(voiceRoomUiProvider);
     final sig = _djPlaybackSignature(dj, muted: !ui.backgroundMusicEnabled);
     if (sig != _lastDjPlaybackSignature) {
       unawaited(_playDjInBackground(dj, sync: sync));
       return;
     }
-    final player = ref.read(voiceRoomDjPlayerProvider);
-    if (!sync.isPlaying && player.playback.value.playing) {
-      unawaited(player.pauseLocal());
+    if (!sync.isPlaying) {
       return;
     }
-    if (sync.isPlaying && !player.playback.value.playing && dj.musicEnabled) {
-      unawaited(_playDjInBackground(dj, sync: sync));
-      return;
-    }
-    if (sync.isPlaying && player.playback.value.playing) {
+    if (sync.isPlaying) {
       final targetMs = sync.resolvedPositionMs();
-      final currentMs = player.playback.value.position.inMilliseconds;
+      final currentMs =
+          ref.read(roomVideoControllerProvider(_roomKey)).resolvedPositionMs();
       if ((targetMs - currentMs).abs() > 2500) {
-        unawaited(player.seekTo(Duration(milliseconds: targetMs)));
+        _syncRoomVideo(dj, sync: sync);
       }
     }
   }
@@ -1295,14 +1313,16 @@ class VoiceRoomLiveController
     final ui = ref.read(voiceRoomUiProvider);
     final muted = !ui.backgroundMusicEnabled;
     final session = ref.read(voiceRoomMusicSessionProvider);
+    await ref.read(voiceRoomDjPlayerProvider).stop();
+
     if (session.dismissed || session.userDismissedPlayer) {
-      await ref.read(voiceRoomDjPlayerProvider).stop();
+      _syncRoomVideo(const ChatRoomDjState(), sync: sync);
       _lastDjPlaybackSignature = _djPlaybackSignature(dj, muted: muted);
       return dj;
     }
 
     if (!dj.musicEnabled) {
-      await ref.read(voiceRoomDjPlayerProvider).stop();
+      _syncRoomVideo(dj.copyWith(playing: false), sync: sync);
       _lastDjPlaybackSignature = _djPlaybackSignature(dj, muted: muted);
       return dj.copyWith(playing: false);
     }
@@ -1314,93 +1334,29 @@ class VoiceRoomLiveController
               effectiveDj.playbackResolveSeed ??
               '',
         );
-    final shouldPlay = effectiveDj.playing && videoId != null && videoId.isNotEmpty;
+    final shouldPlay =
+        effectiveDj.playing && videoId != null && videoId.isNotEmpty;
 
-    final serverMusicUrl = sync?.streamUrl ?? effectiveDj.musicUrl;
-    var streamUrl = await _resolvePlaybackStreamUrl(
-      videoId: videoId,
-      serverMusicUrl: serverMusicUrl,
-    );
-
-    if (shouldPlay && (streamUrl == null || !streamUrl.startsWith('http'))) {
-      VoiceRoomDebugLog.log('music.player.no_stream', {
+    if (shouldPlay) {
+      _syncRoomVideo(effectiveDj, sync: sync);
+      VoiceRoomDebugLog.log('roomVideo.active', {
         'videoId': videoId,
         'room': _roomKey,
+        'positionMs': sync?.resolvedPositionMs() ?? 0,
+        'muted': muted,
       });
-      state = state.copyWith(
-        error: 'Ses akışı oluşturulamadı. Lütfen tekrar deneyin.',
-      );
-      await ref.read(voiceRoomDjPlayerProvider).stop();
-      _lastDjPlaybackSignature = null;
-      return effectiveDj.copyWith(playing: false);
-    }
-
-    final startMs = sync?.resolvedPositionMs() ?? 0;
-    final player = ref.read(voiceRoomDjPlayerProvider);
-    var ok = false;
-    if (shouldPlay && streamUrl != null && streamUrl.startsWith('http')) {
-      ok = await player.playServerStream(
-        streamUrl: streamUrl,
-        playing: true,
-        startPosition: Duration(milliseconds: startMs),
-        nowPlaying: effectiveDj.nowPlaying,
-        muted: muted,
-        videoId: videoId,
-      );
-      if (!ok && videoId != null && videoId.isNotEmpty) {
-        ref.read(youtubeStreamResolverProvider).invalidate(videoId);
-        final retryUrl = await _resolvePlaybackStreamUrl(
-          videoId: videoId,
-          serverMusicUrl: null,
-        );
-        if (retryUrl != null && retryUrl != streamUrl) {
-          VoiceRoomDebugLog.log('music.player.retry', {
-            'videoId': videoId,
-            'retryUrl': retryUrl,
-          });
-          ok = await player.playServerStream(
-            streamUrl: retryUrl,
-            playing: true,
-            startPosition: Duration(milliseconds: startMs),
-            nowPlaying: effectiveDj.nowPlaying,
-            muted: muted,
-            videoId: videoId,
-          );
-        }
-      }
-    } else if (!shouldPlay) {
-      await player.stop();
-      ok = true;
-    }
-
-    VoiceRoomDebugLog.log(ok ? 'music.player.started' : 'music.player.failed', {
-      'streamUrl': streamUrl,
-      'videoId': videoId,
-      'positionMs': startMs,
-    });
-
-    if (shouldPlay && !ok) {
-      state = state.copyWith(
-        error: 'Şarkı oynatılamadı. Bağlantınızı kontrol edip tekrar deneyin.',
-      );
-      if (videoId != null && videoId.isNotEmpty) {
-        ref.read(voiceRoomDjVideoFallbackProvider.notifier).state = videoId;
-      }
-      _lastDjPlaybackSignature = null;
-    } else if (shouldPlay && ok) {
-      ref.read(voiceRoomDjVideoFallbackProvider.notifier).state = null;
       _lastDjPlaybackSignature = _djPlaybackSignature(
         effectiveDj,
         muted: muted,
       );
-    } else if (!shouldPlay) {
-      _lastDjPlaybackSignature = _djPlaybackSignature(
-        effectiveDj,
-        muted: muted,
-      );
-    } else {
-      _lastDjPlaybackSignature = null;
+      return effectiveDj;
     }
+
+    _syncRoomVideo(effectiveDj.copyWith(playing: false), sync: sync);
+    _lastDjPlaybackSignature = _djPlaybackSignature(
+      effectiveDj,
+      muted: muted,
+    );
     return effectiveDj;
   }
 
@@ -1835,7 +1791,17 @@ class VoiceRoomLiveController
     final trimmed = VoiceOfficialJoin.normalizeCommandInput(text.trim());
     if (trimmed.isEmpty || _roomKey.isEmpty) return;
 
-    if (_isLocalHelpCommand(trimmed)) {
+    if (VoiceMusicSync.isIstekCommand(trimmed)) {
+      final song = VoiceMusicSync.parseIstekSongTitle(trimmed);
+      if (song == null || song.isEmpty) {
+        state = state.copyWith(error: 'Kullanım: !istek Sanatçı - Şarkı adı');
+        _showMusicRequestFlashLine('🎵 Kullanım: !istek Sanatçı - Şarkı adı');
+        return;
+      }
+      VoiceRoomDebugLog.log('music.istek.send', {'song': song});
+      ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
+      _showMusicRequestFlashLine('🔍 «$song» aranıyor…');
+    } else if (_isLocalHelpCommand(trimmed)) {
       VoiceRoomDebugLog.log('chat.command.local_help', {'cmd': trimmed});
       state = state.copyWith(
         openCommandsPanel: true,
@@ -1844,24 +1810,6 @@ class VoiceRoomLiveController
             .where((m) => m.id.startsWith('local-') || m.content != trimmed)
             .toList(),
       );
-      return;
-    }
-
-    if (VoiceMusicSync.isIstekCommand(trimmed)) {
-      ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
-      final song = VoiceMusicSync.parseIstekSongTitle(trimmed);
-      if (song == null || song.isEmpty) {
-        state = state.copyWith(error: 'Kullanım: !istek Sanatçı - Şarkı adı');
-        _showMusicRequestFlashLine('🎵 Kullanım: !istek Sanatçı - Şarkı adı');
-        return;
-      }
-      VoiceRoomDebugLog.log('music.istek.search', {'song': song});
-      state = state.copyWith(
-        pendingMusicSearchQuery: song,
-        clearError: true,
-        sending: false,
-      );
-      _showMusicRequestFlashLine('🔍 «$song» — şarkı seçin');
       return;
     }
 
@@ -2170,12 +2118,12 @@ class VoiceRoomLiveController
   }
 
   bool _canControlMusic() {
-    if (state.dj.canControlMusic) return true;
+    if (state.dj.canControlMusic || state.dj.canPlayMusic) return true;
     final user = ref.read(authControllerProvider).valueOrNull;
     final np = state.dj.nowPlaying;
     if (user != null && np?.requestedBy?.id == user.id) return true;
     final perms = _permissions();
-    return perms.isRoomOwner || perms.isSiteAdmin;
+    return perms.isRoomOwner || perms.isSiteAdmin || perms.canManageDj;
   }
 
   Future<String?> pauseMusic() async {
@@ -2193,6 +2141,7 @@ class VoiceRoomLiveController
           );
       await ref.read(voiceRoomDjPlayerProvider).pauseLocal();
       state = state.copyWith(dj: state.dj.copyWith(playing: false));
+      _syncRoomVideo(state.dj.copyWith(playing: false));
       return null;
     } catch (e) {
       return ApiException.userMessage(e);
@@ -2923,8 +2872,6 @@ final voiceRoomMusicSessionProvider =
       VoiceRoomMusicSessionNotifier.new,
     );
 
-/// just_audio başarısız olunca YouTube video yedek oynatıcı (videoId).
-final voiceRoomDjVideoFallbackProvider = StateProvider<String?>((ref) => null);
 
 final voiceRoomLiveProvider = NotifierProvider.autoDispose
     .family<VoiceRoomLiveController, VoiceRoomLiveState, String>(

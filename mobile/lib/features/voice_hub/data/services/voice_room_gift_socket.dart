@@ -78,6 +78,7 @@ class VoiceRoomGiftSocket {
           ..on('userLeft', (data) => _emitPresence(data))
           ..on('dj', (data) => _emitDj(data))
           ..on('music', (data) => _emitDj(data))
+          ..on('roomVideo', (data) => _emitDj(data))
           ..on('QUEUE_UPDATED', (data) => _emitDj(data))
           ..on('CURRENT_SONG_CHANGED', (data) => _emitDj(data))
           ..connect();

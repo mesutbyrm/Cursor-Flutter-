@@ -1,15 +1,14 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/chat_room_providers.dart';
 import '../../providers/voice_room_ui_provider.dart';
-import 'voice_room_web_music_bar.dart';
+import '../../../video/presentation/room_video_controller.dart';
+
+/// Eski global müzik şeridi — Video Müzik Modu ile devre dışı.
 class VoiceRoomGlobalMusicBar extends ConsumerWidget {
   const VoiceRoomGlobalMusicBar({super.key, required this.routePath});
 
-  /// MaterialApp.builder Stack'inde GoRouter.of(context) yok — dışarıdan verilir.
   final String routePath;
 
   static bool shouldShowForRoute(String location) {
@@ -30,67 +29,15 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     final session = ref.watch(voiceRoomMusicSessionProvider);
-    final playback = ref.watch(voiceRoomDjPlayerProvider).playback;
-    final muted = !ref.watch(voiceRoomUiProvider).backgroundMusicEnabled;
-
     if (session.room == null || !session.hasActiveMusic) {
       return const SizedBox.shrink();
     }
     final room = session.room!;
-    final canControl = session.dj.canControlMusic || session.canSyncServer;
-
-    return Material(
-      color: Colors.transparent,
-      child: SafeArea(
-        top: false,
-        child: VoiceRoomWebMusicBar(
-          dj: session.dj,
-          canControlMusic: canControl,
-          musicMuted: muted,
-          onPlayPause: () {
-            final player = ref.read(voiceRoomDjPlayerProvider);
-            final isPlaying =
-                session.dj.playing || player.playback.value.playing;
-            if (canControl) {
-              final ctrl =
-                  ref.read(voiceRoomLiveProvider(room.liveKey).notifier);
-              if (isPlaying) {
-                unawaited(ctrl.pauseMusic());
-              } else {
-                unawaited(ctrl.resumeMusic());
-              }
-            } else if (isPlaying) {
-              unawaited(player.pauseLocal());
-            } else {
-              unawaited(player.resumeLocal());
-            }
-          },
-          onClose: () {
-            final room = session.room;
-            if (room != null) {
-              unawaited(
-                ref
-                    .read(voiceRoomLiveProvider(room.liveKey).notifier)
-                    .closeMusicPlayer(),
-              );
-            } else {
-              unawaited(
-                ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer(),
-              );
-            }
-          },
-          onMuteToggle: () {
-            final notifier = ref.read(voiceRoomUiProvider.notifier);
-            notifier.toggleBackgroundMusic();
-            final enabled = ref.read(voiceRoomUiProvider).backgroundMusicEnabled;
-            unawaited(
-              ref
-                  .read(voiceRoomLiveProvider(room.liveKey).notifier)
-                  .toggleBackgroundMusic(enabled),
-            );
-          },
-        ),
-      ),
-    );
+    final videoActive =
+        ref.watch(roomVideoControllerProvider(room.liveKey)).hasActiveVideo;
+    if (videoActive) {
+      return const SizedBox.shrink();
+    }
+    return const SizedBox.shrink();
   }
 }
