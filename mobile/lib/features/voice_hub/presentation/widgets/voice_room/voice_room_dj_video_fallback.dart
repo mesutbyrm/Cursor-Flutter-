@@ -67,10 +67,12 @@ class _VoiceRoomDjVideoFallbackState
       if (_controller != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           await _controller?.dispose();
-          if (mounted) setState(() {
-            _controller = null;
-            _loadedVideoId = null;
-          });
+          if (mounted) {
+            setState(() {
+              _controller = null;
+              _loadedVideoId = null;
+            });
+          }
         });
       }
       return const SizedBox.shrink();
@@ -82,10 +84,12 @@ class _VoiceRoomDjVideoFallbackState
       }
       if (next == null || next.isEmpty) {
         unawaited(_controller?.dispose());
-        if (mounted) setState(() {
-          _controller = null;
-          _loadedVideoId = null;
-        });
+        if (mounted) {
+          setState(() {
+            _controller = null;
+            _loadedVideoId = null;
+          });
+        }
       }
     });
 

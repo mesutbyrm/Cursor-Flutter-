@@ -66,7 +66,7 @@ class _JetonPaymentStatusListenerState
             if (n.body != null && n.body!.trim().isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(n.body!, style: const TextStyle(height: 1.35)),
-            ),
+            ],
             const SizedBox(height: 12),
             Text(
               approved
