@@ -2,22 +2,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.247+250` |
-| Tarih (UTC) | 2026-06-17 16:01 |
-| Commit | [`c1b04ead77d52fb767261dba75c30171e4033c68`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/c1b04ead77d52fb767261dba75c30171e4033c68) |
-| İş akışı | [Run 27701692145](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27701692145) |
+| Sürüm | `1.0.248+251` |
+| Tarih (UTC) | 2026-06-17 16:45 |
+| Commit | [`1dcbac64bbd79624120a3fb397ac3b79885aea10`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1dcbac64bbd79624120a3fb397ac3b79885aea10) |
+| İş akışı | [Run 27704338918](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27704338918) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.247+250 (2026-06-12)
+## 1.0.248+251 (2026-06-12)
 
-### PK — üretim API sözleşmesi
+### Canlı fal istekleri + sesli oda / PK
 
-- **Uç nokta:** `GET/POST /api/chat/rooms/{roomId}/pk` (`pk-battle` ve `/api/pk/battles` kaldırıldı)
-- **Davet:** `{ action: "create", targetRoomId, duration }` (varsayılan 180 sn)
-- **Kabul / red:** `{ action: "accept"|"reject", battleId }` — kabul eden odanın `roomId` ile
-- **Hediye skoru:** `POST …/gifts` gövdesine `streamId: roomId` eklendi
+- **Canlı fal:** `GET /api/live-fal/pending` (5 sn poll) + `POST …/accept|reject`
+- **SSE:** `fal_request`, `live_fal_request`, `fortune_request`, `private_fal_request` — otomatik `FortuneRequestDialog`
+- **Falcı SSE:** Oda sahibi odasına SSE; arka plandan dönüşte yeniden bağlanma; kopunca reconnect
+- **Sesli oda:** `apiRoomKey` boşken liste yenileme ile giriş düzeltmesi
+- **PK:** Bitmiş PK kaydı temizleme; «zaten aktif PK» hatasında sonlandırma / anlaşılır mesaj
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
