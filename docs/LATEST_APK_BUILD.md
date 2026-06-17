@@ -2,24 +2,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.255+258` |
-| Tarih (UTC) | 2026-06-17 21:33 |
-| Commit | [`a1c775b218cc11dc7f51eb1298524968060891c7`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a1c775b218cc11dc7f51eb1298524968060891c7) |
-| İş akışı | [Run 27720534672](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27720534672) |
+| Sürüm | `1.0.256+259` |
+| Tarih (UTC) | 2026-06-17 22:13 |
+| Commit | [`f8c77065b5839d0cab9ab9166b97bbbfcedb329d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/f8c77065b5839d0cab9ab9166b97bbbfcedb329d) |
+| İş akışı | [Run 27722496843](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27722496843) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.255+258 (2026-06-17)
+## 1.0.256+259 (2026-06-17)
 
-### Canlı falcı — üretim oda API (`/api/room/*`)
+### Canlı falcı — baştan yazılmış akış
 
-- **Oda:** `GET /api/room/{sessionId}` — timer, peerId, jeton bakiyesi
-- **Timer:** Falcı `start_timer`; her iki taraf 60 sn `ping`; client-side countdown sunucu `timerStartedAt` ile
-- **Sohbet:** `GET/POST /api/room/{sessionId}/messages` (teller-chat yedek)
-- **Süre:** Kullanıcı `extend`, falcı `teller_add_time`; seans bitişi `PATCH action: end`
-- **Seans oluşturma:** `fortuneType` + `duration` alanları; falcı poll `?status=pending`
-- **Bekleme:** Danışan «Falcı hazırlanıyor…» overlay'i timer başlayana kadar
+- **Randevu:** Süre seç → Randevu Al → `POST /api/fortune-tellers/session` → bekleme ekranı
+- **Bekleme:** Admin reklamı (`GET /api/banners`); falcıya popup (Kabul / Beklet / Reddet)
+- **Kabul sonrası:** Danışana reklam geçişi (3 sn) → aktif seans
+- **Kapatma:** Danışan ve falcı iptal/kapat dediğinde onay + API `end` + güvenli çıkış
+- **Router:** `/canli-falcilar/:id/waiting` bekleme rotası eklendi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
