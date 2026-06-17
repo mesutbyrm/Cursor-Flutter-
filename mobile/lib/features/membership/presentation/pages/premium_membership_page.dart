@@ -82,6 +82,8 @@ class PremiumMembershipPage extends ConsumerWidget {
                         ),
                         const SizedBox(height: 20),
                         const PremiumFeatureGrid(),
+                        const SizedBox(height: 16),
+                        const PremiumHowToBuyCard(),
                         const SizedBox(height: 20),
                         if (_hasActiveMembership(cat)) ...[
                           PremiumActiveMembershipCard(

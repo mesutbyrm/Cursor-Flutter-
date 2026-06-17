@@ -19,10 +19,56 @@ class PkInvitePage extends ConsumerStatefulWidget {
 
 class _PkInvitePageState extends ConsumerState<PkInvitePage> {
   var _loading = false;
+  var _syncing = true;
   String? _error;
 
   String get _roomKey =>
       widget.room.apiRoomKey.isNotEmpty ? widget.room.apiRoomKey : widget.room.id;
+
+  String? get _altRoomKey =>
+      widget.room.slug != _roomKey ? widget.room.slug : null;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncRoomPk());
+  }
+
+  Future<void> _syncRoomPk() async {
+    setState(() {
+      _syncing = true;
+      _error = null;
+    });
+    try {
+      final remote = ref.read(pkBattleRemoteProvider.notifier);
+      await remote.prepareRoomForInvite(
+        roomId: _roomKey,
+        alternateRoomId: _altRoomKey,
+      );
+    } catch (_) {}
+    if (mounted) setState(() => _syncing = false);
+  }
+
+  Future<bool> _resolveStalePkConflict() async {
+    final remote = ref.read(pkBattleRemoteProvider.notifier);
+    await remote.prepareRoomForInvite(
+      roomId: _roomKey,
+      alternateRoomId: _altRoomKey,
+    );
+    final loaded = await remote.loadRoomBattle(
+      _roomKey,
+      alternateRoomId: _altRoomKey,
+    );
+    if (loaded != null && loaded.id.isNotEmpty && !loaded.isEnded) {
+      await remote.end(
+        loaded.id,
+        roomId: _roomKey,
+        alternateRoomId: _altRoomKey,
+      );
+      remote.clear();
+    }
+    return true;
+  }
 
   Future<void> _invite(VoiceRoomEntity opponent) async {
     setState(() {
@@ -31,15 +77,11 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
     });
     try {
       final remote = ref.read(pkBattleRemoteProvider.notifier);
-      final existing = ref.read(pkBattleRemoteProvider);
-      if (existing != null && existing.isEnded) remote.clear();
-      if (existing != null &&
-          (existing.isActive || existing.isPending) &&
-          !existing.isEnded) {
-        setState(() => _error =
-            'Bu odada zaten aktif bir PK var. Önce mevcut PK\'yı bitirin.');
-        return;
-      }
+      await remote.prepareRoomForInvite(
+        roomId: _roomKey,
+        alternateRoomId: _altRoomKey,
+      );
+
       final oppKey =
           opponent.apiRoomKey.isNotEmpty ? opponent.apiRoomKey : opponent.id;
       if (oppKey.isEmpty || oppKey == _roomKey) {
@@ -48,7 +90,7 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
       }
       final battle = await remote.inviteRoom(
         roomId: _roomKey,
-        alternateRoomId: widget.room.slug != _roomKey ? widget.room.slug : null,
+        alternateRoomId: _altRoomKey,
         opponentRoomId: oppKey,
         alternateOpponentRoomId: opponent.slug != oppKey ? opponent.slug : null,
       );
@@ -60,7 +102,7 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
       }
       remote.connectSocket(
         roomId: _roomKey,
-        alternateRoomId: widget.room.slug != _roomKey ? widget.room.slug : null,
+        alternateRoomId: _altRoomKey,
         battleId: battle.id,
       );
       if (!mounted) return;
@@ -77,24 +119,8 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
         var msg = ApiException.userMessage(e);
         final lower = msg.toLowerCase();
         if (lower.contains('zaten') && lower.contains('pk')) {
-          final remote = ref.read(pkBattleRemoteProvider.notifier);
-          final stale = ref.read(pkBattleRemoteProvider);
-          if (stale != null && stale.isEnded) {
-            remote.clear();
-            msg = 'Eski PK kaydı temizlendi. Tekrar deneyin.';
-          } else if (stale?.id != null) {
-            await remote.end(
-              stale!.id,
-              roomId: _roomKey,
-              alternateRoomId:
-                  widget.room.slug != _roomKey ? widget.room.slug : null,
-            );
-            remote.clear();
-            msg = 'Önceki PK sonlandırıldı. Tekrar davet gönderebilirsiniz.';
-          } else {
-            msg =
-                'Bu odada aktif PK var. Mevcut PK bitince tekrar deneyin.';
-          }
+          await _resolveStalePkConflict();
+          msg = 'Eski PK kaydı temizlendi. Tekrar davet gönderebilirsiniz.';
         }
         if (msg.contains('404')) {
           msg =
@@ -136,6 +162,8 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
 
           return Column(
             children: [
+              if (_syncing)
+                const LinearProgressIndicator(minHeight: 2),
               if (_error != null)
                 Material(
                   color: Colors.red.withValues(alpha: 0.12),
@@ -151,6 +179,11 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
                             style: const TextStyle(color: Colors.red, fontSize: 12),
                           ),
                         ),
+                        if (!_loading)
+                          TextButton(
+                            onPressed: _syncRoomPk,
+                            child: const Text('Yenile'),
+                          ),
                       ],
                     ),
                   ),
@@ -165,7 +198,7 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
                   itemBuilder: (context, i) {
                     final r = others[i];
                     return ListTile(
-                      enabled: !_loading,
+                      enabled: !_loading && !_syncing,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                         side: const BorderSide(color: Colors.white12),

@@ -2,22 +2,22 @@ import 'package:flutter/material.dart';
 
 import '../../theme/home_approved_design.dart';
 
-/// Onaylı mockup — Ana Sayfa, Canlı, Odalar, Jeton, Profil.
+/// Onaylı mockup — Ana Sayfa, Sosyal, Yayın/Medya, Jeton, Profil.
 class BottomNavigationWidget extends StatelessWidget {
   const BottomNavigationWidget({
     super.key,
     required this.activeTab,
     required this.onHome,
-    required this.onLive,
-    required this.onRooms,
+    required this.onSocial,
+    required this.onCreate,
     required this.onJeton,
     required this.onProfile,
   });
 
   final HomeBottomTab activeTab;
   final VoidCallback onHome;
-  final VoidCallback onLive;
-  final VoidCallback onRooms;
+  final VoidCallback onSocial;
+  final VoidCallback onCreate;
   final VoidCallback onJeton;
   final VoidCallback onProfile;
 
@@ -43,16 +43,16 @@ class BottomNavigationWidget extends StatelessWidget {
             onTap: onHome,
           ),
           _NavItem(
-            icon: Icons.cell_tower_rounded,
-            label: 'Canlı',
-            active: activeTab == HomeBottomTab.live,
-            onTap: onLive,
+            icon: Icons.groups_rounded,
+            label: 'Sosyal',
+            active: activeTab == HomeBottomTab.social,
+            onTap: onSocial,
           ),
           _NavItem(
             icon: Icons.mic_rounded,
-            label: 'Odalar',
-            active: activeTab == HomeBottomTab.rooms,
-            onTap: onRooms,
+            label: 'Yayın',
+            active: false,
+            onTap: onCreate,
           ),
           _NavItem(
             icon: Icons.diamond_rounded,
@@ -72,7 +72,7 @@ class BottomNavigationWidget extends StatelessWidget {
   }
 }
 
-enum HomeBottomTab { home, live, rooms, jeton, profile }
+enum HomeBottomTab { home, social, jeton, profile }
 
 class _NavItem extends StatelessWidget {
   const _NavItem({

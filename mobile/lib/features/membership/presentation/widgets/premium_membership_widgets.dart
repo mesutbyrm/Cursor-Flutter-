@@ -553,3 +553,84 @@ class PremiumMembershipBody extends StatelessWidget {
     );
   }
 }
+
+/// Üyelik satın alma adımları — kısa ve anlaşılır.
+class PremiumHowToBuyCard extends StatelessWidget {
+  const PremiumHowToBuyCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withValues(alpha: 0.06),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Nasıl üye olurum?',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+              color: context.colors.onSurface,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const _HowToStep(
+            number: '1',
+            text: 'Aşağıdan paket seçin (Premium, Gold veya Diamond).',
+          ),
+          const _HowToStep(
+            number: '2',
+            text: 'Jeton bakiyeniz yeterliyse anında aktif olur.',
+          ),
+          const _HowToStep(
+            number: '3',
+            text: 'Yetersizse ödeme yöntemi seçip dekont bildirin — onay sonrası üyelik açılır.',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HowToStep extends StatelessWidget {
+  const _HowToStep({required this.number, required this.text});
+
+  final String number;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 12,
+            backgroundColor: AppThemeColors.accentPurple.withValues(alpha: 0.35),
+            child: Text(
+              number,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.35,
+                color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

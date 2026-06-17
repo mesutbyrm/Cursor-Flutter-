@@ -1,15 +1,23 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
+import '../../../admin/presentation/providers/admin_providers.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
+import '../../../notifications/presentation/providers/notifications_list_notifier.dart';
+import '../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../social/domain/entities/create_social_post_input.dart';
+import '../../../social/presentation/providers/social_providers.dart';
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 
-/// Ödeme bildirimi — dekont ve açıklama ile yükleme talebi.
+/// Ödeme bildirimi — dekont görseli ve açıklama ile yükleme talebi.
 class ProfilePaymentNoticePage extends ConsumerStatefulWidget {
   const ProfilePaymentNoticePage({super.key});
 
@@ -26,6 +34,7 @@ class _ProfilePaymentNoticePageState
   final _notesCtrl = TextEditingController();
   var _submitting = false;
   String _type = 'cfc';
+  String? _receiptImagePath;
 
   @override
   void dispose() {
@@ -34,6 +43,40 @@ class _ProfilePaymentNoticePageState
     _receiptCtrl.dispose();
     _notesCtrl.dispose();
     super.dispose();
+  }
+
+  String get _userLabel {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return '';
+    return '${user.display} (@${user.username})';
+  }
+
+  Future<void> _pickReceipt() async {
+    final file = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 82,
+    );
+    if (file == null) return;
+    setState(() => _receiptImagePath = file.path);
+  }
+
+  Future<String?> _uploadReceiptIfNeeded() async {
+    final path = _receiptImagePath;
+    if (path == null || path.isEmpty) return null;
+    try {
+      final post = await ref
+          .read(socialRemoteProvider)
+          .createPost(
+            CreateSocialPostInput(
+              imagePath: path,
+              caption: '[ODEME_DEKONT] $_userLabel',
+            ),
+          )
+          .timeout(const Duration(seconds: 25));
+      return post.mediaUrl;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _submit() async {
@@ -46,23 +89,51 @@ class _ProfilePaymentNoticePageState
     }
     setState(() => _submitting = true);
     try {
+      String? uploaded;
+      if (_receiptImagePath != null && _receiptImagePath!.isNotEmpty) {
+        uploaded = await _uploadReceiptIfNeeded();
+      }
+
+      final receiptParts = <String>[
+        if (uploaded != null && uploaded.isNotEmpty) uploaded,
+        if (_receiptCtrl.text.trim().isNotEmpty) _receiptCtrl.text.trim(),
+        if (uploaded == null &&
+            _receiptImagePath != null &&
+            _receiptImagePath!.isNotEmpty)
+          'Dekont görseli eklendi (yüklenemedi — admin ile paylaşın)',
+      ];
+
       final notes = [
-        if (_receiptCtrl.text.trim().isNotEmpty)
-          'Dekont: ${_receiptCtrl.text.trim()}',
+        if (receiptParts.isNotEmpty) 'Dekont: ${receiptParts.join(' · ')}',
         if (_notesCtrl.text.trim().isNotEmpty) _notesCtrl.text.trim(),
       ].join('\n');
 
       await ref.read(walletRepositoryProvider).submitPaymentRequest({
         'requestType': _type,
+        'type': _type,
         'amount': amount,
         'method': 'bank_transfer',
         'senderInfo': _senderCtrl.text.trim(),
         'notes': notes,
+        if (receiptParts.isNotEmpty) 'receiptReference': receiptParts.join(' · '),
+        'notifyAdmins': true,
+        'notifyStaff': true,
+        'source': 'mobile_payment_notice',
       });
+
       ref.invalidate(paymentRequestsNotifierProvider);
+      ref.invalidate(adminPaymentRequestsProvider);
+      ref.invalidate(adminPaymentNotificationsProvider);
+      ref.invalidate(notificationsListProvider);
+      ref.invalidate(notificationsListNotifierProvider);
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ödeme bildiriminiz alındı')),
+        const SnackBar(
+          content: Text(
+            'Ödeme bildiriminiz alındı. Admin ekibine bildirim gönderildi.',
+          ),
+        ),
       );
       Navigator.of(context).pop();
     } catch (e) {
@@ -82,7 +153,7 @@ class _ProfilePaymentNoticePageState
       body: DiscoverBackground(
         child: DiscoverSubPage(
           title: 'Ödeme Bildirimi',
-          subtitle: 'Dekont linki veya referans + açıklama',
+          subtitle: 'Dekont görseli veya referans + açıklama',
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             children: [
@@ -111,11 +182,33 @@ class _ProfilePaymentNoticePageState
                 ),
               ),
               const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _submitting ? null : _pickReceipt,
+                icon: const Icon(Icons.attach_file_rounded),
+                label: Text(
+                  _receiptImagePath == null
+                      ? 'Dekont paylaş (galeriden seç)'
+                      : 'Dekont seçildi — değiştir',
+                ),
+              ),
+              if (_receiptImagePath != null) ...[
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image(
+                    image: FileImage(File(_receiptImagePath!)),
+                    height: 140,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
               TextField(
                 controller: _receiptCtrl,
                 decoration: const InputDecoration(
-                  labelText: 'Dekont paylaşma (link veya referans no)',
-                  hintText: 'https://... veya dekont ekran görüntüsü linki',
+                  labelText: 'Dekont referansı (isteğe bağlı)',
+                  hintText: 'Referans no veya ek link',
                 ),
               ),
               const SizedBox(height: 12),

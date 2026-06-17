@@ -51,7 +51,59 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
 
   @override
-  Future<ProfileStatsEntity> myStats() => _remote.myStats();
+  Future<ProfileStatsEntity> myStats() async {
+    ProfileStatsEntity stats = const ProfileStatsEntity();
+    try {
+      stats = await _remote.myStats();
+    } catch (_) {}
+
+    try {
+      final profile = await _remote.mySiteProfile();
+      stats = ProfileStatsEntity(
+        liveStreams: stats.liveStreams,
+        likes: stats.likes,
+        followers: stats.followers > 0 ? stats.followers : profile.followersCount,
+        following: stats.following > 0 ? stats.following : profile.followingCount,
+        giftsReceivedCount: stats.giftsReceivedCount,
+        giftsReceivedCoins: stats.giftsReceivedCoins,
+        earningsJeton: stats.earningsJeton,
+        approvedTopUpTotal: stats.approvedTopUpTotal,
+      );
+    } catch (_) {}
+
+    if (stats.liveStreams == 0) {
+      try {
+        final history = await _canlifal.broadcastHistory(page: 1, limit: 100);
+        if (history.items.isNotEmpty) {
+          stats = ProfileStatsEntity(
+            liveStreams: history.items.length,
+            likes: stats.likes,
+            followers: stats.followers,
+            following: stats.following,
+            giftsReceivedCount: stats.giftsReceivedCount,
+            giftsReceivedCoins: stats.giftsReceivedCoins,
+            earningsJeton: stats.earningsJeton,
+            approvedTopUpTotal: stats.approvedTopUpTotal,
+          );
+        }
+      } catch (_) {}
+    }
+
+    if (stats.likes == 0 && stats.giftsReceivedCount > 0) {
+      stats = ProfileStatsEntity(
+        liveStreams: stats.liveStreams,
+        likes: stats.giftsReceivedCount,
+        followers: stats.followers,
+        following: stats.following,
+        giftsReceivedCount: stats.giftsReceivedCount,
+        giftsReceivedCoins: stats.giftsReceivedCoins,
+        earningsJeton: stats.earningsJeton,
+        approvedTopUpTotal: stats.approvedTopUpTotal,
+      );
+    }
+
+    return stats;
+  }
 
   @override
   Future<List<GiftReceivedSummaryEntity>> giftsReceivedSummary() =>

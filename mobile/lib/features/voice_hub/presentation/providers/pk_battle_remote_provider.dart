@@ -37,6 +37,41 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     return battle;
   }
 
+  /// Sunucudaki askıda / bitmemiş PK kaydını temizler; davet öncesi çağırın.
+  Future<bool> prepareRoomForInvite({
+    required String roomId,
+    String? alternateRoomId,
+  }) async {
+    final stale = state;
+    if (stale != null && stale.isEnded) clear();
+
+    final battle = await _api.fetchRoomBattle(
+      roomId,
+      alternateRoomId: alternateRoomId,
+    );
+    if (battle == null) {
+      clear();
+      return true;
+    }
+    if (battle.isEnded) {
+      clear();
+      return true;
+    }
+    if (battle.id.isEmpty) {
+      clear();
+      return true;
+    }
+    try {
+      await end(
+        battle.id,
+        roomId: roomId,
+        alternateRoomId: alternateRoomId,
+      );
+    } catch (_) {}
+    clear();
+    return true;
+  }
+
   Future<PkBattleRemote?> loadStreamBattle(String streamId) async {
     final battle = await _api.fetchStreamBattle(streamId);
     if (battle != null) _apply(battle, 'load');

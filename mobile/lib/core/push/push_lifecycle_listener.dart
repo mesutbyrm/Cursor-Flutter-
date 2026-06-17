@@ -8,6 +8,7 @@ import '../../features/admin/presentation/providers/admin_providers.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/home/presentation/providers/fortune_incoming_invite_provider.dart';
 import '../../features/messages/presentation/providers/messages_providers.dart';
+import '../../features/notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
 import '../onesignal/onesignal_bootstrap.dart';
 import 'push_navigation_handler.dart';

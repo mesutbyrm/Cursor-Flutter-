@@ -288,6 +288,15 @@ class ProfileBranchQuickActions extends StatelessWidget {
       rows: [
         [
           QuickActionTile(
+            icon: Icons.videocam_rounded,
+            label: 'Canlı Yayın\nAç',
+            gradient: [
+              AppColors.liveRed.withValues(alpha: 0.55),
+              AppColors.accentPink.withValues(alpha: 0.35),
+            ],
+            onTap: () => context.push('/live/prep'),
+          ),
+          QuickActionTile(
             icon: Icons.person_add_alt_1_rounded,
             label: 'Arkadaşlarını\ndavet et',
             gradient: [
@@ -327,6 +336,15 @@ class ProfileBranchQuickActions extends StatelessWidget {
           ),
         ],
         [
+          QuickActionTile(
+            icon: Icons.video_library_rounded,
+            label: 'Video\nyükle',
+            gradient: [
+              AppColors.accentPurple.withValues(alpha: 0.45),
+              AppColors.accentPink.withValues(alpha: 0.28),
+            ],
+            onTap: () => context.push('/shorts/upload'),
+          ),
           QuickActionTile(
             icon: Icons.auto_awesome_rounded,
             label: 'Fal&\nTarot',

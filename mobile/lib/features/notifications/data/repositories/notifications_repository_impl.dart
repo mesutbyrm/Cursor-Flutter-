@@ -13,15 +13,34 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
 
   @override
   Future<List<AppNotificationEntity>> fetch() async {
+    final byId = <String, AppNotificationEntity>{};
+
+    void addAll(Iterable<AppNotificationEntity> items) {
+      for (final n in items) {
+        final key = n.id.isNotEmpty ? n.id : '${n.title}_${n.createdAt}';
+        byId.putIfAbsent(key, () => n);
+      }
+    }
+
+    try {
+      addAll(await _remote.list());
+    } catch (_) {}
+
     if (Env.useMobileAuth) {
       try {
         final page = await _canlifal.fetchActivity();
-        if (page.items.isNotEmpty) {
-          return page.items.map(_activityToNotification).toList();
-        }
+        addAll(page.items.map(_activityToNotification));
       } catch (_) {}
     }
-    return _remote.list();
+
+    final list = byId.values.toList()
+      ..sort((a, b) {
+        final at = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bt = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bt.compareTo(at);
+      });
+
+    return list;
   }
 
   AppNotificationEntity _activityToNotification(ProfileActivityItemEntity a) {
@@ -33,6 +52,7 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       body: a.subtitle,
       read: read,
       createdAt: DateTime.tryParse(a.createdAt ?? ''),
+      type: a.type,
     );
   }
 

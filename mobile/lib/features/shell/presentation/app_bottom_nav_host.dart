@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/router/app_router.dart';
 import '../../home/presentation/theme/home_approved_design.dart';
@@ -50,21 +51,61 @@ class AppBottomNavHost extends ConsumerWidget {
 
   static HomeBottomTab activeTabFor(String location) {
     final path = Uri.tryParse(location)?.path ?? location;
-    if (path.startsWith('/voice-rooms')) return HomeBottomTab.rooms;
+    if (path.startsWith('/social') || path.startsWith('/shorts')) {
+      return HomeBottomTab.social;
+    }
     if (path.startsWith('/jeton-store') || path.startsWith('/wallet')) {
       return HomeBottomTab.jeton;
     }
-    if (path.startsWith('/canli-falcilar') ||
-        path.startsWith('/live/prep') ||
-        path.startsWith('/live/swipe')) {
-      return HomeBottomTab.live;
-    }
+    if (path.startsWith('/profile')) return HomeBottomTab.profile;
     if (path.startsWith('/messages') ||
         path.startsWith('/notifications') ||
         path.startsWith('/content-hub')) {
       return HomeBottomTab.home;
     }
     return HomeBottomTab.home;
+  }
+
+  static void showCreateSheet(BuildContext context, GoRouter router) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF12081F),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'İçerik oluştur',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.videocam_rounded, color: Colors.redAccent),
+                title: const Text('Canlı yayın aç'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  router.push('/live/prep');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.video_library_rounded, color: Colors.purpleAccent),
+                title: const Text('Video yükle'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  router.push('/shorts/upload');
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -83,8 +124,8 @@ class AppBottomNavHost extends ConsumerWidget {
           BottomNavigationWidget(
             activeTab: tab,
             onHome: () => router.go('/feed'),
-            onLive: () => router.go('/live'),
-            onRooms: () => router.push('/voice-rooms'),
+            onSocial: () => router.go('/social'),
+            onCreate: () => AppBottomNavHost.showCreateSheet(context, router),
             onJeton: () => router.push('/jeton-store'),
             onProfile: () => router.go('/profile'),
           ),

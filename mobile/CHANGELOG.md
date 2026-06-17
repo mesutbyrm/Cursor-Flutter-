@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.249+252 (2026-06-12)
+
+### PK, alt bar, profil, ödeme, bildirimler
+
+- **PK daveti:** Oda açılışında sunucudan PK durumu senkronu; askıda kayıt otomatik sonlandırma; «zaten aktif PK» hatasında yenileme
+- **Alt bar:** Ana sayfa yanında **Sosyal** sekmesi (`/social`); mikrofon → canlı yayın aç + video yükle
+- **Profil:** Takipçi/takip/yayın sayıları site profili + yayın geçmişi ile birleştirilir
+- **Hızlı işlemler:** Canlı yayın aç ve video yükle kısayolları
+- **Premium üyelik:** «Nasıl üye olurum?» adım kartı; satın alma akışı korundu
+- **Ödeme bildirimi:** Galeriden dekont seçimi; gönderimde admin bildirimi bayrağı
+- **Bildirimler:** `/api/notifications` + aktivite akışı birleşik liste; OneSignal kaydı korunur
+
 ## 1.0.248+251 (2026-06-12)
 
 ### Canlı fal istekleri + sesli oda / PK
