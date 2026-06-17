@@ -10,6 +10,7 @@ class LiveStreamEntity extends Equatable {
     this.viewerCount = 0,
     this.isLive = true,
     this.hostUserId,
+    this.playbackUrl,
   });
 
   final String id;
@@ -21,6 +22,8 @@ class LiveStreamEntity extends Equatable {
   final bool isLive;
   /// Yayıncının TRTC / kullanıcı kimliği (`user.id` from API).
   final String? hostUserId;
+  /// HLS / playback URL — ana sayfa canlı önizleme.
+  final String? playbackUrl;
 
   @override
   List<Object?> get props => [
@@ -32,5 +35,6 @@ class LiveStreamEntity extends Equatable {
         viewerCount,
         isLive,
         hostUserId,
+        playbackUrl,
       ];
 }

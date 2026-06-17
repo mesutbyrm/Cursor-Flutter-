@@ -32,7 +32,9 @@ import '../../features/games/presentation/pages/game_room_page.dart';
 import '../../features/games/presentation/pages/games_hub_page.dart';
 import '../../features/gifts/presentation/pages/gift_send_page.dart';
 import '../../features/live/domain/entities/live_broadcast_session.dart';
+import '../../features/live/domain/entities/live_broadcast_prep_args.dart';
 import '../../features/live/presentation/pages/live_broadcast_prep_page.dart';
+import '../../features/live/presentation/pages/live_broadcast_type_page.dart';
 import '../../features/live/domain/entities/live_swipe_feed_args.dart';
 import '../../features/live/presentation/pages/live_broadcast_room_page.dart';
 import '../../features/live/presentation/pages/live_page.dart';
@@ -332,18 +334,30 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
-        path: '/live/prep',
+        path: '/live/type',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
-          child: const LiveBroadcastPrepPage(),
+          child: const LiveBroadcastTypePage(),
         ),
+      ),
+      GoRoute(
+        path: '/live/prep',
+        pageBuilder: (context, state) {
+          final args = state.extra as LiveBroadcastPrepArgs?;
+          return AppPageTransitions.fadeSlide(
+            key: state.pageKey,
+            child: LiveBroadcastPrepPage(
+              args: args ?? const LiveBroadcastPrepArgs(category: 'Sohbet'),
+            ),
+          );
+        },
       ),
       GoRoute(
         path: '/live/room',
         pageBuilder: (context, state) {
           final session = state.extra as LiveBroadcastSession?;
           final child = session == null
-              ? const LiveBroadcastPrepPage()
+              ? const LiveBroadcastTypePage()
               : LiveBroadcastRoomPage(session: session);
           return AppPageTransitions.fadeSlide(key: state.pageKey, child: child);
         },

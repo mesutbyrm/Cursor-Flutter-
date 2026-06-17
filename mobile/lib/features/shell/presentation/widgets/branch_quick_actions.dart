@@ -25,7 +25,7 @@ class SocialBranchQuickActions extends StatelessWidget {
               AppColors.liveRed.withValues(alpha: 0.55),
               AppColors.accentPink.withValues(alpha: 0.35),
             ],
-            onTap: () => context.push('/live/prep'),
+            onTap: () => context.push('/live/type'),
           ),
           QuickActionTile(
             icon: Icons.person_add_alt_1_rounded,
@@ -92,7 +92,7 @@ class LiveStreamsBranchQuickActions extends StatelessWidget {
               AppColors.liveRed.withValues(alpha: 0.55),
               AppColors.accentPink.withValues(alpha: 0.35),
             ],
-            onTap: () => context.push('/live/prep'),
+            onTap: () => context.push('/live/type'),
           ),
           QuickActionTile(
             icon: Icons.monetization_on_rounded,
@@ -294,7 +294,7 @@ class ProfileBranchQuickActions extends StatelessWidget {
               AppColors.liveRed.withValues(alpha: 0.55),
               AppColors.accentPink.withValues(alpha: 0.35),
             ],
-            onTap: () => context.push('/live/prep'),
+            onTap: () => context.push('/live/type'),
           ),
           QuickActionTile(
             icon: Icons.person_add_alt_1_rounded,

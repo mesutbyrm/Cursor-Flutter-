@@ -1,4 +1,5 @@
 import 'live_stream_entity.dart';
+import 'live_guest_layout.dart';
 import '../../../trtc/domain/entities/trtc_credentials.dart';
 
 /// Yayın hazırlığından odaya aktarılan veri.
@@ -21,6 +22,7 @@ class LiveBroadcastSession {
     this.isImageMode = false,
     this.coverImageUrl,
     this.backgroundUrl,
+    this.guestLayout = LiveGuestLayout.solo,
   });
 
   final String title;
@@ -40,6 +42,7 @@ class LiveBroadcastSession {
   final bool isImageMode;
   final String? coverImageUrl;
   final String? backgroundUrl;
+  final LiveGuestLayout guestLayout;
 
   factory LiveBroadcastSession.fromStream(LiveStreamEntity stream) {
     return LiveBroadcastSession(
@@ -66,6 +69,7 @@ class LiveBroadcastSession {
     bool? isImageMode,
     String? coverImageUrl,
     String? backgroundUrl,
+    LiveGuestLayout? guestLayout,
   }) {
     return LiveBroadcastSession(
       title: title,
@@ -85,6 +89,7 @@ class LiveBroadcastSession {
       isImageMode: isImageMode ?? this.isImageMode,
       coverImageUrl: coverImageUrl ?? this.coverImageUrl,
       backgroundUrl: backgroundUrl ?? this.backgroundUrl,
+      guestLayout: guestLayout ?? this.guestLayout,
     );
   }
 

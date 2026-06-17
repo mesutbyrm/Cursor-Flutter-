@@ -89,7 +89,7 @@ class _LivePageState extends ConsumerState<LivePage>
                 DiscoverIconButton(
                   icon: Icons.videocam_rounded,
                   tooltip: 'Yayına başla',
-                  onPressed: () => context.push('/live/prep'),
+                  onPressed: () => context.push('/live/type'),
                 ),
                 DiscoverIconButton(
                   icon: Icons.refresh_rounded,

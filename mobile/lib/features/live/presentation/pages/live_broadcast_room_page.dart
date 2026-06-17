@@ -30,6 +30,8 @@ import '../providers/live_room_interaction_provider.dart'
     show LiveRoomInteractionNotifier, LiveRoomInteractionState, liveRoomInteractionProvider;
 import '../providers/live_room_providers.dart';
 import '../providers/live_video_pk_provider.dart';
+import '../widgets/live_tiktok/live_background_picker_sheet.dart';
+import '../widgets/live_tiktok/live_guest_grid.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
@@ -65,6 +67,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   final _heartsKey = GlobalKey<LiveFloatingHeartsOverlayState>();
   Key _localPreviewKey = UniqueKey();
   var _leaving = false;
+  var _chatVisible = true;
   VideoWebrtcSignalService? _signalService;
 
   @override
@@ -279,7 +282,27 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.wallpaper_rounded),
-                  title: const Text('Canlifal arka planı uygula'),
+                  title: const Text('Arka plan değiştir'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    LiveBackgroundPickerSheet.show(
+                      context,
+                      selectedUrl: widget.session.backgroundUrl,
+                      onSelectUrl: (url) => run(
+                        () => ref.read(liveStreamExtrasProvider).setBackground(
+                              streamId: streamId,
+                              backgroundUrl: url ??
+                                  'https://canlifal.com/apple-touch-icon.png',
+                            ),
+                        'Yayın arka planı güncellendi.',
+                      ),
+                      onSelectFile: (_) {},
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.wallpaper_outlined),
+                  title: const Text('Canlifal varsayılan arka plan'),
                   onTap: () => run(
                     () => ref.read(liveStreamExtrasProvider).setBackground(
                           streamId: streamId,
@@ -334,9 +357,26 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   }
 
   Widget _videoLayer(LiveBroadcastSession s) {
+    if (s.backgroundUrl?.trim().isNotEmpty == true && !s.isImageMode) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          CachedNetworkImage(
+            imageUrl: s.backgroundUrl!,
+            fit: BoxFit.cover,
+            errorWidget: (_, __, ___) => const SizedBox.shrink(),
+          ),
+          _mainVideo(s),
+        ],
+      );
+    }
     if (s.isImageMode && s.coverImageUrl?.trim().isNotEmpty == true) {
       return _imageModeLayer(s);
     }
+    return _mainVideo(s);
+  }
+
+  Widget _mainVideo(LiveBroadcastSession s) {
     if (!_rtcReady) {
       return Stack(
         fit: StackFit.expand,
@@ -357,22 +397,18 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       );
     }
 
-    if (s.isHost) {
-      return TrtcLocalVideoView(key: _localPreviewKey, manager: _trtc);
-    }
-
-    return ValueListenableBuilder<String?>(
-      valueListenable: _trtc.remoteAnchorUserIdNotifier,
-      builder: (context, anchor, _) {
-        if (anchor != null && anchor.isNotEmpty) {
-          return TrtcRemoteVideoView(
-            key: ValueKey(anchor),
-            manager: _trtc,
-            userId: anchor,
-          );
-        }
-        return const LiveRoomVideoBackground();
-      },
+    final remote = _trtc.remoteAnchorUserIdNotifier.value;
+    return LiveGuestGrid(
+      layout: s.guestLayout,
+      isHost: s.isHost,
+      trtc: _trtc,
+      localPreviewKey: _localPreviewKey,
+      hostAvatarUrl: s.avatarUrl,
+      hostName: s.streamerName,
+      remoteUserId: remote,
+      onInviteSlot: s.isHost
+          ? (_) => _openHostTools()
+          : null,
     );
   }
 
@@ -604,58 +640,156 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                       ),
                     ),
                   const Spacer(),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              GiftNotificationStack(
-                                events: giftCtrl.notifications,
-                              ),
-                              const SizedBox(height: 8),
-                              LivePremiumChatFeed(
-                                messages: roomState.messages.isEmpty
-                                    ? const [
-                                        LiveRoomChatMessage(
-                                          user: 'Sistem',
-                                          text: 'Canlı yayına hoş geldin',
-                                          isSystem: true,
-                                        ),
-                                      ]
-                                    : roomState.messages,
-                              ),
-                            ],
+                  if (_chatVisible)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12, bottom: 4),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: () => setState(() => _chatVisible = false),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.45),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white24),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.keyboard_arrow_down_rounded,
+                                    color: Colors.white, size: 18),
+                                Text(
+                                  'Sohbeti gizle',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        LivePremiumSideRail(
-                          likeLabel: _fmtLikes(interaction.likeCount),
-                          giftLabel: giftCtrl.streamerEarnings != null
-                              ? '${giftCtrl.streamerEarnings}'
-                              : 'Hediye',
-                          shareLabel: 'Paylaş',
-                          onLike: _onDoubleTapHeart,
-                          onGift: () => giftCtrl.setPanelOpen(true),
-                          onShare: _shareLive,
-                          onReport: s.streamId != null && s.streamId!.isNotEmpty
-                              ? () => openReportFlow(
-                                    context,
-                                    ReportTarget(
-                                      type: ReportTargetType.liveStream,
-                                      targetId: s.streamId!,
-                                      displayTitle:
-                                          s.streamerName ?? 'Canlı yayın',
-                                    ),
-                                  )
-                              : null,
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                  if (_chatVisible)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                GiftNotificationStack(
+                                  events: giftCtrl.notifications,
+                                ),
+                                const SizedBox(height: 8),
+                                LivePremiumChatFeed(
+                                  messages: roomState.messages.isEmpty
+                                      ? const [
+                                          LiveRoomChatMessage(
+                                            user: 'Sistem',
+                                            text: 'Canlı yayına hoş geldin',
+                                            isSystem: true,
+                                          ),
+                                        ]
+                                      : roomState.messages,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          LivePremiumSideRail(
+                            likeLabel: _fmtLikes(interaction.likeCount),
+                            giftLabel: giftCtrl.streamerEarnings != null
+                                ? '${giftCtrl.streamerEarnings}'
+                                : 'Hediye',
+                            shareLabel: 'Paylaş',
+                            onLike: _onDoubleTapHeart,
+                            onGift: () => giftCtrl.setPanelOpen(true),
+                            onShare: _shareLive,
+                            onReport: s.streamId != null && s.streamId!.isNotEmpty
+                                ? () => openReportFlow(
+                                      context,
+                                      ReportTarget(
+                                        type: ReportTargetType.liveStream,
+                                        targetId: s.streamId!,
+                                        displayTitle:
+                                            s.streamerName ?? 'Canlı yayın',
+                                      ),
+                                    )
+                                : null,
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () => setState(() => _chatVisible = true),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF22C55E).withValues(alpha: 0.9),
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.chat_bubble_rounded,
+                                      color: Colors.white, size: 16),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Sohbet',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          LivePremiumSideRail(
+                            likeLabel: _fmtLikes(interaction.likeCount),
+                            giftLabel: giftCtrl.streamerEarnings != null
+                                ? '${giftCtrl.streamerEarnings}'
+                                : 'Hediye',
+                            shareLabel: 'Paylaş',
+                            onLike: _onDoubleTapHeart,
+                            onGift: () => giftCtrl.setPanelOpen(true),
+                            onShare: _shareLive,
+                            onReport: s.streamId != null && s.streamId!.isNotEmpty
+                                ? () => openReportFlow(
+                                      context,
+                                      ReportTarget(
+                                        type: ReportTargetType.liveStream,
+                                        targetId: s.streamId!,
+                                        displayTitle:
+                                            s.streamerName ?? 'Canlı yayın',
+                                      ),
+                                    )
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ),
                   const SizedBox(height: 8),
                   LivePremiumBottomBar(
                     chatController: _chat,

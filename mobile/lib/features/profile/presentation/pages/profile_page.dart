@@ -150,12 +150,12 @@ class ProfilePage extends ConsumerWidget {
                             ProfileBroadcasterPanel(
                               onHistory: () =>
                                   context.push('/profile/broadcast-history'),
-                              onSchedule: () => context.push('/live/prep'),
+                              onSchedule: () => context.push('/live/type'),
                               onStats: () =>
                                   context.push('/profile/broadcaster-stats'),
                               onEquipment: () =>
                                   context.push('/profile/equipment'),
-                              onSettings: () => context.push('/live/prep'),
+                              onSettings: () => context.push('/live/type'),
                             ),
                             const SizedBox(height: 22),
                             ProfileGiftsRow(

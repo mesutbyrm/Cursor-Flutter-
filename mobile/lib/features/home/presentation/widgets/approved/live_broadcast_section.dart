@@ -10,6 +10,7 @@ import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/presentation/utils/open_live_stream.dart';
 import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
+import 'live_stream_preview_media.dart';
 import 'home_section_title.dart';
 
 /// Onaylı mockup — 3:4 dikey canlı yayın kartları.
@@ -142,16 +143,7 @@ class _LiveCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              if (stream.thumbnailUrl != null && stream.thumbnailUrl!.isNotEmpty)
-                CachedNetworkImage(
-                  imageUrl: stream.thumbnailUrl!,
-                  fit: BoxFit.cover,
-                  memCacheWidth: eager ? 480 : 320,
-                  fadeInDuration: eager ? Duration.zero : const Duration(milliseconds: 180),
-                  errorWidget: (_, __, ___) => _placeholder(),
-                )
-              else
-                _placeholder(),
+              LiveStreamPreviewMedia(stream: stream, eager: eager),
               DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(

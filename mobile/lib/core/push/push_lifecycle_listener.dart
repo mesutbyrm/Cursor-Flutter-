@@ -68,6 +68,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
   void _onPushReceived() {
     if (!mounted) return;
     ref.invalidate(notificationsListProvider);
+    ref.invalidate(notificationsListNotifierProvider);
     ref.invalidate(conversationsProvider);
     ref.invalidate(adminPaymentNotificationsProvider);
     ref.invalidate(adminPaymentRequestsProvider);

@@ -90,7 +90,7 @@ class AppBottomNavHost extends ConsumerWidget {
                 title: const Text('Canlı yayın aç'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  router.push('/live/prep');
+                  router.push('/live/type');
                 },
               ),
               ListTile(

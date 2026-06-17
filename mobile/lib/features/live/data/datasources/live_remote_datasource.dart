@@ -51,7 +51,23 @@ class LiveRemoteDataSource {
       list = body;
     }
     return asJsonList(list)
-        .map((j) => LiveStreamDto.fromApiMap(j).toEntity())
+        .map((j) {
+          final map = asJsonMap(j);
+          final base = LiveStreamDto.fromApiMap(map).toEntity();
+          final playback = LiveStreamDto.playbackUrlFrom(map);
+          if (playback == null || playback.isEmpty) return base;
+          return LiveStreamEntity(
+            id: base.id,
+            title: base.title,
+            streamerName: base.streamerName,
+            thumbnailUrl: base.thumbnailUrl,
+            category: base.category,
+            viewerCount: base.viewerCount,
+            isLive: base.isLive,
+            hostUserId: base.hostUserId,
+            playbackUrl: playback,
+          );
+        })
         .where((s) => s.id.isNotEmpty)
         .toList();
   }

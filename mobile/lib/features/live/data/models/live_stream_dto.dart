@@ -80,4 +80,16 @@ abstract class LiveStreamDto with _$LiveStreamDto {
         isLive: isLive,
         hostUserId: hostUserId,
       );
+
+  static String? playbackUrlFrom(Map<String, dynamic> json) =>
+      pick(json, [
+        'playbackUrl',
+        'playback_url',
+        'hlsUrl',
+        'hls_url',
+        'streamUrl',
+        'stream_url',
+        'videoUrl',
+        'video_url',
+      ]) as String?;
 }

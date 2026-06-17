@@ -29,5 +29,5 @@ class DiscoverBottomBar extends StatelessWidget {
 
 /// Orta FAB — canlı yayın hazırlığı.
 void openLiveFromFab(BuildContext context) {
-  context.push('/live/prep');
+  context.push('/live/type');
 }

@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.250+253 (2026-06-12)
+
+### TikTok tarzı canlı yayın akışı
+
+- **Yayın türü:** Fal türleri + sohbet/müzik kategorileri (`/live/type`)
+- **Hazırlık:** Kamera önizleme, misafir modu (2/3/4 kişi grid), arka plan seçimi
+- **Canlı oda:** Misafir grid düzeni, sohbet göster/gizle, PK ve arka plan değiştirme
+- **Ana sayfa:** Canlı yayıncılar için video önizleme (HLS varsa) + animasyonlu thumbnail
+
 ## 1.0.249+252 (2026-06-12)
 
 ### PK, alt bar, profil, ödeme, bildirimler

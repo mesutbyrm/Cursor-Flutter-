@@ -79,7 +79,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
                 subtitle: const Text('Kamera veya ekran yayını başlat'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  context.push('/live/prep');
+                  context.push('/live/type');
                 },
               ),
               ListTile(
