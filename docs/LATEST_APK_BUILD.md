@@ -2,21 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.235+238` |
-| Tarih (UTC) | 2026-06-17 04:39 |
-| Commit | [`cf66a019c64f3e3085bb356284f437a24551cc89`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/cf66a019c64f3e3085bb356284f437a24551cc89) |
-| İş akışı | [Run 27665816633](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27665816633) |
+| Sürüm | `1.0.236+239` |
+| Tarih (UTC) | 2026-06-17 05:24 |
+| Commit | [`d522b256070d21eca3e4bb23f4008c6e9a2891b0`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d522b256070d21eca3e4bb23f4008c6e9a2891b0) |
+| İş akışı | [Run 27667333824](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27667333824) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.235+238 (2026-06-12)
+## 1.0.236+239 (2026-06-12)
 
-### !istek / müzik oynatma — web parity
+### Müzik + oda stabilitesi — istemci düzeltmeleri
 
-- Oynatma öncesi akış URL'si her seferinde `videoId` ile yeniden çözülür (Piped → youtube_explode → sunucu)
-- Süresi dolmuş sunucu `musicUrl` / googlevideo linklerine güvenilmez; başarısızlıkta otomatik yeniden dene
-- Piped proxy akışları için HTTP başlıkları; `!istek` arama listesi 10 sonuç (web ile aynı)
+- **Debug logları (release):** `ROOM JOIN/LEAVE`, `SSE CONNECT/DISCONNECT/RECONNECT`, `PRESENCE UPDATE`, `SEAT UPDATE`, `DJ UPDATE`, `MUSIC START/STOP/ERROR`, `DJ EVENT RECEIVED`
+- **Müzik:** Aynı `videoId` ile player yeniden oluşturulmaz; `youtube.com` watch URL → explode çözümleme; `setAudioSource` / `errorStream` hata logları; bildirim yalnızca gerçek oynatma sonrası
+- **Oda:** Boş presence SSE yanıtında koltuk/avatar korunur; `leaveRoomSession()` ile kontrollü çıkış; çift SSE/presence join engeli
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
