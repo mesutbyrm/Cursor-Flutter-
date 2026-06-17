@@ -376,6 +376,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _leaving = true;
     ref.read(pkBattleRemoteProvider.notifier).clear();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
+    await ref
+        .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+        .leaveRoomSession(source: 'rtc_leave');
     await _audio?.leave();
     if (!mounted) return;
     if (context.canPop()) {

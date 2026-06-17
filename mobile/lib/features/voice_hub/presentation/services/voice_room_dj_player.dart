@@ -4,6 +4,7 @@ import 'package:audio_service/audio_service.dart' as audio;
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart' as ja;
 
+import '../../data/services/voice_room_debug_log.dart';
 import '../../data/services/voice_room_music_pipeline_log.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../data/youtube_stream_resolver.dart';
@@ -27,6 +28,7 @@ class VoiceRoomDjPlayer {
   final ValueNotifier<VoiceRoomMusicDiagnostics> diagnostics =
       ValueNotifier(const VoiceRoomMusicDiagnostics());
   String? _currentKey;
+  String? _currentVideoId;
   bool _muted = false;
   void Function()? _onTrackComplete;
   StreamSubscription<VoiceRoomDjPlayback>? _playbackSub;
@@ -92,21 +94,59 @@ class VoiceRoomDjPlayer {
     Duration startPosition = Duration.zero,
     MusicQueueItem? nowPlaying,
     bool muted = false,
+    String? videoId,
   }) async {
     _muted = muted;
     if (!playing) {
       await stop();
       return false;
     }
-    final url = VoiceRoomDjStreamLoader.clientPlaybackUrl(streamUrl.trim());
+    final resolvedVideoId = videoId ??
+        VoiceRoomMusicPipelineLog.videoIdFromUrl(nowPlaying?.youtubeUrl ?? '') ??
+        ChatRoomDjState.videoIdFromLoose(streamUrl);
+    var url = VoiceRoomDjStreamLoader.clientPlaybackUrl(streamUrl.trim());
+    if (YoutubeStreamResolver.isYoutubePageUrl(url)) {
+      final resolved = await _resolveSource(url);
+      if (resolved == null || !resolved.startsWith('http')) {
+        VoiceRoomDebugLog.musicError(
+          phase: 'playServerStream.youtube_unresolved',
+          url: url,
+          videoId: resolvedVideoId,
+        );
+        return false;
+      }
+      url = VoiceRoomDjStreamLoader.clientPlaybackUrl(resolved);
+    }
     if (!url.startsWith('http')) {
       VoiceRoomMusicPipelineLog.nullMusicUrl(
         reason: 'playServerStream_invalid_url',
         caller: 'VoiceRoomDjPlayer.playServerStream',
         detail: streamUrl,
       );
+      VoiceRoomDebugLog.musicError(
+        phase: 'playServerStream_invalid_url',
+        url: streamUrl,
+        videoId: resolvedVideoId,
+      );
       return false;
     }
+
+    final handlerReady = await _handlerIfReady();
+    if (resolvedVideoId != null &&
+        resolvedVideoId.isNotEmpty &&
+        resolvedVideoId == _currentVideoId &&
+        handlerReady != null &&
+        handlerReady.isPlaying &&
+        !_muted) {
+      VoiceRoomDebugLog.log('music.player.same_track', {
+        'videoId': resolvedVideoId,
+      });
+      if (startPosition > Duration.zero) {
+        await handlerReady.seek(startPosition);
+      }
+      return true;
+    }
+
     VoiceRoomMusicPipelineLog.beforeSetAudioSource(
       sourceUrl: url,
       sourceType: 'server_stream',
@@ -124,6 +164,7 @@ class VoiceRoomDjPlayer {
       nowPlaying: nowPlaying,
       musicUrl: url,
       candidate: streamUrl,
+      videoId: resolvedVideoId,
     );
     if (ok && startPosition > Duration.zero) {
       await handler.seek(startPosition);
@@ -220,6 +261,7 @@ class VoiceRoomDjPlayer {
           nowPlaying: nowPlaying,
           musicUrl: musicUrl,
           candidate: candidate,
+          videoId: ChatRoomDjState.videoIdFromLoose(candidate),
         )) {
           if (startPosition != null && startPosition > Duration.zero) {
             await handler.seek(startPosition);
@@ -255,16 +297,23 @@ class VoiceRoomDjPlayer {
     required MusicQueueItem? nowPlaying,
     required String? musicUrl,
     required String candidate,
+    String? videoId,
   }) async {
     final startedAt = DateTime.now();
     for (final target in targets) {
-        if (_currentKey == target && handler.isPlaying && !_muted) {
+      if (_currentKey == target &&
+          videoId != null &&
+          videoId.isNotEmpty &&
+          videoId == _currentVideoId &&
+          handler.isPlaying &&
+          !_muted) {
         await handler.publishMediaSessionIfNeeded();
         return true;
       }
       try {
         await VoiceRoomMusicAudioSession.activateForPlayback();
         _currentKey = target;
+        _currentVideoId = videoId;
         VoiceRoomMusicPipelineLog.playEntered(sourceUrl: target);
         await handler.playSource(
           target,
@@ -288,6 +337,11 @@ class VoiceRoomDjPlayer {
             durationMs: handler.currentDurationMs,
             detail: 'startup_3s_no_audio',
           );
+          VoiceRoomDebugLog.musicError(
+            phase: 'startup_3s_no_audio',
+            url: target,
+            videoId: videoId,
+          );
         }
 
         final started = await handler.waitUntilPlaying(
@@ -303,10 +357,16 @@ class VoiceRoomDjPlayer {
         );
         if (started) {
           await handler.publishMediaSessionIfNeeded();
+          VoiceRoomDebugLog.musicStart(
+            videoId: videoId,
+            title: nowPlaying?.title,
+            streamUrl: target,
+          );
           debugPrint('DJ play ok: $target');
           return true;
         }
         _currentKey = null;
+        _currentVideoId = null;
         await handler.invalidateLoadedSource();
         VoiceRoomMusicPipelineLog.playResult(
           started: false,
@@ -316,6 +376,11 @@ class VoiceRoomDjPlayer {
           durationMs: handler.currentDurationMs,
           detail: 'waitUntilPlaying_failed',
         );
+        VoiceRoomDebugLog.musicError(
+          phase: 'waitUntilPlaying_failed',
+          url: target,
+          videoId: videoId,
+        );
       } on ja.PlayerException catch (e, st) {
         VoiceRoomMusicPipelineLog.justAudioError(
           e,
@@ -323,8 +388,15 @@ class VoiceRoomDjPlayer {
           phase: 'sync_PlayerException',
           url: target,
         );
+        VoiceRoomDebugLog.musicError(
+          phase: 'sync_PlayerException',
+          error: e,
+          url: target,
+          videoId: videoId,
+        );
         debugPrint('DJ play error ($target): $e');
         _currentKey = null;
+        _currentVideoId = null;
         await handler.invalidateLoadedSource();
       } catch (e, st) {
         VoiceRoomMusicPipelineLog.justAudioError(
@@ -333,8 +405,15 @@ class VoiceRoomDjPlayer {
           phase: 'sync',
           url: target,
         );
+        VoiceRoomDebugLog.musicError(
+          phase: 'sync',
+          error: e,
+          url: target,
+          videoId: videoId,
+        );
         debugPrint('DJ play error ($target): $e');
         _currentKey = null;
+        _currentVideoId = null;
         await handler.invalidateLoadedSource();
       }
     }
@@ -425,7 +504,9 @@ class VoiceRoomDjPlayer {
 
   Future<void> stop() async {
     _currentKey = null;
+    _currentVideoId = null;
     _muted = false;
+    VoiceRoomDebugLog.musicStop(reason: 'player.stop');
     playback.value = const VoiceRoomDjPlayback();
     diagnostics.value = const VoiceRoomMusicDiagnostics();
     try {
@@ -727,6 +808,23 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
         url: _currentSource,
       );
     });
+    _player.errorStream.listen((Object error) {
+      _diagnostics = _diagnostics.copyWith(
+        lastError: error.toString(),
+        lastPhase: 'errorStream',
+      );
+      VoiceRoomDebugLog.musicError(
+        phase: 'errorStream',
+        error: error,
+        url: _currentSource,
+      );
+      VoiceRoomMusicPipelineLog.justAudioError(
+        error,
+        StackTrace.current,
+        phase: 'errorStream',
+        url: _currentSource,
+      );
+    });
   }
 
   Future<void> playSource(
@@ -804,6 +902,29 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
           url: source,
           ok: false,
           error: e.toString(),
+        );
+        VoiceRoomDebugLog.musicError(
+          phase: 'setAudioSource',
+          error: e,
+          url: source,
+        );
+        VoiceRoomMusicPipelineLog.justAudioError(
+          e,
+          st,
+          phase: 'setAudioSource',
+          url: source,
+        );
+        rethrow;
+      } catch (e, st) {
+        VoiceRoomMusicPipelineLog.setAudioSourceResult(
+          url: source,
+          ok: false,
+          error: e.toString(),
+        );
+        VoiceRoomDebugLog.musicError(
+          phase: 'setAudioSource',
+          error: e,
+          url: source,
         );
         VoiceRoomMusicPipelineLog.justAudioError(
           e,

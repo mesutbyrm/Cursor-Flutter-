@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.236+239 (2026-06-12)
+
+### Müzik + oda stabilitesi — istemci düzeltmeleri
+
+- **Debug logları (release):** `ROOM JOIN/LEAVE`, `SSE CONNECT/DISCONNECT/RECONNECT`, `PRESENCE UPDATE`, `SEAT UPDATE`, `DJ UPDATE`, `MUSIC START/STOP/ERROR`, `DJ EVENT RECEIVED`
+- **Müzik:** Aynı `videoId` ile player yeniden oluşturulmaz; `youtube.com` watch URL → explode çözümleme; `setAudioSource` / `errorStream` hata logları; bildirim yalnızca gerçek oynatma sonrası
+- **Oda:** Boş presence SSE yanıtında koltuk/avatar korunur; `leaveRoomSession()` ile kontrollü çıkış; çift SSE/presence join engeli
+
 ## 1.0.235+238 (2026-06-12)
 
 ### !istek / müzik oynatma — web parity

@@ -206,6 +206,9 @@ class VoiceRoomLiveController
   final Set<String> _shownEntranceKeys = {};
   final Set<String> _shownMusicRequestFlashKeys = {};
   String? _presenceNickname;
+  var _presenceJoined = false;
+  var _sseStarted = false;
+  var _sessionActive = true;
 
   String? _effectiveNickname(UserEntity? user) {
     final server = state.myNickname?.trim();
@@ -348,7 +351,8 @@ class VoiceRoomLiveController
     final server = serverMusicUrl?.trim();
     if (server != null &&
         server.startsWith('http') &&
-        !ChatRoomDjState.isEphemeralStreamUrl(server)) {
+        !ChatRoomDjState.isEphemeralStreamUrl(server) &&
+        !YoutubeStreamResolver.isYoutubePageUrl(server)) {
       return VoiceRoomDjStreamLoader.clientPlaybackUrl(server);
     }
     return null;
@@ -400,13 +404,18 @@ class VoiceRoomLiveController
     final room = _roomMeta;
     _roomKeepAliveLink = ref.keepAlive();
     ref.onDispose(() {
+      if (_sessionActive) {
+        VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: 'dispose');
+      }
       _poll?.cancel();
       _presenceHeartbeat?.cancel();
       _enterBannerTimer?.cancel();
       _musicRequestFlashTimer?.cancel();
       _giftSocket?.disconnect();
-      _leavePresence();
-      ref.read(voiceRoomSseServiceProvider).disconnect();
+      if (_sessionActive) {
+        _leavePresence();
+        unawaited(ref.read(voiceRoomSseServiceProvider).disconnect());
+      }
       unawaited(ref.read(voiceRoomDjPlayerProvider).shutdown());
       ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer();
       _closeRoomKeepAlive();
@@ -454,11 +463,99 @@ class VoiceRoomLiveController
     ];
   }
 
+  /// Boş presence güncellemelerinde koltuk/avatar kaybını önler; dolu listede sunucu otoriter.
+  List<ChatRoomPresence> _mergePresenceStable(
+    List<ChatRoomPresence> incoming, {
+    required String source,
+  }) {
+    final previous = state.presence;
+    final withSelf = _mergeSelf(incoming);
+    if (withSelf.isEmpty && previous.isNotEmpty) {
+      VoiceRoomDebugLog.presenceUpdate(
+        roomId: _roomKey,
+        previousCount: previous.length,
+        incomingCount: 0,
+        mergedCount: previous.length,
+        source: '$source.keep_previous',
+      );
+      return previous;
+    }
+    final prevById = <String, ChatRoomPresence>{
+      for (final p in previous) p.id: p,
+    };
+    final merged = <ChatRoomPresence>[];
+    for (final p in withSelf) {
+      final prev = prevById[p.id];
+      if (prev == null) {
+        merged.add(p);
+        continue;
+      }
+      merged.add(
+        ChatRoomPresence(
+          id: p.id,
+          name: p.name.trim().isNotEmpty ? p.name : prev.name,
+          nickname: (p.nickname?.trim().isNotEmpty == true)
+              ? p.nickname
+              : prev.nickname,
+          image: (p.image?.trim().isNotEmpty == true) ? p.image : prev.image,
+          chatRole: (p.chatRole?.trim().isNotEmpty == true)
+              ? p.chatRole!
+              : (prev.chatRole ?? 'listener'),
+          roleSymbol: p.roleSymbol ?? prev.roleSymbol,
+          membership: p.membership ?? prev.membership,
+          seatIndex: p.seatIndex ?? prev.seatIndex,
+          isSpeaking: p.isSpeaking || prev.isSpeaking,
+        ),
+      );
+    }
+    VoiceRoomDebugLog.presenceUpdate(
+      roomId: _roomKey,
+      previousCount: previous.length,
+      incomingCount: withSelf.length,
+      mergedCount: merged.length,
+      source: source,
+    );
+    final seatCount = merged.where((p) => p.seatIndex != null).length;
+    if (seatCount > 0) {
+      VoiceRoomDebugLog.seatUpdate(
+        roomId: _roomKey,
+        seatCount: seatCount,
+        source: source,
+      );
+    }
+    return merged;
+  }
+
+  /// Odadan çıkış — presence, SSE ve müzik temizliği (RTC sayfası).
+  Future<void> leaveRoomSession({String source = 'ui_leave'}) async {
+    if (!_sessionActive) return;
+    _sessionActive = false;
+    VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: source);
+    _poll?.cancel();
+    _presenceHeartbeat?.cancel();
+    _giftSocket?.disconnect();
+    _sseStarted = false;
+    _presenceJoined = false;
+    await _leavePresence();
+    await ref.read(voiceRoomSseServiceProvider).disconnect();
+    await ref.read(voiceRoomDjPlayerProvider).stop();
+    _closeRoomKeepAlive();
+  }
+
   Future<void> _joinPresence() async {
     if (_roomKey.isEmpty) {
       state = state.copyWith(loading: false, error: 'Geçersiz oda kimliği');
       return;
     }
+    if (_presenceJoined && state.selfInRoom) {
+      VoiceRoomDebugLog.roomJoin(
+        roomId: _roomKey,
+        source: 'presence',
+        skipped: true,
+      );
+      return;
+    }
+    VoiceRoomDebugLog.roomJoin(roomId: _roomKey, source: 'presence');
     try {
       final token = await ref.read(tokenStorageProvider).readAccess();
       final hasJwt = token != null && token.isNotEmpty;
@@ -477,8 +574,9 @@ class VoiceRoomLiveController
         'count': merged.length,
         'roomId': _roomKey,
       });
+      _presenceJoined = true;
       state = state.copyWith(
-        presence: merged,
+        presence: _mergePresenceStable(merged, source: 'join'),
         selfInRoom: true,
         loading: false,
         clearError: true,
@@ -512,7 +610,8 @@ class VoiceRoomLiveController
   }
 
   Future<void> _leavePresence() async {
-    if (_roomKey.isEmpty) return;
+    if (_roomKey.isEmpty || !_presenceJoined) return;
+    _presenceJoined = false;
     try {
       await ref.read(chatRoomRemoteProvider).leavePresence(_roomKey);
     } catch (_) {}
@@ -528,7 +627,10 @@ class VoiceRoomLiveController
             nickname: _effectiveNickname(user),
           );
       final merged = _mergeSelf(list);
-      state = state.copyWith(presence: merged, selfInRoom: true);
+      state = state.copyWith(
+        presence: _mergePresenceStable(merged, source: 'heartbeat'),
+        selfInRoom: true,
+      );
     } catch (e) {
       VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {
         'error': e.toString(),
@@ -538,6 +640,11 @@ class VoiceRoomLiveController
 
   void _startSse() {
     if (_roomKey.isEmpty) return;
+    if (_sseStarted) {
+      VoiceRoomDebugLog.log('sse.subscribe.skip', {'roomId': _roomKey});
+      return;
+    }
+    _sseStarted = true;
     final storage = ref.read(tokenStorageProvider);
     VoiceRoomDebugLog.log('sse.subscribe', {
       'url': VoiceRoomSseService.streamUrlFor(_roomKey),
@@ -577,7 +684,7 @@ class VoiceRoomLiveController
             }
           },
           onPresence: (users) {
-            final merged = _mergeSelf(users);
+            final merged = _mergePresenceStable(users, source: 'sse');
             final wasSse = state.sseConnected;
             state = state.copyWith(
               presence: merged,
@@ -643,7 +750,7 @@ class VoiceRoomLiveController
         }
       },
       onPresence: (users) {
-        final merged = _mergeSelf(users);
+        final merged = _mergePresenceStable(users, source: 'socket');
         state = state.copyWith(presence: merged, selfInRoom: true);
         ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(true);
         ref
@@ -659,8 +766,13 @@ class VoiceRoomLiveController
 
   String _djPlaybackSignature(ChatRoomDjState dj, {required bool muted}) {
     final effective = _djWithQueuePlaybackFallback(dj);
-    final url = effective.playbackResolveSeed ?? '';
-    return '${effective.playing}|$url|${effective.nowPlaying?.id}|'
+    final videoId = ChatRoomDjState.videoIdFromLoose(
+          effective.nowPlaying?.youtubeUrl ??
+              effective.playbackResolveSeed ??
+              '',
+        ) ??
+        '';
+    return '${effective.playing}|$videoId|${effective.nowPlaying?.id}|'
         '${effective.musicQueue.length}|'
         '${effective.musicEnabled}|$muted';
   }
@@ -730,7 +842,10 @@ class VoiceRoomLiveController
       serverPerms = msgResult.myPermissions ?? serverPerms;
       myNickname = msgResult.myNickname ?? myNickname;
       if (msgResult.roomMuted != null) roomMuted = msgResult.roomMuted!;
-      presence = results[1]! as List<ChatRoomPresence>;
+      presence = _mergePresenceStable(
+        results[1]! as List<ChatRoomPresence>,
+        source: 'refresh',
+      );
 
       String? bgFromDj;
       var playDjInBackground = false;
@@ -1055,6 +1170,22 @@ class VoiceRoomLiveController
   }
 
   Future<void> _applyDjRealtimePayload(Map<String, dynamic> payload) async {
+    final np = payload['nowPlaying'];
+    String? title;
+    String? eventVideoId;
+    if (np is Map) {
+      title = np['title']?.toString();
+      eventVideoId = np['videoId']?.toString() ?? np['youtubeUrl']?.toString();
+    }
+    eventVideoId ??= payload['currentVideoId']?.toString();
+    VoiceRoomDebugLog.djUpdate(
+      roomId: _roomKey,
+      playing: payload['playing'] == true,
+      musicUrl: payload['musicUrl']?.toString(),
+      videoId: eventVideoId,
+      title: title,
+      source: payload['type']?.toString() ?? 'realtime',
+    );
     VoiceRoomDebugLog.log('music.realtime.recv', {
       'playing': payload['playing'],
       'hasUrl': payload['musicUrl'] != null,
@@ -1214,6 +1345,7 @@ class VoiceRoomLiveController
         startPosition: Duration(milliseconds: startMs),
         nowPlaying: effectiveDj.nowPlaying,
         muted: muted,
+        videoId: videoId,
       );
       if (!ok && videoId != null && videoId.isNotEmpty) {
         ref.read(youtubeStreamResolverProvider).invalidate(videoId);
@@ -1232,6 +1364,7 @@ class VoiceRoomLiveController
             startPosition: Duration(milliseconds: startMs),
             nowPlaying: effectiveDj.nowPlaying,
             muted: muted,
+            videoId: videoId,
           );
         }
       }

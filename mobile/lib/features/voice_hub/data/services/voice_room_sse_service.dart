@@ -73,6 +73,7 @@ class VoiceRoomSseService {
       VoiceRoomDebugLog.log('sse.reuse', {'roomId': id});
       return;
     }
+    VoiceRoomDebugLog.sseConnect(roomId: id, url: streamUrlFor(id));
     await _openStream();
   }
 
@@ -145,6 +146,11 @@ class VoiceRoomSseService {
     _reconnectAttempt++;
     final delay = Duration(
       seconds: (_reconnectAttempt.clamp(1, 6) * 2),
+    );
+    VoiceRoomDebugLog.sseReconnect(
+      roomId: _roomId ?? '',
+      attempt: _reconnectAttempt,
+      delaySec: delay.inSeconds,
     );
     VoiceRoomDebugLog.log('sse.reconnect_scheduled', {
       'attempt': _reconnectAttempt,
@@ -255,12 +261,12 @@ class VoiceRoomSseService {
       case VoiceRoomSseKind.gift:
         return;
       case VoiceRoomSseKind.dj:
-        VoiceRoomDebugLog.log('sse.dj', {'room': _roomId});
+        _logDjEvent(map);
         _onDjUpdate?.call(map);
         return;
       case VoiceRoomSseKind.unknown:
         if (map.containsKey('musicUrl') || map.containsKey('playing')) {
-          VoiceRoomDebugLog.log('sse.dj', {'room': _roomId});
+          _logDjEvent(map);
           _onDjUpdate?.call(map);
           return;
         }
@@ -312,7 +318,29 @@ class VoiceRoomSseService {
     _dio = null;
   }
 
+  void _logDjEvent(Map<String, dynamic> map) {
+    final np = map['nowPlaying'];
+    String? title;
+    String? videoId;
+    if (np is Map) {
+      title = np['title']?.toString();
+      videoId = np['videoId']?.toString() ??
+          np['youtubeUrl']?.toString() ??
+          np['video']?.toString();
+    }
+    videoId ??= map['currentVideoId']?.toString();
+    VoiceRoomDebugLog.djUpdate(
+      roomId: _roomId ?? '',
+      playing: map['playing'] == true,
+      musicUrl: map['musicUrl']?.toString(),
+      videoId: videoId,
+      title: title,
+      source: 'sse',
+    );
+  }
+
   Future<void> disconnect() async {
+    final leavingRoom = _roomId;
     _stopped = true;
     _roomId = null;
     _accessToken = null;
@@ -322,6 +350,7 @@ class VoiceRoomSseService {
     _onTyping = null;
     _onPresence = null;
     await _closeStreamOnly();
+    VoiceRoomDebugLog.sseDisconnect(roomId: leavingRoom, reason: 'manual');
     VoiceRoomDebugLog.log('sse.disconnect');
   }
 }
