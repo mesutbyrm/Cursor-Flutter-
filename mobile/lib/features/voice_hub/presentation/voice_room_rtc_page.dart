@@ -55,6 +55,7 @@ import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
+import 'widgets/voice_room/voice_room_dj_video_fallback.dart';
 import 'widgets/voice_room_error_boundary.dart';
 
 /// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
@@ -1415,6 +1416,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   if (mounted) setState(() => _showVipEntrance = false);
                 },
               ),
+            const VoiceRoomDjVideoFallback(),
           ],
         ),
       ),

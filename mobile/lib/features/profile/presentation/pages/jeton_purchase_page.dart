@@ -14,6 +14,7 @@ import '../../../wallet/domain/wallet_balances.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/currency_usage_card.dart';
 import '../widgets/jeton_checkout_flow.dart';
+import '../widgets/jeton_payment_status_listener.dart';
 import '../widgets/jeton_store_widgets.dart';
 
 /// Jeton mağazası — paket seçimi, son paket hatırlama, ödeme bildirimi.
@@ -77,7 +78,8 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Stack(
+      body: JetonPaymentStatusListener(
+        child: Stack(
         fit: StackFit.expand,
         children: [
           const JetonStoreBackdrop(),
@@ -217,6 +219,7 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

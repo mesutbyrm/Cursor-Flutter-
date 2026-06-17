@@ -105,7 +105,8 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
   if (choice == null || !context.mounted) return;
 
   final cost = choice == _OpenRoomChoice.vip ? vipCost : normalCost;
-  final walletKnown = ref.read(walletBalancesProvider).hasValue;
+  final walletAsync = ref.read(walletBalancesProvider);
+  final walletKnown = walletAsync.hasValue;
   if (walletKnown && balance < cost) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -158,12 +159,14 @@ Future<void> _createAndEnter(
           .timeout(const Duration(seconds: 20), onTimeout: () => <VoiceRoomEntity>[]);
       final me = user?.id;
       if (me != null && me.isNotEmpty) {
+        VoiceRoomEntity? newest;
         for (final r in rooms) {
           if (r.ownerId == me && r.apiRoomKey.isNotEmpty) {
-            room = r;
+            newest = r;
             break;
           }
         }
+        if (newest != null) room = newest;
       }
     }
     if (room.apiRoomKey.isEmpty) {

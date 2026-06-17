@@ -8,19 +8,19 @@ import 'home_section_title.dart';
 class HomeHoroscopeSection extends StatelessWidget {
   const HomeHoroscopeSection({super.key});
 
-  static const signs = [
-    ('Koç', '♈'),
-    ('Boğa', '♉'),
-    ('İkizler', '♊'),
-    ('Yengeç', '♋'),
-    ('Aslan', '♌'),
-    ('Başak', '♍'),
-    ('Terazi', '♎'),
-    ('Akrep', '♏'),
-    ('Yay', '♐'),
-    ('Oğlak', '♑'),
-    ('Kova', '♒'),
-    ('Balık', '♓'),
+  static const signs = <(String name, String glyph, Color primary, Color secondary)>[
+    ('Koç', '♈', Color(0xFFE53935), Color(0xFFFF8A80)),
+    ('Boğa', '♉', Color(0xFF43A047), Color(0xFFA5D6A7)),
+    ('İkizler', '♊', Color(0xFF1E88E5), Color(0xFF90CAF9)),
+    ('Yengeç', '♋', Color(0xFF8E24AA), Color(0xFFCE93D8)),
+    ('Aslan', '♌', Color(0xFFF4511E), Color(0xFFFFAB91)),
+    ('Başak', '♍', Color(0xFF6D4C41), Color(0xFFBCAAA4)),
+    ('Terazi', '♎', Color(0xFFEC407A), Color(0xFFF48FB1)),
+    ('Akrep', '♏', Color(0xFF5E35B1), Color(0xFFB39DDB)),
+    ('Yay', '♐', Color(0xFF00897B), Color(0xFF80CBC4)),
+    ('Oğlak', '♑', Color(0xFF546E7A), Color(0xFFB0BEC5)),
+    ('Kova', '♒', Color(0xFF039BE5), Color(0xFF81D4FA)),
+    ('Balık', '♓', Color(0xFF3949AB), Color(0xFF9FA8DA)),
   ];
 
   @override
@@ -34,17 +34,19 @@ class HomeHoroscopeSection extends StatelessWidget {
           onAction: () => context.push('/fortune/yildiz-haritasi'),
         ),
         SizedBox(
-          height: 88,
+          height: 96,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
             itemCount: signs.length,
             separatorBuilder: (_, __) => const SizedBox(width: 10),
             itemBuilder: (context, i) {
-              final (name, glyph) = signs[i];
+              final (name, glyph, primary, secondary) = signs[i];
               return _SignChip(
                 name: name,
                 glyph: glyph,
+                primary: primary,
+                secondary: secondary,
                 onTap: () => context.push('/fortune/yildiz-haritasi'),
               );
             },
@@ -59,11 +61,15 @@ class _SignChip extends StatelessWidget {
   const _SignChip({
     required this.name,
     required this.glyph,
+    required this.primary,
+    required this.secondary,
     required this.onTap,
   });
 
   final String name;
   final String glyph;
+  final Color primary;
+  final Color secondary;
   final VoidCallback onTap;
 
   @override
@@ -73,33 +79,52 @@ class _SignChip extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-        child: Ink(
-          width: 72,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                HomeApprovedDesign.purple.withValues(alpha: 0.35),
-                HomeApprovedDesign.surface,
-              ],
-            ),
-            border: Border.all(
-              color: HomeApprovedDesign.purple.withValues(alpha: 0.25),
-            ),
-          ),
+        child: SizedBox(
+          width: 76,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(glyph, style: const TextStyle(fontSize: 22)),
-              const SizedBox(height: 4),
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [primary, secondary],
+                  ),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.12),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primary.withValues(alpha: 0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  glyph,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    height: 1,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
               Text(
                 name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white70,
+                  fontWeight: FontWeight.w700,
+                  color: HomeApprovedDesign.textSecondary,
                 ),
               ),
             ],

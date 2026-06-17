@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.237+240 (2026-06-12)
+
+### Ana sayfa + sesli oda + jeton ödeme
+
+- **Canlı Falcılar:** Sesli oda kartları gibi kare/yatay kartlar
+- **Canlı Yayındakiler:** Bölüm yukarı taşındı (hızlı aksiyonların hemen altı)
+- **Fal & Tarot:** Görsel kartlarda emoji/yazı bindirmesi kaldırıldı
+- **Günlük Burç:** Burç başına gradient kare ikonlar
+- **Sesli oda müziği:** Ses akışı başarısız olursa 96×96 video yedek oynatıcı
+- **Oda aç:** Web ile uyumlu yanıt ayrıştırma + `roomId` geri kazanımı
+- **Jeton Papara/Havale:** Ödeme bildir popup'ı, dekont görseli, otomatik alanlar, 5–10 dk bekleme mesajı; onay/red bildirim popup'ı
+
 ## 1.0.236+239 (2026-06-12)
 
 ### Müzik + oda stabilitesi — istemci düzeltmeleri

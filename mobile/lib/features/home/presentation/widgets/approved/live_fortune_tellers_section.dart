@@ -12,7 +12,7 @@ import '../../providers/home_providers.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
 
-/// Canlı Falcılar — yuvarlak avatarlar + hızlı aksiyonlar.
+/// Canlı Falcılar — sesli oda kartları gibi kare/yatay kartlar.
 class LiveFortuneTellersSection extends ConsumerWidget {
   const LiveFortuneTellersSection({super.key});
 
@@ -30,16 +30,18 @@ class LiveFortuneTellersSection extends ConsumerWidget {
             onAction: () => context.push('/canli-falcilar'),
           ),
           SizedBox(
-            height: HomeApprovedDesign.storySize + 28,
+            height: HomeApprovedDesign.tellerCardH,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-              itemCount: 4,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemCount: 3,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
               itemBuilder: (_, __) => const PremiumSkeleton(
-                width: HomeApprovedDesign.storySize,
-                height: HomeApprovedDesign.storySize,
-                borderRadius: BorderRadius.all(Radius.circular(99)),
+                width: HomeApprovedDesign.tellerCardW,
+                height: HomeApprovedDesign.tellerCardH,
+                borderRadius: BorderRadius.all(
+                  Radius.circular(HomeApprovedDesign.cardRadius),
+                ),
               ),
             ),
           ),
@@ -67,13 +69,13 @@ class LiveFortuneTellersSection extends ConsumerWidget {
           onAction: () => context.push('/canli-falcilar'),
         ),
         SizedBox(
-          height: HomeApprovedDesign.storySize + 28,
+          height: HomeApprovedDesign.tellerCardH,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
             itemCount: list.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (_, i) => _TellerOrb(teller: list[i]),
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (_, i) => _TellerCard(teller: list[i]),
           ),
         ),
         const SizedBox(height: 8),
@@ -110,51 +112,49 @@ class LiveFortuneTellersSection extends ConsumerWidget {
   }
 }
 
-class _TellerOrb extends StatelessWidget {
-  const _TellerOrb({required this.teller});
+class _TellerCard extends StatelessWidget {
+  const _TellerCard({required this.teller});
 
   final LiveFortuneTellerEntity teller;
 
   @override
   Widget build(BuildContext context) {
+    final specialty = teller.displayCategory.trim();
     return GestureDetector(
       onTap: () => context.push('/canli-falcilar/${teller.id}'),
-      child: SizedBox(
-        width: HomeApprovedDesign.storySize + 4,
-        child: Column(
+      child: Container(
+        width: HomeApprovedDesign.tellerCardW,
+        height: HomeApprovedDesign.tellerCardH,
+        padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+        decoration: BoxDecoration(
+          color: HomeApprovedDesign.surface,
+          borderRadius: BorderRadius.circular(HomeApprovedDesign.cardRadius),
+          border: Border.all(
+            color: teller.isOnline
+                ? HomeApprovedDesign.purple.withValues(alpha: 0.45)
+                : HomeApprovedDesign.border,
+          ),
+          boxShadow: teller.isOnline ? const [HomeApprovedDesign.liveGlow] : null,
+        ),
+        child: Row(
           children: [
             Stack(
               clipBehavior: Clip.none,
-              alignment: Alignment.topCenter,
               children: [
-                if (teller.isOnline)
-                  Positioned(
-                    top: -2,
-                    child: const LiveBadge(compact: true, label: 'CANLI'),
-                  ),
-                Container(
-                  width: HomeApprovedDesign.storySize + 4,
-                  height: HomeApprovedDesign.storySize + 4,
-                  padding: const EdgeInsets.all(2.5),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: teller.isOnline
-                        ? HomeApprovedDesign.storyRingGradient
-                        : null,
-                    border: teller.isOnline
-                        ? null
-                        : Border.all(color: HomeApprovedDesign.border, width: 2),
-                  ),
-                  child: ClipOval(
-                    child: teller.avatarUrl != null
-                        ? CachedNetworkImage(
-                            imageUrl: teller.avatarUrl!,
-                            fit: BoxFit.cover,
-                            width: HomeApprovedDesign.storySize,
-                            height: HomeApprovedDesign.storySize,
-                          )
-                        : ColoredBox(
-                            color: HomeApprovedDesign.surface,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: teller.avatarUrl != null && teller.avatarUrl!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: teller.avatarUrl!,
+                          width: 56,
+                          height: 56,
+                          fit: BoxFit.cover,
+                        )
+                      : ColoredBox(
+                          color: HomeApprovedDesign.searchFill,
+                          child: SizedBox(
+                            width: 56,
+                            height: 56,
                             child: Center(
                               child: Text(
                                 teller.name.isNotEmpty
@@ -168,18 +168,56 @@ class _TellerOrb extends StatelessWidget {
                               ),
                             ),
                           ),
-                  ),
+                        ),
                 ),
+                if (teller.isOnline)
+                  const Positioned(
+                    top: -4,
+                    right: -4,
+                    child: LiveBadge(compact: true, label: 'CANLI'),
+                  ),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              teller.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 10,
-                color: HomeApprovedDesign.textSecondary,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    teller.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: HomeApprovedDesign.textPrimary,
+                    ),
+                  ),
+                  if (specialty != null && specialty.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      specialty,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: HomeApprovedDesign.textMuted,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 4),
+                  Text(
+                    teller.isOnline ? 'Çevrimiçi' : 'Çevrimdışı',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: teller.isOnline
+                          ? HomeApprovedDesign.green
+                          : HomeApprovedDesign.textMuted,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

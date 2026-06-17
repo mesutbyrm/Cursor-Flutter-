@@ -30,6 +30,8 @@ abstract final class HomeApprovedDesign {
   static const trendThumb = 120.0;
   static const fortuneCardW = 100.0;
   static const fortuneCardH = 120.0;
+  static const tellerCardW = 200.0;
+  static const tellerCardH = 88.0;
   static const storySize = 68.0;
 
   static const brandGradient = LinearGradient(
