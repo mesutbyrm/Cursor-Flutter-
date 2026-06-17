@@ -30,13 +30,22 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
       _error = null;
     });
     try {
+      final remote = ref.read(pkBattleRemoteProvider.notifier);
+      final existing = ref.read(pkBattleRemoteProvider);
+      if (existing != null && existing.isEnded) remote.clear();
+      if (existing != null &&
+          (existing.isActive || existing.isPending) &&
+          !existing.isEnded) {
+        setState(() => _error =
+            'Bu odada zaten aktif bir PK var. Önce mevcut PK\'yı bitirin.');
+        return;
+      }
       final oppKey =
           opponent.apiRoomKey.isNotEmpty ? opponent.apiRoomKey : opponent.id;
       if (oppKey.isEmpty || oppKey == _roomKey) {
         setState(() => _error = 'Geçersiz rakip oda seçildi');
         return;
       }
-      final remote = ref.read(pkBattleRemoteProvider.notifier);
       final battle = await remote.inviteRoom(
         roomId: _roomKey,
         alternateRoomId: widget.room.slug != _roomKey ? widget.room.slug : null,
@@ -66,8 +75,30 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
     } catch (e) {
       if (mounted) {
         var msg = ApiException.userMessage(e);
+        final lower = msg.toLowerCase();
+        if (lower.contains('zaten') && lower.contains('pk')) {
+          final remote = ref.read(pkBattleRemoteProvider.notifier);
+          final stale = ref.read(pkBattleRemoteProvider);
+          if (stale != null && stale.isEnded) {
+            remote.clear();
+            msg = 'Eski PK kaydı temizlendi. Tekrar deneyin.';
+          } else if (stale?.id != null) {
+            await remote.end(
+              stale!.id,
+              roomId: _roomKey,
+              alternateRoomId:
+                  widget.room.slug != _roomKey ? widget.room.slug : null,
+            );
+            remote.clear();
+            msg = 'Önceki PK sonlandırıldı. Tekrar davet gönderebilirsiniz.';
+          } else {
+            msg =
+                'Bu odada aktif PK var. Mevcut PK bitince tekrar deneyin.';
+          }
+        }
         if (msg.contains('404')) {
-          msg = 'PK uç noktası bulunamadı (404). Oda kimliğini kontrol edip tekrar deneyin.';
+          msg =
+              'PK uç noktası bulunamadı (404). Oda kimliğini kontrol edip tekrar deneyin.';
         }
         setState(() => _error = msg);
       }

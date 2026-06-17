@@ -9,6 +9,7 @@ enum VoiceRoomSseKind {
   messages,
   gift,
   dj,
+  fortuneRequest,
   unknown,
 }
 
@@ -41,6 +42,11 @@ VoiceRoomSseKind voiceRoomSseKindFrom(String? raw) {
     case 'dj':
     case 'music':
       return VoiceRoomSseKind.dj;
+    case 'fal_request':
+    case 'live_fal_request':
+    case 'fortune_request':
+    case 'private_fal_request':
+      return VoiceRoomSseKind.fortuneRequest;
     default:
       return VoiceRoomSseKind.unknown;
   }

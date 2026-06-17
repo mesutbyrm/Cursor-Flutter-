@@ -43,6 +43,7 @@ class VoiceRoomSseService {
   void Function(List<ChatRoomPresence> users)? _onPresence;
   void Function(Map<String, dynamic> payload)? _onDjUpdate;
   void Function(List<String> users)? _onTyping;
+  void Function(Map<String, dynamic> payload)? _onFortuneRequest;
 
   /// Tam URL — log / teşhis için.
   static String streamUrlFor(String roomId) {
@@ -58,6 +59,7 @@ class VoiceRoomSseService {
     void Function(List<ChatRoomPresence> users)? onPresence,
     void Function(Map<String, dynamic> payload)? onDjUpdate,
     void Function(List<String> users)? onTyping,
+    void Function(Map<String, dynamic> payload)? onFortuneRequest,
   }) async {
     final id = roomId.trim();
     final sameRoom = !_stopped && _roomId == id && _bytesSub != null;
@@ -69,6 +71,7 @@ class VoiceRoomSseService {
     _onPresence = onPresence;
     _onDjUpdate = onDjUpdate;
     _onTyping = onTyping;
+    _onFortuneRequest = onFortuneRequest;
     if (sameRoom) {
       VoiceRoomDebugLog.log('sse.reuse', {'roomId': id});
       return;
@@ -194,6 +197,7 @@ class VoiceRoomSseService {
       'bytes': payload.length,
       'preview': payload.length > 120 ? '${payload.substring(0, 120)}…' : payload,
     });
+    debugPrint('SSE EVENT: $payload');
 
     try {
       final decoded = jsonDecode(payload);
@@ -263,6 +267,9 @@ class VoiceRoomSseService {
       case VoiceRoomSseKind.dj:
         _logDjEvent(map);
         _onDjUpdate?.call(map);
+        return;
+      case VoiceRoomSseKind.fortuneRequest:
+        _onFortuneRequest?.call(map);
         return;
       case VoiceRoomSseKind.unknown:
         if (map.containsKey('musicUrl') || map.containsKey('playing')) {
@@ -349,6 +356,7 @@ class VoiceRoomSseService {
     _onDjUpdate = null;
     _onTyping = null;
     _onPresence = null;
+    _onFortuneRequest = null;
     await _closeStreamOnly();
     VoiceRoomDebugLog.sseDisconnect(roomId: leavingRoom, reason: 'manual');
     VoiceRoomDebugLog.log('sse.disconnect');

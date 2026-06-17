@@ -40,7 +40,7 @@ class PkBattleRemoteDataSource {
       try {
         final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatRoomPk(key));
         final battle = _parseBattle(res.data);
-        if (battle != null) return battle;
+        if (battle != null && !battle.isEnded) return battle;
       } on ApiException catch (e) {
         if (e.statusCode == 404 || e.statusCode == 405) continue;
         rethrow;
@@ -86,6 +86,7 @@ class PkBattleRemoteDataSource {
     String? alternateOpponentRoomId,
     int durationSeconds = 180,
   }) async {
+    ApiException? lastError;
     for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
       for (final oppKey in _roomKeyCandidates(
         opponentRoomId,
@@ -103,11 +104,13 @@ class PkBattleRemoteDataSource {
           final battle = _parseBattle(res.data);
           if (battle != null) return battle;
         } on ApiException catch (e) {
+          lastError = e;
           if (e.statusCode == 404 || e.statusCode == 405) continue;
           rethrow;
         }
       }
     }
+    if (lastError != null) throw lastError;
     return null;
   }
 

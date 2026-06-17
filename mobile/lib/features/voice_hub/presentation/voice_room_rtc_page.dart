@@ -279,6 +279,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       _pinnedLiveRoomKey = room.liveKey;
     }
     if (room.apiRoomKey.isEmpty) {
+      ref.invalidate(voiceRoomsProvider);
+      try {
+        final rooms = await ref
+            .read(voiceRoomsProvider.future)
+            .timeout(const Duration(seconds: 15));
+        room = _roomSynced(rooms);
+        if (room.apiRoomKey.isNotEmpty) {
+          _pinnedLiveRoomKey = room.liveKey;
+        }
+      } catch (_) {}
+    }
+    if (room.apiRoomKey.isEmpty) {
       if (mounted) {
         setState(() {
           _audioJoining = false;
@@ -358,8 +370,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   Future<void> _connectPkBattle() async {
     if (!mounted) return;
-    final r = widget.room;
+    final r = _effectiveRoom();
     final roomKey = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+    if (roomKey.isEmpty) return;
     final remote = ref.read(pkBattleRemoteProvider.notifier);
     await remote.loadRoomBattle(
       roomKey,
@@ -367,7 +380,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     );
     if (!mounted) return;
     final battle = ref.read(pkBattleRemoteProvider);
-    if (battle == null || battle.isEnded) return;
+    if (battle == null || battle.isEnded) {
+      if (battle != null && battle.isEnded) remote.clear();
+      return;
+    }
     remote.connectSocket(
       roomId: roomKey,
       alternateRoomId: r.slug != roomKey ? r.slug : null,

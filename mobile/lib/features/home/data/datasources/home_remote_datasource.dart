@@ -131,15 +131,22 @@ class HomeRemoteDataSource {
     final merged = <FortuneIncomingSession>[];
     final seen = <String>{};
 
+    void addAll(List<FortuneIncomingSession> rows) {
+      for (final row in rows) {
+        if (seen.add(row.sessionId)) merged.add(row);
+      }
+    }
+
+    try {
+      addAll(await fetchLiveFalPending());
+    } catch (_) {}
+
     for (final path in [
       ApiEndpoints.fortuneTellerSessions,
       ApiEndpoints.fortuneTellerIncomingSessions,
     ]) {
       try {
-        final sessions = await _fetchFortuneSessionsFromPath(path);
-        for (final row in sessions) {
-          if (seen.add(row.sessionId)) merged.add(row);
-        }
+        addAll(await _fetchFortuneSessionsFromPath(path));
       } on ApiException catch (e) {
         if (e.statusCode == 404 || e.statusCode == 405) continue;
       } catch (_) {}
@@ -150,6 +157,60 @@ class HomeRemoteDataSource {
       currentUserId,
       tellerProfileId: tellerProfileId,
     );
+  }
+
+  /// `GET /api/live-fal/pending` — bekleyen canlı fal istekleri.
+  Future<List<FortuneIncomingSession>> fetchLiveFalPending() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.liveFalPending);
+      final body = res.data;
+      if (body is List) {
+        return body
+            .map(_mapIncomingFortuneSession)
+            .where((s) => s.sessionId.isNotEmpty)
+            .toList(growable: false);
+      }
+      if (body is! Map) return const [];
+      final map = asJsonMap(body);
+      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+      final raw = data['pending'] ??
+          data['requests'] ??
+          data['items'] ??
+          data['sessions'] ??
+          [];
+      if (raw is! List) return const [];
+      return raw
+          .map(_mapIncomingFortuneSession)
+          .where((s) => s.sessionId.isNotEmpty)
+          .toList(growable: false);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 405) return const [];
+      rethrow;
+    }
+  }
+
+  /// `POST /api/live-fal/request/{requestId}/accept`
+  Future<bool> acceptLiveFalRequest(String requestId) async {
+    final key = requestId.trim();
+    if (key.isEmpty) return false;
+    try {
+      await _dio.safePost<dynamic>(ApiEndpoints.liveFalRequestAccept(key));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// `POST /api/live-fal/request/{requestId}/reject`
+  Future<bool> rejectLiveFalRequest(String requestId) async {
+    final key = requestId.trim();
+    if (key.isEmpty) return false;
+    try {
+      await _dio.safePost<dynamic>(ApiEndpoints.liveFalRequestReject(key));
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Falcı uygulamadayken web ile aynı «çevrimiçi» durumu.
@@ -225,6 +286,13 @@ class HomeRemoteDataSource {
     final key = sessionId.trim();
     if (key.isEmpty) return false;
     final normalized = action.trim().toLowerCase();
+    if (normalized == 'accept') {
+      final ok = await acceptLiveFalRequest(key);
+      if (ok) return true;
+    } else if (normalized == 'reject' || normalized == 'decline') {
+      final ok = await rejectLiveFalRequest(key);
+      if (ok) return true;
+    }
     try {
       await _dio.safePatch<dynamic>(
         ApiEndpoints.fortuneTellerSessionPatch(key),
@@ -494,11 +562,11 @@ class HomeRemoteDataSource {
       tellerResponse = 'rejected';
     }
     return FortuneIncomingSession(
-      sessionId: _str(m, ['id', 'sessionId']) ?? '',
+      sessionId: _str(m, ['requestId', 'id', 'sessionId']) ?? '',
       clientId: _str(m, ['clientId']) ??
           _str(client, ['id', 'userId']) ??
           '',
-      clientName: _str(m, ['clientName', 'clientDisplayName']) ??
+      clientName: _str(m, ['clientName', 'clientDisplayName', 'userName']) ??
           _str(client, ['displayName', 'name', 'username']) ??
           'Danışan',
       tellerId: _str(m, ['tellerId', 'fortuneTellerId']) ??
@@ -509,12 +577,14 @@ class HomeRemoteDataSource {
           null,
       durationMinutes: () {
         final v = asInt(
-          pick(m, ['durationMinutes', 'maxMinutes', 'minutes']),
+          pick(m, ['durationMinutes', 'maxMinutes', 'minutes', 'duration']),
         );
         return v > 0 ? v : 10;
       }(),
-      totalJeton: asInt(pick(m, ['totalJeton', 'jeton', 'amount', 'cost'])),
-      category: _str(m, ['category', 'specialty', 'fortuneType']) ??
+      totalJeton: asInt(
+        pick(m, ['totalJeton', 'jeton', 'amount', 'cost', 'tokenAmount']),
+      ),
+      category: _str(m, ['category', 'specialty', 'fortuneType', 'falType']) ??
           _str(teller, ['specialty']) ??
           'general',
       status: status,

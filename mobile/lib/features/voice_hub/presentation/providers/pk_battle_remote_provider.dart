@@ -50,6 +50,9 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     String? alternateOpponentRoomId,
     int durationSeconds = 180,
   }) async {
+    final stale = state;
+    if (stale != null && stale.isEnded) clear();
+
     final battle = await _api.inviteVoiceRoom(
       roomId: roomId,
       alternateRoomId: alternateRoomId,

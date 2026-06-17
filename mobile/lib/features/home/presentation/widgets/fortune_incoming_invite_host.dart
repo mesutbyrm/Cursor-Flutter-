@@ -6,15 +6,25 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/bootstrap/auth_route_paths.dart';
+import '../../../../core/network/token_storage.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../data/services/live_fortune_request_sse_service.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../providers/fortune_incoming_invite_provider.dart';
+import '../providers/fortune_live_event_bus.dart';
 import '../providers/home_providers.dart';
-import 'live_fortune_invite_sheet.dart';
+import 'fortune_request_dialog.dart';
 
-/// Uygulama genelinde falcı davet popup'ı — push ve poll kaynaklı.
+final liveFortuneRequestSseServiceProvider =
+    Provider<LiveFortuneRequestSseService>((ref) {
+  final service = LiveFortuneRequestSseService();
+  ref.onDispose(service.disconnect);
+  return service;
+});
+
+/// Uygulama genelinde falcı davet popup'ı — SSE, poll ve push.
 class FortuneIncomingInviteHost extends ConsumerStatefulWidget {
   const FortuneIncomingInviteHost({super.key, required this.child});
 
@@ -29,9 +39,12 @@ class _FortuneIncomingInviteHostState
     extends ConsumerState<FortuneIncomingInviteHost>
     with WidgetsBindingObserver {
   Timer? _poll;
+  StreamSubscription<FortuneIncomingSession>? _sseBusSub;
   var _presenting = false;
   var _inviteUiReady = false;
   var _tellerOnlineSet = false;
+  String? _tellerProfileId;
+  String? _sseRoomId;
   final Set<String> _dismissed = {};
 
   bool _mayPresentInvites() {
@@ -48,12 +61,15 @@ class _FortuneIncomingInviteHostState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _poll = Timer.periodic(const Duration(seconds: 2), (_) => _pollApi());
+    _poll = Timer.periodic(const Duration(seconds: 5), (_) => _pollApi());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _inviteUiReady = true);
-      unawaited(_ensureTellerOnline());
-      unawaited(_pollApi());
+      _sseBusSub = ref
+          .read(fortuneLiveEventBusProvider)
+          .stream
+          .listen(_onSseFortuneRequest);
+      unawaited(_bootstrapTeller());
     });
   }
 
@@ -61,15 +77,23 @@ class _FortuneIncomingInviteHostState
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _poll?.cancel();
+    _sseBusSub?.cancel();
+    ref.read(liveFortuneRequestSseServiceProvider).disconnect();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      unawaited(_ensureTellerOnline());
+      unawaited(_bootstrapTeller());
       unawaited(_pollApi());
     }
+  }
+
+  Future<void> _bootstrapTeller() async {
+    await _ensureTellerOnline();
+    await _connectFortuneSse();
+    await _pollApi();
   }
 
   Future<void> _ensureTellerOnline() async {
@@ -92,7 +116,45 @@ class _FortuneIncomingInviteHostState
     if (ok) _tellerOnlineSet = true;
   }
 
-  String? _tellerProfileId;
+  Future<String?> _resolveTellerSseRoomId() async {
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    if (userId == null || userId.isEmpty) return null;
+    try {
+      final rooms = await ref.read(voiceRoomsProvider.future);
+      for (final room in rooms) {
+        if (room.ownerId == userId) {
+          final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+          if (key.isNotEmpty) return key;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<void> _connectFortuneSse() async {
+    if (!_mayPresentInvites()) return;
+    final roomId = await _resolveTellerSseRoomId();
+    if (roomId == null || roomId.isEmpty) {
+      await ref.read(liveFortuneRequestSseServiceProvider).disconnect();
+      _sseRoomId = null;
+      return;
+    }
+    if (_sseRoomId == roomId) return;
+    _sseRoomId = roomId;
+    final tokens = ref.read(tokenStorageProvider);
+    await ref.read(liveFortuneRequestSseServiceProvider).connect(
+          roomId: roomId,
+          accessToken: tokens.readAccess,
+          onRequest: _onSseFortuneRequest,
+        );
+  }
+
+  void _onSseFortuneRequest(FortuneIncomingSession session) {
+    if (!mounted || !_mayPresentInvites()) return;
+    if (!_isPendingInvite(session)) return;
+    ref.read(fortuneIncomingInviteProvider.notifier).enqueue(session);
+    unawaited(_tryPresentNext());
+  }
 
   bool _isPendingInvite(FortuneIncomingSession session) {
     final status = session.status.toLowerCase();
@@ -159,7 +221,7 @@ class _FortuneIncomingInviteHostState
         return;
       }
 
-      final action = await showLiveFortuneTellerInviteSheet(
+      final action = await showFortuneRequestDialog(
         navCtx,
         clientName: req.clientName,
         category: req.category,
@@ -168,15 +230,7 @@ class _FortuneIncomingInviteHostState
       );
       if (!mounted) return;
 
-      if (action == null) {
-        await ref.read(homeRemoteProvider).respondFortuneSession(
-              req.sessionId,
-              action: 'hold',
-            );
-        _dismissed.add(req.sessionId);
-        return;
-      }
-      if (action == false) {
+      if (action != true) {
         await ref.read(homeRemoteProvider).respondFortuneSession(
               req.sessionId,
               action: 'reject',
@@ -242,8 +296,8 @@ class _FortuneIncomingInviteHostState
       final user = next.valueOrNull;
       if (user != null && (prev?.valueOrNull?.id != user.id)) {
         _tellerOnlineSet = false;
-        unawaited(_ensureTellerOnline());
-        unawaited(_pollApi());
+        _sseRoomId = null;
+        unawaited(_bootstrapTeller());
       }
     });
     ref.listen<List<FortuneIncomingSession>>(fortuneIncomingInviteProvider,

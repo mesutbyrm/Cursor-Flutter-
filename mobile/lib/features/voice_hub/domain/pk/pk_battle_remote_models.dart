@@ -46,7 +46,12 @@ class PkBattleRemote extends Equatable {
 
   bool get isPending => status == 'pending';
   bool get isActive => status == 'active';
-  bool get isEnded => status == 'ended' || status == 'rejected';
+  bool get isEnded =>
+      status == 'ended' ||
+      status == 'rejected' ||
+      status == 'cancelled' ||
+      status == 'completed' ||
+      status == 'canceled';
 
   factory PkBattleRemote.fromJson(Map<String, dynamic> json) {
     final giftsRaw = json['recentGifts'];

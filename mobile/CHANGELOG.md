@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.248+251 (2026-06-12)
+
+### Canlı fal istekleri + sesli oda / PK
+
+- **Canlı fal:** `GET /api/live-fal/pending` (5 sn poll) + `POST …/accept|reject`
+- **SSE:** `fal_request`, `live_fal_request`, `fortune_request`, `private_fal_request` — otomatik `FortuneRequestDialog`
+- **Falcı SSE:** Oda sahibi odasına SSE; arka plandan dönüşte yeniden bağlanma; kopunca reconnect
+- **Sesli oda:** `apiRoomKey` boşken liste yenileme ile giriş düzeltmesi
+- **PK:** Bitmiş PK kaydı temizleme; «zaten aktif PK» hatasında sonlandırma / anlaşılır mesaj
+
 ## 1.0.247+250 (2026-06-12)
 
 ### PK — üretim API sözleşmesi

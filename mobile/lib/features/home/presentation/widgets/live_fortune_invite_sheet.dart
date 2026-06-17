@@ -196,15 +196,7 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
                   gradient: const [Color(0xFF00C853), Color(0xFF00E676)],
                   onTap: () => Navigator.pop(context, true),
                 ),
-                const SizedBox(height: 8),
-                _ActionBtn(
-                  label: 'Beklet',
-                  icon: Icons.schedule_rounded,
-                  gradient: const [Color(0xFFFFB300), Color(0xFFFFD54F)],
-                  foreground: Colors.black87,
-                  onTap: () => Navigator.pop(context, null),
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 _ActionBtn(
                   label: 'Reddet',
                   icon: Icons.call_end_rounded,

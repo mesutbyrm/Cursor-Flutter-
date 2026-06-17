@@ -88,6 +88,15 @@ abstract final class ApiEndpoints {
 
   static String tellerChat(String sessionId) => '/api/teller-chat/$sessionId';
 
+  /// Canlı fal istekleri — üretim web ile aynı (`/api/live-fal/*`).
+  static const liveFalPending = '/api/live-fal/pending';
+
+  static String liveFalRequestAccept(String requestId) =>
+      '/api/live-fal/request/$requestId/accept';
+
+  static String liveFalRequestReject(String requestId) =>
+      '/api/live-fal/request/$requestId/reject';
+
   /// Oyunlar ve etkinlikler.
   static const homeGames = '/api/games';
   static const gameRooms = '/api/games/rooms';
