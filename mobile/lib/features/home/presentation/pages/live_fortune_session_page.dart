@@ -18,6 +18,7 @@ import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
+import '../live_fortune/live_fortune_close_dialog.dart';
 import '../providers/home_providers.dart';
 
 /// Canlı fal video oturumu — TRTC + süre sayacı + sohbet.
@@ -358,33 +359,15 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
   }
 
   Future<void> _confirmEnd() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A0F2E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Seansı sonlandır?',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
-        ),
-        content: const Text(
-          'Canlı fal oturumundan çıkmak istediğinize emin misiniz?',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.liveRed),
-            child: const Text('Sonlandır'),
-          ),
-        ],
-      ),
+    final ok = await showLiveFortuneCloseDialog(
+      context,
+      title: 'Seansı kapat?',
+      message: widget.session.isClient
+          ? 'Canlı fal oturumundan çıkmak istediğinize emin misiniz?'
+          : 'Seansı sonlandırmak istediğinize emin misiniz?',
+      confirmLabel: 'Kapat',
     );
-    if (ok == true && mounted) await _leave();
+    if (ok && mounted) await _leave();
   }
 
   Widget _videoLayer() {
