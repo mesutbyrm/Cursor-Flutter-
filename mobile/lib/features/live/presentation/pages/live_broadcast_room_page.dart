@@ -13,6 +13,7 @@ import '../../../home/domain/entities/live_fortune_session_entity.dart';
 import '../../../home/domain/entities/live_fortune_teller_entity.dart';
 import '../../../home/presentation/pages/live_fortune_waiting_page.dart';
 import '../../../home/presentation/providers/home_providers.dart';
+import '../../../home/presentation/widgets/live_fortune_broadcast_side_rail.dart';
 import '../../../home/presentation/widgets/live_fortune_client_booking_sheet.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
@@ -74,6 +75,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   Key _localPreviewKey = UniqueKey();
   var _leaving = false;
   var _chatVisible = true;
+  var _viewerAudioOn = true;
   VideoWebrtcSignalService? _signalService;
 
   @override
@@ -150,12 +152,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     _chat.dispose();
     _agora.dispose();
     super.dispose();
-  }
-
-  bool _isFortuneBroadcast(LiveBroadcastSession s) {
-    final c = s.category.toLowerCase();
-    if (c.contains('fal') || c == 'fortune') return true;
-    return s.tags.any((t) => t.toLowerCase().contains('fal'));
   }
 
   Future<void> _onFortuneRequest(LiveBroadcastSession s) async {
@@ -462,6 +458,52 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         fit: StackFit.expand,
         children: [
           _imageModeLayer(s),
+          if (!s.isHost && _rtcError == null)
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 48,
+                    backgroundColor: Colors.white.withValues(alpha: 0.08),
+                    backgroundImage: s.avatarUrl != null &&
+                            s.avatarUrl!.trim().isNotEmpty
+                        ? CachedNetworkImageProvider(s.avatarUrl!)
+                        : null,
+                    child: s.avatarUrl == null || s.avatarUrl!.trim().isEmpty
+                        ? const Icon(Icons.person_rounded,
+                            size: 48, color: Colors.white54)
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '@${s.streamerHandle ?? s.streamerName ?? 'yayinci'}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white70,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Bağlanıyor...',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           if (_rtcError != null)
             Center(
               child: Padding(
@@ -538,6 +580,48 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     if (id != null && id.isNotEmpty) {
       context.push('/user/$id');
     }
+  }
+
+  Widget _viewerSideRail({
+    required LiveBroadcastSession s,
+    required LiveRoomInteractionState interaction,
+    required LiveGiftController giftCtrl,
+  }) {
+    if (!s.isHost) {
+      return LiveFortuneBroadcastSideRail(
+        viewerCount: s.viewerCount,
+        onGift: () => giftCtrl.setPanelOpen(true),
+        onFortuneRequest: () => unawaited(_onFortuneRequest(s)),
+        onNickname: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Rumuz ayarları yakında')),
+          );
+        },
+        onToggleAudio: () => setState(() => _viewerAudioOn = !_viewerAudioOn),
+        onExit: () => unawaited(_confirmEnd(context)),
+        audioOn: _viewerAudioOn,
+      );
+    }
+    return LivePremiumSideRail(
+      likeLabel: _fmtLikes(interaction.likeCount),
+      giftLabel: giftCtrl.streamerEarnings != null
+          ? '${giftCtrl.streamerEarnings}'
+          : 'Hediye',
+      shareLabel: 'Paylaş',
+      onLike: _onDoubleTapHeart,
+      onGift: () => giftCtrl.setPanelOpen(true),
+      onShare: _shareLive,
+      onReport: s.streamId != null && s.streamId!.isNotEmpty
+          ? () => openReportFlow(
+                context,
+                ReportTarget(
+                  type: ReportTargetType.liveStream,
+                  targetId: s.streamId!,
+                  displayTitle: s.streamerName ?? 'Canlı yayın',
+                ),
+              )
+          : null,
+    );
   }
 
   @override
@@ -785,29 +869,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          LivePremiumSideRail(
-                            likeLabel: _fmtLikes(interaction.likeCount),
-                            giftLabel: giftCtrl.streamerEarnings != null
-                                ? '${giftCtrl.streamerEarnings}'
-                                : 'Hediye',
-                            shareLabel: 'Paylaş',
-                            onLike: _onDoubleTapHeart,
-                            onGift: () => giftCtrl.setPanelOpen(true),
-                            onShare: _shareLive,
-                            onFortune: !s.isHost && _isFortuneBroadcast(s)
-                                ? () => unawaited(_onFortuneRequest(s))
-                                : null,
-                            onReport: s.streamId != null && s.streamId!.isNotEmpty
-                                ? () => openReportFlow(
-                                      context,
-                                      ReportTarget(
-                                        type: ReportTargetType.liveStream,
-                                        targetId: s.streamId!,
-                                        displayTitle:
-                                            s.streamerName ?? 'Canlı yayın',
-                                      ),
-                                    )
-                                : null,
+                          _viewerSideRail(
+                            s: s,
+                            interaction: interaction,
+                            giftCtrl: giftCtrl,
                           ),
                         ],
                       ),
@@ -849,29 +914,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          LivePremiumSideRail(
-                            likeLabel: _fmtLikes(interaction.likeCount),
-                            giftLabel: giftCtrl.streamerEarnings != null
-                                ? '${giftCtrl.streamerEarnings}'
-                                : 'Hediye',
-                            shareLabel: 'Paylaş',
-                            onLike: _onDoubleTapHeart,
-                            onGift: () => giftCtrl.setPanelOpen(true),
-                            onShare: _shareLive,
-                            onFortune: !s.isHost && _isFortuneBroadcast(s)
-                                ? () => unawaited(_onFortuneRequest(s))
-                                : null,
-                            onReport: s.streamId != null && s.streamId!.isNotEmpty
-                                ? () => openReportFlow(
-                                      context,
-                                      ReportTarget(
-                                        type: ReportTargetType.liveStream,
-                                        targetId: s.streamId!,
-                                        displayTitle:
-                                            s.streamerName ?? 'Canlı yayın',
-                                      ),
-                                    )
-                                : null,
+                          _viewerSideRail(
+                            s: s,
+                            interaction: interaction,
+                            giftCtrl: giftCtrl,
                           ),
                         ],
                       ),

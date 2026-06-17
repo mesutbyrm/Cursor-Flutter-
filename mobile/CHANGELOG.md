@@ -1,5 +1,12 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.254+257 (2026-06-17)
+
+### Canlı yayın — izleyici Fal İste şeridi
+
+- **Şerit:** İzleyici, Hediye, Fal İste, Rumuz, ses ve Çık butonları
+- **Bağlanıyor:** Yayına bağlanırken merkezde yükleme durumu
+
 ## 1.0.253+256 (2026-06-17)
 
 ### Canlı falcı — yayın + red yönlendirme
