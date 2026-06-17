@@ -32,8 +32,11 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   @override
   PkBattleRemote? build() => null;
 
-  Future<PkBattleRemote?> loadRoomBattle(String roomId) async {
-    final battle = await _api.fetchRoomBattle(roomId);
+  Future<PkBattleRemote?> loadRoomBattle(String roomId, {String? alternateRoomId}) async {
+    final battle = await _api.fetchRoomBattle(
+      roomId,
+      alternateRoomId: alternateRoomId,
+    );
     if (battle != null) _apply(battle, 'load');
     return battle;
   }
@@ -46,11 +49,15 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
 
   Future<PkBattleRemote?> inviteRoom({
     required String roomId,
+    String? alternateRoomId,
     required String opponentRoomId,
+    String? alternateOpponentRoomId,
   }) async {
     final battle = await _api.inviteVoiceRoom(
       roomId: roomId,
+      alternateRoomId: alternateRoomId,
       opponentRoomId: opponentRoomId,
+      alternateOpponentRoomId: alternateOpponentRoomId,
     );
     if (battle != null) _apply(battle, 'pk:invite');
     return battle;

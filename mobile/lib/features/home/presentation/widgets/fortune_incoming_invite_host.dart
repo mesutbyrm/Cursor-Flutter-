@@ -75,28 +75,49 @@ class _FortuneIncomingInviteHostState
   Future<void> _ensureTellerOnline() async {
     if (_tellerOnlineSet || !_mayPresentInvites()) return;
     final remote = ref.read(homeRemoteProvider);
-    final profile = await remote.fetchMyFortuneTellerProfile();
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    var profile = await remote.fetchMyFortuneTellerProfile();
+    if (profile == null && userId != null) {
+      final tellers = await remote.fetchLiveFortuneTellers();
+      for (final t in tellers) {
+        if (t.userId == userId || t.id == userId) {
+          profile = t;
+          break;
+        }
+      }
+    }
     if (profile == null) return;
+    _tellerProfileId = profile.id;
     final ok = await remote.setFortuneTellerOnline(online: true);
     if (ok) _tellerOnlineSet = true;
   }
+
+  String? _tellerProfileId;
 
   bool _isPendingInvite(FortuneIncomingSession session) {
     final status = session.status.toLowerCase();
     final response = session.tellerResponse.toLowerCase();
     if (response == 'accepted' ||
         response == 'rejected' ||
+        response == 'declined' ||
+        response == 'cancelled' ||
         status == 'active' ||
-        status == 'ended') {
+        status == 'ended' ||
+        status == 'completed' ||
+        status == 'cancelled' ||
+        status == 'rejected') {
       return false;
     }
-    return response == 'pending' ||
+    return response.isEmpty ||
+        response == 'pending' ||
         response == 'held' ||
         response == 'waiting' ||
         response == 'requested' ||
         status == 'pending' ||
         status == 'waiting' ||
-        status == 'requested';
+        status == 'requested' ||
+        status == 'new' ||
+        status == 'open';
   }
 
   Future<void> _pollApi() async {
@@ -105,7 +126,10 @@ class _FortuneIncomingInviteHostState
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     final incoming = await ref
         .read(homeRemoteProvider)
-        .fetchIncomingFortuneSessions(currentUserId: userId);
+        .fetchIncomingFortuneSessions(
+          currentUserId: userId,
+          tellerProfileId: _tellerProfileId,
+        );
     if (!mounted) return;
     for (final req in incoming) {
       if (!_isPendingInvite(req)) continue;

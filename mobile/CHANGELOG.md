@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.246+249 (2026-06-12)
+
+### PK daveti + Canlı falcı kabul ekranı
+
+- **PK:** Oda `pk-battle` 404 ise `POST /api/pk/battles` + slug/cuid yedek anahtarları; anlaşılır hata metni
+- **Canlı falcı:** `sessions` + `sessions/incoming` birleştirilmiş poll; falcı `tellerUserId`/`tellerId` filtresi
+- **Çevrimiçi:** `toggle-online` + `toggle` (PATCH/POST) yedekleri; my-profile yoksa listeden falcı eşleştirme
+- **Oturum oluşturma:** `anchorUserId` + gerçek `userId` ile falcıya yönlendirme
+
 ## 1.0.245+248 (2026-06-12)
 
 ### Sesli oda performans + otomatik koltuk

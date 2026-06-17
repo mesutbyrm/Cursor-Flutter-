@@ -215,6 +215,9 @@ abstract final class ApiEndpoints {
 
   static const pkHistory = '/api/pk/history';
 
+  /// Merkezi PK daveti — oda uçları 404 ise fallback.
+  static const pkBattles = '/api/pk/battles';
+
   static String pkBattle(String battleId) => '/api/pk/battles/$battleId';
 
   static String pkBattleAccept(String battleId) =>

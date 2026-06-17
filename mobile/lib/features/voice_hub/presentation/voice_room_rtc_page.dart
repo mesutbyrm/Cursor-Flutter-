@@ -361,7 +361,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final r = widget.room;
     final roomKey = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
     final remote = ref.read(pkBattleRemoteProvider.notifier);
-    await remote.loadRoomBattle(roomKey);
+    await remote.loadRoomBattle(
+      roomKey,
+      alternateRoomId: r.slug != roomKey ? r.slug : null,
+    );
     if (!mounted) return;
     final battle = ref.read(pkBattleRemoteProvider);
     if (battle == null || battle.isEnded) return;

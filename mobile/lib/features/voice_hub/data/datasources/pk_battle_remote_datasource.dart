@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
@@ -31,9 +32,23 @@ class PkBattleRemoteDataSource {
     return PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
   }
 
-  Future<PkBattleRemote?> fetchRoomBattle(String roomId) async {
-    final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatRoomPkBattle(roomId));
-    return _parseBattle(res.data);
+  Future<PkBattleRemote?> fetchRoomBattle(
+    String roomId, {
+    String? alternateRoomId,
+  }) async {
+    for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
+      try {
+        final res = await _dio.safeGet<dynamic>(
+          ApiEndpoints.chatRoomPkBattle(key),
+        );
+        final battle = _parseBattle(res.data);
+        if (battle != null) return battle;
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 405) continue;
+        rethrow;
+      }
+    }
+    return null;
   }
 
   Future<PkBattleRemote?> fetchStreamBattle(String streamId) async {
@@ -67,20 +82,70 @@ class PkBattleRemoteDataSource {
 
   Future<PkBattleRemote?> inviteVoiceRoom({
     required String roomId,
+    String? alternateRoomId,
     required String opponentRoomId,
+    String? alternateOpponentRoomId,
     int durationSeconds = 300,
     int targetScore = 150000,
   }) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.chatRoomPkBattle(roomId),
-      data: {
-        'action': 'create',
-        'opponentRoomId': opponentRoomId,
-        'durationSeconds': durationSeconds,
-        'targetScore': targetScore,
-      },
-    );
-    return _parseBattle(res.data);
+    final body = {
+      'action': 'create',
+      'opponentRoomId': opponentRoomId,
+      'opponentVoiceRoomId': opponentRoomId,
+      'durationSeconds': durationSeconds,
+      'targetScore': targetScore,
+    };
+    for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
+      for (final oppKey in _roomKeyCandidates(
+        opponentRoomId,
+        alternateOpponentRoomId,
+      )) {
+        try {
+          final res = await _dio.safePost<dynamic>(
+            ApiEndpoints.chatRoomPkBattle(key),
+            data: {
+              ...body,
+              'opponentRoomId': oppKey,
+              'opponentVoiceRoomId': oppKey,
+            },
+          );
+          final battle = _parseBattle(res.data);
+          if (battle != null) return battle;
+        } on ApiException catch (e) {
+          if (e.statusCode == 404 || e.statusCode == 405) continue;
+          rethrow;
+        }
+      }
+    }
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.pkBattles,
+        data: {
+          'battleType': 'voice_room',
+          'voiceRoomId': roomId,
+          'opponentVoiceRoomId': opponentRoomId,
+          'opponentRoomId': opponentRoomId,
+          'durationSeconds': durationSeconds,
+          'targetScore': targetScore,
+        },
+      );
+      return _parseBattle(res.data);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 405) return null;
+      rethrow;
+    }
+  }
+
+  List<String> _roomKeyCandidates(String primary, String? alternate) {
+    final keys = <String>[];
+    void add(String? value) {
+      final v = value?.trim() ?? '';
+      if (v.isNotEmpty && !keys.contains(v)) keys.add(v);
+    }
+
+    add(primary);
+    add(alternate);
+    return keys;
   }
 
   Future<PkBattleRemote?> acceptBattle(String battleId) async {

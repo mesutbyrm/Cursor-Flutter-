@@ -81,8 +81,10 @@ class HomeRemoteDataSource {
         data: {
           'tellerId': id,
           'fortuneTellerId': id,
-          if (tellerUserId != null && tellerUserId.trim().isNotEmpty)
+          if (tellerUserId != null && tellerUserId.trim().isNotEmpty) ...{
             'tellerUserId': tellerUserId.trim(),
+            'anchorUserId': tellerUserId.trim(),
+          },
           if (clientName != null && clientName.trim().isNotEmpty)
             'clientName': clientName.trim(),
           if (durationMinutes != null) 'durationMinutes': durationMinutes,
@@ -124,35 +126,55 @@ class HomeRemoteDataSource {
 
   Future<List<FortuneIncomingSession>> fetchIncomingFortuneSessions({
     String? currentUserId,
+    String? tellerProfileId,
   }) async {
+    final merged = <FortuneIncomingSession>[];
+    final seen = <String>{};
+
     for (final path in [
       ApiEndpoints.fortuneTellerSessions,
       ApiEndpoints.fortuneTellerIncomingSessions,
     ]) {
       try {
         final sessions = await _fetchFortuneSessionsFromPath(path);
-        final filtered = _filterTellerIncoming(sessions, currentUserId);
-        if (path == ApiEndpoints.fortuneTellerSessions || filtered.isNotEmpty) {
-          return filtered;
+        for (final row in sessions) {
+          if (seen.add(row.sessionId)) merged.add(row);
         }
       } on ApiException catch (e) {
         if (e.statusCode == 404 || e.statusCode == 405) continue;
       } catch (_) {}
     }
-    return const [];
+
+    return _filterTellerIncoming(
+      merged,
+      currentUserId,
+      tellerProfileId: tellerProfileId,
+    );
   }
 
   /// Falcı uygulamadayken web ile aynı «çevrimiçi» durumu.
   Future<bool> setFortuneTellerOnline({bool online = true}) async {
-    try {
-      await _dio.safePost<dynamic>(
-        ApiEndpoints.fortuneTellerToggleOnline,
-        data: {'online': online, 'isOnline': online},
-      );
-      return true;
-    } catch (_) {
-      return false;
+    final body = {'online': online, 'isOnline': online};
+    for (final call in [
+      () => _dio.safePost<dynamic>(
+            ApiEndpoints.fortuneTellerToggleOnline,
+            data: body,
+          ),
+      () => _dio.safePatch<dynamic>(
+            '/api/fortune-tellers/toggle',
+            data: body,
+          ),
+      () => _dio.safePost<dynamic>(
+            '/api/fortune-tellers/toggle',
+            data: body,
+          ),
+    ]) {
+      try {
+        await call();
+        return true;
+      } catch (_) {}
     }
+    return false;
   }
 
   Future<LiveFortuneTellerEntity?> fetchMyFortuneTellerProfile() async {
@@ -292,9 +314,11 @@ class HomeRemoteDataSource {
         data['incoming'] ??
         data['pending'] ??
         data['requests'] ??
+        data['fortuneSessions'] ??
         data['pendingSessions'] ??
         data['incomingRequests'] ??
         data['liveSessions'] ??
+        data['pendingRequests'] ??
         [];
     if (raw is List && raw.isNotEmpty) {
       return raw
@@ -311,13 +335,26 @@ class HomeRemoteDataSource {
 
   List<FortuneIncomingSession> _filterTellerIncoming(
     List<FortuneIncomingSession> sessions,
-    String? currentUserId,
-  ) {
+    String? currentUserId, {
+    String? tellerProfileId,
+  }) {
     final uid = currentUserId?.trim() ?? '';
+    final profileId = tellerProfileId?.trim() ?? '';
     return sessions.where((session) {
       if (!_isPendingFortuneInvite(session)) return false;
       if (uid.isEmpty) return true;
-      return session.clientId != uid;
+      if (session.clientId == uid) return false;
+      if (session.tellerUserId == uid) return true;
+      if (session.tellerId == uid) return true;
+      if (profileId.isNotEmpty && session.tellerId == profileId) return true;
+      // Sunucu zaten falcıya filtrelediyse teller alanları boş gelebilir.
+      if (session.tellerUserId == null &&
+          session.tellerId.isEmpty &&
+          session.clientId.isNotEmpty &&
+          session.clientId != uid) {
+        return true;
+      }
+      return false;
     }).toList(growable: false);
   }
 

@@ -39,11 +39,14 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
       final remote = ref.read(pkBattleRemoteProvider.notifier);
       final battle = await remote.inviteRoom(
         roomId: _roomKey,
+        alternateRoomId: widget.room.slug != _roomKey ? widget.room.slug : null,
         opponentRoomId: oppKey,
+        alternateOpponentRoomId: opponent.slug != oppKey ? opponent.slug : null,
       );
       if (!mounted) return;
       if (battle == null) {
-        setState(() => _error = 'PK daveti gönderilemedi — sunucu yanıt vermedi');
+        setState(() => _error =
+            'PK daveti gönderilemedi. Sunucu PK uçları henüz aktif olmayabilir — kısa süre sonra tekrar deneyin.');
         return;
       }
       remote.connectSocket(
@@ -61,7 +64,14 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
       );
       context.pop();
     } catch (e) {
-      if (mounted) setState(() => _error = ApiException.userMessage(e));
+      if (mounted) {
+        var msg = ApiException.userMessage(e);
+        if (msg.contains('404')) {
+          msg =
+              'PK sunucu uçları henüz aktif değil (404). Güncelleme sonrası tekrar deneyin.';
+        }
+        setState(() => _error = msg);
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

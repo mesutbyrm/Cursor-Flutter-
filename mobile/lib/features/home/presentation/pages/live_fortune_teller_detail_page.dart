@@ -75,7 +75,7 @@ class _LiveFortuneTellerDetailPageState
           : user.username;
       final created = await remote.createFortuneTellerSession(
         teller.id,
-        tellerUserId: teller.trtcUserId,
+        tellerUserId: teller.userId ?? teller.trtcUserId,
         clientName: displayName,
         durationMinutes: opt.minutes,
         totalJeton: opt.totalJeton,
