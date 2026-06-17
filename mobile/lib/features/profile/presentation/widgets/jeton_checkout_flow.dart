@@ -186,6 +186,34 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
         _JetonPayMethod.bank => 'bank_transfer',
       };
 
+  String _whatsappDisplay(String raw) {
+    final digits = PaymentDefaults.formatWhatsAppPhone(raw);
+    return digits.startsWith('90') ? '+$digits' : raw;
+  }
+
+  Future<void> _openWhatsAppChat() async {
+    final phone = PaymentDefaults.formatWhatsAppPhone(
+      widget.config.whatsappNumber,
+    );
+    final receiptPart =
+        _receiptImagePath != null ? ' · Dekont eklendi' : '';
+    final msg = Uri.encodeComponent(
+      'Merhaba, ${widget.package.title} (${widget.package.coins} jeton) '
+      'satın almak istiyorum. Kullanıcı: $_userLabel$receiptPart',
+    );
+    final uri = Uri.parse('https://wa.me/$phone?text=$msg');
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'WhatsApp açılamadı. Numara: ${_whatsappDisplay(widget.config.whatsappNumber)}',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cfg = widget.config;
@@ -229,6 +257,10 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
                   ],
                 ),
               ),
+              _CopyDetailCard(
+                label: 'WhatsApp:',
+                value: _whatsappDisplay(cfg.whatsappNumber),
+              ),
               _UserInfoCard(
                 name: _userLabel,
                 email: ref.watch(authControllerProvider).valueOrNull?.username ?? '—',
@@ -236,8 +268,8 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'Butona tıklayarak WhatsApp üzerinden sipariş verin. '
-                  'Mesaj otomatik hazırlanır ve talep admin paneline düşer.',
+                  'Ödemeyi yaptıktan sonra «Ödeme Bildir» ile talebi iletin. '
+                  'Admin ekibine bildirim gider; onay sonrası jetonlar hesabınıza yansır.',
                   style: TextStyle(
                     color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
                     height: 1.4,
@@ -283,34 +315,27 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
               _UsernameWarning(username: _userLabel),
             ],
             const Spacer(),
-            if (widget.method == _JetonPayMethod.whatsapp)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: FilledButton.icon(
-                  onPressed: _submitting ? null : _whatsappOrder,
-                  icon: const Icon(Icons.chat_rounded),
-                  label: const Text('WhatsApp\'tan Sipariş Ver'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF25D366),
-                    minimumSize: const Size.fromHeight(52),
-                  ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: FilledButton.icon(
+                onPressed: _submitting ? null : _openPaymentNotifySheet,
+                icon: Icon(
+                  widget.method == _JetonPayMethod.whatsapp
+                      ? Icons.chat_rounded
+                      : Icons.payment_rounded,
                 ),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: FilledButton(
-                  onPressed: _submitting ? null : _openPaymentNotifySheet,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppThemeColors.accentPurple,
-                    minimumSize: const Size.fromHeight(52),
-                  ),
-                  child: const Text(
-                    'Ödeme Bildir',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
+                label: const Text(
+                  'Ödeme Bildir',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: widget.method == _JetonPayMethod.whatsapp
+                      ? const Color(0xFF25D366)
+                      : AppThemeColors.accentPurple,
+                  minimumSize: const Size.fromHeight(52),
                 ),
               ),
+            ),
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('← Geri Dön'),
@@ -504,52 +529,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     ref.invalidate(adminPaymentRequestsProvider);
     ref.invalidate(adminPaymentNotificationsProvider);
     ref.invalidate(notificationsListProvider);
-  }
-
-  Future<void> _whatsappOrder() async {
-    setState(() => _submitting = true);
-    try {
-      await _submitRequest();
-      final phone = PaymentDefaults.formatWhatsAppPhone(
-        widget.config.whatsappNumber,
-      );
-      final receiptPart =
-          _receiptImagePath != null ? ' · Dekont eklendi' : '';
-      final msg = Uri.encodeComponent(
-        'Merhaba, ${widget.package.title} (${widget.package.coins} jeton) '
-        'satın almak istiyorum. Kullanıcı: $_userLabel$receiptPart',
-      );
-      final uri = Uri.parse('https://wa.me/$phone?text=$msg');
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!launched && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'WhatsApp açılamadı. Numara: ${widget.config.whatsappNumber}',
-            ),
-          ),
-        );
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Ödeme bildirimi gönderildi. Onay sonrası jeton bakiyenize yansır.',
-            ),
-          ),
-        );
-        widget.onDone();
-        Navigator.of(context).pop(true);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
+    ref.invalidate(notificationsListNotifierProvider);
   }
 
   Future<void> _showWaitDialog() async {
@@ -559,7 +539,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
         icon: const Icon(Icons.hourglass_top_rounded, color: AppThemeColors.coinGold),
         title: const Text('Ödeme bildiriminiz alındı'),
         content: const Text(
-          'Talebiniz admin paneline iletildi.\n\n'
+          'Talebiniz admin ekibine iletildi.\n\n'
           'Onay süreci genellikle 5–10 dakika sürer. '
           'Onaylandığında jetonlar hesabınıza yansır ve bildirim alırsınız.',
           style: TextStyle(height: 1.4),
@@ -578,6 +558,10 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     setState(() => _submitting = true);
     try {
       await _submitRequest(extraReceiptRef: extraReceiptRef);
+      if (!mounted) return;
+      if (widget.method == _JetonPayMethod.whatsapp) {
+        await _openWhatsAppChat();
+      }
       if (!mounted) return;
       await _showWaitDialog();
       if (!mounted) return;

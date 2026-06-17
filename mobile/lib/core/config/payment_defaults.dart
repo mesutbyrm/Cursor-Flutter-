@@ -3,7 +3,7 @@ import '../../features/profile/domain/entities/payment_config_entity.dart';
 
 /// canlifal.com ödeme ayarları yüklenmezse — site ile aynı bilgiler.
 abstract final class PaymentDefaults {
-  static const whatsapp = '05327170173';
+  static const whatsapp = '+905327170173';
   static const papara = '1555517633';
   static const accountHolder = 'Mesut bayram';
   static const bankName = 'Garanti Bankası';

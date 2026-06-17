@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.257+260 (2026-06-17)
+
+### Jeton yükleme — ödeme bildirimi düzeltmesi
+
+- **Paketler:** 50 / 100 / 250 / 500 / 1000 jeton her zaman seçilebilir (API + varsayılan birleşimi)
+- **Satın al:** Paket kartına dokununca doğrudan ödeme yöntemi ekranı açılır
+- **Ödeme yöntemleri:** WhatsApp `+905327170173`, Papara, Havale/IBAN — hepsinde «Ödeme Bildir»
+- **Admin bildirimi:** `notifyAdmins` + `notifyStaff` ile staff rollerine anında bildirim
+- **WhatsApp:** Ödeme bildir → admin talebi → WhatsApp sohbeti açılır
+- **API:** 2xx ödeme yanıtı kabulü genişletildi
+
 ## 1.0.256+259 (2026-06-17)
 
 ### Canlı falcı — baştan yazılmış akış

@@ -45,6 +45,11 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
     setState(() => _selectedPackageId = package.id);
   }
 
+  void _tapPackage(JetonPackageEntity package) {
+    _selectPackage(package);
+    _openCheckout(package, formatJetonPrice(package));
+  }
+
   Future<void> _openCheckout(JetonPackageEntity package, String priceText) async {
     await _prefs.saveLastPackageId(package.id);
     if (!mounted) return;
@@ -149,6 +154,7 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
                     selectedId: _selectedPackageId,
                     onSelect: _selectPackage,
                     onCheckout: (p, price) => _openCheckout(p, price),
+                    onTapPackage: _tapPackage,
                     isRefreshing: true,
                   ),
                   error: (e, _) => SliverFillRemaining(
@@ -194,6 +200,7 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
                           selectedId: _selectedPackageId,
                           onSelect: _selectPackage,
                           onCheckout: (p, price) => _openCheckout(p, price),
+                          onTapPackage: _tapPackage,
                         ),
                         if (selected != null)
                           SliverToBoxAdapter(
@@ -341,6 +348,7 @@ class _JetonPackagesContent extends StatelessWidget {
     required this.wallet,
     required this.onSelect,
     required this.onCheckout,
+    required this.onTapPackage,
     this.selectedId,
     this.isRefreshing = false,
   });
@@ -351,6 +359,7 @@ class _JetonPackagesContent extends StatelessWidget {
   final String? selectedId;
   final void Function(JetonPackageEntity package) onSelect;
   final void Function(JetonPackageEntity package, String priceText) onCheckout;
+  final void Function(JetonPackageEntity package) onTapPackage;
   final bool isRefreshing;
 
   @override
@@ -378,7 +387,7 @@ class _JetonPackagesContent extends StatelessWidget {
                 _ResponsivePackageGrid(
                   packages: grid,
                   selectedId: selectedId,
-                  onTap: onSelect,
+                  onTap: onTapPackage,
                 ),
               if (hero != null) ...[
                 JetonPackageTile(
@@ -386,7 +395,7 @@ class _JetonPackagesContent extends StatelessWidget {
                   priceText: formatJetonPrice(hero),
                   fullWidth: true,
                   selected: hero.id == selectedId,
-                  onTap: () => onSelect(hero),
+                  onTap: () => onTapPackage(hero),
                 ),
               ],
               const SizedBox(height: 24),

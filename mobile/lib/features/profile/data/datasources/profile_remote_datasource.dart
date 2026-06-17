@@ -336,6 +336,13 @@ class WalletRemoteDataSource {
       final r = Map<String, dynamic>.from(m['request'] as Map);
       if (r['id'] != null) return true;
     }
+    // 2xx + gövde hatasız: üretim yanıt şekilleri için geniş kabul
+    if (code >= 200 && code < 300) {
+      final err = m['error'];
+      if (err == null || err.toString().trim().isEmpty) {
+        if (m['success'] != false) return true;
+      }
+    }
     return false;
   }
 
@@ -507,7 +514,7 @@ class WalletRemoteDataSource {
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.jetonCatalog);
       final parsed = _parseJetonResponse(res.data);
-      if (parsed.isNotEmpty) return parsed;
+      if (parsed.isNotEmpty) return mergeJetonPackagesWithPresets(parsed);
     } on ApiException catch (_) {
       // 401 / ağ / 404 / sunucu: varsayılan paketlerle devam et
     } catch (_) {

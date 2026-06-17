@@ -27,6 +27,9 @@ Map<String, dynamic> buildJetonPaymentRequest({
     'notes': receipt != null && receipt.isNotEmpty
         ? '$baseNotes\nDekont: $receipt'
         : baseNotes,
+    'notifyAdmins': true,
+    'notifyStaff': true,
+    'source': 'mobile_jeton_checkout',
   };
 }
 
@@ -47,5 +50,8 @@ Map<String, dynamic> buildMembershipPaymentRequest({
     'amount': coins,
     if (package.priceTry != null) 'priceTry': package.priceTry,
     'notes': notes ?? 'Gold üyelik uzatma · $method',
+    'notifyAdmins': true,
+    'notifyStaff': true,
+    'source': 'mobile_jeton_checkout',
   };
 }
