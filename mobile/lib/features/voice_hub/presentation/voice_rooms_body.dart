@@ -26,9 +26,14 @@ class VoiceRoomsBody extends ConsumerStatefulWidget {
   ConsumerState<VoiceRoomsBody> createState() => _VoiceRoomsBodyState();
 }
 
-class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody> {
+class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (!Env.useNextAuth) {
       return const DiscoverEmptyState(
         icon: Icons.headset_mic_outlined,

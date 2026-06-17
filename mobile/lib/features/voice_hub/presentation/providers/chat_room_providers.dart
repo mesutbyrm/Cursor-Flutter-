@@ -211,6 +211,7 @@ class VoiceRoomLiveController
   var _presenceJoined = false;
   var _sseStarted = false;
   var _sessionActive = true;
+  var _autoSeatAttempted = false;
 
   String? _effectiveNickname(UserEntity? user) {
     final server = state.myNickname?.trim();
@@ -715,7 +716,7 @@ class VoiceRoomLiveController
     final sse = sseConnected ?? state.sseConnected;
     final active = musicActive ??
         (state.dj.playing || state.dj.nowPlaying != null);
-    final interval = sse ? (active ? 5 : 12) : 6;
+    final interval = sse ? (active ? 15 : 30) : 12;
     _poll = Timer.periodic(Duration(seconds: interval), (_) {
       if (_pollPaused) return;
       _pollTick++;
@@ -950,6 +951,7 @@ class VoiceRoomLiveController
       if (playDjInBackground) {
         unawaited(_playDjInBackground(dj));
       }
+      unawaited(_tryAutoPrivilegedSeat());
     } catch (e) {
       state = state.copyWith(
         loading: false,
@@ -1763,6 +1765,123 @@ class VoiceRoomLiveController
       selfPresence: self,
       server: state.serverPermissions,
     );
+  }
+
+  int _seatRolePriority(ChatRoomPresence occupant) {
+    final room = _roomMeta;
+    if (room.ownerId == occupant.id ||
+        occupant.chatRole == 'owner' ||
+        occupant.chatRole == 'founder') {
+      return 4;
+    }
+    if (occupant.chatRole == 'admin' || occupant.chatRole == 'superadmin') {
+      return 3;
+    }
+    if (occupant.chatRole == 'moderator' ||
+        occupant.chatRole == 'mod' ||
+        occupant.chatRole == 'op' ||
+        occupant.chatRole == 'sop') {
+      return 2;
+    }
+    if (occupant.chatRole == 'dj' || room.djUserIds.contains(occupant.id)) {
+      return 1;
+    }
+    return 0;
+  }
+
+  int? _privilegedRolePriority(
+    UserEntity user,
+    ChatRoomMyPermissions? server,
+    ChatRoomPresence? self,
+  ) {
+    final perms = VoiceRoomPermissions.forUser(
+      user: user,
+      room: _roomMeta,
+      selfPresence: self,
+      server: server,
+    );
+    if (server?.isRoomOwner == true || perms.isRoomOwner) return 4;
+    if (server?.isGlobalAdmin == true || perms.isSiteAdmin) return 3;
+    final role = (server?.role ?? self?.chatRole ?? '').toLowerCase();
+    if (role == 'moderator' ||
+        role == 'mod' ||
+        role == 'op' ||
+        role == 'sop' ||
+        perms.canModerate) {
+      return 2;
+    }
+    if (role == 'dj' ||
+        _roomMeta.djUserIds.contains(user.id) ||
+        perms.canManageDj) {
+      return 1;
+    }
+    return null;
+  }
+
+  int? _pickAutoSeatIndex({
+    required int myPriority,
+    required List<ChatRoomPresence> presence,
+  }) {
+    if (myPriority >= 4) return 1;
+    final occupied = <int, ChatRoomPresence>{
+      for (final p in presence)
+        if (p.seatIndex != null) p.seatIndex!: p,
+    };
+    for (var seat = 2; seat <= 11; seat++) {
+      final occupant = occupied[seat];
+      if (occupant == null) return seat;
+      if (myPriority > _seatRolePriority(occupant)) return seat;
+    }
+    return null;
+  }
+
+  Future<void> _tryAutoPrivilegedSeat() async {
+    if (_autoSeatAttempted || _roomKey.isEmpty || !state.selfInRoom) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return;
+
+    ChatRoomPresence? self;
+    for (final p in state.presence) {
+      if (p.id == user.id) {
+        self = p;
+        break;
+      }
+    }
+    if (self?.seatIndex != null) {
+      _autoSeatAttempted = true;
+      return;
+    }
+
+    final priority = _privilegedRolePriority(
+      user,
+      state.serverPermissions,
+      self,
+    );
+    if (priority == null) return;
+
+    final seatIndex = _pickAutoSeatIndex(
+      myPriority: priority,
+      presence: state.presence,
+    );
+    if (seatIndex == null) return;
+
+    _autoSeatAttempted = true;
+    VoiceRoomDebugLog.log('seat.auto_join', {
+      'room': _roomKey,
+      'seat': seatIndex,
+      'priority': priority,
+    });
+    try {
+      await ref.read(chatRoomRemoteProvider).joinSeat(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            seatIndex: seatIndex,
+            userId: user.id,
+          );
+      await refresh();
+    } catch (e) {
+      await assignSeat(seatIndex: seatIndex);
+    }
   }
 
   Future<String?> toggleRoomMute({required bool mute}) async {

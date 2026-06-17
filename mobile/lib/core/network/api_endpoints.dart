@@ -195,6 +195,10 @@ abstract final class ApiEndpoints {
   static String chatRoomPresence(String roomId) =>
       '/api/chat/rooms/$roomId/presence';
 
+  /// Yetkili kullanıcı otomatik koltuk — üretim `join-seat`, yoksa `seats` fallback.
+  static String chatRoomJoinSeat(String roomId) =>
+      '/api/chat/rooms/$roomId/join-seat';
+
   /// SSE — mesaj / presence anlık akışı (Bearer gerekli).
   static String chatRoomStream(String roomId) =>
       '/api/chat/rooms/$roomId/stream';

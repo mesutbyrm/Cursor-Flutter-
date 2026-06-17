@@ -1,5 +1,23 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.245+248 (2026-06-12)
+
+### Sesli oda performans + otomatik koltuk
+
+- **Sohbet:** `ChatMessageWidget`, `GiftWidget`, `UserAvatarWidget`; `RepaintBoundary`; `ShaderMask` ve müzik satırı animasyonları kaldırıldı
+- **Mesajlar:** SSE ile tek tek ekleme korundu; poll aralığı SSE açıkken 30 sn
+- **Otomatik koltuk:** Owner/admin/mod/DJ odaya girince `POST join-seat` (yedek `seats`); öncelik Owner > Admin > Moderator > DJ
+- **Yetki:** RTC sayfasında `serverPermissions` ile `VoiceRoomPermissions` düzeltmesi
+- **Oda listesi:** `AutomaticKeepAliveClientMixin`; ana sayfa / canlı sekme 30 sn yenileme
+- **Avatar:** `CachedNetworkImage` max 128×128 önbellek
+- **Android:** `hardwareAccelerated` + Impeller meta-data
+
+### Canlı Falcılar — görüşme
+
+- **TRTC:** Kabul sonrası oturum durumundan `trtcRoomId` alınır
+- **Çıkış:** Seans bitişinde sunucuya `end`/`leave` bildirimi; WebRTC sinyal durdurulur
+- **Sohbet:** Daha yüksek panel, `RepaintBoundary`, blur azaltıldı
+
 ## 1.0.244+247 (2026-06-12)
 
 ### Canlı Falcılar — kabul ekranı + bildirim + hız

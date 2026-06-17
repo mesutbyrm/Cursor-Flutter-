@@ -167,6 +167,10 @@ class _FortuneIncomingInviteHostState
           );
       if (!mounted || !ok) return;
 
+      final status = await ref
+          .read(homeRemoteProvider)
+          .fetchFortuneSessionStatus(req.sessionId);
+
       final user = ref.read(authControllerProvider).valueOrNull;
       final tellerId = req.tellerId.trim();
       LiveFortuneTellerEntity? teller;
@@ -186,11 +190,12 @@ class _FortuneIncomingInviteHostState
       final session = LiveFortuneSessionEntity(
         sessionId: req.sessionId,
         teller: teller,
-        durationMinutes: req.durationMinutes,
-        totalJeton: req.totalJeton,
-        tellerUserId: req.tellerUserId ?? teller.trtcUserId,
+        durationMinutes: status?.durationMinutes ?? req.durationMinutes,
+        totalJeton: status?.totalJeton ?? req.totalJeton,
+        tellerUserId: status?.tellerUserId ?? req.tellerUserId ?? teller.trtcUserId,
         clientId: req.clientId,
         isClient: false,
+        trtcRoomIdOverride: status?.trtcRoomId,
       );
       ref.read(videoWebrtcSignalServiceProvider).start(
             streamId: session.sessionId,

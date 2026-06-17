@@ -221,6 +221,16 @@ class HomeRemoteDataSource {
     }
   }
 
+  Future<bool> endFortuneSession(String sessionId) async {
+    final key = sessionId.trim();
+    if (key.isEmpty) return false;
+    for (final action in const ['end', 'leave', 'cancel', 'complete']) {
+      final ok = await respondFortuneSession(key, action: action);
+      if (ok) return true;
+    }
+    return false;
+  }
+
   Future<List<TellerChatMessage>> fetchTellerChatMessages(
     String sessionId, {
     String? myUserId,

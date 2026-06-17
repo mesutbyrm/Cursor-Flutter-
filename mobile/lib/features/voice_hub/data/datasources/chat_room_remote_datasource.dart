@@ -1370,6 +1370,41 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  /// Yetkili rol (owner/admin/mod/dj) — önce `join-seat`, sonra `seats` / presence.
+  Future<void> joinSeat({
+    required String roomKey,
+    String? alternateKey,
+    int? seatIndex,
+    String? userId,
+  }) async {
+    final body = jsonEncode({
+      if (seatIndex != null) 'seatIndex': seatIndex,
+      if (userId != null && userId.isNotEmpty) 'userId': userId,
+    });
+    final opts = Options(contentType: 'application/json');
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      for (final path in [
+        ApiEndpoints.chatRoomJoinSeat(key),
+        seatsPath(key),
+      ]) {
+        try {
+          await _dio.safePost<dynamic>(path, data: body, options: opts);
+          return;
+        } on ApiException catch (e) {
+          if (e.statusCode == 404 || e.statusCode == 405) continue;
+          rethrow;
+        }
+      }
+      try {
+        await _dio.safePatch<dynamic>(seatsPath(key), data: body, options: opts);
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
+      await _dio.safePost<dynamic>(presencePath(key), data: body, options: opts);
+    });
+  }
+
   Future<void> assignSeat({
     required String roomKey,
     String? alternateKey,

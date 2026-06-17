@@ -11,6 +11,7 @@ import '../../../../core/theme/app_theme_colors.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/presentation/widgets/broadcast_room/live_room_video_background.dart';
+import '../../../live/presentation/providers/live_providers.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
@@ -31,6 +32,7 @@ class LiveFortuneSessionPage extends ConsumerStatefulWidget {
 class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage> {
   final _trtc = TrtcRoomManager();
   final _chat = TextEditingController();
+  final _chatScroll = ScrollController();
   final _messages = <TellerChatMessage>[];
   final _seenChatIds = <String>{};
   var _rtcReady = false;
@@ -62,7 +64,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
 
   void _startChatPoll() {
     _chatPoll?.cancel();
-    _chatPoll = Timer.periodic(const Duration(seconds: 2), (_) => _pollChat());
+    _chatPoll = Timer.periodic(const Duration(seconds: 3), (_) => _pollChat());
     unawaited(_pollChat());
   }
 
@@ -82,7 +84,17 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
       _messages.add(msg);
       changed = true;
     }
-    if (changed && mounted) setState(() {});
+    if (changed && mounted) {
+      setState(() {});
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_chatScroll.hasClients) return;
+        _chatScroll.animateTo(
+          _chatScroll.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+        );
+      });
+    }
   }
 
   @override
@@ -90,6 +102,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     _tick?.cancel();
     _chatPoll?.cancel();
     _chat.dispose();
+    _chatScroll.dispose();
     _trtc.dispose();
     super.dispose();
   }
@@ -249,7 +262,12 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
   Future<void> _leave({bool silent = false}) async {
     if (_leaving) return;
     _leaving = true;
+    _chatPoll?.cancel();
     await _trtc.leave();
+    ref.read(videoWebrtcSignalServiceProvider).stop();
+    await ref
+        .read(homeRemoteProvider)
+        .endFortuneSession(widget.session.sessionId);
     if (!mounted) return;
     if (context.canPop()) {
       context.pop();
@@ -285,7 +303,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
                         vertical: 8,
                       ),
                       borderRadius: 18,
-                      blur: 12,
+                      blur: 4,
                       child: Row(
                         children: [
                           IconButton(
@@ -343,7 +361,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
                               vertical: 6,
                             ),
                             borderRadius: 12,
-                            blur: 6,
+                            blur: 2,
                             child: Text(
                               _timerLabel,
                               style: const TextStyle(
@@ -376,7 +394,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                     child: ProfileGlass(
                       borderRadius: 16,
-                      blur: 10,
+                      blur: 4,
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -417,34 +435,37 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
                             )
                           else
                             SizedBox(
-                              height: 72,
+                              height: 120,
                               child: ListView.builder(
+                                controller: _chatScroll,
                                 itemCount: _messages.length,
                                 itemBuilder: (_, i) {
                                   final m = _messages[i];
                                   final label = m.isMine ? 'Sen' : m.senderName;
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 4),
-                                    child: RichText(
-                                      text: TextSpan(
-                                        children: [
-                                          TextSpan(
-                                            text: '$label: ',
-                                            style: const TextStyle(
-                                              color: AppThemeColors.accentCyan,
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 11,
+                                  return RepaintBoundary(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(bottom: 4),
+                                      child: RichText(
+                                        text: TextSpan(
+                                          children: [
+                                            TextSpan(
+                                              text: '$label: ',
+                                              style: const TextStyle(
+                                                color: AppThemeColors.accentCyan,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 11,
+                                              ),
                                             ),
-                                          ),
-                                          TextSpan(
-                                            text: m.text,
-                                            style: TextStyle(
-                                              color: Colors.white
-                                                  .withValues(alpha: 0.9),
-                                              fontSize: 11,
+                                            TextSpan(
+                                              text: m.text,
+                                              style: TextStyle(
+                                                color: Colors.white
+                                                    .withValues(alpha: 0.9),
+                                                fontSize: 11,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   );

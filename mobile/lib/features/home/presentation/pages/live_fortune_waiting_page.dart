@@ -75,6 +75,9 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
 
   Future<void> _cancel() async {
     _cancelled = true;
+    await ref
+        .read(homeRemoteProvider)
+        .endFortuneSession(widget.session.sessionId);
     if (context.canPop()) context.pop();
   }
 

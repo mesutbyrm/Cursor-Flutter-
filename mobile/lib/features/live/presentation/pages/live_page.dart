@@ -30,6 +30,7 @@ class _LivePageState extends ConsumerState<LivePage>
   late TabController _tab;
   final _liveScroll = ScrollController();
   Timer? _listRefresh;
+  Timer? _voiceListRefresh;
 
   @override
   void initState() {
@@ -40,11 +41,16 @@ class _LivePageState extends ConsumerState<LivePage>
       if (!mounted || _tab.index != 0) return;
       ref.read(liveStreamsListNotifierProvider.notifier).refresh();
     });
+    _voiceListRefresh = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted || _tab.index != 1) return;
+      ref.invalidate(voiceRoomsProvider);
+    });
   }
 
   @override
   void dispose() {
     _listRefresh?.cancel();
+    _voiceListRefresh?.cancel();
     _liveScroll.removeListener(_onLiveScroll);
     _liveScroll.dispose();
     _tab.dispose();
@@ -131,11 +137,20 @@ class _LazyVoiceTab extends StatelessWidget {
   }
 }
 
-class _VoiceTab extends StatelessWidget {
+class _VoiceTab extends StatefulWidget {
   const _VoiceTab();
 
   @override
+  State<_VoiceTab> createState() => _VoiceTabState();
+}
+
+class _VoiceTabState extends State<_VoiceTab> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

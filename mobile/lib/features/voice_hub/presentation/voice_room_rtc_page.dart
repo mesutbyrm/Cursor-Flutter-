@@ -24,6 +24,7 @@ import 'providers/voice_gift_combo_tracker.dart';
 import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
 import '../domain/entities/chat_room_presence.dart';
+import '../domain/entities/chat_room_my_permissions.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
 import 'audio/voice_room_audio_coordinator.dart';
 import 'providers/chat_room_providers.dart';
@@ -302,7 +303,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
 
     try {
-      final perms = VoiceRoomPermissions.forUser(user: user, room: room);
+      final liveForPerms = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+      final perms = VoiceRoomPermissions.forUser(
+        user: user,
+        room: room,
+        server: liveForPerms.serverPermissions,
+      );
       await _audio!.join(
         trtcRoomId: room.trtcRoomId,
         userId: user.id,
@@ -424,8 +430,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   VoiceRoomPermissions _perms(
     UserEntity? user,
-    List<ChatRoomPresence> presence,
-  ) {
+    List<ChatRoomPresence> presence, {
+    ChatRoomMyPermissions? server,
+  }) {
     ChatRoomPresence? self;
     if (user != null) {
       for (final p in presence) {
@@ -439,6 +446,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       user: user,
       room: _effectiveRoom(),
       selfPresence: self,
+      server: server ?? ref.read(voiceRoomLiveProvider(_liveRoomKey)).serverPermissions,
     );
   }
 
@@ -660,6 +668,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           user: auth,
           room: room ?? _effectiveRoom(),
           selfPresence: selfPresence,
+          server: liveState.serverPermissions,
         );
     final isDj = (room ?? _effectiveRoom()).djUserIds.contains(user.id) ||
         user.chatRole == 'dj';
@@ -899,7 +908,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
     final online = live.onlineCountFor(room);
     final user = ref.watch(authControllerProvider).valueOrNull;
-    final perms = _perms(user, live.presence);
+    final perms = _perms(user, live.presence, server: live.serverPermissions);
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
     final jeton = VoiceMusicAccess.jetonFromBalances(
       ref.watch(walletBalancesProvider).valueOrNull,

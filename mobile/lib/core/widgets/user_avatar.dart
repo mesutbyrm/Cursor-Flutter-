@@ -16,14 +16,20 @@ class UserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = BorderRadius.circular(radius);
+    final side = (radius * 2).clamp(24.0, 128.0);
+    final cachePx = side.round();
     if (url != null && url!.isNotEmpty) {
       return ClipRRect(
         borderRadius: r,
         child: CachedNetworkImage(
           imageUrl: url!,
-          width: radius * 2,
-          height: radius * 2,
+          width: side,
+          height: side,
           fit: BoxFit.cover,
+          memCacheWidth: cachePx,
+          memCacheHeight: cachePx,
+          maxWidthDiskCache: 128,
+          maxHeightDiskCache: 128,
           placeholder: (_, __) => _fallback(),
           errorWidget: (_, __, ___) => _fallback(),
         ),
