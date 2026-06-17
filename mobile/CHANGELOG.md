@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.251+254 (2026-06-12)
+
+### Canlı yayın — Agora + üretim API tam entegrasyon
+
+- **RTC:** Video yayınları Tencent TRTC yerine **Agora** (`POST /api/agora/token`, host/audience rolleri)
+- **Yayın akışı:** `POST /api/video-streams` → Agora bağlantısı → `POST …/live-started` (takipçi bildirimi)
+- **SSE:** `GET /api/video-streams/{id}/stream` — izleyici sayısı, sohbet, hediye, yayın sonu (Socket.IO yedek)
+- **PK:** `GET/POST /api/video-streams/pk` + `pk-battle` fallback; `score1/score2` skor alanları
+- **Co-broadcast:** Davet, talep, onay, kabul/red/ayrıl API eylemleri
+- **Yayın güncelleme:** `PATCH /api/video-streams/{id}` — resim modu, arka plan
+- **Kategori:** Fal → `fortune`, sohbet/müzik → `chat`, diğer → `general`
+
 ## 1.0.250+253 (2026-06-12)
 
 ### TikTok tarzı canlı yayın akışı

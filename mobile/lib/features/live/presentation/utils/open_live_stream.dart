@@ -5,13 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../trtc/presentation/providers/trtc_providers.dart';
+import '../../../agora/presentation/providers/agora_providers.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/entities/live_swipe_feed_args.dart';
 import '../providers/live_providers.dart';
 
-/// TRTC oturumu hazırla — swipe ve tek yayın için ortak.
+/// Agora oturumu hazırla — swipe ve tek yayın için ortak.
 Future<LiveBroadcastSession> buildLiveSessionForStream(
   WidgetRef ref,
   LiveStreamEntity stream,
@@ -21,14 +21,14 @@ Future<LiveBroadcastSession> buildLiveSessionForStream(
     throw StateError('İzlemek için giriş yapın');
   }
 
-  final cred = await ref.read(trtcRemoteProvider).fetchUserSig(
-        userId: user.id,
-        roomId: stream.id,
+  final agora = await ref.read(agoraRemoteProvider).fetchToken(
+        channelName: stream.id,
+        role: 'audience',
       );
 
   return LiveBroadcastSession.fromStream(stream).copyWith(
     streamId: stream.id,
-    trtc: cred,
+    agora: agora,
     hostUserId: stream.hostUserId,
   );
 }

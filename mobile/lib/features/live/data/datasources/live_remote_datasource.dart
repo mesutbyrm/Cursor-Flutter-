@@ -435,19 +435,69 @@ class LiveRemoteDataSource {
       'streamId': streamId,
       'elapsedMs': DateTime.now().difference(started).inMilliseconds,
     });
+    return streamId;
+  }
+
+  /// Agora bağlandıktan sonra çağır — takipçilere push bildirimi.
+  Future<int> notifyLiveStarted(String streamId) async {
     try {
-      await _dio.safePost<dynamic>(
+      final res = await _dio.safePost<dynamic>(
         ApiEndpoints.videoStreamLiveStarted(streamId),
-        data: {'title': title},
+        data: const {},
       );
       LiveDebugLog.log('live-started.ok', {'streamId': streamId});
+      final body = res.data;
+      if (body is Map) {
+        return asInt(pick(Map<String, dynamic>.from(body), ['notifiedCount']));
+      }
+      return 0;
     } catch (e) {
-      LiveDebugLog.log('live-started.skip', {
+      LiveDebugLog.log('live-started.fail', {
         'streamId': streamId,
         'reason': ApiException.userMessage(e),
       });
+      rethrow;
     }
-    return streamId;
+  }
+
+  Future<void> updateVideoStream(
+    String streamId, {
+    String? title,
+    String? description,
+    String? broadcastImage,
+    bool? isImageMode,
+    String? backgroundUrl,
+  }) async {
+    await _dio.safePatch<dynamic>(
+      ApiEndpoints.videoStream(streamId),
+      data: {
+        if (title != null) 'title': title,
+        if (description != null) 'description': description,
+        if (broadcastImage != null) 'broadcastImage': broadcastImage,
+        if (isImageMode != null) 'isImageMode': isImageMode,
+        if (backgroundUrl != null) 'backgroundUrl': backgroundUrl,
+      },
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchStreamViewers(String streamId) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.videoStreamViewers(streamId),
+      );
+      final body = res.data;
+      dynamic list = body;
+      if (body is Map) {
+        list = pick(Map<String, dynamic>.from(body), ['viewers', 'items', 'data']) ?? body;
+      }
+      if (list is! List) return const [];
+      return list
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    } catch (_) {
+      return const [];
+    }
   }
 
   String? _extractStreamId(dynamic body) {

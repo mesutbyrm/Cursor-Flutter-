@@ -6,22 +6,26 @@ import 'live_providers.dart';
 class CoBroadcastState {
   const CoBroadcastState({
     this.invites = const [],
+    this.coBroadcasters = const [],
     this.loading = false,
     this.error,
   });
 
   final List<Map<String, dynamic>> invites;
+  final List<Map<String, dynamic>> coBroadcasters;
   final bool loading;
   final String? error;
 
   CoBroadcastState copyWith({
     List<Map<String, dynamic>>? invites,
+    List<Map<String, dynamic>>? coBroadcasters,
     bool? loading,
     String? error,
     bool clearError = false,
   }) {
     return CoBroadcastState(
       invites: invites ?? this.invites,
+      coBroadcasters: coBroadcasters ?? this.coBroadcasters,
       loading: loading ?? this.loading,
       error: clearError ? null : (error ?? this.error),
     );
@@ -44,6 +48,16 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
     }
   }
 
+  Future<void> refreshStream(String streamId) async {
+    state = state.copyWith(loading: true, clearError: true);
+    try {
+      final coBroadcasters = await _remote.fetchCoBroadcasters(streamId);
+      state = state.copyWith(coBroadcasters: coBroadcasters, loading: false);
+    } catch (e) {
+      state = state.copyWith(loading: false, error: '$e');
+    }
+  }
+
   Future<void> invite({
     required String streamId,
     required String inviteeId,
@@ -52,17 +66,32 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
     await refresh();
   }
 
-  Future<void> respond({
+  Future<void> requestJoin(String streamId) async {
+    await _remote.coBroadcastAction(streamId: streamId, action: 'request');
+  }
+
+  Future<void> approveRequest({
     required String streamId,
-    required String inviteId,
-    required bool accept,
+    required String userId,
   }) async {
-    await _remote.respondCoBroadcast(
+    await _remote.coBroadcastAction(
       streamId: streamId,
-      inviteId: inviteId,
-      accept: accept,
+      action: 'approve',
+      userId: userId,
     );
-    await refresh();
+    await refreshStream(streamId);
+  }
+
+  Future<void> acceptInvite(String streamId) async {
+    await _remote.patchCoBroadcast(streamId: streamId, action: 'accept');
+  }
+
+  Future<void> rejectInvite(String streamId) async {
+    await _remote.patchCoBroadcast(streamId: streamId, action: 'reject');
+  }
+
+  Future<void> leave(String streamId) async {
+    await _remote.patchCoBroadcast(streamId: streamId, action: 'leave');
   }
 }
 

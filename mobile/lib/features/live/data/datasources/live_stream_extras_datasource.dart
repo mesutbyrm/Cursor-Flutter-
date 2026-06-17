@@ -12,6 +12,17 @@ class LiveStreamExtrasDataSource {
   Future<int> fetchLikeCount(String streamId) async {
     try {
       final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.videoStreamLike(streamId),
+      );
+      final body = res.data;
+      if (body is Map) {
+        return asInt(
+          pick(Map<String, dynamic>.from(body), ['likeCount', 'count']),
+        );
+      }
+    } catch (_) {}
+    try {
+      final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.videoStream(streamId),
       );
       final body = res.data;
@@ -20,12 +31,6 @@ class LiveStreamExtrasDataSource {
         final data = map['data'] is Map
             ? Map<String, dynamic>.from(map['data'] as Map)
             : map;
-        final stream = data['stream'] ?? data;
-        if (stream is Map) {
-          return asInt(
-            pick(Map<String, dynamic>.from(stream), ['likeCount', 'count']),
-          );
-        }
         return asInt(pick(data, ['likeCount', 'count']));
       }
     } catch (_) {}
@@ -51,21 +56,49 @@ class LiveStreamExtrasDataSource {
   Future<Map<String, dynamic>?> pkAction({
     required String streamId,
     required String action,
-    String? opponentStreamId,
-    String? opponentId,
+    String? targetStreamId,
+    String? battleId,
+    int duration = 180,
   }) async {
+    final body = <String, dynamic>{
+      'action': action,
+      if (targetStreamId != null) 'targetStreamId': targetStreamId,
+      if (battleId != null) 'battleId': battleId,
+      if (action == 'create') 'streamId': streamId,
+      if (action == 'create') 'duration': duration,
+    };
+
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.videoStreamPk,
+        data: body,
+      );
+      final battle = _unwrapBattle(res.data);
+      if (battle != null) return battle;
+    } catch (_) {}
+
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamPkBattle(streamId),
       data: {
         'action': action,
-        if (opponentStreamId != null) 'opponentStreamId': opponentStreamId,
-        if (opponentId != null) 'opponentId': opponentId,
+        if (targetStreamId != null) 'targetStreamId': targetStreamId,
+        if (targetStreamId != null) 'opponentStreamId': targetStreamId,
+        if (battleId != null) 'battleId': battleId,
       },
     );
     return _unwrapBattle(res.data);
   }
 
   Future<Map<String, dynamic>?> fetchPkBattle(String streamId) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.videoStreamPk,
+        query: {'streamId': streamId},
+      );
+      final battle = _unwrapBattle(res.data);
+      if (battle != null) return battle;
+    } catch (_) {}
+
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.videoStreamPkBattle(streamId),
@@ -77,13 +110,19 @@ class LiveStreamExtrasDataSource {
   }
 
   Map<String, dynamic>? _unwrapBattle(dynamic body) {
-    if (body is! Map) return null;
-    final map = Map<String, dynamic>.from(body);
-    final data = map['data'] is Map
-        ? Map<String, dynamic>.from(map['data'] as Map)
-        : map;
-    final raw = data['battle'] ?? data['pk'];
-    if (raw is Map) return Map<String, dynamic>.from(raw);
+    if (body == null) return null;
+    if (body is Map) {
+      final map = Map<String, dynamic>.from(body);
+      if (map.isEmpty) return null;
+      final data = map['data'] is Map
+          ? Map<String, dynamic>.from(map['data'] as Map)
+          : map;
+      final raw = data['battle'] ?? data['pk'];
+      if (raw is Map) return Map<String, dynamic>.from(raw);
+      if (data.containsKey('id') || data.containsKey('status')) {
+        return data;
+      }
+    }
     return null;
   }
 
@@ -101,11 +140,18 @@ class LiveStreamExtrasDataSource {
   Future<void> postSignal({
     required String streamId,
     required String type,
-    required Map<String, dynamic> payload,
+    Map<String, dynamic>? payload,
+    String? receiverId,
+    Map<String, dynamic>? data,
   }) async {
     await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamSignal(streamId),
-      data: {'type': type, 'payload': payload},
+      data: {
+        'type': type,
+        if (receiverId != null) 'receiverId': receiverId,
+        if (data != null) 'data': data,
+        if (payload != null) 'payload': payload,
+      },
     );
   }
 
@@ -117,6 +163,7 @@ class LiveStreamExtrasDataSource {
       if (data is Map) {
         list = pick(Map<String, dynamic>.from(data), ['signals', 'items']);
       }
+      list ??= map['signals'] ?? map['items'];
     } else {
       list = body;
     }
@@ -127,54 +174,90 @@ class LiveStreamExtrasDataSource {
         .toList();
   }
 
+  Future<List<Map<String, dynamic>>> fetchCoBroadcasters(
+    String streamId,
+  ) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.videoStreamCoBroadcast(streamId),
+    );
+    return _listFromBody(res.data, keys: ['coBroadcasters', 'items', 'data']);
+  }
+
+  Future<Map<String, dynamic>?> coBroadcastAction({
+    required String streamId,
+    required String action,
+    String? userId,
+  }) async {
+    final res = await _dio.safePost<dynamic>(
+      ApiEndpoints.videoStreamCoBroadcast(streamId),
+      data: {
+        'action': action,
+        if (userId != null) 'userId': userId,
+      },
+    );
+    return _unwrapCoBroadcaster(res.data);
+  }
+
+  Future<Map<String, dynamic>?> patchCoBroadcast({
+    required String streamId,
+    required String action,
+  }) async {
+    final res = await _dio.safePatch<dynamic>(
+      ApiEndpoints.videoStreamCoBroadcast(streamId),
+      data: {'action': action},
+    );
+    return _unwrapCoBroadcaster(res.data);
+  }
+
   Future<Map<String, dynamic>?> inviteCoBroadcast({
     required String streamId,
     required String inviteeId,
   }) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.videoStreamCoBroadcastInvite(streamId),
-      data: {'inviteeId': inviteeId},
-    );
-    return _unwrapInvite(res.data);
-  }
-
-  Future<Map<String, dynamic>?> respondCoBroadcast({
-    required String streamId,
-    required String inviteId,
-    required bool accept,
-  }) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.videoStreamCoBroadcast(streamId),
-      data: {'inviteId': inviteId, 'accept': accept},
-    );
-    return _unwrapInvite(res.data);
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.videoStreamCoBroadcastInvite(streamId),
+        data: {'inviteeId': inviteeId},
+      );
+      return _unwrapCoBroadcaster(res.data);
+    } catch (_) {
+      return coBroadcastAction(
+        streamId: streamId,
+        action: 'invite',
+        userId: inviteeId,
+      );
+    }
   }
 
   Future<List<Map<String, dynamic>>> fetchCoBroadcastInvites() async {
     final res = await _dio.safeGet<dynamic>(ApiEndpoints.coBroadcastInvites);
-    dynamic list;
-    if (res.data is Map) {
-      final map = Map<String, dynamic>.from(res.data as Map);
-      list = pick(map, ['invites', 'items', 'data']);
-    } else {
-      list = res.data;
+    return _listFromBody(res.data, keys: ['invites', 'items', 'data']);
+  }
+
+  Map<String, dynamic>? _unwrapCoBroadcaster(dynamic body) {
+    if (body is! Map) return null;
+    final map = Map<String, dynamic>.from(body);
+    final data = map['data'] is Map
+        ? Map<String, dynamic>.from(map['data'] as Map)
+        : map;
+    if (data.containsKey('id') && data.containsKey('status')) return data;
+    final raw = data['coBroadcaster'] ?? data['invite'];
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return data.containsKey('success') ? null : data;
+  }
+
+  List<Map<String, dynamic>> _listFromBody(
+    dynamic body, {
+    List<String> keys = const ['items', 'data'],
+  }) {
+    dynamic list = body;
+    if (body is Map) {
+      list = pick(Map<String, dynamic>.from(body), keys) ?? body;
     }
     if (list is! List) return const [];
     return list
         .whereType<Map>()
         .map((e) => Map<String, dynamic>.from(e))
         .toList();
-  }
-
-  Map<String, dynamic>? _unwrapInvite(dynamic body) {
-    if (body is! Map) return null;
-    final map = Map<String, dynamic>.from(body);
-    final data = map['data'] is Map
-        ? Map<String, dynamic>.from(map['data'] as Map)
-        : map;
-    final raw = data['invite'];
-    if (raw is Map) return Map<String, dynamic>.from(raw);
-    return null;
   }
 
   Future<void> banViewer({
@@ -188,20 +271,39 @@ class LiveStreamExtrasDataSource {
     );
   }
 
-  Future<void> muteViewer({
+  Future<void> unbanViewer({
     required String streamId,
     required String userId,
-    int minutes = 30,
+  }) async {
+    await _dio.safeDelete<dynamic>(
+      '${ApiEndpoints.videoStreamBan(streamId)}?userId=$userId',
+    );
+  }
+
+  Future<void> muteViewer({
+    required String streamId,
+    required String viewerId,
     String? reason,
+    DateTime? expiresAt,
   }) async {
     await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamMute(streamId),
       data: {
-        'userId': userId,
-        'minutes': minutes,
-        'durationMinutes': minutes,
+        'viewerId': viewerId,
+        'userId': viewerId,
         if (reason != null) 'reason': reason,
+        if (expiresAt != null) 'expiresAt': expiresAt.toUtc().toIso8601String(),
       },
+    );
+  }
+
+  Future<void> unmuteViewer({
+    required String streamId,
+    required String viewerId,
+  }) async {
+    await _dio.safeDelete<dynamic>(
+      ApiEndpoints.videoStreamMute(streamId),
+      data: {'viewerId': viewerId, 'userId': viewerId},
     );
   }
 
@@ -209,30 +311,55 @@ class LiveStreamExtrasDataSource {
     required String streamId,
     required String userId,
   }) async {
-    await _dio.safePost<dynamic>(
-      ApiEndpoints.videoStreamModerator(streamId),
-      data: {'userId': userId},
-    );
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.videoStreamModerators(streamId),
+        data: {'userId': userId},
+      );
+    } catch (_) {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.videoStreamModerator(streamId),
+        data: {'userId': userId},
+      );
+    }
   }
 
   Future<void> setBroadcastImage({
     required String streamId,
     required String imageUrl,
+    bool isImageMode = true,
   }) async {
-    await _dio.safePost<dynamic>(
-      ApiEndpoints.videoStreamImage(streamId),
-      data: {'imageUrl': imageUrl, 'broadcastImage': imageUrl},
-    );
+    try {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.videoStream(streamId),
+        data: {
+          'broadcastImage': imageUrl,
+          'isImageMode': isImageMode,
+        },
+      );
+    } catch (_) {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.videoStreamImage(streamId),
+        data: {'imageUrl': imageUrl, 'broadcastImage': imageUrl},
+      );
+    }
   }
 
   Future<void> setBackground({
     required String streamId,
     required String backgroundUrl,
   }) async {
-    await _dio.safePost<dynamic>(
-      ApiEndpoints.videoStreamBackground(streamId),
-      data: {'backgroundUrl': backgroundUrl, 'imageUrl': backgroundUrl},
-    );
+    try {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.videoStream(streamId),
+        data: {'backgroundUrl': backgroundUrl},
+      );
+    } catch (_) {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.videoStreamBackground(streamId),
+        data: {'backgroundUrl': backgroundUrl, 'imageUrl': backgroundUrl},
+      );
+    }
   }
 
   Future<void> triggerAutoClose(String streamId) async {

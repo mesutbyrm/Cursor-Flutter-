@@ -19,12 +19,12 @@ class LiveVideoPkState {
   String get status => battle?['status']?.toString() ?? '';
 
   int get leftScore {
-    final v = battle?['leftScore'];
+    final v = battle?['score1'] ?? battle?['leftScore'];
     return v is num ? v.toInt() : 0;
   }
 
   int get rightScore {
-    final v = battle?['rightScore'];
+    final v = battle?['score2'] ?? battle?['rightScore'];
     return v is num ? v.toInt() : 0;
   }
 
@@ -75,13 +75,13 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
     state = state.copyWith(battle: battle, clearError: true);
   }
 
-  Future<void> create({String? opponentStreamId}) async {
+  Future<void> create({String? opponentStreamId, String? targetStreamId}) async {
     state = state.copyWith(loading: true, clearError: true);
     try {
       final battle = await _remote.pkAction(
         streamId: arg,
         action: 'create',
-        opponentStreamId: opponentStreamId,
+        targetStreamId: targetStreamId ?? opponentStreamId,
       );
       state = state.copyWith(battle: battle, loading: false);
     } catch (e) {
@@ -91,12 +91,18 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
 
   Future<void> accept() => _action('accept');
   Future<void> reject() => _action('reject');
+  Future<void> cancel() => _action('cancel');
   Future<void> end() => _action('end');
 
   Future<void> _action(String action) async {
     state = state.copyWith(loading: true, clearError: true);
     try {
-      final battle = await _remote.pkAction(streamId: arg, action: action);
+      final battleId = state.battle?['id']?.toString();
+      final battle = await _remote.pkAction(
+        streamId: arg,
+        action: action,
+        battleId: battleId,
+      );
       state = state.copyWith(battle: battle, loading: false);
     } catch (e) {
       state = state.copyWith(loading: false, error: '$e');

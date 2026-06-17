@@ -1,5 +1,6 @@
 import 'live_stream_entity.dart';
 import 'live_guest_layout.dart';
+import '../../../agora/domain/entities/agora_credentials.dart';
 import '../../../trtc/domain/entities/trtc_credentials.dart';
 
 /// Yayın hazırlığından odaya aktarılan veri.
@@ -16,6 +17,7 @@ class LiveBroadcastSession {
     this.avatarUrl,
     this.viewerCount = 0,
     this.trtc,
+    this.agora,
     this.hostUserId,
     this.initialMicOn = true,
     this.initialCameraOn = true,
@@ -36,6 +38,7 @@ class LiveBroadcastSession {
   final String? avatarUrl;
   final int viewerCount;
   final TrtcCredentials? trtc;
+  final AgoraCredentials? agora;
   final String? hostUserId;
   final bool initialMicOn;
   final bool initialCameraOn;
@@ -62,6 +65,7 @@ class LiveBroadcastSession {
   LiveBroadcastSession copyWith({
     String? streamId,
     TrtcCredentials? trtc,
+    AgoraCredentials? agora,
     String? hostUserId,
     bool? initialMicOn,
     bool? initialCameraOn,
@@ -83,6 +87,7 @@ class LiveBroadcastSession {
       avatarUrl: avatarUrl,
       viewerCount: viewerCount ?? this.viewerCount,
       trtc: trtc ?? this.trtc,
+      agora: agora ?? this.agora,
       hostUserId: hostUserId ?? this.hostUserId,
       initialMicOn: initialMicOn ?? this.initialMicOn,
       initialCameraOn: initialCameraOn ?? this.initialCameraOn,

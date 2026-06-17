@@ -225,6 +225,13 @@ abstract final class ApiEndpoints {
   static String videoStreamPkBattle(String streamId) =>
       '/api/video-streams/$streamId/pk-battle';
 
+  /// Üretim PK — `GET/POST /api/video-streams/pk`
+  static const videoStreamPk = '/api/video-streams/pk';
+
+  static const videoStreamPkList = '/api/video-streams/pk/list';
+
+  static const videoStreamPkScore = '/api/video-streams/pk/score';
+
   static const pkHistory = '/api/pk/history';
 
   /// Merkezi PK daveti — oda uçları 404 ise fallback.
@@ -279,6 +286,9 @@ abstract final class ApiEndpoints {
   static const trtcUserSig = '/api/trtc/usersig';
   static const livekitToken = '/api/livekit/token';
 
+  /// Agora RTC token — canlı video yayını.
+  static const agoraToken = '/api/agora/token';
+
   /// Canlı yayın hediye kataloğu (Tencent / site ile aynı liste).
   static const videoStreamGiftsCatalog = '/api/video-streams/gifts';
 
@@ -298,6 +308,16 @@ abstract final class ApiEndpoints {
 
   static String videoStreamLiveStarted(String streamId) =>
       '/api/video-streams/$streamId/live-started';
+
+  /// SSE — izleyici, sohbet, hediye, yayın sonu.
+  static String videoStreamSse(String streamId) =>
+      '/api/video-streams/$streamId/stream';
+
+  static String videoStreamViewers(String streamId) =>
+      '/api/video-streams/$streamId/viewers';
+
+  static String videoStreamComments(String streamId) =>
+      '/api/video-streams/$streamId/comments';
 
   static String videoStreamGifts(String streamId) =>
       '/api/video-streams/$streamId/gifts';
@@ -327,6 +347,9 @@ abstract final class ApiEndpoints {
 
   static String videoStreamModerator(String streamId) =>
       '/api/video-streams/$streamId/moderator';
+
+  static String videoStreamModerators(String streamId) =>
+      '/api/video-streams/$streamId/moderators';
 
   static String videoStreamImage(String streamId) =>
       '/api/video-streams/$streamId/image';

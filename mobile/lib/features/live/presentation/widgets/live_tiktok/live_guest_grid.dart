@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/live_guest_layout.dart';
+import '../../../../agora/presentation/agora_room_manager.dart';
 import '../../../../trtc/presentation/trtc_room_manager.dart';
 
 /// TikTok tarzı misafir grid — 1/2/3/4 koltuk.
@@ -10,21 +11,25 @@ class LiveGuestGrid extends StatelessWidget {
     super.key,
     required this.layout,
     required this.isHost,
+    this.agora,
     this.trtc,
     this.localPreviewKey,
     this.hostAvatarUrl,
     this.hostName,
     this.remoteUserId,
+    this.remoteUid,
     this.onInviteSlot,
   });
 
   final LiveGuestLayout layout;
   final bool isHost;
+  final AgoraRoomManager? agora;
   final TrtcRoomManager? trtc;
   final Key? localPreviewKey;
   final String? hostAvatarUrl;
   final String? hostName;
   final String? remoteUserId;
+  final int? remoteUid;
   final void Function(int slotIndex)? onInviteSlot;
 
   @override
@@ -35,9 +40,22 @@ class LiveGuestGrid extends StatelessWidget {
     return _gridView();
   }
 
-  Widget _soloView() {
-    if (isHost && trtc != null) {
+  Widget _localVideo() {
+    if (agora != null) {
+      return AgoraLocalVideoView(key: localPreviewKey, manager: agora!);
+    }
+    if (trtc != null) {
       return TrtcLocalVideoView(key: localPreviewKey, manager: trtc!);
+    }
+    return const ColoredBox(color: Colors.black);
+  }
+
+  Widget _remoteVideo() {
+    if (agora != null) {
+      final uid = remoteUid ?? agora!.remoteUid;
+      if (uid != null && uid > 0) {
+        return AgoraRemoteVideoView(key: ValueKey(uid), manager: agora!, uid: uid);
+      }
     }
     if (remoteUserId != null && trtc != null) {
       return TrtcRemoteVideoView(
@@ -45,6 +63,17 @@ class LiveGuestGrid extends StatelessWidget {
         manager: trtc!,
         userId: remoteUserId!,
       );
+    }
+    return const ColoredBox(color: Colors.black);
+  }
+
+  Widget _soloView() {
+    if (isHost && (agora != null || trtc != null)) {
+      return _localVideo();
+    }
+    if ((remoteUid != null || remoteUserId != null) &&
+        (agora != null || trtc != null)) {
+      return _remoteVideo();
     }
     return const ColoredBox(color: Colors.black);
   }
@@ -63,20 +92,16 @@ class LiveGuestGrid extends StatelessWidget {
       ),
       itemCount: count,
       itemBuilder: (context, i) {
-        if (i == 0 && isHost && trtc != null) {
+        if (i == 0 && isHost && (agora != null || trtc != null)) {
           return ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: TrtcLocalVideoView(key: localPreviewKey, manager: trtc!),
+            child: _localVideo(),
           );
         }
-        if (i == 1 && remoteUserId != null && trtc != null) {
+        if (i == 1 && (remoteUid != null || remoteUserId != null)) {
           return ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: TrtcRemoteVideoView(
-              key: ValueKey(remoteUserId),
-              manager: trtc!,
-              userId: remoteUserId!,
-            ),
+            child: _remoteVideo(),
           );
         }
         return _emptySlot(i);

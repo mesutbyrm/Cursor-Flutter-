@@ -14,8 +14,8 @@ import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
-import '../../../trtc/presentation/providers/trtc_providers.dart';
-import '../../../trtc/presentation/trtc_room_manager.dart';
+import '../../../agora/presentation/agora_room_manager.dart';
+import '../../../agora/presentation/providers/agora_providers.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../gifts/live_gift_controller.dart';
@@ -56,7 +56,7 @@ class LiveBroadcastRoomPage extends ConsumerStatefulWidget {
 }
 
 class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
-  final _trtc = TrtcRoomManager();
+  final _agora = AgoraRoomManager();
   var _rtcReady = false;
   String? _rtcError;
   final _chat = TextEditingController();
@@ -83,7 +83,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           ..reset(initialLikes: 0)
           ..loadInitialLikeCount();
       }
-      _initTrtc();
+      _initAgora();
       _initGifts();
       _initStreamExtras();
     });
@@ -100,9 +100,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         );
   }
 
-  Future<void> _initTrtc() async {
+  Future<void> _initAgora() async {
     final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null || !_trtc.isSupported) return;
+    if (user == null || !_agora.isSupported) return;
 
     try {
       final roomId = widget.session.streamId?.trim();
@@ -110,29 +110,24 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         throw StateError('Yayın odası kimliği eksik');
       }
 
-      var cred = widget.session.trtc;
-      if (cred == null || !cred.matchesRoom(roomId)) {
-        cred = await ref.read(trtcRemoteProvider).fetchUserSig(
-              userId: user.id,
-              roomId: roomId,
+      var cred = widget.session.agora;
+      if (cred == null || !cred.matchesChannel(roomId)) {
+        cred = await ref.read(agoraRemoteProvider).fetchToken(
+              channelName: roomId,
+              role: widget.session.isHost ? 'host' : 'audience',
             );
       }
 
-      final anchorHint = widget.session.isHost
-          ? cred.userId
-          : (widget.session.hostUserId?.trim().isNotEmpty == true
-              ? widget.session.hostUserId
-              : null);
-
-      await _trtc.join(
+      await _agora.join(
         credentials: cred,
         isHost: widget.session.isHost,
-        audioOnly: false,
-        expectedAnchorUserId: anchorHint,
       );
       if (widget.session.isHost) {
-        _trtc.setMicEnabled(widget.session.initialMicOn);
-        _trtc.setCameraEnabled(widget.session.initialCameraOn);
+        _agora.setMicEnabled(widget.session.initialMicOn);
+        _agora.setCameraEnabled(widget.session.initialCameraOn);
+        try {
+          await ref.read(liveRemoteProvider).notifyLiveStarted(roomId);
+        } catch (_) {}
       }
       if (mounted) setState(() => _rtcReady = true);
     } catch (e) {
@@ -147,7 +142,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     _signalService?.stop();
     _timer.cancel();
     _chat.dispose();
-    _trtc.dispose();
+    _agora.dispose();
     super.dispose();
   }
 
@@ -155,7 +150,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     if (_leaving) return;
     _leaving = true;
     ref.read(liveGiftControllerProvider).detach();
-    await _trtc.leave();
+    await _agora.leave();
     final streamId = widget.session.streamId;
     if (widget.session.isHost && streamId != null && streamId.isNotEmpty) {
       try {
@@ -397,15 +392,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       );
     }
 
-    final remote = _trtc.remoteAnchorUserIdNotifier.value;
+    final remoteUid = _agora.remoteUidNotifier.value;
     return LiveGuestGrid(
       layout: s.guestLayout,
       isHost: s.isHost,
-      trtc: _trtc,
+      agora: _agora,
       localPreviewKey: _localPreviewKey,
       hostAvatarUrl: s.avatarUrl,
       hostName: s.streamerName,
-      remoteUserId: remote,
+      remoteUid: remoteUid,
       onInviteSlot: s.isHost
           ? (_) => _openHostTools()
           : null,
@@ -794,15 +789,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                   LivePremiumBottomBar(
                     chatController: _chat,
                     isHost: s.isHost,
-                    trtc: s.isHost ? _trtc : null,
+                    agora: s.isHost ? _agora : null,
                     onToggleCamera: s.isHost
                         ? () {
-                            if (_trtc.cameraOn) {
-                              _trtc.stopLocalPreview();
-                            } else {
-                              setState(() => _localPreviewKey = UniqueKey());
-                            }
-                            setState(() {});
+                            _agora.setCameraEnabled(!_agora.cameraOn);
+                            setState(() => _localPreviewKey = UniqueKey());
                           }
                         : null,
                     onGift: () => giftCtrl.setPanelOpen(true),
