@@ -307,14 +307,20 @@ class WalletRemoteDataSource {
   }
 
   bool _paymentRequestAccepted(dynamic data, int code) {
+    if (code >= 200 && code < 300) {
+      if (data == null) return true;
+      if (data is String && data.trim().isEmpty) return true;
+    }
     if (code == 201 || code == 200) {
       if (data == null) return true;
       if (data is String && data.trim().isEmpty) return true;
     }
     if (data is! Map) return false;
     final m = Map<String, dynamic>.from(data);
+    if (m['success'] == false) return false;
     if (m['success'] == true) return true;
     if (m['id'] != null || m['paymentRequestId'] != null) return true;
+    if (m['status']?.toString() == 'pending') return true;
     final nested = m['data'];
     if (nested is Map) {
       final inner = Map<String, dynamic>.from(nested);

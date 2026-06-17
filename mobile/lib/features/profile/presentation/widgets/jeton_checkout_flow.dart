@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -325,9 +326,15 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     final path = _receiptImagePath;
     if (path == null || path.isEmpty) return null;
     try {
-      final post = await ref.read(socialRemoteProvider).createPost(
-            CreateSocialPostInput(imagePath: path, caption: '[JETON_DEKONT] $_userLabel'),
-          );
+      final post = await ref
+          .read(socialRemoteProvider)
+          .createPost(
+            CreateSocialPostInput(
+              imagePath: path,
+              caption: '[JETON_DEKONT] $_userLabel',
+            ),
+          )
+          .timeout(const Duration(seconds: 25));
       return post.mediaUrl;
     } catch (_) {
       return null;
@@ -425,11 +432,12 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
                 FilledButton(
                   onPressed: _submitting
                       ? null
-                      : () async {
+                      : () {
+                          final refText = receiptRefCtrl.text.trim();
                           Navigator.pop(ctx);
                           setState(() => _receiptImagePath = localImage);
-                          await _submitAndClose(
-                            extraReceiptRef: receiptRefCtrl.text.trim(),
+                          unawaited(
+                            _submitAndClose(extraReceiptRef: refText),
                           );
                         },
                   style: FilledButton.styleFrom(
@@ -460,14 +468,21 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
   }
 
   Future<void> _submitRequest({String? extraReceiptRef}) async {
-    final uploaded = await _uploadReceiptIfNeeded();
+    String? uploaded;
+    if (_receiptImagePath != null && _receiptImagePath!.isNotEmpty) {
+      uploaded = await _uploadReceiptIfNeeded();
+    }
     final receiptParts = <String>[
       if (uploaded != null && uploaded.isNotEmpty) uploaded,
       if (extraReceiptRef != null && extraReceiptRef.isNotEmpty) extraReceiptRef,
+      if (uploaded == null &&
+          _receiptImagePath != null &&
+          _receiptImagePath!.isNotEmpty)
+        'Dekont görseli eklendi (yüklenemedi — admin ile paylaşın)',
     ];
     final receipt = receiptParts.join(' · ');
     final autoNotes =
-        'Kullanıcı: $_userLabel · ${widget.package.coins} jeton · ${widget.priceText}';
+        'Açıklama: $_userLabel · ${widget.package.coins} jeton · ${widget.priceText}';
     final body = widget.package.id.startsWith('membership_')
         ? buildMembershipPaymentRequest(
             package: widget.package,

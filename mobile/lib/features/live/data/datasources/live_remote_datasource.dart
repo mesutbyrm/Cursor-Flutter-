@@ -85,32 +85,57 @@ class LiveRemoteDataSource {
   static int openRoomJetonCost({required bool vip}) =>
       vip ? voiceRoomVipOpenJetonCost : voiceRoomNormalOpenJetonCost;
 
-  /// canlifal.com `POST /api/chat/rooms/create`
+  /// canlifal.com `POST /api/chat/rooms/create` (yedek: `POST /api/chat/rooms`)
   Future<VoiceRoomEntity> createVoiceChatRoom({
     bool vip = false,
     String? roomName,
   }) async {
     final cost = openRoomJetonCost(vip: vip);
     final name = roomName?.trim();
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.chatRoomCreate,
-      data: {
-        'cost': cost,
-        'jeton': cost,
-        'jetonCost': cost,
-        'coins': cost,
-        'amount': cost,
-        'isVip': vip,
-        if (vip) 'vip': true,
-        'roomType': vip ? 'vip' : 'normal',
-        'type': vip ? 'vip' : 'normal',
-        if (name != null && name.isNotEmpty) ...{
-          'name': name,
-          'nameTr': name,
-          'title': name,
-          'roomName': name,
-        },
+    final payload = <String, dynamic>{
+      'cost': cost,
+      'jeton': cost,
+      'jetonCost': cost,
+      'coins': cost,
+      'amount': cost,
+      'isVip': vip,
+      if (vip) 'vip': true,
+      'roomType': vip ? 'vip' : 'normal',
+      'type': vip ? 'vip' : 'normal',
+      if (name != null && name.isNotEmpty) ...{
+        'name': name,
+        'nameTr': name,
+        'title': name,
+        'roomName': name,
       },
+    };
+
+    DioException? lastError;
+    for (final path in [ApiEndpoints.chatRoomCreate, ApiEndpoints.chatRooms]) {
+      try {
+        return await _postCreateVoiceRoom(path, payload, roomName: name);
+      } on DioException catch (e) {
+        lastError = e;
+        final code = e.response?.statusCode ?? 0;
+        if (code != 404 && code != 405) rethrow;
+      }
+    }
+    throw lastError ??
+        DioException(
+          requestOptions: RequestOptions(path: ApiEndpoints.chatRoomCreate),
+          message: 'Oda açılamadı — sunucu yanıt vermedi',
+        );
+  }
+
+  Future<VoiceRoomEntity> _postCreateVoiceRoom(
+    String path,
+    Map<String, dynamic> payload, {
+    String? roomName,
+  }) async {
+    final name = roomName?.trim();
+    final res = await _dio.safePost<dynamic>(
+      path,
+      data: payload,
     );
     final body = res.data;
     if (body is String &&

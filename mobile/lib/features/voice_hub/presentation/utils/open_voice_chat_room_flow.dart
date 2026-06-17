@@ -105,9 +105,17 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
   if (choice == null || !context.mounted) return;
 
   final cost = choice == _OpenRoomChoice.vip ? vipCost : normalCost;
-  final walletAsync = ref.read(walletBalancesProvider);
-  final walletKnown = walletAsync.hasValue;
-  if (walletKnown && balance < cost) {
+  ref.invalidate(walletBalancesProvider);
+  try {
+    balance = (await ref.read(walletBalancesProvider.future).timeout(
+          const Duration(seconds: 12),
+        ))
+        .jeton;
+  } catch (_) {
+    balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ?? balance;
+  }
+
+  if (balance < cost) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Yetersiz jeton ($cost gerekli, $balance mevcut).'),
@@ -196,6 +204,39 @@ Future<void> _createAndEnter(
     if (!context.mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
     final msg = ApiException.userMessage(e);
+    final lower = msg.toLowerCase();
+    if (lower.contains('zaten') ||
+        lower.contains('already') ||
+        lower.contains('mevcut') ||
+        lower.contains('bir oda')) {
+      final user = ref.read(authControllerProvider).valueOrNull;
+      ref.invalidate(voiceRoomsProvider);
+      try {
+        final rooms = await ref.read(voiceRoomsProvider.future);
+        final me = user?.id;
+        VoiceRoomEntity? owned;
+        if (me != null) {
+          for (final r in rooms) {
+            if (r.ownerId == me && r.apiRoomKey.isNotEmpty) {
+              owned = r;
+              break;
+            }
+          }
+        }
+        if (owned != null && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Mevcut odanıza yönlendiriliyorsunuz…')),
+          );
+          await openVoiceRoomWithVipGate(
+            context,
+            ref,
+            owned,
+            skipVipGateForOwner: true,
+          );
+          return;
+        }
+      } catch (_) {}
+    }
     if (msg.toLowerCase().contains('yetersiz') ||
         msg.toLowerCase().contains('jeton')) {
       ScaffoldMessenger.of(context).showSnackBar(

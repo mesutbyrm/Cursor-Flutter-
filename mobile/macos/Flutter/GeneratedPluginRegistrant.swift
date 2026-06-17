@@ -34,6 +34,7 @@ import sqflite_darwin
 import tencent_rtc_sdk
 import url_launcher_macos
 import video_player_avfoundation
+import webview_flutter_wkwebview
 import window_to_front
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
@@ -66,5 +67,6 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   TencentRTCCloud.register(with: registry.registrar(forPlugin: "TencentRTCCloud"))
   UrlLauncherPlugin.register(with: registry.registrar(forPlugin: "UrlLauncherPlugin"))
   VideoPlayerPlugin.register(with: registry.registrar(forPlugin: "VideoPlayerPlugin"))
+  WebViewFlutterPlugin.register(with: registry.registrar(forPlugin: "WebViewFlutterPlugin"))
   WindowToFrontPlugin.register(with: registry.registrar(forPlugin: "WindowToFrontPlugin"))
 }

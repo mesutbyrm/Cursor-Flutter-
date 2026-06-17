@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.238+241 (2026-06-12)
+
+### Hata düzeltmeleri — video yedek, oda aç, ödeme bildir
+
+- **Video yedek:** 96×96 sürüklenebilir mini oynatıcı; altta oynat/durdur/kapat; YouTube embed (WebView)
+- **Oda aç:** `POST /api/chat/rooms/create` + yedek `POST /api/chat/rooms`; mevcut oda varsa yönlendirme
+- **Ödeme bildir:** 2xx yanıt kabulü genişletildi; dekont yükleme zaman aşımı; otomatik açıklama alanı
+
 ## 1.0.237+240 (2026-06-12)
 
 ### Ana sayfa + sesli oda + jeton ödeme
