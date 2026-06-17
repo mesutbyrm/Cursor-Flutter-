@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.241+244 (2026-06-12)
+
+### Video Müzik — YouTube Hata 153 düzeltmesi
+
+- WebView embed: `loadHtmlString` + `baseUrl: https://canlifal.com` (Referer zorunluluğu)
+- iframe `referrerpolicy` + `origin` parametresi
+- Yedek: doğrudan embed + `Referer` HTTP header
+- Hata durumunda küçük resim (thumbnail) gösterimi
+
 ## 1.0.240+243 (2026-06-12)
 
 ### Video Müzik Modu — !istek ve siyah ekran düzeltmeleri
