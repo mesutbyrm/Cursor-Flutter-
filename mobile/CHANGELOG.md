@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.235+238 (2026-06-12)
+
+### !istek / müzik oynatma — web parity
+
+- Oynatma öncesi akış URL'si her seferinde `videoId` ile yeniden çözülür (Piped → youtube_explode → sunucu)
+- Süresi dolmuş sunucu `musicUrl` / googlevideo linklerine güvenilmez; başarısızlıkta otomatik yeniden dene
+- Piped proxy akışları için HTTP başlıkları; `!istek` arama listesi 10 sonuç (web ile aynı)
+
 ## 1.0.234+237 (2026-06-12)
 
 ### Müzik oynatma — bildirim ve senkron

@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../providers/room_music_providers.dart';
 
-/// `!istek` sonrası YouTube Data API arama sonuçları — ilk 5.
+/// `!istek` sonrası YouTube arama sonuçları — ilk 10 (web ile aynı).
 Future<YoutubeSearchHit?> showMusicSearchPickerSheet(
   BuildContext context,
   WidgetRef ref, {

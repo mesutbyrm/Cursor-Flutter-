@@ -760,9 +760,7 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
         ),
       );
       final useYtHeaders = !source.startsWith('/') &&
-          (VoiceRoomDjStreamLoader.needsLocalDownload(source) ||
-              source.contains('/api/chat/youtube-audio') ||
-              source.contains('canlifal.com/api/chat/youtube-audio'));
+          VoiceRoomDjStreamLoader.needsStreamHeaders(source);
       final audioSource = source.startsWith('/')
           ? ja.AudioSource.file(source, tag: item)
           : ja.AudioSource.uri(

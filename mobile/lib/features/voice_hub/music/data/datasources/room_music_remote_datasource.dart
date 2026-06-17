@@ -12,7 +12,7 @@ class RoomMusicRemoteDataSource {
 
   final Dio _dio;
 
-  Future<List<YoutubeSearchHit>> searchSongs(String query, {int limit = 5}) async {
+  Future<List<YoutubeSearchHit>> searchSongs(String query, {int limit = 10}) async {
     final q = query.trim();
     if (q.length < 2) return [];
     final res = await _dio.get<dynamic>(

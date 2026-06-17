@@ -6,6 +6,6 @@ class SearchMusicUseCase {
 
   final RoomMusicRepository _repository;
 
-  Future<List<YoutubeSearchHit>> call(String query, {int limit = 5}) =>
+  Future<List<YoutubeSearchHit>> call(String query, {int limit = 10}) =>
       _repository.searchSongs(query, limit: limit);
 }

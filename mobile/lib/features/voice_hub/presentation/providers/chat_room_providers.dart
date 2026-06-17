@@ -34,7 +34,6 @@ import '../../domain/entities/popular_music_suggestion.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/youtube_stream_resolver.dart';
 import '../audio/voice_room_dj_stream_loader.dart';
-import '../audio/voice_room_dj_stream_loader.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import '../services/voice_room_dj_player.dart';
 import '../services/voice_room_music_control_delegate.dart';
@@ -296,6 +295,63 @@ class VoiceRoomLiveController
     final seed = dj.playbackResolveSeed ?? dj.musicUrl;
     if (seed == null || seed.trim().isEmpty) return;
     unawaited(ref.read(youtubeStreamResolverProvider).prefetch(seed));
+    final videoId = ChatRoomDjState.videoIdFromLoose(seed);
+    if (videoId != null && videoId.isNotEmpty) {
+      unawaited(
+        ref.read(youtubeStreamResolverProvider).resolveByVideoId(videoId),
+      );
+    }
+  }
+
+  /// Web `buildDjPayload` uyumu: önce Piped / youtube_explode, sonra sunucu stream.
+  Future<String?> _resolvePlaybackStreamUrl({
+    required String? videoId,
+    String? serverMusicUrl,
+  }) async {
+    final resolver = ref.read(youtubeStreamResolverProvider);
+    if (videoId != null && videoId.isNotEmpty) {
+      VoiceRoomMusicPipelineLog.compareFields(
+        stage: 'resolvePlaybackStream.start',
+        roomId: _roomKey,
+        videoId: videoId,
+        serverMusicUrl: serverMusicUrl,
+      );
+      final fresh = await resolver.resolveByVideoId(videoId);
+      if (fresh != null && fresh.startsWith('http')) {
+        final client = VoiceRoomDjStreamLoader.clientPlaybackUrl(fresh);
+        VoiceRoomMusicPipelineLog.compareFields(
+          stage: 'resolvePlaybackStream.client',
+          roomId: _roomKey,
+          videoId: videoId,
+          resolvedStreamUrl: client,
+        );
+        return client;
+      }
+      try {
+        final api = await ref.read(resolveStreamUseCaseProvider)(
+          roomId: _roomKey,
+          videoId: videoId,
+        );
+        if (api != null && api.startsWith('http')) {
+          return VoiceRoomDjStreamLoader.clientPlaybackUrl(api);
+        }
+      } catch (e, st) {
+        VoiceRoomMusicPipelineLog.justAudioError(
+          e,
+          st,
+          phase: 'resolvePlaybackStream.api',
+          url: videoId,
+        );
+      }
+    }
+
+    final server = serverMusicUrl?.trim();
+    if (server != null &&
+        server.startsWith('http') &&
+        !ChatRoomDjState.isEphemeralStreamUrl(server)) {
+      return VoiceRoomDjStreamLoader.clientPlaybackUrl(server);
+    }
+    return null;
   }
 
   DateTime? get _lastMessageAt {
@@ -1129,22 +1185,11 @@ class VoiceRoomLiveController
         );
     final shouldPlay = effectiveDj.playing && videoId != null && videoId.isNotEmpty;
 
-    var streamUrl = sync?.streamUrl ?? effectiveDj.musicUrl;
-    if (streamUrl != null && streamUrl.startsWith('http')) {
-      streamUrl = VoiceRoomDjStreamLoader.clientPlaybackUrl(streamUrl);
-    }
-    if (streamUrl == null ||
-        !streamUrl.startsWith('http') ||
-        ChatRoomDjState.isEphemeralStreamUrl(
-          sync?.streamUrl ?? effectiveDj.musicUrl ?? '',
-        )) {
-      if (videoId != null && videoId.isNotEmpty) {
-        streamUrl = await ref.read(resolveStreamUseCaseProvider)(
-              roomId: _roomKey,
-              videoId: videoId,
-            );
-      }
-    }
+    final serverMusicUrl = sync?.streamUrl ?? effectiveDj.musicUrl;
+    var streamUrl = await _resolvePlaybackStreamUrl(
+      videoId: videoId,
+      serverMusicUrl: serverMusicUrl,
+    );
 
     if (shouldPlay && (streamUrl == null || !streamUrl.startsWith('http'))) {
       VoiceRoomDebugLog.log('music.player.no_stream', {
@@ -1170,6 +1215,26 @@ class VoiceRoomLiveController
         nowPlaying: effectiveDj.nowPlaying,
         muted: muted,
       );
+      if (!ok && videoId != null && videoId.isNotEmpty) {
+        ref.read(youtubeStreamResolverProvider).invalidate(videoId);
+        final retryUrl = await _resolvePlaybackStreamUrl(
+          videoId: videoId,
+          serverMusicUrl: null,
+        );
+        if (retryUrl != null && retryUrl != streamUrl) {
+          VoiceRoomDebugLog.log('music.player.retry', {
+            'videoId': videoId,
+            'retryUrl': retryUrl,
+          });
+          ok = await player.playServerStream(
+            streamUrl: retryUrl,
+            playing: true,
+            startPosition: Duration(milliseconds: startMs),
+            nowPlaying: effectiveDj.nowPlaying,
+            muted: muted,
+          );
+        }
+      }
     } else if (!shouldPlay) {
       await player.stop();
       ok = true;

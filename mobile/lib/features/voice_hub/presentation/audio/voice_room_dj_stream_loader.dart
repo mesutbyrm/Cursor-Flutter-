@@ -21,6 +21,16 @@ class VoiceRoomDjStreamLoader {
         'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
   };
 
+  /// googlevideo / piped akışları için HTTP başlıkları.
+  static bool needsStreamHeaders(String url) {
+    final u = url.trim().toLowerCase();
+    if (!u.startsWith('http')) return false;
+    return needsLocalDownload(u) ||
+        u.contains('pipedproxy') ||
+        u.contains('kavin.rocks') ||
+        u.contains('piped.video');
+  }
+
   static bool needsLocalDownload(String url) {
     final u = url.trim().toLowerCase();
     if (!u.startsWith('http')) return false;

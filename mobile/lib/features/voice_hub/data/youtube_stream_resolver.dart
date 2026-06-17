@@ -41,6 +41,9 @@ class YoutubeStreamResolver {
     }
     return u.contains('.m3u8') ||
         u.contains('mime=audio') ||
+        u.contains('pipedproxy') ||
+        u.contains('kavin.rocks') ||
+        u.contains('piped.video') ||
         u.endsWith('.mp3') ||
         u.endsWith('.m4a') ||
         u.endsWith('.aac') ||
