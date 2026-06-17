@@ -58,6 +58,9 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
 
       unawaited(OneSignalBootstrap.login(user.id));
       ref.read(pushRegistrarProvider).registerIfPossible();
+      if (!OneSignalBootstrap.permissionGranted) {
+        unawaited(OneSignalBootstrap.requestPermission());
+      }
     });
   }
 

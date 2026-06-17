@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/home_banner_entity.dart';
@@ -121,21 +122,53 @@ class HomeRemoteDataSource {
     }
   }
 
-  Future<List<FortuneIncomingSession>> fetchIncomingFortuneSessions() async {
+  Future<List<FortuneIncomingSession>> fetchIncomingFortuneSessions({
+    String? currentUserId,
+  }) async {
     for (final path in [
       ApiEndpoints.fortuneTellerSessions,
       ApiEndpoints.fortuneTellerIncomingSessions,
     ]) {
       try {
         final sessions = await _fetchFortuneSessionsFromPath(path);
-        if (path == ApiEndpoints.fortuneTellerSessions || sessions.isNotEmpty) {
-          return sessions
-              .where(_isPendingFortuneInvite)
-              .toList(growable: false);
+        final filtered = _filterTellerIncoming(sessions, currentUserId);
+        if (path == ApiEndpoints.fortuneTellerSessions || filtered.isNotEmpty) {
+          return filtered;
         }
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 405) continue;
       } catch (_) {}
     }
     return const [];
+  }
+
+  /// Falcı uygulamadayken web ile aynı «çevrimiçi» durumu.
+  Future<bool> setFortuneTellerOnline({bool online = true}) async {
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.fortuneTellerToggleOnline,
+        data: {'online': online, 'isOnline': online},
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<LiveFortuneTellerEntity?> fetchMyFortuneTellerProfile() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.fortuneTellerMyProfile,
+      );
+      final body = res.data;
+      if (body is! Map) return null;
+      final map = asJsonMap(body);
+      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+      final teller = data['teller'] ?? data['fortuneTeller'] ?? data;
+      return _mapLiveFortuneTeller(teller);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<FortuneSessionStatusResult?> fetchFortuneSessionStatus(
@@ -248,12 +281,34 @@ class HomeRemoteDataSource {
         data['items'] ??
         data['incoming'] ??
         data['pending'] ??
+        data['requests'] ??
+        data['pendingSessions'] ??
+        data['incomingRequests'] ??
+        data['liveSessions'] ??
         [];
-    if (raw is! List) return const [];
-    return raw
-        .map(_mapIncomingFortuneSession)
-        .where((s) => s.sessionId.isNotEmpty)
-        .toList(growable: false);
+    if (raw is List && raw.isNotEmpty) {
+      return raw
+          .map(_mapIncomingFortuneSession)
+          .where((s) => s.sessionId.isNotEmpty)
+          .toList(growable: false);
+    }
+    if (data.containsKey('id') || data.containsKey('sessionId')) {
+      final one = _mapIncomingFortuneSession(data);
+      if (one.sessionId.isNotEmpty) return [one];
+    }
+    return const [];
+  }
+
+  List<FortuneIncomingSession> _filterTellerIncoming(
+    List<FortuneIncomingSession> sessions,
+    String? currentUserId,
+  ) {
+    final uid = currentUserId?.trim() ?? '';
+    return sessions.where((session) {
+      if (!_isPendingFortuneInvite(session)) return false;
+      if (uid.isEmpty) return true;
+      return session.clientId != uid;
+    }).toList(growable: false);
   }
 
   Future<FortuneSessionStatusResult?> _fetchFortuneSessionStatusDirect(
@@ -324,14 +379,27 @@ class HomeRemoteDataSource {
     final response = session.tellerResponse.toLowerCase();
     if (response == 'accepted' ||
         response == 'rejected' ||
-        status == 'active' ||
-        status == 'ended') {
+        response == 'declined' ||
+        response == 'cancelled') {
       return false;
     }
-    return response == 'pending' ||
+    if (status == 'active' ||
+        status == 'ended' ||
+        status == 'completed' ||
+        status == 'cancelled' ||
+        status == 'rejected') {
+      return false;
+    }
+    return response.isEmpty ||
+        response == 'pending' ||
         response == 'held' ||
+        response == 'waiting' ||
+        response == 'requested' ||
         status == 'pending' ||
-        status == 'waiting';
+        status == 'waiting' ||
+        status == 'requested' ||
+        status == 'new' ||
+        status == 'open';
   }
 
   TellerChatMessage _mapTellerChatMessage(
@@ -366,6 +434,18 @@ class HomeRemoteDataSource {
     final m = asJsonMap(raw);
     final client = asJsonMap(m['client'] ?? m['user'] ?? m['clientUser']);
     final teller = asJsonMap(m['teller'] ?? m['fortuneTeller']);
+    final accepted = m['accepted'] == true || m['isAccepted'] == true;
+    final rejected = m['rejected'] == true || m['isRejected'] == true;
+    var status = _str(m, ['status']) ?? 'pending';
+    var tellerResponse =
+        _str(m, ['tellerResponse', 'response', 'tellerStatus']) ?? 'pending';
+    if (accepted) {
+      status = 'active';
+      tellerResponse = 'accepted';
+    } else if (rejected) {
+      status = 'ended';
+      tellerResponse = 'rejected';
+    }
     return FortuneIncomingSession(
       sessionId: _str(m, ['id', 'sessionId']) ?? '',
       clientId: _str(m, ['clientId']) ??
@@ -377,16 +457,21 @@ class HomeRemoteDataSource {
       tellerId: _str(m, ['tellerId', 'fortuneTellerId']) ??
           _str(teller, ['id', 'tellerId']) ??
           '',
+      tellerUserId: _str(m, ['tellerUserId', 'anchorUserId']) ??
+          _str(teller, ['userId', 'tellerUserId']) ??
+          null,
       durationMinutes: () {
-        final v = asInt(pick(m, ['durationMinutes', 'maxMinutes', 'minutes']));
+        final v = asInt(
+          pick(m, ['durationMinutes', 'maxMinutes', 'minutes']),
+        );
         return v > 0 ? v : 10;
       }(),
-      totalJeton: asInt(pick(m, ['totalJeton', 'jeton', 'amount'])),
+      totalJeton: asInt(pick(m, ['totalJeton', 'jeton', 'amount', 'cost'])),
       category: _str(m, ['category', 'specialty', 'fortuneType']) ??
           _str(teller, ['specialty']) ??
           'general',
-      status: _str(m, ['status']) ?? 'pending',
-      tellerResponse: _str(m, ['tellerResponse', 'response']) ?? 'pending',
+      status: status,
+      tellerResponse: tellerResponse,
     );
   }
 

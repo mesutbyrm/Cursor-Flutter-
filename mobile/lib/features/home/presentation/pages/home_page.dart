@@ -18,6 +18,7 @@ import '../widgets/approved/more_fortunes_button.dart';
 import '../widgets/approved/stories_section.dart';
 import '../widgets/approved/trending_video_section.dart';
 import '../widgets/approved/voice_room_section.dart';
+import '../widgets/home_deferred_section.dart';
 import '../widgets/home_game_center_section.dart';
 import '../widgets/home_games_row.dart';
 
@@ -58,19 +59,83 @@ class _HomePageState extends ConsumerState<HomePage> {
             const SliverToBoxAdapter(child: HomeHeader()),
             const SliverToBoxAdapter(child: HomeBannerCarousel()),
             const SliverToBoxAdapter(child: HomeQuickActions()),
-            const SliverToBoxAdapter(child: LiveBroadcastSection()),
-            const SliverToBoxAdapter(child: VoiceRoomSection()),
-            const SliverToBoxAdapter(child: LiveFortuneTellersSection()),
-            const SliverToBoxAdapter(child: FortuneSection()),
-            const SliverToBoxAdapter(child: StoriesSection()),
-            const SliverToBoxAdapter(child: HomeHoroscopeSection()),
-            const SliverToBoxAdapter(child: TrendingVideoSection()),
-            const SliverToBoxAdapter(child: DiscoverSection()),
-            const SliverToBoxAdapter(child: FanClubSection()),
-            const SliverToBoxAdapter(child: GoldSection()),
-            const SliverToBoxAdapter(child: HomeGameCenterSection()),
-            const SliverToBoxAdapter(child: HomeGamesRow()),
-            const SliverToBoxAdapter(child: MoreFortunesButton()),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                child: LiveBroadcastSection(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: Duration(milliseconds: 80),
+                child: VoiceRoomSection(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: Duration(milliseconds: 120),
+                child: LiveFortuneTellersSection(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: Duration(milliseconds: 200),
+                child: FortuneSection(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: Duration(milliseconds: 280),
+                child: StoriesSection(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: Duration(milliseconds: 360),
+                child: HomeHoroscopeSection(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: Duration(milliseconds: 440),
+                child: TrendingVideoSection(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: Duration(milliseconds: 520),
+                child: DiscoverSection(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: Duration(milliseconds: 600),
+                child: FanClubSection(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: Duration(milliseconds: 680),
+                child: GoldSection(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: Duration(milliseconds: 760),
+                child: HomeGameCenterSection(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: Duration(milliseconds: 840),
+                child: HomeGamesRow(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: Duration(milliseconds: 920),
+                child: MoreFortunesButton(),
+              ),
+            ),
             SliverToBoxAdapter(child: SizedBox(height: 72 + bottom)),
           ],
         ),

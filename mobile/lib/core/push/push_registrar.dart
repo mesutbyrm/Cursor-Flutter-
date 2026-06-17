@@ -9,7 +9,7 @@ import '../network/api_exception.dart';
 import '../network/dio_provider.dart';
 import 'push_notification_service.dart';
 
-/// FCM token'ını sunucuya kaydeder (uç yoksa sessizce atlanır).
+/// FCM / OneSignal token'ını sunucuya kaydeder (üretim + yedek uçlar).
 class PushRegistrar {
   PushRegistrar(this._dio);
 
@@ -23,26 +23,32 @@ class PushRegistrar {
     if (token == null || token.isEmpty) return;
     if (token == _lastSentToken) return;
 
-    try {
-      await _dio.safePost(
-        ApiEndpoints.registerFcmDevice,
-        data: {
-          'token': token,
-          'fcmToken': token,
-          'platform': _platformLabel(),
-          if (OneSignalBootstrap.isReady) 'provider': 'onesignal',
-        },
-      );
-      _lastSentToken = token;
-      debugPrint('Push token registered (${OneSignalBootstrap.isReady ? 'OneSignal' : 'FCM'})');
-    } on ApiException catch (e) {
-      if (e.statusCode == 404) {
-        debugPrint('FCM register endpoint not deployed yet');
+    final payload = {
+      'token': token,
+      'fcmToken': token,
+      'deviceToken': token,
+      'platform': _platformLabel(),
+      if (OneSignalBootstrap.isReady) 'provider': 'onesignal',
+    };
+
+    final endpoints = [
+      ApiEndpoints.authMobileDeviceToken,
+      ApiEndpoints.registerFcmDevice,
+      ApiEndpoints.registerUserDeviceToken,
+    ];
+
+    for (final path in endpoints) {
+      try {
+        await _dio.safePost(path, data: payload);
+        _lastSentToken = token;
+        debugPrint('Push token registered via $path');
         return;
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 405) continue;
+        debugPrint('Push register $path failed: ${e.message}');
+      } catch (e) {
+        debugPrint('Push register $path failed: $e');
       }
-      debugPrint('FCM register failed: ${e.message}');
-    } catch (e) {
-      debugPrint('FCM register failed: $e');
     }
   }
 

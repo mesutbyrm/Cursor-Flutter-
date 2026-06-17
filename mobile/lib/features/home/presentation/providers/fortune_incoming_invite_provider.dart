@@ -53,7 +53,10 @@ FortuneIncomingSession? parseFortuneIncomingPayload(Map<String, dynamic>? raw) {
   final looksLikeFortune = type.contains('fortune') ||
       type.contains('falc') ||
       type.contains('live_fortune') ||
-      map.containsKey('sessionId') && map.containsKey('tellerId');
+      type.contains('live_session') ||
+      type.contains('session_request') ||
+      (map.containsKey('sessionId') &&
+          (map.containsKey('tellerId') || map.containsKey('clientId')));
 
   if (!looksLikeFortune) return null;
 
@@ -82,6 +85,8 @@ FortuneIncomingSession? parseFortuneIncomingPayload(Map<String, dynamic>? raw) {
     tellerId: pick(map, ['tellerId', 'teller_id', 'fortuneTellerId'])
             ?.toString() ??
         '',
+    tellerUserId: pick(map, ['tellerUserId', 'teller_user_id', 'anchorUserId'])
+        ?.toString(),
     durationMinutes: duration > 0 ? duration : 10,
     totalJeton: asInt(pick(map, ['totalJeton', 'total_jeton', 'jeton', 'amount'])),
     category: pick(map, ['category', 'specialty', 'specialties'])?.toString() ??

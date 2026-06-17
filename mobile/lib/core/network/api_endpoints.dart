@@ -15,6 +15,7 @@ abstract final class ApiEndpoints {
   static const authMobileGoogle = '/api/auth/mobile-google';
   static const authMobileTiktok = '/api/auth/mobile-tiktok';
   static const authMobileRefresh = '/api/auth/mobile-refresh';
+  static const authMobileDeviceToken = '/api/auth/mobile/device-token';
   static const authForgotPassword = '/api/auth/forgot-password';
   static const authResetPassword = '/api/auth/reset-password';
   static const authChangePassword = '/api/auth/change-password';
@@ -81,6 +82,9 @@ abstract final class ApiEndpoints {
       '/api/fortune-tellers/session/$sessionId/respond';
 
   static String fortuneTeller(String id) => '/api/fortune-tellers/$id';
+
+  static const fortuneTellerMyProfile = '/api/fortune-tellers/my-profile';
+  static const fortuneTellerToggleOnline = '/api/fortune-tellers/toggle-online';
 
   static String tellerChat(String sessionId) => '/api/teller-chat/$sessionId';
 
@@ -373,6 +377,7 @@ abstract final class ApiEndpoints {
 
   /// FCM cihaz token kaydı (canlifal.com veya self-hosted API).
   static const registerFcmDevice = '/api/devices/fcm';
+  static const registerUserDeviceToken = '/api/user/device-token';
 
   static const wallet = '/api/wallet';
 

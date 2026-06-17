@@ -183,6 +183,40 @@ socialRouter.post("/fortune-tellers/session", requireAuth, async (req, res) => {
   });
 });
 
+/** POST /api/fortune-tellers/toggle-online — üretim: falcı çevrimiçi */
+socialRouter.post(
+  "/fortune-tellers/toggle-online",
+  requireAuth,
+  async (req, res) => {
+    const online =
+      req.body?.online === true ||
+      req.body?.isOnline === true ||
+      req.body?.online === "true";
+    return ok(res, { online, isOnline: online });
+  },
+);
+
+/** GET /api/fortune-tellers/my-profile — falcı kendi profili */
+socialRouter.get(
+  "/fortune-tellers/my-profile",
+  requireAuth,
+  async (req, res) => {
+    const uid = req.userId!;
+    return ok(res, {
+      teller: {
+        id: `ft-${uid.slice(0, 8)}`,
+        userId: uid,
+        tellerUserId: uid,
+        displayName: "Canlı Falcı",
+        isOnline: true,
+        rating: 4.9,
+        pricePerMinute: 12,
+        specialties: ["kahve"],
+      },
+    });
+  },
+);
+
 /** GET /api/fortune-tellers/sessions — üretim: falcı gelen + danışan oturumları */
 socialRouter.get(
   "/fortune-tellers/sessions",

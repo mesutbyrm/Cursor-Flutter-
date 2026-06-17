@@ -26,11 +26,12 @@ class FortuneIncomingInviteHost extends ConsumerStatefulWidget {
 }
 
 class _FortuneIncomingInviteHostState
-    extends ConsumerState<FortuneIncomingInviteHost> {
+    extends ConsumerState<FortuneIncomingInviteHost>
+    with WidgetsBindingObserver {
   Timer? _poll;
-  Timer? _readyTimer;
   var _presenting = false;
   var _inviteUiReady = false;
+  var _tellerOnlineSet = false;
   final Set<String> _dismissed = {};
 
   bool _mayPresentInvites() {
@@ -46,23 +47,38 @@ class _FortuneIncomingInviteHostState
   @override
   void initState() {
     super.initState();
-    // Giriş sonrası geçiş barrier'ı otursun; hemen dialog açma (yalnızca scrim kalır).
-    _readyTimer = Timer(const Duration(seconds: 4), () {
+    WidgetsBinding.instance.addObserver(this);
+    _poll = Timer.periodic(const Duration(seconds: 2), (_) => _pollApi());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _inviteUiReady = true);
-      if (_mayPresentInvites()) {
-        unawaited(_pollApi());
-        unawaited(_tryPresentNext());
-      }
+      unawaited(_ensureTellerOnline());
+      unawaited(_pollApi());
     });
-    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _pollApi());
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _poll?.cancel();
-    _readyTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_ensureTellerOnline());
+      unawaited(_pollApi());
+    }
+  }
+
+  Future<void> _ensureTellerOnline() async {
+    if (_tellerOnlineSet || !_mayPresentInvites()) return;
+    final remote = ref.read(homeRemoteProvider);
+    final profile = await remote.fetchMyFortuneTellerProfile();
+    if (profile == null) return;
+    final ok = await remote.setFortuneTellerOnline(online: true);
+    if (ok) _tellerOnlineSet = true;
   }
 
   bool _isPendingInvite(FortuneIncomingSession session) {
@@ -74,14 +90,22 @@ class _FortuneIncomingInviteHostState
         status == 'ended') {
       return false;
     }
-    return response == 'pending' || status == 'pending' || status == 'waiting';
+    return response == 'pending' ||
+        response == 'held' ||
+        response == 'waiting' ||
+        response == 'requested' ||
+        status == 'pending' ||
+        status == 'waiting' ||
+        status == 'requested';
   }
 
   Future<void> _pollApi() async {
     if (!mounted || _presenting || !_mayPresentInvites()) return;
 
-    final incoming =
-        await ref.read(homeRemoteProvider).fetchIncomingFortuneSessions();
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    final incoming = await ref
+        .read(homeRemoteProvider)
+        .fetchIncomingFortuneSessions(currentUserId: userId);
     if (!mounted) return;
     for (final req in incoming) {
       if (!_isPendingInvite(req)) continue;
@@ -149,6 +173,7 @@ class _FortuneIncomingInviteHostState
       if (tellerId.isNotEmpty) {
         teller = await ref.read(homeRemoteProvider).fetchLiveFortuneTeller(tellerId);
       }
+      teller ??= await ref.read(homeRemoteProvider).fetchMyFortuneTellerProfile();
       teller ??= LiveFortuneTellerEntity(
         id: tellerId.isNotEmpty ? tellerId : (user?.id ?? 'teller'),
         userId: user?.id,
@@ -163,7 +188,7 @@ class _FortuneIncomingInviteHostState
         teller: teller,
         durationMinutes: req.durationMinutes,
         totalJeton: req.totalJeton,
-        tellerUserId: teller.trtcUserId,
+        tellerUserId: req.tellerUserId ?? teller.trtcUserId,
         clientId: req.clientId,
         isClient: false,
       );
@@ -184,6 +209,14 @@ class _FortuneIncomingInviteHostState
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authControllerProvider, (prev, next) {
+      final user = next.valueOrNull;
+      if (user != null && (prev?.valueOrNull?.id != user.id)) {
+        _tellerOnlineSet = false;
+        unawaited(_ensureTellerOnline());
+        unawaited(_pollApi());
+      }
+    });
     ref.listen<List<FortuneIncomingSession>>(fortuneIncomingInviteProvider,
         (prev, next) {
       if (next.isNotEmpty && !_presenting && _mayPresentInvites()) {

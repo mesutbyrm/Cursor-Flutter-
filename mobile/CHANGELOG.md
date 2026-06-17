@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.244+247 (2026-06-12)
+
+### Canlı Falcılar — kabul ekranı + bildirim + hız
+
+- **Kabul ekranı:** Üretim `GET /fortune-tellers/sessions` ayrıştırması genişletildi; falcı uygulama açılışında `toggle-online` (web ile aynı çevrimiçi)
+- **Poll:** Davet kontrolü 2 sn; 4 sn başlangıç gecikmesi kaldırıldı; uygulama ön plana gelince anında yenileme
+- **Push:** Token kaydı `POST /api/auth/mobile/device-token` + yedek uçlar; girişte bildirim izni isteği
+- **Performans:** Ana sayfa bölümleri kademeli yükleme (`HomeDeferredSection`); arka plan poll 60 sn
+
 ## 1.0.243+246 (2026-06-12)
 
 ### Canlı Falcılar — web ile oturum senkronu

@@ -7,6 +7,7 @@ class FortuneIncomingSession {
     required this.clientId,
     required this.clientName,
     required this.tellerId,
+    this.tellerUserId,
     required this.durationMinutes,
     required this.totalJeton,
     required this.category,
@@ -18,6 +19,7 @@ class FortuneIncomingSession {
   final String clientId;
   final String clientName;
   final String tellerId;
+  final String? tellerUserId;
   final int durationMinutes;
   final int totalJeton;
   final String category;
