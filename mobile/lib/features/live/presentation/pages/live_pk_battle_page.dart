@@ -68,21 +68,33 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
 
   Future<void> _accept() async {
     final id = ref.read(pkBattleRemoteProvider)?.id;
-    if (id == null) return;
-    await ref.read(pkBattleRemoteProvider.notifier).accept(id);
+    final streamId = _streamId;
+    if (id == null || streamId == null || streamId.isEmpty) return;
+    await ref.read(pkBattleRemoteProvider.notifier).accept(
+          id,
+          streamId: streamId,
+        );
   }
 
   Future<void> _reject() async {
     final id = ref.read(pkBattleRemoteProvider)?.id;
-    if (id == null) return;
-    await ref.read(pkBattleRemoteProvider.notifier).reject(id);
+    final streamId = _streamId;
+    if (id == null || streamId == null || streamId.isEmpty) return;
+    await ref.read(pkBattleRemoteProvider.notifier).reject(
+          id,
+          streamId: streamId,
+        );
     if (mounted) context.pop();
   }
 
   Future<void> _end() async {
     final id = ref.read(pkBattleRemoteProvider)?.id;
-    if (id == null) return;
-    await ref.read(pkBattleRemoteProvider.notifier).end(id);
+    final streamId = _streamId;
+    if (id == null || streamId == null || streamId.isEmpty) return;
+    await ref.read(pkBattleRemoteProvider.notifier).end(
+          id,
+          streamId: streamId,
+        );
     if (mounted) context.pop();
   }
 

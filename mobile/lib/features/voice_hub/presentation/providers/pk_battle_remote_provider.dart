@@ -4,13 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/token_storage.dart';
-import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../data/datasources/pk_battle_remote_datasource.dart';
 import '../../data/services/pk_battle_socket_service.dart';
-import '../../domain/entities/chat_room_presence.dart';
-import '../../domain/pk/pk_battle_mode.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
-import '../../domain/pk/pk_battle_state.dart';
 import 'pk_battle_provider.dart';
 
 final pkBattleRemoteDataSourceProvider = Provider<PkBattleRemoteDataSource>((ref) {
@@ -52,12 +48,14 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     String? alternateRoomId,
     required String opponentRoomId,
     String? alternateOpponentRoomId,
+    int durationSeconds = 180,
   }) async {
     final battle = await _api.inviteVoiceRoom(
       roomId: roomId,
       alternateRoomId: alternateRoomId,
       opponentRoomId: opponentRoomId,
       alternateOpponentRoomId: alternateOpponentRoomId,
+      durationSeconds: durationSeconds,
     );
     if (battle != null) _apply(battle, 'pk:invite');
     return battle;
@@ -76,20 +74,81 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     return battle;
   }
 
-  Future<PkBattleRemote?> accept(String battleId) async {
-    final battle = await _api.acceptBattle(battleId);
+  /// Sesli oda: `roomId` zorunlu. Canlı yayın: `streamId` verin.
+  Future<PkBattleRemote?> accept(
+    String battleId, {
+    String? roomId,
+    String? alternateRoomId,
+    String? streamId,
+  }) async {
+    final PkBattleRemote? battle;
+    if (roomId != null && roomId.trim().isNotEmpty) {
+      battle = await _api.acceptBattle(
+        battleId,
+        roomId: roomId,
+        alternateRoomId: alternateRoomId,
+      );
+    } else if (streamId != null && streamId.trim().isNotEmpty) {
+      battle = await _api.streamPkAction(
+        streamId: streamId,
+        action: 'accept',
+        battleId: battleId,
+      );
+    } else {
+      return null;
+    }
     if (battle != null) _apply(battle, 'pk:accept');
     return battle;
   }
 
-  Future<PkBattleRemote?> reject(String battleId) async {
-    final battle = await _api.rejectBattle(battleId);
+  Future<PkBattleRemote?> reject(
+    String battleId, {
+    String? roomId,
+    String? alternateRoomId,
+    String? streamId,
+  }) async {
+    final PkBattleRemote? battle;
+    if (roomId != null && roomId.trim().isNotEmpty) {
+      battle = await _api.rejectBattle(
+        battleId,
+        roomId: roomId,
+        alternateRoomId: alternateRoomId,
+      );
+    } else if (streamId != null && streamId.trim().isNotEmpty) {
+      battle = await _api.streamPkAction(
+        streamId: streamId,
+        action: 'reject',
+        battleId: battleId,
+      );
+    } else {
+      return null;
+    }
     if (battle != null) _apply(battle, 'pk:reject');
     return battle;
   }
 
-  Future<PkBattleRemote?> end(String battleId) async {
-    final battle = await _api.endBattle(battleId);
+  Future<PkBattleRemote?> end(
+    String battleId, {
+    String? roomId,
+    String? alternateRoomId,
+    String? streamId,
+  }) async {
+    final PkBattleRemote? battle;
+    if (roomId != null && roomId.trim().isNotEmpty) {
+      battle = await _api.endBattle(
+        battleId,
+        roomId: roomId,
+        alternateRoomId: alternateRoomId,
+      );
+    } else if (streamId != null && streamId.trim().isNotEmpty) {
+      battle = await _api.streamPkAction(
+        streamId: streamId,
+        action: 'end',
+        battleId: battleId,
+      );
+    } else {
+      return null;
+    }
     if (battle != null) _apply(battle, 'pk:end');
     return battle;
   }

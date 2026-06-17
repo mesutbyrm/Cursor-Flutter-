@@ -519,11 +519,22 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       ),
     );
     final remote = ref.read(pkBattleRemoteProvider.notifier);
+    final r = widget.room;
+    final roomKey = r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+    final altRoom = r.slug != roomKey ? r.slug : null;
     if (accept == true) {
-      await remote.accept(battleId);
+      await remote.accept(
+        battleId,
+        roomId: roomKey,
+        alternateRoomId: altRoom,
+      );
       if (mounted) _openActivePk(widget.room);
     } else if (accept == false) {
-      await remote.reject(battleId);
+      await remote.reject(
+        battleId,
+        roomId: roomKey,
+        alternateRoomId: altRoom,
+      );
     }
   }
 

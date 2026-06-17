@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.247+250 (2026-06-12)
+
+### PK — üretim API sözleşmesi
+
+- **Uç nokta:** `GET/POST /api/chat/rooms/{roomId}/pk` (`pk-battle` ve `/api/pk/battles` kaldırıldı)
+- **Davet:** `{ action: "create", targetRoomId, duration }` (varsayılan 180 sn)
+- **Kabul / red:** `{ action: "accept"|"reject", battleId }` — kabul eden odanın `roomId` ile
+- **Hediye skoru:** `POST …/gifts` gövdesine `streamId: roomId` eklendi
+
 ## 1.0.246+249 (2026-06-12)
 
 ### PK daveti + Canlı falcı kabul ekranı

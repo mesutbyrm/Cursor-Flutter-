@@ -207,8 +207,11 @@ abstract final class ApiEndpoints {
 
   static String chatRoomGifts(String roomId) => '/api/chat/rooms/$roomId/gifts';
 
-  static String chatRoomPkBattle(String roomId) =>
-      '/api/chat/rooms/$roomId/pk-battle';
+  /// Üretim PK — `GET/POST /api/chat/rooms/{roomId}/pk`
+  static String chatRoomPk(String roomId) => '/api/chat/rooms/$roomId/pk';
+
+  /// Geriye dönük alias (`pk-battle` üretimde 404).
+  static String chatRoomPkBattle(String roomId) => chatRoomPk(roomId);
 
   static String videoStreamPkBattle(String streamId) =>
       '/api/video-streams/$streamId/pk-battle';

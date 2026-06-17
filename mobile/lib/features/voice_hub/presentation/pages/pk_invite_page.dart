@@ -46,7 +46,7 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
       if (!mounted) return;
       if (battle == null) {
         setState(() => _error =
-            'PK daveti gönderilemedi. Sunucu PK uçları henüz aktif olmayabilir — kısa süre sonra tekrar deneyin.');
+            'PK daveti gönderilemedi. Oda veya rakip bulunamadı — tekrar deneyin.');
         return;
       }
       remote.connectSocket(
@@ -67,8 +67,7 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
       if (mounted) {
         var msg = ApiException.userMessage(e);
         if (msg.contains('404')) {
-          msg =
-              'PK sunucu uçları henüz aktif değil (404). Güncelleme sonrası tekrar deneyin.';
+          msg = 'PK uç noktası bulunamadı (404). Oda kimliğini kontrol edip tekrar deneyin.';
         }
         setState(() => _error = msg);
       }

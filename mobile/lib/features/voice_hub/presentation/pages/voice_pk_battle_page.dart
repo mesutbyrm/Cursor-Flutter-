@@ -182,12 +182,28 @@ class _VoicePkBattlePageState extends ConsumerState<VoicePkBattlePage> {
                             rightScore: remote.opponentScore,
                             status: 'pending',
                             isHost: false,
-                            onAccept: () => ref
-                                .read(pkBattleRemoteProvider.notifier)
-                                .accept(remote.id),
-                            onReject: () => ref
-                                .read(pkBattleRemoteProvider.notifier)
-                                .reject(remote.id),
+                            onAccept: () {
+                              final r = widget.room;
+                              final roomKey =
+                                  r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+                              ref.read(pkBattleRemoteProvider.notifier).accept(
+                                    remote.id,
+                                    roomId: roomKey,
+                                    alternateRoomId:
+                                        r.slug != roomKey ? r.slug : null,
+                                  );
+                            },
+                            onReject: () {
+                              final r = widget.room;
+                              final roomKey =
+                                  r.apiRoomKey.isNotEmpty ? r.apiRoomKey : r.id;
+                              ref.read(pkBattleRemoteProvider.notifier).reject(
+                                    remote.id,
+                                    roomId: roomKey,
+                                    alternateRoomId:
+                                        r.slug != roomKey ? r.slug : null,
+                                  );
+                            },
                           )
                         : Text(
                             isChallenger

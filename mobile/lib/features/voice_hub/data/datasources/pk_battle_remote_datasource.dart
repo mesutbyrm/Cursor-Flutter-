@@ -38,9 +38,7 @@ class PkBattleRemoteDataSource {
   }) async {
     for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
       try {
-        final res = await _dio.safeGet<dynamic>(
-          ApiEndpoints.chatRoomPkBattle(key),
-        );
+        final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatRoomPk(key));
         final battle = _parseBattle(res.data);
         if (battle != null) return battle;
       } on ApiException catch (e) {
@@ -80,21 +78,14 @@ class PkBattleRemoteDataSource {
         .toList();
   }
 
+  /// `POST /api/chat/rooms/{myRoomId}/pk` — `{ action: "create", targetRoomId, duration }`
   Future<PkBattleRemote?> inviteVoiceRoom({
     required String roomId,
     String? alternateRoomId,
     required String opponentRoomId,
     String? alternateOpponentRoomId,
-    int durationSeconds = 300,
-    int targetScore = 150000,
+    int durationSeconds = 180,
   }) async {
-    final body = {
-      'action': 'create',
-      'opponentRoomId': opponentRoomId,
-      'opponentVoiceRoomId': opponentRoomId,
-      'durationSeconds': durationSeconds,
-      'targetScore': targetScore,
-    };
     for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
       for (final oppKey in _roomKeyCandidates(
         opponentRoomId,
@@ -102,11 +93,11 @@ class PkBattleRemoteDataSource {
       )) {
         try {
           final res = await _dio.safePost<dynamic>(
-            ApiEndpoints.chatRoomPkBattle(key),
+            ApiEndpoints.chatRoomPk(key),
             data: {
-              ...body,
-              'opponentRoomId': oppKey,
-              'opponentVoiceRoomId': oppKey,
+              'action': 'create',
+              'targetRoomId': oppKey,
+              'duration': durationSeconds,
             },
           );
           final battle = _parseBattle(res.data);
@@ -117,23 +108,7 @@ class PkBattleRemoteDataSource {
         }
       }
     }
-    try {
-      final res = await _dio.safePost<dynamic>(
-        ApiEndpoints.pkBattles,
-        data: {
-          'battleType': 'voice_room',
-          'voiceRoomId': roomId,
-          'opponentVoiceRoomId': opponentRoomId,
-          'opponentRoomId': opponentRoomId,
-          'durationSeconds': durationSeconds,
-          'targetScore': targetScore,
-        },
-      );
-      return _parseBattle(res.data);
-    } on ApiException catch (e) {
-      if (e.statusCode == 404 || e.statusCode == 405) return null;
-      rethrow;
-    }
+    return null;
   }
 
   List<String> _roomKeyCandidates(String primary, String? alternate) {
@@ -148,42 +123,72 @@ class PkBattleRemoteDataSource {
     return keys;
   }
 
-  Future<PkBattleRemote?> acceptBattle(String battleId) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.pkBattleAccept(battleId),
-    );
-    return _parseBattle(res.data);
-  }
+  /// `POST /api/chat/rooms/{roomId}/pk` — `{ action: "accept", battleId }`
+  Future<PkBattleRemote?> acceptBattle(
+    String battleId, {
+    required String roomId,
+    String? alternateRoomId,
+  }) =>
+      roomPkAction(
+        roomId: roomId,
+        alternateRoomId: alternateRoomId,
+        action: 'accept',
+        battleId: battleId,
+      );
 
-  Future<PkBattleRemote?> rejectBattle(String battleId) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.pkBattleReject(battleId),
-    );
-    return _parseBattle(res.data);
-  }
+  /// `POST /api/chat/rooms/{roomId}/pk` — `{ action: "reject", battleId }`
+  Future<PkBattleRemote?> rejectBattle(
+    String battleId, {
+    required String roomId,
+    String? alternateRoomId,
+  }) =>
+      roomPkAction(
+        roomId: roomId,
+        alternateRoomId: alternateRoomId,
+        action: 'reject',
+        battleId: battleId,
+      );
 
-  Future<PkBattleRemote?> endBattle(String battleId) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.pkBattleEnd(battleId),
-    );
-    return _parseBattle(res.data);
-  }
+  /// `POST /api/chat/rooms/{roomId}/pk` — `{ action: "end", battleId }`
+  Future<PkBattleRemote?> endBattle(
+    String battleId, {
+    required String roomId,
+    String? alternateRoomId,
+  }) =>
+      roomPkAction(
+        roomId: roomId,
+        alternateRoomId: alternateRoomId,
+        action: 'end',
+        battleId: battleId,
+      );
 
   Future<PkBattleRemote?> roomPkAction({
     required String roomId,
+    String? alternateRoomId,
     required String action,
     String? battleId,
-    String? opponentRoomId,
+    String? targetRoomId,
+    int? duration,
   }) async {
-    final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.chatRoomPkBattle(roomId),
-      data: {
-        'action': action,
-        if (battleId != null) 'battleId': battleId,
-        if (opponentRoomId != null) 'opponentRoomId': opponentRoomId,
-      },
-    );
-    return _parseBattle(res.data);
+    for (final key in _roomKeyCandidates(roomId, alternateRoomId)) {
+      try {
+        final res = await _dio.safePost<dynamic>(
+          ApiEndpoints.chatRoomPk(key),
+          data: {
+            'action': action,
+            if (battleId != null) 'battleId': battleId,
+            if (targetRoomId != null) 'targetRoomId': targetRoomId,
+            if (duration != null) 'duration': duration,
+          },
+        );
+        final battle = _parseBattle(res.data);
+        if (battle != null) return battle;
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 405) continue;
+        rethrow;
+      }
+    }
+    return null;
   }
 
   Future<PkBattleRemote?> streamPkAction({

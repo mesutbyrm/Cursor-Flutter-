@@ -57,7 +57,10 @@ class PkBattleRemote extends Equatable {
       challengerScore: _int(json['challengerScore'] ?? json['leftScore']),
       opponentScore: _int(json['opponentScore'] ?? json['rightScore']),
       secondsLeft: _int(json['secondsLeft'], fallback: 300),
-      durationSeconds: _int(json['durationSeconds'], fallback: 300),
+      durationSeconds: _int(
+        json['durationSeconds'] ?? json['duration'],
+        fallback: 180,
+      ),
       targetScore: _int(json['targetScore'], fallback: 150000),
       voiceRoomId: json['voiceRoomId']?.toString(),
       opponentVoiceRoomId: json['opponentVoiceRoomId']?.toString(),

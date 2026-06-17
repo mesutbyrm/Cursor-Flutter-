@@ -35,6 +35,7 @@ class ChatRoomGiftsRemoteDataSource {
       data: {
         'giftTypeId': giftTypeId,
         'quantity': quantity,
+        'streamId': roomId,
         if (senderName != null && senderName.isNotEmpty) 'senderName': senderName,
         if (receiverName != null && receiverName.isNotEmpty)
           'receiverName': receiverName,
