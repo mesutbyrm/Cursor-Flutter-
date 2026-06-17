@@ -82,24 +82,36 @@ class VoiceRoomDjPlayer {
     bool muted = false,
   }) async {
     _muted = muted;
-    final handler = await _ensureHandler();
     if (!playing) {
       await stop();
       return false;
     }
-    final url = streamUrl.trim();
-    if (!url.startsWith('http')) return false;
+    final url = VoiceRoomDjStreamLoader.clientPlaybackUrl(streamUrl.trim());
+    if (!url.startsWith('http')) {
+      VoiceRoomMusicPipelineLog.nullMusicUrl(
+        reason: 'playServerStream_invalid_url',
+        caller: 'VoiceRoomDjPlayer.playServerStream',
+        detail: streamUrl,
+      );
+      return false;
+    }
+    VoiceRoomMusicPipelineLog.beforeSetAudioSource(
+      sourceUrl: url,
+      sourceType: 'server_stream',
+      metadataTitle: nowPlaying?.title,
+    );
     await VoiceRoomMusicAudioSession.ensureConfigured();
     final playable = await _streamLoader.preparePlaybackSource(url);
     if (playable == null || playable.isEmpty) return false;
     final targets = await _streamLoader.buildPlaybackTargets(playable);
     if (targets.isEmpty) return false;
+    final handler = await _ensureHandler();
     final ok = await _attemptPlay(
       handler: handler,
       targets: targets,
       nowPlaying: nowPlaying,
       musicUrl: url,
-      candidate: url,
+      candidate: streamUrl,
     );
     if (ok && startPosition > Duration.zero) {
       await handler.seek(startPosition);
@@ -231,13 +243,16 @@ class VoiceRoomDjPlayer {
     required String? musicUrl,
     required String candidate,
   }) async {
+    final startedAt = DateTime.now();
     for (final target in targets) {
-      if (_currentKey == target && handler.isPlaying && !_muted) {
+        if (_currentKey == target && handler.isPlaying && !_muted) {
+        await handler.publishMediaSessionIfNeeded();
         return true;
       }
       try {
         await VoiceRoomMusicAudioSession.activateForPlayback();
         _currentKey = target;
+        VoiceRoomMusicPipelineLog.playEntered(sourceUrl: target);
         await handler.playSource(
           target,
           metadata: VoiceRoomAudioMetadata.fromQueueItem(
@@ -246,10 +261,25 @@ class VoiceRoomDjPlayer {
           ),
           inputMusicUrl: musicUrl,
           candidateLabel: candidate,
+          deferMediaSession: true,
         );
         await handler.setVolume(_muted ? 0.0 : 1.0);
+
+        final elapsedMs = DateTime.now().difference(startedAt).inMilliseconds;
+        if (elapsedMs >= 3000 && !handler.isPlaying) {
+          VoiceRoomMusicPipelineLog.playResult(
+            started: false,
+            url: target,
+            processingState: handler.diagnostics.processingState,
+            playing: handler.isPlaying,
+            durationMs: handler.currentDurationMs,
+            detail: 'startup_3s_no_audio',
+          );
+        }
+
         final started = await handler.waitUntilPlaying(
-          timeout: const Duration(seconds: 12),
+          timeout: const Duration(seconds: 90),
+          startupLogAt: const Duration(seconds: 3),
         );
         diagnostics.value = handler.diagnostics.copyWith(
           serverMusicUrl: musicUrl,
@@ -259,6 +289,7 @@ class VoiceRoomDjPlayer {
           lastPhase: started ? 'sync_ok' : 'sync_verify_failed',
         );
         if (started) {
+          await handler.publishMediaSessionIfNeeded();
           debugPrint('DJ play ok: $target');
           return true;
         }
@@ -270,7 +301,7 @@ class VoiceRoomDjPlayer {
           processingState: handler.diagnostics.processingState,
           playing: handler.isPlaying,
           durationMs: handler.currentDurationMs,
-          detail: 'waitUntilPlaying_timeout',
+          detail: 'waitUntilPlaying_failed',
         );
       } on ja.PlayerException catch (e, st) {
         VoiceRoomMusicPipelineLog.justAudioError(
@@ -385,12 +416,19 @@ class VoiceRoomDjPlayer {
   }
 
   Future<void> shutdown() async {
+    VoiceRoomMusicPipelineLog.audioService(
+      action: 'shutdown.before',
+      playing: playback.value.playing,
+      processingState: diagnostics.value.lastPhase,
+      url: _currentKey,
+    );
     controlDelegate = null;
     onTrackComplete = null;
     await stop();
     try {
       await audio.AudioService.stop();
     } catch (_) {}
+    VoiceRoomMusicPipelineLog.audioService(action: 'shutdown.after');
   }
 
   void dispose() {
@@ -488,8 +526,15 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
     onDiagnosticsChanged?.call(_diagnostics);
   }
 
-  Future<bool> waitUntilPlaying({required Duration timeout}) async {
+  bool _mediaSessionPublished = false;
+
+  Future<bool> waitUntilPlaying({
+    required Duration timeout,
+    Duration startupLogAt = const Duration(seconds: 3),
+  }) async {
     final deadline = DateTime.now().add(timeout);
+    final startupLogDeadline = DateTime.now().add(startupLogAt);
+    var startupLogged = false;
     while (DateTime.now().isBefore(deadline)) {
       _refreshDiagnostics();
       final state = _player.processingState;
@@ -504,6 +549,17 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
           durationMs: currentDurationMs,
         );
         return true;
+      }
+      if (!startupLogged && DateTime.now().isAfter(startupLogDeadline)) {
+        startupLogged = true;
+        VoiceRoomMusicPipelineLog.playResult(
+          started: false,
+          url: _currentSource ?? '(none)',
+          processingState: state.name,
+          playing: _player.playing,
+          durationMs: currentDurationMs,
+          detail: 'startup_3s_check',
+        );
       }
       if (state == ja.ProcessingState.completed) {
         return false;
@@ -526,10 +582,28 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
     return ok;
   }
 
+  Future<void> publishMediaSessionIfNeeded() async {
+    if (_mediaSessionPublished) return;
+    final item = _currentMediaItem;
+    if (item == null) return;
+    _mediaSessionPublished = true;
+    mediaItem.add(item);
+    queue.add([item]);
+    _broadcastPlaybackState();
+    VoiceRoomMusicPipelineLog.audioService(
+      action: 'mediaItem.publish.after_play',
+      title: item.title,
+      playing: _player.playing,
+      processingState: _player.processingState.name,
+      durationMs: currentDurationMs,
+    );
+  }
+
   Future<void> invalidateLoadedSource() async {
     _currentSource = null;
     _currentMediaItem = null;
     _completionFired = false;
+    _mediaSessionPublished = false;
     try {
       await _player.stop();
     } catch (_) {}
@@ -641,6 +715,7 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
     required VoiceRoomAudioMetadata metadata,
     String? inputMusicUrl,
     String? candidateLabel,
+    bool deferMediaSession = false,
   }) async {
     _completionFired = false;
     final needsReload = _currentSource != source ||
@@ -667,7 +742,8 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
       );
       final useYtHeaders = !source.startsWith('/') &&
           (VoiceRoomDjStreamLoader.needsLocalDownload(source) ||
-              source.contains('/api/chat/youtube-audio'));
+              source.contains('/api/chat/youtube-audio') ||
+              source.contains('canlifal.com/api/chat/youtube-audio'));
       final audioSource = source.startsWith('/')
           ? ja.AudioSource.file(source, tag: item)
           : ja.AudioSource.uri(
@@ -696,15 +772,16 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
           playing: _player.playing,
         );
         _currentMediaItem = item;
-        mediaItem.add(item);
-        queue.add([item]);
-        VoiceRoomMusicPipelineLog.audioService(
-          action: 'mediaItem.publish',
-          title: metadata.title,
-          playing: _player.playing,
-          processingState: _player.processingState.name,
-          durationMs: dur?.inMilliseconds,
-        );
+        if (!deferMediaSession) {
+          await publishMediaSessionIfNeeded();
+        } else {
+          VoiceRoomMusicPipelineLog.audioService(
+            action: 'mediaItem.deferred',
+            title: metadata.title,
+            processingState: _player.processingState.name,
+            durationMs: dur?.inMilliseconds,
+          );
+        }
       } on ja.PlayerException catch (e, st) {
         VoiceRoomMusicPipelineLog.setAudioSourceResult(
           url: source,
@@ -817,6 +894,7 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
     _currentSource = null;
     _completionFired = false;
     _currentMediaItem = null;
+    _mediaSessionPublished = false;
     await _player.stop();
     _emitPlayback(const VoiceRoomDjPlayback());
     mediaItem.add(null);

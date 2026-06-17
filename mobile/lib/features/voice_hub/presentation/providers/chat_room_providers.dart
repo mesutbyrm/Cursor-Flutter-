@@ -34,6 +34,7 @@ import '../../domain/entities/popular_music_suggestion.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/youtube_stream_resolver.dart';
 import '../audio/voice_room_dj_stream_loader.dart';
+import '../audio/voice_room_dj_stream_loader.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import '../services/voice_room_dj_player.dart';
 import '../services/voice_room_music_control_delegate.dart';
@@ -931,6 +932,21 @@ class VoiceRoomLiveController
     state = state.copyWith(dj: applied);
   }
 
+  Future<String?> _playDjInBackgroundAndReport(
+    ChatRoomDjState dj, {
+    RoomPlaybackSync? sync,
+  }) async {
+    await _playDjInBackground(dj, sync: sync);
+    final player = ref.read(voiceRoomDjPlayerProvider);
+    if (dj.playing &&
+        !player.playback.value.playing &&
+        player.diagnostics.value.lastPhase == 'sync_verify_failed') {
+      return state.error ??
+          'Şarkı oynatılamadı. Bağlantınızı kontrol edip tekrar deneyin.';
+    }
+    return state.error;
+  }
+
   void clearPendingMusicSearch() {
     if (state.pendingMusicSearchQuery != null) {
       state = state.copyWith(clearPendingMusicSearch: true);
@@ -954,10 +970,12 @@ class VoiceRoomLiveController
         ref.invalidate(walletBalancesProvider);
       }
       await _syncMusicFromServerIfNeeded(force: true);
-      unawaited(_playDjInBackground(state.dj));
-      state = state.copyWith(sending: false);
-      _showMusicRequestFlashLine('✅ «${hit.title}» kuyruğa eklendi');
-      return null;
+      final playErr = await _playDjInBackgroundAndReport(state.dj);
+      state = state.copyWith(sending: false, error: playErr);
+      if (playErr == null) {
+        _showMusicRequestFlashLine('✅ «${hit.title}» kuyruğa eklendi');
+      }
+      return playErr;
     } catch (e) {
       state = state.copyWith(
         sending: false,
@@ -1074,15 +1092,33 @@ class VoiceRoomLiveController
     final shouldPlay = effectiveDj.playing && videoId != null && videoId.isNotEmpty;
 
     var streamUrl = sync?.streamUrl ?? effectiveDj.musicUrl;
+    if (streamUrl != null && streamUrl.startsWith('http')) {
+      streamUrl = VoiceRoomDjStreamLoader.clientPlaybackUrl(streamUrl);
+    }
     if (streamUrl == null ||
         !streamUrl.startsWith('http') ||
-        ChatRoomDjState.isEphemeralStreamUrl(streamUrl)) {
+        ChatRoomDjState.isEphemeralStreamUrl(
+          sync?.streamUrl ?? effectiveDj.musicUrl ?? '',
+        )) {
       if (videoId != null && videoId.isNotEmpty) {
         streamUrl = await ref.read(resolveStreamUseCaseProvider)(
               roomId: _roomKey,
               videoId: videoId,
             );
       }
+    }
+
+    if (shouldPlay && (streamUrl == null || !streamUrl.startsWith('http'))) {
+      VoiceRoomDebugLog.log('music.player.no_stream', {
+        'videoId': videoId,
+        'room': _roomKey,
+      });
+      state = state.copyWith(
+        error: 'Ses akışı oluşturulamadı. Lütfen tekrar deneyin.',
+      );
+      await ref.read(voiceRoomDjPlayerProvider).stop();
+      _lastDjPlaybackSignature = null;
+      return effectiveDj.copyWith(playing: false);
     }
 
     final startMs = sync?.resolvedPositionMs() ?? 0;
@@ -1107,7 +1143,12 @@ class VoiceRoomLiveController
       'positionMs': startMs,
     });
 
-    if (shouldPlay && ok) {
+    if (shouldPlay && !ok) {
+      state = state.copyWith(
+        error: 'Şarkı oynatılamadı. Bağlantınızı kontrol edip tekrar deneyin.',
+      );
+      _lastDjPlaybackSignature = null;
+    } else if (shouldPlay && ok) {
       _lastDjPlaybackSignature = _djPlaybackSignature(
         effectiveDj,
         muted: muted,
@@ -2314,7 +2355,7 @@ class VoiceRoomLiveController
             .toList(),
       );
       state = state.copyWith(dj: enriched);
-      await refresh();
+      await refresh(includeDj: true);
       ref.invalidate(voiceRoomsProvider);
       return null;
     } catch (e) {
@@ -2587,12 +2628,6 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
             .refresh(includeDj: true);
         final live = ref.read(voiceRoomLiveProvider(room.liveKey));
         state = state.copyWith(dj: live.dj);
-        if (!live.dj.playing &&
-            live.dj.nowPlaying == null &&
-            live.dj.musicQueue.isEmpty &&
-            !ref.read(voiceRoomDjPlayerProvider).playback.value.playing) {
-          await closePlayer();
-        }
       } catch (_) {}
     });
   }

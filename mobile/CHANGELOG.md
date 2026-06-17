@@ -1,5 +1,21 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.233+236 (2026-06-12)
+
+### Müzik oynatma — ses gelmeme düzeltmesi
+
+- Android'de googlevideo akışları artık önce canlifal.com `/api/chat/youtube-audio` proxy üzerinden oynatılıyor
+- Medya bildirimi yalnızca ses gerçekten başladıktan sonra gösteriliyor
+- `setAudioSource` / `play()` öncesi-sonrası ayrıntılı `[MusicPipeline]` logları
+- 3 saniye içinde ses başlamazsa teşhis logu; oynatıcıyı kapatan periyodik timeout kaldırıldı
+- Ses akışı alınamazsa / oynatma başarısızsa kullanıcıya hata mesajı
+- Audio focus `gain` + 3 denemeli yeniden aktivasyon
+
+### DJ yönetimi
+
+- Oda sahibi, admin ve moderatörler DJ + butonunu kullanabilir
+- DJ ekleme sonrası sunucu SSE ile tüm odaya yayınlar
+
 ## 1.0.232+235 (2026-06-12)
 
 ### Müzik sistemi — sıfırdan yeniden yazım

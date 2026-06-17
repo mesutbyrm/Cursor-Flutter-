@@ -15,8 +15,7 @@ class VoiceRoomMusicAudioSession {
           avAudioSessionCategoryOptions:
               AVAudioSessionCategoryOptions.mixWithOthers,
           // TRTC/LiveKit ile aynı anda çalabilsin; transient duck müziği susturuyordu.
-          androidAudioFocusGainType:
-              AndroidAudioFocusGainType.gainTransientMayDuck,
+          androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
           androidWillPauseWhenDucked: false,
         ),
       );
@@ -29,14 +28,23 @@ class VoiceRoomMusicAudioSession {
     }
   }
 
-  static Future<void> activateForPlayback() async {
+  static Future<void> activateForPlayback({int maxAttempts = 3}) async {
     if (kIsWeb) return;
     if (!_configured) await ensureConfigured();
-    try {
-      final session = await AudioSession.instance;
-      await session.setActive(true);
-    } catch (e) {
-      debugPrint('VoiceRoomMusicAudioSession activate: $e');
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        final session = await AudioSession.instance;
+        final ok = await session.setActive(true);
+        if (ok) {
+          debugPrint('VoiceRoomMusicAudioSession: active (attempt $attempt)');
+          return;
+        }
+      } catch (e) {
+        debugPrint('VoiceRoomMusicAudioSession activate attempt $attempt: $e');
+      }
+      if (attempt < maxAttempts) {
+        await Future<void>.delayed(Duration(milliseconds: 180 * attempt));
+      }
     }
   }
 

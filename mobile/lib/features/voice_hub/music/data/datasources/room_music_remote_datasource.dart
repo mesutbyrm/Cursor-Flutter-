@@ -4,6 +4,8 @@ import '../../../../../core/network/api_endpoints.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/room_playback_sync.dart';
+import '../../../presentation/audio/voice_room_dj_stream_loader.dart';
+import '../../../data/services/voice_room_music_pipeline_log.dart';
 
 class RoomMusicRemoteDataSource {
   RoomMusicRemoteDataSource(this._dio);
@@ -49,6 +51,13 @@ class RoomMusicRemoteDataSource {
     required String roomId,
     required String videoId,
   }) async {
+    String? raw;
+    VoiceRoomMusicPipelineLog.apiResponse(
+      endpoint: ApiEndpoints.chatRoomMusicStream(roomId),
+      method: 'POST',
+      caller: 'resolveStreamUrl',
+      videoId: videoId,
+    );
     try {
       final res = await _dio.post<dynamic>(
         ApiEndpoints.chatRoomMusicStream(roomId),
@@ -56,22 +65,68 @@ class RoomMusicRemoteDataSource {
       );
       final data = res.data;
       if (data is Map) {
-        final url = data['streamUrl'] ?? data['url'];
-        if (url is String && url.startsWith('http')) return url;
+        raw = data['streamUrl']?.toString() ?? data['url']?.toString();
       }
-    } catch (_) {}
-    try {
-      final res = await _dio.get<dynamic>(
-        ApiEndpoints.chatYoutubeStream,
-        queryParameters: {'videoId': videoId},
+      VoiceRoomMusicPipelineLog.apiResponse(
+        endpoint: ApiEndpoints.chatRoomMusicStream(roomId),
+        method: 'POST',
+        caller: 'resolveStreamUrl.ok',
+        statusCode: res.statusCode,
+        musicUrl: raw,
+        videoId: videoId,
       );
-      final data = res.data;
-      if (data is Map) {
-        final url = data['streamUrl'] ?? data['url'];
-        if (url is String && url.startsWith('http')) return url;
+    } catch (e, st) {
+      VoiceRoomMusicPipelineLog.justAudioError(
+        e,
+        st,
+        phase: 'resolveStreamUrl.music-stream',
+        url: videoId,
+      );
+    }
+    if (raw == null || !raw.startsWith('http')) {
+      try {
+        final res = await _dio.get<dynamic>(
+          ApiEndpoints.chatYoutubeStream,
+          queryParameters: {'videoId': videoId},
+        );
+        final data = res.data;
+        if (data is Map) {
+          raw = data['streamUrl']?.toString() ?? data['url']?.toString();
+        }
+        VoiceRoomMusicPipelineLog.apiResponse(
+          endpoint: ApiEndpoints.chatYoutubeStream,
+          method: 'GET',
+          caller: 'resolveStreamUrl.fallback',
+          statusCode: res.statusCode,
+          musicUrl: raw,
+          videoId: videoId,
+        );
+      } catch (e, st) {
+        VoiceRoomMusicPipelineLog.justAudioError(
+          e,
+          st,
+          phase: 'resolveStreamUrl.youtube-stream',
+          url: videoId,
+        );
       }
-    } catch (_) {}
-    return null;
+    }
+    if (raw == null || !raw.startsWith('http')) {
+      VoiceRoomMusicPipelineLog.nullMusicUrl(
+        reason: 'resolveStreamUrl_all_endpoints_failed',
+        caller: 'RoomMusicRemoteDataSource',
+        detail: videoId,
+      );
+      return null;
+    }
+    final clientUrl = VoiceRoomDjStreamLoader.clientPlaybackUrl(raw);
+    VoiceRoomMusicPipelineLog.compareFields(
+      stage: 'resolveStreamUrl.clientUrl',
+      roomId: roomId,
+      serverMusicUrl: raw,
+      resolvedStreamUrl: clientUrl,
+      videoId: videoId,
+    );
+    return clientUrl;
   }
 
   Future<({

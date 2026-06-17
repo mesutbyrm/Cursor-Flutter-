@@ -757,8 +757,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final candidates = live.presence
         .where((p) => !onStage.contains(p.id) || p.seatIndex == seatIndex)
         .toList();
-    final canManageDj =
-        perms.isRoomOwner || perms.isSiteAdmin;
+    final canManageDj = perms.isRoomOwner ||
+        perms.isSiteAdmin ||
+        perms.canManageDj ||
+        perms.canManageRoom;
 
     await showModalBottomSheet<void>(
       context: context,

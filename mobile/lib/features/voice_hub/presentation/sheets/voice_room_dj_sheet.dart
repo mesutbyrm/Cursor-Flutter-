@@ -70,6 +70,7 @@ class _DjDialogState extends ConsumerState<_DjDialog> {
   bool get _canManage =>
       widget.isOwner ||
       widget.perms.canManageDj ||
+      widget.perms.canManageRoom ||
       widget.perms.isSiteAdmin ||
       widget.perms.isRoomOwner;
 
