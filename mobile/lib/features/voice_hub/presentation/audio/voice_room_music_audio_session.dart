@@ -34,11 +34,9 @@ class VoiceRoomMusicAudioSession {
     for (var attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         final session = await AudioSession.instance;
-        final ok = await session.setActive(true);
-        if (ok) {
-          debugPrint('VoiceRoomMusicAudioSession: active (attempt $attempt)');
-          return;
-        }
+        await session.setActive(true);
+        debugPrint('VoiceRoomMusicAudioSession: active (attempt $attempt)');
+        return;
       } catch (e) {
         debugPrint('VoiceRoomMusicAudioSession activate attempt $attempt: $e');
       }

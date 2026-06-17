@@ -420,7 +420,6 @@ class VoiceRoomDjPlayer {
       action: 'shutdown.before',
       playing: playback.value.playing,
       processingState: diagnostics.value.lastPhase,
-      url: _currentKey,
     );
     controlDelegate = null;
     onTrackComplete = null;
