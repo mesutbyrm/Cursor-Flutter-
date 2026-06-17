@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-06-17 20:22 UTC
+Oluşturulma: 2026-06-17 21:20 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -24,7 +24,7 @@ Base: `main`
 
 | Dal | Neden |
 |-----|-------|
-| cursor/live-fortune-flow-294f | merged into main |
+| cursor/live-fortune-room-api-294f | merged into main |
 
 ## Kalan açık PR'lar
 
