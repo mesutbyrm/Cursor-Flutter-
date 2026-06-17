@@ -62,6 +62,8 @@ FortuneIncomingSession? parseFortuneIncomingPayload(Map<String, dynamic>? raw) {
     'session_id',
     'id',
     'fortuneSessionId',
+    'liveSessionId',
+    'live_session_id',
   ])?.toString();
   if (sessionId == null || sessionId.isEmpty) return null;
 

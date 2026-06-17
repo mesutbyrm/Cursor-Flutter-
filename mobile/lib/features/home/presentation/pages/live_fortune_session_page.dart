@@ -15,6 +15,7 @@ import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
+import '../providers/home_providers.dart';
 
 /// Canlı fal video oturumu — TRTC + süre sayacı + sohbet.
 class LiveFortuneSessionPage extends ConsumerStatefulWidget {
@@ -30,12 +31,15 @@ class LiveFortuneSessionPage extends ConsumerStatefulWidget {
 class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage> {
   final _trtc = TrtcRoomManager();
   final _chat = TextEditingController();
-  final _messages = <_ChatLine>[];
+  final _messages = <TellerChatMessage>[];
+  final _seenChatIds = <String>{};
   var _rtcReady = false;
   String? _rtcError;
   var _leaving = false;
+  var _sendingChat = false;
   late Duration _remaining;
   Timer? _tick;
+  Timer? _chatPoll;
   Key _localPreviewKey = UniqueKey();
 
   @override
@@ -50,12 +54,41 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
       }
       setState(() => _remaining -= const Duration(seconds: 1));
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) => _joinRtc());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_joinRtc());
+      _startChatPoll();
+    });
+  }
+
+  void _startChatPoll() {
+    _chatPoll?.cancel();
+    _chatPoll = Timer.periodic(const Duration(seconds: 2), (_) => _pollChat());
+    unawaited(_pollChat());
+  }
+
+  Future<void> _pollChat() async {
+    if (!mounted || _leaving) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final remote = ref.read(homeRemoteProvider);
+    final incoming = await remote.fetchTellerChatMessages(
+      widget.session.sessionId,
+      myUserId: user?.id,
+    );
+    if (!mounted || incoming.isEmpty) return;
+    var changed = false;
+    for (final msg in incoming) {
+      if (_seenChatIds.contains(msg.id)) continue;
+      _seenChatIds.add(msg.id);
+      _messages.add(msg);
+      changed = true;
+    }
+    if (changed && mounted) setState(() {});
   }
 
   @override
   void dispose() {
     _tick?.cancel();
+    _chatPoll?.cancel();
     _chat.dispose();
     _trtc.dispose();
     super.dispose();
@@ -114,13 +147,30 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     return '$m:$s';
   }
 
-  void _sendChat() {
+  Future<void> _sendChat() async {
     final t = _chat.text.trim();
-    if (t.isEmpty) return;
+    if (t.isEmpty || _sendingChat) return;
     _chat.clear();
-    setState(() {
-      _messages.add(_ChatLine(user: 'Sen', text: t));
-    });
+    setState(() => _sendingChat = true);
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final ok = await ref
+        .read(homeRemoteProvider)
+        .sendTellerChatMessage(widget.session.sessionId, t);
+    if (!mounted) return;
+    setState(() => _sendingChat = false);
+    if (ok) {
+      final mine = TellerChatMessage(
+        id: 'local_${DateTime.now().millisecondsSinceEpoch}',
+        senderId: user?.id ?? '',
+        senderName: 'Sen',
+        text: t,
+        createdAt: DateTime.now(),
+        isMine: true,
+      );
+      _seenChatIds.add(mine.id);
+      setState(() => _messages.add(mine));
+    }
+    unawaited(_pollChat());
   }
 
   Future<void> _confirmEnd() async {
@@ -372,13 +422,14 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
                                 itemCount: _messages.length,
                                 itemBuilder: (_, i) {
                                   final m = _messages[i];
+                                  final label = m.isMine ? 'Sen' : m.senderName;
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 4),
                                     child: RichText(
                                       text: TextSpan(
                                         children: [
                                           TextSpan(
-                                            text: '${m.user}: ',
+                                            text: '$label: ',
                                             style: const TextStyle(
                                               color: AppThemeColors.accentCyan,
                                               fontWeight: FontWeight.w700,
@@ -502,12 +553,6 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
       ),
     );
   }
-}
-
-class _ChatLine {
-  const _ChatLine({required this.user, required this.text});
-  final String user;
-  final String text;
 }
 
 class _TopChip extends StatelessWidget {

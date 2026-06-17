@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.243+246 (2026-06-12)
+
+### Canlı Falcılar — web ile oturum senkronu
+
+- **Gelen istekler:** Üretim API `GET /api/fortune-tellers/sessions` (web ile aynı); yerel ayna yedek
+- **Kabul/red:** `PATCH /api/fortune-tellers/sessions/{id}` + eski `respond` yedek
+- **Danışan bekleme:** Oturum durumu üretim listesinden poll; kabulde TRTC oda bilgisi güncellenir
+- **Sohbet:** `GET/POST /api/teller-chat/{sessionId}` — web ↔ uygulama metin iletişimi
+- **Bildirim:** Canlı fal bildirimleri `/canli-falcilar` sayfasına yönlendirilir
+
 ## 1.0.242+245 (2026-06-12)
 
 ### Video Müzik — akıcı oynatma ve otomatik sıra

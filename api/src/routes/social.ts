@@ -5,6 +5,9 @@ import {
   fortuneSessionRoleForUser,
   getFortuneSession,
   listIncomingFortuneSessionsForTeller,
+  listFortuneSessionsForUser,
+  listTellerChatMessages,
+  appendTellerChatMessage,
   respondFortuneSession,
 } from "../lib/liveStreamExtrasStore";
 import { prisma } from "../lib/prisma";
@@ -180,6 +183,55 @@ socialRouter.post("/fortune-tellers/session", requireAuth, async (req, res) => {
   });
 });
 
+/** GET /api/fortune-tellers/sessions — üretim: falcı gelen + danışan oturumları */
+socialRouter.get(
+  "/fortune-tellers/sessions",
+  requireAuth,
+  async (req, res) => {
+    const sessions = listFortuneSessionsForUser(req.userId!);
+    return ok(res, { sessions });
+  },
+);
+
+/** PATCH /api/fortune-tellers/sessions/:sessionId — üretim: kabul / red / tamamla */
+socialRouter.patch(
+  "/fortune-tellers/sessions/:sessionId",
+  requireAuth,
+  async (req, res) => {
+    const action = req.body?.action?.toString()?.trim().toLowerCase();
+    if (!["accept", "hold", "reject", "complete", "cancel"].includes(action ?? "")) {
+      return fail(res, 400, "BAD_REQUEST", "action: accept | hold | reject | complete | cancel");
+    }
+    if (action === "complete" || action === "cancel") {
+      const session = getFortuneSession(req.params.sessionId);
+      if (!session) {
+        return fail(res, 404, "NOT_FOUND", "Oturum bulunamadı");
+      }
+      session.status = "ended";
+      if (action === "cancel") session.tellerResponse = "rejected";
+      return ok(res, { session, sessionId: session.id, status: session.status });
+    }
+    const result = respondFortuneSession(
+      req.params.sessionId,
+      req.userId!,
+      action as "accept" | "hold" | "reject",
+    );
+    if (!result.ok) {
+      return fail(res, 400, "BAD_REQUEST", result.error);
+    }
+    const session = result.session;
+    const role = fortuneSessionRoleForUser(session, req.userId!);
+    return ok(res, {
+      session,
+      sessionId: session.id,
+      status: session.status,
+      tellerResponse: session.tellerResponse,
+      role,
+      isClient: role === "client",
+    });
+  },
+);
+
 /** GET /api/fortune-tellers/sessions/incoming — falcıya düşen bekleyen istekler */
 socialRouter.get(
   "/fortune-tellers/sessions/incoming",
@@ -242,6 +294,55 @@ socialRouter.post(
       role,
       isClient: role === "client",
     });
+  },
+);
+
+/** GET/POST /api/teller-chat/:sessionId — seans metin sohbeti */
+socialRouter.get(
+  "/teller-chat/:sessionId",
+  requireAuth,
+  async (req, res) => {
+    const session = getFortuneSession(req.params.sessionId);
+    if (!session) {
+      return fail(res, 404, "NOT_FOUND", "Oturum bulunamadı");
+    }
+    const uid = req.userId!;
+    if (session.clientId !== uid && session.tellerUserId !== uid) {
+      return fail(res, 403, "FORBIDDEN", "Yetki yok");
+    }
+    return ok(res, {
+      messages: listTellerChatMessages(req.params.sessionId),
+    });
+  },
+);
+
+socialRouter.post(
+  "/teller-chat/:sessionId",
+  requireAuth,
+  async (req, res) => {
+    const session = getFortuneSession(req.params.sessionId);
+    if (!session) {
+      return fail(res, 404, "NOT_FOUND", "Oturum bulunamadı");
+    }
+    const uid = req.userId!;
+    if (session.clientId !== uid && session.tellerUserId !== uid) {
+      return fail(res, 403, "FORBIDDEN", "Yetki yok");
+    }
+    const text =
+      req.body?.message?.toString()?.trim() ||
+      req.body?.text?.toString()?.trim() ||
+      req.body?.content?.toString()?.trim();
+    if (!text) {
+      return fail(res, 400, "BAD_REQUEST", "message gerekli");
+    }
+    const role = fortuneSessionRoleForUser(session, uid);
+    const row = appendTellerChatMessage(
+      req.params.sessionId,
+      uid,
+      role === "teller" ? "Falcı" : session.clientName ?? "Danışan",
+      text,
+    );
+    return ok(res, { message: row });
   },
 );
 

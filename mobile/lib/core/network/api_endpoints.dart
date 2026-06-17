@@ -64,16 +64,25 @@ abstract final class ApiEndpoints {
 
   static const fortuneTellerSession = '/api/fortune-tellers/session';
 
+  /// Üretim: falcı gelen istekler + danışan oturum durumu (web ile aynı).
+  static const fortuneTellerSessions = '/api/fortune-tellers/sessions';
+
+  /// Yerel API aynası (üretimde 405).
   static const fortuneTellerIncomingSessions =
       '/api/fortune-tellers/sessions/incoming';
 
   static String fortuneTellerSessionStatus(String sessionId) =>
       '/api/fortune-tellers/session/$sessionId';
 
+  static String fortuneTellerSessionPatch(String sessionId) =>
+      '/api/fortune-tellers/sessions/$sessionId';
+
   static String fortuneTellerSessionRespond(String sessionId) =>
       '/api/fortune-tellers/session/$sessionId/respond';
 
   static String fortuneTeller(String id) => '/api/fortune-tellers/$id';
+
+  static String tellerChat(String sessionId) => '/api/teller-chat/$sessionId';
 
   /// Oyunlar ve etkinlikler.
   static const homeGames = '/api/games';

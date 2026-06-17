@@ -58,10 +58,16 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
       ref.read(videoWebrtcSignalServiceProvider).start(
             streamId: widget.session.sessionId,
           );
+      final activeSession = widget.session.copyWith(
+        tellerUserId: status.tellerUserId ?? widget.session.tellerUserId,
+        trtcRoomIdOverride: status.trtcRoomId,
+        durationMinutes: status.durationMinutes ?? widget.session.durationMinutes,
+        totalJeton: status.totalJeton ?? widget.session.totalJeton,
+      );
       if (!mounted) return;
       await Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
-          builder: (_) => LiveFortuneSessionPage(session: widget.session),
+          builder: (_) => LiveFortuneSessionPage(session: activeSession),
         ),
       );
     }

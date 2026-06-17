@@ -42,7 +42,11 @@ void navigateFromNotification(GoRouter router, AppNotificationEntity n) {
     case 'live_fortune':
     case 'live_fortune_request':
     case 'fortune_teller':
-      router.go('/feed');
+      if (n.targetId != null && n.targetId!.trim().isNotEmpty) {
+        router.push('/canli-falcilar');
+        return;
+      }
+      router.go('/canli-falcilar');
       return;
     case 'message':
     case 'chat':

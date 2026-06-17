@@ -326,3 +326,53 @@ export function fortuneSessionRoleForUser(
 export function getFortuneSession(sessionId: string) {
   return fortuneSessions.get(sessionId) ?? null;
 }
+
+/** Üretim uyumu: falcı + danışan oturum listesi. */
+export function listFortuneSessionsForUser(userId: string) {
+  const uid = userId.trim();
+  if (!uid) return [];
+  return [...fortuneSessions.values()]
+    .filter(
+      (s) =>
+        s.clientId === uid ||
+        s.tellerUserId === uid ||
+        s.tellerId === uid,
+    )
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export type TellerChatRow = {
+  id: string;
+  sessionId: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  createdAt: string;
+};
+
+const tellerChatBySession = new Map<string, TellerChatRow[]>();
+
+export function listTellerChatMessages(sessionId: string) {
+  return tellerChatBySession.get(sessionId.trim()) ?? [];
+}
+
+export function appendTellerChatMessage(
+  sessionId: string,
+  senderId: string,
+  senderName: string,
+  text: string,
+) {
+  const key = sessionId.trim();
+  const row: TellerChatRow = {
+    id: randomUUID(),
+    sessionId: key,
+    senderId,
+    senderName: senderName.trim() || "Kullanıcı",
+    text: text.trim(),
+    createdAt: new Date().toISOString(),
+  };
+  const list = tellerChatBySession.get(key) ?? [];
+  list.push(row);
+  tellerChatBySession.set(key, list);
+  return row;
+}

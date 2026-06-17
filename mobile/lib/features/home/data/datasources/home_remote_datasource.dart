@@ -122,20 +122,20 @@ class HomeRemoteDataSource {
   }
 
   Future<List<FortuneIncomingSession>> fetchIncomingFortuneSessions() async {
-    try {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.fortuneTellerIncomingSessions,
-      );
-      final body = res.data;
-      if (body is! Map) return const [];
-      final map = asJsonMap(body);
-      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      final raw = data['sessions'] ?? data['items'] ?? [];
-      if (raw is! List) return const [];
-      return raw.map(_mapIncomingFortuneSession).where((s) => s.sessionId.isNotEmpty).toList();
-    } catch (_) {
-      return const [];
+    for (final path in [
+      ApiEndpoints.fortuneTellerSessions,
+      ApiEndpoints.fortuneTellerIncomingSessions,
+    ]) {
+      try {
+        final sessions = await _fetchFortuneSessionsFromPath(path);
+        if (path == ApiEndpoints.fortuneTellerSessions || sessions.isNotEmpty) {
+          return sessions
+              .where(_isPendingFortuneInvite)
+              .toList(growable: false);
+        }
+      } catch (_) {}
     }
+    return const [];
   }
 
   Future<FortuneSessionStatusResult?> fetchFortuneSessionStatus(
@@ -143,36 +143,24 @@ class HomeRemoteDataSource {
   ) async {
     final key = sessionId.trim();
     if (key.isEmpty) return null;
-    try {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.fortuneTellerSessionStatus(key),
-      );
-      final body = res.data;
-      if (body is! Map) return null;
-      final map = asJsonMap(body);
-      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      final sessionMap =
-          data['session'] is Map ? asJsonMap(data['session']) : data;
-      final id = pick(data, ['sessionId', 'id'])?.toString() ??
-          pick(sessionMap, ['id', 'sessionId'])?.toString();
-      if (id == null || id.isEmpty) return null;
-      final status = pick(data, ['status'])?.toString() ??
-          pick(sessionMap, ['status'])?.toString() ??
-          'pending';
-      final tellerResponse = pick(data, ['tellerResponse'])?.toString() ??
-          pick(sessionMap, ['tellerResponse'])?.toString() ??
-          'pending';
-      final isClientRaw = data['isClient'];
-      final isClient = isClientRaw is bool ? isClientRaw : true;
-      return FortuneSessionStatusResult(
-        sessionId: id,
-        status: status,
-        tellerResponse: tellerResponse,
-        isClient: isClient,
-      );
-    } catch (_) {
-      return null;
+
+    final fromGet = await _fetchFortuneSessionStatusDirect(key);
+    if (fromGet != null) return fromGet;
+
+    for (final path in [
+      ApiEndpoints.fortuneTellerSessions,
+      ApiEndpoints.fortuneTellerIncomingSessions,
+    ]) {
+      try {
+        final sessions = await _fetchFortuneSessionsFromPath(path);
+        for (final row in sessions) {
+          if (row.sessionId == key) {
+            return _statusFromIncoming(row);
+          }
+        }
+      } catch (_) {}
     }
+    return null;
   }
 
   Future<bool> respondFortuneSession(
@@ -181,10 +169,18 @@ class HomeRemoteDataSource {
   }) async {
     final key = sessionId.trim();
     if (key.isEmpty) return false;
+    final normalized = action.trim().toLowerCase();
+    try {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.fortuneTellerSessionPatch(key),
+        data: {'action': normalized},
+      );
+      return true;
+    } catch (_) {}
     try {
       await _dio.safePost<dynamic>(
         ApiEndpoints.fortuneTellerSessionRespond(key),
-        data: {'action': action},
+        data: {'action': normalized},
       );
       return true;
     } catch (_) {
@@ -192,21 +188,205 @@ class HomeRemoteDataSource {
     }
   }
 
+  Future<List<TellerChatMessage>> fetchTellerChatMessages(
+    String sessionId, {
+    String? myUserId,
+  }) async {
+    final key = sessionId.trim();
+    if (key.isEmpty) return const [];
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.tellerChat(key));
+      final items = _itemsFromBody(res.data, keys: const [
+        'messages',
+        'items',
+        'chat',
+        'data',
+      ]);
+      return items
+          .map((raw) => _mapTellerChatMessage(raw, myUserId: myUserId))
+          .where((m) => m.text.trim().isNotEmpty)
+          .toList(growable: false);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<bool> sendTellerChatMessage(String sessionId, String text) async {
+    final key = sessionId.trim();
+    final message = text.trim();
+    if (key.isEmpty || message.isEmpty) return false;
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.tellerChat(key),
+        data: {
+          'message': message,
+          'text': message,
+          'content': message,
+        },
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<List<FortuneIncomingSession>> _fetchFortuneSessionsFromPath(
+    String path,
+  ) async {
+    final res = await _dio.safeGet<dynamic>(path);
+    final body = res.data;
+    if (body is List) {
+      return body
+          .map(_mapIncomingFortuneSession)
+          .where((s) => s.sessionId.isNotEmpty)
+          .toList(growable: false);
+    }
+    if (body is! Map) return const [];
+    final map = asJsonMap(body);
+    final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+    final raw = data['sessions'] ??
+        data['items'] ??
+        data['incoming'] ??
+        data['pending'] ??
+        [];
+    if (raw is! List) return const [];
+    return raw
+        .map(_mapIncomingFortuneSession)
+        .where((s) => s.sessionId.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  Future<FortuneSessionStatusResult?> _fetchFortuneSessionStatusDirect(
+    String sessionId,
+  ) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(
+        ApiEndpoints.fortuneTellerSessionStatus(sessionId),
+      );
+      final body = res.data;
+      if (body is! Map) return null;
+      final map = asJsonMap(body);
+      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+      final sessionMap =
+          data['session'] is Map ? asJsonMap(data['session']) : data;
+      return _statusFromSessionMaps(data, sessionMap);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  FortuneSessionStatusResult? _statusFromSessionMaps(
+    Map<String, dynamic> data,
+    Map<String, dynamic> sessionMap,
+  ) {
+    final id = pick(data, ['sessionId', 'id'])?.toString() ??
+        pick(sessionMap, ['id', 'sessionId'])?.toString();
+    if (id == null || id.isEmpty) return null;
+    final status = pick(data, ['status'])?.toString() ??
+        pick(sessionMap, ['status'])?.toString() ??
+        'pending';
+    final tellerResponse = pick(data, ['tellerResponse', 'response'])?.toString() ??
+        pick(sessionMap, ['tellerResponse', 'response'])?.toString() ??
+        'pending';
+    final isClientRaw = data['isClient'];
+    final isClient = isClientRaw is bool ? isClientRaw : true;
+    return FortuneSessionStatusResult(
+      sessionId: id,
+      status: status,
+      tellerResponse: tellerResponse,
+      isClient: isClient,
+      tellerUserId: pick(data, ['tellerUserId', 'anchorUserId'])?.toString() ??
+          pick(sessionMap, ['tellerUserId', 'anchorUserId'])?.toString(),
+      trtcRoomId: pick(data, ['trtcRoomId', 'roomId'])?.toString() ??
+          pick(sessionMap, ['trtcRoomId', 'roomId'])?.toString(),
+      durationMinutes: asInt(
+        pick(data, ['durationMinutes']) ?? pick(sessionMap, ['durationMinutes']),
+      ),
+      totalJeton: asInt(
+        pick(data, ['totalJeton']) ?? pick(sessionMap, ['totalJeton']),
+      ),
+    );
+  }
+
+  FortuneSessionStatusResult _statusFromIncoming(FortuneIncomingSession row) {
+    return FortuneSessionStatusResult(
+      sessionId: row.sessionId,
+      status: row.status,
+      tellerResponse: row.tellerResponse,
+      isClient: true,
+      durationMinutes: row.durationMinutes,
+      totalJeton: row.totalJeton,
+    );
+  }
+
+  bool _isPendingFortuneInvite(FortuneIncomingSession session) {
+    final status = session.status.toLowerCase();
+    final response = session.tellerResponse.toLowerCase();
+    if (response == 'accepted' ||
+        response == 'rejected' ||
+        status == 'active' ||
+        status == 'ended') {
+      return false;
+    }
+    return response == 'pending' ||
+        response == 'held' ||
+        status == 'pending' ||
+        status == 'waiting';
+  }
+
+  TellerChatMessage _mapTellerChatMessage(
+    dynamic raw, {
+    String? myUserId,
+  }) {
+    final m = asJsonMap(raw);
+    final sender = asJsonMap(m['sender'] ?? m['user'] ?? m['from']);
+    final senderId = _str(m, ['senderId', 'userId', 'fromId']) ??
+        _str(sender, ['id', 'userId']) ??
+        '';
+    final senderName = _str(m, ['senderName', 'userName', 'displayName']) ??
+        _str(sender, ['displayName', 'name', 'username']) ??
+        'Kullanıcı';
+    final text = _str(m, ['text', 'message', 'content', 'body']) ?? '';
+    final createdRaw = pick(m, ['createdAt', 'sentAt', 'timestamp'])?.toString();
+    DateTime? createdAt;
+    if (createdRaw != null && createdRaw.isNotEmpty) {
+      createdAt = DateTime.tryParse(createdRaw);
+    }
+    return TellerChatMessage(
+      id: _str(m, ['id', '_id']) ?? '${senderId}_${createdRaw ?? text.hashCode}',
+      senderId: senderId,
+      senderName: senderName,
+      text: text,
+      createdAt: createdAt,
+      isMine: myUserId != null && senderId.isNotEmpty && senderId == myUserId,
+    );
+  }
+
   FortuneIncomingSession _mapIncomingFortuneSession(dynamic raw) {
     final m = asJsonMap(raw);
+    final client = asJsonMap(m['client'] ?? m['user'] ?? m['clientUser']);
+    final teller = asJsonMap(m['teller'] ?? m['fortuneTeller']);
     return FortuneIncomingSession(
       sessionId: _str(m, ['id', 'sessionId']) ?? '',
-      clientId: _str(m, ['clientId']) ?? '',
-      clientName: _str(m, ['clientName', 'clientDisplayName']) ?? 'Danışan',
-      tellerId: _str(m, ['tellerId']) ?? '',
+      clientId: _str(m, ['clientId']) ??
+          _str(client, ['id', 'userId']) ??
+          '',
+      clientName: _str(m, ['clientName', 'clientDisplayName']) ??
+          _str(client, ['displayName', 'name', 'username']) ??
+          'Danışan',
+      tellerId: _str(m, ['tellerId', 'fortuneTellerId']) ??
+          _str(teller, ['id', 'tellerId']) ??
+          '',
       durationMinutes: () {
-        final v = asInt(pick(m, ['durationMinutes']));
+        final v = asInt(pick(m, ['durationMinutes', 'maxMinutes', 'minutes']));
         return v > 0 ? v : 10;
       }(),
-      totalJeton: asInt(pick(m, ['totalJeton'])),
-      category: _str(m, ['category', 'specialty']) ?? 'general',
+      totalJeton: asInt(pick(m, ['totalJeton', 'jeton', 'amount'])),
+      category: _str(m, ['category', 'specialty', 'fortuneType']) ??
+          _str(teller, ['specialty']) ??
+          'general',
       status: _str(m, ['status']) ?? 'pending',
-      tellerResponse: _str(m, ['tellerResponse']) ?? 'pending',
+      tellerResponse: _str(m, ['tellerResponse', 'response']) ?? 'pending',
     );
   }
 

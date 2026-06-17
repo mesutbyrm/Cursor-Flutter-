@@ -32,16 +32,49 @@ class FortuneSessionStatusResult {
     required this.status,
     required this.tellerResponse,
     required this.isClient,
+    this.tellerUserId,
+    this.trtcRoomId,
+    this.durationMinutes,
+    this.totalJeton,
   });
 
   final String sessionId;
   final String status;
   final String tellerResponse;
   final bool isClient;
+  final String? tellerUserId;
+  final String? trtcRoomId;
+  final int? durationMinutes;
+  final int? totalJeton;
 
-  bool get isActive => status == 'active' || tellerResponse == 'accepted';
+  bool get isActive =>
+      status == 'active' ||
+      status == 'accepted' ||
+      tellerResponse == 'accepted';
   bool get isRejected =>
-      status == 'ended' || tellerResponse == 'rejected';
+      status == 'ended' ||
+      status == 'rejected' ||
+      status == 'cancelled' ||
+      tellerResponse == 'rejected';
+}
+
+/// Falcı seans sohbet mesajı (`/api/teller-chat/{sessionId}`).
+class TellerChatMessage {
+  const TellerChatMessage({
+    required this.id,
+    required this.senderId,
+    required this.senderName,
+    required this.text,
+    required this.createdAt,
+    this.isMine = false,
+  });
+
+  final String id;
+  final String senderId;
+  final String senderName;
+  final String text;
+  final DateTime? createdAt;
+  final bool isMine;
 }
 
 /// `POST /api/fortune-tellers/session` yanıtı.
@@ -73,6 +106,7 @@ class LiveFortuneSessionEntity {
     this.tellerUserId,
     this.clientId,
     this.isClient = true,
+    this.trtcRoomIdOverride,
   });
 
   final String sessionId;
@@ -82,8 +116,34 @@ class LiveFortuneSessionEntity {
   final String? tellerUserId;
   final String? clientId;
   final bool isClient;
+  final String? trtcRoomIdOverride;
 
-  String get trtcRoomId => sessionId;
+  String get trtcRoomId =>
+      (trtcRoomIdOverride?.trim().isNotEmpty == true)
+          ? trtcRoomIdOverride!.trim()
+          : sessionId;
+
+  LiveFortuneSessionEntity copyWith({
+    String? sessionId,
+    LiveFortuneTellerEntity? teller,
+    int? durationMinutes,
+    int? totalJeton,
+    String? tellerUserId,
+    String? clientId,
+    bool? isClient,
+    String? trtcRoomIdOverride,
+  }) {
+    return LiveFortuneSessionEntity(
+      sessionId: sessionId ?? this.sessionId,
+      teller: teller ?? this.teller,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
+      totalJeton: totalJeton ?? this.totalJeton,
+      tellerUserId: tellerUserId ?? this.tellerUserId,
+      clientId: clientId ?? this.clientId,
+      isClient: isClient ?? this.isClient,
+      trtcRoomIdOverride: trtcRoomIdOverride ?? this.trtcRoomIdOverride,
+    );
+  }
 
   String get anchorUserId {
     final fromSession = tellerUserId?.trim();
