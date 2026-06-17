@@ -9,6 +9,7 @@ import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/ui/premium/live_badge.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../providers/home_providers.dart';
 import '../theme/home_palette.dart';
@@ -54,9 +55,11 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
     if (_cancelled || !mounted) return;
     _cancelled = true;
     _poll?.cancel();
-    await showLiveFortuneUnavailableDialog(context);
-    if (!mounted) return;
-    context.go('/feed');
+    ref.invalidate(coinBalanceProvider);
+    await showLiveFortuneUnavailableDialog(
+      context,
+      tellerName: widget.session.teller.name,
+    );
   }
 
   Future<void> _checkStatus() async {

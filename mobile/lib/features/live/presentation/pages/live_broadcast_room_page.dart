@@ -9,6 +9,12 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../home/domain/entities/live_fortune_session_entity.dart';
+import '../../../home/domain/entities/live_fortune_teller_entity.dart';
+import '../../../home/presentation/pages/live_fortune_waiting_page.dart';
+import '../../../home/presentation/providers/home_providers.dart';
+import '../../../home/presentation/widgets/live_fortune_client_booking_sheet.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
@@ -144,6 +150,85 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     _chat.dispose();
     _agora.dispose();
     super.dispose();
+  }
+
+  bool _isFortuneBroadcast(LiveBroadcastSession s) {
+    final c = s.category.toLowerCase();
+    if (c.contains('fal') || c == 'fortune') return true;
+    return s.tags.any((t) => t.toLowerCase().contains('fal'));
+  }
+
+  Future<void> _onFortuneRequest(LiveBroadcastSession s) async {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fal isteği için giriş yapın')),
+      );
+      return;
+    }
+    final hostId = s.hostUserId?.trim();
+    LiveFortuneTellerEntity? teller;
+    if (hostId != null && hostId.isNotEmpty) {
+      final tellers = await ref.read(homeLiveFortuneTellersProvider.future);
+      for (final t in tellers) {
+        if (t.userId == hostId || t.id == hostId) {
+          teller = t;
+          break;
+        }
+      }
+      teller ??= await ref.read(homeRemoteProvider).fetchLiveFortuneTeller(hostId);
+    }
+    if (!mounted) return;
+    if (teller == null) {
+      context.push('/canli-falcilar');
+      return;
+    }
+    final options = FortuneSessionDurationOption.forTeller(teller);
+    final opt = options.length > 1 ? options[1] : options.first;
+    final balance = ref.read(coinBalanceProvider).valueOrNull ?? user.coinBalance;
+    if (balance < opt.totalJeton) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Yetersiz jeton. Gerekli: ${opt.totalJeton}')),
+      );
+      return;
+    }
+    final confirmed = await showLiveFortuneClientBookingSheet(
+      context,
+      teller: teller,
+      durationMinutes: opt.minutes,
+      totalJeton: opt.totalJeton,
+    );
+    if (!mounted || confirmed != true) return;
+    final displayName = user.displayName?.trim().isNotEmpty == true
+        ? user.displayName!.trim()
+        : user.username;
+    final created = await ref.read(homeRemoteProvider).createFortuneTellerSession(
+          teller.id,
+          tellerUserId: teller.userId ?? teller.trtcUserId,
+          clientName: displayName,
+          durationMinutes: opt.minutes,
+          totalJeton: opt.totalJeton,
+        );
+    if (!mounted || created == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fal isteği gönderilemedi')),
+      );
+      return;
+    }
+    final session = LiveFortuneSessionEntity(
+      sessionId: created.sessionId,
+      teller: teller,
+      durationMinutes: opt.minutes,
+      totalJeton: opt.totalJeton,
+      tellerUserId: created.tellerUserId ?? teller.trtcUserId,
+      clientId: created.clientId ?? user.id,
+      isClient: true,
+    );
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => LiveFortuneWaitingPage(session: session),
+      ),
+    );
   }
 
   Future<void> _exitBroadcast(BuildContext context) async {
@@ -709,6 +794,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                             onLike: _onDoubleTapHeart,
                             onGift: () => giftCtrl.setPanelOpen(true),
                             onShare: _shareLive,
+                            onFortune: !s.isHost && _isFortuneBroadcast(s)
+                                ? () => unawaited(_onFortuneRequest(s))
+                                : null,
                             onReport: s.streamId != null && s.streamId!.isNotEmpty
                                 ? () => openReportFlow(
                                       context,
@@ -770,6 +858,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                             onLike: _onDoubleTapHeart,
                             onGift: () => giftCtrl.setPanelOpen(true),
                             onShare: _shareLive,
+                            onFortune: !s.isHost && _isFortuneBroadcast(s)
+                                ? () => unawaited(_onFortuneRequest(s))
+                                : null,
                             onReport: s.streamId != null && s.streamId!.isNotEmpty
                                 ? () => openReportFlow(
                                       context,
