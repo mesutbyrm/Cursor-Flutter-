@@ -945,6 +945,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       ...room.djUserIds,
       ...live.dj.djUsers.map((u) => u.id),
     }.toList();
+    final headerAvatar = ownerPresence?.image;
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
       if (prev?.error != next.error && next.error != null && mounted) {
         final err = next.error!;
