@@ -44,6 +44,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
   var _sendingChat = false;
   var _waitingForTimer = false;
   var _timerStarted = false;
+  int? _tipThankYouAmount;
   LiveFortuneRoomInfo? _room;
   String? _lastChatAfter;
   late Duration _remaining;
@@ -326,9 +327,10 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     if (!mounted) return;
     if (ok) {
       ref.invalidate(coinBalanceProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$amount jeton bahşiş gönderildi')),
-      );
+      setState(() => _tipThankYouAmount = amount);
+      Future<void>.delayed(const Duration(seconds: 3), () {
+        if (mounted) setState(() => _tipThankYouAmount = null);
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Bahşiş gönderilemedi')),
@@ -546,6 +548,57 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
                   ),
                 ),
               ),
+            if (_tipThankYouAmount != null)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  child: Center(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 28),
+                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 22),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF2A1450), Color(0xFF120A24)],
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('🙏', style: TextStyle(fontSize: 36)),
+                          const SizedBox(height: 10),
+                          Text(
+                            teller.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 18,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Bahşişiniz için teşekkür ederim 🤗',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white70,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            '$_tipThankYouAmount Jeton',
+                            style: const TextStyle(
+                              color: Color(0xFFFFD54F),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 20,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             SafeArea(
               child: Column(
                 children: [
@@ -627,18 +680,20 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
                           ),
                           const SizedBox(width: 6),
                           _TopChip(
-                            label: 'Süre Ekle',
+                            label: '+ Süre Ekle',
                             color: const Color(0xFFFFD54F),
                             foreground: Colors.black87,
                             onTap: _openExtendSheet,
                           ),
-                          const SizedBox(width: 4),
-                          _TopChip(
-                            label: 'Bahşiş',
-                            color: AppThemeColors.accentPink,
-                            icon: Icons.card_giftcard_rounded,
-                            onTap: _openTipSheet,
-                          ),
+                          if (widget.session.isClient) ...[
+                            const SizedBox(width: 4),
+                            _TopChip(
+                              label: 'Bahşiş',
+                              color: AppThemeColors.accentPink,
+                              icon: Icons.card_giftcard_rounded,
+                              onTap: _openTipSheet,
+                            ),
+                          ],
                         ],
                       ),
                     ),

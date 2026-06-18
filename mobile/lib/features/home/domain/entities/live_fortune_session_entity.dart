@@ -265,7 +265,7 @@ class FortuneSessionDurationOption {
     LiveFortuneTellerEntity teller,
   ) {
     final perMin = teller.pricePerMinute > 0 ? teller.pricePerMinute : 10;
-    return [5, 10, 15, 20, 30, 60]
+    return [5, 10, 15, 20, 25, 30]
         .map((m) => FortuneSessionDurationOption(minutes: m, jetonPerMinute: perMin))
         .toList();
   }

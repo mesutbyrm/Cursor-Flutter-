@@ -117,10 +117,10 @@ class _LiveFortuneExtendSheet extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
+              crossAxisCount: 2,
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              childAspectRatio: 1.35,
+              childAspectRatio: 1.55,
             ),
             itemCount: liveFortuneExtendOptions.length,
             itemBuilder: (_, i) {

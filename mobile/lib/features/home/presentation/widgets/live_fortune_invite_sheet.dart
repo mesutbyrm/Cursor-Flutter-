@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
+import '../widgets/live_fortune_fortune_type_chip.dart';
 import 'live_fortune_invite_action.dart';
 
 /// Falcıya düşen canlı fal daveti — Kabul / Beklet / Reddet.
@@ -91,20 +92,37 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: const Color(0xFF00E676), width: 2),
               ),
-              child: CircleAvatar(
-                radius: 34,
-                backgroundColor: const Color(0xFF1A0F2E),
-                backgroundImage: clientAvatarUrl != null &&
-                        clientAvatarUrl!.isNotEmpty
-                    ? NetworkImage(clientAvatarUrl!)
-                    : null,
-                child: clientAvatarUrl == null || clientAvatarUrl!.isEmpty
-                    ? const Icon(
-                        Icons.person_rounded,
-                        color: AppThemeColors.accentPink,
-                        size: 36,
-                      )
-                    : null,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  const Icon(
+                    Icons.headset_mic_rounded,
+                    color: Color(0xFF42A5F5),
+                    size: 36,
+                  ),
+                  Positioned(
+                    right: 6,
+                    bottom: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00E676),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        '24',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 14),
@@ -126,7 +144,7 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
                 ),
                 children: [
                   TextSpan(
-                    text: ' sizinle $durationMinutes dakika görüşme talep ediyor',
+                    text: ' sizinle canlı fal için bağlanmak istiyor',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.85),
                       fontWeight: FontWeight.w500,
@@ -138,7 +156,7 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              '✨ $category',
+              '✨ ${fortuneTypeLabel(category)}',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.65),
                 fontSize: 12,

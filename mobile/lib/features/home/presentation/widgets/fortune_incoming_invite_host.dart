@@ -18,6 +18,7 @@ import '../providers/fortune_live_event_bus.dart';
 import '../providers/home_providers.dart';
 import 'fortune_request_dialog.dart';
 import 'live_fortune_invite_action.dart';
+import 'live_fortune_session_start_sheet.dart';
 
 final liveFortuneRequestSseServiceProvider =
     Provider<LiveFortuneRequestSseService>((ref) {
@@ -290,6 +291,36 @@ class _FortuneIncomingInviteHostState
         return;
       }
 
+      final roomPreview = await ref
+          .read(homeRemoteProvider)
+          .fetchRoomInfo(req.sessionId);
+      final clientJeton = roomPreview?.userJetonBalance ?? req.totalJeton;
+
+      final startChoice = await showLiveFortuneSessionStartSheet(
+        navCtx,
+        clientName: req.clientName,
+        clientJetonBalance: clientJeton,
+      );
+      if (!mounted || startChoice == null) {
+        await ref.read(homeRemoteProvider).respondFortuneSession(
+              req.sessionId,
+              action: 'reject',
+            );
+        return;
+      }
+
+      if (startChoice.durationMinutes > 0) {
+        await ref.read(homeRemoteProvider).tellerAddSessionTime(
+              sessionId: req.sessionId,
+              minutes: startChoice.durationMinutes,
+            );
+      }
+
+      await ref.read(homeRemoteProvider).roomAction(
+            req.sessionId,
+            'start_timer',
+          );
+
       final status = await ref
           .read(homeRemoteProvider)
           .fetchFortuneSessionStatus(req.sessionId);
@@ -313,8 +344,12 @@ class _FortuneIncomingInviteHostState
       final session = LiveFortuneSessionEntity(
         sessionId: req.sessionId,
         teller: teller,
-        durationMinutes: status?.durationMinutes ?? req.durationMinutes,
-        totalJeton: status?.totalJeton ?? req.totalJeton,
+        durationMinutes: startChoice.durationMinutes > 0
+            ? startChoice.durationMinutes
+            : (status?.durationMinutes ?? req.durationMinutes),
+        totalJeton: startChoice.totalJeton > 0
+            ? startChoice.totalJeton
+            : (status?.totalJeton ?? req.totalJeton),
         tellerUserId: status?.tellerUserId ?? req.tellerUserId ?? teller.trtcUserId,
         clientId: req.clientId,
         isClient: false,

@@ -1,5 +1,18 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.263+266 (2026-06-18)
+
+### Canlı falcı — canlifal.com ekran uyumu
+
+- **Profil / randevu:** Fal türü seçimi, 5–30 dk (25 dk dahil), jeton/seans etiketi
+- **Bekleme:** Web ile aynı «Lütfen Bekleyiniz…» halka animasyonu ve kırmızı «İptal Et»
+- **Red:** «Falcı randevunuzu reddetti» snackbar (profil sayfasında)
+- **Reklam geçişi:** Kabul sonrası 4 sn «Reklam» kartı (`ad-transition` rotası)
+- **Falcı daveti:** Kulaklık 24 ikonu, web metni, kategori etiketi
+- **Seansı Başlat:** Falcı kabul sonrası web popup geri eklendi
+- **Görüşme:** Danışanda Bahşiş + teşekkür overlay; falcıda yalnızca «+ Süre Ekle»
+- **Süre Ekle:** 2 sütunlu grid (web ile aynı düzen)
+
 ## 1.0.262+265 (2026-06-18)
 
 ### Canlı falcı — randevu → kabul → görüşme akışı

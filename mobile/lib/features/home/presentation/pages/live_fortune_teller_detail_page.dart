@@ -15,8 +15,10 @@ import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../live_fortune/live_fortune_flow.dart';
 import '../providers/home_providers.dart';
+import '../providers/live_fortune_feedback_provider.dart';
 import '../theme/home_palette.dart';
 import '../widgets/live_fortune_client_booking_sheet.dart';
+import '../widgets/live_fortune_fortune_type_chip.dart';
 
 class LiveFortuneTellerDetailPage extends ConsumerStatefulWidget {
   const LiveFortuneTellerDetailPage({super.key, required this.tellerId});
@@ -31,7 +33,26 @@ class LiveFortuneTellerDetailPage extends ConsumerStatefulWidget {
 class _LiveFortuneTellerDetailPageState
     extends ConsumerState<LiveFortuneTellerDetailPage> {
   var _selectedMinutes = 10;
+  var _selectedFortuneType = 'general';
   var _booking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showFeedbackIfAny());
+  }
+
+  void _showFeedbackIfAny() {
+    final msg = ref.read(liveFortuneBookingFeedbackProvider);
+    if (msg == null || msg.isEmpty || !mounted) return;
+    ref.read(liveFortuneBookingFeedbackProvider.notifier).state = null;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: const Color(0xFF5C1A1A),
+      ),
+    );
+  }
 
   Future<void> _startSession(LiveFortuneTellerEntity teller) async {
     if (_booking) return;
@@ -76,9 +97,7 @@ class _LiveFortuneTellerDetailPageState
         teller: teller,
         durationMinutes: opt.minutes,
         totalJeton: opt.totalJeton,
-        fortuneType: teller.specialties.isNotEmpty
-            ? teller.specialties.first
-            : 'general',
+        fortuneType: _selectedFortuneType,
       );
     } finally {
       if (mounted) setState(() => _booking = false);
@@ -104,6 +123,10 @@ class _LiveFortuneTellerDetailPageState
                 return const Center(child: Text('Falcı bulunamadı.'));
               }
               final options = FortuneSessionDurationOption.forTeller(teller);
+              final fortuneTypes = fortuneTypesForTeller(teller.specialties);
+              if (!fortuneTypes.any((t) => t.key == _selectedFortuneType)) {
+                _selectedFortuneType = fortuneTypes.first.key;
+              }
               final selected = options.firstWhere(
                 (o) => o.minutes == _selectedMinutes,
                 orElse: () => options[1],
@@ -197,7 +220,7 @@ class _LiveFortuneTellerDetailPageState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '💰 ${selected.jetonPerMinute} jeton/dk',
+                    '💰 ${(teller.pricePerMinute > 0 ? teller.pricePerMinute : 10) * 10} jeton/seans',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: Color(0xFFFFD54F),
@@ -231,6 +254,66 @@ class _LiveFortuneTellerDetailPageState
                     ],
                   ),
                   const SizedBox(height: 10),
+                  Text(
+                    'Fal Türü Seçin',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: context.colors.onSurfaceMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: fortuneTypes.map((ft) {
+                      final active = ft.key == _selectedFortuneType;
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () =>
+                              setState(() => _selectedFortuneType = ft.key),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Ink(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              gradient: active
+                                  ? const LinearGradient(
+                                      colors: [
+                                        Color(0xFFB832FF),
+                                        Color(0xFFFF0080),
+                                      ],
+                                    )
+                                  : null,
+                              color: active
+                                  ? null
+                                  : Colors.white.withValues(alpha: 0.06),
+                              border: Border.all(
+                                color: active
+                                    ? Colors.transparent
+                                    : AppThemeColors.accentPurple
+                                        .withValues(alpha: 0.35),
+                              ),
+                            ),
+                            child: Text(
+                              ft.label,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                color: active
+                                    ? Colors.white
+                                    : Colors.white.withValues(alpha: 0.9),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
                   Text(
                     'Süre Seçin',
                     style: TextStyle(

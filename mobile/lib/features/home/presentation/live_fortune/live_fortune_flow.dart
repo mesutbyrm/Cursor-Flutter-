@@ -191,6 +191,11 @@ class LiveFortuneFlow {
 
     final route = '/canli-falcilar/${teller.id}/session';
     if (path.contains('/waiting')) {
+      router.pushReplacement(
+        '/canli-falcilar/${teller.id}/ad-transition',
+        extra: session,
+      );
+    } else if (path.contains('/ad-transition')) {
       router.pushReplacement(route, extra: session);
     } else {
       router.push(route, extra: session);
