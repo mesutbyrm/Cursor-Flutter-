@@ -26,7 +26,7 @@ String fortuneTypeLabel(String key) {
 
 List<LiveFortuneFortuneType> fortuneTypesForTeller(List<String> specialties) {
   if (specialties.isEmpty) {
-    return const [liveFortuneFortuneTypes.first];
+    return [liveFortuneFortuneTypes.first];
   }
   final out = <LiveFortuneFortuneType>[];
   for (final spec in specialties) {
@@ -35,6 +35,6 @@ List<LiveFortuneFortuneType> fortuneTypesForTeller(List<String> specialties) {
     if (out.any((t) => t.key == key)) continue;
     out.add(LiveFortuneFortuneType(key: key, label: label));
   }
-  if (out.isEmpty) return const [liveFortuneFortuneTypes.first];
+  if (out.isEmpty) return [liveFortuneFortuneTypes.first];
   return out;
 }
