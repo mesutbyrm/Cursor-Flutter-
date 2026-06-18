@@ -2,26 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.263+266` |
-| Tarih (UTC) | 2026-06-18 12:46 |
-| Commit | [`5dbc8a22434394269d47461328408a8299397d99`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/5dbc8a22434394269d47461328408a8299397d99) |
-| İş akışı | [Run 27759746667](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27759746667) |
+| Sürüm | `1.0.264+267` |
+| Tarih (UTC) | 2026-06-18 14:22 |
+| Commit | [`dcfa3439386266593dcda21a9792e2154e6ad43f`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/dcfa3439386266593dcda21a9792e2154e6ad43f) |
+| İş akışı | [Run 27765377150](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27765377150) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.263+266 (2026-06-18)
+## 1.0.264+267 (2026-06-18)
 
-### Canlı falcı — canlifal.com ekran uyumu
+### Canlı fal seans SSE (`GET /api/room/{sessionId}/stream`)
 
-- **Profil / randevu:** Fal türü seçimi, 5–30 dk (25 dk dahil), jeton/seans etiketi
-- **Bekleme:** Web ile aynı «Lütfen Bekleyiniz…» halka animasyonu ve kırmızı «İptal Et»
-- **Red:** «Falcı randevunuzu reddetti» snackbar (profil sayfasında)
-- **Reklam geçişi:** Kabul sonrası 4 sn «Reklam» kartı (`ad-transition` rotası)
-- **Falcı daveti:** Kulaklık 24 ikonu, web metni, kategori etiketi
-- **Seansı Başlat:** Falcı kabul sonrası web popup geri eklendi
-- **Görüşme:** Danışanda Bahşiş + teşekkür overlay; falcıda yalnızca «+ Süre Ekle»
-- **Süre Ekle:** 2 sütunlu grid (web ile aynı düzen)
+- **Servis:** `LiveFortuneRoomSseService` — mesaj, timer, oda durumu, seans sonu olayları
+- **Bekleme:** Danışan kabul/red anında SSE ile yönlendirme (3 sn poll yedek)
+- **Seans:** Sohbet SSE birincil; poll 20 sn yedek; timer/oda güncellemeleri anlık
+- **Test:** `live_fortune_room_sse_mapper_test.dart` — payload ayrıştırma
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
