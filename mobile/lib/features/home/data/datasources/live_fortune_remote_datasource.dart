@@ -32,7 +32,7 @@ class LiveFortuneRemoteDataSource {
     try {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.fortuneTellers,
-        queryParameters: params.isEmpty ? null : params,
+        query: params.isEmpty ? null : params,
       );
       final items = _itemsFromBody(res.data);
       if (items.isNotEmpty) {

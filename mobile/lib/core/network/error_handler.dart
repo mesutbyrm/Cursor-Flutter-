@@ -4,7 +4,9 @@ import 'api_exception.dart';
 abstract final class ErrorHandler {
   static String message(Object error, {String fallback = 'Bir hata oluştu'}) {
     if (error is ApiException) return error.message;
-    return ApiException.userMessage(error, fallback: fallback);
+    final raw = ApiException.userMessage(error);
+    if (raw.startsWith('ApiException') || raw.isEmpty) return fallback;
+    return raw;
   }
 
   static bool isAuthError(Object error) {
