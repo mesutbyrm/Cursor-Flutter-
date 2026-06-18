@@ -23,9 +23,7 @@ class PushRegistrar {
     try {
       await PushNotificationService.instance.init();
 
-      final token = await _resolvePushToken(
-        allowRetry: allowTokenRetry,
-      );
+      final token = await _resolvePushToken(allowRetry: allowTokenRetry);
       if (token == null || token.isEmpty) return;
       if (token == _lastSentToken) return;
 
@@ -111,7 +109,6 @@ final pushRegistrarProvider = Provider<PushRegistrar>((ref) {
   return PushRegistrar(ref.watch(dioProvider));
 });
 
-final pushRegistrarControllerProvider =
-    Provider<void Function()>((ref) {
+final pushRegistrarControllerProvider = Provider<void Function()>((ref) {
   return () => ref.read(pushRegistrarProvider).registerIfPossible();
 });

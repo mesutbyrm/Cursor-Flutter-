@@ -37,9 +37,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
     super.initState();
     bindPushRegistrarTokenRefresh(() {
       if (!mounted) return;
-      ref.read(pushRegistrarProvider).registerIfPossible(
-            allowTokenRetry: true,
-          );
+      ref.read(pushRegistrarProvider).registerIfPossible(allowTokenRetry: true);
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -100,9 +98,9 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
         await PushNotificationService.instance.requestSystemPermission();
       }
 
-      await ref.read(pushRegistrarProvider).registerIfPossible(
-            allowTokenRetry: true,
-          );
+      await ref
+          .read(pushRegistrarProvider)
+          .registerIfPossible(allowTokenRetry: true);
     } finally {
       _pushSyncing = false;
     }

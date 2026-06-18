@@ -51,16 +51,16 @@ class _NotificationPermissionBannerState
     if (OneSignalBootstrap.isReady) {
       ok = await OneSignalBootstrap.requestPermission();
       if (ok) {
-        await ref.read(pushRegistrarProvider).registerIfPossible(
-              allowTokenRetry: true,
-            );
+        await ref
+            .read(pushRegistrarProvider)
+            .registerIfPossible(allowTokenRetry: true);
       }
     } else {
       ok = await PushNotificationService.instance.requestSystemPermission();
       if (ok) {
-        await ref.read(pushRegistrarProvider).registerIfPossible(
-              allowTokenRetry: true,
-            );
+        await ref
+            .read(pushRegistrarProvider)
+            .registerIfPossible(allowTokenRetry: true);
       }
     }
     if (mounted) {
