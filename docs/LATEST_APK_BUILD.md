@@ -2,25 +2,24 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.261+264` |
-| Tarih (UTC) | 2026-06-18 11:36 |
-| Commit | [`3f4af1cf4de7a9484366570f8634afb9636097b9`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3f4af1cf4de7a9484366570f8634afb9636097b9) |
-| İş akışı | [Run 27756080742](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27756080742) |
+| Sürüm | `1.0.262+265` |
+| Tarih (UTC) | 2026-06-18 12:24 |
+| Commit | [`f615e0caa73b40bee119a2f6da06c4475f9403b2`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/f615e0caa73b40bee119a2f6da06c4475f9403b2) |
+| İş akışı | [Run 27758558794](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27758558794) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.261+264 (2026-06-18)
+## 1.0.262+265 (2026-06-18)
 
-### Canlı falcı — backend MD sözleşmesi (canlifal.com/api/download-prompt)
+### Canlı falcı — randevu → kabul → görüşme akışı
 
-- **Seans oluşturma:** `POST /api/fortune-tellers/session` — body yalnızca `tellerId`, `fortuneType`, `duration`; `creditsCharged` / `maxMinutes` yanıttan okunur
-- **Falcı poll:** Öncelik `GET /api/fortune-tellers/sessions?status=pending` (3 sn aralık)
-- **Kabul / red / iptal:** `PATCH /api/fortune-tellers/sessions/{id}` `{ action }` birincil yol
-- **Çevrimiçi:** `POST /api/fortune-tellers/toggle-online` `{ isOnline: true }`
-- **Aktif seans:** Uygulama açılışında `GET /api/user/active-sessions` ile devam
-- **Push:** `session_request`, `session_update`, `session_ended` tipleri işlenir; kabulde canlı odaya yönlendirme
-- **Danışan bekleme:** Durum poll 3 sn (üretim dokümanı §6–8)
+- **Falcı daveti:** «X sizinle Y dakika görüşme talep ediyor» metni; `userId` / `user.name` API eşlemesi düzeltildi
+- **Kabul:** Ekstra başlatma popup'ı kaldırıldı — kabul sonrası doğrudan görüşme ekranı
+- **Danışan:** Falcı kabul edince bekleme ekranından doğrudan görüşmeye geçiş (3 sn reklam atlandı)
+- **TRTC:** Oda bilgisi alındıktan sonra video bağlantısı; sunucu `roomId` ile yeniden bağlanma
+- **Push kabul:** Bekleme ekranındayken `session_update` ile anında görüşmeye yönlendirme
+- **Falcı çevrimiçi:** Her oturumda `toggle-online` yeniden denenir
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
