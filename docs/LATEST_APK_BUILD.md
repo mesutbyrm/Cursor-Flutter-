@@ -2,23 +2,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.265+268` |
-| Tarih (UTC) | 2026-06-18 15:32 |
-| Commit | [`14d8bfbebb0a894b96e0cf9ae6f57f48cd943fe8`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/14d8bfbebb0a894b96e0cf9ae6f57f48cd943fe8) |
-| İş akışı | [Run 27769813443](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27769813443) |
+| Sürüm | `1.0.267+270` |
+| Tarih (UTC) | 2026-06-18 18:31 |
+| Commit | [`8e713437292cad856e5a4283d8ddc6d237d7d93f`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/8e713437292cad856e5a4283d8ddc6d237d7d93f) |
+| İş akışı | [Run 27780337934](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27780337934) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.265+268 (2026-06-18)
+## 1.0.267+270 (2026-06-18)
 
-### Canlı falcı — bağlantı ve çıkış düzeltmeleri
+### Derleme düzeltmesi
 
-- **Falcı daveti SSE:** `GET /api/fortune-tellers/sessions/stream` — yayın/oda olmadan istek alımı
-- **Poll:** Falcı profili yüklenene kadar bekler; `incoming` ucu öncelikli; 2 sn aralık
-- **Kabul:** «Seansı Başlat» kapatılırsa artık otomatik red yok; seansa geçiş devam eder
-- **Bekleme çıkışı:** İptal API başarısız olsa bile ekrandan çıkış; «Ana sayfaya dön» + zorla çık
-- **Seans kapatma:** API hatasında da güvenli çıkış
+- **SSE:** `eventsource` paketi `youtube_explode_dart` ile `http` sürüm çakışması nedeniyle kaldırıldı; `ChatRoomSseService` Dio stream ile aynı SSE protokolünü kullanır
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
