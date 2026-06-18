@@ -303,6 +303,22 @@ class RolePanelResolver {
         m.containsKey('ownerId');
   }
 
+  bool _rolesContainTeller(dynamic roles) {
+    if (roles is! List) return false;
+    for (final r in roles) {
+      if (_roleLooksLikeTeller(r?.toString())) return true;
+    }
+    return false;
+  }
+
+  bool _rolesContainAgency(dynamic roles) {
+    if (roles is! List) return false;
+    for (final r in roles) {
+      if (_roleLooksLikeAgency(r?.toString())) return true;
+    }
+    return false;
+  }
+
   bool _roleLooksLikeTeller(String? role) {
     final r = role?.trim().toLowerCase() ?? '';
     if (r.isEmpty) return false;
