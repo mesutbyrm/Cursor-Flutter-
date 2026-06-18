@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
-import 'home_providers.dart';
 import '../../../shell/presentation/providers/role_panel_providers.dart';
 
 /// Giriş sonrası `GET /api/fortune-tellers/my-profile` — onaylı falcı bayrağı.

@@ -5,7 +5,6 @@ import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 import '../../agency/data/datasources/agency_remote_datasource.dart';
 import '../../agency/domain/entities/agency_entity.dart';
-import '../../auth/data/datasources/auth_remote_datasource.dart';
 import '../../auth/domain/entities/user_entity.dart';
 import '../../home/data/datasources/home_remote_datasource.dart';
 import '../../home/domain/entities/live_fortune_teller_entity.dart';
