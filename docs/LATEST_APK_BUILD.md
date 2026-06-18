@@ -2,21 +2,30 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.258+261` |
-| Tarih (UTC) | 2026-06-18 06:14 |
-| Commit | [`a2f61476c2b072bb24eda66d905065e67c988d0a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a2f61476c2b072bb24eda66d905065e67c988d0a) |
-| İş akışı | [Run 27740078035](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27740078035) |
+| Sürüm | `1.0.259+262` |
+| Tarih (UTC) | 2026-06-18 09:27 |
+| Commit | [`a811bba43244a9dc1fe248e9b38cc14951eeca13`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a811bba43244a9dc1fe248e9b38cc14951eeca13) |
+| İş akışı | [Run 27749367908](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27749367908) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.258+261 (2026-06-18)
+## 1.0.259+262 (2026-06-18)
 
-### Bildirimler — push kayıt ve izin akışı düzeltmesi
+### Canlı yayın — kamera ve durum düzeltmeleri
 
-- **Mevcut oturum:** Uygulama zaten girişli açıldığında OneSignal `login` ve push token kaydı artık anında tetiklenir
-- **İzin sonrası kayıt:** Bildirim izni banner’dan açıldığında Firebase/FCM token kaydı tekrar denenir
-- **İlk kurulum:** OneSignal/FCM token geç oluşursa kısa retry ile `/api/auth/mobile/device-token`, `/api/devices/fcm`, `/api/user/device-token` kayıtları kaçırılmaz
+- **Kamera önizleme:** İzin / desteklenmeyen cihaz hataları artık ekranda gösterilir; «Kamera açılıyor…» yükleme durumu eklendi
+- **Yanlış «yayında» durumu:** Yayın `preparing` ile oluşturulur; geri dönüş veya Agora hatasında sunucuda otomatik `end` çağrılır
+- **Kamera aç/kapa:** Önizlemede `startPreview` / `stopPreview` kullanılır
+
+### Canlı falcı — istek ve iptal
+
+- **Yayıncıya istek:** Video yayın SSE üzerinden `fal_request` olayları; falcı poll 2 sn; aktif yayın odası SSE önceliği
+- **İptal:** `declined` / `cancelled` durumları; iptal API başarısızsa kullanıcıya uyarı; bekleme ekranında yükleme durumu
+
+### Jeton Al — WhatsApp
+
+- **WhatsApp seçimi:** Yöntem ekranında WhatsApp seçilince sohbet otomatik açılır (jeton, kullanıcı adı, ödeme türü ile)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
