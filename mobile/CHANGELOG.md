@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.265+268 (2026-06-18)
+
+### Canlı falcı — bağlantı ve çıkış düzeltmeleri
+
+- **Falcı daveti SSE:** `GET /api/fortune-tellers/sessions/stream` — yayın/oda olmadan istek alımı
+- **Poll:** Falcı profili yüklenene kadar bekler; `incoming` ucu öncelikli; 2 sn aralık
+- **Kabul:** «Seansı Başlat» kapatılırsa artık otomatik red yok; seansa geçiş devam eder
+- **Bekleme çıkışı:** İptal API başarısız olsa bile ekrandan çıkış; «Ana sayfaya dön» + zorla çık
+- **Seans kapatma:** API hatasında da güvenli çıkış
+
 ## 1.0.264+267 (2026-06-18)
 
 ### Canlı fal seans SSE (`GET /api/room/{sessionId}/stream`)

@@ -151,6 +151,16 @@ class HomeRemoteDataSource {
     }
 
     try {
+      final incoming = await _fetchFortuneSessionsFromPath(
+        ApiEndpoints.fortuneTellerIncomingSessions,
+      );
+      for (final row in incoming) {
+        serverScopedIds.add(row.sessionId);
+      }
+      addAll(incoming);
+    } catch (_) {}
+
+    try {
       final pending = await _fetchFortuneSessionsFromPath(
         ApiEndpoints.fortuneTellerSessionsWithStatus('pending'),
       );
@@ -371,6 +381,10 @@ class HomeRemoteDataSource {
         future.timeout(const Duration(seconds: 12), onTimeout: () => null);
 
     // §7.4 cancel — pending seans iptali (jeton iadesi)
+    try {
+      final roomCancel = await guardedRoom(roomAction(key, 'cancel'));
+      if (roomCancel != null) return true;
+    } catch (_) {}
     try {
       await _dio
           .safePatch<dynamic>(

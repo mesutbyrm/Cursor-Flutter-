@@ -511,10 +511,26 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     await ref.read(liveFortuneRoomSseServiceProvider).disconnect();
     await _trtc.leave();
     ref.read(videoWebrtcSignalServiceProvider).stop();
-    await ref
-        .read(homeRemoteProvider)
-        .endFortuneSession(widget.session.sessionId);
+
+    var ended = false;
+    try {
+      ended = await ref
+          .read(homeRemoteProvider)
+          .endFortuneSession(widget.session.sessionId);
+    } catch (_) {
+      ended = false;
+    }
+
     if (!mounted) return;
+    if (!ended && !silent) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Seans kapatma sunucuya iletilemedi; yine de çıkılıyor.',
+          ),
+        ),
+      );
+    }
     if (context.canPop()) {
       context.pop();
     } else {

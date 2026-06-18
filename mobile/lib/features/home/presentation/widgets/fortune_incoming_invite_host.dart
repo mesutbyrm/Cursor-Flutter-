@@ -10,6 +10,7 @@ import '../../../../core/network/token_storage.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/services/live_fortune_request_sse_service.dart';
+import '../../data/services/live_fortune_teller_incoming_sse_service.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../live_fortune/live_fortune_flow.dart';
@@ -23,6 +24,13 @@ import 'live_fortune_session_start_sheet.dart';
 final liveFortuneRequestSseServiceProvider =
     Provider<LiveFortuneRequestSseService>((ref) {
   final service = LiveFortuneRequestSseService();
+  ref.onDispose(service.disconnect);
+  return service;
+});
+
+final liveFortuneTellerIncomingSseServiceProvider =
+    Provider<LiveFortuneTellerIncomingSseService>((ref) {
+  final service = LiveFortuneTellerIncomingSseService();
   ref.onDispose(service.disconnect);
   return service;
 });
@@ -46,6 +54,7 @@ class _FortuneIncomingInviteHostState
   var _presenting = false;
   var _inviteUiReady = false;
   var _tellerOnlineSet = false;
+  var _isFortuneTeller = false;
   String? _tellerProfileId;
   String? _sseRoomId;
   final Set<String> _dismissed = {};
@@ -64,7 +73,6 @@ class _FortuneIncomingInviteHostState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _pollApi());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _inviteUiReady = true);
@@ -76,12 +84,19 @@ class _FortuneIncomingInviteHostState
     });
   }
 
+  void _startPoll() {
+    _poll?.cancel();
+    _poll = Timer.periodic(const Duration(seconds: 2), (_) => _pollApi());
+    unawaited(_pollApi());
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _poll?.cancel();
     _sseBusSub?.cancel();
     ref.read(liveFortuneRequestSseServiceProvider).disconnect();
+    ref.read(liveFortuneTellerIncomingSseServiceProvider).disconnect();
     super.dispose();
   }
 
@@ -96,7 +111,7 @@ class _FortuneIncomingInviteHostState
   Future<void> _bootstrapTeller() async {
     await _ensureTellerOnline();
     await _connectFortuneSse();
-    await _pollApi();
+    _startPoll();
     await _resumeActiveClientSessions();
   }
 
@@ -127,10 +142,41 @@ class _FortuneIncomingInviteHostState
         }
       }
     }
-    if (profile == null) return;
+    if (profile == null) {
+      _isFortuneTeller = false;
+      return;
+    }
+    _isFortuneTeller = true;
     _tellerProfileId = profile.id;
     final ok = await remote.setFortuneTellerOnline(online: true);
     if (ok) _tellerOnlineSet = true;
+  }
+
+  Future<void> _connectFortuneSse() async {
+    if (!_mayPresentInvites()) return;
+
+    if (_isFortuneTeller) {
+      final tokens = ref.read(tokenStorageProvider);
+      await ref.read(liveFortuneTellerIncomingSseServiceProvider).connect(
+            accessToken: tokens.readAccess,
+            onRequest: _onSseFortuneRequest,
+          );
+    }
+
+    final roomId = await _resolveTellerSseRoomId();
+    if (roomId == null || roomId.isEmpty) {
+      await ref.read(liveFortuneRequestSseServiceProvider).disconnect();
+      _sseRoomId = null;
+      return;
+    }
+    if (_sseRoomId == roomId) return;
+    _sseRoomId = roomId;
+    final tokens = ref.read(tokenStorageProvider);
+    await ref.read(liveFortuneRequestSseServiceProvider).connect(
+          roomId: roomId,
+          accessToken: tokens.readAccess,
+          onRequest: _onSseFortuneRequest,
+        );
   }
 
   Future<String?> _resolveTellerSseRoomId() async {
@@ -156,24 +202,6 @@ class _FortuneIncomingInviteHostState
       }
     } catch (_) {}
     return null;
-  }
-
-  Future<void> _connectFortuneSse() async {
-    if (!_mayPresentInvites()) return;
-    final roomId = await _resolveTellerSseRoomId();
-    if (roomId == null || roomId.isEmpty) {
-      await ref.read(liveFortuneRequestSseServiceProvider).disconnect();
-      _sseRoomId = null;
-      return;
-    }
-    if (_sseRoomId == roomId) return;
-    _sseRoomId = roomId;
-    final tokens = ref.read(tokenStorageProvider);
-    await ref.read(liveFortuneRequestSseServiceProvider).connect(
-          roomId: roomId,
-          accessToken: tokens.readAccess,
-          onRequest: _onSseFortuneRequest,
-        );
   }
 
   void _onSseFortuneRequest(FortuneIncomingSession session) {
@@ -211,6 +239,10 @@ class _FortuneIncomingInviteHostState
 
   Future<void> _pollApi() async {
     if (!mounted || _presenting || !_mayPresentInvites()) return;
+
+    if (_tellerProfileId == null) {
+      await _ensureTellerOnline();
+    }
 
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     final incoming = await ref
@@ -301,25 +333,26 @@ class _FortuneIncomingInviteHostState
         clientName: req.clientName,
         clientJetonBalance: clientJeton,
       );
-      if (!mounted || startChoice == null) {
-        await ref.read(homeRemoteProvider).respondFortuneSession(
+      if (!mounted) return;
+
+      var durationMinutes = req.durationMinutes;
+      var totalJeton = req.totalJeton;
+      if (startChoice != null) {
+        if (startChoice.durationMinutes > 0) {
+          durationMinutes = startChoice.durationMinutes;
+          await ref.read(homeRemoteProvider).tellerAddSessionTime(
+                sessionId: req.sessionId,
+                minutes: startChoice.durationMinutes,
+              );
+        }
+        if (startChoice.totalJeton > 0) {
+          totalJeton = startChoice.totalJeton;
+        }
+        await ref.read(homeRemoteProvider).roomAction(
               req.sessionId,
-              action: 'reject',
-            );
-        return;
-      }
-
-      if (startChoice.durationMinutes > 0) {
-        await ref.read(homeRemoteProvider).tellerAddSessionTime(
-              sessionId: req.sessionId,
-              minutes: startChoice.durationMinutes,
+              'start_timer',
             );
       }
-
-      await ref.read(homeRemoteProvider).roomAction(
-            req.sessionId,
-            'start_timer',
-          );
 
       final status = await ref
           .read(homeRemoteProvider)
@@ -344,11 +377,11 @@ class _FortuneIncomingInviteHostState
       final session = LiveFortuneSessionEntity(
         sessionId: req.sessionId,
         teller: teller,
-        durationMinutes: startChoice.durationMinutes > 0
-            ? startChoice.durationMinutes
+        durationMinutes: durationMinutes > 0
+            ? durationMinutes
             : (status?.durationMinutes ?? req.durationMinutes),
-        totalJeton: startChoice.totalJeton > 0
-            ? startChoice.totalJeton
+        totalJeton: totalJeton > 0
+            ? totalJeton
             : (status?.totalJeton ?? req.totalJeton),
         tellerUserId: status?.tellerUserId ?? req.tellerUserId ?? teller.trtcUserId,
         clientId: req.clientId,

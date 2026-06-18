@@ -95,8 +95,21 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
     super.dispose();
   }
 
-  Future<void> _onCancelPressed() async {
-    if (_closed || _cancelling) return;
+  Future<void> _onCancelPressed({bool forceLocalExit = false}) async {
+    if (_closed) return;
+    if (_cancelling && !forceLocalExit) {
+      final force = await showLiveFortuneCloseDialog(
+        context,
+        title: 'Yine de çık?',
+        message:
+            'İptal isteği sunucuya iletiliyor. Beklemeden çıkarsanız jeton iadesi gecikebilir.',
+        confirmLabel: 'Çık',
+      );
+      if (!force || !mounted) return;
+      await _exitWaiting(apiOk: false, forced: true);
+      return;
+    }
+    if (_cancelling) return;
 
     final confirmed = await showLiveFortuneCloseDialog(
       context,
@@ -110,26 +123,35 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
     setState(() => _cancelling = true);
     _poll?.cancel();
 
-    final ended = await ref
-        .read(homeRemoteProvider)
-        .endFortuneSession(widget.session.sessionId);
-    ref.invalidate(coinBalanceProvider);
-    if (!mounted) return;
+    var ended = false;
+    try {
+      ended = await ref
+          .read(homeRemoteProvider)
+          .endFortuneSession(widget.session.sessionId);
+    } catch (_) {
+      ended = false;
+    }
 
+    if (!mounted) return;
     if (!ended) {
-      setState(() => _cancelling = false);
-      _poll = Timer.periodic(const Duration(seconds: 3), (_) => _checkStatus());
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'İptal sunucuya iletilemedi. Tekrar deneyin veya uygulamayı yeniden başlatın.',
+            'Sunucu iptali yanıt vermedi; yine de çıkılıyor. Jeton iadesi birkaç dakika sürebilir.',
           ),
         ),
       );
-      return;
     }
+    await _exitWaiting(apiOk: ended);
+  }
 
+  Future<void> _exitWaiting({required bool apiOk, bool forced = false}) async {
+    if (_closed || !mounted) return;
     _closed = true;
+    _poll?.cancel();
+    await ref.read(liveFortuneRoomSseServiceProvider).disconnect();
+    ref.invalidate(coinBalanceProvider);
+    if (!mounted) return;
     context.go('/canli-falcilar/${widget.session.teller.id}');
   }
 
@@ -339,6 +361,14 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
                             ),
                           ),
                           const SizedBox(height: 12),
+                          TextButton.icon(
+                            onPressed: _closed
+                                ? null
+                                : () => _exitWaiting(apiOk: false, forced: true),
+                            icon: const Icon(Icons.home_rounded, size: 16),
+                            label: const Text('Ana sayfaya dön'),
+                          ),
+                          const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [

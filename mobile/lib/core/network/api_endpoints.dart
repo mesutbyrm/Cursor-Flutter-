@@ -72,6 +72,10 @@ abstract final class ApiEndpoints {
   static const fortuneTellerIncomingSessions =
       '/api/fortune-tellers/sessions/incoming';
 
+  /// Falcı — bekleyen canlı fal istekleri SSE (Bearer zorunlu).
+  static const fortuneTellerSessionsStream =
+      '/api/fortune-tellers/sessions/stream';
+
   static String fortuneTellerSessionStatus(String sessionId) =>
       '/api/fortune-tellers/session/$sessionId';
 
