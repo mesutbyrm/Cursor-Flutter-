@@ -74,6 +74,17 @@ class LiveFortuneRepositoryImpl implements LiveFortuneRepository {
       );
 
   @override
+  Future<List<FortuneIncomingSession>> fetchPendingSessions() =>
+      _remote.fetchPendingSessions();
+
+  @override
+  Future<FortuneSessionRespondResult> respondSessionDetailed(
+    String sessionId, {
+    required String action,
+  }) =>
+      _remote.respondSessionDetailed(sessionId, action: action);
+
+  @override
   Future<FortuneSessionStatusResult?> fetchSessionStatus(String sessionId) =>
       _remote.fetchSessionStatus(sessionId);
 

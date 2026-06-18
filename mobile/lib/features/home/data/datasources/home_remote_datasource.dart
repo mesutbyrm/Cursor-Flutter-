@@ -313,6 +313,36 @@ class HomeRemoteDataSource {
     return null;
   }
 
+  Future<List<FortuneIncomingSession>> fetchPendingFortuneSessions() async {
+    return _fetchFortuneSessionsFromPath(
+      ApiEndpoints.fortuneTellerSessionsWithStatus('pending'),
+    );
+  }
+
+  Future<Map<String, dynamic>?> respondFortuneSessionWithBody(
+    String sessionId, {
+    required String action,
+  }) async {
+    final key = sessionId.trim();
+    if (key.isEmpty) return null;
+    final normalized = action.trim().toLowerCase();
+    try {
+      final res = await _dio.safePatch<dynamic>(
+        ApiEndpoints.fortuneTellerSessionPatch(key),
+        data: {'action': normalized},
+      );
+      final body = res.data;
+      if (body is Map) {
+        final map = asJsonMap(body);
+        return map['data'] is Map ? asJsonMap(map['data']) : map;
+      }
+      return <String, dynamic>{'success': true};
+    } catch (_) {
+      final ok = await respondFortuneSession(key, action: normalized);
+      return ok ? <String, dynamic>{'success': true} : null;
+    }
+  }
+
   Future<bool> respondFortuneSession(
     String sessionId, {
     required String action,
@@ -1200,6 +1230,17 @@ class HomeRemoteDataSource {
       level: _str(m, ['level', 'tier', 'tellerLevel']),
       specialties: specs,
       category: _advisorCategory(m) ?? _advisorCategory(user),
+      applicationStatus: _str(m, [
+        'applicationStatus',
+        'application_status',
+        'status',
+      ]),
+      totalSessions: asInt(
+        pick(m, ['totalSessions', 'sessions', 'sessionCount']),
+      ),
+      totalEarnings: asInt(
+        pick(m, ['totalEarnings', 'earnings', 'total_earnings']),
+      ),
     );
   }
 

@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.268+271 (2026-06-18)
+
+### Falcı paneli (TellerDashboardScreen)
+
+- **Onaylı falcı:** Girişte `GET /api/fortune-tellers/my-profile` — `applicationStatus == approved`
+- **TellerDashboardScreen:** İsim, çevrimiçi durumu, puan, seans, kazanç, bekleyen/aktif sayaçları
+- **Pending poll:** Her 3 sn `GET /api/fortune-tellers/sessions?status=pending`
+- **IncomingRequestDialog:** Otomatik popup — Kabul Et / Reddet
+- **Kabul:** `PATCH .../sessions/{id}` `{action:accept}` → canlı oda (`LiveFortuneSessionPage`)
+- **Debug log:** dashboard loaded, pending count, popup opened, accept response
+- **Rota:** `/canli-falcilar/dashboard`
+
 ## 1.0.267+270 (2026-06-18)
 
 ### Derleme düzeltmesi

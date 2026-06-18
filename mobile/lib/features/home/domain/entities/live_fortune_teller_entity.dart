@@ -15,6 +15,9 @@ class LiveFortuneTellerEntity extends Equatable {
     this.level,
     this.specialties = const [],
     this.category,
+    this.applicationStatus,
+    this.totalSessions = 0,
+    this.totalEarnings = 0,
   });
 
   final String id;
@@ -30,6 +33,14 @@ class LiveFortuneTellerEntity extends Equatable {
   final String? level;
   final List<String> specialties;
   final String? category;
+  final String? applicationStatus;
+  final int totalSessions;
+  final int totalEarnings;
+
+  String get displayName => name;
+
+  bool get isApproved =>
+      applicationStatus?.trim().toLowerCase() == 'approved';
 
   String get displayCategory {
     if (category != null && category!.trim().isNotEmpty) return category!.trim();
@@ -69,5 +80,8 @@ class LiveFortuneTellerEntity extends Equatable {
         level,
         specialties,
         category,
+        applicationStatus,
+        totalSessions,
+        totalEarnings,
       ];
 }

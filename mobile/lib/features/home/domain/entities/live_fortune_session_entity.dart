@@ -27,6 +27,21 @@ class FortuneIncomingSession {
   final String tellerResponse;
 }
 
+/// PATCH kabul/red yanıtı.
+class FortuneSessionRespondResult {
+  const FortuneSessionRespondResult({
+    required this.success,
+    this.sessionId,
+    this.roomId,
+    this.raw,
+  });
+
+  final bool success;
+  final String? sessionId;
+  final String? roomId;
+  final Map<String, dynamic>? raw;
+}
+
 /// Oturum durumu poll yanıtı.
 class FortuneSessionStatusResult {
   const FortuneSessionStatusResult({

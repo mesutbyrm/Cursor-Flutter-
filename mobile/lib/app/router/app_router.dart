@@ -85,6 +85,7 @@ import '../../features/home/presentation/pages/live_fortune_teller_detail_page.d
 import '../../features/home/presentation/live_fortune/live_fortune_ad_transition_page.dart';
 import '../../features/home/presentation/pages/live_fortune_waiting_page.dart';
 import '../../features/home/presentation/pages/live_fortune_session_page.dart';
+import '../../features/home/presentation/pages/teller_dashboard_screen.dart';
 import '../../features/home/presentation/pages/live_fortune_tellers_page.dart';
 import '../../features/home/domain/entities/live_fortune_session_entity.dart';
 import '../../features/vip_gold/presentation/pages/vip_gold_hub_page.dart';
@@ -724,6 +725,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           child: const LiveFortuneTellersPage(),
         ),
         routes: [
+          GoRoute(
+            path: 'dashboard',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const TellerDashboardScreen(),
+            ),
+          ),
           GoRoute(
             path: ':id',
             pageBuilder: (context, state) {

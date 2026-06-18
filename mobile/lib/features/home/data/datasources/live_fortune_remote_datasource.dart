@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
@@ -117,6 +119,57 @@ class LiveFortuneRemoteDataSource {
         totalJeton: totalJeton,
         fortuneType: fortuneType,
       );
+
+  Future<List<FortuneIncomingSession>> fetchPendingSessions() async {
+    final path = ApiEndpoints.fortuneTellerSessionsWithStatus('pending');
+    if (kDebugMode) {
+      debugPrint('Teller pending API: GET $path');
+    }
+    try {
+      final res = await _dio.safeGet<dynamic>(path);
+      if (kDebugMode) {
+        debugPrint('Teller pending API response: ${res.data}');
+      }
+      final sessions = await _home.fetchPendingFortuneSessions();
+      if (sessions.isEmpty && kDebugMode) {
+        debugPrint('Teller pending API: empty list (raw logged above)');
+      }
+      return sessions;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Teller pending API error: $e');
+      }
+      return const [];
+    }
+  }
+
+  Future<FortuneSessionRespondResult> respondSessionDetailed(
+    String sessionId, {
+    required String action,
+  }) async {
+    final body = await _home.respondFortuneSessionWithBody(
+      sessionId,
+      action: action,
+    );
+    if (kDebugMode) {
+      debugPrint('Accept response: $body');
+    }
+    if (body == null) {
+      return const FortuneSessionRespondResult(success: false);
+    }
+    final roomId = pick(body, [
+          'roomId',
+          'trtcRoomId',
+          'room_id',
+        ])?.toString() ??
+        pick(asJsonMap(body['session'] ?? {}), ['roomId', 'id'])?.toString();
+    return FortuneSessionRespondResult(
+      success: body['success'] == true || roomId != null || body.isNotEmpty,
+      sessionId: pick(body, ['sessionId', 'id'])?.toString() ?? sessionId,
+      roomId: roomId,
+      raw: body,
+    );
+  }
 
   Future<List<FortuneIncomingSession>> fetchIncomingSessions({
     String? currentUserId,

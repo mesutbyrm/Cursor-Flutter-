@@ -108,6 +108,18 @@ Sohbet odaları gerçek zamanlı katmanı **SSE** (`eventsource`) üzerine taş�
 
 ---
 
+## 11. Falcı paneli (1.0.268+271)
+
+| Bileşen | Dosya |
+|---------|--------|
+| Dashboard ekranı | `mobile/lib/features/home/presentation/pages/teller_dashboard_screen.dart` |
+| Pending polling | `mobile/lib/features/home/presentation/providers/teller_dashboard_provider.dart` |
+| Onaylı falcı profili | `mobile/lib/features/home/presentation/providers/teller_profile_provider.dart` |
+| Popup widget | `mobile/lib/features/home/presentation/widgets/incoming_request_dialog.dart` |
+| Kabul/red API | `LiveFortuneRepository.respondSessionDetailed` → `live_fortune_repository_impl.dart` |
+
+---
+
 ## 7. Derleme
 
 Cloud ortamında Flutter SDK PATH dışında olabilir; CI `dart analyze` çalıştırır. Push sonrası APK: [build-apk workflow](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml).

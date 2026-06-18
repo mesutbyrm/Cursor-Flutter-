@@ -11,6 +11,7 @@ import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../providers/home_providers.dart';
+import '../providers/teller_profile_provider.dart';
 import '../theme/home_palette.dart';
 
 /// canlifal.com `/canli-falcilar` — falcı listesi.
@@ -20,12 +21,21 @@ class LiveFortuneTellersPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tellers = ref.watch(homeLiveFortuneTellersProvider);
+    final approved = ref.watch(approvedTellerProvider);
 
     return Scaffold(
       backgroundColor: HomePalette.darkBackground,
       appBar: AppBar(
         title: const Text('Canlı Falcılar'),
         backgroundColor: Colors.transparent,
+        actions: [
+          if (approved.isApprovedTeller)
+            TextButton.icon(
+              onPressed: () => context.push('/canli-falcilar/dashboard'),
+              icon: const Icon(Icons.dashboard_outlined, color: Colors.white),
+              label: const Text('Falcı Paneli'),
+            ),
+        ],
       ),
       extendBodyBehindAppBar: true,
       body: CosmicGalaxyBackground(

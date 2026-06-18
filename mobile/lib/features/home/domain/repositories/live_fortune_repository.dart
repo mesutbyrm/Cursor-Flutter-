@@ -35,10 +35,16 @@ abstract interface class LiveFortuneRepository {
     String? tellerProfileId,
   });
 
+  Future<List<FortuneIncomingSession>> fetchPendingSessions();
+
   Future<FortuneSessionStatusResult?> fetchSessionStatus(String sessionId);
   Future<List<FortuneSessionStatusResult>> fetchActiveSessions();
 
   Future<bool> respondSession(String sessionId, {required String action});
+  Future<FortuneSessionRespondResult> respondSessionDetailed(
+    String sessionId, {
+    required String action,
+  });
   Future<bool> endSession(String sessionId);
 
   Future<LiveFortuneRoomInfo?> fetchRoomInfo(String sessionId);

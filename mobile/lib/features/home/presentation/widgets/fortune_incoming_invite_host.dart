@@ -17,6 +17,7 @@ import '../live_fortune/live_fortune_flow.dart';
 import '../providers/fortune_incoming_invite_provider.dart';
 import '../providers/fortune_live_event_bus.dart';
 import '../providers/home_providers.dart';
+import '../providers/teller_profile_provider.dart';
 import 'fortune_request_dialog.dart';
 import 'live_fortune_invite_action.dart';
 import 'live_fortune_session_start_sheet.dart';
@@ -66,6 +67,7 @@ class _FortuneIncomingInviteHostState
     if (auth.valueOrNull == null) return false;
     final router = ref.read(goRouterProvider);
     final path = router.routerDelegate.currentConfiguration.uri.path;
+    if (path.contains('/canli-falcilar/dashboard')) return false;
     return !AuthRoutePaths.isPublicAuthPath(path);
   }
 
@@ -144,6 +146,11 @@ class _FortuneIncomingInviteHostState
     }
     if (profile == null) {
       _isFortuneTeller = false;
+      return;
+    }
+    if (!profile.isApproved) {
+      _isFortuneTeller = false;
+      _tellerProfileId = null;
       return;
     }
     _isFortuneTeller = true;
@@ -407,6 +414,7 @@ class _FortuneIncomingInviteHostState
       if (user != null && (prev?.valueOrNull?.id != user.id)) {
         _tellerOnlineSet = false;
         _sseRoomId = null;
+        unawaited(ref.read(approvedTellerProvider.notifier).refresh());
         unawaited(_bootstrapTeller());
       }
     });
