@@ -101,7 +101,7 @@ class _FortuneIncomingInviteHostState
   }
 
   Future<void> _ensureTellerOnline() async {
-    if (_tellerOnlineSet || !_mayPresentInvites()) return;
+    if (!_mayPresentInvites()) return;
     final remote = ref.read(homeRemoteProvider);
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     var profile = await remote.fetchMyFortuneTellerProfile();
@@ -116,6 +116,7 @@ class _FortuneIncomingInviteHostState
     }
     if (profile == null) return;
     _tellerProfileId = profile.id;
+    if (_tellerOnlineSet) return;
     final ok = await remote.setFortuneTellerOnline(online: true);
     if (ok) _tellerOnlineSet = true;
   }
@@ -244,13 +245,16 @@ class _FortuneIncomingInviteHostState
       );
       if (!mounted) return;
 
-      if (action == LiveFortuneInviteAction.reject || action == null) {
-        if (action == LiveFortuneInviteAction.reject) {
-          await ref.read(homeRemoteProvider).respondFortuneSession(
-                req.sessionId,
-                action: 'reject',
-              );
-        }
+      if (action == null) {
+        ref.read(fortuneIncomingInviteProvider.notifier).enqueue(req);
+        return;
+      }
+
+      if (action == LiveFortuneInviteAction.reject) {
+        await ref.read(homeRemoteProvider).respondFortuneSession(
+              req.sessionId,
+              action: 'reject',
+            );
         _dismissed.add(req.sessionId);
         if (mounted && navCtx.mounted) {
           liveFortuneExitToHome(navCtx);

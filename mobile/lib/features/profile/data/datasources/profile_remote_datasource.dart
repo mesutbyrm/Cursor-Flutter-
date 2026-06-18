@@ -422,6 +422,15 @@ class WalletRemoteDataSource {
       } else if (data is String && data.isNotEmpty && !data.contains('<html')) {
         msg = data;
       }
+      if (code == 400 &&
+          msg.toLowerCase().contains('bekleyen') &&
+          msg.toLowerCase().contains('talep')) {
+        throw ApiException(
+          'Zaten bekleyen bir jeton ödeme talebiniz var. '
+          'Önceki talebin onaylanmasını bekleyin veya destek ile iletişime geçin.',
+          statusCode: code,
+        );
+      }
       throw ApiException(msg, statusCode: code);
     }
 

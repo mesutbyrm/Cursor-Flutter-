@@ -137,6 +137,7 @@ class HomeRemoteDataSource {
   }) async {
     final merged = <FortuneIncomingSession>[];
     final seen = <String>{};
+    final serverScopedIds = <String>{};
 
     void addAll(List<FortuneIncomingSession> rows) {
       for (final row in rows) {
@@ -145,7 +146,11 @@ class HomeRemoteDataSource {
     }
 
     try {
-      addAll(await fetchLiveFalPending());
+      final liveFal = await fetchLiveFalPending();
+      for (final row in liveFal) {
+        serverScopedIds.add(row.sessionId);
+      }
+      addAll(liveFal);
     } catch (_) {}
 
     for (final path in [
@@ -164,6 +169,7 @@ class HomeRemoteDataSource {
       merged,
       currentUserId,
       tellerProfileId: tellerProfileId,
+      serverScopedSessionIds: serverScopedIds,
     );
   }
 
@@ -324,20 +330,27 @@ class HomeRemoteDataSource {
   Future<bool> endFortuneSession(String sessionId) async {
     final key = sessionId.trim();
     if (key.isEmpty) return false;
-    final roomEnded = await roomAction(key, 'end');
+    Future<bool> guarded(Future<bool> future) =>
+        future.timeout(const Duration(seconds: 12), onTimeout: () => false);
+    Future<Map<String, dynamic>?> guardedRoom(Future<Map<String, dynamic>?> future) =>
+        future.timeout(const Duration(seconds: 12), onTimeout: () => null);
+
+    final roomEnded = await guardedRoom(roomAction(key, 'end'));
     if (roomEnded != null) return true;
-    final rejected = await rejectLiveFalRequest(key);
-    if (rejected) return true;
+    if (await guarded(rejectLiveFalRequest(key))) return true;
     try {
-      await _dio.safePatch<dynamic>(
-        ApiEndpoints.fortuneTellerSessionPatch(key),
-        data: const {'action': 'cancel', 'status': 'cancelled'},
-      );
+      await _dio
+          .safePatch<dynamic>(
+            ApiEndpoints.fortuneTellerSessionPatch(key),
+            data: const {'action': 'cancel', 'status': 'cancelled'},
+          )
+          .timeout(const Duration(seconds: 12));
       return true;
     } catch (_) {}
     for (final action in const ['cancel', 'end', 'leave', 'complete']) {
-      final ok = await respondFortuneSession(key, action: action);
-      if (ok) return true;
+      if (await guarded(respondFortuneSession(key, action: action))) {
+        return true;
+      }
     }
     return false;
   }
@@ -594,6 +607,7 @@ class HomeRemoteDataSource {
     List<FortuneIncomingSession> sessions,
     String? currentUserId, {
     String? tellerProfileId,
+    Set<String> serverScopedSessionIds = const {},
   }) {
     final uid = currentUserId?.trim() ?? '';
     final profileId = tellerProfileId?.trim() ?? '';
@@ -601,9 +615,17 @@ class HomeRemoteDataSource {
       if (!_isPendingFortuneInvite(session)) return false;
       if (uid.isEmpty) return true;
       if (session.clientId == uid) return false;
+      // `GET /api/live-fal/pending` sunucuda zaten falcıya filtrelenir.
+      if (serverScopedSessionIds.contains(session.sessionId)) return true;
       if (session.tellerUserId == uid) return true;
       if (session.tellerId == uid) return true;
       if (profileId.isNotEmpty && session.tellerId == profileId) return true;
+      if (profileId.isNotEmpty &&
+          session.tellerUserId != null &&
+          session.tellerUserId!.isNotEmpty &&
+          session.tellerUserId == profileId) {
+        return true;
+      }
       // Sunucu zaten falcıya filtrelediyse teller alanları boş gelebilir.
       if (session.tellerUserId == null &&
           session.tellerId.isEmpty &&

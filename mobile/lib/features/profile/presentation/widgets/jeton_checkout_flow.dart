@@ -330,15 +330,25 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: FilledButton.icon(
-                onPressed: _submitting ? null : _openPaymentNotifySheet,
+                onPressed: _submitting
+                    ? null
+                    : () {
+                        if (widget.method == _JetonPayMethod.whatsapp) {
+                          _openPaymentNotifySheet();
+                        } else {
+                          unawaited(_submitAndClose());
+                        }
+                      },
                 icon: Icon(
                   widget.method == _JetonPayMethod.whatsapp
                       ? Icons.chat_rounded
                       : Icons.payment_rounded,
                 ),
-                label: const Text(
-                  'Ödeme Bildir',
-                  style: TextStyle(fontWeight: FontWeight.w800),
+                label: Text(
+                  widget.method == _JetonPayMethod.whatsapp
+                      ? 'Ödeme Bildir'
+                      : 'Ödemeyi Bildir',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
                 style: FilledButton.styleFrom(
                   backgroundColor: widget.method == _JetonPayMethod.whatsapp
@@ -348,6 +358,12 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
                 ),
               ),
             ),
+            if (widget.method != _JetonPayMethod.whatsapp)
+              TextButton.icon(
+                onPressed: _submitting ? null : _openPaymentNotifySheet,
+                icon: const Icon(Icons.attach_file_rounded, size: 18),
+                label: const Text('Dekont ekle (isteğe bağlı)'),
+              ),
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('← Geri Dön'),

@@ -1,5 +1,23 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.260+263 (2026-06-18)
+
+### Canlı falcı — istek mobilde gelmiyor / iptal takılıyor
+
+- **`/api/live-fal/pending`:** Sunucu tarafı filtrelenmiş istekler artık mobilde yanlışlıkla elenmiyor
+- **Davet popup:** Diyalog dışına tıklanınca istek kalıcı olarak silinmiyor; tekrar gösteriliyor
+- **İptal:** Onaydan önce «İptal ediliyor…» gösterilmiyor; API zaman aşımı (12 sn) eklendi
+- **Falcı çevrimiçi:** Profil bulununca `toggle-online` her oturumda yeniden deneniyor
+
+### Canlı yayın
+
+- Yayın oluşturma `status: live` (üretim API uyumu); orphan temizliği korunuyor
+
+### Jeton — Papara / IBAN
+
+- **Tek dokunuş:** Papara ve havalede «Ödemeyi Bildir» doğrudan admin talebi gönderir
+- **Bekleyen talep:** Aynı kullanıcıda önceki bekleyen talep varsa net hata mesajı
+
 ## 1.0.259+262 (2026-06-18)
 
 ### Canlı yayın — kamera ve durum düzeltmeleri

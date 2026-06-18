@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/ui/premium/live_badge.dart';
@@ -12,9 +13,9 @@ import '../../domain/entities/live_fortune_session_entity.dart';
 import '../providers/home_providers.dart';
 import '../theme/home_palette.dart';
 import '../widgets/live_fortune_unavailable_dialog.dart';
+import '../live_fortune/live_fortune_close_dialog.dart';
 import '../live_fortune/live_fortune_admin_ad_panel.dart';
 import '../live_fortune/live_fortune_ad_transition_page.dart';
-import '../live_fortune/live_fortune_flow.dart';
 
 /// Danışan — randevu sonrası falcı kabulünü bekler; admin reklamı gösterilir.
 class LiveFortuneWaitingPage extends ConsumerStatefulWidget {
@@ -47,23 +48,40 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
 
   Future<void> _onClosePressed() async {
     if (_closed || _cancelling) return;
+
+    final confirmed = await showLiveFortuneCloseDialog(
+      context,
+      title: 'Randevuyu iptal et?',
+      message:
+          '${widget.session.teller.name} ile randevunuzu iptal etmek istediğinize emin misiniz?',
+      confirmLabel: 'İptal Et',
+    );
+    if (!confirmed || !mounted) return;
+
     setState(() => _cancelling = true);
     _poll?.cancel();
-    final ok = await LiveFortuneFlow.cancelWaiting(
-      context: context,
-      ref: ref,
-      sessionId: widget.session.sessionId,
-      tellerName: widget.session.teller.name,
-    );
+
+    final ended = await ref
+        .read(homeRemoteProvider)
+        .endFortuneSession(widget.session.sessionId);
+    ref.invalidate(coinBalanceProvider);
     if (!mounted) return;
-    if (ok) {
-      _closed = true;
-    } else {
+
+    if (!ended) {
       setState(() => _cancelling = false);
-      if (!_closed) {
-        _poll = Timer.periodic(const Duration(seconds: 2), (_) => _checkStatus());
-      }
+      _poll = Timer.periodic(const Duration(seconds: 2), (_) => _checkStatus());
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'İptal sunucuya iletilemedi. Tekrar deneyin veya uygulamayı yeniden başlatın.',
+          ),
+        ),
+      );
+      return;
     }
+
+    _closed = true;
+    context.go('/canli-falcilar');
   }
 
   Future<void> _onRejected() async {
