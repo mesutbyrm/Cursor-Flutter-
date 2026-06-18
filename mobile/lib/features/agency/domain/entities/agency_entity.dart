@@ -38,6 +38,9 @@ class AgencyEntity extends Equatable {
     return isActive && id.isNotEmpty;
   }
 
+  /// Kullanılabilir ajans — onaylı veya aktif kayıt.
+  bool get isUsable => id.isNotEmpty && (isApproved || isActive);
+
   @override
   List<Object?> get props => [
         id,

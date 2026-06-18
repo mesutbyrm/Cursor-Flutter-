@@ -13,7 +13,7 @@ class BranchRoleActions {
     final approved = ref.watch(approvedTellerProvider);
     if (approved.isApprovedTeller) {
       return const TellerBranchAction(
-        label: 'Falcı\nPaneli',
+        label: 'Falcı\nPanel',
         icon: Icons.dashboard_outlined,
         route: '/canli-falcilar/dashboard',
       );
@@ -29,7 +29,7 @@ class BranchRoleActions {
     final approved = ref.watch(approvedAgencyProvider);
     if (approved.isApprovedAgency) {
       return const AgencyBranchAction(
-        label: 'Ajans\nPaneli',
+        label: 'Ajans\nPanel',
         icon: Icons.business_center_outlined,
         route: '/ajans/dashboard',
       );

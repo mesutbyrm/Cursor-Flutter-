@@ -127,7 +127,7 @@ class _QuickActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final approved = ref.watch(approvedTellerProvider);
-    final tellerLabel = approved.isApprovedTeller ? 'Falcı Paneli' : 'Falcı Ol';
+    final tellerLabel = approved.isApprovedTeller ? 'Falcı Panel' : 'Falcı Ol';
     final tellerIcon =
         approved.isApprovedTeller ? Icons.dashboard_outlined : Icons.person_add_rounded;
     void openTeller() {

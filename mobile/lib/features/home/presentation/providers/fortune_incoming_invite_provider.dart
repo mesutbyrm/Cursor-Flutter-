@@ -13,12 +13,9 @@ class FortuneIncomingInviteNotifier extends Notifier<List<FortuneIncomingSession
 
   void enqueue(FortuneIncomingSession session) {
     if (session.sessionId.isEmpty) return;
-    if (state.any((s) => s.sessionId == session.sessionId)) {
-      FortuneInviteCoordinator.requestPresent();
-      return;
-    }
+    if (state.any((s) => s.sessionId == session.sessionId)) return;
     state = [...state, session];
-    FortuneInviteCoordinator.requestPresent();
+    FortuneInviteCoordinator.requestPresent(sessionId: session.sessionId);
   }
 
   FortuneIncomingSession? takeNext() {

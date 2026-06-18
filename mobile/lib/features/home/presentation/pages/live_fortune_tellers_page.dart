@@ -33,7 +33,7 @@ class LiveFortuneTellersPage extends ConsumerWidget {
             TextButton.icon(
               onPressed: () => context.push('/canli-falcilar/dashboard'),
               icon: const Icon(Icons.dashboard_outlined, color: Colors.white),
-              label: const Text('Falcı Paneli'),
+              label: const Text('Falcı Panel'),
             ),
         ],
       ),

@@ -24,36 +24,11 @@ class TellerDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _TellerDashboardScreenState extends ConsumerState<TellerDashboardScreen> {
-  String? _shownPopupId;
   var _openingSession = false;
   var _presentingInvite = false;
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<TellerDashboardState>(tellerDashboardProvider, (prev, next) {
-      final popupId = next.popupSessionId;
-      if (popupId == null ||
-          popupId == _shownPopupId ||
-          _openingSession ||
-          _presentingInvite) {
-        return;
-      }
-      FortuneIncomingSession? session;
-      for (final s in next.pendingSessions) {
-        if (s.sessionId == popupId) {
-          session = s;
-          break;
-        }
-      }
-      if (session == null) return;
-      _shownPopupId = popupId;
-      final captured = session;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        unawaited(_presentIncomingInvite(captured));
-      });
-    });
-
     final dash = ref.watch(tellerDashboardProvider);
     final approved = ref.watch(approvedTellerProvider);
     final profile = dash.profile ?? approved.profile;
@@ -64,9 +39,9 @@ class _TellerDashboardScreenState extends ConsumerState<TellerDashboardScreen> {
       );
     }
 
-    if (profile == null || !profile.isApproved) {
+    if (profile == null || !profile.isUsable) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Falcı Paneli')),
+        appBar: AppBar(title: const Text('Falcı Panel')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -85,7 +60,7 @@ class _TellerDashboardScreenState extends ConsumerState<TellerDashboardScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF0D0618),
       appBar: AppBar(
-        title: const Text('Falcı Paneli'),
+        title: const Text('Falcı Panel'),
         backgroundColor: Colors.transparent,
         actions: [
           IconButton(
@@ -152,8 +127,6 @@ class _TellerDashboardScreenState extends ConsumerState<TellerDashboardScreen> {
       if (!mounted) return;
 
       if (action == null || action == LiveFortuneInviteAction.hold) {
-        _shownPopupId = null;
-        ref.read(tellerDashboardProvider.notifier).clearPopup();
         return;
       }
 
@@ -167,7 +140,6 @@ class _TellerDashboardScreenState extends ConsumerState<TellerDashboardScreen> {
       await _handleAccept(session);
     } finally {
       _presentingInvite = false;
-      ref.read(tellerDashboardProvider.notifier).clearPopup();
     }
   }
 
@@ -186,7 +158,6 @@ class _TellerDashboardScreenState extends ConsumerState<TellerDashboardScreen> {
             const SnackBar(content: Text('Kabul sunucuya iletilemedi.')),
           );
         }
-        _shownPopupId = null;
         return;
       }
 

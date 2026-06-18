@@ -18,7 +18,7 @@ class ApprovedTellerState {
   final bool loading;
   final bool checked;
 
-  bool get isApprovedTeller => profile?.isApproved == true;
+  bool get isApprovedTeller => profile?.isUsable == true;
 
   ApprovedTellerState copyWith({
     LiveFortuneTellerEntity? profile,

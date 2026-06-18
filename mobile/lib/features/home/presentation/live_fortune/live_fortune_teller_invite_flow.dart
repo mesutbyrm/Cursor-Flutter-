@@ -17,13 +17,25 @@ class LiveFortuneTellerInviteFlow {
 
   static BuildContext? get _navContext => rootNavigatorKey.currentContext;
 
+  static Future<BuildContext?> _waitForNavContext({
+    int attempts = 12,
+    Duration step = const Duration(milliseconds: 80),
+  }) async {
+    for (var i = 0; i < attempts; i++) {
+      final ctx = _navContext;
+      if (ctx != null && ctx.mounted) return ctx;
+      await Future<void>.delayed(step);
+    }
+    return null;
+  }
+
   /// «Canlı Fal İsteği» — Kabul / Beklet / Reddet.
   static Future<LiveFortuneInviteAction?> showInviteDialog(
     FortuneIncomingSession session, {
     BuildContext? context,
-  }) {
-    final ctx = context ?? _navContext;
-    if (ctx == null || !ctx.mounted) return Future.value();
+  }) async {
+    final ctx = context ?? await _waitForNavContext();
+    if (ctx == null || !ctx.mounted) return null;
     return showFortuneRequestDialog(
       ctx,
       clientName: session.clientName,
@@ -40,7 +52,7 @@ class LiveFortuneTellerInviteFlow {
     String? roomIdOverride,
     BuildContext? context,
   }) async {
-    final navCtx = context ?? _navContext;
+    final navCtx = context ?? await _waitForNavContext();
     if (navCtx == null || !navCtx.mounted) return false;
 
     final repo = ref.read(liveFortuneRepositoryProvider);

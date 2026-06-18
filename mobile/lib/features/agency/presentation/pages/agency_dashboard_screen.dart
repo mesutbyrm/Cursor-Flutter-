@@ -22,9 +22,9 @@ class AgencyDashboardScreen extends ConsumerWidget {
       );
     }
 
-    if (agency == null || !agency.isApproved) {
+    if (agency == null || !agency.isUsable) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Ajans Paneli')),
+        appBar: AppBar(title: const Text('Ajans Panel')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -43,7 +43,7 @@ class AgencyDashboardScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF0A1020),
       appBar: AppBar(
-        title: const Text('Ajans Paneli'),
+        title: const Text('Ajans Panel'),
         backgroundColor: Colors.transparent,
         actions: [
           IconButton(

@@ -18,7 +18,6 @@ class TellerDashboardState {
     this.loading = true,
     this.togglingOnline = false,
     this.lastApiLog,
-    this.popupSessionId,
   });
 
   final LiveFortuneTellerEntity? profile;
@@ -27,7 +26,6 @@ class TellerDashboardState {
   final bool loading;
   final bool togglingOnline;
   final String? lastApiLog;
-  final String? popupSessionId;
 
   int get pendingCount => pendingSessions.length;
 
@@ -38,8 +36,6 @@ class TellerDashboardState {
     bool? loading,
     bool? togglingOnline,
     String? lastApiLog,
-    String? popupSessionId,
-    bool clearPopup = false,
   }) {
     return TellerDashboardState(
       profile: profile ?? this.profile,
@@ -48,8 +44,6 @@ class TellerDashboardState {
       loading: loading ?? this.loading,
       togglingOnline: togglingOnline ?? this.togglingOnline,
       lastApiLog: lastApiLog ?? this.lastApiLog,
-      popupSessionId:
-          clearPopup ? null : (popupSessionId ?? this.popupSessionId),
     );
   }
 }
@@ -89,7 +83,7 @@ class TellerDashboardNotifier extends AutoDisposeNotifier<TellerDashboardState> 
 
   Future<void> _pollPending() async {
     final profile = state.profile ?? ref.read(approvedTellerProvider).profile;
-    if (profile == null || !profile.isApproved) return;
+    if (profile == null || !profile.isUsable) return;
 
     final repo = ref.read(liveFortuneRepositoryProvider);
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
@@ -132,26 +126,17 @@ class TellerDashboardNotifier extends AutoDisposeNotifier<TellerDashboardState> 
 
     if (pending.isNotEmpty) {
       final first = pending.first;
-      if (!_handledSessions.contains(first.sessionId) &&
-          state.popupSessionId != first.sessionId) {
-        state = state.copyWith(popupSessionId: first.sessionId);
-        FortuneInviteCoordinator.requestPresent();
+      if (!_handledSessions.contains(first.sessionId)) {
+        FortuneInviteCoordinator.requestPresent(sessionId: first.sessionId);
         if (kDebugMode) {
-          debugPrint('Incoming popup opened');
+          debugPrint('Incoming invite queued for popup');
         }
       }
     }
   }
 
-  void clearPopup() {
-    state = state.copyWith(clearPopup: true);
-  }
-
   void markHandled(String sessionId) {
     _handledSessions.add(sessionId);
-    if (state.popupSessionId == sessionId) {
-      state = state.copyWith(clearPopup: true);
-    }
   }
 
   Future<bool> toggleOnline() async {

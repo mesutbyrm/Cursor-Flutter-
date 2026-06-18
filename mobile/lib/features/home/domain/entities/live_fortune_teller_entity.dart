@@ -56,6 +56,17 @@ class LiveFortuneTellerEntity extends Equatable {
     return totalSessions > 0;
   }
 
+  /// Onaylı veya `my-profile` kaydı olan kullanılabilir falcı.
+  bool get isUsable {
+    if (id.trim().isEmpty) return false;
+    if (isApproved) return true;
+    final status = applicationStatus?.trim().toLowerCase();
+    if (status == 'pending' || status == 'rejected' || status == 'declined') {
+      return false;
+    }
+    return true;
+  }
+
   String get displayCategory {
     if (category != null && category!.trim().isNotEmpty) return category!.trim();
     if (specialties.isNotEmpty) return specialties.first;

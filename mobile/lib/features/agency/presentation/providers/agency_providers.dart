@@ -22,7 +22,7 @@ class ApprovedAgencyState {
   final bool loading;
   final bool checked;
 
-  bool get isApprovedAgency => agency?.isApproved == true;
+  bool get isApprovedAgency => agency?.isUsable == true;
 
   ApprovedAgencyState copyWith({
     AgencyEntity? agency,
@@ -129,7 +129,7 @@ class AgencyDashboardNotifier extends AutoDisposeNotifier<AgencyDashboardState> 
       await ref.read(approvedAgencyProvider.notifier).refresh();
       agency = ref.read(approvedAgencyProvider).agency;
     }
-    if (agency == null || !agency.isApproved) {
+    if (agency == null || !agency.isUsable) {
       state = AgencyDashboardState(agency: agency, loading: false);
       return;
     }

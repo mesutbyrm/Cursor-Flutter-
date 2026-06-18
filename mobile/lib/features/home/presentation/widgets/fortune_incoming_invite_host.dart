@@ -60,18 +60,28 @@ class _FortuneIncomingInviteHostState
   String? _sseRoomId;
   final Set<String> _dismissed = {};
 
-  bool _mayPresentInvites() {
+  bool _isSignedIn() {
     if (!_inviteUiReady) return false;
     final auth = ref.read(authControllerProvider);
     if (auth.isLoading) return false;
-    if (auth.valueOrNull == null) return false;
-    final router = ref.read(goRouterProvider);
-    final path = router.routerDelegate.currentConfiguration.uri.path;
-    if (path.contains('/canli-falcilar/dashboard')) return false;
+    return auth.valueOrNull != null;
+  }
+
+  bool _mayPresentInvites() {
+    if (!_isSignedIn()) return false;
+    final path =
+        ref.read(goRouterProvider).routerDelegate.currentConfiguration.uri.path;
     if (path.contains('/canli-falcilar') && path.contains('/session')) {
       return false;
     }
     return !AuthRoutePaths.isPublicAuthPath(path);
+  }
+
+  bool _mayRunTellerBackgroundSync() {
+    if (!_isSignedIn()) return false;
+    return !AuthRoutePaths.isPublicAuthPath(
+      ref.read(goRouterProvider).routerDelegate.currentConfiguration.uri.path,
+    );
   }
 
   @override
@@ -139,7 +149,7 @@ class _FortuneIncomingInviteHostState
   }
 
   Future<void> _ensureTellerOnline() async {
-    if (!_mayPresentInvites()) return;
+    if (!_mayRunTellerBackgroundSync()) return;
     final approved = ref.read(approvedTellerProvider);
     var profile = approved.profile;
     if (profile == null) {
@@ -160,7 +170,7 @@ class _FortuneIncomingInviteHostState
         }
       }
     }
-    if (profile == null || !profile.isApproved) {
+    if (profile == null || !profile.isUsable) {
       _isFortuneTeller = false;
       _tellerProfileId = null;
       return;
@@ -172,7 +182,7 @@ class _FortuneIncomingInviteHostState
   }
 
   Future<void> _connectFortuneSse() async {
-    if (!_mayPresentInvites()) return;
+    if (!_mayRunTellerBackgroundSync()) return;
 
     if (_isFortuneTeller) {
       final tokens = ref.read(tokenStorageProvider);
@@ -224,10 +234,9 @@ class _FortuneIncomingInviteHostState
   }
 
   void _onSseFortuneRequest(FortuneIncomingSession session) {
-    if (!mounted || !_mayPresentInvites()) return;
+    if (!mounted || !_mayRunTellerBackgroundSync()) return;
     if (!_isPendingInvite(session)) return;
     ref.read(fortuneIncomingInviteProvider.notifier).enqueue(session);
-    unawaited(_tryPresentNext());
   }
 
   bool _isPendingInvite(FortuneIncomingSession session) {
@@ -257,7 +266,7 @@ class _FortuneIncomingInviteHostState
   }
 
   Future<void> _pollApi() async {
-    if (!mounted || _presenting || !_mayPresentInvites()) return;
+    if (!mounted || _presenting || !_mayRunTellerBackgroundSync()) return;
 
     if (_tellerProfileId == null) {
       await _ensureTellerOnline();
@@ -275,7 +284,9 @@ class _FortuneIncomingInviteHostState
       if (!_isPendingInvite(req)) continue;
       ref.read(fortuneIncomingInviteProvider.notifier).enqueue(req);
     }
-    await _tryPresentNext();
+    if (_mayPresentInvites()) {
+      await _tryPresentNext();
+    }
   }
 
   Future<void> _tryPresentNext() async {
@@ -290,9 +301,13 @@ class _FortuneIncomingInviteHostState
   }
 
   Future<void> _presentInvite(FortuneIncomingSession req) async {
-    if (!mounted || !_mayPresentInvites()) return;
+    if (!mounted || !_mayPresentInvites()) {
+      ref.read(fortuneIncomingInviteProvider.notifier).enqueue(req);
+      return;
+    }
     _presenting = true;
     try {
+      FortuneInviteCoordinator.markDialogShown(req.sessionId);
       final action = await LiveFortuneTellerInviteFlow.showInviteDialog(req);
       if (!mounted) return;
 

@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.272+275 (2026-06-18)
+
+### Canlı fal kabul ekranı + tek bildirim
+
+- **Çift kabul ekranı:** Falcı panelindeki otomatik popup kaldırıldı; yalnızca global `FortuneIncomingInviteHost` mor «Canlı Fal İsteği» dialogunu açar
+- **Dashboard SSE/poll:** Falcı panelinde de arka plan SSE ve poll çalışır; kabul ekranı artık paneldeyken de gelir
+- **Tek bildirim:** FCM yerel bildirimi falcı davetinde atlanır; kuyruk tekrar `requestPresent` çağırmaz
+- **Panel etiketleri:** «Falcı Panel» / «Ajans Panel» (onaylı kullanıcılar); `isUsable` ile daha geniş onay algısı
+
 ## 1.0.271+274 (2026-06-18)
 
 ### API dokümantasyonu uyumu (§15 Falcı / §17 Ajans)

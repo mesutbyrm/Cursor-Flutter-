@@ -145,6 +145,14 @@ class PushNotificationService {
   Future<void> showRemoteMessage(RemoteMessage msg) async {
     if (!_initialized) await init();
 
+    final data = Map<String, dynamic>.from(msg.data);
+    if (PushNavigationHandler.handleFortuneInviteData(
+      data,
+      notifyReceived: false,
+    )) {
+      return;
+    }
+
     final title =
         msg.notification?.title ?? msg.data['title']?.toString() ?? 'Canlifal';
     final body =
