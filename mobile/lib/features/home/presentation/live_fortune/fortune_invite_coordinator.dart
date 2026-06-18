@@ -3,26 +3,23 @@ class FortuneInviteCoordinator {
   FortuneInviteCoordinator._();
 
   static void Function()? onRequestPresent;
-  static String? _lastSessionId;
-  static DateTime? _lastRequestAt;
+  static String? _lastShownSessionId;
+  static DateTime? _lastShownAt;
 
-  /// Aynı oturum için kısa sürede tekrar popup açmayı engeller.
   static void requestPresent({String? sessionId}) {
-    if (sessionId != null && sessionId.isNotEmpty) {
-      final now = DateTime.now();
-      if (_lastSessionId == sessionId &&
-          _lastRequestAt != null &&
-          now.difference(_lastRequestAt!) < const Duration(seconds: 4)) {
-        return;
-      }
-      _lastSessionId = sessionId;
-      _lastRequestAt = now;
-    }
     onRequestPresent?.call();
   }
 
+  /// Dialog gösterildikten sonra kısa süre aynı oturumu tekrar açmayı engeller.
+  static bool shouldDebounceShown(String sessionId) {
+    if (sessionId.isEmpty) return false;
+    if (_lastShownSessionId != sessionId || _lastShownAt == null) return false;
+    return DateTime.now().difference(_lastShownAt!) <
+        const Duration(seconds: 3);
+  }
+
   static void markDialogShown(String sessionId) {
-    _lastSessionId = sessionId;
-    _lastRequestAt = DateTime.now();
+    _lastShownSessionId = sessionId;
+    _lastShownAt = DateTime.now();
   }
 }

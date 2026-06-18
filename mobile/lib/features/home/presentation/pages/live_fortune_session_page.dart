@@ -148,7 +148,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     if (newRoomId != null &&
         newRoomId.isNotEmpty &&
         previousRoomId != newRoomId &&
-        _rtcReady) {
+        (_rtcReady || _rtcError != null)) {
       await _rejoinRtc();
     }
   }
@@ -237,7 +237,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     if (info.roomId != null &&
         info.roomId!.isNotEmpty &&
         previousRoomId != info.roomId &&
-        _rtcReady) {
+        (_rtcReady || _rtcError != null)) {
       unawaited(_rejoinRtc());
     }
   }
@@ -311,6 +311,9 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     }
     final isClient = widget.session.isClient;
     final roomId = _room?.roomId ?? widget.session.trtcRoomId;
+    final remotePeerId = isClient
+        ? widget.session.anchorUserId
+        : (_room?.peerId ?? widget.session.clientId ?? '');
     try {
       final cred = await ref.read(trtcRemoteProvider).fetchUserSig(
             userId: user.id,
@@ -320,9 +323,16 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
         credentials: cred,
         isHost: !isClient,
         audioOnly: false,
-        expectedAnchorUserId: isClient ? widget.session.anchorUserId : null,
+        twoWayVideo: true,
+        expectedAnchorUserId:
+            remotePeerId.trim().isNotEmpty ? remotePeerId.trim() : null,
       );
-      if (mounted) setState(() => _rtcReady = true);
+      if (mounted) {
+        setState(() {
+          _rtcReady = true;
+          _rtcError = null;
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _rtcError = ApiException.userMessage(e));
     }
@@ -464,24 +474,81 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
         fit: StackFit.expand,
         children: [
           const LiveRoomVideoBackground(),
-          if (_rtcError != null)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  _rtcError!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white70),
-                ),
+          Center(
+            child: ProfileGlass(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              borderRadius: 20,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_rtcError != null) ...[
+                    Text(
+                      _rtcError!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: _rejoinRtc,
+                      child: const Text('Yeniden Bağlan'),
+                    ),
+                  ] else ...[
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Bağlantı kuruluyor…',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Diğer tarafın odaya girmesini bekliyorsunuz',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.65),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            )
-          else
-            const Center(child: CircularProgressIndicator()),
+            ),
+          ),
         ],
       );
     }
     if (!widget.session.isClient) {
-      return TrtcLocalVideoView(key: _localPreviewKey, manager: _trtc);
+      final peerId = _room?.peerId ?? widget.session.clientId ?? '';
+      return ValueListenableBuilder<String?>(
+        valueListenable: _trtc.remoteAnchorUserIdNotifier,
+        builder: (context, anchor, _) {
+          final remoteId =
+              (anchor != null && anchor.isNotEmpty) ? anchor : peerId;
+          if (remoteId.isNotEmpty) {
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                TrtcRemoteVideoView(
+                  key: ValueKey('remote-$remoteId'),
+                  manager: _trtc,
+                  userId: remoteId,
+                ),
+                if (!_trtc.remoteVideoAvailable.value)
+                  _waitingPeerOverlay(),
+              ],
+            );
+          }
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              TrtcLocalVideoView(key: _localPreviewKey, manager: _trtc),
+              _waitingPeerOverlay(),
+            ],
+          );
+        },
+      );
     }
     final anchorId = widget.session.anchorUserId;
     return ValueListenableBuilder<String?>(
@@ -490,14 +557,66 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
         final remoteId =
             (anchor != null && anchor.isNotEmpty) ? anchor : anchorId;
         if (remoteId.isNotEmpty) {
-          return TrtcRemoteVideoView(
-            key: ValueKey(remoteId),
-            manager: _trtc,
-            userId: remoteId,
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              TrtcRemoteVideoView(
+                key: ValueKey(remoteId),
+                manager: _trtc,
+                userId: remoteId,
+              ),
+              if (!_trtc.remoteVideoAvailable.value) _waitingPeerOverlay(),
+            ],
           );
         }
-        return const LiveRoomVideoBackground();
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            const LiveRoomVideoBackground(),
+            _waitingPeerOverlay(),
+          ],
+        );
       },
+    );
+  }
+
+  Widget _waitingPeerOverlay() {
+    return ColoredBox(
+      color: Colors.black.withValues(alpha: 0.55),
+      child: Center(
+        child: ProfileGlass(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          borderRadius: 20,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                'Bağlantı kuruluyor…',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Diğer tarafın odaya girmesini bekliyorsunuz',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white.withValues(alpha: 0.65),
+                ),
+              ),
+              const SizedBox(height: 14),
+              FilledButton(
+                onPressed: _rejoinRtc,
+                child: const Text('Yeniden Bağlan'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -587,6 +706,24 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
                           ),
                         ],
                       ),
+                    ),
+                  ),
+                ),
+              ),
+            if (_rtcReady && !widget.session.isClient)
+              Positioned(
+                top: MediaQuery.paddingOf(context).top + 56,
+                right: 12,
+                child: Material(
+                  elevation: 4,
+                  borderRadius: BorderRadius.circular(10),
+                  clipBehavior: Clip.antiAlias,
+                  child: SizedBox(
+                    width: 88,
+                    height: 120,
+                    child: TrtcLocalVideoView(
+                      key: _localPreviewKey,
+                      manager: _trtc,
                     ),
                   ),
                 ),
@@ -737,7 +874,11 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      _waitingForTimer ? 'Bekleniyor' : 'Bağlı',
+                                      !_rtcReady
+                                          ? 'Bağlanıyor...'
+                                          : (_waitingForTimer
+                                              ? 'Bekleniyor'
+                                              : 'Bağlı'),
                                       style: TextStyle(
                                         fontSize: 10,
                                         color: Colors.white.withValues(alpha: 0.7),

@@ -13,8 +13,10 @@ class FortuneIncomingInviteNotifier extends Notifier<List<FortuneIncomingSession
 
   void enqueue(FortuneIncomingSession session) {
     if (session.sessionId.isEmpty) return;
-    if (state.any((s) => s.sessionId == session.sessionId)) return;
-    state = [...state, session];
+    final exists = state.any((s) => s.sessionId == session.sessionId);
+    if (!exists) {
+      state = [...state, session];
+    }
     FortuneInviteCoordinator.requestPresent(sessionId: session.sessionId);
   }
 
@@ -59,7 +61,17 @@ String _pushType(Map<String, dynamic> map) => [
       map['event'],
       map['kind'],
       map['notificationType'],
-    ].whereType<String>().map((s) => s.toLowerCase()).join(' ');
+    ].map((e) => e?.toString().trim() ?? '').where((s) => s.isNotEmpty).map((s) => s.toLowerCase()).join(' ');
+
+String? _sessionIdFromTargetPath(dynamic rawPath) {
+  final path = rawPath?.toString().trim() ?? '';
+  if (path.isEmpty) return null;
+  final segments = path.split('/').where((s) => s.isNotEmpty).toList();
+  if (segments.isEmpty) return null;
+  final last = segments.last;
+  if (last == 'dashboard' || last == 'session' || last.length < 6) return null;
+  return last;
+}
 
 /// Kullanıcı push — `session_update` (kabul / red / iptal).
 class FortuneSessionUpdatePayload {
@@ -145,7 +157,9 @@ FortuneIncomingSession? parseFortuneIncomingPayload(Map<String, dynamic>? raw) {
     'live_session_id',
     'entityId',
     'refId',
-  ])?.toString();
+    'requestId',
+  ])?.toString() ??
+      _sessionIdFromTargetPath(map['targetPath']);
   if (sessionId == null || sessionId.isEmpty) return null;
 
   final duration = asInt(

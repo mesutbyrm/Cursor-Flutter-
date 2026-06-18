@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.274+277 (2026-06-18)
+
+### Canlı fal — kabul ekranı + TRTC kamera/ses
+
+- **Kabul ekranı:** `targetPath` içinden oturum ID; kuyruk tekrar `requestPresent`; UI hazır olunca otomatik popup
+- **TRTC iki yönlü video:** `videoCall` sahnesi — danışan da `anchor` (kamera/mikrofon yayınlar)
+- **Falcı uzak video:** Host rolünde bile danışan videosu dinlenir (önceden hiç dinlenmiyordu)
+- **Bağlantı ekranı:** «Bağlantı kuruluyor…» + «Yeniden Bağlan»; falcı PiP önizleme
+- **Oda peerId:** `GET /api/room/{id}` → danışan TRTC kimliği eşlemesi
+
 ## 1.0.273+276 (2026-06-18)
 
 ### Gerçek düzeltmeler — panel, kabul ekranı, tek bildirim

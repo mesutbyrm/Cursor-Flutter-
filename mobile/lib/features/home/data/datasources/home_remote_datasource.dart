@@ -897,7 +897,8 @@ class HomeRemoteDataSource {
         final v = asInt(pick(data, ['creditsPerMinute']));
         return v > 0 ? v : 10;
       }(),
-      peerId: _str(data, ['peerId']),
+      peerId: _str(data, ['peerId', 'clientId', 'userId']) ??
+          _str(user, ['id', 'userId']),
       isUser: data['isUser'] == true || data['isTeller'] != true,
       isTeller: data['isTeller'] == true,
       userJetonBalance: asInt(pick(user, ['jetonBalance'])),

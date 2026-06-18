@@ -91,6 +91,7 @@ class _FortuneIncomingInviteHostState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _inviteUiReady = true);
+      unawaited(_tryPresentNext());
       FortuneInviteCoordinator.onRequestPresent = () {
         if (!mounted) return;
         unawaited(_tryPresentNext());
