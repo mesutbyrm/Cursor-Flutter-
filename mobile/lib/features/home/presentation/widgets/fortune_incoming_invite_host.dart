@@ -352,6 +352,7 @@ class _FortuneIncomingInviteHostState
         _tellerOnlineSet = false;
         _sseRoomId = null;
         unawaited(ref.read(approvedTellerProvider.notifier).refresh());
+        unawaited(ref.read(approvedAgencyProvider.notifier).refresh());
         unawaited(_bootstrapTeller());
       }
     });

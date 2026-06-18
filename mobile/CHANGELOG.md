@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.271+274 (2026-06-18)
+
+### API dokümantasyonu uyumu (§15 Falcı / §17 Ajans)
+
+- **Bildirim tıklama:** Canlı fal isteği bildirimine tıklanınca mor kabul ekranı açılır (`fortuneInviteFromNotification`)
+- **Keşfet & İçerik:** Onaylı falcı/ajans için «Panel» etiketi ve doğrudan dashboard rotası
+- **`/falci-ol` / `/ajans-ol`:** Onaylı kullanıcı dashboard'a, diğerleri content-hub'a yönlendirilir
+
 ## 1.0.270+273 (2026-06-18)
 
 ### Falcı / Ajans paneli + kabul ekranı düzeltmeleri

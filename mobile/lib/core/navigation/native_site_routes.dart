@@ -25,7 +25,7 @@ void openNativeSitePath(BuildContext context, String path) {
     return;
   }
   if (p == '/falci-ol') {
-    context.push('/content-hub');
+    context.push('/falci-ol');
     return;
   }
   if (p.startsWith('/fortune') || p.contains('fal')) {
@@ -55,7 +55,7 @@ void openNativeSitePath(BuildContext context, String path) {
     return;
   }
   if (p == '/ajans-ol') {
-    context.push('/content-hub');
+    context.push('/ajans-ol');
     return;
   }
   if (p == '/fan-club-hub' ||

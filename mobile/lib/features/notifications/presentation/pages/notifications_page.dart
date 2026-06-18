@@ -10,6 +10,8 @@ import '../../../../core/performance/list_perf.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../domain/entities/app_notification_entity.dart';
 import '../../domain/notification_action.dart';
+import '../../../home/presentation/live_fortune/fortune_notification_bridge.dart';
+import '../../../home/presentation/providers/fortune_incoming_invite_provider.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../providers/notifications_list_notifier.dart';
 import '../providers/notifications_providers.dart';
@@ -160,6 +162,11 @@ class _NotificationsListView extends ConsumerWidget {
                 await ref
                     .read(notificationsListNotifierProvider.notifier)
                     .refresh();
+              }
+              final invite = fortuneInviteFromNotification(n);
+              if (invite != null) {
+                ref.read(fortuneIncomingInviteProvider.notifier).enqueue(invite);
+                return;
               }
               navigateFromNotification(router, n);
             },

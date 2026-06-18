@@ -86,7 +86,9 @@ import '../../features/home/presentation/live_fortune/live_fortune_ad_transition
 import '../../features/home/presentation/pages/live_fortune_waiting_page.dart';
 import '../../features/home/presentation/pages/live_fortune_session_page.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
+import '../../features/agency/presentation/providers/agency_providers.dart';
 import '../../features/home/presentation/pages/teller_dashboard_screen.dart';
+import '../../features/home/presentation/providers/teller_profile_provider.dart';
 import '../../features/home/presentation/pages/live_fortune_tellers_page.dart';
 import '../../features/home/domain/entities/live_fortune_session_entity.dart';
 import '../../features/vip_gold/presentation/pages/vip_gold_hub_page.dart';
@@ -173,6 +175,24 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             token: state.uri.queryParameters['token'],
           ),
         ),
+      ),
+      GoRoute(
+        path: '/falci-ol',
+        redirect: (context, state) {
+          if (ref.read(approvedTellerProvider).isApprovedTeller) {
+            return '/canli-falcilar/dashboard';
+          }
+          return '/content-hub';
+        },
+      ),
+      GoRoute(
+        path: '/ajans-ol',
+        redirect: (context, state) {
+          if (ref.read(approvedAgencyProvider).isApprovedAgency) {
+            return '/ajans/dashboard';
+          }
+          return '/content-hub';
+        },
       ),
       GoRoute(
         path: '/auth/otp-verify',
