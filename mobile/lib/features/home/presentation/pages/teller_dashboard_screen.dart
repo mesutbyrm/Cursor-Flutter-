@@ -43,9 +43,10 @@ class _TellerDashboardScreenState extends ConsumerState<TellerDashboardScreen> {
       }
       if (session == null) return;
       _shownPopupId = popupId;
+      final captured = session;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        unawaited(_showIncomingPopup(session));
+        unawaited(_showIncomingPopup(captured));
       });
     });
 

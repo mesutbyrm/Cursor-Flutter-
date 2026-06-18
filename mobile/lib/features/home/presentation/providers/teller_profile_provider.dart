@@ -51,7 +51,7 @@ class ApprovedTellerNotifier extends Notifier<ApprovedTellerState> {
     if (user != null) {
       Future.microtask(refresh);
     }
-    return const ApprovedTellerState(loading: user != null);
+    return ApprovedTellerState(loading: user != null);
   }
 
   Future<void> refresh() async {
