@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
+import '../../presentation/live_fortune/fortune_invite_coordinator.dart';
 
 /// Falcıya gösterilecek bekleyen davet kuyruğu (push + poll).
 class FortuneIncomingInviteNotifier extends Notifier<List<FortuneIncomingSession>> {
@@ -12,8 +13,12 @@ class FortuneIncomingInviteNotifier extends Notifier<List<FortuneIncomingSession
 
   void enqueue(FortuneIncomingSession session) {
     if (session.sessionId.isEmpty) return;
-    if (state.any((s) => s.sessionId == session.sessionId)) return;
+    if (state.any((s) => s.sessionId == session.sessionId)) {
+      FortuneInviteCoordinator.requestPresent();
+      return;
+    }
     state = [...state, session];
+    FortuneInviteCoordinator.requestPresent();
   }
 
   FortuneIncomingSession? takeNext() {

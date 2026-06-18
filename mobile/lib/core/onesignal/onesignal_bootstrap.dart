@@ -41,15 +41,17 @@ class OneSignalBootstrap {
 
       OneSignal.Notifications.addForegroundWillDisplayListener((event) {
         final data = event.notification.additionalData;
-        if (data != null &&
+        final isFortuneInvite = data != null &&
             PushNavigationHandler.handleFortuneInviteData(
               Map<String, dynamic>.from(data),
-            )) {
+              notifyReceived: false,
+            );
+        if (isFortuneInvite) {
           event.preventDefault();
         } else {
           event.notification.display();
+          PushNavigationHandler.onPushReceived?.call();
         }
-        PushNavigationHandler.onPushReceived?.call();
       });
 
       _ready = true;

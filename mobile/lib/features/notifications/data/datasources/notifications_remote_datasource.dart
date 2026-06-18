@@ -15,7 +15,7 @@ class NotificationsRemoteDataSource {
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.notifications);
       final parsed = _parseList(res.data);
-      if (parsed != null) return parsed;
+      if (parsed != null) return _dedupeNotifications(parsed);
     } on ApiException catch (e) {
       if (e.statusCode == 401) {
         throw const ApiException(
@@ -76,5 +76,28 @@ class NotificationsRemoteDataSource {
 
   Future<void> markRead(String id) async {
     await _dio.safePatch(ApiEndpoints.notificationRead(id), data: const {});
+  }
+
+  List<AppNotificationEntity> _dedupeNotifications(
+    List<AppNotificationEntity> items,
+  ) {
+    final seenIds = <String>{};
+    final seenFingerprints = <String>{};
+    final out = <AppNotificationEntity>[];
+    for (final item in items) {
+      final id = item.id.trim();
+      if (id.isNotEmpty && !seenIds.add(id)) continue;
+      final fingerprint = [
+        item.type?.toLowerCase() ?? '',
+        item.title.trim().toLowerCase(),
+        item.body?.trim().toLowerCase() ?? '',
+        item.targetId?.trim() ?? '',
+      ].join('|');
+      if (fingerprint.isNotEmpty && !seenFingerprints.add(fingerprint)) {
+        continue;
+      }
+      out.add(item);
+    }
+    return out;
   }
 }

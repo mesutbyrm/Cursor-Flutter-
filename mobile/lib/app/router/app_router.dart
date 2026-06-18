@@ -85,6 +85,7 @@ import '../../features/home/presentation/pages/live_fortune_teller_detail_page.d
 import '../../features/home/presentation/live_fortune/live_fortune_ad_transition_page.dart';
 import '../../features/home/presentation/pages/live_fortune_waiting_page.dart';
 import '../../features/home/presentation/pages/live_fortune_session_page.dart';
+import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
 import '../../features/home/presentation/pages/teller_dashboard_screen.dart';
 import '../../features/home/presentation/pages/live_fortune_tellers_page.dart';
 import '../../features/home/domain/entities/live_fortune_session_entity.dart';
@@ -716,6 +717,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
           child: const VipGoldHubPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/ajans/dashboard',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const AgencyDashboardScreen(),
         ),
       ),
       GoRoute(

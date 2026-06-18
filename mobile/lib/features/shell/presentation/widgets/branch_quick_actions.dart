@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/quick_action_tile.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
+import 'branch_role_actions.dart';
 
 /// Sosyal sekmesi — davet, jeton, akış ve sesli odalar.
 class SocialBranchQuickActions extends StatelessWidget {
@@ -276,11 +278,13 @@ class LiveVoiceBranchQuickActions extends StatelessWidget {
 }
 
 /// Profil sekmesi — kısayollar.
-class ProfileBranchQuickActions extends StatelessWidget {
+class ProfileBranchQuickActions extends ConsumerWidget {
   const ProfileBranchQuickActions({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final teller = BranchRoleActions.tellerAction(ref);
+    final agency = BranchRoleActions.agencyAction(ref);
     return QuickActionsSection(
       sectionIcon: Icons.bolt_rounded,
       sectionTitle: 'Hızlı işlemler',
@@ -366,22 +370,34 @@ class ProfileBranchQuickActions extends StatelessWidget {
         ],
         [
           QuickActionTile(
-            icon: Icons.workspace_premium_rounded,
-            label: 'Falcı\nol',
+            icon: teller.icon,
+            label: teller.label,
             gradient: [
               const Color(0xFF3D2A10).withValues(alpha: 0.95),
               const Color(0xFF1A1208).withValues(alpha: 0.95),
             ],
-            onTap: () => openNativeSitePath(context, '/falci-ol'),
+            onTap: () {
+              if (teller.route != null) {
+                teller.navigate(context);
+              } else {
+                openNativeSitePath(context, teller.nativePath ?? '/falci-ol');
+              }
+            },
           ),
           QuickActionTile(
-            icon: Icons.business_center_rounded,
-            label: 'Ajans\nol',
+            icon: agency.icon,
+            label: agency.label,
             gradient: [
               const Color(0xFF1A2838).withValues(alpha: 0.95),
               const Color(0xFF0E141C).withValues(alpha: 0.95),
             ],
-            onTap: () => openNativeSitePath(context, '/ajans-ol'),
+            onTap: () {
+              if (agency.route != null) {
+                agency.navigate(context);
+              } else {
+                openNativeSitePath(context, agency.nativePath ?? '/ajans-ol');
+              }
+            },
           ),
         ],
       ],

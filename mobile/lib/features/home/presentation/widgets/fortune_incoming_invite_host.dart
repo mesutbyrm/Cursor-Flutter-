@@ -12,12 +12,14 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/services/live_fortune_request_sse_service.dart';
 import '../../data/services/live_fortune_teller_incoming_sse_service.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
+import '../live_fortune/fortune_invite_coordinator.dart';
 import '../live_fortune/live_fortune_flow.dart';
 import '../live_fortune/live_fortune_teller_invite_flow.dart';
 import '../providers/fortune_incoming_invite_provider.dart';
 import '../providers/fortune_live_event_bus.dart';
 import '../providers/home_providers.dart';
 import '../providers/teller_profile_provider.dart';
+import '../../../agency/presentation/providers/agency_providers.dart';
 import 'live_fortune_invite_action.dart';
 
 final liveFortuneRequestSseServiceProvider =
@@ -79,6 +81,10 @@ class _FortuneIncomingInviteHostState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _inviteUiReady = true);
+      FortuneInviteCoordinator.onRequestPresent = () {
+        if (!mounted) return;
+        unawaited(_tryPresentNext());
+      };
       _sseBusSub = ref
           .read(fortuneLiveEventBusProvider)
           .stream
@@ -95,6 +101,7 @@ class _FortuneIncomingInviteHostState
 
   @override
   void dispose() {
+    FortuneInviteCoordinator.onRequestPresent = null;
     WidgetsBinding.instance.removeObserver(this);
     _poll?.cancel();
     _sseBusSub?.cancel();
@@ -133,30 +140,34 @@ class _FortuneIncomingInviteHostState
 
   Future<void> _ensureTellerOnline() async {
     if (!_mayPresentInvites()) return;
-    final repo = ref.read(liveFortuneRepositoryProvider);
-    final userId = ref.read(authControllerProvider).valueOrNull?.id;
-    var profile = await repo.fetchMyProfile();
-    if (profile == null && userId != null) {
-      final tellers = await repo.fetchTellers();
-      for (final t in tellers) {
-        if (t.userId == userId || t.id == userId) {
-          profile = t;
-          break;
+    final approved = ref.read(approvedTellerProvider);
+    var profile = approved.profile;
+    if (profile == null) {
+      await ref.read(approvedTellerProvider.notifier).refresh();
+      profile = ref.read(approvedTellerProvider).profile;
+    }
+    if (profile == null) {
+      final repo = ref.read(liveFortuneRepositoryProvider);
+      final userId = ref.read(authControllerProvider).valueOrNull?.id;
+      profile = await repo.fetchMyProfile();
+      if (profile == null && userId != null) {
+        final tellers = await repo.fetchTellers();
+        for (final t in tellers) {
+          if (t.userId == userId || t.id == userId) {
+            profile = t;
+            break;
+          }
         }
       }
     }
-    if (profile == null) {
-      _isFortuneTeller = false;
-      return;
-    }
-    if (!profile.isApproved) {
+    if (profile == null || !profile.isApproved) {
       _isFortuneTeller = false;
       _tellerProfileId = null;
       return;
     }
     _isFortuneTeller = true;
     _tellerProfileId = profile.id;
-    final ok = await repo.setOnline(online: true);
+    final ok = await ref.read(liveFortuneRepositoryProvider).setOnline(online: true);
     if (ok) _tellerOnlineSet = true;
   }
 

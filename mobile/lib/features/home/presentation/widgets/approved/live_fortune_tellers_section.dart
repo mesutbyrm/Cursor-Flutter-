@@ -9,6 +9,7 @@ import '../../../../../core/ui/premium/live_badge.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../domain/entities/live_fortune_teller_entity.dart';
 import '../../providers/home_providers.dart';
+import '../../providers/teller_profile_provider.dart';
 import '../../theme/home_approved_design.dart';
 import 'home_section_title.dart';
 
@@ -232,6 +233,18 @@ class _QuickActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final approved = ref.watch(approvedTellerProvider);
+    final tellerLabel = approved.isApprovedTeller ? 'Falcı Paneli' : 'Falcı Ol';
+    final tellerIcon =
+        approved.isApprovedTeller ? Icons.dashboard_outlined : Icons.person_add_rounded;
+    void openTeller() {
+      if (approved.isApprovedTeller) {
+        context.push('/canli-falcilar/dashboard');
+      } else {
+        context.push('/content-hub');
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
       child: Row(
@@ -254,9 +267,9 @@ class _QuickActions extends ConsumerWidget {
           const SizedBox(width: 8),
           Expanded(
             child: _Chip(
-              icon: Icons.person_add_rounded,
-              label: 'Falcı Ol',
-              onTap: () => context.push('/content-hub'),
+              icon: tellerIcon,
+              label: tellerLabel,
+              onTap: openTeller,
             ),
           ),
         ],

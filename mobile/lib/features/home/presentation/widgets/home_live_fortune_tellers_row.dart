@@ -7,6 +7,7 @@ import '../../../../core/ui/premium/live_badge.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../providers/home_providers.dart';
+import '../providers/teller_profile_provider.dart';
 import '../theme/home_palette.dart';
 import 'home_circular_orb.dart';
 import 'home_glass_card.dart';
@@ -87,7 +88,7 @@ class HomeLiveFortuneTellersRow extends ConsumerWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-              child: _QuickActions(),
+              child: const _QuickActions(),
             ),
           ],
         );
@@ -120,9 +121,23 @@ class _TellerOrb extends StatelessWidget {
   }
 }
 
-class _QuickActions extends StatelessWidget {
+class _QuickActions extends ConsumerWidget {
+  const _QuickActions();
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final approved = ref.watch(approvedTellerProvider);
+    final tellerLabel = approved.isApprovedTeller ? 'Falcı Paneli' : 'Falcı Ol';
+    final tellerIcon =
+        approved.isApprovedTeller ? Icons.dashboard_outlined : Icons.person_add_rounded;
+    void openTeller() {
+      if (approved.isApprovedTeller) {
+        context.push('/canli-falcilar/dashboard');
+      } else {
+        context.push('/content-hub');
+      }
+    }
+
     return Row(
       children: [
         Expanded(
@@ -143,9 +158,9 @@ class _QuickActions extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: _ActionChip(
-            icon: Icons.person_add_rounded,
-            label: 'Falcı Ol',
-            onTap: () => context.push('/content-hub'),
+            icon: tellerIcon,
+            label: tellerLabel,
+            onTap: openTeller,
           ),
         ),
       ],

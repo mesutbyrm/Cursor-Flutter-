@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.270+273 (2026-06-18)
+
+### Falcı / Ajans paneli + kabul ekranı düzeltmeleri
+
+- **Onaylı falcı:** «Falcı Ol» → **Falcı Paneli** (profil, ana sayfa, canlı falcılar)
+- **Onaylı ajans:** «Ajans Ol» → **Ajans Paneli** (`GET /api/agency/my`, üyeler, kazanç, görevler)
+- **AjansDashboardScreen:** `/ajans/dashboard` — web paneli özellikleri (üye listesi, kazançlar, görevler, davet kodu)
+- **Kabul ekranı:** Push/SSE sonrası `FortuneInviteCoordinator` ile mor «Canlı Fal İsteği» dialog zorla açılır
+- **Çift bildirim:** Falcı davet push'unda sistem banner + liste yenileme engellendi; bildirim listesi id/fingerprint ile tekilleştirildi
+
 ## 1.0.269+272 (2026-06-18)
 
 ### Canlı fal kabul ekranları (web UI)

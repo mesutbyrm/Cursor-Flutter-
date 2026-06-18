@@ -37,7 +37,10 @@ class PushNavigationHandler {
     }
   }
 
-  static bool handleFortuneInviteData(Map<String, dynamic>? data) {
+  static bool handleFortuneInviteData(
+    Map<String, dynamic>? data, {
+    bool notifyReceived = true,
+  }) {
     if (data == null || data.isEmpty) return false;
 
     final sessionUpdate = parseSessionUpdatePayload(data);
@@ -52,12 +55,15 @@ class PushNavigationHandler {
     final invite = parseFortuneIncomingPayload(data);
     if (invite == null) return false;
     onFortuneInvite?.call(data);
+    if (notifyReceived) {
+      onPushReceived?.call();
+    }
     return true;
   }
 
   static void handleAdditionalData(Map<String, dynamic>? data) {
-    onPushReceived?.call();
     if (handleFortuneInviteData(data)) return;
+    onPushReceived?.call();
 
     final router = _router;
     if (router == null || data == null || data.isEmpty) return;
