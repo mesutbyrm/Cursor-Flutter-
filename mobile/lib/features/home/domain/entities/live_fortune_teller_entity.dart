@@ -39,8 +39,22 @@ class LiveFortuneTellerEntity extends Equatable {
 
   String get displayName => name;
 
-  bool get isApproved =>
-      applicationStatus?.trim().toLowerCase() == 'approved';
+  bool get isApproved {
+    final status = applicationStatus?.trim().toLowerCase();
+    if (status == null || status.isEmpty) return false;
+    const approved = {'approved', 'active'};
+    const rejected = {
+      'pending',
+      'rejected',
+      'declined',
+      'online',
+      'offline',
+      'inactive',
+    };
+    if (approved.contains(status)) return true;
+    if (rejected.contains(status)) return false;
+    return totalSessions > 0;
+  }
 
   String get displayCategory {
     if (category != null && category!.trim().isNotEmpty) return category!.trim();

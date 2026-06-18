@@ -7,6 +7,7 @@ import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
 import 'home_providers.dart';
 import 'teller_profile_provider.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 
 class TellerDashboardState {
   const TellerDashboardState({
@@ -90,7 +91,18 @@ class TellerDashboardNotifier extends AutoDisposeNotifier<TellerDashboardState> 
     if (profile == null || !profile.isApproved) return;
 
     final repo = ref.read(liveFortuneRepositoryProvider);
-    final pending = await repo.fetchPendingSessions();
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    final incoming = await repo.fetchIncomingSessions(
+      currentUserId: userId,
+      tellerProfileId: profile.id,
+    );
+    final pendingOnly = await repo.fetchPendingSessions();
+    final merged = <FortuneIncomingSession>[];
+    final seen = <String>{};
+    for (final row in [...incoming, ...pendingOnly]) {
+      if (seen.add(row.sessionId)) merged.add(row);
+    }
+    final pending = merged;
     final active = await repo.fetchActiveSessions();
     final activeForTeller = active
         .where(

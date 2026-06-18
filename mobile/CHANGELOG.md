@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.269+272 (2026-06-18)
+
+### Canlı fal kabul ekranları (web UI)
+
+- **Canlı Fal İsteği popup:** Falcı paneli ve global host artık web ile aynı mor gradient dialog (Kabul Et / Beklet / Reddet)
+- **Seansı Başlat:** Kabul sonrası jeton bakiyesi + süre seçimi + «Şimdi Başlat» sheet'i gösterilir
+- **Pending tespiti:** Dashboard hem `fetchIncomingSessions` hem `fetchPendingSessions` birleştirir
+- **Onaylı falcı:** `applicationStatus` artık `status: online` ile karışmaz; `isApproved` / `canGoOnline` desteklenir
+- **Ortak akış:** `LiveFortuneTellerInviteFlow` — root navigator üzerinden dialog
+
 ## 1.0.268+271 (2026-06-18)
 
 ### Falcı paneli (TellerDashboardScreen)

@@ -2,17 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/app_router.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
+import '../live_fortune/live_fortune_teller_invite_flow.dart';
 import '../providers/home_providers.dart';
 import '../providers/teller_dashboard_provider.dart';
 import '../providers/teller_profile_provider.dart';
-import '../widgets/incoming_request_dialog.dart';
-import '../widgets/live_fortune_session_start_sheet.dart';
+import '../widgets/live_fortune_invite_action.dart';
 
 /// Onaylı falcı kontrol paneli — pending poll + kabul/red popup.
 class TellerDashboardScreen extends ConsumerStatefulWidget {
@@ -26,12 +26,16 @@ class TellerDashboardScreen extends ConsumerStatefulWidget {
 class _TellerDashboardScreenState extends ConsumerState<TellerDashboardScreen> {
   String? _shownPopupId;
   var _openingSession = false;
+  var _presentingInvite = false;
 
   @override
   Widget build(BuildContext context) {
     ref.listen<TellerDashboardState>(tellerDashboardProvider, (prev, next) {
       final popupId = next.popupSessionId;
-      if (popupId == null || popupId == _shownPopupId || _openingSession) {
+      if (popupId == null ||
+          popupId == _shownPopupId ||
+          _openingSession ||
+          _presentingInvite) {
         return;
       }
       FortuneIncomingSession? session;
@@ -46,7 +50,7 @@ class _TellerDashboardScreenState extends ConsumerState<TellerDashboardScreen> {
       final captured = session;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        unawaited(_showIncomingPopup(captured));
+        unawaited(_presentIncomingInvite(captured));
       });
     });
 
@@ -131,7 +135,7 @@ class _TellerDashboardScreenState extends ConsumerState<TellerDashboardScreen> {
               ...dash.pendingSessions.map(
                 (s) => _PendingTile(
                   session: s,
-                  onTap: () => _showIncomingPopup(s),
+                  onTap: () => _presentIncomingInvite(s),
                 ),
               ),
           ],
@@ -140,17 +144,31 @@ class _TellerDashboardScreenState extends ConsumerState<TellerDashboardScreen> {
     );
   }
 
-  Future<void> _showIncomingPopup(FortuneIncomingSession session) async {
-    if (!mounted) return;
-    await IncomingRequestDialog.show(
-      context,
-      session: session,
-      onAccept: () => _handleAccept(session),
-      onReject: () => ref
-          .read(tellerDashboardProvider.notifier)
-          .rejectSession(session),
-    );
-    ref.read(tellerDashboardProvider.notifier).clearPopup();
+  Future<void> _presentIncomingInvite(FortuneIncomingSession session) async {
+    if (!mounted || _presentingInvite || _openingSession) return;
+    _presentingInvite = true;
+    try {
+      final action = await LiveFortuneTellerInviteFlow.showInviteDialog(session);
+      if (!mounted) return;
+
+      if (action == null || action == LiveFortuneInviteAction.hold) {
+        _shownPopupId = null;
+        ref.read(tellerDashboardProvider.notifier).clearPopup();
+        return;
+      }
+
+      if (action == LiveFortuneInviteAction.reject) {
+        await ref
+            .read(tellerDashboardProvider.notifier)
+            .rejectSession(session);
+        return;
+      }
+
+      await _handleAccept(session);
+    } finally {
+      _presentingInvite = false;
+      ref.read(tellerDashboardProvider.notifier).clearPopup();
+    }
   }
 
   Future<void> _handleAccept(FortuneIncomingSession session) async {
@@ -162,63 +180,20 @@ class _TellerDashboardScreenState extends ConsumerState<TellerDashboardScreen> {
           .acceptSession(session);
       if (!mounted) return;
       if (!respond.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kabul sunucuya iletilemedi.')),
-        );
+        final navCtx = rootNavigatorKey.currentContext;
+        if (navCtx != null && navCtx.mounted) {
+          ScaffoldMessenger.of(navCtx).showSnackBar(
+            const SnackBar(content: Text('Kabul sunucuya iletilemedi.')),
+          );
+        }
+        _shownPopupId = null;
         return;
       }
 
-      final repo = ref.read(liveFortuneRepositoryProvider);
-      final roomPreview = await repo.fetchRoomInfo(session.sessionId);
-      final clientJeton = roomPreview?.userJetonBalance ?? session.totalJeton;
-
-      if (!mounted) return;
-      final startChoice = await showLiveFortuneSessionStartSheet(
-        context,
-        clientName: session.clientName,
-        clientJetonBalance: clientJeton,
-      );
-
-      var durationMinutes = session.durationMinutes;
-      var totalJeton = session.totalJeton;
-      if (startChoice != null) {
-        if (startChoice.durationMinutes > 0) {
-          durationMinutes = startChoice.durationMinutes;
-          await repo.tellerAddTime(
-            sessionId: session.sessionId,
-            minutes: startChoice.durationMinutes,
-          );
-        }
-        if (startChoice.totalJeton > 0) totalJeton = startChoice.totalJeton;
-        await repo.roomAction(session.sessionId, 'start_timer');
-      }
-
-      final status = await repo.fetchSessionStatus(session.sessionId);
-      final teller = ref.read(tellerDashboardProvider).profile ??
-          ref.read(approvedTellerProvider).profile;
-      if (teller == null || !mounted) return;
-
-      final liveSession = LiveFortuneSessionEntity(
-        sessionId: session.sessionId,
-        teller: teller,
-        durationMinutes: durationMinutes > 0
-            ? durationMinutes
-            : (status?.durationMinutes ?? session.durationMinutes),
-        totalJeton: totalJeton > 0
-            ? totalJeton
-            : (status?.totalJeton ?? session.totalJeton),
-        tellerUserId:
-            status?.tellerUserId ?? session.tellerUserId ?? teller.trtcUserId,
-        clientId: session.clientId,
-        isClient: false,
-        trtcRoomIdOverride:
-            respond.roomId ?? status?.trtcRoomId ?? session.sessionId,
-      );
-
-      if (!mounted) return;
-      await context.push(
-        '/canli-falcilar/${teller.id}/session',
-        extra: liveSession,
+      await LiveFortuneTellerInviteFlow.openSessionAfterAccept(
+        ref: ref,
+        req: session,
+        roomIdOverride: respond.roomId,
       );
     } finally {
       _openingSession = false;

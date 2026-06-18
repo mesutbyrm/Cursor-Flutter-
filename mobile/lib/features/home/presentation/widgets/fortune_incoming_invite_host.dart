@@ -12,15 +12,13 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/services/live_fortune_request_sse_service.dart';
 import '../../data/services/live_fortune_teller_incoming_sse_service.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
-import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../live_fortune/live_fortune_flow.dart';
+import '../live_fortune/live_fortune_teller_invite_flow.dart';
 import '../providers/fortune_incoming_invite_provider.dart';
 import '../providers/fortune_live_event_bus.dart';
 import '../providers/home_providers.dart';
 import '../providers/teller_profile_provider.dart';
-import 'fortune_request_dialog.dart';
 import 'live_fortune_invite_action.dart';
-import 'live_fortune_session_start_sheet.dart';
 
 final liveFortuneRequestSseServiceProvider =
     Provider<LiveFortuneRequestSseService>((ref) {
@@ -68,6 +66,9 @@ class _FortuneIncomingInviteHostState
     final router = ref.read(goRouterProvider);
     final path = router.routerDelegate.currentConfiguration.uri.path;
     if (path.contains('/canli-falcilar/dashboard')) return false;
+    if (path.contains('/canli-falcilar') && path.contains('/session')) {
+      return false;
+    }
     return !AuthRoutePaths.isPublicAuthPath(path);
   }
 
@@ -281,19 +282,7 @@ class _FortuneIncomingInviteHostState
     if (!mounted || !_mayPresentInvites()) return;
     _presenting = true;
     try {
-      final navCtx = rootNavigatorKey.currentContext;
-      if (navCtx == null || !navCtx.mounted) {
-        ref.read(fortuneIncomingInviteProvider.notifier).enqueue(req);
-        return;
-      }
-
-      final action = await showFortuneRequestDialog(
-        navCtx,
-        clientName: req.clientName,
-        category: req.category,
-        durationMinutes: req.durationMinutes,
-        totalJeton: req.totalJeton,
-      );
+      final action = await LiveFortuneTellerInviteFlow.showInviteDialog(req);
       if (!mounted) return;
 
       if (action == null) {
@@ -315,92 +304,29 @@ class _FortuneIncomingInviteHostState
         return;
       }
 
-      final ok = await ref.read(liveFortuneRepositoryProvider).respondSession(
-            req.sessionId,
-            action: 'accept',
-          );
+      final respond = await ref
+          .read(liveFortuneRepositoryProvider)
+          .respondSessionDetailed(req.sessionId, action: 'accept');
       if (!mounted) return;
-      if (!ok) {
-        ScaffoldMessenger.of(navCtx).showSnackBar(
-          const SnackBar(
-            content: Text('Kabul sunucuya iletilemedi. Tekrar deneyin.'),
-          ),
-        );
+      final navCtx = rootNavigatorKey.currentContext;
+      if (!respond.success) {
+        if (navCtx != null && navCtx.mounted) {
+          ScaffoldMessenger.of(navCtx).showSnackBar(
+            const SnackBar(
+              content: Text('Kabul sunucuya iletilemedi. Tekrar deneyin.'),
+            ),
+          );
+        }
         ref.read(fortuneIncomingInviteProvider.notifier).enqueue(req);
         return;
       }
 
-      final roomPreview = await ref
-          .read(liveFortuneRepositoryProvider)
-          .fetchRoomInfo(req.sessionId);
-      final clientJeton = roomPreview?.userJetonBalance ?? req.totalJeton;
-
-      final startChoice = await showLiveFortuneSessionStartSheet(
-        navCtx,
-        clientName: req.clientName,
-        clientJetonBalance: clientJeton,
+      final opened = await LiveFortuneTellerInviteFlow.openSessionAfterAccept(
+        ref: ref,
+        req: req,
+        roomIdOverride: respond.roomId,
       );
-      if (!mounted) return;
-
-      var durationMinutes = req.durationMinutes;
-      var totalJeton = req.totalJeton;
-      if (startChoice != null) {
-        if (startChoice.durationMinutes > 0) {
-          durationMinutes = startChoice.durationMinutes;
-          await ref.read(liveFortuneRepositoryProvider).tellerAddTime(
-                sessionId: req.sessionId,
-                minutes: startChoice.durationMinutes,
-              );
-        }
-        if (startChoice.totalJeton > 0) {
-          totalJeton = startChoice.totalJeton;
-        }
-        await ref.read(liveFortuneRepositoryProvider).roomAction(
-              req.sessionId,
-              'start_timer',
-            );
-      }
-
-      final status = await ref
-          .read(liveFortuneRepositoryProvider)
-          .fetchSessionStatus(req.sessionId);
-
-      final user = ref.read(authControllerProvider).valueOrNull;
-      final tellerId = req.tellerId.trim();
-      LiveFortuneTellerEntity? teller;
-      if (tellerId.isNotEmpty) {
-        teller = await ref.read(liveFortuneRepositoryProvider).fetchTeller(tellerId);
-      }
-      teller ??= await ref.read(liveFortuneRepositoryProvider).fetchMyProfile();
-      teller ??= LiveFortuneTellerEntity(
-        id: tellerId.isNotEmpty ? tellerId : (user?.id ?? 'teller'),
-        userId: user?.id,
-        name: user?.displayName?.trim().isNotEmpty == true
-            ? user!.displayName!.trim()
-            : (user?.username ?? 'Falcı'),
-        isOnline: true,
-      );
-
-      final session = LiveFortuneSessionEntity(
-        sessionId: req.sessionId,
-        teller: teller,
-        durationMinutes: durationMinutes > 0
-            ? durationMinutes
-            : (status?.durationMinutes ?? req.durationMinutes),
-        totalJeton: totalJeton > 0
-            ? totalJeton
-            : (status?.totalJeton ?? req.totalJeton),
-        tellerUserId: status?.tellerUserId ?? req.tellerUserId ?? teller.trtcUserId,
-        clientId: req.clientId,
-        isClient: false,
-        trtcRoomIdOverride: status?.trtcRoomId,
-      );
-      if (!mounted) return;
-      await navCtx.push(
-        '/canli-falcilar/${teller.id}/session',
-        extra: session,
-      );
-      _dismissed.add(req.sessionId);
+      if (opened) _dismissed.add(req.sessionId);
     } finally {
       _presenting = false;
       if (mounted) await _tryPresentNext();

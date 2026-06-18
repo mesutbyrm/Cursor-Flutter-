@@ -1183,6 +1183,24 @@ class HomeRemoteDataSource {
   LiveFortuneTellerEntity parseLiveFortuneTeller(dynamic raw) =>
       _mapLiveFortuneTeller(raw);
 
+  String? _readFortuneTellerApplicationStatus(Map<String, dynamic> m) {
+    final direct = _str(m, ['applicationStatus', 'application_status']);
+    if (direct != null) {
+      final lower = direct.toLowerCase();
+      if (lower == 'online' || lower == 'offline') return null;
+      return direct;
+    }
+    if (m['isApproved'] == true || m['approved'] == true) return 'approved';
+    if (m['canGoOnline'] == true) return 'approved';
+    final status = _str(m, ['status']);
+    if (status != null) {
+      final lower = status.toLowerCase();
+      const appStatuses = {'approved', 'pending', 'rejected', 'declined'};
+      if (appStatuses.contains(lower)) return status;
+    }
+    return null;
+  }
+
   LiveFortuneTellerEntity _mapLiveFortuneTeller(dynamic raw) {
     final m = asJsonMap(raw);
     final user = asJsonMap(m['user'] ?? m['profile']);
@@ -1230,11 +1248,7 @@ class HomeRemoteDataSource {
       level: _str(m, ['level', 'tier', 'tellerLevel']),
       specialties: specs,
       category: _advisorCategory(m) ?? _advisorCategory(user),
-      applicationStatus: _str(m, [
-        'applicationStatus',
-        'application_status',
-        'status',
-      ]),
+      applicationStatus: _readFortuneTellerApplicationStatus(m),
       totalSessions: asInt(
         pick(m, ['totalSessions', 'sessions', 'sessionCount']),
       ),
