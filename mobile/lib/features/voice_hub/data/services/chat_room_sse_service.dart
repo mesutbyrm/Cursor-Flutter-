@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:eventsource/eventsource.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
@@ -12,19 +11,20 @@ import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
 import 'voice_room_debug_log.dart';
 
-/// Sohbet odası SSE — `GET /api/chat/rooms/{roomId}/stream` (eventsource).
+/// Sohbet odası SSE — `GET /api/chat/rooms/{roomId}/stream`.
 ///
-/// Socket.IO kullanılmaz. UI `events` broadcast stream ile dinler.
+/// Dio stream ile SSE ayrıştırma (`eventsource` paketi `http` sürümü
+/// `youtube_explode_dart` ile çakıştığı için kullanılmıyor).
 class ChatRoomSseService {
   ChatRoomSseService();
 
   final _events = StreamController<ChatRoomSseEvent>.broadcast();
   Stream<ChatRoomSseEvent> get events => _events.stream;
 
-  EventSource? _source;
-  StreamSubscription<Event>? _sub;
+  Dio? _dio;
+  CancelToken? _cancel;
+  StreamSubscription<List<int>>? _bytesSub;
   Timer? _reconnectTimer;
-  http.Client? _httpClient;
 
   String? _roomId;
   Future<String?> Function()? _accessToken;
@@ -40,8 +40,19 @@ class ChatRoomSseService {
   void Function(Map<String, dynamic> payload)? _onRoomUpdate;
   void Function(Map<String, dynamic> payload)? _onModeration;
   void Function(Map<String, dynamic> payload)? _onAnnouncement;
-  void Function(List<String> users)? _onTyping;
   void Function(Map<String, dynamic> payload)? _onFortuneRequest;
+  void Function(List<String> users)? _onTyping;
+
+  static Dio _sseDio() {
+    return Dio(
+      BaseOptions(
+        baseUrl: Env.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: Duration.zero,
+        headers: {'Accept': 'text/event-stream'},
+      ),
+    );
+  }
 
   static String streamUrlFor(String roomId) {
     final base = Env.apiBaseUrl.replaceAll(RegExp(r'/$'), '');
@@ -88,7 +99,7 @@ class ChatRoomSseService {
     if (id == null || id.isEmpty || _stopped) return;
 
     final token = _accessToken != null ? await _accessToken!() : null;
-    final headers = <String, String>{
+    final headers = <String, dynamic>{
       'Accept': 'text/event-stream',
       'Cache-Control': 'no-cache',
     };
@@ -96,19 +107,32 @@ class ChatRoomSseService {
       headers['Authorization'] = 'Bearer ${token.trim()}';
     }
 
-    final url = streamUrlFor(id);
-    VoiceRoomDebugLog.sseConnect(roomId: id, url: url);
+    VoiceRoomDebugLog.sseConnect(roomId: id, url: streamUrlFor(id));
 
+    _dio = _sseDio();
+    _cancel = CancelToken();
     try {
-      _httpClient ??= http.Client();
-      _source = await EventSource.connect(
-        Uri.parse(url),
-        headers: headers,
-        client: _httpClient,
+      final res = await _dio!.get<ResponseBody>(
+        ApiEndpoints.chatRoomStream(id),
+        options: Options(
+          responseType: ResponseType.stream,
+          headers: headers,
+        ),
+        cancelToken: _cancel,
       );
+      final byteStream = res.data?.stream;
+      if (byteStream == null) {
+        _scheduleReconnect();
+        return;
+      }
+
       _reconnectAttempt = 0;
-      _sub = _source!.listen(
-        _handleEventSourceEvent,
+      final buffer = StringBuffer();
+      _bytesSub = byteStream.listen(
+        (chunk) {
+          buffer.write(utf8.decode(chunk, allowMalformed: true));
+          _drainSseBuffer(buffer);
+        },
         onError: (_) => _scheduleReconnect(),
         onDone: () => _scheduleReconnect(),
         cancelOnError: false,
@@ -119,8 +143,32 @@ class ChatRoomSseService {
     }
   }
 
-  void _handleEventSourceEvent(Event event) {
-    final payload = event.data?.trim() ?? '';
+  void _drainSseBuffer(StringBuffer buffer) {
+    var raw = buffer.toString().replaceAll('\r\n', '\n');
+    while (true) {
+      final sep = raw.indexOf('\n\n');
+      if (sep < 0) break;
+      final block = raw.substring(0, sep);
+      raw = raw.substring(sep + 2);
+      _handleSseBlock(block);
+    }
+    buffer
+      ..clear()
+      ..write(raw);
+  }
+
+  void _handleSseBlock(String block) {
+    String? eventName;
+    final dataLines = <String>[];
+    for (final line in block.split('\n')) {
+      if (line.startsWith('event:')) {
+        eventName = line.substring(6).trim();
+      } else if (line.startsWith('data:')) {
+        dataLines.add(line.substring(5).trimLeft());
+      }
+    }
+    if (dataLines.isEmpty) return;
+    final payload = dataLines.join('\n').trim();
     if (payload.isEmpty || payload == '[DONE]') return;
 
     Map<String, dynamic> map;
@@ -133,12 +181,12 @@ class ChatRoomSseService {
     }
 
     final type = chatRoomSseEventTypeFrom(
-      map['type']?.toString() ?? event.event,
+      map['type']?.toString() ?? eventName,
     );
     final sseEvent = ChatRoomSseEvent(
       type: type,
       data: map,
-      eventName: event.event,
+      eventName: eventName,
     );
     if (!_events.isClosed) _events.add(sseEvent);
     _dispatch(type, map);
@@ -261,10 +309,12 @@ class ChatRoomSseService {
   Future<void> _closeStreamOnly() async {
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
-    await _sub?.cancel();
-    _sub = null;
-    await _source?.close();
-    _source = null;
+    _cancel?.cancel('reconnect');
+    _cancel = null;
+    await _bytesSub?.cancel();
+    _bytesSub = null;
+    _dio?.close(force: true);
+    _dio = null;
   }
 
   Future<void> disconnect() async {
@@ -272,8 +322,6 @@ class ChatRoomSseService {
     _roomId = null;
     _accessToken = null;
     await _closeStreamOnly();
-    _httpClient?.close();
-    _httpClient = null;
   }
 
   void dispose() {

@@ -45,7 +45,7 @@ Sohbet odaları gerçek zamanlı katmanı **SSE** (`eventsource`) üzerine taş�
 
 | Servis | Görev |
 |--------|--------|
-| `ChatRoomSseService` | Sohbet odası SSE — mesaj, presence, DJ, şarkı, hediye, moderasyon |
+- `ChatRoomSseService` | Sohbet odası SSE — mesaj, presence, DJ, şarkı, hediye, moderasyon (Dio stream)
 | `LiveFortuneRepository` | Canlı falcı API katmanı (repository) |
 | `LiveFortuneRemoteDataSource` | Dio + üretim uçları |
 | `LiveFortuneRoomSignalService` | `POST/GET/DELETE /api/room/signal` poll |

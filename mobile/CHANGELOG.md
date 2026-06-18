@@ -1,10 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.267+270 (2026-06-18)
+
+### Derleme düzeltmesi
+
+- **SSE:** `eventsource` paketi `youtube_explode_dart` ile `http` sürüm çakışması nedeniyle kaldırıldı; `ChatRoomSseService` Dio stream ile aynı SSE protokolünü kullanır
+
 ## 1.0.266+269 (2026-06-18)
 
 ### Backend entegrasyonu — SSE, repository, canlı falcı
 
-- **Sohbet SSE:** `ChatRoomSseService` (`eventsource`) — message, dj, song, music, gift, presence, moderasyon; Socket.IO hediye yolu kaldırıldı
+- **Sohbet SSE:** `ChatRoomSseService` (Dio stream) — message, dj, song, music, gift, presence, moderasyon; Socket.IO hediye yolu kaldırıldı
 - **Odadan çıkış:** Müzik player + SSE + presence temizliği; geri tuşu tam `leaveRoomSession`
 - **Poll:** SSE bağlıyken mesaj poll atlanır (DJ/presence yedek poll 15–30 sn)
 - **Canlı falcı:** `LiveFortuneRepository` + `LiveFortuneRemoteDataSource` — apply, reviews, awards, gifts, room signal
