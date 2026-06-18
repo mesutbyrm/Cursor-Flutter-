@@ -39,6 +39,52 @@ class AuthRepositoryImpl implements AuthRepository {
     return null;
   }
 
+
+  static Map<String, dynamic> _mergeRoleHints(
+    Map<String, dynamic> userMap,
+    Map<String, dynamic> root,
+  ) {
+    final merged = Map<String, dynamic>.from(userMap);
+    for (final key in const [
+      'role',
+      'tier',
+      'roles',
+      'isFortuneTeller',
+      'isLiveFortuneTeller',
+      'canGoOnline',
+      'isAgency',
+      'isAgencyOwner',
+      'isAgencyAdmin',
+      'fortuneTellerId',
+      'liveFortuneTellerId',
+      'tellerId',
+      'agencyId',
+      'agency_id',
+      'liveAgencyId',
+      'fortuneTeller',
+      'agency',
+      'liveAgency',
+      'myAgency',
+    ]) {
+      final value = root[key];
+      if (value != null && merged[key] == null) {
+        merged[key] = value;
+      }
+    }
+    final data = root['data'];
+    if (data is Map) {
+      final dm = data is Map<String, dynamic>
+          ? data
+          : Map<String, dynamic>.from(data);
+      for (final entry in dm.entries) {
+        if (merged[entry.key] == null) {
+          merged[entry.key] = entry.value;
+        }
+      }
+    }
+    return merged;
+  }
+
   Future<UserEntity> _persistAndMap(Map<String, dynamic> body) async {
     final access = _pickToken(body);
     final refresh = _pickRefresh(body);
@@ -47,13 +93,15 @@ class AuthRepositoryImpl implements AuthRepository {
     }
     final um = _userMap(body);
     if (um != null) {
-      final dto = UserDto.fromJson(um);
-      return dto.toEntity(role: dto.roleFrom(um));
+      final merged = _mergeRoleHints(um, body);
+      final dto = UserDto.fromJson(merged);
+      return dto.toEntity(role: dto.roleFrom(merged));
     }
     final me = await _remote.me();
     final um2 = _userMap(me) ?? me;
-    final dto = UserDto.fromJson(um2);
-    return dto.toEntity(role: dto.roleFrom(um2));
+    final merged2 = _mergeRoleHints(um2, me);
+    final dto = UserDto.fromJson(merged2);
+    return dto.toEntity(role: dto.roleFrom(merged2));
   }
 
   @override
@@ -116,8 +164,9 @@ class AuthRepositoryImpl implements AuthRepository {
         message: 'Oturum doğrulanamadı',
       );
       final um = _userMap(me) ?? me;
-      final dto = UserDto.fromJson(um);
-      return dto.toEntity(role: dto.roleFrom(um));
+      final merged = _mergeRoleHints(um, me);
+      final dto = UserDto.fromJson(merged);
+      return dto.toEntity(role: dto.roleFrom(merged));
     } catch (_) {
       await _tokens.clear();
       return null;

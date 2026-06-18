@@ -68,8 +68,45 @@ abstract class UserDto with _$UserDto {
     );
   }
 
-  String? roleFrom(Map<String, dynamic> json) =>
-      pick(json, ['role', 'tier'])?.toString();
+  String? roleFrom(Map<String, dynamic> json) {
+    final direct = pick(json, ['role', 'tier', 'userRole'])?.toString();
+    if (direct != null && direct.trim().isNotEmpty) return direct.trim();
+
+    if (json['isFortuneTeller'] == true ||
+        json['isLiveFortuneTeller'] == true ||
+        json['canGoOnline'] == true) {
+      return 'fortune_teller';
+    }
+    if (json['isAgency'] == true ||
+        json['isAgencyOwner'] == true ||
+        json['isAgencyAdmin'] == true) {
+      return 'agency';
+    }
+
+    final roles = json['roles'];
+    if (roles is List) {
+      for (final r in roles) {
+        final s = r.toString().toLowerCase();
+        if (s.contains('teller') ||
+            s.contains('fortune') ||
+            s.contains('falc') ||
+            s.contains('falci')) {
+          return 'fortune_teller';
+        }
+        if (s.contains('agency') || s.contains('ajans')) return 'agency';
+      }
+    }
+
+    if (pick(json, ['fortuneTellerId', 'liveFortuneTellerId', 'tellerId']) !=
+        null) {
+      return 'fortune_teller';
+    }
+    if (pick(json, ['agencyId', 'agency_id', 'liveAgencyId']) != null) {
+      return 'agency';
+    }
+
+    return null;
+  }
 
   /// Geriye dönük uyumluluk.
   factory UserDto.fromJson(Map<String, dynamic> json) => UserDto.fromApiMap(json);

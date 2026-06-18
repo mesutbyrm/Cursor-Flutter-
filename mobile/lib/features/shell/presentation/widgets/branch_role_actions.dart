@@ -11,7 +11,9 @@ class BranchRoleActions {
 
   static TellerBranchAction tellerAction(WidgetRef ref) {
     final approved = ref.watch(approvedTellerProvider);
-    if (approved.isApprovedTeller) {
+    final isPanelTeller = approved.isApprovedTeller ||
+        (approved.loading && approved.profile?.isUsable == true);
+    if (isPanelTeller) {
       return const TellerBranchAction(
         label: 'Falcı\nPanel',
         icon: Icons.dashboard_outlined,
@@ -19,7 +21,7 @@ class BranchRoleActions {
       );
     }
     return const TellerBranchAction(
-      label: 'Falcı\nol',
+      label: 'Falcı\nOl',
       icon: Icons.workspace_premium_rounded,
       nativePath: '/falci-ol',
     );
@@ -27,7 +29,9 @@ class BranchRoleActions {
 
   static AgencyBranchAction agencyAction(WidgetRef ref) {
     final approved = ref.watch(approvedAgencyProvider);
-    if (approved.isApprovedAgency) {
+    final isPanelAgency = approved.isApprovedAgency ||
+        (approved.loading && approved.agency?.isUsable == true);
+    if (isPanelAgency) {
       return const AgencyBranchAction(
         label: 'Ajans\nPanel',
         icon: Icons.business_center_outlined,
@@ -35,7 +39,7 @@ class BranchRoleActions {
       );
     }
     return const AgencyBranchAction(
-      label: 'Ajans\nol',
+      label: 'Ajans\nOl',
       icon: Icons.business_center_rounded,
       nativePath: '/ajans-ol',
     );

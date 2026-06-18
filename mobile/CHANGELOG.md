@@ -1,5 +1,22 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.276+279 (2026-06-18)
+
+### Falcı Panel / Ajans Panel — onay algısı düzeltmesi
+
+- **Derleme hatası:** `RolePanelResolver` artık doğru `homeRemoteProvider` ile bağlanıyor
+- **Çoklu kaynak:** `/api/me` içindeki `roles`, `isFortuneTeller`, `isAgency` alanları okunur
+- **Uç nokta probu:** Falcı seans ve ajans üye/kazanç uçlarına erişim varsa panel etiketi gösterilir
+- **Durum alanları:** `verificationStatus`, `approvalStatus`, `active`, `verified` onaylı sayılır
+
+## 1.0.275+278 (2026-06-18)
+
+### Falcı Panel / Ajans Panel etiket düzeltmesi
+
+- **Çoklu API algısı:** `RolePanelResolver` — `my-profile`, `/api/me`, `/api/user/profile`, falcı listesi, seans uçları
+- **Ajans:** `agency/my` + `/api/me` iç içe `agency` / `liveAgency` alanları
+- **Etiket:** Onaylı kullanıcıda «Falcı Panel» / «Ajans Panel»; yükleme sırasında önceki onay korunur
+
 ## 1.0.274+277 (2026-06-18)
 
 ### Canlı fal — kabul ekranı + TRTC kamera/ses

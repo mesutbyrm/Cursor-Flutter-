@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
 import 'home_providers.dart';
+import '../../../shell/presentation/providers/role_panel_providers.dart';
 
 /// Giriş sonrası `GET /api/fortune-tellers/my-profile` — onaylı falcı bayrağı.
 class ApprovedTellerState {
@@ -61,17 +62,7 @@ class ApprovedTellerNotifier extends Notifier<ApprovedTellerState> {
       return;
     }
     state = state.copyWith(loading: true);
-    final repo = ref.read(liveFortuneRepositoryProvider);
-    var profile = await repo.fetchMyProfile();
-    if (profile == null) {
-      final tellers = await repo.fetchTellers();
-      for (final t in tellers) {
-        if (t.userId == user.id || t.id == user.id) {
-          profile = t;
-          break;
-        }
-      }
-    }
+    final profile = await ref.read(rolePanelResolverProvider).resolveTeller(user);
     state = ApprovedTellerState(
       profile: profile,
       loading: false,

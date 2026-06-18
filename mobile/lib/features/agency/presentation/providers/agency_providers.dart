@@ -6,6 +6,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/datasources/agency_remote_datasource.dart';
 import '../../domain/entities/agency_entity.dart';
+import '../../../shell/presentation/providers/role_panel_providers.dart';
 
 final agencyRemoteProvider = Provider<AgencyRemoteDataSource>((ref) {
   return AgencyRemoteDataSource(ref.watch(dioProvider));
@@ -65,7 +66,7 @@ class ApprovedAgencyNotifier extends Notifier<ApprovedAgencyState> {
       return;
     }
     state = state.copyWith(loading: true);
-    final agency = await ref.read(agencyRemoteProvider).fetchMyAgency();
+    final agency = await ref.read(rolePanelResolverProvider).resolveAgency(user);
     state = ApprovedAgencyState(
       agency: agency,
       loading: false,

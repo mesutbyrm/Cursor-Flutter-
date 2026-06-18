@@ -17,7 +17,7 @@ class AgencyRemoteDataSource {
       if (body is! Map) return null;
       final map = asJsonMap(body);
       final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      final agency = data['agency'] ?? data['profile'] ?? data;
+      final agency = data['agency'] ?? data['myAgency'] ?? data['liveAgency'] ?? data['agencyProfile'] ?? data['profile'] ?? data;
       if (agency is! Map) return null;
       return _mapAgency(asJsonMap(agency));
     } catch (_) {
@@ -64,6 +64,8 @@ class AgencyRemoteDataSource {
       return false;
     }
   }
+
+  AgencyEntity mapAgencyPublic(Map<String, dynamic> m) => _mapAgency(m);
 
   AgencyEntity _mapAgency(Map<String, dynamic> m) {
     final user = asJsonMap(m['user'] ?? m['owner']);

@@ -281,10 +281,25 @@ class HomeRemoteDataSource {
       if (body is! Map) return null;
       final map = asJsonMap(body);
       final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      final teller =
-          data['teller'] ?? data['fortuneTeller'] ?? data['profile'] ?? data;
-      if (teller is! Map) return null;
-      return _mapLiveFortuneTeller(teller);
+      for (final key in const [
+        'teller',
+        'fortuneTeller',
+        'liveFortuneTeller',
+        'fortuneTellerProfile',
+        'liveFortuneTellerProfile',
+        'profile',
+      ]) {
+        final nested = data[key];
+        if (nested is Map) {
+          final parsed = _mapLiveFortuneTeller(nested);
+          if (parsed.id.isNotEmpty) return parsed;
+        }
+      }
+      if (_looksLikeTellerProfileMap(data)) {
+        final parsed = _mapLiveFortuneTeller(data);
+        if (parsed.id.isNotEmpty) return parsed;
+      }
+      return null;
     } catch (_) {
       return null;
     }
@@ -1187,10 +1202,17 @@ class HomeRemoteDataSource {
       _mapLiveFortuneTeller(raw);
 
   String? _readFortuneTellerApplicationStatus(Map<String, dynamic> m) {
-    final direct = _str(m, ['applicationStatus', 'application_status']);
+    final direct = _str(m, [
+      'applicationStatus',
+      'application_status',
+      'verificationStatus',
+      'approvalStatus',
+      'tellerStatus',
+    ]);
     if (direct != null) {
       final lower = direct.toLowerCase();
       if (lower == 'online' || lower == 'offline') return null;
+      if (lower == 'active' || lower == 'verified') return 'approved';
       return direct;
     }
     if (m['isApproved'] == true || m['approved'] == true) return 'approved';
@@ -1198,10 +1220,23 @@ class HomeRemoteDataSource {
     final status = _str(m, ['status']);
     if (status != null) {
       final lower = status.toLowerCase();
+      if (lower == 'active' || lower == 'verified') return 'approved';
       const appStatuses = {'approved', 'pending', 'rejected', 'declined'};
       if (appStatuses.contains(lower)) return status;
     }
     return null;
+  }
+
+
+  bool _looksLikeTellerProfileMap(Map<String, dynamic> m) {
+    final id = _str(m, ['id', '_id', 'tellerId']);
+    if (id == null || id.isEmpty) return false;
+    return m.containsKey('userId') ||
+        m.containsKey('displayName') ||
+        m.containsKey('specialties') ||
+        m.containsKey('isOnline') ||
+        m.containsKey('pricePerMinute') ||
+        m.containsKey('canGoOnline');
   }
 
   LiveFortuneTellerEntity _mapLiveFortuneTeller(dynamic raw) {
