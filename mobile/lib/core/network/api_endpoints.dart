@@ -96,6 +96,10 @@ abstract final class ApiEndpoints {
   static String liveFortuneRoomMessages(String sessionId) =>
       '${liveFortuneRoom(sessionId)}/messages';
 
+  /// Canlı fal seans SSE — mesaj, timer, durum (üretim `GET /api/room/{id}/stream`).
+  static String liveFortuneRoomStream(String sessionId) =>
+      '${liveFortuneRoom(sessionId)}/stream';
+
   static const liveFortuneRoomSignal = '/api/room/signal';
 
   static String fortuneTeller(String id) => '/api/fortune-tellers/$id';

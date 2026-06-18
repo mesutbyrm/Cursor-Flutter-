@@ -11,7 +11,9 @@ import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
+import '../../../../core/network/token_storage.dart';
 import '../providers/home_providers.dart';
+import '../providers/live_fortune_room_sse_provider.dart';
 import '../providers/live_fortune_feedback_provider.dart';
 import '../theme/home_palette.dart';
 import '../live_fortune/live_fortune_close_dialog.dart';
@@ -43,11 +45,52 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
     )..repeat();
     _poll = Timer.periodic(const Duration(seconds: 3), (_) => _checkStatus());
     unawaited(_checkStatus());
+    unawaited(_connectWaitingSse());
+  }
+
+  Future<void> _connectWaitingSse() async {
+    final storage = ref.read(tokenStorageProvider);
+    await ref.read(liveFortuneRoomSseServiceProvider).connect(
+          sessionId: widget.session.sessionId,
+          accessToken: storage.readAccess,
+          onSessionUpdate: (status) {
+            if (!mounted || _closed) return;
+            if (status.isRejected) {
+              unawaited(_onRejected());
+              return;
+            }
+            if (status.isActive) {
+              unawaited(_onAccepted(status));
+            }
+          },
+          onSessionEnded: ({endedBy}) {
+            if (!mounted || _closed) return;
+            unawaited(_onRejected());
+          },
+        );
+  }
+
+  Future<void> _onAccepted(FortuneSessionStatusResult status) async {
+    if (_closed || !mounted) return;
+    _closed = true;
+    _poll?.cancel();
+    final activeSession = widget.session.copyWith(
+      tellerUserId: status.tellerUserId ?? widget.session.tellerUserId,
+      trtcRoomIdOverride: status.trtcRoomId,
+      durationMinutes: status.durationMinutes ?? widget.session.durationMinutes,
+      totalJeton: status.totalJeton ?? widget.session.totalJeton,
+    );
+    if (!mounted) return;
+    context.pushReplacement(
+      '/canli-falcilar/${activeSession.teller.id}/ad-transition',
+      extra: activeSession,
+    );
   }
 
   @override
   void dispose() {
     _poll?.cancel();
+    unawaited(ref.read(liveFortuneRoomSseServiceProvider).disconnect());
     _ring.dispose();
     super.dispose();
   }
@@ -113,20 +156,7 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
     }
 
     if (status.isActive) {
-      _closed = true;
-      _poll?.cancel();
-      final activeSession = widget.session.copyWith(
-        tellerUserId: status.tellerUserId ?? widget.session.tellerUserId,
-        trtcRoomIdOverride: status.trtcRoomId,
-        durationMinutes:
-            status.durationMinutes ?? widget.session.durationMinutes,
-        totalJeton: status.totalJeton ?? widget.session.totalJeton,
-      );
-      if (!mounted) return;
-      context.pushReplacement(
-        '/canli-falcilar/${activeSession.teller.id}/ad-transition',
-        extra: activeSession,
-      );
+      await _onAccepted(status);
     }
   }
 

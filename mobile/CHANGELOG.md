@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.264+267 (2026-06-18)
+
+### Canlı fal seans SSE (`GET /api/room/{sessionId}/stream`)
+
+- **Servis:** `LiveFortuneRoomSseService` — mesaj, timer, oda durumu, seans sonu olayları
+- **Bekleme:** Danışan kabul/red anında SSE ile yönlendirme (3 sn poll yedek)
+- **Seans:** Sohbet SSE birincil; poll 20 sn yedek; timer/oda güncellemeleri anlık
+- **Test:** `live_fortune_room_sse_mapper_test.dart` — payload ayrıştırma
+
 ## 1.0.263+266 (2026-06-18)
 
 ### Canlı falcı — canlifal.com ekran uyumu

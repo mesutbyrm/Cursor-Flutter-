@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/token_storage.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../auth/domain/entities/user_entity.dart';
@@ -20,6 +21,7 @@ import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../live_fortune/live_fortune_close_dialog.dart';
 import '../providers/home_providers.dart';
+import '../providers/live_fortune_room_sse_provider.dart';
 
 /// Canlı fal video oturumu — TRTC + süre sayacı + sohbet.
 class LiveFortuneSessionPage extends ConsumerStatefulWidget {
@@ -52,6 +54,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
   Timer? _chatPoll;
   Timer? _ping;
   Timer? _roomPoll;
+  var _sseConnected = false;
   Key _localPreviewKey = UniqueKey();
 
   @override
@@ -62,6 +65,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
       await _bootstrapRoom();
       if (!mounted) return;
       await _joinRtc();
+      await _connectRoomSse();
       _startChatPoll();
     });
   }
@@ -170,8 +174,72 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
 
   void _startChatPoll() {
     _chatPoll?.cancel();
-    _chatPoll = Timer.periodic(const Duration(seconds: 3), (_) => _pollChat());
+    // SSE birincil; poll yedek (prompt §10.1 — 2–3 sn, SSE yoksa).
+    final interval = _sseConnected
+        ? const Duration(seconds: 20)
+        : const Duration(seconds: 3);
+    _chatPoll = Timer.periodic(interval, (_) => _pollChat());
     unawaited(_pollChat());
+  }
+
+  Future<void> _connectRoomSse() async {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    final storage = ref.read(tokenStorageProvider);
+    await ref.read(liveFortuneRoomSseServiceProvider).connect(
+          sessionId: widget.session.sessionId,
+          accessToken: storage.readAccess,
+          myUserId: user?.id,
+          onConnected: () {
+            if (!mounted) return;
+            if (!_sseConnected) {
+              setState(() => _sseConnected = true);
+              _startChatPoll();
+            }
+          },
+          onMessage: _onSseChatMessage,
+          onRoomUpdate: _onSseRoomUpdate,
+          onSessionEnded: ({endedBy}) {
+            if (!mounted || _leaving) return;
+            unawaited(_leave(silent: true));
+          },
+        );
+  }
+
+  void _onSseChatMessage(TellerChatMessage msg) {
+    if (!mounted || _leaving) return;
+    if (_seenChatIds.contains(msg.id)) return;
+    _seenChatIds.add(msg.id);
+    final created = msg.createdAt?.toUtc().toIso8601String();
+    if (created != null && created.isNotEmpty) {
+      _lastChatAfter = created;
+    }
+    setState(() => _messages.add(msg));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_chatScroll.hasClients) return;
+      _chatScroll.animateTo(
+        _chatScroll.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  void _onSseRoomUpdate(LiveFortuneRoomInfo info) {
+    if (!mounted || _leaving) return;
+    final previousRoomId = _room?.roomId;
+    _room = info;
+    _timerStarted = info.timerStarted;
+    _waitingForTimer = widget.session.isClient && !info.timerStarted;
+    if (info.timerStarted) {
+      _remaining = Duration(seconds: info.remainingSeconds);
+    }
+    setState(() {});
+    if (info.roomId != null &&
+        info.roomId!.isNotEmpty &&
+        previousRoomId != info.roomId &&
+        _rtcReady) {
+      unawaited(_rejoinRtc());
+    }
   }
 
   Future<void> _pollChat() async {
@@ -214,6 +282,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     _chatPoll?.cancel();
     _ping?.cancel();
     _roomPoll?.cancel();
+    unawaited(ref.read(liveFortuneRoomSseServiceProvider).disconnect());
     _chat.dispose();
     _chatScroll.dispose();
     _trtc.dispose();
@@ -439,6 +508,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     _ping?.cancel();
     _roomPoll?.cancel();
     _tick?.cancel();
+    await ref.read(liveFortuneRoomSseServiceProvider).disconnect();
     await _trtc.leave();
     ref.read(videoWebrtcSignalServiceProvider).stop();
     await ref
