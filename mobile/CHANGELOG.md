@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.259+262 (2026-06-18)
+
+### Canlı Falcılar — backend mirror tamamlama + yayın davranışı
+
+- **Backend mirror:** `/api/room/{sessionId}`, `/messages`, `/api/live-fal/pending`, kabul/red, `/api/teller/gifts`, query/per-teller session alias ve toggle alias eklendi
+- **Seans timer:** start_timer, ping, extend, teller_add_time ve end aksiyonları local API’de üretim path’leriyle çalışır
+- **Canlı yayın:** «Fal İste» yalnız fal kategorili yayınlarda görünür; yayın kategorisi stream verisinden korunur
+- **Bildirim:** `fortune_teller` bildirimi hedef id ile doğrudan falcı detayına gider
+
 ## 1.0.258+261 (2026-06-18)
 
 ### Bildirimler — push kayıt ve izin akışı düzeltmesi

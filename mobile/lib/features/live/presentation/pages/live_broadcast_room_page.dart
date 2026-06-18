@@ -19,8 +19,6 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
-import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../agora/presentation/agora_room_manager.dart';
 import '../../../agora/presentation/providers/agora_providers.dart';
 import '../../domain/entities/live_broadcast_session.dart';
@@ -34,7 +32,10 @@ import '../providers/live_providers.dart';
 import '../../data/services/video_webrtc_signal_service.dart';
 import '../providers/co_broadcast_provider.dart';
 import '../providers/live_room_interaction_provider.dart'
-    show LiveRoomInteractionNotifier, LiveRoomInteractionState, liveRoomInteractionProvider;
+    show
+        LiveRoomInteractionNotifier,
+        LiveRoomInteractionState,
+        liveRoomInteractionProvider;
 import '../providers/live_room_providers.dart';
 import '../providers/live_video_pk_provider.dart';
 import '../widgets/live_tiktok/live_background_picker_sheet.dart';
@@ -101,7 +102,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     final streamId = widget.session.streamId;
     if (streamId == null || streamId.isEmpty) return;
     final user = ref.read(authControllerProvider).valueOrNull;
-    ref.read(liveGiftControllerProvider).attach(
+    ref
+        .read(liveGiftControllerProvider)
+        .attach(
           streamId: streamId,
           receiverName: widget.session.streamerName ?? 'Yayıncı',
           initialCoins: user?.coinBalance,
@@ -120,16 +123,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
 
       var cred = widget.session.agora;
       if (cred == null || !cred.matchesChannel(roomId)) {
-        cred = await ref.read(agoraRemoteProvider).fetchToken(
+        cred = await ref
+            .read(agoraRemoteProvider)
+            .fetchToken(
               channelName: roomId,
               role: widget.session.isHost ? 'host' : 'audience',
             );
       }
 
-      await _agora.join(
-        credentials: cred,
-        isHost: widget.session.isHost,
-      );
+      await _agora.join(credentials: cred, isHost: widget.session.isHost);
       if (widget.session.isHost) {
         _agora.setMicEnabled(widget.session.initialMicOn);
         _agora.setCameraEnabled(widget.session.initialCameraOn);
@@ -172,7 +174,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           break;
         }
       }
-      teller ??= await ref.read(homeRemoteProvider).fetchLiveFortuneTeller(hostId);
+      teller ??= await ref
+          .read(homeRemoteProvider)
+          .fetchLiveFortuneTeller(hostId);
     }
     if (!mounted) return;
     if (teller == null) {
@@ -181,7 +185,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     }
     final options = FortuneSessionDurationOption.forTeller(teller);
     final opt = options.length > 1 ? options[1] : options.first;
-    final balance = ref.read(coinBalanceProvider).valueOrNull ?? user.coinBalance;
+    final balance =
+        ref.read(coinBalanceProvider).valueOrNull ?? user.coinBalance;
     if (balance < opt.totalJeton) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Yetersiz jeton. Gerekli: ${opt.totalJeton}')),
@@ -257,9 +262,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       notifier.setFollowing(true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ApiException.userMessage(e))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiException.userMessage(e))));
       }
     } finally {
       notifier.setFollowLoading(false);
@@ -279,9 +284,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   void _onDoubleTapHeart() {
     final streamId = widget.session.streamId?.trim();
     if (streamId == null || streamId.isEmpty) return;
-    ref.read(liveRoomInteractionProvider(streamId).notifier).burstHearts(
-          likes: 1,
-        );
+    ref
+        .read(liveRoomInteractionProvider(streamId).notifier)
+        .burstHearts(likes: 1);
   }
 
   Future<void> _openPkPanel() async {
@@ -297,11 +302,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       showDragHandle: true,
       builder: (ctx) {
         Future<void> run(Future<void> Function() action, String ok) async {
+          final messenger = ScaffoldMessenger.of(ctx);
           try {
             await action();
             if (!ctx.mounted) return;
             Navigator.pop(ctx);
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok)));
+            messenger.showSnackBar(SnackBar(content: Text(ok)));
           } catch (e) {
             if (!ctx.mounted) return;
             ScaffoldMessenger.of(ctx).showSnackBar(
@@ -321,15 +327,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                     'Yayın Araçları',
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
-                  subtitle: Text('Web canlı yayın özellikleriyle uyumlu hızlı işlemler'),
+                  subtitle: Text(
+                    'Web canlı yayın özellikleriyle uyumlu hızlı işlemler',
+                  ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.image_rounded),
                   title: const Text('Resim modunu kapak görseliyle güncelle'),
                   onTap: () => run(
-                    () => ref.read(liveStreamExtrasProvider).setBroadcastImage(
+                    () => ref
+                        .read(liveStreamExtrasProvider)
+                        .setBroadcastImage(
                           streamId: streamId,
-                          imageUrl: widget.session.coverImageUrl ??
+                          imageUrl:
+                              widget.session.coverImageUrl ??
                               widget.session.avatarUrl ??
                               'https://canlifal.com/apple-touch-icon.png',
                         ),
@@ -345,9 +356,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                       context,
                       selectedUrl: widget.session.backgroundUrl,
                       onSelectUrl: (url) => run(
-                        () => ref.read(liveStreamExtrasProvider).setBackground(
+                        () => ref
+                            .read(liveStreamExtrasProvider)
+                            .setBackground(
                               streamId: streamId,
-                              backgroundUrl: url ??
+                              backgroundUrl:
+                                  url ??
                                   'https://canlifal.com/apple-touch-icon.png',
                             ),
                         'Yayın arka planı güncellendi.',
@@ -360,9 +374,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                   leading: const Icon(Icons.wallpaper_outlined),
                   title: const Text('Canlifal varsayılan arka plan'),
                   onTap: () => run(
-                    () => ref.read(liveStreamExtrasProvider).setBackground(
+                    () => ref
+                        .read(liveStreamExtrasProvider)
+                        .setBackground(
                           streamId: streamId,
-                          backgroundUrl: widget.session.backgroundUrl ??
+                          backgroundUrl:
+                              widget.session.backgroundUrl ??
                               'https://canlifal.com/apple-touch-icon.png',
                         ),
                     'Yayın arka planı güncellendi.',
@@ -371,18 +388,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                 ListTile(
                   leading: const Icon(Icons.group_add_rounded),
                   title: const Text('Co-broadcast davetlerini yenile'),
-                  onTap: () => run(
-                    () async {
-                      await ref.read(coBroadcastProvider.notifier).refresh();
-                    },
-                    'Ortak yayın davetleri yenilendi.',
-                  ),
+                  onTap: () => run(() async {
+                    await ref.read(coBroadcastProvider.notifier).refresh();
+                  }, 'Ortak yayın davetleri yenilendi.'),
                 ),
                 ListTile(
                   leading: const Icon(Icons.timer_off_rounded),
                   title: const Text('Auto-close kontrolü çalıştır'),
                   onTap: () => run(
-                    () => ref.read(liveStreamExtrasProvider).triggerAutoClose(streamId),
+                    () => ref
+                        .read(liveStreamExtrasProvider)
+                        .triggerAutoClose(streamId),
                     'Auto-close kontrolü tetiklendi.',
                   ),
                 ),
@@ -420,7 +436,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           CachedNetworkImage(
             imageUrl: s.backgroundUrl!,
             fit: BoxFit.cover,
-            errorWidget: (_, __, ___) => const SizedBox.shrink(),
+            errorWidget: (_, _, _) => const SizedBox.shrink(),
           ),
           _mainVideo(s),
         ],
@@ -446,13 +462,16 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                   CircleAvatar(
                     radius: 48,
                     backgroundColor: Colors.white.withValues(alpha: 0.08),
-                    backgroundImage: s.avatarUrl != null &&
-                            s.avatarUrl!.trim().isNotEmpty
+                    backgroundImage:
+                        s.avatarUrl != null && s.avatarUrl!.trim().isNotEmpty
                         ? CachedNetworkImageProvider(s.avatarUrl!)
                         : null,
                     child: s.avatarUrl == null || s.avatarUrl!.trim().isEmpty
-                        ? const Icon(Icons.person_rounded,
-                            size: 48, color: Colors.white54)
+                        ? const Icon(
+                            Icons.person_rounded,
+                            size: 48,
+                            color: Colors.white54,
+                          )
                         : null,
                   ),
                   const SizedBox(height: 12),
@@ -508,9 +527,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       hostAvatarUrl: s.avatarUrl,
       hostName: s.streamerName,
       remoteUid: remoteUid,
-      onInviteSlot: s.isHost
-          ? (_) => _openHostTools()
-          : null,
+      onInviteSlot: s.isHost ? (_) => _openHostTools() : null,
     );
   }
 
@@ -572,6 +589,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         viewerCount: s.viewerCount,
         onGift: () => giftCtrl.setPanelOpen(true),
         onFortuneRequest: () => unawaited(_onFortuneRequest(s)),
+        showFortuneRequest: _isFortuneBroadcast(s),
         onNickname: () {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Rumuz ayarları yakında')),
@@ -593,15 +611,30 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       onShare: _shareLive,
       onReport: s.streamId != null && s.streamId!.isNotEmpty
           ? () => openReportFlow(
-                context,
-                ReportTarget(
-                  type: ReportTargetType.liveStream,
-                  targetId: s.streamId!,
-                  displayTitle: s.streamerName ?? 'Canlı yayın',
-                ),
-              )
+              context,
+              ReportTarget(
+                type: ReportTargetType.liveStream,
+                targetId: s.streamId!,
+                displayTitle: s.streamerName ?? 'Canlı yayın',
+              ),
+            )
           : null,
     );
+  }
+
+  bool _isFortuneBroadcast(LiveBroadcastSession s) {
+    bool hasFortuneText(String value) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == 'fortune' ||
+          normalized == 'fal' ||
+          normalized.contains('fal') ||
+          normalized.contains('tarot') ||
+          normalized.contains('kahve') ||
+          normalized.contains('burç') ||
+          normalized.contains('astroloji');
+    }
+
+    return hasFortuneText(s.category) || s.tags.any(hasFortuneText);
   }
 
   @override
@@ -609,8 +642,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     final baseSession = widget.session;
     final streamId = baseSession.streamId?.trim();
     final hasStream = streamId != null && streamId.isNotEmpty;
-    final roomState =
-        hasStream ? ref.watch(liveRoomProvider(streamId)) : const LiveRoomState();
+    final roomState = hasStream
+        ? ref.watch(liveRoomProvider(streamId))
+        : const LiveRoomState();
     final s = baseSession.copyWith(viewerCount: roomState.viewerCount);
     final top = MediaQuery.paddingOf(context).top;
     final giftCtrl = ref.watch(liveGiftControllerProvider);
@@ -623,29 +657,29 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     if (hasStream) {
       ref.listen(liveRoomProvider(streamId), (prev, next) {
         if (next.streamEnded && !(prev?.streamEnded ?? false) && !s.isHost) {
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          if (!mounted) return;
-          await showDialog<void>(
-            context: context,
-            barrierDismissible: false,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Yayın sona erdi'),
-              content: const Text('Yayıncı yayını kapattı.'),
-              actions: [
-                FilledButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Tamam'),
-                ),
-              ],
-            ),
-          );
-          if (!mounted) return;
-          if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
-            widget.onSwipeClose!();
-          } else {
-            context.go('/live');
-          }
-        });
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (!mounted) return;
+            await showDialog<void>(
+              context: context,
+              barrierDismissible: false,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Yayın sona erdi'),
+                content: const Text('Yayıncı yayını kapattı.'),
+                actions: [
+                  FilledButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Tamam'),
+                  ),
+                ],
+              ),
+            );
+            if (!context.mounted) return;
+            if (widget.embeddedInSwipe && widget.onSwipeClose != null) {
+              widget.onSwipeClose!();
+            } else {
+              context.go('/live');
+            }
+          });
         }
       });
     }
@@ -664,7 +698,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
               .pulseHeartsVisual();
           final battle = ref.read(liveVideoPkProvider(streamId)).battle;
           if (battle != null && battle['status'] == 'active') {
-            unawaited(ref.read(liveVideoPkProvider(streamId).notifier).refresh());
+            unawaited(
+              ref.read(liveVideoPkProvider(streamId).notifier).refresh(),
+            );
           }
         }
       }
@@ -703,7 +739,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                       followLoading: interaction.followLoading,
                       onFollow: _onFollow,
                       onClose: () => _confirmEnd(context),
-                      onProfileTap: s.hostUserId != null || s.streamerHandle != null
+                      onProfileTap:
+                          s.hostUserId != null || s.streamerHandle != null
                           ? () => _openHostProfile(context, s)
                           : null,
                       onBack: widget.embeddedInSwipe
@@ -741,8 +778,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                             TextButton.icon(
                               onPressed: _openPkPanel,
                               style: TextButton.styleFrom(
-                                backgroundColor:
-                                    Colors.black.withValues(alpha: 0.35),
+                                backgroundColor: Colors.black.withValues(
+                                  alpha: 0.35,
+                                ),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 6,
@@ -755,15 +793,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                               ),
                               label: const Text(
                                 'PK Başlat',
-                                style: TextStyle(color: Colors.white, fontSize: 12),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
                             TextButton.icon(
                               onPressed: _openHostTools,
                               style: TextButton.styleFrom(
-                                backgroundColor:
-                                    Colors.black.withValues(alpha: 0.35),
+                                backgroundColor: Colors.black.withValues(
+                                  alpha: 0.35,
+                                ),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 6,
@@ -776,7 +818,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                               ),
                               label: const Text(
                                 'Araçlar',
-                                style: TextStyle(color: Colors.white, fontSize: 12),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
                           ],
@@ -804,8 +849,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.keyboard_arrow_down_rounded,
-                                    color: Colors.white, size: 18),
+                                Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
                                 Text(
                                   'Sohbeti gizle',
                                   style: TextStyle(
@@ -872,14 +920,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF22C55E).withValues(alpha: 0.9),
+                                color: const Color(
+                                  0xFF22C55E,
+                                ).withValues(alpha: 0.9),
                                 borderRadius: BorderRadius.circular(24),
                               ),
                               child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.chat_bubble_rounded,
-                                      color: Colors.white, size: 16),
+                                  Icon(
+                                    Icons.chat_bubble_rounded,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
                                   SizedBox(width: 6),
                                   Text(
                                     'Sohbet',
@@ -921,10 +974,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                       }
                       _chat.clear();
                       unawaited(
-                        ref.read(liveRoomProvider(streamId).notifier).sendMessage(
-                              t,
-                              selfName: user?.display ?? 'Sen',
-                            ),
+                        ref
+                            .read(liveRoomProvider(streamId).notifier)
+                            .sendMessage(t, selfName: user?.display ?? 'Sen'),
                       );
                     },
                     onEnd: s.isHost ? () => _confirmEnd(context) : null,
@@ -973,32 +1025,5 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     );
     if (ok != true || !context.mounted) return;
     await _exitBroadcast(context);
-  }
-}
-
-class _HostBadge extends StatelessWidget {
-  const _HostBadge({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return ProfileGlass(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      borderRadius: 14,
-      blur: 8,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: AppColors.accentCyan),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
-    );
   }
 }

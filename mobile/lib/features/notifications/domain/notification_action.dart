@@ -37,15 +37,17 @@ void navigateFromNotification(GoRouter router, AppNotificationEntity n) {
     case 'live':
       router.go('/live');
       return;
+    case 'fortune_teller':
+      if (n.targetId != null && n.targetId!.trim().isNotEmpty) {
+        router.push('/canli-falcilar/${n.targetId!.trim()}');
+        return;
+      }
+      router.go('/canli-falcilar');
+      return;
     case 'fortune_session':
     case 'fortune_session_request':
     case 'live_fortune':
     case 'live_fortune_request':
-    case 'fortune_teller':
-      if (n.targetId != null && n.targetId!.trim().isNotEmpty) {
-        router.push('/canli-falcilar');
-        return;
-      }
       router.go('/canli-falcilar');
       return;
     case 'message':

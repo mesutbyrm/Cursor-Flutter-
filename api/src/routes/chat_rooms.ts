@@ -1,4 +1,5 @@
 import { Router } from "express";
+import type { Request, Response } from "express";
 import { optionalAuth } from "../middleware/optionalAuth";
 import { requireAuth } from "../middleware/requireAuth";
 import { fail, ok } from "../lib/response";
@@ -535,8 +536,8 @@ chatRoomsRouter.delete("/rooms/:roomId/dj/:targetUserId", requireAuth, async (re
 });
 
 async function handleAssignSeat(
-  req: { params: { roomId: string }; body?: Record<string, unknown>; userId?: string },
-  res: import("express").Response,
+  req: Request,
+  res: Response,
 ) {
   const user = await loadUser(req.userId);
   if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");

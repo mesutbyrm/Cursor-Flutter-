@@ -1,14 +1,19 @@
 import { Router } from "express";
+import type { Request, Response } from "express";
 import { z } from "zod";
 import {
   createFortuneSession,
+  appendTellerGift,
+  fortuneRoomInfoForUser,
   fortuneSessionRoleForUser,
   getFortuneSession,
   listIncomingFortuneSessionsForTeller,
   listFortuneSessionsForUser,
+  listPendingLiveFalRequestsForTeller,
   listTellerChatMessages,
   appendTellerChatMessage,
   respondFortuneSession,
+  updateFortuneSessionLifecycle,
 } from "../lib/liveStreamExtrasStore";
 import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
@@ -146,9 +151,69 @@ socialRouter.get("/fortune-tellers", async (_req, res) => {
   });
 });
 
-/** POST /api/fortune-tellers/session — canlı falcı oturumu */
-socialRouter.post("/fortune-tellers/session", requireAuth, async (req, res) => {
+/** GET /api/social/fortune-tellers — eski Flutter fallback liste yolu. */
+socialRouter.get("/social/fortune-tellers", async (_req, res) => {
+  const tellerId = "ft-1";
+  const tellerUserId = resolveTellerUserId(tellerId);
+  return ok(res, {
+    items: [
+      {
+        id: tellerId,
+        userId: tellerUserId,
+        tellerUserId,
+        displayName: "Canlı Falcı",
+        rating: 4.8,
+        pricePerMinute: 12,
+        pricePerSession: 120,
+        isOnline: true,
+        specialties: ["tarot"],
+        image: "https://canlifal.com/favicon.ico",
+      },
+    ],
+  });
+});
+
+function fortuneSessionPayload(session: ReturnType<typeof createFortuneSession>, userId: string) {
+  const role = fortuneSessionRoleForUser(session, userId);
+  return {
+    session,
+    sessionId: session.id,
+    id: session.id,
+    tellerId: session.tellerId,
+    tellerUserId: session.tellerUserId,
+    clientId: session.clientId,
+    clientName: session.clientName,
+    durationMinutes: session.durationMinutes,
+    totalJeton: session.totalJeton,
+    fortuneType: session.fortuneType,
+    trtcRoomId: session.trtcRoomId,
+    roomId: session.trtcRoomId,
+    role,
+    isClient: role === "client",
+    isTeller: role === "teller",
+    status: session.status,
+    tellerResponse: session.tellerResponse,
+  };
+}
+
+function canAccessFortuneSession(
+  session: ReturnType<typeof createFortuneSession>,
+  userId: string,
+) {
+  return (
+    session.clientId === userId ||
+    session.tellerUserId === userId ||
+    session.tellerId === userId
+  );
+}
+
+function createFortuneSessionFromRequest(
+  req: Request,
+  res: Response,
+  explicitTellerId?: string,
+) {
   const tellerId =
+    explicitTellerId?.trim() ||
     req.body?.tellerId?.toString()?.trim() ||
     req.body?.fortuneTellerId?.toString()?.trim();
   if (!tellerId) {
@@ -160,28 +225,32 @@ socialRouter.post("/fortune-tellers/session", requireAuth, async (req, res) => {
     req.body as Record<string, unknown>,
   );
   const body = req.body as Record<string, unknown>;
+  const duration =
+    Number(body?.durationMinutes ?? body?.duration ?? body?.minutes) || undefined;
+  const totalJeton =
+    Number(body?.totalJeton ?? body?.jeton ?? body?.creditsCharged) || undefined;
   const session = createFortuneSession(tellerId, clientId, tellerUserId, {
     clientName: body?.clientName?.toString(),
-    durationMinutes: Number(body?.durationMinutes) || undefined,
-    totalJeton: Number(body?.totalJeton) || undefined,
+    durationMinutes: duration,
+    totalJeton,
+    fortuneType: body?.fortuneType?.toString() || body?.falType?.toString(),
   });
-  const role = fortuneSessionRoleForUser(session, clientId);
-  return ok(res, {
-    session,
-    sessionId: session.id,
-    tellerId: session.tellerId,
-    tellerUserId: session.tellerUserId,
-    clientId: session.clientId,
-    clientName: session.clientName,
-    durationMinutes: session.durationMinutes,
-    totalJeton: session.totalJeton,
-    trtcRoomId: session.trtcRoomId,
-    role,
-    isClient: role === "client",
-    status: session.status,
-    tellerResponse: session.tellerResponse,
-  });
+  return ok(res, fortuneSessionPayload(session, clientId));
+}
+
+/** POST /api/fortune-tellers/session — canlı falcı oturumu */
+socialRouter.post("/fortune-tellers/session", requireAuth, async (req, res) => {
+  return createFortuneSessionFromRequest(req, res);
 });
+
+/** POST /api/fortune-tellers/:tellerId/session — dokümanlı üretim alias'ı. */
+socialRouter.post(
+  "/fortune-tellers/:tellerId/session",
+  requireAuth,
+  async (req, res) => {
+    return createFortuneSessionFromRequest(req, res, req.params.tellerId);
+  },
+);
 
 /** POST /api/fortune-tellers/toggle-online — üretim: falcı çevrimiçi */
 socialRouter.post(
@@ -195,6 +264,21 @@ socialRouter.post(
     return ok(res, { online, isOnline: online });
   },
 );
+
+/** POST/PATCH /api/fortune-tellers/toggle — web fallback alias. */
+for (const method of ["post", "patch"] as const) {
+  socialRouter[method](
+    "/fortune-tellers/toggle",
+    requireAuth,
+    async (req, res) => {
+      const online =
+        req.body?.online === true ||
+        req.body?.isOnline === true ||
+        req.body?.online === "true";
+      return ok(res, { online, isOnline: online });
+    },
+  );
+}
 
 /** GET /api/fortune-tellers/my-profile — falcı kendi profili */
 socialRouter.get(
@@ -222,7 +306,8 @@ socialRouter.get(
   "/fortune-tellers/sessions",
   requireAuth,
   async (req, res) => {
-    const sessions = listFortuneSessionsForUser(req.userId!);
+    const status = req.query.status?.toString();
+    const sessions = listFortuneSessionsForUser(req.userId!, status);
     return ok(res, { sessions });
   },
 );
@@ -233,10 +318,10 @@ socialRouter.patch(
   requireAuth,
   async (req, res) => {
     const action = req.body?.action?.toString()?.trim().toLowerCase();
-    if (!["accept", "hold", "reject", "complete", "cancel"].includes(action ?? "")) {
-      return fail(res, 400, "BAD_REQUEST", "action: accept | hold | reject | complete | cancel");
+    if (!["accept", "hold", "reject", "complete", "cancel", "end", "leave", "extend"].includes(action ?? "")) {
+      return fail(res, 400, "BAD_REQUEST", "action: accept | hold | reject | complete | cancel | end | leave | extend");
     }
-    if (action === "complete" || action === "cancel") {
+    if (action === "complete" || action === "cancel" || action === "end" || action === "leave") {
       const session = getFortuneSession(req.params.sessionId);
       if (!session) {
         return fail(res, 404, "NOT_FOUND", "Oturum bulunamadı");
@@ -244,6 +329,18 @@ socialRouter.patch(
       session.status = "ended";
       if (action === "cancel") session.tellerResponse = "rejected";
       return ok(res, { session, sessionId: session.id, status: session.status });
+    }
+    if (action === "extend") {
+      const result = updateFortuneSessionLifecycle(
+        req.params.sessionId,
+        req.userId!,
+        "extend",
+        {
+          minutes: Number(req.body?.minutes ?? req.body?.durationMinutes ?? 0),
+        },
+      );
+      if (!result.ok) return fail(res, 400, "BAD_REQUEST", result.error);
+      return ok(res, fortuneSessionPayload(result.session, req.userId!));
     }
     const result = respondFortuneSession(
       req.params.sessionId,
@@ -276,6 +373,27 @@ socialRouter.get(
   },
 );
 
+/** GET /api/fortune-tellers/session?sessionId=... — üretim query alias'ı. */
+socialRouter.get(
+  "/fortune-tellers/session",
+  requireAuth,
+  async (req, res) => {
+    const sessionId = req.query.sessionId?.toString()?.trim();
+    if (!sessionId) {
+      return fail(res, 400, "BAD_REQUEST", "sessionId gerekli");
+    }
+    const session = getFortuneSession(sessionId);
+    if (!session) {
+      return fail(res, 404, "NOT_FOUND", "Oturum bulunamadı");
+    }
+    const uid = req.userId!;
+    if (!canAccessFortuneSession(session, uid)) {
+      return fail(res, 403, "FORBIDDEN", "Yetki yok");
+    }
+    return ok(res, fortuneSessionPayload(session, uid));
+  },
+);
+
 /** GET /api/fortune-tellers/session/:sessionId — oturum durumu (danışan poll) */
 socialRouter.get(
   "/fortune-tellers/session/:sessionId",
@@ -286,18 +404,10 @@ socialRouter.get(
       return fail(res, 404, "NOT_FOUND", "Oturum bulunamadı");
     }
     const uid = req.userId!;
-    if (session.clientId !== uid && session.tellerUserId !== uid) {
+    if (!canAccessFortuneSession(session, uid)) {
       return fail(res, 403, "FORBIDDEN", "Yetki yok");
     }
-    const role = fortuneSessionRoleForUser(session, uid);
-    return ok(res, {
-      session,
-      sessionId: session.id,
-      status: session.status,
-      tellerResponse: session.tellerResponse,
-      role,
-      isClient: role === "client",
-    });
+    return ok(res, fortuneSessionPayload(session, uid));
   },
 );
 
@@ -331,6 +441,165 @@ socialRouter.post(
   },
 );
 
+/** GET /api/live-fal/pending — falcıya düşen bekleyen canlı fal istekleri. */
+socialRouter.get("/live-fal/pending", requireAuth, async (req, res) => {
+  const sessions = listPendingLiveFalRequestsForTeller(req.userId!);
+  return ok(res, {
+    pending: sessions,
+    requests: sessions,
+    sessions,
+  });
+});
+
+/** POST /api/live-fal/request/:requestId/accept — üretim live-fal kabul alias'ı. */
+socialRouter.post(
+  "/live-fal/request/:requestId/accept",
+  requireAuth,
+  async (req, res) => {
+    const result = respondFortuneSession(
+      req.params.requestId,
+      req.userId!,
+      "accept",
+    );
+    if (!result.ok) {
+      return fail(res, 400, "BAD_REQUEST", result.error);
+    }
+    return ok(res, fortuneSessionPayload(result.session, req.userId!));
+  },
+);
+
+/** POST /api/live-fal/request/:requestId/reject — üretim live-fal red alias'ı. */
+socialRouter.post(
+  "/live-fal/request/:requestId/reject",
+  requireAuth,
+  async (req, res) => {
+    const result = respondFortuneSession(
+      req.params.requestId,
+      req.userId!,
+      "reject",
+    );
+    if (!result.ok) {
+      return fail(res, 400, "BAD_REQUEST", result.error);
+    }
+    return ok(res, fortuneSessionPayload(result.session, req.userId!));
+  },
+);
+
+/** GET /api/room/:sessionId — canlı fal oda/timer durumu. */
+socialRouter.get("/room/:sessionId", requireAuth, async (req, res) => {
+  const session = getFortuneSession(req.params.sessionId);
+  if (!session) {
+    return fail(res, 404, "NOT_FOUND", "Oturum bulunamadı");
+  }
+  const uid = req.userId!;
+  if (!canAccessFortuneSession(session, uid)) {
+    return fail(res, 403, "FORBIDDEN", "Yetki yok");
+  }
+  return ok(res, fortuneRoomInfoForUser(session, uid));
+});
+
+/** PATCH /api/room/:sessionId — start_timer, ping, extend, teller_add_time, end. */
+socialRouter.patch("/room/:sessionId", requireAuth, async (req, res) => {
+  const action = req.body?.action?.toString()?.trim().toLowerCase();
+  if (!action) {
+    return fail(res, 400, "BAD_REQUEST", "action gerekli");
+  }
+  const result = updateFortuneSessionLifecycle(
+    req.params.sessionId,
+    req.userId!,
+    action,
+    {
+      minutes: Number(req.body?.minutes ?? req.body?.durationMinutes ?? 0),
+      durationMinutes: Number(req.body?.durationMinutes ?? 0),
+      creditsPerMinute: Number(req.body?.creditsPerMinute ?? 0),
+    },
+  );
+  if (!result.ok) {
+    return fail(res, 400, "BAD_REQUEST", result.error);
+  }
+  return ok(res, {
+    ...fortuneRoomInfoForUser(result.session, req.userId!),
+    session: result.session,
+  });
+});
+
+/** GET/POST /api/room/:sessionId/messages — oda sohbeti (teller-chat ile aynı store). */
+socialRouter.get(
+  "/room/:sessionId/messages",
+  requireAuth,
+  async (req, res) => {
+    const session = getFortuneSession(req.params.sessionId);
+    if (!session) {
+      return fail(res, 404, "NOT_FOUND", "Oturum bulunamadı");
+    }
+    const uid = req.userId!;
+    if (!canAccessFortuneSession(session, uid)) {
+      return fail(res, 403, "FORBIDDEN", "Yetki yok");
+    }
+    const after = req.query.after?.toString();
+    const afterMs = after ? Date.parse(after) : Number.NaN;
+    const messages = listTellerChatMessages(req.params.sessionId).filter((m) =>
+      Number.isNaN(afterMs) ? true : Date.parse(m.createdAt) > afterMs,
+    );
+    return ok(res, { messages, items: messages });
+  },
+);
+
+socialRouter.post(
+  "/room/:sessionId/messages",
+  requireAuth,
+  async (req, res) => {
+    const session = getFortuneSession(req.params.sessionId);
+    if (!session) {
+      return fail(res, 404, "NOT_FOUND", "Oturum bulunamadı");
+    }
+    const uid = req.userId!;
+    if (!canAccessFortuneSession(session, uid)) {
+      return fail(res, 403, "FORBIDDEN", "Yetki yok");
+    }
+    const text =
+      req.body?.message?.toString()?.trim() ||
+      req.body?.text?.toString()?.trim() ||
+      req.body?.content?.toString()?.trim();
+    if (!text) {
+      return fail(res, 400, "BAD_REQUEST", "message gerekli");
+    }
+    const role = fortuneSessionRoleForUser(session, uid);
+    const row = appendTellerChatMessage(
+      req.params.sessionId,
+      uid,
+      role === "teller" ? "Falcı" : session.clientName ?? "Danışan",
+      text,
+    );
+    return ok(res, { message: row });
+  },
+);
+
+/** POST /api/teller/gifts — canlı fal bahşiş stub'u. */
+socialRouter.post("/teller/gifts", requireAuth, async (req, res) => {
+  const sessionId = req.body?.sessionId?.toString()?.trim();
+  const amount = Number(
+    req.body?.amount ?? req.body?.jeton ?? req.body?.coins ?? 0,
+  );
+  if (!sessionId || amount <= 0) {
+    return fail(res, 400, "BAD_REQUEST", "sessionId ve amount gerekli");
+  }
+  const session = getFortuneSession(sessionId);
+  if (!session) {
+    return fail(res, 404, "NOT_FOUND", "Oturum bulunamadı");
+  }
+  const uid = req.userId!;
+  if (!canAccessFortuneSession(session, uid)) {
+    return fail(res, 403, "FORBIDDEN", "Yetki yok");
+  }
+  const gift = appendTellerGift(session.id, uid, session.tellerUserId, amount);
+  return ok(res, {
+    gift,
+    balance: 0,
+    jetonBalance: 0,
+  });
+});
+
 /** GET/POST /api/teller-chat/:sessionId — seans metin sohbeti */
 socialRouter.get(
   "/teller-chat/:sessionId",
@@ -341,7 +610,7 @@ socialRouter.get(
       return fail(res, 404, "NOT_FOUND", "Oturum bulunamadı");
     }
     const uid = req.userId!;
-    if (session.clientId !== uid && session.tellerUserId !== uid) {
+    if (!canAccessFortuneSession(session, uid)) {
       return fail(res, 403, "FORBIDDEN", "Yetki yok");
     }
     return ok(res, {
@@ -359,7 +628,7 @@ socialRouter.post(
       return fail(res, 404, "NOT_FOUND", "Oturum bulunamadı");
     }
     const uid = req.userId!;
-    if (session.clientId !== uid && session.tellerUserId !== uid) {
+    if (!canAccessFortuneSession(session, uid)) {
       return fail(res, 403, "FORBIDDEN", "Yetki yok");
     }
     const text =

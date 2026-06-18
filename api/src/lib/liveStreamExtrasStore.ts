@@ -239,10 +239,16 @@ export type FortuneSessionRow = {
   clientName?: string;
   durationMinutes?: number;
   totalJeton?: number;
+  fortuneType?: string;
   trtcRoomId: string;
   status: "pending" | "active" | "ended";
   tellerResponse: "pending" | "accepted" | "held" | "rejected";
+  timerStartedAt?: string | null;
+  lastPingAt?: string | null;
+  endedAt?: string | null;
+  creditsPerMinute?: number;
   createdAt: string;
+  updatedAt: string;
 };
 
 const fortuneSessions = new Map<string, FortuneSessionRow>();
@@ -255,11 +261,14 @@ export function createFortuneSession(
     clientName?: string;
     durationMinutes?: number;
     totalJeton?: number;
+    fortuneType?: string;
+    creditsPerMinute?: number;
   },
 ) {
   const sessionId = `fs-${randomUUID().slice(0, 12)}`;
   const anchorUserId =
     tellerUserId?.trim() || tellerId.trim() || clientId.trim();
+  const now = new Date().toISOString();
   const row: FortuneSessionRow = {
     id: sessionId,
     tellerId,
@@ -268,10 +277,16 @@ export function createFortuneSession(
     clientName: extras?.clientName?.trim() || undefined,
     durationMinutes: extras?.durationMinutes,
     totalJeton: extras?.totalJeton,
+    fortuneType: extras?.fortuneType?.trim() || "general",
+    creditsPerMinute: extras?.creditsPerMinute,
     trtcRoomId: sessionId,
     status: "pending",
     tellerResponse: "pending",
-    createdAt: new Date().toISOString(),
+    timerStartedAt: null,
+    lastPingAt: null,
+    endedAt: null,
+    createdAt: now,
+    updatedAt: now,
   };
   fortuneSessions.set(row.id, row);
   return row;
@@ -309,7 +324,9 @@ export function respondFortuneSession(
   } else {
     row.tellerResponse = "rejected";
     row.status = "ended";
+    row.endedAt = new Date().toISOString();
   }
+  row.updatedAt = new Date().toISOString();
   return { ok: true as const, session: row };
 }
 
@@ -328,9 +345,10 @@ export function getFortuneSession(sessionId: string) {
 }
 
 /** Üretim uyumu: falcı + danışan oturum listesi. */
-export function listFortuneSessionsForUser(userId: string) {
+export function listFortuneSessionsForUser(userId: string, status?: string) {
   const uid = userId.trim();
   if (!uid) return [];
+  const normalizedStatus = status?.trim().toLowerCase();
   return [...fortuneSessions.values()]
     .filter(
       (s) =>
@@ -338,7 +356,137 @@ export function listFortuneSessionsForUser(userId: string) {
         s.tellerUserId === uid ||
         s.tellerId === uid,
     )
+    .filter((s) => !normalizedStatus || s.status === normalizedStatus)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export function listPendingLiveFalRequestsForTeller(userId: string) {
+  return listIncomingFortuneSessionsForTeller(userId);
+}
+
+export function updateFortuneSessionLifecycle(
+  sessionId: string,
+  userId: string,
+  action: string,
+  extras?: {
+    minutes?: number;
+    durationMinutes?: number;
+    creditsPerMinute?: number;
+  },
+) {
+  const row = fortuneSessions.get(sessionId);
+  if (!row) return { ok: false as const, error: "Oturum bulunamadı" };
+  if (row.clientId !== userId && row.tellerUserId !== userId && row.tellerId !== userId) {
+    return { ok: false as const, error: "Yetki yok" };
+  }
+
+  const normalized = action.trim().toLowerCase();
+  const now = new Date().toISOString();
+  if (normalized === "start_timer") {
+    row.status = "active";
+    row.tellerResponse = "accepted";
+    row.timerStartedAt ??= now;
+  } else if (normalized === "ping") {
+    row.lastPingAt = now;
+  } else if (normalized === "extend" || normalized === "teller_add_time") {
+    const addMinutes = Math.max(
+      0,
+      Number(extras?.minutes ?? extras?.durationMinutes ?? 0),
+    );
+    if (addMinutes > 0) {
+      row.durationMinutes = (row.durationMinutes ?? 10) + addMinutes;
+    }
+  } else if (
+    normalized === "end" ||
+    normalized === "leave" ||
+    normalized === "cancel" ||
+    normalized === "complete"
+  ) {
+    row.status = "ended";
+    row.endedAt = now;
+    if (normalized === "cancel") row.tellerResponse = "rejected";
+  } else {
+    return { ok: false as const, error: "Geçersiz action" };
+  }
+
+  if (extras?.creditsPerMinute && extras.creditsPerMinute > 0) {
+    row.creditsPerMinute = extras.creditsPerMinute;
+  }
+  row.updatedAt = now;
+  return { ok: true as const, session: row };
+}
+
+export function fortuneRoomInfoForUser(session: FortuneSessionRow, userId: string) {
+  const role = fortuneSessionRoleForUser(session, userId);
+  const timerStartedAt = session.timerStartedAt ?? null;
+  const elapsedSeconds = timerStartedAt
+    ? Math.max(0, Math.floor((Date.now() - Date.parse(timerStartedAt)) / 1000))
+    : 0;
+  const minutesUsed = Math.floor(elapsedSeconds / 60);
+  return {
+    id: session.id,
+    sessionId: session.id,
+    status: session.status,
+    tellerResponse: session.tellerResponse,
+    roomId: session.trtcRoomId,
+    trtcRoomId: session.trtcRoomId,
+    maxMinutes: session.durationMinutes ?? 10,
+    durationMinutes: session.durationMinutes ?? 10,
+    timerStarted: Boolean(timerStartedAt),
+    timerStartedAt,
+    elapsedSeconds,
+    minutesUsed,
+    creditsPerMinute: session.creditsPerMinute ?? 10,
+    peerId: role === "teller" ? session.clientId : session.tellerUserId,
+    isUser: role === "client",
+    isClient: role === "client",
+    isTeller: role === "teller",
+    tellerId: session.tellerId,
+    tellerUserId: session.tellerUserId,
+    clientId: session.clientId,
+    clientName: session.clientName,
+    totalJeton: session.totalJeton,
+    fortuneType: session.fortuneType,
+    createdAt: session.createdAt,
+    updatedAt: session.updatedAt,
+    endedAt: session.endedAt,
+    user: {
+      id: userId,
+      jetonBalance: 0,
+    },
+  };
+}
+
+export type TellerGiftRow = {
+  id: string;
+  sessionId: string;
+  senderId: string;
+  tellerUserId: string;
+  amount: number;
+  createdAt: string;
+};
+
+const tellerGiftsBySession = new Map<string, TellerGiftRow[]>();
+
+export function appendTellerGift(
+  sessionId: string,
+  senderId: string,
+  tellerUserId: string,
+  amount: number,
+) {
+  const key = sessionId.trim();
+  const row: TellerGiftRow = {
+    id: randomUUID(),
+    sessionId: key,
+    senderId,
+    tellerUserId,
+    amount: Math.max(1, Math.round(amount)),
+    createdAt: new Date().toISOString(),
+  };
+  const list = tellerGiftsBySession.get(key) ?? [];
+  list.push(row);
+  tellerGiftsBySession.set(key, list);
+  return row;
 }
 
 export type TellerChatRow = {

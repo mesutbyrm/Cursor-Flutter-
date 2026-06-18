@@ -212,11 +212,11 @@ export function emitChatRoomDjUpdate(roomId: string) {
     activeDjId: dj.activeDjId,
   };
   const videoPayload = {
+    ...payload,
     type: "roomVideo",
     event: dj.playing ? "play" : dj.currentVideoId ? "pause" : "close",
     action: dj.playing ? "play" : dj.currentVideoId ? "pause" : "close",
     roomId: canonical,
-    ...payload,
   };
   for (const key of voiceRoomTargets(roomId)) {
     io.to(voiceRoom(key)).emit("dj", payload);

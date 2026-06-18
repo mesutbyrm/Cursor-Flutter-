@@ -12,6 +12,7 @@ class LiveFortuneBroadcastSideRail extends StatelessWidget {
     this.onToggleAudio,
     this.onExit,
     this.audioOn = true,
+    this.showFortuneRequest = true,
   });
 
   final int viewerCount;
@@ -21,6 +22,7 @@ class LiveFortuneBroadcastSideRail extends StatelessWidget {
   final VoidCallback? onToggleAudio;
   final VoidCallback? onExit;
   final bool audioOn;
+  final bool showFortuneRequest;
 
   @override
   Widget build(BuildContext context) {
@@ -39,13 +41,15 @@ class LiveFortuneBroadcastSideRail extends StatelessWidget {
           gradient: const [Color(0xFFFF9800), Color(0xFFFFB300)],
           onTap: onGift,
         ),
-        const SizedBox(height: 12),
-        _RailBtn(
-          icon: Icons.coffee_rounded,
-          label: 'Fal İste',
-          gradient: const [Color(0xFF8D6E63), Color(0xFFA1887F)],
-          onTap: onFortuneRequest,
-        ),
+        if (showFortuneRequest) ...[
+          const SizedBox(height: 12),
+          _RailBtn(
+            icon: Icons.coffee_rounded,
+            label: 'Fal İste',
+            gradient: const [Color(0xFF8D6E63), Color(0xFFA1887F)],
+            onTap: onFortuneRequest,
+          ),
+        ],
         const SizedBox(height: 12),
         _RailBtn(
           icon: Icons.person_outline_rounded,

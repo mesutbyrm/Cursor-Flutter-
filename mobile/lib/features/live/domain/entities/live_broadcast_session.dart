@@ -50,7 +50,9 @@ class LiveBroadcastSession {
   factory LiveBroadcastSession.fromStream(LiveStreamEntity stream) {
     return LiveBroadcastSession(
       title: stream.title,
-      category: 'Sohbet',
+      category: stream.category?.trim().isNotEmpty == true
+          ? stream.category!.trim()
+          : 'Sohbet',
       isHost: false,
       streamId: stream.id,
       streamerName: stream.streamerName ?? 'Yayıncı',
