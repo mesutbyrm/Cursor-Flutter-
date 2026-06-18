@@ -157,40 +157,43 @@ class PremiumMembershipPage extends ConsumerWidget {
     MembershipCatalogEntity cat,
     MembershipPackageEntity pkg,
   ) async {
-    final rate = ref.read(walletBalancesProvider).valueOrNull?.jetonTlRate ??
-        kDefaultJetonTlRate;
+    final wallet = ref.read(walletBalancesProvider).valueOrNull;
+    final rate = wallet?.jetonTlRate ?? kDefaultJetonTlRate;
+    final priceJeton = pkg.priceJeton;
 
-    try {
-      await ref.read(dioProvider).safePost<Map<String, dynamic>>(
-        ApiEndpoints.membershipPurchase,
-        data: {'tierId': pkg.id},
-      );
-      ref.invalidate(membershipCatalogProvider);
-      ref.invalidate(walletBalancesProvider);
-      if (context.mounted) {
-        final active = pkg.isActive && (pkg.daysRemaining ?? 0) > 0;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              active
-                  ? '${pkg.title} üyeliğiniz uzatıldı'
-                  : '${pkg.title} üyeliği aktif',
-            ),
-          ),
+    if (wallet != null && priceJeton > 0 && wallet.jeton >= priceJeton) {
+      try {
+        await ref.read(dioProvider).safePost<Map<String, dynamic>>(
+          ApiEndpoints.membershipPurchase,
+          data: {'tierId': pkg.id},
         );
-      }
-      return;
-    } on ApiException catch (e) {
-      if (e.message.contains('Yetersiz jeton')) {
+        ref.invalidate(membershipCatalogProvider);
+        ref.invalidate(walletBalancesProvider);
         if (context.mounted) {
+          final active = pkg.isActive && (pkg.daysRemaining ?? 0) > 0;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                active
+                    ? '${pkg.title} üyeliğiniz uzatıldı'
+                    : '${pkg.title} üyeliği aktif',
+              ),
+            ),
+          );
+        }
+        return;
+      } on ApiException catch (e) {
+        if (!context.mounted) return;
+        final insufficient = e.message.contains('Yetersiz jeton') ||
+            e.message.toLowerCase().contains('insufficient');
+        if (!insufficient) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(e.message)),
           );
-          context.push('/jeton-store');
+          return;
         }
-        return;
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
 
     if (!context.mounted) return;
 

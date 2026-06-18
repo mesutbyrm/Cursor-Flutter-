@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+
+## 1.0.279+282 (2026-06-18)
+
+### Gold üyelik — ödeme bildir düzeltmesi
+
+- **Yetersiz jeton:** Jeton mağazasına yönlendirme kaldırıldı; Papara/Havale/WhatsApp ödeme akışı açılır
+- **Talep gövdesi:** `senderInfo`, `receiptReference`, `tierId` / `membershipTier` alanları eklendi
+- **Onay metni:** Gold üyelik için «üyeliğiniz aktifleşir» mesajı
+
 ## 1.0.278+281 (2026-06-18)
 
 ### Jeton — ödeme bildir düzeltmesi

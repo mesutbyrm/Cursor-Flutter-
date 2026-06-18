@@ -536,11 +536,14 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     final receipt = receiptParts.join(' · ');
     final autoNotes =
         'Açıklama: $_userLabel · ${widget.package.coins} jeton · ${widget.priceText}';
-    final body = widget.package.id.startsWith('membership_')
+    final isMembership = widget.package.id.startsWith('membership_');
+    final body = isMembership
         ? buildMembershipPaymentRequest(
             package: widget.package,
             method: _methodApi,
-            notes: widget.paymentNotes,
+            notes: widget.paymentNotes ?? autoNotes,
+            senderLabel: _userLabel,
+            receiptReference: receipt.isEmpty ? null : receipt,
           )
         : buildJetonPaymentRequest(
             package: widget.package,
@@ -561,16 +564,21 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
   }
 
   Future<void> _showWaitDialog() async {
+    final isMembership = widget.package.id.startsWith('membership_');
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         icon: const Icon(Icons.hourglass_top_rounded, color: AppThemeColors.coinGold),
         title: const Text('Ödeme bildiriminiz alındı'),
-        content: const Text(
-          'Talebiniz admin ekibine iletildi.\n\n'
-          'Onay süreci genellikle 5–10 dakika sürer. '
-          'Onaylandığında jetonlar hesabınıza yansır ve bildirim alırsınız.',
-          style: TextStyle(height: 1.4),
+        content: Text(
+          isMembership
+              ? 'Talebiniz admin ekibine iletildi.\n\n'
+                  'Onay süreci genellikle 5–10 dakika sürer. '
+                  'Onaylandığında Gold üyeliğiniz aktifleşir ve bildirim alırsınız.'
+              : 'Talebiniz admin ekibine iletildi.\n\n'
+                  'Onay süreci genellikle 5–10 dakika sürer. '
+                  'Onaylandığında jetonlar hesabınıza yansır ve bildirim alırsınız.',
+          style: const TextStyle(height: 1.4),
         ),
         actions: [
           FilledButton(
