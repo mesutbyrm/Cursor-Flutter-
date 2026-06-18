@@ -2,22 +2,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.272+275` |
-| Tarih (UTC) | 2026-06-18 21:22 |
-| Commit | [`9c199dad329cbac2a6edeeb7a9559ea3921d1aa9`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/9c199dad329cbac2a6edeeb7a9559ea3921d1aa9) |
-| İş akışı | [Run 27789472819](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27789472819) |
+| Sürüm | `1.0.273+276` |
+| Tarih (UTC) | 2026-06-18 22:05 |
+| Commit | [`e7397a8149c5fc9ec1b7c5b1eab37eecfa522825`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/e7397a8149c5fc9ec1b7c5b1eab37eecfa522825) |
+| İş akışı | [Run 27791664735](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27791664735) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.272+275 (2026-06-18)
+## 1.0.273+276 (2026-06-18)
 
-### Canlı fal kabul ekranı + tek bildirim
+### Gerçek düzeltmeler — panel, kabul ekranı, tek bildirim
 
-- **Çift kabul ekranı:** Falcı panelindeki otomatik popup kaldırıldı; yalnızca global `FortuneIncomingInviteHost` mor «Canlı Fal İsteği» dialogunu açar
-- **Dashboard SSE/poll:** Falcı panelinde de arka plan SSE ve poll çalışır; kabul ekranı artık paneldeyken de gelir
-- **Tek bildirim:** FCM yerel bildirimi falcı davetinde atlanır; kuyruk tekrar `requestPresent` çağırmaz
-- **Panel etiketleri:** «Falcı Panel» / «Ajans Panel» (onaylı kullanıcılar); `isUsable` ile daha geniş onay algısı
+- **Push `targetId`:** Sunucu `type: fortune` + `targetId` gönderdiğinde artık oturum ID okunur; mor kabul ekranı açılır (önceden yalnızca bildirim geliyordu)
+- **Erken push tamponu:** Oturum açılmadan gelen davetler kaybolmaz; `PushLifecycleListener` mount olunca kuyruğa alınır
+- **Falcı panel poll:** Bekleyen oturumlar `fortuneIncomingInviteProvider` kuyruğuna eklenir (yalnızca `requestPresent` değil)
+- **Onay algısı:** `my-profile` / `agency/my` `profile` sarmalayıcısı; ajans `isUsable` teller ile aynı mantık; router redirect önce API’yi bekler
+- **Çift bildirim:** Falcı davet tıklamasında liste yenileme atlanır; push tamponu çift işlemeyi engeller
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
