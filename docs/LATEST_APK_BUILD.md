@@ -2,24 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.257+260` |
-| Tarih (UTC) | 2026-06-17 22:59 |
-| Commit | [`fbdf00de6571a84123e0da18425edecea65a0300`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/fbdf00de6571a84123e0da18425edecea65a0300) |
-| İş akışı | [Run 27724648050](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27724648050) |
+| Sürüm | `1.0.258+261` |
+| Tarih (UTC) | 2026-06-18 06:14 |
+| Commit | [`a2f61476c2b072bb24eda66d905065e67c988d0a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a2f61476c2b072bb24eda66d905065e67c988d0a) |
+| İş akışı | [Run 27740078035](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27740078035) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.257+260 (2026-06-17)
+## 1.0.258+261 (2026-06-18)
 
-### Jeton yükleme — ödeme bildirimi düzeltmesi
+### Bildirimler — push kayıt ve izin akışı düzeltmesi
 
-- **Paketler:** 50 / 100 / 250 / 500 / 1000 jeton her zaman seçilebilir (API + varsayılan birleşimi)
-- **Satın al:** Paket kartına dokununca doğrudan ödeme yöntemi ekranı açılır
-- **Ödeme yöntemleri:** WhatsApp `+905327170173`, Papara, Havale/IBAN — hepsinde «Ödeme Bildir»
-- **Admin bildirimi:** `notifyAdmins` + `notifyStaff` ile staff rollerine anında bildirim
-- **WhatsApp:** Ödeme bildir → admin talebi → WhatsApp sohbeti açılır
-- **API:** 2xx ödeme yanıtı kabulü genişletildi
+- **Mevcut oturum:** Uygulama zaten girişli açıldığında OneSignal `login` ve push token kaydı artık anında tetiklenir
+- **İzin sonrası kayıt:** Bildirim izni banner’dan açıldığında Firebase/FCM token kaydı tekrar denenir
+- **İlk kurulum:** OneSignal/FCM token geç oluşursa kısa retry ile `/api/auth/mobile/device-token`, `/api/devices/fcm`, `/api/user/device-token` kayıtları kaçırılmaz
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
