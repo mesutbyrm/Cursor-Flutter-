@@ -2,30 +2,31 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.259+262` |
-| Tarih (UTC) | 2026-06-18 09:27 |
-| Commit | [`a811bba43244a9dc1fe248e9b38cc14951eeca13`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a811bba43244a9dc1fe248e9b38cc14951eeca13) |
-| İş akışı | [Run 27749367908](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27749367908) |
+| Sürüm | `1.0.260+263` |
+| Tarih (UTC) | 2026-06-18 10:52 |
+| Commit | [`f6753087671546eb5c5eebf69d0e645584dfec1d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/f6753087671546eb5c5eebf69d0e645584dfec1d) |
+| İş akışı | [Run 27753875430](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27753875430) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.259+262 (2026-06-18)
+## 1.0.260+263 (2026-06-18)
 
-### Canlı yayın — kamera ve durum düzeltmeleri
+### Canlı falcı — istek mobilde gelmiyor / iptal takılıyor
 
-- **Kamera önizleme:** İzin / desteklenmeyen cihaz hataları artık ekranda gösterilir; «Kamera açılıyor…» yükleme durumu eklendi
-- **Yanlış «yayında» durumu:** Yayın `preparing` ile oluşturulur; geri dönüş veya Agora hatasında sunucuda otomatik `end` çağrılır
-- **Kamera aç/kapa:** Önizlemede `startPreview` / `stopPreview` kullanılır
+- **`/api/live-fal/pending`:** Sunucu tarafı filtrelenmiş istekler artık mobilde yanlışlıkla elenmiyor
+- **Davet popup:** Diyalog dışına tıklanınca istek kalıcı olarak silinmiyor; tekrar gösteriliyor
+- **İptal:** Onaydan önce «İptal ediliyor…» gösterilmiyor; API zaman aşımı (12 sn) eklendi
+- **Falcı çevrimiçi:** Profil bulununca `toggle-online` her oturumda yeniden deneniyor
 
-### Canlı falcı — istek ve iptal
+### Canlı yayın
 
-- **Yayıncıya istek:** Video yayın SSE üzerinden `fal_request` olayları; falcı poll 2 sn; aktif yayın odası SSE önceliği
-- **İptal:** `declined` / `cancelled` durumları; iptal API başarısızsa kullanıcıya uyarı; bekleme ekranında yükleme durumu
+- Yayın oluşturma `status: live` (üretim API uyumu); orphan temizliği korunuyor
 
-### Jeton Al — WhatsApp
+### Jeton — Papara / IBAN
 
-- **WhatsApp seçimi:** Yöntem ekranında WhatsApp seçilince sohbet otomatik açılır (jeton, kullanıcı adı, ödeme türü ile)
+- **Tek dokunuş:** Papara ve havalede «Ödemeyi Bildir» doğrudan admin talebi gönderir
+- **Bekleyen talep:** Aynı kullanıcıda önceki bekleyen talep varsa net hata mesajı
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
