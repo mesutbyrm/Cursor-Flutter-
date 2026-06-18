@@ -185,15 +185,16 @@ class LiveFortuneFlow {
     );
 
     final path = router.routerDelegate.currentConfiguration.uri.path;
-    if (path.contains('/canli-falcilar') &&
-        (path.contains('/session') || path.contains('/waiting'))) {
+    if (path.contains('/canli-falcilar') && path.contains('/session')) {
       return;
     }
 
-    router.push(
-      '/canli-falcilar/${teller.id}/session',
-      extra: session,
-    );
+    final route = '/canli-falcilar/${teller.id}/session';
+    if (path.contains('/waiting')) {
+      router.pushReplacement(route, extra: session);
+    } else {
+      router.push(route, extra: session);
+    }
   }
 
   /// Uygulama açılışında `GET /api/user/active-sessions` (§8).

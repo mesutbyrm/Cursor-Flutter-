@@ -15,7 +15,6 @@ import '../theme/home_palette.dart';
 import '../widgets/live_fortune_unavailable_dialog.dart';
 import '../live_fortune/live_fortune_close_dialog.dart';
 import '../live_fortune/live_fortune_admin_ad_panel.dart';
-import '../live_fortune/live_fortune_ad_transition_page.dart';
 
 /// Danışan — randevu sonrası falcı kabulünü bekler; admin reklamı gösterilir.
 class LiveFortuneWaitingPage extends ConsumerStatefulWidget {
@@ -118,10 +117,9 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
         totalJeton: status.totalJeton ?? widget.session.totalJeton,
       );
       if (!mounted) return;
-      await Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(
-          builder: (_) => LiveFortuneAdTransitionPage(session: activeSession),
-        ),
+      context.pushReplacement(
+        '/canli-falcilar/${activeSession.teller.id}/session',
+        extra: activeSession,
       );
     }
   }

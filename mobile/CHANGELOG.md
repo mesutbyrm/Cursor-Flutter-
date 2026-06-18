@@ -1,5 +1,16 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.262+265 (2026-06-18)
+
+### Canlı falcı — randevu → kabul → görüşme akışı
+
+- **Falcı daveti:** «X sizinle Y dakika görüşme talep ediyor» metni; `userId` / `user.name` API eşlemesi düzeltildi
+- **Kabul:** Ekstra başlatma popup'ı kaldırıldı — kabul sonrası doğrudan görüşme ekranı
+- **Danışan:** Falcı kabul edince bekleme ekranından doğrudan görüşmeye geçiş (3 sn reklam atlandı)
+- **TRTC:** Oda bilgisi alındıktan sonra video bağlantısı; sunucu `roomId` ile yeniden bağlanma
+- **Push kabul:** Bekleme ekranındayken `session_update` ile anında görüşmeye yönlendirme
+- **Falcı çevrimiçi:** Her oturumda `toggle-online` yeniden denenir
+
 ## 1.0.261+264 (2026-06-18)
 
 ### Canlı falcı — backend MD sözleşmesi (canlifal.com/api/download-prompt)

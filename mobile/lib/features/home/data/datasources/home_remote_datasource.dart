@@ -716,9 +716,12 @@ class HomeRemoteDataSource {
     final status = pick(data, ['status'])?.toString() ??
         pick(sessionMap, ['status'])?.toString() ??
         'pending';
-    final tellerResponse = pick(data, ['tellerResponse', 'response'])?.toString() ??
+    var tellerResponse = pick(data, ['tellerResponse', 'response'])?.toString() ??
         pick(sessionMap, ['tellerResponse', 'response'])?.toString() ??
         'pending';
+    if (status == 'active' || status == 'accepted') {
+      tellerResponse = 'accepted';
+    }
     final isClientRaw = data['isClient'];
     final isClient = isClientRaw is bool ? isClientRaw : true;
     final tellerMap = asJsonMap(sessionMap['teller'] ?? data['teller']);
@@ -873,10 +876,14 @@ class HomeRemoteDataSource {
     }
     return FortuneIncomingSession(
       sessionId: _str(m, ['requestId', 'id', 'sessionId']) ?? '',
-      clientId: _str(m, ['clientId']) ??
+      clientId: _str(m, ['clientId', 'userId']) ??
           _str(client, ['id', 'userId']) ??
           '',
-      clientName: _str(m, ['clientName', 'clientDisplayName', 'userName']) ??
+      clientName: _str(m, [
+            'clientName',
+            'clientDisplayName',
+            'userName',
+          ]) ??
           _str(client, ['displayName', 'name', 'username']) ??
           'Danışan',
       tellerId: _str(m, ['tellerId', 'fortuneTellerId']) ??
@@ -901,7 +908,7 @@ class HomeRemoteDataSource {
           'creditsCharged',
         ]),
       ),
-      category: _str(m, ['category', 'specialty', 'fortuneType', 'falType']) ??
+      category: _str(m, ['fortuneType', 'category', 'specialty', 'falType']) ??
           _str(teller, ['specialty']) ??
           'general',
       status: status,

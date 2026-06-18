@@ -12,15 +12,12 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../data/services/live_fortune_request_sse_service.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
-import '../live_fortune/live_fortune_close_dialog.dart';
-import '../live_fortune/live_fortune_flow.dart';
 import '../live_fortune/live_fortune_flow.dart';
 import '../providers/fortune_incoming_invite_provider.dart';
 import '../providers/fortune_live_event_bus.dart';
 import '../providers/home_providers.dart';
 import 'fortune_request_dialog.dart';
 import 'live_fortune_invite_action.dart';
-import 'live_fortune_session_start_sheet.dart';
 
 final liveFortuneRequestSseServiceProvider =
     Provider<LiveFortuneRequestSseService>((ref) {
@@ -106,8 +103,7 @@ class _FortuneIncomingInviteHostState
     if (!_mayPresentInvites()) return;
     final path =
         ref.read(goRouterProvider).routerDelegate.currentConfiguration.uri.path;
-    if (path.contains('/canli-falcilar') &&
-        (path.contains('/session') || path.contains('/waiting'))) {
+    if (path.contains('/canli-falcilar') && path.contains('/session')) {
       return;
     }
     await LiveFortuneFlow.resumeActiveClientSessions(
@@ -132,7 +128,6 @@ class _FortuneIncomingInviteHostState
     }
     if (profile == null) return;
     _tellerProfileId = profile.id;
-    if (_tellerOnlineSet) return;
     final ok = await remote.setFortuneTellerOnline(online: true);
     if (ok) _tellerOnlineSet = true;
   }
@@ -272,18 +267,11 @@ class _FortuneIncomingInviteHostState
               action: 'reject',
             );
         _dismissed.add(req.sessionId);
-        if (mounted && navCtx.mounted) {
-          liveFortuneExitToHome(navCtx);
-        }
         return;
       }
 
       if (action == LiveFortuneInviteAction.hold) {
-        await ref.read(homeRemoteProvider).respondFortuneSession(
-              req.sessionId,
-              action: 'hold',
-            );
-        _dismissed.add(req.sessionId);
+        ref.read(fortuneIncomingInviteProvider.notifier).enqueue(req);
         return;
       }
 
@@ -291,38 +279,16 @@ class _FortuneIncomingInviteHostState
             req.sessionId,
             action: 'accept',
           );
-      if (!mounted || !ok) return;
-
-      final roomPreview = await ref
-          .read(homeRemoteProvider)
-          .fetchRoomInfo(req.sessionId);
-      final clientJeton = roomPreview?.userJetonBalance ?? req.totalJeton;
-
-      final startChoice = await showLiveFortuneSessionStartSheet(
-        navCtx,
-        clientName: req.clientName,
-        clientJetonBalance: clientJeton,
-      );
-      if (!mounted || startChoice == null) {
-        await ref.read(homeRemoteProvider).respondFortuneSession(
-              req.sessionId,
-              action: 'reject',
-            );
-        if (navCtx.mounted) liveFortuneExitToHome(navCtx);
+      if (!mounted) return;
+      if (!ok) {
+        ScaffoldMessenger.of(navCtx).showSnackBar(
+          const SnackBar(
+            content: Text('Kabul sunucuya iletilemedi. Tekrar deneyin.'),
+          ),
+        );
+        ref.read(fortuneIncomingInviteProvider.notifier).enqueue(req);
         return;
       }
-
-      if (startChoice.durationMinutes > 0) {
-        await ref.read(homeRemoteProvider).tellerAddSessionTime(
-              sessionId: req.sessionId,
-              minutes: startChoice.durationMinutes,
-            );
-      }
-
-      await ref.read(homeRemoteProvider).roomAction(
-            req.sessionId,
-            'start_timer',
-          );
 
       final status = await ref
           .read(homeRemoteProvider)
@@ -347,20 +313,13 @@ class _FortuneIncomingInviteHostState
       final session = LiveFortuneSessionEntity(
         sessionId: req.sessionId,
         teller: teller,
-        durationMinutes: startChoice.durationMinutes > 0
-            ? startChoice.durationMinutes
-            : (status?.durationMinutes ?? req.durationMinutes),
-        totalJeton: startChoice.totalJeton > 0
-            ? startChoice.totalJeton
-            : (status?.totalJeton ?? req.totalJeton),
+        durationMinutes: status?.durationMinutes ?? req.durationMinutes,
+        totalJeton: status?.totalJeton ?? req.totalJeton,
         tellerUserId: status?.tellerUserId ?? req.tellerUserId ?? teller.trtcUserId,
         clientId: req.clientId,
         isClient: false,
         trtcRoomIdOverride: status?.trtcRoomId,
       );
-      ref.read(videoWebrtcSignalServiceProvider).start(
-            streamId: session.sessionId,
-          );
       if (!mounted) return;
       await navCtx.push(
         '/canli-falcilar/${teller.id}/session',

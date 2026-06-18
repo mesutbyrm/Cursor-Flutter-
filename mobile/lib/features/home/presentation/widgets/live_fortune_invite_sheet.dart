@@ -124,11 +124,11 @@ class _LiveFortuneInviteSheet extends StatelessWidget {
                   color: Color(0xFFFFD54F),
                   fontWeight: FontWeight.w800,
                 ),
-                children: const [
+                children: [
                   TextSpan(
-                    text: ' sizinle canlı fal için bağlanmak istiyor',
+                    text: ' sizinle $durationMinutes dakika görüşme talep ediyor',
                     style: TextStyle(
-                      color: Colors.white70,
+                      color: Colors.white.withValues(alpha: 0.85),
                       fontWeight: FontWeight.w500,
                     ),
                   ),

@@ -57,9 +57,10 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
   void initState() {
     super.initState();
     _remaining = Duration(minutes: widget.session.durationMinutes);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_bootstrapRoom());
-      unawaited(_joinRtc());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _bootstrapRoom();
+      if (!mounted) return;
+      await _joinRtc();
       _startChatPoll();
     });
   }
@@ -94,6 +95,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
   Future<void> _syncRoomInfo({bool startTimerIfTeller = false}) async {
     if (!mounted || _leaving) return;
     final remote = ref.read(homeRemoteProvider);
+    final previousRoomId = _room?.roomId;
     final info = await remote.fetchRoomInfo(widget.session.sessionId);
     if (!mounted || info == null) return;
 
@@ -136,6 +138,21 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
       _remaining = Duration(minutes: maxMinutes);
     }
     if (mounted) setState(() {});
+
+    final newRoomId = _room?.roomId;
+    if (newRoomId != null &&
+        newRoomId.isNotEmpty &&
+        previousRoomId != newRoomId &&
+        _rtcReady) {
+      await _rejoinRtc();
+    }
+  }
+
+  Future<void> _rejoinRtc() async {
+    await _trtc.leave();
+    if (!mounted) return;
+    setState(() => _rtcReady = false);
+    await _joinRtc();
   }
 
   Future<void> _sendPing() async {
