@@ -332,22 +332,23 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
               child: FilledButton.icon(
                 onPressed: _submitting
                     ? null
-                    : () {
-                        if (widget.method == _JetonPayMethod.whatsapp) {
-                          _openPaymentNotifySheet();
-                        } else {
-                          unawaited(_submitAndClose());
-                        }
-                      },
-                icon: Icon(
-                  widget.method == _JetonPayMethod.whatsapp
-                      ? Icons.chat_rounded
-                      : Icons.payment_rounded,
-                ),
+                    : () => unawaited(_submitAndClose()),
+                icon: _submitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Icon(
+                        widget.method == _JetonPayMethod.whatsapp
+                            ? Icons.chat_rounded
+                            : Icons.payment_rounded,
+                      ),
                 label: Text(
-                  widget.method == _JetonPayMethod.whatsapp
-                      ? 'Ödeme Bildir'
-                      : 'Ödemeyi Bildir',
+                  _submitting ? 'Gönderiliyor…' : 'Ödeme Bildir',
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
                 style: FilledButton.styleFrom(
@@ -358,12 +359,11 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
                 ),
               ),
             ),
-            if (widget.method != _JetonPayMethod.whatsapp)
-              TextButton.icon(
-                onPressed: _submitting ? null : _openPaymentNotifySheet,
-                icon: const Icon(Icons.attach_file_rounded, size: 18),
-                label: const Text('Dekont ekle (isteğe bağlı)'),
-              ),
+            TextButton.icon(
+              onPressed: _submitting ? null : _openPaymentNotifySheet,
+              icon: const Icon(Icons.attach_file_rounded, size: 18),
+              label: const Text('Dekont ekle (isteğe bağlı)'),
+            ),
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('← Geri Dön'),
@@ -487,8 +487,8 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
                       ? null
                       : () {
                           final refText = receiptRefCtrl.text.trim();
-                          Navigator.pop(ctx);
                           setState(() => _receiptImagePath = localImage);
+                          Navigator.pop(ctx);
                           unawaited(
                             _submitAndClose(extraReceiptRef: refText),
                           );

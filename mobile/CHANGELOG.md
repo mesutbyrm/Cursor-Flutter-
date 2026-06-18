@@ -1,5 +1,14 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.278+281 (2026-06-18)
+
+### Jeton — ödeme bildir düzeltmesi
+
+- **Tek dokunuş:** WhatsApp / Papara / Havale'de «Ödeme Bildir» doğrudan talep gönderir (önce yalnızca alt sayfa açılıyordu)
+- **API yedekleri:** `POST /api/payment/requests` → `/api/jeton/payment-request` → `/api/payment/request`
+- **Yanıt algısı:** `paymentRequest`, `ok`, `created` alanları; 2xx geniş kabul
+- **Dekont:** İsteğe bağlı «Dekont ekle» tüm yöntemlerde
+
 ## 1.0.276+279 (2026-06-18)
 
 ### Falcı Panel / Ajans Panel — onay algısı düzeltmesi

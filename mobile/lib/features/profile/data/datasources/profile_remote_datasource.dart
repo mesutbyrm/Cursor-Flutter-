@@ -336,6 +336,18 @@ class WalletRemoteDataSource {
       final r = Map<String, dynamic>.from(m['request'] as Map);
       if (r['id'] != null) return true;
     }
+    for (final key in const [
+      'paymentRequest',
+      'cfcPaymentRequest',
+      'payment_request',
+    ]) {
+      final nested = m[key];
+      if (nested is Map) {
+        final r = Map<String, dynamic>.from(nested);
+        if (r['id'] != null || r['paymentRequestId'] != null) return true;
+      }
+    }
+    if (m['ok'] == true || m['created'] == true) return true;
     // 2xx + gövde hatasız: üretim yanıt şekilleri için geniş kabul
     if (code >= 200 && code < 300) {
       final err = m['error'];
@@ -404,68 +416,87 @@ class WalletRemoteDataSource {
       );
     }
 
-    Response<dynamic> res;
-    try {
-      res = await _postPaymentRequest(ApiEndpoints.paymentRequests, body);
-    } on ApiException catch (e) {
-      if (e.statusCode != 404) rethrow;
-      res = await _postPaymentRequest('/api/jeton/payment-request', body);
+    final paths = <String>[
+      ApiEndpoints.paymentRequests,
+      '/api/jeton/payment-request',
+      '/api/payment/request',
+    ];
+
+    ApiException? lastError;
+    for (final path in paths) {
+      try {
+        final res = await _postPaymentRequest(path, body);
+        final code = res.statusCode ?? 0;
+        final data = res.data;
+
+        if (code >= 400) {
+          String msg = 'Talep gönderilemedi (HTTP $code).';
+          if (data is Map) {
+            msg = (data['error'] ?? data['message'] ?? msg).toString();
+          } else if (data is String &&
+              data.isNotEmpty &&
+              !data.contains('<html')) {
+            msg = data;
+          }
+          if (code == 400 &&
+              msg.toLowerCase().contains('bekleyen') &&
+              msg.toLowerCase().contains('talep')) {
+            throw ApiException(
+              'Zaten bekleyen bir jeton ödeme talebiniz var. '
+              'Önceki talebin onaylanmasını bekleyin veya destek ile iletişime geçin.',
+              statusCode: code,
+            );
+          }
+          if (code == 404 || code == 405) {
+            lastError = ApiException(msg, statusCode: code);
+            continue;
+          }
+          throw ApiException(msg, statusCode: code);
+        }
+
+        if (_paymentRequestAccepted(data, code)) return;
+
+        if (data is String) {
+          final s = data.trim();
+          if (s.contains('<!DOCTYPE') || s.contains('<html')) {
+            throw const ApiException(
+              'Ödeme talebi gönderilemedi — sunucu oturum sayfası döndürdü. '
+              'Çıkış yapıp tekrar giriş yapın.',
+            );
+          }
+          if (s.isNotEmpty) {
+            throw ApiException(s);
+          }
+          return;
+        }
+
+        if (data is Map) {
+          final m = Map<String, dynamic>.from(data);
+          if (m['success'] == false) {
+            throw ApiException(
+              (m['error'] ?? m['message'] ?? 'Talep gönderilemedi').toString(),
+            );
+          }
+          final err = m['error'];
+          if (err != null && err.toString().isNotEmpty) {
+            throw ApiException(err.toString());
+          }
+        }
+
+        if (code >= 200 && code < 300) return;
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 405) {
+          lastError = e;
+          continue;
+        }
+        rethrow;
+      }
     }
 
-    final code = res.statusCode ?? 0;
-    final data = res.data;
-
-    if (code >= 400) {
-      String msg = 'Talep gönderilemedi (HTTP $code).';
-      if (data is Map) {
-        msg = (data['error'] ?? data['message'] ?? msg).toString();
-      } else if (data is String && data.isNotEmpty && !data.contains('<html')) {
-        msg = data;
-      }
-      if (code == 400 &&
-          msg.toLowerCase().contains('bekleyen') &&
-          msg.toLowerCase().contains('talep')) {
-        throw ApiException(
-          'Zaten bekleyen bir jeton ödeme talebiniz var. '
-          'Önceki talebin onaylanmasını bekleyin veya destek ile iletişime geçin.',
-          statusCode: code,
+    throw lastError ??
+        const ApiException(
+          'Ödeme bildirimi sunucuya ulaşamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.',
         );
-      }
-      throw ApiException(msg, statusCode: code);
-    }
-
-    if (_paymentRequestAccepted(data, code)) return;
-    if (data is String) {
-      final s = data.trim();
-      if (s.contains('<!DOCTYPE') || s.contains('<html')) {
-        throw const ApiException(
-          'Ödeme talebi gönderilemedi — sunucu oturum sayfası döndürdü. '
-          'Çıkış yapıp tekrar giriş yapın.',
-        );
-      }
-      if (s.isNotEmpty) {
-        throw ApiException(s);
-      }
-      return;
-    }
-
-    if (data is Map) {
-      final m = Map<String, dynamic>.from(data);
-      if (m['success'] == false) {
-        throw ApiException(
-          (m['error'] ?? m['message'] ?? 'Talep gönderilemedi').toString(),
-        );
-      }
-      final err = m['error'];
-      if (err != null && err.toString().isNotEmpty) {
-        throw ApiException(err.toString());
-      }
-    }
-
-    throw const ApiException(
-      'Ödeme bildirimi sunucudan onay alınamadı. '
-      'Bildirimler veya talep geçmişinden kontrol edin; gerekirse tekrar deneyin.',
-    );
   }
 
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests() async {
