@@ -45,6 +45,7 @@ class VideoStreamSseService {
   void Function(LiveStreamChatMessage message)? _onMessage;
   void Function(LiveGiftEvent event)? _onGift;
   VoidCallback? _onStreamEnded;
+  void Function(Map<String, dynamic> battle)? _onPkBattle;
   static const _fortuneEventTypes = {
     'fal_request',
     'live_fal_request',
