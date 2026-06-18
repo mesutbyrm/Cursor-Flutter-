@@ -2,23 +2,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.273+276` |
-| Tarih (UTC) | 2026-06-18 22:05 |
-| Commit | [`e7397a8149c5fc9ec1b7c5b1eab37eecfa522825`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/e7397a8149c5fc9ec1b7c5b1eab37eecfa522825) |
-| İş akışı | [Run 27791664735](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27791664735) |
+| Sürüm | `1.0.274+277` |
+| Tarih (UTC) | 2026-06-18 22:48 |
+| Commit | [`7add4a12c9be0adbae3a97ed84fd1d649d56938c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/7add4a12c9be0adbae3a97ed84fd1d649d56938c) |
+| İş akışı | [Run 27793501952](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27793501952) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.273+276 (2026-06-18)
+## 1.0.274+277 (2026-06-18)
 
-### Gerçek düzeltmeler — panel, kabul ekranı, tek bildirim
+### Canlı fal — kabul ekranı + TRTC kamera/ses
 
-- **Push `targetId`:** Sunucu `type: fortune` + `targetId` gönderdiğinde artık oturum ID okunur; mor kabul ekranı açılır (önceden yalnızca bildirim geliyordu)
-- **Erken push tamponu:** Oturum açılmadan gelen davetler kaybolmaz; `PushLifecycleListener` mount olunca kuyruğa alınır
-- **Falcı panel poll:** Bekleyen oturumlar `fortuneIncomingInviteProvider` kuyruğuna eklenir (yalnızca `requestPresent` değil)
-- **Onay algısı:** `my-profile` / `agency/my` `profile` sarmalayıcısı; ajans `isUsable` teller ile aynı mantık; router redirect önce API’yi bekler
-- **Çift bildirim:** Falcı davet tıklamasında liste yenileme atlanır; push tamponu çift işlemeyi engeller
+- **Kabul ekranı:** `targetPath` içinden oturum ID; kuyruk tekrar `requestPresent`; UI hazır olunca otomatik popup
+- **TRTC iki yönlü video:** `videoCall` sahnesi — danışan da `anchor` (kamera/mikrofon yayınlar)
+- **Falcı uzak video:** Host rolünde bile danışan videosu dinlenir (önceden hiç dinlenmiyordu)
+- **Bağlantı ekranı:** «Bağlantı kuruluyor…» + «Yeniden Bağlan»; falcı PiP önizleme
+- **Oda peerId:** `GET /api/room/{id}` → danışan TRTC kimliği eşlemesi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
