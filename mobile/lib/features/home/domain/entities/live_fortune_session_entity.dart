@@ -35,6 +35,7 @@ class FortuneSessionStatusResult {
     required this.tellerResponse,
     required this.isClient,
     this.tellerUserId,
+    this.tellerProfileId,
     this.trtcRoomId,
     this.durationMinutes,
     this.totalJeton,
@@ -45,6 +46,7 @@ class FortuneSessionStatusResult {
   final String tellerResponse;
   final bool isClient;
   final String? tellerUserId;
+  final String? tellerProfileId;
   final String? trtcRoomId;
   final int? durationMinutes;
   final int? totalJeton;
@@ -93,6 +95,8 @@ class FortuneSessionCreateResult {
     this.clientId,
     this.role,
     this.isClient = true,
+    this.creditsCharged,
+    this.maxMinutes,
   });
 
   final String sessionId;
@@ -101,6 +105,8 @@ class FortuneSessionCreateResult {
   final String? clientId;
   final String? role;
   final bool isClient;
+  final int? creditsCharged;
+  final int? maxMinutes;
 }
 
 /// Canlı fal oturumu — TRTC oda + süre/jeton.

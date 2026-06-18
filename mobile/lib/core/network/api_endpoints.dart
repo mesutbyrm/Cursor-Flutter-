@@ -103,6 +103,9 @@ abstract final class ApiEndpoints {
   static const fortuneTellerMyProfile = '/api/fortune-tellers/my-profile';
   static const fortuneTellerToggleOnline = '/api/fortune-tellers/toggle-online';
 
+  /// Aktif seanslar — kullanıcı uygulama açılışında (üretim prompt §8).
+  static const userActiveSessions = '/api/user/active-sessions';
+
   static String tellerChat(String sessionId) => '/api/teller-chat/$sessionId';
 
   /// Canlı fal istekleri — üretim web ile aynı (`/api/live-fal/*`).

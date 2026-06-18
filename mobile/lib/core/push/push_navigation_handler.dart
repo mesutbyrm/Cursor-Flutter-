@@ -12,15 +12,18 @@ class PushNavigationHandler {
   static GoRouter? _router;
   static void Function()? onPushReceived;
   static void Function(Map<String, dynamic> data)? onFortuneInvite;
+  static void Function(FortuneSessionUpdatePayload update)? onSessionUpdate;
 
   static void install(
     GoRouter router, {
     void Function()? onReceived,
     void Function(Map<String, dynamic> data)? onFortuneInviteData,
+    void Function(FortuneSessionUpdatePayload update)? onSessionUpdateData,
   }) {
     _router = router;
     onPushReceived = onReceived;
     onFortuneInvite = onFortuneInviteData;
+    onSessionUpdate = onSessionUpdateData;
   }
 
   static void navigateToPath(String path) {
@@ -36,6 +39,16 @@ class PushNavigationHandler {
 
   static bool handleFortuneInviteData(Map<String, dynamic>? data) {
     if (data == null || data.isEmpty) return false;
+
+    final sessionUpdate = parseSessionUpdatePayload(data);
+    if (sessionUpdate != null) {
+      onSessionUpdate?.call(sessionUpdate);
+      if (sessionUpdate.isRejected) {
+        _router?.go('/canli-falcilar');
+      }
+      return true;
+    }
+
     final invite = parseFortuneIncomingPayload(data);
     if (invite == null) return false;
     onFortuneInvite?.call(data);
@@ -48,6 +61,17 @@ class PushNavigationHandler {
 
     final router = _router;
     if (router == null || data == null || data.isEmpty) return;
+
+    final type = [
+      data['type'],
+      data['event'],
+      data['notificationType'],
+    ].whereType<String>().map((s) => s.toLowerCase()).join(' ');
+
+    if (type.contains('session_ended')) {
+      router.go('/canli-falcilar');
+      return;
+    }
 
     final entity = AppNotificationEntity(
       id: data['id']?.toString() ?? 'push',

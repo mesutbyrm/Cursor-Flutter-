@@ -39,6 +39,7 @@ void navigateFromNotification(GoRouter router, AppNotificationEntity n) {
       return;
     case 'fortune_session':
     case 'fortune_session_request':
+    case 'session_request':
     case 'live_fortune':
     case 'live_fortune_request':
     case 'fortune_teller':
@@ -46,6 +47,10 @@ void navigateFromNotification(GoRouter router, AppNotificationEntity n) {
         router.push('/canli-falcilar');
         return;
       }
+      router.go('/canli-falcilar');
+      return;
+    case 'session_update':
+    case 'session_ended':
       router.go('/canli-falcilar');
       return;
     case 'message':

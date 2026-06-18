@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.261+264 (2026-06-18)
+
+### Canlı falcı — backend MD sözleşmesi (canlifal.com/api/download-prompt)
+
+- **Seans oluşturma:** `POST /api/fortune-tellers/session` — body yalnızca `tellerId`, `fortuneType`, `duration`; `creditsCharged` / `maxMinutes` yanıttan okunur
+- **Falcı poll:** Öncelik `GET /api/fortune-tellers/sessions?status=pending` (3 sn aralık)
+- **Kabul / red / iptal:** `PATCH /api/fortune-tellers/sessions/{id}` `{ action }` birincil yol
+- **Çevrimiçi:** `POST /api/fortune-tellers/toggle-online` `{ isOnline: true }`
+- **Aktif seans:** Uygulama açılışında `GET /api/user/active-sessions` ile devam
+- **Push:** `session_request`, `session_update`, `session_ended` tipleri işlenir; kabulde canlı odaya yönlendirme
+- **Danışan bekleme:** Durum poll 3 sn (üretim dokümanı §6–8)
+
 ## 1.0.260+263 (2026-06-18)
 
 ### Canlı falcı — istek mobilde gelmiyor / iptal takılıyor

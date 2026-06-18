@@ -81,21 +81,14 @@ class HomeRemoteDataSource {
         ? fortuneType!.trim()
         : 'general';
     try {
+      // Üretim sözleşmesi: POST /api/fortune-tellers/session
+      // Body: tellerId, fortuneType, duration (canlifal.com/api/download-prompt)
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.fortuneTellerSession,
         data: {
           'tellerId': id,
           'fortuneType': type,
           'duration': duration,
-          'fortuneTellerId': id,
-          if (tellerUserId != null && tellerUserId.trim().isNotEmpty) ...{
-            'tellerUserId': tellerUserId.trim(),
-            'anchorUserId': tellerUserId.trim(),
-          },
-          if (clientName != null && clientName.trim().isNotEmpty)
-            'clientName': clientName.trim(),
-          'durationMinutes': duration,
-          if (totalJeton != null) 'totalJeton': totalJeton,
         },
       );
       final body = res.data;
@@ -116,18 +109,30 @@ class HomeRemoteDataSource {
       final isClient = isClientRaw is bool
           ? isClientRaw
           : role != 'teller';
+      final charged = asInt(
+        pick(data, ['creditsCharged', 'totalJeton']) ??
+            pick(sessionMap, ['creditsCharged', 'totalJeton']),
+      );
       return FortuneSessionCreateResult(
         sessionId: sessionId,
         status: status,
         tellerUserId: pick(data, ['tellerUserId', 'anchorUserId'])?.toString() ??
-            pick(sessionMap, ['tellerUserId'])?.toString(),
-        clientId: pick(data, ['clientId'])?.toString() ??
-            pick(sessionMap, ['clientId'])?.toString(),
+            pick(sessionMap, ['tellerUserId'])?.toString() ??
+            tellerUserId,
+        clientId: pick(data, ['clientId', 'userId'])?.toString() ??
+            pick(sessionMap, ['clientId', 'userId'])?.toString(),
         role: role,
         isClient: isClient,
+        creditsCharged: charged > 0 ? charged : totalJeton,
+        maxMinutes: asInt(
+          pick(data, ['maxMinutes', 'duration']) ??
+              pick(sessionMap, ['maxMinutes', 'duration']),
+        ),
       );
-    } catch (_) {
-      return null;
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(ApiException.userMessage(e));
     }
   }
 
@@ -146,6 +151,16 @@ class HomeRemoteDataSource {
     }
 
     try {
+      final pending = await _fetchFortuneSessionsFromPath(
+        ApiEndpoints.fortuneTellerSessionsWithStatus('pending'),
+      );
+      for (final row in pending) {
+        serverScopedIds.add(row.sessionId);
+      }
+      addAll(pending);
+    } catch (_) {}
+
+    try {
       final liveFal = await fetchLiveFalPending();
       for (final row in liveFal) {
         serverScopedIds.add(row.sessionId);
@@ -154,7 +169,6 @@ class HomeRemoteDataSource {
     } catch (_) {}
 
     for (final path in [
-      ApiEndpoints.fortuneTellerSessionsWithStatus('pending'),
       ApiEndpoints.fortuneTellerSessions,
       ApiEndpoints.fortuneTellerIncomingSessions,
     ]) {
@@ -227,29 +241,25 @@ class HomeRemoteDataSource {
     }
   }
 
-  /// Falcı uygulamadayken web ile aynı «çevrimiçi» durumu.
+  /// Falcı uygulamadayken web ile aynı «çevrimiçi» durumu (§5).
   Future<bool> setFortuneTellerOnline({bool online = true}) async {
-    final body = {'online': online, 'isOnline': online};
-    for (final call in [
-      () => _dio.safePost<dynamic>(
-            ApiEndpoints.fortuneTellerToggleOnline,
-            data: body,
-          ),
-      () => _dio.safePatch<dynamic>(
-            '/api/fortune-tellers/toggle',
-            data: body,
-          ),
-      () => _dio.safePost<dynamic>(
-            '/api/fortune-tellers/toggle',
-            data: body,
-          ),
-    ]) {
-      try {
-        await call();
-        return true;
-      } catch (_) {}
+    final body = {'isOnline': online};
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.fortuneTellerToggleOnline,
+        data: body,
+      );
+      return true;
+    } catch (_) {}
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.fortuneTellerToggleOnline,
+        data: {'online': online, 'isOnline': online},
+      );
+      return true;
+    } catch (_) {
+      return false;
     }
-    return false;
   }
 
   Future<LiveFortuneTellerEntity?> fetchMyFortuneTellerProfile() async {
@@ -300,15 +310,7 @@ class HomeRemoteDataSource {
     final key = sessionId.trim();
     if (key.isEmpty) return false;
     final normalized = action.trim().toLowerCase();
-    if (normalized == 'accept') {
-      final ok = await acceptLiveFalRequest(key);
-      if (ok) return true;
-    } else if (normalized == 'reject' || normalized == 'decline') {
-      final ok = await rejectLiveFalRequest(key);
-      if (ok) return true;
-    } else if (normalized == 'hold') {
-      // Üretim: PATCH ile beklet.
-    }
+    // Üretim §7.2–7.4: PATCH /api/fortune-tellers/sessions/{id}
     try {
       await _dio.safePatch<dynamic>(
         ApiEndpoints.fortuneTellerSessionPatch(key),
@@ -316,6 +318,15 @@ class HomeRemoteDataSource {
       );
       return true;
     } catch (_) {}
+    if (normalized == 'accept') {
+      final ok = await acceptLiveFalRequest(key);
+      if (ok) return true;
+    } else if (normalized == 'reject' ||
+        normalized == 'decline' ||
+        normalized == 'cancel') {
+      final ok = await rejectLiveFalRequest(key);
+      if (ok) return true;
+    }
     try {
       await _dio.safePost<dynamic>(
         ApiEndpoints.fortuneTellerSessionRespond(key),
@@ -327,6 +338,30 @@ class HomeRemoteDataSource {
     }
   }
 
+  /// Kullanıcının aktif seansları — `GET /api/user/active-sessions` (§8).
+  Future<List<FortuneSessionStatusResult>> fetchUserActiveSessions() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.userActiveSessions);
+      final body = res.data;
+      final list = body is List
+          ? body
+          : body is Map
+              ? pick(asJsonMap(body), ['sessions', 'items', 'data']) ?? []
+              : [];
+      if (list is! List) return const [];
+      return list
+          .map((raw) {
+            final m = asJsonMap(raw);
+            return _statusFromSessionMaps(m, m);
+          })
+          .whereType<FortuneSessionStatusResult>()
+          .where((s) => s.isActive)
+          .toList(growable: false);
+    } catch (_) {
+      return const [];
+    }
+  }
+
   Future<bool> endFortuneSession(String sessionId) async {
     final key = sessionId.trim();
     if (key.isEmpty) return false;
@@ -335,19 +370,21 @@ class HomeRemoteDataSource {
     Future<Map<String, dynamic>?> guardedRoom(Future<Map<String, dynamic>?> future) =>
         future.timeout(const Duration(seconds: 12), onTimeout: () => null);
 
-    final roomEnded = await guardedRoom(roomAction(key, 'end'));
-    if (roomEnded != null) return true;
-    if (await guarded(rejectLiveFalRequest(key))) return true;
+    // §7.4 cancel — pending seans iptali (jeton iadesi)
     try {
       await _dio
           .safePatch<dynamic>(
             ApiEndpoints.fortuneTellerSessionPatch(key),
-            data: const {'action': 'cancel', 'status': 'cancelled'},
+            data: const {'action': 'cancel'},
           )
           .timeout(const Duration(seconds: 12));
       return true;
     } catch (_) {}
-    for (final action in const ['cancel', 'end', 'leave', 'complete']) {
+
+    final roomEnded = await guardedRoom(roomAction(key, 'end'));
+    if (roomEnded != null) return true;
+    if (await guarded(rejectLiveFalRequest(key))) return true;
+    for (final action in const ['reject', 'end', 'leave', 'complete']) {
       if (await guarded(respondFortuneSession(key, action: action))) {
         return true;
       }
@@ -684,13 +721,18 @@ class HomeRemoteDataSource {
         'pending';
     final isClientRaw = data['isClient'];
     final isClient = isClientRaw is bool ? isClientRaw : true;
+    final tellerMap = asJsonMap(sessionMap['teller'] ?? data['teller']);
     return FortuneSessionStatusResult(
       sessionId: id,
       status: status,
       tellerResponse: tellerResponse,
       isClient: isClient,
       tellerUserId: pick(data, ['tellerUserId', 'anchorUserId'])?.toString() ??
-          pick(sessionMap, ['tellerUserId', 'anchorUserId'])?.toString(),
+          pick(sessionMap, ['tellerUserId', 'anchorUserId'])?.toString() ??
+          pick(tellerMap, ['userId'])?.toString(),
+      tellerProfileId: pick(data, ['tellerId'])?.toString() ??
+          pick(sessionMap, ['tellerId'])?.toString() ??
+          pick(tellerMap, ['id'])?.toString(),
       trtcRoomId: pick(data, ['trtcRoomId', 'roomId'])?.toString() ??
           pick(sessionMap, ['trtcRoomId', 'roomId'])?.toString(),
       durationMinutes: asInt(

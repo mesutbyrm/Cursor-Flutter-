@@ -14,6 +14,7 @@ import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../live_fortune/live_fortune_close_dialog.dart';
 import '../live_fortune/live_fortune_flow.dart';
+import '../live_fortune/live_fortune_flow.dart';
 import '../providers/fortune_incoming_invite_provider.dart';
 import '../providers/fortune_live_event_bus.dart';
 import '../providers/home_providers.dart';
@@ -65,7 +66,7 @@ class _FortuneIncomingInviteHostState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _poll = Timer.periodic(const Duration(seconds: 2), (_) => _pollApi());
+    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _pollApi());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _inviteUiReady = true);
@@ -98,6 +99,21 @@ class _FortuneIncomingInviteHostState
     await _ensureTellerOnline();
     await _connectFortuneSse();
     await _pollApi();
+    await _resumeActiveClientSessions();
+  }
+
+  Future<void> _resumeActiveClientSessions() async {
+    if (!_mayPresentInvites()) return;
+    final path =
+        ref.read(goRouterProvider).routerDelegate.currentConfiguration.uri.path;
+    if (path.contains('/canli-falcilar') &&
+        (path.contains('/session') || path.contains('/waiting'))) {
+      return;
+    }
+    await LiveFortuneFlow.resumeActiveClientSessions(
+      router: ref.read(goRouterProvider),
+      remote: ref.read(homeRemoteProvider),
+    );
   }
 
   Future<void> _ensureTellerOnline() async {

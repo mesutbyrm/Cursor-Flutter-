@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../data/datasources/home_remote_datasource.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../providers/home_providers.dart';
@@ -39,24 +41,36 @@ class LiveFortuneFlow {
     final type = fortuneType ??
         (teller.specialties.isNotEmpty ? teller.specialties.first : 'general');
 
-    final created = await remote.createFortuneTellerSession(
-      teller.id,
-      tellerUserId: teller.userId ?? teller.trtcUserId,
-      clientName: displayName,
-      durationMinutes: durationMinutes,
-      totalJeton: totalJeton,
-      fortuneType: type,
-    );
+    FortuneSessionCreateResult? created;
+    try {
+      created = await remote.createFortuneTellerSession(
+        teller.id,
+        tellerUserId: teller.userId ?? teller.trtcUserId,
+        clientName: displayName,
+        durationMinutes: durationMinutes,
+        totalJeton: totalJeton,
+        fortuneType: type,
+      );
+    } on ApiException catch (e) {
+      if (context.mounted) _snack(context, e.message);
+      return null;
+    } catch (e) {
+      if (context.mounted) _snack(context, ApiException.userMessage(e));
+      return null;
+    }
     if (!context.mounted || created == null) {
       if (context.mounted) _snack(context, 'Randevu oluşturulamadı');
       return null;
     }
 
+    final charged = created.creditsCharged ?? totalJeton;
+    final minutes = created.maxMinutes ?? durationMinutes;
+
     final session = LiveFortuneSessionEntity(
       sessionId: created.sessionId,
       teller: teller,
-      durationMinutes: durationMinutes,
-      totalJeton: totalJeton,
+      durationMinutes: minutes,
+      totalJeton: charged,
       tellerUserId: created.tellerUserId ?? teller.trtcUserId,
       clientId: created.clientId ?? user.id,
       isClient: true,
@@ -127,6 +141,76 @@ class LiveFortuneFlow {
       context.go('/canli-falcilar');
     }
     return true;
+  }
+
+  /// Push `session_update` (accept) veya uygulama açılışında aktif seans devamı.
+  static Future<void> resumeSessionFromPush({
+    required GoRouter router,
+    required String sessionId,
+    required HomeRemoteDataSource remote,
+    String? tellerId,
+  }) async {
+    final key = sessionId.trim();
+    if (key.isEmpty) return;
+
+    final status = await remote.fetchFortuneSessionStatus(key);
+    if (status == null) return;
+
+    if (status.isRejected) {
+      router.go('/canli-falcilar');
+      return;
+    }
+
+    if (!status.isActive) return;
+
+    final tid = tellerId?.trim() ?? '';
+    LiveFortuneTellerEntity? teller;
+    if (tid.isNotEmpty) {
+      teller = await remote.fetchLiveFortuneTeller(tid);
+    }
+    teller ??= LiveFortuneTellerEntity(
+      id: tid.isNotEmpty ? tid : 'teller',
+      name: 'Falcı',
+      isOnline: true,
+    );
+
+    final session = LiveFortuneSessionEntity(
+      sessionId: key,
+      teller: teller,
+      durationMinutes: status.durationMinutes ?? 10,
+      totalJeton: status.totalJeton ?? 0,
+      tellerUserId: status.tellerUserId,
+      isClient: status.isClient,
+      trtcRoomIdOverride: status.trtcRoomId,
+    );
+
+    final path = router.routerDelegate.currentConfiguration.uri.path;
+    if (path.contains('/canli-falcilar') &&
+        (path.contains('/session') || path.contains('/waiting'))) {
+      return;
+    }
+
+    router.push(
+      '/canli-falcilar/${teller.id}/session',
+      extra: session,
+    );
+  }
+
+  /// Uygulama açılışında `GET /api/user/active-sessions` (§8).
+  static Future<void> resumeActiveClientSessions({
+    required GoRouter router,
+    required HomeRemoteDataSource remote,
+  }) async {
+    final active = await remote.fetchUserActiveSessions();
+    if (active.isEmpty) return;
+
+    final first = active.first;
+    await resumeSessionFromPush(
+      router: router,
+      sessionId: first.sessionId,
+      tellerId: first.tellerProfileId ?? first.tellerUserId,
+      remote: remote,
+    );
   }
 
   static String _displayName(UserEntity user) {

@@ -7,7 +7,9 @@ import '../../app/router/app_router.dart';
 import '../../features/admin/presentation/providers/admin_providers.dart';
 import '../../features/auth/domain/entities/user_entity.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../../features/home/presentation/live_fortune/live_fortune_flow.dart';
 import '../../features/home/presentation/providers/fortune_incoming_invite_provider.dart';
+import '../../features/home/presentation/providers/home_providers.dart';
 import '../../features/messages/presentation/providers/messages_providers.dart';
 import '../../features/notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
@@ -49,6 +51,17 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
           if (invite != null) {
             ref.read(fortuneIncomingInviteProvider.notifier).enqueue(invite);
           }
+        },
+        onSessionUpdateData: (update) {
+          if (!update.isAccepted) return;
+          unawaited(
+            LiveFortuneFlow.resumeSessionFromPush(
+              router: ref.read(goRouterProvider),
+              sessionId: update.sessionId,
+              tellerId: update.tellerId,
+              remote: ref.read(homeRemoteProvider),
+            ),
+          );
         },
       );
       _queuePushSync(null, ref.read(authControllerProvider));

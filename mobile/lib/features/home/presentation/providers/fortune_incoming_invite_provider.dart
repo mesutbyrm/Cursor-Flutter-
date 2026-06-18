@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/util/json_util.dart';
@@ -31,32 +33,93 @@ final fortuneIncomingInviteProvider =
   FortuneIncomingInviteNotifier.new,
 );
 
-/// Push / bildirim `additionalData` → davet modeli.
-FortuneIncomingSession? parseFortuneIncomingPayload(Map<String, dynamic>? raw) {
-  if (raw == null || raw.isEmpty) return null;
-
-  Map<String, dynamic> map = Map<String, dynamic>.from(raw);
-  if (map['data'] is Map) {
-    map = {...map, ...asJsonMap(map['data'])};
+Map<String, dynamic> _flattenPushPayload(Map<String, dynamic> raw) {
+  var map = Map<String, dynamic>.from(raw);
+  final nested = map['data'];
+  if (nested is String && nested.trim().isNotEmpty) {
+    try {
+      final decoded = jsonDecode(nested);
+      if (decoded is Map) {
+        map = {...map, ...asJsonMap(decoded)};
+      }
+    } catch (_) {}
+  } else if (nested is Map) {
+    map = {...map, ...asJsonMap(nested)};
   }
   if (map['payload'] is Map) {
     map = {...map, ...asJsonMap(map['payload'])};
   }
+  return map;
+}
 
-  final type = [
-    map['type'],
-    map['event'],
-    map['kind'],
-    map['notificationType'],
-  ].whereType<String>().map((s) => s.toLowerCase()).join(' ');
+String _pushType(Map<String, dynamic> map) => [
+      map['type'],
+      map['event'],
+      map['kind'],
+      map['notificationType'],
+    ].whereType<String>().map((s) => s.toLowerCase()).join(' ');
 
-  final looksLikeFortune = type.contains('fortune') ||
+/// Kullanıcı push — `session_update` (kabul / red / iptal).
+class FortuneSessionUpdatePayload {
+  const FortuneSessionUpdatePayload({
+    required this.sessionId,
+    required this.action,
+    this.tellerId,
+  });
+
+  final String sessionId;
+  final String action;
+  final String? tellerId;
+
+  bool get isAccepted => action == 'accept';
+  bool get isRejected =>
+      action == 'reject' || action == 'decline' || action == 'cancel';
+}
+
+FortuneSessionUpdatePayload? parseSessionUpdatePayload(
+  Map<String, dynamic>? raw,
+) {
+  if (raw == null || raw.isEmpty) return null;
+  final map = _flattenPushPayload(raw);
+  final type = _pushType(map);
+  if (!type.contains('session_update')) return null;
+
+  final sessionId = pick(map, [
+    'sessionId',
+    'session_id',
+    'id',
+  ])?.toString();
+  if (sessionId == null || sessionId.isEmpty) return null;
+
+  final action = pick(map, ['action', 'status'])?.toString().toLowerCase() ??
+      'accept';
+  return FortuneSessionUpdatePayload(
+    sessionId: sessionId,
+    action: action,
+    tellerId: pick(map, ['tellerId', 'teller_id'])?.toString(),
+  );
+}
+
+/// Push / bildirim `additionalData` → falcı davet modeli (`session_request`).
+FortuneIncomingSession? parseFortuneIncomingPayload(Map<String, dynamic>? raw) {
+  if (raw == null || raw.isEmpty) return null;
+
+  final map = _flattenPushPayload(raw);
+  final type = _pushType(map);
+
+  if (type.contains('session_update') || type.contains('session_ended')) {
+    return null;
+  }
+
+  final looksLikeFortune = type.contains('session_request') ||
+      type.contains('fortune') ||
       type.contains('falc') ||
       type.contains('live_fortune') ||
       type.contains('live_session') ||
-      type.contains('session_request') ||
       (map.containsKey('sessionId') &&
-          (map.containsKey('tellerId') || map.containsKey('clientId')));
+          (map.containsKey('tellerId') ||
+              map.containsKey('clientId') ||
+              map.containsKey('userId')));
 
   if (!looksLikeFortune) return null;
 
@@ -70,7 +133,9 @@ FortuneIncomingSession? parseFortuneIncomingPayload(Map<String, dynamic>? raw) {
   ])?.toString();
   if (sessionId == null || sessionId.isEmpty) return null;
 
-  final duration = asInt(pick(map, ['durationMinutes', 'duration', 'minutes']));
+  final duration = asInt(
+    pick(map, ['durationMinutes', 'duration', 'minutes', 'maxMinutes']),
+  );
   return FortuneIncomingSession(
     sessionId: sessionId,
     clientId: pick(map, ['clientId', 'client_id', 'userId'])?.toString() ?? '',
@@ -88,8 +153,17 @@ FortuneIncomingSession? parseFortuneIncomingPayload(Map<String, dynamic>? raw) {
     tellerUserId: pick(map, ['tellerUserId', 'teller_user_id', 'anchorUserId'])
         ?.toString(),
     durationMinutes: duration > 0 ? duration : 10,
-    totalJeton: asInt(pick(map, ['totalJeton', 'total_jeton', 'jeton', 'amount'])),
-    category: pick(map, ['category', 'specialty', 'specialties'])?.toString() ??
+    totalJeton: asInt(
+      pick(map, [
+        'totalJeton',
+        'total_jeton',
+        'jeton',
+        'amount',
+        'creditsCharged',
+      ]),
+    ),
+    category: pick(map, ['category', 'specialty', 'specialties', 'fortuneType'])
+            ?.toString() ??
         'general',
     status: pick(map, ['status'])?.toString() ?? 'pending',
     tellerResponse: pick(map, ['tellerResponse', 'response'])?.toString() ??

@@ -36,7 +36,7 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
   @override
   void initState() {
     super.initState();
-    _poll = Timer.periodic(const Duration(seconds: 2), (_) => _checkStatus());
+    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _checkStatus());
     unawaited(_checkStatus());
   }
 
@@ -69,7 +69,7 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
 
     if (!ended) {
       setState(() => _cancelling = false);
-      _poll = Timer.periodic(const Duration(seconds: 2), (_) => _checkStatus());
+      _poll = Timer.periodic(const Duration(seconds: 3), (_) => _checkStatus());
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
