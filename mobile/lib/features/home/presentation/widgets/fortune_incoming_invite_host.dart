@@ -307,7 +307,6 @@ class _FortuneIncomingInviteHostState
     }
     _presenting = true;
     try {
-      FortuneInviteCoordinator.markDialogShown(req.sessionId);
       final action = await LiveFortuneTellerInviteFlow.showInviteDialog(req);
       if (!mounted) return;
 
@@ -315,6 +314,8 @@ class _FortuneIncomingInviteHostState
         ref.read(fortuneIncomingInviteProvider.notifier).enqueue(req);
         return;
       }
+
+      FortuneInviteCoordinator.markDialogShown(req.sessionId);
 
       if (action == LiveFortuneInviteAction.reject) {
         await ref.read(liveFortuneRepositoryProvider).respondSession(

@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
-import '../live_fortune/fortune_invite_coordinator.dart';
+import 'fortune_incoming_invite_provider.dart';
 import 'home_providers.dart';
 import 'teller_profile_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -125,12 +125,9 @@ class TellerDashboardNotifier extends AutoDisposeNotifier<TellerDashboardState> 
     );
 
     if (pending.isNotEmpty) {
-      final first = pending.first;
-      if (!_handledSessions.contains(first.sessionId)) {
-        FortuneInviteCoordinator.requestPresent(sessionId: first.sessionId);
-        if (kDebugMode) {
-          debugPrint('Incoming invite queued for popup');
-        }
+      for (final session in pending) {
+        if (_handledSessions.contains(session.sessionId)) continue;
+        ref.read(fortuneIncomingInviteProvider.notifier).enqueue(session);
       }
     }
   }

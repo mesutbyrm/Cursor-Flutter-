@@ -70,7 +70,13 @@ class NotificationsRemoteDataSource {
       type: pick(json, ['type', 'category'])?.toString(),
       targetPath: pick(json, ['targetPath', 'actionUrl', 'link', 'href'])
           ?.toString(),
-      targetId: pick(json, ['targetId', 'entityId', 'refId'])?.toString(),
+      targetId: pick(json, [
+            'targetId',
+            'entityId',
+            'refId',
+            'sessionId',
+            'session_id',
+          ])?.toString(),
     );
   }
 

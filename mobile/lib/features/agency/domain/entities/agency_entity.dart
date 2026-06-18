@@ -38,8 +38,16 @@ class AgencyEntity extends Equatable {
     return isActive && id.isNotEmpty;
   }
 
-  /// Kullanılabilir ajans — onaylı veya aktif kayıt.
-  bool get isUsable => id.isNotEmpty && (isApproved || isActive);
+  /// Kullanılabilir ajans — `my` kaydı varsa onaylı say (pending/rejected hariç).
+  bool get isUsable {
+    if (id.trim().isEmpty) return false;
+    if (isApproved) return true;
+    final status = applicationStatus?.trim().toLowerCase();
+    if (status == 'pending' || status == 'rejected' || status == 'declined') {
+      return false;
+    }
+    return true;
+  }
 
   @override
   List<Object?> get props => [

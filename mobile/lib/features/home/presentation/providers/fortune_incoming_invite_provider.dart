@@ -118,20 +118,33 @@ FortuneIncomingSession? parseFortuneIncomingPayload(Map<String, dynamic>? raw) {
       type.contains('falc') ||
       type.contains('live_fortune') ||
       type.contains('live_session') ||
+      type.contains('live_fal') ||
       (map.containsKey('sessionId') &&
           (map.containsKey('tellerId') ||
               map.containsKey('clientId') ||
-              map.containsKey('userId')));
+              map.containsKey('userId'))) ||
+      ((map.containsKey('targetId') || map.containsKey('target_id')) &&
+          (type.contains('fortune') ||
+              type.contains('live') ||
+              type.contains('falc') ||
+              map['targetPath']?.toString().toLowerCase().contains('fal') ==
+                  true ||
+              map['targetPath']?.toString().toLowerCase().contains('session') ==
+                  true));
 
   if (!looksLikeFortune) return null;
 
   final sessionId = pick(map, [
     'sessionId',
     'session_id',
+    'targetId',
+    'target_id',
     'id',
     'fortuneSessionId',
     'liveSessionId',
     'live_session_id',
+    'entityId',
+    'refId',
   ])?.toString();
   if (sessionId == null || sessionId.isEmpty) return null;
 

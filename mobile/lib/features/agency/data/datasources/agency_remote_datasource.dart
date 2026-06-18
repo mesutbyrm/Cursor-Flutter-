@@ -17,7 +17,7 @@ class AgencyRemoteDataSource {
       if (body is! Map) return null;
       final map = asJsonMap(body);
       final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      final agency = data['agency'] ?? data;
+      final agency = data['agency'] ?? data['profile'] ?? data;
       if (agency is! Map) return null;
       return _mapAgency(asJsonMap(agency));
     } catch (_) {
@@ -74,7 +74,8 @@ class AgencyRemoteDataSource {
           'Ajans',
       description: _str(m, ['description', 'bio', 'about']),
       logoUrl: _str(m, ['logoUrl', 'logo', 'image', 'avatarUrl']),
-      applicationStatus: _readApplicationStatus(m),
+      applicationStatus:
+          _readApplicationStatus(m) ?? _readApplicationStatus(user),
       memberCount: asInt(pick(m, ['memberCount', 'members', 'totalMembers'])),
       totalEarnings: asInt(
         pick(m, ['totalEarnings', 'earnings', 'total_earnings']),
@@ -87,7 +88,11 @@ class AgencyRemoteDataSource {
       inviteCode: _str(m, ['inviteCode', 'code', 'referralCode']),
       isActive: m['isActive'] == true ||
           m['active'] == true ||
-          m['status']?.toString().toLowerCase() == 'active',
+          m['isApproved'] == true ||
+          m['approved'] == true ||
+          m['status']?.toString().toLowerCase() == 'active' ||
+          m['status']?.toString().toLowerCase() == 'approved' ||
+          _str(m, ['inviteCode', 'code']) != null,
     );
   }
 

@@ -4,14 +4,18 @@ import '../../../notifications/domain/entities/app_notification_entity.dart';
 /// Bildirim listesi / push → falcı davet modeli (§15 PATCH sessions).
 FortuneIncomingSession? fortuneInviteFromNotification(AppNotificationEntity n) {
   final type = (n.type ?? '').toLowerCase();
+  final path = (n.targetPath ?? '').toLowerCase();
   final isFortuneInvite = type.contains('session_request') ||
       type.contains('fortune_session') ||
       type.contains('live_fortune') ||
       type.contains('fortune_teller') ||
-      type.contains('falc');
+      type.contains('fortune') ||
+      type.contains('falc') ||
+      path.contains('fal') ||
+      path.contains('session');
   if (!isFortuneInvite) return null;
 
-  final sessionId = n.targetId?.trim();
+  final sessionId = _sessionIdFromNotification(n);
   if (sessionId == null || sessionId.isEmpty) return null;
 
   return FortuneIncomingSession(
@@ -23,6 +27,23 @@ FortuneIncomingSession? fortuneInviteFromNotification(AppNotificationEntity n) {
     totalJeton: 0,
     category: 'general',
   );
+}
+
+String? _sessionIdFromNotification(AppNotificationEntity n) {
+  final target = n.targetId?.trim();
+  if (target != null && target.isNotEmpty) return target;
+
+  final path = n.targetPath?.trim() ?? '';
+  if (path.isNotEmpty) {
+    final segments = path.split('/').where((s) => s.isNotEmpty).toList();
+    if (segments.isNotEmpty) {
+      final last = segments.last;
+      if (last.length >= 8 && last != 'dashboard' && last != 'session') {
+        return last;
+      }
+    }
+  }
+  return null;
 }
 
 String _clientNameFromNotification(AppNotificationEntity n) {

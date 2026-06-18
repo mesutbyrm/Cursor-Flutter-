@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/bootstrap/auth_route_paths.dart';
+import '../../features/agency/presentation/providers/agency_providers.dart';
+import '../../features/home/presentation/providers/teller_profile_provider.dart';
 import '../../features/home/presentation/widgets/fortune_incoming_invite_host.dart';
 import '../../features/shell/presentation/app_bottom_nav_host.dart';
 import '../../features/voice_hub/presentation/widgets/voice_room/voice_room_global_music_bar.dart';
@@ -33,7 +37,10 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
     final router = ref.read(goRouterProvider);
     _location = router.routerDelegate.currentConfiguration.uri.path;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _attachRouter(ref.read(goRouterProvider));
+      if (!mounted) return;
+      unawaited(ref.read(approvedTellerProvider.notifier).refresh());
+      unawaited(ref.read(approvedAgencyProvider.notifier).refresh());
+      _attachRouter(ref.read(goRouterProvider));
     });
   }
 

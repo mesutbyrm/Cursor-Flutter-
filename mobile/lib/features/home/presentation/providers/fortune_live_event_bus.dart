@@ -28,8 +28,15 @@ FortuneIncomingSession? parseFortuneSsePayload(Map<String, dynamic> map) {
           ? asJsonMap(map['session'])
           : map;
   final client = asJsonMap(nested['client'] ?? nested['user']);
-  final sessionId =
-      pick(nested, ['requestId', 'id', 'sessionId'])?.toString() ?? '';
+  final sessionId = pick(nested, [
+        'requestId',
+        'id',
+        'sessionId',
+        'session_id',
+        'targetId',
+        'target_id',
+      ])?.toString() ??
+      '';
   if (sessionId.isEmpty) return null;
   return FortuneIncomingSession(
     sessionId: sessionId,

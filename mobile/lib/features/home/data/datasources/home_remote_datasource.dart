@@ -281,7 +281,9 @@ class HomeRemoteDataSource {
       if (body is! Map) return null;
       final map = asJsonMap(body);
       final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      final teller = data['teller'] ?? data['fortuneTeller'] ?? data;
+      final teller =
+          data['teller'] ?? data['fortuneTeller'] ?? data['profile'] ?? data;
+      if (teller is! Map) return null;
       return _mapLiveFortuneTeller(teller);
     } catch (_) {
       return null;
@@ -1248,7 +1250,8 @@ class HomeRemoteDataSource {
       level: _str(m, ['level', 'tier', 'tellerLevel']),
       specialties: specs,
       category: _advisorCategory(m) ?? _advisorCategory(user),
-      applicationStatus: _readFortuneTellerApplicationStatus(m),
+      applicationStatus: _readFortuneTellerApplicationStatus(m) ??
+          _readFortuneTellerApplicationStatus(user),
       totalSessions: asInt(
         pick(m, ['totalSessions', 'sessions', 'sessionCount']),
       ),

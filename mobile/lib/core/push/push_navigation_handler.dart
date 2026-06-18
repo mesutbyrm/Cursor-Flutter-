@@ -13,6 +13,7 @@ class PushNavigationHandler {
   static void Function()? onPushReceived;
   static void Function(Map<String, dynamic> data)? onFortuneInvite;
   static void Function(FortuneSessionUpdatePayload update)? onSessionUpdate;
+  static final List<Map<String, dynamic>> _bufferedFortunePayloads = [];
 
   static void install(
     GoRouter router, {
@@ -24,6 +25,16 @@ class PushNavigationHandler {
     onPushReceived = onReceived;
     onFortuneInvite = onFortuneInviteData;
     onSessionUpdate = onSessionUpdateData;
+    _drainBufferedFortunePayloads();
+  }
+
+  static void _drainBufferedFortunePayloads() {
+    if (onFortuneInvite == null || _bufferedFortunePayloads.isEmpty) return;
+    final copy = List<Map<String, dynamic>>.from(_bufferedFortunePayloads);
+    _bufferedFortunePayloads.clear();
+    for (final data in copy) {
+      handleFortuneInviteData(data, notifyReceived: false);
+    }
   }
 
   static void navigateToPath(String path) {
@@ -54,7 +65,11 @@ class PushNavigationHandler {
 
     final invite = parseFortuneIncomingPayload(data);
     if (invite == null) return false;
-    onFortuneInvite?.call(data);
+    if (onFortuneInvite == null) {
+      _bufferedFortunePayloads.add(Map<String, dynamic>.from(data));
+      return true;
+    }
+    onFortuneInvite!.call(data);
     if (notifyReceived) {
       onPushReceived?.call();
     }
@@ -62,7 +77,7 @@ class PushNavigationHandler {
   }
 
   static void handleAdditionalData(Map<String, dynamic>? data) {
-    if (handleFortuneInviteData(data)) return;
+    if (handleFortuneInviteData(data, notifyReceived: false)) return;
     onPushReceived?.call();
 
     final router = _router;

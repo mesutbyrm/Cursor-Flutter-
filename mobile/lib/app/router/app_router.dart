@@ -111,6 +111,8 @@ final shellSessionProvider = StateProvider<int>((ref) => 0);
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   ref.watch(shellSessionProvider);
+  ref.watch(approvedTellerProvider);
+  ref.watch(approvedAgencyProvider);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
@@ -178,8 +180,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/falci-ol',
-        redirect: (context, state) {
-          if (ref.read(approvedTellerProvider).isApprovedTeller) {
+        redirect: (context, state) async {
+          var approved = ref.read(approvedTellerProvider);
+          if (!approved.checked) {
+            await ref.read(approvedTellerProvider.notifier).refresh();
+            approved = ref.read(approvedTellerProvider);
+          }
+          if (approved.isApprovedTeller) {
             return '/canli-falcilar/dashboard';
           }
           return '/content-hub';
@@ -187,8 +194,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/ajans-ol',
-        redirect: (context, state) {
-          if (ref.read(approvedAgencyProvider).isApprovedAgency) {
+        redirect: (context, state) async {
+          var approved = ref.read(approvedAgencyProvider);
+          if (!approved.checked) {
+            await ref.read(approvedAgencyProvider.notifier).refresh();
+            approved = ref.read(approvedAgencyProvider);
+          }
+          if (approved.isApprovedAgency) {
             return '/ajans/dashboard';
           }
           return '/content-hub';

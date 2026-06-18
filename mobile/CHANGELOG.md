@@ -1,5 +1,15 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.273+276 (2026-06-18)
+
+### Gerçek düzeltmeler — panel, kabul ekranı, tek bildirim
+
+- **Push `targetId`:** Sunucu `type: fortune` + `targetId` gönderdiğinde artık oturum ID okunur; mor kabul ekranı açılır (önceden yalnızca bildirim geliyordu)
+- **Erken push tamponu:** Oturum açılmadan gelen davetler kaybolmaz; `PushLifecycleListener` mount olunca kuyruğa alınır
+- **Falcı panel poll:** Bekleyen oturumlar `fortuneIncomingInviteProvider` kuyruğuna eklenir (yalnızca `requestPresent` değil)
+- **Onay algısı:** `my-profile` / `agency/my` `profile` sarmalayıcısı; ajans `isUsable` teller ile aynı mantık; router redirect önce API’yi bekler
+- **Çift bildirim:** Falcı davet tıklamasında liste yenileme atlanır; push tamponu çift işlemeyi engeller
+
 ## 1.0.272+275 (2026-06-18)
 
 ### Canlı fal kabul ekranı + tek bildirim
