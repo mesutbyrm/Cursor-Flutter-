@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/live_debug_log.dart';
 import '../../../../core/network/token_storage.dart';
+import '../../../home/presentation/providers/fortune_live_event_bus.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import 'live_providers.dart';
@@ -108,6 +109,9 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       onStreamEnded: () => state = state.copyWith(streamEnded: true),
       onPkBattle: (battle) {
         ref.read(liveVideoPkProvider(streamId).notifier).applyRemoteBattle(battle);
+      },
+      onFortuneRequest: (session) {
+        emitFortuneLiveRequest(ref, session);
       },
     );
 

@@ -112,9 +112,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null || !_agora.isSupported) return;
 
+    final roomId = widget.session.streamId?.trim() ?? '';
     try {
-      final roomId = widget.session.streamId?.trim();
-      if (roomId == null || roomId.isEmpty) {
+      if (roomId.isEmpty) {
         throw StateError('Yayın odası kimliği eksik');
       }
 
@@ -131,14 +131,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         isHost: widget.session.isHost,
       );
       if (widget.session.isHost) {
+        await _agora.setCameraEnabled(widget.session.initialCameraOn);
         _agora.setMicEnabled(widget.session.initialMicOn);
-        _agora.setCameraEnabled(widget.session.initialCameraOn);
         try {
           await ref.read(liveRemoteProvider).notifyLiveStarted(roomId);
         } catch (_) {}
       }
       if (mounted) setState(() => _rtcReady = true);
     } catch (e) {
+      if (widget.session.isHost && roomId.isNotEmpty) {
+        try {
+          await ref.read(liveRepositoryProvider).endVideoStream(roomId);
+        } catch (_) {}
+        ref.invalidate(liveStreamsProvider);
+      }
       if (mounted) {
         setState(() => _rtcError = ApiException.userMessage(e));
       }
@@ -150,6 +156,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     _signalService?.stop();
     _timer.cancel();
     _chat.dispose();
+    if (!_leaving &&
+        widget.session.isHost &&
+        widget.session.streamId?.isNotEmpty == true) {
+      final streamId = widget.session.streamId!;
+      unawaited(
+        ref.read(liveRepositoryProvider).endVideoStream(streamId).catchError((_) {}),
+      );
+    }
     _agora.dispose();
     super.dispose();
   }

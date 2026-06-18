@@ -9,6 +9,8 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/live_debug_log.dart';
 import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
+import '../../../home/domain/entities/live_fortune_session_entity.dart';
+import '../../../home/presentation/providers/fortune_live_event_bus.dart';
 import '../datasources/live_gifts_remote_datasource.dart';
 
 /// Video yayın SSE — `GET /api/video-streams/{streamId}/stream`.
@@ -43,7 +45,14 @@ class VideoStreamSseService {
   void Function(LiveStreamChatMessage message)? _onMessage;
   void Function(LiveGiftEvent event)? _onGift;
   VoidCallback? _onStreamEnded;
-  void Function(Map<String, dynamic> battle)? _onPkBattle;
+  static const _fortuneEventTypes = {
+    'fal_request',
+    'live_fal_request',
+    'fortune_request',
+    'private_fal_request',
+  };
+
+  void Function(FortuneIncomingSession request)? _onFortuneRequest;
 
   static String streamUrlFor(String streamId) {
     final base = Env.apiBaseUrl.replaceAll(RegExp(r'/$'), '');
@@ -59,6 +68,7 @@ class VideoStreamSseService {
     void Function(LiveGiftEvent event)? onGift,
     VoidCallback? onStreamEnded,
     void Function(Map<String, dynamic> battle)? onPkBattle,
+    void Function(FortuneIncomingSession request)? onFortuneRequest,
   }) async {
     final id = streamId.trim();
     final same = !_stopped && _streamId == id && _bytesSub != null;
@@ -71,6 +81,7 @@ class VideoStreamSseService {
     _onGift = onGift;
     _onStreamEnded = onStreamEnded;
     _onPkBattle = onPkBattle;
+    _onFortuneRequest = onFortuneRequest;
     if (same) return;
     LiveDebugLog.log('stream.sse.connect', {'streamId': id});
     await _openStream();
@@ -210,6 +221,14 @@ class VideoStreamSseService {
         }
         return;
       default:
+        final typeLower = type.toLowerCase();
+        if (_fortuneEventTypes.contains(typeLower)) {
+          final session = parseFortuneSsePayload(map);
+          if (session != null && session.sessionId.isNotEmpty) {
+            _onFortuneRequest?.call(session);
+          }
+          return;
+        }
         if (map['event']?.toString() == 'STREAM_ENDED') {
           _onStreamEnded?.call();
         }
@@ -237,6 +256,7 @@ class VideoStreamSseService {
     _onGift = null;
     _onStreamEnded = null;
     _onPkBattle = null;
+    _onFortuneRequest = null;
     await _closeStreamOnly();
     LiveDebugLog.log('stream.sse.disconnect');
   }

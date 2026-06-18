@@ -30,6 +30,7 @@ class LiveFortuneWaitingPage extends ConsumerStatefulWidget {
 class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage> {
   Timer? _poll;
   var _closed = false;
+  var _cancelling = false;
 
   @override
   void initState() {
@@ -45,14 +46,24 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
   }
 
   Future<void> _onClosePressed() async {
-    if (_closed) return;
+    if (_closed || _cancelling) return;
+    setState(() => _cancelling = true);
+    _poll?.cancel();
     final ok = await LiveFortuneFlow.cancelWaiting(
       context: context,
       ref: ref,
       sessionId: widget.session.sessionId,
       tellerName: widget.session.teller.name,
     );
-    if (ok) _closed = true;
+    if (!mounted) return;
+    if (ok) {
+      _closed = true;
+    } else {
+      setState(() => _cancelling = false);
+      if (!_closed) {
+        _poll = Timer.periodic(const Duration(seconds: 2), (_) => _checkStatus());
+      }
+    }
   }
 
   Future<void> _onRejected() async {
@@ -228,9 +239,15 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
               ),
               const SizedBox(height: 20),
               OutlinedButton.icon(
-                onPressed: _onClosePressed,
-                icon: const Icon(Icons.close_rounded, size: 18),
-                label: const Text('Randevuyu iptal et'),
+                onPressed: (_closed || _cancelling) ? null : _onClosePressed,
+                icon: _cancelling
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.close_rounded, size: 18),
+                label: Text(_cancelling ? 'İptal ediliyor…' : 'Randevuyu iptal et'),
               ),
             ],
           ),

@@ -201,9 +201,17 @@ class AgoraRoomManager {
     _micOn = enabled;
   }
 
-  void setCameraEnabled(bool enabled) {
+  Future<void> setCameraEnabled(bool enabled) async {
     if (_engine == null || !_isHost) return;
-    _engine!.muteLocalVideoStream(!enabled);
+    if (_previewOnly && !_inChannel) {
+      if (enabled) {
+        await _engine!.startPreview();
+      } else {
+        await _engine!.stopPreview();
+      }
+    } else {
+      await _engine!.muteLocalVideoStream(!enabled);
+    }
     _cameraOn = enabled;
   }
 

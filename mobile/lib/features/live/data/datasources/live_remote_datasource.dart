@@ -421,7 +421,7 @@ class LiveRemoteDataSource {
         'private': isPrivate,
         'isImageMode': isImageMode,
         'requestType': 'live',
-        'status': 'live',
+        'status': 'preparing',
       },
     );
     final streamId = _extractStreamId(res.data);

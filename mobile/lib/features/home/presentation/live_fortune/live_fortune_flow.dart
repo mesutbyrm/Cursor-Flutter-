@@ -83,9 +83,22 @@ class LiveFortuneFlow {
       confirmLabel: 'İptal Et',
     );
     if (!ok || !context.mounted) return false;
-    await ref.read(homeRemoteProvider).endFortuneSession(sessionId);
+
+    final ended = await ref.read(homeRemoteProvider).endFortuneSession(sessionId);
     ref.invalidate(coinBalanceProvider);
-    if (!context.mounted) return true;
+    if (!context.mounted) return ended;
+
+    if (!ended) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'İptal sunucuya iletilemedi. Tekrar deneyin veya uygulamayı yeniden başlatın.',
+          ),
+        ),
+      );
+      return false;
+    }
+
     context.go('/canli-falcilar');
     return true;
   }

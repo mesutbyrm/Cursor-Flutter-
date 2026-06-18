@@ -326,7 +326,16 @@ class HomeRemoteDataSource {
     if (key.isEmpty) return false;
     final roomEnded = await roomAction(key, 'end');
     if (roomEnded != null) return true;
-    for (final action in const ['end', 'leave', 'cancel', 'complete']) {
+    final rejected = await rejectLiveFalRequest(key);
+    if (rejected) return true;
+    try {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.fortuneTellerSessionPatch(key),
+        data: const {'action': 'cancel', 'status': 'cancelled'},
+      );
+      return true;
+    } catch (_) {}
+    for (final action in const ['cancel', 'end', 'leave', 'complete']) {
       final ok = await respondFortuneSession(key, action: action);
       if (ok) return true;
     }

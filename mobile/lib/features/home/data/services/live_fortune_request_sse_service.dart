@@ -149,8 +149,6 @@ class LiveFortuneRequestSseService {
     final payload = dataLines.join('\n').trim();
     if (payload.isEmpty || payload == '[DONE]') return;
 
-    debugPrint('SSE EVENT: $payload');
-
     try {
       final decoded = jsonDecode(payload);
       if (decoded is! Map) return;

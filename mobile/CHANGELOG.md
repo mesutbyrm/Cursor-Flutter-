@@ -1,5 +1,22 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.259+262 (2026-06-18)
+
+### Canlı yayın — kamera ve durum düzeltmeleri
+
+- **Kamera önizleme:** İzin / desteklenmeyen cihaz hataları artık ekranda gösterilir; «Kamera açılıyor…» yükleme durumu eklendi
+- **Yanlış «yayında» durumu:** Yayın `preparing` ile oluşturulur; geri dönüş veya Agora hatasında sunucuda otomatik `end` çağrılır
+- **Kamera aç/kapa:** Önizlemede `startPreview` / `stopPreview` kullanılır
+
+### Canlı falcı — istek ve iptal
+
+- **Yayıncıya istek:** Video yayın SSE üzerinden `fal_request` olayları; falcı poll 2 sn; aktif yayın odası SSE önceliği
+- **İptal:** `declined` / `cancelled` durumları; iptal API başarısızsa kullanıcıya uyarı; bekleme ekranında yükleme durumu
+
+### Jeton Al — WhatsApp
+
+- **WhatsApp seçimi:** Yöntem ekranında WhatsApp seçilince sohbet otomatik açılır (jeton, kullanıcı adı, ödeme türü ile)
+
 ## 1.0.258+261 (2026-06-18)
 
 ### Bildirimler — push kayıt ve izin akışı düzeltmesi

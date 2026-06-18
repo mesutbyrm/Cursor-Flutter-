@@ -65,7 +65,7 @@ class _FortuneIncomingInviteHostState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _poll = Timer.periodic(const Duration(seconds: 5), (_) => _pollApi());
+    _poll = Timer.periodic(const Duration(seconds: 2), (_) => _pollApi());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _inviteUiReady = true);
@@ -123,6 +123,16 @@ class _FortuneIncomingInviteHostState
   Future<String?> _resolveTellerSseRoomId() async {
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     if (userId == null || userId.isEmpty) return null;
+    try {
+      final streams = await ref.read(liveStreamsProvider.future);
+      for (final stream in streams) {
+        if (stream.isLive &&
+            stream.hostUserId == userId &&
+            stream.id.isNotEmpty) {
+          return stream.id;
+        }
+      }
+    } catch (_) {}
     try {
       final rooms = await ref.read(voiceRoomsProvider.future);
       for (final room in rooms) {

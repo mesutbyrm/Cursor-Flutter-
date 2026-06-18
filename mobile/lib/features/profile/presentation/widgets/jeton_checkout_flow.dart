@@ -176,6 +176,14 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
   String? _receiptImagePath;
   final _prefs = JetonPurchasePrefs();
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.method == _JetonPayMethod.whatsapp) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _openWhatsAppChat());
+    }
+  }
+
   String get _userLabel {
     final me = ref.read(authControllerProvider).valueOrNull;
     return me?.display ?? me?.username ?? 'Kullanıcı';
@@ -200,7 +208,10 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
         _receiptImagePath != null ? ' · Dekont eklendi' : '';
     final msg = Uri.encodeComponent(
       'Merhaba, ${widget.package.title} (${widget.package.coins} jeton) '
-      'satın almak istiyorum. Kullanıcı: $_userLabel$receiptPart',
+      'satın almak istiyorum.\n'
+      'Ödeme türü: WhatsApp\n'
+      'Kullanıcı: $_userLabel\n'
+      'Tutar: ${widget.priceText}$receiptPart',
     );
     final uri = Uri.parse('https://wa.me/$phone?text=$msg');
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);

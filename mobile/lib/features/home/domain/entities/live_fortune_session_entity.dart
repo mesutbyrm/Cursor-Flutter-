@@ -57,7 +57,12 @@ class FortuneSessionStatusResult {
       status == 'ended' ||
       status == 'rejected' ||
       status == 'cancelled' ||
-      tellerResponse == 'rejected';
+      status == 'declined' ||
+      status == 'canceled' ||
+      tellerResponse == 'rejected' ||
+      tellerResponse == 'declined' ||
+      tellerResponse == 'cancelled' ||
+      tellerResponse == 'canceled';
 }
 
 /// Falcı seans sohbet mesajı (`/api/teller-chat/{sessionId}`).

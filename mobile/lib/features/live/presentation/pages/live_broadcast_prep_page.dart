@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -37,10 +38,13 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
   var _micOn = true;
   var _cameraOn = true;
   var _previewReady = false;
+  var _previewLoading = false;
   var _starting = false;
+  var _navigatedToRoom = false;
   String? _previewError;
   String? _backgroundUrl;
   String? _localBackgroundPath;
+  String? _orphanStreamId;
   LiveGuestLayout _guestLayout = LiveGuestLayout.solo;
 
   LiveBroadcastPrepArgs get _args =>
@@ -56,17 +60,51 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
   @override
   void dispose() {
     _title.dispose();
+    final orphan = _orphanStreamId;
+    if (orphan != null && !_navigatedToRoom && Env.useMobileAuth) {
+      unawaited(
+        ref.read(liveRepositoryProvider).endVideoStream(orphan).catchError((_) {}),
+      );
+    }
     _agora.dispose();
     super.dispose();
   }
 
+  Future<void> _cleanupOrphanStream() async {
+    final id = _orphanStreamId;
+    if (id == null || _navigatedToRoom) return;
+    try {
+      await ref.read(liveRepositoryProvider).endVideoStream(id);
+    } catch (_) {}
+    _orphanStreamId = null;
+  }
+
   Future<void> _initPreview() async {
     final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null || !_agora.isSupported) return;
+    if (user == null) {
+      if (mounted) {
+        setState(() => _previewError = 'Kamera önizlemesi için giriş yapın');
+      }
+      return;
+    }
+    if (!_agora.isSupported) {
+      if (mounted) {
+        setState(
+          () => _previewError = 'Kamera yalnızca Android/iOS cihazlarda çalışır',
+        );
+      }
+      return;
+    }
 
+    if (mounted) setState(() => _previewLoading = true);
     final ok = await AgoraRoomManager.requestPermissions(video: true);
     if (!ok) {
-      if (mounted) setState(() => _previewError = 'Kamera izni gerekli');
+      if (mounted) {
+        setState(() {
+          _previewLoading = false;
+          _previewError = 'Kamera izni gerekli';
+        });
+      }
       return;
     }
 
@@ -86,10 +124,19 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         );
       }
       await _agora.startPreviewOnly(appId: cred.appId);
-      if (mounted) setState(() => _previewReady = true);
+      if (mounted) {
+        setState(() {
+          _previewReady = true;
+          _previewLoading = false;
+          _previewError = null;
+        });
+      }
     } catch (e) {
       if (mounted) {
-        setState(() => _previewError = ApiException.userMessage(e));
+        setState(() {
+          _previewLoading = false;
+          _previewError = ApiException.userMessage(e);
+        });
       }
     }
   }
@@ -103,8 +150,17 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
       );
       return;
     }
+    if (!_agora.isSupported) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Canlı yayın yalnızca Android/iOS cihazlarda desteklenir'),
+        ),
+      );
+      return;
+    }
 
     setState(() => _starting = true);
+    String? createdStreamId;
     try {
       await _agora.leave();
 
@@ -124,6 +180,8 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
               isImageMode: false,
               backgroundUrl: _backgroundUrl,
             );
+        createdStreamId = roomId;
+        _orphanStreamId = roomId;
       }
 
       final agora = await ref.read(agoraRemoteProvider).fetchToken(
@@ -131,7 +189,10 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
             role: 'host',
           );
 
-      if (!mounted) return;
+      if (!mounted) {
+        await _cleanupOrphanStream();
+        return;
+      }
       final session = LiveBroadcastSession.demoHost(
         title: _title.text.trim(),
         category: _args.category,
@@ -153,8 +214,16 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         guestLayout: _guestLayout,
       );
 
-      context.push('/live/room', extra: session);
+      _navigatedToRoom = true;
+      _orphanStreamId = null;
+      await context.push('/live/room', extra: session);
+      if (mounted && context.canPop()) {
+        context.pop();
+      }
     } catch (e) {
+      if (createdStreamId != null) {
+        await _cleanupOrphanStream();
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),
@@ -185,7 +254,13 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
     final top = MediaQuery.paddingOf(context).top;
     final bottom = MediaQuery.paddingOf(context).bottom;
 
-    return Scaffold(
+    return PopScope(
+      canPop: !_starting,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop || _starting) return;
+        await _cleanupOrphanStream();
+      },
+      child: Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         fit: StackFit.expand,
@@ -211,11 +286,38 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text(
-                  _previewError!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white70),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _previewError!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                    if (!_previewLoading) ...[
+                      const SizedBox(height: 12),
+                      TextButton.icon(
+                        onPressed: _initPreview,
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Tekrar dene'),
+                      ),
+                    ],
+                  ],
                 ),
+              ),
+            ),
+          if (_previewLoading && !_previewReady)
+            const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(color: Colors.white70),
+                  SizedBox(height: 12),
+                  Text(
+                    'Kamera açılıyor…',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ],
               ),
             ),
           SafeArea(
@@ -227,7 +329,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                     children: [
                       _RoundBtn(
                         icon: Icons.arrow_back_ios_new_rounded,
-                        onTap: () => context.pop(),
+                        onTap: _starting ? null : () => context.pop(),
                       ),
                       const Expanded(
                         child: Text(
@@ -340,10 +442,12 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                             icon: _cameraOn
                                 ? Icons.videocam_rounded
                                 : Icons.videocam_off_rounded,
-                            onTap: () {
-                              _agora.setCameraEnabled(!_cameraOn);
+                            onTap: () async {
+                              final next = !_cameraOn;
+                              await _agora.setCameraEnabled(next);
+                              if (!mounted) return;
                               setState(() {
-                                _cameraOn = !_cameraOn;
+                                _cameraOn = next;
                                 _localPreviewKey = UniqueKey();
                               });
                             },
@@ -432,6 +536,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -466,10 +571,10 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
 }
 
 class _RoundBtn extends StatelessWidget {
-  const _RoundBtn({required this.icon, required this.onTap});
+  const _RoundBtn({required this.icon, this.onTap});
 
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
