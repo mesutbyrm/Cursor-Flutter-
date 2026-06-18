@@ -25,6 +25,10 @@ class _NotificationPermissionBannerState
   void initState() {
     super.initState();
     _syncGranted();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _refreshGranted();
+    });
   }
 
   void _syncGranted() {
@@ -33,16 +37,31 @@ class _NotificationPermissionBannerState
         : PushNotificationService.instance.permissionGranted;
   }
 
+  Future<void> _refreshGranted() async {
+    final granted = OneSignalBootstrap.isReady
+        ? OneSignalBootstrap.permissionGranted
+        : await PushNotificationService.instance.refreshPermissionStatus();
+    if (!mounted) return;
+    setState(() => _granted = granted);
+  }
+
   Future<void> _enable() async {
     setState(() => _loading = true);
     var ok = false;
     if (OneSignalBootstrap.isReady) {
       ok = await OneSignalBootstrap.requestPermission();
       if (ok) {
-        await ref.read(pushRegistrarProvider).registerIfPossible();
+        await ref.read(pushRegistrarProvider).registerIfPossible(
+              allowTokenRetry: true,
+            );
       }
     } else {
       ok = await PushNotificationService.instance.requestSystemPermission();
+      if (ok) {
+        await ref.read(pushRegistrarProvider).registerIfPossible(
+              allowTokenRetry: true,
+            );
+      }
     }
     if (mounted) {
       setState(() {
@@ -63,7 +82,10 @@ class _NotificationPermissionBannerState
         borderColor: AppThemeColors.accentPink.withValues(alpha: 0.35),
         child: Row(
           children: [
-            const Icon(Icons.notifications_active_rounded, color: AppThemeColors.accentPink),
+            const Icon(
+              Icons.notifications_active_rounded,
+              color: AppThemeColors.accentPink,
+            ),
             const SizedBox(width: 12),
             const Expanded(
               child: Text(

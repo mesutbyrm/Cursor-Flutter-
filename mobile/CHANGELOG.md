@@ -1,5 +1,13 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.258+261 (2026-06-18)
+
+### Bildirimler — push kayıt ve izin akışı düzeltmesi
+
+- **Mevcut oturum:** Uygulama zaten girişli açıldığında OneSignal `login` ve push token kaydı artık anında tetiklenir
+- **İzin sonrası kayıt:** Bildirim izni banner’dan açıldığında Firebase/FCM token kaydı tekrar denenir
+- **İlk kurulum:** OneSignal/FCM token geç oluşursa kısa retry ile `/api/auth/mobile/device-token`, `/api/devices/fcm`, `/api/user/device-token` kayıtları kaçırılmaz
+
 ## 1.0.257+260 (2026-06-17)
 
 ### Jeton yükleme — ödeme bildirimi düzeltmesi

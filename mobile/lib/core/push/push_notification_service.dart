@@ -67,6 +67,28 @@ class PushNotificationService {
     _initialized = true;
   }
 
+  Future<bool> refreshPermissionStatus() async {
+    if (kIsWeb) return false;
+
+    try {
+      if (Platform.isAndroid) {
+        final status = await Permission.notification.status;
+        _permissionGranted = status.isGranted;
+        return _permissionGranted;
+      }
+
+      final settings =
+          await FirebaseMessaging.instance.getNotificationSettings();
+      _permissionGranted =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
+              settings.authorizationStatus == AuthorizationStatus.provisional;
+      return _permissionGranted;
+    } catch (e) {
+      debugPrint('Notification permission status failed: $e');
+      return _permissionGranted;
+    }
+  }
+
   void _onTap(NotificationResponse response) {
     final payload = response.payload?.trim();
     if (payload == null || payload.isEmpty) return;
