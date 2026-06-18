@@ -126,8 +126,8 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
     var ended = false;
     try {
       ended = await ref
-          .read(homeRemoteProvider)
-          .endFortuneSession(widget.session.sessionId);
+          .read(liveFortuneRepositoryProvider)
+          .endSession(widget.session.sessionId);
     } catch (_) {
       ended = false;
     }
@@ -168,8 +168,8 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
   Future<void> _checkStatus() async {
     if (!mounted || _closed) return;
     final status = await ref
-        .read(homeRemoteProvider)
-        .fetchFortuneSessionStatus(widget.session.sessionId);
+        .read(liveFortuneRepositoryProvider)
+        .fetchSessionStatus(widget.session.sessionId);
     if (!mounted || status == null) return;
 
     if (status.isRejected) {

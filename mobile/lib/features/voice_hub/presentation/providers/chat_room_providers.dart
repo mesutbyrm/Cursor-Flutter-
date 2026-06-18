@@ -15,8 +15,7 @@ import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import '../../data/services/exo_player_probe.dart';
 import '../../data/services/voice_room_music_pipeline_log.dart';
-import '../../data/services/voice_room_gift_socket.dart';
-import '../../data/services/voice_room_sse_service.dart';
+import '../../data/services/chat_room_sse_service.dart';
 import '../../data/youtube_music_search_cache.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../music/domain/entities/room_playback_sync.dart';
@@ -65,8 +64,8 @@ final chatRoomRemoteProvider = Provider<ChatRoomRemoteDataSource>((ref) {
   return remote;
 });
 
-final voiceRoomSseServiceProvider = Provider<VoiceRoomSseService>((ref) {
-  final s = VoiceRoomSseService();
+final voiceRoomSseServiceProvider = Provider<ChatRoomSseService>((ref) {
+  final s = ChatRoomSseService();
   ref.onDispose(s.disconnect);
   return s;
 });
@@ -205,7 +204,6 @@ class VoiceRoomLiveController
   var _pollPaused = false;
   var _pollTick = 0;
   String? _lastDjPlaybackSignature;
-  VoiceRoomGiftSocket? _giftSocket;
   final Set<String> _shownEntranceKeys = {};
   final Set<String> _shownMusicRequestFlashKeys = {};
   String? _presenceNickname;
@@ -415,7 +413,6 @@ class VoiceRoomLiveController
       _presenceHeartbeat?.cancel();
       _enterBannerTimer?.cancel();
       _musicRequestFlashTimer?.cancel();
-      _giftSocket?.disconnect();
       if (_sessionActive) {
         _leavePresence();
         unawaited(ref.read(voiceRoomSseServiceProvider).disconnect());
@@ -431,7 +428,6 @@ class VoiceRoomLiveController
       await Future.wait([_joinPresence(), _warmBackgrounds()]);
       await refresh(includeDj: true);
       _startSse();
-      _startGiftSocket();
       final player = ref.read(voiceRoomDjPlayerProvider);
       player.onTrackComplete = () => unawaited(_onDjTrackComplete());
       _wireMusicControls();
@@ -537,12 +533,12 @@ class VoiceRoomLiveController
     VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: source);
     _poll?.cancel();
     _presenceHeartbeat?.cancel();
-    _giftSocket?.disconnect();
     _sseStarted = false;
     _presenceJoined = false;
     await _leavePresence();
     await ref.read(voiceRoomSseServiceProvider).disconnect();
-    await ref.read(voiceRoomDjPlayerProvider).stop();
+    await ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer();
+    await ref.read(voiceRoomDjPlayerProvider).shutdown();
     if (_roomKey.isNotEmpty) {
       ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
     }
@@ -654,9 +650,10 @@ class VoiceRoomLiveController
     _sseStarted = true;
     final storage = ref.read(tokenStorageProvider);
     VoiceRoomDebugLog.log('sse.subscribe', {
-      'url': VoiceRoomSseService.streamUrlFor(_roomKey),
+      'url': ChatRoomSseService.streamUrlFor(_roomKey),
       'roomId': _roomKey,
     });
+    final giftsRemote = ref.read(liveGiftsRemoteProvider);
     ref
         .read(voiceRoomSseServiceProvider)
         .connect(
@@ -667,13 +664,30 @@ class VoiceRoomLiveController
               state = state.copyWith(sseConnected: true);
             }
             ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);
+            ref.read(voiceRoomGiftRealtimeProvider).setSocketPreferred(false);
           },
           onDjUpdate: (payload) {
-            if (payload != null && payload.isNotEmpty) {
+            if (payload.isNotEmpty) {
               _applyRoomVideoPayload(payload);
               unawaited(_applyDjRealtimePayload(payload));
             } else {
               unawaited(refresh(includeDj: true));
+            }
+          },
+          onSong: (payload) {
+            _applyRoomVideoPayload(payload);
+            unawaited(_applyDjRealtimePayload(payload));
+            _showMusicRequestFlashLine('🎵 Şarkı kuyruğa eklendi');
+          },
+          onGift: (payload) {
+            final giftRaw = payload['gift'] ?? payload;
+            if (giftRaw is! Map) return;
+            final ev = giftsRemote.parseGiftEvent(
+              Map<String, dynamic>.from(giftRaw),
+              streamId: _roomKey,
+            );
+            if (ev != null) {
+              ref.read(voiceRoomGiftRealtimeProvider).publishRemote(ev);
             }
           },
           onMessage: (msg) {
@@ -730,54 +744,6 @@ class VoiceRoomLiveController
       final fullDj = !sse || djActive || (_pollTick % 2 == 0);
       unawaited(refresh(includeDj: fullDj));
     });
-  }
-
-  void _startGiftSocket() {
-    if (_roomKey.isEmpty) return;
-    _giftSocket?.disconnect();
-    final storage = ref.read(tokenStorageProvider);
-    final slug = _roomMeta.slug.trim();
-    _giftSocket = VoiceRoomGiftSocket(ref.read(liveGiftsRemoteProvider));
-    VoiceRoomDebugLog.log('socket.dj.subscribe', {'room': _roomKey});
-    ref.read(voiceRoomGiftRealtimeProvider).setSocketPreferred(true);
-    _giftSocket!.connect(
-      roomId: _roomKey,
-      alternateRoomId: slug.isNotEmpty && slug != _roomKey ? slug : null,
-      onEvent: (event) {
-        ref.read(voiceRoomGiftRealtimeProvider).publishRemote(event);
-      },
-      onDjUpdate: (payload) {
-        _applyRoomVideoPayload(payload);
-        unawaited(_applyDjRealtimePayload(payload));
-      },
-      onMessage: (msg) {
-        final exists = state.messages.any((m) => m.id == msg.id);
-        if (exists) return;
-        state = state.copyWith(messages: [...state.messages, msg]);
-        _onMusicRelatedChatMessage(msg);
-        if (msg.kind == ChatMessageKind.systemJoin &&
-            VoiceOfficialJoin.isEntranceWorthy(
-              content: msg.content,
-              membership: msg.user?.membership,
-              chatRole: msg.user?.chatRole,
-            ) &&
-            _markEntranceOnce(msg.content)) {
-          _showEnterBanner(msg.content);
-        }
-      },
-      onPresence: (users) {
-        final merged = _mergePresenceStable(users, source: 'socket');
-        state = state.copyWith(presence: merged, selfInRoom: true);
-        ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(true);
-        ref
-            .read(voiceRoomDiagnosticProvider.notifier)
-            .setPresence(joined: true, count: merged.length);
-      },
-      onConnectionChanged: (connected) {
-        ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(connected);
-      },
-      accessToken: storage.readAccess,
-    );
   }
 
   void _syncRoomVideo(ChatRoomDjState dj, {RoomPlaybackSync? sync}) {
@@ -847,16 +813,25 @@ class VoiceRoomLiveController
       String? myNickname = state.myNickname;
       var roomMuted = state.roomMuted;
 
+      final skipMessagePoll = state.sseConnected;
       final results = await Future.wait<Object?>([
-        remote.fetchMessages(_roomKey, since: since).catchError((Object e) {
-          refreshError ??= e;
-          return (
+        if (skipMessagePoll)
+          Future.value((
             messages: state.messages,
             myPermissions: state.serverPermissions,
             myNickname: state.myNickname,
             roomMuted: state.roomMuted,
-          );
-        }),
+          ))
+        else
+          remote.fetchMessages(_roomKey, since: since).catchError((Object e) {
+            refreshError ??= e;
+            return (
+              messages: state.messages,
+              myPermissions: state.serverPermissions,
+              myNickname: state.myNickname,
+              roomMuted: state.roomMuted,
+            );
+          }),
         remote.fetchPresence(_roomKey).catchError((Object e) {
           refreshError ??= e;
           return state.presence;
@@ -1180,7 +1155,7 @@ class VoiceRoomLiveController
             channelTitle: hit.uploader,
             thumbUrl: hit.thumbUrl,
             duration: hit.duration,
-            skipPayment: true,
+            skipPayment: false,
           );
       if (result.newBalance != null) {
         ref.invalidate(walletBalancesProvider);

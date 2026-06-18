@@ -7,6 +7,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/home_remote_datasource.dart';
+import '../../domain/repositories/live_fortune_repository.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../providers/home_providers.dart';
@@ -36,17 +37,15 @@ class LiveFortuneFlow {
       return null;
     }
 
-    final remote = ref.read(homeRemoteProvider);
-    final displayName = _displayName(user);
+    final repo = ref.read(liveFortuneRepositoryProvider);
     final type = fortuneType ??
         (teller.specialties.isNotEmpty ? teller.specialties.first : 'general');
 
     FortuneSessionCreateResult? created;
     try {
-      created = await remote.createFortuneTellerSession(
+      created = await repo.createSession(
         teller.id,
         tellerUserId: teller.userId ?? teller.trtcUserId,
-        clientName: displayName,
         durationMinutes: durationMinutes,
         totalJeton: totalJeton,
         fortuneType: type,
@@ -98,7 +97,7 @@ class LiveFortuneFlow {
     );
     if (!ok || !context.mounted) return false;
 
-    final ended = await ref.read(homeRemoteProvider).endFortuneSession(sessionId);
+    final ended = await ref.read(liveFortuneRepositoryProvider).endSession(sessionId);
     ref.invalidate(coinBalanceProvider);
     if (!context.mounted) return ended;
 
@@ -133,7 +132,7 @@ class LiveFortuneFlow {
       confirmLabel: 'Kapat',
     );
     if (!ok || !context.mounted) return false;
-    await ref.read(homeRemoteProvider).endFortuneSession(sessionId);
+    await ref.read(liveFortuneRepositoryProvider).endSession(sessionId);
     if (!context.mounted) return true;
     if (context.canPop()) {
       context.pop();
@@ -147,13 +146,13 @@ class LiveFortuneFlow {
   static Future<void> resumeSessionFromPush({
     required GoRouter router,
     required String sessionId,
-    required HomeRemoteDataSource remote,
+    required LiveFortuneRepository repo,
     String? tellerId,
   }) async {
     final key = sessionId.trim();
     if (key.isEmpty) return;
 
-    final status = await remote.fetchFortuneSessionStatus(key);
+    final status = await repo.fetchSessionStatus(key);
     if (status == null) return;
 
     if (status.isRejected) {
@@ -166,7 +165,7 @@ class LiveFortuneFlow {
     final tid = tellerId?.trim() ?? '';
     LiveFortuneTellerEntity? teller;
     if (tid.isNotEmpty) {
-      teller = await remote.fetchLiveFortuneTeller(tid);
+      teller = await repo.fetchTeller(tid);
     }
     teller ??= LiveFortuneTellerEntity(
       id: tid.isNotEmpty ? tid : 'teller',
@@ -205,9 +204,9 @@ class LiveFortuneFlow {
   /// Uygulama açılışında `GET /api/user/active-sessions` (§8).
   static Future<void> resumeActiveClientSessions({
     required GoRouter router,
-    required HomeRemoteDataSource remote,
+    required LiveFortuneRepository repo,
   }) async {
-    final active = await remote.fetchUserActiveSessions();
+    final active = await repo.fetchActiveSessions();
     if (active.isEmpty) return;
 
     final first = active.first;
@@ -215,7 +214,7 @@ class LiveFortuneFlow {
       router: router,
       sessionId: first.sessionId,
       tellerId: first.tellerProfileId ?? first.tellerUserId,
-      remote: remote,
+      repo: repo,
     );
   }
 

@@ -124,17 +124,17 @@ class _FortuneIncomingInviteHostState
     }
     await LiveFortuneFlow.resumeActiveClientSessions(
       router: ref.read(goRouterProvider),
-      remote: ref.read(homeRemoteProvider),
+      repo: ref.read(liveFortuneRepositoryProvider),
     );
   }
 
   Future<void> _ensureTellerOnline() async {
     if (!_mayPresentInvites()) return;
-    final remote = ref.read(homeRemoteProvider);
+    final repo = ref.read(liveFortuneRepositoryProvider);
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
-    var profile = await remote.fetchMyFortuneTellerProfile();
+    var profile = await repo.fetchMyProfile();
     if (profile == null && userId != null) {
-      final tellers = await remote.fetchLiveFortuneTellers();
+      final tellers = await repo.fetchTellers();
       for (final t in tellers) {
         if (t.userId == userId || t.id == userId) {
           profile = t;
@@ -148,7 +148,7 @@ class _FortuneIncomingInviteHostState
     }
     _isFortuneTeller = true;
     _tellerProfileId = profile.id;
-    final ok = await remote.setFortuneTellerOnline(online: true);
+    final ok = await repo.setOnline(online: true);
     if (ok) _tellerOnlineSet = true;
   }
 
@@ -246,8 +246,8 @@ class _FortuneIncomingInviteHostState
 
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     final incoming = await ref
-        .read(homeRemoteProvider)
-        .fetchIncomingFortuneSessions(
+        .read(liveFortuneRepositoryProvider)
+        .fetchIncomingSessions(
           currentUserId: userId,
           tellerProfileId: _tellerProfileId,
         );
@@ -295,7 +295,7 @@ class _FortuneIncomingInviteHostState
       }
 
       if (action == LiveFortuneInviteAction.reject) {
-        await ref.read(homeRemoteProvider).respondFortuneSession(
+        await ref.read(liveFortuneRepositoryProvider).respondSession(
               req.sessionId,
               action: 'reject',
             );
@@ -308,7 +308,7 @@ class _FortuneIncomingInviteHostState
         return;
       }
 
-      final ok = await ref.read(homeRemoteProvider).respondFortuneSession(
+      final ok = await ref.read(liveFortuneRepositoryProvider).respondSession(
             req.sessionId,
             action: 'accept',
           );
@@ -324,7 +324,7 @@ class _FortuneIncomingInviteHostState
       }
 
       final roomPreview = await ref
-          .read(homeRemoteProvider)
+          .read(liveFortuneRepositoryProvider)
           .fetchRoomInfo(req.sessionId);
       final clientJeton = roomPreview?.userJetonBalance ?? req.totalJeton;
 
@@ -340,7 +340,7 @@ class _FortuneIncomingInviteHostState
       if (startChoice != null) {
         if (startChoice.durationMinutes > 0) {
           durationMinutes = startChoice.durationMinutes;
-          await ref.read(homeRemoteProvider).tellerAddSessionTime(
+          await ref.read(liveFortuneRepositoryProvider).tellerAddTime(
                 sessionId: req.sessionId,
                 minutes: startChoice.durationMinutes,
               );
@@ -348,23 +348,23 @@ class _FortuneIncomingInviteHostState
         if (startChoice.totalJeton > 0) {
           totalJeton = startChoice.totalJeton;
         }
-        await ref.read(homeRemoteProvider).roomAction(
+        await ref.read(liveFortuneRepositoryProvider).roomAction(
               req.sessionId,
               'start_timer',
             );
       }
 
       final status = await ref
-          .read(homeRemoteProvider)
-          .fetchFortuneSessionStatus(req.sessionId);
+          .read(liveFortuneRepositoryProvider)
+          .fetchSessionStatus(req.sessionId);
 
       final user = ref.read(authControllerProvider).valueOrNull;
       final tellerId = req.tellerId.trim();
       LiveFortuneTellerEntity? teller;
       if (tellerId.isNotEmpty) {
-        teller = await ref.read(homeRemoteProvider).fetchLiveFortuneTeller(tellerId);
+        teller = await ref.read(liveFortuneRepositoryProvider).fetchTeller(tellerId);
       }
-      teller ??= await ref.read(homeRemoteProvider).fetchMyFortuneTellerProfile();
+      teller ??= await ref.read(liveFortuneRepositoryProvider).fetchMyProfile();
       teller ??= LiveFortuneTellerEntity(
         id: tellerId.isNotEmpty ? tellerId : (user?.id ?? 'teller'),
         userId: user?.id,

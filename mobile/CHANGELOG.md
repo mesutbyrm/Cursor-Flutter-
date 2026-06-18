@@ -1,5 +1,17 @@
 # Sürüm notları — canlifal_social
 
+## 1.0.266+269 (2026-06-18)
+
+### Backend entegrasyonu — SSE, repository, canlı falcı
+
+- **Sohbet SSE:** `ChatRoomSseService` (`eventsource`) — message, dj, song, music, gift, presence, moderasyon; Socket.IO hediye yolu kaldırıldı
+- **Odadan çıkış:** Müzik player + SSE + presence temizliği; geri tuşu tam `leaveRoomSession`
+- **Poll:** SSE bağlıyken mesaj poll atlanır (DJ/presence yedek poll 15–30 sn)
+- **Canlı falcı:** `LiveFortuneRepository` + `LiveFortuneRemoteDataSource` — apply, reviews, awards, gifts, room signal
+- **ErrorHandler:** Merkezi API hata mesajları
+- **WebRTC sinyal:** `LiveFortuneRoomSignalService` — `POST/GET/DELETE /api/room/signal` (HTTP poll)
+- **Rapor:** `docs/FLUTTER_BACKEND_INTEGRATION_REPORT.md`
+
 ## 1.0.265+268 (2026-06-18)
 
 ### Canlı falcı — bağlantı ve çıkış düzeltmeleri

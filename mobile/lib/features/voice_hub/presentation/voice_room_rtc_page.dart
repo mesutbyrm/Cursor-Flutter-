@@ -420,7 +420,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   Future<void> _leave() async {
     final nav = Navigator.of(context);
     if (nav.canPop()) {
-      nav.pop();
+      await _leaveRoom();
       return;
     }
     final leave = await showDialog<bool>(
@@ -1100,12 +1100,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        final rootNav = Navigator.of(context);
-        if (rootNav.canPop()) {
-          rootNav.pop();
-          return;
-        }
-        await _leave();
+        await _leaveRoom();
       },
       child: Scaffold(
         backgroundColor: VoiceRoomTokens.bgDeep,

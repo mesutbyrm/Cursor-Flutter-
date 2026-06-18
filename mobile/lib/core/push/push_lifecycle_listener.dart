@@ -59,7 +59,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
               router: ref.read(goRouterProvider),
               sessionId: update.sessionId,
               tellerId: update.tellerId,
-              remote: ref.read(homeRemoteProvider),
+              repo: ref.read(liveFortuneRepositoryProvider),
             ),
           );
         },

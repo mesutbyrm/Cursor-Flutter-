@@ -106,6 +106,20 @@ abstract final class ApiEndpoints {
 
   static const liveFortuneRoomSignal = '/api/room/signal';
 
+  static String liveFortuneRoomSignalQuery(String sessionId) =>
+      '$liveFortuneRoomSignal?sessionId=${Uri.encodeComponent(sessionId.trim())}';
+
+  static const fortuneTellerApply = '/api/fortune-tellers/apply';
+
+  static String fortuneTellerReviews(String tellerId) =>
+      '/api/fortune-tellers/${Uri.encodeComponent(tellerId.trim())}/reviews';
+
+  static String fortuneTellerAwards(String tellerId) =>
+      '/api/fortune-tellers/awards?tellerId=${Uri.encodeComponent(tellerId.trim())}';
+
+  static String fortuneTellerGifts(String tellerId) =>
+      '/api/fortune-tellers/gifts?tellerId=${Uri.encodeComponent(tellerId.trim())}';
+
   static String fortuneTeller(String id) => '/api/fortune-tellers/$id';
 
   static const fortuneTellerMyProfile = '/api/fortune-tellers/my-profile';

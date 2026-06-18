@@ -1149,6 +1149,10 @@ class HomeRemoteDataSource {
     );
   }
 
+  /// Dış datasource'lar için JSON → entity (canlı falcı modülü).
+  LiveFortuneTellerEntity parseLiveFortuneTeller(dynamic raw) =>
+      _mapLiveFortuneTeller(raw);
+
   LiveFortuneTellerEntity _mapLiveFortuneTeller(dynamic raw) {
     final m = asJsonMap(raw);
     final user = asJsonMap(m['user'] ?? m['profile']);

@@ -99,9 +99,9 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
 
   Future<void> _syncRoomInfo({bool startTimerIfTeller = false}) async {
     if (!mounted || _leaving) return;
-    final remote = ref.read(homeRemoteProvider);
+    final repo = ref.read(liveFortuneRepositoryProvider);
     final previousRoomId = _room?.roomId;
-    final info = await remote.fetchRoomInfo(widget.session.sessionId);
+    final info = await repo.fetchRoomInfo(widget.session.sessionId);
     if (!mounted || info == null) return;
 
     final wasTimerStarted = _timerStarted;
@@ -112,7 +112,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     if (startTimerIfTeller &&
         !widget.session.isClient &&
         !info.timerStarted) {
-      final result = await remote.roomAction(
+      final result = await repo.roomAction(
         widget.session.sessionId,
         'start_timer',
       );
@@ -162,7 +162,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
 
   Future<void> _sendPing() async {
     if (!mounted || _leaving || !_timerStarted) return;
-    final result = await ref.read(homeRemoteProvider).roomAction(
+    final result = await ref.read(liveFortuneRepositoryProvider).roomAction(
           widget.session.sessionId,
           'ping',
         );
@@ -245,8 +245,8 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
   Future<void> _pollChat() async {
     if (!mounted || _leaving) return;
     final user = ref.read(authControllerProvider).valueOrNull;
-    final remote = ref.read(homeRemoteProvider);
-    final incoming = await remote.fetchTellerChatMessages(
+    final repo = ref.read(liveFortuneRepositoryProvider);
+    final incoming = await repo.fetchTellerChatMessages(
       widget.session.sessionId,
       myUserId: user?.id,
       afterIso: _lastChatAfter,
@@ -358,8 +358,8 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     setState(() => _sendingChat = true);
     final user = ref.read(authControllerProvider).valueOrNull;
     final ok = await ref
-        .read(homeRemoteProvider)
-        .sendTellerChatMessage(widget.session.sessionId, t);
+        .read(liveFortuneRepositoryProvider)
+        .sendRoomMessage(widget.session.sessionId, t);
     if (!mounted) return;
     setState(() => _sendingChat = false);
     if (ok) {
@@ -387,7 +387,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
       jetonBalance: balance,
     );
     if (!mounted || amount == null) return;
-    final ok = await ref.read(homeRemoteProvider).sendTellerTip(
+    final ok = await ref.read(liveFortuneRepositoryProvider).sendTip(
           sessionId: widget.session.sessionId,
           amount: amount,
           tellerId: widget.session.teller.id,
@@ -419,7 +419,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
       jetonPerMinute: perMin,
     );
     if (!mounted || choice == null) return;
-    final ok = await ref.read(homeRemoteProvider).extendFortuneSession(
+    final ok = await ref.read(liveFortuneRepositoryProvider).extendSession(
           sessionId: widget.session.sessionId,
           minutes: choice.minutes,
           totalJeton: choice.jeton,
@@ -515,8 +515,8 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     var ended = false;
     try {
       ended = await ref
-          .read(homeRemoteProvider)
-          .endFortuneSession(widget.session.sessionId);
+          .read(liveFortuneRepositoryProvider)
+          .endSession(widget.session.sessionId);
     } catch (_) {
       ended = false;
     }

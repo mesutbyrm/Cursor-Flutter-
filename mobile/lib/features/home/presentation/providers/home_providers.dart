@@ -5,7 +5,10 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../../social/presentation/providers/social_providers.dart';
 import '../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../data/datasources/home_remote_datasource.dart';
+import '../../data/datasources/live_fortune_remote_datasource.dart';
 import '../../data/repositories/home_repository_impl.dart';
+import '../../data/repositories/live_fortune_repository_impl.dart';
+import '../../data/services/live_fortune_room_signal_service.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_fortune_card_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
@@ -13,12 +16,33 @@ import '../../domain/entities/home_trend_video_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 import '../../domain/repositories/home_repository.dart';
+import '../../domain/repositories/live_fortune_repository.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 
 final homeRemoteProvider = Provider<HomeRemoteDataSource>((ref) {
   return HomeRemoteDataSource(ref.watch(dioProvider));
+});
+
+final liveFortuneRemoteProvider = Provider<LiveFortuneRemoteDataSource>((ref) {
+  return LiveFortuneRemoteDataSource(
+    ref.watch(dioProvider),
+    ref.watch(homeRemoteProvider),
+  );
+});
+
+final liveFortuneRepositoryProvider = Provider<LiveFortuneRepository>((ref) {
+  return LiveFortuneRepositoryImpl(ref.watch(liveFortuneRemoteProvider));
+});
+
+final liveFortuneRoomSignalServiceProvider =
+    Provider<LiveFortuneRoomSignalService>((ref) {
+  final service = LiveFortuneRoomSignalService(
+    ref.watch(liveFortuneRemoteProvider),
+  );
+  ref.onDispose(service.dispose);
+  return service;
 });
 
 final homeRepositoryProvider = Provider<HomeRepository>((ref) {
