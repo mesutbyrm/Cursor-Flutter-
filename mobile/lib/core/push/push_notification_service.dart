@@ -42,7 +42,8 @@ class PushNotificationService {
     if (!kIsWeb && Platform.isAndroid) {
       await _local
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.createNotificationChannel(
             const AndroidNotificationChannel(
               _channelId,
@@ -53,7 +54,8 @@ class PushNotificationService {
           );
       await _local
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.createNotificationChannel(
             const AndroidNotificationChannel(
               _urgentChannelId,
@@ -65,6 +67,28 @@ class PushNotificationService {
     }
 
     _initialized = true;
+  }
+
+  Future<bool> refreshPermissionStatus() async {
+    if (kIsWeb) return false;
+
+    try {
+      if (Platform.isAndroid) {
+        final status = await Permission.notification.status;
+        _permissionGranted = status.isGranted;
+        return _permissionGranted;
+      }
+
+      final settings = await FirebaseMessaging.instance
+          .getNotificationSettings();
+      _permissionGranted =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional;
+      return _permissionGranted;
+    } catch (e) {
+      debugPrint('Notification permission status failed: $e');
+      return _permissionGranted;
+    }
   }
 
   void _onTap(NotificationResponse response) {
@@ -97,7 +121,7 @@ class PushNotificationService {
     );
     _permissionGranted =
         settings.authorizationStatus == AuthorizationStatus.authorized ||
-            settings.authorizationStatus == AuthorizationStatus.provisional;
+        settings.authorizationStatus == AuthorizationStatus.provisional;
     return _permissionGranted;
   }
 
@@ -121,10 +145,10 @@ class PushNotificationService {
   Future<void> showRemoteMessage(RemoteMessage msg) async {
     if (!_initialized) await init();
 
-    final title = msg.notification?.title ??
-        msg.data['title']?.toString() ??
-        'Canlifal';
-    final body = msg.notification?.body ??
+    final title =
+        msg.notification?.title ?? msg.data['title']?.toString() ?? 'Canlifal';
+    final body =
+        msg.notification?.body ??
         msg.data['body']?.toString() ??
         msg.data['message']?.toString();
 
