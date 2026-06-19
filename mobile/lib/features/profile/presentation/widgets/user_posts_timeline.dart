@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/performance/list_perf.dart';
-import '../../../core/ui/premium/premium_skeleton.dart';
-import '../../../core/widgets/app_error_view.dart';
+import '../../../../core/performance/list_perf.dart';
+import '../../../../core/ui/premium/premium_skeleton.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../../../social/presentation/widgets/instagram/social_instagram_post_card.dart';
 import '../../../social/presentation/providers/user_social_posts_notifier.dart';

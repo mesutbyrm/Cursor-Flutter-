@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../../core/video/video_cache_service.dart';
+import '../../../../core/video/video_cache_service.dart';
 import 'short_video_url_resolver.dart';
 
 /// CDN / imzalı URL / API stream sırasıyla oynatıcı oluşturur.
