@@ -2,24 +2,27 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.292+295` |
-| Tarih (UTC) | 2026-06-19 14:38 |
-| Commit | [`47208d301cd5c56e8025795583cce19547234b5d`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/47208d301cd5c56e8025795583cce19547234b5d) |
-| İş akışı | [Run 27831451986](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27831451986) |
+| Sürüm | `1.0.293+296` |
+| Tarih (UTC) | 2026-06-19 15:44 |
+| Commit | [`24abf0697c8e884b89124606e529d106e6885d35`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/24abf0697c8e884b89124606e529d106e6885d35) |
+| İş akışı | [Run 27834738437](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27834738437) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.292+295 (2026-06-19)
+## 1.0.293+296 (2026-06-19)
 
-### Canlı falcı — web falcı + mobil danışan TRTC düzeltmesi
+### Canlı Falcılar — sıfırdan yeniden yazım (`live_psychics`)
 
-- **TRTC sahne:** `videoCall` yerine üretim web ile aynı `live` sahnesi — karşı taraf görüntüsü artık eşleşir
-- **Oda kimliği:** `GET /api/room/{id}` → `roomId` / `trtcRoomId` öncelikli; usersig yanıtındaki oda kullanılır
-- **Peer eşlemesi:** Danışan/falcı rolüne göre `peerId`, `tellerUserId`, `clientId` birleşimi (`remotePeerIdFor`)
-- **İzin sonrası çıkış:** Oturum `SharedPreferences` ile kalıcı; izin diyaloğu / process restore sonrası seans ekranına dönüş
-- **İzin ön isteği:** Reklam geçiş ekranında kamera/mikrofon izni (seans açılmadan önce)
-- **Yaşam döngüsü:** Uygulama ön plana gelince bağlantı yeniden denenir; bekleme/geçiş/seans sırasında `resumeActiveSessions` çakışması engellendi
+- **Yeni mimari:** `lib/features/live_psychics/` — domain / data / presentation (Riverpod, setState yok)
+- **Liste:** Çevrimiçi falcılar, pull-to-refresh, infinite scroll
+- **Profil & randevu:** Fotoğraf, uzmanlık, puan, online durumu, fal türü + süre seçimi
+- **SSE:** Falcı gelen çağrı + oda güncellemeleri (web ile aynı uçlar)
+- **Durumlar:** Bekliyor / Kabul / Red / Süre doldu
+- **Falcı paneli:** Bekleyen çağrılar, çevrimiçi anahtarı, kabul/red
+- **Tam ekran gelen çağrı popup'ı** + video görüşme (TRTC `live` sahnesi)
+- **Hata / boş / offline:** Async view bileşenleri, retry, loading state
+- **Eski modül kaldırıldı:** `home/live_fortune_*` dosyaları silindi; router, shell, push, ana sayfa yeni modüle bağlandı
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
