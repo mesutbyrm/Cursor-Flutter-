@@ -128,6 +128,8 @@ class HomeRemoteDataSource {
           pick(data, ['maxMinutes', 'duration']) ??
               pick(sessionMap, ['maxMinutes', 'duration']),
         ),
+        trtcRoomId: pick(data, ['trtcRoomId', 'roomId'])?.toString() ??
+            pick(sessionMap, ['trtcRoomId', 'roomId'])?.toString(),
       );
     } on ApiException {
       rethrow;
@@ -896,6 +898,16 @@ class HomeRemoteDataSource {
       timerStartedAt = DateTime.tryParse(timerRaw);
     }
     final user = asJsonMap(data['user']);
+    final teller = asJsonMap(data['teller']);
+    final tellerUserId = _str(data, ['tellerUserId', 'anchorUserId']) ??
+        _str(teller, ['userId', 'tellerUserId']);
+    final clientId = _str(data, ['clientId']) ??
+        _str(user, ['id', 'userId']);
+    final isTeller = data['isTeller'] == true;
+    final peerId = isTeller
+        ? _str(data, ['peerId', 'clientId', 'userId']) ?? clientId
+        : _str(data, ['peerId', 'anchorUserId', 'tellerUserId']) ??
+            tellerUserId;
     return LiveFortuneRoomInfo(
       sessionId: id,
       status: _str(data, ['status']) ?? 'active',
@@ -912,10 +924,11 @@ class HomeRemoteDataSource {
         final v = asInt(pick(data, ['creditsPerMinute']));
         return v > 0 ? v : 10;
       }(),
-      peerId: _str(data, ['peerId', 'clientId', 'userId']) ??
-          _str(user, ['id', 'userId']),
+      peerId: peerId,
+      tellerUserId: tellerUserId,
+      clientId: clientId,
       isUser: data['isUser'] == true || data['isTeller'] != true,
-      isTeller: data['isTeller'] == true,
+      isTeller: isTeller,
       userJetonBalance: asInt(pick(user, ['jetonBalance'])),
     );
   }

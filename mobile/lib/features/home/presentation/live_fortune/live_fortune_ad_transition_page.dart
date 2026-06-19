@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../trtc/presentation/trtc_room_manager.dart';
+import '../../data/live_fortune_session_store.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import 'live_fortune_admin_ad_panel.dart';
 
@@ -23,6 +27,18 @@ class LiveFortuneAdTransitionPage extends ConsumerStatefulWidget {
 class _LiveFortuneAdTransitionPageState
     extends ConsumerState<LiveFortuneAdTransitionPage> {
   var _navigated = false;
+  var _permissionsReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(LiveFortuneSessionStore.save(widget.session));
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final ok = await TrtcRoomManager.requestPermissions(video: true);
+      if (!mounted) return;
+      setState(() => _permissionsReady = ok);
+    });
+  }
 
   void _goSession() {
     if (_navigated || !mounted) return;
@@ -83,7 +99,9 @@ class _LiveFortuneAdTransitionPageState
                 LiveFortuneAdminAdPanel(
                   countdownSeconds: 4,
                   onCountdownFinished: _goSession,
-                  subtitle: 'Canlı fal deneyiminiz birazdan başlayacak!',
+                  subtitle: _permissionsReady
+                      ? 'Canlı fal deneyiminiz birazdan başlayacak!'
+                      : 'Kamera ve mikrofon izni isteniyor…',
                 ),
               ],
             ),

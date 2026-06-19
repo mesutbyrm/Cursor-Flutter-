@@ -71,6 +71,16 @@ abstract final class LiveFortuneRoomSseMapper {
       timerStartedAt = DateTime.tryParse(timerRaw);
     }
     final user = asJsonMap(nested['user']);
+    final teller = asJsonMap(nested['teller']);
+    final tellerUserId = _str(nested, ['tellerUserId', 'anchorUserId']) ??
+        _str(teller, ['userId', 'tellerUserId']);
+    final clientId = _str(nested, ['clientId']) ??
+        _str(user, ['id', 'userId']);
+    final isTeller = nested['isTeller'] == true;
+    final peerId = isTeller
+        ? _str(nested, ['peerId', 'clientId', 'userId']) ?? clientId
+        : _str(nested, ['peerId', 'anchorUserId', 'tellerUserId']) ??
+            tellerUserId;
     return LiveFortuneRoomInfo(
       sessionId: id,
       status: _str(nested, ['status']) ?? 'active',
@@ -90,9 +100,11 @@ abstract final class LiveFortuneRoomSseMapper {
         final v = asInt(pick(nested, ['creditsPerMinute']));
         return v > 0 ? v : 10;
       }(),
-      peerId: _str(nested, ['peerId']),
+      peerId: peerId,
+      tellerUserId: tellerUserId,
+      clientId: clientId,
       isUser: nested['isUser'] == true || nested['isTeller'] != true,
-      isTeller: nested['isTeller'] == true,
+      isTeller: isTeller,
       userJetonBalance: asInt(pick(user, ['jetonBalance'])),
     );
   }

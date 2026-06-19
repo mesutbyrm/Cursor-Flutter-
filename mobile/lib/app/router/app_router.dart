@@ -82,9 +82,7 @@ import '../../features/voice_hub/presentation/voice_room_rtc_page.dart';
 import '../../features/voice_hub/presentation/widgets/voice_room_error_boundary.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
 import '../../features/home/presentation/pages/live_fortune_teller_detail_page.dart';
-import '../../features/home/presentation/live_fortune/live_fortune_ad_transition_page.dart';
-import '../../features/home/presentation/pages/live_fortune_waiting_page.dart';
-import '../../features/home/presentation/pages/live_fortune_session_page.dart';
+import '../../features/home/presentation/live_fortune/live_fortune_session_route.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
 import '../../features/agency/presentation/providers/agency_providers.dart';
 import '../../features/home/presentation/pages/teller_dashboard_screen.dart';
@@ -791,15 +789,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 pageBuilder: (context, state) {
                   final session = state.extra as LiveFortuneSessionEntity?;
                   final id = state.pathParameters['id'] ?? '';
-                  if (session == null) {
-                    return AppPageTransitions.fadeSlide(
-                      key: state.pageKey,
-                      child: LiveFortuneTellerDetailPage(tellerId: id),
-                    );
-                  }
                   return AppPageTransitions.fadeSlide(
                     key: state.pageKey,
-                    child: LiveFortuneWaitingPage(session: session),
+                    child: LiveFortuneWaitingRoute(
+                      tellerId: id,
+                      session: session,
+                    ),
                   );
                 },
               ),
@@ -808,15 +803,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 pageBuilder: (context, state) {
                   final session = state.extra as LiveFortuneSessionEntity?;
                   final id = state.pathParameters['id'] ?? '';
-                  if (session == null) {
-                    return AppPageTransitions.fadeSlide(
-                      key: state.pageKey,
-                      child: LiveFortuneTellerDetailPage(tellerId: id),
-                    );
-                  }
                   return AppPageTransitions.fadeSlide(
                     key: state.pageKey,
-                    child: LiveFortuneAdTransitionPage(session: session),
+                    child: LiveFortuneAdTransitionRoute(
+                      tellerId: id,
+                      session: session,
+                    ),
                   );
                 },
               ),
@@ -824,16 +816,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 path: 'session',
                 pageBuilder: (context, state) {
                   final session = state.extra as LiveFortuneSessionEntity?;
-                  if (session == null) {
-                    final id = state.pathParameters['id'] ?? '';
-                    return AppPageTransitions.fadeSlide(
-                      key: state.pageKey,
-                      child: LiveFortuneTellerDetailPage(tellerId: id),
-                    );
-                  }
+                  final id = state.pathParameters['id'] ?? '';
                   return AppPageTransitions.fadeSlide(
                     key: state.pageKey,
-                    child: LiveFortuneSessionPage(session: session),
+                    child: LiveFortuneSessionRoute(
+                      tellerId: id,
+                      session: session,
+                    ),
                   );
                 },
               ),

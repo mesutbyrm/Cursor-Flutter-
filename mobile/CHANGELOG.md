@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.292+295 (2026-06-19)
+
+### Canlı falcı — web falcı + mobil danışan TRTC düzeltmesi
+
+- **TRTC sahne:** `videoCall` yerine üretim web ile aynı `live` sahnesi — karşı taraf görüntüsü artık eşleşir
+- **Oda kimliği:** `GET /api/room/{id}` → `roomId` / `trtcRoomId` öncelikli; usersig yanıtındaki oda kullanılır
+- **Peer eşlemesi:** Danışan/falcı rolüne göre `peerId`, `tellerUserId`, `clientId` birleşimi (`remotePeerIdFor`)
+- **İzin sonrası çıkış:** Oturum `SharedPreferences` ile kalıcı; izin diyaloğu / process restore sonrası seans ekranına dönüş
+- **İzin ön isteği:** Reklam geçiş ekranında kamera/mikrofon izni (seans açılmadan önce)
+- **Yaşam döngüsü:** Uygulama ön plana gelince bağlantı yeniden denenir; bekleme/geçiş/seans sırasında `resumeActiveSessions` çakışması engellendi
+
 ## 1.0.291+294 (2026-06-19)
 
 ### Production readiness sprint

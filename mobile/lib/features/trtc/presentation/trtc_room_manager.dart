@@ -135,6 +135,11 @@ class TrtcRoomManager {
       },
       onRemoteUserEnterRoom: (userId) {
         debugPrint('TRTC remote enter: $userId');
+        if (userId == _localUserId) return;
+        if (_twoWayVideo) {
+          _setRemoteAnchor(userId);
+          _cloud?.muteRemoteAudio(userId, false);
+        }
       },
       onRemoteUserLeaveRoom: (userId, _) {
         if (remoteAnchorUserId == userId) {
@@ -181,9 +186,10 @@ class TrtcRoomManager {
       role: publishAsAnchor ? TRTCRoleType.anchor : TRTCRoleType.audience,
     );
 
-    final scene = twoWayVideo
-        ? TRTCAppScene.videoCall
-        : (audioOnly ? TRTCAppScene.voiceChatRoom : TRTCAppScene.live);
+    // Üretim web canlı falcı `live` sahnesi kullanır; tüm katılımcılar aynı sahneyi paylaşmalı.
+    final scene = audioOnly
+        ? TRTCAppScene.voiceChatRoom
+        : TRTCAppScene.live;
     _cloud!.enterRoom(params, scene);
 
     final enterResult = await _enterRoomCompleter!.future.timeout(

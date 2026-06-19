@@ -10,6 +10,7 @@ import '../../../../core/ui/premium/live_badge.dart';
 import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../data/live_fortune_session_store.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../../../core/network/token_storage.dart';
 import '../providers/home_providers.dart';
@@ -46,6 +47,7 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
     _poll = Timer.periodic(const Duration(seconds: 3), (_) => _checkStatus());
     unawaited(_checkStatus());
     unawaited(_connectWaitingSse());
+    unawaited(LiveFortuneSessionStore.save(widget.session));
   }
 
   Future<void> _connectWaitingSse() async {
@@ -80,6 +82,7 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
       durationMinutes: status.durationMinutes ?? widget.session.durationMinutes,
       totalJeton: status.totalJeton ?? widget.session.totalJeton,
     );
+    await LiveFortuneSessionStore.save(activeSession);
     if (!mounted) return;
     context.pushReplacement(
       '/canli-falcilar/${activeSession.teller.id}/ad-transition',
@@ -150,6 +153,7 @@ class _LiveFortuneWaitingPageState extends ConsumerState<LiveFortuneWaitingPage>
     _closed = true;
     _poll?.cancel();
     await ref.read(liveFortuneRoomSseServiceProvider).disconnect();
+    await LiveFortuneSessionStore.clear();
     ref.invalidate(coinBalanceProvider);
     if (!mounted) return;
     context.go('/canli-falcilar/${widget.session.teller.id}');

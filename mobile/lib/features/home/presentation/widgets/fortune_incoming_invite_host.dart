@@ -71,10 +71,15 @@ class _FortuneIncomingInviteHostState
     if (!_isSignedIn()) return false;
     final path =
         ref.read(goRouterProvider).routerDelegate.currentConfiguration.uri.path;
-    if (path.contains('/canli-falcilar') && path.contains('/session')) {
-      return false;
-    }
+    if (_isInLiveFortuneFlow(path)) return false;
     return !AuthRoutePaths.isPublicAuthPath(path);
+  }
+
+  bool _isInLiveFortuneFlow(String path) {
+    if (!path.contains('/canli-falcilar')) return false;
+    return path.contains('/waiting') ||
+        path.contains('/ad-transition') ||
+        path.contains('/session');
   }
 
   bool _mayRunTellerBackgroundSync() {
@@ -140,9 +145,7 @@ class _FortuneIncomingInviteHostState
     if (!_mayPresentInvites()) return;
     final path =
         ref.read(goRouterProvider).routerDelegate.currentConfiguration.uri.path;
-    if (path.contains('/canli-falcilar') && path.contains('/session')) {
-      return;
-    }
+    if (_isInLiveFortuneFlow(path)) return;
     await LiveFortuneFlow.resumeActiveClientSessions(
       router: ref.read(goRouterProvider),
       repo: ref.read(liveFortuneRepositoryProvider),

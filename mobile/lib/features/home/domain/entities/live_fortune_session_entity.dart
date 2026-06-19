@@ -112,6 +112,7 @@ class FortuneSessionCreateResult {
     this.isClient = true,
     this.creditsCharged,
     this.maxMinutes,
+    this.trtcRoomId,
   });
 
   final String sessionId;
@@ -122,6 +123,7 @@ class FortuneSessionCreateResult {
   final bool isClient;
   final int? creditsCharged;
   final int? maxMinutes;
+  final String? trtcRoomId;
 }
 
 /// Canlı fal oturumu — TRTC oda + süre/jeton.
@@ -178,6 +180,22 @@ class LiveFortuneSessionEntity {
     if (fromSession != null && fromSession.isNotEmpty) return fromSession;
     return teller.trtcUserId;
   }
+
+  /// Karşı tarafın TRTC kullanıcı kimliği (oda API + oturum birleşimi).
+  String remotePeerIdFor({
+    LiveFortuneRoomInfo? room,
+  }) {
+    final peer = room?.peerId?.trim();
+    if (peer != null && peer.isNotEmpty) return peer;
+    if (isClient) {
+      final anchor = room?.tellerUserId?.trim();
+      if (anchor != null && anchor.isNotEmpty) return anchor;
+      return anchorUserId;
+    }
+    final client = room?.clientId?.trim() ?? clientId?.trim();
+    if (client != null && client.isNotEmpty) return client;
+    return '';
+  }
 }
 
 /// `GET /api/room/{sessionId}` — sunucu oda durumu + timer.
@@ -193,6 +211,8 @@ class LiveFortuneRoomInfo {
     this.minutesUsed = 0,
     this.creditsPerMinute = 10,
     this.peerId,
+    this.tellerUserId,
+    this.clientId,
     this.isUser = true,
     this.isTeller = false,
     this.userJetonBalance,
@@ -208,6 +228,8 @@ class LiveFortuneRoomInfo {
   final int minutesUsed;
   final int creditsPerMinute;
   final String? peerId;
+  final String? tellerUserId;
+  final String? clientId;
   final bool isUser;
   final bool isTeller;
   final int? userJetonBalance;
@@ -240,6 +262,8 @@ class LiveFortuneRoomInfo {
     int? minutesUsed,
     int? creditsPerMinute,
     String? peerId,
+    String? tellerUserId,
+    String? clientId,
     bool? isUser,
     bool? isTeller,
     int? userJetonBalance,
@@ -255,6 +279,8 @@ class LiveFortuneRoomInfo {
       minutesUsed: minutesUsed ?? this.minutesUsed,
       creditsPerMinute: creditsPerMinute ?? this.creditsPerMinute,
       peerId: peerId ?? this.peerId,
+      tellerUserId: tellerUserId ?? this.tellerUserId,
+      clientId: clientId ?? this.clientId,
       isUser: isUser ?? this.isUser,
       isTeller: isTeller ?? this.isTeller,
       userJetonBalance: userJetonBalance ?? this.userJetonBalance,

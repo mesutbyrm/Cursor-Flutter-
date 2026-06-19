@@ -16,8 +16,10 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../widgets/live_fortune_extend_sheet.dart';
 import '../widgets/live_fortune_tip_sheet.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
+import '../../../trtc/domain/entities/trtc_credentials.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
+import '../../data/live_fortune_session_store.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../live_fortune/live_fortune_close_dialog.dart';
 import '../providers/home_providers.dart';
@@ -34,7 +36,8 @@ class LiveFortuneSessionPage extends ConsumerStatefulWidget {
       _LiveFortuneSessionPageState();
 }
 
-class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage> {
+class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
+    with WidgetsBindingObserver {
   final _trtc = TrtcRoomManager();
   final _chat = TextEditingController();
   final _chatScroll = ScrollController();
@@ -60,7 +63,9 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _remaining = Duration(minutes: widget.session.durationMinutes);
+    unawaited(LiveFortuneSessionStore.save(widget.session));
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _bootstrapRoom();
       if (!mounted) return;
@@ -145,6 +150,15 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     if (mounted) setState(() {});
 
     final newRoomId = _room?.roomId;
+    if (newRoomId != null && newRoomId.isNotEmpty) {
+      final updatedSession = widget.session.copyWith(
+        tellerUserId: _room?.tellerUserId ?? widget.session.tellerUserId,
+        clientId: _room?.clientId ?? widget.session.clientId,
+        trtcRoomIdOverride: newRoomId,
+      );
+      unawaited(LiveFortuneSessionStore.save(updatedSession));
+    }
+
     if (newRoomId != null &&
         newRoomId.isNotEmpty &&
         previousRoomId != newRoomId &&
@@ -278,6 +292,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tick?.cancel();
     _chatPoll?.cancel();
     _ping?.cancel();
@@ -299,6 +314,25 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     }
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        mounted &&
+        !_leaving &&
+        !_rtcReady &&
+        _rtcError == null) {
+      unawaited(_rejoinRtc());
+    }
+  }
+
+  String get _trtcRoomId {
+    final fromRoom = _room?.roomId?.trim();
+    if (fromRoom != null && fromRoom.isNotEmpty) return fromRoom;
+    return widget.session.trtcRoomId;
+  }
+
+  String get _remotePeerId => widget.session.remotePeerIdFor(room: _room);
+
   Future<void> _joinRtc() async {
     final user = await _waitForAuth();
     if (user == null) {
@@ -309,19 +343,32 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
       if (mounted) setState(() => _rtcError = 'Video bu cihazda desteklenmiyor');
       return;
     }
-    final isClient = widget.session.isClient;
-    final roomId = _room?.roomId ?? widget.session.trtcRoomId;
-    final remotePeerId = isClient
-        ? widget.session.anchorUserId
-        : (_room?.peerId ?? widget.session.clientId ?? '');
+    if (_room?.roomId == null || _room!.roomId!.trim().isEmpty) {
+      await _syncRoomInfo();
+    }
+    final roomId = _trtcRoomId;
+    if (roomId.trim().isEmpty) {
+      if (mounted) {
+        setState(() => _rtcError = 'Oda bilgisi alınamadı. Tekrar deneyin.');
+      }
+      return;
+    }
+    final remotePeerId = _remotePeerId;
     try {
       final cred = await ref.read(trtcRemoteProvider).fetchUserSig(
             userId: user.id,
             roomId: roomId,
           );
+      final effectiveRoomId =
+          cred.roomId.trim().isNotEmpty ? cred.roomId.trim() : roomId;
       await _trtc.join(
-        credentials: cred,
-        isHost: !isClient,
+        credentials: TrtcCredentials(
+          sdkAppId: cred.sdkAppId,
+          userId: cred.userId,
+          userSig: cred.userSig,
+          roomId: effectiveRoomId,
+        ),
+        isHost: !widget.session.isClient,
         audioOnly: false,
         twoWayVideo: true,
         expectedAnchorUserId:
@@ -520,7 +567,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
       );
     }
     if (!widget.session.isClient) {
-      final peerId = _room?.peerId ?? widget.session.clientId ?? '';
+      final peerId = _remotePeerId;
       return ValueListenableBuilder<String?>(
         valueListenable: _trtc.remoteAnchorUserIdNotifier,
         builder: (context, anchor, _) {
@@ -550,7 +597,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
         },
       );
     }
-    final anchorId = widget.session.anchorUserId;
+    final anchorId = _remotePeerId;
     return ValueListenableBuilder<String?>(
       valueListenable: _trtc.remoteAnchorUserIdNotifier,
       builder: (context, anchor, _) {
@@ -630,6 +677,7 @@ class _LiveFortuneSessionPageState extends ConsumerState<LiveFortuneSessionPage>
     await ref.read(liveFortuneRoomSseServiceProvider).disconnect();
     await _trtc.leave();
     ref.read(videoWebrtcSignalServiceProvider).stop();
+    await LiveFortuneSessionStore.clear();
 
     var ended = false;
     try {

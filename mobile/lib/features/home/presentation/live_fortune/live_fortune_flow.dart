@@ -7,6 +7,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/home_remote_datasource.dart';
+import '../../data/live_fortune_session_store.dart';
 import '../../domain/repositories/live_fortune_repository.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
@@ -73,7 +74,10 @@ class LiveFortuneFlow {
       tellerUserId: created.tellerUserId ?? teller.trtcUserId,
       clientId: created.clientId ?? user.id,
       isClient: true,
+      trtcRoomIdOverride: created.trtcRoomId,
     );
+
+    await LiveFortuneSessionStore.save(session);
 
     if (!context.mounted) return session;
     context.push('/canli-falcilar/${teller.id}/waiting', extra: session);
@@ -98,6 +102,7 @@ class LiveFortuneFlow {
     if (!ok || !context.mounted) return false;
 
     final ended = await ref.read(liveFortuneRepositoryProvider).endSession(sessionId);
+    await LiveFortuneSessionStore.clear();
     ref.invalidate(coinBalanceProvider);
     if (!context.mounted) return ended;
 
@@ -133,6 +138,7 @@ class LiveFortuneFlow {
     );
     if (!ok || !context.mounted) return false;
     await ref.read(liveFortuneRepositoryProvider).endSession(sessionId);
+    await LiveFortuneSessionStore.clear();
     if (!context.mounted) return true;
     if (context.canPop()) {
       context.pop();
@@ -182,9 +188,13 @@ class LiveFortuneFlow {
       isClient: status.isClient,
       trtcRoomIdOverride: status.trtcRoomId,
     );
+    await LiveFortuneSessionStore.save(session);
 
     final path = router.routerDelegate.currentConfiguration.uri.path;
-    if (path.contains('/canli-falcilar') && path.contains('/session')) {
+    if (path.contains('/canli-falcilar') &&
+        (path.contains('/session') ||
+            path.contains('/waiting') ||
+            path.contains('/ad-transition'))) {
       return;
     }
 

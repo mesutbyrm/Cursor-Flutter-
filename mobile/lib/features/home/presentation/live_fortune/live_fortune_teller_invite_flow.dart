@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../data/live_fortune_session_store.dart';
 import '../../domain/entities/live_fortune_session_entity.dart';
 import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../providers/home_providers.dart';
@@ -112,8 +113,12 @@ class LiveFortuneTellerInviteFlow {
       clientId: req.clientId,
       isClient: false,
       trtcRoomIdOverride:
-          roomIdOverride ?? status?.trtcRoomId ?? req.sessionId,
+          roomIdOverride ??
+          roomPreview?.roomId ??
+          status?.trtcRoomId ??
+          req.sessionId,
     );
+    await LiveFortuneSessionStore.save(session);
     if (!navCtx.mounted) return false;
     await navCtx.push(
       '/canli-falcilar/${teller.id}/session',
