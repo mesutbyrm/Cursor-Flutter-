@@ -30,6 +30,7 @@ Future<PsychicBookingResult?> showPsychicBookingSheet(
   required PsychicEntity psychic,
   int initialMinutes = 10,
   String? initialFortuneType,
+  bool isStaff = false,
 }) {
   return showModalBottomSheet<PsychicBookingResult>(
     context: context,
@@ -42,15 +43,19 @@ Future<PsychicBookingResult?> showPsychicBookingSheet(
           (ref) => initialFortuneType ?? psychicFortuneTypesForPsychic(psychic.specialties).first.key,
         ),
       ],
-      child: _PsychicBookingSheet(psychic: psychic),
+      child: _PsychicBookingSheet(psychic: psychic, isStaff: isStaff),
     ),
   );
 }
 
 class _PsychicBookingSheet extends ConsumerWidget {
-  const _PsychicBookingSheet({required this.psychic});
+  const _PsychicBookingSheet({
+    required this.psychic,
+    this.isStaff = false,
+  });
 
   final PsychicEntity psychic;
+  final bool isStaff;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -128,6 +133,29 @@ class _PsychicBookingSheet extends ConsumerWidget {
                     ),
                     textAlign: TextAlign.center,
                   ),
+                  if (isStaff) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1565C0).withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF64B5F6)),
+                      ),
+                      child: const Text(
+                        'Staff hesabı — seans için jeton düşülmez',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF80D8FF),
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 18),
                   const Text(
                     'Süre Seçin',
@@ -236,7 +264,7 @@ class _PsychicBookingSheet extends ConsumerWidget {
                           child: Column(
                             children: [
                               Text(
-                                '${selected.totalJeton} jeton',
+                                isStaff ? 'Ücretsiz' : '${selected.totalJeton} jeton',
                                 style: const TextStyle(
                                   color: AppThemeColors.accentCyan,
                                   fontWeight: FontWeight.w900,

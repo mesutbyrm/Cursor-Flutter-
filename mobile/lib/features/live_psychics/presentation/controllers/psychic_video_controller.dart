@@ -430,13 +430,16 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     final perMin = session.psychic.pricePerMinute > 0
         ? session.psychic.pricePerMinute
         : 10;
+    final isStaff =
+        ref.read(walletBalancesProvider).valueOrNull?.isStaff == true;
     final balance = ref.read(coinBalanceProvider).valueOrNull ??
         ref.read(authControllerProvider).valueOrNull?.coinBalance ??
         0;
     return showPsychicExtendSheet(
       context,
-      jetonBalance: balance,
+      jetonBalance: isStaff ? 999999999 : balance,
       jetonPerMinute: perMin,
+      staffExempt: isStaff,
     );
   }
 

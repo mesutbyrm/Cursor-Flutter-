@@ -83,6 +83,14 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
       );
 
   @override
+  Future<List<PsychicEntity>> fetchFavoritePsychics() =>
+      _remote.fetchFavoritePsychics();
+
+  @override
+  Future<bool> toggleFavoritePsychic(String tellerId) =>
+      _remote.toggleFavoritePsychic(tellerId);
+
+  @override
   Future<PsychicSessionCreateResult?> createSession({
     required String tellerId,
     String? tellerUserId,

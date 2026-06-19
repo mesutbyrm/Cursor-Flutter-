@@ -39,6 +39,7 @@ class PsychicsListState {
     this.isLoadingMore = false,
     this.isRefreshing = false,
     this.filters = const PsychicsListFilters(),
+    this.favoritesOnly = false,
   });
 
   final List<PsychicEntity> items;
@@ -47,6 +48,7 @@ class PsychicsListState {
   final bool isLoadingMore;
   final bool isRefreshing;
   final PsychicsListFilters filters;
+  final bool favoritesOnly;
 
   PsychicsListState copyWith({
     List<PsychicEntity>? items,
@@ -55,6 +57,7 @@ class PsychicsListState {
     bool? isLoadingMore,
     bool? isRefreshing,
     PsychicsListFilters? filters,
+    bool? favoritesOnly,
   }) {
     return PsychicsListState(
       items: items ?? this.items,
@@ -63,6 +66,7 @@ class PsychicsListState {
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       isRefreshing: isRefreshing ?? this.isRefreshing,
       filters: filters ?? this.filters,
+      favoritesOnly: favoritesOnly ?? this.favoritesOnly,
     );
   }
 }
@@ -75,8 +79,19 @@ class PsychicsListController extends AutoDisposeAsyncNotifier<PsychicsListState>
     return _fetchFirst(const PsychicsListFilters());
   }
 
-  Future<PsychicsListState> _fetchFirst(PsychicsListFilters filters) async {
+  Future<PsychicsListState> _fetchFirst(PsychicsListFilters filters,
+      {bool favoritesOnly = false}) async {
     final repo = ref.read(livePsychicsRepositoryProvider);
+    if (favoritesOnly) {
+      final favorites = await repo.fetchFavoritePsychics();
+      return PsychicsListState(
+        items: favorites,
+        page: 1,
+        hasMore: false,
+        filters: filters,
+        favoritesOnly: true,
+      );
+    }
     final first = await repo.fetchPsychics(
       page: 1,
       limit: _pageSize,
@@ -92,15 +107,33 @@ class PsychicsListController extends AutoDisposeAsyncNotifier<PsychicsListState>
     );
   }
 
+  Future<void> showFavoritesOnly(bool enabled) async {
+    final current = state.valueOrNull;
+    final filters = current?.filters ?? const PsychicsListFilters();
+    if (current != null) {
+      state = AsyncData(
+        current.copyWith(isRefreshing: true, favoritesOnly: enabled),
+      );
+    } else {
+      state = const AsyncLoading();
+    }
+    try {
+      state = AsyncData(await _fetchFirst(filters, favoritesOnly: enabled));
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
   Future<void> applyFilters(PsychicsListFilters filters) async {
     final current = state.valueOrNull;
+    final favoritesOnly = current?.favoritesOnly ?? false;
     if (current != null) {
       state = AsyncData(current.copyWith(isRefreshing: true, filters: filters));
     } else {
       state = const AsyncLoading();
     }
     try {
-      state = AsyncData(await _fetchFirst(filters));
+      state = AsyncData(await _fetchFirst(filters, favoritesOnly: favoritesOnly));
     } catch (e, st) {
       state = AsyncError(e, st);
     }
@@ -109,11 +142,12 @@ class PsychicsListController extends AutoDisposeAsyncNotifier<PsychicsListState>
   Future<void> refresh() async {
     final current = state.valueOrNull;
     final filters = current?.filters ?? const PsychicsListFilters();
+    final favoritesOnly = current?.favoritesOnly ?? false;
     if (current != null) {
       state = AsyncData(current.copyWith(isRefreshing: true));
     }
     try {
-      state = AsyncData(await _fetchFirst(filters));
+      state = AsyncData(await _fetchFirst(filters, favoritesOnly: favoritesOnly));
     } catch (e, st) {
       state = AsyncError(e, st);
     }
@@ -121,6 +155,7 @@ class PsychicsListController extends AutoDisposeAsyncNotifier<PsychicsListState>
 
   Future<void> loadMore() async {
     final current = state.valueOrNull;
+    if (current == null || current.favoritesOnly) return;
     if (current == null || !current.hasMore || current.isLoadingMore) return;
     state = AsyncData(current.copyWith(isLoadingMore: true));
     try {
@@ -145,6 +180,7 @@ class PsychicsListController extends AutoDisposeAsyncNotifier<PsychicsListState>
         page: nextPage,
         hasMore: batch.length >= _pageSize,
         filters: filters,
+        favoritesOnly: current.favoritesOnly,
       ));
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -174,6 +210,7 @@ class PsychicsListController extends AutoDisposeAsyncNotifier<PsychicsListState>
       page: current.page,
       hasMore: current.hasMore,
       filters: current.filters,
+      favoritesOnly: current.favoritesOnly,
     ));
   }
 }

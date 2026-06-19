@@ -246,6 +246,8 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
               onToggleOnline: () =>
                   ref.read(psychicTellerDashboardProvider.notifier).toggleOnline(),
             ),
+            const SizedBox(height: 12),
+            _TellerStatsPanel(tellerId: profile.id),
             const SizedBox(height: 16),
             Text(
               'Bekleyen: ${dash.requests.length}',
@@ -272,6 +274,91 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _TellerStatsPanel extends ConsumerWidget {
+  const _TellerStatsPanel({required this.tellerId});
+
+  final String tellerId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final awards = ref.watch(psychicAwardsProvider(tellerId));
+    final gifts = ref.watch(psychicGiftsProvider(tellerId));
+
+    return awards.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (awardList) => gifts.when(
+        loading: () => const SizedBox.shrink(),
+        error: (_, __) => const SizedBox.shrink(),
+        data: (giftList) {
+          if (awardList.isEmpty && giftList.isEmpty) {
+            return const SizedBox.shrink();
+          }
+          final giftTotal = giftList.fold<int>(0, (s, g) => s + g.giftCount);
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: Row(
+              children: [
+                if (awardList.isNotEmpty)
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.emoji_events_rounded,
+                          color: Color(0xFFFFD54F),
+                          size: 22,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${awardList.length} ödül',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (awardList.isNotEmpty && giftList.isNotEmpty)
+                  Container(
+                    width: 1,
+                    height: 28,
+                    color: Colors.white12,
+                    margin: const EdgeInsets.symmetric(horizontal: 10),
+                  ),
+                if (giftList.isNotEmpty)
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.card_giftcard_rounded,
+                          color: Color(0xFFFF4081),
+                          size: 22,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '$giftTotal hediye',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

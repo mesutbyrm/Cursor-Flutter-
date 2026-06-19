@@ -258,6 +258,75 @@ class LivePsychicsRemoteDataSource {
     }
   }
 
+  Future<List<PsychicEntity>> fetchFavoritePsychics() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.favoriteTellers);
+      final items = PsychicModel.itemsFromBody(
+        res.data,
+        keys: const [
+          'favorites',
+          'tellers',
+          'items',
+          'data',
+          'results',
+        ],
+      );
+      if (items.isNotEmpty) {
+        return items
+            .map(PsychicModel.psychicFromJson)
+            .where((p) => p.id.isNotEmpty)
+            .toList(growable: false);
+      }
+      final body = res.data;
+      if (body is List) {
+        return body
+            .whereType<Map>()
+            .map((e) {
+              final map = Map<String, dynamic>.from(e);
+              final nested = map['teller'] ?? map['fortuneTeller'];
+              if (nested is Map) {
+                return PsychicModel.psychicFromJson(nested);
+              }
+              return PsychicModel.psychicFromJson(map);
+            })
+            .where((p) => p.id.isNotEmpty)
+            .toList(growable: false);
+      }
+    } catch (_) {}
+    return const [];
+  }
+
+  Future<bool> toggleFavoritePsychic(String tellerId) async {
+    final key = tellerId.trim();
+    if (key.isEmpty) return false;
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.favoriteTellers,
+        data: {'tellerId': key},
+      );
+      final body = res.data;
+      if (body is Map) {
+        final map = asJsonMap(body);
+        final favored = pick(map, [
+          'favorited',
+          'isFavorite',
+          'isFavourite',
+          'favorite',
+          'added',
+        ]);
+        if (favored is bool) return favored;
+        if (favored != null) {
+          final s = favored.toString().toLowerCase();
+          if (s == 'true' || s == '1') return true;
+          if (s == 'false' || s == '0') return false;
+        }
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<PsychicSessionCreateResult?> createSession({
     required String tellerId,
     String? tellerUserId,

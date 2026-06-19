@@ -14,6 +14,7 @@ import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_e
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_flow.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_booking_sheet.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_favorite_button.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_fortune_types.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
 
@@ -29,6 +30,7 @@ class PsychicProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final psychicAsync = ref.watch(psychicDetailProvider(psychicId));
     final balance = ref.watch(coinBalanceProvider).valueOrNull ?? 0;
+    final isStaff = ref.watch(walletBalancesProvider).valueOrNull?.isStaff == true;
     final booking = ref.watch(_profileBookingProvider);
 
     ref.listen(psychicBookingFeedbackProvider, (prev, next) {
@@ -59,10 +61,20 @@ class PsychicProfileScreen extends ConsumerWidget {
                   return _ProfileBody(
                     psychic: psychic,
                     balance: balance,
+                    isStaff: isStaff,
                     booking: booking,
-                    onBook: () => _book(context, ref, psychic, balance),
+                    onBook: () => _book(context, ref, psychic, balance, isStaff),
                   );
                 },
+              ),
+            ),
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 4, top: 4),
+                  child: PsychicFavoriteButton(tellerId: psychicId),
+                ),
               ),
             ),
             SafeArea(
@@ -91,6 +103,7 @@ class PsychicProfileScreen extends ConsumerWidget {
     WidgetRef ref,
     PsychicEntity psychic,
     int balance,
+    bool isStaff,
   ) async {
     if (ref.read(_profileBookingProvider)) return;
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -107,10 +120,14 @@ class PsychicProfileScreen extends ConsumerWidget {
       return;
     }
 
-    final result = await showPsychicBookingSheet(context, psychic: psychic);
+    final result = await showPsychicBookingSheet(
+      context,
+      psychic: psychic,
+      isStaff: isStaff,
+    );
     if (!context.mounted || result == null) return;
 
-    if (balance < result.jeton) {
+    if (!isStaff && balance < result.jeton) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -141,12 +158,14 @@ class _ProfileBody extends ConsumerWidget {
   const _ProfileBody({
     required this.psychic,
     required this.balance,
+    required this.isStaff,
     required this.booking,
     required this.onBook,
   });
 
   final PsychicEntity psychic;
   final int balance;
+  final bool isStaff;
   final bool booking;
   final VoidCallback onBook;
 
@@ -266,11 +285,15 @@ class _ProfileBody extends ConsumerWidget {
         const SizedBox(height: 24),
         if (psychic.pricePerMinute > 0)
           Text(
-            '${psychic.pricePerMinute} jeton/dk · Bakiye: $balance jeton',
+            isStaff
+                ? 'Staff hesabı — jeton düşülmez'
+                : '${psychic.pricePerMinute} jeton/dk · Bakiye: $balance jeton',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.6),
+              color: isStaff
+                  ? const Color(0xFF80D8FF)
+                  : Colors.white.withValues(alpha: 0.6),
             ),
           ),
         const SizedBox(height: 16),

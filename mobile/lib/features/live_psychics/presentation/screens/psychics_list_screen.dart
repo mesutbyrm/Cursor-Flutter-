@@ -84,7 +84,10 @@ class PsychicsListScreen extends ConsumerWidget {
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     children: [
-                      PsychicsFilterBar(filters: state.filters),
+                      PsychicsFilterBar(
+                        filters: state.filters,
+                        favoritesOnly: state.favoritesOnly,
+                      ),
                       const SizedBox(height: 48),
                       const Center(child: Text('Bu filtreye uygun falcı yok.')),
                     ],
@@ -108,7 +111,10 @@ class PsychicsListScreen extends ConsumerWidget {
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (_, i) {
                       if (i == 0) {
-                        return PsychicsFilterBar(filters: state.filters);
+                        return PsychicsFilterBar(
+                          filters: state.filters,
+                          favoritesOnly: state.favoritesOnly,
+                        );
                       }
                       final itemIndex = i - 1;
                       if (itemIndex >= state.items.length) {
@@ -224,9 +230,14 @@ class PsychicListTile extends StatelessWidget {
 }
 
 class PsychicsFilterBar extends ConsumerWidget {
-  const PsychicsFilterBar({super.key, required this.filters});
+  const PsychicsFilterBar({
+    super.key,
+    required this.filters,
+    this.favoritesOnly = false,
+  });
 
   final PsychicsListFilters filters;
+  final bool favoritesOnly;
 
   static const _sortOptions = [
     ('rating', 'Puan'),
@@ -240,6 +251,24 @@ class PsychicsFilterBar extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: const Text('Favorilerim'),
+                  avatar: const Icon(Icons.favorite_rounded, size: 16),
+                  selected: favoritesOnly,
+                  onSelected: (on) =>
+                      notifier.showFavoritesOnly(on),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
         Text(
           'Sıralama',
           style: TextStyle(

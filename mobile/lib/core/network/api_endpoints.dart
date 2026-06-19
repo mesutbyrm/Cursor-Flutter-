@@ -125,6 +125,8 @@ abstract final class ApiEndpoints {
   static const fortuneTellerMyProfile = '/api/fortune-tellers/my-profile';
   static const fortuneTellerToggleOnline = '/api/fortune-tellers/toggle-online';
 
+  static const favoriteTellers = '/api/favorite-tellers';
+
   /// Aktif seanslar — kullanıcı uygulama açılışında (üretim prompt §8).
   static const userActiveSessions = '/api/user/active-sessions';
 

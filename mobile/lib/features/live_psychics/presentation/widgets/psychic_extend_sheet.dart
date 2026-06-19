@@ -23,6 +23,7 @@ Future<PsychicExtendOption?> showPsychicExtendSheet(
   BuildContext context, {
   required int jetonBalance,
   int jetonPerMinute = 10,
+  bool staffExempt = false,
 }) {
   return showGeneralDialog<PsychicExtendOption>(
     context: context,
@@ -38,6 +39,7 @@ Future<PsychicExtendOption?> showPsychicExtendSheet(
           child: _PsychicExtendSheet(
             jetonBalance: jetonBalance,
             jetonPerMinute: jetonPerMinute,
+            staffExempt: staffExempt,
           ),
         ),
       ),
@@ -53,10 +55,12 @@ class _PsychicExtendSheet extends StatelessWidget {
   const _PsychicExtendSheet({
     required this.jetonBalance,
     required this.jetonPerMinute,
+    this.staffExempt = false,
   });
 
   final int jetonBalance;
   final int jetonPerMinute;
+  final bool staffExempt;
 
   @override
   Widget build(BuildContext context) {
@@ -102,10 +106,14 @@ class _PsychicExtendSheet extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '💰 Jetonunuz: $jetonBalance ($jetonPerMinute jeton/dk)',
+            staffExempt
+                ? 'Staff hesabı — uzatma için jeton düşülmez'
+                : '💰 Jetonunuz: $jetonBalance ($jetonPerMinute jeton/dk)',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFFFFD54F),
+            style: TextStyle(
+              color: staffExempt
+                  ? const Color(0xFF80D8FF)
+                  : const Color(0xFFFFD54F),
               fontWeight: FontWeight.w800,
               fontSize: 13,
             ),
@@ -123,7 +131,7 @@ class _PsychicExtendSheet extends StatelessWidget {
             itemCount: psychicExtendOptions.length,
             itemBuilder: (_, i) {
               final opt = psychicExtendOptions[i];
-              final affordable = jetonBalance >= opt.jeton;
+              final affordable = staffExempt || jetonBalance >= opt.jeton;
               return Material(
                 color: Colors.transparent,
                 child: InkWell(

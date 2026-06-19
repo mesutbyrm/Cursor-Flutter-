@@ -95,6 +95,11 @@ abstract class LivePsychicsRepository {
     String? comment,
   });
 
+  Future<List<PsychicEntity>> fetchFavoritePsychics();
+
+  /// `POST /api/favorite-tellers` — ekler veya çıkarır; yeni favori durumunu döner.
+  Future<bool> toggleFavoritePsychic(String tellerId);
+
   Future<PsychicSessionCreateResult?> createSession({
     required String tellerId,
     String? tellerUserId,

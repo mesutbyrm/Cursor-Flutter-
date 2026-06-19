@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.298+301 (2026-06-19)
+
+### Canlı Falcılar — favoriler, staff muafiyeti, panel özeti
+
+- **Favoriler:** `GET/POST /api/favorite-tellers` — profil kalbi, liste «Favorilerim» filtresi
+- **Staff jeton muafiyeti:** Randevu ve süre uzatmada bakiye kontrolü atlanır; bilgi bandı
+- **Falcı paneli:** Ödül ve hediye sayı özeti kartı
+
 ## 1.0.297+300 (2026-06-19)
 
 ### Canlı Falcılar — PDF eksikleri (2–6)
