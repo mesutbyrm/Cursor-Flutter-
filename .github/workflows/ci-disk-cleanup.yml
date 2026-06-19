@@ -1,0 +1,58 @@
+# Actions depolama + runner disk temizliği (manuel veya haftalık).
+# Artifact/cache kotası veya runner "No space left on device" sonrası çalıştırın.
+
+name: CI disk cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (silme yok, yalnızca rapor)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+  schedule:
+    - cron: '0 3 * * 0'
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ci-disk-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup-storage:
+    name: GitHub Actions depolama temizliği
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Artifact, cache ve eski APK release temizliği
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+          KEEP_RELEASE_TAGS: apk-latest
+        run: |
+          chmod +x scripts/ci-actions-cleanup.sh
+          bash scripts/ci-actions-cleanup.sh
+
+  cleanup-runner-sample:
+    name: Runner disk temizlik adımları (örnek)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Runner disk raporu ve ön temizlik
+        run: |
+          set -x
+          df -h
+          sudo apt-get clean || true
+          sudo rm -rf /usr/share/dotnet /opt/ghc || true
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
+          df -h
