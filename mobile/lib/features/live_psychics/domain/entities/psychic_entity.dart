@@ -45,7 +45,29 @@ class PsychicEntity extends Equatable {
   bool get isApproved {
     final status = applicationStatus?.trim().toLowerCase();
     if (status == null || status.isEmpty) return false;
-    return status == 'approved' || status == 'active';
+    const approved = {'approved', 'active'};
+    const rejected = {
+      'pending',
+      'rejected',
+      'declined',
+      'online',
+      'offline',
+      'inactive',
+    };
+    if (approved.contains(status)) return true;
+    if (rejected.contains(status)) return false;
+    return false;
+  }
+
+  /// Onaylı veya `my-profile` kaydı olan kullanılabilir falcı.
+  bool get isUsable {
+    if (id.trim().isEmpty) return false;
+    if (isApproved) return true;
+    final status = applicationStatus?.trim().toLowerCase();
+    if (status == 'pending' || status == 'rejected' || status == 'declined') {
+      return false;
+    }
+    return true;
   }
 
   @override

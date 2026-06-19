@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.294+297 (2026-06-19)
+
+### Canlı Falcılar — falcı kabul/red ekranı düzeltmesi
+
+- **Push → dialog:** `PsychicInviteCoordinator` ile bildirim/SSE sonrası mor kabul ekranı zorla açılır
+- **Falcı algısı:** `isUsable` + `my-profile` / liste yedekleri; SSE artık onaylı profil beklenmeden bağlanır
+- **Poll/SSE ayrımı:** Arka plan senkronu auth yüklenirken de çalışır; dialog yalnızca uygun rotada gösterilir
+- **SSE parse:** İç içe `request` / `session` gövdeleri `parsePsychicSsePayload` ile okunur
+- **Gelen istek filtresi:** Teller alanı boş API yanıtları artık düşürülmez
+- **VideoCall köprüsü:** Çift UI engellendi — canlı fal davetleri yalnızca `PsychicIncomingCallDialog`
+
 ## 1.0.293+296 (2026-06-19)
 
 ### Canlı Falcılar — sıfırdan yeniden yazım (`live_psychics`)

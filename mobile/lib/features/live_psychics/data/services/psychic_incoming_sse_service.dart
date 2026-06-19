@@ -8,7 +8,7 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../domain/entities/psychic_request_entity.dart';
-import '../models/psychic_model.dart';
+import '../../presentation/providers/psychic_live_event_bus.dart';
 
 /// Falcı gelen istek SSE — `GET /api/fortune-tellers/sessions/stream`.
 class PsychicIncomingSseService {
@@ -122,9 +122,12 @@ class PsychicIncomingSseService {
       }
       if (type.contains('request') ||
           type.contains('session') ||
-          map.containsKey('sessionId')) {
-        final req = PsychicModel.requestFromJson(map);
-        if (req.sessionId.isNotEmpty && req.isPending) {
+          type.contains('invite') ||
+          map.containsKey('sessionId') ||
+          map.containsKey('request') ||
+          map.containsKey('session')) {
+        final req = parsePsychicSsePayload(map);
+        if (req != null && req.sessionId.isNotEmpty && req.isPending) {
           _onRequest?.call(req);
         }
       }

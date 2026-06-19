@@ -211,9 +211,16 @@ class LivePsychicsRemoteDataSource {
       if (r.clientId == uid) return false;
       if (r.tellerUserId == uid || r.tellerId == uid) return true;
       if (profileId.isNotEmpty && r.tellerId == profileId) return true;
+      // Gelen istek uçlarında teller alanı boş gelebilir; falcıya yönlendirilmiş kayıtları düşürme.
+      if (profileId.isNotEmpty || _isFortuneTellerContext(uid, profileId)) {
+        return r.clientId.isEmpty || r.clientId != uid;
+      }
       return r.clientId.isNotEmpty && r.clientId != uid;
     }).toList(growable: false);
   }
+
+  bool _isFortuneTellerContext(String uid, String profileId) =>
+      uid.isNotEmpty || profileId.isNotEmpty;
 
   Future<PsychicRespondResult> respondSession(
     String sessionId, {

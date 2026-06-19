@@ -121,10 +121,6 @@ class VideoCallNotifier extends Notifier<VideoCallState> {
 final videoCallProvider =
     NotifierProvider<VideoCallNotifier, VideoCallState>(VideoCallNotifier.new);
 
-/// Psychic invite kuyruğu ile köprü.
-final videoCallPsychicBridgeProvider = Provider<void>((ref) {
-  ref.listen(psychicIncomingQueueProvider, (prev, next) {
-    if (next.isEmpty) return;
-    ref.read(videoCallProvider.notifier).syncFromPsychicQueue(next);
-  });
-});
+/// Psychic invite kuyruğu — yalnızca PsychicIncomingHost dialog gösterir.
+/// VideoCall köprüsü devre dışı (çift UI / yanlış ekran önlenir).
+final videoCallPsychicBridgeProvider = Provider<void>((ref) {});

@@ -8,6 +8,7 @@ import '../../features/admin/presentation/providers/admin_providers.dart';
 import '../../features/auth/domain/entities/user_entity.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/live_psychics/presentation/controllers/psychic_flow.dart';
+import '../../features/live_psychics/presentation/controllers/psychic_invite_coordinator.dart';
 import '../../features/live_psychics/presentation/controllers/psychic_incoming_controller.dart';
 import '../../features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../features/live_psychics/presentation/providers/psychic_push_payload.dart';
@@ -51,6 +52,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
           final invite = parsePsychicIncomingPayload(data);
           if (invite != null) {
             ref.read(psychicIncomingQueueProvider.notifier).enqueue(invite);
+            PsychicInviteCoordinator.requestPresent(sessionId: invite.sessionId);
           }
         },
         onSessionUpdateData: (update) {

@@ -13,11 +13,13 @@ import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_e
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_request_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_incoming_controller.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_invite_coordinator.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_incoming_call_dialog.dart';
 
-/// Uygulama genelinde falcı gelen çağrı popup'ı — SSE + 2 sn poll.
+/// Uygulama genelinde falcı gelen çağrı popup'ı — SSE + 2 sn poll + push.
 class PsychicIncomingHost extends ConsumerStatefulWidget {
   const PsychicIncomingHost({super.key, required this.child});
 
@@ -31,9 +33,12 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     with WidgetsBindingObserver {
   Timer? _poll;
   var _presenting = false;
+  var _inviteUiReady = false;
+  var _isFortuneTeller = false;
   String? _tellerProfileId;
 
   bool _isSignedIn() {
+    if (!_inviteUiReady) return false;
     final auth = ref.read(authControllerProvider);
     if (auth.isLoading) return false;
     return auth.valueOrNull != null;
@@ -44,6 +49,13 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     final path =
         ref.read(goRouterProvider).routerDelegate.currentConfiguration.uri.path;
     if (_isInPsychicFlow(path)) return false;
+    return !AuthRoutePaths.isPublicAuthPath(path);
+  }
+
+  bool _mayRunTellerBackgroundSync() {
+    if (!_isSignedIn()) return false;
+    final path =
+        ref.read(goRouterProvider).routerDelegate.currentConfiguration.uri.path;
     return !AuthRoutePaths.isPublicAuthPath(path);
   }
 
@@ -59,6 +71,13 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => _inviteUiReady = true);
+      unawaited(_tryPresentNext());
+      PsychicInviteCoordinator.onRequestPresent = () {
+        if (!mounted) return;
+        unawaited(_tryPresentNext());
+      };
       unawaited(_bootstrap());
     });
   }
@@ -76,40 +95,63 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   }
 
   Future<void> _ensureTellerProfile() async {
-    if (!_isSignedIn()) return;
-    var approved = ref.read(approvedPsychicProvider).valueOrNull;
-    if (approved?.profile == null) {
+    if (!_mayRunTellerBackgroundSync()) return;
+
+    var profile = ref.read(approvedPsychicProvider).valueOrNull?.profile;
+    if (profile == null) {
       await ref.read(approvedPsychicProvider.notifier).refresh();
-      approved = ref.read(approvedPsychicProvider).valueOrNull;
+      profile = ref.read(approvedPsychicProvider).valueOrNull?.profile;
     }
-    final profile = approved?.profile;
-    if (profile != null && profile.isApproved) {
-      _tellerProfileId = profile.id;
-      await ref
-          .read(livePsychicsRepositoryProvider)
-          .setOnline(online: true);
+    if (profile == null) {
+      final repo = ref.read(livePsychicsRepositoryProvider);
+      profile = await repo.fetchMyProfile();
+      if (profile == null) {
+        final userId = ref.read(authControllerProvider).valueOrNull?.id;
+        if (userId != null) {
+          final tellers = await repo.fetchPsychics();
+          for (final t in tellers) {
+            if (t.userId == userId || t.id == userId) {
+              profile = t;
+              break;
+            }
+          }
+        }
+      }
     }
+    if (profile == null || !profile.isUsable) {
+      _isFortuneTeller = false;
+      _tellerProfileId = null;
+      return;
+    }
+    _isFortuneTeller = true;
+    _tellerProfileId = profile.id;
+    await ref.read(livePsychicsRepositoryProvider).setOnline(online: true);
   }
 
   Future<void> _connectSse() async {
-    if (!_isSignedIn() || _tellerProfileId == null) return;
+    if (!_mayRunTellerBackgroundSync() || !_isFortuneTeller) return;
     final tokens = ref.read(tokenStorageProvider);
     await ref.read(psychicIncomingSseServiceProvider).connect(
           accessToken: tokens.readAccess,
-          onRequest: (req) {
-            if (!mounted) return;
-            if (req.isPending) {
-              ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
-            }
-          },
+          onRequest: _onSseRequest,
         );
   }
 
+  void _onSseRequest(PsychicRequestEntity req) {
+    if (!mounted || !_mayRunTellerBackgroundSync()) return;
+    if (!req.isPending) return;
+    ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
+    emitPsychicLiveRequest(ref, req);
+    PsychicInviteCoordinator.requestPresent(sessionId: req.sessionId);
+  }
+
   Future<void> _pollApi() async {
-    if (!mounted || _presenting || !_mayPresentInvites()) return;
+    if (!mounted || _presenting || !_mayRunTellerBackgroundSync()) return;
+
     if (_tellerProfileId == null) {
       await _ensureTellerProfile();
     }
+
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     final incoming = await ref
         .read(livePsychicsRepositoryProvider)
@@ -122,7 +164,9 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
       if (!req.isPending) continue;
       ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
     }
-    await _tryPresentNext();
+    if (_mayPresentInvites()) {
+      await _tryPresentNext();
+    }
   }
 
   Future<void> _tryPresentNext() async {
@@ -131,6 +175,10 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     final next = ref.read(psychicIncomingQueueProvider.notifier).takeNext();
     if (next == null) return;
     if (dismissed.contains(next.sessionId)) {
+      await _tryPresentNext();
+      return;
+    }
+    if (PsychicInviteCoordinator.shouldDebounceShown(next.sessionId)) {
       await _tryPresentNext();
       return;
     }
@@ -150,6 +198,8 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
         ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
         return;
       }
+
+      PsychicInviteCoordinator.markDialogShown(req.sessionId);
 
       final accepted = await showPsychicIncomingCallDialog(
         navCtx,
@@ -232,6 +282,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
 
   @override
   void dispose() {
+    PsychicInviteCoordinator.onRequestPresent = null;
     WidgetsBinding.instance.removeObserver(this);
     _poll?.cancel();
     ref.read(psychicIncomingSseServiceProvider).disconnect();
@@ -242,6 +293,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       unawaited(_bootstrap());
+      unawaited(_tryPresentNext());
     }
   }
 
@@ -251,13 +303,17 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
       final user = next.valueOrNull;
       if (user != null && prev?.valueOrNull?.id != user.id) {
         _tellerProfileId = null;
+        _isFortuneTeller = false;
         unawaited(ref.read(approvedPsychicProvider.notifier).refresh());
         unawaited(_bootstrap());
+      }
+      if (prev?.isLoading == true && next.valueOrNull != null) {
+        unawaited(_tryPresentNext());
       }
     });
     ref.listen<List<PsychicRequestEntity>>(psychicIncomingQueueProvider,
         (prev, next) {
-      if (next.isNotEmpty && !_presenting && _mayPresentInvites()) {
+      if (next.isNotEmpty && !_presenting) {
         unawaited(_tryPresentNext());
       }
     });
