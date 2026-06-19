@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.288+291 (2026-06-19)
+
+### Derleme düzeltmesi — video oynatma
+
+- Eksik import'lar giderildi (`ApiException`, `shortsRepositoryProvider`)
+
+
 ## 1.0.287+290 (2026-06-19)
 
 ### Video yükle — oynatma düzeltmesi

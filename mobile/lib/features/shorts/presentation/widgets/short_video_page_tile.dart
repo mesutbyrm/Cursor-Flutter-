@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../domain/entities/short_video_entity.dart';
+import '../providers/shorts_providers.dart';
 import '../utils/short_video_player_util.dart';
 import 'short_video_actions_rail.dart';
 
