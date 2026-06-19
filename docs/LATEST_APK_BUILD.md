@@ -2,22 +2,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.285+288` |
-| Tarih (UTC) | 2026-06-19 08:41 |
-| Commit | [`08b0aa180133da88183e426db6bcd90b1d521378`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/08b0aa180133da88183e426db6bcd90b1d521378) |
-| İş akışı | [Run 27814746095](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27814746095) |
+| Sürüm | `1.0.286+289` |
+| Tarih (UTC) | 2026-06-19 08:57 |
+| Commit | [`a3474d621ed476cec6d9d13634548266b7c2e922`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a3474d621ed476cec6d9d13634548266b7c2e922) |
+| İş akışı | [Run 27815377288](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27815377288) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.285+288 (2026-06-19)
+## 1.0.286+289 (2026-06-19)
 
-### Kahve & el falı — fotoğraf yükleme
+### Ana sayfa — marka yazısı
 
-- **Kahve falı:** Fincan içi (zorunlu) + tabak (opsiyonel) — kamera veya galeri
-- **El falı:** Avuç içi fotoğrafı + sağ/sol el seçimi
-- **Üretim API:** Presigned yükleme + `kahve-fali-image` / `el-fali` görsel analiz
-- **Tasarım:** Cam efektli premium panel, ipucu banner, mini kamera/galeri aksiyonları
+- Sol üstteki ikon kaldırıldı; yerine gradyanlı **CanlıFal** şekilli yazı logosu
 
 
 
