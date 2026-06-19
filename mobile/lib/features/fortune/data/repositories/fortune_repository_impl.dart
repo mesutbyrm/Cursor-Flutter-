@@ -1,4 +1,5 @@
 import '../../../../core/pagination/paged_result.dart';
+import '../../domain/entities/fortune_image_input.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 import '../../domain/entities/user_fortune_entity.dart';
 import '../../domain/repositories/fortune_repository.dart';
