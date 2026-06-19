@@ -6,7 +6,6 @@ import '../../../core/util/json_util.dart';
 import '../../agency/data/datasources/agency_remote_datasource.dart';
 import '../../agency/domain/entities/agency_entity.dart';
 import '../../auth/domain/entities/user_entity.dart';
-import '../../live_psychics/data/repositories/live_psychics_remote_datasource.dart';
 import '../../live_psychics/data/services/fortune_teller_profile_resolver.dart';
 import '../../live_psychics/domain/entities/psychic_entity.dart';
 import '../../live_psychics/presentation/diagnostics/teller_role_diagnostic.dart';
@@ -15,13 +14,11 @@ import '../../live_psychics/presentation/diagnostics/teller_role_diagnostic.dart
 class RolePanelResolver {
   RolePanelResolver(
     this._dio,
-    this._psychics,
     this._agency,
     this._fortuneTeller,
   );
 
   final Dio _dio;
-  final LivePsychicsRemoteDataSource _psychics;
   final AgencyRemoteDataSource _agency;
   final FortuneTellerProfileResolver _fortuneTeller;
 
