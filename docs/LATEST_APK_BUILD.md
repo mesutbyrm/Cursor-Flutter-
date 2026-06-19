@@ -2,24 +2,26 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.294+297` |
-| Tarih (UTC) | 2026-06-19 16:49 |
-| Commit | [`89b083ccd0712a6284a9900dd8d4ba6752bb7f32`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/89b083ccd0712a6284a9900dd8d4ba6752bb7f32) |
-| İş akışı | [Run 27837679119](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27837679119) |
+| Sürüm | `1.0.295+298` |
+| Tarih (UTC) | 2026-06-19 18:30 |
+| Commit | [`bfb7c0c206be3631ca2112e3c2babeaca0da417a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/bfb7c0c206be3631ca2112e3c2babeaca0da417a) |
+| İş akışı | [Run 27841921839](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27841921839) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.294+297 (2026-06-19)
+## 1.0.295+298 (2026-06-19)
 
-### Canlı Falcılar — falcı kabul/red ekranı düzeltmesi
+### Canlı Falcılar — PDF entegrasyon uyumu
 
-- **Push → dialog:** `PsychicInviteCoordinator` ile bildirim/SSE sonrası mor kabul ekranı zorla açılır
-- **Falcı algısı:** `isUsable` + `my-profile` / liste yedekleri; SSE artık onaylı profil beklenmeden bağlanır
-- **Poll/SSE ayrımı:** Arka plan senkronu auth yüklenirken de çalışır; dialog yalnızca uygun rotada gösterilir
-- **SSE parse:** İç içe `request` / `session` gövdeleri `parsePsychicSsePayload` ile okunur
-- **Gelen istek filtresi:** Teller alanı boş API yanıtları artık düşürülmez
-- **VideoCall köprüsü:** Çift UI engellendi — canlı fal davetleri yalnızca `PsychicIncomingCallDialog`
+- **Aktif seans:** Uygulama açılışında `GET /api/user/active-sessions` ile otomatik odaya dönüş
+- **Push red/iptal:** `session_update` reddinde jeton iadesi bildirimi
+- **Bekleme:** `cancelled` durumu reddedildi olarak işlenir
+- **Liste:** `online=true` + `sort=rating` filtreleri
+- **Oda timer:** Sunucu `elapsedSeconds` ile senkron
+- **Süre:** Kullanıcı `extend`, falcı `teller_add_time` (PDF §12)
+- **Profil:** Falcı yorumları (`GET .../reviews`)
+- **API:** Başvuru, online durum sorgusu, model alan eşlemeleri (`displayName`, `pricePerSession`)
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
