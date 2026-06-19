@@ -2,25 +2,27 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.289+292` |
-| Tarih (UTC) | 2026-06-19 10:10 |
-| Commit | [`4795deec136f2335baf6aebbafe76310998b49c6`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/4795deec136f2335baf6aebbafe76310998b49c6) |
-| İş akışı | [Run 27818825570](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27818825570) |
+| Sürüm | `1.0.290+293` |
+| Tarih (UTC) | 2026-06-19 10:37 |
+| Commit | [`93f90fc6fbf2d5dd3a9a4849c376abe70e4ab5fb`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/93f90fc6fbf2d5dd3a9a4849c376abe70e4ab5fb) |
+| İş akışı | [Run 27820135561](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27820135561) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.289+292 (2026-06-19)
+## 1.0.290+293 (2026-06-19)
 
-### Profil — okunabilirlik ve premium düzen
+### 2026 Premium altyapı yükseltmesi
 
-- **Vitrin banner:** Gradyan kapak, büyük avatar ve cam istatistik kartı
-- **Tipografi:** Minimum 12–15px etiketler; başlık ve sayaçlar daha belirgin
-- **Yayıncı paneli:** 3 sütunlu ızgara; ikon ve yazılar büyütüldü
-- **Cüzdan:** 2 sütunlu aksiyon ızgarası, net bakiye kartı
-- **Hediyeler:** Görsel URL desteği ve daha büyük kutular
-- **Paylaşımlarım:** Kendi profilinde sosyal paylaşım duvarı
-- **Kullanıcı profili:** Banner + avatar bindirmesi, okunabilir istatistikler
+- **AMOLED koyu tema:** Saf siyah OLED modu (Profil → Ayarlar → Tema)
+- **Video önbellek:** `VideoCacheService` — kısa videolarda disk cache + prefetch
+- **Offline API cache:** `ApiCacheStore` TTL katmanı (başlangıç altyapısı)
+- **SSE politikası:** Ortak `SseReconnectPolicy` + `SseReconnectBanner` bileşeni
+- **Skeleton:** Profil ve mesaj listesi iskeletleri; profil paylaşımlarında lazy `ListView.builder`
+- **Hata ekranları:** `AppErrorView` — kullanıcı dostu mesaj + tekrar dene
+- **Geçişler:** `sharedAxis` Material Motion slide + fade
+- **Sesli oda:** Paylaş butonu (header) + oda listesi 25sn canlı yenileme
+- **Performans:** Shorts tile `RepaintBoundary`; thumbnail `CachedNetworkImage`
 
 
 
