@@ -81,14 +81,14 @@ import '../../features/voice_hub/presentation/voice_room_route_page.dart';
 import '../../features/voice_hub/presentation/voice_room_rtc_page.dart';
 import '../../features/voice_hub/presentation/widgets/voice_room_error_boundary.dart';
 import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
-import '../../features/home/presentation/pages/live_fortune_teller_detail_page.dart';
-import '../../features/home/presentation/live_fortune/live_fortune_session_route.dart';
+import '../../features/live_psychics/domain/entities/psychic_session_entity.dart';
+import '../../features/live_psychics/presentation/controllers/psychics_list_controller.dart';
+import '../../features/live_psychics/presentation/screens/psychic_session_route.dart';
+import '../../features/live_psychics/presentation/screens/psychic_teller_dashboard_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_profile_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychics_list_screen.dart';
 import '../../features/agency/presentation/pages/agency_dashboard_screen.dart';
 import '../../features/agency/presentation/providers/agency_providers.dart';
-import '../../features/home/presentation/pages/teller_dashboard_screen.dart';
-import '../../features/home/presentation/providers/teller_profile_provider.dart';
-import '../../features/home/presentation/pages/live_fortune_tellers_page.dart';
-import '../../features/home/domain/entities/live_fortune_session_entity.dart';
 import '../../features/vip_gold/presentation/pages/vip_gold_hub_page.dart';
 import '../../premium_fortune/router/pf_router.dart';
 import '../../core/bootstrap/app_startup_log.dart';
@@ -109,7 +109,7 @@ final shellSessionProvider = StateProvider<int>((ref) => 0);
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   ref.watch(shellSessionProvider);
-  ref.watch(approvedTellerProvider);
+  ref.watch(approvedPsychicProvider);
   ref.watch(approvedAgencyProvider);
 
   return GoRouter(
@@ -179,12 +179,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/falci-ol',
         redirect: (context, state) async {
-          var approved = ref.read(approvedTellerProvider);
-          if (!approved.checked) {
-            await ref.read(approvedTellerProvider.notifier).refresh();
-            approved = ref.read(approvedTellerProvider);
+          var approved = ref.read(approvedPsychicProvider);
+          if (!approved.hasValue) {
+            await ref.read(approvedPsychicProvider.notifier).refresh();
+            approved = ref.read(approvedPsychicProvider);
           }
-          if (approved.isApprovedTeller) {
+          if (approved.valueOrNull?.isApprovedTeller == true) {
             return '/canli-falcilar/dashboard';
           }
           return '/content-hub';
@@ -764,14 +764,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/canli-falcilar',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
-          child: const LiveFortuneTellersPage(),
+          child: const PsychicsListScreen(),
         ),
         routes: [
           GoRoute(
             path: 'dashboard',
             pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
               key: state.pageKey,
-              child: const TellerDashboardScreen(),
+              child: const PsychicTellerDashboardScreen(),
             ),
           ),
           GoRoute(
@@ -780,19 +780,19 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               final id = state.pathParameters['id'] ?? '';
               return AppPageTransitions.fadeSlide(
                 key: state.pageKey,
-                child: LiveFortuneTellerDetailPage(tellerId: id),
+                child: PsychicProfileScreen(psychicId: id),
               );
             },
             routes: [
               GoRoute(
                 path: 'waiting',
                 pageBuilder: (context, state) {
-                  final session = state.extra as LiveFortuneSessionEntity?;
+                  final session = state.extra as PsychicSessionEntity?;
                   final id = state.pathParameters['id'] ?? '';
                   return AppPageTransitions.fadeSlide(
                     key: state.pageKey,
-                    child: LiveFortuneWaitingRoute(
-                      tellerId: id,
+                    child: PsychicWaitingRoute(
+                      psychicId: id,
                       session: session,
                     ),
                   );
@@ -801,12 +801,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'ad-transition',
                 pageBuilder: (context, state) {
-                  final session = state.extra as LiveFortuneSessionEntity?;
+                  final session = state.extra as PsychicSessionEntity?;
                   final id = state.pathParameters['id'] ?? '';
                   return AppPageTransitions.fadeSlide(
                     key: state.pageKey,
-                    child: LiveFortuneAdTransitionRoute(
-                      tellerId: id,
+                    child: PsychicAdTransitionRoute(
+                      psychicId: id,
                       session: session,
                     ),
                   );
@@ -815,12 +815,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'session',
                 pageBuilder: (context, state) {
-                  final session = state.extra as LiveFortuneSessionEntity?;
+                  final session = state.extra as PsychicSessionEntity?;
                   final id = state.pathParameters['id'] ?? '';
                   return AppPageTransitions.fadeSlide(
                     key: state.pageKey,
-                    child: LiveFortuneSessionRoute(
-                      tellerId: id,
+                    child: PsychicSessionRoute(
+                      psychicId: id,
                       session: session,
                     ),
                   );

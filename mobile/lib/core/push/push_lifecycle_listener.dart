@@ -7,9 +7,10 @@ import '../../app/router/app_router.dart';
 import '../../features/admin/presentation/providers/admin_providers.dart';
 import '../../features/auth/domain/entities/user_entity.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
-import '../../features/home/presentation/live_fortune/live_fortune_flow.dart';
-import '../../features/home/presentation/providers/fortune_incoming_invite_provider.dart';
-import '../../features/home/presentation/providers/home_providers.dart';
+import '../../features/live_psychics/presentation/controllers/psychic_flow.dart';
+import '../../features/live_psychics/presentation/controllers/psychic_incoming_controller.dart';
+import '../../features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import '../../features/live_psychics/presentation/providers/psychic_push_payload.dart';
 import '../../features/messages/presentation/providers/messages_providers.dart';
 import '../../features/notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
@@ -47,19 +48,19 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
         ref.read(goRouterProvider),
         onReceived: _onPushReceived,
         onFortuneInviteData: (data) {
-          final invite = parseFortuneIncomingPayload(data);
+          final invite = parsePsychicIncomingPayload(data);
           if (invite != null) {
-            ref.read(fortuneIncomingInviteProvider.notifier).enqueue(invite);
+            ref.read(psychicIncomingQueueProvider.notifier).enqueue(invite);
           }
         },
         onSessionUpdateData: (update) {
           if (!update.isAccepted) return;
           unawaited(
-            LiveFortuneFlow.resumeSessionFromPush(
+            PsychicFlow.resumeFromPush(
               router: ref.read(goRouterProvider),
               sessionId: update.sessionId,
               tellerId: update.tellerId,
-              repo: ref.read(liveFortuneRepositoryProvider),
+              repo: ref.read(livePsychicsRepositoryProvider),
             ),
           );
         },

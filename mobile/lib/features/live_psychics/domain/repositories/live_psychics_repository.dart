@@ -1,0 +1,119 @@
+import '../entities/psychic_entity.dart';
+import '../entities/psychic_request_entity.dart';
+import '../entities/psychic_room_entity.dart';
+import '../entities/psychic_session_entity.dart';
+import '../entities/psychic_session_status.dart';
+
+class PsychicSessionCreateResult {
+  const PsychicSessionCreateResult({
+    required this.sessionId,
+    required this.status,
+    this.tellerUserId,
+    this.clientId,
+    this.creditsCharged,
+    this.maxMinutes,
+    this.trtcRoomId,
+  });
+
+  final String sessionId;
+  final PsychicSessionStatus status;
+  final String? tellerUserId;
+  final String? clientId;
+  final int? creditsCharged;
+  final int? maxMinutes;
+  final String? trtcRoomId;
+}
+
+class PsychicRespondResult {
+  const PsychicRespondResult({
+    required this.success,
+    this.sessionId,
+    this.roomId,
+  });
+
+  final bool success;
+  final String? sessionId;
+  final String? roomId;
+}
+
+class PsychicSessionStatusResult {
+  const PsychicSessionStatusResult({
+    required this.sessionId,
+    required this.status,
+    required this.isClient,
+    this.tellerUserId,
+    this.tellerProfileId,
+    this.trtcRoomId,
+    this.durationMinutes,
+    this.totalJeton,
+  });
+
+  final String sessionId;
+  final PsychicSessionStatus status;
+  final bool isClient;
+  final String? tellerUserId;
+  final String? tellerProfileId;
+  final String? trtcRoomId;
+  final int? durationMinutes;
+  final int? totalJeton;
+}
+
+abstract class LivePsychicsRepository {
+  Future<List<PsychicEntity>> fetchPsychics({
+    int page = 1,
+    int limit = 20,
+    bool? onlineOnly,
+    String? specialty,
+  });
+
+  Future<PsychicEntity?> fetchPsychic(String id);
+  Future<PsychicEntity?> fetchMyProfile();
+  Future<bool> setOnline({required bool online});
+
+  Future<PsychicSessionCreateResult?> createSession({
+    required String tellerId,
+    String? tellerUserId,
+    required int durationMinutes,
+    required String fortuneType,
+  });
+
+  Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId);
+  Future<List<PsychicSessionStatusResult>> fetchActiveSessions();
+  Future<List<PsychicRequestEntity>> fetchIncomingRequests({
+    String? currentUserId,
+    String? tellerProfileId,
+  });
+
+  Future<PsychicRespondResult> respondSession(
+    String sessionId, {
+    required String action,
+  });
+
+  Future<bool> endSession(String sessionId);
+  Future<PsychicRoomEntity?> fetchRoom(String sessionId);
+  Future<Map<String, dynamic>?> roomAction(
+    String sessionId,
+    String action, {
+    Map<String, dynamic>? extra,
+  });
+
+  Future<List<PsychicChatMessage>> fetchMessages(
+    String sessionId, {
+    String? afterIso,
+    String? myUserId,
+  });
+
+  Future<bool> sendMessage(String sessionId, String text);
+  Future<bool> extendSession({
+    required String sessionId,
+    required int minutes,
+    required int totalJeton,
+  });
+
+  Future<bool> sendTip({
+    required String sessionId,
+    required int amount,
+    String? tellerId,
+    String? tellerUserId,
+  });
+}

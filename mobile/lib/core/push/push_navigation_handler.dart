@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/home/presentation/providers/fortune_incoming_invite_provider.dart';
+import '../../features/live_psychics/presentation/providers/psychic_push_payload.dart';
 import '../../features/notifications/domain/entities/app_notification_entity.dart';
 import '../../features/notifications/domain/notification_action.dart';
 
@@ -12,14 +12,14 @@ class PushNavigationHandler {
   static GoRouter? _router;
   static void Function()? onPushReceived;
   static void Function(Map<String, dynamic> data)? onFortuneInvite;
-  static void Function(FortuneSessionUpdatePayload update)? onSessionUpdate;
+  static void Function(PsychicSessionUpdatePayload update)? onSessionUpdate;
   static final List<Map<String, dynamic>> _bufferedFortunePayloads = [];
 
   static void install(
     GoRouter router, {
     void Function()? onReceived,
     void Function(Map<String, dynamic> data)? onFortuneInviteData,
-    void Function(FortuneSessionUpdatePayload update)? onSessionUpdateData,
+    void Function(PsychicSessionUpdatePayload update)? onSessionUpdateData,
   }) {
     _router = router;
     onPushReceived = onReceived;
@@ -54,7 +54,7 @@ class PushNavigationHandler {
   }) {
     if (data == null || data.isEmpty) return false;
 
-    final sessionUpdate = parseSessionUpdatePayload(data);
+    final sessionUpdate = parsePsychicSessionUpdatePayload(data);
     if (sessionUpdate != null) {
       onSessionUpdate?.call(sessionUpdate);
       if (sessionUpdate.isRejected) {
@@ -63,7 +63,7 @@ class PushNavigationHandler {
       return true;
     }
 
-    final invite = parseFortuneIncomingPayload(data);
+    final invite = parsePsychicIncomingPayload(data);
     if (invite == null) return false;
     if (onFortuneInvite == null) {
       _bufferedFortunePayloads.add(Map<String, dynamic>.from(data));

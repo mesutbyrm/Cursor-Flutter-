@@ -6,8 +6,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/bootstrap/auth_route_paths.dart';
 import '../../features/agency/presentation/providers/agency_providers.dart';
-import '../../features/home/presentation/providers/teller_profile_provider.dart';
-import '../../features/home/presentation/widgets/fortune_incoming_invite_host.dart';
+import '../../features/live_psychics/presentation/controllers/psychics_list_controller.dart';
+import '../../features/live_psychics/presentation/widgets/psychic_incoming_host.dart';
 import '../../features/shell/presentation/app_bottom_nav_host.dart';
 import '../../features/video_call/presentation/incoming_video_call_screen.dart';
 import '../../features/voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
@@ -40,7 +40,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
     _location = router.routerDelegate.currentConfiguration.uri.path;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      unawaited(ref.read(approvedTellerProvider.notifier).refresh());
+      unawaited(ref.read(approvedPsychicProvider.notifier).refresh());
       unawaited(ref.read(approvedAgencyProvider.notifier).refresh());
       _attachRouter(ref.read(goRouterProvider));
     });
@@ -101,7 +101,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
 
     var body = widget.child;
     if (!isAuthRoute) {
-      body = FortuneIncomingInviteHost(child: body);
+      body = PsychicIncomingHost(child: body);
       body = VideoCallIncomingHost(child: body);
       body = AppBottomNavHost(location: location, child: body);
     }

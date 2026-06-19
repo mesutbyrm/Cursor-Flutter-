@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/push/push_notification_service.dart';
-import '../../home/domain/entities/live_fortune_session_entity.dart';
-import '../../home/presentation/providers/fortune_live_event_bus.dart';
+import '../../live_psychics/domain/entities/psychic_request_entity.dart';
+import '../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import '../domain/video_call_invitation.dart';
 
 /// Gelen görüntülü çağrı davetleri — SSE, push ve 30 sn zaman aşımı.
@@ -12,7 +12,6 @@ class VideoCallInvitationService {
   VideoCallInvitationService();
 
   static const callTimeout = Duration(seconds: 30);
-  static const _notificationChannelId = 'video_call_incoming';
 
   final _incoming = StreamController<VideoCallInvitation>.broadcast();
   Stream<VideoCallInvitation> get incoming => _incoming.stream;
@@ -20,15 +19,15 @@ class VideoCallInvitationService {
   final Map<String, Timer> _timeouts = {};
   final Set<String> _activeCallIds = {};
 
-  void handleFortuneSession(FortuneIncomingSession session) {
+  void handlePsychicRequest(PsychicRequestEntity request) {
     final invite = VideoCallInvitation(
-      callId: session.sessionId,
-      callerId: session.clientId,
-      callerName: session.clientName,
-      category: session.category,
-      durationMinutes: session.durationMinutes,
-      totalJeton: session.totalJeton,
-      sessionId: session.sessionId,
+      callId: request.sessionId,
+      callerId: request.clientId,
+      callerName: request.clientName,
+      category: request.fortuneType,
+      durationMinutes: request.durationMinutes,
+      totalJeton: request.totalJeton,
+      sessionId: request.sessionId,
       receivedAt: DateTime.now(),
     );
     enqueue(invite);
@@ -108,18 +107,18 @@ class VideoCallTimeoutException implements Exception {
   String toString() => 'VideoCallTimeoutException($callId)';
 }
 
-/// Fortune SSE payload → [VideoCallInvitation].
-VideoCallInvitation? videoCallFromFortuneMap(Map<String, dynamic> map) {
-  final session = parseFortuneSsePayload(map);
-  if (session == null) return null;
+/// Psychic SSE payload → [VideoCallInvitation].
+VideoCallInvitation? videoCallFromPsychicMap(Map<String, dynamic> map) {
+  final request = parsePsychicSsePayload(map);
+  if (request == null) return null;
   return VideoCallInvitation(
-    callId: session.sessionId,
-    callerId: session.clientId,
-    callerName: session.clientName,
-    category: session.category,
-    durationMinutes: session.durationMinutes,
-    totalJeton: session.totalJeton,
-    sessionId: session.sessionId,
+    callId: request.sessionId,
+    callerId: request.clientId,
+    callerName: request.clientName,
+    category: request.fortuneType,
+    durationMinutes: request.durationMinutes,
+    totalJeton: request.totalJeton,
+    sessionId: request.sessionId,
     receivedAt: DateTime.now(),
   );
 }

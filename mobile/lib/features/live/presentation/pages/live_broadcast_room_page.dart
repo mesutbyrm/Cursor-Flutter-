@@ -9,12 +9,12 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../home/domain/entities/live_fortune_session_entity.dart';
-import '../../../home/domain/entities/live_fortune_teller_entity.dart';
-import '../../../home/presentation/live_fortune/live_fortune_flow.dart';
-import '../../../home/presentation/providers/home_providers.dart';
-import '../../../home/presentation/widgets/live_fortune_broadcast_side_rail.dart';
-import '../../../home/presentation/widgets/live_fortune_client_booking_sheet.dart';
+import '../../../live_psychics/domain/entities/psychic_entity.dart';
+import '../../../live_psychics/presentation/controllers/psychic_flow.dart';
+import '../../../live_psychics/presentation/providers/live_psychics_providers.dart';
+import '../../../live_psychics/presentation/widgets/psychic_booking_sheet.dart';
+import '../../../live_psychics/presentation/widgets/psychic_broadcast_side_rail.dart';
+import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../../../moderation/domain/entities/report_target.dart';
@@ -195,23 +195,25 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       return;
     }
     final hostId = s.hostUserId?.trim();
-    LiveFortuneTellerEntity? teller;
+    PsychicEntity? psychic;
     if (hostId != null && hostId.isNotEmpty) {
-      final tellers = await ref.read(homeLiveFortuneTellersProvider.future);
-      for (final t in tellers) {
-        if (t.userId == hostId || t.id == hostId) {
-          teller = t;
-          break;
+      psychic = await ref.read(livePsychicsRepositoryProvider).fetchPsychic(hostId);
+      if (psychic == null) {
+        final list = await ref.read(livePsychicsRepositoryProvider).fetchPsychics();
+        for (final p in list) {
+          if (p.userId == hostId || p.id == hostId) {
+            psychic = p;
+            break;
+          }
         }
       }
-      teller ??= await ref.read(homeRemoteProvider).fetchLiveFortuneTeller(hostId);
     }
     if (!mounted) return;
-    if (teller == null) {
+    if (psychic == null) {
       context.push('/canli-falcilar');
       return;
     }
-    final options = FortuneSessionDurationOption.forTeller(teller);
+    final options = PsychicDurationOption.forPsychic(psychic.pricePerMinute);
     final opt = options.length > 1 ? options[1] : options.first;
     final balance = ref.read(coinBalanceProvider).valueOrNull ?? user.coinBalance;
     if (balance < opt.totalJeton) {
@@ -220,22 +222,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       );
       return;
     }
-    final confirmed = await showLiveFortuneClientBookingSheet(
+    final booking = await showPsychicBookingSheet(
       context,
-      teller: teller,
-      durationMinutes: opt.minutes,
-      totalJeton: opt.totalJeton,
+      psychic: psychic,
+      initialMinutes: opt.minutes,
     );
-    if (!mounted || confirmed != true) return;
-    await LiveFortuneFlow.bookAndOpenWaiting(
-      context: context,
+    if (!mounted || booking == null) return;
+    await PsychicFlow.bookAndOpenWaiting(
       ref: ref,
-      teller: teller,
-      durationMinutes: opt.minutes,
-      totalJeton: opt.totalJeton,
-      fortuneType: teller.specialties.isNotEmpty
-          ? teller.specialties.first
-          : 'general',
+      router: GoRouter.of(context),
+      psychic: psychic,
+      durationMinutes: booking.minutes,
+      totalJeton: booking.jeton,
+      fortuneType: booking.fortuneType,
     );
   }
 
@@ -609,7 +608,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     required LiveGiftController giftCtrl,
   }) {
     if (!s.isHost) {
-      return LiveFortuneBroadcastSideRail(
+      return PsychicBroadcastSideRail(
         viewerCount: s.viewerCount,
         onGift: () => giftCtrl.setPanelOpen(true),
         onFortuneRequest: () => unawaited(_onFortuneRequest(s)),

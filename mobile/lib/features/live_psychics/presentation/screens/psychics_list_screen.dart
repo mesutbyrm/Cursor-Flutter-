@@ -1,0 +1,206 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../core/network/api_exception.dart';
+import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/ui/premium/live_badge.dart';
+import '../../../../core/ui/premium_2026/cosmic_galaxy_background.dart';
+import '../../../../core/widgets/user_avatar.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../domain/entities/psychic_entity.dart';
+import '../controllers/psychics_list_controller.dart';
+
+/// Çevrimiçi falcı listesi — pull to refresh + infinite scroll.
+class PsychicsListScreen extends ConsumerWidget {
+  const PsychicsListScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final listAsync = ref.watch(psychicsListControllerProvider);
+    final approved = ref.watch(approvedPsychicProvider);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF0D0618),
+      appBar: AppBar(
+        title: const Text('Canlı Falcılar'),
+        backgroundColor: Colors.transparent,
+        actions: [
+          if (approved.valueOrNull?.isApprovedTeller == true)
+            TextButton.icon(
+              onPressed: () => context.push('/canli-falcilar/dashboard'),
+              icon: const Icon(Icons.dashboard_outlined, color: Colors.white),
+              label: const Text('Falcı Panel'),
+            ),
+        ],
+      ),
+      extendBodyBehindAppBar: true,
+      body: CosmicGalaxyBackground(
+        child: SafeArea(
+          child: listAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(ApiException.userMessage(e), textAlign: TextAlign.center),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: () =>
+                        ref.read(psychicsListControllerProvider.notifier).refresh(),
+                    child: const Text('Tekrar dene'),
+                  ),
+                ],
+              ),
+            ),
+            data: (state) {
+              final authed = ref.watch(authControllerProvider).valueOrNull != null;
+              if (!authed) {
+                return Center(
+                  child: Text(
+                    'Canlı falcılar için giriş yapın.',
+                    style: TextStyle(color: context.colors.onSurfaceMuted),
+                  ),
+                );
+              }
+              if (state.items.isEmpty) {
+                return RefreshIndicator(
+                  onRefresh: () =>
+                      ref.read(psychicsListControllerProvider.notifier).refresh(),
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: const [
+                      SizedBox(height: 120),
+                      Center(child: Text('Şu an çevrimiçi falcı yok.')),
+                    ],
+                  ),
+                );
+              }
+              return NotificationListener<ScrollNotification>(
+                onNotification: (n) {
+                  if (n.metrics.pixels >= n.metrics.maxScrollExtent - 200) {
+                    ref.read(psychicsListControllerProvider.notifier).loadMore();
+                  }
+                  return false;
+                },
+                child: RefreshIndicator(
+                  onRefresh: () =>
+                      ref.read(psychicsListControllerProvider.notifier).refresh(),
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (_, i) {
+                      if (i >= state.items.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      return PsychicListTile(psychic: state.items[i]);
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PsychicListTile extends StatelessWidget {
+  const PsychicListTile({super.key, required this.psychic});
+
+  final PsychicEntity psychic;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.06),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: () => context.push('/canli-falcilar/${psychic.id}'),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Stack(
+                children: [
+                  psychic.avatarUrl != null && psychic.avatarUrl!.isNotEmpty
+                      ? CircleAvatar(
+                          radius: 28,
+                          backgroundImage:
+                              CachedNetworkImageProvider(psychic.avatarUrl!),
+                        )
+                      : const UserAvatar(radius: 28),
+                  if (psychic.isOnline)
+                    const Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: LiveBadge(compact: true),
+                    ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      psychic.name,
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                    ),
+                    Text(
+                      psychic.displayCategory,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.65),
+                      ),
+                    ),
+                    if (psychic.rating > 0)
+                      Text(
+                        '★ ${psychic.rating.toStringAsFixed(1)} · ${psychic.reviewCount} seans',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withValues(alpha: 0.5),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    psychic.isOnline ? 'Çevrimiçi' : 'Çevrimdışı',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: psychic.isOnline
+                          ? const Color(0xFF00E676)
+                          : Colors.white54,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (psychic.pricePerMinute > 0)
+                    Text(
+                      '${psychic.pricePerMinute} jeton/dk',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFFFFD54F),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

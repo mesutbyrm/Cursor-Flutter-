@@ -9,8 +9,8 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/live_debug_log.dart';
 import '../../domain/entities/live_gift_event.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
-import '../../../home/domain/entities/live_fortune_session_entity.dart';
-import '../../../home/presentation/providers/fortune_live_event_bus.dart';
+import '../../../live_psychics/domain/entities/psychic_request_entity.dart';
+import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import '../datasources/live_gifts_remote_datasource.dart';
 
 /// Video yayın SSE — `GET /api/video-streams/{streamId}/stream`.
@@ -53,7 +53,7 @@ class VideoStreamSseService {
     'private_fal_request',
   };
 
-  void Function(FortuneIncomingSession request)? _onFortuneRequest;
+  void Function(PsychicRequestEntity request)? _onFortuneRequest;
 
   static String streamUrlFor(String streamId) {
     final base = Env.apiBaseUrl.replaceAll(RegExp(r'/$'), '');
@@ -69,7 +69,7 @@ class VideoStreamSseService {
     void Function(LiveGiftEvent event)? onGift,
     VoidCallback? onStreamEnded,
     void Function(Map<String, dynamic> battle)? onPkBattle,
-    void Function(FortuneIncomingSession request)? onFortuneRequest,
+    void Function(PsychicRequestEntity request)? onFortuneRequest,
   }) async {
     final id = streamId.trim();
     final same = !_stopped && _streamId == id && _bytesSub != null;
@@ -224,7 +224,7 @@ class VideoStreamSseService {
       default:
         final typeLower = type.toLowerCase();
         if (_fortuneEventTypes.contains(typeLower)) {
-          final session = parseFortuneSsePayload(map);
+          final session = parsePsychicSsePayload(map);
           if (session != null && session.sessionId.isNotEmpty) {
             _onFortuneRequest?.call(session);
           }

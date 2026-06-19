@@ -13,7 +13,7 @@ import '../widgets/approved/fortune_section.dart';
 import '../widgets/approved/gold_section.dart';
 import '../widgets/approved/home_header.dart';
 import '../widgets/approved/live_broadcast_section.dart';
-import '../widgets/approved/live_fortune_tellers_section.dart';
+import '../widgets/psychics_home_section.dart';
 import '../widgets/approved/more_fortunes_button.dart';
 import '../widgets/approved/stories_section.dart';
 import '../widgets/approved/trending_video_section.dart';
@@ -73,7 +73,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             const SliverToBoxAdapter(
               child: HomeDeferredSection(
                 delay: Duration(milliseconds: 120),
-                child: LiveFortuneTellersSection(),
+                child: PsychicsHomeSection(),
               ),
             ),
             const SliverToBoxAdapter(

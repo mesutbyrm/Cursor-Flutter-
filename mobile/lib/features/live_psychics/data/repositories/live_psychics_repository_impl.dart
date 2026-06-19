@@ -1,0 +1,127 @@
+import '../../domain/entities/psychic_entity.dart';
+import '../../domain/entities/psychic_request_entity.dart';
+import '../../domain/entities/psychic_room_entity.dart';
+import '../../domain/repositories/live_psychics_repository.dart';
+import '../repositories/live_psychics_remote_datasource.dart';
+
+class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
+  LivePsychicsRepositoryImpl(this._remote);
+
+  final LivePsychicsRemoteDataSource _remote;
+
+  @override
+  Future<List<PsychicEntity>> fetchPsychics({
+    int page = 1,
+    int limit = 20,
+    bool? onlineOnly,
+    String? specialty,
+  }) =>
+      _remote.fetchPsychics(
+        page: page,
+        limit: limit,
+        onlineOnly: onlineOnly,
+        specialty: specialty,
+      );
+
+  @override
+  Future<PsychicEntity?> fetchPsychic(String id) => _remote.fetchPsychic(id);
+
+  @override
+  Future<PsychicEntity?> fetchMyProfile() => _remote.fetchMyProfile();
+
+  @override
+  Future<bool> setOnline({required bool online}) =>
+      _remote.setOnline(online: online);
+
+  @override
+  Future<PsychicSessionCreateResult?> createSession({
+    required String tellerId,
+    String? tellerUserId,
+    required int durationMinutes,
+    required String fortuneType,
+  }) =>
+      _remote.createSession(
+        tellerId: tellerId,
+        tellerUserId: tellerUserId,
+        durationMinutes: durationMinutes,
+        fortuneType: fortuneType,
+      );
+
+  @override
+  Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId) =>
+      _remote.fetchSessionStatus(sessionId);
+
+  @override
+  Future<List<PsychicSessionStatusResult>> fetchActiveSessions() =>
+      _remote.fetchActiveSessions();
+
+  @override
+  Future<List<PsychicRequestEntity>> fetchIncomingRequests({
+    String? currentUserId,
+    String? tellerProfileId,
+  }) =>
+      _remote.fetchIncomingRequests(
+        currentUserId: currentUserId,
+        tellerProfileId: tellerProfileId,
+      );
+
+  @override
+  Future<PsychicRespondResult> respondSession(
+    String sessionId, {
+    required String action,
+  }) =>
+      _remote.respondSession(sessionId, action: action);
+
+  @override
+  Future<bool> endSession(String sessionId) => _remote.endSession(sessionId);
+
+  @override
+  Future<PsychicRoomEntity?> fetchRoom(String sessionId) =>
+      _remote.fetchRoom(sessionId);
+
+  @override
+  Future<Map<String, dynamic>?> roomAction(
+    String sessionId,
+    String action, {
+    Map<String, dynamic>? extra,
+  }) =>
+      _remote.roomAction(sessionId, action, extra: extra);
+
+  @override
+  Future<List<PsychicChatMessage>> fetchMessages(
+    String sessionId, {
+    String? afterIso,
+    String? myUserId,
+  }) =>
+      _remote.fetchMessages(sessionId, afterIso: afterIso, myUserId: myUserId);
+
+  @override
+  Future<bool> sendMessage(String sessionId, String text) =>
+      _remote.sendMessage(sessionId, text);
+
+  @override
+  Future<bool> extendSession({
+    required String sessionId,
+    required int minutes,
+    required int totalJeton,
+  }) =>
+      _remote.extendSession(
+        sessionId: sessionId,
+        minutes: minutes,
+        totalJeton: totalJeton,
+      );
+
+  @override
+  Future<bool> sendTip({
+    required String sessionId,
+    required int amount,
+    String? tellerId,
+    String? tellerUserId,
+  }) =>
+      _remote.sendTip(
+        sessionId: sessionId,
+        amount: amount,
+        tellerId: tellerId,
+        tellerUserId: tellerUserId,
+      );
+}

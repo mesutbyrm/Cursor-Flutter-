@@ -10,7 +10,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
-import '../../../home/presentation/providers/fortune_live_event_bus.dart';
+import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import '../../data/services/exo_player_probe.dart';
@@ -718,9 +718,9 @@ class VoiceRoomLiveController
             state = state.copyWith(typingUsers: users);
           },
           onFortuneRequest: (payload) {
-            final session = parseFortuneSsePayload(payload);
+            final session = parsePsychicSsePayload(payload);
             if (session == null) return;
-            emitFortuneLiveRequest(ref, session);
+            emitPsychicLiveRequest(ref, session);
           },
         );
   }

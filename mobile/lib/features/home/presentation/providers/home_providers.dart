@@ -5,44 +5,20 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../../social/presentation/providers/social_providers.dart';
 import '../../../shorts/presentation/providers/shorts_providers.dart';
 import '../../data/datasources/home_remote_datasource.dart';
-import '../../data/datasources/live_fortune_remote_datasource.dart';
 import '../../data/repositories/home_repository_impl.dart';
-import '../../data/repositories/live_fortune_repository_impl.dart';
-import '../../data/services/live_fortune_room_signal_service.dart';
 import '../../domain/entities/home_banner_entity.dart';
 import '../../domain/entities/home_fortune_card_entity.dart';
 import '../../domain/entities/home_game_entity.dart';
 import '../../domain/entities/home_trend_video_entity.dart';
-import '../../domain/entities/live_fortune_teller_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 import '../../domain/repositories/home_repository.dart';
-import '../../domain/repositories/live_fortune_repository.dart';
+import '../../../live_psychics/presentation/controllers/psychics_list_controller.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 
 final homeRemoteProvider = Provider<HomeRemoteDataSource>((ref) {
   return HomeRemoteDataSource(ref.watch(dioProvider));
-});
-
-final liveFortuneRemoteProvider = Provider<LiveFortuneRemoteDataSource>((ref) {
-  return LiveFortuneRemoteDataSource(
-    ref.watch(dioProvider),
-    ref.watch(homeRemoteProvider),
-  );
-});
-
-final liveFortuneRepositoryProvider = Provider<LiveFortuneRepository>((ref) {
-  return LiveFortuneRepositoryImpl(ref.watch(liveFortuneRemoteProvider));
-});
-
-final liveFortuneRoomSignalServiceProvider =
-    Provider<LiveFortuneRoomSignalService>((ref) {
-  final service = LiveFortuneRoomSignalService(
-    ref.watch(liveFortuneRemoteProvider),
-  );
-  ref.onDispose(service.dispose);
-  return service;
 });
 
 final homeRepositoryProvider = Provider<HomeRepository>((ref) {
@@ -60,16 +36,6 @@ final homeBannersProvider = FutureProvider<List<HomeBannerEntity>>((ref) async {
 final homeFortuneCardsProvider =
     FutureProvider<List<HomeFortuneCardEntity>>((ref) async {
   return ref.watch(homeRemoteProvider).fetchHomepageFortuneCards();
-});
-
-final homeLiveFortuneTellersProvider =
-    FutureProvider<List<LiveFortuneTellerEntity>>((ref) async {
-  return ref.watch(homeRepositoryProvider).fetchLiveFortuneTellers();
-});
-
-final liveFortuneTellerProvider =
-    FutureProvider.family<LiveFortuneTellerEntity?, String>((ref, id) async {
-  return ref.watch(homeRepositoryProvider).fetchLiveFortuneTeller(id);
 });
 
 final homeAdvisorsProvider =
@@ -160,7 +126,7 @@ final homeFeedNotifierProvider =
 /// Tüm ana sayfa verilerini yenile.
 Future<void> refreshHomeData(WidgetRef ref) async {
   ref.invalidate(homeBannersProvider);
-  ref.invalidate(homeLiveFortuneTellersProvider);
+  ref.invalidate(psychicsListControllerProvider);
   ref.invalidate(homeAdvisorsProvider);
   ref.invalidate(homeLiveStreamsProvider);
   ref.invalidate(homeVoiceRoomsProvider);
@@ -171,7 +137,7 @@ Future<void> refreshHomeData(WidgetRef ref) async {
   ref.invalidate(shortsFeedProvider);
   await Future.wait([
     ref.refresh(homeBannersProvider.future),
-    ref.refresh(homeLiveFortuneTellersProvider.future),
+    ref.refresh(psychicsListControllerProvider.future),
     ref.refresh(homeAdvisorsProvider.future),
     ref.refresh(homeLiveStreamsProvider.future),
     ref.refresh(homeVoiceRoomsProvider.future),

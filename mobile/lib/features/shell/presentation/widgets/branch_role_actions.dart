@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../home/presentation/providers/teller_profile_provider.dart';
+import '../../../live_psychics/presentation/controllers/psychics_list_controller.dart';
 import '../../../agency/presentation/providers/agency_providers.dart';
 
 /// Onaylı falcı/ajans için «Panel», değilse «Ol» etiketi ve rotası.
@@ -10,9 +10,9 @@ class BranchRoleActions {
   BranchRoleActions._();
 
   static TellerBranchAction tellerAction(WidgetRef ref) {
-    final approved = ref.watch(approvedTellerProvider);
-    final isPanelTeller = approved.isApprovedTeller ||
-        (approved.loading && approved.profile?.isUsable == true);
+    final approved = ref.watch(approvedPsychicProvider);
+    final isPanelTeller = approved.valueOrNull?.isApprovedTeller == true ||
+        (approved.isLoading && approved.valueOrNull?.profile?.isApproved == true);
     if (isPanelTeller) {
       return const TellerBranchAction(
         label: 'Falcı\nPanel',

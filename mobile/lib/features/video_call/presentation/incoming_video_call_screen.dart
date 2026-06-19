@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/widgets/user_avatar.dart';
-import '../../home/presentation/widgets/live_fortune_fortune_type_chip.dart';
+import '../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
 import '../data/video_call_invitation_service.dart';
 import '../domain/video_call_invitation.dart';
 import 'video_call_provider.dart';
@@ -116,7 +116,7 @@ class _IncomingVideoCallScreenState extends ConsumerState<IncomingVideoCallScree
             ),
             const SizedBox(height: 8),
             Text(
-              '✨ ${fortuneTypeLabel(invite.displayCategory)}',
+              '✨ ${psychicFortuneTypeLabel(invite.displayCategory)}',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.85),
                 fontSize: 14,
@@ -229,7 +229,7 @@ class VideoCallIncomingHost extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(videoCallFortuneBridgeProvider);
+    ref.watch(videoCallPsychicBridgeProvider);
     final callState = ref.watch(videoCallProvider);
     final active = callState.active;
 

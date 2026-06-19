@@ -6,26 +6,27 @@ import '../../../core/util/json_util.dart';
 import '../../agency/data/datasources/agency_remote_datasource.dart';
 import '../../agency/domain/entities/agency_entity.dart';
 import '../../auth/domain/entities/user_entity.dart';
-import '../../home/data/datasources/home_remote_datasource.dart';
-import '../../home/domain/entities/live_fortune_teller_entity.dart';
+import '../../live_psychics/data/models/psychic_model.dart';
+import '../../live_psychics/data/repositories/live_psychics_remote_datasource.dart';
+import '../../live_psychics/domain/entities/psychic_entity.dart';
 
 /// Onaylı falcı/ajans — birden fazla üretim uç noktasından çözümleme.
 class RolePanelResolver {
   RolePanelResolver(
     this._dio,
-    this._home,
+    this._psychics,
     this._agency,
   );
 
   final Dio _dio;
-  final HomeRemoteDataSource _home;
+  final LivePsychicsRemoteDataSource _psychics;
   final AgencyRemoteDataSource _agency;
 
-  Future<LiveFortuneTellerEntity?> resolveTeller(UserEntity user) async {
+  Future<PsychicEntity?> resolveTeller(UserEntity user) async {
     final userId = user.id.trim();
     if (userId.isEmpty) return null;
 
-    var profile = await _home.fetchMyFortuneTellerProfile();
+    var profile = await _psychics.fetchMyProfile();
     if (_usable(profile)) return profile;
 
     for (final path in [
@@ -38,7 +39,7 @@ class RolePanelResolver {
     }
 
     try {
-      final tellers = await _home.fetchLiveFortuneTellers();
+      final tellers = await _psychics.fetchPsychics();
       for (final t in tellers) {
         if (t.userId == userId || t.id == userId) {
           if (_usable(t)) return t;
@@ -47,7 +48,7 @@ class RolePanelResolver {
     } catch (_) {}
 
     if (await _canAccessTellerSessions()) {
-      return LiveFortuneTellerEntity(
+      return PsychicEntity(
         id: userId,
         userId: userId,
         name: user.displayName?.trim().isNotEmpty == true
@@ -60,7 +61,7 @@ class RolePanelResolver {
     }
 
     if (_roleLooksLikeTeller(user.role)) {
-      return LiveFortuneTellerEntity(
+      return PsychicEntity(
         id: userId,
         userId: userId,
         name: user.displayName?.trim().isNotEmpty == true
@@ -113,10 +114,7 @@ class RolePanelResolver {
     return null;
   }
 
-  Future<LiveFortuneTellerEntity?> _tellerFromPath(
-    String path,
-    String userId,
-  ) async {
+  Future<PsychicEntity?> _tellerFromPath(String path, String userId) async {
     try {
       final res = await _dio.safeGet<dynamic>(path);
       return _parseTellerBody(res.data, userId);
@@ -134,7 +132,7 @@ class RolePanelResolver {
     }
   }
 
-  LiveFortuneTellerEntity? _parseTellerBody(dynamic body, String userId) {
+  PsychicEntity? _parseTellerBody(dynamic body, String userId) {
     if (body is! Map) return null;
     final map = asJsonMap(body);
     if (map['success'] == false && map['error'] != null) return null;
@@ -154,12 +152,12 @@ class RolePanelResolver {
       ]) {
         final nested = layer[key];
         if (nested is Map) {
-          final parsed = _home.parseLiveFortuneTeller(nested);
+          final parsed = PsychicModel.psychicFromJson(nested);
           if (_usable(parsed)) return parsed;
         }
       }
       if (_looksLikeTellerMap(layer)) {
-        final parsed = _home.parseLiveFortuneTeller(layer);
+        final parsed = PsychicModel.psychicFromJson(layer);
         if (_usable(parsed)) return parsed;
       }
     }
@@ -176,7 +174,7 @@ class RolePanelResolver {
         map['isLiveFortuneTeller'] == true ||
         map['canGoOnline'] == true) {
       final id = (tellerId != null && tellerId.isNotEmpty) ? tellerId : userId;
-      return LiveFortuneTellerEntity(
+      return PsychicEntity(
         id: id,
         userId: userId,
         name: pick(map, ['name', 'displayName'])?.toString() ?? 'Falcı',
@@ -335,8 +333,8 @@ class RolePanelResolver {
     return r.contains('agency') || r.contains('ajans');
   }
 
-  bool _usable(LiveFortuneTellerEntity? profile) =>
-      profile != null && profile.isUsable;
+  bool _usable(PsychicEntity? profile) =>
+      profile != null && profile.isApproved;
 
   bool _usableAgency(AgencyEntity? agency) =>
       agency != null && agency.isUsable;
