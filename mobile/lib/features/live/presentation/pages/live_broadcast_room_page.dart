@@ -110,7 +110,20 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
 
   Future<void> _initAgora() async {
     final user = ref.read(authControllerProvider).valueOrNull;
-    if (user == null || !_agora.isSupported) return;
+    if (user == null) {
+      if (mounted) {
+        setState(() => _rtcError = 'Yayın için giriş yapmalısınız');
+      }
+      return;
+    }
+    if (!_agora.isSupported) {
+      if (mounted) {
+        setState(
+          () => _rtcError = 'Canlı yayın yalnızca Android/iOS cihazlarda desteklenir',
+        );
+      }
+      return;
+    }
 
     final roomId = widget.session.streamId?.trim() ?? '';
     try {
@@ -137,7 +150,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           await ref.read(liveRemoteProvider).notifyLiveStarted(roomId);
         } catch (_) {}
       }
-      if (mounted) setState(() => _rtcReady = true);
+      if (mounted) {
+        setState(() {
+          _rtcReady = true;
+          _localPreviewKey = UniqueKey();
+        });
+      }
     } catch (e) {
       if (widget.session.isHost && roomId.isNotEmpty) {
         try {
@@ -452,35 +470,44 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         fit: StackFit.expand,
         children: [
           _imageModeLayer(s),
-          if (!s.isHost && _rtcError == null)
+          if (_rtcError == null)
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircleAvatar(
-                    radius: 48,
-                    backgroundColor: Colors.white.withValues(alpha: 0.08),
-                    backgroundImage: s.avatarUrl != null &&
-                            s.avatarUrl!.trim().isNotEmpty
-                        ? CachedNetworkImageProvider(s.avatarUrl!)
-                        : null,
-                    child: s.avatarUrl == null || s.avatarUrl!.trim().isEmpty
-                        ? const Icon(Icons.person_rounded,
-                            size: 48, color: Colors.white54)
-                        : null,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '@${s.streamerHandle ?? s.streamerName ?? 'yayinci'}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white70,
+                  if (!s.isHost) ...[
+                    CircleAvatar(
+                      radius: 48,
+                      backgroundColor: Colors.white.withValues(alpha: 0.08),
+                      backgroundImage: s.avatarUrl != null &&
+                              s.avatarUrl!.trim().isNotEmpty
+                          ? CachedNetworkImageProvider(s.avatarUrl!)
+                          : null,
+                      child: s.avatarUrl == null || s.avatarUrl!.trim().isEmpty
+                          ? const Icon(Icons.person_rounded,
+                              size: 48, color: Colors.white54)
+                          : null,
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Bağlanıyor...',
-                    style: TextStyle(
+                    const SizedBox(height: 12),
+                    Text(
+                      '@${s.streamerHandle ?? s.streamerName ?? 'yayinci'}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white70,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ] else ...[
+                    const Icon(
+                      Icons.sensors_rounded,
+                      size: 56,
+                      color: Color(0xFFB832FF),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  Text(
+                    s.isHost ? 'Yayın başlatılıyor…' : 'Bağlanıyor...',
+                    style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 18,
                       color: Colors.white,

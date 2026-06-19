@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.280+283 (2026-06-18)
+
+### Canlı yayın — kamera/ses ve oda geçişi
+
+- **Agora handoff:** Hazırlık önizlemesi kapatılıp motor serbest bırakılıyor; oda açılınca kamera kilidi kalkıyor
+- **Yayıncı bağlantı:** Kanala girince yerel video/ses açıkça etkinleştiriliyor
+- **Yükleniyor ekranı:** Yayıncı için «Yayın başlatılıyor…» göstergesi; giriş/destek hataları görünür
+
+
 ## 1.0.279+282 (2026-06-18)
 
 ### Gold üyelik — ödeme bildir düzeltmesi

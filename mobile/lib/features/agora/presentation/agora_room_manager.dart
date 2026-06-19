@@ -185,6 +185,11 @@ class AgoraRoomManager {
       onTimeout: () => throw StateError('Agora kanala bağlanılamadı'),
     );
     _inChannel = true;
+
+    if (isHost) {
+      await _engine!.enableLocalVideo(true);
+      await _engine!.enableLocalAudio(true);
+    }
   }
 
   String get channelName => _channelName;
@@ -245,12 +250,18 @@ class AgoraRoomManager {
     _cameraOn = false;
   }
 
-  Future<void> dispose() async {
+  /// Önizlemeden yayın odasına geçerken motoru tamamen bırak (kamera kilidi).
+  Future<void> shutdownForHandoff() async {
     await leave();
     if (_engine != null) {
       await _engine!.release();
       _engine = null;
     }
+    _channelName = '';
+  }
+
+  Future<void> dispose() async {
+    await shutdownForHandoff();
   }
 
   RtcEngine? get engine => _engine;

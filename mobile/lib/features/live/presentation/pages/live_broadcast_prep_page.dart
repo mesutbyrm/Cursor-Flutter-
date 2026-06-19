@@ -32,7 +32,7 @@ class LiveBroadcastPrepPage extends ConsumerStatefulWidget {
 
 class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
   final _title = TextEditingController();
-  final _agora = AgoraRoomManager();
+  AgoraRoomManager _agora = AgoraRoomManager();
   Key _localPreviewKey = UniqueKey();
 
   var _micOn = true;
@@ -162,7 +162,12 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
     setState(() => _starting = true);
     String? createdStreamId;
     try {
-      await _agora.leave();
+      if (mounted) {
+        setState(() => _previewReady = false);
+      }
+      await _agora.shutdownForHandoff();
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      _agora = AgoraRoomManager();
 
       var roomId = 'live-${DateTime.now().millisecondsSinceEpoch}';
       if (Env.useMobileAuth) {
@@ -217,8 +222,11 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
       _navigatedToRoom = true;
       _orphanStreamId = null;
       await context.push('/live/room', extra: session);
-      if (mounted && context.canPop()) {
-        context.pop();
+      if (mounted) {
+        _agora = AgoraRoomManager();
+        if (context.canPop()) {
+          context.pop();
+        }
       }
     } catch (e) {
       if (createdStreamId != null) {
