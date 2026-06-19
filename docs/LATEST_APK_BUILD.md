@@ -2,21 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.279+282` |
-| Tarih (UTC) | 2026-06-19 00:05 |
-| Commit | [`39db7c6ff141548b34655168e957b214cdc0c884`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/39db7c6ff141548b34655168e957b214cdc0c884) |
-| İş akışı | [Run 27796515787](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27796515787) |
+| Sürüm | `1.0.280+283` |
+| Tarih (UTC) | 2026-06-19 00:33 |
+| Commit | [`53059fa5b5a4f51bc954c755c022515cf89261ff`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/53059fa5b5a4f51bc954c755c022515cf89261ff) |
+| İş akışı | [Run 27797545902](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27797545902) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.279+282 (2026-06-18)
+## 1.0.280+283 (2026-06-18)
 
-### Gold üyelik — ödeme bildir düzeltmesi
+### Canlı yayın — kamera/ses ve oda geçişi
 
-- **Yetersiz jeton:** Jeton mağazasına yönlendirme kaldırıldı; Papara/Havale/WhatsApp ödeme akışı açılır
-- **Talep gövdesi:** `senderInfo`, `receiptReference`, `tierId` / `membershipTier` alanları eklendi
-- **Onay metni:** Gold üyelik için «üyeliğiniz aktifleşir» mesajı
+- **Agora handoff:** Hazırlık önizlemesi kapatılıp motor serbest bırakılıyor; oda açılınca kamera kilidi kalkıyor
+- **Yayıncı bağlantı:** Kanala girince yerel video/ses açıkça etkinleştiriliyor
+- **Yükleniyor ekranı:** Yayıncı için «Yayın başlatılıyor…» göstergesi; giriş/destek hataları görünür
+
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
