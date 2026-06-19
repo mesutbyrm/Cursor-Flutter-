@@ -1,7 +1,5 @@
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
-import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import 'profile_glass.dart';
 
@@ -28,8 +26,8 @@ class ProfilePremiumBanner extends StatelessWidget {
     final cta = isGold ? 'Uzat' : 'Ayrıcalıkları Gör';
 
     return ProfileGlass(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      borderRadius: 20,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      borderRadius: 22,
       gradient: const LinearGradient(
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
@@ -39,14 +37,14 @@ class ProfilePremiumBanner extends StatelessWidget {
           Color(0xFF8E2DA8),
         ],
       ),
-      borderColor: AppThemeColors.accentPink.withValues(alpha: 0.4),
+      borderColor: AppThemeColors.accentPink.withValues(alpha: 0.45),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.12),
+              color: Colors.white.withValues(alpha: 0.14),
               boxShadow: AppThemeColors.glowShadow(
                 const Color(0xFFFFD54F),
                 blur: 16,
@@ -55,7 +53,7 @@ class ProfilePremiumBanner extends StatelessWidget {
             child: const Icon(
               Icons.workspace_premium_rounded,
               color: Color(0xFFFFD54F),
-              size: 28,
+              size: 30,
             ),
           ),
           const SizedBox(width: 14),
@@ -63,24 +61,25 @@ class ProfilePremiumBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Premium Üyelik',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
-                    fontSize: 16,
+                    fontSize: 17,
                     letterSpacing: -0.2,
+                    color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   subtitle,
                   style: TextStyle(
                     color: isGold
-                        ? const Color(0xFFFFD54F).withValues(alpha: 0.95)
-                        : context.colors.onSurfaceVariant,
-                    fontSize: 12,
-                    height: 1.3,
-                    fontWeight: isGold ? FontWeight.w700 : FontWeight.w400,
+                        ? const Color(0xFFFFE082)
+                        : Colors.white.withValues(alpha: 0.88),
+                    fontSize: 13,
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -93,12 +92,12 @@ class ProfilePremiumBanner extends StatelessWidget {
               onTap: onViewPrivileges,
               borderRadius: BorderRadius.circular(14),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                 child: Text(
                   cta,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: 12,
+                    fontSize: 13,
                     color: Colors.white,
                   ),
                 ),

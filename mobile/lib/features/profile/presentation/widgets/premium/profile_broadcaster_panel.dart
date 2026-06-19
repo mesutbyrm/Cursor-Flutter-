@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:flutter/material.dart';
 
 import 'profile_glass.dart';
 
@@ -39,19 +38,24 @@ class ProfileBroadcasterPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const ProfileSectionTitle(title: 'Yayıncı Paneli'),
-        Row(
-          children: [
-            for (var i = 0; i < items.length; i++) ...[
-              if (i > 0) SizedBox(width: 8),
-              Expanded(
-                child: _BroadcasterTile(
-                  icon: items[i].icon,
-                  label: items[i].label,
-                  onTap: items[i].onTap,
-                ),
-              ),
-            ],
-          ],
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: items.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 0.92,
+          ),
+          itemBuilder: (context, i) {
+            final item = items[i];
+            return _BroadcasterTile(
+              icon: item.icon,
+              label: item.label,
+              onTap: item.onTap,
+            );
+          },
         ),
       ],
     );
@@ -73,34 +77,37 @@ class _BroadcasterTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ProfileGlass(
       onTap: onTap,
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
-      borderRadius: 16,
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      borderRadius: 18,
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: AppThemeColors.accentPurple.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(14),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppThemeColors.accentPurple.withValues(alpha: 0.28),
+                  AppThemeColors.accentPink.withValues(alpha: 0.18),
+                ],
+              ),
             ),
             child: Icon(
               icon,
-              size: 22,
-              color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
+              size: 24,
+              color: AppThemeColors.accentCyan.withValues(alpha: 0.95),
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             label,
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              height: 1.15,
-              color: context.colors.onSurfaceVariant,
-            ),
+            style: ProfileTypography.actionLabel(context),
           ),
         ],
       ),

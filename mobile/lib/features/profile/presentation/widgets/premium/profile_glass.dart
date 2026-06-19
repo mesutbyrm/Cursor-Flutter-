@@ -94,3 +94,78 @@ String profileFormatCoins(int value) {
   }
   return buf.toString();
 }
+
+/// Profil ekranı tipografi — okunabilir minimum boyutlar.
+abstract final class ProfileTypography {
+  static TextStyle pageTitle(BuildContext context) =>
+      Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.4,
+            color: context.colors.onSurface,
+            height: 1.15,
+          ) ??
+      TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w900,
+        color: context.colors.onSurface,
+      );
+
+  static TextStyle displayName(BuildContext context) => TextStyle(
+        fontSize: 26,
+        fontWeight: FontWeight.w900,
+        letterSpacing: -0.5,
+        color: context.colors.onSurface,
+        height: 1.1,
+      );
+
+  static TextStyle username(BuildContext context) => TextStyle(
+        color: context.colors.onSurfaceMuted,
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        height: 1.2,
+      );
+
+  static TextStyle statValue(BuildContext context) => TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w900,
+        letterSpacing: -0.3,
+        color: context.colors.onSurface,
+        height: 1,
+      );
+
+  static TextStyle statLabel(BuildContext context) => TextStyle(
+        color: context.colors.onSurfaceMuted,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        height: 1.25,
+      );
+
+  static TextStyle body(BuildContext context) => TextStyle(
+        color: context.colors.onSurfaceVariant,
+        fontSize: 15,
+        height: 1.5,
+        fontWeight: FontWeight.w500,
+      );
+
+  static TextStyle cardTitle(BuildContext context) => TextStyle(
+        fontWeight: FontWeight.w800,
+        fontSize: 16,
+        color: context.colors.onSurface,
+        height: 1.2,
+      );
+
+  static TextStyle cardSubtitle(BuildContext context) => TextStyle(
+        fontSize: 13,
+        color: context.colors.onSurfaceMuted,
+        height: 1.4,
+        fontWeight: FontWeight.w500,
+      );
+
+  static TextStyle actionLabel(BuildContext context) => TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        height: 1.25,
+        color: context.colors.onSurface,
+      );
+}

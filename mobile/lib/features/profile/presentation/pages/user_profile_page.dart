@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,6 +11,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/premium/profile_glass.dart';
 import '../widgets/user_posts_timeline.dart';
 
 class UserProfilePage extends ConsumerWidget {
@@ -58,55 +58,88 @@ class UserProfilePage extends ConsumerWidget {
             physics: PremiumMotion.listPhysics,
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             children: [
-              LiquidGlassCard(
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(3),
+              Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.bottomCenter,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: SizedBox(
+                      height: 120,
+                      width: double.infinity,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              const Color(0xFF2A1248),
+                              AppThemeColors.accentPurple.withValues(alpha: 0.7),
+                              AppThemeColors.accentPink.withValues(alpha: 0.45),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -44,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: context.colors.brandGradient,
                       ),
-                      child: UserAvatar(url: user.avatarUrl, radius: 36),
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: context.scaffoldBg,
+                        ),
+                        child: UserAvatar(url: user.avatarUrl, radius: 48),
+                      ),
                     ),
-                    SizedBox(width: 16),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 52),
+              Text(
+                user.display,
+                textAlign: TextAlign.center,
+                style: ProfileTypography.displayName(context),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '@${user.username}',
+                textAlign: TextAlign.center,
+                style: ProfileTypography.username(context),
+              ),
+              const SizedBox(height: 18),
+              ProfileGlass(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Row(
+                  children: [
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user.display,
-                            style: PremiumTypography.headline(context),
-                          ),
-                          Text(
-                            '@${user.username}',
-                            style: TextStyle(
-                              color: context.colors.onSurfaceMuted,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
+                      child: _Stat(
+                        label: 'Takipçi',
+                        value: profileFormatCount(user.followersCount),
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 44,
+                      color: context.colors.divider.withValues(alpha: 0.65),
+                    ),
+                    Expanded(
+                      child: _Stat(
+                        label: 'Takip',
+                        value: profileFormatCount(user.followingCount),
                       ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: 14),
-              LiquidGlassCard(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _Stat(label: 'Takipçi', value: '${user.followersCount}'),
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: Colors.white.withValues(alpha: 0.08),
-                    ),
-                    _Stat(label: 'Takip', value: '${user.followingCount}'),
-                  ],
-                ),
-              ),
-              SizedBox(height: 20),
+              const SizedBox(height: 18),
               if (!isSelf) ...[
                 Row(
                   children: [
@@ -124,7 +157,7 @@ class UserProfilePage extends ConsumerWidget {
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(52),
                           backgroundColor: user.isFollowing
-                              ? Colors.white.withValues(alpha: 0.12)
+                              ? context.colors.surfaceContainer
                               : AppThemeColors.accentPink,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
@@ -133,14 +166,17 @@ class UserProfilePage extends ConsumerWidget {
                         ),
                         child: Text(
                           user.isFollowing ? 'Takipten çık' : 'Takip et',
-                          style: TextStyle(fontWeight: FontWeight.w800),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
                         ),
                       ),
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => _openDirectMessage(context, ref),
+                        onPressed: () => context.push('/chat/$userId'),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(52),
                           foregroundColor: AppThemeColors.accentCyan,
@@ -151,9 +187,12 @@ class UserProfilePage extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: Text(
+                        child: const Text(
                           'Mesaj',
-                          style: TextStyle(fontWeight: FontWeight.w800),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
                         ),
                       ),
                     ),
@@ -165,51 +204,34 @@ class UserProfilePage extends ConsumerWidget {
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                     disabledBackgroundColor:
-                        Colors.white.withValues(alpha: 0.08),
+                        context.colors.surfaceContainer,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Bu sizin profiliniz',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                   ),
                 ),
               if (user.bio != null && user.bio!.isNotEmpty) ...[
-                SizedBox(height: 14),
-                LiquidGlassCard(
+                const SizedBox(height: 14),
+                ProfileGlass(
+                  padding: const EdgeInsets.all(16),
                   child: Text(
                     user.bio!,
-                    style: PremiumTypography.body(context).copyWith(
-                      height: 1.45,
-                    ),
+                    style: ProfileTypography.body(context),
                   ),
                 ),
               ],
-              SizedBox(height: 20),
-              const Row(
-                children: [
-                  Icon(Icons.grid_on_rounded, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'Paylaşımlar',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
+              const SizedBox(height: 22),
+              const ProfileSectionTitle(title: 'Paylaşımlar'),
               UserPostsTimeline(userId: userId, focusPostId: focusPostId),
             ],
           );
         },
       ),
     );
-  }
-
-  Future<void> _openDirectMessage(BuildContext context, WidgetRef ref) async {
-    context.push('/chat/$userId');
   }
 }
 
@@ -223,18 +245,9 @@ class _Stat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(color: context.colors.onSurfaceMuted, fontSize: 13),
-        ),
+        Text(value, style: ProfileTypography.statValue(context)),
+        const SizedBox(height: 6),
+        Text(label, style: ProfileTypography.statLabel(context)),
       ],
     );
   }

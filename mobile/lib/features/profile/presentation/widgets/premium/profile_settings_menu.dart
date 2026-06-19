@@ -76,7 +76,7 @@ class ProfileSettingsMenu extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 8),
+        const ProfileSectionTitle(title: 'Ayarlar'),
         const ThemeModeSelector(),
         const SizedBox(height: 12),
         ProfileGlass(
@@ -132,9 +132,10 @@ class _SettingsTile extends StatelessWidget {
                 child: Text(
                   label,
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
                     color: palette.textPrimary,
+                    height: 1.2,
                   ),
                 ),
               ),

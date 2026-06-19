@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.289+292 (2026-06-19)
+
+### Profil — okunabilirlik ve premium düzen
+
+- **Vitrin banner:** Gradyan kapak, büyük avatar ve cam istatistik kartı
+- **Tipografi:** Minimum 12–15px etiketler; başlık ve sayaçlar daha belirgin
+- **Yayıncı paneli:** 3 sütunlu ızgara; ikon ve yazılar büyütüldü
+- **Cüzdan:** 2 sütunlu aksiyon ızgarası, net bakiye kartı
+- **Hediyeler:** Görsel URL desteği ve daha büyük kutular
+- **Paylaşımlarım:** Kendi profilinde sosyal paylaşım duvarı
+- **Kullanıcı profili:** Banner + avatar bindirmesi, okunabilir istatistikler
+
+
 ## 1.0.288+291 (2026-06-19)
 
 ### Derleme düzeltmesi — video oynatma

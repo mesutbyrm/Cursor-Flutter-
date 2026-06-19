@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/profile_stats_entity.dart';
@@ -32,20 +32,20 @@ class ProfileGiftsRow extends ConsumerWidget {
             ),
             child: const Text(
               'Tümünü Gör',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
             ),
           ),
         ),
         gifts.when(
           loading: () => const SizedBox(
-            height: 100,
+            height: 118,
             child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
           ),
           error: (_, _) => const _EmptyGiftsHint(),
           data: (items) {
             if (items.isEmpty) return const _EmptyGiftsHint();
             return SizedBox(
-              height: 100,
+              height: 118,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: items.length.clamp(0, 8),
@@ -66,13 +66,29 @@ class _EmptyGiftsHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ProfileGlass(
-      padding: const EdgeInsets.all(16),
-      child: Text(
-        'Yayınlarda aldığın hediyeler burada görünür.',
-        style: TextStyle(
-          fontSize: 13,
-          color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
-        ),
+      padding: const EdgeInsets.all(18),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppThemeColors.accentPink.withValues(alpha: 0.15),
+            ),
+            child: const Icon(
+              Icons.card_giftcard_rounded,
+              color: AppThemeColors.accentPink,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              'Yayınlarda aldığın hediyeler burada görünür.',
+              style: ProfileTypography.cardSubtitle(context),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -85,12 +101,12 @@ class _GiftTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final display = gift.icon.startsWith('http') ? '🎁' : gift.icon;
+    final isUrl = gift.icon.startsWith('http');
     return SizedBox(
-      width: 72,
+      width: 88,
       child: ProfileGlass(
-        padding: const EdgeInsets.all(10),
-        borderRadius: 18,
+        padding: const EdgeInsets.all(12),
+        borderRadius: 20,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -98,36 +114,57 @@ class _GiftTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 54,
+                  height: 54,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
                       colors: [
-                        AppThemeColors.accentPink.withValues(alpha: 0.8),
-                        AppThemeColors.accentPurple.withValues(alpha: 0.6),
+                        AppThemeColors.accentPink.withValues(alpha: 0.75),
+                        AppThemeColors.accentPurple.withValues(alpha: 0.55),
                       ],
                     ),
                   ),
-                  child: Text(display, style: const TextStyle(fontSize: 26)),
+                  child: isUrl
+                      ? ClipOval(
+                          child: CachedNetworkImage(
+                            imageUrl: gift.icon,
+                            width: 54,
+                            height: 54,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, _, _) => const Text(
+                              '🎁',
+                              style: TextStyle(fontSize: 26),
+                            ),
+                          ),
+                        )
+                      : Text(
+                          gift.icon.isNotEmpty ? gift.icon : '🎁',
+                          style: const TextStyle(fontSize: 28),
+                        ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'x${gift.count}',
+                  style: ProfileTypography.statLabel(context),
                 ),
               ],
             ),
             Positioned(
-              top: -4,
-              right: -4,
+              top: -6,
+              right: -6,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
                   gradient: context.colors.brandGradient,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: context.scaffoldBg, width: 1.5),
                 ),
                 child: Text(
-                  'x${gift.count}',
+                  '${gift.count}',
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                   ),

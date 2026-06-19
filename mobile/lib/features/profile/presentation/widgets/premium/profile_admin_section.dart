@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -64,18 +63,12 @@ class ProfileAdminSection extends ConsumerWidget {
                   children: [
                     Text(
                       'Ödeme istekleri',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
-                      ),
+                      style: ProfileTypography.cardTitle(context),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'Jeton/CFC talepleri canlifal.com’dan · onay ve bildirimler',
-                      style: TextStyle(
-                        color: context.colors.onSurfaceMuted,
-                        fontSize: 12,
-                      ),
+                      style: ProfileTypography.cardSubtitle(context),
                     ),
                   ],
                 ),
