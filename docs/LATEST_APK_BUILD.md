@@ -2,24 +2,24 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.299+302` |
-| Tarih (UTC) | 2026-06-19 20:15 |
-| Commit | [`1d79d137f755551f0fd7f8014f8f9c579760d648`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/1d79d137f755551f0fd7f8014f8f9c579760d648) |
-| İş akışı | [Run 27845987392](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27845987392) |
+| Sürüm | `1.0.300+303` |
+| Tarih (UTC) | 2026-06-19 21:06 |
+| Commit | [`848899991875cad28b717cb40841d713531ea04e`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/848899991875cad28b717cb40841d713531ea04e) |
+| İş akışı | [Run 27847982749](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27847982749) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.299+302 (2026-06-19)
+## 1.0.300+303 (2026-06-19)
 
-### Canlı Falcılar — liste maddeleri tamamlama / sağlamlaştırma
+### Canlı Falcılar — falcı kabul/red ekranı (kritik düzeltme)
 
-- **Değerlendirme:** `POST /api/teller/reviews` başarısızsa `POST .../fortune-tellers/{id}/reviews` yedek yolu
-- **session_ended:** Özet diyaloğu root navigator; danışan çıkışında önce özet sonra yönlendirme
-- **Bekleme timeout:** Süre dolunca/redde «Tamam» ile onaylı çıkış (otomatik atlama yok)
-- **Staff:** `staffExempt: true` ile seans oluşturma isteği
-- **WebRTC/TRTC:** TRTC birincil; seans bitişinde `DELETE /api/room/signal` temizliği
-- **Panel:** Ödül ve hediye listeleri (profille aynı veri)
+- **Kırılan halka:** Push `type: psychic_request_created` mobilde tanınmıyordu → bildirim geliyor, kuyruk/dialog açılmıyordu
+- **Push parse:** `psychic_request_created`, `request_created`, iç içe `request`/`session` gövdeleri
+- **SSE:** Oturum açıkken profil onayı beklemeden `sessions/stream` bağlanır; `event:` satırı parse'a aktarılır
+- **Poll:** Bekleyen istek kuyruğa eklenince `PsychicInviteCoordinator` ile dialog tetiklenir
+- **Mount:** Push ile dolu kuyruk ilk frame'de de işlenir (listen ilk değerde ateşlenmez)
+- **Falcı rolü:** `online`/`offline` başvuru durumu artık reddedilmiş sayılmaz
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
