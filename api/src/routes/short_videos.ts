@@ -8,7 +8,7 @@ import {
   MAX_SHORT_VIDEO_SECONDS,
 } from "../lib/mp4Duration";
 import { fail, ok } from "../lib/response";
-import { uploadShortMedia } from "../lib/r2Storage";
+import { uploadShortMedia, getShortMediaObject, storageKeyFromPublicUrl } from "../lib/r2Storage";
 import { optionalAuth } from "../middleware/optionalAuth";
 import { requireAuth } from "../middleware/requireAuth";
 
@@ -212,6 +212,27 @@ shortVideosRouter.post(
     return ok(res, { video: videoPayload(row) }, 201);
   },
 );
+
+/** GET /api/short-videos/:id/stream — CDN 404 olduğunda R2 üzerinden oynatma */
+shortVideosRouter.get("/:id/stream", optionalAuth, async (req, res) => {
+  const videoId = req.params.id;
+  const video = await prisma.shortVideo.findUnique({ where: { id: videoId } });
+  if (!video) return fail(res, 404, "NOT_FOUND", "Video bulunamadı");
+
+  const key = storageKeyFromPublicUrl(video.videoUrl);
+  if (!key) return fail(res, 404, "NOT_FOUND", "Video dosyası bulunamadı");
+
+  const obj = await getShortMediaObject(key);
+  if (!obj) return fail(res, 404, "NOT_FOUND", "Video dosyası bulunamadı");
+
+  res.setHeader("Content-Type", obj.contentType);
+  res.setHeader("Cache-Control", "public, max-age=3600");
+  if (obj.contentLength != null) {
+    res.setHeader("Content-Length", String(obj.contentLength));
+  }
+  res.setHeader("Accept-Ranges", "bytes");
+  obj.body.pipe(res);
+});
 
 /** POST /api/short-videos/:id/like — beğeni toggle */
 shortVideosRouter.post("/:id/like", requireAuth, async (req, res) => {

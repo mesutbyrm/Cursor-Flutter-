@@ -15,6 +15,7 @@ import '../../../../../core/network/api_exception.dart';
 import '../../providers/social_providers.dart';
 import 'social_post_caption.dart';
 import 'social_post_comments_sheet.dart';
+import 'social_post_video_player.dart';
 
 /// CanlıFal Sosyal akış kartı — fal rozeti, otomatik paylaşım, etkileşim.
 class SocialInstagramPostCard extends ConsumerStatefulWidget {
@@ -563,17 +564,28 @@ class _PostMediaBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mediaUrl = post.mediaUrl!.trim();
+    final isVideo = socialPostLooksLikeVideo(
+      postType: post.postType,
+      mediaUrl: mediaUrl,
+    );
+
     return Padding(
       padding: const EdgeInsets.only(top: 4),
-      child: AspectRatio(
-        aspectRatio: 4 / 5,
-        child: CachedNetworkImage(
-          imageUrl: post.mediaUrl!,
-          fit: BoxFit.cover,
-          placeholder: (_, _) => const _MysticMediaPlaceholder(),
-          errorWidget: (_, _, _) => const _MysticMediaPlaceholder(),
-        ),
-      ),
+      child: isVideo
+          ? SocialPostVideoPlayer(
+              videoUrl: mediaUrl,
+              videoId: post.id,
+            )
+          : AspectRatio(
+              aspectRatio: 4 / 5,
+              child: CachedNetworkImage(
+                imageUrl: mediaUrl,
+                fit: BoxFit.cover,
+                placeholder: (_, _) => const _MysticMediaPlaceholder(),
+                errorWidget: (_, _, _) => const _MysticMediaPlaceholder(),
+              ),
+            ),
     );
   }
 }

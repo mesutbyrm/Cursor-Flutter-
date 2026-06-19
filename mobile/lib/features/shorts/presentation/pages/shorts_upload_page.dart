@@ -11,6 +11,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/providers/auth_selectors.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/shorts_providers.dart';
+import '../../../home/presentation/providers/home_providers.dart';
 
 const _maxDurationSec = 15.0;
 const _maxBytes = 10 * 1024 * 1024;
@@ -54,6 +55,13 @@ class _ShortsUploadPageState extends ConsumerState<ShortsUploadPage> {
       if (file == null) return;
 
       final path = file.path;
+      final lowerPath = path.toLowerCase();
+      if (!lowerPath.endsWith('.mp4')) {
+        setState(() => _error =
+            'Yalnızca MP4 (H.264) desteklenir. Galeriden .mp4 video seçin.');
+        return;
+      }
+
       final bytes = await File(path).length();
       if (bytes > _maxBytes) {
         setState(() => _error = 'Video en fazla 10 MB olabilir.');
@@ -115,6 +123,7 @@ class _ShortsUploadPageState extends ConsumerState<ShortsUploadPage> {
             description: _descCtrl.text,
           );
       await ref.read(shortsFeedProvider.notifier).refresh();
+      ref.invalidate(homeTrendVideosProvider);
       if (!mounted) return;
       context.pop();
       if (context.canPop()) {

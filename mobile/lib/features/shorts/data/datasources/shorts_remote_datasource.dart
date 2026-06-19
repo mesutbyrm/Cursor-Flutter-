@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
-import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/short_comment_entity.dart';
@@ -106,13 +105,15 @@ class ShortsRemoteDataSource {
     String? thumbnailPath,
     String? description,
   }) async {
+    final videoExt = _videoExtension(videoPath);
+    final videoMime = _videoContentType(videoPath);
     final form = FormData.fromMap({
       if (description != null && description.trim().isNotEmpty)
         'description': description.trim(),
       'video': await MultipartFile.fromFile(
         videoPath,
-        filename: 'short_${DateTime.now().millisecondsSinceEpoch}.mp4',
-        contentType: DioMediaType.parse('video/mp4'),
+        filename: 'short_${DateTime.now().millisecondsSinceEpoch}.$videoExt',
+        contentType: DioMediaType.parse(videoMime),
       ),
       if (thumbnailPath != null)
         'thumbnail': await MultipartFile.fromFile(
@@ -224,5 +225,19 @@ class ShortsRemoteDataSource {
     final raw = m?['videos'];
     if (raw is! List) return const [];
     return asJsonList(raw).map(_videoFrom).where((v) => v.id.isNotEmpty).toList();
+  }
+
+  static String _videoExtension(String path) {
+    final lower = path.toLowerCase();
+    if (lower.endsWith('.mov')) return 'mov';
+    if (lower.endsWith('.webm')) return 'webm';
+    return 'mp4';
+  }
+
+  static String _videoContentType(String path) {
+    final lower = path.toLowerCase();
+    if (lower.endsWith('.mov')) return 'video/quicktime';
+    if (lower.endsWith('.webm')) return 'video/webm';
+    return 'video/mp4';
   }
 }

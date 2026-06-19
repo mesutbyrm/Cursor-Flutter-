@@ -477,10 +477,14 @@ abstract final class ApiEndpoints {
 
   /// Görsel fal — presigned yükleme (kahve fincanı, el falı vb.).
   static const uploadPresigned = '/api/upload/presigned';
+
+  /// R2/S3 depolama yolu için imzalı okuma URL'i.
+  static const uploadGetUrl = '/api/upload/get-url';
   static String shortVideoLike(String id) => '/api/short-videos/$id/like';
   static String shortVideoComments(String id) =>
       '/api/short-videos/$id/comments';
   static String shortVideoView(String id) => '/api/short-videos/$id/view';
+  static String shortVideoStream(String id) => '/api/short-videos/$id/stream';
   static String shortVideoDelete(String id) => '/api/short-videos/$id';
   static String shortVideosByUser(String userId) =>
       '/api/short-videos/user/$userId';

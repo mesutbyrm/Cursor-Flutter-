@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../../core/network/dio_provider.dart';
 import '../../domain/entities/short_video_entity.dart';
-import '../providers/shorts_providers.dart';
 import '../utils/short_video_player_util.dart';
 import 'short_video_actions_rail.dart';
 
@@ -59,10 +59,11 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
       _error = false;
     });
     try {
-      final cache = ref.read(shortVideoCacheManagerProvider);
+      final dio = ref.read(dioProvider);
       final c = await createShortVideoController(
         url: widget.video.videoUrl,
-        cacheManager: cache,
+        videoId: widget.video.id,
+        dio: dio,
       );
       if (!mounted) {
         await c.dispose();

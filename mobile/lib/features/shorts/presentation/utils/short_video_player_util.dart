@@ -1,37 +1,69 @@
 import 'dart:async';
 
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:dio/dio.dart';
 import 'package:video_player/video_player.dart';
 
-/// CDN/R2 URL'den oynatma — önbellek varsa dosyadan, yoksa ağdan.
+import 'short_video_url_resolver.dart';
+
+/// CDN / imzalı URL / API stream sırasıyla oynatıcı oluşturur.
 Future<VideoPlayerController> createShortVideoController({
   required String url,
-  CacheManager? cacheManager,
+  String? videoId,
+  Dio? dio,
 }) async {
-  if (url.isEmpty) {
+  final candidates = <String>[url.trim()];
+  if (dio != null) {
+    final resolver = ShortVideoUrlResolver(dio);
+    final resolved = await resolver.resolvePlayUrls(
+      videoUrl: url,
+      videoId: videoId,
+    );
+    for (final u in resolved) {
+      if (!candidates.contains(u)) candidates.add(u);
+    }
+  }
+
+  if (candidates.isEmpty || candidates.every((u) => u.isEmpty)) {
     throw StateError('Video URL boş');
   }
 
-  VideoPlayerController controller;
-  if (cacheManager != null) {
+  Object? lastError;
+  for (final playUrl in candidates) {
+    if (playUrl.isEmpty) continue;
+    VideoPlayerController? controller;
     try {
-      final file = await cacheManager.getSingleFile(url);
-      controller = VideoPlayerController.file(file);
-    } catch (_) {
-      controller = VideoPlayerController.networkUrl(Uri.parse(url));
+      controller = VideoPlayerController.networkUrl(Uri.parse(playUrl));
+      await controller.initialize().timeout(const Duration(seconds: 25));
+      if (controller.value.hasError) {
+        throw StateError(controller.value.errorDescription ?? 'player_error');
+      }
+      controller.setLooping(true);
+      return controller;
+    } catch (e) {
+      lastError = e;
+      await controller?.dispose();
     }
-  } else {
-    controller = VideoPlayerController.networkUrl(Uri.parse(url));
   }
 
-  await controller.initialize();
-  controller.setLooping(true);
-  return controller;
+  throw lastError ?? StateError('Video oynatılamadı');
 }
 
-Future<void> preloadShortVideoUrl(String url, CacheManager cache) async {
+Future<void> preloadShortVideoUrl(
+  String url, {
+  String? videoId,
+  Dio? dio,
+}) async {
   if (url.isEmpty) return;
+  VideoPlayerController? controller;
   try {
-    await cache.downloadFile(url);
-  } catch (_) {}
+    controller = await createShortVideoController(
+      url: url,
+      videoId: videoId,
+      dio: dio,
+    );
+  } catch (_) {
+    // Ön yükleme isteğe bağlı; oynatma sırasında tekrar denenir.
+  } finally {
+    await controller?.dispose();
+  }
 }

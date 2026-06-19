@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.287+290 (2026-06-19)
+
+### Video yükle — oynatma düzeltmesi
+
+- **CDN yedek:** `cdn.canlifal.com` 404 olduğunda imzalı URL (`/api/upload/get-url`) ve API stream (`/api/short-videos/:id/stream`) ile oynatma
+- **Kısa video akışı:** Ağ öncelikli oynatıcı; bozuk önbellek kullanımı kaldırıldı
+- **Sosyal akış:** `postType: video` gönderilerde gerçek video oynatıcı (önceden yalnızca görsel deneniyordu)
+- **Yükleme:** Yalnızca MP4 kabul; MIME türü dosya uzantısından; yükleme sonrası trend videolar yenilenir
+
+
 ## 1.0.286+289 (2026-06-19)
 
 ### Ana sayfa — marka yazısı

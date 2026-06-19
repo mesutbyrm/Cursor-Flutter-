@@ -1,4 +1,5 @@
 import {
+  GetObjectCommand,
   PutObjectCommand,
   S3Client,
   type PutObjectCommandInput,
@@ -72,4 +73,57 @@ export async function uploadShortMedia(params: {
     key: `shorts/${params.folder}/${filename}`,
     url: `${publicBaseUrl()}/${params.folder}/${filename}`,
   };
+}
+
+export async function getShortMediaObject(key: string): Promise<{
+  body: NodeJS.ReadableStream;
+  contentType: string;
+  contentLength?: number;
+} | null> {
+  const client = r2Client();
+  const bucket = process.env.R2_BUCKET_NAME?.trim() ?? "canlifal-shorts";
+
+  if (client) {
+    try {
+      const out = await client.send(
+        new GetObjectCommand({ Bucket: bucket, Key: key }),
+      );
+      if (!out.Body) return null;
+      return {
+        body: out.Body as NodeJS.ReadableStream,
+        contentType: out.ContentType ?? "application/octet-stream",
+        contentLength: out.ContentLength,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  const localPath = path.join(process.cwd(), "uploads", key);
+  try {
+    const data = await fs.readFile(localPath);
+    const { Readable } = await import("node:stream");
+    return {
+      body: Readable.from(data),
+      contentType: key.endsWith(".mp4") ? "video/mp4" : "image/jpeg",
+      contentLength: data.length,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function storageKeyFromPublicUrl(url: string): string | null {
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  try {
+    const u = new URL(trimmed);
+    const p = u.pathname.startsWith("/") ? u.pathname.slice(1) : u.pathname;
+    if (p.startsWith("shorts/")) return p;
+    const idx = p.indexOf("shorts/");
+    if (idx >= 0) return p.slice(idx);
+  } catch {
+    // ignore
+  }
+  return null;
 }

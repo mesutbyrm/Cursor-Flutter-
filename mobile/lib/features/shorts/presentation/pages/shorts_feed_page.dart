@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/short_video_entity.dart';
+import '../../../../core/network/dio_provider.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/short_video_player_util.dart';
 import '../widgets/short_video_page_tile.dart';
@@ -41,11 +42,15 @@ class _ShortsFeedPageState extends ConsumerState<ShortsFeedPage> {
   }
 
   void _preloadAround(List<ShortVideoEntity> videos, int i) {
-    final cache = ref.read(shortVideoCacheManagerProvider);
+    final dio = ref.read(dioProvider);
     for (final offset in [0, 1, 2]) {
       final j = i + offset;
       if (j >= 0 && j < videos.length) {
-        preloadShortVideoUrl(videos[j].videoUrl, cache);
+        preloadShortVideoUrl(
+          videos[j].videoUrl,
+          videoId: videos[j].id,
+          dio: dio,
+        );
       }
     }
   }
