@@ -23,7 +23,7 @@ class BranchRoleActions {
     return const TellerBranchAction(
       label: 'Falcı\nOl',
       icon: Icons.workspace_premium_rounded,
-      nativePath: '/falci-ol',
+      route: '/canli-falcilar/apply',
     );
   }
 

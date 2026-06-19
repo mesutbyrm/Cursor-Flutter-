@@ -118,7 +118,7 @@ class LivePsychicsRemoteDataSource {
     return null;
   }
 
-  Future<Map<String, dynamic>?> applyAsTeller({
+  Future<PsychicEntity?> applyAsTeller({
     required String displayName,
     required List<String> specialties,
     String? bio,
@@ -135,9 +135,25 @@ class LivePsychicsRemoteDataSource {
             'applicationNote': applicationNote.trim(),
         },
       );
-      if (res.data is Map) return asJsonMap(res.data);
-    } catch (_) {}
-    return null;
+      if (res.data is! Map) {
+        throw ApiException('Başvuru yanıtı geçersiz');
+      }
+      final map = asJsonMap(res.data);
+      if (map['success'] == false) {
+        throw ApiException(
+          map['error']?.toString() ??
+              map['message']?.toString() ??
+              'Başvuru gönderilemedi',
+        );
+      }
+      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+      final teller = data['teller'] ?? data;
+      return PsychicModel.psychicFromJson(teller);
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(ApiException.userMessage(e));
+    }
   }
 
   Future<List<PsychicReviewEntity>> fetchReviews(String tellerId) async {

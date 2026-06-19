@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.296+299 (2026-06-19)
+
+### Canlı Falcılar — falcı başvuru ekranı (PDF §4)
+
+- **`/falci-ol` ve `/canli-falcilar/apply`:** Görünen ad, biyografi, uzmanlık seçimi, başvuru notu
+- **`POST /api/fortune-tellers/apply`:** Hata mesajları kullanıcıya gösterilir
+- **Durum ekranları:** Onaylı / bekleyen / reddedilmiş başvuru kartları
+- **Liste & shell:** «Falcı Ol» / «Başvuru» kısayolu; onaylı falcılar panele yönlendirilir
+
 ## 1.0.295+298 (2026-06-19)
 
 ### Canlı Falcılar — PDF entegrasyon uyumu

@@ -73,7 +73,7 @@ abstract class LivePsychicsRepository {
   Future<bool> setOnline({required bool online});
   Future<Map<String, dynamic>?> fetchOnlineStatus();
 
-  Future<Map<String, dynamic>?> applyAsTeller({
+  Future<PsychicEntity?> applyAsTeller({
     required String displayName,
     required List<String> specialties,
     String? bio,

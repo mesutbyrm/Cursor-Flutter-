@@ -41,7 +41,7 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
       _remote.fetchOnlineStatus();
 
   @override
-  Future<Map<String, dynamic>?> applyAsTeller({
+  Future<PsychicEntity?> applyAsTeller({
     required String displayName,
     required List<String> specialties,
     String? bio,

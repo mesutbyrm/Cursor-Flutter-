@@ -84,6 +84,7 @@ import '../../features/voice_hub/presentation/voice_rooms_hub_page.dart';
 import '../../features/live_psychics/domain/entities/psychic_session_entity.dart';
 import '../../features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import '../../features/live_psychics/presentation/screens/psychic_session_route.dart';
+import '../../features/live_psychics/presentation/screens/psychic_apply_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_teller_dashboard_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_profile_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychics_list_screen.dart';
@@ -187,8 +188,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           if (approved.valueOrNull?.isApprovedTeller == true) {
             return '/canli-falcilar/dashboard';
           }
-          return '/content-hub';
+          return null;
         },
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const PsychicApplyScreen(),
+        ),
       ),
       GoRoute(
         path: '/ajans-ol',
@@ -767,6 +772,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           child: const PsychicsListScreen(),
         ),
         routes: [
+          GoRoute(
+            path: 'apply',
+            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+              key: state.pageKey,
+              child: const PsychicApplyScreen(),
+            ),
+          ),
           GoRoute(
             path: 'dashboard',
             pageBuilder: (context, state) => AppPageTransitions.fadeSlide(

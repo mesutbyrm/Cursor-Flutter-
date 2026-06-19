@@ -83,7 +83,7 @@ class ContentHubPage extends ConsumerWidget {
       return ContentLink(
         title: teller.label.replaceAll('\n', ' '),
         subtitle: teller.route != null ? 'Kontrol paneli' : 'Başvuru',
-        path: teller.route ?? teller.nativePath ?? '/falci-ol',
+        path: teller.route ?? teller.nativePath ?? '/canli-falcilar/apply',
         icon: teller.icon,
       );
     }
@@ -100,7 +100,9 @@ class ContentHubPage extends ConsumerWidget {
 
   void _openLink(BuildContext context, ContentLink link) {
     final path = link.path;
-    if (path == '/canli-falcilar/dashboard' || path == '/ajans/dashboard') {
+    if (path == '/canli-falcilar/dashboard' ||
+        path == '/canli-falcilar/apply' ||
+        path == '/ajans/dashboard') {
       context.push(path);
       return;
     }
