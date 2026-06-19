@@ -1,6 +1,21 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.290+293 (2026-06-19)
+
+### 2026 Premium altyapı yükseltmesi
+
+- **AMOLED koyu tema:** Saf siyah OLED modu (Profil → Ayarlar → Tema)
+- **Video önbellek:** `VideoCacheService` — kısa videolarda disk cache + prefetch
+- **Offline API cache:** `ApiCacheStore` TTL katmanı (başlangıç altyapısı)
+- **SSE politikası:** Ortak `SseReconnectPolicy` + `SseReconnectBanner` bileşeni
+- **Skeleton:** Profil ve mesaj listesi iskeletleri; profil paylaşımlarında lazy `ListView.builder`
+- **Hata ekranları:** `AppErrorView` — kullanıcı dostu mesaj + tekrar dene
+- **Geçişler:** `sharedAxis` Material Motion slide + fade
+- **Sesli oda:** Paylaş butonu (header) + oda listesi 25sn canlı yenileme
+- **Performans:** Shorts tile `RepaintBoundary`; thumbnail `CachedNetworkImage`
+
+
 ## 1.0.289+292 (2026-06-19)
 
 ### Profil — okunabilirlik ve premium düzen

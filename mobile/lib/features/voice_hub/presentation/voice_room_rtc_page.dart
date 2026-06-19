@@ -1,9 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
-import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -478,12 +479,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     return uname.isNotEmpty && slug == uname;
   }
 
-  void _shareRoom() {
+  Future<void> _shareRoom() async {
     final slug = widget.room.slug;
     final url = '${Env.siteOrigin}/sohbet/$slug';
-    Clipboard.setData(ClipboardData(text: url));
+    final title = widget.room.displayTitle;
+    await Share.share(
+      'CanlıFal sesli odaya katıl: $title\n$url',
+      subject: title,
+    );
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Paylaşım linki kopyalandı: $url')),
+      SnackBar(content: Text('Oda daveti paylaşıldı')),
     );
   }
 
@@ -1227,6 +1233,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                     room: room,
                                     onUserTap: _openUser,
                                   ),
+                          onShare: _shareRoom,
                         ),
                         Expanded(
                           child: Column(

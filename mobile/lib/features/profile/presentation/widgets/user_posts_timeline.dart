@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/performance/list_perf.dart';
+import '../../../core/ui/premium/premium_skeleton.dart';
+import '../../../core/widgets/app_error_view.dart';
 import '../../../feed/domain/entities/post_entity.dart';
 import '../../../social/presentation/widgets/instagram/social_instagram_post_card.dart';
 import '../../../social/presentation/providers/user_social_posts_notifier.dart';
 
-/// Facebook tarzı dikey paylaşım duvarı — profil sayfasında.
+/// Facebook tarzı dikey paylaşım duvarı — lazy builder + skeleton.
 class UserPostsTimeline extends ConsumerStatefulWidget {
   const UserPostsTimeline({
     super.key,
@@ -51,23 +54,17 @@ class _UserPostsTimelineState extends ConsumerState<UserPostsTimeline> {
         ref.watch(userSocialPostsNotifierProvider(widget.userId));
 
     return postsAsync.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 32),
-        child: Center(
-          child: SizedBox(
-            width: 28,
-            height: 28,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
+      loading: () => const Column(
+        children: [
+          PremiumPostSkeleton(),
+          PremiumPostSkeleton(),
+        ],
       ),
-      error: (e, _) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(
-          'Paylaşımlar yüklenemedi',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-          ),
+      error: (e, _) => AppErrorView.fromError(
+        e,
+        compact: true,
+        onRetry: () => ref.invalidate(
+          userSocialPostsNotifierProvider(widget.userId),
         ),
       ),
       data: (posts) {
@@ -92,14 +89,24 @@ class _UserPostsTimelineState extends ConsumerState<UserPostsTimeline> {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            for (final post in posts)
-              KeyedSubtree(
-                key: _keyFor(post.id),
-                child: SocialInstagramPostCard(
-                  post: post,
-                  openProfileOnTap: false,
-                ),
-              ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              cacheExtent: ListPerf.cacheExtent,
+              itemCount: posts.length,
+              itemBuilder: (context, index) {
+                final post = posts[index];
+                return ListPerf.repaint(
+                  KeyedSubtree(
+                    key: _keyFor(post.id),
+                    child: SocialInstagramPostCard(
+                      post: post,
+                      openProfileOnTap: false,
+                    ),
+                  ),
+                );
+              },
+            ),
             if (hasMore)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),

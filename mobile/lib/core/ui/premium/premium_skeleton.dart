@@ -107,3 +107,68 @@ class PremiumPostSkeleton extends StatelessWidget {
     );
   }
 }
+
+/// Profil sayfası iskeleti.
+class PremiumProfileSkeleton extends StatelessWidget {
+  const PremiumProfileSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          PremiumSkeleton(
+            width: double.infinity,
+            height: 108,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          const SizedBox(height: 24),
+          const PremiumSkeleton(
+            width: 104,
+            height: 104,
+            borderRadius: BorderRadius.all(Radius.circular(52)),
+          ),
+          const SizedBox(height: 16),
+          PremiumSkeleton(width: 180, height: 22),
+          const SizedBox(height: 8),
+          PremiumSkeleton(width: 120, height: 14),
+          const SizedBox(height: 20),
+          PremiumSkeleton(
+            width: double.infinity,
+            height: 88,
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Mesaj listesi iskeleti.
+class PremiumMessageListSkeleton extends StatelessWidget {
+  const PremiumMessageListSkeleton({super.key, this.count = 6});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: count,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (_, i) {
+        final mine = i.isEven;
+        return Align(
+          alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+          child: PremiumSkeleton(
+            width: mine ? 220 : 260,
+            height: 52,
+            borderRadius: BorderRadius.circular(16),
+          ),
+        );
+      },
+    );
+  }
+}

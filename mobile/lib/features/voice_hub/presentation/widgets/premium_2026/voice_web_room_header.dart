@@ -22,6 +22,7 @@ class VoiceWebRoomHeader extends StatelessWidget {
     this.onGallery,
     this.onSettings,
     this.onRoomPanel,
+    this.onShare,
     this.roomAvatarUrl,
     this.verified = true,
   });
@@ -34,6 +35,7 @@ class VoiceWebRoomHeader extends StatelessWidget {
   final VoidCallback? onGallery;
   final VoidCallback? onSettings;
   final VoidCallback? onRoomPanel;
+  final VoidCallback? onShare;
   final String? roomAvatarUrl;
   final bool verified;
 
@@ -126,6 +128,10 @@ class VoiceWebRoomHeader extends StatelessWidget {
               ),
               _OnlineChip(count: onlineCount, onTap: onAudience),
               const SizedBox(width: 4),
+              _GlassIconBtn(
+                icon: Icons.ios_share_rounded,
+                onTap: onShare,
+              ),
               _GlassIconBtn(
                 icon: Icons.photo_library_outlined,
                 onTap: onGallery,

@@ -64,12 +64,27 @@ abstract final class AppPageTransitions {
   static CustomTransitionPage<T> sharedAxis<T>({
     required LocalKey? key,
     required Widget child,
+    Axis axis = Axis.horizontal,
   }) {
     return CustomTransitionPage<T>(
       key: key,
       child: child,
+      transitionDuration: PremiumMotion.medium,
+      reverseTransitionDuration: PremiumMotion.medium,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeTransition(opacity: animation, child: child);
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        final begin = axis == Axis.horizontal
+            ? const Offset(0.08, 0)
+            : const Offset(0, 0.06);
+        final offset = Tween<Offset>(begin: begin, end: Offset.zero).animate(curved);
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(position: offset, child: child),
+        );
       },
     );
   }

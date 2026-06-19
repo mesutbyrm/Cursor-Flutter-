@@ -13,6 +13,7 @@ import 'features/voice_hub/data/services/voice_room_debug_log.dart';
 import 'core/firebase/firebase_bootstrap.dart';
 import 'core/network/cookie_jar_provider.dart';
 import 'core/onesignal/onesignal_bootstrap.dart';
+import 'core/offline/api_cache_store.dart';
 import 'core/storage/local_cache.dart';
 import 'core/storage/theme_preferences.dart';
 
@@ -30,6 +31,12 @@ Future<void> main() async {
     await ThemePreferences.init();
   } catch (e) {
     debugPrint('ThemePreferences init failed: $e');
+  }
+
+  try {
+    await ApiCacheStore.init();
+  } catch (e) {
+    debugPrint('ApiCacheStore init failed: $e');
   }
 
   await OneSignalBootstrap.init();

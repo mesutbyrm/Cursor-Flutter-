@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/theme_mode_provider.dart';
+import '../providers/amoled_dark_provider.dart';
 import '../storage/theme_preferences.dart';
 import '../theme/app_spacing.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -14,6 +15,7 @@ class ThemeModeSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
+    final amoled = ref.watch(amoledDarkProvider);
     final c = context.colors;
 
     return ThemedGlassCard(
@@ -69,6 +71,30 @@ class ThemeModeSelector extends ConsumerWidget {
                   height: 1.35,
                 ),
           ),
+          if (mode != ThemeMode.light) ...[
+            const SizedBox(height: AppSpacing.md),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                'AMOLED Koyu',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: c.onSurface,
+                    ),
+              ),
+              subtitle: Text(
+                'Saf siyah arka plan — OLED ekranlarda daha az pil tüketimi',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: c.onSurfaceMuted,
+                      height: 1.35,
+                    ),
+              ),
+              value: amoled,
+              activeThumbColor: c.secondary,
+              onChanged: (v) =>
+                  ref.read(amoledDarkProvider.notifier).setEnabled(v),
+            ),
+          ],
         ],
       ),
     );

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
@@ -295,7 +296,7 @@ class ChatRoomSseService {
     if (_stopped || _roomId == null) return;
     _reconnectTimer?.cancel();
     _reconnectAttempt++;
-    final delay = Duration(seconds: (_reconnectAttempt.clamp(1, 6) * 2));
+    final delay = SseReconnectPolicy.delayForAttempt(_reconnectAttempt);
     VoiceRoomDebugLog.sseReconnect(
       roomId: _roomId ?? '',
       attempt: _reconnectAttempt,

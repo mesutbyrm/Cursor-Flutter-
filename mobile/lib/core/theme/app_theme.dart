@@ -24,6 +24,8 @@ class AppTheme {
 
   static ThemeData dark() => _build(AppThemeColors.dark, CanlifalTokens.dark);
 
+  static ThemeData amoled() => _build(AppThemeColors.amoled, CanlifalTokens.dark);
+
   static ThemeData light() => _build(AppThemeColors.light, CanlifalTokens.light);
 
   static ThemeData _build(AppThemeColors c, CanlifalTokens tokens) {

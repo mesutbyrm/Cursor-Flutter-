@@ -130,6 +130,52 @@ class AppThemeColors {
     useGlassBlur: true,
   );
 
+  /// Saf siyah AMOLED — OLED ekranlar için pil dostu koyu tema.
+  static const AppThemeColors amoled = AppThemeColors(
+    brightness: Brightness.dark,
+    scaffoldBackground: Color(0xFF000000),
+    surface: Color(0xFF050505),
+    surfaceElevated: Color(0xFF0A0A0A),
+    surfaceContainer: Color(0xFF080810),
+    onSurface: Color(0xFFFFFFFF),
+    onSurfaceVariant: Color(0xFFC8C8D8),
+    onSurfaceMuted: Color(0xFF8A8A9E),
+    primary: Color(0xFF9B6BFF),
+    onPrimary: Colors.white,
+    secondary: accentCyan,
+    onSecondary: Color(0xFF000000),
+    outline: Color(0xFF2E2E3A),
+    outlineVariant: Color(0xFF1A1A22),
+    divider: Color(0xFF1A1A22),
+    glassFill: Color(0xB30A0A12),
+    glassFillElevated: Color(0xCC0D0D16),
+    glassBorder: Color(0x66B832FF),
+    glassHighlight: Color(0x12FFFFFF),
+    dialogBackground: Color(0xFF0A0A0A),
+    bottomSheetBackground: Color(0xF00A0A0A),
+    snackBarBackground: Color(0xFF141418),
+    barrier: Color(0x99000000),
+    brandGradient: LinearGradient(
+      colors: [accentPink, accentPurple],
+    ),
+    cardShadow: [
+      BoxShadow(
+        color: Color(0x80000000),
+        blurRadius: 20,
+        offset: Offset(0, 8),
+      ),
+    ],
+    elevatedShadow: [
+      BoxShadow(
+        color: Color(0x80FE2C55),
+        blurRadius: 24,
+        spreadRadius: -8,
+        offset: Offset(0, 10),
+      ),
+    ],
+    useGlassBlur: true,
+  );
+
   /// Modern, profesyonel açık tema.
   static const AppThemeColors light = AppThemeColors(
     brightness: Brightness.light,

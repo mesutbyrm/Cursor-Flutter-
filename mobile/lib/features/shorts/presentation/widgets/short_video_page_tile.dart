@@ -1,10 +1,10 @@
-import 'dart:async';
-
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/performance/list_perf.dart';
 import '../../domain/entities/short_video_entity.dart';
 import '../providers/shorts_providers.dart';
 import '../utils/short_video_player_util.dart';
@@ -147,9 +147,10 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
     final video = widget.video;
     final c = _controller;
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
+    return ListPerf.repaint(
+      Stack(
+        fit: StackFit.expand,
+        children: [
         if (_loading)
           _thumbnailOrBlack(video)
         else if (_error || c == null || !c.value.isInitialized)
@@ -214,7 +215,8 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
               ),
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -223,12 +225,14 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
     return ColoredBox(
       color: Colors.black,
       child: thumb != null && thumb.isNotEmpty
-          ? Image.network(
-              thumb,
+          ? CachedNetworkImage(
+              imageUrl: thumb,
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,
-              errorBuilder: (_, __, ___) => _centerMsg(showError),
+              memCacheWidth: 720,
+              errorWidget: (_, _, _) => _centerMsg(showError),
+              placeholder: (_, _) => _centerMsg(false),
             )
           : _centerMsg(showError),
     );

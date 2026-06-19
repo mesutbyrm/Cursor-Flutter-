@@ -6,6 +6,7 @@ import '../core/bootstrap/app_startup_log.dart';
 import '../core/bootstrap/root_overlay_purge.dart';
 import '../core/l10n/app_localizations_config.dart';
 import '../core/providers/theme_mode_provider.dart';
+import '../core/providers/amoled_dark_provider.dart';
 import '../core/push/push_lifecycle_listener.dart';
 import '../core/scroll/modern_social_scroll_behavior.dart';
 import '../core/theme/app_theme.dart';
@@ -58,6 +59,8 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
     final auth = ref.watch(authControllerProvider);
     final guest = ref.watch(guestModeProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final amoledDark = ref.watch(amoledDarkProvider);
+    final darkTheme = amoledDark ? AppTheme.amoled() : AppTheme.dark();
 
     final bootstrapDone = !auth.isLoading || auth.hasValue;
     final authed = auth.valueOrNull != null;
@@ -67,7 +70,8 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
       return MaterialApp(
         title: 'Canlifal',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.dark(),
+        theme: AppTheme.light(),
+        darkTheme: darkTheme,
         home: const AuthBootstrapOverlay(),
       );
     }
@@ -83,7 +87,7 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
         supportedLocales: AppLocalizationsConfig.supportedLocales,
         localizationsDelegates: AppLocalizationsConfig.delegates,
         theme: AppTheme.light(),
-        darkTheme: AppTheme.dark(),
+        darkTheme: darkTheme,
         themeMode: themeMode,
         home: const AuthGatewayHost(),
       );
@@ -103,7 +107,7 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
           supportedLocales: AppLocalizationsConfig.supportedLocales,
           localizationsDelegates: AppLocalizationsConfig.delegates,
           theme: AppTheme.light(),
-          darkTheme: AppTheme.dark(),
+          darkTheme: darkTheme,
           themeMode: themeMode,
           builder: (context, child) {
             final brightness = Theme.of(context).brightness;

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Tema tercihi — [SharedPreferences] ile kalıcı.
 abstract final class ThemePreferences {
   static const _key = 'app_theme_mode';
+  static const _amoledKey = 'app_amoled_dark';
 
   static SharedPreferences? _prefs;
 
@@ -31,6 +32,20 @@ abstract final class ThemePreferences {
   static Future<void> saveThemeMode(ThemeMode mode) async {
     await init();
     await _store.setString(_key, _encode(mode));
+  }
+
+  static bool loadAmoledDark() {
+    try {
+      if (_prefs == null) return false;
+      return _store.getBool(_amoledKey) ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> saveAmoledDark(bool enabled) async {
+    await init();
+    await _store.setBool(_amoledKey, enabled);
   }
 
   static String label(ThemeMode mode) => switch (mode) {

@@ -456,7 +456,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/profile/edit',
-        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+        pageBuilder: (context, state) => AppPageTransitions.cupertinoSheet(
           key: state.pageKey,
           child: const ProfileEditPage(),
         ),
@@ -530,10 +530,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/user/:id',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final id = state.pathParameters['id']!;
           final focusPostId = state.extra as String?;
-          return UserProfilePage(userId: id, focusPostId: focusPostId);
+          return AppPageTransitions.sharedAxis(
+            key: state.pageKey,
+            child: UserProfilePage(userId: id, focusPostId: focusPostId),
+          );
         },
       ),
       GoRoute(
@@ -581,7 +584,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: 'upload',
-            pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+            pageBuilder: (context, state) => AppPageTransitions.cupertinoSheet(
               key: state.pageKey,
               child: const ShortsUploadPage(),
             ),

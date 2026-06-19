@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../core/video/video_cache_service.dart';
 import 'short_video_url_resolver.dart';
 
 /// CDN / imzalı URL / API stream sırasıyla oynatıcı oluşturur.
@@ -28,11 +29,18 @@ Future<VideoPlayerController> createShortVideoController({
   }
 
   Object? lastError;
+  final cache = VideoCacheService.instance;
   for (final playUrl in candidates) {
     if (playUrl.isEmpty) continue;
     VideoPlayerController? controller;
     try {
-      controller = VideoPlayerController.networkUrl(Uri.parse(playUrl));
+      final file = await cache.getCachedFile(playUrl);
+      if (file != null && await file.exists()) {
+        controller = VideoPlayerController.file(file);
+      } else {
+        controller = VideoPlayerController.networkUrl(Uri.parse(playUrl));
+        unawaited(cache.prefetch(playUrl));
+      }
       await controller.initialize().timeout(const Duration(seconds: 25));
       if (controller.value.hasError) {
         throw StateError(controller.value.errorDescription ?? 'player_error');
