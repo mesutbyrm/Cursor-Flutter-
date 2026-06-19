@@ -90,7 +90,6 @@ class ThemeModeSelector extends ConsumerWidget {
                     ),
               ),
               value: amoled,
-              activeThumbColor: c.secondary,
               onChanged: (v) =>
                   ref.read(amoledDarkProvider.notifier).setEnabled(v),
             ),

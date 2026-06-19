@@ -32,7 +32,7 @@ class MessageSseService extends BaseSseService {
     if (id.isEmpty) return;
     _conversationId = id;
     _onEvent = onEvent;
-    await super.connect(accessToken: accessToken);
+    await super.openConnection(accessToken: accessToken);
   }
 
   @override

@@ -53,7 +53,8 @@ abstract class BaseSseService {
   /// Yeniden bağlanmadan önce.
   void onReconnecting(int attempt) {}
 
-  Future<void> connect({
+  /// Alt sınıflar token ile bağlantı açar.
+  Future<void> openConnection({
     required Future<String?> Function() accessToken,
   }) async {
     _stopped = false;

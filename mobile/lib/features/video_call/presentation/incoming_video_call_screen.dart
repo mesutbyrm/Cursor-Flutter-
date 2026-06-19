@@ -115,7 +115,14 @@ class _IncomingVideoCallScreenState extends ConsumerState<IncomingVideoCallScree
               ),
             ),
             const SizedBox(height: 8),
-            LiveFortuneFortuneTypeChip(label: invite.displayCategory),
+            Text(
+              '✨ ${fortuneTypeLabel(invite.displayCategory)}',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.85),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             if (invite.durationMinutes > 0) ...[
               const SizedBox(height: 12),
               Text(

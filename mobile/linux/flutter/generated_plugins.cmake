@@ -8,7 +8,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   file_selector_linux
   flutter_secure_storage_linux
   flutter_webrtc
-  livekit_client
   rive_common
   url_launcher_linux
   window_to_front

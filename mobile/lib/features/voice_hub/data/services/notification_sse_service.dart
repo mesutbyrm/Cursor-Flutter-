@@ -28,7 +28,7 @@ class NotificationSseService extends BaseSseService {
     final id = roomId.trim();
     if (id.isEmpty) return;
     _roomId = id;
-    await super.connect(accessToken: accessToken);
+    await super.openConnection(accessToken: accessToken);
   }
 
   @override

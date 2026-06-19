@@ -31,7 +31,7 @@ class FalSseService extends BaseSseService {
     _sessionId = id;
     _onFortuneRequest = onFortuneRequest;
     _onSessionUpdate = onSessionUpdate;
-    await super.connect(accessToken: accessToken);
+    await super.openConnection(accessToken: accessToken);
   }
 
   @override

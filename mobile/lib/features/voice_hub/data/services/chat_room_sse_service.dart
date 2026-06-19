@@ -70,7 +70,7 @@ class ChatRoomSseService extends BaseSseService {
     _onFortuneRequest = onFortuneRequest;
     _onTyping = onTyping;
     VoiceRoomDebugLog.sseConnect(roomId: id, url: streamUrlFor(id));
-    await super.connect(accessToken: accessToken);
+    await super.openConnection(accessToken: accessToken);
   }
 
   @override
