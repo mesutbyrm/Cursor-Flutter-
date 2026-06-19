@@ -37,6 +37,64 @@ String psychicPushType(Map<String, dynamic> map) => [
         .map((s) => s.toLowerCase())
         .join(' ');
 
+/// Üretim push/SSE tipleri — `psychic_request_created` dahil.
+bool isPsychicInviteEventType(String type) {
+  final t = type.trim().toLowerCase();
+  if (t.isEmpty) return false;
+  if (t.contains('session_update') || t.contains('session_ended')) return false;
+
+  const known = {
+    'psychic_request_created',
+    'psychic_request',
+    'request_created',
+    'fortune_session_request',
+    'live_fortune_request',
+    'session_request',
+    'fortune_request',
+    'live_fal_request',
+    'fal_request',
+    'private_fal_request',
+  };
+  if (known.contains(t)) return true;
+
+  return t.contains('session_request') ||
+      t.contains('psychic_request') ||
+      t.contains('request_created') ||
+      (t.contains('psychic') && t.contains('request')) ||
+      (t.contains('fortune') && t.contains('request')) ||
+      t.contains('fortune') ||
+      t.contains('falc') ||
+      t.contains('live_fortune') ||
+      t.contains('live_session') ||
+      t.contains('live_fal');
+}
+
+Map<String, dynamic> mergePsychicInviteNestedFields(Map<String, dynamic> map) {
+  var merged = Map<String, dynamic>.from(map);
+  for (final key in const ['request', 'session', 'invite', 'liveSession']) {
+    final nested = merged[key];
+    if (nested is Map) {
+      merged = {...merged, ...asJsonMap(nested)};
+    }
+  }
+  final client = merged['client'] ?? merged['user'];
+  if (client is Map) {
+    final c = asJsonMap(client);
+    merged.putIfAbsent('clientId', () => pick(c, ['id', 'userId', 'clientId']));
+    merged.putIfAbsent('clientName', () => pick(c, [
+          'displayName',
+          'name',
+          'username',
+          'clientName',
+        ]));
+    merged.putIfAbsent(
+      'clientAvatarUrl',
+      () => pick(c, ['avatarUrl', 'image', 'avatar']),
+    );
+  }
+  return merged;
+}
+
 String? sessionIdFromTargetPath(dynamic rawPath) {
   final path = rawPath?.toString().trim() ?? '';
   if (path.isEmpty) return null;
@@ -148,27 +206,22 @@ PsychicSessionUpdatePayload? parsePsychicSessionUpdatePayload(
 PsychicRequestEntity? parsePsychicIncomingPayload(Map<String, dynamic>? raw) {
   if (raw == null || raw.isEmpty) return null;
 
-  final map = flattenPsychicPushPayload(raw);
+  final flat = flattenPsychicPushPayload(raw);
+  final map = mergePsychicInviteNestedFields(flat);
   final type = psychicPushType(map);
 
   if (type.contains('session_update') || type.contains('session_ended')) {
     return null;
   }
 
-  final looksLikeFortune = type.contains('session_request') ||
-      type.contains('fortune') ||
-      type.contains('falc') ||
-      type.contains('live_fortune') ||
-      type.contains('live_session') ||
-      type.contains('live_fal') ||
+  final looksLikeFortune = isPsychicInviteEventType(type) ||
       (map.containsKey('sessionId') &&
           (map.containsKey('tellerId') ||
               map.containsKey('clientId') ||
               map.containsKey('userId'))) ||
       ((map.containsKey('targetId') || map.containsKey('target_id')) &&
-          (type.contains('fortune') ||
+          (isPsychicInviteEventType(type) ||
               type.contains('live') ||
-              type.contains('falc') ||
               map['targetPath']?.toString().toLowerCase().contains('fal') ==
                   true ||
               map['targetPath']?.toString().toLowerCase().contains('session') ==
@@ -188,6 +241,7 @@ PsychicRequestEntity? parsePsychicIncomingPayload(Map<String, dynamic>? raw) {
         'entityId',
         'refId',
         'requestId',
+        'liveSessionId',
       ])?.toString() ??
       sessionIdFromTargetPath(map['targetPath']);
   if (sessionId == null || sessionId.isEmpty) return null;
@@ -247,14 +301,12 @@ bool isPsychicInvitePayload(Map<String, dynamic>? raw) =>
 PsychicRequestEntity? psychicInviteFromNotification(AppNotificationEntity n) {
   final type = (n.type ?? '').toLowerCase();
   final path = (n.targetPath ?? '').toLowerCase();
-  final isFortuneInvite = type.contains('session_request') ||
+  final isFortuneInvite = isPsychicInviteEventType(type) ||
       type.contains('fortune_session') ||
-      type.contains('live_fortune') ||
       type.contains('fortune_teller') ||
-      type.contains('fortune') ||
-      type.contains('falc') ||
       path.contains('fal') ||
-      path.contains('session');
+      path.contains('session') ||
+      path.contains('canli-falcilar');
   if (!isFortuneInvite) return null;
 
   final sessionId = _sessionIdFromNotification(n);

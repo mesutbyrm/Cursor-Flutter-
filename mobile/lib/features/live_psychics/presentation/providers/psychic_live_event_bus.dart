@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/psychic_request_entity.dart';
 import '../../domain/entities/psychic_session_status.dart';
+import 'psychic_push_payload.dart';
 
 /// Sesli oda / yayın SSE — canlı fal isteği olayları.
 final psychicLiveEventBusProvider =
@@ -23,11 +24,21 @@ void emitPsychicLiveRequest(
 }
 
 PsychicRequestEntity? parsePsychicSsePayload(Map<String, dynamic> map) {
-  final nested = map['request'] is Map
-      ? asJsonMap(map['request'])
-      : map['session'] is Map
-          ? asJsonMap(map['session'])
-          : map;
+  final merged = mergePsychicInviteNestedFields(map);
+  final type = psychicPushType(merged);
+  if (!isPsychicInviteEventType(type) &&
+      !merged.containsKey('sessionId') &&
+      !merged.containsKey('requestId') &&
+      !merged.containsKey('request') &&
+      !merged.containsKey('session')) {
+    return null;
+  }
+
+  final nested = merged['request'] is Map
+      ? asJsonMap(merged['request'])
+      : merged['session'] is Map
+          ? asJsonMap(merged['session'])
+          : merged;
   final client = asJsonMap(nested['client'] ?? nested['user']);
   final sessionId = pick(nested, [
         'requestId',
@@ -36,6 +47,16 @@ PsychicRequestEntity? parsePsychicSsePayload(Map<String, dynamic> map) {
         'session_id',
         'targetId',
         'target_id',
+        'liveSessionId',
+      ])?.toString() ??
+      pick(merged, [
+        'requestId',
+        'id',
+        'sessionId',
+        'session_id',
+        'targetId',
+        'target_id',
+        'liveSessionId',
       ])?.toString() ??
       '';
   if (sessionId.isEmpty) return null;

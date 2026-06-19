@@ -40,6 +40,9 @@ void navigateFromNotification(GoRouter router, AppNotificationEntity n) {
     case 'fortune_session':
     case 'fortune_session_request':
     case 'session_request':
+    case 'psychic_request_created':
+    case 'psychic_request':
+    case 'request_created':
     case 'live_fortune':
     case 'live_fortune_request':
     case 'fortune_teller':

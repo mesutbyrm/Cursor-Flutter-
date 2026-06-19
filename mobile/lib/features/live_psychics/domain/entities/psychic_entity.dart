@@ -45,13 +45,11 @@ class PsychicEntity extends Equatable {
   bool get isApproved {
     final status = applicationStatus?.trim().toLowerCase();
     if (status == null || status.isEmpty) return false;
-    const approved = {'approved', 'active'};
+    const approved = {'approved', 'active', 'online', 'offline'};
     const rejected = {
       'pending',
       'rejected',
       'declined',
-      'online',
-      'offline',
       'inactive',
     };
     if (approved.contains(status)) return true;

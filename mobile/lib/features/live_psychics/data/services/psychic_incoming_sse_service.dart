@@ -113,6 +113,10 @@ class PsychicIncomingSseService {
       final decoded = jsonDecode(payload);
       if (decoded is! Map) return;
       final map = Map<String, dynamic>.from(decoded);
+      if (eventName != null && eventName.isNotEmpty) {
+        map.putIfAbsent('event', () => eventName);
+        map.putIfAbsent('type', () => eventName);
+      }
       final type = (map['type'] ?? eventName ?? '').toString().toLowerCase();
       if (type.contains('online') ||
           type.contains('offline') ||

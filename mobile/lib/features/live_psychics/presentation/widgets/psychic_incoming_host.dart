@@ -74,11 +74,11 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _inviteUiReady = true);
-      unawaited(_tryPresentNext());
       PsychicInviteCoordinator.onRequestPresent = () {
         if (!mounted) return;
         unawaited(_tryPresentNext());
       };
+      unawaited(_tryPresentNext());
       unawaited(_bootstrap());
     });
   }
@@ -132,13 +132,17 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
       _tellerProfileId = null;
       return;
     }
+    final wasTeller = _isFortuneTeller;
     _isFortuneTeller = true;
     _tellerProfileId = profile.id;
     await ref.read(livePsychicsRepositoryProvider).setOnline(online: true);
+    if (!wasTeller) {
+      await _connectSse();
+    }
   }
 
   Future<void> _connectSse() async {
-    if (!_mayRunTellerBackgroundSync() || !_isFortuneTeller) return;
+    if (!_mayRunTellerBackgroundSync()) return;
     final tokens = ref.read(tokenStorageProvider);
     await ref.read(psychicIncomingSseServiceProvider).connect(
           accessToken: tokens.readAccess,
@@ -173,6 +177,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     for (final req in incoming) {
       if (!req.isPending) continue;
       ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
+      PsychicInviteCoordinator.requestPresent(sessionId: req.sessionId);
     }
     if (_mayPresentInvites()) {
       await _tryPresentNext();
