@@ -2,22 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.284+287` |
-| Tarih (UTC) | 2026-06-19 08:17 |
-| Commit | [`b7c3633b6d778d6068780c5e8d7c616e409cd3b3`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b7c3633b6d778d6068780c5e8d7c616e409cd3b3) |
-| İş akışı | [Run 27813574822](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27813574822) |
+| Sürüm | `1.0.285+288` |
+| Tarih (UTC) | 2026-06-19 08:41 |
+| Commit | [`08b0aa180133da88183e426db6bcd90b1d521378`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/08b0aa180133da88183e426db6bcd90b1d521378) |
+| İş akışı | [Run 27814746095](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27814746095) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.284+287 (2026-06-19)
+## 1.0.285+288 (2026-06-19)
 
-### Fal & Tarot — 2026 vitrin ve doğrudan sonuç
+### Kahve & el falı — fotoğraf yükleme
 
-- **Görseller:** Fal türlerinde gerçeğe yakın ağ görselleri (hub grid + vitrin kartları)
-- **Tarot / tür sayfası:** Üstte «Falını Aç», altta «En çok bakılan fallar» listesi
-- **Doğrudan sonuç:** «Falına bak» oturum ekranı kaldırıldı; tüm fallarda tek dokunuşla sonuç
-- **Sosyal paylaşım:** Her fal sonucu otomatik olarak sosyal akışta paylaşılır (giriş yapılıysa)
+- **Kahve falı:** Fincan içi (zorunlu) + tabak (opsiyonel) — kamera veya galeri
+- **El falı:** Avuç içi fotoğrafı + sağ/sol el seçimi
+- **Üretim API:** Presigned yükleme + `kahve-fali-image` / `el-fali` görsel analiz
+- **Tasarım:** Cam efektli premium panel, ipucu banner, mini kamera/galeri aksiyonları
 
 
 
