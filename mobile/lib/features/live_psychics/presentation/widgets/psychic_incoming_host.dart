@@ -141,7 +141,8 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     if (!mounted || !_mayRunTellerBackgroundSync()) return;
     if (!req.isPending) return;
     ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
-    emitPsychicLiveRequest(ref, req);
+    final bus = ref.read(psychicLiveEventBusProvider);
+    if (!bus.isClosed) bus.add(req);
     PsychicInviteCoordinator.requestPresent(sessionId: req.sessionId);
   }
 
