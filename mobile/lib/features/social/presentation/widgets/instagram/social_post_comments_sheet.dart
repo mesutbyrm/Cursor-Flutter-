@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/user_avatar.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../domain/entities/social_comment_entity.dart';
 import '../../providers/social_providers.dart';
 

@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.283+286 (2026-06-19)
+
+### Derleme düzeltmesi — sosyal + sesli oda APK
+
+- **Import:** `user_posts_timeline.dart` ve `social_post_comments_sheet.dart` yol hataları giderildi
+- **APK:** Sosyal ve sesli oda özellikleri CI'da yeniden derlenir
+
+
 ## 1.0.282+285 (2026-06-19)
 
 ### Sesli oda — «Oda Aç» düzeltmesi

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../feed/domain/entities/post_entity.dart';
-import '../../presentation/widgets/instagram/social_instagram_post_card.dart';
-import '../providers/user_social_posts_notifier.dart';
+import '../../../social/presentation/widgets/instagram/social_instagram_post_card.dart';
+import '../../../social/presentation/providers/user_social_posts_notifier.dart';
 
 /// Facebook tarzı dikey paylaşım duvarı — profil sayfasında.
 class UserPostsTimeline extends ConsumerStatefulWidget {
