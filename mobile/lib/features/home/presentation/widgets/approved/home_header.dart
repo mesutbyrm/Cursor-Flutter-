@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/widgets/canlifal_brand_logo.dart';
+import '../../../../../core/widgets/canlifal_logo.dart';
 import '../../../../messages/presentation/providers/messages_providers.dart';
 import '../../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
@@ -31,7 +31,7 @@ class HomeHeader extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const CanlifalBrandLogo.horizontal(height: 28),
+              const CanlifalWordmark(fontSize: 24, compact: true),
               const Spacer(),
               _IconBadge(
                 icon: Icons.notifications_none_rounded,

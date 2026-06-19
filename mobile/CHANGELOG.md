@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.286+289 (2026-06-19)
+
+### Ana sayfa — marka yazısı
+
+- Sol üstteki ikon kaldırıldı; yerine gradyanlı **CanlıFal** şekilli yazı logosu
+
+
 ## 1.0.285+288 (2026-06-19)
 
 ### Kahve & el falı — fotoğraf yükleme
