@@ -14,6 +14,7 @@ import '../widgets/fortune_hub_hero_banner.dart';
 import '../widgets/fortune_mystic_background.dart';
 import '../data/fortune_catalog.dart';
 import '../widgets/fortune_hub_type_card.dart';
+import '../widgets/fortune_popular_readings_section.dart';
 
 /// Fal & Tarot ana sekme — mockup: enerji, türler, son fallar, AI, premium.
 class FortuneTarotHubPage extends ConsumerWidget {
@@ -55,7 +56,12 @@ class FortuneTarotHubPage extends ConsumerWidget {
                   }, childCount: FortuneCatalog.hubFortuneTypes.length),
                 ),
               ),
-              SliverToBoxAdapter(child: _RecentReadingsSection()),
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
+                  child: FortunePopularReadingsSection(),
+                ),
+              ),
               SliverToBoxAdapter(child: _QuickFortuneActions()),
               SliverToBoxAdapter(child: _AiSuggestionBanner()),
               SliverToBoxAdapter(child: _PremiumBanner()),
@@ -80,75 +86,6 @@ class _FortuneTypesHeader extends StatelessWidget {
       ),
     );
   }
-}
-
-class _RecentReadingsSection extends StatelessWidget {
-  static const _items = [
-    _RecentItem('🃏', 'Yeni Başlangıç', 'Tarot', '12 Mar'),
-    _RecentItem('💜', 'Kalp Bağı', 'Aşk Falı', '10 Mar'),
-    _RecentItem('🔢', '7 Enerjisi', 'Numeroloji', '8 Mar'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const _SectionTitleRow(title: 'SON BAKILAN FALLAR'),
-          SizedBox(height: 12),
-          SizedBox(
-            height: 120,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _items.length,
-              separatorBuilder: (_, _) => SizedBox(width: 12),
-              itemBuilder: (context, i) {
-                final item = _items[i];
-                return SizedBox(
-                  width: 148,
-                  child: FortuneGlassCard(
-                    padding: const EdgeInsets.all(12),
-                    onTap: () => context.push('/fortune/tarot'),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(item.emoji, style: TextStyle(fontSize: 28)),
-                        const Spacer(),
-                        Text(
-                          item.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: PremiumTypography.title(
-                            context,
-                          ).copyWith(fontSize: 13),
-                        ),
-                        Text(
-                          '${item.type} · ${item.date}',
-                          style: PremiumTypography.label(
-                            context,
-                          ).copyWith(fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RecentItem {
-  const _RecentItem(this.emoji, this.title, this.type, this.date);
-  final String emoji;
-  final String title;
-  final String type;
-  final String date;
 }
 
 class _QuickFortuneActions extends StatelessWidget {

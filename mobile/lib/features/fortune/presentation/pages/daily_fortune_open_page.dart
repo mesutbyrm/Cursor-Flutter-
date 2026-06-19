@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -8,24 +9,24 @@ import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 import '../data/fortune_catalog.dart';
-import '../services/fortune_reading_service.dart';
+import '../services/fortune_reading_coordinator.dart';
 import '../widgets/daily_fortune_gift_illustration.dart';
 import '../widgets/fortune_mystic_background.dart';
 import '../widgets/fortune_mystic_bar_button.dart';
 import '../widgets/fortune_mystic_title_bar.dart';
 
 /// Günlük fal — 1. adım: hediye kartı + Falını Aç (mockup).
-class DailyFortuneOpenPage extends StatefulWidget {
+class DailyFortuneOpenPage extends ConsumerStatefulWidget {
   const DailyFortuneOpenPage({super.key, required this.type});
 
   final FortuneTypeEntity type;
 
   @override
-  State<DailyFortuneOpenPage> createState() => _DailyFortuneOpenPageState();
+  ConsumerState<DailyFortuneOpenPage> createState() =>
+      _DailyFortuneOpenPageState();
 }
 
-class _DailyFortuneOpenPageState extends State<DailyFortuneOpenPage> {
-  final _service = FortuneReadingService();
+class _DailyFortuneOpenPageState extends ConsumerState<DailyFortuneOpenPage> {
   var _loading = false;
 
   FortuneTypeEntity get type => widget.type;
@@ -33,11 +34,12 @@ class _DailyFortuneOpenPageState extends State<DailyFortuneOpenPage> {
   Future<void> _openFortune() async {
     if (_loading) return;
     setState(() => _loading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 1100));
-    final result = _service.generate(type);
-    if (!mounted) return;
-    setState(() => _loading = false);
-    context.push('/fortune/${type.slug}/result', extra: result);
+    await FortuneReadingCoordinator.openReading(
+      context: context,
+      ref: ref,
+      type: type,
+    );
+    if (mounted) setState(() => _loading = false);
   }
 
   void _openWeb() {

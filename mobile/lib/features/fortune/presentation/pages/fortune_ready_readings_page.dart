@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../data/fortune_catalog.dart';
+import '../services/fortune_reading_coordinator.dart';
 import '../widgets/fortune_glass_card.dart';
 import '../widgets/fortune_mystic_background.dart';
 
-class FortuneReadyReadingsPage extends StatelessWidget {
+class FortuneReadyReadingsPage extends ConsumerWidget {
   const FortuneReadyReadingsPage({super.key});
 
   static const _items = [
@@ -41,7 +42,7 @@ class FortuneReadyReadingsPage extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final top = MediaQuery.paddingOf(context).top;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -55,7 +56,7 @@ class FortuneReadyReadingsPage extends StatelessWidget {
                 children: [
                   DiscoverIconButton(
                     icon: Icons.arrow_back_ios_new_rounded,
-                    onPressed: () => context.pop(),
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
                   const Expanded(
                     child: Text(
@@ -82,7 +83,11 @@ class FortuneReadyReadingsPage extends StatelessWidget {
                   return FortuneGlassCard(
                     onTap: type == null
                         ? null
-                        : () => context.push('/fortune/${type.slug}/session'),
+                        : () => FortuneReadingCoordinator.openReading(
+                              context: context,
+                              ref: ref,
+                              type: type,
+                            ),
                     child: Row(
                       children: [
                         Text(item.icon, style: const TextStyle(fontSize: 34)),

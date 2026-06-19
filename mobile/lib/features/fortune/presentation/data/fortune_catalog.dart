@@ -28,8 +28,8 @@ abstract final class FortuneCatalog {
     emoji: '🎁',
     accent: Color(0xFFB832FF),
     kind: FortuneSessionKind.generic,
-    ctaLabel: 'Falını Aç',
-    isDaily: true,
+      ctaLabel: 'Falını Aç',
+      isDaily: true,
   );
 
   static const types = <FortuneTypeEntity>[
@@ -41,7 +41,7 @@ abstract final class FortuneCatalog {
       emoji: '🃏',
       accent: Color(0xFFB832FF),
       kind: FortuneSessionKind.tarotCards,
-      ctaLabel: 'Falına Bak',
+      ctaLabel: 'Falını Aç',
     ),
     FortuneTypeEntity(
       id: 'ask',
@@ -51,7 +51,7 @@ abstract final class FortuneCatalog {
       emoji: '💜',
       accent: Color(0xFFFF4EC8),
       kind: FortuneSessionKind.loveHeart,
-      ctaLabel: 'Falına Bak',
+      ctaLabel: 'Falını Aç',
     ),
     FortuneTypeEntity(
       id: 'kahve',
@@ -61,7 +61,7 @@ abstract final class FortuneCatalog {
       emoji: '☕',
       accent: Color(0xFFD97706),
       kind: FortuneSessionKind.coffeeCup,
-      ctaLabel: 'Falına Bak',
+      ctaLabel: 'Falını Aç',
     ),
     FortuneTypeEntity(
       id: 'yildiz',
@@ -71,7 +71,7 @@ abstract final class FortuneCatalog {
       emoji: '✨',
       accent: Color(0xFF38BDF8),
       kind: FortuneSessionKind.zodiacWheel,
-      ctaLabel: 'Yorumunu Al',
+      ctaLabel: 'Falını Aç',
     ),
     FortuneTypeEntity(
       id: 'el',
@@ -81,7 +81,7 @@ abstract final class FortuneCatalog {
       emoji: '🖐️',
       accent: Color(0xFF4ADE80),
       kind: FortuneSessionKind.palmScan,
-      ctaLabel: 'Analiz Et',
+      ctaLabel: 'Falını Aç',
     ),
     FortuneTypeEntity(
       id: 'katina',
@@ -91,7 +91,7 @@ abstract final class FortuneCatalog {
       emoji: '🎴',
       accent: Color(0xFFA855F7),
       kind: FortuneSessionKind.playingCards,
-      ctaLabel: 'Falına Bak',
+      ctaLabel: 'Falını Aç',
     ),
     FortuneTypeEntity(
       id: 'iskambil',
@@ -101,7 +101,7 @@ abstract final class FortuneCatalog {
       emoji: '🂡',
       accent: Color(0xFF6366F1),
       kind: FortuneSessionKind.playingCards,
-      ctaLabel: 'Falına Bak',
+      ctaLabel: 'Falını Aç',
     ),
     FortuneTypeEntity(
       id: 'melek',
@@ -111,7 +111,7 @@ abstract final class FortuneCatalog {
       emoji: '👼',
       accent: Color(0xFF67E8F9),
       kind: FortuneSessionKind.angelCards,
-      ctaLabel: 'Falına Bak',
+      ctaLabel: 'Falını Aç',
     ),
     FortuneTypeEntity(
       id: 'numeroloji',
@@ -121,7 +121,7 @@ abstract final class FortuneCatalog {
       emoji: '🔢',
       accent: Color(0xFF34D399),
       kind: FortuneSessionKind.numberInput,
-      ctaLabel: 'Hesapla',
+      ctaLabel: 'Falını Aç',
     ),
     FortuneTypeEntity(
       id: 'ruya',
@@ -131,7 +131,7 @@ abstract final class FortuneCatalog {
       emoji: '🌙',
       accent: Color(0xFF818CF8),
       kind: FortuneSessionKind.dreamText,
-      ctaLabel: 'Yorumla',
+      ctaLabel: 'Falını Aç',
     ),
     FortuneTypeEntity(
       id: 'cin',
@@ -141,7 +141,7 @@ abstract final class FortuneCatalog {
       emoji: '🏮',
       accent: Color(0xFFEF4444),
       kind: FortuneSessionKind.chineseCoins,
-      ctaLabel: 'Falına Bak',
+      ctaLabel: 'Falını Aç',
     ),
     FortuneTypeEntity(
       id: 'pendul',
@@ -151,7 +151,7 @@ abstract final class FortuneCatalog {
       emoji: '🔮',
       accent: Color(0xFF14B8A6),
       kind: FortuneSessionKind.pendulum,
-      ctaLabel: 'Cevap Al',
+      ctaLabel: 'Falını Aç',
     ),
     FortuneTypeEntity(
       id: 'runik',
@@ -161,7 +161,7 @@ abstract final class FortuneCatalog {
       emoji: 'ᚠ',
       accent: Color(0xFF94A3B8),
       kind: FortuneSessionKind.runeStone,
-      ctaLabel: 'Falına Bak',
+      ctaLabel: 'Falını Aç',
     ),
     FortuneTypeEntity(
       id: 'evet-hayir',
@@ -171,7 +171,7 @@ abstract final class FortuneCatalog {
       emoji: '❓',
       accent: Color(0xFFFBBF24),
       kind: FortuneSessionKind.yesNo,
-      ctaLabel: 'Cevap Al',
+      ctaLabel: 'Falını Aç',
     ),
   ];
 

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../data/fortune_type_showcase.dart';
+import 'fortune_type_network_image.dart';
 
-/// Mockup vitrin kartı — AI illüstrasyon, açıklama, 3 özellik, Falını Aç.
+/// Mockup vitrin kartı — gerçekçi görsel, açıklama, 3 özellik, isteğe bağlı Falını Aç.
 class FortuneTypeShowcaseCard extends StatelessWidget {
   const FortuneTypeShowcaseCard({
     super.key,
@@ -14,17 +14,19 @@ class FortuneTypeShowcaseCard extends StatelessWidget {
     required this.onOpenFortune,
     this.compact = false,
     this.showCardHeader = true,
+    this.showOpenButton = true,
   });
 
   final FortuneTypeShowcase showcase;
   final VoidCallback onOpenFortune;
   final bool compact;
   final bool showCardHeader;
+  final bool showOpenButton;
 
   @override
   Widget build(BuildContext context) {
     final accent = showcase.type.accent;
-    final illHeight = compact ? 140.0 : 168.0;
+    final illHeight = compact ? 160.0 : 200.0;
 
     return Container(
       decoration: BoxDecoration(
@@ -74,38 +76,12 @@ class FortuneTypeShowcaseCard extends StatelessWidget {
               const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: SizedBox(
-                  height: illHeight,
-                  width: double.infinity,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.asset(
-                        showcase.imageAsset,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => _FallbackIllustration(
-                          emoji: showcase.type.emoji,
-                          accent: accent,
-                        ),
-                      ),
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              accent.withValues(alpha: 0.15),
-                              Colors.black.withValues(alpha: 0.35),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              child: FortuneTypeNetworkImage(
+                slug: showcase.type.slug,
+                accent: accent,
+                emoji: showcase.type.emoji,
+                height: illHeight,
+                borderRadius: 16,
               ),
             ),
             Padding(
@@ -137,14 +113,17 @@ class FortuneTypeShowcaseCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-              child: _OpenFortuneButton(
-                accent: accent,
-                onPressed: onOpenFortune,
+            if (showOpenButton) ...[
+              const SizedBox(height: 14),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                child: _OpenFortuneButton(
+                  accent: accent,
+                  onPressed: onOpenFortune,
+                ),
               ),
-            ),
+            ] else
+              const SizedBox(height: 14),
           ],
         ),
       ),
@@ -239,18 +218,19 @@ class _OpenFortuneButton extends StatelessWidget {
   }
 }
 
-class _FallbackIllustration extends StatelessWidget {
-  const _FallbackIllustration({required this.emoji, required this.accent});
+/// Üst bölümde kullanılan tam genişlik Falını Aç düğmesi.
+class FortuneOpenFortuneButton extends StatelessWidget {
+  const FortuneOpenFortuneButton({
+    super.key,
+    required this.accent,
+    required this.onPressed,
+  });
 
-  final String emoji;
   final Color accent;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: accent.withValues(alpha: 0.15),
-      alignment: Alignment.center,
-      child: Text(emoji, style: const TextStyle(fontSize: 64)),
-    );
+    return _OpenFortuneButton(accent: accent, onPressed: onPressed);
   }
 }

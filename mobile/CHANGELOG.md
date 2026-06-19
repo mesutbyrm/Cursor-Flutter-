@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.284+287 (2026-06-19)
+
+### Fal & Tarot — 2026 vitrin ve doğrudan sonuç
+
+- **Görseller:** Fal türlerinde gerçeğe yakın ağ görselleri (hub grid + vitrin kartları)
+- **Tarot / tür sayfası:** Üstte «Falını Aç», altta «En çok bakılan fallar» listesi
+- **Doğrudan sonuç:** «Falına bak» oturum ekranı kaldırıldı; tüm fallarda tek dokunuşla sonuç
+- **Sosyal paylaşım:** Her fal sonucu otomatik olarak sosyal akışta paylaşılır (giriş yapılıysa)
+
+
 ## 1.0.283+286 (2026-06-19)
 
 ### Derleme düzeltmesi — sosyal + sesli oda APK
