@@ -1,9 +1,10 @@
-import '../../../../core/config/env.dart';
-import '../../../profile/data/datasources/canlifal_user_api_datasource.dart';
-import '../../../profile/domain/entities/profile_stats_entity.dart';
 import '../../domain/entities/app_notification_entity.dart';
 import '../../domain/repositories/notifications_repository.dart';
 import '../datasources/notifications_remote_datasource.dart';
+import '../../../profile/data/datasources/canlifal_user_api_datasource.dart';
+import '../../../profile/domain/entities/profile_stats_entity.dart';
+import '../../../../core/config/env.dart';
+import '../../../../core/offline/cache_first_loader.dart';
 
 class NotificationsRepositoryImpl implements NotificationsRepository {
   NotificationsRepositoryImpl(this._remote, this._canlifal);
@@ -11,8 +12,25 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   final NotificationsRemoteDataSource _remote;
   final CanlifalUserApiDataSource _canlifal;
 
+  static const _cacheKey = 'notifications_list_v1';
+
   @override
-  Future<List<AppNotificationEntity>> fetch() async {
+  Future<List<AppNotificationEntity>> fetch() {
+    return CacheFirstLoader.load(
+      cacheKey: _cacheKey,
+      maxAge: const Duration(minutes: 10),
+      fetch: _fetchFresh,
+      encode: (list) => {
+        'items': list.map(_encodeNotification).toList(),
+      },
+      decode: (json) {
+        final items = CacheFirstLoader.decodeListItems(json);
+        return items.map(_decodeNotification).toList();
+      },
+    );
+  }
+
+  Future<List<AppNotificationEntity>> _fetchFresh() async {
     final byId = <String, AppNotificationEntity>{};
 
     void addAll(Iterable<AppNotificationEntity> items) {
@@ -41,6 +59,26 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       });
 
     return list;
+  }
+
+  static Map<String, dynamic> _encodeNotification(AppNotificationEntity n) => {
+        'id': n.id,
+        'title': n.title,
+        'body': n.body,
+        'read': n.read,
+        'createdAt': n.createdAt?.toIso8601String(),
+        'type': n.type,
+      };
+
+  static AppNotificationEntity _decodeNotification(Map<String, dynamic> json) {
+    return AppNotificationEntity(
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      body: json['body']?.toString(),
+      read: json['read'] == true,
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
+      type: json['type']?.toString(),
+    );
   }
 
   AppNotificationEntity _activityToNotification(ProfileActivityItemEntity a) {

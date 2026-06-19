@@ -87,6 +87,10 @@ class _TellerDashboardScreenState extends ConsumerState<TellerDashboardScreen> {
               totalSessions: profile.totalSessions,
               totalEarnings: profile.totalEarnings,
               activeSessions: dash.activeSessionCount,
+              pricePerMinute: profile.pricePerMinute.toDouble(),
+              sessionElapsedSec: dash.activeSessionElapsedSec,
+              sessionEarnings: dash.sessionEarningsJeton,
+              sseConnected: dash.sseConnected,
             ),
             const SizedBox(height: 20),
             _PendingBadge(count: dash.pendingCount),
@@ -244,27 +248,63 @@ class _StatGrid extends StatelessWidget {
     required this.totalSessions,
     required this.totalEarnings,
     required this.activeSessions,
+    required this.pricePerMinute,
+    required this.sessionElapsedSec,
+    required this.sessionEarnings,
+    required this.sseConnected,
   });
 
   final double rating;
   final int totalSessions;
   final int totalEarnings;
   final int activeSessions;
+  final double pricePerMinute;
+  final int sessionElapsedSec;
+  final int sessionEarnings;
+  final bool sseConnected;
+
+  String _formatElapsed(int sec) {
+    final m = sec ~/ 60;
+    final s = sec % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 2.2,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _statCard('Puan', rating.toStringAsFixed(1)),
-        _statCard('Toplam Seans', '$totalSessions'),
-        _statCard('Kazanç (jeton)', '$totalEarnings'),
-        _statCard('Aktif Seans', '$activeSessions'),
+        if (sseConnected)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Icon(Icons.sensors, size: 14, color: Colors.greenAccent.shade400),
+                const SizedBox(width: 6),
+                Text(
+                  'SSE canlı',
+                  style: TextStyle(color: Colors.greenAccent.shade400, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 2.2,
+          children: [
+            _statCard('Puan', rating.toStringAsFixed(1)),
+            _statCard('Dakika ücreti', '${pricePerMinute.toStringAsFixed(0)} jeton'),
+            _statCard('Aktif süre', _formatElapsed(sessionElapsedSec)),
+            _statCard('Anlık kazanç', '$sessionEarnings jeton'),
+            _statCard('Toplam Seans', '$totalSessions'),
+            _statCard('Toplam kazanç', '$totalEarnings'),
+            _statCard('Aktif Seans', '$activeSessions'),
+          ],
+        ),
       ],
     );
   }

@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/hero_tags.dart';
 import '../../domain/entities/post_entity.dart';
 
 /// Üst hikâye halkaları — fal / tarot içerikli yazarlar hariç (yalnızca normal hikâyeler).
@@ -73,11 +75,15 @@ class FeedStoryStrip extends StatelessWidget {
                   padding: const EdgeInsets.all(2),
                   child: ClipOval(
                     child: u.avatarUrl != null && u.avatarUrl!.isNotEmpty
-                        ? Image.network(
-                            u.avatarUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                _fallbackAvatar(u.name),
+                        ? HeroAvatar(
+                            userId: u.name,
+                            child: CachedNetworkImage(
+                              imageUrl: u.avatarUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (_, __) => _fallbackAvatar(u.name),
+                              errorWidget: (_, __, ___) =>
+                                  _fallbackAvatar(u.name),
+                            ),
                           )
                         : _fallbackAvatar(u.name),
                   ),

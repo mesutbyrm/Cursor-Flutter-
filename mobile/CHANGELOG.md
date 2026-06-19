@@ -1,6 +1,22 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.291+294 (2026-06-19)
+
+### Production readiness sprint
+
+- **Görüntülü arama:** `IncomingVideoCallScreen`, 30 sn timeout, kabul/red/meşgul, kaçırılan arama bildirimi
+- **SSE:** `BaseSseService`, reconnect 1→30 sn; `ChatRoomSseService`, `NotificationSseService`, `FalSseService`, `MessageSseService`
+- **Falcı paneli:** SSE canlı istekler, aktif süre, dakika ücreti, anlık kazanç
+- **Online sayılar:** 25 sn poll kaldırıldı; SSE presence ile keşfet listesi
+- **Provider modülleri:** `voice_room_*_provider.dart` barrel ayrımı
+- **Crashlytics:** Firebase Crashlytics + Sentry DSN stub
+- **Offline:** `CacheFirstLoader` + bildirimler cache-first
+- **Tablet:** `NavigationRail` (≥720px)
+- **Hero + görsel:** `HeroTags`, feed/story `CachedNetworkImage`
+- **Rapor:** `docs/PRODUCTION_READINESS_REPORT.md`
+
+
 ## 1.0.290+293 (2026-06-19)
 
 ### 2026 Premium altyapı yükseltmesi

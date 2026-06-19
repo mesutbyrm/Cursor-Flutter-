@@ -16,6 +16,7 @@ import '../../data/services/voice_room_debug_log.dart';
 import '../../data/services/exo_player_probe.dart';
 import '../../data/services/voice_room_music_pipeline_log.dart';
 import '../../data/services/chat_room_sse_service.dart';
+import 'voice_room_sse_provider.dart';
 import '../../data/youtube_music_search_cache.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../music/domain/entities/room_playback_sync.dart';
@@ -62,12 +63,6 @@ final chatRoomRemoteProvider = Provider<ChatRoomRemoteDataSource>((ref) {
   );
   ref.onDispose(remote.close);
   return remote;
-});
-
-final voiceRoomSseServiceProvider = Provider<ChatRoomSseService>((ref) {
-  final s = ChatRoomSseService();
-  ref.onDispose(s.disconnect);
-  return s;
 });
 
 final voiceRoomDjStreamLoaderProvider = Provider<VoiceRoomDjStreamLoader>((

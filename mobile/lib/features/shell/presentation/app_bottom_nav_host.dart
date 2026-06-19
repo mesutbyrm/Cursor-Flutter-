@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/app_router.dart';
+import '../../../core/ui/responsive/responsive_layout.dart';
 import '../../home/presentation/theme/home_approved_design.dart';
 import '../../home/presentation/widgets/approved/bottom_navigation_widget.dart';
 
@@ -121,6 +122,73 @@ class AppBottomNavHost extends ConsumerWidget {
     if (!showNav) return child;
 
     final tab = activeTabFor(location);
+    final width = MediaQuery.sizeOf(context).width;
+    final useRail = width >= ResponsiveLayout.wideBreakpoint;
+
+    if (useRail) {
+      final railIndex = switch (tab) {
+        HomeBottomTab.home => 0,
+        HomeBottomTab.social => 1,
+        HomeBottomTab.jeton => 3,
+        HomeBottomTab.profile => 4,
+      };
+      return ColoredBox(
+        color: HomeApprovedDesign.background,
+        child: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: railIndex,
+              onDestinationSelected: (i) {
+                switch (i) {
+                  case 0:
+                    router.go('/feed');
+                  case 1:
+                    router.go('/social');
+                  case 2:
+                    AppBottomNavHost.showCreateSheet(context, router);
+                  case 3:
+                    router.push('/jeton-store');
+                  case 4:
+                    router.go('/profile');
+                }
+              },
+              backgroundColor: const Color(0xFF12081F),
+              indicatorColor: HomeApprovedDesign.purple.withValues(alpha: 0.2),
+              labelType: NavigationRailLabelType.selected,
+              destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home_rounded),
+                  label: Text('Ana'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.groups_outlined),
+                  selectedIcon: Icon(Icons.groups_rounded),
+                  label: Text('Sosyal'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.mic_none_rounded),
+                  selectedIcon: Icon(Icons.mic_rounded),
+                  label: Text('Yayın'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.diamond_outlined),
+                  selectedIcon: Icon(Icons.diamond_rounded),
+                  label: Text('Jeton'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person_rounded),
+                  label: Text('Profil'),
+                ),
+              ],
+            ),
+            const VerticalDivider(width: 1, thickness: 1),
+            Expanded(child: child),
+          ],
+        ),
+      );
+    }
 
     return ColoredBox(
       color: HomeApprovedDesign.background,

@@ -1,14 +1,16 @@
 import 'dart:async';
 
 /// SSE yeniden bağlanma politikası — tüm stream servisleri için ortak.
+///
+/// Gecikme dizisi: 1s → 2s → 5s → 10s → 20s → 30s (maksimum).
 abstract final class SseReconnectPolicy {
-  static const baseDelay = Duration(seconds: 2);
-  static const maxDelay = Duration(seconds: 12);
+  static const _delaysSec = [1, 2, 5, 10, 20, 30];
+  static const maxDelay = Duration(seconds: 30);
   static const maxAttempts = 0; // 0 = sınırsız
 
   static Duration delayForAttempt(int attempt) {
-    final sec = baseDelay.inSeconds * (attempt.clamp(1, 6));
-    return Duration(seconds: sec.clamp(baseDelay.inSeconds, maxDelay.inSeconds));
+    final idx = (attempt - 1).clamp(0, _delaysSec.length - 1);
+    return Duration(seconds: _delaysSec[idx]);
   }
 
   static bool shouldGiveUp(int attempt) =>

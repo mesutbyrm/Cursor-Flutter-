@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -356,12 +357,13 @@ class _FeatureLeading extends StatelessWidget {
     if (image != null && image.startsWith('http')) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: Image.network(
-          image,
+        child: CachedNetworkImage(
+          imageUrl: image,
           width: 46,
           height: 46,
           fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => _IconBox(icon: item.icon),
+          placeholder: (_, __) => _IconBox(icon: item.icon),
+          errorWidget: (_, __, ___) => _IconBox(icon: item.icon),
         ),
       );
     }

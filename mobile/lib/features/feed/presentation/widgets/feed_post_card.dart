@@ -1,7 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/hero_tags.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../domain/entities/post_entity.dart';
@@ -33,7 +35,6 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
   }
 
   void _openComments() {
-    final textController = TextEditingController();
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -42,70 +43,9 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 12,
-            bottom: MediaQuery.viewInsetsOf(ctx).bottom + 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Yorumlar · ${widget.post.commentsCount}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: textController,
-                decoration: InputDecoration(
-                  hintText: 'Yorumunu yaz…',
-                  filled: true,
-                  fillColor: AppTheme.surfaceElevated,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: () {
-                  if (textController.text.trim().isEmpty) return;
-                  ref.read(feedNotifierProvider.notifier).addComment(widget.post.id);
-                  Navigator.pop(ctx);
-                },
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppTheme.accent,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text('Gönder'),
-              ),
-            ],
-          ),
-        );
+        return _FeedCommentsSheet(post: widget.post);
       },
-    ).whenComplete(textController.dispose);
+    );
   }
 
   @override
@@ -138,14 +78,23 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
                   fit: StackFit.expand,
                   children: [
                     if (p.mediaUrl != null && p.mediaUrl!.isNotEmpty)
-                      Image.network(
-                        p.mediaUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: AppTheme.surfaceElevated,
-                          alignment: Alignment.center,
-                          child: const Icon(Icons.play_circle_fill,
-                              size: 64, color: AppTheme.muted),
+                      HeroPostImage(
+                        postId: p.id,
+                        child: CachedNetworkImage(
+                          imageUrl: p.mediaUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Container(
+                            color: AppTheme.surfaceElevated,
+                          ),
+                          errorWidget: (_, __, ___) => Container(
+                            color: AppTheme.surfaceElevated,
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.play_circle_fill,
+                              size: 64,
+                              color: AppTheme.muted,
+                            ),
+                          ),
                         ),
                       )
                     else
@@ -299,6 +248,99 @@ class _ActionChip extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _FeedCommentsSheet extends ConsumerStatefulWidget {
+  const _FeedCommentsSheet({required this.post});
+
+  final PostEntity post;
+
+  @override
+  ConsumerState<_FeedCommentsSheet> createState() => _FeedCommentsSheetState();
+}
+
+class _FeedCommentsSheetState extends ConsumerState<_FeedCommentsSheet> {
+  late final TextEditingController _textController;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 12,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(99),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Yorumlar · ${widget.post.commentsCount}',
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _textController,
+            decoration: InputDecoration(
+              hintText: 'Yorumunu yaz…',
+              filled: true,
+              fillColor: AppTheme.surfaceElevated,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: () {
+              if (_textController.text.trim().isEmpty) return;
+              ref
+                  .read(feedNotifierProvider.notifier)
+                  .addComment(widget.post.id);
+              Navigator.pop(context);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.accent,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: const Text('Gönder'),
+          ),
+        ],
       ),
     );
   }

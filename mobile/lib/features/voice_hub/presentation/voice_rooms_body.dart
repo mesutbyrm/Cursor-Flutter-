@@ -11,6 +11,7 @@ import '../../../core/widgets/discover_tab_layout.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/domain/entities/voice_room_sort.dart';
 import '../../live/presentation/providers/live_providers.dart';
+import 'providers/voice_rooms_presence_provider.dart';
 import 'utils/open_voice_chat_room_flow.dart';
 import '../../vip_gold/presentation/utils/open_voice_room_vip.dart';
 import 'widgets/premium_2026/voice_discover_hub_2026.dart';
@@ -30,25 +31,8 @@ class VoiceRoomsBody extends ConsumerStatefulWidget {
 
 class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     with AutomaticKeepAliveClientMixin {
-  Timer? _refreshTimer;
-
   @override
   bool get wantKeepAlive => true;
-
-  @override
-  void initState() {
-    super.initState();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 25), (_) {
-      if (!mounted) return;
-      ref.invalidate(voiceRoomsProvider);
-    });
-  }
-
-  @override
-  void dispose() {
-    _refreshTimer?.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +46,7 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     }
 
     final rooms = ref.watch(voiceRoomsProvider);
+    final presence = ref.watch(voiceRoomsPresenceProvider);
     final liveStreams = ref.watch(liveStreamsProvider);
     final mq = MediaQuery.paddingOf(context);
     final topPad = widget.embeddedInLiveShellTab
@@ -87,6 +72,13 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
         }
 
         final ordered = _orderedRooms(list, ref.watch(myVoiceRoomProvider));
+        final withPresence = ordered
+            .map(
+              (r) => r.copyWith(
+                onlineCount: presence.countFor(r),
+              ),
+            )
+            .toList();
         final live = liveStreams.valueOrNull ?? const [];
 
         return PremiumImmersiveBackground(
@@ -98,7 +90,7 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
               ref.invalidate(liveStreamsProvider);
             },
             child: VoiceDiscoverHub2026(
-              rooms: ordered,
+              rooms: withPresence,
               liveStreams: live,
               topPadding: topPad,
               onRoomTap: (r) => openVoiceRoomWithVipGate(context, ref, r),

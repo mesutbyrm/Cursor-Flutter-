@@ -188,4 +188,37 @@ class PushNotificationService {
       return null;
     }
   }
+
+  /// Yerel bildirim — gelen arama vb.
+  Future<void> showLocal({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+    bool urgent = false,
+  }) async {
+    if (!_initialized) await init();
+    final channelId = urgent ? _urgentChannelId : _channelId;
+    final channelName = urgent ? 'Canlifal — Acil' : _channelName;
+    final android = AndroidNotificationDetails(
+      channelId,
+      channelName,
+      importance: urgent ? Importance.max : Importance.high,
+      priority: urgent ? Priority.max : Priority.high,
+      fullScreenIntent: urgent,
+      category: urgent ? AndroidNotificationCategory.call : null,
+      icon: '@mipmap/ic_launcher',
+    );
+    const ios = DarwinNotificationDetails(
+      presentAlert: true,
+      presentSound: true,
+    );
+    await _local.show(
+      id,
+      title,
+      body,
+      NotificationDetails(android: android, iOS: ios),
+      payload: payload,
+    );
+  }
 }

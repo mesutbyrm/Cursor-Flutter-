@@ -9,13 +9,14 @@ import 'package:path_provider/path_provider.dart';
 
 import 'app/app.dart';
 import 'core/bootstrap/app_startup_log.dart';
-import 'features/voice_hub/data/services/voice_room_debug_log.dart';
+import 'core/crash/crash_reporting_bootstrap.dart';
 import 'core/firebase/firebase_bootstrap.dart';
 import 'core/network/cookie_jar_provider.dart';
 import 'core/onesignal/onesignal_bootstrap.dart';
 import 'core/offline/api_cache_store.dart';
 import 'core/storage/local_cache.dart';
 import 'core/storage/theme_preferences.dart';
+import 'features/voice_hub/data/services/voice_room_debug_log.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,22 +44,10 @@ Future<void> main() async {
   AppStartupLog.log('OneSignal init done');
   await FirebaseBootstrap.init();
   AppStartupLog.log('Firebase init done');
+  await CrashReportingBootstrap.init();
+  AppStartupLog.log('Crash reporting init done');
 
-  // Ağ yokken font indirme bazı cihazlarda açılışta çökme yapabiliyor.
   GoogleFonts.config.allowRuntimeFetching = false;
-
-  FlutterError.onError = (details) {
-    FlutterError.presentError(details);
-    VoiceRoomDebugLog.recordFlutterError(
-      details.exception,
-      details.stack,
-    );
-  };
-
-  PlatformDispatcher.instance.onError = (error, stack) {
-    VoiceRoomDebugLog.recordPlatformError(error, stack);
-    return true;
-  };
 
   PersistCookieJar? jar;
   try {

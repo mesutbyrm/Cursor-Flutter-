@@ -76,6 +76,31 @@ class VoiceRoomEntity extends Equatable {
         roomType: roomType,
       );
 
+  VoiceRoomEntity copyWith({
+    int? onlineCount,
+    int? userCount,
+  }) {
+    return VoiceRoomEntity(
+      id: id,
+      slug: slug,
+      nameTr: nameTr,
+      descTr: descTr,
+      rulesTr: rulesTr,
+      icon: icon,
+      onlineCount: onlineCount ?? this.onlineCount,
+      userCount: userCount ?? this.userCount,
+      backgroundImageUrl: backgroundImageUrl,
+      ownerName: ownerName,
+      ownerAvatarUrl: ownerAvatarUrl,
+      ownerId: ownerId,
+      activeDjId: activeDjId,
+      djUserIds: djUserIds,
+      recentUserAvatars: recentUserAvatars,
+      isVip: isVip,
+      roomType: roomType,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,

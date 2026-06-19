@@ -9,6 +9,8 @@ import '../../features/agency/presentation/providers/agency_providers.dart';
 import '../../features/home/presentation/providers/teller_profile_provider.dart';
 import '../../features/home/presentation/widgets/fortune_incoming_invite_host.dart';
 import '../../features/shell/presentation/app_bottom_nav_host.dart';
+import '../../features/video_call/presentation/incoming_video_call_screen.dart';
+import '../../features/voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
 import '../../features/voice_hub/presentation/widgets/voice_room/voice_room_global_music_bar.dart';
 import '../router/app_router.dart';
 
@@ -100,7 +102,13 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
     var body = widget.child;
     if (!isAuthRoute) {
       body = FortuneIncomingInviteHost(child: body);
+      body = VideoCallIncomingHost(child: body);
       body = AppBottomNavHost(location: location, child: body);
+    }
+
+    // SSE presence — keşfet online sayıları (poll yerine).
+    if (!isAuthRoute) {
+      ref.watch(voiceRoomsPresenceProvider);
     }
 
     return Stack(

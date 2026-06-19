@@ -29,7 +29,7 @@ class HomeRealtimeBridge {
     _ref.invalidate(homeLiveStreamsProvider);
     _ref.invalidate(homeVoiceRoomsProvider);
     _ref.invalidate(liveStreamsProvider);
-    _ref.invalidate(voiceRoomsProvider);
+    // voiceRoomsProvider: SSE presence (voiceRoomsPresenceProvider) ile güncellenir.
   }
 
   void dispose() {
