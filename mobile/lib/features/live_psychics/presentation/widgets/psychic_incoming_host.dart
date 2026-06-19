@@ -12,6 +12,7 @@ import 'package:canlifal_social/features/live_psychics/data/services/psychic_ses
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_request_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_flow.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_incoming_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_invite_coordinator.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
@@ -86,6 +87,14 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     await _ensureTellerProfile();
     await _connectSse();
     _startPoll();
+    if (_mayPresentInvites()) {
+      unawaited(
+        PsychicFlow.resumeActiveClientSessions(
+          router: ref.read(goRouterProvider),
+          repo: ref.read(livePsychicsRepositoryProvider),
+        ),
+      );
+    }
   }
 
   void _startPoll() {

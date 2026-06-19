@@ -16,12 +16,14 @@ class PsychicRoomEntity extends Equatable {
     this.clientId,
     this.isClient = true,
     this.isTeller = false,
+    this.elapsedSeconds = 0,
   });
 
   final String sessionId;
   final PsychicSessionStatus status;
   final int maxMinutes;
   final bool timerStarted;
+  final int elapsedSeconds;
   final String? roomId;
   final DateTime? timerStartedAt;
   final String? peerId;
@@ -32,8 +34,11 @@ class PsychicRoomEntity extends Equatable {
 
   int get remainingSeconds {
     if (!timerStarted || timerStartedAt == null) return maxMinutes * 60;
-    final elapsed = DateTime.now().difference(timerStartedAt!).inSeconds;
-    return (maxMinutes * 60) - elapsed;
+    final total = maxMinutes * 60;
+    final elapsed = elapsedSeconds > 0
+        ? elapsedSeconds
+        : DateTime.now().difference(timerStartedAt!).inSeconds;
+    return total - elapsed;
   }
 
   PsychicRoomEntity copyWith({
@@ -48,6 +53,7 @@ class PsychicRoomEntity extends Equatable {
     String? clientId,
     bool? isClient,
     bool? isTeller,
+    int? elapsedSeconds,
   }) {
     return PsychicRoomEntity(
       sessionId: sessionId ?? this.sessionId,
@@ -61,6 +67,7 @@ class PsychicRoomEntity extends Equatable {
       clientId: clientId ?? this.clientId,
       isClient: isClient ?? this.isClient,
       isTeller: isTeller ?? this.isTeller,
+      elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
     );
   }
 
@@ -77,6 +84,7 @@ class PsychicRoomEntity extends Equatable {
         clientId,
         isClient,
         isTeller,
+        elapsedSeconds,
       ];
 }
 

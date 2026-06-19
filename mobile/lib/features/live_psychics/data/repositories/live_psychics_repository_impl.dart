@@ -1,5 +1,6 @@
 import '../../domain/entities/psychic_entity.dart';
 import '../../domain/entities/psychic_request_entity.dart';
+import '../../domain/entities/psychic_review_entity.dart';
 import '../../domain/entities/psychic_room_entity.dart';
 import '../../domain/repositories/live_psychics_repository.dart';
 import '../repositories/live_psychics_remote_datasource.dart';
@@ -15,12 +16,14 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
     int limit = 20,
     bool? onlineOnly,
     String? specialty,
+    String? sort,
   }) =>
       _remote.fetchPsychics(
         page: page,
         limit: limit,
         onlineOnly: onlineOnly,
         specialty: specialty,
+        sort: sort,
       );
 
   @override
@@ -32,6 +35,28 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
   @override
   Future<bool> setOnline({required bool online}) =>
       _remote.setOnline(online: online);
+
+  @override
+  Future<Map<String, dynamic>?> fetchOnlineStatus() =>
+      _remote.fetchOnlineStatus();
+
+  @override
+  Future<Map<String, dynamic>?> applyAsTeller({
+    required String displayName,
+    required List<String> specialties,
+    String? bio,
+    String? applicationNote,
+  }) =>
+      _remote.applyAsTeller(
+        displayName: displayName,
+        specialties: specialties,
+        bio: bio,
+        applicationNote: applicationNote,
+      );
+
+  @override
+  Future<List<PsychicReviewEntity>> fetchReviews(String tellerId) =>
+      _remote.fetchReviews(tellerId);
 
   @override
   Future<PsychicSessionCreateResult?> createSession({
@@ -110,6 +135,13 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
         minutes: minutes,
         totalJeton: totalJeton,
       );
+
+  @override
+  Future<bool> tellerAddTime({
+    required String sessionId,
+    required int minutes,
+  }) =>
+      _remote.tellerAddTime(sessionId: sessionId, minutes: minutes);
 
   @override
   Future<bool> sendTip({

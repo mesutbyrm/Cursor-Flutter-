@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.295+298 (2026-06-19)
+
+### Canlı Falcılar — PDF entegrasyon uyumu
+
+- **Aktif seans:** Uygulama açılışında `GET /api/user/active-sessions` ile otomatik odaya dönüş
+- **Push red/iptal:** `session_update` reddinde jeton iadesi bildirimi
+- **Bekleme:** `cancelled` durumu reddedildi olarak işlenir
+- **Liste:** `online=true` + `sort=rating` filtreleri
+- **Oda timer:** Sunucu `elapsedSeconds` ile senkron
+- **Süre:** Kullanıcı `extend`, falcı `teller_add_time` (PDF §12)
+- **Profil:** Falcı yorumları (`GET .../reviews`)
+- **API:** Başvuru, online durum sorgusu, model alan eşlemeleri (`displayName`, `pricePerSession`)
+
 ## 1.0.294+297 (2026-06-19)
 
 ### Canlı Falcılar — falcı kabul/red ekranı düzeltmesi

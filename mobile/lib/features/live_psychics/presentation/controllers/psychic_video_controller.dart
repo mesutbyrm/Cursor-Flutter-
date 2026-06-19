@@ -440,6 +440,23 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     );
   }
 
+  Future<bool> tellerAddTime(PsychicExtendOption choice) async {
+    final ok = await ref.read(livePsychicsRepositoryProvider).tellerAddTime(
+          sessionId: session.sessionId,
+          minutes: choice.minutes,
+        );
+    if (ok) {
+      ref.invalidate(coinBalanceProvider);
+      await _syncRoomInfo();
+      final room = state.room;
+      state = state.copyWith(
+        remaining: state.remaining + Duration(minutes: choice.minutes),
+        room: room?.copyWith(maxMinutes: (room.maxMinutes) + choice.minutes),
+      );
+    }
+    return ok;
+  }
+
   Future<bool> extendSession(PsychicExtendOption choice) async {
     final ok = await ref.read(livePsychicsRepositoryProvider).extendSession(
           sessionId: session.sessionId,

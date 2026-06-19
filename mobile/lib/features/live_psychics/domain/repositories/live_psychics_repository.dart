@@ -1,5 +1,6 @@
 import '../entities/psychic_entity.dart';
 import '../entities/psychic_request_entity.dart';
+import '../entities/psychic_review_entity.dart';
 import '../entities/psychic_room_entity.dart';
 import '../entities/psychic_session_entity.dart';
 import '../entities/psychic_session_status.dart';
@@ -64,11 +65,22 @@ abstract class LivePsychicsRepository {
     int limit = 20,
     bool? onlineOnly,
     String? specialty,
+    String? sort,
   });
 
   Future<PsychicEntity?> fetchPsychic(String id);
   Future<PsychicEntity?> fetchMyProfile();
   Future<bool> setOnline({required bool online});
+  Future<Map<String, dynamic>?> fetchOnlineStatus();
+
+  Future<Map<String, dynamic>?> applyAsTeller({
+    required String displayName,
+    required List<String> specialties,
+    String? bio,
+    String? applicationNote,
+  });
+
+  Future<List<PsychicReviewEntity>> fetchReviews(String tellerId);
 
   Future<PsychicSessionCreateResult?> createSession({
     required String tellerId,
@@ -108,6 +120,11 @@ abstract class LivePsychicsRepository {
     required String sessionId,
     required int minutes,
     required int totalJeton,
+  });
+
+  Future<bool> tellerAddTime({
+    required String sessionId,
+    required int minutes,
   });
 
   Future<bool> sendTip({

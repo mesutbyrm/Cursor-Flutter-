@@ -134,9 +134,6 @@ PsychicRequestEntity? parsePsychicIncomingPayload(Map<String, dynamic>? raw) {
       sessionIdFromTargetPath(map['targetPath']);
   if (sessionId == null || sessionId.isEmpty) return null;
 
-  final duration = asInt(
-    pick(map, ['durationMinutes', 'duration', 'minutes', 'maxMinutes']),
-  );
   return PsychicRequestEntity(
     sessionId: sessionId,
     clientId: pick(map, ['clientId', 'client_id', 'userId'])?.toString() ?? '',
@@ -146,6 +143,7 @@ PsychicRequestEntity? parsePsychicIncomingPayload(Map<String, dynamic>? raw) {
           'displayName',
           'userName',
           'fromName',
+          'userName',
         ])?.toString() ??
         'Danışan',
     clientAvatarUrl:
@@ -155,7 +153,17 @@ PsychicRequestEntity? parsePsychicIncomingPayload(Map<String, dynamic>? raw) {
         '',
     tellerUserId: pick(map, ['tellerUserId', 'teller_user_id', 'anchorUserId'])
         ?.toString(),
-    durationMinutes: duration > 0 ? duration : 10,
+    durationMinutes: () {
+      final duration = asInt(
+        pick(map, [
+          'durationMinutes',
+          'duration',
+          'minutes',
+          'maxMinutes',
+        ]),
+      );
+      return duration > 0 ? duration : 10;
+    }(),
     totalJeton: asInt(
       pick(map, [
         'totalJeton',

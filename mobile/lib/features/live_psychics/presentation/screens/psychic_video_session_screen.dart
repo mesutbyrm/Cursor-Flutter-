@@ -355,6 +355,26 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                         label: 'Kamera',
                         onTap: ctrl.toggleCamera,
                       ),
+                      if (!session.isClient)
+                        _ControlBtn(
+                          icon: Icons.schedule_rounded,
+                          label: 'Süre ekle',
+                          onTap: () async {
+                            final choice = await ctrl.openExtendSheet(context);
+                            if (choice == null || !context.mounted) return;
+                            final ok = await ctrl.tellerAddTime(choice);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  ok
+                                      ? '${choice.minutes} dakika eklendi'
+                                      : 'Süre eklenemedi',
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       if (session.isClient) ...[
                         _ControlBtn(
                           icon: Icons.card_giftcard_rounded,

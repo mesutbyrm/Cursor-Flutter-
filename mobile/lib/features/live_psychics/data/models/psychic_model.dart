@@ -2,6 +2,7 @@ import '../../../../core/util/json_util.dart';
 import '../../domain/entities/psychic_entity.dart';
 import '../../domain/entities/psychic_request_entity.dart';
 import '../../domain/entities/psychic_room_entity.dart';
+import '../../domain/entities/psychic_review_entity.dart';
 import '../../domain/entities/psychic_session_status.dart';
 import '../../domain/repositories/live_psychics_repository.dart';
 
@@ -60,8 +61,8 @@ abstract final class PsychicModel {
       bio: str(m, ['bio', 'description', 'about']) ?? str(user, ['bio']),
       avatarUrl: str(m, [
             'avatarUrl',
-            'image',
             'avatar',
+            'image',
             'photoUrl',
             'profileImage',
           ]) ??
@@ -141,6 +142,7 @@ abstract final class PsychicModel {
         ? str(data, ['peerId', 'clientId', 'userId']) ?? clientId
         : str(data, ['peerId', 'anchorUserId', 'tellerUserId']) ?? tellerUserId;
     final statusRaw = str(data, ['status']) ?? 'active';
+    final elapsed = asInt(pick(data, ['elapsedSeconds', 'elapsed_seconds']));
     return PsychicRoomEntity(
       sessionId: id,
       status: PsychicSessionStatus.fromApi(statusRaw),
@@ -149,6 +151,7 @@ abstract final class PsychicModel {
         return v > 0 ? v : 10;
       }(),
       timerStarted: data['timerStarted'] == true,
+      elapsedSeconds: elapsed,
       roomId: str(data, ['roomId', 'trtcRoomId']),
       timerStartedAt: timerStartedAt,
       peerId: peerId,
@@ -263,5 +266,22 @@ abstract final class PsychicModel {
     final v = pick(m, keys);
     if (v is num) return v.toDouble();
     return double.tryParse(v?.toString() ?? '') ?? 0;
+  }
+
+  static PsychicReviewEntity reviewFromJson(dynamic raw) {
+    final m = asJsonMap(raw);
+    final session = asJsonMap(m['session']);
+    final user = asJsonMap(session['user']);
+    final createdRaw = pick(m, ['createdAt'])?.toString();
+    return PsychicReviewEntity(
+      id: str(m, ['id', '_id']) ?? '',
+      rating: asInt(pick(m, ['rating', 'score'])).clamp(1, 5),
+      comment: str(m, ['comment', 'text']),
+      clientName: str(user, ['name', 'displayName', 'username']),
+      fortuneType: str(session, ['fortuneType', 'category']),
+      createdAt: createdRaw != null && createdRaw.isNotEmpty
+          ? DateTime.tryParse(createdRaw)
+          : null,
+    );
   }
 }

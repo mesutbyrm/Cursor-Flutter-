@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/psychic_entity.dart';
+import '../../domain/entities/psychic_review_entity.dart';
 import '../providers/live_psychics_providers.dart';
 
 class PsychicsListState {
@@ -41,7 +42,12 @@ class PsychicsListController extends AutoDisposeAsyncNotifier<PsychicsListState>
   @override
   Future<PsychicsListState> build() async {
     final repo = ref.read(livePsychicsRepositoryProvider);
-    final first = await repo.fetchPsychics(page: 1, limit: _pageSize);
+    final first = await repo.fetchPsychics(
+      page: 1,
+      limit: _pageSize,
+      onlineOnly: true,
+      sort: 'rating',
+    );
     return PsychicsListState(
       items: first,
       page: 1,
@@ -56,7 +62,12 @@ class PsychicsListController extends AutoDisposeAsyncNotifier<PsychicsListState>
     }
     try {
       final repo = ref.read(livePsychicsRepositoryProvider);
-      final first = await repo.fetchPsychics(page: 1, limit: _pageSize);
+      final first = await repo.fetchPsychics(
+      page: 1,
+      limit: _pageSize,
+      onlineOnly: true,
+      sort: 'rating',
+    );
       state = AsyncData(PsychicsListState(
         items: first,
         page: 1,
@@ -74,7 +85,12 @@ class PsychicsListController extends AutoDisposeAsyncNotifier<PsychicsListState>
     try {
       final repo = ref.read(livePsychicsRepositoryProvider);
       final nextPage = current.page + 1;
-      final batch = await repo.fetchPsychics(page: nextPage, limit: _pageSize);
+      final batch = await repo.fetchPsychics(
+        page: nextPage,
+        limit: _pageSize,
+        onlineOnly: true,
+        sort: 'rating',
+      );
       final merged = [...current.items, ...batch];
       final seen = <String>{};
       final unique = <PsychicEntity>[];
@@ -122,6 +138,13 @@ final psychicsListControllerProvider =
   PsychicsListController.new,
 );
 
+final psychicReviewsProvider =
+    FutureProvider.autoDispose.family<List<PsychicReviewEntity>, String>(
+  (ref, tellerId) async {
+    return ref.read(livePsychicsRepositoryProvider).fetchReviews(tellerId);
+  },
+);
+
 final psychicDetailProvider =
     FutureProvider.autoDispose.family<PsychicEntity?, String>((ref, id) async {
   return ref.read(livePsychicsRepositoryProvider).fetchPsychic(id);
@@ -138,7 +161,7 @@ class ApprovedPsychicState {
   final PsychicEntity? profile;
   final bool isLoading;
 
-  bool get isApprovedTeller => profile?.isApproved == true;
+  bool get isApprovedTeller => profile?.isUsable == true;
 }
 
 class ApprovedPsychicController extends AsyncNotifier<ApprovedPsychicState> {

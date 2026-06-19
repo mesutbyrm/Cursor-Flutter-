@@ -6,6 +6,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/psychic_entity.dart';
 import '../../domain/entities/psychic_request_entity.dart';
+import '../../domain/entities/psychic_review_entity.dart';
 import '../../domain/entities/psychic_room_entity.dart';
 import '../../domain/entities/psychic_session_status.dart';
 import '../../domain/repositories/live_psychics_repository.dart';
@@ -22,6 +23,7 @@ class LivePsychicsRemoteDataSource {
     int limit = 20,
     bool? onlineOnly,
     String? specialty,
+    String? sort,
   }) async {
     final params = <String, dynamic>{
       'page': page,
@@ -30,6 +32,9 @@ class LivePsychicsRemoteDataSource {
     if (onlineOnly == true) params['online'] = 'true';
     if (specialty != null && specialty.trim().isNotEmpty) {
       params['specialty'] = specialty.trim();
+    }
+    if (sort != null && sort.trim().isNotEmpty) {
+      params['sort'] = sort.trim();
     }
     try {
       final res = await _dio.safeGet<dynamic>(
@@ -103,6 +108,64 @@ class LivePsychicsRemoteDataSource {
     } catch (_) {
       return false;
     }
+  }
+
+  Future<Map<String, dynamic>?> fetchOnlineStatus() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerToggleOnline);
+      if (res.data is Map) return asJsonMap(res.data);
+    } catch (_) {}
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> applyAsTeller({
+    required String displayName,
+    required List<String> specialties,
+    String? bio,
+    String? applicationNote,
+  }) async {
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.fortuneTellerApply,
+        data: {
+          'displayName': displayName.trim(),
+          'specialties': specialties,
+          if (bio != null && bio.trim().isNotEmpty) 'bio': bio.trim(),
+          if (applicationNote != null && applicationNote.trim().isNotEmpty)
+            'applicationNote': applicationNote.trim(),
+        },
+      );
+      if (res.data is Map) return asJsonMap(res.data);
+    } catch (_) {}
+    return null;
+  }
+
+  Future<List<PsychicReviewEntity>> fetchReviews(String tellerId) async {
+    final key = tellerId.trim();
+    if (key.isEmpty) return const [];
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerReviews(key));
+      final body = res.data;
+      if (body is Map) {
+        final map = asJsonMap(body);
+        final items = PsychicModel.itemsFromBody(
+          map,
+          keys: const ['reviews', 'items', 'data'],
+        );
+        return items
+            .map(PsychicModel.reviewFromJson)
+            .where((r) => r.id.isNotEmpty)
+            .toList(growable: false);
+      }
+      if (body is List) {
+        return body
+            .whereType<Map>()
+            .map((e) => PsychicModel.reviewFromJson(e))
+            .where((r) => r.id.isNotEmpty)
+            .toList(growable: false);
+      }
+    } catch (_) {}
+    return const [];
   }
 
   Future<PsychicSessionCreateResult?> createSession({
@@ -367,7 +430,19 @@ class LivePsychicsRemoteDataSource {
     final result = await roomAction(
       sessionId,
       'extend',
-      extra: {'minutes': minutes, 'jeton': totalJeton},
+      extra: {'minutes': minutes},
+    );
+    return result != null;
+  }
+
+  Future<bool> tellerAddTime({
+    required String sessionId,
+    required int minutes,
+  }) async {
+    final result = await roomAction(
+      sessionId,
+      'teller_add_time',
+      extra: {'minutes': minutes},
     );
     return result != null;
   }

@@ -11,6 +11,8 @@ import '../../features/live_psychics/presentation/controllers/psychic_flow.dart'
 import '../../features/live_psychics/presentation/controllers/psychic_invite_coordinator.dart';
 import '../../features/live_psychics/presentation/controllers/psychic_incoming_controller.dart';
 import '../../features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import '../../features/live_psychics/presentation/providers/psychic_booking_feedback_provider.dart';
+import '../../features/profile/presentation/providers/profile_providers.dart';
 import '../../features/live_psychics/presentation/providers/psychic_push_payload.dart';
 import '../../features/messages/presentation/providers/messages_providers.dart';
 import '../../features/notifications/presentation/providers/notifications_list_notifier.dart';
@@ -56,15 +58,22 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
           }
         },
         onSessionUpdateData: (update) {
-          if (!update.isAccepted) return;
-          unawaited(
-            PsychicFlow.resumeFromPush(
-              router: ref.read(goRouterProvider),
-              sessionId: update.sessionId,
-              tellerId: update.tellerId,
-              repo: ref.read(livePsychicsRepositoryProvider),
-            ),
-          );
+          if (update.isAccepted) {
+            unawaited(
+              PsychicFlow.resumeFromPush(
+                router: ref.read(goRouterProvider),
+                sessionId: update.sessionId,
+                tellerId: update.tellerId,
+                repo: ref.read(livePsychicsRepositoryProvider),
+              ),
+            );
+            return;
+          }
+          if (update.isRejected) {
+            ref.read(psychicBookingFeedbackProvider.notifier).state =
+                'Randevu reddedildi — jetonlar iade edildi';
+            ref.invalidate(coinBalanceProvider);
+          }
         },
       );
       _queuePushSync(null, ref.read(authControllerProvider));

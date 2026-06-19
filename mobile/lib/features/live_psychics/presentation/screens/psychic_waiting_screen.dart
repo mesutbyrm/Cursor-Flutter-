@@ -93,7 +93,8 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   }
 
   void _handleRoomStatus(PsychicSessionStatus status) {
-    if (status == PsychicSessionStatus.rejected) {
+    if (status == PsychicSessionStatus.rejected ||
+        status == PsychicSessionStatus.cancelled) {
       unawaited(_onRejected());
       return;
     }
@@ -113,7 +114,8 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
         .fetchSessionStatus(session.sessionId);
     if (status == null) return;
 
-    if (status.status == PsychicSessionStatus.rejected) {
+    if (status.status == PsychicSessionStatus.rejected ||
+        status.status == PsychicSessionStatus.cancelled) {
       await _onRejected();
       return;
     }

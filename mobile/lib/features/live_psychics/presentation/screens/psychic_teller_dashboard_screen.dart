@@ -69,7 +69,7 @@ class PsychicTellerDashboardController
 
   Future<void> _pollRequests() async {
     final profile = state.profile;
-    if (profile == null || !profile.isApproved) return;
+    if (profile == null || !profile.isUsable) return;
     final userId = ref.read(authControllerProvider).valueOrNull?.id;
     final incoming = await ref.read(livePsychicsRepositoryProvider).fetchIncomingRequests(
           currentUserId: userId,
