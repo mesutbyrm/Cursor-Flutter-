@@ -14,6 +14,7 @@ import '../../features/live_psychics/presentation/providers/live_psychics_provid
 import '../../features/live_psychics/presentation/providers/psychic_booking_feedback_provider.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart';
 import '../../features/live_psychics/presentation/providers/psychic_push_payload.dart';
+import '../../features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
 import '../../features/messages/presentation/providers/messages_providers.dart';
 import '../../features/notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
@@ -74,6 +75,25 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
                 'Randevu reddedildi — jetonlar iade edildi';
             ref.invalidate(coinBalanceProvider);
           }
+        },
+        onSessionEndedData: (ended) {
+          ref.read(psychicSessionEndedProvider.notifier).state =
+              PsychicSessionEndedEvent(
+            sessionId: ended.sessionId,
+            tellerId: ended.tellerId,
+            tellerName: ended.tellerName,
+            durationMinutes:
+                ended.durationMinutes != null && ended.durationMinutes! > 0
+                    ? ended.durationMinutes
+                    : null,
+            totalJeton:
+                ended.totalJeton != null && ended.totalJeton! > 0
+                    ? ended.totalJeton
+                    : null,
+            message: ended.message,
+            promptReview: true,
+          );
+          ref.invalidate(coinBalanceProvider);
         },
       );
       _queuePushSync(null, ref.read(authControllerProvider));

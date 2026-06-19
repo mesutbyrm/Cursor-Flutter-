@@ -63,6 +63,64 @@ class PsychicSessionUpdatePayload {
       action == 'reject' || action == 'decline' || action == 'cancel';
 }
 
+class PsychicSessionEndedPayload {
+  const PsychicSessionEndedPayload({
+    required this.sessionId,
+    this.tellerId,
+    this.tellerName,
+    this.durationMinutes,
+    this.totalJeton,
+    this.message,
+  });
+
+  final String sessionId;
+  final String? tellerId;
+  final String? tellerName;
+  final int? durationMinutes;
+  final int? totalJeton;
+  final String? message;
+}
+
+PsychicSessionEndedPayload? parsePsychicSessionEndedPayload(
+  Map<String, dynamic>? raw,
+) {
+  if (raw == null || raw.isEmpty) return null;
+  final map = flattenPsychicPushPayload(raw);
+  final type = psychicPushType(map);
+  if (!type.contains('session_ended')) return null;
+
+  final sessionId = pick(map, [
+    'sessionId',
+    'session_id',
+    'id',
+    'targetId',
+    'target_id',
+  ])?.toString();
+  if (sessionId == null || sessionId.isEmpty) return null;
+
+  final rawDuration = asInt(
+    pick(map, ['durationMinutes', 'duration', 'minutes', 'maxMinutes']),
+  );
+  final rawJeton = asInt(
+    pick(map, ['totalJeton', 'total_jeton', 'jeton', 'creditsCharged']),
+  );
+
+  return PsychicSessionEndedPayload(
+    sessionId: sessionId,
+    tellerId: pick(map, ['tellerId', 'teller_id', 'fortuneTellerId'])
+        ?.toString(),
+    tellerName: pick(map, [
+      'tellerName',
+      'teller_name',
+      'displayName',
+      'name',
+    ])?.toString(),
+    durationMinutes: rawDuration > 0 ? rawDuration : null,
+    totalJeton: rawJeton > 0 ? rawJeton : null,
+    message: pick(map, ['message', 'body', 'summary'])?.toString(),
+  );
+}
+
 PsychicSessionUpdatePayload? parsePsychicSessionUpdatePayload(
   Map<String, dynamic>? raw,
 ) {

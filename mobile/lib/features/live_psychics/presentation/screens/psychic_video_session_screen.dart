@@ -8,6 +8,7 @@ import 'package:canlifal_social/features/live/presentation/widgets/broadcast_roo
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_video_controller.dart';
 import 'package:canlifal_social/features/profile/presentation/widgets/premium/profile_glass.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
 import 'package:canlifal_social/features/trtc/presentation/trtc_room_manager.dart';
 
 final _psychicSessionChatProvider =
@@ -34,9 +35,21 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
       }
       if (next.leaving && prev?.leaving != true) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Seans süresi doldu')),
-          );
+          if (session.isClient) {
+            ref.read(psychicSessionEndedProvider.notifier).state =
+                PsychicSessionEndedEvent(
+              sessionId: session.sessionId,
+              tellerId: session.psychic.id,
+              tellerName: session.psychic.name,
+              durationMinutes: session.durationMinutes,
+              totalJeton: session.totalJeton,
+              promptReview: true,
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Seans sonlandı')),
+            );
+          }
           if (context.canPop()) {
             context.pop();
           } else {

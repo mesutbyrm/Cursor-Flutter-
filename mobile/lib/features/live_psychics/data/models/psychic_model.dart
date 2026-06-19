@@ -268,6 +268,12 @@ abstract final class PsychicModel {
     return double.tryParse(v?.toString() ?? '') ?? 0;
   }
 
+  static DateTime? parseDate(dynamic raw) {
+    final s = raw?.toString().trim() ?? '';
+    if (s.isEmpty) return null;
+    return DateTime.tryParse(s);
+  }
+
   static PsychicReviewEntity reviewFromJson(dynamic raw) {
     final m = asJsonMap(raw);
     final session = asJsonMap(m['session']);

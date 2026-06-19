@@ -1,4 +1,6 @@
+import '../../domain/entities/psychic_award_entity.dart';
 import '../../domain/entities/psychic_entity.dart';
+import '../../domain/entities/psychic_gift_entity.dart';
 import '../../domain/entities/psychic_request_entity.dart';
 import '../../domain/entities/psychic_review_entity.dart';
 import '../../domain/entities/psychic_room_entity.dart';
@@ -57,6 +59,28 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
   @override
   Future<List<PsychicReviewEntity>> fetchReviews(String tellerId) =>
       _remote.fetchReviews(tellerId);
+
+  @override
+  Future<List<PsychicAwardEntity>> fetchAwards(String tellerId) =>
+      _remote.fetchAwards(tellerId);
+
+  @override
+  Future<List<PsychicGiftEntity>> fetchGifts(String tellerId) =>
+      _remote.fetchGifts(tellerId);
+
+  @override
+  Future<bool> submitReview({
+    required String sessionId,
+    required String tellerId,
+    required int rating,
+    String? comment,
+  }) =>
+      _remote.submitReview(
+        sessionId: sessionId,
+        tellerId: tellerId,
+        rating: rating,
+        comment: comment,
+      );
 
   @override
   Future<PsychicSessionCreateResult?> createSession({

@@ -11,6 +11,7 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/psychic_entity.dart';
 import '../controllers/psychics_list_controller.dart';
+import '../widgets/psychic_fortune_types.dart';
 
 /// Çevrimiçi falcı listesi — pull to refresh + infinite scroll.
 class PsychicsListScreen extends ConsumerWidget {
@@ -81,9 +82,11 @@ class PsychicsListScreen extends ConsumerWidget {
                       ref.read(psychicsListControllerProvider.notifier).refresh(),
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    children: const [
-                      SizedBox(height: 120),
-                      Center(child: Text('Şu an çevrimiçi falcı yok.')),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    children: [
+                      PsychicsFilterBar(filters: state.filters),
+                      const SizedBox(height: 48),
+                      const Center(child: Text('Bu filtreye uygun falcı yok.')),
                     ],
                   ),
                 );
@@ -101,16 +104,20 @@ class PsychicsListScreen extends ConsumerWidget {
                   child: ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                    itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
+                    itemCount: state.items.length + (state.isLoadingMore ? 1 : 0) + 1,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (_, i) {
-                      if (i >= state.items.length) {
+                      if (i == 0) {
+                        return PsychicsFilterBar(filters: state.filters);
+                      }
+                      final itemIndex = i - 1;
+                      if (itemIndex >= state.items.length) {
                         return const Padding(
                           padding: EdgeInsets.all(16),
                           child: Center(child: CircularProgressIndicator()),
                         );
                       }
-                      return PsychicListTile(psychic: state.items[i]);
+                      return PsychicListTile(psychic: state.items[itemIndex]);
                     },
                   ),
                 ),
@@ -212,6 +219,96 @@ class PsychicListTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class PsychicsFilterBar extends ConsumerWidget {
+  const PsychicsFilterBar({super.key, required this.filters});
+
+  final PsychicsListFilters filters;
+
+  static const _sortOptions = [
+    ('rating', 'Puan'),
+    ('price', 'Fiyat'),
+    ('sessions', 'Seans'),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(psychicsListControllerProvider.notifier);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Sıralama',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: Colors.white.withValues(alpha: 0.65),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _sortOptions.map((opt) {
+              final selected = filters.sort == opt.$1;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: Text(opt.$2),
+                  selected: selected,
+                  onSelected: (_) => notifier.applyFilters(
+                    filters.copyWith(sort: opt.$1),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Uzmanlık',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: Colors.white.withValues(alpha: 0.65),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: const Text('Tümü'),
+                  selected: filters.specialty == null,
+                  onSelected: (_) => notifier.applyFilters(
+                    filters.copyWith(clearSpecialty: true),
+                  ),
+                ),
+              ),
+              ...psychicFortuneTypes.map((type) {
+                final selected = filters.specialty == type.key;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: Text(type.label),
+                    selected: selected,
+                    onSelected: (_) => notifier.applyFilters(
+                      filters.copyWith(specialty: type.key),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 }

@@ -430,6 +430,9 @@ abstract final class ApiEndpoints {
 
   static const tellerGifts = '/api/teller/gifts';
 
+  /// Seans sonrası değerlendirme (FEATURE_INVENTORY).
+  static const tellerReviews = '/api/teller/reviews';
+
   static const dailyLogin = '/api/daily-login';
   static const dailyMissions = '/api/daily-missions';
 

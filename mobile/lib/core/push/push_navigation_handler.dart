@@ -13,6 +13,7 @@ class PushNavigationHandler {
   static void Function()? onPushReceived;
   static void Function(Map<String, dynamic> data)? onFortuneInvite;
   static void Function(PsychicSessionUpdatePayload update)? onSessionUpdate;
+  static void Function(PsychicSessionEndedPayload ended)? onSessionEnded;
   static final List<Map<String, dynamic>> _bufferedFortunePayloads = [];
 
   static void install(
@@ -20,11 +21,13 @@ class PushNavigationHandler {
     void Function()? onReceived,
     void Function(Map<String, dynamic> data)? onFortuneInviteData,
     void Function(PsychicSessionUpdatePayload update)? onSessionUpdateData,
+    void Function(PsychicSessionEndedPayload ended)? onSessionEndedData,
   }) {
     _router = router;
     onPushReceived = onReceived;
     onFortuneInvite = onFortuneInviteData;
     onSessionUpdate = onSessionUpdateData;
+    onSessionEnded = onSessionEndedData;
     _drainBufferedFortunePayloads();
   }
 
@@ -53,6 +56,12 @@ class PushNavigationHandler {
     bool notifyReceived = true,
   }) {
     if (data == null || data.isEmpty) return false;
+
+    final sessionEnded = parsePsychicSessionEndedPayload(data);
+    if (sessionEnded != null) {
+      onSessionEnded?.call(sessionEnded);
+      return true;
+    }
 
     final sessionUpdate = parsePsychicSessionUpdatePayload(data);
     if (sessionUpdate != null) {
@@ -90,7 +99,12 @@ class PushNavigationHandler {
     ].whereType<String>().map((s) => s.toLowerCase()).join(' ');
 
     if (type.contains('session_ended')) {
-      router.go('/canli-falcilar');
+      final ended = parsePsychicSessionEndedPayload(data);
+      if (ended != null) {
+        onSessionEnded?.call(ended);
+      } else {
+        router.go('/canli-falcilar');
+      }
       return;
     }
 

@@ -1,8 +1,35 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/entities/psychic_award_entity.dart';
 import '../../domain/entities/psychic_entity.dart';
+import '../../domain/entities/psychic_gift_entity.dart';
 import '../../domain/entities/psychic_review_entity.dart';
 import '../providers/live_psychics_providers.dart';
+
+class PsychicsListFilters {
+  const PsychicsListFilters({
+    this.specialty,
+    this.sort = 'rating',
+    this.onlineOnly = true,
+  });
+
+  final String? specialty;
+  final String sort;
+  final bool onlineOnly;
+
+  PsychicsListFilters copyWith({
+    String? specialty,
+    bool clearSpecialty = false,
+    String? sort,
+    bool? onlineOnly,
+  }) {
+    return PsychicsListFilters(
+      specialty: clearSpecialty ? null : (specialty ?? this.specialty),
+      sort: sort ?? this.sort,
+      onlineOnly: onlineOnly ?? this.onlineOnly,
+    );
+  }
+}
 
 class PsychicsListState {
   const PsychicsListState({
@@ -11,6 +38,7 @@ class PsychicsListState {
     this.hasMore = true,
     this.isLoadingMore = false,
     this.isRefreshing = false,
+    this.filters = const PsychicsListFilters(),
   });
 
   final List<PsychicEntity> items;
@@ -18,6 +46,7 @@ class PsychicsListState {
   final bool hasMore;
   final bool isLoadingMore;
   final bool isRefreshing;
+  final PsychicsListFilters filters;
 
   PsychicsListState copyWith({
     List<PsychicEntity>? items,
@@ -25,6 +54,7 @@ class PsychicsListState {
     bool? hasMore,
     bool? isLoadingMore,
     bool? isRefreshing,
+    PsychicsListFilters? filters,
   }) {
     return PsychicsListState(
       items: items ?? this.items,
@@ -32,6 +62,7 @@ class PsychicsListState {
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       isRefreshing: isRefreshing ?? this.isRefreshing,
+      filters: filters ?? this.filters,
     );
   }
 }
@@ -41,38 +72,48 @@ class PsychicsListController extends AutoDisposeAsyncNotifier<PsychicsListState>
 
   @override
   Future<PsychicsListState> build() async {
+    return _fetchFirst(const PsychicsListFilters());
+  }
+
+  Future<PsychicsListState> _fetchFirst(PsychicsListFilters filters) async {
     final repo = ref.read(livePsychicsRepositoryProvider);
     final first = await repo.fetchPsychics(
       page: 1,
       limit: _pageSize,
-      onlineOnly: true,
-      sort: 'rating',
+      onlineOnly: filters.onlineOnly ? true : null,
+      specialty: filters.specialty,
+      sort: filters.sort,
     );
     return PsychicsListState(
       items: first,
       page: 1,
       hasMore: first.length >= _pageSize,
+      filters: filters,
     );
+  }
+
+  Future<void> applyFilters(PsychicsListFilters filters) async {
+    final current = state.valueOrNull;
+    if (current != null) {
+      state = AsyncData(current.copyWith(isRefreshing: true, filters: filters));
+    } else {
+      state = const AsyncLoading();
+    }
+    try {
+      state = AsyncData(await _fetchFirst(filters));
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
   }
 
   Future<void> refresh() async {
     final current = state.valueOrNull;
+    final filters = current?.filters ?? const PsychicsListFilters();
     if (current != null) {
       state = AsyncData(current.copyWith(isRefreshing: true));
     }
     try {
-      final repo = ref.read(livePsychicsRepositoryProvider);
-      final first = await repo.fetchPsychics(
-      page: 1,
-      limit: _pageSize,
-      onlineOnly: true,
-      sort: 'rating',
-    );
-      state = AsyncData(PsychicsListState(
-        items: first,
-        page: 1,
-        hasMore: first.length >= _pageSize,
-      ));
+      state = AsyncData(await _fetchFirst(filters));
     } catch (e, st) {
       state = AsyncError(e, st);
     }
@@ -85,11 +126,13 @@ class PsychicsListController extends AutoDisposeAsyncNotifier<PsychicsListState>
     try {
       final repo = ref.read(livePsychicsRepositoryProvider);
       final nextPage = current.page + 1;
+      final filters = current.filters;
       final batch = await repo.fetchPsychics(
         page: nextPage,
         limit: _pageSize,
-        onlineOnly: true,
-        sort: 'rating',
+        onlineOnly: filters.onlineOnly ? true : null,
+        specialty: filters.specialty,
+        sort: filters.sort,
       );
       final merged = [...current.items, ...batch];
       final seen = <String>{};
@@ -101,6 +144,7 @@ class PsychicsListController extends AutoDisposeAsyncNotifier<PsychicsListState>
         items: unique,
         page: nextPage,
         hasMore: batch.length >= _pageSize,
+        filters: filters,
       ));
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -129,6 +173,7 @@ class PsychicsListController extends AutoDisposeAsyncNotifier<PsychicsListState>
           .toList(growable: false),
       page: current.page,
       hasMore: current.hasMore,
+      filters: current.filters,
     ));
   }
 }
@@ -142,6 +187,20 @@ final psychicReviewsProvider =
     FutureProvider.autoDispose.family<List<PsychicReviewEntity>, String>(
   (ref, tellerId) async {
     return ref.read(livePsychicsRepositoryProvider).fetchReviews(tellerId);
+  },
+);
+
+final psychicAwardsProvider =
+    FutureProvider.autoDispose.family<List<PsychicAwardEntity>, String>(
+  (ref, tellerId) async {
+    return ref.read(livePsychicsRepositoryProvider).fetchAwards(tellerId);
+  },
+);
+
+final psychicGiftsProvider =
+    FutureProvider.autoDispose.family<List<PsychicGiftEntity>, String>(
+  (ref, tellerId) async {
+    return ref.read(livePsychicsRepositoryProvider).fetchGifts(tellerId);
   },
 );
 

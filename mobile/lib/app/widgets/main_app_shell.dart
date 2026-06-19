@@ -8,6 +8,7 @@ import '../../core/bootstrap/auth_route_paths.dart';
 import '../../features/agency/presentation/providers/agency_providers.dart';
 import '../../features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import '../../features/live_psychics/presentation/widgets/psychic_incoming_host.dart';
+import '../../features/live_psychics/presentation/widgets/psychic_session_ended_host.dart';
 import '../../features/shell/presentation/app_bottom_nav_host.dart';
 import '../../features/video_call/presentation/incoming_video_call_screen.dart';
 import '../../features/voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
@@ -101,6 +102,7 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
 
     var body = widget.child;
     if (!isAuthRoute) {
+      body = PsychicSessionEndedHost(child: body);
       body = PsychicIncomingHost(child: body);
       body = VideoCallIncomingHost(child: body);
       body = AppBottomNavHost(location: location, child: body);

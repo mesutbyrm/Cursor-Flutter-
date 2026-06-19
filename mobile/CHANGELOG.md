@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.297+300 (2026-06-19)
+
+### Canlı Falcılar — PDF eksikleri (2–6)
+
+- **Bekleme:** 3 dk geri sayım; süre dolunca otomatik iptal + jeton iadesi mesajı
+- **Push `session_ended`:** Seans özeti diyaloğu; danışana değerlendirme önerisi
+- **Liste filtreleri:** Uzmanlık chip’leri + sıralama (puan / fiyat / seans)
+- **Profil:** Ödüller (`GET .../awards`) ve hediye özeti (`GET .../gifts`)
+- **Değerlendirme:** Seans bitişinde `POST /api/teller/reviews` bottom sheet
+
 ## 1.0.296+299 (2026-06-19)
 
 ### Canlı Falcılar — falcı başvuru ekranı (PDF §4)

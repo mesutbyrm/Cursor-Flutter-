@@ -27,16 +27,21 @@ enum PsychicWaitingPhase {
   expired,
 }
 
+/// PDF: falcı yanıt vermezse 2–3 dk sonra bekleme sona erer.
+const psychicWaitingTimeoutSeconds = 180;
+
 class PsychicWaitingState {
   const PsychicWaitingState({
     this.phase = PsychicWaitingPhase.waiting,
     this.cancelling = false,
     this.closed = false,
+    this.remainingSeconds = psychicWaitingTimeoutSeconds,
   });
 
   final PsychicWaitingPhase phase;
   final bool cancelling;
   final bool closed;
+  final int remainingSeconds;
 
   String get statusLabel => switch (phase) {
         PsychicWaitingPhase.waiting => 'Bekliyor',
@@ -45,15 +50,23 @@ class PsychicWaitingState {
         PsychicWaitingPhase.expired => 'Süre doldu',
       };
 
+  String get remainingLabel {
+    final m = remainingSeconds ~/ 60;
+    final s = remainingSeconds % 60;
+    return '${m.toString().padLeft(1, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
   PsychicWaitingState copyWith({
     PsychicWaitingPhase? phase,
     bool? cancelling,
     bool? closed,
+    int? remainingSeconds,
   }) {
     return PsychicWaitingState(
       phase: phase ?? this.phase,
       cancelling: cancelling ?? this.cancelling,
       closed: closed ?? this.closed,
+      remainingSeconds: remainingSeconds ?? this.remainingSeconds,
     );
   }
 }
@@ -67,13 +80,26 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   final Ref ref;
   final PsychicSessionEntity session;
   Timer? _poll;
+  Timer? _timeout;
   var _navigated = false;
 
   Future<void> _init() async {
     await PsychicSessionStore.save(session);
     _poll = Timer.periodic(const Duration(seconds: 3), (_) => _checkStatus());
+    _timeout = Timer.periodic(const Duration(seconds: 1), (_) => _tickTimeout());
     unawaited(_checkStatus());
     unawaited(_connectSse());
+  }
+
+  void _tickTimeout() {
+    if (state.closed || state.phase != PsychicWaitingPhase.waiting) return;
+    final next = state.remainingSeconds - 1;
+    if (next <= 0) {
+      _timeout?.cancel();
+      unawaited(_onExpired());
+      return;
+    }
+    state = state.copyWith(remainingSeconds: next);
   }
 
   Future<void> _connectSse() async {
@@ -133,6 +159,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     _navigated = true;
     state = state.copyWith(phase: PsychicWaitingPhase.accepted, closed: true);
     _poll?.cancel();
+    _timeout?.cancel();
     final activeSession = session.copyWith(
       tellerUserId: status?.tellerUserId ?? session.tellerUserId,
       trtcRoomIdOverride: status?.trtcRoomId,
@@ -148,6 +175,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     if (state.closed) return;
     state = state.copyWith(phase: PsychicWaitingPhase.rejected, closed: true);
     _poll?.cancel();
+    _timeout?.cancel();
     await ref.read(psychicRoomSseServiceProvider).disconnect();
     await PsychicSessionStore.clear();
     ref.invalidate(coinBalanceProvider);
@@ -160,11 +188,17 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     if (state.closed) return;
     state = state.copyWith(phase: PsychicWaitingPhase.expired, closed: true);
     _poll?.cancel();
+    _timeout?.cancel();
+    try {
+      await ref
+          .read(livePsychicsRepositoryProvider)
+          .endSession(session.sessionId);
+    } catch (_) {}
     await ref.read(psychicRoomSseServiceProvider).disconnect();
     await PsychicSessionStore.clear();
     ref.invalidate(coinBalanceProvider);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
-        'Falcı yanıt vermedi — süre doldu';
+        'Falcı yanıt vermedi — süre doldu, jetonlar iade edildi';
     ref.read(psychicWaitingExitProvider.notifier).state = session.psychic.id;
   }
 
@@ -194,6 +228,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
 
     state = state.copyWith(cancelling: true);
     _poll?.cancel();
+    _timeout?.cancel();
     var ended = false;
     try {
       ended = await ref
@@ -218,6 +253,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     if (state.closed) return;
     state = state.copyWith(closed: true);
     _poll?.cancel();
+    _timeout?.cancel();
     await ref.read(psychicRoomSseServiceProvider).disconnect();
     await PsychicSessionStore.clear();
     ref.invalidate(coinBalanceProvider);
@@ -227,6 +263,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
   @override
   void dispose() {
     _poll?.cancel();
+    _timeout?.cancel();
     unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
     super.dispose();
   }
@@ -367,6 +404,17 @@ class PsychicWaitingScreen extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: 12),
+                          if (waiting.phase == PsychicWaitingPhase.waiting) ...[
+                            Text(
+                              'Kalan süre: ${waiting.remainingLabel}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppThemeColors.accentCyan,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                          ],
                           Text(
                             'Durum: ${waiting.statusLabel}',
                             style: TextStyle(

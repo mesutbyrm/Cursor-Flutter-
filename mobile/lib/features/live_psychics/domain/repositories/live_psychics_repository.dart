@@ -1,4 +1,6 @@
+import '../entities/psychic_award_entity.dart';
 import '../entities/psychic_entity.dart';
+import '../entities/psychic_gift_entity.dart';
 import '../entities/psychic_request_entity.dart';
 import '../entities/psychic_review_entity.dart';
 import '../entities/psychic_room_entity.dart';
@@ -81,6 +83,17 @@ abstract class LivePsychicsRepository {
   });
 
   Future<List<PsychicReviewEntity>> fetchReviews(String tellerId);
+
+  Future<List<PsychicAwardEntity>> fetchAwards(String tellerId);
+
+  Future<List<PsychicGiftEntity>> fetchGifts(String tellerId);
+
+  Future<bool> submitReview({
+    required String sessionId,
+    required String tellerId,
+    required int rating,
+    String? comment,
+  });
 
   Future<PsychicSessionCreateResult?> createSession({
     required String tellerId,

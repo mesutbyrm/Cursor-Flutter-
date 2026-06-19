@@ -4,7 +4,9 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/util/json_util.dart';
+import '../../domain/entities/psychic_award_entity.dart';
 import '../../domain/entities/psychic_entity.dart';
+import '../../domain/entities/psychic_gift_entity.dart';
 import '../../domain/entities/psychic_request_entity.dart';
 import '../../domain/entities/psychic_review_entity.dart';
 import '../../domain/entities/psychic_room_entity.dart';
@@ -182,6 +184,78 @@ class LivePsychicsRemoteDataSource {
       }
     } catch (_) {}
     return const [];
+  }
+
+  Future<List<PsychicAwardEntity>> fetchAwards(String tellerId) async {
+    final key = tellerId.trim();
+    if (key.isEmpty) return const [];
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerAwards(key));
+      final items = PsychicModel.itemsFromBody(res.data);
+      return items
+          .map((m) => PsychicAwardEntity(
+                id: m['id']?.toString() ?? '',
+                tellerId: key,
+                awardType: m['awardType']?.toString() ?? '',
+                title: m['title']?.toString() ?? '',
+                startDate: PsychicModel.parseDate(m['startDate']),
+                endDate: PsychicModel.parseDate(m['endDate']),
+                createdAt: PsychicModel.parseDate(m['createdAt']),
+              ))
+          .where((a) => a.id.isNotEmpty)
+          .toList(growable: false);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<List<PsychicGiftEntity>> fetchGifts(String tellerId) async {
+    final key = tellerId.trim();
+    if (key.isEmpty) return const [];
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerGifts(key));
+      final items = PsychicModel.itemsFromBody(res.data);
+      return items
+          .map((m) => PsychicGiftEntity(
+                senderId: m['senderId']?.toString() ??
+                    m['userId']?.toString() ??
+                    '',
+                senderName: m['senderName']?.toString() ??
+                    m['name']?.toString() ??
+                    'Kullanıcı',
+                giftCount: asInt(m['giftCount'] ?? m['count']),
+                senderImage:
+                    m['senderImage']?.toString() ?? m['image']?.toString(),
+                totalJeton: asInt(m['totalJeton'] ?? m['jeton'] ?? m['amount']),
+              ))
+          .where((g) => g.senderId.isNotEmpty)
+          .toList(growable: false);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<bool> submitReview({
+    required String sessionId,
+    required String tellerId,
+    required int rating,
+    String? comment,
+  }) async {
+    try {
+      await _dio.safePost<dynamic>(
+        ApiEndpoints.tellerReviews,
+        data: {
+          'sessionId': sessionId.trim(),
+          'tellerId': tellerId.trim(),
+          'rating': rating.clamp(1, 5),
+          if (comment != null && comment.trim().isNotEmpty)
+            'comment': comment.trim(),
+        },
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<PsychicSessionCreateResult?> createSession({
