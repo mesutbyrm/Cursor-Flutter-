@@ -12,12 +12,17 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
 import '../providers/profile_providers.dart';
-import '../widgets/user_posts_tiktok_grid.dart';
+import '../widgets/user_posts_timeline.dart';
 
 class UserProfilePage extends ConsumerWidget {
-  const UserProfilePage({super.key, required this.userId});
+  const UserProfilePage({
+    super.key,
+    required this.userId,
+    this.focusPostId,
+  });
 
   final String userId;
+  final String? focusPostId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -195,7 +200,7 @@ class UserProfilePage extends ConsumerWidget {
                   ),
                 ],
               ),
-              UserPostsTikTokGrid(userId: userId),
+              UserPostsTimeline(userId: userId, focusPostId: focusPostId),
             ],
           );
         },

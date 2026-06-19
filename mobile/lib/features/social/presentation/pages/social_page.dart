@@ -14,7 +14,7 @@ import '../utils/social_feed_layout.dart';
 import '../widgets/instagram/social_active_rooms.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
 import '../widgets/instagram/social_instagram_post_card.dart';
-import '../utils/open_social_create_post.dart';
+import '../providers/social_composer_providers.dart';
 import '../widgets/instagram/social_feed_composer.dart';
 
 /// CanlıFal Sosyal — premium mistik akış.
@@ -102,7 +102,9 @@ class _SocialPageState extends ConsumerState<SocialPage> {
                                   ? 'Henüz paylaşım yok.\nİlk gönderini paylaş veya canlifal.com oturumunu kontrol et.'
                                   : 'Henüz paylaşım yok.\nİlk gönderini şimdi paylaş.',
                               actionLabel: 'Paylaşım oluştur',
-                              action: () => openSocialCreatePost(context, ref),
+                              action: () => ref
+                                  .read(socialComposerExpandedProvider.notifier)
+                                  .state = true,
                             ),
                           );
                         }

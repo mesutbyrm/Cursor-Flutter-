@@ -72,10 +72,10 @@ class SocialRemoteDataSource {
   /// POST `/api/social/posts` — metin veya görsel paylaşım (multipart / JSON).
   Future<PostDto> createPost(CreateSocialPostInput input) async {
     final caption = input.caption.trim();
-    final type = input.hasMedia ? 'image' : 'text';
+    final type = input.resolvedType;
 
     Response<dynamic> res;
-    if (input.hasMedia) {
+    if (input.hasImage) {
       final path = input.imagePath!;
       final form = FormData.fromMap({
         'caption': caption,
@@ -87,6 +87,25 @@ class SocialRemoteDataSource {
         'image': await MultipartFile.fromFile(
           path,
           filename: 'post_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        ),
+      });
+      res = await _dio.safePost<dynamic>(
+        ApiEndpoints.socialPosts,
+        data: form,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+    } else if (input.hasVideo) {
+      final path = input.videoPath!;
+      final form = FormData.fromMap({
+        'caption': caption,
+        'text': caption,
+        'content': caption,
+        'description': caption,
+        'postType': type,
+        'type': type,
+        'video': await MultipartFile.fromFile(
+          path,
+          filename: 'post_${DateTime.now().millisecondsSinceEpoch}.mp4',
         ),
       });
       res = await _dio.safePost<dynamic>(

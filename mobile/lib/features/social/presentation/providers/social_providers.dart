@@ -65,6 +65,15 @@ class SocialNotifier extends AsyncNotifier<List<PostEntity>> {
       _loadingMore = false;
     }
   }
+
+  void bumpCommentCount(String postId, {int delta = 1}) {
+    final cur = state.valueOrNull;
+    if (cur == null) return;
+    state = AsyncValue.data(cur.map((p) {
+      if (p.id != postId) return p;
+      return p.copyWith(commentsCount: p.commentsCount + delta);
+    }).toList());
+  }
 }
 
 final socialNotifierProvider =

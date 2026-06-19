@@ -532,7 +532,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/user/:id',
         builder: (context, state) {
           final id = state.pathParameters['id']!;
-          return UserProfilePage(userId: id);
+          final focusPostId = state.extra as String?;
+          return UserProfilePage(userId: id, focusPostId: focusPostId);
         },
       ),
       GoRoute(

@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/canlifal_tokens.dart';
 import '../../../../../core/ui/premium/premium_icon_button.dart';
 import '../../../../../core/widgets/messages_notifications_actions.dart';
-import '../../utils/open_social_create_post.dart';
+import '../../providers/social_composer_providers.dart';
 
 /// CanlıFal Sosyal üst çubuk — paylaşım + mesajlar + bildirimler.
 class SocialInstagramAppBar extends ConsumerWidget {
@@ -55,7 +55,8 @@ class SocialInstagramAppBar extends ConsumerWidget {
           PremiumIconButton(
             icon: Icons.add_box_outlined,
             size: 40,
-            onTap: () => openSocialCreatePost(context, ref),
+            onTap: () =>
+                ref.read(socialComposerExpandedProvider.notifier).state = true,
           ),
           const SizedBox(width: 4),
           const MessagesNotificationsActions(spacing: 4),

@@ -18,9 +18,14 @@ import 'social_post_comments_sheet.dart';
 
 /// CanlıFal Sosyal akış kartı — fal rozeti, otomatik paylaşım, etkileşim.
 class SocialInstagramPostCard extends ConsumerStatefulWidget {
-  const SocialInstagramPostCard({super.key, required this.post});
+  const SocialInstagramPostCard({
+    super.key,
+    required this.post,
+    this.openProfileOnTap = true,
+  });
 
   final PostEntity post;
+  final bool openProfileOnTap;
 
   @override
   ConsumerState<SocialInstagramPostCard> createState() =>
@@ -63,6 +68,10 @@ class _SocialInstagramPostCardState
   bool get _hasMedia =>
       post.mediaUrl != null && post.mediaUrl!.trim().isNotEmpty;
 
+  void _openAuthorTimeline(BuildContext context) {
+    context.push('/user/${post.author.id}', extra: post.id);
+  }
+
   @override
   Widget build(BuildContext context) {
     final myId = ref.watch(currentUserIdProvider);
@@ -92,50 +101,64 @@ class _SocialInstagramPostCardState
               _PostHeader(
                 post: post,
                 isMine: isMine,
-                onProfile: () => context.push('/user/${post.author.id}'),
+                onProfile: () => _openAuthorTimeline(context),
                 onDelete: isMine ? () => _deletePost(context) : null,
               ),
-              if ((post.caption?.trim().isNotEmpty ?? false) && _hasMedia)
-                SocialPostCaption(post: post, inlineBodyOnly: true),
-              if (!_hasMedia && (post.caption?.trim().isNotEmpty ?? false))
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF2A1548), Color(0xFF14102A)],
+              GestureDetector(
+                onTap: widget.openProfileOnTap
+                    ? () => _openAuthorTimeline(context)
+                    : null,
+                behavior: HitTestBehavior.opaque,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if ((post.caption?.trim().isNotEmpty ?? false) && _hasMedia)
+                      SocialPostCaption(post: post, inlineBodyOnly: true),
+                    if (!_hasMedia && (post.caption?.trim().isNotEmpty ?? false))
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFF2A1548), Color(0xFF14102A)],
+                            ),
+                            border: Border.all(
+                              color: AppThemeColors.accentPurple
+                                  .withValues(alpha: 0.35),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: SocialPostTextPreview(
+                              text: post.caption!.trim(),
+                            ),
+                          ),
+                        ),
                       ),
-                      border: Border.all(
-                        color: AppThemeColors.accentPurple.withValues(alpha: 0.35),
+                    if (post.isAutoShare || post.fortuneCount > 0)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            if (post.isAutoShare) const _AutoShareBadge(),
+                            if (post.fortuneCount > 0)
+                              _CoViewersBadge(count: post.fortuneCount),
+                          ],
+                        ),
                       ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: SocialPostTextPreview(text: post.caption!.trim()),
-                    ),
-                  ),
+                    if (_hasMedia)
+                      _PostMediaBlock(
+                        post: post,
+                        onFortuneTap: () => _openFortune(context),
+                      ),
+                  ],
                 ),
-              if (post.isAutoShare || post.fortuneCount > 0)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      if (post.isAutoShare) const _AutoShareBadge(),
-                      if (post.fortuneCount > 0)
-                        _CoViewersBadge(count: post.fortuneCount),
-                    ],
-                  ),
-                ),
-              if (_hasMedia)
-                _PostMediaBlock(
-                  post: post,
-                  onFortuneTap: () => _openFortune(context),
-                ),
+              ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                 child: Row(

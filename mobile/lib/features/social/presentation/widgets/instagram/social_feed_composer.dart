@@ -1,20 +1,189 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
-import '../../utils/open_social_create_post.dart';
+import '../../../../search/domain/entities/search_user_entity.dart';
+import '../../../../search/presentation/providers/search_providers.dart';
+import '../../../domain/entities/create_social_post_input.dart';
+import '../../providers/social_composer_providers.dart';
+import '../../providers/social_create_post_provider.dart';
 
-/// «Ne düşünüyorsun, Canlıfal?» — mor çerçeveli paylaşım kartı.
-class SocialFeedComposer extends ConsumerWidget {
+/// Sosyal akış üstü — aynı sayfada paylaşım (metin, foto, video, duygu, #, @).
+class SocialFeedComposer extends ConsumerStatefulWidget {
   const SocialFeedComposer({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SocialFeedComposer> createState() => _SocialFeedComposerState();
+}
+
+class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
+  final _caption = TextEditingController();
+  final _picker = ImagePicker();
+  final _focus = FocusNode();
+
+  var _expanded = false;
+  var _submitting = false;
+  String? _imagePath;
+  String? _videoPath;
+  String? _moodEmoji;
+
+  static const _moods = ['😊', '😍', '🔥', '✨', '😢', '🎉', '💜', '🙏'];
+
+  @override
+  void dispose() {
+    _caption.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  void _expand() {
+    setState(() => _expanded = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _focus.requestFocus());
+  }
+
+  bool get _canShare =>
+      !_submitting &&
+      (_caption.text.trim().isNotEmpty ||
+          _imagePath != null ||
+          _videoPath != null);
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final file = await _picker.pickImage(
+        source: source,
+        maxWidth: 2048,
+        maxHeight: 2048,
+        imageQuality: 88,
+      );
+      if (file != null && mounted) {
+        setState(() {
+          _imagePath = file.path;
+          _videoPath = null;
+          _expanded = true;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Görsel seçilemedi: $e')),
+      );
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    try {
+      final file = await _picker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: const Duration(minutes: 3),
+      );
+      if (file != null && mounted) {
+        setState(() {
+          _videoPath = file.path;
+          _imagePath = null;
+          _expanded = true;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Video seçilemedi: $e')),
+      );
+    }
+  }
+
+  void _insertText(String snippet) {
+    final text = _caption.text;
+    final sel = _caption.selection;
+    final start = sel.start >= 0 ? sel.start : text.length;
+    final end = sel.end >= 0 ? sel.end : text.length;
+    final next = text.replaceRange(start, end, snippet);
+    _caption.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: start + snippet.length),
+    );
+    setState(() {});
+    _expand();
+  }
+
+  Future<void> _pickMention() async {
+    final picked = await showModalBottomSheet<SearchUserEntity>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF120A24),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => const _MentionPickerSheet(),
+    );
+    if (picked != null) {
+      _insertText('@${picked.username} ');
+    }
+  }
+
+  Future<void> _submit() async {
+    final me = ref.read(authControllerProvider).valueOrNull;
+    if (me == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Paylaşım için giriş yapın')),
+      );
+      return;
+    }
+    if (!_canShare) return;
+
+    var caption = _caption.text.trim();
+    if (_moodEmoji != null && _moodEmoji!.isNotEmpty) {
+      caption = caption.isEmpty ? _moodEmoji! : '$_moodEmoji $caption';
+    }
+
+    setState(() => _submitting = true);
+    try {
+      await ref.read(socialCreatePostProvider.notifier).submit(
+            CreateSocialPostInput(
+              caption: caption,
+              imagePath: _imagePath,
+              videoPath: _videoPath,
+            ),
+          );
+      if (!mounted) return;
+      _caption.clear();
+      setState(() {
+        _imagePath = null;
+        _videoPath = null;
+        _moodEmoji = null;
+        _expanded = false;
+      });
+      _focus.unfocus();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Paylaşım yayınlandı')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(socialComposerExpandedProvider, (prev, next) {
+      if (next == true && mounted) {
+        _expand();
+        ref.read(socialComposerExpandedProvider.notifier).state = false;
+      }
+    });
+
     final me = ref.watch(authControllerProvider).valueOrNull;
+    final displayName = me?.display ?? 'sen';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
@@ -36,70 +205,170 @@ class SocialFeedComposer extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => openSocialCreatePost(context, ref),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  UserAvatar(url: me?.avatarUrl, radius: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _expanded
+                        ? TextField(
+                            controller: _caption,
+                            focusNode: _focus,
+                            maxLines: 5,
+                            minLines: 2,
+                            maxLength: 2200,
+                            style: TextStyle(
+                              color: context.colors.onSurface,
+                              fontSize: 15,
+                              height: 1.4,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Ne düşünüyorsun, $displayName?',
+                              hintStyle: TextStyle(
+                                color: context.colors.onSurfaceMuted
+                                    .withValues(alpha: 0.9),
+                              ),
+                              border: InputBorder.none,
+                              counterStyle: TextStyle(
+                                color: context.colors.onSurfaceMuted,
+                                fontSize: 11,
+                              ),
+                            ),
+                            onChanged: (_) => setState(() {}),
+                          )
+                        : GestureDetector(
+                            onTap: me == null
+                                ? () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content:
+                                            Text('Paylaşım için giriş yapın'),
+                                      ),
+                                    );
+                                  }
+                                : _expand,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 6),
+                                child: Text(
+                                  'Ne düşünüyorsun, $displayName?',
+                                  style: TextStyle(
+                                    color: context.colors.onSurfaceMuted
+                                        .withValues(alpha: 0.95),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+            if (_moodEmoji != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Chip(
+                    label: Text('Duygu: $_moodEmoji'),
+                    deleteIcon: const Icon(Icons.close, size: 16),
+                    onDeleted: () => setState(() => _moodEmoji = null),
+                  ),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-                  child: Row(
+              ),
+            if (_imagePath != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+                child: _MediaPreview(
+                  child: Image.file(File(_imagePath!), fit: BoxFit.cover),
+                  onClear: () => setState(() => _imagePath = null),
+                ),
+              ),
+            if (_videoPath != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+                child: _MediaPreview(
+                  child: const Stack(
+                    alignment: Alignment.center,
                     children: [
-                      UserAvatar(url: me?.avatarUrl, radius: 20),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Ne düşünüyorsun, Canlıfal?',
-                          style: TextStyle(
-                            color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
+                      ColoredBox(
+                        color: Color(0xFF1A0F3D),
+                        child: Center(
+                          child: Icon(
+                            Icons.videocam_rounded,
+                            size: 48,
+                            color: Colors.white54,
                           ),
                         ),
                       ),
                     ],
                   ),
+                  onClear: () => setState(() => _videoPath = null),
                 ),
               ),
-            ),
-            Divider(
-              height: 1,
-              color: Colors.white.withValues(alpha: 0.06),
-            ),
+            Divider(height: 1, color: Colors.white.withValues(alpha: 0.06)),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _ComposerAction(
                     icon: Icons.photo_library_rounded,
-                    label: 'Fotoğraf',
+                    label: 'Foto',
                     color: AppThemeColors.accentPink,
-                    onTap: () => openSocialCreatePost(context, ref),
+                    onTap: () => _pickImage(ImageSource.gallery),
                   ),
                   _ComposerAction(
                     icon: Icons.videocam_rounded,
                     label: 'Video',
                     color: const Color(0xFFE85D4A),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Video paylaşımı yakında'),
-                        ),
-                      );
-                    },
+                    onTap: _pickVideo,
                   ),
                   _ComposerAction(
                     icon: Icons.emoji_emotions_outlined,
                     label: 'Duygu',
                     color: const Color(0xFFF7B928),
-                    onTap: () => openSocialCreatePost(
-                      context,
-                      ref,
-                      initialCaption: '😊 ',
+                    onTap: _showMoodPicker,
+                  ),
+                  IconButton(
+                    tooltip: 'Hashtag',
+                    onPressed: () => _insertText('#'),
+                    icon: const Icon(Icons.tag_rounded, size: 22),
+                    color: AppThemeColors.accentPurple,
+                  ),
+                  IconButton(
+                    tooltip: 'Etiketle',
+                    onPressed: _pickMention,
+                    icon: const Icon(Icons.alternate_email_rounded, size: 22),
+                    color: AppThemeColors.accentCyan,
+                  ),
+                  const Spacer(),
+                  FilledButton(
+                    onPressed: _canShare ? _submit : null,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppThemeColors.accentPink,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      minimumSize: const Size(0, 36),
                     ),
+                    child: _submitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Paylaş',
+                            style: TextStyle(fontWeight: FontWeight.w800),
+                          ),
                   ),
                 ],
               ),
@@ -107,6 +376,71 @@ class SocialFeedComposer extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showMoodPicker() {
+    _expand();
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF120A24),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
+            children: _moods.map((e) {
+              return InkWell(
+                onTap: () {
+                  setState(() => _moodEmoji = e);
+                  Navigator.pop(ctx);
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text(e, style: const TextStyle(fontSize: 32)),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MediaPreview extends StatelessWidget {
+  const _MediaPreview({required this.child, required this.onClear});
+
+  final Widget child;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: AspectRatio(aspectRatio: 16 / 9, child: child),
+        ),
+        Positioned(
+          top: 8,
+          right: 8,
+          child: Material(
+            color: Colors.black54,
+            shape: const CircleBorder(),
+            child: IconButton(
+              icon: const Icon(Icons.close_rounded, color: Colors.white),
+              onPressed: onClear,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -130,19 +464,110 @@ class _ComposerAction extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 22, color: color),
-            SizedBox(width: 6),
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
                 fontWeight: FontWeight.w700,
-                fontSize: 13,
+                fontSize: 12,
                 color: context.colors.onSurfaceVariant,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MentionPickerSheet extends ConsumerStatefulWidget {
+  const _MentionPickerSheet();
+
+  @override
+  ConsumerState<_MentionPickerSheet> createState() =>
+      _MentionPickerSheetState();
+}
+
+class _MentionPickerSheetState extends ConsumerState<_MentionPickerSheet> {
+  final _query = TextEditingController();
+  var _loading = false;
+  List<SearchUserEntity> _results = const [];
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
+
+  Future<void> _search(String q) async {
+    if (q.trim().length < 2) {
+      setState(() => _results = const []);
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final list =
+          await ref.read(searchRemoteProvider).searchUsers(q.trim());
+      if (mounted) setState(() => _results = list);
+    } catch (_) {
+      if (mounted) setState(() => _results = const []);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.viewInsetsOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottom),
+      child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * 0.55,
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Kişi etiketle',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _query,
+                decoration: InputDecoration(
+                  hintText: 'Kullanıcı adı ara…',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  filled: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onChanged: _search,
+              ),
+            ),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                      itemCount: _results.length,
+                      itemBuilder: (context, i) {
+                        final u = _results[i];
+                        return ListTile(
+                          leading: UserAvatar(url: u.image, radius: 18),
+                          title: Text(u.name),
+                          subtitle: Text('@${u.username}'),
+                          onTap: () => Navigator.pop(context, u),
+                        );
+                      },
+                    ),
             ),
           ],
         ),

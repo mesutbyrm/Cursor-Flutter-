@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:go_router/go_router.dart';
+
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/user_avatar.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../domain/entities/social_comment_entity.dart';
 import '../../providers/social_providers.dart';
 
@@ -23,6 +26,15 @@ class SocialPostCommentsSheet extends ConsumerStatefulWidget {
     required String postId,
     int initialCount = 0,
   }) {
+    final container = ProviderScope.containerOf(context);
+    final authed = container.read(authControllerProvider).valueOrNull;
+    if (authed == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Yorum yazmak için giriş yapın')),
+      );
+      context.go('/login');
+      return Future.value();
+    }
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -70,9 +82,20 @@ class _SocialPostCommentsSheetState
   Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _sending) return;
+    final authed = ref.read(authControllerProvider).valueOrNull;
+    if (authed == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Yorum yazmak için giriş yapın')),
+        );
+        context.go('/login');
+      }
+      return;
+    }
     setState(() => _sending = true);
     try {
       await ref.read(socialRepositoryProvider).addComment(widget.postId, text);
+      ref.read(socialNotifierProvider.notifier).bumpCommentCount(widget.postId);
       _controller.clear();
       setState(_reload);
       if (mounted) {

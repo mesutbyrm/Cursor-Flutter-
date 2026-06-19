@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.281+284 (2026-06-19)
+
+### Sosyal — paylaşım, profil ve yorum iyileştirmeleri
+
+- **Video paylaşım:** Gönderi oluştururken video multipart (`video` alanı) desteği
+- **Profil duvarı:** TikTok ızgarası yerine dikey zaman çizelgesi; gönderiye dokununca ilgili paylaşıma kaydırma
+- **Yorum sayacı:** Yorum gönderildiğinde akıştaki sayaç anında güncellenir
+- **Composer:** App bar ve boş durum «Paylaşım oluştur» inline composer'ı açar
+- **Giriş kontrolü:** Yorum yazmadan önce oturum doğrulaması
+
+
 ## 1.0.280+283 (2026-06-18)
 
 ### Canlı yayın — kamera/ses ve oda geçişi
