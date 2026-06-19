@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../shell/presentation/providers/role_panel_providers.dart';
 import '../../domain/entities/psychic_award_entity.dart';
 import '../../domain/entities/psychic_entity.dart';
 import '../../domain/entities/psychic_gift_entity.dart';
@@ -299,21 +298,19 @@ class ApprovedPsychicNotifier extends Notifier<ApprovedPsychicState> {
       return;
     }
     state = state.copyWith(loading: true);
-    final resolved =
-        await ref.read(rolePanelResolverProvider).resolveTellerDetailed(user);
-    final diagnostic = TellerRoleDiagnostic.from(
+    final resolved = await ref
+        .read(fortuneTellerProfileResolverProvider)
+        .resolveFortuneTellerProfile(user);
+    final diagnostic = TellerRoleDiagnostic.fromResolve(
       user: user,
-      profile: resolved.profile,
-      resolveSource: resolved.source,
-      rawMyProfile: resolved.rawMyProfile,
-      rawMeSnippet: resolved.rawMeSnippet,
+      resolved: resolved,
     );
     diagnostic.emit();
     state = ApprovedPsychicState(
       profile: resolved.profile,
       loading: false,
       checked: true,
-      lastDiagnostic: diagnostic.resolveSource,
+      lastDiagnostic: resolved.source,
     );
   }
 }

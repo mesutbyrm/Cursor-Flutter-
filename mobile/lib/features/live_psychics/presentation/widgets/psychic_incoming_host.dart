@@ -106,32 +106,19 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   Future<void> _ensureTellerProfile() async {
     if (!_mayRunTellerBackgroundSync()) return;
 
-    var profile = ref.read(approvedPsychicProvider).profile;
-    if (profile == null) {
+    var approved = ref.read(approvedPsychicProvider);
+    if (!approved.checked || approved.profile == null) {
       await ref.read(approvedPsychicProvider.notifier).refresh();
-      profile = ref.read(approvedPsychicProvider).profile;
+      approved = ref.read(approvedPsychicProvider);
     }
-    if (profile == null) {
-      final repo = ref.read(livePsychicsRepositoryProvider);
-      profile = await repo.fetchMyProfile();
-      if (profile == null) {
-        final userId = ref.read(authControllerProvider).valueOrNull?.id;
-        if (userId != null) {
-          final tellers = await repo.fetchPsychics();
-          for (final t in tellers) {
-            if (t.userId == userId || t.id == userId) {
-              profile = t;
-              break;
-            }
-          }
-        }
-      }
-    }
+
+    final profile = approved.profile;
     if (profile == null || !profile.isUsable) {
       _isFortuneTeller = false;
       _tellerProfileId = null;
       return;
     }
+
     final wasTeller = _isFortuneTeller;
     _isFortuneTeller = true;
     _tellerProfileId = profile.id;
@@ -330,6 +317,16 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
         (prev, next) {
       if (next.isNotEmpty && !_presenting) {
         unawaited(_tryPresentNext());
+      }
+    });
+    ref.listen(approvedPsychicProvider, (prev, next) {
+      final profile = next.profile;
+      if (profile != null && profile.isUsable) {
+        _isFortuneTeller = true;
+        _tellerProfileId = profile.id;
+      } else if (next.checked) {
+        _isFortuneTeller = false;
+        _tellerProfileId = null;
       }
     });
     return widget.child;

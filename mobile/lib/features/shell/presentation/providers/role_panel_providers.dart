@@ -12,5 +12,6 @@ final rolePanelResolverProvider = Provider<RolePanelResolver>((ref) {
     dio,
     ref.watch(livePsychicsRemoteProvider),
     AgencyRemoteDataSource(dio),
+    ref.watch(fortuneTellerProfileResolverProvider),
   );
 });

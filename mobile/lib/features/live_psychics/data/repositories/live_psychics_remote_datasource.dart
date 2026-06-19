@@ -66,6 +66,21 @@ class LivePsychicsRemoteDataSource {
     }
   }
 
+  /// `userId` (auth) ile eşleşen falcı — liste sayfalama; **authUser.id ile GET by id yapılmaz**.
+  Future<PsychicEntity?> findTellerByAuthUserId(String authUserId) async {
+    final uid = authUserId.trim();
+    if (uid.isEmpty) return null;
+    for (var page = 1; page <= 10; page++) {
+      final batch = await fetchPsychics(page: page, limit: 50);
+      if (batch.isEmpty) break;
+      for (final t in batch) {
+        if (t.userId?.trim() == uid && t.isUsable) return t;
+      }
+      if (batch.length < 50) break;
+    }
+    return null;
+  }
+
   Future<PsychicEntity?> fetchPsychic(String id) async {
     final key = id.trim();
     if (key.isEmpty) return null;

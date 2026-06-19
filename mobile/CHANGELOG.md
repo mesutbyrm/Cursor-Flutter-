@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.302+305 (2026-06-19)
+
+### Canlı Falcılar — fortuneTeller.id ≠ authUser.id (kök neden düzeltmesi)
+
+- **Tek kaynak:** `resolveFortuneTellerProfile()` — my-profile → liste (userId) → /api/me → `fortune-tellers/{tellerId}`
+- **Kaldırıldı:** `GET /api/fortune-tellers/{authUser.id}` (404 kök nedeni)
+- **Tüm akışlar:** `approvedPsychicProvider`, `RolePanelResolver`, `PsychicIncomingHost._ensureTellerProfile`
+- **Teşhis:** `[TellerDebug]` — profileFound, fortuneTellerId, authUserId, isUsable, isApprovedTeller, isFortuneTeller
+
 ## 1.0.301+304 (2026-06-19)
 
 ### Canlı Falcılar — falcı rolü doğrulama (kök neden düzeltmesi)

@@ -3,48 +3,99 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../data/services/fortune_teller_profile_resolver.dart';
 import '../../domain/entities/psychic_entity.dart';
 
 /// Falcı rolü çözümlemesi — debug log (üretimde de sorun teşhisi için).
 class TellerRoleDiagnostic {
   TellerRoleDiagnostic({
-    required this.userId,
+    required this.authUserId,
     required this.role,
+    required this.profileFound,
+    required this.fortuneTellerId,
+    required this.isUsable,
+    required this.isApprovedTeller,
     required this.isFortuneTeller,
-    required this.tellerId,
-    required this.tellerProfileFound,
-    required this.onlineStatus,
-    required this.approvalStatus,
     required this.resolveSource,
+    this.approvalStatus,
+    this.onlineStatus,
+    this.blockReason,
     this.rawMyProfile,
     this.rawMeSnippet,
   });
 
-  final String? userId;
+  final String? authUserId;
   final String? role;
+  final bool profileFound;
+  final String? fortuneTellerId;
+  final bool isUsable;
+  final bool isApprovedTeller;
   final bool isFortuneTeller;
-  final String? tellerId;
-  final bool tellerProfileFound;
-  final bool? onlineStatus;
-  final String? approvalStatus;
   final String resolveSource;
+  final String? approvalStatus;
+  final bool? onlineStatus;
+  final String? blockReason;
   final String? rawMyProfile;
   final String? rawMeSnippet;
 
   void emit() {
-    final payload = {
-      'userId': userId,
-      'role': role,
-      'isFortuneTeller': isFortuneTeller,
-      'tellerId': tellerId,
-      'tellerProfile': tellerProfileFound,
-      'onlineStatus': onlineStatus,
-      'approvalStatus': approvalStatus,
-      'resolveSource': resolveSource,
-      if (rawMyProfile != null) 'rawMyProfile': rawMyProfile,
-      if (rawMeSnippet != null) 'rawMe': rawMeSnippet,
-    };
-    debugPrint('[TellerRole] ${jsonEncode(payload)}');
+    debugPrint(
+      '[TellerDebug]\n'
+      'profileFound=$profileFound\n'
+      'fortuneTellerId=${fortuneTellerId ?? ""}\n'
+      'authUserId=${authUserId ?? ""}\n'
+      'isUsable=$isUsable\n'
+      'isApprovedTeller=$isApprovedTeller\n'
+      'isFortuneTeller=$isFortuneTeller\n'
+      'resolveSource=$resolveSource\n'
+      'role=${role ?? ""}\n'
+      'approvalStatus=${approvalStatus ?? ""}\n'
+      'onlineStatus=${onlineStatus ?? ""}\n'
+      'blockReason=${blockReason ?? ""}',
+    );
+    if (rawMyProfile != null || rawMeSnippet != null) {
+      debugPrint(
+        '[TellerDebug] raw=${jsonEncode({
+          if (rawMyProfile != null) 'myProfile': rawMyProfile,
+          if (rawMeSnippet != null) 'me': rawMeSnippet,
+        })}',
+      );
+    }
+  }
+
+  static TellerRoleDiagnostic fromResolve({
+    required UserEntity user,
+    required FortuneTellerProfileResult resolved,
+  }) {
+    final profile = resolved.profile;
+    final found = resolved.profileFound;
+    final usable = resolved.isUsable;
+    return TellerRoleDiagnostic(
+      authUserId: user.id,
+      role: user.role,
+      profileFound: found,
+      fortuneTellerId: profile?.id,
+      isUsable: usable,
+      isApprovedTeller: usable,
+      isFortuneTeller: usable,
+      resolveSource: resolved.source,
+      approvalStatus: profile?.applicationStatus,
+      onlineStatus: profile?.isOnline,
+      blockReason: found && usable
+          ? ''
+          : _blockReason(resolved),
+      rawMyProfile: resolved.rawMyProfile,
+      rawMeSnippet: resolved.rawMeSnippet,
+    );
+  }
+
+  static String _blockReason(FortuneTellerProfileResult resolved) {
+    if (resolved.source == 'no_auth_user') {
+      return 'Oturum kullanıcı kimliği boş';
+    }
+    return 'my-profile, fortune-tellers listesi (userId=${resolved.authUserId}) '
+        've /api/me ile falcı profili çözülemedi; '
+        'authUser.id fortuneTeller.id ile karıştırılmamalı';
   }
 
   static TellerRoleDiagnostic from({
@@ -54,15 +105,19 @@ class TellerRoleDiagnostic {
     String? rawMyProfile,
     String? rawMeSnippet,
   }) {
+    final usable = profile?.isUsable == true;
     return TellerRoleDiagnostic(
-      userId: user.id,
+      authUserId: user.id,
       role: user.role,
-      isFortuneTeller: profile?.isUsable == true,
-      tellerId: profile?.id,
-      tellerProfileFound: profile != null,
-      onlineStatus: profile?.isOnline,
-      approvalStatus: profile?.applicationStatus,
+      profileFound: profile != null,
+      fortuneTellerId: profile?.id,
+      isUsable: usable,
+      isApprovedTeller: usable,
+      isFortuneTeller: usable,
       resolveSource: resolveSource,
+      approvalStatus: profile?.applicationStatus,
+      onlineStatus: profile?.isOnline,
+      blockReason: usable ? '' : 'Profil bulunamadı veya kullanılamaz',
       rawMyProfile: rawMyProfile,
       rawMeSnippet: rawMeSnippet,
     );
@@ -80,6 +135,7 @@ class TellerRoleDiagnostic {
   }
 }
 
+/// Geriye dönük — [RolePanelResolver] delegasyonu.
 class TellerResolveResult {
   const TellerResolveResult({
     this.profile,

@@ -6,22 +6,24 @@ import '../../../core/util/json_util.dart';
 import '../../agency/data/datasources/agency_remote_datasource.dart';
 import '../../agency/domain/entities/agency_entity.dart';
 import '../../auth/domain/entities/user_entity.dart';
-import '../../live_psychics/data/models/psychic_model.dart';
 import '../../live_psychics/data/repositories/live_psychics_remote_datasource.dart';
+import '../../live_psychics/data/services/fortune_teller_profile_resolver.dart';
 import '../../live_psychics/domain/entities/psychic_entity.dart';
 import '../../live_psychics/presentation/diagnostics/teller_role_diagnostic.dart';
 
-/// Onaylı falcı/ajans — birden fazla üretim uç noktasından çözümleme.
+/// Onaylı ajans; falcı çözümlemesi [FortuneTellerProfileResolver]'a delege edilir.
 class RolePanelResolver {
   RolePanelResolver(
     this._dio,
     this._psychics,
     this._agency,
+    this._fortuneTeller,
   );
 
   final Dio _dio;
   final LivePsychicsRemoteDataSource _psychics;
   final AgencyRemoteDataSource _agency;
+  final FortuneTellerProfileResolver _fortuneTeller;
 
   Future<PsychicEntity?> resolveTeller(UserEntity user) async {
     final result = await resolveTellerDetailed(user);
@@ -29,102 +31,12 @@ class RolePanelResolver {
   }
 
   Future<TellerResolveResult> resolveTellerDetailed(UserEntity user) async {
-    final userId = user.id.trim();
-    if (userId.isEmpty) {
-      return const TellerResolveResult(source: 'no_user');
-    }
-
-    final rawMyProfile =
-        await _psychics.fetchMyProfileRaw();
-    var profile = PsychicModel.psychicFromMyProfileBody(rawMyProfile);
-    if (_usable(profile)) {
-      return TellerResolveResult(
-        profile: profile,
-        source: 'my-profile',
-        rawMyProfile: TellerRoleDiagnostic.truncateJson(rawMyProfile),
-      );
-    }
-
-    String? rawMeSnippet;
-    for (final path in [
-      ApiEndpoints.me,
-      ApiEndpoints.userSiteProfile,
-      ApiEndpoints.fortuneTeller(userId),
-    ]) {
-      profile = await _tellerFromPath(path, userId);
-      if (_usable(profile)) {
-        return TellerResolveResult(
-          profile: profile,
-          source: path,
-          rawMyProfile: TellerRoleDiagnostic.truncateJson(rawMyProfile),
-          rawMeSnippet: rawMeSnippet,
-        );
-      }
-      if (path == ApiEndpoints.me || path == ApiEndpoints.userSiteProfile) {
-        try {
-          final res = await _dio.safeGet<dynamic>(path);
-          rawMeSnippet = TellerRoleDiagnostic.truncateJson(res.data);
-        } catch (_) {}
-      }
-    }
-
-    try {
-      final tellers = await _psychics.fetchPsychics();
-      for (final t in tellers) {
-        if (t.userId == userId || t.id == userId) {
-          if (_usable(t)) {
-            return TellerResolveResult(
-              profile: t,
-              source: 'fortune-tellers-list',
-              rawMyProfile: TellerRoleDiagnostic.truncateJson(rawMyProfile),
-              rawMeSnippet: rawMeSnippet,
-            );
-          }
-        }
-      }
-    } catch (_) {}
-
-    if (await _canAccessTellerSessions()) {
-      profile = PsychicEntity(
-        id: userId,
-        userId: userId,
-        name: user.displayName?.trim().isNotEmpty == true
-            ? user.displayName!.trim()
-            : user.username,
-        avatarUrl: user.avatarUrl,
-        applicationStatus: 'approved',
-        isOnline: true,
-      );
-      return TellerResolveResult(
-        profile: profile,
-        source: 'sessions-access',
-        rawMyProfile: TellerRoleDiagnostic.truncateJson(rawMyProfile),
-        rawMeSnippet: rawMeSnippet,
-      );
-    }
-
-    if (_roleLooksLikeTeller(user.role)) {
-      profile = PsychicEntity(
-        id: userId,
-        userId: userId,
-        name: user.displayName?.trim().isNotEmpty == true
-            ? user.displayName!.trim()
-            : user.username,
-        avatarUrl: user.avatarUrl,
-        applicationStatus: 'approved',
-      );
-      return TellerResolveResult(
-        profile: profile,
-        source: 'user.role=${user.role}',
-        rawMyProfile: TellerRoleDiagnostic.truncateJson(rawMyProfile),
-        rawMeSnippet: rawMeSnippet,
-      );
-    }
-
+    final resolved = await _fortuneTeller.resolveFortuneTellerProfile(user);
     return TellerResolveResult(
-      source: 'not_resolved',
-      rawMyProfile: TellerRoleDiagnostic.truncateJson(rawMyProfile),
-      rawMeSnippet: rawMeSnippet,
+      profile: resolved.profile,
+      source: resolved.source,
+      rawMyProfile: resolved.rawMyProfile,
+      rawMeSnippet: resolved.rawMeSnippet,
     );
   }
 
@@ -167,15 +79,6 @@ class RolePanelResolver {
     return null;
   }
 
-  Future<PsychicEntity?> _tellerFromPath(String path, String userId) async {
-    try {
-      final res = await _dio.safeGet<dynamic>(path);
-      return _parseTellerBody(res.data, userId);
-    } catch (_) {
-      return null;
-    }
-  }
-
   Future<AgencyEntity?> _agencyFromPath(String path) async {
     try {
       final res = await _dio.safeGet<dynamic>(path);
@@ -183,59 +86,6 @@ class RolePanelResolver {
     } catch (_) {
       return null;
     }
-  }
-
-  PsychicEntity? _parseTellerBody(dynamic body, String userId) {
-    if (body is! Map) return null;
-    final map = asJsonMap(body);
-    if (map['success'] == false && map['error'] != null) return null;
-
-    final layers = <Map<String, dynamic>>[];
-    if (map['data'] is Map) layers.add(asJsonMap(map['data']));
-    layers.add(map);
-
-    for (final layer in layers) {
-      for (final key in const [
-        'teller',
-        'fortuneTeller',
-        'liveFortuneTeller',
-        'fortuneTellerProfile',
-        'liveFortuneTellerProfile',
-        'profile',
-      ]) {
-        final nested = layer[key];
-        if (nested is Map) {
-          final parsed = PsychicModel.psychicFromJson(nested);
-          if (_usable(parsed)) return parsed;
-        }
-      }
-      if (_looksLikeTellerMap(layer)) {
-        final parsed = PsychicModel.psychicFromJson(layer);
-        if (_usable(parsed)) return parsed;
-      }
-    }
-
-    final role = pick(map, ['role', 'userRole'])?.toString().toLowerCase() ?? '';
-    final tellerId = pick(map, [
-      'fortuneTellerId',
-      'tellerId',
-      'liveFortuneTellerId',
-    ])?.toString();
-    if (_roleLooksLikeTeller(role) ||
-        _rolesContainTeller(map['roles']) ||
-        map['isFortuneTeller'] == true ||
-        map['isLiveFortuneTeller'] == true ||
-        map['canGoOnline'] == true) {
-      final id = (tellerId != null && tellerId.isNotEmpty) ? tellerId : userId;
-      return PsychicEntity(
-        id: id,
-        userId: userId,
-        name: pick(map, ['name', 'displayName'])?.toString() ?? 'Falcı',
-        applicationStatus: 'approved',
-        isOnline: map['isOnline'] == true || map['online'] == true,
-      );
-    }
-    return null;
   }
 
   AgencyEntity? _parseAgencyBody(dynamic body) {
@@ -285,22 +135,6 @@ class RolePanelResolver {
     return null;
   }
 
-  Future<bool> _canAccessTellerSessions() async {
-    for (final path in [
-      ApiEndpoints.fortuneTellerSessionsWithStatus('pending'),
-      ApiEndpoints.fortuneTellerIncomingSessions,
-      ApiEndpoints.fortuneTellerSessions,
-      ApiEndpoints.fortuneTellerSessionsStream,
-    ]) {
-      try {
-        final res = await _dio.safeGet<dynamic>(path);
-        if (!_looksLikeAuthorizedBody(res.data)) continue;
-        return true;
-      } catch (_) {}
-    }
-    return false;
-  }
-
   Future<bool> _canAccessAgencyEndpoints() async {
     for (final path in [
       ApiEndpoints.agencyMembers,
@@ -334,17 +168,6 @@ class RolePanelResolver {
     return map.isNotEmpty;
   }
 
-  bool _looksLikeTellerMap(Map<String, dynamic> m) {
-    final id = pick(m, ['id', '_id', 'tellerId'])?.toString();
-    if (id == null || id.isEmpty) return false;
-    return m.containsKey('userId') ||
-        m.containsKey('displayName') ||
-        m.containsKey('specialties') ||
-        m.containsKey('isOnline') ||
-        m.containsKey('pricePerMinute') ||
-        m.containsKey('canGoOnline');
-  }
-
   bool _looksLikeAgencyMap(Map<String, dynamic> m) {
     final id = pick(m, ['id', '_id', 'agencyId'])?.toString();
     if (id == null || id.isEmpty) return false;
@@ -352,14 +175,6 @@ class RolePanelResolver {
         m.containsKey('memberCount') ||
         m.containsKey('inviteCode') ||
         m.containsKey('ownerId');
-  }
-
-  bool _rolesContainTeller(dynamic roles) {
-    if (roles is! List) return false;
-    for (final r in roles) {
-      if (_roleLooksLikeTeller(r?.toString())) return true;
-    }
-    return false;
   }
 
   bool _rolesContainAgency(dynamic roles) {
@@ -370,24 +185,11 @@ class RolePanelResolver {
     return false;
   }
 
-  bool _roleLooksLikeTeller(String? role) {
-    final r = role?.trim().toLowerCase() ?? '';
-    if (r.isEmpty) return false;
-    return r.contains('teller') ||
-        r.contains('fortune') ||
-        r.contains('falc') ||
-        r.contains('falci') ||
-        r.contains('advisor');
-  }
-
   bool _roleLooksLikeAgency(String? role) {
     final r = role?.trim().toLowerCase() ?? '';
     if (r.isEmpty) return false;
     return r.contains('agency') || r.contains('ajans');
   }
-
-  bool _usable(PsychicEntity? profile) =>
-      profile != null && profile.isUsable;
 
   bool _usableAgency(AgencyEntity? agency) =>
       agency != null && agency.isUsable;
