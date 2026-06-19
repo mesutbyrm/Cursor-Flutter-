@@ -3,6 +3,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/app_router.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -23,18 +24,16 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
 
   const normalCost = LiveRemoteDataSource.voiceRoomNormalOpenJetonCost;
   const vipCost = LiveRemoteDataSource.voiceRoomVipOpenJetonCost;
-  int balance = 0;
-  try {
-    balance = (await ref.read(walletBalancesProvider.future).timeout(
-          const Duration(seconds: 12),
-        ))
-        .jeton;
-  } catch (_) {
-    balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ?? 0;
-  }
+  var balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ?? 0;
+  // Önbellekli bakiye ile hemen sheet aç; güncelleme arka planda.
+  ref.read(walletBalancesProvider.future).then((b) {
+    balance = b.jeton;
+  }).catchError((_) {});
 
   final choice = await showModalBottomSheet<_OpenRoomChoice>(
     context: context,
+    isScrollControlled: true,
+    useRootNavigator: true,
     backgroundColor: const Color(0xFF12081F),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -72,7 +71,8 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: () => Navigator.pop(ctx, _OpenRoomChoice.standard),
+              onPressed: () => Navigator.of(ctx, rootNavigator: true)
+                  .pop(_OpenRoomChoice.standard),
               icon: const Icon(Icons.mic_rounded),
               label: Text('Sesli oda aç · $normalCost jeton'),
               style: FilledButton.styleFrom(
@@ -82,7 +82,8 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
             ),
             const SizedBox(height: 10),
             OutlinedButton.icon(
-              onPressed: () => Navigator.pop(ctx, _OpenRoomChoice.vip),
+              onPressed: () =>
+                  Navigator.of(ctx, rootNavigator: true).pop(_OpenRoomChoice.vip),
               icon: const Icon(Icons.workspace_premium_rounded),
               label: Text('VIP oda aç · $vipCost jeton/ay'),
               style: OutlinedButton.styleFrom(
@@ -93,7 +94,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
             ),
             const SizedBox(height: 8),
             TextButton(
-              onPressed: () => Navigator.pop(ctx),
+              onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
               child: const Text('İptal'),
             ),
           ],
@@ -103,6 +104,8 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
   );
 
   if (choice == null || !context.mounted) return;
+
+  _showLoadingDialog(context);
 
   final cost = choice == _OpenRoomChoice.vip ? vipCost : normalCost;
   ref.invalidate(walletBalancesProvider);
@@ -115,8 +118,15 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
     balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ?? balance;
   }
 
+  if (!context.mounted) {
+    _dismissLoadingDialog(context);
+    return;
+  }
+
   if (balance < cost) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    _dismissLoadingDialog(context);
+    _showSnackBar(
+      context,
       SnackBar(
         content: Text('Yetersiz jeton ($cost gerekli, $balance mevcut).'),
         action: SnackBarAction(
@@ -128,23 +138,46 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
     return;
   }
 
-  await _createAndEnter(context, ref, vip: choice == _OpenRoomChoice.vip);
+  await _createAndEnter(
+    context,
+    ref,
+    vip: choice == _OpenRoomChoice.vip,
+    loadingVisible: true,
+  );
 }
 
 enum _OpenRoomChoice { standard, vip }
+
+void _showLoadingDialog(BuildContext context) {
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    useRootNavigator: true,
+    builder: (_) => const Center(
+      child: CircularProgressIndicator(color: AppThemeColors.accentPink),
+    ),
+  );
+}
+
+void _dismissLoadingDialog(BuildContext context) {
+  final nav = Navigator.of(context, rootNavigator: true);
+  if (nav.canPop()) nav.pop();
+}
+
+void _showSnackBar(BuildContext context, SnackBar snackBar) {
+  final rootCtx = rootNavigatorKey.currentContext ?? context;
+  ScaffoldMessenger.maybeOf(rootCtx)?.showSnackBar(snackBar);
+}
 
 Future<void> _createAndEnter(
   BuildContext context,
   WidgetRef ref, {
   required bool vip,
+  bool loadingVisible = false,
 }) async {
-  showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => const Center(
-      child: CircularProgressIndicator(color: AppThemeColors.accentPink),
-    ),
-  );
+  if (!loadingVisible) {
+    _showLoadingDialog(context);
+  }
 
   try {
     final user = ref.read(authControllerProvider).valueOrNull;
@@ -186,8 +219,9 @@ Future<void> _createAndEnter(
     ref.invalidate(voiceRoomsProvider);
     ref.invalidate(walletBalancesProvider);
     if (!context.mounted) return;
-    Navigator.of(context, rootNavigator: true).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
+    _dismissLoadingDialog(context);
+    _showSnackBar(
+      context,
       SnackBar(
         content: Text(
           vip ? 'VIP sesli oda açıldı' : 'Sesli sohbet odanız açıldı',
@@ -202,7 +236,7 @@ Future<void> _createAndEnter(
     );
   } catch (e) {
     if (!context.mounted) return;
-    Navigator.of(context, rootNavigator: true).pop();
+    _dismissLoadingDialog(context);
     final msg = ApiException.userMessage(e);
     final lower = msg.toLowerCase();
     if (lower.contains('zaten') ||
@@ -224,7 +258,8 @@ Future<void> _createAndEnter(
           }
         }
         if (owned != null && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          _showSnackBar(
+            context,
             const SnackBar(content: Text('Mevcut odanıza yönlendiriliyorsunuz…')),
           );
           await openVoiceRoomWithVipGate(
@@ -239,7 +274,8 @@ Future<void> _createAndEnter(
     }
     if (msg.toLowerCase().contains('yetersiz') ||
         msg.toLowerCase().contains('jeton')) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showSnackBar(
+        context,
         SnackBar(
           content: Text(msg),
           action: SnackBarAction(
@@ -250,8 +286,6 @@ Future<void> _createAndEnter(
       );
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg)),
-    );
+    _showSnackBar(context, SnackBar(content: Text(msg)));
   }
 }

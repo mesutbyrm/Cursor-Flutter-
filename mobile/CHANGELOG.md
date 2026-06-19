@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.282+285 (2026-06-19)
+
+### Sesli oda — «Oda Aç» düzeltmesi
+
+- **Alt sayfa:** `useRootNavigator` + `isScrollControlled`; seçim `rootNavigator` ile döner
+- **Anında geri bildirim:** Butona basınca sheet kapanır, yükleme diyaloğu hemen açılır (12 sn bakiye beklemesi yok)
+- **Bakiye kontrolü:** Yükleme göstergesi açıkken jeton doğrulanır; yetersizse kök SnackBar
+- **Oda oluşturma:** Hata/başarı mesajları kök `ScaffoldMessenger` üzerinden; başarıda odaya yönlendirme
+
+
 ## 1.0.281+284 (2026-06-19)
 
 ### Sosyal — paylaşım, profil ve yorum iyileştirmeleri
