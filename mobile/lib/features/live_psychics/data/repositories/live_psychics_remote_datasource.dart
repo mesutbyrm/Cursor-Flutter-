@@ -89,14 +89,19 @@ class LivePsychicsRemoteDataSource {
   Future<PsychicEntity?> fetchMyProfile() async {
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerMyProfile);
-      final body = res.data;
-      if (body is! Map) return null;
-      final map = asJsonMap(body);
-      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      final teller = data['teller'] ?? data;
-      return PsychicModel.psychicFromJson(teller);
+      return PsychicModel.psychicFromMyProfileBody(res.data);
     } catch (_) {
       return null;
+    }
+  }
+
+  /// Teşhis — ham `my-profile` JSON (log için).
+  Future<dynamic> fetchMyProfileRaw() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerMyProfile);
+      return res.data;
+    } catch (e) {
+      return {'error': e.toString()};
     }
   }
 

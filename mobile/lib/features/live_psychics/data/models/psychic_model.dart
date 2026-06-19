@@ -49,7 +49,9 @@ abstract final class PsychicModel {
         m['online'] == true ||
         m['status']?.toString().toLowerCase() == 'online';
     final specs = _stringList(m['specialties'] ?? m['tags'] ?? user['specialties']);
-    final profileId = str(m, ['id', '_id', 'tellerId']) ?? str(user, ['tellerId']) ?? '';
+    final profileId = str(m, ['id', '_id', 'tellerId', 'fortuneTellerId']) ??
+        str(user, ['tellerId', 'fortuneTellerId']) ??
+        '';
     final userId = str(m, ['userId', 'tellerUserId', 'ownerId']) ??
         str(user, ['id', 'userId']);
     return PsychicEntity(
@@ -81,9 +83,92 @@ abstract final class PsychicModel {
       ])),
       specialties: specs,
       category: str(m, ['category', 'specialty']) ?? str(user, ['category']),
-      applicationStatus: str(m, ['applicationStatus', 'status']) ??
-          str(user, ['applicationStatus']),
+      applicationStatus: _applicationStatusFrom(m, user),
     );
+  }
+
+  /// `GET /api/fortune-tellers/my-profile` ve benzeri gövdeler.
+  static PsychicEntity? psychicFromMyProfileBody(dynamic body) {
+    if (body is! Map) return null;
+    final map = asJsonMap(body);
+    if (map['success'] == false && map['error'] != null) return null;
+
+    final layers = <Map<String, dynamic>>[];
+    if (map['data'] is Map) layers.add(asJsonMap(map['data']));
+    layers.add(map);
+
+    for (final layer in layers) {
+      for (final key in const [
+        'teller',
+        'fortuneTeller',
+        'liveFortuneTeller',
+        'fortuneTellerProfile',
+        'liveFortuneTellerProfile',
+        'profile',
+      ]) {
+        final nested = layer[key];
+        if (nested is Map) {
+          final parsed = psychicFromJson(nested);
+          if (parsed.id.isNotEmpty) return parsed;
+        }
+      }
+      if (layer.containsKey('id') ||
+          layer.containsKey('userId') ||
+          layer.containsKey('displayName')) {
+        final parsed = psychicFromJson(layer);
+        if (parsed.id.isNotEmpty) return parsed;
+      }
+    }
+    return null;
+  }
+
+  static String? _applicationStatusFrom(
+    Map<String, dynamic> m,
+    Map<String, dynamic> user,
+  ) {
+    final explicit = str(m, [
+          'applicationStatus',
+          'approvalStatus',
+          'tellerApplicationStatus',
+        ]) ??
+        str(user, ['applicationStatus', 'approvalStatus']);
+    if (explicit != null && explicit.isNotEmpty) return explicit;
+
+    final status = str(m, ['status']) ?? str(user, ['status']);
+    if (status != null && status.isNotEmpty) {
+      final s = status.toLowerCase();
+      const appStates = {
+        'pending',
+        'rejected',
+        'declined',
+        'approved',
+        'active',
+        'inactive',
+      };
+      if (appStates.contains(s)) return status;
+      if (s == 'online' || s == 'offline') {
+        if (_looksApprovedRecord(m) || _looksApprovedRecord(user)) {
+          return 'approved';
+        }
+        return status;
+      }
+    }
+
+    if (_looksApprovedRecord(m) || _looksApprovedRecord(user)) {
+      return 'approved';
+    }
+    return null;
+  }
+
+  static bool _looksApprovedRecord(Map<String, dynamic> m) {
+    if (m.isEmpty) return false;
+    if (m['isActive'] == true ||
+        m['isVerified'] == true ||
+        m['approvedAt'] != null) {
+      return true;
+    }
+    final app = str(m, ['applicationStatus'])?.toLowerCase();
+    return app == 'approved' || app == 'active';
   }
 
   static PsychicRequestEntity requestFromJson(dynamic raw) {

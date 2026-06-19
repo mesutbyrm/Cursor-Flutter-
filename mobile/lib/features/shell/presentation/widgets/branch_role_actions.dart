@@ -11,8 +11,8 @@ class BranchRoleActions {
 
   static TellerBranchAction tellerAction(WidgetRef ref) {
     final approved = ref.watch(approvedPsychicProvider);
-    final isPanelTeller = approved.valueOrNull?.isApprovedTeller == true ||
-        (approved.isLoading && approved.valueOrNull?.profile?.isApproved == true);
+    final isPanelTeller = approved.isApprovedTeller ||
+        (approved.loading && approved.profile?.isUsable == true);
     if (isPanelTeller) {
       return const TellerBranchAction(
         label: 'Falcı\nPanel',

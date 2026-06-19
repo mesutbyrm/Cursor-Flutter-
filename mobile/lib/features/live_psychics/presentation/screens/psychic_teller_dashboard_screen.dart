@@ -61,8 +61,13 @@ class PsychicTellerDashboardController
 
   Future<void> refresh() async {
     state = state.copyWith(loading: true);
-    final repo = ref.read(livePsychicsRepositoryProvider);
-    final profile = await repo.fetchMyProfile();
+    var approved = ref.read(approvedPsychicProvider);
+    if (!approved.checked || approved.profile == null) {
+      await ref.read(approvedPsychicProvider.notifier).refresh();
+      approved = ref.read(approvedPsychicProvider);
+    }
+    final profile = approved.profile ??
+        await ref.read(livePsychicsRepositoryProvider).fetchMyProfile();
     state = state.copyWith(profile: profile, loading: false);
     await _pollRequests();
   }
@@ -195,15 +200,16 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dash = ref.watch(psychicTellerDashboardProvider);
     final approved = ref.watch(approvedPsychicProvider);
-    final profile = dash.profile ?? approved.valueOrNull?.profile;
+    final profile = dash.profile ?? approved.profile;
 
-    if (dash.loading || approved.isLoading) {
+    if ((dash.loading || (approved.loading && !approved.checked)) &&
+        profile == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (profile == null || !profile.isApproved) {
+    if (profile == null || !profile.isUsable) {
       return Scaffold(
         appBar: AppBar(title: const Text('Falcı Panel')),
         body: Center(

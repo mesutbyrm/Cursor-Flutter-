@@ -106,10 +106,10 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   Future<void> _ensureTellerProfile() async {
     if (!_mayRunTellerBackgroundSync()) return;
 
-    var profile = ref.read(approvedPsychicProvider).valueOrNull?.profile;
+    var profile = ref.read(approvedPsychicProvider).profile;
     if (profile == null) {
       await ref.read(approvedPsychicProvider.notifier).refresh();
-      profile = ref.read(approvedPsychicProvider).valueOrNull?.profile;
+      profile = ref.read(approvedPsychicProvider).profile;
     }
     if (profile == null) {
       final repo = ref.read(livePsychicsRepositoryProvider);
@@ -257,7 +257,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
         return;
       }
 
-      final approved = ref.read(approvedPsychicProvider).valueOrNull?.profile;
+      final approved = ref.read(approvedPsychicProvider).profile;
       final user = ref.read(authControllerProvider).valueOrNull;
       final psychic = approved ??
           PsychicEntity(

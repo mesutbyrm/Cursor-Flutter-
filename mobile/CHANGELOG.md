@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.301+304 (2026-06-19)
+
+### Canlı Falcılar — falcı rolü doğrulama (kök neden düzeltmesi)
+
+- **Kök neden:** `approvedPsychicProvider` yalnızca `GET /my-profile` kullanıyordu; `RolePanelResolver` (liste, `/api/me`, `user.role`) devre dışıydı
+- **Sonsuz loading:** `AsyncNotifier` + `goRouter` watch — başvuru ekranı her refresh'te sıfırlanıyordu; ajans modeline geçildi
+- **Alan eşlemesi:** `fortuneTeller`, `isActive`, `isVerified`, `approvedAt` → `applicationStatus: approved`
+- **Üretim listesi:** `displayName`, `applicationStatus`, `userId` (cuid) doğru parse
+- **Teşhis logu:** `[TellerRole]` — userId, role, isFortuneTeller, tellerId, approvalStatus, resolveSource, ham my-profile
+- **Panel:** `isUsable` ile açılır (`isApproved` tek başına yetmezdi)
+
 ## 1.0.300+303 (2026-06-19)
 
 ### Canlı Falcılar — falcı kabul/red ekranı (kritik düzeltme)

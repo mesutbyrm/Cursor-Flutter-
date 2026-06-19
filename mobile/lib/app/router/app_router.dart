@@ -110,7 +110,6 @@ final shellSessionProvider = StateProvider<int>((ref) => 0);
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   ref.watch(shellSessionProvider);
-  ref.watch(approvedPsychicProvider);
   ref.watch(approvedAgencyProvider);
 
   return GoRouter(
@@ -181,11 +180,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/falci-ol',
         redirect: (context, state) async {
           var approved = ref.read(approvedPsychicProvider);
-          if (!approved.hasValue) {
+          if (!approved.checked) {
             await ref.read(approvedPsychicProvider.notifier).refresh();
             approved = ref.read(approvedPsychicProvider);
           }
-          if (approved.valueOrNull?.isApprovedTeller == true) {
+          if (approved.isApprovedTeller) {
             return '/canli-falcilar/dashboard';
           }
           return null;

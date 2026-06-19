@@ -49,7 +49,7 @@ class _PsychicApplyScreenState extends ConsumerState<PsychicApplyScreen> {
   _ApplyPhase _phaseFromProfile(ApprovedPsychicState? state) {
     final profile = state?.profile;
     if (profile == null) return _ApplyPhase.form;
-    if (profile.isApproved) return _ApplyPhase.approved;
+    if (profile.isUsable) return _ApplyPhase.approved;
     final status = profile.applicationStatus?.trim().toLowerCase() ?? '';
     if (status == 'rejected' || status == 'declined') {
       return _ApplyPhase.rejected;
@@ -111,26 +111,11 @@ class _PsychicApplyScreenState extends ConsumerState<PsychicApplyScreen> {
       extendBodyBehindAppBar: true,
       body: CosmicGalaxyBackground(
         child: SafeArea(
-          child: approved.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(ApiException.userMessage(e), textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      onPressed: () =>
-                          ref.read(approvedPsychicProvider.notifier).refresh(),
-                      child: const Text('Tekrar dene'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            data: (state) {
+          child: Builder(
+            builder: (context) {
+              if (!approved.checked && approved.loading) {
+                return const Center(child: CircularProgressIndicator());
+              }
               if (!authed) {
                 return const Center(
                   child: Padding(
@@ -142,7 +127,7 @@ class _PsychicApplyScreenState extends ConsumerState<PsychicApplyScreen> {
                   ),
                 );
               }
-              final phase = _phaseFromProfile(state);
+              final phase = _phaseFromProfile(approved);
               return switch (phase) {
                 _ApplyPhase.approved => _StatusCard(
                     icon: Icons.verified_rounded,

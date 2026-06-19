@@ -9,6 +9,7 @@ import '../../auth/domain/entities/user_entity.dart';
 import '../../live_psychics/data/models/psychic_model.dart';
 import '../../live_psychics/data/repositories/live_psychics_remote_datasource.dart';
 import '../../live_psychics/domain/entities/psychic_entity.dart';
+import '../../live_psychics/presentation/diagnostics/teller_role_diagnostic.dart';
 
 /// Onaylı falcı/ajans — birden fazla üretim uç noktasından çözümleme.
 class RolePanelResolver {
@@ -23,32 +24,68 @@ class RolePanelResolver {
   final AgencyRemoteDataSource _agency;
 
   Future<PsychicEntity?> resolveTeller(UserEntity user) async {
+    final result = await resolveTellerDetailed(user);
+    return result.profile;
+  }
+
+  Future<TellerResolveResult> resolveTellerDetailed(UserEntity user) async {
     final userId = user.id.trim();
-    if (userId.isEmpty) return null;
+    if (userId.isEmpty) {
+      return const TellerResolveResult(source: 'no_user');
+    }
 
-    var profile = await _psychics.fetchMyProfile();
-    if (_usable(profile)) return profile;
+    final rawMyProfile =
+        await _psychics.fetchMyProfileRaw();
+    var profile = PsychicModel.psychicFromMyProfileBody(rawMyProfile);
+    if (_usable(profile)) {
+      return TellerResolveResult(
+        profile: profile,
+        source: 'my-profile',
+        rawMyProfile: TellerRoleDiagnostic.truncateJson(rawMyProfile),
+      );
+    }
 
+    String? rawMeSnippet;
     for (final path in [
       ApiEndpoints.me,
       ApiEndpoints.userSiteProfile,
       ApiEndpoints.fortuneTeller(userId),
     ]) {
       profile = await _tellerFromPath(path, userId);
-      if (_usable(profile)) return profile;
+      if (_usable(profile)) {
+        return TellerResolveResult(
+          profile: profile,
+          source: path,
+          rawMyProfile: TellerRoleDiagnostic.truncateJson(rawMyProfile),
+          rawMeSnippet: rawMeSnippet,
+        );
+      }
+      if (path == ApiEndpoints.me || path == ApiEndpoints.userSiteProfile) {
+        try {
+          final res = await _dio.safeGet<dynamic>(path);
+          rawMeSnippet = TellerRoleDiagnostic.truncateJson(res.data);
+        } catch (_) {}
+      }
     }
 
     try {
       final tellers = await _psychics.fetchPsychics();
       for (final t in tellers) {
         if (t.userId == userId || t.id == userId) {
-          if (_usable(t)) return t;
+          if (_usable(t)) {
+            return TellerResolveResult(
+              profile: t,
+              source: 'fortune-tellers-list',
+              rawMyProfile: TellerRoleDiagnostic.truncateJson(rawMyProfile),
+              rawMeSnippet: rawMeSnippet,
+            );
+          }
         }
       }
     } catch (_) {}
 
     if (await _canAccessTellerSessions()) {
-      return PsychicEntity(
+      profile = PsychicEntity(
         id: userId,
         userId: userId,
         name: user.displayName?.trim().isNotEmpty == true
@@ -58,10 +95,16 @@ class RolePanelResolver {
         applicationStatus: 'approved',
         isOnline: true,
       );
+      return TellerResolveResult(
+        profile: profile,
+        source: 'sessions-access',
+        rawMyProfile: TellerRoleDiagnostic.truncateJson(rawMyProfile),
+        rawMeSnippet: rawMeSnippet,
+      );
     }
 
     if (_roleLooksLikeTeller(user.role)) {
-      return PsychicEntity(
+      profile = PsychicEntity(
         id: userId,
         userId: userId,
         name: user.displayName?.trim().isNotEmpty == true
@@ -70,9 +113,19 @@ class RolePanelResolver {
         avatarUrl: user.avatarUrl,
         applicationStatus: 'approved',
       );
+      return TellerResolveResult(
+        profile: profile,
+        source: 'user.role=${user.role}',
+        rawMyProfile: TellerRoleDiagnostic.truncateJson(rawMyProfile),
+        rawMeSnippet: rawMeSnippet,
+      );
     }
 
-    return null;
+    return TellerResolveResult(
+      source: 'not_resolved',
+      rawMyProfile: TellerRoleDiagnostic.truncateJson(rawMyProfile),
+      rawMeSnippet: rawMeSnippet,
+    );
   }
 
   Future<AgencyEntity?> resolveAgency(UserEntity user) async {
@@ -334,7 +387,7 @@ class RolePanelResolver {
   }
 
   bool _usable(PsychicEntity? profile) =>
-      profile != null && profile.isApproved;
+      profile != null && profile.isUsable;
 
   bool _usableAgency(AgencyEntity? agency) =>
       agency != null && agency.isUsable;

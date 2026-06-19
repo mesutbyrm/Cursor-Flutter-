@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../shell/presentation/providers/role_panel_providers.dart';
 import '../../domain/entities/psychic_award_entity.dart';
 import '../../domain/entities/psychic_entity.dart';
 import '../../domain/entities/psychic_gift_entity.dart';
 import '../../domain/entities/psychic_review_entity.dart';
+import '../diagnostics/teller_role_diagnostic.dart';
 import '../providers/live_psychics_providers.dart';
 
 class PsychicsListFilters {
@@ -247,32 +252,85 @@ final psychicDetailProvider =
 });
 
 final approvedPsychicProvider =
-    AsyncNotifierProvider<ApprovedPsychicController, ApprovedPsychicState>(
-  ApprovedPsychicController.new,
+    NotifierProvider<ApprovedPsychicNotifier, ApprovedPsychicState>(
+  ApprovedPsychicNotifier.new,
 );
 
 class ApprovedPsychicState {
-  const ApprovedPsychicState({this.profile, this.isLoading = false});
+  const ApprovedPsychicState({
+    this.profile,
+    this.loading = false,
+    this.checked = false,
+    this.lastDiagnostic,
+  });
 
   final PsychicEntity? profile;
-  final bool isLoading;
+  final bool loading;
+  final bool checked;
+  final String? lastDiagnostic;
 
   bool get isApprovedTeller => profile?.isUsable == true;
 }
 
-class ApprovedPsychicController extends AsyncNotifier<ApprovedPsychicState> {
+class ApprovedPsychicNotifier extends Notifier<ApprovedPsychicState> {
   @override
-  Future<ApprovedPsychicState> build() async {
-    final profile = await ref.read(livePsychicsRepositoryProvider).fetchMyProfile();
-    return ApprovedPsychicState(profile: profile);
+  ApprovedPsychicState build() {
+    ref.listen(authControllerProvider, (prev, next) {
+      final user = next.valueOrNull;
+      if (user == null) {
+        state = const ApprovedPsychicState(checked: true);
+        return;
+      }
+      if (prev?.valueOrNull?.id != user.id) {
+        unawaited(refresh());
+      }
+    });
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user != null) {
+      Future.microtask(refresh);
+    }
+    return ApprovedPsychicState(loading: user != null);
   }
 
   Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final profile =
-          await ref.read(livePsychicsRepositoryProvider).fetchMyProfile();
-      return ApprovedPsychicState(profile: profile);
-    });
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) {
+      state = const ApprovedPsychicState(checked: true);
+      return;
+    }
+    state = state.copyWith(loading: true);
+    final resolved =
+        await ref.read(rolePanelResolverProvider).resolveTellerDetailed(user);
+    final diagnostic = TellerRoleDiagnostic.from(
+      user: user,
+      profile: resolved.profile,
+      resolveSource: resolved.source,
+      rawMyProfile: resolved.rawMyProfile,
+      rawMeSnippet: resolved.rawMeSnippet,
+    );
+    diagnostic.emit();
+    state = ApprovedPsychicState(
+      profile: resolved.profile,
+      loading: false,
+      checked: true,
+      lastDiagnostic: diagnostic.resolveSource,
+    );
+  }
+}
+
+extension ApprovedPsychicStateCopy on ApprovedPsychicState {
+  ApprovedPsychicState copyWith({
+    PsychicEntity? profile,
+    bool? loading,
+    bool? checked,
+    String? lastDiagnostic,
+    bool clearProfile = false,
+  }) {
+    return ApprovedPsychicState(
+      profile: clearProfile ? null : (profile ?? this.profile),
+      loading: loading ?? this.loading,
+      checked: checked ?? this.checked,
+      lastDiagnostic: lastDiagnostic ?? this.lastDiagnostic,
+    );
   }
 }
