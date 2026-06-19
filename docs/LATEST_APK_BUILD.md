@@ -2,26 +2,22 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.295+298` |
-| Tarih (UTC) | 2026-06-19 18:30 |
-| Commit | [`bfb7c0c206be3631ca2112e3c2babeaca0da417a`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/bfb7c0c206be3631ca2112e3c2babeaca0da417a) |
-| İş akışı | [Run 27841921839](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27841921839) |
+| Sürüm | `1.0.296+299` |
+| Tarih (UTC) | 2026-06-19 18:59 |
+| Commit | [`d1594a7e36c140c56dc339432f55b7310fbfe721`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d1594a7e36c140c56dc339432f55b7310fbfe721) |
+| İş akışı | [Run 27843174204](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27843174204) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.295+298 (2026-06-19)
+## 1.0.296+299 (2026-06-19)
 
-### Canlı Falcılar — PDF entegrasyon uyumu
+### Canlı Falcılar — falcı başvuru ekranı (PDF §4)
 
-- **Aktif seans:** Uygulama açılışında `GET /api/user/active-sessions` ile otomatik odaya dönüş
-- **Push red/iptal:** `session_update` reddinde jeton iadesi bildirimi
-- **Bekleme:** `cancelled` durumu reddedildi olarak işlenir
-- **Liste:** `online=true` + `sort=rating` filtreleri
-- **Oda timer:** Sunucu `elapsedSeconds` ile senkron
-- **Süre:** Kullanıcı `extend`, falcı `teller_add_time` (PDF §12)
-- **Profil:** Falcı yorumları (`GET .../reviews`)
-- **API:** Başvuru, online durum sorgusu, model alan eşlemeleri (`displayName`, `pricePerSession`)
+- **`/falci-ol` ve `/canli-falcilar/apply`:** Görünen ad, biyografi, uzmanlık seçimi, başvuru notu
+- **`POST /api/fortune-tellers/apply`:** Hata mesajları kullanıcıya gösterilir
+- **Durum ekranları:** Onaylı / bekleyen / reddedilmiş başvuru kartları
+- **Liste & shell:** «Falcı Ol» / «Başvuru» kısayolu; onaylı falcılar panele yönlendirilir
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
