@@ -2,21 +2,20 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.280+283` |
-| Tarih (UTC) | 2026-06-19 00:33 |
-| Commit | [`53059fa5b5a4f51bc954c755c022515cf89261ff`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/53059fa5b5a4f51bc954c755c022515cf89261ff) |
-| İş akışı | [Run 27797545902](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27797545902) |
+| Sürüm | `1.0.283+286` |
+| Tarih (UTC) | 2026-06-19 07:35 |
+| Commit | [`d941f3c1a8fb3a78f57a2ad956eef3f5d112445f`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d941f3c1a8fb3a78f57a2ad956eef3f5d112445f) |
+| İş akışı | [Run 27811718400](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27811718400) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.280+283 (2026-06-18)
+## 1.0.283+286 (2026-06-19)
 
-### Canlı yayın — kamera/ses ve oda geçişi
+### Derleme düzeltmesi — sosyal + sesli oda APK
 
-- **Agora handoff:** Hazırlık önizlemesi kapatılıp motor serbest bırakılıyor; oda açılınca kamera kilidi kalkıyor
-- **Yayıncı bağlantı:** Kanala girince yerel video/ses açıkça etkinleştiriliyor
-- **Yükleniyor ekranı:** Yayıncı için «Yayın başlatılıyor…» göstergesi; giriş/destek hataları görünür
+- **Import:** `user_posts_timeline.dart` ve `social_post_comments_sheet.dart` yol hataları giderildi
+- **APK:** Sosyal ve sesli oda özellikleri CI'da yeniden derlenir
 
 
 
