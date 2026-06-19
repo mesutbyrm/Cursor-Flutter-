@@ -1,5 +1,7 @@
 import 'dart:async';
 
+/// Canlı fal video oturumu — **TRTC birincil** medya katmanı.
+/// HTTP `/api/room/signal` yalnızca seans bitişinde sinyal temizliği için kullanılır.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -528,6 +530,11 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     await ref.read(psychicRoomSseServiceProvider).disconnect();
     try {
       await ref.read(livePsychicsRepositoryProvider).endSession(session.sessionId);
+    } catch (_) {}
+    try {
+      await ref
+          .read(livePsychicsRepositoryProvider)
+          .clearRoomSignals(session.sessionId);
     } catch (_) {}
     await _trtc.leave();
     await PsychicSessionStore.clear();

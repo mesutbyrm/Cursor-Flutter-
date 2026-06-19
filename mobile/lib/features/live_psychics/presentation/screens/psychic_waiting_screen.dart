@@ -181,6 +181,10 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     ref.invalidate(coinBalanceProvider);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
         'Falcı randevunuzu reddetti';
+  }
+
+  void acknowledgeExit() {
+    if (!state.closed) return;
     ref.read(psychicWaitingExitProvider.notifier).state = session.psychic.id;
   }
 
@@ -199,7 +203,6 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     ref.invalidate(coinBalanceProvider);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
         'Falcı yanıt vermedi — süre doldu, jetonlar iade edildi';
-    ref.read(psychicWaitingExitProvider.notifier).state = session.psychic.id;
   }
 
   Future<void> cancel(BuildContext context) async {
@@ -395,7 +398,16 @@ class PsychicWaitingScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            '${psychic.name} randevunuzu onayladığında otomatik olarak odaya bağlanacaksınız.',
+                            switch (waiting.phase) {
+                              PsychicWaitingPhase.waiting =>
+                                '${psychic.name} randevunuzu onayladığında otomatik olarak odaya bağlanacaksınız.',
+                              PsychicWaitingPhase.expired =>
+                                'Falcı belirlenen sürede yanıt vermedi. Jetonlarınız iade edilir.',
+                              PsychicWaitingPhase.rejected =>
+                                'Falcı randevunuzu kabul etmedi. Jetonlarınız iade edilir.',
+                              PsychicWaitingPhase.accepted =>
+                                'Falcı kabul etti, odaya bağlanılıyor…',
+                            },
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 13,
@@ -423,42 +435,69 @@ class PsychicWaitingScreen extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton.icon(
-                              onPressed: waiting.closed || waiting.cancelling
-                                  ? null
-                                  : () => ref
-                                      .read(
-                                        psychicWaitingControllerProvider(session)
-                                            .notifier,
-                                      )
-                                      .cancel(context),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFFE53935),
-                                minimumSize: const Size.fromHeight(48),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
+                          if (waiting.phase == PsychicWaitingPhase.expired ||
+                              waiting.phase == PsychicWaitingPhase.rejected)
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
+                                onPressed: () => ref
+                                    .read(
+                                      psychicWaitingControllerProvider(session)
+                                          .notifier,
+                                    )
+                                    .acknowledgeExit(),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: AppThemeColors.accentPurple,
+                                  minimumSize: const Size.fromHeight(48),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Tamam',
+                                  style: TextStyle(fontWeight: FontWeight.w800),
                                 ),
                               ),
-                              icon: waiting.cancelling
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Icon(Icons.close_rounded, size: 18),
-                              label: Text(
-                                waiting.cancelling
-                                    ? 'İptal ediliyor…'
-                                    : 'İptal Et',
-                                style: const TextStyle(fontWeight: FontWeight.w800),
+                            )
+                          else
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.icon(
+                                onPressed: waiting.closed || waiting.cancelling
+                                    ? null
+                                    : () => ref
+                                        .read(
+                                          psychicWaitingControllerProvider(
+                                            session,
+                                          ).notifier,
+                                        )
+                                        .cancel(context),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFFE53935),
+                                  minimumSize: const Size.fromHeight(48),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                icon: waiting.cancelling
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Icon(Icons.close_rounded, size: 18),
+                                label: Text(
+                                  waiting.cancelling
+                                      ? 'İptal ediliyor…'
+                                      : 'İptal Et',
+                                  style:
+                                      const TextStyle(fontWeight: FontWeight.w800),
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),

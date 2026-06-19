@@ -299,64 +299,74 @@ class _TellerStatsPanel extends ConsumerWidget {
           if (awardList.isEmpty && giftList.isEmpty) {
             return const SizedBox.shrink();
           }
-          final giftTotal = giftList.fold<int>(0, (s, g) => s + g.giftCount);
-          return Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white12),
-            ),
-            child: Row(
-              children: [
-                if (awardList.isNotEmpty)
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.emoji_events_rounded,
-                          color: Color(0xFFFFD54F),
-                          size: 22,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (awardList.isNotEmpty) ...[
+                const Text(
+                  'Ödüller',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                ),
+                const SizedBox(height: 8),
+                ...awardList.take(5).map(
+                      (a) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.emoji_events_rounded,
+                              color: Color(0xFFFFD54F),
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                a.title.isNotEmpty ? a.title : a.awardType,
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            '${awardList.length} ödül',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                if (awardList.isNotEmpty && giftList.isNotEmpty)
-                  Container(
-                    width: 1,
-                    height: 28,
-                    color: Colors.white12,
-                    margin: const EdgeInsets.symmetric(horizontal: 10),
-                  ),
-                if (giftList.isNotEmpty)
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.card_giftcard_rounded,
-                          color: Color(0xFFFF4081),
-                          size: 22,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            '$giftTotal hediye',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                const SizedBox(height: 12),
               ],
-            ),
+              if (giftList.isNotEmpty) ...[
+                const Text(
+                  'Hediyeler',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                ),
+                const SizedBox(height: 8),
+                ...giftList.take(5).map(
+                      (g) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.card_giftcard_rounded,
+                              color: Color(0xFFFF4081),
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                g.senderName,
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                            Text(
+                              '${g.giftCount}×',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withValues(alpha: 0.65),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+              ],
+            ],
           );
         },
       ),

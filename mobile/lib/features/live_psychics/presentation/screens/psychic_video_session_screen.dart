@@ -44,16 +44,17 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
               durationMinutes: session.durationMinutes,
               totalJeton: session.totalJeton,
               promptReview: true,
+              navigateAfter: true,
             );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Seans sonlandı')),
             );
-          }
-          if (context.canPop()) {
-            context.pop();
-          } else {
-            context.go('/canli-falcilar');
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/canli-falcilar');
+            }
           }
         }
       }
@@ -73,7 +74,7 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
         );
         if (ok && context.mounted) {
           await ctrl.leave();
-          if (context.mounted) {
+          if (!session.isClient && context.mounted) {
             if (context.canPop()) {
               context.pop();
             } else {

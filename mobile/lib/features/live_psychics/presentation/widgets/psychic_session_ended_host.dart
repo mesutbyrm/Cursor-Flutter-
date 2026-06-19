@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:canlifal_social/app/router/app_router.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_review_sheet.dart';
 
@@ -25,8 +26,12 @@ class _PsychicSessionEndedHostState extends ConsumerState<PsychicSessionEndedHos
       _showing = true;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
-        await _showSummary(context, next);
+        final root = Navigator.of(context, rootNavigator: true).context;
+        await _showSummary(root, next);
         if (!mounted) return;
+        if (next.navigateAfter) {
+          ref.read(goRouterProvider).go('/canli-falcilar');
+        }
         ref.read(psychicSessionEndedProvider.notifier).state = null;
         _showing = false;
       });
@@ -53,6 +58,7 @@ class _PsychicSessionEndedHostState extends ConsumerState<PsychicSessionEndedHos
     final review = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
+      useRootNavigator: true,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1A1028),
         title: const Text(
@@ -65,18 +71,18 @@ class _PsychicSessionEndedHostState extends ConsumerState<PsychicSessionEndedHos
               event.tellerId != null &&
               event.tellerId!.isNotEmpty)
             TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
+              onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(true),
               child: const Text('Değerlendir'),
             ),
           FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
+            onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(false),
             child: const Text('Tamam'),
           ),
         ],
       ),
     );
 
-    if (!mounted || review != true) return;
+    if (!context.mounted || review != true) return;
     final tellerId = event.tellerId;
     if (tellerId == null || tellerId.isEmpty) return;
     await showPsychicReviewSheet(

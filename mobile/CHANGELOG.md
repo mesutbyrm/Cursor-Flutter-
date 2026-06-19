@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.299+302 (2026-06-19)
+
+### Canlı Falcılar — liste maddeleri tamamlama / sağlamlaştırma
+
+- **Değerlendirme:** `POST /api/teller/reviews` başarısızsa `POST .../fortune-tellers/{id}/reviews` yedek yolu
+- **session_ended:** Özet diyaloğu root navigator; danışan çıkışında önce özet sonra yönlendirme
+- **Bekleme timeout:** Süre dolunca/redde «Tamam» ile onaylı çıkış (otomatik atlama yok)
+- **Staff:** `staffExempt: true` ile seans oluşturma isteği
+- **WebRTC/TRTC:** TRTC birincil; seans bitişinde `DELETE /api/room/signal` temizliği
+- **Panel:** Ödül ve hediye listeleri (profille aynı veri)
+
 ## 1.0.298+301 (2026-06-19)
 
 ### Canlı Falcılar — favoriler, staff muafiyeti, panel özeti

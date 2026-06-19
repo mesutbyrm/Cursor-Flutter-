@@ -241,16 +241,20 @@ class LivePsychicsRemoteDataSource {
     required int rating,
     String? comment,
   }) async {
+    final payload = {
+      'sessionId': sessionId.trim(),
+      'tellerId': tellerId.trim(),
+      'rating': rating.clamp(1, 5),
+      if (comment != null && comment.trim().isNotEmpty) 'comment': comment.trim(),
+    };
+    try {
+      await _dio.safePost<dynamic>(ApiEndpoints.tellerReviews, data: payload);
+      return true;
+    } catch (_) {}
     try {
       await _dio.safePost<dynamic>(
-        ApiEndpoints.tellerReviews,
-        data: {
-          'sessionId': sessionId.trim(),
-          'tellerId': tellerId.trim(),
-          'rating': rating.clamp(1, 5),
-          if (comment != null && comment.trim().isNotEmpty)
-            'comment': comment.trim(),
-        },
+        ApiEndpoints.fortuneTellerReviews(tellerId.trim()),
+        data: payload,
       );
       return true;
     } catch (_) {
@@ -332,6 +336,7 @@ class LivePsychicsRemoteDataSource {
     String? tellerUserId,
     required int durationMinutes,
     required String fortuneType,
+    bool staffExempt = false,
   }) async {
     final id = tellerId.trim();
     if (id.isEmpty) return null;
@@ -342,6 +347,7 @@ class LivePsychicsRemoteDataSource {
           'tellerId': id,
           'fortuneType': fortuneType.trim().isNotEmpty ? fortuneType.trim() : 'general',
           'duration': durationMinutes,
+          if (staffExempt) 'staffExempt': true,
         },
       );
       return PsychicModel.sessionCreateFromJson(res.data);
@@ -497,6 +503,17 @@ class LivePsychicsRemoteDataSource {
     } catch (_) {
       return false;
     }
+  }
+
+  /// WebRTC sinyal temizliği — TRTC birincil; `/api/room/signal` yedek kanal.
+  Future<void> clearRoomSignals(String sessionId) async {
+    final key = sessionId.trim();
+    if (key.isEmpty) return;
+    try {
+      await _dio.safeDelete<dynamic>(
+        ApiEndpoints.liveFortuneRoomSignalQuery(key),
+      );
+    } catch (_) {}
   }
 
   Future<PsychicRoomEntity?> fetchRoom(String sessionId) async {

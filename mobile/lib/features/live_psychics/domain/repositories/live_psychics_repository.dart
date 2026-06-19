@@ -105,6 +105,7 @@ abstract class LivePsychicsRepository {
     String? tellerUserId,
     required int durationMinutes,
     required String fortuneType,
+    bool staffExempt = false,
   });
 
   Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId);
@@ -120,6 +121,7 @@ abstract class LivePsychicsRepository {
   });
 
   Future<bool> endSession(String sessionId);
+  Future<void> clearRoomSignals(String sessionId);
   Future<PsychicRoomEntity?> fetchRoom(String sessionId);
   Future<Map<String, dynamic>?> roomAction(
     String sessionId,

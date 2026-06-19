@@ -96,12 +96,14 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
     String? tellerUserId,
     required int durationMinutes,
     required String fortuneType,
+    bool staffExempt = false,
   }) =>
       _remote.createSession(
         tellerId: tellerId,
         tellerUserId: tellerUserId,
         durationMinutes: durationMinutes,
         fortuneType: fortuneType,
+        staffExempt: staffExempt,
       );
 
   @override
@@ -131,6 +133,10 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
 
   @override
   Future<bool> endSession(String sessionId) => _remote.endSession(sessionId);
+
+  @override
+  Future<void> clearRoomSignals(String sessionId) =>
+      _remote.clearRoomSignals(sessionId);
 
   @override
   Future<PsychicRoomEntity?> fetchRoom(String sessionId) =>

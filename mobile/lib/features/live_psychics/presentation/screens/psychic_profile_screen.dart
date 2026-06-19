@@ -147,6 +147,7 @@ class PsychicProfileScreen extends ConsumerWidget {
         durationMinutes: result.minutes,
         totalJeton: result.jeton,
         fortuneType: result.fortuneType,
+        staffExempt: isStaff,
       );
     } finally {
       ref.read(_profileBookingProvider.notifier).state = false;

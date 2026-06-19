@@ -24,6 +24,7 @@ abstract final class PsychicFlow {
     required int durationMinutes,
     required int totalJeton,
     String? fortuneType,
+    bool staffExempt = false,
   }) async {
     final repo = ref.read(livePsychicsRepositoryProvider);
     final type = fortuneType ??
@@ -33,6 +34,7 @@ abstract final class PsychicFlow {
       tellerUserId: psychic.trtcUserId,
       durationMinutes: durationMinutes,
       fortuneType: type,
+      staffExempt: staffExempt,
     );
     if (created == null) return null;
     final session = PsychicSessionEntity(

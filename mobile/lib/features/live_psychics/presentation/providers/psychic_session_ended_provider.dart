@@ -10,6 +10,7 @@ class PsychicSessionEndedEvent {
     this.totalJeton,
     this.message,
     this.promptReview = false,
+    this.navigateAfter = false,
   });
 
   final String sessionId;
@@ -19,6 +20,7 @@ class PsychicSessionEndedEvent {
   final int? totalJeton;
   final String? message;
   final bool promptReview;
+  final bool navigateAfter;
 }
 
 final psychicSessionEndedProvider =
