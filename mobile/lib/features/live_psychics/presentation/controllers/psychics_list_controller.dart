@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/psychic_entity.dart';
-import 'live_psychics_providers.dart';
+import '../providers/live_psychics_providers.dart';
 
 class PsychicsListState {
   const PsychicsListState({

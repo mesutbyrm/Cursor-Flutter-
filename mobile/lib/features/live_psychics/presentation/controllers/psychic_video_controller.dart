@@ -488,11 +488,11 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   void toggleMic() {
-    _trtc.toggleMic();
+    _trtc.setMicEnabled(!_trtc.micOn);
   }
 
   void toggleCamera() {
-    _trtc.toggleCamera();
+    _trtc.setCameraEnabled(!_trtc.cameraOn);
     state = state.copyWith(localPreviewKey: state.localPreviewKey + 1);
   }
 
