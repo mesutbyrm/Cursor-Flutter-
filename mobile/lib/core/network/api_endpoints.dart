@@ -474,6 +474,9 @@ abstract final class ApiEndpoints {
   // --- Kısa videolar (TikTok tarzı, R2 CDN) ---
   static const shortVideos = '/api/short-videos';
   static const shortVideosUpload = '/api/short-videos/upload';
+
+  /// Görsel fal — presigned yükleme (kahve fincanı, el falı vb.).
+  static const uploadPresigned = '/api/upload/presigned';
   static String shortVideoLike(String id) => '/api/short-videos/$id/like';
   static String shortVideoComments(String id) =>
       '/api/short-videos/$id/comments';

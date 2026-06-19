@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -7,9 +8,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../domain/entities/fortune_image_input.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 import '../../domain/repositories/fortune_repository.dart';
+import '../data/fortune_image_capture_config.dart';
 import '../providers/fortune_api_providers.dart';
+import '../widgets/fortune_image_capture_panel.dart';
 import 'fortune_reading_service.dart';
 
 /// Fal okuma akışı — oturum ekranını atlayıp doğrudan sonuç sayfasına gider.
@@ -27,8 +31,16 @@ class FortuneReadingCoordinator {
     bool? yesNoChoice,
     DateTime? birthDate,
     bool replaceCurrentRoute = false,
+    FortuneLocalImageInput? localImages,
   }) async {
     if (!context.mounted) return;
+
+    FortuneLocalImageInput? images = localImages;
+    if (FortuneImageCaptureConfig.requiresCapture(type) &&
+        (images == null || !images.isValidFor(type))) {
+      images = await showFortuneImageCaptureSheet(context: context, type: type);
+      if (images == null || !images.isValidFor(type)) return;
+    }
 
     final resolvedYesNo = type.kind == FortuneSessionKind.yesNo
         ? (yesNoChoice ?? _rng.nextBool())
@@ -52,7 +64,7 @@ class FortuneReadingCoordinator {
               CircularProgressIndicator(color: type.accent),
               const SizedBox(height: 20),
               Text(
-                '${type.title} açılıyor…',
+                _loadingTitle(type, images),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
@@ -62,7 +74,7 @@ class FortuneReadingCoordinator {
               ),
               const SizedBox(height: 8),
               Text(
-                'Kartlar ve enerjiler senin için hazırlanıyor',
+                _loadingSubtitle(type, images),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.72),
@@ -74,6 +86,21 @@ class FortuneReadingCoordinator {
         ),
       ),
     );
+
+    FortuneCloudImageInput? cloudImages;
+    if (images != null && FortuneImageCaptureConfig.requiresCapture(type)) {
+      try {
+        cloudImages = await _uploadImages(ref, type, images);
+      } catch (e) {
+        if (context.mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(ApiException.userMessage(e))),
+          );
+        }
+        return;
+      }
+    }
 
     FortuneReadingResult? result;
     var usedRemote = false;
@@ -93,6 +120,7 @@ class FortuneReadingCoordinator {
                       userInput: userInput,
                       yesNoChoice: resolvedYesNo,
                       birthDate: resolvedBirth,
+                      images: cloudImages,
                       accessToken: accessToken,
                     )) {
               text = update.text;
@@ -119,16 +147,28 @@ class FortuneReadingCoordinator {
                 userInput: userInput,
                 yesNoChoice: resolvedYesNo,
                 birthDate: resolvedBirth,
+                images: cloudImages,
               );
           usedRemote = true;
         }
       } else {
-        await Future<void>.delayed(const Duration(milliseconds: 900));
+        await Future<void>.delayed(const Duration(milliseconds: 1100));
         result = _service.generate(
           type,
           userInput: userInput,
           yesNoChoice: resolvedYesNo,
         );
+        if (images != null && FortuneImageCaptureConfig.requiresCapture(type)) {
+          result = FortuneReadingResult(
+            type: result.type,
+            summary: result.summary,
+            detail:
+                '${result.detail}\n\n'
+                '(Giriş yaparak fotoğraflı AI fal yorumunu alabilirsiniz.)',
+            luckyNumber: result.luckyNumber,
+            luckyColor: result.luckyColor,
+          );
+        }
       }
     } catch (e) {
       final msg = ApiException.userMessage(e);
@@ -212,6 +252,54 @@ class FortuneReadingCoordinator {
     } else {
       context.push('/fortune/${type.slug}/result', extra: finalResult);
     }
+  }
+
+  static String _loadingTitle(
+    FortuneTypeEntity type,
+    FortuneLocalImageInput? images,
+  ) {
+    if (images != null && FortuneImageCaptureConfig.isCoffee(type)) {
+      return 'Kahve falın hazırlanıyor…';
+    }
+    if (images != null && FortuneImageCaptureConfig.isPalm(type)) {
+      return 'El falın analiz ediliyor…';
+    }
+    return '${type.title} açılıyor…';
+  }
+
+  static String _loadingSubtitle(
+    FortuneTypeEntity type,
+    FortuneLocalImageInput? images,
+  ) {
+    if (images != null && FortuneImageCaptureConfig.requiresCapture(type)) {
+      return 'Fotoğrafların inceleniyor, semboller çözülüyor';
+    }
+    return 'Kartlar ve enerjiler senin için hazırlanıyor';
+  }
+
+  static Future<FortuneCloudImageInput> _uploadImages(
+    WidgetRef ref,
+    FortuneTypeEntity type,
+    FortuneLocalImageInput local,
+  ) async {
+    final uploader = ref.read(fortuneImageUploadServiceProvider);
+    if (FortuneImageCaptureConfig.isCoffee(type)) {
+      final cup = local.cupPath!;
+      final cupPath = await uploader.uploadImageFile(File(cup));
+      String? saucerPath;
+      if (local.saucerPath != null && local.saucerPath!.trim().isNotEmpty) {
+        saucerPath = await uploader.uploadImageFile(File(local.saucerPath!));
+      }
+      return FortuneCloudImageInput(
+        cupImagePath: cupPath,
+        saucerImagePath: saucerPath,
+      );
+    }
+    final palmPath = await uploader.uploadImageFile(File(local.palmPath!));
+    return FortuneCloudImageInput(
+      palmImagePath: palmPath,
+      hand: local.hand,
+    );
   }
 
   static Future<void> _showPurchasePrompt(

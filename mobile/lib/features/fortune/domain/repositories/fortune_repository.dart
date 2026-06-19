@@ -1,4 +1,5 @@
 import '../../../../core/pagination/paged_result.dart';
+import '../entities/fortune_image_input.dart';
 import '../entities/fortune_type_entity.dart';
 import '../entities/user_fortune_entity.dart';
 
@@ -43,6 +44,7 @@ abstract class FortuneRepository {
     String? userInput,
     bool? yesNoChoice,
     DateTime? birthDate,
+    FortuneCloudImageInput? images,
     required String accessToken,
   });
 
@@ -51,6 +53,7 @@ abstract class FortuneRepository {
     String? userInput,
     bool? yesNoChoice,
     DateTime? birthDate,
+    FortuneCloudImageInput? images,
   });
 
   Future<PagedResult<UserFortuneEntity>> history({

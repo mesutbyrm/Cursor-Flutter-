@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../data/datasources/fortune_remote_datasource.dart';
 import '../../data/repositories/fortune_repository_impl.dart';
+import '../../data/services/fortune_image_upload_service.dart';
 import '../../domain/entities/user_fortune_entity.dart';
 import '../../domain/repositories/fortune_repository.dart';
 
@@ -12,6 +13,10 @@ final fortuneRemoteProvider = Provider<FortuneRemoteDataSource>((ref) {
 
 final fortuneRepositoryProvider = Provider<FortuneRepository>((ref) {
   return FortuneRepositoryImpl(ref.watch(fortuneRemoteProvider));
+});
+
+final fortuneImageUploadServiceProvider = Provider<FortuneImageUploadService>((ref) {
+  return FortuneImageUploadService(ref.watch(dioProvider));
 });
 
 final fortuneHistoryProvider =

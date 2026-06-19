@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.285+288 (2026-06-19)
+
+### Kahve & el falı — fotoğraf yükleme
+
+- **Kahve falı:** Fincan içi (zorunlu) + tabak (opsiyonel) — kamera veya galeri
+- **El falı:** Avuç içi fotoğrafı + sağ/sol el seçimi
+- **Üretim API:** Presigned yükleme + `kahve-fali-image` / `el-fali` görsel analiz
+- **Tasarım:** Cam efektli premium panel, ipucu banner, mini kamera/galeri aksiyonları
+
+
 ## 1.0.284+287 (2026-06-19)
 
 ### Fal & Tarot — 2026 vitrin ve doğrudan sonuç

@@ -15,6 +15,7 @@ class FortuneRepositoryImpl implements FortuneRepository {
     String? userInput,
     bool? yesNoChoice,
     DateTime? birthDate,
+    FortuneCloudImageInput? images,
     required String accessToken,
   }) =>
       _remote.streamFortune(
@@ -22,6 +23,7 @@ class FortuneRepositoryImpl implements FortuneRepository {
         userInput: userInput,
         yesNoChoice: yesNoChoice,
         birthDate: birthDate,
+        images: images,
         accessToken: accessToken,
       );
 
@@ -31,11 +33,13 @@ class FortuneRepositoryImpl implements FortuneRepository {
     String? userInput,
     bool? yesNoChoice,
     DateTime? birthDate,
+    FortuneCloudImageInput? images,
   }) => _remote.readFortune(
     type: type,
     userInput: userInput,
     yesNoChoice: yesNoChoice,
     birthDate: birthDate,
+    images: images,
   );
 
   @override

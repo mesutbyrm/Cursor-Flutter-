@@ -5,6 +5,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/pagination/paged_result.dart';
 import '../../../../core/util/json_util.dart';
+import '../../domain/entities/fortune_image_input.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 import '../../domain/entities/user_fortune_entity.dart';
 import '../../domain/repositories/fortune_repository.dart';
@@ -21,12 +22,15 @@ class FortuneRemoteDataSource {
     String? userInput,
     bool? yesNoChoice,
     DateTime? birthDate,
+    FortuneCloudImageInput? images,
   }) {
     final input = userInput?.trim();
-    return {
+    final body = <String, dynamic>{
       'type': type.slug,
       'fortuneType': type.title,
       'slug': type.slug,
+      'language': 'tr',
+      'platform': 'mobile',
       if (input != null && input.isNotEmpty) ...{
         'question': input,
         'text': input,
@@ -35,8 +39,31 @@ class FortuneRemoteDataSource {
       },
       if (yesNoChoice != null) 'answer': yesNoChoice ? 'yes' : 'no',
       if (birthDate != null) 'birthDate': birthDate.toIso8601String(),
-      'platform': 'mobile',
     };
+
+    if (images != null) {
+      if (images.cupImagePath != null && images.cupImagePath!.isNotEmpty) {
+        body['cupImagePath'] = images.cupImagePath;
+      }
+      if (images.saucerImagePath != null && images.saucerImagePath!.isNotEmpty) {
+        body['saucerImagePath'] = images.saucerImagePath;
+      }
+      if (images.palmImagePath != null && images.palmImagePath!.isNotEmpty) {
+        body['palmImagePath'] = images.palmImagePath;
+        body['hand'] = images.hand;
+      }
+    }
+
+    return body;
+  }
+
+  String _readingSlug(FortuneTypeEntity type, FortuneCloudImageInput? images) {
+    if (images != null &&
+        images.cupImagePath != null &&
+        images.cupImagePath!.isNotEmpty) {
+      return 'kahve-fali-image';
+    }
+    return _apiSlugFor(type.slug);
   }
 
   Stream<FortuneStreamUpdate> streamFortune({
@@ -44,14 +71,16 @@ class FortuneRemoteDataSource {
     String? userInput,
     bool? yesNoChoice,
     DateTime? birthDate,
+    FortuneCloudImageInput? images,
     required String accessToken,
   }) async* {
-    final slug = _apiSlugFor(type.slug);
+    final slug = _readingSlug(type, images);
     final body = _fortuneBody(
       type: type,
       userInput: userInput,
       yesNoChoice: yesNoChoice,
       birthDate: birthDate,
+      images: images,
     );
     await for (final chunk in _sse.streamReading(
       apiSlug: slug,
@@ -72,8 +101,9 @@ class FortuneRemoteDataSource {
     String? userInput,
     bool? yesNoChoice,
     DateTime? birthDate,
+    FortuneCloudImageInput? images,
   }) async {
-    final path = ApiEndpoints.fortuneReading(_apiSlugFor(type.slug));
+    final path = ApiEndpoints.fortuneReading(_readingSlug(type, images));
     final res = await _dio.safePost<dynamic>(
       path,
       data: _fortuneBody(
@@ -81,6 +111,7 @@ class FortuneRemoteDataSource {
         userInput: userInput,
         yesNoChoice: yesNoChoice,
         birthDate: birthDate,
+        images: images,
       ),
     );
     final map = _unwrapMap(res.data);
