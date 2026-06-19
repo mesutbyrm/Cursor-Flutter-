@@ -2,19 +2,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.286+289` |
-| Tarih (UTC) | 2026-06-19 08:57 |
-| Commit | [`a3474d621ed476cec6d9d13634548266b7c2e922`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/a3474d621ed476cec6d9d13634548266b7c2e922) |
-| İş akışı | [Run 27815377288](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27815377288) |
+| Sürüm | `1.0.288+291` |
+| Tarih (UTC) | 2026-06-19 09:51 |
+| Commit | [`606908de7c7002cbdefe370d97915fdbc46cf9ab`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/606908de7c7002cbdefe370d97915fdbc46cf9ab) |
+| İş akışı | [Run 27818020740](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27818020740) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.286+289 (2026-06-19)
+## 1.0.288+291 (2026-06-19)
 
-### Ana sayfa — marka yazısı
+### Derleme düzeltmesi — video oynatma
 
-- Sol üstteki ikon kaldırıldı; yerine gradyanlı **CanlıFal** şekilli yazı logosu
+- Eksik import'lar giderildi (`ApiException`, `shortsRepositoryProvider`)
 
 
 
