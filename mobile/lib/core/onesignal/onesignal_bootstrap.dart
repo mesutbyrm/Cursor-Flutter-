@@ -40,10 +40,18 @@ class OneSignalBootstrap {
       });
 
       OneSignal.Notifications.addForegroundWillDisplayListener((event) {
-        final data = event.notification.additionalData;
-        final isFortuneInvite = data != null &&
+        final additional = event.notification.additionalData;
+        final data = <String, dynamic>{
+          if (additional != null)
+            ...additional.map((k, v) => MapEntry(k.toString(), v)),
+          if (event.notification.title != null)
+            'title': event.notification.title!,
+          if (event.notification.body != null)
+            'body': event.notification.body!,
+        };
+        final isFortuneInvite = data.isNotEmpty &&
             PushNavigationHandler.handleFortuneInviteData(
-              Map<String, dynamic>.from(data),
+              data,
               notifyReceived: false,
             );
         if (isFortuneInvite) {

@@ -13,6 +13,7 @@ class PushNavigationHandler {
   static void Function()? onPushReceived;
   static void Function(Map<String, dynamic> data)? onFortuneInvite;
   static void Function(PsychicSessionUpdatePayload update)? onSessionUpdate;
+  static void Function(PsychicSessionUpdatePayload cancelled)? onSessionCancelled;
   static void Function(PsychicSessionEndedPayload ended)? onSessionEnded;
   static final List<Map<String, dynamic>> _bufferedFortunePayloads = [];
 
@@ -21,12 +22,14 @@ class PushNavigationHandler {
     void Function()? onReceived,
     void Function(Map<String, dynamic> data)? onFortuneInviteData,
     void Function(PsychicSessionUpdatePayload update)? onSessionUpdateData,
+    void Function(PsychicSessionUpdatePayload cancelled)? onSessionCancelledData,
     void Function(PsychicSessionEndedPayload ended)? onSessionEndedData,
   }) {
     _router = router;
     onPushReceived = onReceived;
     onFortuneInvite = onFortuneInviteData;
     onSessionUpdate = onSessionUpdateData;
+    onSessionCancelled = onSessionCancelledData;
     onSessionEnded = onSessionEndedData;
     _drainBufferedFortunePayloads();
   }
@@ -63,16 +66,27 @@ class PushNavigationHandler {
       return true;
     }
 
+    final sessionCancelled = parsePsychicSessionCancelledPayload(data);
+    if (sessionCancelled != null) {
+      onSessionCancelled?.call(sessionCancelled);
+      if (sessionCancelled.isRejected || sessionCancelled.isCancelled) {
+        return true;
+      }
+    }
+
     final sessionUpdate = parsePsychicSessionUpdatePayload(data);
     if (sessionUpdate != null) {
       onSessionUpdate?.call(sessionUpdate);
+      if (sessionUpdate.isRejected || sessionUpdate.isCancelled) {
+        onSessionCancelled?.call(sessionUpdate);
+      }
       if (sessionUpdate.isRejected) {
         _router?.go('/canli-falcilar');
       }
       return true;
     }
 
-    final invite = parsePsychicIncomingPayload(data);
+    final invite = parsePsychicIncomingLoose(data);
     if (invite == null) return false;
     if (onFortuneInvite == null) {
       _bufferedFortunePayloads.add(Map<String, dynamic>.from(data));

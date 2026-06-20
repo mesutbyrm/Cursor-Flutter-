@@ -9,19 +9,18 @@ import '../../domain/entities/psychic_session_status.dart';
 
 Map<String, dynamic> flattenPsychicPushPayload(Map<String, dynamic> raw) {
   var map = Map<String, dynamic>.from(raw);
-  final nested = map['data'];
-  if (nested is String && nested.trim().isNotEmpty) {
-    try {
-      final decoded = jsonDecode(nested);
-      if (decoded is Map) {
-        map = {...map, ...asJsonMap(decoded)};
-      }
-    } catch (_) {}
-  } else if (nested is Map) {
-    map = {...map, ...asJsonMap(nested)};
-  }
-  if (map['payload'] is Map) {
-    map = {...map, ...asJsonMap(map['payload'])};
+  for (final key in const ['data', 'payload', 'custom', 'additionalData']) {
+    final nested = map[key];
+    if (nested is String && nested.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(nested);
+        if (decoded is Map) {
+          map = {...map, ...asJsonMap(decoded)};
+        }
+      } catch (_) {}
+    } else if (nested is Map) {
+      map = {...map, ...asJsonMap(nested)};
+    }
   }
   return map;
 }
@@ -119,6 +118,44 @@ class PsychicSessionUpdatePayload {
   bool get isAccepted => action == 'accept';
   bool get isRejected =>
       action == 'reject' || action == 'decline' || action == 'cancel';
+  bool get isCancelled =>
+      action == 'cancel' || action == 'cancelled' || action == 'canceled';
+}
+
+/// İptal / red push — bekleme ve falcı dialog'unu anında kapatır.
+PsychicSessionUpdatePayload? parsePsychicSessionCancelledPayload(
+  Map<String, dynamic>? raw,
+) {
+  if (raw == null || raw.isEmpty) return null;
+  final map = flattenPsychicPushPayload(raw);
+  final type = psychicPushType(map);
+  if (!type.contains('cancel') &&
+      !type.contains('declin') &&
+      !type.contains('reject')) {
+    return null;
+  }
+  if (type.contains('session_ended')) return null;
+
+  final sessionId = pick(map, [
+    'sessionId',
+    'session_id',
+    'targetId',
+    'target_id',
+    'id',
+    'requestId',
+    'liveSessionId',
+  ])?.toString() ??
+      sessionIdFromTargetPath(map['targetPath']);
+  if (sessionId == null || sessionId.isEmpty) return null;
+
+  final action = pick(map, ['action', 'status'])?.toString().toLowerCase() ??
+      (type.contains('cancel') ? 'cancel' : 'reject');
+  return PsychicSessionUpdatePayload(
+    sessionId: sessionId,
+    action: action,
+    tellerId: pick(map, ['tellerId', 'teller_id', 'fortuneTellerId'])
+        ?.toString(),
+  );
 }
 
 class PsychicSessionEndedPayload {
@@ -246,6 +283,13 @@ PsychicRequestEntity? parsePsychicIncomingPayload(Map<String, dynamic>? raw) {
       sessionIdFromTargetPath(map['targetPath']);
   if (sessionId == null || sessionId.isEmpty) return null;
 
+  final inviteStatus = isPsychicInviteEventType(type)
+      ? PsychicSessionStatus.pending
+      : PsychicSessionStatus.fromApi(
+          pick(map, ['status'])?.toString(),
+          tellerResponse: pick(map, ['tellerResponse', 'response'])?.toString(),
+        );
+
   return PsychicRequestEntity(
     sessionId: sessionId,
     clientId: pick(map, ['clientId', 'client_id', 'userId'])?.toString() ?? '',
@@ -288,11 +332,71 @@ PsychicRequestEntity? parsePsychicIncomingPayload(Map<String, dynamic>? raw) {
     fortuneType: pick(map, ['category', 'specialty', 'specialties', 'fortuneType'])
             ?.toString() ??
         'general',
-    status: PsychicSessionStatus.fromApi(
-      pick(map, ['status'])?.toString(),
-      tellerResponse: pick(map, ['tellerResponse', 'response'])?.toString(),
-    ),
+    status: inviteStatus,
   );
+}
+
+/// OneSignal yalnızca targetId gönderdiğinde minimal davet.
+PsychicRequestEntity? parsePsychicIncomingLoose(
+  Map<String, dynamic>? raw, {
+  String? title,
+  String? body,
+}) {
+  final fromPayload = parsePsychicIncomingPayload(raw);
+  if (fromPayload != null) return fromPayload;
+
+  final map = raw != null ? flattenPsychicPushPayload(raw) : <String, dynamic>{};
+  final titleText = title ?? map['title']?.toString();
+  final bodyText = body ?? map['body']?.toString();
+  final type = psychicPushType(map);
+  final sessionId = pick(map, [
+        'sessionId',
+        'session_id',
+        'targetId',
+        'target_id',
+        'id',
+      ])?.toString() ??
+      sessionIdFromTargetPath(map['targetPath']);
+  if (sessionId == null || sessionId.isEmpty) return null;
+
+  final looksLikeInvite = isPsychicInviteEventType(type) ||
+      type.contains('psychic') ||
+      type.contains('fortune') ||
+      type.contains('fal') ||
+      (titleText ?? '').toLowerCase().contains('fal') ||
+      (bodyText ?? '').toLowerCase().contains('fal');
+
+  if (!looksLikeInvite) return null;
+
+  return PsychicRequestEntity(
+    sessionId: sessionId,
+    clientId: pick(map, ['clientId', 'userId'])?.toString() ?? '',
+    clientName: pick(map, ['clientName', 'displayName'])?.toString() ??
+        _clientNameFromTitle(titleText),
+    tellerId: pick(map, ['tellerId', 'fortuneTellerId'])?.toString() ?? '',
+    durationMinutes: 10,
+    totalJeton: asInt(pick(map, ['totalJeton', 'jeton'])),
+    fortuneType: 'general',
+    status: PsychicSessionStatus.pending,
+  );
+}
+
+String _clientNameFromTitle(String? title) {
+  final t = title?.trim() ?? '';
+  if (t.isEmpty) return 'Danışan';
+  const prefixes = [
+    'Canlı fal isteği:',
+    'Canlı Fal İsteği:',
+    'Yeni fal talebi:',
+    'Yeni seans isteği:',
+  ];
+  for (final prefix in prefixes) {
+    if (t.startsWith(prefix)) {
+      final name = t.substring(prefix.length).trim();
+      if (name.isNotEmpty) return name;
+    }
+  }
+  return t;
 }
 
 bool isPsychicInvitePayload(Map<String, dynamic>? raw) =>

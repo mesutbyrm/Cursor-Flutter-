@@ -47,7 +47,41 @@ void main() {
       expect(invite, isNotNull);
       expect(invite!.sessionId, 'sess_json_003');
     });
+
+    test('loose parse uses targetId and fal title', () {
+      final invite = parsePsychicIncomingLoose(
+        {'targetId': 'sess_loose_004'},
+        title: 'Canlı fal isteği: Ayşe',
+      );
+
+      expect(invite, isNotNull);
+      expect(invite!.sessionId, 'sess_loose_004');
+      expect(invite.clientName, 'Ayşe');
+      expect(invite.isPending, isTrue);
+    });
+
+    test('invite with nested non-pending status stays pending', () {
+      final invite = parsePsychicIncomingPayload({
+        'type': 'psychic_request_created',
+        'session': {'id': 'sess_status', 'status': 'active'},
+      });
+
+      expect(invite, isNotNull);
+      expect(invite!.isPending, isTrue);
+    });
   });
+
+  group('parsePsychicSessionCancelledPayload', () {
+    test('matches session_cancelled', () {
+      final cancel = parsePsychicSessionCancelledPayload({
+        'type': 'psychic_session_cancelled',
+        'sessionId': 'sess_cancel_1',
+      });
+
+      expect(cancel, isNotNull);
+      expect(cancel!.sessionId, 'sess_cancel_1');
+      expect(cancel.isCancelled, isTrue);
+    });
 
   group('isPsychicInviteEventType', () {
     test('matches production psychic_request_created', () {

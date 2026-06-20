@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.303+306 (2026-06-19)
+
+### Canlı Falcılar — davet dialog + anında iptal
+
+- **Push parse:** `parsePsychicIncomingLoose` — OneSignal `custom`/title ile minimal davet; invite durumu her zaman `pending`
+- **İptal senkronu:** `psychicSessionCancelSignal` — danışan iptalinde falcı dialog'u anında kapanır (1 sn durum izleme + push)
+- **Bekleme ekranı:** İptal onayı sonrası anında çıkış; API arka planda; poll 1 sn
+- **Teşhis:** `[TellerDebug]` yalnızca 7 satır (profileFound … resolveSource)
+
 ## 1.0.302+305 (2026-06-19)
 
 ### Canlı Falcılar — fortuneTeller.id ≠ authUser.id (kök neden düzeltmesi)

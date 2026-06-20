@@ -47,20 +47,8 @@ class TellerRoleDiagnostic {
       'isUsable=$isUsable\n'
       'isApprovedTeller=$isApprovedTeller\n'
       'isFortuneTeller=$isFortuneTeller\n'
-      'resolveSource=$resolveSource\n'
-      'role=${role ?? ""}\n'
-      'approvalStatus=${approvalStatus ?? ""}\n'
-      'onlineStatus=${onlineStatus ?? ""}\n'
-      'blockReason=${blockReason ?? ""}',
+      'resolveSource=$resolveSource',
     );
-    if (rawMyProfile != null || rawMeSnippet != null) {
-      debugPrint(
-        '[TellerDebug] raw=${jsonEncode({
-          if (rawMyProfile != null) 'myProfile': rawMyProfile,
-          if (rawMeSnippet != null) 'me': rawMeSnippet,
-        })}',
-      );
-    }
   }
 
   static TellerRoleDiagnostic fromResolve({

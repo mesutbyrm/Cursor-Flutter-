@@ -15,6 +15,7 @@ import '../../features/live_psychics/presentation/providers/psychic_booking_feed
 import '../../features/profile/presentation/providers/profile_providers.dart';
 import '../../features/live_psychics/presentation/providers/psychic_push_payload.dart';
 import '../../features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
+import '../../features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import '../../features/messages/presentation/providers/messages_providers.dart';
 import '../../features/notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../features/notifications/presentation/providers/notifications_providers.dart';
@@ -52,11 +53,20 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
         ref.read(goRouterProvider),
         onReceived: _onPushReceived,
         onFortuneInviteData: (data) {
-          final invite = parsePsychicIncomingPayload(data);
+          final invite = parsePsychicIncomingLoose(data);
           if (invite != null) {
             ref.read(psychicIncomingQueueProvider.notifier).enqueue(invite);
             PsychicInviteCoordinator.requestPresent(sessionId: invite.sessionId);
           }
+        },
+        onSessionCancelledData: (cancelled) {
+          ref
+              .read(psychicSessionCancelSignalProvider.notifier)
+              .signal(cancelled.sessionId);
+          ref.read(psychicIncomingQueueProvider.notifier).remove(cancelled.sessionId);
+          ref.read(psychicDismissedSessionsProvider.notifier).update(
+                (s) => {...s, cancelled.sessionId},
+              );
         },
         onSessionUpdateData: (update) {
           if (update.isAccepted) {

@@ -17,7 +17,7 @@ import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_r
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_status.dart';
 import 'package:canlifal_social/features/live_psychics/domain/repositories/live_psychics_repository.dart';
-import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
 
 enum PsychicWaitingPhase {
@@ -85,10 +85,14 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
 
   Future<void> _init() async {
     await PsychicSessionStore.save(session);
-    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _checkStatus());
+    _poll = Timer.periodic(const Duration(seconds: 1), (_) => _checkStatus());
     _timeout = Timer.periodic(const Duration(seconds: 1), (_) => _tickTimeout());
     unawaited(_checkStatus());
     unawaited(_connectSse());
+  }
+
+  void onRemoteCancelled() {
+    if (!state.closed) unawaited(_onRejected());
   }
 
   void _tickTimeout() {
@@ -181,6 +185,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     ref.invalidate(coinBalanceProvider);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
         'Falcı randevunuzu reddetti';
+    ref.read(psychicWaitingExitProvider.notifier).state = session.psychic.id;
   }
 
   void acknowledgeExit() {
@@ -193,32 +198,19 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     state = state.copyWith(phase: PsychicWaitingPhase.expired, closed: true);
     _poll?.cancel();
     _timeout?.cancel();
-    try {
-      await ref
-          .read(livePsychicsRepositoryProvider)
-          .endSession(session.sessionId);
-    } catch (_) {}
+    unawaited(
+      ref.read(livePsychicsRepositoryProvider).endSession(session.sessionId),
+    );
     await ref.read(psychicRoomSseServiceProvider).disconnect();
     await PsychicSessionStore.clear();
     ref.invalidate(coinBalanceProvider);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
         'Falcı yanıt vermedi — süre doldu, jetonlar iade edildi';
+    ref.read(psychicWaitingExitProvider.notifier).state = session.psychic.id;
   }
 
   Future<void> cancel(BuildContext context) async {
     if (state.closed) return;
-    if (state.cancelling) {
-      final force = await showPsychicCloseDialog(
-        context,
-        title: 'Yine de çık?',
-        message:
-            'İptal isteği sunucuya iletiliyor. Beklemeden çıkarsanız jeton iadesi gecikebilir.',
-        confirmLabel: 'Çık',
-      );
-      if (!force) return;
-      await _exit(apiOk: false);
-      return;
-    }
 
     final confirmed = await showPsychicCloseDialog(
       context,
@@ -229,30 +221,16 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     );
     if (!confirmed) return;
 
-    state = state.copyWith(cancelling: true);
-    _poll?.cancel();
-    _timeout?.cancel();
-    var ended = false;
-    try {
-      ended = await ref
-          .read(livePsychicsRepositoryProvider)
-          .endSession(session.sessionId);
-    } catch (_) {
-      ended = false;
-    }
-    if (!ended && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Sunucu iptali yanıt vermedi; yine de çıkılıyor. Jeton iadesi birkaç dakika sürebilir.',
-          ),
-        ),
-      );
-    }
-    await _exit(apiOk: ended);
+    ref
+        .read(psychicSessionCancelSignalProvider.notifier)
+        .signal(session.sessionId);
+    await _exitImmediate();
+    unawaited(
+      ref.read(livePsychicsRepositoryProvider).endSession(session.sessionId),
+    );
   }
 
-  Future<void> _exit({required bool apiOk}) async {
+  Future<void> _exitImmediate() async {
     if (state.closed) return;
     state = state.copyWith(closed: true);
     _poll?.cancel();
@@ -306,6 +284,14 @@ class PsychicWaitingScreen extends ConsumerWidget {
       if (next == null) return;
       context.go('/canli-falcilar/$next');
       ref.read(psychicWaitingExitProvider.notifier).state = null;
+    });
+
+    ref.listen<String?>(psychicSessionCancelSignalProvider, (prev, sessionId) {
+      if (sessionId == session.sessionId) {
+        ref
+            .read(psychicWaitingControllerProvider(session).notifier)
+            .onRemoteCancelled();
+      }
     });
 
     return PopScope(
@@ -463,7 +449,7 @@ class PsychicWaitingScreen extends ConsumerWidget {
                             SizedBox(
                               width: double.infinity,
                               child: FilledButton.icon(
-                                onPressed: waiting.closed || waiting.cancelling
+                                onPressed: waiting.closed
                                     ? null
                                     : () => ref
                                         .read(
@@ -479,22 +465,10 @@ class PsychicWaitingScreen extends ConsumerWidget {
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                 ),
-                                icon: waiting.cancelling
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Icon(Icons.close_rounded, size: 18),
-                                label: Text(
-                                  waiting.cancelling
-                                      ? 'İptal ediliyor…'
-                                      : 'İptal Et',
-                                  style:
-                                      const TextStyle(fontWeight: FontWeight.w800),
+                                icon: const Icon(Icons.close_rounded, size: 18),
+                                label: const Text(
+                                  'İptal Et',
+                                  style: TextStyle(fontWeight: FontWeight.w800),
                                 ),
                               ),
                             ),

@@ -18,7 +18,9 @@ import 'package:canlifal_social/features/live_psychics/presentation/controllers/
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_live_event_bus.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_incoming_call_dialog.dart';
+import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_status.dart';
 
 /// Uygulama genelinde falcı gelen çağrı popup'ı — SSE + 2 sn poll + push.
 class PsychicIncomingHost extends ConsumerStatefulWidget {
@@ -33,10 +35,12 @@ class PsychicIncomingHost extends ConsumerStatefulWidget {
 class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     with WidgetsBindingObserver {
   Timer? _poll;
+  Timer? _inviteStatusWatch;
   var _presenting = false;
   var _inviteUiReady = false;
   var _isFortuneTeller = false;
   String? _tellerProfileId;
+  String? _activePresentingSessionId;
 
   bool _isSignedIn() {
     if (!_inviteUiReady) return false;
@@ -76,6 +80,12 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
       setState(() => _inviteUiReady = true);
       PsychicInviteCoordinator.onRequestPresent = () {
         if (!mounted) return;
+        if (!_inviteUiReady) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) unawaited(_tryPresentNext());
+          });
+          return;
+        }
         unawaited(_tryPresentNext());
       };
       unawaited(_tryPresentNext());
@@ -187,6 +197,42 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     await _presentInvite(next);
   }
 
+  void _dismissActiveInvite({bool addToDismissed = true}) {
+    _inviteStatusWatch?.cancel();
+    _inviteStatusWatch = null;
+    final sessionId = _activePresentingSessionId;
+    _activePresentingSessionId = null;
+    if (sessionId != null && addToDismissed) {
+      ref.read(psychicIncomingQueueProvider.notifier).remove(sessionId);
+      ref.read(psychicDismissedSessionsProvider.notifier).update(
+            (s) => {...s, sessionId},
+          );
+    }
+    final navCtx = rootNavigatorKey.currentContext;
+    if (navCtx != null && navCtx.mounted && _presenting) {
+      Navigator.of(navCtx, rootNavigator: true).pop(null);
+    }
+  }
+
+  void _watchInviteCancellation(PsychicRequestEntity req) {
+    _inviteStatusWatch?.cancel();
+    _activePresentingSessionId = req.sessionId;
+    _inviteStatusWatch = Timer.periodic(const Duration(seconds: 1), (_) async {
+      if (!mounted || !_presenting) return;
+      final status = await ref
+          .read(livePsychicsRepositoryProvider)
+          .fetchSessionStatus(req.sessionId);
+      if (!mounted || !_presenting) return;
+      final s = status?.status;
+      if (s == PsychicSessionStatus.cancelled ||
+          s == PsychicSessionStatus.rejected ||
+          s == PsychicSessionStatus.expired ||
+          s == PsychicSessionStatus.ended) {
+        _dismissActiveInvite();
+      }
+    });
+  }
+
   Future<void> _presentInvite(PsychicRequestEntity req) async {
     if (!mounted || !_mayPresentInvites()) {
       ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
@@ -202,6 +248,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
       }
 
       PsychicInviteCoordinator.markDialogShown(req.sessionId);
+      _watchInviteCancellation(req);
 
       final accepted = await showPsychicIncomingCallDialog(
         navCtx,
@@ -276,6 +323,9 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
         );
       }
     } finally {
+      _inviteStatusWatch?.cancel();
+      _inviteStatusWatch = null;
+      _activePresentingSessionId = null;
       _presenting = false;
       ref.read(psychicIncomingPresentingProvider.notifier).state = false;
       if (mounted) await _tryPresentNext();
@@ -287,6 +337,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     PsychicInviteCoordinator.onRequestPresent = null;
     WidgetsBinding.instance.removeObserver(this);
     _poll?.cancel();
+    _inviteStatusWatch?.cancel();
     ref.read(psychicIncomingSseServiceProvider).disconnect();
     super.dispose();
   }
@@ -327,6 +378,20 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
       } else if (next.checked) {
         _isFortuneTeller = false;
         _tellerProfileId = null;
+      }
+    });
+    ref.listen<String?>(psychicSessionCancelSignalProvider, (prev, sessionId) {
+      if (sessionId == null) return;
+      if (_activePresentingSessionId == sessionId ||
+          ref.read(psychicIncomingQueueProvider).any((r) => r.sessionId == sessionId)) {
+        if (_presenting && _activePresentingSessionId == sessionId) {
+          _dismissActiveInvite();
+        } else {
+          ref.read(psychicIncomingQueueProvider.notifier).remove(sessionId);
+          ref.read(psychicDismissedSessionsProvider.notifier).update(
+                (s) => {...s, sessionId},
+              );
+        }
       }
     });
     return widget.child;
