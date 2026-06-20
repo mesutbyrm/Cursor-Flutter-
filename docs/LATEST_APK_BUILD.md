@@ -2,25 +2,24 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.307+310` |
-| Tarih (UTC) | 2026-06-20 10:30 |
-| Commit | [`03b0c72fe17f09326a3e6b5bc9e739eec5cb213c`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/03b0c72fe17f09326a3e6b5bc9e739eec5cb213c) |
-| İş akışı | [Run 27868091149](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27868091149) |
+| Sürüm | `1.0.308+311` |
+| Tarih (UTC) | 2026-06-20 14:19 |
+| Commit | [`5d4a6a1067c1c259a634e32414b3ff1b078dec42`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/5d4a6a1067c1c259a634e32414b3ff1b078dec42) |
+| İş akışı | [Run 27873453994](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27873453994) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.307+310 (2026-06-20)
+## 1.0.308+311 (2026-06-20)
 
-### Premium AI Fal Deneyimi (2026)
+### Fal & Tarot — Premium UI güncellemesi
 
-- **Kapak görseli:** Fal türüne özel tam genişlik görsel, glassmorphism, parallax, mistik ışık animasyonu
-- **Falını Aç CTA:** Glow, haptic, Lottie yıldız; yüklemede dönen tarot kartları + shimmer
-- **AI yorum:** 6 bölüm (Genel Enerji, Aşk, İş, Para, Gelecek, Tavsiye); API metni parse + yerel 200+ kelime yedek
-- **Görsel analiz:** Kapak/fotoğraf sembolleri yoruma entegre
-- **Sonuç ekranı:** Metin kapak üzerinde blur cam paneller; bölümler 1–5 sn sırayla fade-in
-- **Sosyal:** Otomatik paylaşım şablonu, kapak görseli, `fortuneId` bağlantısı; takipçi bildirimi
-- **Veritabanı:** `UserFortune` genişletildi; `SocialFortunePost` tablosu; `SocialPost.fortuneId`
+- **Dönen küre:** Taşma düzeltildi, ClipRect + responsive boyut, 24px alt boşluk, RepaintBoundary
+- **Fal kartları:** Premium gradient overlay, shimmer yükleme, Hero animasyonu, yüksek çözünürlük CDN
+- **Detay ekranı:** Falını Aç hero büyüme, blur arka plan, Lottie geçiş animasyonu
+- **Sonuç ekranı:** Fal türüne özel dinamik arka plan, hareketli partiküller, daktilo efekti
+- **Sosyal:** Yorum → Fal Sonucu → Paylaş → SOSYALDE PAYLAŞ hiyerarşisi; Story kalitesinde paylaşım görseli
+- **Performans:** RepaintBoundary, memCacheWidth, statik parçacık boyama
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
