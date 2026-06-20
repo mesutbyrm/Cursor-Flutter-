@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.305+308 (2026-06-19)
+
+### Fal & Tarot — Ultra Premium Liquid Glass ana ekran
+
+- **Kozmik arka plan:** Katmanlı uzay gradient, nebula nefesi, binlerce yıldız, sis, parallax partiküller (scroll)
+- **Hero:** Animasyonlu 3D kristal küre (20 sn dönüş, galaksi içi), altın serif başlık, FALINA BAK liquid ripple CTA
+- **Kehanet kartı:** Tam genişlik VisionOS cam panel + tarot illüstrasyonu
+- **Fal türleri:** 2×4 premium kart grid (radius 32, stagger giriş), Tarot → Aura
+- **Günlük enerjin:** Yatay swipe kristal cam kartlar
+- **Header:** Liquid Glass mesaj/bildirim butonları, altın «Fal & Tarot» tipografi
+
 ## 1.0.304+307 (2026-06-20)
 
 ### Jeton — Papara / Havale ödeme bildirimi
