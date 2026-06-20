@@ -2,24 +2,24 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.305+308` |
-| Tarih (UTC) | 2026-06-20 09:24 |
-| Commit | [`83237e58ba6f2d92a5c0c5d8f9a0266b65c0b6f5`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/83237e58ba6f2d92a5c0c5d8f9a0266b65c0b6f5) |
-| İş akışı | [Run 27866552706](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27866552706) |
+| Sürüm | `1.0.306+309` |
+| Tarih (UTC) | 2026-06-20 10:16 |
+| Commit | [`057841bbdf04915b0ad1210d3af66db1c739353e`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/057841bbdf04915b0ad1210d3af66db1c739353e) |
+| İş akışı | [Run 27867741618](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27867741618) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.305+308 (2026-06-19)
+## 1.0.306+309 (2026-06-20)
 
-### Fal & Tarot — Ultra Premium Liquid Glass ana ekran
+### Sesli sohbet — gelir modeli ve oda tipleri
 
-- **Kozmik arka plan:** Katmanlı uzay gradient, nebula nefesi, binlerce yıldız, sis, parallax partiküller (scroll)
-- **Hero:** Animasyonlu 3D kristal küre (20 sn dönüş, galaksi içi), altın serif başlık, FALINA BAK liquid ripple CTA
-- **Kehanet kartı:** Tam genişlik VisionOS cam panel + tarot illüstrasyonu
-- **Fal türleri:** 2×4 premium kart grid (radius 32, stagger giriş), Tarot → Aura
-- **Günlük enerjin:** Yatay swipe kristal cam kartlar
-- **Header:** Liquid Glass mesaj/bildirim butonları, altın «Fal & Tarot» tipografi
+- **Oda tipleri:** `FREE`, `NORMAL`, `VIP` — ücretsiz oda açma (0 jeton), kapasite limitleri
+- **Hediye dağılımı (backend):** Alıcı %70 / oda sahibi %30 → komisyon brüt pay üzerinden %50
+- **Ücretsiz oda:** Oda sahibi hediye ve müzik geliri almaz; müzik isteği tamamı site
+- **Müzik isteği:** 10 jeton; NORMAL 50/50, VIP 70/30 (admin ayarlı)
+- **Admin:** Sesli Oda sekmesi — oranlar ve kapasite ayarları
+- **API:** `VoiceRoomSettings`, `VoiceRoomFinanceAuditLog`, migration
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
