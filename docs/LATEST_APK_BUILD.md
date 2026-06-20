@@ -2,24 +2,26 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.308+311` |
-| Tarih (UTC) | 2026-06-20 14:44 |
-| Commit | [`141e980dfc88d34e2a154990db9c7c4687e8b1bb`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/141e980dfc88d34e2a154990db9c7c4687e8b1bb) |
-| İş akışı | [Run 27874038244](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27874038244) |
+| Sürüm | `1.0.309+312` |
+| Tarih (UTC) | 2026-06-20 15:13 |
+| Commit | [`116544d4fb382f3515188772f36e792cb08763ae`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/116544d4fb382f3515188772f36e792cb08763ae) |
+| İş akışı | [Run 27874727957](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27874727957) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.308+311 (2026-06-20)
+## 1.0.309+312 (2026-06-19)
 
-### Fal & Tarot — Premium UI güncellemesi
+### Fal sayfaları — Premium 2026 redesign
 
-- **Dönen küre:** Taşma düzeltildi, ClipRect + responsive boyut, 24px alt boşluk, RepaintBoundary
-- **Fal kartları:** Premium gradient overlay, shimmer yükleme, Hero animasyonu, yüksek çözünürlük CDN
-- **Detay ekranı:** Falını Aç hero büyüme, blur arka plan, Lottie geçiş animasyonu
-- **Sonuç ekranı:** Fal türüne özel dinamik arka plan, hareketli partiküller, daktilo efekti
-- **Sosyal:** Yorum → Fal Sonucu → Paylaş → SOSYALDE PAYLAŞ hiyerarşisi; Story kalitesinde paylaşım görseli
-- **Performans:** RepaintBoundary, memCacheWidth, statik parçacık boyama
+- **Fal türleri grid:** Sinematik 2 kolon kartlar, glassmorphism + neon glow, 30px radius, tap scale animasyonu; emoji/clipart kaldırıldı
+- **Görseller:** Fal türüne özel yüksek çözünürlüklü Unsplash sahneleri (tarot, kahve, aşk, yıldızname, melek, numeroloji, istihare, aura)
+- **Günlük fal:** Hediye kutusu kaldırıldı; mistik tarot kartı, dönen enerji halkaları, nebula + partikül hero
+- **Falını Aç geçişi:** 2.5sn kamera zoom, kozmik ışık patlaması, kart dönüşü, haptic
+- **Kehanet / intro:** `CinematicFortuneHero` — 320px parallax hero, fal türüne göre dinamik görsel
+- **Sonuç ekranı:** Başlık kartı (Yeni Başlangıçlar vb.), enerji etiketi, glass bölümler (Aşk, Kariyer, Para, Ruhsal, Tavsiye), Material ikonlar
+- **Animasyonlar:** `flutter_animate`, `shimmer`, `animated_text_kit` typewriter, fade/slide/glow
+- **Performans:** RepaintBoundary, CachedNetworkImage memCache, Hero
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
