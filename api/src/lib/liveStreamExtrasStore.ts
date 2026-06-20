@@ -464,3 +464,124 @@ export function updateStreamFortuneRequestStatus(
   row.status = status;
   return { ok: true as const, request: row };
 }
+
+export type CoBroadcastJoinRequestRow = {
+  id: string;
+  streamId: string;
+  userId: string;
+  userName: string;
+  status: "pending" | "accepted" | "rejected";
+  createdAt: string;
+};
+
+export type CoBroadcasterRow = {
+  userId: string;
+  userName: string;
+  joinedAt: string;
+};
+
+const coJoinRequestsByStream = new Map<string, CoBroadcastJoinRequestRow[]>();
+const coBroadcastersByStream = new Map<string, CoBroadcasterRow[]>();
+
+export function listCoBroadcastJoinRequests(streamId: string) {
+  return [...(coJoinRequestsByStream.get(streamId.trim()) ?? [])].filter(
+    (r) => r.status === "pending",
+  );
+}
+
+export function listCoBroadcasters(streamId: string) {
+  return [...(coBroadcastersByStream.get(streamId.trim()) ?? [])];
+}
+
+export function requestCoBroadcastJoin(
+  streamId: string,
+  userId: string,
+  userName: string,
+) {
+  const key = streamId.trim();
+  const list = coJoinRequestsByStream.get(key) ?? [];
+  const existing = list.find(
+    (r) => r.userId === userId && r.status === "pending",
+  );
+  if (existing) return existing;
+  const row: CoBroadcastJoinRequestRow = {
+    id: randomUUID(),
+    streamId: key,
+    userId,
+    userName: userName.trim() || "İzleyici",
+    status: "pending",
+    createdAt: new Date().toISOString(),
+  };
+  list.push(row);
+  coJoinRequestsByStream.set(key, list);
+  return row;
+}
+
+export function respondCoBroadcastJoin(
+  streamId: string,
+  hostUserId: string,
+  targetUserId: string,
+  accept: boolean,
+) {
+  const stream = streamId.trim();
+  const list = coJoinRequestsByStream.get(stream) ?? [];
+  const row = list.find(
+    (r) => r.userId === targetUserId && r.status === "pending",
+  );
+  if (!row) return { ok: false as const, error: "İstek bulunamadı" };
+  row.status = accept ? "accepted" : "rejected";
+  if (accept) {
+    const guests = coBroadcastersByStream.get(stream) ?? [];
+    if (!guests.some((g) => g.userId === targetUserId)) {
+      guests.push({
+        userId: targetUserId,
+        userName: row.userName,
+        joinedAt: new Date().toISOString(),
+      });
+      coBroadcastersByStream.set(stream, guests);
+    }
+  }
+  return { ok: true as const, request: row };
+}
+
+const streamMutes = new Map<string, Set<string>>();
+const streamBans = new Map<string, Set<string>>();
+const streamModerators = new Map<string, Set<string>>();
+
+function bucket(map: Map<string, Set<string>>, streamId: string) {
+  const key = streamId.trim();
+  let set = map.get(key);
+  if (!set) {
+    set = new Set();
+    map.set(key, set);
+  }
+  return set;
+}
+
+export function muteStreamViewer(streamId: string, viewerId: string) {
+  bucket(streamMutes, streamId).add(viewerId.trim());
+}
+
+export function unmuteStreamViewer(streamId: string, viewerId: string) {
+  bucket(streamMutes, streamId).delete(viewerId.trim());
+}
+
+export function banStreamViewer(streamId: string, userId: string) {
+  bucket(streamBans, streamId).add(userId.trim());
+}
+
+export function unbanStreamViewer(streamId: string, userId: string) {
+  bucket(streamBans, streamId).delete(userId.trim());
+}
+
+export function addStreamModerator(streamId: string, userId: string) {
+  bucket(streamModerators, streamId).add(userId.trim());
+}
+
+export function removeStreamModerator(streamId: string, userId: string) {
+  bucket(streamModerators, streamId).delete(userId.trim());
+}
+
+export function listStreamModerators(streamId: string) {
+  return [...bucket(streamModerators, streamId)];
+}

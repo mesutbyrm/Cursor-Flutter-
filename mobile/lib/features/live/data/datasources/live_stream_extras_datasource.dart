@@ -177,10 +177,21 @@ class LiveStreamExtrasDataSource {
   Future<List<Map<String, dynamic>>> fetchCoBroadcasters(
     String streamId,
   ) async {
+    final snapshot = await fetchCoBroadcastSnapshot(streamId);
+    return snapshot.coBroadcasters;
+  }
+
+  Future<({List<Map<String, dynamic>> coBroadcasters, List<Map<String, dynamic>> joinRequests})>
+      fetchCoBroadcastSnapshot(String streamId) async {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.videoStreamCoBroadcast(streamId),
     );
-    return _listFromBody(res.data, keys: ['coBroadcasters', 'items', 'data']);
+    return (
+      coBroadcasters: _listFromBody(res.data,
+          keys: ['coBroadcasters', 'items', 'data']),
+      joinRequests: _listFromBody(res.data,
+          keys: ['joinRequests', 'pendingRequests', 'requests']),
+    );
   }
 
   Future<Map<String, dynamic>?> coBroadcastAction({

@@ -19,11 +19,10 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
-import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../agora/presentation/agora_room_manager.dart';
 import '../../../agora/presentation/providers/agora_providers.dart';
-import '../../../domain/entities/live_fortune_request_entity.dart';
+import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../gifts/live_gift_controller.dart';
@@ -42,9 +41,11 @@ import '../widgets/live_tiktok/live_background_picker_sheet.dart';
 import '../widgets/live_tiktok/live_guest_grid.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
 import '../providers/live_fortune_request_provider.dart';
+import '../providers/live_broadcast_settings_provider.dart';
 import '../widgets/broadcast_room/live_fortune_request_form.dart';
 import '../widgets/broadcast_room/live_fortune_requests_panel.dart';
 import '../widgets/broadcast_room/live_moderation_sheet.dart';
+import '../widgets/broadcast_room/live_broadcast_settings_sheet.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import '../widgets/broadcast_room/live_room_chat_fal_panel.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
@@ -83,6 +84,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   var _chatVisible = true;
   var _viewerAudioOn = true;
   VideoWebrtcSignalService? _signalService;
+  Timer? _guestJoinPoll;
+  final Set<String> _seenGuestJoinIds = {};
 
   @override
   void initState() {
@@ -177,6 +180,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
 
   @override
   void dispose() {
+    _guestJoinPoll?.cancel();
     _signalService?.stop();
     _timer.cancel();
     _chat.dispose();
@@ -409,9 +413,117 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     if (streamId == null || streamId.isEmpty) return;
     if (widget.session.isHost) {
       unawaited(ref.read(coBroadcastProvider.notifier).refresh());
+      unawaited(ref.read(coBroadcastProvider.notifier).refreshStream(streamId));
+      _guestJoinPoll?.cancel();
+      _guestJoinPoll = Timer.periodic(const Duration(seconds: 5), (_) {
+        if (!mounted) return;
+        unawaited(
+          ref.read(coBroadcastProvider.notifier).refreshStream(streamId),
+        );
+      });
     }
     _signalService = ref.read(videoWebrtcSignalServiceProvider);
     _signalService?.start(streamId: streamId);
+  }
+
+  Future<void> _onChatModeration(LiveRoomChatMessage message) async {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null ||
+        streamId.isEmpty ||
+        !widget.session.isHost ||
+        message.userId == null ||
+        message.userId!.isEmpty) {
+      return;
+    }
+    await showLiveModerationSheet(
+      context: context,
+      ref: ref,
+      streamId: streamId,
+      targetUserId: message.userId!,
+      targetDisplayName: message.user,
+    );
+  }
+
+  Future<void> _requestGuestJoin() async {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty || widget.session.isHost) return;
+    final settings = ref.read(liveBroadcastSettingsProvider);
+    if (!settings.guestsEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Yayıncı konuk almayı kapattı')),
+      );
+      return;
+    }
+    try {
+      await ref.read(coBroadcastProvider.notifier).requestJoin(streamId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Yayına katılma isteği gönderildi')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    }
+  }
+
+  Future<void> _promptGuestJoinRequest(Map<String, dynamic> request) async {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty || !widget.session.isHost) return;
+    final id = request['id']?.toString() ?? '';
+    if (id.isEmpty || !_seenGuestJoinIds.add(id)) return;
+
+    final name = request['userName']?.toString() ??
+        request['displayName']?.toString() ??
+        'İzleyici';
+    final userId = request['userId']?.toString() ?? '';
+
+    if (!mounted) return;
+    final accept = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        title: const Text('Yayına katılma isteği'),
+        content: Text('$name yayına katılmak istiyor.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Reddet'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Kabul Et'),
+          ),
+        ],
+      ),
+    );
+    if (accept == null) return;
+    try {
+      if (accept && userId.isNotEmpty) {
+        await ref.read(coBroadcastProvider.notifier).approveRequest(
+              streamId: streamId,
+              userId: userId,
+            );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('$name yayına eklendi')),
+          );
+        }
+      } else if (userId.isNotEmpty) {
+        await ref.read(liveStreamExtrasProvider).coBroadcastAction(
+              streamId: streamId,
+              action: 'reject',
+              userId: userId,
+            );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ApiException.userMessage(e))),
+        );
+      }
+    }
   }
 
   void _onDoubleTapHeart() {
@@ -770,9 +882,33 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         ? ref.watch(liveFortuneRequestsProvider(streamId))
         : null;
     final balance = ref.watch(coinBalanceProvider).valueOrNull ?? user?.coinBalance;
+    final broadcastSettings = ref.watch(liveBroadcastSettingsProvider);
+
+    if (hasStream && s.isHost) {
+      ref.listen(coBroadcastProvider, (prev, next) {
+        for (final req in next.joinRequests) {
+          if ((req['status']?.toString() ?? 'pending') == 'pending') {
+            unawaited(_promptGuestJoinRequest(req));
+          }
+        }
+      });
+    }
 
     if (hasStream) {
       ref.listen(liveRoomProvider(streamId), (prev, next) {
+        if (next.fortuneAnsweredNotice != null &&
+            next.fortuneAnsweredNotice != prev?.fortuneAnsweredNotice) {
+          final notice = next.fortuneAnsweredNotice!;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(notice)),
+            );
+            ref
+                .read(liveRoomProvider(streamId).notifier)
+                .clearFortuneAnsweredNotice();
+          });
+        }
         if (next.streamEnded && !(prev?.streamEnded ?? false) && !s.isHost) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           if (!mounted) return;
@@ -890,7 +1026,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             TextButton.icon(
-                              onPressed: () => _openPkPanel,
+                              onPressed: broadcastSettings.pkEnabled ? _openPkPanel : null,
                               style: TextButton.styleFrom(
                                 backgroundColor:
                                     Colors.black.withValues(alpha: 0.35),
@@ -933,6 +1069,30 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                                   color: Colors.white,
                                   fontSize: 12,
                                 ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton.icon(
+                              onPressed: () => showLiveBroadcastSettingsSheet(
+                                context: context,
+                                ref: ref,
+                              ),
+                              style: TextButton.styleFrom(
+                                backgroundColor:
+                                    Colors.black.withValues(alpha: 0.35),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.settings_rounded,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              label: const Text(
+                                'Ayarlar',
+                                style: TextStyle(color: Colors.white, fontSize: 12),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -1023,6 +1183,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                                       : roomState.messages,
                                   showFortuneTab:
                                       !s.isHost && _isFortuneBroadcast(s),
+                                  canModerate: s.isHost,
+                                  onMessageLongPress: s.isHost
+                                      ? (m) => unawaited(_onChatModeration(m))
+                                      : null,
                                   balance: balance,
                                   initialFortuneType:
                                       s.tags.isNotEmpty ? s.tags.first : null,
@@ -1110,13 +1274,21 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                     chatController: _chat,
                     isHost: s.isHost,
                     agora: s.isHost ? _agora : null,
+                    commentsEnabled: broadcastSettings.commentsEnabled,
+                    onJoinBroadcast: !s.isHost &&
+                            broadcastSettings.guestsEnabled &&
+                            hasStream
+                        ? () => unawaited(_requestGuestJoin())
+                        : null,
                     onToggleCamera: s.isHost
                         ? () {
                             _agora.setCameraEnabled(!_agora.cameraOn);
                             setState(() => _localPreviewKey = UniqueKey());
                           }
                         : null,
-                    onGift: () => giftCtrl.setPanelOpen(true),
+                    onGift: broadcastSettings.giftsEnabled
+                        ? () => giftCtrl.setPanelOpen(true)
+                        : null,
                     onSend: () {
                       final t = _chat.text.trim();
                       if (t.isEmpty || streamId == null || streamId.isEmpty) {
@@ -1135,7 +1307,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                 ],
               ),
             ),
-            if (giftCtrl.panelOpen && user != null)
+            if (giftCtrl.panelOpen && user != null && broadcastSettings.giftsEnabled)
               Positioned(
                 left: 0,
                 right: 0,

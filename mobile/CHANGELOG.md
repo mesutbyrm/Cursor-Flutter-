@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.311+314 (2026-06-19)
+
+### Canlı yayın — entegrasyon tamamlama
+
+- **İzleyici oturumu:** `fromStream` artık kategori/etiketleri taşıyor — fal sekmesi izleyicide de açılıyor
+- **Moderasyon:** Sohbet mesajına uzun bas → sustur/at/engelle/moderatör sheet
+- **Konuk alma:** İzleyici «Katıl» → yayıncı kabul/red popup; co-broadcast API genişletildi
+- **Yayın ayarları:** Yorum, hediye, PK, konuk ve grid kapasitesi sheet
+- **Fal yanıt bildirimi:** SSE ile «Fal isteğiniz yanıtlandı» snackbar
+- **API mirror:** `GET /video-streams/:id/stream` SSE, mute/ban/moderator, co-broadcast join
+
 ## 1.0.310+313 (2026-06-19)
 
 ### Canlı yayın — Premium 2026 (fal isteği, keşfet, moderasyon)

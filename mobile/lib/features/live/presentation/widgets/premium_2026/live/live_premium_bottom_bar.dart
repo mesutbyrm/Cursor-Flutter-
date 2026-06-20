@@ -20,6 +20,8 @@ class LivePremiumBottomBar extends StatelessWidget {
     this.onGift,
     this.onToggleCamera,
     this.onEnd,
+    this.onJoinBroadcast,
+    this.commentsEnabled = true,
   });
 
   final TextEditingController chatController;
@@ -30,6 +32,8 @@ class LivePremiumBottomBar extends StatelessWidget {
   final VoidCallback? onGift;
   final VoidCallback? onToggleCamera;
   final VoidCallback? onEnd;
+  final VoidCallback? onJoinBroadcast;
+  final bool commentsEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -100,6 +104,24 @@ class LivePremiumBottomBar extends StatelessWidget {
               ],
               Row(
                 children: [
+                  if (!isHost && onJoinBroadcast != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: TextButton.icon(
+                        onPressed: onJoinBroadcast,
+                        icon: const Icon(Icons.videocam_rounded, size: 18),
+                        label: const Text('Katıl'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor:
+                              AppThemeColors.accentPink.withValues(alpha: 0.35),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                        ),
+                      ),
+                    ),
                   IconButton(
                     onPressed: () {},
                     icon: const Icon(Icons.emoji_emotions_outlined,
@@ -108,9 +130,12 @@ class LivePremiumBottomBar extends StatelessWidget {
                   Expanded(
                     child: TextField(
                       controller: chatController,
+                      enabled: commentsEnabled,
                       style: const TextStyle(color: Colors.white, fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'Yorum yaz…',
+                        hintText: commentsEnabled
+                            ? 'Yorum yaz…'
+                            : 'Yorumlar kapalı',
                         hintStyle: TextStyle(
                           color: Colors.white.withValues(alpha: 0.45),
                         ),

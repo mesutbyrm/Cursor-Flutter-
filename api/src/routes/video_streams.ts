@@ -10,6 +10,18 @@ import {
   createStreamFortuneRequest,
   listStreamFortuneRequests,
   updateStreamFortuneRequestStatus,
+  listCoBroadcastJoinRequests,
+  listCoBroadcasters,
+  requestCoBroadcastJoin,
+  respondCoBroadcastJoin,
+  muteStreamViewer,
+  unmuteStreamViewer,
+  banStreamViewer,
+  unbanStreamViewer,
+  addStreamModerator,
+  removeStreamModerator,
+  listStreamModerators,
+  getPkBattle,
 } from "../lib/liveStreamExtrasStore";
 import {
   getActiveBattleForStream,
@@ -312,6 +324,19 @@ videoStreamsRouter.post("/:id/signal", requireAuth, async (req, res) => {
   return ok(res, { signal: row });
 });
 
+/** GET /api/video-streams/:id/co-broadcast */
+videoStreamsRouter.get("/:id/co-broadcast", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  if (!getLiveStream(streamId)) {
+    return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+  }
+  return ok(res, {
+    coBroadcasters: listCoBroadcasters(streamId),
+    joinRequests: listCoBroadcastJoinRequests(streamId),
+    pendingRequests: listCoBroadcastJoinRequests(streamId),
+  });
+});
+
 /** POST /api/video-streams/:id/co-broadcast/invite */
 videoStreamsRouter.post(
   "/:id/co-broadcast/invite",
@@ -334,9 +359,54 @@ videoStreamsRouter.post(
 
 /** POST /api/video-streams/:id/co-broadcast */
 videoStreamsRouter.post("/:id/co-broadcast", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  const stream = getLiveStream(streamId);
+  if (!stream) return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+
+  const action = req.body?.action?.toString()?.trim().toLowerCase() ?? "";
+  const userId = req.body?.userId?.toString()?.trim();
+
+  if (action === "request") {
+    const user = await loadUser(req.userId);
+    const row = requestCoBroadcastJoin(
+      streamId,
+      req.userId!,
+      user?.displayName ?? user?.username ?? "İzleyici",
+    );
+    return ok(res, { request: row, joinRequest: row });
+  }
+
+  if (action === "approve" || action === "accept") {
+    if (stream.broadcasterId !== req.userId) {
+      return fail(res, 403, "FORBIDDEN", "Yalnızca yayıncı onaylayabilir");
+    }
+    if (!userId) {
+      return fail(res, 400, "BAD_REQUEST", "userId gerekli");
+    }
+    const result = respondCoBroadcastJoin(streamId, req.userId!, userId, true);
+    if (!result.ok) {
+      return fail(res, 400, "BAD_REQUEST", result.error ?? "Onaylanamadı");
+    }
+    return ok(res, { request: result.request, coBroadcaster: result.request });
+  }
+
+  if (action === "reject" || action === "decline") {
+    if (stream.broadcasterId !== req.userId) {
+      return fail(res, 403, "FORBIDDEN", "Yalnızca yayıncı reddedebilir");
+    }
+    if (!userId) {
+      return fail(res, 400, "BAD_REQUEST", "userId gerekli");
+    }
+    const result = respondCoBroadcastJoin(streamId, req.userId!, userId, false);
+    if (!result.ok) {
+      return fail(res, 400, "BAD_REQUEST", result.error ?? "Reddedilemedi");
+    }
+    return ok(res, { request: result.request });
+  }
+
   const inviteId = req.body?.inviteId?.toString()?.trim();
   if (!inviteId) {
-    return fail(res, 400, "BAD_REQUEST", "inviteId gerekli");
+    return fail(res, 400, "BAD_REQUEST", "inviteId veya action gerekli");
   }
   const accept = req.body?.accept !== false;
   const result = respondCoBroadcastInvite(inviteId, req.userId!, accept);
@@ -496,3 +566,186 @@ videoStreamsRouter.patch(
     return ok(res, { request: result.request });
   },
 );
+
+/** POST /api/video-streams/:id/mute */
+videoStreamsRouter.post("/:id/mute", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  if (!getLiveStream(streamId)) {
+    return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+  }
+  const viewerId =
+    req.body?.viewerId?.toString()?.trim() ||
+    req.body?.userId?.toString()?.trim();
+  if (!viewerId) {
+    return fail(res, 400, "BAD_REQUEST", "viewerId gerekli");
+  }
+  muteStreamViewer(streamId, viewerId);
+  return ok(res, { muted: true, viewerId });
+});
+
+videoStreamsRouter.delete("/:id/mute", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  const viewerId =
+    req.body?.viewerId?.toString()?.trim() ||
+    req.query.userId?.toString()?.trim() ||
+    req.query.viewerId?.toString()?.trim();
+  if (!viewerId) {
+    return fail(res, 400, "BAD_REQUEST", "viewerId gerekli");
+  }
+  unmuteStreamViewer(streamId, viewerId);
+  return ok(res, { muted: false, viewerId });
+});
+
+/** POST /api/video-streams/:id/ban */
+videoStreamsRouter.post("/:id/ban", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  if (!getLiveStream(streamId)) {
+    return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+  }
+  const userId = req.body?.userId?.toString()?.trim();
+  if (!userId) {
+    return fail(res, 400, "BAD_REQUEST", "userId gerekli");
+  }
+  banStreamViewer(streamId, userId);
+  return ok(res, { banned: true, userId });
+});
+
+videoStreamsRouter.delete("/:id/ban", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  const userId =
+    req.body?.userId?.toString()?.trim() ||
+    req.query.userId?.toString()?.trim();
+  if (!userId) {
+    return fail(res, 400, "BAD_REQUEST", "userId gerekli");
+  }
+  unbanStreamViewer(streamId, userId);
+  return ok(res, { banned: false, userId });
+});
+
+videoStreamsRouter.get("/:id/moderators", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  if (!getLiveStream(streamId)) {
+    return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+  }
+  const mods = listStreamModerators(streamId);
+  return ok(res, {
+    moderators: mods.map((id) => ({ userId: id })),
+    items: mods.map((id) => ({ userId: id })),
+  });
+});
+
+videoStreamsRouter.post("/:id/moderators", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  const userId = req.body?.userId?.toString()?.trim();
+  if (!userId) {
+    return fail(res, 400, "BAD_REQUEST", "userId gerekli");
+  }
+  addStreamModerator(streamId, userId);
+  return ok(res, { added: true, userId });
+});
+
+videoStreamsRouter.delete("/:id/moderators", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  const userId =
+    req.body?.userId?.toString()?.trim() ||
+    req.query.userId?.toString()?.trim();
+  if (!userId) {
+    return fail(res, 400, "BAD_REQUEST", "userId gerekli");
+  }
+  removeStreamModerator(streamId, userId);
+  return ok(res, { removed: true, userId });
+});
+
+videoStreamsRouter.post("/:id/moderator", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  const userId = req.body?.userId?.toString()?.trim();
+  if (!userId) {
+    return fail(res, 400, "BAD_REQUEST", "userId gerekli");
+  }
+  addStreamModerator(streamId, userId);
+  return ok(res, { added: true, userId });
+});
+
+videoStreamsRouter.delete("/:id/moderator", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  const userId = req.body?.userId?.toString()?.trim();
+  if (!userId) {
+    return fail(res, 400, "BAD_REQUEST", "userId gerekli");
+  }
+  removeStreamModerator(streamId, userId);
+  return ok(res, { removed: true, userId });
+});
+
+/** GET /api/video-streams/:id/stream — SSE */
+videoStreamsRouter.get("/:id/stream", optionalAuth, async (req, res) => {
+  const streamId = req.params.id;
+  const stream = getLiveStream(streamId);
+  if (!stream) {
+    return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+  }
+
+  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders?.();
+
+  const send = (payload: Record<string, unknown>) => {
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  };
+
+  send({ type: "connected", streamId });
+
+  let lastMsgId = "";
+  const msgs = listLiveStreamMessages(streamId);
+  if (msgs.length > 0) lastMsgId = msgs[msgs.length - 1]!.id;
+  let lastViewer = stream.viewerCount;
+  let lastFortuneSig = "";
+  let lastPkSig = "";
+  let ended = stream.status !== "live";
+
+  const timer = setInterval(() => {
+    try {
+      const row = getLiveStream(streamId);
+      if (!row) {
+        send({ type: "streamEnded", streamId });
+        return;
+      }
+      if (row.viewerCount !== lastViewer) {
+        lastViewer = row.viewerCount;
+        send({ type: "viewerCount", streamId, viewerCount: lastViewer });
+      }
+      const latest = listLiveStreamMessages(streamId);
+      for (const m of latest) {
+        if (!lastMsgId || m.id > lastMsgId) {
+          send({ type: "streamMessage", message: m });
+          lastMsgId = m.id;
+        }
+      }
+      const fortune = listStreamFortuneRequests(streamId);
+      const fSig = fortune.map((f) => `${f.id}:${f.status}`).join("|");
+      if (fSig !== lastFortuneSig) {
+        lastFortuneSig = fSig;
+        for (const request of fortune) {
+          send({ type: "fortune_request", streamId, request });
+        }
+      }
+      const pk = getPkBattle(streamId);
+      const pkSig = pk
+        ? `${pk.id}:${pk.status}:${pk.leftScore}:${pk.rightScore}`
+        : "";
+      if (pkSig !== lastPkSig) {
+        lastPkSig = pkSig;
+        if (pk) send({ type: "pk", streamId, data: pk, battle: pk });
+      }
+      if (!ended && row.status !== "live") {
+        ended = true;
+        send({ type: "streamEnded", streamId });
+      }
+      res.write(`: heartbeat\n\n`);
+    } catch {
+      /* bağlantı kapalı olabilir */
+    }
+  }, 2500);
+
+  req.on("close", () => clearInterval(timer));
+});

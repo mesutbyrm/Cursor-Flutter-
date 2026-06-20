@@ -14,6 +14,8 @@ class LiveRoomChatFalPanel extends StatefulWidget {
     this.balance,
     this.initialFortuneType,
     this.showFortuneTab = true,
+    this.onMessageLongPress,
+    this.canModerate = false,
   });
 
   final List<LiveRoomChatMessage> messages;
@@ -26,6 +28,8 @@ class LiveRoomChatFalPanel extends StatefulWidget {
   final int? balance;
   final String? initialFortuneType;
   final bool showFortuneTab;
+  final void Function(LiveRoomChatMessage message)? onMessageLongPress;
+  final bool canModerate;
 
   @override
   State<LiveRoomChatFalPanel> createState() => _LiveRoomChatFalPanelState();
@@ -71,7 +75,11 @@ class _LiveRoomChatFalPanelState extends State<LiveRoomChatFalPanel>
               ? TabBarView(
                   controller: _tabs,
                   children: [
-                    LivePremiumChatFeed(messages: widget.messages),
+                    LivePremiumChatFeed(
+                      messages: widget.messages,
+                      onMessageLongPress: widget.onMessageLongPress,
+                      canModerate: widget.canModerate,
+                    ),
                     SingleChildScrollView(
                       child: LiveFortuneRequestForm(
                         balance: widget.balance,
@@ -81,7 +89,11 @@ class _LiveRoomChatFalPanelState extends State<LiveRoomChatFalPanel>
                     ),
                   ],
                 )
-              : LivePremiumChatFeed(messages: widget.messages),
+              : LivePremiumChatFeed(
+                  messages: widget.messages,
+                  onMessageLongPress: widget.onMessageLongPress,
+                  canModerate: widget.canModerate,
+                ),
         ),
       ],
     );

@@ -12,10 +12,14 @@ class LivePremiumChatFeed extends StatelessWidget {
     super.key,
     required this.messages,
     this.maxHeight = 200,
+    this.onMessageLongPress,
+    this.canModerate = false,
   });
 
   final List<LiveRoomChatMessage> messages;
   final double maxHeight;
+  final void Function(LiveRoomChatMessage message)? onMessageLongPress;
+  final bool canModerate;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +39,18 @@ class LivePremiumChatFeed extends StatelessWidget {
           itemCount: messages.length,
           itemBuilder: (ctx, i) {
             final m = messages[messages.length - 1 - i];
-            return _ChatBubble(message: m)
+            final bubble = _ChatBubble(message: m);
+            final child = canModerate &&
+                    onMessageLongPress != null &&
+                    !m.isSystem &&
+                    m.userId != null &&
+                    m.userId!.isNotEmpty
+                ? GestureDetector(
+                    onLongPress: () => onMessageLongPress!(m),
+                    child: bubble,
+                  )
+                : bubble;
+            return child
                 .animate(delay: (20 * (i % 4)).ms)
                 .fadeIn(duration: 220.ms)
                 .slideX(begin: -0.04, end: 0);

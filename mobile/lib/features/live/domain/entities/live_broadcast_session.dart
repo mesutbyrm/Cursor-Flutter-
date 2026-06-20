@@ -48,13 +48,18 @@ class LiveBroadcastSession {
   final LiveGuestLayout guestLayout;
 
   factory LiveBroadcastSession.fromStream(LiveStreamEntity stream) {
+    final category = stream.category?.trim().isNotEmpty == true
+        ? stream.category!.trim()
+        : (stream.isFortuneStream ? 'fortune' : 'chat');
     return LiveBroadcastSession(
       title: stream.title,
-      category: 'Sohbet',
+      category: category,
+      tags: stream.tags,
       isHost: false,
       streamId: stream.id,
       streamerName: stream.streamerName ?? 'Yayıncı',
       streamerHandle: 'yayinci',
+      avatarUrl: stream.thumbnailUrl,
       viewerCount: stream.viewerCount,
       trtc: null,
       hostUserId: stream.hostUserId,
@@ -63,6 +68,9 @@ class LiveBroadcastSession {
   }
 
   LiveBroadcastSession copyWith({
+    String? title,
+    String? category,
+    List<String>? tags,
     String? streamId,
     TrtcCredentials? trtc,
     AgoraCredentials? agora,
@@ -76,9 +84,9 @@ class LiveBroadcastSession {
     LiveGuestLayout? guestLayout,
   }) {
     return LiveBroadcastSession(
-      title: title,
-      category: category,
-      tags: tags,
+      title: title ?? this.title,
+      category: category ?? this.category,
+      tags: tags ?? this.tags,
       description: description,
       isHost: isHost,
       streamId: streamId ?? this.streamId,

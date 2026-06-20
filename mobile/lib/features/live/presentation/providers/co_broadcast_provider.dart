@@ -7,18 +7,21 @@ class CoBroadcastState {
   const CoBroadcastState({
     this.invites = const [],
     this.coBroadcasters = const [],
+    this.joinRequests = const [],
     this.loading = false,
     this.error,
   });
 
   final List<Map<String, dynamic>> invites;
   final List<Map<String, dynamic>> coBroadcasters;
+  final List<Map<String, dynamic>> joinRequests;
   final bool loading;
   final String? error;
 
   CoBroadcastState copyWith({
     List<Map<String, dynamic>>? invites,
     List<Map<String, dynamic>>? coBroadcasters,
+    List<Map<String, dynamic>>? joinRequests,
     bool? loading,
     String? error,
     bool clearError = false,
@@ -26,6 +29,7 @@ class CoBroadcastState {
     return CoBroadcastState(
       invites: invites ?? this.invites,
       coBroadcasters: coBroadcasters ?? this.coBroadcasters,
+      joinRequests: joinRequests ?? this.joinRequests,
       loading: loading ?? this.loading,
       error: clearError ? null : (error ?? this.error),
     );
@@ -51,8 +55,12 @@ class CoBroadcastNotifier extends Notifier<CoBroadcastState> {
   Future<void> refreshStream(String streamId) async {
     state = state.copyWith(loading: true, clearError: true);
     try {
-      final coBroadcasters = await _remote.fetchCoBroadcasters(streamId);
-      state = state.copyWith(coBroadcasters: coBroadcasters, loading: false);
+      final snapshot = await _remote.fetchCoBroadcastSnapshot(streamId);
+      state = state.copyWith(
+        coBroadcasters: snapshot.coBroadcasters,
+        joinRequests: snapshot.joinRequests,
+        loading: false,
+      );
     } catch (e) {
       state = state.copyWith(loading: false, error: '$e');
     }

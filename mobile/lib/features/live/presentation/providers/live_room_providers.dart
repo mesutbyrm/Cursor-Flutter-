@@ -7,8 +7,10 @@ import '../../../../core/network/live_debug_log.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
+import '../../domain/entities/live_fortune_request_entity.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import 'live_providers.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import 'live_fortune_request_provider.dart';
 import 'live_video_pk_provider.dart';
@@ -21,6 +23,7 @@ class LiveRoomState {
     this.sending = false,
     this.sseConnected = false,
     this.error,
+    this.fortuneAnsweredNotice,
   });
 
   final List<LiveRoomChatMessage> messages;
@@ -29,6 +32,7 @@ class LiveRoomState {
   final bool sending;
   final bool sseConnected;
   final String? error;
+  final String? fortuneAnsweredNotice;
 
   LiveRoomState copyWith({
     List<LiveRoomChatMessage>? messages,
@@ -37,7 +41,9 @@ class LiveRoomState {
     bool? sending,
     bool? sseConnected,
     String? error,
+    String? fortuneAnsweredNotice,
     bool clearError = false,
+    bool clearFortuneNotice = false,
   }) {
     return LiveRoomState(
       messages: messages ?? this.messages,
@@ -46,6 +52,9 @@ class LiveRoomState {
       sending: sending ?? this.sending,
       sseConnected: sseConnected ?? this.sseConnected,
       error: clearError ? null : (error ?? this.error),
+      fortuneAnsweredNotice: clearFortuneNotice
+          ? null
+          : (fortuneAnsweredNotice ?? this.fortuneAnsweredNotice),
     );
   }
 }
@@ -116,6 +125,22 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       },
       onStreamFortuneRequest: (map) {
         ref.read(liveFortuneRequestsProvider(streamId).notifier).pushFromSse(map);
+        final entity = LiveFortuneRequestEntity.fromJson(map);
+        final request = map['request'];
+        final merged = request is Map
+            ? LiveFortuneRequestEntity.fromJson(
+                Map<String, dynamic>.from(request),
+              )
+            : entity;
+        final userId = ref.read(authControllerProvider).valueOrNull?.id;
+        if (userId != null &&
+            merged.userId == userId &&
+            merged.status == LiveFortuneRequestStatus.answered) {
+          state = state.copyWith(
+            fortuneAnsweredNotice:
+                'Fal isteğiniz yanıtlandı. Canlı yayına katılarak falınızı dinleyebilirsiniz.',
+          );
+        }
       },
     );
 
@@ -145,6 +170,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       list.add(
         LiveRoomChatMessage(
           id: m.id,
+          userId: m.userId,
           user: m.displayName,
           text: m.content,
           isSystem: m.isSystem,
@@ -194,6 +220,12 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
 
   void setViewerCount(int count) {
     if (count >= 0) state = state.copyWith(viewerCount: count);
+  }
+
+  void clearFortuneAnsweredNotice() {
+    if (state.fortuneAnsweredNotice != null) {
+      state = state.copyWith(clearFortuneNotice: true);
+    }
   }
 }
 
