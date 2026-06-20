@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../feed/presentation/widgets/discover/discover_glass_card.dart';
+import '../../../../core/theme/app_theme_colors.dart';
+import '../../../../core/widgets/discover/discover_glass_card.dart';
 import '../providers/admin_voice_room_providers.dart';
 
 /// Admin — sesli oda gelir oranları (backend hesaplar, burada yalnızca ayar).

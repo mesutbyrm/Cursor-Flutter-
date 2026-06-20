@@ -248,7 +248,11 @@ Future<void> _createAndEnter(
       context,
       SnackBar(
         content: Text(
-          vip ? 'VIP sesli oda açıldı' : 'Sesli sohbet odanız açıldı',
+          switch (choice) {
+            _OpenRoomChoice.vip => 'VIP sesli oda açıldı',
+            _OpenRoomChoice.free => 'Ücretsiz sesli oda açıldı',
+            _OpenRoomChoice.standard => 'Sesli sohbet odanız açıldı',
+          },
         ),
       ),
     );
