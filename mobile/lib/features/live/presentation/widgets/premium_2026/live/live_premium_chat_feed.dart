@@ -5,6 +5,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../broadcast_room/live_room_chat_message.dart';
+import '../live_vip_chat_badge.dart';
 
 /// Canlı yorum akışı — cam baloncuklar, alttan yukarı.
 class LivePremiumChatFeed extends StatelessWidget {
@@ -99,6 +100,25 @@ class _ChatBubble extends StatelessWidget {
               text: TextSpan(
                 style: const TextStyle(fontSize: 13, height: 1.35),
                 children: [
+                  WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (message.isVip)
+                          const LiveVipChatBadge(kind: LiveChatBadgeKind.vip),
+                        if (message.isModerator)
+                          const LiveVipChatBadge(kind: LiveChatBadgeKind.moderator),
+                        if (message.isFortuneTeller)
+                          const LiveVipChatBadge(kind: LiveChatBadgeKind.fortuneTeller),
+                        if (message.level != null)
+                          LiveVipChatBadge(
+                            kind: LiveChatBadgeKind.level,
+                            label: 'Lv${message.level}',
+                          ),
+                      ],
+                    ),
+                  ),
                   TextSpan(
                     text: '${message.user} ',
                     style: const TextStyle(

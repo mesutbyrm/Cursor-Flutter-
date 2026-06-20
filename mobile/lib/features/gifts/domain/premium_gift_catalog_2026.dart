@@ -13,6 +13,10 @@ abstract final class PremiumGiftCatalog2026 {
     'kalp',
     'tac',
     'yat',
+    'sato',
+    'kristal',
+    'tarot_altin',
+    'elmas_yagmuru',
   ];
 
   static const _defs = <_PremiumDef>[
@@ -95,6 +99,46 @@ abstract final class PremiumGiftCatalog2026 {
       animationRef: 'lottie:star',
       aliases: ['yat', 'yacht'],
       coinCostHint: 800,
+    ),
+    _PremiumDef(
+      id: 'sato',
+      displayName: 'Şato',
+      emoji: '🏰',
+      rarity: GiftRarity.legendary,
+      animationKind: GiftAnimationKind.lottie,
+      animationRef: 'lottie:star',
+      aliases: ['sato', 'castle', 'şato'],
+      coinCostHint: 600,
+    ),
+    _PremiumDef(
+      id: 'kristal',
+      displayName: 'Fal Kristali',
+      emoji: '🔮',
+      rarity: GiftRarity.legendary,
+      animationKind: GiftAnimationKind.rive,
+      animationRef: 'rive:diamond',
+      aliases: ['kristal', 'crystal', 'fal_kristali'],
+      coinCostHint: 450,
+    ),
+    _PremiumDef(
+      id: 'tarot_altin',
+      displayName: 'Altın Tarot',
+      emoji: '🃏',
+      rarity: GiftRarity.epic,
+      animationKind: GiftAnimationKind.lottie,
+      animationRef: 'lottie:heart',
+      aliases: ['tarot', 'tarot_altin', 'altin_tarot'],
+      coinCostHint: 280,
+    ),
+    _PremiumDef(
+      id: 'elmas_yagmuru',
+      displayName: 'Elmas Yağmuru',
+      emoji: '💠',
+      rarity: GiftRarity.mythic,
+      animationKind: GiftAnimationKind.svga,
+      animationRef: 'svga:galaxy',
+      aliases: ['elmas_yagmuru', 'diamond_rain'],
+      coinCostHint: 750,
     ),
   ];
 

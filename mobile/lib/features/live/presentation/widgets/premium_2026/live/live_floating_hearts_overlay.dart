@@ -12,11 +12,15 @@ class LiveFloatingHeartsOverlay extends StatefulWidget {
     required this.burstToken,
     this.enabled = true,
     this.onDoubleTap,
+    this.onTripleTap,
+    this.onLongPress,
   });
 
   final int burstToken;
   final bool enabled;
   final VoidCallback? onDoubleTap;
+  final VoidCallback? onTripleTap;
+  final VoidCallback? onLongPress;
 
   @override
   State<LiveFloatingHeartsOverlay> createState() =>
@@ -30,6 +34,8 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
   final _rand = Random();
   Timer? _ambient;
   Offset? _lastTap;
+  int _tapCount = 0;
+  Timer? _tapReset;
 
   @override
   void initState() {
@@ -87,8 +93,25 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
   @override
   void dispose() {
     _ambient?.cancel();
+    _tapReset?.cancel();
     _ctrl.dispose();
     super.dispose();
+  }
+
+  void _registerTap(Offset globalPos) {
+    _lastTap = globalPos;
+    _tapCount++;
+    _tapReset?.cancel();
+    _tapReset = Timer(const Duration(milliseconds: 420), () {
+      if (_tapCount >= 3) {
+        widget.onTripleTap?.call();
+        burstAt(globalPos, count: 18);
+      } else if (_tapCount == 2) {
+        widget.onDoubleTap?.call();
+        burstAt(globalPos);
+      }
+      _tapCount = 0;
+    });
   }
 
   @override
@@ -98,11 +121,8 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onDoubleTapDown: (d) {
-        _lastTap = d.globalPosition;
-        widget.onDoubleTap?.call();
-        burstAt(d.globalPosition);
-      },
+      onTapDown: (d) => _registerTap(d.globalPosition),
+      onLongPress: widget.onLongPress,
       child: IgnorePointer(
         child: AnimatedBuilder(
           animation: _ctrl,

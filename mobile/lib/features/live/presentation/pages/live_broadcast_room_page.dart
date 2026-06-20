@@ -25,14 +25,16 @@ import '../../../agora/presentation/providers/agora_providers.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_catalog.dart';
+import '../../domain/entities/live_guest_layout.dart';
 import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import '../gifts/widgets/floating_gift_particles.dart';
-import '../gifts/widgets/gift_fullscreen_overlay.dart';
 import '../gifts/widgets/gift_notification_stack.dart';
 import '../providers/live_providers.dart';
 import '../../data/services/video_webrtc_signal_service.dart';
 import '../providers/co_broadcast_provider.dart';
+import '../providers/live_beauty_provider.dart';
+import '../providers/live_guest_grid_provider.dart';
 import '../providers/live_room_interaction_provider.dart'
     show LiveRoomInteractionNotifier, LiveRoomInteractionState, liveRoomInteractionProvider;
 import '../providers/live_room_providers.dart';
@@ -86,6 +88,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   VideoWebrtcSignalService? _signalService;
   Timer? _guestJoinPoll;
   final Set<String> _seenGuestJoinIds = {};
+  final Set<String> _seenVipEntrances = {};
+  String? _vipBannerName;
+  VoidCallback? _remoteUidsListener;
 
   @override
   void initState() {
@@ -164,6 +169,17 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           _rtcReady = true;
           _localPreviewKey = UniqueKey();
         });
+        ref.read(liveBeautyProvider.notifier).bindRtc(agora: _agora);
+        final layout = _resolveGuestLayout();
+        ref.read(liveGuestGridProvider.notifier)
+          ..setLayout(layout)
+          ..setHost(
+            userId: user.id,
+            name: widget.session.streamerName ?? user.display,
+          );
+        _remoteUidsListener ??= _onRemoteUidsChanged;
+        _agora.remoteUidsNotifier.addListener(_remoteUidsListener!);
+        _onRemoteUidsChanged();
       }
     } catch (e) {
       if (widget.session.isHost && roomId.isNotEmpty) {
@@ -182,6 +198,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   void dispose() {
     _guestJoinPoll?.cancel();
     _signalService?.stop();
+    if (_remoteUidsListener != null) {
+      _agora.remoteUidsNotifier.removeListener(_remoteUidsListener!);
+    }
     _timer.cancel();
     _chat.dispose();
     if (!_leaving &&
@@ -534,6 +553,80 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         );
   }
 
+  void _onTripleTapSuperLike() {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    ref.read(liveRoomInteractionProvider(streamId).notifier).triggerSuperLike();
+  }
+
+  void _onLongPressApplause() {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    final notifier = ref.read(liveRoomInteractionProvider(streamId).notifier);
+    notifier.triggerApplause();
+    notifier.triggerEmojiRain();
+  }
+
+  LiveGuestLayout _resolveGuestLayout() {
+    final settings = ref.read(liveBroadcastSettingsProvider);
+    if (settings.guestLayout != LiveGuestLayout.solo) {
+      return settings.guestLayout;
+    }
+    return widget.session.guestLayout;
+  }
+
+  void _onRemoteUidsChanged() {
+    ref
+        .read(liveGuestGridProvider.notifier)
+        .syncRemoteUids(_agora.remoteUidsNotifier.value);
+  }
+
+  void _onGuestAction(int slotIndex, String action) {
+    final grid = ref.read(liveGuestGridProvider.notifier);
+    switch (action) {
+      case 'pin':
+        grid.togglePin(slotIndex);
+      case 'mute':
+        grid.toggleGuestMute(slotIndex);
+        final slots = ref.read(liveGuestGridProvider).slots;
+        if (slotIndex < slots.length) {
+          final uid = slots[slotIndex].agoraUid;
+          if (uid != null) {
+            unawaited(_agora.muteRemoteAudio(uid, slots[slotIndex].mutedByHost));
+          }
+        }
+      case 'cam':
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Konuk kamera kontrolü yakında')),
+        );
+    }
+  }
+
+  Future<void> _openControlCenter() async {
+    final streamId = widget.session.streamId?.trim();
+    if (streamId == null || streamId.isEmpty) return;
+    await openLiveHostControlCenter(
+      context: context,
+      ref: ref,
+      streamId: streamId,
+      isHost: widget.session.isHost,
+    );
+  }
+
+  Map<String, dynamic>? _pkBattleExtras(Map<String, dynamic>? battle) {
+    if (battle == null) return null;
+    final seconds = battle['secondsLeft'] ?? battle['remainingSeconds'];
+    final top = battle['topSupporter'] ?? battle['top_supporter'];
+    final mvp = battle['mvp'] ?? battle['mvpName'];
+    final winner = battle['winner'] ?? battle['winnerSide'];
+    return {
+      'secondsLeft': seconds is num ? seconds.round() : int.tryParse('$seconds'),
+      'topSupporter': top?.toString(),
+      'mvpName': mvp?.toString(),
+      'winnerSide': winner?.toString(),
+    };
+  }
+
   Future<void> _openPkPanel() async {
     await context.push('/live/pk-invite', extra: widget.session);
   }
@@ -759,17 +852,22 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     }
 
     final remoteUid = _agora.remoteUidNotifier.value;
-    return LiveGuestGrid(
-      layout: s.guestLayout,
-      isHost: s.isHost,
-      agora: _agora,
-      localPreviewKey: _localPreviewKey,
-      hostAvatarUrl: s.avatarUrl,
-      hostName: s.streamerName,
-      remoteUid: remoteUid,
-      onInviteSlot: s.isHost
-          ? (_) => _openHostTools()
-          : null,
+    final layout = _resolveGuestLayout();
+    return ValueListenableBuilder<List<int>>(
+      valueListenable: _agora.remoteUidsNotifier,
+      builder: (context, remoteUids, _) {
+        return LiveGuestGrid(
+          layout: layout,
+          isHost: s.isHost,
+          agora: _agora,
+          localPreviewKey: _localPreviewKey,
+          hostAvatarUrl: s.avatarUrl,
+          hostName: s.streamerName,
+          remoteUid: remoteUid,
+          onInviteSlot: s.isHost ? (_) => _openControlCenter() : null,
+          onGuestAction: s.isHost ? _onGuestAction : null,
+        );
+      },
     );
   }
 
@@ -938,8 +1036,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     }
 
     ref.listen<LiveGiftController>(liveGiftControllerProvider, (prev, next) {
-      final ev = next.activeFullscreen;
-      if (ev != null && ev != prev?.activeFullscreen) {
+      final queue = next.fullscreenQueue;
+      final prevQueue = prev?.fullscreenQueue ?? const [];
+      if (queue.isNotEmpty && queue.first != (prevQueue.isNotEmpty ? prevQueue.first : null)) {
+        final ev = queue.first;
         final emoji = LiveGiftCatalog.emojiById[ev.giftId] ?? '💖';
         _particlesKey.currentState?.burst(
           emoji,
@@ -956,6 +1056,26 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         }
       }
     });
+
+    if (hasStream) {
+      ref.listen(liveRoomProvider(streamId), (prev, next) {
+        if (next.messages.length > (prev?.messages.length ?? 0)) {
+          for (final m in next.messages.skip(prev?.messages.length ?? 0)) {
+            if (m.isVip && !m.isSystem) {
+              final key = m.userId ?? m.user;
+              if (_seenVipEntrances.add(key)) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) setState(() => _vipBannerName = m.user);
+                });
+              }
+            }
+          }
+        }
+      });
+    }
+
+    final pkExtras = _pkBattleExtras(pkState?.battle);
+    final pkStatus = pkState?.status ?? '';
 
     return PopScope(
       canPop: widget.embeddedInSwipe,
@@ -975,9 +1095,38 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
               key: _heartsKey,
               burstToken: interaction.heartBurstToken,
               onDoubleTap: _onDoubleTapHeart,
+              onTripleTap: _onTripleTapSuperLike,
+              onLongPress: _onLongPressApplause,
+            ),
+            LiveInteractionEffectsOverlay(
+              burstToken: interaction.heartBurstToken,
+              superLikeToken: interaction.superLikeToken,
+              emojiRainToken: interaction.emojiRainToken,
+              applauseToken: interaction.applauseToken,
             ),
             FloatingGiftParticles(key: _particlesKey),
-            GiftFullscreenOverlay(event: giftCtrl.activeFullscreen),
+            LiveGiftAnimationStack(events: giftCtrl.fullscreenQueue),
+            if (hasStream && pkState?.battle != null &&
+                (pkStatus == 'active' || pkStatus == 'ended'))
+              LivePkPremiumOverlay(
+                leftScore: pkState!.leftScore,
+                rightScore: pkState.rightScore,
+                status: pkStatus,
+                secondsLeft: pkExtras?['secondsLeft'] as int?,
+                topSupporter: pkExtras?['topSupporter'] as String?,
+                mvpName: pkExtras?['mvpName'] as String?,
+                winnerSide: pkExtras?['winnerSide'] as String?,
+              ),
+            if (_vipBannerName != null)
+              Positioned(
+                top: top + 72,
+                left: 16,
+                right: 16,
+                child: LiveVipEntranceBanner(
+                  displayName: _vipBannerName!,
+                  onDone: () => setState(() => _vipBannerName = null),
+                ),
+              ),
             SafeArea(
               child: Column(
                 children: [
@@ -998,23 +1147,24 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                           : null,
                     ),
                   ),
-                  if (hasStream && pkState?.battle != null)
+                  if (hasStream && pkState?.battle != null && pkStatus == 'pending')
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                       child: LivePkScoreBar(
                         leftScore: pkState!.leftScore,
                         rightScore: pkState.rightScore,
-                        status: pkState.status,
+                        status: pkStatus,
                         isHost: s.isHost,
-                        onAccept: () => ref
-                            .read(liveVideoPkProvider(streamId).notifier)
-                            .accept(),
-                        onReject: () => ref
-                            .read(liveVideoPkProvider(streamId).notifier)
-                            .reject(),
-                        onEnd: () => ref
-                            .read(liveVideoPkProvider(streamId).notifier)
-                            .end(),
+                        onAccept: !s.isHost
+                            ? () => ref
+                                .read(liveVideoPkProvider(streamId).notifier)
+                                .accept()
+                            : null,
+                        onReject: !s.isHost
+                            ? () => ref
+                                .read(liveVideoPkProvider(streamId).notifier)
+                                .reject()
+                            : null,
                       ),
                     )
                   else if (s.isHost)
@@ -1048,7 +1198,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                             const SizedBox(width: 8),
                             TextButton.icon(
                               onPressed: hasStream
-                                  ? () => _openFortuneRequestsPanel(streamId)
+                                  ? _openControlCenter
                                   : null,
                               style: TextButton.styleFrom(
                                 backgroundColor:
@@ -1064,7 +1214,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                                 size: 16,
                               ),
                               label: Text(
-                                'Fal İstekleri (${fortuneReqState?.pendingCount ?? 0})',
+                                'Kontrol (${fortuneReqState?.pendingCount ?? 0})',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 12,
@@ -1092,6 +1242,30 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                               ),
                               label: const Text(
                                 'Ayarlar',
+                                style: TextStyle(color: Colors.white, fontSize: 12),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton.icon(
+                              onPressed: () => showLiveBeautyFilterSheet(
+                                context: context,
+                                ref: ref,
+                              ),
+                              style: TextButton.styleFrom(
+                                backgroundColor:
+                                    Colors.black.withValues(alpha: 0.35),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.face_retouching_natural_rounded,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              label: const Text(
+                                'Güzellik',
                                 style: TextStyle(color: Colors.white, fontSize: 12),
                               ),
                             ),

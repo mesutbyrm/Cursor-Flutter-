@@ -1,6 +1,21 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.313+316 (2026-06-19)
+
+### Canlı yayın — Premium 2026 tamamlama
+
+- **Kontrol merkezi:** Sağdan açılan 6 sekmeli panel (Fal, Hediye, PK, Konuk, Moderasyon, İstatistik); fal istekleri VIP/Öncelikli/Standart gruplu, swipe ile kabul/tamamla/iptal
+- **Hediye animasyonları:** Aynı anda 3 tam ekran Lottie/Rive/partikül animasyonu (`LiveGiftAnimationStack`); şato, kristal, tarot, elmas yağmuru kataloga eklendi
+- **RTC grid:** 2/4/6/9 kişilik otomatik grid; pin, sessize alma, host kontrolleri; Agora çoklu remote UID senkronu
+- **PK savaşı:** Premium overlay — geri sayım, MVP, destekçi, kazanan konfeti; pending davetlerde mevcut skor çubuğu
+- **Güzellik filtresi:** Agora + TRTC beauty SDK; slider sheet; SharedPreferences ile kalıcı ayar
+- **Yayıncı dashboard:** Gerçek zamanlı jeton, izleyici, hediye grafikleri (SSE/API türetilmiş)
+- **VIP giriş:** Altın banner + sohbet rozetleri (VIP, seviye, falcı, MOD)
+- **Etkileşim:** Çift/üçlü dokunuş kalp, süper beğeni, emoji yağmuru, alkış (SSE senkron)
+- **Hediye paneli:** Popüler / Fal / VIP / Etkinlik kategorileri + animasyon önizleme
+- **UI cila:** Liquid glass kontrol paneli, glassmorphism, premium PK ve etkileşim katmanları
+
 ## 1.0.312+315 (2026-06-19)
 
 ### Düzeltme — canlı yayın import yolları (CI analyze)

@@ -41,6 +41,7 @@ class LiveGiftController extends ChangeNotifier {
 
   final List<LiveGiftEvent> notifications = [];
   LiveGiftEvent? activeFullscreen;
+  final List<LiveGiftEvent> fullscreenQueue = [];
   int? coinBalance;
   int? streamerEarnings;
 
@@ -68,6 +69,7 @@ class LiveGiftController extends ChangeNotifier {
     _streamId = null;
     notifications.clear();
     activeFullscreen = null;
+    fullscreenQueue.clear();
     _combo.clear();
     panelOpen = false;
     notifyListeners();
@@ -159,15 +161,20 @@ class LiveGiftController extends ChangeNotifier {
     if (notifications.length > 5) {
       notifications.removeRange(5, notifications.length);
     }
+    fullscreenQueue.insert(0, enriched);
+    if (fullscreenQueue.length > 3) {
+      fullscreenQueue.removeRange(3, fullscreenQueue.length);
+    }
     activeFullscreen = enriched;
     notifyListeners();
 
     final duration = enriched.rarity.fullscreenDuration;
     Future.delayed(duration, () {
+      fullscreenQueue.removeWhere((e) => e.id == enriched.id);
       if (activeFullscreen?.id == enriched.id) {
-        activeFullscreen = null;
-        notifyListeners();
+        activeFullscreen = fullscreenQueue.isNotEmpty ? fullscreenQueue.first : null;
       }
+      notifyListeners();
     });
 
     Future.delayed(const Duration(seconds: 8), () {

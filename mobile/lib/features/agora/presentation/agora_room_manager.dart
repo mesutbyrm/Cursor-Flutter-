@@ -23,8 +23,11 @@ class AgoraRoomManager {
   int? remoteUid;
   final ValueNotifier<int?> remoteUidNotifier = ValueNotifier<int?>(null);
   final ValueNotifier<bool> remoteVideoAvailable = ValueNotifier(false);
+  final ValueNotifier<List<int>> remoteUidsNotifier = ValueNotifier<List<int>>([]);
 
   final Set<int> _remoteUids = {};
+
+  List<int> get remoteUidsList => remoteUidsNotifier.value;
 
   bool get isSupported => !kIsWeb;
   bool get inChannel => _inChannel;
@@ -142,6 +145,7 @@ class AgoraRoomManager {
       onUserJoined: (connection, uid, elapsed) {
         debugPrint('Agora remote joined uid=$uid');
         _remoteUids.add(uid);
+        remoteUidsNotifier.value = _remoteUids.toList()..sort();
         if (!_isHost || remoteUid == null) {
           remoteUid = uid;
           remoteUidNotifier.value = uid;
@@ -150,6 +154,7 @@ class AgoraRoomManager {
       },
       onUserOffline: (connection, uid, reason) {
         _remoteUids.remove(uid);
+        remoteUidsNotifier.value = _remoteUids.toList()..sort();
         if (remoteUid == uid) {
           remoteUid = _remoteUids.isEmpty ? null : _remoteUids.first;
           remoteUidNotifier.value = remoteUid;
@@ -224,10 +229,36 @@ class AgoraRoomManager {
     _engine?.switchCamera();
   }
 
+  /// Agora güzelleştirme — skin smooth, whitening, sharpness.
+  Future<void> applyBeauty({
+    required bool enabled,
+    double smoothness = 0,
+    double lightening = 0,
+    double redness = 0,
+    double sharpness = 0,
+  }) async {
+    final engine = _engine;
+    if (engine == null) return;
+    await engine.setBeautyEffectOptions(
+      enabled: enabled,
+      options: BeautyOptions(
+        smoothnessLevel: smoothness.clamp(0.0, 1.0),
+        lighteningLevel: lightening.clamp(0.0, 1.0),
+        rednessLevel: redness.clamp(0.0, 1.0),
+        sharpnessLevel: sharpness.clamp(0.0, 1.0),
+      ),
+    );
+  }
+
+  Future<void> muteRemoteAudio(int uid, bool mute) async {
+    await _engine?.muteRemoteAudioStream(uid: uid, mute: mute);
+  }
+
   Future<void> leave() async {
     remoteVideoAvailable.value = false;
     remoteUid = null;
     remoteUidNotifier.value = null;
+    remoteUidsNotifier.value = [];
     _remoteUids.clear();
 
     if (_engine != null) {

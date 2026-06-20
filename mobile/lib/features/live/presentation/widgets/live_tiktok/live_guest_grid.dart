@@ -1,12 +1,17 @@
+import 'dart:ui';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/live_guest_layout.dart';
+import '../../../domain/entities/live_guest_slot.dart';
 import '../../../../agora/presentation/agora_room_manager.dart';
 import '../../../../trtc/presentation/trtc_room_manager.dart';
+import '../../providers/live_guest_grid_provider.dart';
 
-/// TikTok tarzı misafir grid — 1/2/3/4 koltuk.
-class LiveGuestGrid extends StatelessWidget {
+/// TikTok Party tarzı çoklu yayın grid — 2/4/6/9 koltuk.
+class LiveGuestGrid extends ConsumerWidget {
   const LiveGuestGrid({
     super.key,
     required this.layout,
@@ -19,6 +24,7 @@ class LiveGuestGrid extends StatelessWidget {
     this.remoteUserId,
     this.remoteUid,
     this.onInviteSlot,
+    this.onGuestAction,
   });
 
   final LiveGuestLayout layout;
@@ -31,56 +37,20 @@ class LiveGuestGrid extends StatelessWidget {
   final String? remoteUserId;
   final int? remoteUid;
   final void Function(int slotIndex)? onInviteSlot;
+  final void Function(int slotIndex, String action)? onGuestAction;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final grid = ref.watch(liveGuestGridProvider);
     if (layout == LiveGuestLayout.solo) {
       return _soloView();
     }
-    return _gridView();
-  }
 
-  Widget _localVideo() {
-    if (agora != null) {
-      return AgoraLocalVideoView(key: localPreviewKey, manager: agora!);
-    }
-    if (trtc != null) {
-      return TrtcLocalVideoView(key: localPreviewKey, manager: trtc!);
-    }
-    return const ColoredBox(color: Colors.black);
-  }
+    final cross = layout.crossAxisCount;
+    final slots = grid.slots.length >= layout.seats
+        ? grid.slots.take(layout.seats).toList()
+        : _buildSlots(layout.seats);
 
-  Widget _remoteVideo() {
-    if (agora != null) {
-      final uid = remoteUid ?? agora!.remoteUid;
-      if (uid != null && uid > 0) {
-        return AgoraRemoteVideoView(key: ValueKey(uid), manager: agora!, uid: uid);
-      }
-    }
-    if (remoteUserId != null && trtc != null) {
-      return TrtcRemoteVideoView(
-        key: ValueKey(remoteUserId),
-        manager: trtc!,
-        userId: remoteUserId!,
-      );
-    }
-    return const ColoredBox(color: Colors.black);
-  }
-
-  Widget _soloView() {
-    if (isHost && (agora != null || trtc != null)) {
-      return _localVideo();
-    }
-    if ((remoteUid != null || remoteUserId != null) &&
-        (agora != null || trtc != null)) {
-      return _remoteVideo();
-    }
-    return const ColoredBox(color: Colors.black);
-  }
-
-  Widget _gridView() {
-    final count = layout.seats;
-    final cross = count <= 2 ? 1 : 2;
     return GridView.builder(
       physics: const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
@@ -88,60 +58,264 @@ class LiveGuestGrid extends StatelessWidget {
         crossAxisCount: cross,
         mainAxisSpacing: 3,
         crossAxisSpacing: 3,
-        childAspectRatio: cross == 1 ? 0.72 : 0.55,
+        childAspectRatio: cross == 1 ? 0.72 : (cross == 3 ? 0.62 : 0.55),
       ),
-      itemCount: count,
+      itemCount: layout.seats,
       itemBuilder: (context, i) {
-        if (i == 0 && isHost && (agora != null || trtc != null)) {
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: _localVideo(),
-          );
-        }
-        if (i == 1 && (remoteUid != null || remoteUserId != null)) {
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: _remoteVideo(),
-          );
-        }
-        return _emptySlot(i);
+        final slot = i < slots.length ? slots[i] : LiveGuestSlot(index: i);
+        return _SlotCell(
+          slot: slot,
+          isHost: isHost,
+          agora: agora,
+          trtc: trtc,
+          localPreviewKey: i == 0 ? localPreviewKey : null,
+          hostAvatarUrl: hostAvatarUrl,
+          hostName: hostName,
+          remoteUid: slot.agoraUid ?? (i == 1 ? remoteUid : null),
+          remoteUserId: i == 1 ? remoteUserId : null,
+          pinned: grid.pinnedIndex == i,
+          onInvite: onInviteSlot == null ? null : () => onInviteSlot!(i),
+          onAction: onGuestAction == null
+              ? null
+              : (action) => onGuestAction!(i, action),
+        );
       },
     );
   }
 
-  Widget _emptySlot(int index) {
+  List<LiveGuestSlot> _buildSlots(int count) {
+    return [for (var i = 0; i < count; i++) LiveGuestSlot(index: i, isHost: i == 0)];
+  }
+
+  Widget _soloView() {
+    if (isHost && (agora != null || trtc != null)) {
+      return _localVideo(localPreviewKey);
+    }
+    if ((remoteUid != null || remoteUserId != null) &&
+        (agora != null || trtc != null)) {
+      return _remoteVideo(remoteUid, remoteUserId);
+    }
+    return const ColoredBox(color: Colors.black);
+  }
+
+  Widget _localVideo(Key? key) {
+    if (agora != null) {
+      return AgoraLocalVideoView(key: key, manager: agora!);
+    }
+    if (trtc != null) {
+      return TrtcLocalVideoView(key: key, manager: trtc!);
+    }
+    return const ColoredBox(color: Colors.black);
+  }
+
+  Widget _remoteVideo(int? uid, String? userId) {
+    if (agora != null) {
+      final id = uid ?? agora!.remoteUid;
+      if (id != null && id > 0) {
+        return AgoraRemoteVideoView(key: ValueKey(id), manager: agora!, uid: id);
+      }
+    }
+    if (userId != null && trtc != null) {
+      return TrtcRemoteVideoView(
+        key: ValueKey(userId),
+        manager: trtc!,
+        userId: userId,
+      );
+    }
+    return const ColoredBox(color: Colors.black);
+  }
+}
+
+class _SlotCell extends StatelessWidget {
+  const _SlotCell({
+    required this.slot,
+    required this.isHost,
+    this.agora,
+    this.trtc,
+    this.localPreviewKey,
+    this.hostAvatarUrl,
+    this.hostName,
+    this.remoteUid,
+    this.remoteUserId,
+    this.pinned = false,
+    this.onInvite,
+    this.onAction,
+  });
+
+  final LiveGuestSlot slot;
+  final bool isHost;
+  final AgoraRoomManager? agora;
+  final TrtcRoomManager? trtc;
+  final Key? localPreviewKey;
+  final String? hostAvatarUrl;
+  final String? hostName;
+  final int? remoteUid;
+  final String? remoteUserId;
+  final bool pinned;
+  final VoidCallback? onInvite;
+  final void Function(String action)? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget child;
+    if (slot.isHost || slot.index == 0) {
+      child = agora != null
+          ? AgoraLocalVideoView(key: localPreviewKey, manager: agora!)
+          : trtc != null
+              ? TrtcLocalVideoView(key: localPreviewKey, manager: trtc!)
+              : _placeholder(hostName ?? 'Sen', hostAvatarUrl);
+    } else if (remoteUid != null && agora != null) {
+      child = AgoraRemoteVideoView(
+        key: ValueKey(remoteUid),
+        manager: agora!,
+        uid: remoteUid!,
+      );
+    } else if (remoteUserId != null && trtc != null) {
+      child = TrtcRemoteVideoView(
+        key: ValueKey(remoteUserId),
+        manager: trtc!,
+        userId: remoteUserId!,
+      );
+    } else if (slot.isEmpty) {
+      return _emptySlot();
+    } else {
+      child = _placeholder(slot.displayName ?? 'Konuk', null);
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          child,
+          if (pinned)
+            Positioned(
+              top: 6,
+              left: 6,
+              child: _badge(Icons.push_pin_rounded, 'Sabit'),
+            ),
+          if (slot.mutedByHost)
+            Positioned(
+              top: 6,
+              right: 6,
+              child: _badge(Icons.mic_off_rounded, 'Sessiz'),
+            ),
+          Positioned(
+            left: 6,
+            bottom: 6,
+            child: _badge(
+              Icons.person_rounded,
+              slot.displayName ?? hostName ?? 'Yayıncı',
+            ),
+          ),
+          if (isHost && slot.index > 0 && onAction != null)
+            Positioned(
+              right: 4,
+              bottom: 4,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _miniBtn(Icons.push_pin_outlined, () => onAction!('pin')),
+                  _miniBtn(Icons.mic_off_outlined, () => onAction!('mute')),
+                  _miniBtn(Icons.videocam_off_outlined, () => onAction!('cam')),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptySlot() {
     return GestureDetector(
-      onTap: onInviteSlot == null ? null : () => onInviteSlot!(index),
+      onTap: onInvite,
       child: Container(
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (index == 0 && hostAvatarUrl?.isNotEmpty == true)
-              CircleAvatar(
-                radius: 28,
-                backgroundImage: CachedNetworkImageProvider(hostAvatarUrl!),
-              )
-            else
-              Icon(
-                Icons.person_add_alt_1_rounded,
-                color: Colors.white.withValues(alpha: 0.7),
-                size: 32,
-              ),
-            const SizedBox(height: 8),
+            Icon(
+              Icons.person_add_alt_1_rounded,
+              color: Colors.white.withValues(alpha: 0.7),
+              size: 28,
+            ),
+            const SizedBox(height: 6),
             Text(
-              index == 0 ? (hostName ?? 'Sen') : 'Misafir davet et',
+              'Davet et',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.w700,
                 color: Colors.white.withValues(alpha: 0.85),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _placeholder(String name, String? avatar) {
+    return Container(
+      color: Colors.black54,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (avatar?.isNotEmpty == true)
+              CircleAvatar(
+                radius: 24,
+                backgroundImage: CachedNetworkImageProvider(avatar!),
+              )
+            else
+              const Icon(Icons.person_rounded, color: Colors.white54, size: 40),
+            const SizedBox(height: 6),
+            Text(name, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _badge(IconData icon, String label) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+          color: Colors.black.withValues(alpha: 0.45),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 11, color: Colors.white),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white, fontSize: 9),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _miniBtn(IconData icon, VoidCallback onTap) {
+    return Material(
+      color: Colors.black54,
+      borderRadius: BorderRadius.circular(6),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Icon(icon, size: 14, color: Colors.white),
         ),
       ),
     );

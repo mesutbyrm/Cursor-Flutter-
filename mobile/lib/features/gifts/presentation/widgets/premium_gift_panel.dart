@@ -12,6 +12,7 @@ import '../../../../core/config/env.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../live/presentation/gifts/live_gift_controller.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../domain/premium_gift_catalog_2026.dart';
 import '../../domain/gift_entity.dart';
 import '../../domain/gift_platform.dart';
 import '../../domain/gift_rarity.dart';
@@ -44,6 +45,7 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
   late final TabController _tabs;
   LiveVideoGiftType? _selected;
   int _qty = 1;
+  String _category = 'popular';
 
   @override
   void initState() {
@@ -139,6 +141,8 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
                   children: [
                     _GiftsTab(
                       gifts: gifts,
+                      category: _category,
+                      onCategory: (c) => setState(() => _category = c),
                       selected: _selected,
                       qty: _qty,
                       sending: widget.controller.sending,
@@ -182,6 +186,8 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
 class _GiftsTab extends StatelessWidget {
   const _GiftsTab({
     required this.gifts,
+    required this.category,
+    required this.onCategory,
     required this.selected,
     required this.qty,
     required this.sending,
@@ -191,12 +197,34 @@ class _GiftsTab extends StatelessWidget {
   });
 
   final AsyncValue<List<GiftEntity>> gifts;
+  final String category;
+  final ValueChanged<String> onCategory;
   final LiveVideoGiftType? selected;
   final int qty;
   final bool sending;
   final ValueChanged<LiveVideoGiftType> onSelect;
   final ValueChanged<int> onQty;
   final VoidCallback onSend;
+
+  List<GiftEntity> _filter(List<GiftEntity> all) {
+    bool isFortune(GiftEntity g) {
+      final n = g.name.toLowerCase();
+      return n.contains('fal') || n.contains('tarot') || n.contains('kristal');
+    }
+
+    bool isVip(GiftEntity g) =>
+        g.rarity.index >= GiftRarity.epic.index || g.price >= 200;
+
+    return switch (category) {
+      'fortune' => all.where(isFortune).toList(),
+      'vip' => all.where(isVip).toList(),
+      'event' => all
+          .where((g) => !isFortune(g) && !isVip(g))
+          .where((g) => !PremiumGiftCatalog2026.giftIds.contains(g.id))
+          .toList(),
+      _ => PremiumGiftCatalog2026.sortCatalog(all, (g) => g.id),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -208,25 +236,47 @@ class _GiftsTab extends StatelessWidget {
       data: (catalog) {
         final mobile = catalog
             .where((g) => g.platform != GiftPlatform.web)
-            .toList()
-          ..sort((a, b) => b.rarity.index.compareTo(a.rarity.index));
+            .toList();
+        final filtered = _filter(mobile);
 
-        if (selected == null && mobile.isNotEmpty) {
+        if (selected == null && filtered.isNotEmpty) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            onSelect(LiveVideoGiftType.fromGift(mobile.first));
+            onSelect(LiveVideoGiftType.fromGift(filtered.first));
           });
         }
 
         return Column(
           children: [
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                children: [
+                  for (final c in const [
+                    ('popular', 'Popüler'),
+                    ('fortune', 'Fal'),
+                    ('vip', 'VIP'),
+                    ('event', 'Etkinlik'),
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(c.$2),
+                        selected: category == c.$1,
+                        onSelected: (_) => onCategory(c.$1),
+                      ),
+                    ),
+                ],
+              ),
+            ),
             Expanded(
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 cacheExtent: 400,
-                itemCount: mobile.length,
+                itemCount: filtered.length,
                 itemBuilder: (ctx, i) {
-                  final entity = mobile[i];
+                  final entity = filtered[i];
                   final gift = LiveVideoGiftType.fromGift(entity);
                   return Padding(
                     padding: const EdgeInsets.only(right: 10),

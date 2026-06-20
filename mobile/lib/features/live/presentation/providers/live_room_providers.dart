@@ -174,6 +174,10 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
           user: m.displayName,
           text: m.content,
           isSystem: m.isSystem,
+          isVip: m.isVip,
+          isModerator: m.isModerator,
+          isFortuneTeller: m.isFortuneTeller,
+          level: m.level,
         ),
       );
     }
