@@ -2,26 +2,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.309+312` |
-| Tarih (UTC) | 2026-06-20 15:13 |
-| Commit | [`116544d4fb382f3515188772f36e792cb08763ae`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/116544d4fb382f3515188772f36e792cb08763ae) |
-| İş akışı | [Run 27874727957](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27874727957) |
+| Sürüm | `1.0.312+315` |
+| Tarih (UTC) | 2026-06-20 16:10 |
+| Commit | [`ac08361e55b4381aedcc5a27974b3836245af493`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/ac08361e55b4381aedcc5a27974b3836245af493) |
+| İş akışı | [Run 27876209447](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27876209447) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.309+312 (2026-06-19)
+## 1.0.312+315 (2026-06-19)
 
-### Fal sayfaları — Premium 2026 redesign
+### Düzeltme — canlı yayın import yolları (CI analyze)
 
-- **Fal türleri grid:** Sinematik 2 kolon kartlar, glassmorphism + neon glow, 30px radius, tap scale animasyonu; emoji/clipart kaldırıldı
-- **Görseller:** Fal türüne özel yüksek çözünürlüklü Unsplash sahneleri (tarot, kahve, aşk, yıldızname, melek, numeroloji, istihare, aura)
-- **Günlük fal:** Hediye kutusu kaldırıldı; mistik tarot kartı, dönen enerji halkaları, nebula + partikül hero
-- **Falını Aç geçişi:** 2.5sn kamera zoom, kozmik ışık patlaması, kart dönüşü, haptic
-- **Kehanet / intro:** `CinematicFortuneHero` — 320px parallax hero, fal türüne göre dinamik görsel
-- **Sonuç ekranı:** Başlık kartı (Yeni Başlangıçlar vb.), enerji etiketi, glass bölümler (Aşk, Kariyer, Para, Ruhsal, Tavsiye), Material ikonlar
-- **Animasyonlar:** `flutter_animate`, `shimmer`, `animated_text_kit` typewriter, fade/slide/glow
-- **Performans:** RepaintBoundary, CachedNetworkImage memCache, Hero
+- `live_fortune_request_provider`, keşfet chip'leri, moderasyon sheet ve fal formlarında yanlış relative import'lar düzeltildi
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
