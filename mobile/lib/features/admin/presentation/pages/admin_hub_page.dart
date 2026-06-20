@@ -5,6 +5,7 @@ import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
@@ -226,8 +227,8 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
           'requestId': requestId,
           'action': action,
           if (action == 'approve') 'reviewNote': 'Onaylandı',
-          if (action == 'reject' && reviewNote.trim().isNotEmpty)
-            'reviewNote': reviewNote.trim(),
+          if (action == 'reject' && (reviewNote?.trim().isNotEmpty ?? false))
+            'reviewNote': reviewNote!.trim(),
         },
       );
       _refreshAll();
