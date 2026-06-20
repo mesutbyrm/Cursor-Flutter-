@@ -221,6 +221,8 @@ model CfcPaymentRequest {
   priceTry      Float?
   senderInfo    String?
   notes         String?
+  receiptUrl    String?
+  username      String?
   status        String   @default("pending")
   reviewedBy    String?
   reviewNote    String?
@@ -230,6 +232,20 @@ model CfcPaymentRequest {
   @@index([userId, status])
   @@index([status, createdAt])
   @@index([requestType, status])
+}
+
+/// Ödeme işlemleri denetim kaydı.
+model PaymentAuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  userId    String
+  requestId String
+  action    String
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([requestId, createdAt])
+  @@index([userId, createdAt])
 }
 
 /// FCM push token (mobil).

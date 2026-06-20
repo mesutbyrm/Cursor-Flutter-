@@ -47,7 +47,6 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
 
   void _tapPackage(JetonPackageEntity package) {
     _selectPackage(package);
-    _openCheckout(package, formatJetonPrice(package));
   }
 
   Future<void> _openCheckout(JetonPackageEntity package, String priceText) async {
@@ -268,8 +267,8 @@ class _PaymentNotifyBar extends StatelessWidget {
               const SizedBox(height: 10),
               FilledButton.icon(
                 onPressed: onPay,
-                icon: const Icon(Icons.payment_rounded),
-                label: const Text('Ödeme Bildir'),
+                icon: const Icon(Icons.shopping_bag_rounded),
+                label: const Text('Satın Al'),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppThemeColors.accentPurple,
                   minimumSize: const Size.fromHeight(48),

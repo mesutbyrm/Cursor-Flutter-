@@ -34,16 +34,26 @@ export async function notifyStaffPaymentPending(input: {
   requestType: "jeton" | "cfc";
   amountLabel: string;
   method: string;
+  username?: string;
+  packageName?: string;
+  amountTry?: number;
 }) {
   const staff = await prisma.user.findMany({
     where: { role: { in: [...STAFF_ROLES] } },
     select: { id: true },
   });
   const isJeton = input.requestType === "jeton";
-  const title = isJeton
-    ? "Jeton ödemesi — onay bekliyor"
-    : "CFC ödemesi — onay bekliyor";
-  const body = `${input.amountLabel} · ${input.method}`;
+  const title = "Yeni ödeme bildirimi alındı";
+  const amountText =
+    input.amountTry != null && Number.isFinite(input.amountTry)
+      ? `${input.amountTry} TL`
+      : input.amountLabel;
+  const body = [
+    `Kullanıcı: ${input.username ?? "—"}`,
+    `Paket: ${input.packageName ?? input.amountLabel}`,
+    `Tutar: ${amountText}`,
+    `Yöntem: ${input.method}`,
+  ].join("\n");
   const type = isJeton ? "jeton_payment_request" : "cfc_payment_request";
 
   const data = {

@@ -195,6 +195,14 @@ String paymentNotificationSummary(Map<String, dynamic> n) {
   return n['title']?.toString() ?? 'Ödeme bildirimi';
 }
 
+String? paymentReceiptUrl(Map<String, dynamic> r) {
+  final direct = r['receiptUrl']?.toString().trim();
+  if (direct != null && direct.isNotEmpty) return direct;
+  final notes = r['notes']?.toString() ?? '';
+  final match = RegExp(r'https?://\S+').firstMatch(notes);
+  return match?.group(0);
+}
+
 String _methodTr(String m) => switch (m) {
       'whatsapp' => 'WhatsApp',
       'papara' => 'Papara',

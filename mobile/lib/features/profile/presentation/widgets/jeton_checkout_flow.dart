@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -12,10 +13,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/config/payment_defaults.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../social/domain/entities/create_social_post_input.dart';
-import '../../../social/presentation/providers/social_providers.dart';
 import '../../data/jeton_payment_request.dart';
 import '../../data/jeton_purchase_prefs.dart';
+import '../../data/services/payment_receipt_upload_service.dart';
 import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../../../admin/presentation/providers/admin_providers.dart';
@@ -289,42 +289,49 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
                   ),
                 ),
               ),
+              _ReceiptPickerSection(
+                imagePath: _receiptImagePath,
+                onPickGallery: _pickReceiptGallery,
+                onPickCamera: _pickReceiptCamera,
+                onPickPdf: _pickReceiptPdf,
+                onClear: () => setState(() => _receiptImagePath = null),
+              ),
             ] else ...[
               _InfoCard(
-                child: Row(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: Text(
-                        widget.package.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFFFFD54F),
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      widget.priceText,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 18,
-                      ),
-                    ),
+                    _RowLabel('Paket:', widget.package.title,
+                        valueColor: const Color(0xFFFFD54F)),
+                    const Divider(height: 16, color: Colors.white12),
+                    _RowLabel('Jeton:', '${widget.package.coins}',
+                        valueColor: const Color(0xFFFFD54F)),
+                    const Divider(height: 16, color: Colors.white12),
+                    _RowLabel('Tutar:', widget.priceText,
+                        valueColor: const Color(0xFFFFD54F)),
                   ],
                 ),
               ),
-              if (widget.method == _JetonPayMethod.papara)
+              if (widget.method == _JetonPayMethod.papara) ...[
+                _CopyDetailCard(
+                  label: 'Papara Ad Soyad:',
+                  value: cfg.bankAccountHolder.isNotEmpty
+                      ? cfg.bankAccountHolder
+                      : '—',
+                ),
                 _CopyDetailCard(
                   label: 'Papara No:',
                   value: cfg.paparaAddress,
-                )
-              else
-                _BankDetailCard(config: cfg),
-              if (widget.method == _JetonPayMethod.papara)
-                _InfoCard(
-                  child: _RowLabel('Alıcı:', cfg.bankAccountHolder),
                 ),
+              ] else
+                _BankDetailCard(config: cfg),
               _UsernameWarning(username: _userLabel),
+              _ReceiptPickerSection(
+                imagePath: _receiptImagePath,
+                onPickGallery: _pickReceiptGallery,
+                onPickCamera: _pickReceiptCamera,
+                onPickPdf: _pickReceiptPdf,
+                onClear: () => setState(() => _receiptImagePath = null),
+              ),
             ],
             const Spacer(),
             Padding(
@@ -359,11 +366,6 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
                 ),
               ),
             ),
-            TextButton.icon(
-              onPressed: _submitting ? null : _openPaymentNotifySheet,
-              icon: const Icon(Icons.attach_file_rounded, size: 18),
-              label: const Text('Dekont ekle (isteğe bağlı)'),
-            ),
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('← Geri Dön'),
@@ -375,20 +377,42 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     );
   }
 
+  Future<void> _pickReceiptGallery() async {
+    final file = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 82,
+    );
+    if (file == null) return;
+    setState(() => _receiptImagePath = file.path);
+  }
+
+  Future<void> _pickReceiptCamera() async {
+    final file = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      imageQuality: 82,
+    );
+    if (file == null) return;
+    setState(() => _receiptImagePath = file.path);
+  }
+
+  Future<void> _pickReceiptPdf() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png'],
+    );
+    final path = result?.files.single.path;
+    if (path == null || path.isEmpty) return;
+    setState(() => _receiptImagePath = path);
+  }
+
   Future<String?> _uploadReceiptIfNeeded() async {
     final path = _receiptImagePath;
     if (path == null || path.isEmpty) return null;
     try {
-      final post = await ref
-          .read(socialRemoteProvider)
-          .createPost(
-            CreateSocialPostInput(
-              imagePath: path,
-              caption: '[JETON_DEKONT] $_userLabel',
-            ),
-          )
-          .timeout(const Duration(seconds: 25));
-      return post.mediaUrl;
+      return await ref
+          .read(paymentReceiptUploadServiceProvider)
+          .uploadFile(File(path))
+          .timeout(const Duration(seconds: 45));
     } catch (_) {
       return null;
     }
@@ -1047,6 +1071,92 @@ class _UsernameWarning extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ReceiptPickerSection extends StatelessWidget {
+  const _ReceiptPickerSection({
+    required this.imagePath,
+    required this.onPickGallery,
+    required this.onPickCamera,
+    required this.onPickPdf,
+    required this.onClear,
+  });
+
+  final String? imagePath;
+  final VoidCallback onPickGallery;
+  final VoidCallback onPickCamera;
+  final VoidCallback onPickPdf;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final isPdf = imagePath?.toLowerCase().endsWith('.pdf') == true;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: _InfoCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Dekont Ekle (isteğe bağlı)',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: onPickGallery,
+                  icon: const Icon(Icons.photo_library_outlined, size: 18),
+                  label: const Text('Galeri'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: onPickCamera,
+                  icon: const Icon(Icons.photo_camera_outlined, size: 18),
+                  label: const Text('Kamera'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: onPickPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                  label: const Text('PDF / Dosya'),
+                ),
+                if (imagePath != null)
+                  TextButton(onPressed: onClear, child: const Text('Kaldır')),
+              ],
+            ),
+            if (imagePath != null) ...[
+              const SizedBox(height: 10),
+              if (isPdf)
+                Row(
+                  children: [
+                    const Icon(Icons.insert_drive_file_rounded, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        imagePath!.split('/').last,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                )
+              else
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image(
+                    image: FileImage(File(imagePath!)),
+                    height: 120,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+            ],
+          ],
+        ),
       ),
     );
   }

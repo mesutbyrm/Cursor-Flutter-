@@ -61,6 +61,28 @@ function cfcSettingsPayload(s: Awaited<ReturnType<typeof getOrCreateCfcSettings>
   };
 }
 
+async function writePaymentAudit(input: {
+  actorId?: string | null;
+  userId: string;
+  requestId: string;
+  action: string;
+  detail?: string | null;
+}) {
+  try {
+    await prisma.paymentAuditLog.create({
+      data: {
+        actorId: input.actorId ?? null,
+        userId: input.userId,
+        requestId: input.requestId,
+        action: input.action,
+        detail: input.detail?.slice(0, 1000) ?? null,
+      },
+    });
+  } catch (err) {
+    console.error("[payment-audit]", err);
+  }
+}
+
 function requestPayload(row: {
   id: string;
   userId: string;
@@ -73,6 +95,8 @@ function requestPayload(row: {
   priceTry: number | null;
   senderInfo: string | null;
   notes: string | null;
+  receiptUrl: string | null;
+  username: string | null;
   status: string;
   reviewedBy: string | null;
   reviewNote: string | null;
@@ -98,6 +122,11 @@ function requestPayload(row: {
     priceTry: row.priceTry ?? undefined,
     senderInfo: row.senderInfo,
     notes: row.notes,
+    receiptUrl: row.receiptUrl ?? undefined,
+    username: row.username ?? undefined,
+    paymentMethod: row.method,
+    packageName: row.packageTitle ?? undefined,
+    coinAmount: row.coins ?? undefined,
     status: row.status,
     reviewedBy: row.reviewedBy,
     reviewNote: row.reviewNote,
@@ -262,6 +291,22 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
     );
   }
 
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const username =
+    user?.username?.trim() ||
+    user?.displayName?.trim() ||
+    req.body?.username?.toString()?.slice(0, 64) ||
+    null;
+  const receiptUrl =
+    req.body?.receiptUrl?.toString()?.slice(0, 2048) ??
+    req.body?.receiptReference?.toString()?.slice(0, 2048) ??
+    null;
+  let notes = req.body?.notes?.toString()?.slice(0, 500) ?? null;
+  if (!receiptUrl && req.body?.receiptReference) {
+    const ref = req.body.receiptReference.toString().slice(0, 500);
+    notes = notes ? `${notes}\nDekont: ${ref}` : `Dekont: ${ref}`;
+  }
+
   const row = await prisma.cfcPaymentRequest.create({
     data: {
       userId,
@@ -273,8 +318,17 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
       coins,
       priceTry,
       senderInfo: req.body?.senderInfo?.toString()?.slice(0, 128) ?? null,
-      notes: req.body?.notes?.toString()?.slice(0, 500) ?? null,
+      notes,
+      receiptUrl,
+      username,
     },
+  });
+
+  await writePaymentAudit({
+    userId,
+    requestId: row.id,
+    action: "payment_notification_created",
+    detail: `${requestType} · ${method} · ${packageTitle ?? amount}`,
   });
 
   const notifData = {
@@ -316,6 +370,9 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
         requestType: requestType as "jeton" | "cfc",
         amountLabel: userBody,
         method,
+        username: username ?? "Kullanıcı",
+        packageName: row.packageTitle ?? `${row.coins ?? row.amount} Jeton`,
+        amountTry: row.priceTry ?? undefined,
       });
     } catch (err) {
       console.error("[payment/requests] post-create notify failed", err);
@@ -445,15 +502,22 @@ walletRouter.patch(
 
       await createNotification({
         userId: row.userId,
-        title: isJeton ? "Jeton Yükleme Onaylandı" : "CFC Yükleme Onaylandı",
+        title: isJeton ? "Ödemeniz onaylandı" : "CFC Yükleme Onaylandı",
         body: isJeton
-          ? `${row.coins ?? row.amount} jeton hesabınıza eklendi.`
+          ? `Ödemeniz onaylandı. ${row.coins ?? row.amount} jeton hesabınıza yüklendi.`
           : `${row.amount} CFC hesabınıza eklendi.`,
         type: isJeton ? "jeton_payment_approved" : "cfc_payment_approved",
         data: { paymentRequestId: row.id, amount: row.amount, method: row.method },
         targetPath: isJeton ? "/jeton-yukle" : "/cfc-store",
         targetId: row.id,
         urgent: true,
+      });
+      await writePaymentAudit({
+        actorId: req.userId!,
+        userId: row.userId,
+        requestId: row.id,
+        action: "approved",
+        detail: reviewNote ?? "Onaylandı",
       });
     } else if (action === "reject") {
       await prisma.cfcPaymentRequest.update({
@@ -467,13 +531,20 @@ walletRouter.patch(
 
       await createNotification({
         userId: row.userId,
-        title: isJeton ? "Jeton Yükleme Reddedildi" : "CFC Yükleme Reddedildi",
-        body: reviewNote ?? "Talebiniz reddedildi.",
+        title: isJeton ? "Ödeme bildiriminiz reddedildi" : "CFC Yükleme Reddedildi",
+        body: reviewNote?.trim() || "Ödeme bildiriminiz reddedildi.",
         type: isJeton ? "jeton_payment_rejected" : "cfc_payment_rejected",
         data: { paymentRequestId: row.id, amount: row.amount, method: row.method },
         targetPath: isJeton ? "/jeton-yukle" : "/cfc-store",
         targetId: row.id,
         urgent: true,
+      });
+      await writePaymentAudit({
+        actorId: req.userId!,
+        userId: row.userId,
+        requestId: row.id,
+        action: "rejected",
+        detail: reviewNote ?? "Reddedildi",
       });
     } else {
       return jsonError(res, 400, "Geçersiz istek");
@@ -556,6 +627,98 @@ walletRouter.get("/admin/payment-requests", requireAuth, requireStaff, async (re
     data: { requests: rows.map((r) => requestPayload(r)) },
   });
 });
+
+/** GET /api/admin/payment-notifications — Finans > Ödeme Bildirimleri (web/mobil) */
+walletRouter.get(
+  "/admin/payment-notifications",
+  requireAuth,
+  requireStaff,
+  async (req, res) => {
+    const statusQ = String(req.query.status ?? "all");
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+    const skip = (page - 1) * limit;
+    const where =
+      statusQ === "all" || !statusQ ? undefined : { status: statusQ };
+
+    const [total, rows] = await Promise.all([
+      prisma.cfcPaymentRequest.count({ where }),
+      prisma.cfcPaymentRequest.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              displayName: true,
+              username: true,
+              email: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const items = rows.map((r) => requestPayload(r));
+    return res.status(200).json({
+      items,
+      paymentNotifications: items,
+      total,
+      page,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    });
+  },
+);
+
+/** GET /api/admin/payments/stream — bekleyen ödeme SSE (admin panel canlı güncelleme) */
+walletRouter.get(
+  "/admin/payments/stream",
+  requireAuth,
+  requireStaff,
+  async (req, res) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders?.();
+
+    let lastCount = -1;
+    let closed = false;
+    req.on("close", () => {
+      closed = true;
+    });
+
+    const tick = async () => {
+      if (closed) return;
+      try {
+        const count = await prisma.cfcPaymentRequest.count({
+          where: { status: "pending" },
+        });
+        if (count !== lastCount) {
+          lastCount = count;
+          res.write(
+            `event: payment_update\ndata: ${JSON.stringify({ pendingCount: count })}\n\n`,
+          );
+        } else {
+          res.write(`event: ping\ndata: {}\n\n`);
+        }
+      } catch {
+        res.write(`event: ping\ndata: {}\n\n`);
+      }
+    };
+
+    await tick();
+    const interval = setInterval(() => {
+      if (closed) {
+        clearInterval(interval);
+        return;
+      }
+      void tick();
+    }, 5000);
+  },
+);
 
 const PAYMENT_NOTIF_TYPES = [
   "cfc_payment_request",

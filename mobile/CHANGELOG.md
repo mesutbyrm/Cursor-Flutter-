@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.304+307 (2026-06-20)
+
+### Jeton — Papara / Havale ödeme bildirimi
+
+- **Satın Al akışı:** Paket seç → «Satın Al» → ödeme yöntemi → Papara/Havale detay ekranı
+- **Dekont:** Galeri, kamera, PDF/dosya; presigned R2 yükleme (`payment-receipts`)
+- **API:** `receiptUrl`, `username`, audit log; admin SSE `/api/admin/payments/stream`
+- **Admin:** Finans · Ödeme Bildirimleri, dekont önizleme, red sebebi, 5 sn yenileme
+- **Bildirim:** Yönetici push metni — kullanıcı, paket, tutar TL
+
 ## 1.0.303+306 (2026-06-19)
 
 ### Canlı Falcılar — davet dialog + anında iptal

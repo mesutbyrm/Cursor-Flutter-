@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
@@ -32,7 +32,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
   void initState() {
     super.initState();
     _tabs = TabController(length: 2, vsync: this);
-    _poll = Timer.periodic(const Duration(seconds: 12), (_) {
+    _poll = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted) return;
       ref.invalidate(adminPaymentRequestsProvider);
       ref.invalidate(adminPaymentNotificationsProvider);
@@ -93,8 +93,8 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                   ),
                   Expanded(
                     child: DiscoverTabHeader(
-                      title: 'Ödeme istekleri',
-                      subtitle: 'canlifal.com · jeton ve CFC talepleri',
+                      title: 'Finans · Ödeme Bildirimleri',
+                      subtitle: 'Jeton ve CFC manuel ödemeler',
                     ),
                   ),
                   DiscoverIconButton(
@@ -214,6 +214,11 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
     String requestId,
     String action,
   ) async {
+    String? reviewNote;
+    if (action == 'reject') {
+      reviewNote = await _askRejectReason(context);
+      if (reviewNote == null) return;
+    }
     try {
       await ref.read(dioProvider).safePatch<dynamic>(
         ApiEndpoints.adminCfcPaymentPatch,
@@ -221,6 +226,8 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
           'requestId': requestId,
           'action': action,
           if (action == 'approve') 'reviewNote': 'Onaylandı',
+          if (action == 'reject' && reviewNote.trim().isNotEmpty)
+            'reviewNote': reviewNote.trim(),
         },
       );
       _refreshAll();
@@ -245,6 +252,37 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
         );
       }
     }
+  }
+
+  Future<String?> _askRejectReason(BuildContext context) async {
+    final ctrl = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Ödemeyi reddet'),
+        content: TextField(
+          controller: ctrl,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            labelText: 'Red sebebi (kullanıcıya bildirilir)',
+            hintText: 'Örn. Dekont tutarı eşleşmiyor',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Reddet'),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    return result;
   }
 }
 
@@ -283,6 +321,35 @@ class _PendingPaymentsTab extends StatelessWidget {
   final AsyncValue<List<Map<String, dynamic>>> async;
   final void Function(BuildContext, String, String) onReview;
   final VoidCallback onRefresh;
+
+  static Future<void> _showReceipt(BuildContext context, String url) async {
+    final isPdf = url.toLowerCase().contains('.pdf');
+    if (isPdf) {
+      final uri = Uri.tryParse(url);
+      if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => Dialog(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              InteractiveViewer(
+                child: Image.network(url, fit: BoxFit.contain),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Kapat'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -395,6 +462,15 @@ class _PendingPaymentsTab extends StatelessWidget {
                         child: Text(
                           r['notes'].toString(),
                           style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    if (paymentReceiptUrl(r) != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: TextButton.icon(
+                          onPressed: () => _showReceipt(context, paymentReceiptUrl(r)!),
+                          icon: const Icon(Icons.receipt_long_rounded, size: 18),
+                          label: const Text('Dekontu gör'),
                         ),
                       ),
                     SizedBox(height: 12),

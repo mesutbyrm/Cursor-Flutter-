@@ -23,7 +23,10 @@ Map<String, dynamic> buildJetonPaymentRequest({
     if (package.priceTry != null) 'priceTry': package.priceTry,
     if (senderLabel != null && senderLabel.trim().isNotEmpty)
       'senderInfo': senderLabel.trim(),
-    if (receipt != null && receipt.isNotEmpty) 'receiptReference': receipt,
+    if (receipt != null && receipt.isNotEmpty) ...{
+      'receiptReference': receipt,
+      'receiptUrl': receipt,
+    },
     'notes': receipt != null && receipt.isNotEmpty
         ? '$baseNotes\nDekont: $receipt'
         : baseNotes,
@@ -60,7 +63,10 @@ Map<String, dynamic> buildMembershipPaymentRequest({
     if (package.priceTry != null) 'priceTry': package.priceTry,
     if (senderLabel != null && senderLabel.trim().isNotEmpty)
       'senderInfo': senderLabel.trim(),
-    if (receipt != null && receipt.isNotEmpty) 'receiptReference': receipt,
+    if (receipt != null && receipt.isNotEmpty) ...{
+      'receiptReference': receipt,
+      'receiptUrl': receipt,
+    },
     'notes': receipt != null && receipt.isNotEmpty
         ? '$baseNotes\nDekont: $receipt'
         : baseNotes,
