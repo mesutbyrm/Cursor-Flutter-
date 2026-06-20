@@ -11,6 +11,9 @@ class LiveStreamEntity extends Equatable {
     this.isLive = true,
     this.hostUserId,
     this.playbackUrl,
+    this.tags = const [],
+    this.isPkLive = false,
+    this.isVipHost = false,
   });
 
   final String id;
@@ -24,6 +27,18 @@ class LiveStreamEntity extends Equatable {
   final String? hostUserId;
   /// HLS / playback URL — ana sayfa canlı önizleme.
   final String? playbackUrl;
+  final List<String> tags;
+  final bool isPkLive;
+  final bool isVipHost;
+
+  bool get isFortuneStream {
+    final cat = (category ?? '').toLowerCase();
+    if (cat.contains('fortune') || cat.contains('fal')) return true;
+    return tags.any((t) {
+      final l = t.toLowerCase();
+      return l.contains('fal') || l.contains('tarot') || l.contains('fortune');
+    });
+  }
 
   @override
   List<Object?> get props => [
@@ -36,5 +51,8 @@ class LiveStreamEntity extends Equatable {
         isLive,
         hostUserId,
         playbackUrl,
+        tags,
+        isPkLive,
+        isVipHost,
       ];
 }

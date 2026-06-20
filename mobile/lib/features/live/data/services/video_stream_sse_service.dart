@@ -54,6 +54,7 @@ class VideoStreamSseService {
   };
 
   void Function(PsychicRequestEntity request)? _onFortuneRequest;
+  void Function(Map<String, dynamic> request)? _onStreamFortuneRequest;
 
   static String streamUrlFor(String streamId) {
     final base = Env.apiBaseUrl.replaceAll(RegExp(r'/$'), '');
@@ -70,6 +71,7 @@ class VideoStreamSseService {
     VoidCallback? onStreamEnded,
     void Function(Map<String, dynamic> battle)? onPkBattle,
     void Function(PsychicRequestEntity request)? onFortuneRequest,
+    void Function(Map<String, dynamic> request)? onStreamFortuneRequest,
   }) async {
     final id = streamId.trim();
     final same = !_stopped && _streamId == id && _bytesSub != null;
@@ -83,6 +85,7 @@ class VideoStreamSseService {
     _onStreamEnded = onStreamEnded;
     _onPkBattle = onPkBattle;
     _onFortuneRequest = onFortuneRequest;
+    _onStreamFortuneRequest = onStreamFortuneRequest;
     if (same) return;
     LiveDebugLog.log('stream.sse.connect', {'streamId': id});
     await _openStream();
@@ -224,6 +227,7 @@ class VideoStreamSseService {
       default:
         final typeLower = type.toLowerCase();
         if (_fortuneEventTypes.contains(typeLower)) {
+          _onStreamFortuneRequest?.call(map);
           final session = parsePsychicSsePayload(map);
           if (session != null && session.sessionId.isNotEmpty) {
             _onFortuneRequest?.call(session);
@@ -258,6 +262,7 @@ class VideoStreamSseService {
     _onStreamEnded = null;
     _onPkBattle = null;
     _onFortuneRequest = null;
+    _onStreamFortuneRequest = null;
     await _closeStreamOnly();
     LiveDebugLog.log('stream.sse.disconnect');
   }

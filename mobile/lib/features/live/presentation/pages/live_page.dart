@@ -16,6 +16,7 @@ import '../../../voice_hub/presentation/voice_rooms_body.dart';
 import '../providers/live_streams_list_notifier.dart';
 import '../providers/live_providers.dart';
 import '../utils/open_live_stream.dart';
+import '../widgets/live_discover_category_chips.dart';
 import '../widgets/live_stream_list_tile.dart';
 
 class LivePage extends ConsumerStatefulWidget {
@@ -182,6 +183,9 @@ class _LiveStreamsTab extends ConsumerWidget {
           padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: LiveStreamsBranchQuickActions(),
         ),
+        const SizedBox(height: 8),
+        const LiveDiscoverCategoryChips(),
+        const SizedBox(height: 8),
         Expanded(
           child: live.when(
             loading: () => ListView.separated(

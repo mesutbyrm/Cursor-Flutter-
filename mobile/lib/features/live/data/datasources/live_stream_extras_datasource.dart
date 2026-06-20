@@ -324,6 +324,22 @@ class LiveStreamExtrasDataSource {
     }
   }
 
+  Future<void> removeModerator({
+    required String streamId,
+    required String userId,
+  }) async {
+    try {
+      await _dio.safeDelete<dynamic>(
+        '${ApiEndpoints.videoStreamModerators(streamId)}?userId=$userId',
+      );
+    } catch (_) {
+      await _dio.safeDelete<dynamic>(
+        ApiEndpoints.videoStreamModerator(streamId),
+        data: {'userId': userId},
+      );
+    }
+  }
+
   Future<void> setBroadcastImage({
     required String streamId,
     required String imageUrl,

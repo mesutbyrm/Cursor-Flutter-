@@ -93,7 +93,23 @@ export function emitStreamEnded(
   io.to(room).emit("STREAM_ENDED", body);
 }
 
-/** Canlı yayın PK güncellemesi — web ve mobil senkronu */
+/** Canlı fal isteği — SSE/socket senkronu */
+export function emitStreamFortuneRequest(
+  streamId: string,
+  payload: Record<string, unknown>,
+) {
+  if (!io) return;
+  const room = streamRoom(streamId);
+  const body = {
+    streamId,
+    type: "fortune_request",
+    ...payload,
+  };
+  io.to(room).emit("fortune_request", body);
+  io.to(room).emit("fal_request", body);
+  io.to(room).emit("live_fal_request", body);
+}
+
 export function emitPkBattleUpdate(
   streamId: string,
   battle: Record<string, unknown>,

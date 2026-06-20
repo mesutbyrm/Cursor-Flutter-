@@ -7,6 +7,9 @@ import {
   listStreamSignals,
   pushStreamSignal,
   respondCoBroadcastInvite,
+  createStreamFortuneRequest,
+  listStreamFortuneRequests,
+  updateStreamFortuneRequestStatus,
 } from "../lib/liveStreamExtrasStore";
 import {
   getActiveBattleForStream,
@@ -36,6 +39,7 @@ import {
   emitStreamEnded,
   emitStreamMessage,
   emitStreamViewerCount,
+  emitStreamFortuneRequest,
 } from "../socket/giftHub";
 
 export const videoStreamsRouter = Router();
@@ -91,7 +95,11 @@ async function loadUser(userId: string | undefined) {
 videoStreamsRouter.get("/", async (req, res) => {
   const page = Math.max(1, Number(req.query.page ?? 1));
   const limit = Math.min(50, Math.max(1, Number(req.query.limit ?? 30)));
-  const all = listLiveStreams();
+  const category = req.query.category?.toString()?.trim();
+  let all = listLiveStreams();
+  if (category) {
+    all = all.filter((s) => (s.category ?? "").toLowerCase() === category.toLowerCase());
+  }
   const skip = (page - 1) * limit;
   const slice = all.slice(skip, skip + limit).map(mapStream);
   return res.status(200).json({
@@ -363,3 +371,128 @@ videoStreamsRouter.post("/:id/messages", requireAuth, async (req, res) => {
   emitStreamMessage(streamId, row);
   return res.status(200).json({ message: row, success: true });
 });
+
+/** GET /api/video-streams/:id/fortune-requests */
+videoStreamsRouter.get("/:id/fortune-requests", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  if (!getLiveStream(streamId)) {
+    return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+  }
+  const requests = listStreamFortuneRequests(streamId);
+  return ok(res, { requests, items: requests });
+});
+
+/** POST /api/video-streams/:id/fortune-requests */
+videoStreamsRouter.post("/:id/fortune-requests", requireAuth, async (req, res) => {
+  const streamId = req.params.id;
+  const stream = getLiveStream(streamId);
+  if (!stream) return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+
+  const displayName =
+    req.body?.displayName?.toString()?.trim() ||
+    req.body?.display_name?.toString()?.trim();
+  const question = req.body?.question?.toString()?.trim() ?? "";
+  const fortuneType =
+    req.body?.fortuneType?.toString()?.trim() ||
+    req.body?.type?.toString()?.trim() ||
+    "tarot";
+  const priorityRaw = (req.body?.priority?.toString()?.trim() ?? "standard").toLowerCase();
+  const priority =
+    priorityRaw === "priority" || priorityRaw === "oncelikli"
+      ? "priority"
+      : priorityRaw === "vip"
+        ? "vip"
+        : priorityRaw === "super" || priorityRaw === "superfal"
+          ? "super"
+          : priorityRaw === "urgent" || priorityRaw === "acil"
+            ? "urgent"
+            : "standard";
+
+  const costMap: Record<string, number> = {
+    standard: 500,
+    priority: 1000,
+    urgent: 1500,
+    vip: 2500,
+    super: 2500,
+  };
+  const jetonCost = Number(req.body?.jetonCost ?? costMap[priority] ?? 500);
+
+  if (!displayName || displayName.length < 2) {
+    return fail(res, 400, "VALIDATION_ERROR", "Görünecek isim gerekli");
+  }
+  if (question.length < 5) {
+    return fail(res, 400, "VALIDATION_ERROR", "Fal sorusu çok kısa");
+  }
+
+  if (user.coins < jetonCost) {
+    return fail(res, 402, "INSUFFICIENT_COINS", "Yetersiz jeton");
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data: { coins: { decrement: jetonCost } },
+  });
+
+  const request = createStreamFortuneRequest({
+    streamId,
+    userId: user.id,
+    username: user.username ?? user.displayName ?? "user",
+    displayName,
+    question,
+    fortuneType,
+    priority,
+    jetonCost,
+  });
+
+  emitStreamFortuneRequest(streamId, {
+    type: "fortune_request",
+    request,
+  });
+
+  return ok(res, {
+    request,
+    newBalance: updated.coins,
+    coinBalance: updated.coins,
+  });
+});
+
+/** PATCH /api/video-streams/:id/fortune-requests/:requestId */
+videoStreamsRouter.patch(
+  "/:id/fortune-requests/:requestId",
+  requireAuth,
+  async (req, res) => {
+    const streamId = req.params.id;
+    const stream = getLiveStream(streamId);
+    if (!stream) return fail(res, 404, "NOT_FOUND", "Yayın bulunamadı");
+    if (stream.broadcasterId !== req.userId) {
+      return fail(res, 403, "FORBIDDEN", "Yalnızca yayıncı güncelleyebilir");
+    }
+    const statusRaw = req.body?.status?.toString()?.trim().toLowerCase() ?? "pending";
+    const status =
+      statusRaw === "reviewing" || statusRaw === "inceleniyor"
+        ? "reviewing"
+        : statusRaw === "answered" || statusRaw === "completed"
+          ? "answered"
+          : statusRaw === "cancelled"
+            ? "cancelled"
+            : "pending";
+
+    const result = updateStreamFortuneRequestStatus(
+      req.params.requestId,
+      streamId,
+      req.userId!,
+      status,
+    );
+    if (!result.ok) {
+      return fail(res, 400, "BAD_REQUEST", result.error ?? "Güncellenemedi");
+    }
+    emitStreamFortuneRequest(streamId, {
+      type: "fortune_request",
+      request: result.request,
+    });
+    return ok(res, { request: result.request });
+  },
+);

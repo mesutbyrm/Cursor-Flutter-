@@ -33,6 +33,7 @@ import { requireAuth } from "./middleware/requireAuth";
 import { jsonError } from "./lib/jsonError";
 import { fail } from "./lib/response";
 import { pkBattlesRouter } from "./routes/pk_battles";
+import { liveFalRequestsRouter } from "./routes/live_fal_requests";
 import { shortVideosRouter } from "./routes/short_videos";
 import { voiceRoomSettingsRouter } from "./routes/voice_room_settings";
 import { initGiftSocket } from "./socket/giftHub";
@@ -76,6 +77,7 @@ app.use("/api/stories", storiesRouter);
 app.use("/api/social/stories", storiesRouter);
 app.use("/api/reports", reportsRouter);
 app.use("/api/pk", pkBattlesRouter);
+app.use("/api", liveFalRequestsRouter);
 app.use("/api/short-videos", shortVideosRouter);
 
 /** @deprecated — GET /api/music/search kullanın */

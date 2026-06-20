@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.310+313 (2026-06-19)
+
+### Canlı yayın — Premium 2026 (fal isteği, keşfet, moderasyon)
+
+- **Fal isteği:** Sohbet | Fal İsteği sekmeleri; görünen isim gizliliği; Standart/Öncelikli/VIP jeton onayı (500/1000/2500)
+- **Yayıncı paneli:** Fal İstekleri kuyruğu (VIP > Öncelikli > Standart), durum: Beklemede / İnceleniyor / Yanıtlandı
+- **SSE:** `fortune_request` olayları anlık panel güncellemesi + haptic
+- **Keşfet:** Kategori chip filtresi, fal yayınlarına öncelikli sıralama (TikTok Live benzeri)
+- **Kartlar:** CANLI / PK / VIP rozetleri, kategori etiketi
+- **Moderasyon:** Sustur, at, engelle, moderatör ekle/kaldır sheet (video-stream API)
+- **API mirror:** `fortune-requests`, `/api/live/fal-request/*` alias uçları, jeton tahsilatı backend'de
+
 ## 1.0.309+312 (2026-06-19)
 
 ### Fal sayfaları — Premium 2026 redesign

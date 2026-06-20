@@ -23,6 +23,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../agora/presentation/agora_room_manager.dart';
 import '../../../agora/presentation/providers/agora_providers.dart';
+import '../../../domain/entities/live_fortune_request_entity.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_gift_catalog.dart';
 import '../gifts/live_gift_controller.dart';
@@ -40,7 +41,12 @@ import '../providers/live_video_pk_provider.dart';
 import '../widgets/live_tiktok/live_background_picker_sheet.dart';
 import '../widgets/live_tiktok/live_guest_grid.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
+import '../providers/live_fortune_request_provider.dart';
+import '../widgets/broadcast_room/live_fortune_request_form.dart';
+import '../widgets/broadcast_room/live_fortune_requests_panel.dart';
+import '../widgets/broadcast_room/live_moderation_sheet.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
+import '../widgets/broadcast_room/live_room_chat_fal_panel.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
 import '../widgets/premium_2026/live_premium_2026.dart';
 
@@ -186,6 +192,62 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     super.dispose();
   }
 
+  bool _isFortuneBroadcast(LiveBroadcastSession s) {
+    final cat = s.category.toLowerCase();
+    if (cat.contains('fortune') || cat.contains('fal')) return true;
+    return s.tags.any((t) {
+      final l = t.toLowerCase();
+      return l.contains('fal') || l.contains('tarot');
+    });
+  }
+
+  Future<void> _openFortuneRequestsPanel(String streamId) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Consumer(
+        builder: (context, ref, __) {
+          final state = ref.watch(liveFortuneRequestsProvider(streamId));
+          ref.listen(liveFortuneRequestsProvider(streamId), (prev, next) {
+            if ((next.newRequestPulse) > (prev?.newRequestPulse ?? 0)) {
+              // Yeni istek — görsel pulse (ses asset yok).
+            }
+          });
+          return LiveFortuneRequestsPanel(
+            requests: state.requests,
+            loading: state.loading,
+            onStatusChange: (id, status) {
+              ref
+                  .read(liveFortuneRequestsProvider(streamId).notifier)
+                  .setStatus(id, status);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Future<bool> _submitStreamFortuneRequest({
+    required String streamId,
+    required String displayName,
+    required String question,
+    required String fortuneType,
+    required LiveFortunePriority priority,
+  }) async {
+    final row = await ref.read(liveFortuneRequestsProvider(streamId).notifier).submit(
+          displayName: displayName,
+          question: question,
+          fortuneType: fortuneType,
+          priority: priority,
+        );
+    if (row != null) {
+      ref.invalidate(coinBalanceProvider);
+      return true;
+    }
+    return false;
+  }
+
   Future<void> _onFortuneRequest(LiveBroadcastSession s) async {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) {
@@ -194,6 +256,51 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       );
       return;
     }
+
+    final streamId = s.streamId?.trim();
+    if (streamId != null && streamId.isNotEmpty && _isFortuneBroadcast(s)) {
+      final balance =
+          ref.read(coinBalanceProvider).valueOrNull ?? user.coinBalance;
+      final ok = await showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(ctx).bottom + 16,
+            left: 16,
+            right: 16,
+          ),
+          child: LiveFortuneRequestForm(
+            balance: balance,
+            initialFortuneType: s.tags.isNotEmpty ? s.tags.first : 'tarot',
+            onSubmit: ({
+              required displayName,
+              required question,
+              required fortuneType,
+              required priority,
+            }) async {
+              final success = await _submitStreamFortuneRequest(
+                streamId: streamId,
+                displayName: displayName,
+                question: question,
+                fortuneType: fortuneType,
+                priority: priority,
+              );
+              if (success && ctx.mounted) Navigator.pop(ctx, true);
+              return success;
+            },
+          ),
+        ),
+      );
+      if (ok == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Fal isteğiniz kuyruğa eklendi')),
+        );
+      }
+      return;
+    }
+
     final hostId = s.hostUserId?.trim();
     PsychicEntity? psychic;
     if (hostId != null && hostId.isNotEmpty) {
@@ -659,6 +766,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         ? ref.watch(liveRoomInteractionProvider(streamId))
         : const LiveRoomInteractionState();
     final pkState = hasStream ? ref.watch(liveVideoPkProvider(streamId)) : null;
+    final fortuneReqState = hasStream && s.isHost
+        ? ref.watch(liveFortuneRequestsProvider(streamId))
+        : null;
+    final balance = ref.watch(coinBalanceProvider).valueOrNull ?? user?.coinBalance;
 
     if (hasStream) {
       ref.listen(liveRoomProvider(streamId), (prev, next) {
@@ -779,7 +890,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             TextButton.icon(
-                              onPressed: _openPkPanel,
+                              onPressed: () => _openPkPanel,
                               style: TextButton.styleFrom(
                                 backgroundColor:
                                     Colors.black.withValues(alpha: 0.35),
@@ -796,6 +907,32 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                               label: const Text(
                                 'PK Başlat',
                                 style: TextStyle(color: Colors.white, fontSize: 12),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton.icon(
+                              onPressed: hasStream
+                                  ? () => _openFortuneRequestsPanel(streamId)
+                                  : null,
+                              style: TextButton.styleFrom(
+                                backgroundColor:
+                                    Colors.black.withValues(alpha: 0.35),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.auto_awesome_rounded,
+                                color: Color(0xFFFFD700),
+                                size: 16,
+                              ),
+                              label: Text(
+                                'Fal İstekleri (${fortuneReqState?.pendingCount ?? 0})',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -874,7 +1011,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                                   events: giftCtrl.notifications,
                                 ),
                                 const SizedBox(height: 8),
-                                LivePremiumChatFeed(
+                                LiveRoomChatFalPanel(
                                   messages: roomState.messages.isEmpty
                                       ? const [
                                           LiveRoomChatMessage(
@@ -884,6 +1021,32 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                                           ),
                                         ]
                                       : roomState.messages,
+                                  showFortuneTab:
+                                      !s.isHost && _isFortuneBroadcast(s),
+                                  balance: balance,
+                                  initialFortuneType:
+                                      s.tags.isNotEmpty ? s.tags.first : null,
+                                  onSubmitFortuneRequest: hasStream
+                                      ? ({
+                                          required displayName,
+                                          required question,
+                                          required fortuneType,
+                                          required priority,
+                                        }) =>
+                                            _submitStreamFortuneRequest(
+                                              streamId: streamId,
+                                              displayName: displayName,
+                                              question: question,
+                                              fortuneType: fortuneType,
+                                              priority: priority,
+                                            )
+                                      : ({
+                                          required displayName,
+                                          required question,
+                                          required fortuneType,
+                                          required priority,
+                                        }) async =>
+                                            false,
                                 ),
                               ],
                             ),

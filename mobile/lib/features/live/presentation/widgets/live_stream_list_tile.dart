@@ -2,14 +2,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/ui/premium/live_badge.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../domain/entities/live_stream_entity.dart';
 
-/// Canlı yayın liste satırı — keşfet / canlı sekmesi.
+/// Canlı yayın kartı — premium 2026 keşfet.
 class LiveStreamListTile extends StatelessWidget {
   const LiveStreamListTile({
     super.key,
@@ -32,9 +31,43 @@ class LiveStreamListTile extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
             child: SizedBox(
-              width: 72,
-              height: 88,
-              child: _Thumbnail(url: stream.thumbnailUrl),
+              width: 88,
+              height: 104,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _Thumbnail(url: stream.thumbnailUrl),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.55),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 6,
+                    top: 6,
+                    child: Row(
+                      children: [
+                        if (stream.isLive) const LiveBadge(compact: true),
+                        if (stream.isPkLive) ...[
+                          const SizedBox(width: 4),
+                          _miniBadge('PK', const Color(0xFFFF6B6B)),
+                        ],
+                        if (stream.isVipHost) ...[
+                          const SizedBox(width: 4),
+                          _miniBadge('VIP', const Color(0xFFFFD700)),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 14),
@@ -42,10 +75,6 @@ class LiveStreamListTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (stream.isLive) ...[
-                  const LiveBadge(compact: true),
-                  const SizedBox(height: 6),
-                ],
                 Text(
                   stream.title,
                   maxLines: 2,
@@ -54,6 +83,16 @@ class LiveStreamListTile extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
+                const SizedBox(height: 4),
+                if (stream.category != null && stream.category!.isNotEmpty)
+                  Text(
+                    stream.category!.toUpperCase(),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: AppThemeColors.accentPurple.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                 const SizedBox(height: 4),
                 Text(
                   '${stream.streamerName ?? 'Yayıncı'} · ${stream.viewerCount} izleyici',
@@ -74,6 +113,24 @@ class LiveStreamListTile extends StatelessWidget {
       ),
     );
   }
+
+  Widget _miniBadge(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.black,
+          fontSize: 8,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
 }
 
 class _Thumbnail extends StatelessWidget {
@@ -87,7 +144,7 @@ class _Thumbnail extends StatelessWidget {
       return CachedNetworkImage(
         imageUrl: url!,
         fit: BoxFit.cover,
-        memCacheWidth: 200,
+        memCacheWidth: 220,
         errorWidget: (_, _, _) => const _Fallback(),
       );
     }

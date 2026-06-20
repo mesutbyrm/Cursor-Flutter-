@@ -400,6 +400,23 @@ abstract final class ApiEndpoints {
   static String videoStreamModerators(String streamId) =>
       '/api/video-streams/$streamId/moderators';
 
+  /// Canlı fal istekleri — üretim video-stream + legacy alias.
+  static String videoStreamFortuneRequests(String streamId) =>
+      '/api/video-streams/$streamId/fortune-requests';
+
+  static String videoStreamFortuneRequest(String streamId, String requestId) =>
+      '/api/video-streams/$streamId/fortune-requests/$requestId';
+
+  static const liveFalRequestCreate = '/api/live/fal-request/create';
+
+  static String liveFalRequestUpdate(String requestId) =>
+      '/api/live/fal-request/$requestId/update';
+
+  static String liveFalRequestComplete(String requestId) =>
+      '/api/live/fal-request/$requestId/complete';
+
+  static const liveFalRequests = '/api/live/fal-requests';
+
   static String videoStreamImage(String streamId) =>
       '/api/video-streams/$streamId/image';
 

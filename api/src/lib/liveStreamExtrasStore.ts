@@ -376,3 +376,91 @@ export function appendTellerChatMessage(
   tellerChatBySession.set(key, list);
   return row;
 }
+
+export type StreamFortuneRequestRow = {
+  id: string;
+  streamId: string;
+  userId: string;
+  username: string;
+  displayName: string;
+  question: string;
+  fortuneType: string;
+  priority: "standard" | "priority" | "vip" | "super" | "urgent";
+  status: "pending" | "reviewing" | "answered" | "cancelled";
+  jetonCost: number;
+  createdAt: string;
+};
+
+const streamFortuneRequests = new Map<string, StreamFortuneRequestRow>();
+
+function priorityWeight(p: StreamFortuneRequestRow["priority"]) {
+  switch (p) {
+    case "super":
+      return 5;
+    case "vip":
+      return 4;
+    case "urgent":
+      return 3;
+    case "priority":
+      return 2;
+    default:
+      return 1;
+  }
+}
+
+export function listStreamFortuneRequests(streamId: string) {
+  const id = streamId.trim();
+  return [...streamFortuneRequests.values()]
+    .filter((r) => r.streamId === id)
+    .sort((a, b) => {
+      const w = priorityWeight(b.priority) - priorityWeight(a.priority);
+      if (w !== 0) return w;
+      return a.createdAt.localeCompare(b.createdAt);
+    });
+}
+
+export function getStreamFortuneRequest(requestId: string) {
+  return streamFortuneRequests.get(requestId.trim()) ?? null;
+}
+
+export function createStreamFortuneRequest(input: {
+  streamId: string;
+  userId: string;
+  username: string;
+  displayName: string;
+  question: string;
+  fortuneType: string;
+  priority: StreamFortuneRequestRow["priority"];
+  jetonCost: number;
+}) {
+  const id = `fr-${randomUUID().slice(0, 12)}`;
+  const row: StreamFortuneRequestRow = {
+    id,
+    streamId: input.streamId.trim(),
+    userId: input.userId.trim(),
+    username: input.username.trim(),
+    displayName: input.displayName.trim(),
+    question: input.question.trim(),
+    fortuneType: input.fortuneType.trim() || "tarot",
+    priority: input.priority,
+    status: "pending",
+    jetonCost: input.jetonCost,
+    createdAt: new Date().toISOString(),
+  };
+  streamFortuneRequests.set(id, row);
+  return row;
+}
+
+export function updateStreamFortuneRequestStatus(
+  requestId: string,
+  streamId: string,
+  hostUserId: string,
+  status: StreamFortuneRequestRow["status"],
+) {
+  const row = streamFortuneRequests.get(requestId.trim());
+  if (!row || row.streamId !== streamId.trim()) {
+    return { ok: false as const, error: "İstek bulunamadı" };
+  }
+  row.status = status;
+  return { ok: true as const, request: row };
+}

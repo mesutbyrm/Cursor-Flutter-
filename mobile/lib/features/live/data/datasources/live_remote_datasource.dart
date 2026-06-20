@@ -18,11 +18,16 @@ class LiveRemoteDataSource {
 
   static const int _pageSize = 30;
 
-  Future<List<LiveStreamEntity>> fetch({int page = 1}) async {
+  Future<List<LiveStreamEntity>> fetch({int page = 1, String? category}) async {
+    final query = <String, String>{
+      'limit': '$_pageSize',
+      'page': '$page',
+      if (category != null && category.isNotEmpty) 'category': category,
+    };
     if (Env.useMobileAuth) {
       final res = await _dio.safeGet<dynamic>(
         ApiEndpoints.videoStreams,
-        query: {'limit': '$_pageSize', 'page': '$page'},
+        query: query,
       );
       return _parseStreamList(res.data);
     }
@@ -55,7 +60,9 @@ class LiveRemoteDataSource {
           final map = asJsonMap(j);
           final base = LiveStreamDto.fromApiMap(map).toEntity();
           final playback = LiveStreamDto.playbackUrlFrom(map);
-          if (playback == null || playback.isEmpty) return base;
+          final tags = _parseTags(map);
+          final isPk = _boolFlag(map, ['isPk', 'isPkLive', 'pkActive', 'inPk']);
+          final isVip = _boolFlag(map, ['isVip', 'isVipHost', 'vipHost']);
           return LiveStreamEntity(
             id: base.id,
             title: base.title,
@@ -66,10 +73,31 @@ class LiveRemoteDataSource {
             isLive: base.isLive,
             hostUserId: base.hostUserId,
             playbackUrl: playback,
+            tags: tags,
+            isPkLive: isPk,
+            isVipHost: isVip,
           );
         })
         .where((s) => s.id.isNotEmpty)
         .toList();
+  }
+
+  List<String> _parseTags(Map<String, dynamic> map) {
+    final raw = pick(map, ['tags', 'labels']);
+    if (raw is List) {
+      return raw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+    }
+    final single = pick(map, ['tag', 'subcategory'])?.toString();
+    if (single != null && single.isNotEmpty) return [single];
+    return const [];
+  }
+
+  bool _boolFlag(Map<String, dynamic> map, List<String> keys) {
+    final v = pick(map, keys);
+    if (v is bool) return v;
+    if (v is num) return v != 0;
+    final s = v?.toString().toLowerCase();
+    return s == 'true' || s == '1' || s == 'yes';
   }
 
   /// canlifal.com `/api/chat/rooms` — site ile aynı oda kartları.

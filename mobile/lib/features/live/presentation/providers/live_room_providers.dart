@@ -10,6 +10,7 @@ import '../../domain/entities/live_stream_chat_message.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import 'live_providers.dart';
 import '../gifts/providers/live_gift_providers.dart';
+import 'live_fortune_request_provider.dart';
 import 'live_video_pk_provider.dart';
 
 class LiveRoomState {
@@ -112,6 +113,9 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       },
       onFortuneRequest: (session) {
         emitPsychicLiveRequest(ref, session);
+      },
+      onStreamFortuneRequest: (map) {
+        ref.read(liveFortuneRequestsProvider(streamId).notifier).pushFromSse(map);
       },
     );
 

@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/live_stream_entity.dart';
+import '../../domain/utils/live_discover_ranker.dart';
+import 'live_fortune_request_provider.dart';
 import 'live_providers.dart';
 
 class LiveStreamsListNotifier extends AsyncNotifier<List<LiveStreamEntity>> {
@@ -12,24 +16,34 @@ class LiveStreamsListNotifier extends AsyncNotifier<List<LiveStreamEntity>> {
 
   @override
   Future<List<LiveStreamEntity>> build() async {
+    ref.listen(liveDiscoverCategoryProvider, (_, __) {
+      unawaited(refresh());
+    });
     _page = 1;
     _end = false;
-    final items =
-        await ref.read(liveRepositoryProvider).fetchStreams(page: 1);
+    return _loadPage(1);
+  }
+
+  Future<List<LiveStreamEntity>> _loadPage(int page) async {
+    final filter = ref.read(liveDiscoverCategoryProvider);
+    final items = await ref.read(liveRepositoryProvider).fetchStreams(
+          page: page,
+          category: filter.apiCategory,
+        );
     _end = items.length < _pageSize;
-    return items;
+    return rankLiveStreamsForDiscover(
+      streams: items,
+      filter: filter,
+      userAffinity: filter.isFortuneFamily ? filter : null,
+    );
   }
 
   Future<void> refresh() async {
     state = const AsyncValue.loading();
-    ref.invalidate(liveStreamsProvider);
     state = await AsyncValue.guard(() async {
       _page = 1;
       _end = false;
-      final items =
-          await ref.read(liveRepositoryProvider).fetchStreams(page: 1);
-      _end = items.length < _pageSize;
-      return items;
+      return _loadPage(1);
     });
   }
 
@@ -39,14 +53,12 @@ class LiveStreamsListNotifier extends AsyncNotifier<List<LiveStreamEntity>> {
     _loadingMore = true;
     final nextPage = _page + 1;
     try {
-      final next =
-          await ref.read(liveRepositoryProvider).fetchStreams(page: nextPage);
+      final next = await _loadPage(nextPage);
       if (next.isEmpty) {
         _end = true;
         return;
       }
       _page = nextPage;
-      _end = next.length < _pageSize;
       state = AsyncValue.data([...cur, ...next]);
     } finally {
       _loadingMore = false;

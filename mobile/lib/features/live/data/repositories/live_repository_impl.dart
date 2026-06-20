@@ -9,8 +9,8 @@ class LiveRepositoryImpl implements LiveRepository {
   final LiveRemoteDataSource _remote;
 
   @override
-  Future<List<LiveStreamEntity>> fetchStreams({int page = 1}) =>
-      _remote.fetch(page: page);
+  Future<List<LiveStreamEntity>> fetchStreams({int page = 1, String? category}) =>
+      _remote.fetch(page: page, category: category);
 
   @override
   Future<List<VoiceRoomEntity>> fetchVoiceRooms() => _remote.fetchVoiceRooms();
