@@ -180,6 +180,7 @@ class _PremiumFortuneCoverState extends State<PremiumFortuneCover>
           ],
         ),
       ),
+    ),
     );
   }
 }
