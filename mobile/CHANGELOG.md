@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.315+318 (2026-06-20)
+
+### Canlı yayın — Yayını Başlat timeout düzeltmesi
+
+- **live_broadcast_prep_page:** `createVideoStream` ve `fetchToken` çağrılarına 15 sn timeout; sunucu yanıt vermezse spinner kalkar ve kullanıcıya hata mesajı gösterilir
+- **Agora handoff:** `shutdownForHandoff` 8 sn timeout ile korundu (takılsa bile akış devam eder)
+- **Hata sonrası:** `_previewReady` sıfırlanır; buton tekrar tıklanabilir
+
 ## 1.0.314+317 (2026-06-20)
 
 ### Sesli oda — PK SSE entegrasyonu

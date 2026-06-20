@@ -165,7 +165,15 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
       if (mounted) {
         setState(() => _previewReady = false);
       }
-      await _agora.shutdownForHandoff();
+
+      // Agora handoff — motor kapatma da nadiren takılabilir, koruma altına alındı.
+      await _agora.shutdownForHandoff().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () {
+          // Motor kapatılamasa bile akışı durdurmuyoruz; yeni instance
+          // oluşturmak güvenlidir, eski referans çöp toplanır.
+        },
+      );
       await Future<void>.delayed(const Duration(milliseconds: 350));
       _agora = AgoraRoomManager();
 
@@ -175,24 +183,40 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
           label: _args.category,
           isFortune: _args.isFortune,
         );
-        roomId = await ref.read(liveRepositoryProvider).createVideoStream(
-              title: _title.text.trim(),
-              description: _args.subtitle ?? _args.category,
-              category: apiCategory,
-              tags: [_args.category],
-              thumbnailUrl: user.avatarUrl,
-              isPrivate: false,
-              isImageMode: false,
-              backgroundUrl: _backgroundUrl,
-            );
+        try {
+          roomId = await ref
+              .read(liveRepositoryProvider)
+              .createVideoStream(
+                title: _title.text.trim(),
+                description: _args.subtitle ?? _args.category,
+                category: apiCategory,
+                tags: [_args.category],
+                thumbnailUrl: user.avatarUrl,
+                isPrivate: false,
+                isImageMode: false,
+                backgroundUrl: _backgroundUrl,
+              )
+              .timeout(const Duration(seconds: 15));
+        } on TimeoutException {
+          throw StateError(
+            'Yayın oluşturulamadı: sunucu yanıt vermiyor. Lütfen tekrar deneyin.',
+          );
+        }
         createdStreamId = roomId;
         _orphanStreamId = roomId;
       }
 
-      final agora = await ref.read(agoraRemoteProvider).fetchToken(
-            channelName: roomId,
-            role: 'host',
-          );
+      final AgoraCredentials agora;
+      try {
+        agora = await ref
+            .read(agoraRemoteProvider)
+            .fetchToken(channelName: roomId, role: 'host')
+            .timeout(const Duration(seconds: 15));
+      } on TimeoutException {
+        throw StateError(
+          'Yayın anahtarı alınamadı: sunucu yanıt vermiyor. Lütfen tekrar deneyin.',
+        );
+      }
 
       if (!mounted) {
         await _cleanupOrphanStream();
@@ -236,6 +260,8 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(ApiException.userMessage(e))),
         );
+        // Buton tekrar denenebilir olsun diye önizlemeyi de sıfırlıyoruz.
+        setState(() => _previewReady = false);
       }
     } finally {
       if (mounted) setState(() => _starting = false);
