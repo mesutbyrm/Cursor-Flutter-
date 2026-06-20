@@ -9,7 +9,10 @@ import '../../../live/domain/entities/live_gift_event.dart';
 import 'voice_room_debug_log.dart';
 import 'voice_room_socket_helper.dart';
 
-/// Sesli oda hediye socket — `joinRoom` + `gift` olayları.
+/// Üretim `ChatPresenceRow` — Flutter domain karşılığı.
+typedef ChatPresenceRow = ChatRoomPresence;
+
+/// Sesli oda hediye + presence socket — `joinRoom` + olay dinleyicileri.
 class VoiceRoomGiftSocket {
   VoiceRoomGiftSocket(this._remote);
 
@@ -19,8 +22,12 @@ class VoiceRoomGiftSocket {
   void Function(Map<String, dynamic> payload)? _onDjUpdate;
   void Function(ChatRoomMessage message)? _onMessage;
   void Function(List<ChatRoomPresence> users)? _onPresence;
+  void Function(List<ChatPresenceRow> previous, List<ChatPresenceRow> current)?
+      _onPresenceSnapshot;
   void Function(bool connected)? _onConnectionChanged;
   List<String> _joinKeys = const [];
+  List<ChatPresenceRow> _lastPresence = const [];
+  var _loggedPresencePayloadShape = false;
 
   void connect({
     required String roomId,
@@ -29,6 +36,8 @@ class VoiceRoomGiftSocket {
     void Function(Map<String, dynamic> payload)? onDjUpdate,
     void Function(ChatRoomMessage message)? onMessage,
     void Function(List<ChatRoomPresence> users)? onPresence,
+    void Function(List<ChatPresenceRow> previous, List<ChatPresenceRow> current)?
+        onPresenceSnapshot,
     void Function(bool connected)? onConnectionChanged,
     Future<String?> Function()? accessToken,
   }) {
@@ -36,7 +45,10 @@ class VoiceRoomGiftSocket {
     _onDjUpdate = onDjUpdate;
     _onMessage = onMessage;
     _onPresence = onPresence;
+    _onPresenceSnapshot = onPresenceSnapshot;
     _onConnectionChanged = onConnectionChanged;
+    _lastPresence = const [];
+    _loggedPresencePayloadShape = false;
     _joinKeys = VoiceRoomSocketHelper.joinKeys(
       primary: roomId,
       alternate: alternateRoomId,
@@ -72,10 +84,13 @@ class VoiceRoomGiftSocket {
           ..on('chatMessage', (data) => _emitMessage(data))
           ..on('message', (data) => _emitMessage(data))
           ..on('roomMessage', (data) => _emitMessage(data))
-          ..on('roomUsers', (data) => _emitPresence(data))
-          ..on('presenceUpdated', (data) => _emitPresence(data))
-          ..on('userJoined', (data) => _emitPresence(data))
-          ..on('userLeft', (data) => _emitPresence(data))
+          ..on('roomUsers', (data) => _emitPresenceSnapshot(data, 'roomUsers'))
+          ..on(
+            'presenceUpdated',
+            (data) => _emitPresenceSnapshot(data, 'presenceUpdated'),
+          )
+          ..on('userJoined', (data) => _emitPresenceSnapshot(data, 'userJoined'))
+          ..on('userLeft', (data) => _emitPresenceSnapshot(data, 'userLeft'))
           ..on('dj', (data) => _emitDj(data))
           ..on('music', (data) => _emitDj(data))
           ..on('roomVideo', (data) => _emitDj(data))
@@ -116,19 +131,72 @@ class VoiceRoomGiftSocket {
     _onMessage?.call(msg);
   }
 
-  void _emitPresence(dynamic data) {
+  void _emitPresenceSnapshot(dynamic data, String eventName) {
     if (data is! Map) return;
     final map = Map<String, dynamic>.from(data);
-    dynamic raw = map['users'] ?? map['presence'] ?? map['members'];
-    if (raw is! List) return;
+    if (!_loggedPresencePayloadShape) {
+      _loggedPresencePayloadShape = true;
+      debugPrint(
+        '[VoiceRoom] presence snapshot payload ($eventName): keys=${map.keys.toList()}',
+      );
+    }
+    final next = _parsePresenceList(map, eventName: eventName);
+    if (next == null) return;
+    final previous = List<ChatPresenceRow>.from(_lastPresence);
+    VoiceRoomDebugLog.log('socket.presence.snapshot', {
+      'event': eventName,
+      'prev': previous.length,
+      'next': next.length,
+    });
+    _onPresenceSnapshot?.call(previous, next);
+    _onPresence?.call(next);
+    _lastPresence = next;
+  }
+
+  /// `giftHub.ts` emit şekilleri: tam liste veya delta + users.
+  List<ChatPresenceRow>? _parsePresenceList(
+    Map<String, dynamic> map, {
+    required String eventName,
+  }) {
+    final fromUsers = _rowsFromRawList(map['users'] ?? map['presence'] ?? map['members']);
+    if (fromUsers != null && fromUsers.isNotEmpty) {
+      return fromUsers;
+    }
+
+    if (eventName == 'userJoined') {
+      final joined = map['user'];
+      if (joined is Map) {
+        final row = ChatPresenceRow.fromJson(Map<String, dynamic>.from(joined));
+        if (row.id.isEmpty) return null;
+        final list = List<ChatPresenceRow>.from(_lastPresence);
+        final idx = list.indexWhere((p) => p.id == row.id);
+        if (idx >= 0) {
+          list[idx] = row;
+        } else {
+          list.add(row);
+        }
+        return list;
+      }
+    }
+
+    if (eventName == 'userLeft') {
+      final leftId = map['userId']?.toString();
+      if (leftId != null && leftId.isNotEmpty) {
+        return _lastPresence.where((p) => p.id != leftId).toList();
+      }
+    }
+
+    return fromUsers;
+  }
+
+  List<ChatPresenceRow>? _rowsFromRawList(dynamic raw) {
+    if (raw is! List) return null;
     final users = raw
         .whereType<Map>()
-        .map((e) => ChatRoomPresence.fromJson(Map<String, dynamic>.from(e)))
+        .map((e) => ChatPresenceRow.fromJson(Map<String, dynamic>.from(e)))
         .where((u) => u.id.isNotEmpty)
         .toList();
-    if (users.isEmpty) return;
-    VoiceRoomDebugLog.log('socket.presence.recv', {'count': users.length});
-    _onPresence?.call(users);
+    return users.isEmpty ? null : users;
   }
 
   void _emitDj(dynamic data) {
@@ -154,7 +222,10 @@ class VoiceRoomGiftSocket {
     _onDjUpdate = null;
     _onMessage = null;
     _onPresence = null;
+    _onPresenceSnapshot = null;
     _onConnectionChanged = null;
     _joinKeys = const [];
+    _lastPresence = const [];
+    _loggedPresencePayloadShape = false;
   }
 }

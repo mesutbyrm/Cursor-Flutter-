@@ -8,6 +8,52 @@ import 'package:tencent_rtc_sdk/trtc_cloud_listener.dart';
 import 'package:tencent_rtc_sdk/tx_device_manager.dart';
 import 'package:api_example/utils/bidirectional_map.dart';
 
+/// Üretim `ChatPresenceRow` — socket/SSE presence satırı (demo).
+class ChatPresenceRow {
+  const ChatPresenceRow({
+    required this.id,
+    this.name = '',
+    this.nickname,
+    this.avatar,
+    this.chatRole,
+    this.roleEmoji,
+    this.membership,
+    this.seatIndex,
+    this.isSpeaking = false,
+    this.joinedAt,
+  });
+
+  factory ChatPresenceRow.fromJson(Map<String, dynamic> json) {
+    return ChatPresenceRow(
+      id: (json['id'] ?? json['userId'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      nickname: json['nickname']?.toString(),
+      avatar: (json['image'] ?? json['avatar'] ?? json['avatarUrl'])?.toString(),
+      chatRole: json['chatRole']?.toString(),
+      roleEmoji: (json['roleSymbol'] ?? json['roleEmoji'])?.toString(),
+      membership: json['membership']?.toString(),
+      seatIndex: json['seatIndex'] is int
+          ? json['seatIndex'] as int
+          : int.tryParse('${json['seatIndex']}'),
+      isSpeaking: json['isSpeaking'] == true,
+      joinedAt: json['joinedAt'] is int
+          ? json['joinedAt'] as int
+          : int.tryParse('${json['joinedAt']}'),
+    );
+  }
+
+  final String id;
+  final String name;
+  final String? nickname;
+  final String? avatar;
+  final String? chatRole;
+  final String? roleEmoji;
+  final String? membership;
+  final int? seatIndex;
+  final bool isSpeaking;
+  final int? joinedAt;
+}
+
 class AudioUser {
   final String userId;
   bool isMuted;
@@ -30,6 +76,22 @@ class ViewManager {
 
   bool isViewKeyAvailable(int key) {
     return _userViewMap.containsValue(key);
+  }
+
+  /// Sunucu `seatIndex` (1 tabanlı) → görünüm yuvası (0 tabanlı).
+  void assignSeatView(String userId, int seatIndex) {
+    if (seatIndex < 1 || seatIndex > MAX_ANCHOR_COUNT) {
+      releaseView(userId);
+      return;
+    }
+    final viewKey = seatIndex - 1;
+    final occupant = getUserIdByViewKey(viewKey);
+    if (occupant != null && occupant != userId) {
+      releaseView(occupant);
+    }
+    releaseView(userId);
+    _availableViewKeys.remove(viewKey);
+    _userViewMap.add(userId, viewKey);
   }
 
   String? getUserIdByViewKey(int key) {
@@ -160,18 +222,11 @@ class VoiceRoomState extends ChangeNotifier {
         notifyListeners();
       },
       onUserAudioAvailable: (userId, available) {
+        // Koltuk ataması sunucu snapshot'ından — yalnızca ses akışı izlenir.
         if (available) {
-          if (_viewManager.hasAvailableView) {
-            final viewKey = _viewManager.allocateView(userId);
-            if (viewKey != null) {
-              addAudioUser(userId);
-            }
-          } else {
-            _statusMessage = 'Room anchor limit reached';
-            notifyListeners();
-          }
+          _ensureAudioUser(userId);
         } else {
-          removeAudioUser(userId);
+          _removeAudioStream(userId);
         }
       },
       onUserVoiceVolume: (userVolumes, totalVolume) {
@@ -240,6 +295,10 @@ class VoiceRoomState extends ChangeNotifier {
   }
 
   void addAudioUser(String userId) {
+    _ensureAudioUser(userId);
+  }
+
+  void _ensureAudioUser(String userId) {
     if (!_audioUsers.containsKey(userId)) {
       _audioUsers[userId] = AudioUser(
         userId: userId,
@@ -250,10 +309,58 @@ class VoiceRoomState extends ChangeNotifier {
   }
 
   void removeAudioUser(String userId) {
+    _removeAudioStream(userId);
+    _viewManager.releaseView(userId);
+    notifyListeners();
+  }
+
+  /// Ses akışı kapandı — koltuk görünümü sunucu snapshot'ında kalır.
+  void _removeAudioStream(String userId) {
     if (_audioUsers.containsKey(userId)) {
-      _viewManager.releaseView(userId);
       _audioUsers.remove(userId);
       notifyListeners();
+    }
+  }
+
+  /// Sunucu-yetkili koltuk/mikrofon/rol — `roomUsers` / `presenceUpdated` diff.
+  void applyPresenceSnapshot(
+    List<ChatPresenceRow> previous,
+    List<ChatPresenceRow> current,
+  ) {
+    final prevById = {for (final p in previous) p.id: p};
+    final nextIds = current.map((p) => p.id).toSet();
+
+    for (final row in current) {
+      final prev = prevById[row.id];
+      final seatChanged = prev?.seatIndex != row.seatIndex;
+      final roleChanged = prev?.chatRole != row.chatRole;
+      final speakingChanged = prev?.isSpeaking != row.isSpeaking;
+      if (!seatChanged && !roleChanged && !speakingChanged) continue;
+
+      _syncSeatFromServer(row);
+    }
+
+    for (final prev in previous) {
+      if (!nextIds.contains(prev.id)) {
+        _viewManager.releaseView(prev.id);
+        _audioUsers.remove(prev.id);
+      }
+    }
+
+    notifyListeners();
+  }
+
+  void _syncSeatFromServer(ChatPresenceRow row) {
+    final seat = row.seatIndex;
+    if (seat != null && seat >= 1 && seat <= ViewManager.MAX_ANCHOR_COUNT) {
+      _viewManager.assignSeatView(row.id, seat);
+      _ensureAudioUser(row.id);
+      final user = _audioUsers[row.id];
+      if (user != null) {
+        user.isSpeaking = row.isSpeaking;
+      }
+    } else {
+      _viewManager.releaseView(row.id);
     }
   }
 
@@ -266,6 +373,11 @@ class VoiceRoomState extends ChangeNotifier {
       _trtcCloud?.enableAudioVolumeEvaluation(false, TRTCAudioVolumeEvaluateParams());
     }
     notifyListeners();
+  }
+
+  /// Dış kaynaktan (ör. test köprüsü) presence snapshot uygula.
+  void ingestPresenceSnapshot(List<ChatPresenceRow> current) {
+    applyPresenceSnapshot(const [], current);
   }
 
   @override

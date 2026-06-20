@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.316+319 (2026-06-20)
+
+### Sesli oda — seat/mic/role snapshot-diff senkronizasyonu
+
+- **VoiceRoomGiftSocket:** `roomUsers` / `presenceUpdated` / `userJoined` / `userLeft` için presence snapshot diff callback (`onPresenceSnapshot`)
+- **VoiceSeatRestService:** `takeSeat` REST (`PATCH/POST /seats`); `leaveSeat` / `toggleMic` / `changeRole` placeholder (`UnimplementedError` + net mesaj)
+- **VoiceRoomLiveController:** `applyPresenceSnapshot` — sunucu-yetkili koltuk/konuşma/rol güncellemesi
+- **Socket bağlantısı:** Oda açılışında gift socket + SSE birlikte; koltuk emit yok (REST)
+- **Mikrofon:** TRTC yerel toggle + REST placeholder (yakında snackbar, crash yok)
+- **Tencent demo:** `VoiceRoomState.applyPresenceSnapshot`, `onUserAudioAvailable` artık koltuk atamaz
+
 ## 1.0.315+318 (2026-06-20)
 
 ### Canlı yayın — Yayını Başlat timeout düzeltmesi
