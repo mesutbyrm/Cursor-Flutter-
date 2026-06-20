@@ -1,11 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
-import '../../../../core/network/token_storage.dart';
 import '../../data/datasources/pk_battle_remote_datasource.dart';
-import '../../data/services/pk_battle_socket_service.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
 import 'pk_battle_provider.dart';
 
@@ -13,17 +9,9 @@ final pkBattleRemoteDataSourceProvider = Provider<PkBattleRemoteDataSource>((ref
   return PkBattleRemoteDataSource(ref.watch(dioProvider));
 });
 
-final pkBattleSocketServiceProvider = Provider<PkBattleSocketService>((ref) {
-  final s = PkBattleSocketService();
-  ref.onDispose(s.disconnect);
-  return s;
-});
-
-/// Sunucu PK senkronu — REST + Socket.IO.
+/// Sunucu PK senkronu — REST; canlı güncellemeler oda SSE üzerinden gelir.
 class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
-  PkBattleSocketService get _socket => ref.read(pkBattleSocketServiceProvider);
   PkBattleRemoteDataSource get _api => ref.read(pkBattleRemoteDataSourceProvider);
-  TokenStorage get _tokens => ref.read(tokenStorageProvider);
 
   @override
   PkBattleRemote? build() => null;
@@ -191,35 +179,29 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     return battle;
   }
 
+  /// Eski çağrılar uyumluluk için korunur — PK artık oda SSE üzerinden gelir.
   void connectSocket({
     String? roomId,
     String? alternateRoomId,
     String? streamId,
     String? battleId,
-  }) {
-    _socket.connect(
-      roomId: roomId,
-      alternateRoomId: alternateRoomId,
-      streamId: streamId,
-      battleId: battleId ?? state?.id,
-      onUpdate: (battle, event) => _apply(battle, event),
-      accessToken: () => _tokens.readAccess(),
-    );
-  }
+  }) {}
 
-  void disconnectSocket() => _socket.disconnect();
+  /// Eski çağrılar uyumluluk için korunur — ayrı socket bağlantısı yok.
+  void disconnectSocket() {}
+
+  /// Oda SSE üzerinden gelen PK güncellemesi — socket bağlantısı gerekmez.
+  void ingestSseBattle(PkBattleRemote battle) {
+    state = battle;
+  }
 
   void _apply(PkBattleRemote battle, String event) {
     state = battle;
     ref.read(pkBattleProvider.notifier).applyRemoteBattle(battle);
-    if (battle.isEnded && (event == 'pk:end' || event == 'pk:winner')) {
-      disconnectSocket();
-    }
   }
 
   void clear() {
     state = null;
-    disconnectSocket();
   }
 }
 

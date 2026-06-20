@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.314+317 (2026-06-20)
+
+### Sesli oda — PK SSE entegrasyonu
+
+- **chat_room_providers:** Oda SSE akışına `onPk` callback — PK güncellemeleri artık ayrı Socket.IO yerine ana SSE'den besleniyor
+- **pk_battle_remote_provider:** `connectSocket` / `disconnectSocket` no-op; REST + SSE mimarisi
+- **chat_room_sse_service:** `type: pk` olayları parse edilip `PkBattleRemote` olarak iletiliyor
+
 ## 1.0.313+316 (2026-06-19)
 
 ### Canlı yayın — Premium 2026 tamamlama

@@ -16,6 +16,9 @@ import '../../data/services/voice_room_debug_log.dart';
 import '../../data/services/exo_player_probe.dart';
 import '../../data/services/voice_room_music_pipeline_log.dart';
 import '../../data/services/chat_room_sse_service.dart';
+import '../../domain/pk/pk_battle_remote_models.dart';
+import 'pk_battle_provider.dart';
+import 'pk_battle_remote_provider.dart';
 import 'voice_room_sse_provider.dart';
 import '../../data/youtube_music_search_cache.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
@@ -721,6 +724,18 @@ class VoiceRoomLiveController
             final session = parsePsychicSsePayload(payload);
             if (session == null) return;
             emitPsychicLiveRequest(ref, session);
+          },
+          onPk: (battle, event) {
+            // PK battle — artık ayrı bir Socket.IO bağlantısı yerine
+            // odanın ana SSE akışından besleniyor.
+            ref.read(pkBattleProvider.notifier).applyRemoteBattle(battle);
+            ref.read(pkBattleRemoteProvider.notifier).ingestSseBattle(battle);
+            VoiceRoomDebugLog.log('sse.pk', {
+              'roomId': _roomKey,
+              'battleId': battle.id,
+              'event': event,
+              'status': battle.status,
+            });
           },
         );
   }

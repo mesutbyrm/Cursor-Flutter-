@@ -5,6 +5,7 @@ import '../../../../core/network/sse/base_sse_service.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
+import '../../domain/pk/pk_battle_remote_models.dart';
 import 'voice_room_debug_log.dart';
 
 /// Sohbet odası SSE — `GET /api/chat/rooms/{roomId}/stream`.
@@ -26,6 +27,7 @@ class ChatRoomSseService extends BaseSseService {
   void Function(Map<String, dynamic> payload)? _onModeration;
   void Function(Map<String, dynamic> payload)? _onAnnouncement;
   void Function(Map<String, dynamic> payload)? _onFortuneRequest;
+  void Function(PkBattleRemote battle, String event)? _onPk;
   void Function(List<String> users)? _onTyping;
 
   static String streamUrlFor(String roomId) {
@@ -53,6 +55,7 @@ class ChatRoomSseService extends BaseSseService {
     void Function(Map<String, dynamic> payload)? onModeration,
     void Function(Map<String, dynamic> payload)? onAnnouncement,
     void Function(Map<String, dynamic> payload)? onFortuneRequest,
+    void Function(PkBattleRemote battle, String event)? onPk,
     void Function(List<String> users)? onTyping,
   }) async {
     final id = roomId.trim();
@@ -68,6 +71,7 @@ class ChatRoomSseService extends BaseSseService {
     _onModeration = onModeration;
     _onAnnouncement = onAnnouncement;
     _onFortuneRequest = onFortuneRequest;
+    _onPk = onPk;
     _onTyping = onTyping;
     VoiceRoomDebugLog.sseConnect(roomId: id, url: streamUrlFor(id));
     await super.openConnection(accessToken: accessToken);
@@ -160,6 +164,9 @@ class ChatRoomSseService extends BaseSseService {
       case ChatRoomSseEventType.fortuneRequest:
         _onFortuneRequest?.call(map);
         return;
+      case ChatRoomSseEventType.pk:
+        _emitPk(map);
+        return;
       case ChatRoomSseEventType.unknown:
         if (map['typing'] is List) {
           final users = (map['typing'] as List)
@@ -172,6 +179,7 @@ class ChatRoomSseService extends BaseSseService {
           _onDjUpdate?.call(map);
           return;
         }
+        if (_tryEmitPk(map)) return;
         final users = _parseUsers(map);
         if (users != null && users.isNotEmpty) {
           _onPresence?.call(users);
@@ -191,6 +199,23 @@ class ChatRoomSseService extends BaseSseService {
         .map((e) => ChatRoomPresence.fromJson(Map<String, dynamic>.from(e)))
         .where((u) => u.id.isNotEmpty)
         .toList();
+  }
+
+  bool _tryEmitPk(Map<String, dynamic> map) {
+    if (!map.containsKey('battle') && !map.containsKey('pk')) return false;
+    _emitPk(map);
+    return true;
+  }
+
+  void _emitPk(Map<String, dynamic> map) {
+    final raw = map['battle'] ?? map['pk'] ?? map['data'];
+    if (raw is! Map) return;
+    final battle = PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
+    if (battle.id.isEmpty) return;
+    final event = map['event']?.toString() ??
+        map['type']?.toString() ??
+        'pk';
+    _onPk?.call(battle, event);
   }
 
   ChatRoomMessage? _parseMessage(Map<String, dynamic> map) {
