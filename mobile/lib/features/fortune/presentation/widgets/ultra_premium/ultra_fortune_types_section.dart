@@ -180,6 +180,7 @@ class _PremiumTypeCard extends StatelessWidget {
               accent: type.accent,
               emoji: type.emoji,
               borderRadius: 0,
+              imageWidth: 900,
             ),
             DecoratedBox(
               decoration: BoxDecoration(

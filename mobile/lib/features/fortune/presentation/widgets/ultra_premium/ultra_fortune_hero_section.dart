@@ -8,68 +8,80 @@ import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_ripple_button.dart';
 import 'ultra_fortune_tokens.dart';
 
-/// Hero — kristal küre, başlık, CTA, yan bilgi kartları, sosyal kanıt.
+/// Hero — responsive kristal küre, taşma yok, SafeArea uyumlu.
 class UltraFortuneHeroSection extends StatelessWidget {
   const UltraFortuneHeroSection({super.key});
 
+  static double _ballSize(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final w = size.width;
+    final h = size.height;
+    // Küçük ekranlarda küreyi küçült; üst bölümün ~%28'ini geçmesin.
+    final byWidth = w * 0.34;
+    final byHeight = h * 0.22;
+    return byWidth.clamp(120.0, 200.0).clamp(0, byHeight);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final ballSize = (width * 0.46).clamp(160.0, 220.0);
+    final ballSize = _ballSize(context);
+    final ballBoxHeight = ballSize * 1.02;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(
-            height: ballSize * 1.15,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  right: -8,
-                  top: 0,
-                  bottom: 0,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      _SideInfoCard(
-                        label: 'Enerjin',
-                        value: 'Yüksek',
-                        icon: Icons.diamond_rounded,
-                        iconColor: UltraFortuneTokens.softLilac,
-                      ),
-                      SizedBox(height: 10),
-                      _SideInfoCard(
-                        label: 'Ay Evresi',
-                        value: 'Şişkin Ay',
-                        icon: Icons.nightlight_round,
-                        iconColor: UltraFortuneTokens.metallicGold,
-                      ),
-                    ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _HeroCopy(
+                  onCta: () => context.push(
+                    '/fortune/${FortuneCatalog.dailyFortune.slug}',
                   ),
                 ),
-                Positioned(
-                  right: ballSize * 0.08,
-                  top: 0,
-                  child: UltraFortuneCrystalBall(size: ballSize),
-                ),
-                Positioned(
-                  left: 0,
-                  top: ballSize * 0.08,
-                  right: ballSize * 0.55,
-                  child: _HeroCopy(
-                    onCta: () => context.push(
-                      '/fortune/${FortuneCatalog.dailyFortune.slug}',
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: ballSize,
+                height: ballBoxHeight,
+                child: ClipRect(
+                  child: RepaintBoundary(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: UltraFortuneCrystalBall(size: ballSize),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: const [
+              Expanded(
+                child: _SideInfoCard(
+                  label: 'Enerjin',
+                  value: 'Yüksek',
+                  icon: Icons.diamond_rounded,
+                  iconColor: UltraFortuneTokens.softLilac,
+                ),
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: _SideInfoCard(
+                  label: 'Ay Evresi',
+                  value: 'Şişkin Ay',
+                  icon: Icons.nightlight_round,
+                  iconColor: UltraFortuneTokens.metallicGold,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           _SocialProofStrip(),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -84,7 +96,7 @@ class _HeroCopy extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final titleStyle = GoogleFonts.playfairDisplay(
-      fontSize: 22,
+      fontSize: 21,
       fontWeight: FontWeight.w700,
       height: 1.22,
       color: Colors.white,
@@ -119,7 +131,7 @@ class _HeroCopy extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         UltraFortuneRippleButton(
           label: 'FALINA BAK',
           onPressed: onCta,
@@ -144,46 +156,48 @@ class _SideInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 88,
-      child: UltraFortuneLiquidSurface(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        borderRadius: BorderRadius.circular(18),
-        blur: 40,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: iconColor.withValues(alpha: 0.18),
-                boxShadow: UltraFortuneTokens.purpleGlow(blur: 10),
-              ),
-              child: Icon(icon, size: 14, color: iconColor),
+    return UltraFortuneLiquidSurface(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      borderRadius: BorderRadius.circular(18),
+      blur: 40,
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: iconColor.withValues(alpha: 0.18),
+              boxShadow: UltraFortuneTokens.purpleGlow(blur: 10),
             ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.85),
-              ),
+            child: Icon(icon, size: 14, color: iconColor),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.85),
+                  ),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -197,7 +211,6 @@ class _SocialProofStrip extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       blur: 36,
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
             width: 72,

@@ -13,6 +13,7 @@ import '../widgets/fortune_mystic_bar_button.dart';
 import '../widgets/fortune_mystic_title_bar.dart';
 import '../widgets/fortune_popular_readings_section.dart';
 import '../widgets/premium_ai/premium_fortune_cover.dart';
+import '../widgets/premium_ai/premium_fortune_detail_transition.dart';
 import '../widgets/premium_ai/premium_fortune_open_button.dart';
 
 /// Premium AI fal vitrin — tam ekran kapak, parallax, Falını Aç CTA.
@@ -52,11 +53,15 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
   }
 
   Future<void> _openFortune() {
-    return FortuneReadingCoordinator.openReading(
+    return runPremiumFortuneOpenTransition(
       context: context,
-      ref: ref,
       type: type,
-      localImages: _needsCapture ? _images : null,
+      onOpen: () => FortuneReadingCoordinator.openReading(
+        context: context,
+        ref: ref,
+        type: type,
+        localImages: _needsCapture ? _images : null,
+      ),
     );
   }
 

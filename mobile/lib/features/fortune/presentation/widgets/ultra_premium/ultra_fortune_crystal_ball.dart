@@ -52,7 +52,7 @@ class _UltraFortuneCrystalBallState extends State<UltraFortuneCrystalBall>
           scale: breatheScale,
           child: SizedBox(
             width: s,
-            height: s * 1.12,
+            height: s,
             child: CustomPaint(
               painter: _CrystalBallPainter(
                 rotation: _rotate.value,
@@ -95,12 +95,12 @@ class _CrystalBallPainter extends CustomPainter {
     }
 
     // Golden pedestal
-    final baseY = h * 0.86;
+    final baseY = h * 0.78;
     final basePath = Path()
       ..moveTo(w * 0.28, baseY)
-      ..quadraticBezierTo(w * 0.5, baseY - h * 0.06, w * 0.72, baseY)
-      ..lineTo(w * 0.68, h * 0.98)
-      ..quadraticBezierTo(w * 0.5, h * 1.02, w * 0.32, h * 0.98)
+      ..quadraticBezierTo(w * 0.5, baseY - h * 0.05, w * 0.72, baseY)
+      ..lineTo(w * 0.68, h * 0.94)
+      ..quadraticBezierTo(w * 0.5, h * 0.97, w * 0.32, h * 0.94)
       ..close();
     canvas.drawPath(
       basePath,
@@ -126,9 +126,9 @@ class _CrystalBallPainter extends CustomPainter {
     // Ball shadow
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(center.dx, h * 0.92),
-        width: w * 0.42,
-        height: h * 0.06,
+        center: Offset(center.dx, h * 0.9),
+        width: w * 0.38,
+        height: h * 0.05,
       ),
       Paint()
         ..color = Colors.black.withValues(alpha: 0.45)

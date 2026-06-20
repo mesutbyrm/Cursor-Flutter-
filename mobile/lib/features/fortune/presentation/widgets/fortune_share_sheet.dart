@@ -6,8 +6,9 @@ import '../../domain/entities/fortune_type_entity.dart';
 
 void showFortuneShareSheet(
   BuildContext context,
-  FortuneReadingResult result,
-) {
+  FortuneReadingResult result, {
+  VoidCallback? onShareStory,
+}) {
   showModalBottomSheet<void>(
     context: context,
     backgroundColor: const Color(0xFF16162A),
@@ -16,7 +17,7 @@ void showFortuneShareSheet(
     ),
     builder: (ctx) {
       final text =
-          '${result.type.title} — ${result.summary}\n\n${result.detail}';
+          '${result.type.title} — ${result.summary}\n\n${result.fullText}';
       return SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -36,37 +37,56 @@ void showFortuneShareSheet(
                 'Paylaş',
                 style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
               ),
+              const SizedBox(height: 8),
+              Text(
+                'Story kalitesinde görsel veya metin paylaş',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.65),
+                  fontSize: 12,
+                ),
+              ),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
+                  if (onShareStory != null)
+                    _ShareChip(
+                      icon: Icons.auto_awesome,
+                      label: 'Story',
+                      color: AppThemeColors.accentPurple,
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        onShareStory();
+                      },
+                    ),
                   _ShareChip(
                     icon: Icons.camera_alt_outlined,
                     label: 'Instagram',
                     color: const Color(0xFFE1306C),
-                    onTap: () => _share(text),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      if (onShareStory != null) {
+                        onShareStory();
+                      } else {
+                        _share(text);
+                      }
+                    },
                   ),
                   _ShareChip(
                     icon: Icons.chat_rounded,
                     label: 'WhatsApp',
                     color: const Color(0xFF25D366),
-                    onTap: () => _share(text),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _share(text);
+                    },
                   ),
                   _ShareChip(
                     icon: Icons.send_rounded,
                     label: 'Telegram',
                     color: const Color(0xFF229ED9),
-                    onTap: () => _share(text),
-                  ),
-                  _ShareChip(
-                    icon: Icons.bookmark_border_rounded,
-                    label: 'Kaydet',
-                    color: AppThemeColors.accentPurple,
                     onTap: () {
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Fal metni panoya kopyalandı')),
-                      );
                       _share(text);
                     },
                   ),

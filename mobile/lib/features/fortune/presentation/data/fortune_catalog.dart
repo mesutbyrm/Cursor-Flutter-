@@ -242,5 +242,8 @@ abstract final class FortuneCatalog {
     'evet-hayır': 'evet-hayir',
     'istihare': 'pendul',
     'istikhara': 'pendul',
+    'aura': 'runik',
+    'kursun-dokme': 'cin-fali',
+    'kursun': 'cin-fali',
   };
 }

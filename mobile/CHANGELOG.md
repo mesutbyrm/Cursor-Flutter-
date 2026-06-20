@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.308+311 (2026-06-20)
+
+### Fal & Tarot — Premium UI güncellemesi
+
+- **Dönen küre:** Taşma düzeltildi, ClipRect + responsive boyut, 24px alt boşluk, RepaintBoundary
+- **Fal kartları:** Premium gradient overlay, shimmer yükleme, Hero animasyonu, yüksek çözünürlük CDN
+- **Detay ekranı:** Falını Aç hero büyüme, blur arka plan, Lottie geçiş animasyonu
+- **Sonuç ekranı:** Fal türüne özel dinamik arka plan, hareketli partiküller, daktilo efekti
+- **Sosyal:** Yorum → Fal Sonucu → Paylaş → SOSYALDE PAYLAŞ hiyerarşisi; Story kalitesinde paylaşım görseli
+- **Performans:** RepaintBoundary, memCacheWidth, statik parçacık boyama
+
 ## 1.0.307+310 (2026-06-20)
 
 ### Premium AI Fal Deneyimi (2026)

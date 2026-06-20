@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 
 import '../../data/fortune_type_images.dart';
 import '../../../domain/entities/fortune_type_entity.dart';
+import '../fortune_type_network_image.dart';
 import '../ultra_premium/ultra_fortune_tokens.dart';
+import 'fortune_image_shimmer.dart';
 
-/// Tam genişlik premium fal kapağı — parallax, glassmorphism, gradient.
+/// Tam genişlik premium fal kapağı — parallax, glassmorphism, hero.
 class PremiumFortuneCover extends StatefulWidget {
   const PremiumFortuneCover({
     super.key,
@@ -16,12 +18,14 @@ class PremiumFortuneCover extends StatefulWidget {
     this.height = 320,
     this.scrollOffset = 0,
     this.imageUrl,
+    this.heroTag,
   });
 
   final FortuneTypeEntity type;
   final double height;
   final double scrollOffset;
   final String? imageUrl;
+  final String? heroTag;
 
   @override
   State<PremiumFortuneCover> createState() => _PremiumFortuneCoverState();
@@ -51,26 +55,47 @@ class _PremiumFortuneCoverState extends State<PremiumFortuneCover>
     final url = widget.imageUrl ?? FortuneTypeImages.urlFor(widget.type.slug, width: 1200);
     final parallax = widget.scrollOffset * 0.35;
     final accent = widget.type.accent;
+    final tag = widget.heroTag ?? FortuneTypeImages.heroTagFor(widget.type.slug);
 
-    return SizedBox(
-      height: widget.height,
-      width: double.infinity,
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Transform.translate(
-              offset: Offset(0, parallax),
-              child: Transform.scale(
-                scale: 1.08,
-                child: CachedNetworkImage(
-                  imageUrl: url,
-                  fit: BoxFit.cover,
-                  fadeInDuration: const Duration(milliseconds: 500),
-                ),
+    Widget imageLayer = Transform.translate(
+      offset: Offset(0, parallax),
+      child: Transform.scale(
+        scale: 1.06,
+        child: widget.imageUrl != null
+            ? CachedNetworkImage(
+                imageUrl: url,
+                fit: BoxFit.cover,
+                fadeInDuration: const Duration(milliseconds: 500),
+                placeholder: (_, _) => FortuneImageShimmer(accent: accent, emoji: widget.type.emoji),
+              )
+            : FortuneTypeNetworkImage(
+                slug: widget.type.slug,
+                accent: accent,
+                emoji: widget.type.emoji,
+                borderRadius: 0,
+                imageWidth: 1200,
+                heroTag: tag,
               ),
-            ),
+      ),
+    );
+
+    if (widget.imageUrl != null) {
+      imageLayer = Hero(
+        tag: tag,
+        child: Material(type: MaterialType.transparency, child: imageLayer),
+      );
+    }
+
+    return RepaintBoundary(
+      child: SizedBox(
+        height: widget.height,
+        width: double.infinity,
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              imageLayer,
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
