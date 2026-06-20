@@ -70,6 +70,20 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
               ),
             ),
             const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () =>
+                  Navigator.of(ctx, rootNavigator: true).pop(_OpenRoomChoice.free),
+              icon: const Icon(Icons.volunteer_activism_rounded),
+              label: const Text('Ücretsiz oda aç · 0 jeton'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppThemeColors.accentCyan,
+                side: BorderSide(
+                  color: AppThemeColors.accentCyan.withValues(alpha: 0.7),
+                ),
+                minimumSize: const Size.fromHeight(48),
+              ),
+            ),
+            const SizedBox(height: 10),
             FilledButton.icon(
               onPressed: () => Navigator.of(ctx, rootNavigator: true)
                   .pop(_OpenRoomChoice.standard),
@@ -107,7 +121,11 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
 
   _showLoadingDialog(context);
 
-  final cost = choice == _OpenRoomChoice.vip ? vipCost : normalCost;
+  final cost = switch (choice) {
+    _OpenRoomChoice.vip => vipCost,
+    _OpenRoomChoice.standard => normalCost,
+    _OpenRoomChoice.free => 0,
+  };
   ref.invalidate(walletBalancesProvider);
   try {
     balance = (await ref.read(walletBalancesProvider.future).timeout(
@@ -123,7 +141,7 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
     return;
   }
 
-  if (balance < cost) {
+  if (cost > 0 && balance < cost) {
     _dismissLoadingDialog(context);
     _showSnackBar(
       context,
@@ -141,12 +159,12 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
   await _createAndEnter(
     context,
     ref,
-    vip: choice == _OpenRoomChoice.vip,
+    choice: choice,
     loadingVisible: true,
   );
 }
 
-enum _OpenRoomChoice { standard, vip }
+enum _OpenRoomChoice { free, standard, vip }
 
 void _showLoadingDialog(BuildContext context) {
   showDialog<void>(
@@ -172,7 +190,7 @@ void _showSnackBar(BuildContext context, SnackBar snackBar) {
 Future<void> _createAndEnter(
   BuildContext context,
   WidgetRef ref, {
-  required bool vip,
+  required _OpenRoomChoice choice,
   bool loadingVisible = false,
 }) async {
   if (!loadingVisible) {
@@ -181,10 +199,16 @@ Future<void> _createAndEnter(
 
   try {
     final user = ref.read(authControllerProvider).valueOrNull;
+    final roomType = switch (choice) {
+      _OpenRoomChoice.free => 'free',
+      _OpenRoomChoice.vip => 'vip',
+      _OpenRoomChoice.standard => 'normal',
+    };
     var room = await ref
         .read(liveRepositoryProvider)
         .createVoiceChatRoom(
-          vip: vip,
+          vip: choice == _OpenRoomChoice.vip,
+          roomType: roomType,
           roomName: user?.display ?? user?.username,
         )
         .timeout(

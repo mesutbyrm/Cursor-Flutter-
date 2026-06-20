@@ -6,6 +6,7 @@ extension VoiceRoomAccess on VoiceRoomEntity {
       '${nameTr.toLowerCase()} ${slug.toLowerCase()} ${descTr?.toLowerCase() ?? ''}';
 
   bool get isVipGoldRoom {
+    if (isFreeRoom) return false;
     if (isVip == true) return true;
     final type = roomType?.toLowerCase().trim();
     if (type == 'vip' || type == 'gold' || type == 'premium') return true;
@@ -16,7 +17,21 @@ extension VoiceRoomAccess on VoiceRoomEntity {
         t.contains('premium oda');
   }
 
+  /// Ücretsiz oda — hediye/müzik geliri oda sahibine gitmez.
+  bool get isFreeRoom {
+    final type = roomType?.toUpperCase().trim();
+    return type == 'FREE' || type == 'ÜCRETSİZ' || type == 'UCRETSIZ';
+  }
+
+  /// NORMAL | FREE | VIP
+  String get resolvedRoomType {
+    if (isFreeRoom) return 'FREE';
+    if (isVipGoldRoom) return 'VIP';
+    return 'NORMAL';
+  }
+
   bool get isPasswordLockedRoom {
+    if (isFreeRoom) return false;
     final t = _haystack;
     return t.contains('şifre') ||
         t.contains('sifre') ||

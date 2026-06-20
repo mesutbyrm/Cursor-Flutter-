@@ -26,6 +26,13 @@ import {
   rankSymbol,
   type VoiceStaffRank,
 } from "./voiceStaffRank";
+import type { RoomType } from "@prisma/client";
+import {
+  getVoiceRoomSettings,
+  maxUsersForRoomType,
+  parseRoomType,
+} from "./voiceRoomSettings";
+import { applyMusicPayout } from "./voiceRoomRevenue";
 
 export type ChatRoomUser = {
   id: string;
@@ -65,6 +72,9 @@ export type ChatRoomRow = {
   djUserIds: string[];
   recentUsers: { image?: string | null }[];
   rules?: string;
+  roomType?: RoomType;
+  maxUsers?: number;
+  isVip?: boolean;
 };
 
 const SITE_BACKGROUNDS = Array.from(
@@ -90,6 +100,8 @@ const rooms: ChatRoomRow[] = [
     recentUsers: [],
     rules:
       "1. Saygılı dil kullanın.\n2. Spam ve reklam yasaktır.\n3. Yetkililerin uyarılarına uyun.",
+    roomType: "NORMAL",
+    maxUsers: 100,
   },
 ];
 
@@ -264,6 +276,16 @@ export function isSiteAdmin(user: Pick<User, "username" | "role"> | null) {
   return fullControlRank(staffRankForUser(user));
 }
 
+export function getRoomType(room: ChatRoomRow): RoomType {
+  if (room.roomType) return room.roomType;
+  if (room.isVip) return "VIP";
+  return "NORMAL";
+}
+
+export function roomMaxUsers(room: ChatRoomRow, settingsMax: number) {
+  return room.maxUsers ?? settingsMax;
+}
+
 export function roomPrivileges(
   user: Pick<User, "id" | "username" | "role"> | null,
   room: ChatRoomRow,
@@ -273,6 +295,7 @@ export function roomPrivileges(
   const admin = staffPower >= rankPower("admin");
   const founderControl = staffPower >= rankPower("founder");
   const canModerateStaff = canModerateRank(rank);
+  const roomType = getRoomType(room);
   const owner =
     admin ||
     founderControl ||
@@ -283,11 +306,16 @@ export function roomPrivileges(
     owner ||
     canModerateStaff ||
     (user != null && room.djUserIds.includes(user.id));
+  const canAddModerators = roomType !== "FREE";
   return {
     admin,
     owner,
     dj,
     canModerate: admin || owner || canModerateStaff,
+    canAddModerators,
+    canEarnGiftRevenue: roomType !== "FREE",
+    canEarnMusicRevenue: roomType !== "FREE",
+    roomType,
     rank,
     staffPower,
   };
@@ -364,6 +392,12 @@ export async function joinPresence(
   if (!room) return null;
   if (isRoomBanned(roomId, user.id)) {
     return { banned: true as const, presence: [] as ChatPresenceRow[] };
+  }
+  const settings = await getVoiceRoomSettings();
+  const cap = roomMaxUsers(room, maxUsersForRoomType(getRoomType(room), settings));
+  const pmap = roomMap(roomId);
+  if (!pmap.has(user.id) && pmap.size >= cap) {
+    return { full: true as const, presence: listPresence(roomId), maxUsers: cap };
   }
   const priv = roomPrivileges(user, room);
   const chatRole = priv.admin
@@ -543,25 +577,43 @@ function tryHandleRoomCommand(
 
 export const VOICE_ROOM_NORMAL_COST = 100;
 export const VOICE_ROOM_VIP_COST = 5000;
+export const VOICE_ROOM_FREE_COST = 0;
 
 export async function createVoiceChatRoom(
   user: User,
-  input: { vip?: boolean; cost?: number; name?: string },
+  input: {
+    vip?: boolean;
+    cost?: number;
+    name?: string;
+    roomType?: RoomType | string;
+  },
 ) {
-  const vip = input.vip === true;
-  const cost = input.cost ?? (vip ? VOICE_ROOM_VIP_COST : VOICE_ROOM_NORMAL_COST);
+  const settings = await getVoiceRoomSettings();
+  let roomType = parseRoomType(input.roomType);
+  if (input.vip === true && roomType === "NORMAL") roomType = "VIP";
+
+  const cost =
+    input.cost ??
+    (roomType === "VIP"
+      ? VOICE_ROOM_VIP_COST
+      : roomType === "FREE"
+        ? VOICE_ROOM_FREE_COST
+        : VOICE_ROOM_NORMAL_COST);
+
   const dbUser = await loadUser(user.id);
   if (!dbUser) return { ok: false as const, error: "Oturum gerekli" };
-  if (dbUser.coins < cost) {
+  if (cost > 0 && dbUser.coins < cost) {
     return {
       ok: false as const,
       error: `Yetersiz jeton (${cost} gerekli, ${dbUser.coins} mevcut)`,
     };
   }
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { coins: { decrement: cost } },
-  });
+  if (cost > 0) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { coins: { decrement: cost } },
+    });
+  }
   const baseName =
     (input.name?.trim() || dbUser.displayName || dbUser.username || "Sohbet").slice(
       0,
@@ -574,12 +626,19 @@ export async function createVoiceChatRoom(
     .slice(0, 24);
   const slug = `${slugBase || "oda"}-${Date.now().toString(36).slice(-6)}`;
   const id = `room-${randomUUID().slice(0, 12)}`;
+  const maxUsers = maxUsersForRoomType(roomType, settings);
+  const isVip = roomType === "VIP";
   const row: ChatRoomRow = {
     id,
     slug,
     nameTr: baseName,
-    descTr: vip ? "VIP sesli sohbet odası" : "Sesli sohbet odası",
-    icon: vip ? "⭐" : "🎤",
+    descTr:
+      roomType === "VIP"
+        ? "VIP sesli sohbet odası"
+        : roomType === "FREE"
+          ? "Ücretsiz sesli sohbet odası"
+          : "Sesli sohbet odası",
+    icon: isVip ? "⭐" : roomType === "FREE" ? "🎙️" : "🎤",
     onlineCount: 0,
     userCount: 0,
     backgroundImage: SITE_BACKGROUNDS[0],
@@ -593,9 +652,35 @@ export async function createVoiceChatRoom(
     djUserIds: [],
     recentUsers: [],
     rules: "Saygılı olun, spam yapmayın.",
+    roomType,
+    maxUsers,
+    isVip,
   };
   rooms.push(row);
-  return { ok: true as const, room: row, newBalance: dbUser.coins - cost };
+
+  try {
+    await prisma.voiceRoom.create({
+      data: {
+        id,
+        slug,
+        nameTr: baseName,
+        descTr: row.descTr,
+        icon: row.icon,
+        backgroundImage: row.backgroundImage,
+        ownerId: user.id,
+        roomType,
+        maxUsers,
+      },
+    });
+  } catch (err) {
+    console.warn("[voice-room] persist skipped:", err);
+  }
+
+  return {
+    ok: true as const,
+    room: row,
+    newBalance: cost > 0 ? dbUser.coins - cost : dbUser.coins,
+  };
 }
 
 function bannedWordsForRoom(roomId: string) {
@@ -1072,9 +1157,10 @@ export async function requestMusicQueue(
   if (!settings.musicEnabled) {
     return { ok: false as const, error: "DJ sistemi bu odada kapalı" };
   }
+  const platformSettings = await getVoiceRoomSettings();
   const dbUser = await loadUser(user.id);
   if (!dbUser) return { ok: false as const, error: "Oturum gerekli" };
-  const cost = settings.musicRequestCost;
+  const cost = settings.musicRequestCost || platformSettings.musicRequestCost;
   if (dbUser.coins < cost) {
     return {
       ok: false as const,
@@ -1113,6 +1199,17 @@ export async function requestMusicQueue(
     amount: cost,
     balanceAfter: newBalance,
     songName,
+  });
+
+  const roomType = getRoomType(room);
+  const musicSplit = await applyMusicPayout({
+    roomId: resolveRoomId(roomId),
+    roomType,
+    requesterId: user.id,
+    ownerId: room.ownerId ?? null,
+    totalCost: cost,
+    songName,
+    settings: platformSettings,
   });
 
   const key = resolveRoomId(roomId);
@@ -1197,6 +1294,12 @@ export async function requestMusicQueue(
     newBalance,
     musicUrl: dj?.musicUrl ?? null,
     playing: dj?.playing ?? false,
+    revenue: {
+      total: cost,
+      roomType,
+      ownerNet: musicSplit.ownerNet,
+      siteAmount: musicSplit.siteAmount,
+    },
   };
 }
 
@@ -1281,6 +1384,12 @@ export function addRoomDj(roomId: string, actor: User, targetUserId: string) {
   const room = getChatRoom(roomId);
   if (!room) return { ok: false as const, error: "Oda bulunamadı" };
   const priv = roomPrivileges(actor, room);
+  if (!priv.canAddModerators) {
+    return {
+      ok: false as const,
+      error: "Ücretsiz odalarda moderatör atanamaz",
+    };
+  }
   if (!priv.owner && !priv.admin && !priv.canModerate) {
     return { ok: false as const, error: "Yetki yok" };
   }

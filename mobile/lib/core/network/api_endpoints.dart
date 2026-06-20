@@ -321,6 +321,9 @@ abstract final class ApiEndpoints {
   static const adminNotifications = '/api/admin/notifications';
   static const adminPaymentNotifications = '/api/admin/payment-notifications';
   static const adminPaymentsStream = '/api/admin/payments/stream';
+  static const adminVoiceRoomSettings = '/api/admin/voice-room-settings';
+  static const adminVoiceRoomFinanceAudit = '/api/admin/voice-room-finance-audit';
+  static const platformVoiceRoomSettings = '/api/platform/voice-room-settings';
 
   /// Arkadaş daveti — bağlantı veya kod (oturum gerekir).
   static const referral = '/api/referral';

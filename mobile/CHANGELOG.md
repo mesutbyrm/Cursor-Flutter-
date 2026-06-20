@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.306+309 (2026-06-20)
+
+### Sesli sohbet — gelir modeli ve oda tipleri
+
+- **Oda tipleri:** `FREE`, `NORMAL`, `VIP` — ücretsiz oda açma (0 jeton), kapasite limitleri
+- **Hediye dağılımı (backend):** Alıcı %70 / oda sahibi %30 → komisyon brüt pay üzerinden %50
+- **Ücretsiz oda:** Oda sahibi hediye ve müzik geliri almaz; müzik isteği tamamı site
+- **Müzik isteği:** 10 jeton; NORMAL 50/50, VIP 70/30 (admin ayarlı)
+- **Admin:** Sesli Oda sekmesi — oranlar ve kapasite ayarları
+- **API:** `VoiceRoomSettings`, `VoiceRoomFinanceAuditLog`, migration
+
 ## 1.0.305+308 (2026-06-19)
 
 ### Fal & Tarot — Ultra Premium Liquid Glass ana ekran

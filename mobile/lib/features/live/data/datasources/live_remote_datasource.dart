@@ -98,15 +98,21 @@ class LiveRemoteDataSource {
   static const int voiceRoomNormalOpenJetonCost = 100;
   static const int voiceRoomVipOpenJetonCost = 5000;
 
-  static int openRoomJetonCost({required bool vip}) =>
-      vip ? voiceRoomVipOpenJetonCost : voiceRoomNormalOpenJetonCost;
+  static int openRoomJetonCost({required bool vip, String? roomType}) {
+    final t = roomType?.toLowerCase();
+    if (t == 'free' || t == 'ucretsiz') return 0;
+    return vip ? voiceRoomVipOpenJetonCost : voiceRoomNormalOpenJetonCost;
+  }
 
   /// canlifal.com `POST /api/chat/rooms/create` (yedek: `POST /api/chat/rooms`)
   Future<VoiceRoomEntity> createVoiceChatRoom({
     bool vip = false,
+    String? roomType,
     String? roomName,
   }) async {
-    final cost = openRoomJetonCost(vip: vip);
+    final resolvedType = roomType ??
+        (vip ? 'vip' : 'normal');
+    final cost = openRoomJetonCost(vip: vip, roomType: resolvedType);
     final name = roomName?.trim();
     final payload = <String, dynamic>{
       'cost': cost,
@@ -114,10 +120,10 @@ class LiveRemoteDataSource {
       'jetonCost': cost,
       'coins': cost,
       'amount': cost,
-      'isVip': vip,
-      if (vip) 'vip': true,
-      'roomType': vip ? 'vip' : 'normal',
-      'type': vip ? 'vip' : 'normal',
+      'isVip': vip || resolvedType == 'vip',
+      if (vip || resolvedType == 'vip') 'vip': true,
+      'roomType': resolvedType,
+      'type': resolvedType,
       if (name != null && name.isNotEmpty) ...{
         'name': name,
         'nameTr': name,

@@ -34,6 +34,7 @@ import { jsonError } from "./lib/jsonError";
 import { fail } from "./lib/response";
 import { pkBattlesRouter } from "./routes/pk_battles";
 import { shortVideosRouter } from "./routes/short_videos";
+import { voiceRoomSettingsRouter } from "./routes/voice_room_settings";
 import { initGiftSocket } from "./socket/giftHub";
 import path from "node:path";
 
@@ -59,6 +60,7 @@ app.use("/api/gifts", giftsRouter);
 app.use("/api/video-streams", videoStreamsRouter);
 app.use("/api/video-streams", videoStreamGiftsRouter);
 app.use("/api", walletRouter);
+app.use("/api", voiceRoomSettingsRouter);
 app.use("/api", socialRouter);
 app.use("/api", homeRouter);
 app.use("/api", usersRouter);

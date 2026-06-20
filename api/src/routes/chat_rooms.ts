@@ -106,7 +106,9 @@ chatRoomsRouter.post("/rooms/create", requireAuth, async (req, res) => {
           : typeof req.body?.title === "string"
             ? req.body.title
             : undefined;
-  const result = await createVoiceChatRoom(user, { vip, cost, name });
+  const roomTypeRaw =
+    req.body?.roomType ?? req.body?.type ?? (vip ? "vip" : undefined);
+  const result = await createVoiceChatRoom(user, { vip, cost, name, roomType: roomTypeRaw });
   if (!result.ok) {
     const code = result.error?.includes("jeton") ? 402 : 400;
     return fail(res, code, "BAD_REQUEST", result.error ?? "Oda açılamadı");

@@ -5,6 +5,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
+import '../../domain/entities/voice_gift_revenue.dart';
 
 /// Sesli oda hediyeleri — katalog canlı yayınla aynı, gönderim oda uç noktasına.
 class ChatRoomGiftsRemoteDataSource {
@@ -21,7 +22,7 @@ class ChatRoomGiftsRemoteDataSource {
     }
   }
 
-  Future<void> sendGift({
+  Future<VoiceGiftSendResult> sendGift({
     required String roomId,
     required String giftTypeId,
     int quantity = 1,
@@ -30,7 +31,7 @@ class ChatRoomGiftsRemoteDataSource {
     String? receiverId,
     String platform = 'mobile',
   }) async {
-    await _dio.safePost<dynamic>(
+    final res = await _dio.safePost<dynamic>(
       ApiEndpoints.chatRoomGifts(roomId),
       data: {
         'giftTypeId': giftTypeId,
@@ -42,6 +43,15 @@ class ChatRoomGiftsRemoteDataSource {
         if (receiverId != null && receiverId.isNotEmpty) 'receiverId': receiverId,
         'platform': platform,
       },
+    );
+    final body = res.data;
+    Map<String, dynamic>? revenueMap;
+    if (body is Map) {
+      final rev = body['revenue'];
+      if (rev is Map) revenueMap = Map<String, dynamic>.from(rev);
+    }
+    return VoiceGiftSendResult(
+      revenue: VoiceGiftRevenueBreakdown.fromJson(revenueMap),
     );
   }
 

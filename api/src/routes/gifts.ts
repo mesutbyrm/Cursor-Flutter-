@@ -4,6 +4,13 @@ import { prisma } from "../lib/prisma";
 import { fail, ok } from "../lib/response";
 import { optionalAuth } from "../middleware/optionalAuth";
 import { applyPkGift } from "../lib/pkBattleService";
+import { getChatRoom, getRoomType } from "../lib/chatRoomStore";
+import {
+  applyGiftPayout,
+  giftSplitPayload,
+  calculateGiftSplit,
+} from "../lib/voiceRoomRevenue";
+import { getVoiceRoomSettings } from "../lib/voiceRoomSettings";
 import {
   emitGiftEvent,
   emitGiftRoomEvent,
@@ -378,6 +385,31 @@ export async function sendRoomGift(
     include: { gift: true },
   });
 
+  const room = getChatRoom(roomId);
+  const roomType = room ? getRoomType(room) : "NORMAL";
+  const settings = await getVoiceRoomSettings();
+  let revenue = giftSplitPayload(
+    calculateGiftSplit(totalCost, roomType, settings),
+  );
+
+  if (userId) {
+    try {
+      const split = await applyGiftPayout({
+        roomId,
+        roomType,
+        senderId: userId,
+        receiverId,
+        ownerId: room?.ownerId ?? null,
+        totalCost,
+        giftEventId: event.id,
+        settings,
+      });
+      revenue = giftSplitPayload(split);
+    } catch (err) {
+      console.error("[gift-payout]", err);
+    }
+  }
+
   const payload = eventPayload(event);
   emitGiftRoomEvent(roomId, payload);
 
@@ -403,6 +435,7 @@ export async function sendRoomGift(
     balance: newBalance,
     coinBalance: newBalance,
     pkBattle: pkResult?.battle ?? null,
+    revenue,
   });
 }
 

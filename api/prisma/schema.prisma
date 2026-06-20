@@ -186,6 +186,12 @@ model GiftEvent {
   coinCost     Int
   combo        Int      @default(1)
   platform     String   @default("mobile")
+  roomType     String?
+  receiverGross Int?
+  receiverNet   Int?
+  ownerGross    Int?
+  ownerNet      Int?
+  siteAmount    Int?
   createdAt    DateTime @default(now())
 
   @@index([streamId, createdAt])
@@ -485,4 +491,75 @@ model MusicActionLog {
   @@index([roomId, createdAt])
   @@index([userId, createdAt])
   @@map("music_action_logs")
+}
+
+/// Sesli oda türü — gelir ve özellik matrisi.
+enum RoomType {
+  FREE
+  NORMAL
+  VIP
+}
+
+/// Kalıcı sesli oda kaydı (canlifal.com ChatRoom / VoiceRoom ile uyumlu).
+model VoiceRoom {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  nameTr           String
+  descTr           String?
+  icon             String?
+  backgroundImage  String?
+  ownerId          String
+  roomType         RoomType @default(NORMAL)
+  maxUsers         Int      @default(100)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([roomType, isActive])
+  @@index([ownerId])
+  @@map("voice_rooms")
+}
+
+/// Sesli oda gelir ayarları (admin paneli).
+model VoiceRoomSettings {
+  id                     String   @id @default("default")
+  giftReceiverPercent    Int      @default(70)
+  roomOwnerPercent       Int      @default(30)
+  siteCommissionPercent  Int      @default(50)
+  musicOwnerPercent      Int      @default(50)
+  musicSitePercent       Int      @default(50)
+  vipMusicOwnerPercent   Int      @default(70)
+  vipMusicSitePercent    Int      @default(30)
+  musicRequestCost       Int      @default(10)
+  freeRoomMaxUsers       Int      @default(15)
+  normalRoomMaxUsers     Int      @default(100)
+  vipRoomMaxUsers        Int      @default(500)
+  updatedAt              DateTime @updatedAt
+
+  @@map("voice_room_settings")
+}
+
+/// Hediye ve müzik jeton dağıtımı denetim kaydı.
+model VoiceRoomFinanceAuditLog {
+  id              String   @id @default(cuid())
+  roomId          String?
+  roomType        String?
+  transactionType String
+  actorId         String?
+  totalAmount     Int
+  receiverId      String?
+  receiverGross   Int?
+  receiverNet     Int?
+  ownerId         String?
+  ownerGross      Int?
+  ownerNet        Int?
+  siteAmount      Int      @default(0)
+  giftEventId     String?
+  metadata        String?
+  createdAt       DateTime @default(now())
+
+  @@index([roomId, createdAt])
+  @@index([transactionType, createdAt])
+  @@index([actorId, createdAt])
+  @@map("voice_room_finance_audit_log")
 }
