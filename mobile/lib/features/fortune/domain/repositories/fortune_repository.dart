@@ -11,6 +11,9 @@ class SaveFortuneInput {
     this.answer,
     this.summary,
     this.detail,
+    this.imageUrl,
+    this.fortuneText,
+    this.visualAnalysis,
     this.luckyNumber,
     this.luckyColor,
   });
@@ -21,6 +24,9 @@ class SaveFortuneInput {
   final String? answer;
   final String? summary;
   final String? detail;
+  final String? imageUrl;
+  final String? fortuneText;
+  final String? visualAnalysis;
   final int? luckyNumber;
   final String? luckyColor;
 }

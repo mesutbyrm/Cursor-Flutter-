@@ -5,10 +5,16 @@ class ShareFortuneInput {
     required this.summary,
     this.detail,
     this.fortuneType,
+    this.imageUrl,
+    this.fortuneId,
+    this.visualAnalysis,
   });
 
   final String fortuneSlug;
   final String summary;
   final String? detail;
   final String? fortuneType;
+  final String? imageUrl;
+  final String? fortuneId;
+  final String? visualAnalysis;
 }

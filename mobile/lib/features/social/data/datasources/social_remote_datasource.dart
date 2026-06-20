@@ -166,6 +166,12 @@ class SocialRemoteDataSource {
         'summary': input.summary,
         if (input.detail != null && input.detail!.isNotEmpty)
           'detail': input.detail,
+        if (input.imageUrl != null && input.imageUrl!.isNotEmpty)
+          'imageUrl': input.imageUrl,
+        if (input.fortuneId != null && input.fortuneId!.isNotEmpty)
+          'fortuneId': input.fortuneId,
+        if (input.visualAnalysis != null && input.visualAnalysis!.isNotEmpty)
+          'visualAnalysis': input.visualAnalysis,
       },
     );
     return _parseCreatedPost(res.data, caption: input.summary, type: 'fortune');

@@ -14,9 +14,10 @@ import '../../domain/repositories/fortune_repository.dart';
 import '../data/fortune_image_capture_config.dart';
 import '../providers/fortune_api_providers.dart';
 import '../widgets/fortune_image_capture_panel.dart';
+import '../widgets/premium_ai/premium_fortune_open_button.dart';
 import 'fortune_reading_service.dart';
 
-/// Fal okuma akışı — oturum ekranını atlayıp doğrudan sonuç sayfasına gider.
+/// Fal okuma akışı — premium yükleme, yapılandırılmış AI yorum, sonuç sayfası.
 class FortuneReadingCoordinator {
   FortuneReadingCoordinator._();
 
@@ -51,40 +52,13 @@ class FortuneReadingCoordinator {
             ? DateTime(1995, 6, 15)
             : null);
 
-    showDialog<void>(
+    final imageHint = _imageHint(type, images);
+
+    showPremiumFortuneLoading(
       context: context,
-      barrierDismissible: false,
-      builder: (ctx) => PopScope(
-        canPop: false,
-        child: AlertDialog(
-          backgroundColor: const Color(0xFF1A0F2E),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(color: type.accent),
-              const SizedBox(height: 20),
-              Text(
-                _loadingTitle(type, images),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _loadingSubtitle(type, images),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.72),
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      title: _loadingTitle(type, images),
+      subtitle: _loadingSubtitle(type, images),
+      accent: type.accent,
     );
 
     FortuneCloudImageInput? cloudImages;
@@ -130,11 +104,11 @@ class FortuneReadingCoordinator {
             if (text.trim().isNotEmpty) {
               streamed = true;
               usedRemote = true;
-              result = FortuneReadingResult(
+              result = _service.enrichFromApiText(
                 type: type,
-                summary: text.length > 120 ? '${text.substring(0, 120)}…' : text,
-                detail: text,
+                text: text,
                 recordId: fortuneId,
+                imageHint: imageHint,
               );
             }
           } catch (_) {
@@ -142,7 +116,7 @@ class FortuneReadingCoordinator {
           }
         }
         if (!streamed) {
-          result = await ref.read(fortuneRepositoryProvider).readFortune(
+          final remote = await ref.read(fortuneRepositoryProvider).readFortune(
                 type: type,
                 userInput: userInput,
                 yesNoChoice: resolvedYesNo,
@@ -150,23 +124,29 @@ class FortuneReadingCoordinator {
                 images: cloudImages,
               );
           usedRemote = true;
+          result = _service.enrichFromApiText(
+            type: type,
+            text: remote.detail,
+            summary: remote.summary,
+            recordId: remote.recordId,
+            luckyNumber: remote.luckyNumber,
+            luckyColor: remote.luckyColor,
+            imageHint: imageHint,
+          );
         }
       } else {
-        await Future<void>.delayed(const Duration(milliseconds: 1100));
+        await Future<void>.delayed(const Duration(milliseconds: 1400));
         result = _service.generate(
           type,
           userInput: userInput,
           yesNoChoice: resolvedYesNo,
+          imageHint: imageHint,
         );
         if (images != null && FortuneImageCaptureConfig.requiresCapture(type)) {
-          result = FortuneReadingResult(
-            type: result.type,
-            summary: result.summary,
+          result = result.copyWith(
             detail:
                 '${result.detail}\n\n'
                 '(Giriş yaparak fotoğraflı AI fal yorumunu alabilirsiniz.)',
-            luckyNumber: result.luckyNumber,
-            luckyColor: result.luckyColor,
           );
         }
       }
@@ -192,6 +172,7 @@ class FortuneReadingCoordinator {
         type,
         userInput: userInput,
         yesNoChoice: resolvedYesNo,
+        imageHint: imageHint,
       );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -225,19 +206,15 @@ class FortuneReadingCoordinator {
                     summary: finalResult.summary,
                     detail: finalResult.detail,
                     answer: finalResult.summary,
+                    imageUrl: finalResult.imageUrl,
+                    fortuneText: finalResult.fullText,
+                    visualAnalysis: finalResult.visualAnalysis,
                     luckyNumber: finalResult.luckyNumber,
                     luckyColor: finalResult.luckyColor,
                   ),
                 );
         if (saved != null) {
-          finalResult = FortuneReadingResult(
-            type: finalResult.type,
-            summary: finalResult.summary,
-            detail: finalResult.detail,
-            luckyNumber: finalResult.luckyNumber,
-            luckyColor: finalResult.luckyColor,
-            recordId: saved.id,
-          );
+          finalResult = finalResult.copyWith(recordId: saved.id);
         }
         ref.invalidate(fortuneHistoryProvider);
       } catch (_) {
@@ -254,15 +231,29 @@ class FortuneReadingCoordinator {
     }
   }
 
+  static String? _imageHint(
+    FortuneTypeEntity type,
+    FortuneLocalImageInput? images,
+  ) {
+    if (images == null) return null;
+    if (FortuneImageCaptureConfig.isCoffee(type)) {
+      return 'fincan içi telve desenleri ve duman çizgileri';
+    }
+    if (FortuneImageCaptureConfig.isPalm(type)) {
+      return 'avuç içi çizgileri ve enerji alanları';
+    }
+    return null;
+  }
+
   static String _loadingTitle(
     FortuneTypeEntity type,
     FortuneLocalImageInput? images,
   ) {
     if (images != null && FortuneImageCaptureConfig.isCoffee(type)) {
-      return 'Kahve falın hazırlanıyor…';
+      return 'Kahve falın AI ile hazırlanıyor…';
     }
     if (images != null && FortuneImageCaptureConfig.isPalm(type)) {
-      return 'El falın analiz ediliyor…';
+      return 'El falın görsel analiz ediliyor…';
     }
     return '${type.title} açılıyor…';
   }
@@ -272,9 +263,9 @@ class FortuneReadingCoordinator {
     FortuneLocalImageInput? images,
   ) {
     if (images != null && FortuneImageCaptureConfig.requiresCapture(type)) {
-      return 'Fotoğrafların inceleniyor, semboller çözülüyor';
+      return 'Semboller çözülüyor, kişisel yorum yazılıyor (200+ kelime)';
     }
-    return 'Kartlar ve enerjiler senin için hazırlanıyor';
+    return 'Kartlar dönüyor, enerjiler senin için birleşiyor';
   }
 
   static Future<FortuneCloudImageInput> _uploadImages(

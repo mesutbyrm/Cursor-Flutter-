@@ -49,7 +49,10 @@ class _DailyFortuneResultPageState extends ConsumerState<DailyFortuneResultPage>
               fortuneSlug: result.type.slug,
               fortuneType: result.type.title,
               summary: result.summary,
-              detail: result.detail,
+              detail: result.fullText,
+              imageUrl: result.imageUrl,
+              fortuneId: result.recordId,
+              visualAnalysis: result.visualAnalysis,
             ),
           );
       ref.invalidate(socialNotifierProvider);
