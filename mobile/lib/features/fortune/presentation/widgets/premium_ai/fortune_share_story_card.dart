@@ -10,7 +10,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../domain/entities/fortune_type_entity.dart';
 import '../../data/fortune_type_images.dart';
-import 'fortune_type_network_image.dart';
+import '../fortune_type_network_image.dart';
 
 /// Instagram Story kalitesinde fal paylaşım kartı (9:16).
 class FortuneShareStoryCard extends StatelessWidget {

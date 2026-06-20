@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/entities/fortune_type_entity.dart';
+import '../../../domain/entities/fortune_type_entity.dart';
 
 /// Fal sonucu aksiyon hiyerarşisi — Yorum → Paylaş → Sosyalde Paylaş.
 class FortuneResultActionPanel extends StatelessWidget {
