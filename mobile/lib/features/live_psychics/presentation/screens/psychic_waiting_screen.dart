@@ -17,6 +17,7 @@ import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_r
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_status.dart';
 import 'package:canlifal_social/features/live_psychics/domain/repositories/live_psychics_repository.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
 
