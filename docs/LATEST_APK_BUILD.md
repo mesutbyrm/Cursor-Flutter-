@@ -2,21 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.314+317` |
-| Tarih (UTC) | 2026-06-20 19:13 |
-| Commit | [`d4b497a53bd526bf5938fa127bd8be4c0bf28e66`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d4b497a53bd526bf5938fa127bd8be4c0bf28e66) |
-| İş akışı | [Run 27880762254](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27880762254) |
+| Sürüm | `1.0.315+318` |
+| Tarih (UTC) | 2026-06-20 20:12 |
+| Commit | [`3c01e134c795d246e19bead6488e4445e778fc94`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3c01e134c795d246e19bead6488e4445e778fc94) |
+| İş akışı | [Run 27882207520](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27882207520) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.314+317 (2026-06-20)
+## 1.0.315+318 (2026-06-20)
 
-### Sesli oda — PK SSE entegrasyonu
+### Canlı yayın — Yayını Başlat timeout düzeltmesi
 
-- **chat_room_providers:** Oda SSE akışına `onPk` callback — PK güncellemeleri artık ayrı Socket.IO yerine ana SSE'den besleniyor
-- **pk_battle_remote_provider:** `connectSocket` / `disconnectSocket` no-op; REST + SSE mimarisi
-- **chat_room_sse_service:** `type: pk` olayları parse edilip `PkBattleRemote` olarak iletiliyor
+- **live_broadcast_prep_page:** `createVideoStream` ve `fetchToken` çağrılarına 15 sn timeout; sunucu yanıt vermezse spinner kalkar ve kullanıcıya hata mesajı gösterilir
+- **Agora handoff:** `shutdownForHandoff` 8 sn timeout ile korundu (takılsa bile akış devam eder)
+- **Hata sonrası:** `_previewReady` sıfırlanır; buton tekrar tıklanabilir
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
