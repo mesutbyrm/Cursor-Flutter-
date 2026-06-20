@@ -2,28 +2,21 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.313+316` |
-| Tarih (UTC) | 2026-06-20 17:26 |
-| Commit | [`5584a830e013a4a4189bb39b3da3a09ed365fd73`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/5584a830e013a4a4189bb39b3da3a09ed365fd73) |
-| İş akışı | [Run 27878146568](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27878146568) |
+| Sürüm | `1.0.314+317` |
+| Tarih (UTC) | 2026-06-20 19:13 |
+| Commit | [`d4b497a53bd526bf5938fa127bd8be4c0bf28e66`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/d4b497a53bd526bf5938fa127bd8be4c0bf28e66) |
+| İş akışı | [Run 27880762254](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27880762254) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.313+316 (2026-06-19)
+## 1.0.314+317 (2026-06-20)
 
-### Canlı yayın — Premium 2026 tamamlama
+### Sesli oda — PK SSE entegrasyonu
 
-- **Kontrol merkezi:** Sağdan açılan 6 sekmeli panel (Fal, Hediye, PK, Konuk, Moderasyon, İstatistik); fal istekleri VIP/Öncelikli/Standart gruplu, swipe ile kabul/tamamla/iptal
-- **Hediye animasyonları:** Aynı anda 3 tam ekran Lottie/Rive/partikül animasyonu (`LiveGiftAnimationStack`); şato, kristal, tarot, elmas yağmuru kataloga eklendi
-- **RTC grid:** 2/4/6/9 kişilik otomatik grid; pin, sessize alma, host kontrolleri; Agora çoklu remote UID senkronu
-- **PK savaşı:** Premium overlay — geri sayım, MVP, destekçi, kazanan konfeti; pending davetlerde mevcut skor çubuğu
-- **Güzellik filtresi:** Agora + TRTC beauty SDK; slider sheet; SharedPreferences ile kalıcı ayar
-- **Yayıncı dashboard:** Gerçek zamanlı jeton, izleyici, hediye grafikleri (SSE/API türetilmiş)
-- **VIP giriş:** Altın banner + sohbet rozetleri (VIP, seviye, falcı, MOD)
-- **Etkileşim:** Çift/üçlü dokunuş kalp, süper beğeni, emoji yağmuru, alkış (SSE senkron)
-- **Hediye paneli:** Popüler / Fal / VIP / Etkinlik kategorileri + animasyon önizleme
-- **UI cila:** Liquid glass kontrol paneli, glassmorphism, premium PK ve etkileşim katmanları
+- **chat_room_providers:** Oda SSE akışına `onPk` callback — PK güncellemeleri artık ayrı Socket.IO yerine ana SSE'den besleniyor
+- **pk_battle_remote_provider:** `connectSocket` / `disconnectSocket` no-op; REST + SSE mimarisi
+- **chat_room_sse_service:** `type: pk` olayları parse edilip `PkBattleRemote` olarak iletiliyor
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
