@@ -1,6 +1,12 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.312+315 (2026-06-19)
+
+### Düzeltme — canlı yayın import yolları (CI analyze)
+
+- `live_fortune_request_provider`, keşfet chip'leri, moderasyon sheet ve fal formlarında yanlış relative import'lar düzeltildi
+
 ## 1.0.311+314 (2026-06-19)
 
 ### Canlı yayın — entegrasyon tamamlama

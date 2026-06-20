@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/live_stream_entity.dart';
+import '../../domain/utils/live_discover_category.dart';
 import '../../domain/utils/live_discover_ranker.dart';
 import 'live_fortune_request_provider.dart';
 import 'live_providers.dart';

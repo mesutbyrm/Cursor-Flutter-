@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/entities/live_guest_layout.dart';
+import '../../../domain/entities/live_guest_layout.dart';
 import '../../providers/live_broadcast_settings_provider.dart';
 
 Future<void> showLiveBroadcastSettingsSheet({

@@ -3,7 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
 import '../../../domain/entities/live_fortune_request_entity.dart';
-import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
+import '../../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
 
 /// Yayıncı — fal istekleri kuyruğu paneli.
 class LiveFortuneRequestsPanel extends StatelessWidget {

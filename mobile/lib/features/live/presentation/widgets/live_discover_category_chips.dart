@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/utils/live_discover_category.dart';
-import '../../providers/live_fortune_request_provider.dart';
+import '../../domain/utils/live_discover_category.dart';
+import '../providers/live_fortune_request_provider.dart';
 
 /// Canlı keşfet — yatay kategori chip'leri.
 class LiveDiscoverCategoryChips extends ConsumerWidget {

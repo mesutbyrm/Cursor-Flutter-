@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/dio_provider.dart';
 import '../../data/datasources/live_fortune_request_datasource.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../domain/utils/live_discover_category.dart';

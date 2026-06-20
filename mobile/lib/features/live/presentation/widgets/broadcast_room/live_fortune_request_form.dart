@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../domain/entities/live_fortune_request_entity.dart';
-import '../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
+import '../../../../live_psychics/presentation/widgets/psychic_fortune_types.dart';
 
 /// İzleyici — canlı fal isteği formu + jeton onayı.
 class LiveFortuneRequestForm extends StatefulWidget {
