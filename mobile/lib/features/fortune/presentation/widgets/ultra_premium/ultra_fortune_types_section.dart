@@ -3,11 +3,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../data/fortune_catalog.dart';
 import '../../../domain/entities/fortune_type_entity.dart';
-import '../fortune_type_network_image.dart';
-import 'ultra_fortune_liquid_surface.dart';
+import '../premium_2026/cinematic_fortune_grid_card.dart';
+import '../premium_2026/premium_section_header.dart';
 import 'ultra_fortune_tokens.dart';
 
-/// Ultra hub fal türleri — 2 satır premium kartlar.
+/// Ultra hub fal türleri — 2 kolon sinematik grid.
 abstract final class UltraFortuneHubCatalog {
   static const entries = <({String slug, String subtitle, String? displayTitle})>[
     (slug: 'tarot', subtitle: 'Kartların mesajını keşfet', displayTitle: null),
@@ -74,24 +74,12 @@ class _UltraFortuneTypesSectionState extends State<UltraFortuneTypesSection>
         children: [
           Row(
             children: [
-              const Text('✨', style: TextStyle(fontSize: 14)),
-              const SizedBox(width: 6),
-              ShaderMask(
-                shaderCallback: (bounds) =>
-                    UltraFortuneTokens.goldTypography.createShader(bounds),
-                child: const Text(
-                  'FAL TÜRLERİ',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 14,
-                    letterSpacing: 1.0,
-                    color: Colors.white,
-                  ),
+              const Expanded(
+                child: PremiumSectionHeader(
+                  title: 'FAL TÜRLERİ',
+                  icon: Icons.grid_view_rounded,
                 ),
               ),
-              const SizedBox(width: 6),
-              const Text('✨', style: TextStyle(fontSize: 14)),
-              const Spacer(),
               TextButton(
                 onPressed: () => context.push('/fortune/types'),
                 style: TextButton.styleFrom(
@@ -134,7 +122,7 @@ class _UltraFortuneTypesSectionState extends State<UltraFortuneTypesSection>
                   offset: Offset(0, 24 * (1 - anim.value)),
                   child: Opacity(opacity: anim.value, child: child),
                 ),
-                child: _PremiumTypeCard(
+                child: CinematicFortuneGridCard(
                   type: item.type,
                   title: item.title,
                   subtitle: item.subtitle,
@@ -144,109 +132,6 @@ class _UltraFortuneTypesSectionState extends State<UltraFortuneTypesSection>
             },
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PremiumTypeCard extends StatelessWidget {
-  const _PremiumTypeCard({
-    required this.type,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final FortuneTypeEntity type;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return UltraFortuneLiquidSurface(
-      onTap: onTap,
-      padding: EdgeInsets.zero,
-      borderRadius: BorderRadius.circular(UltraFortuneTokens.cardRadius),
-      blur: 40,
-      elevated: true,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(UltraFortuneTokens.cardRadius - 1),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            FortuneTypeNetworkImage(
-              slug: type.slug,
-              accent: type.accent,
-              emoji: type.emoji,
-              borderRadius: 0,
-              imageWidth: 900,
-            ),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.05),
-                    type.accent.withValues(alpha: 0.15),
-                    Colors.black.withValues(alpha: 0.82),
-                  ],
-                  stops: const [0.0, 0.45, 1.0],
-                ),
-              ),
-            ),
-            Positioned(
-              top: 12,
-              right: 12,
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.black.withValues(alpha: 0.35),
-                  border: Border.all(
-                    color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.4),
-                  ),
-                ),
-                child: Text(type.emoji, style: const TextStyle(fontSize: 16)),
-              ),
-            ),
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 17,
-                      color: Colors.white,
-                      letterSpacing: -0.2,
-                      shadows: [
-                        Shadow(color: Colors.black54, blurRadius: 8),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.82),
-                      fontSize: 11,
-                      height: 1.3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

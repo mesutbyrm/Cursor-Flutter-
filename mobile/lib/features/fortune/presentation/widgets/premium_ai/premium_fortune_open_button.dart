@@ -98,7 +98,7 @@ class _PremiumFortuneOpenButtonState extends State<PremiumFortuneOpenButton>
                       ),
                       const SizedBox(width: 10),
                       const Text(
-                        '✨ Falını Aç',
+                        'Falını Aç',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
@@ -181,7 +181,7 @@ class _PremiumFortuneLoadingOverlayState extends State<PremiumFortuneLoadingOver
                               offset: Offset(0, -36 + i * 4.0),
                               child: _TarotCardFace(
                                 accent: widget.accent,
-                                label: ['I', 'X', '☽'][i],
+                                label: ['I', 'X', 'III'][i],
                               ),
                             ),
                           ),

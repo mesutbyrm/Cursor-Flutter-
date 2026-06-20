@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import '../../domain/entities/fortune_type_entity.dart';
 import 'fortune_glass_card.dart';
 import 'fortune_type_network_image.dart';
 
-/// Fal & Tarot hub — görsel vitrin kartı (2026 premium).
+/// Fal & Tarot hub — sinematik vitrin kartı (emoji yok).
 class FortuneHubTypeCard extends StatelessWidget {
   const FortuneHubTypeCard({
     super.key,
@@ -32,7 +31,6 @@ class FortuneHubTypeCard extends StatelessWidget {
             FortuneTypeNetworkImage(
               slug: type.slug,
               accent: type.accent,
-              emoji: type.emoji,
               borderRadius: 0,
             ),
             DecoratedBox(
@@ -57,19 +55,6 @@ class FortuneHubTypeCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: type.accent.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: AppThemeColors.glowShadow(type.accent, blur: 8),
-                    ),
-                    child: Text(
-                      type.emoji,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
                   Text(
                     type.title,
                     maxLines: 1,

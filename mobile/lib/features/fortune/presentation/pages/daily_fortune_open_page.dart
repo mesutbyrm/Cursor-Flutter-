@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../domain/entities/fortune_type_entity.dart';
-import '../data/fortune_catalog.dart';
 import '../services/fortune_reading_coordinator.dart';
-import '../widgets/daily_fortune_gift_illustration.dart';
 import '../widgets/fortune_mystic_background.dart';
 import '../widgets/fortune_mystic_bar_button.dart';
 import '../widgets/fortune_mystic_title_bar.dart';
+import '../widgets/premium_2026/daily_fortune_premium_hero.dart';
+import '../widgets/premium_ai/premium_fortune_detail_transition.dart';
+import '../widgets/premium_ai/premium_fortune_open_button.dart';
 
-/// Günlük fal — 1. adım: hediye kartı + Falını Aç (mockup).
+/// Günlük fal — sinematik tarot hero + premium Falını Aç geçişi.
 class DailyFortuneOpenPage extends ConsumerStatefulWidget {
   const DailyFortuneOpenPage({super.key, required this.type});
 
@@ -28,18 +28,40 @@ class DailyFortuneOpenPage extends ConsumerStatefulWidget {
 
 class _DailyFortuneOpenPageState extends ConsumerState<DailyFortuneOpenPage> {
   var _loading = false;
+  final _scroll = ScrollController();
+  double _scrollOffset = 0;
 
   FortuneTypeEntity get type => widget.type;
 
-  Future<void> _openFortune() async {
-    if (_loading) return;
-    setState(() => _loading = true);
-    await FortuneReadingCoordinator.openReading(
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(() {
+      setState(() => _scrollOffset = _scroll.offset);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openFortune() {
+    return runPremiumFortuneOpenTransition(
       context: context,
-      ref: ref,
       type: type,
+      onOpen: () async {
+        if (_loading) return;
+        setState(() => _loading = true);
+        await FortuneReadingCoordinator.openReading(
+          context: context,
+          ref: ref,
+          type: type,
+        );
+        if (mounted) setState(() => _loading = false);
+      },
     );
-    if (mounted) setState(() => _loading = false);
   }
 
   void _openWeb() {
@@ -54,13 +76,6 @@ class _DailyFortuneOpenPageState extends ConsumerState<DailyFortuneOpenPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bodyStyle = GoogleFonts.playfairDisplay(
-      fontSize: 22,
-      fontWeight: FontWeight.w600,
-      height: 1.3,
-      color: Colors.white,
-    );
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: FortuneMysticBackground(
@@ -78,140 +93,37 @@ class _DailyFortuneOpenPageState extends ConsumerState<DailyFortuneOpenPage> {
             ),
             Expanded(
               child: SingleChildScrollView(
+                controller: _scroll,
                 physics: PremiumMotion.listPhysics,
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                 child: Column(
                   children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            const Color(0xFF2A1548).withValues(alpha: 0.95),
-                            const Color(0xFF12081F),
-                          ],
-                        ),
-                        border: Border.all(
-                          color: AppThemeColors.accentPurple.withValues(alpha: 0.5),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppThemeColors.accentPurple.withValues(alpha: 0.2),
-                            blurRadius: 24,
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          const DailyFortuneGiftIllustration(height: 200),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Bugünün enerjisi ve',
-                            textAlign: TextAlign.center,
-                            style: bodyStyle.copyWith(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          ShaderMask(
-                            shaderCallback: (b) => const LinearGradient(
-                              colors: [Color(0xFFE879F9), Color(0xFFC084FC)],
-                            ).createShader(b),
-                            child: Text(
-                              'sürpriz mesajın',
-                              textAlign: TextAlign.center,
-                              style: bodyStyle.copyWith(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          const FortuneMysticStarDivider(),
-                        ],
-                      ),
+                    DailyFortunePremiumHero(
+                      height: 300,
+                      parallaxOffset: _scrollOffset,
                     ),
                     const SizedBox(height: 28),
-                    _OpenFortuneButton(
-                      loading: _loading,
+                    PremiumFortuneOpenButton(
+                      accent: AppThemeColors.accentPurple,
+                      enabled: !_loading,
                       onPressed: _openFortune,
                     ),
+                    if (_loading) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        'Kozmik enerji okunuyor…',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.65),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _OpenFortuneButton extends StatelessWidget {
-  const _OpenFortuneButton({
-    required this.loading,
-    required this.onPressed,
-  });
-
-  final bool loading;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: loading ? null : onPressed,
-        borderRadius: BorderRadius.circular(28),
-        child: Ink(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF9333EA), Color(0xFF7C3AED), Color(0xFF5B21B6)],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF7C3AED).withValues(alpha: 0.5),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: loading
-                ? const Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    ),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
-                      const SizedBox(width: 10),
-                      Text(
-                        FortuneCatalog.dailyFortune.ctaLabel,
-                        style: GoogleFonts.playfairDisplay(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 18,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
         ),
       ),
     );

@@ -79,7 +79,6 @@ class FortuneTypeShowcaseCard extends StatelessWidget {
               child: FortuneTypeNetworkImage(
                 slug: showcase.type.slug,
                 accent: accent,
-                emoji: showcase.type.emoji,
                 height: illHeight,
                 borderRadius: 16,
               ),

@@ -66,12 +66,11 @@ class _PremiumFortuneCoverState extends State<PremiumFortuneCover>
                 imageUrl: url,
                 fit: BoxFit.cover,
                 fadeInDuration: const Duration(milliseconds: 500),
-                placeholder: (_, _) => FortuneImageShimmer(accent: accent, emoji: widget.type.emoji),
+                placeholder: (_, _) => FortuneImageShimmer(accent: accent),
               )
             : FortuneTypeNetworkImage(
                 slug: widget.type.slug,
                 accent: accent,
-                emoji: widget.type.emoji,
                 borderRadius: 0,
                 imageWidth: 1200,
                 heroTag: tag,
@@ -144,7 +143,23 @@ class _PremiumFortuneCoverState extends State<PremiumFortuneCover>
                     ),
                     child: Row(
                       children: [
-                        Text(widget.type.emoji, style: const TextStyle(fontSize: 28)),
+                        Container(
+                          width: 40,
+                          height: 40,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: accent.withValues(alpha: 0.2),
+                            border: Border.all(
+                              color: UltraFortuneTokens.metallicGold.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.auto_awesome_rounded,
+                            color: accent.withValues(alpha: 0.95),
+                            size: 20,
+                          ),
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(

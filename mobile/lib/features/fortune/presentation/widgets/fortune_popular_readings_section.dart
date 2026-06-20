@@ -99,7 +99,6 @@ class _PopularCard extends StatelessWidget {
               child: FortuneTypeNetworkImage(
                 slug: type.slug,
                 accent: type.accent,
-                emoji: type.emoji,
                 borderRadius: 0,
               ),
             ),

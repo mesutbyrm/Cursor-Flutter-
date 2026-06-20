@@ -10,7 +10,6 @@ class FortuneTypeNetworkImage extends StatelessWidget {
     super.key,
     required this.slug,
     required this.accent,
-    this.emoji,
     this.height,
     this.borderRadius = 16,
     this.fit = BoxFit.cover,
@@ -20,7 +19,6 @@ class FortuneTypeNetworkImage extends StatelessWidget {
 
   final String slug;
   final Color accent;
-  final String? emoji;
   final double? height;
   final double borderRadius;
   final BoxFit fit;
@@ -39,8 +37,8 @@ class FortuneTypeNetworkImage extends StatelessWidget {
         fit: fit,
         fadeInDuration: const Duration(milliseconds: 400),
         memCacheWidth: imageWidth,
-        placeholder: (_, _) => FortuneImageShimmer(accent: accent, emoji: emoji),
-        errorWidget: (_, _, _) => FortuneImageShimmer(accent: accent, emoji: emoji),
+        placeholder: (_, _) => FortuneImageShimmer(accent: accent),
+        errorWidget: (_, _, _) => FortuneImageShimmer(accent: accent),
       ),
     );
 
@@ -76,7 +74,6 @@ class FortuneTypeNetworkImage extends StatelessWidget {
                 ),
               ),
             ),
-            // Mistik parçacık vurgusu (hafif, statik — performans dostu)
             IgnorePointer(
               child: CustomPaint(painter: _SparklePainter(accent: accent)),
             ),

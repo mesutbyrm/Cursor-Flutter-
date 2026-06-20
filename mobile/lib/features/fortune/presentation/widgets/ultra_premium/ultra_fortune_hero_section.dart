@@ -227,9 +227,15 @@ class _SocialProofStrip extends StatelessWidget {
                       UltraFortuneTokens.softLilac,
                       UltraFortuneTokens.metallicGold,
                     ][i].withValues(alpha: 0.85),
-                    child: Text(
-                      ['🌙', '✨', '🔮', '⭐'][i],
-                      style: const TextStyle(fontSize: 12),
+                    child: Icon(
+                      [
+                        Icons.nightlight_round,
+                        Icons.auto_awesome_rounded,
+                        Icons.blur_on_rounded,
+                        Icons.star_rounded,
+                      ][i],
+                      size: 14,
+                      color: Colors.white.withValues(alpha: 0.95),
                     ),
                   ),
                 );

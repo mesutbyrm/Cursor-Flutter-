@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/fortune_catalog.dart';
+import '../premium_2026/premium_section_header.dart';
 import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_tokens.dart';
 
@@ -51,22 +52,13 @@ class UltraFortuneDailyEnergy extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: Row(
             children: [
-              const Text('✨', style: TextStyle(fontSize: 14)),
-              const SizedBox(width: 6),
-              ShaderMask(
-                shaderCallback: (bounds) =>
-                    UltraFortuneTokens.goldTypography.createShader(bounds),
-                child: const Text(
-                  'GÜNLÜK ENERJİN',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 14,
-                    letterSpacing: 0.8,
-                    color: Colors.white,
-                  ),
+              const Expanded(
+                child: PremiumSectionHeader(
+                  title: 'GÜNLÜK ENERJİN',
+                  icon: Icons.bolt_rounded,
+                  iconColor: UltraFortuneTokens.electricPurple,
                 ),
               ),
-              const Spacer(),
               TextButton(
                 onPressed: () => context.push(
                   '/fortune/${FortuneCatalog.dailyFortune.slug}',

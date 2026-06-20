@@ -41,7 +41,6 @@ class FortuneShareStoryCard extends StatelessWidget {
             FortuneTypeNetworkImage(
               slug: type.slug,
               accent: type.accent,
-              emoji: type.emoji,
               borderRadius: 0,
               imageWidth: 1080,
               heroTag: 'share-${type.slug}',
@@ -69,7 +68,11 @@ class FortuneShareStoryCard extends StatelessWidget {
                       CircleAvatar(
                         radius: 18,
                         backgroundColor: type.accent.withValues(alpha: 0.3),
-                        child: Text(type.emoji, style: const TextStyle(fontSize: 18)),
+                        child: Icon(
+                          Icons.auto_awesome_rounded,
+                          color: type.accent,
+                          size: 18,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -114,7 +117,7 @@ class FortuneShareStoryCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    '✨ AI Fal Özeti',
+                    'AI Fal Özeti',
                     style: TextStyle(
                       color: type.accent.withValues(alpha: 0.95),
                       fontWeight: FontWeight.w900,

@@ -12,7 +12,7 @@ import '../widgets/fortune_mystic_background.dart';
 import '../widgets/fortune_mystic_bar_button.dart';
 import '../widgets/fortune_mystic_title_bar.dart';
 import '../widgets/fortune_popular_readings_section.dart';
-import '../widgets/premium_ai/premium_fortune_cover.dart';
+import '../widgets/premium_2026/cinematic_fortune_hero.dart';
 import '../widgets/premium_ai/premium_fortune_detail_transition.dart';
 import '../widgets/premium_ai/premium_fortune_open_button.dart';
 
@@ -108,10 +108,10 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    PremiumFortuneCover(
+                    CinematicFortuneHero(
                       type: type,
                       scrollOffset: _scrollOffset,
-                      height: 300,
+                      height: 320,
                     ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),

@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.309+312 (2026-06-19)
+
+### Fal sayfaları — Premium 2026 redesign
+
+- **Fal türleri grid:** Sinematik 2 kolon kartlar, glassmorphism + neon glow, 30px radius, tap scale animasyonu; emoji/clipart kaldırıldı
+- **Görseller:** Fal türüne özel yüksek çözünürlüklü Unsplash sahneleri (tarot, kahve, aşk, yıldızname, melek, numeroloji, istihare, aura)
+- **Günlük fal:** Hediye kutusu kaldırıldı; mistik tarot kartı, dönen enerji halkaları, nebula + partikül hero
+- **Falını Aç geçişi:** 2.5sn kamera zoom, kozmik ışık patlaması, kart dönüşü, haptic
+- **Kehanet / intro:** `CinematicFortuneHero` — 320px parallax hero, fal türüne göre dinamik görsel
+- **Sonuç ekranı:** Başlık kartı (Yeni Başlangıçlar vb.), enerji etiketi, glass bölümler (Aşk, Kariyer, Para, Ruhsal, Tavsiye), Material ikonlar
+- **Animasyonlar:** `flutter_animate`, `shimmer`, `animated_text_kit` typewriter, fade/slide/glow
+- **Performans:** RepaintBoundary, CachedNetworkImage memCache, Hero
+
 ## 1.0.308+311 (2026-06-20)
 
 ### Fal & Tarot — Premium UI güncellemesi
