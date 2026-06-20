@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
+import {
+  buildFortuneShareCaption,
+  notifyFollowersFortuneShared,
+} from "../lib/fortuneSocialShare";
 import { fail, ok } from "../lib/response";
 import { requireAuth } from "../middleware/requireAuth";
 
@@ -128,6 +132,9 @@ const autoFortuneSchema = z.object({
   fortuneType: z.string().max(64).optional(),
   summary: z.string().min(1).max(800),
   detail: z.string().max(4000).optional(),
+  imageUrl: z.string().url().max(2000).optional(),
+  fortuneId: z.string().max(64).optional(),
+  visualAnalysis: z.string().max(2000).optional(),
 });
 
 /** POST /api/social/posts/auto-fortune — fal sonucu otomatik sosyal paylaşım */
@@ -142,23 +149,51 @@ socialPostsRouter.post("/posts/auto-fortune", requireAuth, async (req, res) => {
 
   const slug = parsed.data.fortuneSlug;
   const summary = parsed.data.summary.trim();
-  const detail = (parsed.data.detail ?? "").trim();
-  const caption =
-    detail.length > 0
-      ? `${summary}\n\n${detail}`.slice(0, 2200)
-      : summary;
+  const displayName =
+    author.displayName?.trim() ||
+    author.username?.trim() ||
+    author.email.split("@")[0];
+  const caption = buildFortuneShareCaption({
+    displayName,
+    fortuneSlug: slug,
+    fortuneType: parsed.data.fortuneType,
+    summary,
+  });
 
   const created = await prisma.socialPost.create({
     data: {
       authorId: author.id,
       caption,
+      mediaUrl: parsed.data.imageUrl,
       postType: "fortune",
       fortuneType: parsed.data.fortuneType ?? slug,
+      fortuneId: parsed.data.fortuneId,
       isAutoShare: true,
       fortuneCount: 1,
       viewCount: 0,
     },
     include: { author: true },
+  });
+
+  if (parsed.data.fortuneId) {
+    await prisma.socialFortunePost.create({
+      data: {
+        userId: author.id,
+        fortuneId: parsed.data.fortuneId,
+        postId: created.id,
+        postText: caption,
+      },
+    }).catch(() => {
+      // fortuneId geçersizse paylaşım yine oluşur.
+    });
+  }
+
+  void notifyFollowersFortuneShared({
+    authorId: author.id,
+    authorName: displayName,
+    postId: created.id,
+    fortuneSlug: slug,
+    fortuneType: parsed.data.fortuneType,
   });
 
   return ok(res, { post: postPayload(created) }, 201);

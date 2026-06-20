@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'fortune_reading_section.dart';
+
 /// Fal oturumu etkileşim türü.
 enum FortuneSessionKind {
   tarotCards,
@@ -52,6 +54,9 @@ class FortuneReadingResult {
     this.luckyNumber,
     this.luckyColor,
     this.recordId,
+    this.imageUrl,
+    this.visualAnalysis,
+    this.sections = const [],
   });
 
   final FortuneTypeEntity type;
@@ -62,4 +67,44 @@ class FortuneReadingResult {
 
   /// Sunucuya kaydedilen fal kaydı (`POST /api/user/fortunes`).
   final String? recordId;
+
+  /// Kapak / vitrin görseli URL.
+  final String? imageUrl;
+
+  /// Görselden çıkarılan sembolik analiz metni.
+  final String? visualAnalysis;
+
+  /// Yapılandırılmış bölümler (boşsa [detail] kullanılır).
+  final List<FortuneReadingSection> sections;
+
+  bool get hasStructuredSections => sections.length >= 3;
+
+  String get fullText {
+    if (sections.isEmpty) return detail;
+    return sections.map((s) => '${s.title}\n${s.body}').join('\n\n');
+  }
+
+  FortuneReadingResult copyWith({
+    FortuneTypeEntity? type,
+    String? summary,
+    String? detail,
+    int? luckyNumber,
+    String? luckyColor,
+    String? recordId,
+    String? imageUrl,
+    String? visualAnalysis,
+    List<FortuneReadingSection>? sections,
+  }) {
+    return FortuneReadingResult(
+      type: type ?? this.type,
+      summary: summary ?? this.summary,
+      detail: detail ?? this.detail,
+      luckyNumber: luckyNumber ?? this.luckyNumber,
+      luckyColor: luckyColor ?? this.luckyColor,
+      recordId: recordId ?? this.recordId,
+      imageUrl: imageUrl ?? this.imageUrl,
+      visualAnalysis: visualAnalysis ?? this.visualAnalysis,
+      sections: sections ?? this.sections,
+    );
+  }
 }

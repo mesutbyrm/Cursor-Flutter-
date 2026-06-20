@@ -14,7 +14,10 @@ const createFortuneSchema = z.object({
   question: z.string().max(2000).optional(),
   answer: z.string().max(8000).optional(),
   summary: z.string().max(800).optional(),
-  detail: z.string().max(4000).optional(),
+  detail: z.string().max(8000).optional(),
+  imageUrl: z.string().url().max(2000).optional(),
+  fortuneText: z.string().max(12000).optional(),
+  visualAnalysis: z.string().max(4000).optional(),
   luckyNumber: z.coerce.number().int().min(0).max(999).optional(),
   luckyColor: z.string().max(64).optional(),
 });
@@ -27,8 +30,13 @@ function fortunePayload(row: {
   answer: string | null;
   summary: string | null;
   detail: string | null;
+  imageUrl?: string | null;
+  fortuneText?: string | null;
+  visualAnalysis?: string | null;
   luckyNumber: number | null;
   luckyColor: string | null;
+  likesCount?: number;
+  commentsCount?: number;
   createdAt: Date;
 }) {
   return {
@@ -38,9 +46,14 @@ function fortunePayload(row: {
     question: row.question ?? undefined,
     answer: row.answer ?? row.summary ?? undefined,
     summary: row.summary ?? undefined,
-    detail: row.detail ?? undefined,
+    detail: row.detail ?? row.fortuneText ?? undefined,
+    imageUrl: row.imageUrl ?? undefined,
+    fortuneText: row.fortuneText ?? row.detail ?? undefined,
+    visualAnalysis: row.visualAnalysis ?? undefined,
     luckyNumber: row.luckyNumber ?? undefined,
     luckyColor: row.luckyColor ?? undefined,
+    likesCount: row.likesCount ?? 0,
+    commentsCount: row.commentsCount ?? 0,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -95,7 +108,10 @@ export async function createUserFortune(req: Request, res: Response) {
       question: d.question,
       answer: d.answer ?? d.summary,
       summary: d.summary,
-      detail: d.detail,
+      detail: d.detail ?? d.fortuneText,
+      imageUrl: d.imageUrl,
+      fortuneText: d.fortuneText ?? d.detail,
+      visualAnalysis: d.visualAnalysis,
       luckyNumber: d.luckyNumber,
       luckyColor: d.luckyColor,
     },

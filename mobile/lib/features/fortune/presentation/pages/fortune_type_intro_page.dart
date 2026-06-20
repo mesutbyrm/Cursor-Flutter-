@@ -12,9 +12,10 @@ import '../widgets/fortune_mystic_background.dart';
 import '../widgets/fortune_mystic_bar_button.dart';
 import '../widgets/fortune_mystic_title_bar.dart';
 import '../widgets/fortune_popular_readings_section.dart';
-import '../widgets/fortune_type_showcase_card.dart';
+import '../widgets/premium_ai/premium_fortune_cover.dart';
+import '../widgets/premium_ai/premium_fortune_open_button.dart';
 
-/// Fal türü vitrin — görsel fallarda fotoğraf yükleme; diğerlerinde doğrudan sonuç.
+/// Premium AI fal vitrin — tam ekran kapak, parallax, Falını Aç CTA.
 class FortuneTypeIntroPage extends ConsumerStatefulWidget {
   const FortuneTypeIntroPage({super.key, required this.type});
 
@@ -27,13 +28,28 @@ class FortuneTypeIntroPage extends ConsumerStatefulWidget {
 
 class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
   FortuneLocalImageInput _images = const FortuneLocalImageInput();
+  final _scroll = ScrollController();
+  double _scrollOffset = 0;
 
   FortuneTypeEntity get type => widget.type;
 
   bool get _needsCapture => FortuneImageCaptureConfig.requiresCapture(type);
 
-  bool get _canOpen =>
-      !_needsCapture || _images.isValidFor(type);
+  bool get _canOpen => !_needsCapture || _images.isValidFor(type);
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(() {
+      setState(() => _scrollOffset = _scroll.offset);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   Future<void> _openFortune() {
     return FortuneReadingCoordinator.openReading(
@@ -75,71 +91,89 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
               title: showcase.numberedTitle,
               onBack: () => context.pop(),
               trailing: FortuneMysticBarButton(
-                icon: Icons.star_outline_rounded,
-                onPressed: () {},
+                icon: Icons.auto_awesome,
+                onPressed: _canOpen ? _openFortune : () {},
               ),
             ),
             Expanded(
               child: SingleChildScrollView(
+                controller: _scroll,
                 physics: PremiumMotion.listPhysics,
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (_needsCapture) ...[
-                      FortuneImageCapturePanel(
-                        type: type,
-                        initial: _images,
-                        onChanged: (v) => setState(() => _images = v),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    Opacity(
-                      opacity: _canOpen ? 1 : 0.5,
-                      child: FortuneOpenFortuneButton(
-                        accent: type.accent,
-                        onPressed: _canOpen
-                            ? _openFortune
-                            : () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      FortuneImageCaptureConfig.isCoffee(type)
-                                          ? 'Lütfen fincan içi fotoğrafını yükleyin'
-                                          : 'Lütfen el fotoğrafını yükleyin',
-                                    ),
-                                  ),
-                                );
-                              },
-                      ),
+                    PremiumFortuneCover(
+                      type: type,
+                      scrollOffset: _scrollOffset,
+                      height: 300,
                     ),
-                    if (!_canOpen)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          FortuneImageCaptureConfig.isCoffee(type)
-                              ? 'Falını açmak için fincan içi fotoğrafı zorunludur.'
-                              : 'Falını açmak için avuç içi fotoğrafı zorunludur.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: type.accent.withValues(alpha: 0.85),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (_needsCapture) ...[
+                            FortuneImageCapturePanel(
+                              type: type,
+                              initial: _images,
+                              onChanged: (v) => setState(() => _images = v),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                          PremiumFortuneOpenButton(
+                            accent: type.accent,
+                            enabled: _canOpen,
+                            onPressed: _canOpen
+                                ? _openFortune
+                                : () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          FortuneImageCaptureConfig.isCoffee(type)
+                                              ? 'Lütfen fincan içi fotoğrafını yükleyin'
+                                              : 'Lütfen el fotoğrafını yükleyin',
+                                        ),
+                                      ),
+                                    );
+                                  },
                           ),
-                        ),
+                          if (!_canOpen)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                FortuneImageCaptureConfig.isCoffee(type)
+                                    ? 'Falını açmak için fincan içi fotoğrafı zorunludur.'
+                                    : 'Falını açmak için avuç içi fotoğrafı zorunludur.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: type.accent.withValues(alpha: 0.85),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'AI, kapak görselindeki sembolleri ve enerjini analiz ederek '
+                            'sana özel en az 200 kelimelik yorum üretir. Her açılış benzersizdir.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.72),
+                              fontSize: 12,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
                       ),
-                    const SizedBox(height: 16),
-                    FortuneTypeShowcaseCard(
-                      showcase: showcase,
-                      compact: false,
-                      showCardHeader: false,
-                      showOpenButton: false,
-                      onOpenFortune: _openFortune,
                     ),
                     const SizedBox(height: 24),
-                    FortunePopularReadingsSection(
-                      excludeSlug: type.slug,
-                      onOpenReading: open,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: FortunePopularReadingsSection(
+                        excludeSlug: type.slug,
+                        onOpenReading: open,
+                      ),
                     ),
                   ],
                 ),

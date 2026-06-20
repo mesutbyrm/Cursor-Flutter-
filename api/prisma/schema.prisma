@@ -47,20 +47,41 @@ model User {
 
 /// Mobil / web fal geçmişi kaydı.
 model UserFortune {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type        String
-  slug        String?
-  question    String?
-  answer      String?
-  summary     String?
-  detail      String?
-  luckyNumber Int?
-  luckyColor  String?
-  createdAt   DateTime @default(now())
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           String
+  slug           String?
+  question       String?
+  answer         String?
+  summary        String?
+  detail         String?
+  imageUrl       String?
+  fortuneText    String?  @db.Text
+  visualAnalysis String?  @db.Text
+  luckyNumber    Int?
+  luckyColor     String?
+  likesCount     Int      @default(0)
+  commentsCount  Int      @default(0)
+  createdAt      DateTime @default(now())
+  socialPosts    SocialFortunePost[]
 
   @@index([userId, createdAt])
+}
+
+/// Fal açılışının sosyal akış kaydı (otomatik paylaşım).
+model SocialFortunePost {
+  id        String      @id @default(cuid())
+  userId    String
+  fortuneId String
+  fortune   UserFortune @relation(fields: [fortuneId], references: [id], onDelete: Cascade)
+  postId    String?     @unique
+  post      SocialPost? @relation(fields: [postId], references: [id], onDelete: SetNull)
+  postText  String      @db.Text
+  createdAt DateTime    @default(now())
+
+  @@index([userId, createdAt])
+  @@index([fortuneId])
 }
 
 /// Kullanıcı favorileri (profil, gönderi, fal, içerik linki).
@@ -87,6 +108,7 @@ model SocialPost {
   mediaUrl       String?
   postType       String   @default("text")
   fortuneType    String?
+  fortuneId      String?
   isAutoShare    Boolean  @default(false)
   fortuneCount   Int      @default(0)
   viewCount      Int      @default(0)
@@ -96,10 +118,12 @@ model SocialPost {
   updatedAt      DateTime @updatedAt
   likes          SocialPostLike[]
   comments       SocialPostComment[]
+  fortuneLink    SocialFortunePost?
 
   @@index([authorId])
   @@index([createdAt])
   @@index([postType, createdAt])
+  @@index([fortuneId])
 }
 
 model SocialPostLike {
