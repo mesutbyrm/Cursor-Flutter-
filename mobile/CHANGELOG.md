@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.317+320 (2026-06-20)
+
+### Sesli oda — mikrofon ve rol (backend uyumu)
+
+- **Mikrofon:** `toggleMic` REST kaldırıldı; yalnızca TRTC/LiveKit client-side (`setMicEnabled`)
+- **Rol:** `changeRole` placeholder silindi; `assignRoleToUser` provider metodu + yetki kontrolü
+- **VoiceSeatRestService:** yalnızca koltuk REST (`takeSeat` / `leaveSeat` placeholder)
+
 ## 1.0.316+319 (2026-06-20)
 
 ### Sesli oda — seat/mic/role snapshot-diff senkronizasyonu

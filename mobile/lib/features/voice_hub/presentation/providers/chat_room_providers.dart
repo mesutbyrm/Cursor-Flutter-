@@ -2212,12 +2212,13 @@ class VoiceRoomLiveController
           break;
         case 'yetki':
           if (target == null || command.roleSymbol == null) return;
-          await remote.assignRole(
-            roomKey: _roomKey,
-            alternateKey: _roomMeta.slug,
-            userId: target.id,
+          final roleErr = await assignRoleToUser(
+            targetUserId: target.id,
             roleSymbol: command.roleSymbol!,
           );
+          if (roleErr != null) {
+            throw StateError(roleErr);
+          }
           break;
         case 'dj':
           if (target == null) return;
@@ -2563,6 +2564,35 @@ class VoiceRoomLiveController
             musicEnabled: musicEnabled,
             musicRequestCost: musicRequestCost,
             maxMusicQueue: maxMusicQueue,
+          );
+      await refresh();
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> assignRoleToUser({
+    required String targetUserId,
+    required String roleSymbol,
+  }) async {
+    final perms = _permissions();
+    if (!perms.canManageRoom &&
+        !perms.canModerate &&
+        !perms.isRoomOwner &&
+        !perms.isSiteAdmin) {
+      return 'Kullanıcıları taşıma yetkiniz yok.';
+    }
+    final symbol = roleSymbol.trim();
+    if (symbol.isEmpty) {
+      return 'Geçerli bir rol sembolü gerekli.';
+    }
+    try {
+      await ref.read(chatRoomRemoteProvider).assignRole(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            userId: targetUserId,
+            roleSymbol: symbol,
           );
       await refresh();
       return null;

@@ -28,7 +28,6 @@ import '../domain/entities/chat_room_presence.dart';
 import '../domain/entities/chat_room_my_permissions.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
 import 'audio/voice_room_audio_coordinator.dart';
-import '../data/services/voice_seat_rest_service.dart';
 import 'providers/chat_room_providers.dart';
 import '../music/presentation/widgets/music_search_picker_sheet.dart';
 import 'providers/pk_battle_remote_provider.dart';
@@ -203,20 +202,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final next = !_micOn;
     _audio?.setMicEnabled(next);
     setState(() => _micOn = next);
-    final roomKey = _effectiveRoom().apiRoomKey;
-    if (roomKey.isEmpty) return;
-    unawaited(() async {
-      try {
-        await ref
-            .read(voiceSeatRestServiceProvider)
-            .toggleMic(roomKey, !next);
-      } on UnimplementedError catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(VoiceSeatRestService.placeholderMessage(e))),
-        );
-      } catch (_) {}
-    }());
+    // Mikrofon yalnızca TRTC/LiveKit client-side; backend REST yok.
+    // TODO: Socket.IO mic/audio-state event'i varsa burada emit et.
   }
 
   void _toggleHeadphones() {
