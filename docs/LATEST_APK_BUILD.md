@@ -2,21 +2,24 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.315+318` |
-| Tarih (UTC) | 2026-06-20 20:12 |
-| Commit | [`3c01e134c795d246e19bead6488e4445e778fc94`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/3c01e134c795d246e19bead6488e4445e778fc94) |
-| İş akışı | [Run 27882207520](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27882207520) |
+| Sürüm | `1.0.316+319` |
+| Tarih (UTC) | 2026-06-21 00:06 |
+| Commit | [`6f7910dcad2e1c7547967ffcc2d8ec46361e7da0`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/6f7910dcad2e1c7547967ffcc2d8ec46361e7da0) |
+| İş akışı | [Run 27887608060](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27887608060) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.315+318 (2026-06-20)
+## 1.0.316+319 (2026-06-20)
 
-### Canlı yayın — Yayını Başlat timeout düzeltmesi
+### Sesli oda — seat/mic/role snapshot-diff senkronizasyonu
 
-- **live_broadcast_prep_page:** `createVideoStream` ve `fetchToken` çağrılarına 15 sn timeout; sunucu yanıt vermezse spinner kalkar ve kullanıcıya hata mesajı gösterilir
-- **Agora handoff:** `shutdownForHandoff` 8 sn timeout ile korundu (takılsa bile akış devam eder)
-- **Hata sonrası:** `_previewReady` sıfırlanır; buton tekrar tıklanabilir
+- **VoiceRoomGiftSocket:** `roomUsers` / `presenceUpdated` / `userJoined` / `userLeft` için presence snapshot diff callback (`onPresenceSnapshot`)
+- **VoiceSeatRestService:** `takeSeat` REST (`PATCH/POST /seats`); `leaveSeat` / `toggleMic` / `changeRole` placeholder (`UnimplementedError` + net mesaj)
+- **VoiceRoomLiveController:** `applyPresenceSnapshot` — sunucu-yetkili koltuk/konuşma/rol güncellemesi
+- **Socket bağlantısı:** Oda açılışında gift socket + SSE birlikte; koltuk emit yok (REST)
+- **Mikrofon:** TRTC yerel toggle + REST placeholder (yakında snackbar, crash yok)
+- **Tencent demo:** `VoiceRoomState.applyPresenceSnapshot`, `onUserAudioAvailable` artık koltuk atamaz
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
