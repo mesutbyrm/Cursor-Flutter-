@@ -1,5 +1,9 @@
 import { prisma } from "./prisma";
 import { createNotification } from "./notifications";
+import {
+  PAYMENT_ALERT_EMAIL,
+  sendPaymentAdminEmail,
+} from "./payment_admin_email";
 
 const STAFF_ROLES = ["admin", "yonetici", "moderator", "destek", "yardim"] as const;
 
@@ -37,6 +41,8 @@ export async function notifyStaffPaymentPending(input: {
   username?: string;
   packageName?: string;
   amountTry?: number;
+  senderInfo?: string | null;
+  notes?: string | null;
 }) {
   const staff = await prisma.user.findMany({
     where: { role: { in: [...STAFF_ROLES] } },
@@ -62,10 +68,21 @@ export async function notifyStaffPaymentPending(input: {
     method: input.method,
   };
 
+  const notifyIds = new Set(staff.map((s) => s.id));
+
+  // Admin e-posta hesabı staff listesinde değilse uygulama içi bildirim de gönder.
+  const alertUser = await prisma.user.findUnique({
+    where: { email: PAYMENT_ALERT_EMAIL },
+    select: { id: true },
+  });
+  if (alertUser) {
+    notifyIds.add(alertUser.id);
+  }
+
   await Promise.all(
-    staff.map((s) =>
+    [...notifyIds].map((userId) =>
       createNotification({
-        userId: s.id,
+        userId,
         title,
         body,
         type,
@@ -76,6 +93,18 @@ export async function notifyStaffPaymentPending(input: {
       }),
     ),
   );
+
+  await sendPaymentAdminEmail({
+    paymentRequestId: input.paymentRequestId,
+    requestType: input.requestType,
+    amountLabel: input.amountLabel,
+    method: input.method,
+    username: input.username,
+    packageName: input.packageName,
+    amountTry: input.amountTry,
+    senderInfo: input.senderInfo,
+    notes: input.notes,
+  });
 }
 
 /** Yayıncı canlıya geçti — takipçilere push */

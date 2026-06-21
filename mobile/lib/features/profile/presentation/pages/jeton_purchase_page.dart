@@ -51,24 +51,24 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
   void _tapPackage(JetonPackageEntity package) {
     _selectPackage(package);
     unawaited(_prefs.saveLastPackageId(package.id));
-    unawaited(
-      _openCheckout(package, formatJetonPrice(package)),
-    );
   }
 
-  Future<void> _openPaymentNotify({JetonPackageEntity? package}) async {
+  void _openPaymentNotifyNow() {
     final items = ref.read(jetonPackagesProvider).valueOrNull;
-    final list = (items == null || items.isEmpty) ? kFallbackJetonPackages : items;
-    final selected = package ?? _resolveSelected(list);
-    await openJetonPaymentNotifySheet(
-      context,
-      ref,
-      package: selected,
-      priceTry: selected?.priceTry,
-      onDone: () {
-        ref.invalidate(walletBalancesProvider);
-        ref.invalidate(jetonPackagesProvider);
-      },
+    final list =
+        (items == null || items.isEmpty) ? kFallbackJetonPackages : items;
+    final selected = _resolveSelected(list);
+    unawaited(
+      openJetonPaymentNotifySheet(
+        context,
+        ref,
+        package: selected,
+        priceTry: selected?.priceTry,
+        onDone: () {
+          ref.invalidate(walletBalancesProvider);
+          ref.invalidate(jetonPackagesProvider);
+        },
+      ),
     );
   }
 
@@ -105,6 +105,12 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      bottomNavigationBar: SafeArea(
+        child: _PaidNotifyFooter(
+          hasSelection: _selectedPackageId != null,
+          onNotify: _openPaymentNotifyNow,
+        ),
+      ),
       body: JetonPaymentStatusListener(
         child: Stack(
         fit: StackFit.expand,
@@ -181,12 +187,6 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
                         onTapPackage: _tapPackage,
                         isRefreshing: true,
                       ),
-                      SliverToBoxAdapter(
-                        child: _PaidNotifyFooter(
-                          hasSelection: _selectedPackageId != null,
-                          onNotify: () => _openPaymentNotify(),
-                        ),
-                      ),
                     ],
                   ),
                   error: (e, _) => SliverFillRemaining(
@@ -234,20 +234,13 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
                           onCheckout: (p, price) => _openCheckout(p, price),
                           onTapPackage: _tapPackage,
                         ),
-                        SliverToBoxAdapter(
-                          child: _PaidNotifyFooter(
-                            hasSelection: selected != null,
-                            onNotify: () =>
-                                _openPaymentNotify(package: selected),
-                          ),
-                        ),
                       ],
                     );
                   },
                 ),
                 SliverToBoxAdapter(
                   child: SizedBox(
-                    height: MediaQuery.paddingOf(context).bottom + 88,
+                    height: MediaQuery.paddingOf(context).bottom + 16,
                   ),
                 ),
               ],
@@ -338,7 +331,7 @@ class _PaidNotifyFooter extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Ödeme Yaptım, Bildir',
+                              'Ödemeyi Yaptım, Bildir',
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 15,
@@ -346,7 +339,7 @@ class _PaidNotifyFooter extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              'Ödemenizi yaptıktan sonra buradan bildirim gönderin',
+                              'Ödeme bildirimi formunu hemen aç',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: context.colors.onSurfaceMuted
@@ -507,7 +500,6 @@ class _JetonPackagesContent extends StatelessWidget {
                 onPurchase: (p, price) {
                   onSelect(p);
                   onTapPackage(p);
-                  onCheckout(p, price);
                 },
               ),
             ],

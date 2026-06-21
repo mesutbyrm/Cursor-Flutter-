@@ -28,15 +28,26 @@ Future<void> openJetonPaymentNotifySheet(
   double? priceTry,
   VoidCallback? onDone,
 }) {
+  final maxHeight = MediaQuery.sizeOf(context).height * 0.92;
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    useRootNavigator: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => _JetonPaymentNotifySheet(
-      initialPackage: package,
-      initialPriceTry: priceTry,
-      onDone: onDone,
-    ),
+    builder: (ctx) {
+      final bottomInset = MediaQuery.viewInsetsOf(ctx).bottom;
+      return Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          child: _JetonPaymentNotifySheet(
+            initialPackage: package,
+            initialPriceTry: priceTry,
+            onDone: onDone,
+          ),
+        ),
+      );
+    },
   );
 }
 
@@ -185,20 +196,16 @@ class _JetonPaymentNotifySheetState
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.viewInsetsOf(context).bottom;
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottom),
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: Color(0xFF12081F),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            child: _success ? _buildSuccess() : _buildForm(),
-          ),
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: Color(0xFF12081F),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          child: _success ? _buildSuccess() : _buildForm(),
         ),
       ),
     );
@@ -257,214 +264,205 @@ class _JetonPaymentNotifySheetState
   }
 
   Widget _buildForm() {
-    return DraggableScrollableSheet(
+    return ListView(
       key: const ValueKey('form'),
-      expand: false,
-      initialChildSize: 0.88,
-      minChildSize: 0.45,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return ListView(
-          controller: scrollController,
-          padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
+      shrinkWrap: true,
+      children: [
+        Center(
+          child: Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(4),
             ),
-            _SheetHeader(onClose: () => Navigator.of(context).pop()),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+          ),
+        ),
+        _SheetHeader(onClose: () => Navigator.of(context).pop()),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Ödeme yöntemi',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              ),
+              const SizedBox(height: 10),
+              Row(
                 children: [
-                  const Text(
-                    'Ödeme yöntemi',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _MethodChip(
-                          label: 'WhatsApp',
-                          icon: Icons.chat_rounded,
-                          iconColor: const Color(0xFF25D366),
-                          selected: _method == _NotifyMethod.whatsapp,
-                          onTap: () =>
-                              setState(() => _method = _NotifyMethod.whatsapp),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _MethodChip(
-                          label: 'Diğer',
-                          icon: Icons.credit_card_rounded,
-                          iconColor: AppThemeColors.accentPurple,
-                          selected: _method == _NotifyMethod.other,
-                          onTap: () =>
-                              setState(() => _method = _NotifyMethod.other),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final p in kFallbackJetonPackages)
-                        ActionChip(
-                          label: Text('${p.coins} jeton'),
-                          backgroundColor: _package?.coins == p.coins
-                              ? AppThemeColors.accentPurple.withValues(alpha: 0.35)
-                              : const Color(0xFF1A1030),
-                          side: BorderSide(
-                            color: _package?.coins == p.coins
-                                ? AppThemeColors.accentPink
-                                : AppThemeColors.accentPurple
-                                    .withValues(alpha: 0.35),
-                          ),
-                          onPressed: () => _applyPreset(p),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  _LabeledField(
-                    label: 'Tutar (₺) *',
-                    child: TextField(
-                      controller: _amountCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
-                      ],
-                      decoration: _fieldDecoration(),
+                  Expanded(
+                    child: _MethodChip(
+                      label: 'WhatsApp',
+                      icon: Icons.chat_rounded,
+                      iconColor: const Color(0xFF25D366),
+                      selected: _method == _NotifyMethod.whatsapp,
+                      onTap: () =>
+                          setState(() => _method = _NotifyMethod.whatsapp),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  _LabeledField(
-                    label: 'İşlem No / Referans (opsiyonel)',
-                    child: TextField(
-                      controller: _receiptCtrl,
-                      decoration: _fieldDecoration(hint: '123456688'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _LabeledField(
-                    label: 'Gönderen İsmi (opsiyonel)',
-                    child: TextField(
-                      controller: _senderCtrl,
-                      decoration: _fieldDecoration(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _LabeledField(
-                    label: 'Not (opsiyonel)',
-                    child: TextField(
-                      controller: _notesCtrl,
-                      maxLines: 3,
-                      decoration: _fieldDecoration(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      color: const Color(0xFF1E3A5F).withValues(alpha: 0.45),
-                      border: Border.all(
-                        color: const Color(0xFF60A5FA).withValues(alpha: 0.35),
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.info_outline_rounded,
-                          size: 20,
-                          color: const Color(0xFF60A5FA).withValues(alpha: 0.95),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Ödemenizi yaptıktan sonra bu formu doldurarak bildirim gönderin. '
-                            'Ekibimiz ödemenizi kontrol edip jetonlarınızı en kısa sürede yükleyecektir.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              height: 1.4,
-                              color: context.colors.onSurfaceMuted
-                                  .withValues(alpha: 0.95),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _submitting ? null : () => unawaited(_submit()),
-                      borderRadius: BorderRadius.circular(14),
-                      child: Ink(
-                        height: 52,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFFFE2C55),
-                              Color(0xFFB832FF),
-                              Color(0xFF7C3AED),
-                            ],
-                          ),
-                        ),
-                        child: Center(
-                          child: _submitting
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.send_rounded,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Ödeme Bildir',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MethodChip(
+                      label: 'Diğer',
+                      icon: Icons.credit_card_rounded,
+                      iconColor: AppThemeColors.accentPurple,
+                      selected: _method == _NotifyMethod.other,
+                      onTap: () =>
+                          setState(() => _method = _NotifyMethod.other),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
-        );
-      },
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final p in kFallbackJetonPackages)
+                    ActionChip(
+                      label: Text('${p.coins} jeton'),
+                      backgroundColor: _package?.coins == p.coins
+                          ? AppThemeColors.accentPurple.withValues(alpha: 0.35)
+                          : const Color(0xFF1A1030),
+                      side: BorderSide(
+                        color: _package?.coins == p.coins
+                            ? AppThemeColors.accentPink
+                            : AppThemeColors.accentPurple.withValues(alpha: 0.35),
+                      ),
+                      onPressed: () => _applyPreset(p),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _LabeledField(
+                label: 'Tutar (₺) *',
+                child: TextField(
+                  controller: _amountCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
+                  ],
+                  decoration: _fieldDecoration(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _LabeledField(
+                label: 'İşlem No / Referans (opsiyonel)',
+                child: TextField(
+                  controller: _receiptCtrl,
+                  decoration: _fieldDecoration(hint: '123456688'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _LabeledField(
+                label: 'Gönderen İsmi (opsiyonel)',
+                child: TextField(
+                  controller: _senderCtrl,
+                  decoration: _fieldDecoration(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _LabeledField(
+                label: 'Not (opsiyonel)',
+                child: TextField(
+                  controller: _notesCtrl,
+                  maxLines: 3,
+                  decoration: _fieldDecoration(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  color: const Color(0xFF1E3A5F).withValues(alpha: 0.45),
+                  border: Border.all(
+                    color: const Color(0xFF60A5FA).withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 20,
+                      color: const Color(0xFF60A5FA).withValues(alpha: 0.95),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Ödemenizi yaptıktan sonra bu formu doldurarak bildirim gönderin. '
+                        'Ekibimiz ödemenizi kontrol edip jetonlarınızı en kısa sürede yükleyecektir.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.4,
+                          color: context.colors.onSurfaceMuted
+                              .withValues(alpha: 0.95),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _submitting ? null : () => unawaited(_submit()),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Ink(
+                    height: 52,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFFE2C55),
+                          Color(0xFFB832FF),
+                          Color(0xFF7C3AED),
+                        ],
+                      ),
+                    ),
+                    child: Center(
+                      child: _submitting
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.send_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Ödeme Bildir',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

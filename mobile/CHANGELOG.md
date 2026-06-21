@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.320+323 (2026-06-20)
+
+### Jeton — ödeme bildirimi düzeltmesi
+
+- **Ödemeyi Yaptım, Bildir** sabit alt buton — tıklanınca form hemen açılır (bottom sheet düzeltmesi)
+- Paket kartları yalnızca seçim yapar; bildirim butonu her zaman görünür
+- **Backend:** admin/staff + `mesutbyrm1@gmail.com` uygulama bildirimi; Resend ile e-posta (`RESEND_API_KEY`)
+
 ## 1.0.319+322 (2026-06-20)
 
 ### Jeton mağazası — ödeme bildirimi (mockup uyumu)

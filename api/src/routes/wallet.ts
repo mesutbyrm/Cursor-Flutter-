@@ -373,6 +373,8 @@ walletRouter.post("/payment/requests", requireAuth, async (req, res) => {
         username: username ?? "Kullanıcı",
         packageName: row.packageTitle ?? `${row.coins ?? row.amount} Jeton`,
         amountTry: row.priceTry ?? undefined,
+        senderInfo: row.senderInfo,
+        notes: row.notes,
       });
     } catch (err) {
       console.error("[payment/requests] post-create notify failed", err);
