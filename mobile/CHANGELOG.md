@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.321+324 (2026-06-20)
+
+### Jeton mağazası — boş ekran düzeltmesi
+
+- Sayfa düzeni sadeleştirildi (`ListView` + sabit alt bar); paket grid'i her zaman görünür
+- API yüklenirken bile 50–1000 jeton kartları (`kFallbackJetonPackages`) gösterilir
+- «Ödemeyi Yaptım, Bildir» altta sabit; üstte jeton paketleri ve özel miktar alanı
+
 ## 1.0.320+323 (2026-06-20)
 
 ### Jeton — ödeme bildirimi düzeltmesi

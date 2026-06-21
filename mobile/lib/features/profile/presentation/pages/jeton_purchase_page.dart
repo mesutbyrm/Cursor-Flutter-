@@ -53,10 +53,14 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
     unawaited(_prefs.saveLastPackageId(package.id));
   }
 
+  List<JetonPackageEntity> _packageList(AsyncValue<List<JetonPackageEntity>> packages) {
+    final remote = packages.valueOrNull;
+    if (remote == null || remote.isEmpty) return kFallbackJetonPackages;
+    return remote;
+  }
+
   void _openPaymentNotifyNow() {
-    final items = ref.read(jetonPackagesProvider).valueOrNull;
-    final list =
-        (items == null || items.isEmpty) ? kFallbackJetonPackages : items;
+    final list = _packageList(ref.read(jetonPackagesProvider));
     final selected = _resolveSelected(list);
     unawaited(
       openJetonPaymentNotifySheet(
@@ -101,153 +105,133 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
   Widget build(BuildContext context) {
     final packages = ref.watch(jetonPackagesProvider);
     final wallet = ref.watch(walletBalancesProvider);
+    final items = _packageList(packages);
     final top = MediaQuery.paddingOf(context).top;
+    final bottom = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      bottomNavigationBar: SafeArea(
-        child: _PaidNotifyFooter(
-          hasSelection: _selectedPackageId != null,
-          onNotify: _openPaymentNotifyNow,
-        ),
-      ),
       body: JetonPaymentStatusListener(
         child: Stack(
-        fit: StackFit.expand,
-        children: [
-          const JetonStoreBackdrop(),
-          RefreshIndicator(
-            color: AppThemeColors.accentPurple,
-            onRefresh: () async {
-              ref.invalidate(jetonPackagesProvider);
-              ref.invalidate(walletBalancesProvider);
-              await ref.read(jetonPackagesProvider.future);
-            },
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(child: SizedBox(height: top + 8)),
-                SliverToBoxAdapter(
-                  child: ResponsiveConstrained(
-                    child: Padding(
-                      padding: ResponsiveLayout.pagePadding(context),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _JetonStoreHeader(onBack: () => context.pop()),
-                          const SizedBox(height: 16),
-                          const CurrencyUsageCard.jeton(),
-                          const SizedBox(height: 20),
-                          wallet.when(
-                            data: (b) => Column(
+          fit: StackFit.expand,
+          children: [
+            const JetonStoreBackdrop(),
+            Column(
+              children: [
+                Expanded(
+                  child: RefreshIndicator(
+                    color: AppThemeColors.accentPurple,
+                    onRefresh: () async {
+                      ref.invalidate(jetonPackagesProvider);
+                      ref.invalidate(walletBalancesProvider);
+                      await ref.read(jetonPackagesProvider.future);
+                    },
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(
+                        0,
+                        top + 8,
+                        0,
+                        12,
+                      ),
+                      children: [
+                        ResponsiveConstrained(
+                          child: Padding(
+                            padding: ResponsiveLayout.pagePadding(context),
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                JetonStoreBalanceRow(
-                                  jeton: b.jeton,
-                                  cfc: b.cfc,
-                                ),
-                                if (_isGoldMember(
-                                  b.membership,
-                                  b.membershipDaysRemaining,
-                                )) ...[
-                                  const SizedBox(height: 12),
-                                  JetonGoldMemberBanner(
-                                    onTap: () =>
-                                        context.push('/premium-membership'),
+                                _JetonStoreHeader(onBack: () => context.pop()),
+                                const SizedBox(height: 16),
+                                const CurrencyUsageCard.jeton(),
+                                const SizedBox(height: 20),
+                                wallet.when(
+                                  data: (b) => Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      JetonStoreBalanceRow(
+                                        jeton: b.jeton,
+                                        cfc: b.cfc,
+                                      ),
+                                      if (_isGoldMember(
+                                        b.membership,
+                                        b.membershipDaysRemaining,
+                                      )) ...[
+                                        const SizedBox(height: 12),
+                                        JetonGoldMemberBanner(
+                                          onTap: () => context
+                                              .push('/premium-membership'),
+                                        ),
+                                      ],
+                                    ],
                                   ),
-                                ],
+                                  loading: () => const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(24),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ),
+                                  error: (e, _) => Text(
+                                    ApiException.userMessage(e),
+                                    style: TextStyle(
+                                      color: context.colors.onSurfaceMuted,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
-                            loading: () => const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(24),
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                        if (packages.isLoading)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: LinearProgressIndicator(minHeight: 2),
+                          ),
+                        if (packages.hasError)
+                          Padding(
+                            padding: ResponsiveLayout.pagePadding(context),
+                            child: Text(
+                              ApiException.userMessage(packages.error!),
+                              style: TextStyle(
+                                color: context.colors.onSurfaceMuted,
                               ),
                             ),
-                            error: (e, _) => Text(
-                              ApiException.userMessage(e),
-                              style: TextStyle(color: context.colors.onSurfaceMuted),
-                            ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                packages.when(
-                  loading: () => SliverMainAxisGroup(
-                    slivers: [
-                      _JetonPackagesContent(
-                        pageContext: context,
-                        list: kFallbackJetonPackages,
-                        wallet: wallet,
-                        selectedId: _selectedPackageId,
-                        onSelect: _selectPackage,
-                        onCheckout: (p, price) => _openCheckout(p, price),
-                        onTapPackage: _tapPackage,
-                        isRefreshing: true,
-                      ),
-                    ],
-                  ),
-                  error: (e, _) => SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: ResponsiveConstrained(
-                      child: Padding(
-                        padding: ResponsiveLayout.pagePadding(context),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.cloud_off_rounded,
-                              size: 48,
-                              color: context.colors.onSurfaceMuted
-                                  .withValues(alpha: 0.8),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              ApiException.userMessage(e),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            FilledButton(
-                              onPressed: () =>
-                                  ref.invalidate(jetonPackagesProvider),
-                              child: const Text('Tekrar dene'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  data: (list) {
-                    final items =
-                        list.isEmpty ? kFallbackJetonPackages : list;
-                    final selected = _resolveSelected(items);
-                    return SliverMainAxisGroup(
-                      slivers: [
-                        _JetonPackagesContent(
-                          pageContext: context,
+                        _JetonPackagesBody(
                           list: items,
                           wallet: wallet,
                           selectedId: _selectedPackageId,
-                          onSelect: _selectPackage,
-                          onCheckout: (p, price) => _openCheckout(p, price),
                           onTapPackage: _tapPackage,
+                          onOpenCheckout: _openCheckout,
                         ),
                       ],
-                    );
-                  },
+                    ),
+                  ),
                 ),
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: MediaQuery.paddingOf(context).bottom + 16,
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0B0618).withValues(alpha: 0.92),
+                    border: Border(
+                      top: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: bottom),
+                    child: _PaidNotifyFooter(
+                      hasSelection: _selectedPackageId != null,
+                      onNotify: _openPaymentNotifyNow,
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -270,38 +254,33 @@ class _PaidNotifyFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ResponsiveConstrained(
+      alignment: Alignment.center,
       child: Padding(
-        padding: ResponsiveLayout.pagePadding(context, top: 8, bottom: 8),
+        padding: ResponsiveLayout.pagePadding(context, top: 10, bottom: 10),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('👆', style: TextStyle(fontSize: 16)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    hasSelection
-                        ? 'Ödemenizi yaptıktan sonra bildirim gönderin'
-                        : 'Paket seçin veya özel miktar belirleyerek ödeme yöntemlerini görüntüleyin',
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.35,
-                      color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
-                    ),
-                  ),
-                ),
-              ],
+            Text(
+              hasSelection
+                  ? 'Ödemenizi yaptıktan sonra bildirim gönderin'
+                  : 'Paket seçin veya özel miktar belirleyin',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.35,
+                color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Material(
               color: Colors.transparent,
               child: InkWell(
                 onTap: onNotify,
                 borderRadius: BorderRadius.circular(16),
                 child: Ink(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     color: const Color(0xFF0D2818).withValues(alpha: 0.65),
@@ -317,7 +296,8 @@ class _PaidNotifyFooter extends StatelessWidget {
                         height: 40,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFF22C55E).withValues(alpha: 0.15),
+                          color:
+                              const Color(0xFF22C55E).withValues(alpha: 0.15),
                         ),
                         child: const Icon(
                           Icons.send_rounded,
@@ -326,11 +306,11 @@ class _PaidNotifyFooter extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Expanded(
+                      const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Ödemeyi Yaptım, Bildir',
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
@@ -342,8 +322,7 @@ class _PaidNotifyFooter extends StatelessWidget {
                               'Ödeme bildirimi formunu hemen aç',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: context.colors.onSurfaceMuted
-                                    .withValues(alpha: 0.9),
+                                color: Color(0xFF9CA3AF),
                               ),
                             ),
                           ],
@@ -423,26 +402,21 @@ class _JetonStoreHeader extends StatelessWidget {
   }
 }
 
-class _JetonPackagesContent extends StatelessWidget {
-  const _JetonPackagesContent({
-    required this.pageContext,
+class _JetonPackagesBody extends StatelessWidget {
+  const _JetonPackagesBody({
     required this.list,
     required this.wallet,
-    required this.onSelect,
-    required this.onCheckout,
     required this.onTapPackage,
+    required this.onOpenCheckout,
     this.selectedId,
-    this.isRefreshing = false,
   });
 
-  final BuildContext pageContext;
   final List<JetonPackageEntity> list;
   final AsyncValue<WalletBalances> wallet;
   final String? selectedId;
-  final void Function(JetonPackageEntity package) onSelect;
-  final void Function(JetonPackageEntity package, String priceText) onCheckout;
   final void Function(JetonPackageEntity package) onTapPackage;
-  final bool isRefreshing;
+  final Future<void> Function(JetonPackageEntity package, String priceText)
+      onOpenCheckout;
 
   @override
   Widget build(BuildContext context) {
@@ -450,60 +424,62 @@ class _JetonPackagesContent extends StatelessWidget {
     final hero = jetonHeroPackage(list);
     final rate = wallet.valueOrNull?.jetonTlRate ?? kDefaultJetonTlRate;
 
-    return SliverToBoxAdapter(
-      child: ResponsiveConstrained(
-        child: Padding(
-          padding: ResponsiveLayout.pagePadding(
-            pageContext,
-            bottom: 16,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (isRefreshing)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 12),
-                  child: LinearProgressIndicator(minHeight: 2),
-                ),
-              if (grid.isNotEmpty)
-                _ResponsivePackageGrid(
-                  packages: grid,
-                  selectedId: selectedId,
-                  onTap: onTapPackage,
-                ),
-              if (hero != null) ...[
-                JetonPackageTile(
-                  package: hero,
-                  priceText: formatJetonPrice(hero),
-                  fullWidth: true,
-                  selected: hero.id == selectedId,
-                  onTap: () => onTapPackage(hero),
-                ),
-              ],
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  '👆 Paket seçin veya özel miktar belirleyerek ödeme yöntemlerini görüntüleyin',
-                  style: TextStyle(
-                    fontSize: 12,
-                    height: 1.35,
-                    color: Theme.of(pageContext)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.65),
-                  ),
-                ),
+    return ResponsiveConstrained(
+      child: Padding(
+        padding: ResponsiveLayout.pagePadding(context, top: 8, bottom: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (grid.isNotEmpty)
+              _ResponsivePackageGrid(
+                packages: grid,
+                selectedId: selectedId,
+                onTap: onTapPackage,
               ),
-              JetonCustomAmountSection(
-                tlRate: rate,
-                onPurchase: (p, price) {
-                  onSelect(p);
-                  onTapPackage(p);
-                },
+            if (hero != null) ...[
+              const SizedBox(height: 4),
+              JetonPackageTile(
+                package: hero,
+                priceText: formatJetonPrice(hero),
+                fullWidth: true,
+                selected: hero.id == selectedId,
+                onTap: () => onTapPackage(hero),
               ),
             ],
-          ),
+            const SizedBox(height: 20),
+            Text(
+              'Paket seçin veya özel miktar belirleyin',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.35,
+                color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
+              ),
+            ),
+            const SizedBox(height: 12),
+            JetonCustomAmountSection(
+              tlRate: rate,
+              onPurchase: (p, price) {
+                onTapPackage(p);
+                unawaited(onOpenCheckout(p, price));
+              },
+            ),
+            if (selectedId != null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () {
+                  final selected = list.where((p) => p.id == selectedId).firstOrNull;
+                  if (selected != null) {
+                    unawaited(
+                      onOpenCheckout(selected, formatJetonPrice(selected)),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.payments_outlined, size: 18),
+                label: const Text('Ödeme yöntemlerini görüntüle'),
+              ),
+            ],
+          ],
         ),
       ),
     );
