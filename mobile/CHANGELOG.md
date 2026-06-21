@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.318+321 (2026-06-20)
+
+### Sesli oda — `_isMicMuted` state + mic UI
+
+- **voice_room_rtc_page:** `_micOn` → `_isMicMuted`; footer ikonu `micOn: !_isMicMuted`
+- Socket.IO mic/audio-state event'i yok — net TODO (backend talebi gerekir)
+
 ## 1.0.317+320 (2026-06-20)
 
 ### Sesli oda — mikrofon ve rol (backend uyumu)

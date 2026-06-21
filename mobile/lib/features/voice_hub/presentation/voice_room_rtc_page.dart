@@ -80,7 +80,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _audioReady = false;
   String? _audioError;
   String? _loginError;
-  var _micOn = true;
+  var _isMicMuted = false;
   var _leaving = false;
   LiveGiftEvent? _fullscreenGift;
   var _showVipEntrance = false;
@@ -199,11 +199,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       );
       return;
     }
-    final next = !_micOn;
-    _audio?.setMicEnabled(next);
-    setState(() => _micOn = next);
+    final muted = !_isMicMuted;
+    _audio?.setMicEnabled(!muted);
+    setState(() => _isMicMuted = muted);
     // Mikrofon yalnızca TRTC/LiveKit client-side; backend REST yok.
-    // TODO: Socket.IO mic/audio-state event'i varsa burada emit et.
+    // TODO(mic-sync): Socket.IO'da mic/audio-state event'i YOK (mobile/lib/core/socket
+    // klasörü de yok). Diğer kullanıcılara mic durumu senkronu için backend'de yeni
+    // event/endpoint gerekir — ayrı backend talebi.
   }
 
   void _toggleHeadphones() {
@@ -343,7 +345,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         setState(() {
           _audioJoining = false;
           _audioReady = true;
-          _micOn = _audio!.micOn;
+          _isMicMuted = !_audio!.micOn;
         });
         _startGiftRealtime();
         ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(true);
@@ -977,8 +979,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       for (final p in live.presence)
         if (p.isSpeaking) p.id,
     };
-    if (_micOn && user != null) speakingIds.add(user.id);
-    final speakingId = (_micOn && user != null)
+    if (!_isMicMuted && user != null) speakingIds.add(user.id);
+    final speakingId = (!_isMicMuted && user != null)
         ? user.id
         : (speakingIds.isNotEmpty ? speakingIds.first : null);
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
@@ -1430,7 +1432,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   onToggleAudioOutput: _toggleHeadphones,
                   headphonesOn: ui.headphonesOn,
                   onMicToggle: _toggleMic,
-                  micOn: _micOn,
+                  micOn: !_isMicMuted,
                   micEnabled: _audioReady,
                   onRoomSettings: () => _openHubSettings(
                     context,
