@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -14,6 +16,7 @@ import '../../../wallet/domain/wallet_balances.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/currency_usage_card.dart';
 import '../widgets/jeton_checkout_flow.dart';
+import '../widgets/jeton_payment_notify_sheet.dart';
 import '../widgets/jeton_payment_status_listener.dart';
 import '../widgets/jeton_store_widgets.dart';
 
@@ -47,6 +50,26 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
 
   void _tapPackage(JetonPackageEntity package) {
     _selectPackage(package);
+    unawaited(_prefs.saveLastPackageId(package.id));
+    unawaited(
+      _openCheckout(package, formatJetonPrice(package)),
+    );
+  }
+
+  Future<void> _openPaymentNotify({JetonPackageEntity? package}) async {
+    final items = ref.read(jetonPackagesProvider).valueOrNull;
+    final list = (items == null || items.isEmpty) ? kFallbackJetonPackages : items;
+    final selected = package ?? _resolveSelected(list);
+    await openJetonPaymentNotifySheet(
+      context,
+      ref,
+      package: selected,
+      priceTry: selected?.priceTry,
+      onDone: () {
+        ref.invalidate(walletBalancesProvider);
+        ref.invalidate(jetonPackagesProvider);
+      },
+    );
   }
 
   Future<void> _openCheckout(JetonPackageEntity package, String priceText) async {
@@ -146,15 +169,25 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
                   ),
                 ),
                 packages.when(
-                  loading: () => _JetonPackagesContent(
-                    pageContext: context,
-                    list: kFallbackJetonPackages,
-                    wallet: wallet,
-                    selectedId: _selectedPackageId,
-                    onSelect: _selectPackage,
-                    onCheckout: (p, price) => _openCheckout(p, price),
-                    onTapPackage: _tapPackage,
-                    isRefreshing: true,
+                  loading: () => SliverMainAxisGroup(
+                    slivers: [
+                      _JetonPackagesContent(
+                        pageContext: context,
+                        list: kFallbackJetonPackages,
+                        wallet: wallet,
+                        selectedId: _selectedPackageId,
+                        onSelect: _selectPackage,
+                        onCheckout: (p, price) => _openCheckout(p, price),
+                        onTapPackage: _tapPackage,
+                        isRefreshing: true,
+                      ),
+                      SliverToBoxAdapter(
+                        child: _PaidNotifyFooter(
+                          hasSelection: _selectedPackageId != null,
+                          onNotify: () => _openPaymentNotify(),
+                        ),
+                      ),
+                    ],
                   ),
                   error: (e, _) => SliverFillRemaining(
                     hasScrollBody: false,
@@ -201,17 +234,13 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
                           onCheckout: (p, price) => _openCheckout(p, price),
                           onTapPackage: _tapPackage,
                         ),
-                        if (selected != null)
-                          SliverToBoxAdapter(
-                            child: _PaymentNotifyBar(
-                              package: selected,
-                              priceText: formatJetonPrice(selected),
-                              onPay: () => _openCheckout(
-                                selected,
-                                formatJetonPrice(selected),
-                              ),
-                            ),
+                        SliverToBoxAdapter(
+                          child: _PaidNotifyFooter(
+                            hasSelection: selected != null,
+                            onNotify: () =>
+                                _openPaymentNotify(package: selected),
                           ),
+                        ),
                       ],
                     );
                   },
@@ -236,46 +265,107 @@ class _JetonPurchasePageState extends ConsumerState<JetonPurchasePage> {
   }
 }
 
-class _PaymentNotifyBar extends StatelessWidget {
-  const _PaymentNotifyBar({
-    required this.package,
-    required this.priceText,
-    required this.onPay,
+class _PaidNotifyFooter extends StatelessWidget {
+  const _PaidNotifyFooter({
+    required this.hasSelection,
+    required this.onNotify,
   });
 
-  final JetonPackageEntity package;
-  final String priceText;
-  final VoidCallback onPay;
+  final bool hasSelection;
+  final VoidCallback onNotify;
 
   @override
   Widget build(BuildContext context) {
     return ResponsiveConstrained(
       child: Padding(
-        padding: ResponsiveLayout.pagePadding(context, bottom: 8),
-        child: ProGlassCard(
-          blur: 12,
-          animateIn: false,
-          padding: const EdgeInsets.all(14),
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Seçili: ${package.title} · $priceText',
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 10),
-              FilledButton.icon(
-                onPressed: onPay,
-                icon: const Icon(Icons.shopping_bag_rounded),
-                label: const Text('Satın Al'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppThemeColors.accentPurple,
-                  minimumSize: const Size.fromHeight(48),
+        padding: ResponsiveLayout.pagePadding(context, top: 8, bottom: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('👆', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    hasSelection
+                        ? 'Ödemenizi yaptıktan sonra bildirim gönderin'
+                        : 'Paket seçin veya özel miktar belirleyerek ödeme yöntemlerini görüntüleyin',
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.35,
+                      color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onNotify,
+                borderRadius: BorderRadius.circular(16),
+                child: Ink(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: const Color(0xFF0D2818).withValues(alpha: 0.65),
+                    border: Border.all(
+                      color: const Color(0xFF22C55E).withValues(alpha: 0.75),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF22C55E).withValues(alpha: 0.15),
+                        ),
+                        child: const Icon(
+                          Icons.send_rounded,
+                          color: Color(0xFF22C55E),
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Ödeme Yaptım, Bildir',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                color: Color(0xFF22C55E),
+                              ),
+                            ),
+                            Text(
+                              'Ödemenizi yaptıktan sonra buradan bildirim gönderin',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: context.colors.onSurfaceMuted
+                                    .withValues(alpha: 0.9),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: const Color(0xFF22C55E).withValues(alpha: 0.9),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -398,10 +488,25 @@ class _JetonPackagesContent extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  '👆 Paket seçin veya özel miktar belirleyerek ödeme yöntemlerini görüntüleyin',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    color: Theme.of(pageContext)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.65),
+                  ),
+                ),
+              ),
               JetonCustomAmountSection(
                 tlRate: rate,
                 onPurchase: (p, price) {
                   onSelect(p);
+                  onTapPackage(p);
                   onCheckout(p, price);
                 },
               ),

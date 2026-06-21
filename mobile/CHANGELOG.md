@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.319+322 (2026-06-20)
+
+### Jeton mağazası — ödeme bildirimi (mockup uyumu)
+
+- **Ödeme Bildir** alt sayfası: WhatsApp / Diğer, tutar (₺), işlem no, gönderen, not; başarı ekranı «Bildirim Gönderildi!»
+- **Jeton paketleri** tıklanabilir — seçim + ödeme yöntemleri akışı
+- **Ödeme Yaptım, Bildir** yeşil alt buton — `POST /api/payment/requests` ile backend bildirimi
+- Formda sabit jeton miktarı çipleri (50–1000) tutarı otomatik doldurur
+
 ## 1.0.318+321 (2026-06-20)
 
 ### Sesli oda — `_isMicMuted` state + mic UI
