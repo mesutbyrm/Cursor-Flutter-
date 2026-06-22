@@ -23,6 +23,20 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
 
   String? get _streamId => widget.session.streamId?.trim();
 
+  @override
+  void initState() {
+    super.initState();
+    // liveStreamsProvider artık autoDispose (bkz. live_providers.dart),
+    // ama bu sayfaya gelmeden önce liveStreamsProvider'ı zaten dinleyen
+    // başka bir widget (ör. ana sayfa) aktifse provider dispose olmaz,
+    // cache korunur. Bu yüzden PK daveti için karşı tarafın o ANKİ
+    // canlı yayın durumunu garanti etmek üzere burada da açıkça
+    // invalidate ediyoruz — çift güvence, zararsız.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.invalidate(liveStreamsProvider);
+    });
+  }
+
   Future<void> _invite(LiveStreamEntity opponent) async {
     final streamId = _streamId;
     if (streamId == null || streamId.isEmpty) {
@@ -63,54 +77,88 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
     final myId = _streamId;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Canlı PK Daveti')),
-      body: streamsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
-        data: (streams) {
-          final others = streams
-              .where((s) => s.isLive && s.id != myId)
-              .toList();
-          if (_error != null) {
-            return Center(
-              child: Text(_error!, style: const TextStyle(color: Colors.red)),
-            );
-          }
-          if (_loading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (others.isEmpty) {
-            return const Center(child: Text('PK için uygun canlı yayın yok'));
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: others.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (context, i) {
-              final s = others[i];
-              return ListTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: Colors.white12),
-                ),
-                leading: CircleAvatar(
-                  backgroundImage: s.thumbnailUrl != null && s.thumbnailUrl!.isNotEmpty
-                      ? NetworkImage(s.thumbnailUrl!)
-                      : null,
-                  child: s.thumbnailUrl == null || s.thumbnailUrl!.isEmpty
-                      ? const Icon(Icons.live_tv_rounded)
-                      : null,
-                ),
-                title: Text(s.title),
-                subtitle: Text(
-                  '${s.streamerName ?? 'Yayıncı'} · ${s.viewerCount} izleyici',
-                ),
-                trailing: const Icon(Icons.flash_on_rounded),
-                onTap: () => _invite(s),
-              );
-            },
-          );
+      appBar: AppBar(
+        title: const Text('Canlı PK Daveti'),
+        actions: [
+          // Manuel yenileme — kullanıcı karşı tarafın yeni başlattığı
+          // yayını listede görmüyorsa elle tazeleyebilsin diye.
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Listeyi yenile',
+            onPressed: () => ref.invalidate(liveStreamsProvider),
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(liveStreamsProvider);
+          // invalidate senkron olduğu için, yeni future'ın en azından
+          // başlamasına izin vermek üzere bir sonraki frame'i bekleriz.
+          await ref.read(liveStreamsProvider.future).catchError((_) => <LiveStreamEntity>[]);
         },
+        child: streamsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('$e')),
+          data: (streams) {
+            final others = streams
+                .where((s) => s.isLive && s.id != myId)
+                .toList();
+            if (_error != null) {
+              return Center(
+                child: Text(_error!, style: const TextStyle(color: Colors.red)),
+              );
+            }
+            if (_loading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (others.isEmpty) {
+              // Liste boşsa, eskiden cache'lenmiş veriden mi yoksa
+              // gerçekten aktif yayın olmadığından mı emin olamayan
+              // kullanıcı için yenileme ipucu veriyoruz.
+              return ListView(
+                children: const [
+                  SizedBox(height: 120),
+                  Center(child: Text('PK için uygun canlı yayın yok')),
+                  SizedBox(height: 8),
+                  Center(
+                    child: Text(
+                      'Aşağı çekerek listeyi yenileyebilirsiniz',
+                      style: TextStyle(fontSize: 12, color: Colors.white54),
+                    ),
+                  ),
+                ],
+              );
+            }
+            return ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: others.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (context, i) {
+                final s = others[i];
+                return ListTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: Colors.white12),
+                  ),
+                  leading: CircleAvatar(
+                    backgroundImage: s.thumbnailUrl != null && s.thumbnailUrl!.isNotEmpty
+                        ? NetworkImage(s.thumbnailUrl!)
+                        : null,
+                    child: s.thumbnailUrl == null || s.thumbnailUrl!.isEmpty
+                        ? const Icon(Icons.live_tv_rounded)
+                        : null,
+                  ),
+                  title: Text(s.title),
+                  subtitle: Text(
+                    '${s.streamerName ?? 'Yayıncı'} · ${s.viewerCount} izleyici',
+                  ),
+                  trailing: const Icon(Icons.flash_on_rounded),
+                  onTap: () => _invite(s),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
