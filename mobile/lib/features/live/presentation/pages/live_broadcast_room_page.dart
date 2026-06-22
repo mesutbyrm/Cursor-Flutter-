@@ -228,7 +228,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         _handleAgoraError(e);
         final msg = ApiException.userMessage(e);
         setState(() {
-          _rtcError = msg.contains('Agora') ? 'Yayına bağlanılamadı' : msg;
+          if (msg.contains('AgoraRtcException') || msg.contains('Agora')) {
+            _rtcError = 'Yayına bağlanılamadı';
+          } else {
+            _rtcError = msg;
+          }
         });
       }
     }

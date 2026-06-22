@@ -41,6 +41,12 @@ class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverl
       vsync: this,
       duration: const Duration(milliseconds: 2400),
     )..repeat();
+    final initial = widget.event;
+    if (initial != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.event != null) _triggerEffects(widget.event!);
+      });
+    }
   }
 
   @override
