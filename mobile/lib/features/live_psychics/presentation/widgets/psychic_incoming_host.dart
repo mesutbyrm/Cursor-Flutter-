@@ -180,7 +180,9 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
 
   Future<void> _connectSse() async {
     if (!_mayRunTellerBackgroundSync()) return;
-    final service = _sseService ?? ref.read(psychicIncomingSseServiceProvider);
+    final PsychicIncomingSseService service =
+        _sseService ?? ref.read(psychicIncomingSseServiceProvider);
+    _sseService ??= service;
     final tokens = ref.read(tokenStorageProvider);
     await service.connect(
           accessToken: tokens.readAccess,

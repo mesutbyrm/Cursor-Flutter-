@@ -1,6 +1,12 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.331+334 (2026-06-22)
+
+### Canlı Falcılar — derleme düzeltmesi
+
+- `PsychicIncomingHost._connectSse`: nullable SSE servis tipi derleme hatası giderildi
+
 ## 1.0.330+333 (2026-06-22)
 
 ### Canlı Falcılar — falcı kabul bildirimi (SSE / push)
