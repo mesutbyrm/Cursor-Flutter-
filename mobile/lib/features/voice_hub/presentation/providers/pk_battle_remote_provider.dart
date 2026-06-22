@@ -9,7 +9,25 @@ final pkBattleRemoteDataSourceProvider = Provider<PkBattleRemoteDataSource>((ref
   return PkBattleRemoteDataSource(ref.watch(dioProvider));
 });
 
-/// Sunucu PK senkronu — REST; canlı güncellemeler oda SSE üzerinden gelir.
+/// Sunucu PK senkronu — REST.
+///
+/// ÖNEMLİ MİMARİ DEĞİŞİKLİK: PK battle artık kendi Socket.IO/SSE
+/// bağlantısını AÇMIYOR. Backend resmi sözleşmesi PK olaylarını voice
+/// room'un zaten açık olan tek SSE akışı üzerinden (`"type": "pk"`)
+/// yayınlıyor. Canlı güncellemeler artık `chat_room_providers.dart`
+/// içindeki `_startSse()`'in `onPk` callback'i üzerinden doğrudan
+/// `pkBattleProvider.applyRemoteBattle()`'a yönlendiriliyor — bkz.
+/// `voice_room_sse_provider.dart` / `voiceRoomSseServiceProvider`.
+///
+/// Bu controller artık sadece:
+///  - REST ile PK aksiyonlarını tetikler (invite/accept/reject/end)
+///  - REST ile mevcut battle durumunu yükler (loadRoomBattle/loadStreamBattle)
+///  - Kendi `state`'ini (PkBattleRemote?) bu REST çağrılarına göre tutar
+///
+/// `connectSocket`/`disconnectSocket` metodları, çağıran widget kodu
+/// değişmeden çalışmaya devam etsin diye **no-op** olarak bırakıldı.
+/// Yeni kodda bunları çağırmaya gerek yoktur; canlı yayın (streamId ile,
+/// oda bağlamı olmayan) PK senaryosu için ayrıca bkz. not en altta.
 class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   PkBattleRemoteDataSource get _api => ref.read(pkBattleRemoteDataSourceProvider);
 
@@ -179,21 +197,27 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
     return battle;
   }
 
-  /// Eski çağrılar uyumluluk için korunur — PK artık oda SSE üzerinden gelir.
+  /// @deprecated Artık no-op. PK canlı güncellemeleri voice room'un ana
+  /// SSE akışı üzerinden otomatik gelir (bkz. sınıf dokümantasyonu).
+  /// Geriye dönük uyumluluk için tutuldu; yeni kodda çağırmayın.
   void connectSocket({
     String? roomId,
     String? alternateRoomId,
     String? streamId,
     String? battleId,
-  }) {}
-
-  /// Eski çağrılar uyumluluk için korunur — ayrı socket bağlantısı yok.
-  void disconnectSocket() {}
-
-  /// Oda SSE üzerinden gelen PK güncellemesi — socket bağlantısı gerekmez.
-  void ingestSseBattle(PkBattleRemote battle) {
-    state = battle;
+  }) {
+    // Bilinçli olarak boş bırakıldı. Oda bağlamındaki (roomId verilen)
+    // PK battle'lar artık chat_room_providers.dart → _startSse() → onPk
+    // üzerinden otomatik beslenir.
+    //
+    // NOT: streamId ile, oda bağlamı OLMADAN açılan canlı yayın PK'leri
+    // (voice room dışı) için ayrı bir SSE aboneliği gerekiyorsa, bu
+    // canlı yayının kendi stream SSE servisinde de aynı şekilde bir
+    // `onPk` eklenmesi gerekir — bu henüz yapılmadı, bkz. TODO.
   }
+
+  /// @deprecated Artık no-op.
+  void disconnectSocket() {}
 
   void _apply(PkBattleRemote battle, String event) {
     state = battle;

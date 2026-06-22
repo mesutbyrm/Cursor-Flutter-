@@ -70,11 +70,21 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
     case 'live_fal_request':
     case 'fortune_request':
       return ChatRoomSseEventType.fortuneRequest;
+    // PK Battle — backend resmi sözleşmesi: SSE "type": "pk".
+    // Eski Socket.IO event isimleri de uyumluluk için eşlenir
+    // (sunucu geçiş döneminde her ikisini de gönderebilir).
     case 'pk':
-    case 'pk_battle':
     case 'pkbattle':
     case 'pkbattleupdated':
-    case 'pk_battle_updated':
+    case 'pk_updated':
+    case 'pk:invite':
+    case 'pk:accept':
+    case 'pk:reject':
+    case 'pk:start':
+    case 'pk:score-update':
+    case 'pk:gift':
+    case 'pk:end':
+    case 'pk:winner':
       return ChatRoomSseEventType.pk;
     default:
       return ChatRoomSseEventType.unknown;

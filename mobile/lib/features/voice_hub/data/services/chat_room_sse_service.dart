@@ -27,8 +27,8 @@ class ChatRoomSseService extends BaseSseService {
   void Function(Map<String, dynamic> payload)? _onModeration;
   void Function(Map<String, dynamic> payload)? _onAnnouncement;
   void Function(Map<String, dynamic> payload)? _onFortuneRequest;
-  void Function(PkBattleRemote battle, String event)? _onPk;
   void Function(List<String> users)? _onTyping;
+  void Function(PkBattleRemote battle, String event)? _onPk;
 
   static String streamUrlFor(String roomId) {
     final base = BaseSseService.createSseDio().options.baseUrl
@@ -55,8 +55,8 @@ class ChatRoomSseService extends BaseSseService {
     void Function(Map<String, dynamic> payload)? onModeration,
     void Function(Map<String, dynamic> payload)? onAnnouncement,
     void Function(Map<String, dynamic> payload)? onFortuneRequest,
-    void Function(PkBattleRemote battle, String event)? onPk,
     void Function(List<String> users)? onTyping,
+    void Function(PkBattleRemote battle, String event)? onPk,
   }) async {
     final id = roomId.trim();
     if (id.isEmpty) return;
@@ -71,10 +71,16 @@ class ChatRoomSseService extends BaseSseService {
     _onModeration = onModeration;
     _onAnnouncement = onAnnouncement;
     _onFortuneRequest = onFortuneRequest;
-    _onPk = onPk;
     _onTyping = onTyping;
+    _onPk = onPk;
     VoiceRoomDebugLog.sseConnect(roomId: id, url: streamUrlFor(id));
     await super.openConnection(accessToken: accessToken);
+  }
+
+  /// Bağlantı kurulduktan sonra PK dinleyicisini değiştirmek için.
+  /// (Örn. PK battleId değiştiğinde yeniden connect() gerekmeden.)
+  void setOnPk(void Function(PkBattleRemote battle, String event)? onPk) {
+    _onPk = onPk;
   }
 
   @override
@@ -165,7 +171,7 @@ class ChatRoomSseService extends BaseSseService {
         _onFortuneRequest?.call(map);
         return;
       case ChatRoomSseEventType.pk:
-        _emitPk(map);
+        _dispatchPk(map);
         return;
       case ChatRoomSseEventType.unknown:
         if (map['typing'] is List) {
@@ -179,7 +185,6 @@ class ChatRoomSseService extends BaseSseService {
           _onDjUpdate?.call(map);
           return;
         }
-        if (_tryEmitPk(map)) return;
         final users = _parseUsers(map);
         if (users != null && users.isNotEmpty) {
           _onPresence?.call(users);
@@ -188,6 +193,19 @@ class ChatRoomSseService extends BaseSseService {
         final msg = _parseMessage(map);
         if (msg != null) _onMessage?.call(msg);
     }
+  }
+
+  /// `pk` event payload'ını ayrıştırır.
+  /// Sunucu, `{ "type": "pk", "battle": {...}, "event": "pk:score-update" }`
+  /// veya doğrudan `{ "type": "pk", ...battleFields }` şeklinde gönderebilir.
+  void _dispatchPk(Map<String, dynamic> map) {
+    final raw = map['battle'] ?? map['pk'] ?? map;
+    if (raw is! Map) return;
+    final battleJson = Map<String, dynamic>.from(raw);
+    final battle = PkBattleRemote.fromJson(battleJson);
+    if (battle.id.isEmpty) return;
+    final eventName = map['event']?.toString() ?? 'pk';
+    _onPk?.call(battle, eventName);
   }
 
   List<ChatRoomPresence>? _parseUsers(Map<String, dynamic> map) {
@@ -199,23 +217,6 @@ class ChatRoomSseService extends BaseSseService {
         .map((e) => ChatRoomPresence.fromJson(Map<String, dynamic>.from(e)))
         .where((u) => u.id.isNotEmpty)
         .toList();
-  }
-
-  bool _tryEmitPk(Map<String, dynamic> map) {
-    if (!map.containsKey('battle') && !map.containsKey('pk')) return false;
-    _emitPk(map);
-    return true;
-  }
-
-  void _emitPk(Map<String, dynamic> map) {
-    final raw = map['battle'] ?? map['pk'] ?? map['data'];
-    if (raw is! Map) return;
-    final battle = PkBattleRemote.fromJson(Map<String, dynamic>.from(raw));
-    if (battle.id.isEmpty) return;
-    final event = map['event']?.toString() ??
-        map['type']?.toString() ??
-        'pk';
-    _onPk?.call(battle, event);
   }
 
   ChatRoomMessage? _parseMessage(Map<String, dynamic> map) {
