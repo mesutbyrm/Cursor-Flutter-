@@ -56,6 +56,7 @@ function isUrgentNotificationType(type?: string): boolean {
   return (
     t === "message" ||
     t === "live" ||
+    t === "fortune_session_invite" ||
     t.includes("payment") ||
     t.includes("jeton") ||
     t.includes("cfc") ||
