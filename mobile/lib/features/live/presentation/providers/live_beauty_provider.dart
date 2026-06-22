@@ -27,6 +27,8 @@ class LiveBeautyNotifier extends Notifier<LiveBeautySettings> {
     _applyToRtc(state);
   }
 
+  AgoraRoomManager? get boundAgora => _agora;
+
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_prefsKey);
