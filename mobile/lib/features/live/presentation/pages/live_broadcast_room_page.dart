@@ -513,6 +513,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       streamId: streamId,
       targetUserId: message.userId!,
       targetDisplayName: message.user,
+      isModerator: message.isModerator,
     );
   }
 

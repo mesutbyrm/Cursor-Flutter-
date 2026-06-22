@@ -40,6 +40,7 @@ import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'sheets/voice_room_speak_queue_sheet.dart';
 import 'sheets/voice_room_hub_settings.dart';
+import 'sheets/voice_room_moderation_sheet.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'utils/voice_music_access.dart';
 import '../../profile/presentation/providers/profile_providers.dart';
@@ -710,8 +711,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           selfPresence: selfPresence,
           server: liveState.serverPermissions,
         );
-    final isDj = (room ?? _effectiveRoom()).djUserIds.contains(user.id) ||
-        user.chatRole == 'dj';
     final effectiveRoom = room ?? _effectiveRoom();
     final livePresence = ref.read(voiceRoomLiveProvider(_liveRoomKey)).presence;
     void openGift() => _openGiftShop(
@@ -722,14 +721,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         );
 
     if (permissions.canModerate || owner) {
-      showVoiceUserModerationSheet(
-        context,
+      showVoiceRoomModerationSheet(
+        context: context,
         ref: ref,
         room: effectiveRoom,
-        user: user,
-        perms: permissions,
-        isOwner: owner,
-        isDj: isDj,
+        targetUser: VoiceRoomModerationTarget.fromPresence(user),
+        isOwnerOrMod: true,
         onGift: openGift,
       );
       return;

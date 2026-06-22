@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.322+325 (2026-06-21)
+
+### Moderasyon panelleri (canlı + sesli oda)
+
+- **Canlı yayın:** mor tema moderasyon sheet — avatar, yükleme göstergesi, ban onay diyaloğu; gerçek `liveStreamExtrasProvider` API
+- **Sesli oda:** yeni `voice_room_moderation_sheet` — moderatör yap/kaldır (`@` rol), konuşmacı onay (koltuk), sustur, at; ücretsiz odada moderatör kilidi
+- Kullanıcıya uzun basınca / moderasyon menüsünden açılır
+
 ## 1.0.321+324 (2026-06-20)
 
 ### Jeton mağazası — boş ekran düzeltmesi
