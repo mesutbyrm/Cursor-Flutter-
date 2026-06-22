@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.329+332 (2026-06-22)
+
+### Firebase / Google Sign-In APK
+
+- `google-services.json` güncel (SHA-1: `4a6072b9…`, Web client gömülü)
+- CI için `GOOGLE_SERVICES_JSON_BASE64` secret güncellenmeli: `bash scripts/set-google-services-secret.sh`
+
 ## 1.0.328+331 (2026-06-22)
 
 ### Ana sayfa — gri ekran düzeltmesi
