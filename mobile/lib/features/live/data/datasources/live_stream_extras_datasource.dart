@@ -174,6 +174,18 @@ class LiveStreamExtrasDataSource {
         .toList();
   }
 
+  /// İzleyici listesi — `GET /api/video-streams/{streamId}/viewers`.
+  /// Aktif izleyiciler + hediye sıralaması döner (backend dokümantasyonu).
+  Future<List<Map<String, dynamic>>> fetchViewers(String streamId) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.videoStreamViewers(streamId),
+    );
+    return _listFromBody(
+      res.data,
+      keys: ['viewers', 'items', 'data'],
+    );
+  }
+
   Future<List<Map<String, dynamic>>> fetchCoBroadcasters(
     String streamId,
   ) async {

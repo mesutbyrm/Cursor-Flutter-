@@ -386,17 +386,71 @@ class _PkTab extends ConsumerWidget {
   }
 }
 
-class _GuestsTab extends ConsumerWidget {
+class _GuestsTab extends ConsumerStatefulWidget {
   const _GuestsTab({required this.streamId});
   final String streamId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_GuestsTab> createState() => _GuestsTabState();
+}
+
+class _GuestsTabState extends ConsumerState<_GuestsTab> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(coBroadcastProvider.notifier).loadViewers(widget.streamId);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final co = ref.watch(coBroadcastProvider);
+
+    ref.listen(coBroadcastProvider.select((s) => s.error), (prev, next) {
+      if (next != null && next.isNotEmpty && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next)),
+        );
+      }
+    });
+
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
+        // Davet aç/kapat anahtarı — yalnızca bu cihazda UI'ı etkiler.
+        Card(
+          color: Colors.white.withValues(alpha: 0.06),
+          child: SwitchListTile(
+            value: co.inviteEnabled,
+            onChanged: (v) =>
+                ref.read(coBroadcastProvider.notifier).setInviteEnabled(v),
+            title: const Text(
+              'İzleyici davetlerine açık',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            ),
+            subtitle: Text(
+              co.inviteEnabled
+                  ? 'İzleyicilerden birini seçip davet edebilirsiniz'
+                  : 'Davet etme kapalı — yine de bekleyen istekleri onaylayabilirsiniz',
+              style: const TextStyle(color: Colors.white54, fontSize: 11),
+            ),
+            activeThumbColor: const Color(0xFFB832FF),
+          ),
+        ),
+        const SizedBox(height: 8),
+
         _sectionTitle('Bekleyen istekler'),
+        if (co.joinRequests.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              'Bekleyen istek yok',
+              style: TextStyle(color: Colors.white38, fontSize: 12),
+            ),
+          ),
         ...co.joinRequests.map(
           (r) => ListTile(
             title: Text(
@@ -408,7 +462,7 @@ class _GuestsTab extends ConsumerWidget {
                 final uid = r['userId']?.toString() ?? '';
                 if (uid.isNotEmpty) {
                   ref.read(coBroadcastProvider.notifier).approveRequest(
-                        streamId: streamId,
+                        streamId: widget.streamId,
                         userId: uid,
                       );
                 }
@@ -417,7 +471,17 @@ class _GuestsTab extends ConsumerWidget {
             ),
           ),
         ),
+
+        const SizedBox(height: 16),
         _sectionTitle('Aktif konuklar'),
+        if (co.coBroadcasters.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              'Aktif konuk yok',
+              style: TextStyle(color: Colors.white38, fontSize: 12),
+            ),
+          ),
         ...co.coBroadcasters.map(
           (g) => ListTile(
             title: Text(
@@ -426,6 +490,77 @@ class _GuestsTab extends ConsumerWidget {
             ),
           ),
         ),
+
+        // Davet et bölümü — yalnızca anahtar açıkken gösterilir.
+        if (co.inviteEnabled) ...[
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _sectionTitle('İzleyiciyi davet et'),
+              const Spacer(),
+              IconButton(
+                icon: co.viewersLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh_rounded, color: Colors.white54, size: 18),
+                onPressed: co.viewersLoading
+                    ? null
+                    : () => ref
+                        .read(coBroadcastProvider.notifier)
+                        .loadViewers(widget.streamId),
+              ),
+            ],
+          ),
+          if (co.viewers.isEmpty && !co.viewersLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Davet edilebilecek izleyici yok',
+                style: TextStyle(color: Colors.white38, fontSize: 12),
+              ),
+            ),
+          ...co.viewers.map((v) {
+            final uid = v['userId']?.toString() ?? v['id']?.toString() ?? '';
+            final name = v['userName']?.toString() ??
+                v['displayName']?.toString() ??
+                v['name']?.toString() ??
+                'İzleyici';
+            // Zaten konuk olan veya isteği bekleyen izleyiciyi listeden
+            // ayıklamaya gerek yok — backend zaten uygun durumu döndürür,
+            // ama burada en azından aktif konukları gizleyelim.
+            final alreadyGuest = co.coBroadcasters.any(
+              (g) => (g['userId']?.toString() ?? g['id']?.toString() ?? '') == uid,
+            );
+            if (alreadyGuest || uid.isEmpty) return const SizedBox.shrink();
+            return ListTile(
+              title: Text(name, style: const TextStyle(color: Colors.white)),
+              trailing: OutlinedButton(
+                onPressed: co.loading
+                    ? null
+                    : () async {
+                        try {
+                          await ref.read(coBroadcastProvider.notifier).invite(
+                                streamId: widget.streamId,
+                                inviteeId: uid,
+                              );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('$name davet edildi')),
+                            );
+                          }
+                        } catch (_) {
+                          // Hata zaten state.error üzerinden ref.listen
+                          // ile snackbar olarak gösteriliyor.
+                        }
+                      },
+                child: const Text('Davet Et'),
+              ),
+            );
+          }),
+        ],
       ],
     );
   }
