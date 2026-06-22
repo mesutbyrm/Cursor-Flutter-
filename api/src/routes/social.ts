@@ -110,10 +110,22 @@ socialRouter.get("/announcements", async (_req, res) => {
 });
 
 /** Falcı profil id → TRTC anchor userId (canlifal.com ile uyumlu). */
-function resolveTellerUserId(
+async function resolveTellerUserId(
   tellerId: string,
   body?: Record<string, unknown>,
-): string {
+): Promise<string> {
+  const fromBody =
+    body?.tellerUserId?.toString()?.trim() ||
+    body?.userId?.toString()?.trim() ||
+    body?.anchorUserId?.toString()?.trim();
+  if (fromBody) return fromBody;
+
+  const teller = await prisma.fortuneTeller.findUnique({
+    where: { id: tellerId },
+    select: { userId: true },
+  });
+  return teller?.userId ?? tellerId;
+}
   const fromBody =
     body?.tellerUserId?.toString()?.trim() ||
     body?.userId?.toString()?.trim() ||
@@ -156,7 +168,7 @@ socialRouter.post("/fortune-tellers/session", requireAuth, async (req, res) => {
     return fail(res, 400, "BAD_REQUEST", "tellerId gerekli");
   }
   const clientId = req.userId!;
-  const tellerUserId = resolveTellerUserId(
+  const tellerUserId = await resolveTellerUserId(
     tellerId,
     req.body as Record<string, unknown>,
   );
