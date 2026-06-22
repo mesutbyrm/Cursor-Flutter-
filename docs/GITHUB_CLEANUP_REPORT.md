@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-06-22 15:03 UTC
+Oluşturulma: 2026-06-22 16:27 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -9,7 +9,7 @@ Base: `main`
 
 | Metrik | Adet |
 |--------|------|
-| Kapatılan PR | 1 |
+| Kapatılan PR | 0 |
 | Silinen remote dal | 1 |
 | Kalan açık PR | 0 |
 | Korunan / aktif dal | 0 |
@@ -18,13 +18,13 @@ Base: `main`
 
 | PR | Neden |
 |----|-------|
-| #154 | cursor/* obsolete PR (0 gün, main doğrudan geliştirme) |
+| — | — |
 
 ## Silinen dallar (cursor/*)
 
 | Dal | Neden |
 |-----|-------|
-| cursor/ci-typescript-fix-53f7 | merged into main |
+| cursor/google-signin-fix-53f7 | merged into main |
 
 ## Kalan açık PR'lar
 
