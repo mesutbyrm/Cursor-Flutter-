@@ -2,22 +2,23 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.324+327` |
-| Tarih (UTC) | 2026-06-22 12:23 |
-| Commit | [`dcbbe2036f2ab63501d604e3452ad153c7933008`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/dcbbe2036f2ab63501d604e3452ad153c7933008) |
-| İş akışı | [Run 27951655077](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27951655077) |
+| Sürüm | `1.0.325+328` |
+| Tarih (UTC) | 2026-06-22 12:43 |
+| Commit | [`32aa02357f13887545544f8087527fee7f3ae7c6`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/32aa02357f13887545544f8087527fee7f3ae7c6) |
+| İş akışı | [Run 27952555268](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27952555268) |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.324+327 (2026-06-22)
+## 1.0.325+328 (2026-06-22)
 
-### Canlı yayın — hediye sıralaması
+### Canlı yayın SSE — yeni olay türleri
 
-- **`LiveGiftLeaderboard`** — sol alt köşede hediye atanlar listesi (top 3 + genişlet)
-- REST ile ilk yükleme (`/api/video-streams/{id}/gifts/leaderboard`)
-- Gerçek zamanlı güncelleme — gelen hediye olaylarından otomatik sıralama
-- Madalya (🥇🥈🥉), avatar, hediye adı/emoji ve toplam coin gösterimi
+- **`VideoStreamSseService`:** `like` / `streamLike`, `userJoined`, `userLeft`, `moderatorAdded` / `moderatorRemoved` olayları
+- Beğeni sayacı SSE ile senkron (`syncRemoteLikeCount`)
+- Hediye SSE olayları hediye sıralamasına da yazılır
+- Moderatör değişiminde sohbet rozetleri güncellenir
+- İzleyici girişinde `viewerCount` senkronu
 
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
