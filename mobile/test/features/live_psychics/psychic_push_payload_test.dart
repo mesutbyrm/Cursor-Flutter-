@@ -1,3 +1,4 @@
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_push_payload.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -82,6 +83,25 @@ void main() {
       expect(cancel!.sessionId, 'sess_cancel_1');
       expect(cancel.isCancelled, isTrue);
     });
+  });
+
+  group('parsePsychicSsePayload', () {
+    test('forces pending for psychic_request_created SSE event', () {
+      final invite = parsePsychicSsePayload({
+        'type': 'psychic_request_created',
+        'event': 'psychic_request_created',
+        'session': {
+          'id': 'sess_sse_001',
+          'status': 'active',
+          'clientName': 'Zeynep',
+        },
+      });
+
+      expect(invite, isNotNull);
+      expect(invite!.sessionId, 'sess_sse_001');
+      expect(invite.isPending, isTrue);
+    });
+  });
 
   group('isPsychicInviteEventType', () {
     test('matches production psychic_request_created', () {

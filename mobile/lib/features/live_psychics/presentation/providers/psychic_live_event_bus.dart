@@ -60,6 +60,15 @@ PsychicRequestEntity? parsePsychicSsePayload(Map<String, dynamic> map) {
       ])?.toString() ??
       '';
   if (sessionId.isEmpty) return null;
+
+  final inviteStatus = isPsychicInviteEventType(type)
+      ? PsychicSessionStatus.pending
+      : PsychicSessionStatus.fromApi(
+          pick(nested, ['status'])?.toString(),
+          tellerResponse:
+              pick(nested, ['tellerResponse', 'response'])?.toString(),
+        );
+
   return PsychicRequestEntity(
     sessionId: sessionId,
     clientId: pick(nested, ['clientId'])?.toString() ??
@@ -82,9 +91,6 @@ PsychicRequestEntity? parsePsychicSsePayload(Map<String, dynamic> map) {
     ),
     fortuneType: pick(nested, ['category', 'fortuneType', 'falType'])?.toString() ??
         'Canlı fal',
-    status: PsychicSessionStatus.fromApi(
-      pick(nested, ['status'])?.toString(),
-      tellerResponse: pick(nested, ['tellerResponse', 'response'])?.toString(),
-    ),
+    status: inviteStatus,
   );
 }

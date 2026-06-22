@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.330+333 (2026-06-22)
+
+### Canlı Falcılar — falcı kabul bildirimi (SSE / push)
+
+- **SSE parse:** `psychic_request_created` olaylarında durum her zaman `pending` sayılır; aktif/yanlış status ile kuyruğa düşmeme giderildi
+- **SSE servis:** `parsePsychicIncomingPayload` birincil parser (push ile aynı sözleşme)
+- **PsychicIncomingHost:** Oturum yüklenince SSE/poll yeniden bootstrap; falcı profili çözülünce `setOnline` + SSE yeniden bağlanır
+- **Rota dinleyicisi:** Seans/bekleme ekranından çıkınca kuyruktaki davet dialog'u otomatik açılır
+- **dispose:** `ref.read` kaldırıldı; SSE servisi güvenli kapatılır
+
 ## 1.0.329+332 (2026-06-22)
 
 ### Firebase / Google Sign-In APK

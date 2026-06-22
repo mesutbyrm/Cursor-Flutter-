@@ -8,6 +8,7 @@ import 'package:canlifal_social/app/router/app_router.dart';
 import 'package:canlifal_social/core/bootstrap/auth_route_paths.dart';
 import 'package:canlifal_social/core/network/token_storage.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
+import 'package:canlifal_social/features/live_psychics/data/services/psychic_incoming_sse_service.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_request_entity.dart';
@@ -41,6 +42,10 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   var _isFortuneTeller = false;
   String? _tellerProfileId;
   String? _activePresentingSessionId;
+  PsychicIncomingSseService? _sseService;
+  GoRouter? _router;
+  String _routePath = '/feed';
+  var _routeListenerAttached = false;
 
   bool _isSignedIn() {
     if (!_inviteUiReady) return false;
@@ -51,10 +56,9 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
 
   bool _mayPresentInvites() {
     if (!_isSignedIn()) return false;
-    final path =
+    final path = _router?.routerDelegate.currentConfiguration.uri.path ??
         ref.read(goRouterProvider).routerDelegate.currentConfiguration.uri.path;
-    if (_isInPsychicFlow(path)) return false;
-    return !AuthRoutePaths.isPublicAuthPath(path);
+    return _mayPresentInvitesForPath(path);
   }
 
   bool _mayRunTellerBackgroundSync() {
@@ -77,6 +81,8 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      _sseService = ref.read(psychicIncomingSseServiceProvider);
+      _attachRouteListener(ref.read(goRouterProvider));
       setState(() => _inviteUiReady = true);
       PsychicInviteCoordinator.onRequestPresent = () {
         if (!mounted) return;
@@ -91,6 +97,40 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
       unawaited(_tryPresentNext());
       unawaited(_bootstrap());
     });
+  }
+
+  void _attachRouteListener(GoRouter router) {
+    if (_routeListenerAttached && identical(_router, router)) return;
+    _detachRouteListener();
+    _router = router;
+    _routePath = router.routerDelegate.currentConfiguration.uri.path;
+    router.routerDelegate.addListener(_onRouteChanged);
+    _routeListenerAttached = true;
+  }
+
+  void _detachRouteListener() {
+    _router?.routerDelegate.removeListener(_onRouteChanged);
+    _router = null;
+    _routeListenerAttached = false;
+  }
+
+  void _onRouteChanged() {
+    if (!mounted) return;
+    final router = _router;
+    if (router == null) return;
+    final next = router.routerDelegate.currentConfiguration.uri.path;
+    if (next == _routePath) return;
+    final wasBlocked = !_mayPresentInvitesForPath(_routePath);
+    _routePath = next;
+    if (wasBlocked && _mayPresentInvites()) {
+      unawaited(_tryPresentNext());
+    }
+  }
+
+  bool _mayPresentInvitesForPath(String path) {
+    if (!_isSignedIn()) return false;
+    if (_isInPsychicFlow(path)) return false;
+    return !AuthRoutePaths.isPublicAuthPath(path);
   }
 
   Future<void> _bootstrap() async {
@@ -140,8 +180,9 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
 
   Future<void> _connectSse() async {
     if (!_mayRunTellerBackgroundSync()) return;
+    final service = _sseService ?? ref.read(psychicIncomingSseServiceProvider);
     final tokens = ref.read(tokenStorageProvider);
-    await ref.read(psychicIncomingSseServiceProvider).connect(
+    await service.connect(
           accessToken: tokens.readAccess,
           onRequest: _onSseRequest,
         );
@@ -154,6 +195,9 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     final bus = ref.read(psychicLiveEventBusProvider);
     if (!bus.isClosed) bus.add(req);
     PsychicInviteCoordinator.requestPresent(sessionId: req.sessionId);
+    if (_mayPresentInvites()) {
+      unawaited(_tryPresentNext());
+    }
   }
 
   Future<void> _pollApi() async {
@@ -336,9 +380,10 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   void dispose() {
     PsychicInviteCoordinator.onRequestPresent = null;
     WidgetsBinding.instance.removeObserver(this);
+    _detachRouteListener();
     _poll?.cancel();
     _inviteStatusWatch?.cancel();
-    ref.read(psychicIncomingSseServiceProvider).disconnect();
+    unawaited(_sseService?.disconnect());
     super.dispose();
   }
 
@@ -352,6 +397,13 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
 
   @override
   Widget build(BuildContext context) {
+    final router = ref.watch(goRouterProvider);
+    if (!identical(router, _router)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _attachRouteListener(router);
+      });
+    }
+
     ref.listen(authControllerProvider, (prev, next) {
       final user = next.valueOrNull;
       if (user != null && prev?.valueOrNull?.id != user.id) {
@@ -361,6 +413,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
         unawaited(_bootstrap());
       }
       if (prev?.isLoading == true && next.valueOrNull != null) {
+        unawaited(_bootstrap());
         unawaited(_tryPresentNext());
       }
     });
@@ -373,8 +426,14 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     ref.listen(approvedPsychicProvider, (prev, next) {
       final profile = next.profile;
       if (profile != null && profile.isUsable) {
+        final wasTeller = _isFortuneTeller;
         _isFortuneTeller = true;
         _tellerProfileId = profile.id;
+        if (!wasTeller || prev?.profile?.id != profile.id) {
+          unawaited(ref.read(livePsychicsRepositoryProvider).setOnline(online: true));
+          unawaited(_connectSse());
+          unawaited(_pollApi());
+        }
       } else if (next.checked) {
         _isFortuneTeller = false;
         _tellerProfileId = null;
