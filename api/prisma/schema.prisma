@@ -43,6 +43,7 @@ model User {
   favorites             UserFavorite[]
   shortVideos           ShortVideo[]
   shortVideoComments    ShortVideoComment[]
+  fortuneTeller  FortuneTeller?
 }
 
 /// Mobil / web fal geçmişi kaydı.
@@ -586,4 +587,17 @@ model VoiceRoomFinanceAuditLog {
   @@index([transactionType, createdAt])
   @@index([actorId, createdAt])
   @@map("voice_room_finance_audit_log")
+}
+model FortuneTeller {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  displayName    String
+  specialties    String[]
+  pricePerMinute Int      @default(12)
+  rating         Float    @default(5.0)
+  isOnline       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
 }
