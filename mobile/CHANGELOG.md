@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.333+336 (2026-06-22)
+
+### Ana sayfa — sosyal akış kaldırıldı
+
+- `HomeSocialFeedSection` ana sayfadan çıkarıldı; sosyal içerik `/social` sekmesinden erişilebilir
+- Ana sayfa yenilemede gereksiz feed API çağrısı kaldırıldı
+
 ## 1.0.332+335 (2026-06-22)
 
 ### Firebase / Google Sign-In — CI secret senkronu

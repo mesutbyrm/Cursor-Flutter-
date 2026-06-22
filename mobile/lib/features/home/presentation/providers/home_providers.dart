@@ -13,7 +13,6 @@ import '../../domain/entities/home_trend_video_entity.dart';
 import '../../domain/entities/online_advisor_entity.dart';
 import '../../domain/repositories/home_repository.dart';
 import '../../../live_psychics/presentation/controllers/psychics_list_controller.dart';
-import '../../../feed/domain/entities/post_entity.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 
@@ -67,62 +66,6 @@ final homeTrendVideosProvider =
   return ref.watch(homeRepositoryProvider).fetchTrendVideos();
 });
 
-/// Ana sayfa sosyal akış — sayfalama.
-class HomeFeedNotifier extends AsyncNotifier<List<PostEntity>> {
-  var _page = 1;
-  var _hasMore = true;
-  var _loadingMore = false;
-
-  @override
-  Future<List<PostEntity>> build() async {
-    _page = 1;
-    _hasMore = true;
-    final bundle =
-        await ref.read(homeRepositoryProvider).fetchFeedPosts(page: 1);
-    _hasMore = bundle.hasMore;
-    return bundle.posts;
-  }
-
-  Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      _page = 1;
-      _hasMore = true;
-      final bundle =
-          await ref.read(homeRepositoryProvider).fetchFeedPosts(page: 1);
-      _hasMore = bundle.hasMore;
-      return bundle.posts;
-    });
-  }
-
-  Future<void> loadMore() async {
-    final cur = state.valueOrNull;
-    if (cur == null || !_hasMore || _loadingMore) return;
-    _loadingMore = true;
-    final next = _page + 1;
-    try {
-      final bundle =
-          await ref.read(homeRepositoryProvider).fetchFeedPosts(page: next);
-      if (bundle.posts.isEmpty) {
-        _hasMore = false;
-        return;
-      }
-      _page = next;
-      _hasMore = bundle.hasMore;
-      state = AsyncValue.data([...cur, ...bundle.posts]);
-    } finally {
-      _loadingMore = false;
-    }
-  }
-
-  bool get canLoadMore => _hasMore && !_loadingMore;
-}
-
-final homeFeedNotifierProvider =
-    AsyncNotifierProvider<HomeFeedNotifier, List<PostEntity>>(
-  HomeFeedNotifier.new,
-);
-
 /// Tüm ana sayfa verilerini yenile.
 Future<void> refreshHomeData(WidgetRef ref) async {
   ref.invalidate(homeBannersProvider);
@@ -137,8 +80,6 @@ Future<void> refreshHomeData(WidgetRef ref) async {
   ref.invalidate(socialStoryRingsProvider);
   ref.invalidate(shortsFeedProvider);
 
-  final feedRefresh = ref.read(homeFeedNotifierProvider.notifier).refresh();
-
   await Future.wait([
     ref.refresh(homeBannersProvider.future),
     ref.refresh(psychicsListControllerProvider.future),
@@ -150,6 +91,5 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homeFortuneCardsProvider.future),
     ref.refresh(homeTrendVideosProvider.future),
     ref.refresh(socialStoryRingsProvider.future),
-    feedRefresh,
   ]);
 }
