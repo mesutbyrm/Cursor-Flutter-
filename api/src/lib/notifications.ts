@@ -38,6 +38,7 @@ export async function createNotification(input: {
     if (input.targetPath) extra.targetPath = input.targetPath;
     if (input.targetId) extra.targetId = input.targetId;
     if (input.type) extra.type = input.type;
+    // Sadece OneSignal kullan — FCM ayrıca çağrılmıyor (çift bildirim önleme)
     void sendOneSignalToUser({
       userId: input.userId,
       title: input.title,
