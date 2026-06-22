@@ -126,7 +126,9 @@ jobs:
         run: |
           set -eux
           if [ -n "${GOOGLE_SERVICES_JSON_BASE64:-}" ]; then
-            echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > mobile/android/app/google-services.json
+            # GitHub UI / macOS base64 bazen satır sonu ekler — decode öncesi temizle.
+            printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | tr -d '\n\r ' | base64 -d > mobile/android/app/google-services.json
+            jq -e '.project_info.project_id' mobile/android/app/google-services.json >/dev/null
             bash scripts/generate-firebase-options.sh
           else
             echo "GOOGLE_SERVICES_JSON_BASE64 not set — skipping Firebase config"

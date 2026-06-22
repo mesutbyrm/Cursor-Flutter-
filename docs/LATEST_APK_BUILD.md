@@ -2,21 +2,19 @@
 
 | Alan | Değer |
 |------|--------|
-| Sürüm | `1.0.328+331` |
-| Tarih (UTC) | 2026-06-22 18:15 |
-| Commit | [`b1e92c0ef3f18ffdd4f2fe8d8065cddd4606d946`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/b1e92c0ef3f18ffdd4f2fe8d8065cddd4606d946) |
-| İş akışı | [Run 27973173812](https://github.com/mesutbyrm/Cursor-Flutter-/actions/runs/27973173812) |
+| Sürüm | `1.0.332+335` |
+| Tarih (UTC) | 2026-06-22 20:45 |
+| Commit | [`2e0d9505`](https://github.com/mesutbyrm/Cursor-Flutter-/commit/2e0d9505) |
+| İş akışı | Cloud Agent yerel derleme + `apk-latest` yükleme |
 | APK | [canlifal-mobile-release.apk](https://github.com/mesutbyrm/Cursor-Flutter-/releases/download/apk-latest/canlifal-mobile-release.apk) |
 
 ## Özellikler
 
-## 1.0.328+331 (2026-06-22)
+## 1.0.332+335 (2026-06-22)
 
-### Ana sayfa — gri ekran düzeltmesi
+### Firebase / Google Sign-In — CI secret senkronu
 
-- **HomePage:** `dispose()` içinde `ref.read` kaldırıldı (Riverpod hatası); bridge örneği `initState`'te önbelleğe alınıyor
-- **HomeRealtimeBridge:** `_disposed` bayrağı ile sekme değişiminde güvenli timer iptali
-- Sekme dışına çıkıp ana sayfaya dönünce widget yeniden oluşturulduğunda çökme/gri ekran giderildi
-
+- `GOOGLE_SERVICES_JSON_BASE64` güncellendi (SHA-1: `4a6072b9…`, paket: `com.mesutbyrm.canlifal`)
+- CI `apk-latest` derlemesi yeni `google-services.json` ile yayınlandı
 
 _Bu dosya Build release APK iş akışı tarafından otomatik güncellenir._
