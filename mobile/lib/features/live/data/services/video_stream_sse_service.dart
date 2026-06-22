@@ -46,6 +46,11 @@ class VideoStreamSseService {
   void Function(LiveGiftEvent event)? _onGift;
   VoidCallback? _onStreamEnded;
   void Function(Map<String, dynamic> battle)? _onPkBattle;
+
+  void Function(int likeCount)? _onLike;
+  void Function(Map<String, dynamic> user)? _onUserJoined;
+  void Function(String userId)? _onUserLeft;
+  void Function(String userId, bool isModerator)? _onModeratorUpdated;
   static const _fortuneEventTypes = {
     'fal_request',
     'live_fal_request',
@@ -72,6 +77,10 @@ class VideoStreamSseService {
     void Function(Map<String, dynamic> battle)? onPkBattle,
     void Function(PsychicRequestEntity request)? onFortuneRequest,
     void Function(Map<String, dynamic> request)? onStreamFortuneRequest,
+    void Function(int likeCount)? onLike,
+    void Function(Map<String, dynamic> user)? onUserJoined,
+    void Function(String userId)? onUserLeft,
+    void Function(String userId, bool isModerator)? onModeratorUpdated,
   }) async {
     final id = streamId.trim();
     final same = !_stopped && _streamId == id && _bytesSub != null;
@@ -86,6 +95,10 @@ class VideoStreamSseService {
     _onPkBattle = onPkBattle;
     _onFortuneRequest = onFortuneRequest;
     _onStreamFortuneRequest = onStreamFortuneRequest;
+    _onLike = onLike;
+    _onUserJoined = onUserJoined;
+    _onUserLeft = onUserLeft;
+    _onModeratorUpdated = onModeratorUpdated;
     if (same) return;
     LiveDebugLog.log('stream.sse.connect', {'streamId': id});
     await _openStream();
@@ -224,6 +237,31 @@ class VideoStreamSseService {
           _onPkBattle?.call(Map<String, dynamic>.from(data));
         }
         return;
+      case 'like':
+      case 'streamLike':
+        final count = map['likeCount'] ?? map['count'] ?? map['total'];
+        if (count is num) _onLike?.call(count.round());
+        return;
+      case 'userJoined':
+      case 'viewerJoined':
+        final user = map['user'] ?? map;
+        if (user is Map) {
+          _onUserJoined?.call(Map<String, dynamic>.from(user));
+        }
+        return;
+      case 'userLeft':
+      case 'viewerLeft':
+        final userId = map['userId']?.toString() ?? map['id']?.toString() ?? '';
+        if (userId.isNotEmpty) _onUserLeft?.call(userId);
+        return;
+      case 'moderatorAdded':
+        final addedId = map['userId']?.toString() ?? '';
+        if (addedId.isNotEmpty) _onModeratorUpdated?.call(addedId, true);
+        return;
+      case 'moderatorRemoved':
+        final removedId = map['userId']?.toString() ?? '';
+        if (removedId.isNotEmpty) _onModeratorUpdated?.call(removedId, false);
+        return;
       default:
         final typeLower = type.toLowerCase();
         if (_fortuneEventTypes.contains(typeLower)) {
@@ -263,6 +301,10 @@ class VideoStreamSseService {
     _onPkBattle = null;
     _onFortuneRequest = null;
     _onStreamFortuneRequest = null;
+    _onLike = null;
+    _onUserJoined = null;
+    _onUserLeft = null;
+    _onModeratorUpdated = null;
     await _closeStreamOnly();
     LiveDebugLog.log('stream.sse.disconnect');
   }

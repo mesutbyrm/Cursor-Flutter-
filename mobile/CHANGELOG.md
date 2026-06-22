@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.325+328 (2026-06-22)
+
+### Canlı yayın SSE — yeni olay türleri
+
+- **`VideoStreamSseService`:** `like` / `streamLike`, `userJoined`, `userLeft`, `moderatorAdded` / `moderatorRemoved` olayları
+- Beğeni sayacı SSE ile senkron (`syncRemoteLikeCount`)
+- Hediye SSE olayları hediye sıralamasına da yazılır
+- Moderatör değişiminde sohbet rozetleri güncellenir
+- İzleyici girişinde `viewerCount` senkronu
+
 ## 1.0.324+327 (2026-06-22)
 
 ### Canlı yayın — hediye sıralaması

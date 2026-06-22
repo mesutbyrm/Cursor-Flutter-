@@ -13,6 +13,8 @@ import 'live_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import 'live_fortune_request_provider.dart';
+import 'live_gift_leaderboard_provider.dart';
+import 'live_room_interaction_provider.dart';
 import 'live_video_pk_provider.dart';
 
 class LiveRoomState {
@@ -115,10 +117,27 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         if (count >= 0) state = state.copyWith(viewerCount: count);
       },
       onMessage: (msg) => _mergeMessages([msg]),
-      onGift: (ev) => ref.read(liveGiftRealtimeProvider).publishRemote(ev),
+      onGift: (ev) {
+        ref.read(liveGiftRealtimeProvider).publishRemote(ev);
+        ref.read(liveGiftLeaderboardProvider(streamId).notifier).record(ev);
+      },
       onStreamEnded: () => state = state.copyWith(streamEnded: true),
       onPkBattle: (battle) {
         ref.read(liveVideoPkProvider(streamId).notifier).applyRemoteBattle(battle);
+      },
+      onLike: (count) {
+        ref
+            .read(liveRoomInteractionProvider(streamId).notifier)
+            .syncRemoteLikeCount(count);
+      },
+      onUserJoined: (user) {
+        final count = user['viewerCount'] ?? user['viewers'] ?? user['watching'];
+        if (count is num) {
+          state = state.copyWith(viewerCount: count.round());
+        }
+      },
+      onModeratorUpdated: (userId, isModerator) {
+        _applyModeratorFlag(userId: userId, isModerator: isModerator);
       },
       onFortuneRequest: (session) {
         emitPsychicLiveRequest(ref, session);
@@ -182,6 +201,30 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
       );
     }
     state = state.copyWith(messages: list);
+  }
+
+  void _applyModeratorFlag({
+    required String userId,
+    required bool isModerator,
+  }) {
+    if (userId.isEmpty) return;
+    var changed = false;
+    final list = state.messages.map((m) {
+      if (m.userId != userId) return m;
+      changed = true;
+      return LiveRoomChatMessage(
+        id: m.id,
+        userId: m.userId,
+        user: m.user,
+        text: m.text,
+        isSystem: m.isSystem,
+        isVip: m.isVip,
+        isModerator: isModerator,
+        isFortuneTeller: m.isFortuneTeller,
+        level: m.level,
+      );
+    }).toList();
+    if (changed) state = state.copyWith(messages: list);
   }
 
   Future<void> sendMessage(String text, {required String selfName}) async {
