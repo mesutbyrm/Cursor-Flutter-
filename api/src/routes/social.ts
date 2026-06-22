@@ -126,36 +126,24 @@ async function resolveTellerUserId(
   });
   return teller?.userId ?? tellerId;
 }
-  const fromBody =
-    body?.tellerUserId?.toString()?.trim() ||
-    body?.userId?.toString()?.trim() ||
-    body?.anchorUserId?.toString()?.trim();
-  if (fromBody) return fromBody;
-  // Seed: ft-* profilleri için sabit demo anchor (gerçek ortamda DB userId gelir).
-  if (tellerId.startsWith("ft-")) {
-    return `teller-user-${tellerId}`;
-  }
-  return tellerId;
-}
 
 socialRouter.get("/fortune-tellers", async (_req, res) => {
-  const tellerId = "ft-1";
-  const tellerUserId = resolveTellerUserId(tellerId);
+  const tellers = await prisma.fortuneTeller.findMany({
+    where: { isOnline: true },
+    include: { user: { select: { id: true, avatarUrl: true } } },
+  });
   return ok(res, {
-    tellers: [
-      {
-        id: tellerId,
-        userId: tellerUserId,
-        tellerUserId,
-        displayName: "Canlı Falcı",
-        rating: 4.8,
-        pricePerMinute: 12,
-        pricePerSession: 120,
-        isOnline: true,
-        specialties: ["tarot"],
-        image: "https://canlifal.com/favicon.ico",
-      },
-    ],
+    tellers: tellers.map((t) => ({
+      id: t.id,
+      userId: t.userId,
+      tellerUserId: t.userId,
+      displayName: t.displayName,
+      rating: t.rating,
+      pricePerMinute: t.pricePerMinute,
+      isOnline: t.isOnline,
+      specialties: t.specialties,
+      image: t.user.avatarUrl ?? "https://canlifal.com/favicon.ico",
+    })),
   });
 });
 
@@ -236,16 +224,24 @@ socialRouter.get(
   requireAuth,
   async (req, res) => {
     const uid = req.userId!;
+    const teller = await prisma.fortuneTeller.findUnique({
+      where: { userId: uid },
+      include: { user: { select: { avatarUrl: true } } },
+    });
+    if (!teller) {
+      return fail(res, 404, "NOT_FOUND", "Falcı profili bulunamadı");
+    }
     return ok(res, {
       teller: {
-        id: `ft-${uid.slice(0, 8)}`,
-        userId: uid,
-        tellerUserId: uid,
-        displayName: "Canlı Falcı",
-        isOnline: true,
-        rating: 4.9,
-        pricePerMinute: 12,
-        specialties: ["kahve"],
+        id: teller.id,
+        userId: teller.userId,
+        tellerUserId: teller.userId,
+        displayName: teller.displayName,
+        isOnline: teller.isOnline,
+        rating: teller.rating,
+        pricePerMinute: teller.pricePerMinute,
+        specialties: teller.specialties,
+        image: teller.user.avatarUrl ?? "",
       },
     });
   },
@@ -416,19 +412,25 @@ socialRouter.post(
 
 socialRouter.get("/fortune-tellers/:id", async (req, res) => {
   const id = req.params.id;
-  const tellerUserId = resolveTellerUserId(id);
+  const teller = await prisma.fortuneTeller.findUnique({
+    where: { id },
+    include: { user: { select: { id: true, avatarUrl: true } } },
+  });
+  if (!teller) {
+    return fail(res, 404, "NOT_FOUND", "Falcı bulunamadı");
+  }
   return ok(res, {
     teller: {
-      id,
-      userId: tellerUserId,
-      tellerUserId,
-      displayName: "Canlı Falcı",
-      rating: 4.8,
-      pricePerMinute: 12,
-      pricePerSession: 120,
-      isOnline: true,
-      specialties: ["tarot"],
-      image: "https://canlifal.com/favicon.ico",
+      id: teller.id,
+      userId: teller.userId,
+      tellerUserId: teller.userId,
+      displayName: teller.displayName,
+      rating: teller.rating,
+      pricePerMinute: teller.pricePerMinute,
+      pricePerSession: teller.pricePerMinute * 10,
+      isOnline: teller.isOnline,
+      specialties: teller.specialties,
+      image: teller.user.avatarUrl ?? "https://canlifal.com/favicon.ico",
     },
   });
 });
