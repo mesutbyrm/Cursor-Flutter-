@@ -21,6 +21,7 @@ import '../widgets/approved/voice_room_section.dart';
 import '../widgets/home_deferred_section.dart';
 import '../widgets/home_game_center_section.dart';
 import '../widgets/home_games_row.dart';
+import '../widgets/home_social_feed_section.dart';
 
 /// Onaylı ana sayfa mockup — piksel uyumlu bölüm sırası.
 class HomePage extends ConsumerStatefulWidget {
@@ -37,6 +38,12 @@ class _HomePageState extends ConsumerState<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(homeRealtimeBridgeProvider).start();
     });
+  }
+
+  @override
+  void dispose() {
+    ref.read(homeRealtimeBridgeProvider).dispose();
+    super.dispose();
   }
 
   Future<void> _onRefresh() => refreshHomeData(ref);
@@ -128,6 +135,12 @@ class _HomePageState extends ConsumerState<HomePage> {
               child: HomeDeferredSection(
                 delay: Duration(milliseconds: 840),
                 child: HomeGamesRow(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: Duration(milliseconds: 900),
+                child: HomeSocialFeedSection(),
               ),
             ),
             const SliverToBoxAdapter(

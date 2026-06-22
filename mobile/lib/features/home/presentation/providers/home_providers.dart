@@ -132,9 +132,13 @@ Future<void> refreshHomeData(WidgetRef ref) async {
   ref.invalidate(homeVoiceRoomsProvider);
   ref.invalidate(homeGamesProvider);
   ref.invalidate(homeDailyRewardsProvider);
+  ref.invalidate(homeFortuneCardsProvider);
   ref.invalidate(homeTrendVideosProvider);
   ref.invalidate(socialStoryRingsProvider);
   ref.invalidate(shortsFeedProvider);
+
+  final feedRefresh = ref.read(homeFeedNotifierProvider.notifier).refresh();
+
   await Future.wait([
     ref.refresh(homeBannersProvider.future),
     ref.refresh(psychicsListControllerProvider.future),
@@ -142,7 +146,10 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homeLiveStreamsProvider.future),
     ref.refresh(homeVoiceRoomsProvider.future),
     ref.refresh(homeGamesProvider.future),
+    ref.refresh(homeDailyRewardsProvider.future),
+    ref.refresh(homeFortuneCardsProvider.future),
     ref.refresh(homeTrendVideosProvider.future),
     ref.refresh(socialStoryRingsProvider.future),
+    feedRefresh,
   ]);
 }
