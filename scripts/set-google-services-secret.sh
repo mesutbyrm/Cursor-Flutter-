@@ -49,6 +49,13 @@ fi
 
 base64 -w0 "$JSON" | gh secret set GOOGLE_SERVICES_JSON_BASE64 --repo "$REPO"
 
-echo "✓ Secret güncellendi."
-echo "Yeni APK için:"
-echo "  gh workflow run build-apk.yml --repo $REPO --ref main"
+echo ""
+echo "Doğrulama (yerel decode):"
+if base64 -d <<<"$(base64 -w0 "$JSON")" | jq -e '.project_info.project_id' >/dev/null 2>&1; then
+  echo "  ✓ base64 encode/decode OK"
+else
+  echo "  ! base64 doğrulaması başarısız"
+fi
+echo ""
+echo "Not: GitHub UI'ye yalnızca base64 yapıştırın (ham JSON değil)."
+echo "     Ham JSON yapıştırıldıysa CI yine de kabul eder (build-apk.yml)."

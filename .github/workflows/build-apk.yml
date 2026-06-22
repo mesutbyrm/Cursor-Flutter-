@@ -126,8 +126,15 @@ jobs:
         run: |
           set -eux
           if [ -n "${GOOGLE_SERVICES_JSON_BASE64:-}" ]; then
-            # GitHub UI / macOS base64 bazen satır sonu ekler — decode öncesi temizle.
-            printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | tr -d '\n\r ' | base64 -d > mobile/android/app/google-services.json
+            RAW=$(printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | tr -d '\r')
+            TRIMMED=$(printf '%s' "$RAW" | tr -d ' \n\t')
+            if [[ "$TRIMMED" == \{* ]]; then
+              # Secret'a ham JSON yapıştırıldıysa (base64 değil) doğrudan kullan.
+              printf '%s' "$RAW" > mobile/android/app/google-services.json
+            else
+              # GitHub UI / macOS base64 bazen satır sonu ekler — decode öncesi temizle.
+              printf '%s' "$RAW" | tr -d '\n\r ' | base64 -d > mobile/android/app/google-services.json
+            fi
             jq -e '.project_info.project_id' mobile/android/app/google-services.json >/dev/null
             bash scripts/generate-firebase-options.sh
           else
