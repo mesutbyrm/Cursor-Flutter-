@@ -3,10 +3,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import '../../../../../agora/presentation/agora_room_manager.dart';
 import '../../../../../trtc/presentation/trtc_room_manager.dart';
+import '../../broadcast_room/live_camera_control.dart';
 
 /// Alt cam giriş çubuğu + yayıncı kontrolleri.
 class LivePremiumBottomBar extends StatelessWidget {
@@ -19,6 +19,7 @@ class LivePremiumBottomBar extends StatelessWidget {
     this.trtc,
     this.onGift,
     this.onToggleCamera,
+    this.onRtcStateChanged,
     this.onEnd,
     this.onJoinBroadcast,
     this.commentsEnabled = true,
@@ -31,6 +32,7 @@ class LivePremiumBottomBar extends StatelessWidget {
   final TrtcRoomManager? trtc;
   final VoidCallback? onGift;
   final VoidCallback? onToggleCamera;
+  final VoidCallback? onRtcStateChanged;
   final VoidCallback? onEnd;
   final VoidCallback? onJoinBroadcast;
   final bool commentsEnabled;
@@ -39,9 +41,8 @@ class LivePremiumBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
 
-    final rtcMicOn = agora?.micOn ?? trtc?.micOn ?? false;
-    final rtcCameraOn = agora?.cameraOn ?? trtc?.cameraOn ?? false;
     final hasRtc = agora != null || trtc != null;
+    final rtcChanged = onRtcStateChanged ?? onToggleCamera;
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -62,34 +63,22 @@ class LivePremiumBottomBar extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _MiniControl(
-                      icon: rtcMicOn ? Icons.mic_rounded : Icons.mic_off_rounded,
-                      label: 'Mik',
-                      onTap: () {
-                        if (agora != null) {
-                          agora!.setMicEnabled(!agora!.micOn);
-                        } else {
-                          trtc!.setMicEnabled(!trtc!.micOn);
-                        }
-                      },
+                    LiveMicToggleButton(
+                      agora: agora,
+                      trtc: trtc,
+                      size: 44,
+                      onChanged: rtcChanged,
                     ),
-                    _MiniControl(
-                      icon: rtcCameraOn
-                          ? Icons.videocam_rounded
-                          : Icons.videocam_off_rounded,
-                      label: 'Kam',
-                      onTap: onToggleCamera,
+                    LiveCameraToggleButton(
+                      agora: agora,
+                      trtc: trtc,
+                      size: 44,
+                      onChanged: rtcChanged,
                     ),
-                    _MiniControl(
-                      icon: Icons.cameraswitch_rounded,
-                      label: 'Çevir',
-                      onTap: () {
-                        if (agora != null) {
-                          agora!.switchCamera();
-                        } else {
-                          trtc!.switchCamera();
-                        }
-                      },
+                    LiveCameraSwitchButton(
+                      agora: agora,
+                      trtc: trtc,
+                      size: 44,
                     ),
                     if (onEnd != null)
                       _MiniControl(

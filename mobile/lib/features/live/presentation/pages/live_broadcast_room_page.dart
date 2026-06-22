@@ -47,6 +47,7 @@ import '../providers/live_fortune_request_provider.dart';
 import '../providers/live_broadcast_settings_provider.dart';
 import '../widgets/broadcast_room/live_fortune_request_form.dart';
 import '../widgets/broadcast_room/live_fortune_requests_panel.dart';
+import '../widgets/broadcast_room/live_like_realtime.dart';
 import '../widgets/broadcast_room/live_moderation_sheet.dart';
 import '../widgets/broadcast_room/live_broadcast_settings_sheet.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
@@ -495,6 +496,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       });
     }
     _signalService = ref.read(videoWebrtcSignalServiceProvider);
+    _signalService?.onSignal = (sig) {
+      if (!mounted) return;
+      handleLiveLikeSignal(ref, streamId: streamId, signal: sig);
+    };
     _signalService?.start(streamId: streamId);
   }
 
@@ -977,20 +982,31 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     required LiveBroadcastSession s,
     required LiveRoomInteractionState interaction,
     required LiveGiftController giftCtrl,
+    String? streamId,
   }) {
     if (!s.isHost) {
-      return PsychicBroadcastSideRail(
-        viewerCount: s.viewerCount,
-        onGift: () => giftCtrl.setPanelOpen(true),
-        onFortuneRequest: () => unawaited(_onFortuneRequest(s)),
-        onNickname: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Rumuz ayarları yakında')),
-          );
-        },
-        onToggleAudio: () => setState(() => _viewerAudioOn = !_viewerAudioOn),
-        onExit: () => unawaited(_confirmEnd(context)),
-        audioOn: _viewerAudioOn,
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (streamId != null && streamId.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: LiveLikeButton(streamId: streamId),
+            ),
+          PsychicBroadcastSideRail(
+            viewerCount: s.viewerCount,
+            onGift: () => giftCtrl.setPanelOpen(true),
+            onFortuneRequest: () => unawaited(_onFortuneRequest(s)),
+            onNickname: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Rumuz ayarları yakında')),
+              );
+            },
+            onToggleAudio: () => setState(() => _viewerAudioOn = !_viewerAudioOn),
+            onExit: () => unawaited(_confirmEnd(context)),
+            audioOn: _viewerAudioOn,
+          ),
+        ],
       );
     }
     return LivePremiumSideRail(
@@ -1454,6 +1470,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                             s: s,
                             interaction: interaction,
                             giftCtrl: giftCtrl,
+                            streamId: streamId,
                           ),
                         ],
                       ),
@@ -1499,6 +1516,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                             s: s,
                             interaction: interaction,
                             giftCtrl: giftCtrl,
+                            streamId: streamId,
                           ),
                         ],
                       ),
@@ -1513,6 +1531,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                             broadcastSettings.guestsEnabled &&
                             hasStream
                         ? () => unawaited(_requestGuestJoin())
+                        : null,
+                    onRtcStateChanged: s.isHost
+                        ? () => setState(() => _localPreviewKey = UniqueKey())
                         : null,
                     onToggleCamera: s.isHost
                         ? () {

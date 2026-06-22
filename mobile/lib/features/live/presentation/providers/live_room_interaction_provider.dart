@@ -70,6 +70,15 @@ class LiveRoomInteractionNotifier
     );
   }
 
+  /// Signal / polling ile gelen toplam beğeni — API çağrısı yapmaz.
+  void syncRemoteLikeCount(int total, {bool pulse = true}) {
+    if (total <= state.likeCount) return;
+    state = state.copyWith(
+      likeCount: total,
+      heartBurstToken: pulse ? state.heartBurstToken + 1 : state.heartBurstToken,
+    );
+  }
+
   void triggerSuperLike() {
     state = state.copyWith(
       likeCount: state.likeCount + 5,

@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.323+326 (2026-06-21)
+
+### Canlı yayın — beğeni ve kamera kontrolleri
+
+- **Beğeni:** `LiveLikeButton` — optimistic REST beğeni, uçan kalp animasyonu, izleyici sağ şeridinde
+- **Sinyal:** HTTP signal polling ile uzak beğeni senkronu (`handleLiveLikeSignal`)
+- **Kamera:** `LiveCameraToggleButton` / `LiveCameraSwitchButton` / `LiveMicToggleButton` — Agora + TRTC
+- Alt kontrol çubuğu yeni kamera widget'ları ile güncellendi
+
 ## 1.0.322+325 (2026-06-21)
 
 ### Moderasyon panelleri (canlı + sesli oda)
