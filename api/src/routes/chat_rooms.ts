@@ -1,4 +1,9 @@
-import { Router } from "express";
+import { Request, Response, Router } from "express";
+
+type RoomRequest = Request<{ roomId: string }>;
+type RoomTargetRequest = Request<{ roomId: string; targetUserId: string }>;
+type RoomItemRequest = Request<{ roomId: string; itemId: string }>;
+type RoomWordRequest = Request<{ roomId: string; word: string }>;
 import { optionalAuth } from "../middleware/optionalAuth";
 import { requireAuth } from "../middleware/requireAuth";
 import { fail, ok } from "../lib/response";
@@ -536,10 +541,7 @@ chatRoomsRouter.delete("/rooms/:roomId/dj/:targetUserId", requireAuth, async (re
   return ok(res, { djUserIds: result.djUserIds, success: true });
 });
 
-async function handleAssignSeat(
-  req: { params: { roomId: string }; body?: Record<string, unknown>; userId?: string },
-  res: import("express").Response,
-) {
+async function handleAssignSeat(req: RoomRequest, res: Response) {
   const user = await loadUser(req.userId);
   if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
   const seatIndex =
@@ -563,11 +565,11 @@ async function handleAssignSeat(
   return res.status(200).json({ success: true, presence: result.presence });
 }
 
-chatRoomsRouter.patch("/rooms/:roomId/seats", requireAuth, async (req, res) => {
+chatRoomsRouter.patch("/rooms/:roomId/seats", requireAuth, async (req: RoomRequest, res) => {
   return handleAssignSeat(req, res);
 });
 
-chatRoomsRouter.post("/rooms/:roomId/seats", requireAuth, async (req, res) => {
+chatRoomsRouter.post("/rooms/:roomId/seats", requireAuth, async (req: RoomRequest, res) => {
   return handleAssignSeat(req, res);
 });
 

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "postinstall": "prisma generate",
+    "typecheck": "tsc --noEmit",
     "build": "npm run db:generate && tsc",
     "start": "node dist/index.js",
     "db:generate": "prisma generate",

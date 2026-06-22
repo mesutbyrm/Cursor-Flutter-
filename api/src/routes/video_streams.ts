@@ -99,6 +99,7 @@ async function loadUser(userId: string | undefined) {
       displayName: true,
       username: true,
       avatarUrl: true,
+      coins: true,
     },
   });
 }
