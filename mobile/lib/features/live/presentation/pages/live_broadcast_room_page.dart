@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live_psychics/domain/entities/psychic_entity.dart';
 import '../../../live_psychics/presentation/controllers/psychic_flow.dart';
@@ -122,6 +123,42 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         );
   }
 
+  bool _isBenignAgoraError(Object e) {
+    final msg = e.toString();
+    return msg.contains('-17') ||
+        msg.contains('JOIN_CHANNEL_REJECTED') ||
+        msg.contains('errJoinChannelRejected');
+  }
+
+  void _handleAgoraError(Object e) {
+    debugPrint('[Agora] error: $e');
+    if (_isBenignAgoraError(e)) return;
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Bağlantı hatası: yeniden deneniyor...')),
+    );
+  }
+
+  void _onRtcJoinSuccess(UserEntity user) {
+    if (!mounted) return;
+    setState(() {
+      _rtcReady = true;
+      _rtcError = null;
+      _localPreviewKey = UniqueKey();
+    });
+    ref.read(liveBeautyProvider.notifier).bindRtc(agora: _agora);
+    final layout = _resolveGuestLayout();
+    ref.read(liveGuestGridProvider.notifier)
+      ..setLayout(layout)
+      ..setHost(
+        userId: user.id,
+        name: widget.session.streamerName ?? user.display,
+      );
+    _remoteUidsListener ??= _onRemoteUidsChanged;
+    _agora.remoteUidsNotifier.addListener(_remoteUidsListener!);
+    _onRemoteUidsChanged();
+  }
+
   Future<void> _initAgora() async {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) {
@@ -164,24 +201,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           await ref.read(liveRemoteProvider).notifyLiveStarted(roomId);
         } catch (_) {}
       }
-      if (mounted) {
-        setState(() {
-          _rtcReady = true;
-          _localPreviewKey = UniqueKey();
-        });
-        ref.read(liveBeautyProvider.notifier).bindRtc(agora: _agora);
-        final layout = _resolveGuestLayout();
-        ref.read(liveGuestGridProvider.notifier)
-          ..setLayout(layout)
-          ..setHost(
-            userId: user.id,
-            name: widget.session.streamerName ?? user.display,
-          );
-        _remoteUidsListener ??= _onRemoteUidsChanged;
-        _agora.remoteUidsNotifier.addListener(_remoteUidsListener!);
-        _onRemoteUidsChanged();
-      }
+      _onRtcJoinSuccess(user);
     } catch (e) {
+      if (_isBenignAgoraError(e) && _agora.inChannel) {
+        debugPrint('[Agora] duplicate join ignored, channel active: $e');
+        _onRtcJoinSuccess(user);
+        return;
+      }
       if (widget.session.isHost && roomId.isNotEmpty) {
         try {
           await ref.read(liveRepositoryProvider).endVideoStream(roomId);
@@ -189,7 +215,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         ref.invalidate(liveStreamsProvider);
       }
       if (mounted) {
-        setState(() => _rtcError = ApiException.userMessage(e));
+        if (_isBenignAgoraError(e)) {
+          _handleAgoraError(e);
+          return;
+        }
+        _handleAgoraError(e);
+        final msg = ApiException.userMessage(e);
+        setState(() {
+          _rtcError = msg.contains('Agora') ? 'Yayına bağlanılamadı' : msg;
+        });
       }
     }
   }
@@ -1105,7 +1139,13 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
               applauseToken: interaction.applauseToken,
             ),
             FloatingGiftParticles(key: _particlesKey),
-            LiveGiftAnimationStack(events: giftCtrl.fullscreenQueue),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: LiveGiftAnimationStack(
+                  events: List.from(giftCtrl.fullscreenQueue),
+                ),
+              ),
+            ),
             if (hasStream && pkState?.battle != null &&
                 (pkStatus == 'active' || pkStatus == 'ended'))
               LivePkPremiumOverlay(

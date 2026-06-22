@@ -103,6 +103,8 @@ class AgoraRoomManager {
 
     if (_inChannel || _previewOnly) {
       await leave();
+      // Let Agora finish leaving before joinChannel (avoids ERR_JOIN_CHANNEL_REJECTED).
+      await Future<void>.delayed(const Duration(milliseconds: 300));
     }
 
     final appId = credentials.appId.trim();
@@ -163,6 +165,10 @@ class AgoraRoomManager {
       },
       onError: (err, msg) {
         debugPrint('Agora error $err: $msg');
+        if (err == ErrorCodeType.errJoinChannelRejected) {
+          if (!joinCompleter.isCompleted) joinCompleter.complete();
+          return;
+        }
         if (!joinCompleter.isCompleted) {
           joinCompleter.completeError(StateError('Agora bağlantı hatası: $msg'));
         }
@@ -171,19 +177,29 @@ class AgoraRoomManager {
     if (prevHandler != null) _engine!.unregisterEventHandler(prevHandler);
     _engine!.registerEventHandler(_handler!);
 
-    await _engine!.joinChannel(
-      token: credentials.token,
-      channelId: channel,
-      uid: credentials.uid,
-      options: ChannelMediaOptions(
-        channelProfile: ChannelProfileType.channelProfileLiveBroadcasting,
-        clientRoleType: role,
-        publishMicrophoneTrack: isHost,
-        publishCameraTrack: isHost,
-        autoSubscribeAudio: true,
-        autoSubscribeVideo: true,
-      ),
-    );
+    try {
+      await _engine!.joinChannel(
+        token: credentials.token,
+        channelId: channel,
+        uid: credentials.uid,
+        options: ChannelMediaOptions(
+          channelProfile: ChannelProfileType.channelProfileLiveBroadcasting,
+          clientRoleType: role,
+          publishMicrophoneTrack: isHost,
+          publishCameraTrack: isHost,
+          autoSubscribeAudio: true,
+          autoSubscribeVideo: true,
+        ),
+      );
+    } on AgoraRtcException catch (e) {
+      if (e.code == -17 || e.code == 17) {
+        debugPrint('[Agora] duplicate joinChannel ignored: $e');
+        if (!joinCompleter.isCompleted) joinCompleter.complete();
+        _inChannel = true;
+      } else {
+        rethrow;
+      }
+    }
 
     await joinCompleter.future.timeout(
       const Duration(seconds: 20),

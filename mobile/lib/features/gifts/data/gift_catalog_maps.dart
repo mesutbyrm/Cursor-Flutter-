@@ -65,7 +65,13 @@ abstract final class GiftCatalogMaps {
   /// Premium 2026 — painter fallback (asset yok veya SVGA/Rive eksik).
   static bool usePremiumPainter(GiftEntity gift) {
     final id = gift.id.toLowerCase();
-    if (id == 'galaksi' || id == 'aslan' || id == 'yat') return true;
+    if (id == 'galaksi' ||
+        id == 'aslan' ||
+        id == 'yat' ||
+        id == 'roket' ||
+        id == 'rocket') {
+      return true;
+    }
     if (id == 'elmas') return riveAsset(gift) == null;
     return false;
   }
