@@ -131,22 +131,25 @@ async function resolveTellerUserId(
 }
 
 socialRouter.get("/fortune-tellers", async (_req, res) => {
-  const tellers = await prisma.fortuneTeller.findMany({
-    where: { isOnline: true },
-    include: { user: { select: { id: true, avatarUrl: true } } },
+  const suna = await prisma.user.findUnique({
+    where: { email: "suna61722@gmail.com" },
+    select: { id: true, displayName: true, avatarUrl: true },
   });
-  return ok(res, {
-    tellers: tellers.map((t) => ({
-      id: t.id,
-      userId: t.userId,
-      tellerUserId: t.userId,
-      displayName: t.displayName,
-      rating: t.rating,
-      pricePerMinute: t.pricePerMinute,
-      isOnline: t.isOnline,
-      specialties: t.specialties,
-      image: t.user.avatarUrl ?? "https://canlifal.com/favicon.ico",
-    })),
+  const tellers = suna
+    ? [{
+        id: suna.id,
+        userId: suna.id,
+        tellerUserId: suna.id,
+        displayName: suna.displayName ?? "İlhamperisi",
+        rating: 4.9,
+        pricePerMinute: 12,
+        isOnline: true,
+        specialties: ["tarot", "kahve"],
+        image: suna.avatarUrl ?? "https://canlifal.com/favicon.ico",
+      }]
+    : [];
+  return ok(res, { tellers });
+});
   });
 });
 
