@@ -69,9 +69,24 @@ Secret yoksa APK Firebase/Google olmadan derlenir; uygulama açılır ama **Goog
 
 ## Sunucu (canlifal.com)
 
-Endpoint hazır: `POST /api/auth/mobile-google` body: `{ "idToken": "…" }`.
+Endpoint: `POST /api/auth/mobile-google` body: `{ "idToken": "…" }`.
 
-Geçersiz token → `401` *Geçersiz Google token*. Ek backend değişikliği gerekmez.
+**Üretim ortam değişkeni (zorunlu):**
+
+```bash
+GOOGLE_CLIENT_ID=24667749197-u4d3ep5jdp8lcv4lqg4ngo2ckae4ueh4.apps.googleusercontent.com
+```
+
+Mobil `GOOGLE_SERVER_CLIENT_ID` / `serverClientId` ile **aynı Web OAuth client ID** olmalıdır.
+`GOOGLE_SERVER_CLIENT_ID` sunucuda alias olarak da okunur.
+
+İsteğe bağlı Android OAuth client:
+
+```bash
+GOOGLE_CLIENT_IDS=24667749197-d36b5gj433fhmfgc6uu4u23d6q10ipe2.apps.googleusercontent.com
+```
+
+Geçersiz token → `401` *Geçersiz Google token* — genelde `aud` uyuşmazlığı (yanlış `GOOGLE_CLIENT_ID`).
 
 ## Site tarafı (öneri)
 
