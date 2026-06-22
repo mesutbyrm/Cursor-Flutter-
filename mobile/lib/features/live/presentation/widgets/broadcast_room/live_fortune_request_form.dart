@@ -87,17 +87,20 @@ class _LiveFortuneRequestFormState extends State<LiveFortuneRequestForm> {
 
     setState(() => _loading = true);
     HapticFeedback.mediumImpact();
-    final success = await widget.onSubmit(
-      displayName: name,
-      question: q,
-      fortuneType: _fortuneType,
-      priority: _priority,
-    );
-    if (!mounted) return;
-    setState(() => _loading = false);
-    if (success) {
-      _snack('Fal isteğiniz gönderildi');
-      _question.clear();
+    try {
+      final success = await widget.onSubmit(
+        displayName: name,
+        question: q,
+        fortuneType: _fortuneType,
+        priority: _priority,
+      );
+      if (!mounted) return;
+      if (success) {
+        _snack('Fal isteğiniz gönderildi');
+        _question.clear();
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 

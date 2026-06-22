@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -74,19 +76,39 @@ class LiveFortuneRequestsNotifier
     required String fortuneType,
     required LiveFortunePriority priority,
   }) async {
+    state = state.copyWith(loading: true, clearError: true);
     try {
-      final row = await _ds.createRequest(
-        streamId: arg,
-        displayName: displayName,
-        question: question,
-        fortuneType: fortuneType,
-        priority: priority,
-      );
+      final row = await _ds
+          .createRequest(
+            streamId: arg,
+            displayName: displayName,
+            question: question,
+            fortuneType: fortuneType,
+            priority: priority,
+          )
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () => throw TimeoutException(
+              'Fal isteği gönderilemedi: sunucu yanıt vermiyor.',
+              const Duration(seconds: 15),
+            ),
+          );
       _upsert(row);
       return row;
-    } catch (e) {
-      state = state.copyWith(error: e.toString());
+    } on TimeoutException {
+      state = state.copyWith(
+        loading: false,
+        error:
+            'Fal isteği gönderilemedi: bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.',
+      );
       return null;
+    } catch (e) {
+      state = state.copyWith(loading: false, error: e.toString());
+      return null;
+    } finally {
+      if (state.loading) {
+        state = state.copyWith(loading: false);
+      }
     }
   }
 

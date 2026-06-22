@@ -292,17 +292,36 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     required String fortuneType,
     required LiveFortunePriority priority,
   }) async {
-    final row = await ref.read(liveFortuneRequestsProvider(streamId).notifier).submit(
-          displayName: displayName,
-          question: question,
-          fortuneType: fortuneType,
-          priority: priority,
+    try {
+      final row =
+          await ref.read(liveFortuneRequestsProvider(streamId).notifier).submit(
+                displayName: displayName,
+                question: question,
+                fortuneType: fortuneType,
+                priority: priority,
+              );
+      if (row != null) {
+        ref.invalidate(coinBalanceProvider);
+        return true;
+      }
+      return false;
+    } on TimeoutException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Fal isteği gönderilemedi. Lütfen tekrar deneyin.'),
+          ),
         );
-    if (row != null) {
-      ref.invalidate(coinBalanceProvider);
-      return true;
+      }
+      return false;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Hata: $e')),
+        );
+      }
+      return false;
     }
-    return false;
   }
 
   Future<void> _onFortuneRequest(LiveBroadcastSession s) async {
