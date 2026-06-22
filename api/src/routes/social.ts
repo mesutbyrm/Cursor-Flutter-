@@ -167,6 +167,27 @@ socialRouter.post("/fortune-tellers/session", requireAuth, async (req, res) => {
     totalJeton: Number(body?.totalJeton) || undefined,
   });
   const role = fortuneSessionRoleForUser(session, clientId);
+  void createNotification({
+    userId: session.tellerUserId,
+    title: `Canlı fal isteği: ${session.clientName ?? "Bir danışan"}`,
+    body: `${session.durationMinutes ?? 10} dk · ${session.totalJeton ?? 0} jeton — kabul etmek için uygulama açın`,
+    type: "fortune_session_invite",
+    targetPath: `/canli-falcilar/dashboard`,
+    targetId: session.id,
+    urgent: true,
+    data: {
+      event: "fortune_session_invite",
+      sessionId: session.id,
+      tellerId: session.tellerId,
+      tellerUserId: session.tellerUserId,
+      clientId: session.clientId,
+      clientName: session.clientName ?? "",
+      durationMinutes: String(session.durationMinutes ?? 10),
+      totalJeton: String(session.totalJeton ?? 0),
+      trtcRoomId: session.trtcRoomId,
+      type: "fortune_session_invite",
+    },
+  });
   return ok(res, {
     session,
     sessionId: session.id,
