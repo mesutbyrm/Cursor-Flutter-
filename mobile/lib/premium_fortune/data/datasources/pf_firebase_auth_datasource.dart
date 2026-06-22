@@ -8,6 +8,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/config/google_auth_config.dart';
 import '../../../core/firebase/firebase_bootstrap.dart';
 import '../../core/config/pf_config.dart';
 import '../../core/errors/pf_failure.dart';
@@ -22,12 +23,15 @@ class PfFirebaseAuthDatasource {
   })  : _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance,
         _storage = storage ?? FirebaseStorage.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn();
+        _googleSignInOverride = googleSignIn;
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
   final FirebaseStorage _storage;
-  final GoogleSignIn _googleSignIn;
+  final GoogleSignIn? _googleSignInOverride;
+
+  GoogleSignIn get _googleSignIn =>
+      _googleSignInOverride ?? GoogleAuthConfig.createGoogleSignIn();
   final _uuid = const Uuid();
 
   bool get isAvailable => FirebaseBootstrap.isReady;

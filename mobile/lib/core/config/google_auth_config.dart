@@ -1,3 +1,5 @@
+import 'package:google_sign_in/google_sign_in.dart';
+
 import '../firebase/firebase_options_generated.dart';
 import 'env.dart';
 
@@ -15,6 +17,20 @@ abstract final class GoogleAuthConfig {
   }
 
   static bool get isConfigured => serverClientId != null;
+
+  /// Android'de `idToken` için Web client ID (`serverClientId`) zorunludur.
+  static GoogleSignIn createGoogleSignIn({
+    List<String> scopes = const ['email', 'profile'],
+  }) {
+    final serverId = serverClientId;
+    if (serverId == null || serverId.isEmpty) {
+      throw StateError(setupHint);
+    }
+    return GoogleSignIn(
+      scopes: scopes,
+      serverClientId: serverId,
+    );
+  }
 
   static String get setupHint => '''
 Google ile giriş için şunlar gerekli:

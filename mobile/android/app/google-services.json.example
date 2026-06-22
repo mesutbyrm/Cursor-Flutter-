@@ -15,7 +15,11 @@
       "oauth_client": [
         {
           "client_id": "YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com",
-          "client_type": 1
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mesutbyrm.canlifal",
+            "certificate_hash": "YOUR_DEBUG_OR_RELEASE_SHA1_WITHOUT_COLONS"
+          }
         },
         {
           "client_id": "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",

@@ -17,18 +17,12 @@ class NativeAuthDataSource {
   final Dio _dio;
 
   Future<Map<String, dynamic>> signInWithGoogle({String? referralCode}) async {
-    final serverId = GoogleAuthConfig.serverClientId;
-    if (serverId == null || serverId.isEmpty) {
-      throw ApiException(
-        'Google giriş yapılandırılmamış.\n\n'
-        '${GoogleAuthConfig.setupHint}',
-      );
+    final GoogleSignIn googleSignIn;
+    try {
+      googleSignIn = GoogleAuthConfig.createGoogleSignIn();
+    } on StateError catch (e) {
+      throw ApiException('Google giriş yapılandırılmamış.\n\n${e.message}');
     }
-
-    final googleSignIn = GoogleSignIn(
-      scopes: const ['email', 'profile'],
-      serverClientId: serverId,
-    );
 
     try {
       await googleSignIn.signOut();

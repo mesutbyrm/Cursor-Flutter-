@@ -68,4 +68,9 @@ dependencies {
 
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
+} else {
+    logger.warn(
+        "google-services.json bulunamadı — Google Sign-In ApiException 10 (DEVELOPER_ERROR) " +
+            "riski. Firebase Console'dan indirip android/app/ altına koyun.",
+    )
 }

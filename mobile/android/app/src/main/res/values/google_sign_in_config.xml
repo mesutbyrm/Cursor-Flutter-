@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      google-services.json + Gradle eklentisi yoksa google_sign_in_android bu değeri kullanır.
+      Eklenti uygulandığında Firebase tarafından üretilen değerlerle birleştirilir.
+      Kaynak: FirebaseOptionsGenerated.googleWebClientId (client_type: 3)
+    -->
+    <string name="default_web_client_id" translatable="false">
+        24667749197-u4d3ep5jdp8lcv4lqg4ngo2ckae4ueh4.apps.googleusercontent.com
+    </string>
+</resources>
