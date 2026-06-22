@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.328+331 (2026-06-22)
+
+### Ana sayfa — gri ekran düzeltmesi
+
+- **HomePage:** `dispose()` içinde `ref.read` kaldırıldı (Riverpod hatası); bridge örneği `initState`'te önbelleğe alınıyor
+- **HomeRealtimeBridge:** `_disposed` bayrağı ile sekme değişiminde güvenli timer iptali
+- Sekme dışına çıkıp ana sayfaya dönünce widget yeniden oluşturulduğunda çökme/gri ekran giderildi
+
 ## 1.0.327+330 (2026-06-22)
 
 ### Google Sign-In — Firebase yapılandırması

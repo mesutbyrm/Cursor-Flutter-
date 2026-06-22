@@ -32,17 +32,23 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
+  HomeRealtimeBridge? _realtimeBridge;
+
   @override
   void initState() {
     super.initState();
+    _realtimeBridge = ref.read(homeRealtimeBridgeProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(homeRealtimeBridgeProvider).start();
+      if (!mounted) return;
+      _realtimeBridge?.start();
     });
   }
 
   @override
   void dispose() {
-    ref.read(homeRealtimeBridgeProvider).dispose();
+    // ref kullanılamaz — ConsumerState dispose sırasında Riverpod hata verir.
+    _realtimeBridge?.dispose();
+    _realtimeBridge = null;
     super.dispose();
   }
 

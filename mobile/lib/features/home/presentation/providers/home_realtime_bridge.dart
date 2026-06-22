@@ -18,14 +18,17 @@ class HomeRealtimeBridge {
 
   final Ref _ref;
   Timer? _pollTimer;
+  var _disposed = false;
 
   void start() {
     if (!Env.useNextAuth) return;
+    _disposed = false;
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _tick());
   }
 
   void _tick() {
+    if (_disposed || _pollTimer == null) return;
     _ref.invalidate(homeLiveStreamsProvider);
     _ref.invalidate(homeVoiceRoomsProvider);
     _ref.invalidate(liveStreamsProvider);
@@ -33,6 +36,7 @@ class HomeRealtimeBridge {
   }
 
   void dispose() {
+    _disposed = true;
     _pollTimer?.cancel();
     _pollTimer = null;
   }
