@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.327+330 (2026-06-22)
+
+### Google Sign-In — Firebase yapılandırması
+
+- `google-services.json` güncellendi (yeni Android OAuth client + SHA-1: `4a6072b9…`)
+- CI `GOOGLE_SERVICES_JSON_BASE64` secret yeni dosyayla senkronize edildi
+- Google Sign-In için doğru sertifika parmak izi APK'ya gömülü
+
 ## 1.0.326+329 (2026-06-22)
 
 ### Ana sayfa — providers ve sosyal akış
