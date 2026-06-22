@@ -120,7 +120,6 @@ async function resolveTellerUserId(
     body?.anchorUserId?.toString()?.trim();
   if (fromBody) return fromBody;
 
-  // Falcıyı email ile bul
   const user = await prisma.user.findUnique({
     where: { email: "suna61722@gmail.com" },
     select: { id: true },
