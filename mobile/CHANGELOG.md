@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.332+335 (2026-06-22)
+
+### Firebase / Google Sign-In — CI secret senkronu
+
+- `GOOGLE_SERVICES_JSON_BASE64` güncellendi (SHA-1: `4a6072b9…`, paket: `com.mesutbyrm.canlifal`)
+- CI `apk-latest` derlemesi yeni `google-services.json` ile yayınlandı
+
 ## 1.0.331+334 (2026-06-22)
 
 ### Canlı Falcılar — derleme düzeltmesi
