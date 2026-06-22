@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.324+327 (2026-06-22)
+
+### Canlı yayın — hediye sıralaması
+
+- **`LiveGiftLeaderboard`** — sol alt köşede hediye atanlar listesi (top 3 + genişlet)
+- REST ile ilk yükleme (`/api/video-streams/{id}/gifts/leaderboard`)
+- Gerçek zamanlı güncelleme — gelen hediye olaylarından otomatik sıralama
+- Madalya (🥇🥈🥉), avatar, hediye adı/emoji ve toplam coin gösterimi
+
 ## 1.0.323+326 (2026-06-21)
 
 ### Canlı yayın — beğeni ve kamera kontrolleri

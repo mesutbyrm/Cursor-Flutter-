@@ -36,6 +36,7 @@ import '../../data/services/video_webrtc_signal_service.dart';
 import '../providers/co_broadcast_provider.dart';
 import '../providers/live_beauty_provider.dart';
 import '../providers/live_guest_grid_provider.dart';
+import '../providers/live_gift_leaderboard_provider.dart';
 import '../providers/live_room_interaction_provider.dart'
     show LiveRoomInteractionNotifier, LiveRoomInteractionState, liveRoomInteractionProvider;
 import '../providers/live_room_providers.dart';
@@ -47,6 +48,7 @@ import '../providers/live_fortune_request_provider.dart';
 import '../providers/live_broadcast_settings_provider.dart';
 import '../widgets/broadcast_room/live_fortune_request_form.dart';
 import '../widgets/broadcast_room/live_fortune_requests_panel.dart';
+import '../widgets/broadcast_room/live_gift_leaderboard.dart';
 import '../widgets/broadcast_room/live_like_realtime.dart';
 import '../widgets/broadcast_room/live_moderation_sheet.dart';
 import '../widgets/broadcast_room/live_broadcast_settings_sheet.dart';
@@ -122,6 +124,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           receiverName: widget.session.streamerName ?? 'Yayıncı',
           initialCoins: user?.coinBalance,
         );
+    unawaited(
+      ref.read(liveGiftLeaderboardProvider(streamId).notifier).loadInitial(),
+    );
   }
 
   bool _isBenignAgoraError(Object e) {
@@ -1106,6 +1111,15 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     }
 
     ref.listen<LiveGiftController>(liveGiftControllerProvider, (prev, next) {
+      if (hasStream) {
+        final prevIds =
+            prev?.notifications.map((e) => e.id).toSet() ?? const <String>{};
+        for (final ev in next.notifications) {
+          if (!prevIds.contains(ev.id)) {
+            ref.read(liveGiftLeaderboardProvider(streamId).notifier).record(ev);
+          }
+        }
+      }
       final queue = next.fullscreenQueue;
       final prevQueue = prev?.fullscreenQueue ?? const [];
       if (queue.isNotEmpty && queue.first != (prevQueue.isNotEmpty ? prevQueue.first : null)) {
@@ -1202,6 +1216,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                   displayName: _vipBannerName!,
                   onDone: () => setState(() => _vipBannerName = null),
                 ),
+              ),
+            if (hasStream)
+              Positioned(
+                left: 12,
+                bottom: 200,
+                child: LiveGiftLeaderboard(streamId: streamId),
               ),
             SafeArea(
               child: Column(
