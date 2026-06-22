@@ -120,11 +120,14 @@ async function resolveTellerUserId(
     body?.anchorUserId?.toString()?.trim();
   if (fromBody) return fromBody;
 
-  const teller = await prisma.fortuneTeller.findUnique({
-    where: { id: tellerId },
-    select: { userId: true },
+  // Falcıyı email ile bul
+  const user = await prisma.user.findUnique({
+    where: { email: "suna61722@gmail.com" },
+    select: { id: true },
   });
-  return teller?.userId ?? tellerId;
+  if (user) return user.id;
+
+  return tellerId;
 }
 
 socialRouter.get("/fortune-tellers", async (_req, res) => {
