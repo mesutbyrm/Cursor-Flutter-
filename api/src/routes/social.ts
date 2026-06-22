@@ -149,7 +149,6 @@ socialRouter.get("/fortune-tellers", async (_req, res) => {
     : [];
   return ok(res, { tellers });
 });
-  });
 });
 
 /** POST /api/fortune-tellers/session — canlı falcı oturumu */
