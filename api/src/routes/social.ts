@@ -227,15 +227,10 @@ socialRouter.get(
     const uid = req.userId!;
     const user = await prisma.user.findUnique({
       where: { id: uid },
-      select: {
-        id: true,
-        displayName: true,
-        avatarUrl: true,
-        role: true,
-      },
+      select: { id: true, displayName: true, avatarUrl: true },
     });
-    if (!user || user.role !== "fortune_teller") {
-      return fail(res, 404, "NOT_FOUND", "Falcı profili bulunamadı");
+    if (!user) {
+      return fail(res, 404, "NOT_FOUND", "Kullanıcı bulunamadı");
     }
     return ok(res, {
       teller: {
