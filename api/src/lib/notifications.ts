@@ -33,11 +33,19 @@ export async function createNotification(input: {
   if (input.userId) {
     const extra: Record<string, string> = {
       title: input.title,
+      type: input.type ?? "system",
+      event: input.type ?? "system",
     };
     if (input.body) extra.body = input.body;
     if (input.targetPath) extra.targetPath = input.targetPath;
     if (input.targetId) extra.targetId = input.targetId;
-    if (input.type) extra.type = input.type;
+    // data içindeki tüm alanları ekle (sessionId, tellerId vb.)
+    if (input.data && typeof input.data === 'object') {
+      const d = input.data as Record<string, unknown>;
+      for (const [k, v] of Object.entries(d)) {
+        if (v != null) extra[k] = String(v);
+      }
+    }
     // Sadece OneSignal kullan — FCM ayrıca çağrılmıyor (çift bildirim önleme)
     void sendOneSignalToUser({
       userId: input.userId,
