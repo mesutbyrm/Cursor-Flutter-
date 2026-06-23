@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
@@ -601,35 +604,111 @@ class LivePsychicsRemoteDataSource {
   }) async {
     final key = sessionId.trim();
     final act = action.trim().toLowerCase();
-    if (key.isEmpty) return const PsychicRespondResult(success: false);
+    if (key.isEmpty) {
+      debugPrint('[PsychicRespond] empty sessionId action=$act');
+      return const PsychicRespondResult(
+        success: false,
+        errorMessage: 'sessionId boş',
+      );
+    }
+
+    final patchPath = ApiEndpoints.fortuneTellerSessionPatch(key);
     Map<String, dynamic>? body;
+    int? httpStatus;
+    String? endpointUsed;
+    String? responseBody;
+    String? errorMessage;
+
     try {
       final res = await _dio.safePatch<dynamic>(
-        ApiEndpoints.fortuneTellerSessionPatch(key),
+        patchPath,
         data: {'action': act},
       );
+      httpStatus = res.statusCode;
+      endpointUsed = patchPath;
+      responseBody = _psychicRespondBodySnippet(res.data);
+      debugPrint(
+        '[PsychicRespond] PATCH $patchPath action=$act '
+        'status=$httpStatus body=$responseBody',
+      );
       if (res.data is Map) body = asJsonMap(res.data);
-    } catch (_) {}
-    body ??= await _respondLegacy(key, act);
-    if (body == null) return const PsychicRespondResult(success: false);
+    } catch (e, st) {
+      debugPrint(
+        '[PsychicRespond] PATCH $patchPath action=$act exception: $e\n$st',
+      );
+      if (e is ApiException) {
+        httpStatus = e.statusCode;
+        errorMessage = e.message;
+      } else {
+        errorMessage = e.toString();
+      }
+    }
+
+    if (body == null) {
+      final legacyPath = ApiEndpoints.fortuneTellerSessionRespond(key);
+      try {
+        final res = await _dio.safePost<dynamic>(
+          legacyPath,
+          data: {'action': act},
+        );
+        httpStatus = res.statusCode;
+        endpointUsed = legacyPath;
+        responseBody = _psychicRespondBodySnippet(res.data);
+        debugPrint(
+          '[PsychicRespond] POST $legacyPath action=$act '
+          'status=$httpStatus body=$responseBody',
+        );
+        if (res.data is Map) body = asJsonMap(res.data);
+      } catch (e, st) {
+        debugPrint(
+          '[PsychicRespond] POST $legacyPath action=$act exception: $e\n$st',
+        );
+        if (e is ApiException) {
+          httpStatus = e.statusCode;
+          errorMessage = e.message;
+        } else {
+          errorMessage = e.toString();
+        }
+      }
+    }
+
+    if (body == null) {
+      return PsychicRespondResult(
+        success: false,
+        sessionId: key,
+        httpStatus: httpStatus,
+        endpoint: endpointUsed,
+        responseBody: responseBody,
+        errorMessage: errorMessage ?? 'Sunucu yanıt vermedi',
+      );
+    }
+
     final roomId = PsychicModel.str(body, ['roomId', 'trtcRoomId', 'room_id']) ??
         PsychicModel.str(asJsonMap(body['session'] ?? {}), ['roomId', 'id']);
+    final success =
+        body['success'] == true || roomId != null || body.isNotEmpty;
+    debugPrint(
+      '[PsychicRespond] parsed success=$success sessionId=$key roomId=$roomId',
+    );
     return PsychicRespondResult(
-      success: body['success'] == true || roomId != null || body.isNotEmpty,
+      success: success,
       sessionId: PsychicModel.str(body, ['sessionId', 'id']) ?? key,
       roomId: roomId,
+      httpStatus: httpStatus,
+      endpoint: endpointUsed,
+      responseBody: responseBody,
+      errorMessage: success ? null : errorMessage,
     );
   }
 
-  Future<Map<String, dynamic>?> _respondLegacy(String sessionId, String action) async {
+  String _psychicRespondBodySnippet(Object? data) {
+    if (data == null) return 'null';
     try {
-      final res = await _dio.safePost<dynamic>(
-        ApiEndpoints.fortuneTellerSessionRespond(sessionId),
-        data: {'action': action},
-      );
-      if (res.data is Map) return asJsonMap(res.data);
-    } catch (_) {}
-    return null;
+      final raw = data is String ? data : jsonEncode(data);
+      return raw.length > 600 ? '${raw.substring(0, 600)}…' : raw;
+    } catch (_) {
+      return data.toString();
+    }
   }
 
   Future<bool> endSession(String sessionId) async {

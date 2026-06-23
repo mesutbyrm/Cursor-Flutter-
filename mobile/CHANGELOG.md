@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.340+343 (2026-06-23)
+
+### Falcı davet popup — kabul akışı ve siyah ekran
+
+- **Kabul Et:** API çağrısı dialog içinde; yükleme göstergesi; başarıda popup kapanır ve randevu ekranı açılır; hatada snackbar
+- **`respondSession` log:** `PATCH /api/fortune-tellers/sessions/{id}` (+ POST yedek), HTTP status, response body, tüm exception'lar `debugPrint`
+- **Siyah ekran:** İptal push'unda yalnızca açık davet dialogu kapatılır; root navigator kör `pop` kaldırıldı
+- **Çift bildirim:** Aynı `sessionId` için 60 sn dedup (`PsychicInviteCoordinator`)
+
 ## 1.0.339+342 (2026-06-23)
 
 ### Falcı paneli, başvuru, TRTC video

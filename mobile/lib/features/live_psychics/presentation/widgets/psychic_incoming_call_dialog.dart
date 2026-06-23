@@ -1,26 +1,45 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/widgets/user_avatar.dart';
 
+import 'package:canlifal_social/features/live_psychics/domain/repositories/live_psychics_repository.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_fortune_types.dart';
 
-/// Tam ekran gelen çağrı diyaloğu — `true` kabul, `false` red, `null` kapatma.
-Future<bool?> showPsychicIncomingCallDialog(
-  BuildContext context, {
+enum PsychicIncomingDialogAction { dismissed, rejected, accepted }
+
+class PsychicIncomingDialogClose {
+  const PsychicIncomingDialogClose({
+    required this.action,
+    this.respond,
+  });
+
+  final PsychicIncomingDialogAction action;
+  final PsychicRespondResult? respond;
+}
+
+/// Tam ekran gelen çağrı diyaloğu — kabul/red API çağrısı burada yapılır.
+Future<PsychicIncomingDialogClose?> showPsychicIncomingCallDialog(
+  BuildContext context,
+  WidgetRef ref, {
+  required String sessionId,
   required String clientName,
   required String fortuneType,
   required int durationMinutes,
   required int totalJeton,
   String? clientAvatarUrl,
 }) {
-  return showGeneralDialog<bool>(
+  return showGeneralDialog<PsychicIncomingDialogClose>(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Canlı fal isteği',
     barrierColor: Colors.black.withValues(alpha: 0.85),
     transitionDuration: const Duration(milliseconds: 220),
     pageBuilder: (ctx, _, __) => _PsychicIncomingCallDialog(
+      sessionId: sessionId,
       clientName: clientName,
       fortuneType: fortuneType,
       durationMinutes: durationMinutes,
@@ -34,8 +53,9 @@ Future<bool?> showPsychicIncomingCallDialog(
   );
 }
 
-class _PsychicIncomingCallDialog extends StatelessWidget {
+class _PsychicIncomingCallDialog extends ConsumerStatefulWidget {
   const _PsychicIncomingCallDialog({
+    required this.sessionId,
     required this.clientName,
     required this.fortuneType,
     required this.durationMinutes,
@@ -43,6 +63,7 @@ class _PsychicIncomingCallDialog extends StatelessWidget {
     this.clientAvatarUrl,
   });
 
+  final String sessionId;
   final String clientName;
   final String fortuneType;
   final int durationMinutes;
@@ -50,8 +71,86 @@ class _PsychicIncomingCallDialog extends StatelessWidget {
   final String? clientAvatarUrl;
 
   @override
+  ConsumerState<_PsychicIncomingCallDialog> createState() =>
+      _PsychicIncomingCallDialogState();
+}
+
+class _PsychicIncomingCallDialogState
+    extends ConsumerState<_PsychicIncomingCallDialog> {
+  var _busy = false;
+  String? _busyAction;
+
+  Future<void> _respond(String action) async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _busyAction = action;
+    });
+    try {
+      final respond = await ref
+          .read(livePsychicsRepositoryProvider)
+          .respondSession(widget.sessionId, action: action);
+      if (!mounted) return;
+
+      debugPrint(
+        '[PsychicInviteDialog] $action session=${widget.sessionId} '
+        'success=${respond.success} endpoint=${respond.endpoint} '
+        'status=${respond.httpStatus} body=${respond.responseBody}',
+      );
+
+      if (action == 'accept') {
+        if (respond.success) {
+          Navigator.pop(
+            context,
+            PsychicIncomingDialogClose(
+              action: PsychicIncomingDialogAction.accepted,
+              respond: respond,
+            ),
+          );
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              respond.errorMessage ??
+                  'Kabul sunucuya iletilemedi (${respond.httpStatus ?? '?'})',
+            ),
+          ),
+        );
+        return;
+      }
+
+      Navigator.pop(
+        context,
+        PsychicIncomingDialogClose(
+          action: PsychicIncomingDialogAction.rejected,
+          respond: respond,
+        ),
+      );
+    } catch (e, st) {
+      debugPrint(
+        '[PsychicInviteDialog] $action session=${widget.sessionId} '
+        'exception: $e\n$st',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _busyAction = null;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final timeLabel = TimeOfDay.now().format(context);
+    final accepting = _busy && _busyAction == 'accept';
+    final rejecting = _busy && _busyAction == 'reject';
 
     return Material(
       color: Colors.transparent,
@@ -82,11 +181,12 @@ class _PsychicIncomingCallDialog extends StatelessWidget {
                       ],
                     ),
                   ),
-                  child: clientAvatarUrl != null && clientAvatarUrl!.isNotEmpty
+                  child: widget.clientAvatarUrl != null &&
+                          widget.clientAvatarUrl!.isNotEmpty
                       ? CircleAvatar(
                           radius: 56,
                           backgroundImage:
-                              CachedNetworkImageProvider(clientAvatarUrl!),
+                              CachedNetworkImageProvider(widget.clientAvatarUrl!),
                         )
                       : const UserAvatar(radius: 56),
                 ),
@@ -102,7 +202,7 @@ class _PsychicIncomingCallDialog extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text.rich(
                   TextSpan(
-                    text: clientName,
+                    text: widget.clientName,
                     style: const TextStyle(
                       color: Color(0xFFFFD54F),
                       fontWeight: FontWeight.w800,
@@ -123,7 +223,7 @@ class _PsychicIncomingCallDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  '✨ ${psychicFortuneTypeLabel(fortuneType)}',
+                  '✨ ${psychicFortuneTypeLabel(widget.fortuneType)}',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.65),
                     fontSize: 13,
@@ -132,7 +232,8 @@ class _PsychicIncomingCallDialog extends StatelessWidget {
                 const SizedBox(height: 24),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.35),
                     borderRadius: BorderRadius.circular(16),
@@ -144,7 +245,7 @@ class _PsychicIncomingCallDialog extends StatelessWidget {
                         child: Column(
                           children: [
                             Text(
-                              '$durationMinutes dakika',
+                              '${widget.durationMinutes} dakika',
                               style: const TextStyle(
                                 color: Color(0xFFFFD54F),
                                 fontWeight: FontWeight.w900,
@@ -167,7 +268,7 @@ class _PsychicIncomingCallDialog extends StatelessWidget {
                         child: Column(
                           children: [
                             Text(
-                              '$totalJeton jeton',
+                              '${widget.totalJeton} jeton',
                               style: const TextStyle(
                                 color: Color(0xFF00E676),
                                 fontWeight: FontWeight.w900,
@@ -209,21 +310,32 @@ class _PsychicIncomingCallDialog extends StatelessWidget {
                 ),
                 const Spacer(flex: 3),
                 _ActionBtn(
-                  label: 'Kabul Et',
+                  label: accepting ? 'Kabul ediliyor…' : 'Kabul Et',
                   icon: Icons.call_rounded,
                   gradient: const [Color(0xFF00C853), Color(0xFF00E676)],
-                  onTap: () => Navigator.pop(context, true),
+                  busy: accepting,
+                  enabled: !_busy,
+                  onTap: () => _respond('accept'),
                 ),
                 const SizedBox(height: 12),
                 _ActionBtn(
-                  label: 'Reddet',
+                  label: rejecting ? 'Reddediliyor…' : 'Reddet',
                   icon: Icons.call_end_rounded,
                   gradient: const [Color(0xFFE53935), Color(0xFFFF5252)],
-                  onTap: () => Navigator.pop(context, false),
+                  busy: rejecting,
+                  enabled: !_busy,
+                  onTap: () => _respond('reject'),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: _busy
+                      ? null
+                      : () => Navigator.pop(
+                            context,
+                            const PsychicIncomingDialogClose(
+                              action: PsychicIncomingDialogAction.dismissed,
+                            ),
+                          ),
                   child: Text(
                     'Kapat',
                     style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
@@ -244,12 +356,16 @@ class _ActionBtn extends StatelessWidget {
     required this.icon,
     required this.gradient,
     required this.onTap,
+    this.busy = false,
+    this.enabled = true,
   });
 
   final String label;
   final IconData icon;
   final List<Color> gradient;
   final VoidCallback onTap;
+  final bool busy;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -258,18 +374,32 @@ class _ActionBtn extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
+          onTap: enabled ? onTap : null,
           borderRadius: BorderRadius.circular(14),
           child: Ink(
             height: 52,
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: gradient),
+              gradient: LinearGradient(
+                colors: enabled
+                    ? gradient
+                    : gradient.map((c) => c.withValues(alpha: 0.45)).toList(),
+              ),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: Colors.white, size: 22),
+                if (busy)
+                  const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: Colors.white,
+                    ),
+                  )
+                else
+                  Icon(icon, color: Colors.white, size: 22),
                 const SizedBox(width: 10),
                 Text(
                   label,

@@ -39,6 +39,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   Timer? _poll;
   Timer? _inviteStatusWatch;
   var _presenting = false;
+  var _inviteDialogVisible = false;
   var _inviteUiReady = false;
   var _isFortuneTeller = false;
   String? _tellerProfileId;
@@ -271,9 +272,16 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
             (s) => {...s, sessionId},
           );
     }
-    final navCtx = rootNavigatorKey.currentContext;
-    if (navCtx != null && navCtx.mounted && _presenting) {
-      Navigator.of(navCtx, rootNavigator: true).pop(null);
+    if (_inviteDialogVisible) {
+      final navCtx = rootNavigatorKey.currentContext;
+      if (navCtx != null && navCtx.mounted) {
+        Navigator.of(navCtx, rootNavigator: true).maybePop(
+          const PsychicIncomingDialogClose(
+            action: PsychicIncomingDialogAction.dismissed,
+          ),
+        );
+      }
+      _inviteDialogVisible = false;
     }
   }
 
@@ -313,43 +321,35 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
       PsychicInviteCoordinator.markDialogShown(req.sessionId);
       _watchInviteCancellation(req);
 
-      final accepted = await showPsychicIncomingCallDialog(
+      _inviteDialogVisible = true;
+      final close = await showPsychicIncomingCallDialog(
         navCtx,
+        ref,
+        sessionId: req.sessionId,
         clientName: req.clientName,
         fortuneType: req.fortuneType,
         durationMinutes: req.durationMinutes,
         totalJeton: req.totalJeton,
         clientAvatarUrl: req.clientAvatarUrl,
       );
+      _inviteDialogVisible = false;
       if (!mounted) return;
 
-      if (accepted == null) {
+      if (close == null ||
+          close.action == PsychicIncomingDialogAction.dismissed) {
         ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
         return;
       }
 
-      if (!accepted) {
-        await ref
-            .read(livePsychicsRepositoryProvider)
-            .respondSession(req.sessionId, action: 'reject');
+      if (close.action == PsychicIncomingDialogAction.rejected) {
         ref.read(psychicDismissedSessionsProvider.notifier).update(
               (s) => {...s, req.sessionId},
             );
         return;
       }
 
-      final respond = await ref
-          .read(livePsychicsRepositoryProvider)
-          .respondSession(req.sessionId, action: 'accept');
-      if (!mounted) return;
-      if (!respond.success) {
-        if (navCtx.mounted) {
-          ScaffoldMessenger.of(navCtx).showSnackBar(
-            const SnackBar(
-              content: Text('Kabul sunucuya iletilemedi. Tekrar deneyin.'),
-            ),
-          );
-        }
+      final respond = close.respond;
+      if (respond == null || !respond.success) {
         ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
         return;
       }
@@ -386,6 +386,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
         );
       }
     } finally {
+      _inviteDialogVisible = false;
       _inviteStatusWatch?.cancel();
       _inviteStatusWatch = null;
       _activePresentingSessionId = null;

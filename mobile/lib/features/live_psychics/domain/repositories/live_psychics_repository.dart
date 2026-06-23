@@ -32,11 +32,19 @@ class PsychicRespondResult {
     required this.success,
     this.sessionId,
     this.roomId,
+    this.httpStatus,
+    this.endpoint,
+    this.responseBody,
+    this.errorMessage,
   });
 
   final bool success;
   final String? sessionId;
   final String? roomId;
+  final int? httpStatus;
+  final String? endpoint;
+  final String? responseBody;
+  final String? errorMessage;
 }
 
 class PsychicSessionStatusResult {
