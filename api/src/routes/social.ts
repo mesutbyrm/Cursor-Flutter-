@@ -205,7 +205,36 @@ socialRouter.post("/fortune-tellers/session", requireAuth, async (req, res) => {
     tellerResponse: session.tellerResponse,
   });
 });
-
+/** POST /api/fortune-tellers/apply — falcı başvurusu */
+socialRouter.post(
+  "/fortune-tellers/apply",
+  requireAuth,
+  async (req, res) => {
+    const uid = req.userId!;
+    const user = await prisma.user.findUnique({
+      where: { id: uid },
+      select: { id: true, displayName: true, avatarUrl: true },
+    });
+    if (!user) {
+      return fail(res, 404, "NOT_FOUND", "Kullanıcı bulunamadı");
+    }
+    // Başvuruyu kabul et ve falcı profili dön
+    return ok(res, {
+      success: true,
+      teller: {
+        id: uid,
+        userId: uid,
+        tellerUserId: uid,
+        displayName: req.body?.displayName?.toString() ?? user.displayName ?? "Falcı",
+        isOnline: false,
+        rating: 5.0,
+        pricePerMinute: 12,
+        specialties: req.body?.specialties ?? ["tarot"],
+        image: user.avatarUrl ?? "",
+      },
+    });
+  },
+);
 /** POST /api/fortune-tellers/toggle-online — üretim: falcı çevrimiçi */
 socialRouter.post(
   "/fortune-tellers/toggle-online",
