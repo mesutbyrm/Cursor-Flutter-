@@ -3,22 +3,24 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../data/datasources/live_fortune_request_datasource.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 import '../../domain/utils/live_discover_category.dart';
-import 'live_providers.dart';
 
 class LiveFortuneRequestsState {
   const LiveFortuneRequestsState({
     this.requests = const [],
     this.loading = false,
+    this.submitting = false,
     this.error,
     this.newRequestPulse = 0,
   });
 
   final List<LiveFortuneRequestEntity> requests;
   final bool loading;
+  final bool submitting;
   final String? error;
   final int newRequestPulse;
 
@@ -33,6 +35,7 @@ class LiveFortuneRequestsState {
   LiveFortuneRequestsState copyWith({
     List<LiveFortuneRequestEntity>? requests,
     bool? loading,
+    bool? submitting,
     String? error,
     int? newRequestPulse,
     bool clearError = false,
@@ -40,6 +43,7 @@ class LiveFortuneRequestsState {
     return LiveFortuneRequestsState(
       requests: requests ?? this.requests,
       loading: loading ?? this.loading,
+      submitting: submitting ?? this.submitting,
       error: clearError ? null : (error ?? this.error),
       newRequestPulse: newRequestPulse ?? this.newRequestPulse,
     );
@@ -76,7 +80,7 @@ class LiveFortuneRequestsNotifier
     required String fortuneType,
     required LiveFortunePriority priority,
   }) async {
-    state = state.copyWith(loading: true, clearError: true);
+    state = state.copyWith(submitting: true, clearError: true);
     try {
       final row = await _ds
           .createRequest(
@@ -97,17 +101,20 @@ class LiveFortuneRequestsNotifier
       return row;
     } on TimeoutException {
       state = state.copyWith(
-        loading: false,
+        submitting: false,
         error:
             'Fal isteği gönderilemedi: bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.',
       );
       return null;
     } catch (e) {
-      state = state.copyWith(loading: false, error: e.toString());
+      state = state.copyWith(
+        submitting: false,
+        error: ApiException.userMessage(e),
+      );
       return null;
     } finally {
-      if (state.loading) {
-        state = state.copyWith(loading: false);
+      if (state.submitting) {
+        state = state.copyWith(submitting: false);
       }
     }
   }

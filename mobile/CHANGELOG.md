@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.343+346 (2026-06-23)
+
+### Canlı yayın + canlı falcı düzeltmeleri
+
+- **Canlı falcılar Agora:** TRTC yerine canlı yayınla aynı Agora altyapısı (`POST /api/agora/token`, `joinTwoWayVideo`)
+- **Fal isteği:** HTTP loglama, ayrı `submitting` durumu, zaman aşımı ve hata mesajı — sonsuz loading giderildi
+- **Güzellik ayarları:** Yayın hazırlık ekranında beauty/filtre/kamera ön ayarı (yayında korunur)
+- **Oturum navigasyonu:** Kabul sonrası danışan doğrudan görüşme ekranına yönlendirilir
+- **Jeton bildirimi:** `JetonPaymentStatusListener` uygulama geneline taşındı (MainAppShell)
+
 ## 1.0.342+345 (2026-06-23)
 
 ### Jeton + canlı falcı oturumu

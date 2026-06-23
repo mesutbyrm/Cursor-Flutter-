@@ -13,14 +13,14 @@ import 'package:canlifal_social/features/profile/presentation/widgets/premium/pr
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_peer_left_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
-import 'package:canlifal_social/features/trtc/presentation/trtc_room_manager.dart';
+import 'package:canlifal_social/features/agora/presentation/agora_room_manager.dart';
 
 final _psychicSessionChatProvider =
     StateProvider.autoDispose.family<TextEditingController, PsychicSessionEntity>(
   (ref, _) => TextEditingController(),
 );
 
-/// Canlı fal video oturumu — TRTC + süre + sohbet.
+/// Canlı fal video oturumu — Agora + süre + sohbet.
 class PsychicVideoSessionScreen extends ConsumerWidget {
   const PsychicVideoSessionScreen({super.key, required this.session});
 
@@ -172,9 +172,9 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                   child: SizedBox(
                     width: 88,
                     height: 120,
-                    child: TrtcLocalVideoView(
+                    child: AgoraLocalVideoView(
                       key: ValueKey(state.localPreviewKey),
-                      manager: ctrl.trtc,
+                      manager: ctrl.agora,
                     ),
                   ),
                 ),
@@ -193,9 +193,9 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        TrtcLocalVideoView(
+                        AgoraLocalVideoView(
                           key: ValueKey(state.localPreviewKey),
-                          manager: ctrl.trtc,
+                          manager: ctrl.agora,
                         ),
                         Positioned(
                           right: 4,
@@ -385,14 +385,14 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _ControlBtn(
-                        icon: ctrl.trtc.micOn
+                        icon: ctrl.agora.micOn
                             ? Icons.mic_rounded
                             : Icons.mic_off_rounded,
                         label: 'Mik',
                         onTap: ctrl.toggleMic,
                       ),
                       _ControlBtn(
-                        icon: ctrl.trtc.cameraOn
+                        icon: ctrl.agora.cameraOn
                             ? Icons.videocam_rounded
                             : Icons.videocam_off_rounded,
                         label: 'Kamera',
@@ -523,39 +523,33 @@ class _VideoLayer extends StatelessWidget {
       );
     }
 
-    final peerId = ctrl.remotePeerId;
     if (!session.isClient) {
-      return ValueListenableBuilder<String?>(
-        valueListenable: ctrl.trtc.remoteAnchorUserIdNotifier,
-        builder: (context, anchor, _) {
-          final remoteId =
-              (anchor != null && anchor.isNotEmpty) ? anchor : peerId;
-          if (remoteId.isNotEmpty) {
-            return TrtcRemoteVideoView(
-              key: ValueKey('remote-$remoteId'),
-              manager: ctrl.trtc,
-              userId: remoteId,
+      return ValueListenableBuilder<int?>(
+        valueListenable: ctrl.agora.remoteUidNotifier,
+        builder: (context, remoteUid, _) {
+          if (remoteUid != null) {
+            return AgoraRemoteVideoView(
+              key: ValueKey('remote-$remoteUid'),
+              manager: ctrl.agora,
+              uid: remoteUid,
             );
           }
-          return TrtcLocalVideoView(
+          return AgoraLocalVideoView(
             key: ValueKey(state.localPreviewKey),
-            manager: ctrl.trtc,
+            manager: ctrl.agora,
           );
         },
       );
     }
 
-    final anchorId = peerId;
-    return ValueListenableBuilder<String?>(
-      valueListenable: ctrl.trtc.remoteAnchorUserIdNotifier,
-      builder: (context, anchor, _) {
-        final remoteId =
-            (anchor != null && anchor.isNotEmpty) ? anchor : anchorId;
-        if (remoteId.isNotEmpty) {
-          return TrtcRemoteVideoView(
-            key: ValueKey(remoteId),
-            manager: ctrl.trtc,
-            userId: remoteId,
+    return ValueListenableBuilder<int?>(
+      valueListenable: ctrl.agora.remoteUidNotifier,
+      builder: (context, remoteUid, _) {
+        if (remoteUid != null) {
+          return AgoraRemoteVideoView(
+            key: ValueKey('remote-$remoteUid'),
+            manager: ctrl.agora,
+            uid: remoteUid,
           );
         }
         return const LiveRoomVideoBackground();

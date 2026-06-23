@@ -1,14 +1,17 @@
 import 'dart:async';
 
-/// Canlı fal video oturumu — **TRTC birincil** medya katmanı.
-/// HTTP `/api/room/signal` yalnızca seans bitişinde sinyal temizliği için kullanılır.
+/// Canlı fal video oturumu — **Agora** (canlı yayın ile aynı altyapı).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/core/network/api_exception.dart';
+import 'package:canlifal_social/core/network/live_debug_log.dart';
 import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
 import 'package:canlifal_social/core/network/token_storage.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
+import 'package:canlifal_social/features/agora/presentation/agora_room_manager.dart';
+import 'package:canlifal_social/features/agora/presentation/providers/agora_providers.dart';
+import 'package:canlifal_social/features/live/presentation/providers/live_beauty_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_extend_sheet.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_tip_sheet.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
@@ -19,9 +22,6 @@ import 'package:canlifal_social/features/live_psychics/presentation/providers/li
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_peer_left_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
-import 'package:canlifal_social/features/trtc/domain/entities/trtc_credentials.dart';
-import 'package:canlifal_social/features/trtc/presentation/providers/trtc_providers.dart';
-import 'package:canlifal_social/features/trtc/presentation/trtc_room_manager.dart';
 
 class PsychicVideoState {
   const PsychicVideoState({
@@ -99,14 +99,14 @@ class PsychicVideoState {
 class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   PsychicVideoController(this.ref, this.session)
       : super(PsychicVideoState(remaining: Duration(minutes: session.durationMinutes))) {
-    _trtc = TrtcRoomManager();
+    _agora = AgoraRoomManager();
     _bootstrap();
   }
 
   final Ref ref;
   final PsychicSessionEntity session;
 
-  late final TrtcRoomManager _trtc;
+  late final AgoraRoomManager _agora;
   final _seenChatIds = <String>{};
   String? _lastChatAfter;
   Timer? _tick;
@@ -115,17 +115,19 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   Timer? _roomPoll;
   var _disposed = false;
 
-  TrtcRoomManager get trtc => _trtc;
+  AgoraRoomManager get agora => _agora;
 
-  String get trtcRoomId {
+  String get channelId {
     final fromRoom = state.room?.roomId?.trim();
     if (fromRoom != null && fromRoom.isNotEmpty) return fromRoom;
     return session.trtcRoomId;
   }
 
-  String get remotePeerId => session.remotePeerIdFor(room: state.room);
-
   Future<void> _bootstrap() async {
+    LiveDebugLog.log('psychic.session.bootstrap', {
+      'sessionId': session.sessionId,
+      'isClient': session.isClient,
+    });
     await PsychicSessionStore.save(session);
     await _syncRoomInfo(startTimerIfTeller: true);
     _startTimers();
@@ -225,7 +227,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   Future<void> _rejoinRtc() async {
-    await _trtc.leave();
+    await _agora.leave();
     if (_disposed) return;
     state = state.copyWith(rtcReady: false);
     await _joinRtc();
@@ -345,7 +347,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       state = state.copyWith(rtcError: 'Oturum için giriş gerekli');
       return;
     }
-    if (!_trtc.isSupported) {
+    if (!_agora.isSupported) {
       state = state.copyWith(rtcError: 'Video bu cihazda desteklenmiyor');
       return;
     }
@@ -364,37 +366,43 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     if (state.room?.roomId == null || state.room!.roomId!.trim().isEmpty) {
       await _syncRoomInfo();
     }
-    final roomId = trtcRoomId;
+    final roomId = channelId;
     if (roomId.trim().isEmpty) {
       state = state.copyWith(rtcError: 'Oda bilgisi alınamadı. Tekrar deneyin.');
       return;
     }
-    final remotePeerId = this.remotePeerId;
+
+    LiveDebugLog.log('psychic.agora.join.request', {
+      'sessionId': session.sessionId,
+      'channel': roomId,
+      'userId': user.id,
+    });
+
     try {
-      final cred = await ref.read(trtcRemoteProvider).fetchUserSig(
-            userId: user.id,
-            roomId: roomId,
+      final cred = await ref.read(agoraRemoteProvider).fetchToken(
+            channelName: roomId,
+            role: 'host',
           );
-      final effectiveRoomId =
-          cred.roomId.trim().isNotEmpty ? cred.roomId.trim() : roomId;
-      await _trtc.join(
-        credentials: TrtcCredentials(
-          sdkAppId: cred.sdkAppId,
-          userId: cred.userId,
-          userSig: cred.userSig,
-          roomId: effectiveRoomId,
-        ),
-        isHost: !session.isClient,
-        audioOnly: false,
-        twoWayVideo: true,
-        expectedAnchorUserId: session.isClient
-            ? (remotePeerId.trim().isNotEmpty
-                ? remotePeerId.trim()
-                : session.anchorUserId)
-            : (remotePeerId.trim().isNotEmpty ? remotePeerId.trim() : null),
+      final effectiveChannel = cred.channelName.trim().isNotEmpty
+          ? cred.channelName.trim()
+          : roomId;
+
+      await _agora.joinTwoWayVideo(
+        credentials: cred.copyWith(channelName: effectiveChannel),
       );
+      ref.read(liveBeautyProvider.notifier).bindRtc(agora: _agora);
+      LiveDebugLog.log('psychic.agora.join.ok', {
+        'sessionId': session.sessionId,
+        'channel': effectiveChannel,
+        'uid': cred.uid,
+      });
       state = state.copyWith(rtcReady: true, clearRtcError: true);
     } catch (e) {
+      LiveDebugLog.log('psychic.agora.join.fail', {
+        'sessionId': session.sessionId,
+        'channel': roomId,
+        'error': ApiException.userMessage(e),
+      });
       state = state.copyWith(rtcError: ApiException.userMessage(e));
     }
   }
@@ -425,7 +433,6 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         state = state.copyWith(sendingChat: false);
         return;
       }
-      // Optimistic ekleme yok — SSE/poll tek mesaj döndürür (çift gönderim önlenir).
       unawaited(_pollChat());
     } finally {
       if (!_disposed) state = state.copyWith(sendingChat: false);
@@ -542,15 +549,15 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   void toggleMic() {
-    _trtc.setMicEnabled(!_trtc.micOn);
+    _agora.setMicEnabled(!_agora.micOn);
   }
 
   void toggleCamera() {
-    _trtc.setCameraEnabled(!_trtc.cameraOn);
+    _agora.setCameraEnabled(!_agora.cameraOn);
     state = state.copyWith(localPreviewKey: state.localPreviewKey + 1);
   }
 
-  void switchCamera() => _trtc.switchCamera();
+  void switchCamera() => _agora.switchCamera();
 
   Future<void> leave({
     bool silent = false,
@@ -583,7 +590,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           .clearRoomSignals(session.sessionId);
     } catch (_) {}
     await ref.read(psychicRoomSseServiceProvider).disconnect();
-    await _trtc.leave();
+    await _agora.leave();
     await PsychicSessionStore.clear();
     ref.invalidate(coinBalanceProvider);
     if (peerEndedMessage != null) {
@@ -618,7 +625,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     _ping?.cancel();
     _roomPoll?.cancel();
     unawaited(ref.read(psychicRoomSseServiceProvider).disconnect());
-    _trtc.dispose();
+    _agora.dispose();
     super.dispose();
   }
 }

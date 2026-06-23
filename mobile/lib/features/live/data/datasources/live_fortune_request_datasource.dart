@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/live_debug_log.dart';
 import '../../../../core/util/json_util.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
 
@@ -20,14 +22,23 @@ class LiveFortuneRequestDataSource {
         ApiEndpoints.videoStreamFortuneRequests(id),
       );
       return _parseList(res.data);
-    } catch (_) {
+    } catch (e) {
+      LiveDebugLog.log('fal.request.fetch.fail', {
+        'streamId': id,
+        'primary': ApiEndpoints.videoStreamFortuneRequests(id),
+        'error': ApiException.userMessage(e),
+      });
       try {
         final res = await _dio.safeGet<dynamic>(
           ApiEndpoints.liveFalRequests,
           query: {'streamId': id},
         );
         return _parseList(res.data);
-      } catch (_) {
+      } catch (e2) {
+        LiveDebugLog.log('fal.request.fetch.fallback.fail', {
+          'streamId': id,
+          'error': ApiException.userMessage(e2),
+        });
         return const [];
       }
     }
@@ -40,6 +51,7 @@ class LiveFortuneRequestDataSource {
     required String fortuneType,
     required LiveFortunePriority priority,
   }) async {
+    final id = streamId.trim();
     final body = {
       'displayName': displayName.trim(),
       'question': question.trim(),
@@ -49,23 +61,50 @@ class LiveFortuneRequestDataSource {
       'jetonCost': priority.jetonCost,
     };
 
+    final primaryPath = ApiEndpoints.videoStreamFortuneRequests(id);
+    LiveDebugLog.log('fal.request.create', {
+      'streamId': id,
+      'path': primaryPath,
+      'priority': priority.name,
+    });
+
     try {
       final res = await _dio.safePost<dynamic>(
-        ApiEndpoints.videoStreamFortuneRequests(streamId.trim()),
+        primaryPath,
         data: body,
       );
+      LiveDebugLog.log('fal.request.create.ok', {
+        'streamId': id,
+        'status': res.statusCode,
+        'path': primaryPath,
+      });
       final row = _unwrap(res.data);
       if (row != null) return LiveFortuneRequestEntity.fromJson(row);
-    } catch (_) {}
+    } catch (e) {
+      LiveDebugLog.log('fal.request.create.primary.fail', {
+        'streamId': id,
+        'path': primaryPath,
+        'error': ApiException.userMessage(e),
+      });
+    }
 
+    final fallbackPath = ApiEndpoints.liveFalRequestCreate;
+    LiveDebugLog.log('fal.request.create.fallback', {
+      'streamId': id,
+      'path': fallbackPath,
+    });
     final res = await _dio.safePost<dynamic>(
-      ApiEndpoints.liveFalRequestCreate,
-      data: {...body, 'streamId': streamId.trim()},
+      fallbackPath,
+      data: {...body, 'streamId': id},
     );
+    LiveDebugLog.log('fal.request.create.fallback.ok', {
+      'streamId': id,
+      'status': res.statusCode,
+    });
     final row = _unwrap(res.data);
     if (row == null) {
       throw DioException(
-        requestOptions: RequestOptions(path: ApiEndpoints.liveFalRequestCreate),
+        requestOptions: RequestOptions(path: fallbackPath),
         message: 'Fal isteği oluşturulamadı',
       );
     }
@@ -86,7 +125,12 @@ class LiveFortuneRequestDataSource {
       );
       final row = _unwrap(res.data);
       if (row != null) return LiveFortuneRequestEntity.fromJson(row);
-    } catch (_) {}
+    } catch (e) {
+      LiveDebugLog.log('fal.request.update.fail', {
+        'requestId': requestId,
+        'error': ApiException.userMessage(e),
+      });
+    }
 
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.liveFalRequestUpdate(requestId),

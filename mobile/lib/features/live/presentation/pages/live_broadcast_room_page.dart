@@ -310,6 +310,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         ref.invalidate(coinBalanceProvider);
         return true;
       }
+      final err = ref.read(liveFortuneRequestsProvider(streamId)).error;
+      if (mounted && err != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(err)),
+        );
+      }
       return false;
     } on TimeoutException {
       if (mounted) {

@@ -221,6 +221,116 @@ class AgoraRoomManager {
     await join(credentials: credentials, isHost: true);
   }
 
+  /// İki yönlü görüntülü görüşme — canlı falcılar (her iki taraf yayıncı).
+  Future<void> joinTwoWayVideo({
+    required AgoraCredentials credentials,
+  }) async {
+    if (!isSupported) {
+      throw StateError('Agora yalnızca Android/iOS üzerinde desteklenir');
+    }
+
+    final channel = credentials.channelName.trim();
+    if (channel.isEmpty) {
+      throw StateError('Agora kanal adı boş');
+    }
+
+    final ok = await requestPermissions(video: true);
+    if (!ok) throw StateError('Mikrofon veya kamera izni verilmedi');
+
+    if (_inChannel || _previewOnly) {
+      await leave();
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    }
+
+    final appId = credentials.appId.trim();
+    if (appId.isEmpty) {
+      throw StateError('Agora App ID eksik');
+    }
+
+    await _ensureEngine(appId);
+    _isHost = true;
+    _previewOnly = false;
+    _channelName = channel;
+
+    await _engine!.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
+    await _engine!.enableLocalAudio(true);
+    await _engine!.muteLocalAudioStream(false);
+    await _engine!.muteLocalVideoStream(false);
+    _micOn = true;
+    _cameraOn = true;
+
+    final joinCompleter = Completer<void>();
+    void onJoin(RtcConnection connection, int elapsed) {
+      if (!joinCompleter.isCompleted) joinCompleter.complete();
+    }
+
+    final prevHandler = _handler;
+    _handler = RtcEngineEventHandler(
+      onJoinChannelSuccess: (connection, elapsed) {
+        _inChannel = true;
+        onJoin(connection, elapsed);
+        debugPrint('Agora 2-way join ok channel=${connection.channelId}');
+      },
+      onLeaveChannel: (connection, stats) => _inChannel = false,
+      onUserJoined: (connection, uid, elapsed) {
+        debugPrint('Agora 2-way remote joined uid=$uid');
+        _remoteUids.add(uid);
+        remoteUidsNotifier.value = _remoteUids.toList()..sort();
+        remoteUid = uid;
+        remoteUidNotifier.value = uid;
+        remoteVideoAvailable.value = true;
+      },
+      onUserOffline: (connection, uid, reason) {
+        _remoteUids.remove(uid);
+        remoteUidsNotifier.value = _remoteUids.toList()..sort();
+        if (remoteUid == uid) {
+          remoteUid = _remoteUids.isEmpty ? null : _remoteUids.first;
+          remoteUidNotifier.value = remoteUid;
+          remoteVideoAvailable.value = remoteUid != null;
+        }
+      },
+      onError: (err, msg) {
+        debugPrint('Agora 2-way error $err: $msg');
+        if (!joinCompleter.isCompleted) {
+          joinCompleter.completeError(StateError('Agora bağlantı hatası: $msg'));
+        }
+      },
+    );
+    if (prevHandler != null) _engine!.unregisterEventHandler(prevHandler);
+    _engine!.registerEventHandler(_handler!);
+
+    try {
+      await _engine!.joinChannel(
+        token: credentials.token,
+        channelId: channel,
+        uid: credentials.uid,
+        options: const ChannelMediaOptions(
+          channelProfile: ChannelProfileType.channelProfileLiveBroadcasting,
+          clientRoleType: ClientRoleType.clientRoleBroadcaster,
+          publishMicrophoneTrack: true,
+          publishCameraTrack: true,
+          autoSubscribeAudio: true,
+          autoSubscribeVideo: true,
+        ),
+      );
+    } on AgoraRtcException catch (e) {
+      if (e.code == -17 || e.code == 17) {
+        if (!joinCompleter.isCompleted) joinCompleter.complete();
+        _inChannel = true;
+      } else {
+        rethrow;
+      }
+    }
+
+    await joinCompleter.future.timeout(
+      const Duration(seconds: 20),
+      onTimeout: () => throw StateError('Agora kanala bağlanılamadı'),
+    );
+    _inChannel = true;
+    await _engine!.enableLocalVideo(true);
+    await _engine!.enableLocalAudio(true);
+  }
+
   void setMicEnabled(bool enabled) {
     if (_engine == null || !_isHost) return;
     _engine!.muteLocalAudioStream(!enabled);

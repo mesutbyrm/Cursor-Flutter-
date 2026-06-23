@@ -98,6 +98,8 @@ class _LiveFortuneRequestFormState extends State<LiveFortuneRequestForm> {
       if (success) {
         _snack('Fal isteğiniz gönderildi');
         _question.clear();
+      } else if (mounted) {
+        _snack('Fal isteği gönderilemedi. Lütfen tekrar deneyin.');
       }
     } finally {
       if (mounted) setState(() => _loading = false);

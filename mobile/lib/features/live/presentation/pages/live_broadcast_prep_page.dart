@@ -17,7 +17,9 @@ import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_guest_layout.dart';
 import '../../domain/utils/live_stream_category.dart';
 import '../providers/live_providers.dart';
+import '../providers/live_beauty_provider.dart';
 import '../widgets/live_tiktok/live_background_picker_sheet.dart';
+import '../widgets/premium_2026/live_beauty_filter_sheet.dart';
 
 /// TikTok tarzı yayın hazırlığı — kamera önizleme, misafir modu, arka plan.
 class LiveBroadcastPrepPage extends ConsumerStatefulWidget {
@@ -124,6 +126,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         );
       }
       await _agora.startPreviewOnly(appId: cred.appId);
+      ref.read(liveBeautyProvider.notifier).bindRtc(agora: _agora);
       if (mounted) {
         setState(() {
           _previewReady = true;
@@ -502,7 +505,10 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                           const SizedBox(width: 14),
                           _ControlBtn(
                             icon: Icons.auto_fix_high_rounded,
-                            onTap: _pickBackground,
+                            onTap: () => showLiveBeautyFilterSheet(
+                              context: context,
+                              ref: ref,
+                            ),
                           ),
                         ],
                       ),

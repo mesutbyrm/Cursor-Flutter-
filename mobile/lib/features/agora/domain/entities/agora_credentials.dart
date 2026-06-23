@@ -34,4 +34,18 @@ class AgoraCredentials {
       uid: asInt(pick(json, ['uid', 'agoraUid'])),
     );
   }
+
+  AgoraCredentials copyWith({
+    String? token,
+    String? channelName,
+    String? appId,
+    int? uid,
+  }) {
+    return AgoraCredentials(
+      token: token ?? this.token,
+      channelName: channelName ?? this.channelName,
+      appId: appId ?? this.appId,
+      uid: uid ?? this.uid,
+    );
+  }
 }

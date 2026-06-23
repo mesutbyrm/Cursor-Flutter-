@@ -149,7 +149,7 @@ abstract final class PsychicFlow {
       return;
     }
     if (path.contains('/waiting')) {
-      router.pushReplacement('/canli-falcilar/${psychic.id}/ad-transition', extra: session);
+      router.pushReplacement('/canli-falcilar/${psychic.id}/session', extra: session);
     } else {
       router.push('/canli-falcilar/${psychic.id}/session', extra: session);
     }
