@@ -218,7 +218,7 @@ socialRouter.post(
         id: uid,
         userId: uid,
         tellerUserId: uid,
-        displayName: req.body?.displayName?.toString() ?? user.displayName ?? "Falcı",
+        displayName: req.body?.displayName?.toString() ?? "Falcı",
         isOnline: false,
         rating: 5.0,
         pricePerMinute: 12,
