@@ -95,8 +95,8 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                   ),
                   Expanded(
                     child: DiscoverTabHeader(
-                      title: 'Finans · Ödeme Bildirimleri',
-                      subtitle: 'Jeton ve CFC manuel ödemeler',
+                      title: 'Ödeme Talepleri',
+                      subtitle: 'Jeton ve CFC — onayla veya reddet',
                     ),
                   ),
                   DiscoverIconButton(
@@ -454,10 +454,11 @@ class _PendingPaymentsTab extends StatelessWidget {
                     ),
                     SizedBox(height: 6),
                     Text(
-                      paymentRequestSummary(r),
+                      paymentRequestDetailLine(r),
                       style: TextStyle(
                         color: context.colors.onSurfaceMuted,
                         fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     if (r['notes'] != null && r['notes'].toString().isNotEmpty)

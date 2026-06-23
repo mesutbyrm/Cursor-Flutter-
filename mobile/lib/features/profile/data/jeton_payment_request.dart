@@ -1,5 +1,47 @@
 import '../domain/entities/jeton_package_entity.dart';
 
+/// Özel TL/jeton tutarıyla jeton talebi — `CANLIFAL-{userId}` açıklama kodu.
+Map<String, dynamic> buildCustomJetonPaymentRequest({
+  required int coins,
+  required double priceTry,
+  required String method,
+  required String userId,
+  String? username,
+  String? paymentReference,
+  String? receiptReference,
+}) {
+  final safeCoins = coins > 0 ? coins : 1;
+  final ref = (paymentReference ?? 'CANLIFAL-$userId').trim();
+  final receipt = receiptReference?.trim();
+  final notes = StringBuffer()
+    ..writeln('Jeton yükleme · $method')
+    ..writeln('Açıklama: $ref')
+    ..writeln('$safeCoins jeton · ₺${priceTry.toStringAsFixed(priceTry == priceTry.roundToDouble() ? 0 : 2)}');
+  if (username != null && username.trim().isNotEmpty) {
+    notes.writeln('Kullanıcı: ${username.trim()}');
+  }
+  return {
+    'requestType': 'jeton',
+    'type': 'jeton',
+    'method': method,
+    'packageId': 'custom_$safeCoins',
+    'packageTitle': '$safeCoins Jeton',
+    'coins': safeCoins,
+    'amount': safeCoins,
+    'priceTry': priceTry,
+    if (username != null && username.trim().isNotEmpty)
+      'senderInfo': username.trim(),
+    if (receipt != null && receipt.isNotEmpty) ...{
+      'receiptReference': receipt,
+      'receiptUrl': receipt,
+    },
+    'notes': notes.toString().trim(),
+    'notifyAdmins': true,
+    'notifyStaff': true,
+    'source': 'mobile_jeton_premium',
+  };
+}
+
 /// canlifal.com `POST /api/payment/requests` — jeton talebi gövdesi.
 /// Eski site API'si yalnızca `amount` okuyorsa uyum için `amount` = `coins`.
 Map<String, dynamic> buildJetonPaymentRequest({
