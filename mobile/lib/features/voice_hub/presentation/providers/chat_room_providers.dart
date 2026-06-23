@@ -429,8 +429,6 @@ class VoiceRoomLiveController
     });
     Future.microtask(() async {
       await VoiceRoomMusicAudioSession.ensureConfigured();
-      ref.invalidate(coinBalanceProvider);
-      ref.invalidate(walletBalancesProvider);
       await Future.wait([_joinPresence(), _warmBackgrounds()]);
       await refresh(includeDj: true);
       _startSse();
@@ -1251,7 +1249,7 @@ class VoiceRoomLiveController
             skipPayment: false,
           );
       if (result.newBalance != null) {
-        ref.invalidate(walletBalancesProvider);
+        invalidateWalletCacheFromRef(ref);
       }
       await _syncMusicFromServerIfNeeded(force: true);
       final playErr = await _playDjInBackgroundAndReport(state.dj);
@@ -1484,8 +1482,8 @@ class VoiceRoomLiveController
         dj = await _applyDjPlayback(dj);
         state = state.copyWith(dj: dj, clearError: true);
       }
-      ref.invalidate(coinBalanceProvider);
-      ref.invalidate(walletBalancesProvider);
+      invalidateWalletCacheFromRef(ref);
+      invalidateWalletCacheFromRef(ref);
       VoiceRoomDebugLog.log('music.sync.ok', {
         'playing': dj.playing,
         'queue': dj.musicQueue.length,
@@ -1714,8 +1712,8 @@ class VoiceRoomLiveController
         }
       }
 
-      ref.invalidate(coinBalanceProvider);
-      ref.invalidate(walletBalancesProvider);
+      invalidateWalletCacheFromRef(ref);
+      invalidateWalletCacheFromRef(ref);
 
       var queue = result.queue;
       var nowPlaying =
@@ -2693,8 +2691,8 @@ class VoiceRoomLiveController
             const Duration(seconds: 45),
             onTimeout: () => throw TimeoutException('Şarkı isteği zaman aşımı'),
           );
-      ref.invalidate(coinBalanceProvider);
-      ref.invalidate(walletBalancesProvider);
+      invalidateWalletCacheFromRef(ref);
+      invalidateWalletCacheFromRef(ref);
       VoiceRoomDebugLog.log('music.request.ok', {
         'playing': result.playing,
         'queuePos': result.queuePosition,

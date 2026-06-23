@@ -37,8 +37,7 @@ class ProfilePage extends ConsumerWidget {
 
     Future<void> refresh() async {
       await ref.read(authControllerProvider.notifier).refreshMe();
-      ref.invalidate(walletBalancesProvider);
-      ref.invalidate(coinBalanceProvider);
+      await ref.read(walletBalancesProvider.notifier).refresh(force: true);
       ref.invalidate(profileStatsProvider);
       ref.invalidate(giftsReceivedSummaryProvider);
     }

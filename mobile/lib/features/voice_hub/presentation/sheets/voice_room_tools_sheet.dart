@@ -60,7 +60,7 @@ class _VoiceRoomToolsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final coins = ref.watch(coinBalanceProvider).valueOrNull ?? 0;
+    final coins = ref.watch(coinBalanceProvider) ?? 0;
     final coinLabel = NumberFormat.decimalPattern('tr').format(coins);
     final rules = (room.rulesTr ?? room.descTr ?? '').trim();
     final canModerate = perms.canModerate || isOwner;

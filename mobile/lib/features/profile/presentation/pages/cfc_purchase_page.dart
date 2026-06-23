@@ -52,7 +52,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
 
   Future<void> _refresh() async {
     ref.invalidate(paymentConfigProvider);
-    ref.invalidate(walletBalancesProvider);
+    ref.refreshWalletCache(force: true);
     await ref.read(paymentRequestsNotifierProvider.notifier).refresh();
   }
 
@@ -86,7 +86,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                   config: PaymentDefaults.config,
                   onSubmitted: () {
                     ref.read(paymentRequestsNotifierProvider.notifier).refresh();
-                    ref.invalidate(walletBalancesProvider);
+                    ref.refreshWalletCache(force: true);
                   },
                 ),
               ],
@@ -120,7 +120,7 @@ class _CfcPurchasePageState extends ConsumerState<CfcPurchasePage> {
                     config: cfg,
                     onSubmitted: () {
                       ref.read(paymentRequestsNotifierProvider.notifier).refresh();
-                      ref.invalidate(walletBalancesProvider);
+                      ref.refreshWalletCache(force: true);
                     },
                   ),
                 ),

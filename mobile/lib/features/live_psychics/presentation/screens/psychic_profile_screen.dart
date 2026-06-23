@@ -29,7 +29,7 @@ class PsychicProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final psychicAsync = ref.watch(psychicDetailProvider(psychicId));
-    final balance = ref.watch(coinBalanceProvider).valueOrNull ?? 0;
+    final balance = ref.watch(coinBalanceProvider) ?? 0;
     final isStaff = ref.watch(walletBalancesProvider).valueOrNull?.isStaff == true;
     final booking = ref.watch(_profileBookingProvider);
 

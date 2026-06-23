@@ -579,7 +579,7 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
     await ref.read(walletRepositoryProvider).submitPaymentRequest(body);
     await _prefs.saveLastPackageId(widget.package.id);
     await _prefs.saveLastPaymentMethod(_methodApi);
-    ref.invalidate(walletBalancesProvider);
+    ref.refreshWalletCache(force: true);
     ref.invalidate(paymentRequestsNotifierProvider);
     ref.invalidate(adminPaymentRequestsProvider);
     ref.invalidate(adminPaymentNotificationsProvider);

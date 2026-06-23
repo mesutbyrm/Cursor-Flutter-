@@ -99,8 +99,8 @@ class RoomGiftPanel extends ConsumerWidget {
             giftTypeId: g.id,
           );
       if (!context.mounted) return;
-      ref.invalidate(coinBalanceProvider);
-      ref.invalidate(walletBalancesProvider);
+      ref.refreshWalletCache(force: true);
+      ref.refreshWalletCache(force: true);
       onSent?.call();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

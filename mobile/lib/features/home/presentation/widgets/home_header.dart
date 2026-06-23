@@ -21,7 +21,7 @@ class HomeHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).valueOrNull;
     final name = user?.display ?? 'CanlıFal';
-    final coins = ref.watch(coinBalanceProvider).valueOrNull ??
+    final coins = ref.watch(coinBalanceProvider) ??
         user?.coinBalance ??
         0;
     final coinLabel = NumberFormat.decimalPattern('tr').format(coins);

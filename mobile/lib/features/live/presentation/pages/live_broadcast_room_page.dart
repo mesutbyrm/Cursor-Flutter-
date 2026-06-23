@@ -307,7 +307,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                 priority: priority,
               );
       if (row != null) {
-        ref.invalidate(coinBalanceProvider);
+        ref.refreshWalletCache(force: true);
         return true;
       }
       final err = ref.read(liveFortuneRequestsProvider(streamId)).error;
@@ -348,7 +348,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     final streamId = s.streamId?.trim();
     if (streamId != null && streamId.isNotEmpty && _isFortuneBroadcast(s)) {
       final balance =
-          ref.read(coinBalanceProvider).valueOrNull ?? user.coinBalance;
+          ref.read(coinBalanceProvider) ?? user.coinBalance;
       final ok = await showModalBottomSheet<bool>(
         context: context,
         isScrollControlled: true,
@@ -410,7 +410,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     }
     final options = PsychicDurationOption.forPsychic(psychic.pricePerMinute);
     final opt = options.length > 1 ? options[1] : options.first;
-    final balance = ref.read(coinBalanceProvider).valueOrNull ?? user.coinBalance;
+    final balance = ref.read(coinBalanceProvider) ?? user.coinBalance;
     if (balance < opt.totalJeton) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Yetersiz jeton. Gerekli: ${opt.totalJeton}')),
@@ -1060,7 +1060,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     final fortuneReqState = hasStream && s.isHost
         ? ref.watch(liveFortuneRequestsProvider(streamId))
         : null;
-    final balance = ref.watch(coinBalanceProvider).valueOrNull ?? user?.coinBalance;
+    final balance = ref.watch(coinBalanceProvider) ?? user?.coinBalance;
     final broadcastSettings = ref.watch(liveBroadcastSettingsProvider);
 
     if (hasStream && s.isHost) {

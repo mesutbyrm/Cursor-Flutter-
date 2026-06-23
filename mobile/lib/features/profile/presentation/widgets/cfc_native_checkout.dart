@@ -269,7 +269,7 @@ class _CfcNativeCheckoutState extends ConsumerState<CfcNativeCheckout> {
             : _notesCtrl.text.trim(),
       });
       if (!mounted) return;
-      ref.invalidate(walletBalancesProvider);
+      ref.refreshWalletCache(force: true);
       ref.invalidate(paymentRequestsNotifierProvider);
       ref.invalidate(adminPaymentRequestsProvider);
       ref.invalidate(adminPaymentNotificationsProvider);

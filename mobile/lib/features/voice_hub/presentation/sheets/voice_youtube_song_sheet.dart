@@ -156,7 +156,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
       return;
     }
-    ref.invalidate(coinBalanceProvider);
+    ref.refreshWalletCache(force: true);
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Şarkı sıraya eklendi · $_cost jeton')),
@@ -166,7 +166,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
-    final coins = ref.watch(coinBalanceProvider).valueOrNull ?? 0;
+    final coins = ref.watch(coinBalanceProvider) ?? 0;
     final balanceLabel = NumberFormat.decimalPattern('tr').format(coins);
 
     return Padding(

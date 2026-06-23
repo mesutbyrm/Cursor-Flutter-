@@ -237,7 +237,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
       _refreshAll();
       await ref.read(adminPaymentRequestsProvider.future);
       await ref.read(adminPaymentNotificationsProvider.future);
-      ref.invalidate(walletBalancesProvider);
+      ref.refreshWalletCache(force: true);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

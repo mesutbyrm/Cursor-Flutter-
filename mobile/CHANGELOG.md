@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.344+347 (2026-06-23)
+
+### Performans (Öncelik 1)
+
+- **Splash:** Bootstrap en fazla 2 saniye; auth timeout 2 sn
+- **Jeton cache:** `WalletBalancesNotifier` — throttle (20 sn), 3 sn fetch timeout
+- **Gereksiz API:** Sesli oda girişinde cüzdan yenileme kaldırıldı
+- **Profil:** İstatistikler 3 sn timeout + keepAlive
+- **Fal isteği SSE:** `{ request: {...} }` sarmalayıcı parse düzeltmesi
+
 ## 1.0.343+346 (2026-06-23)
 
 ### Canlı yayın + canlı falcı düzeltmeleri

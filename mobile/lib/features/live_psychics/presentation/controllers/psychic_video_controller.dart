@@ -440,7 +440,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
   }
 
   Future<int?> openTipSheet(BuildContext context) async {
-    final balance = ref.read(coinBalanceProvider).valueOrNull ??
+    final balance = ref.read(coinBalanceProvider) ??
         ref.read(authControllerProvider).valueOrNull?.coinBalance ??
         0;
     return showPsychicTipSheet(
@@ -458,7 +458,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           tellerUserId: session.tellerUserId,
         );
     if (ok) {
-      ref.invalidate(coinBalanceProvider);
+      invalidateWalletCacheFromRef(ref);
       state = state.copyWith(tipThankYouAmount: amount);
       Future<void>.delayed(const Duration(seconds: 3), () {
         if (!_disposed) state = state.copyWith(clearTipThankYou: true);
@@ -473,7 +473,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         : 10;
     final isStaff =
         ref.read(walletBalancesProvider).valueOrNull?.isStaff == true;
-    final balance = ref.read(coinBalanceProvider).valueOrNull ??
+    final balance = ref.read(coinBalanceProvider) ??
         ref.read(authControllerProvider).valueOrNull?.coinBalance ??
         0;
     return showPsychicExtendSheet(
@@ -490,7 +490,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           minutes: choice.minutes,
         );
     if (ok) {
-      ref.invalidate(coinBalanceProvider);
+      invalidateWalletCacheFromRef(ref);
       await _syncRoomInfo();
       final room = state.room;
       state = state.copyWith(
@@ -508,7 +508,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           totalJeton: choice.jeton,
         );
     if (ok) {
-      ref.invalidate(coinBalanceProvider);
+      invalidateWalletCacheFromRef(ref);
       await _syncRoomInfo();
       final room = state.room;
       state = state.copyWith(
@@ -592,7 +592,7 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
     await ref.read(psychicRoomSseServiceProvider).disconnect();
     await _agora.leave();
     await PsychicSessionStore.clear();
-    ref.invalidate(coinBalanceProvider);
+    invalidateWalletCacheFromRef(ref);
     if (peerEndedMessage != null) {
       ref.read(psychicPeerLeftProvider.notifier).state = PsychicPeerLeftEvent(
         sessionId: session.sessionId,

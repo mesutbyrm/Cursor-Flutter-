@@ -39,7 +39,7 @@ Future<void> recordGameCenterResult(
   ref.invalidate(gameMiniScoresProvider);
   ref.invalidate(gameLeaderboardProvider);
   ref.invalidate(gameCenterLeaderboardProvider);
-  ref.invalidate(walletBalancesProvider);
+  ref.refreshWalletCache(force: true);
   ref.invalidate(gameCenterJetonProvider);
 }
 

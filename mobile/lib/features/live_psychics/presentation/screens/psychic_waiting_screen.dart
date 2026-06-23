@@ -183,7 +183,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     _timeout?.cancel();
     await ref.read(psychicRoomSseServiceProvider).disconnect();
     await PsychicSessionStore.clear();
-    ref.invalidate(coinBalanceProvider);
+    invalidateWalletCacheFromRef(ref);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
         'Falcı görüşmeyi iptal etti — jetonlar iade edilir';
     ref.read(psychicWaitingExitProvider.notifier).state = session.psychic.id;
@@ -204,7 +204,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     );
     await ref.read(psychicRoomSseServiceProvider).disconnect();
     await PsychicSessionStore.clear();
-    ref.invalidate(coinBalanceProvider);
+    invalidateWalletCacheFromRef(ref);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
         'Falcı yanıt vermedi — süre doldu, jetonlar iade edildi';
     ref.read(psychicWaitingExitProvider.notifier).state = session.psychic.id;
@@ -238,7 +238,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     _timeout?.cancel();
     await ref.read(psychicRoomSseServiceProvider).disconnect();
     await PsychicSessionStore.clear();
-    ref.invalidate(coinBalanceProvider);
+    invalidateWalletCacheFromRef(ref);
     ref.read(psychicWaitingExitProvider.notifier).state = session.psychic.id;
   }
 

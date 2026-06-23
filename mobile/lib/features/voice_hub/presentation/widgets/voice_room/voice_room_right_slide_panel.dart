@@ -162,7 +162,7 @@ class _PanelBodyState extends ConsumerState<_PanelBody> {
 
   @override
   Widget build(BuildContext context) {
-    final coins = ref.watch(coinBalanceProvider).valueOrNull ?? 0;
+    final coins = ref.watch(coinBalanceProvider) ?? 0;
     final coinLabel = NumberFormat.decimalPattern('tr').format(coins);
     final rules = (widget.room.rulesTr ?? widget.room.descTr ?? '').trim();
     final canModerate = widget.perms.canModerate || widget.isOwner;

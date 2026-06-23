@@ -23,7 +23,7 @@ class DiscoverPremiumHeader extends ConsumerWidget {
     final user = ref.watch(authControllerProvider).valueOrNull;
     final guest = ref.watch(guestModeProvider);
     final name = user?.display ?? (guest ? 'Misafir' : 'CanlıFal');
-    final coins = ref.watch(coinBalanceProvider).valueOrNull ??
+    final coins = ref.watch(coinBalanceProvider) ??
         user?.coinBalance ??
         0;
     final coinLabel = NumberFormat.decimalPattern('tr').format(coins);

@@ -30,7 +30,8 @@ class WalletCenterPage extends ConsumerWidget {
         child: DiscoverSubPage(
           title: 'Cüzdanım',
           subtitle: 'Jeton · CFC · Premium üyelik',
-          onRefresh: () async => ref.invalidate(walletBalancesProvider),
+          onRefresh: () =>
+              ref.read(walletBalancesProvider.notifier).refresh(force: true),
           body: wallet.isLoading && cached == null
               ? const Center(child: DiscoverAccentLoader())
               : wallet.hasError && cached == null

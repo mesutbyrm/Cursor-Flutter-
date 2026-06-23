@@ -221,7 +221,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
 
   @override
   Widget build(BuildContext context) {
-    final coins = ref.watch(coinBalanceProvider).valueOrNull ?? 0;
+    final coins = ref.watch(coinBalanceProvider) ?? 0;
     final coinLabel = NumberFormat.decimalPattern('tr').format(coins);
     final canModerate = widget.perms.canModerate || widget.isOwner;
     final top = MediaQuery.paddingOf(context).top;

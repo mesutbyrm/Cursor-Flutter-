@@ -162,7 +162,7 @@ class _JetonPaymentNotifySheetState
       await ref.read(walletRepositoryProvider).submitPaymentRequest(body);
       await _prefs.saveLastPackageId(pkg.id);
       await _prefs.saveLastPaymentMethod(_methodApi);
-      ref.invalidate(walletBalancesProvider);
+      ref.refreshWalletCache(force: true);
       ref.invalidate(paymentRequestsNotifierProvider);
       ref.invalidate(adminPaymentRequestsProvider);
       ref.invalidate(adminPaymentNotificationsProvider);

@@ -41,7 +41,7 @@ class _LiveGiftPanelState extends ConsumerState<LiveGiftPanel> {
   Widget build(BuildContext context) {
     final gifts = ref.watch(liveGiftTypesProvider);
     final coins = widget.controller.coinBalance ??
-        ref.watch(coinBalanceProvider).valueOrNull ??
+        ref.watch(coinBalanceProvider) ??
         0;
 
     return ClipRRect(
@@ -158,7 +158,7 @@ class _LiveGiftPanelState extends ConsumerState<LiveGiftPanel> {
                               senderId: widget.senderId,
                               quantity: _qty,
                             );
-                            ref.invalidate(coinBalanceProvider);
+                            ref.refreshWalletCache(force: true);
                             if (context.mounted) widget.onClose();
                           },
                   ),

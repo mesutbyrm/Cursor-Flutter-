@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,10 +26,19 @@ class CanlifalApp extends ConsumerStatefulWidget {
 }
 
 class _CanlifalAppState extends ConsumerState<CanlifalApp> {
+  /// Splash / bootstrap en fazla 2 saniye bloklar; sonra uygulama açılır.
+  static const _maxBootstrap = Duration(seconds: 2);
+  Timer? _bootstrapCap;
+  var _bootstrapCapReached = false;
+
   @override
   void initState() {
     super.initState();
     AppStartupLog.appStart();
+    _bootstrapCap = Timer(_maxBootstrap, () {
+      if (!mounted) return;
+      setState(() => _bootstrapCapReached = true);
+    });
 
     ref.listenManual<bool>(guestModeProvider, (prev, next) {
       if (prev == next || next != true) return;
@@ -55,6 +66,12 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
   }
 
   @override
+  void dispose() {
+    _bootstrapCap?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
     final guest = ref.watch(guestModeProvider);
@@ -62,7 +79,8 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
     final amoledDark = ref.watch(amoledDarkProvider);
     final darkTheme = amoledDark ? AppTheme.amoled() : AppTheme.dark();
 
-    final bootstrapDone = !auth.isLoading || auth.hasValue;
+    final bootstrapDone =
+        !auth.isLoading || auth.hasValue || _bootstrapCapReached;
     final authed = auth.valueOrNull != null;
     final showMainShell = bootstrapDone && (authed || guest);
 

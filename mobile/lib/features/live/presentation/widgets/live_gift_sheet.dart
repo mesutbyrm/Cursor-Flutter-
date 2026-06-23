@@ -101,7 +101,7 @@ Future<void> showLiveGiftPicker(
                                         senderId: user?.id,
                                       );
                                   if (context.mounted) {
-                                    ref.invalidate(coinBalanceProvider);
+                                    ref.refreshWalletCache(force: true);
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(

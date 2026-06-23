@@ -142,7 +142,7 @@ class GrowthHubPage extends ConsumerWidget {
   static Future<void> _refresh(WidgetRef ref) async {
     ref.invalidate(profileStatsProvider);
     ref.invalidate(homeDailyRewardsProvider);
-    ref.invalidate(walletBalancesProvider);
+    ref.refreshWalletCache(force: true);
     ref.invalidate(referralInfoProvider);
     ref.invalidate(userAchievementsProvider);
     await Future.wait([

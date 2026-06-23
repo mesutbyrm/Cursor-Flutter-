@@ -240,7 +240,7 @@ class _JetonPremiumPurchaseViewState
           .read(walletRepositoryProvider)
           .submitPaymentRequest(body)
           .timeout(const Duration(seconds: 35));
-      ref.invalidate(walletBalancesProvider);
+      ref.refreshWalletCache(force: true);
       ref.invalidate(paymentRequestsNotifierProvider);
       ref.invalidate(adminPaymentRequestsProvider);
       ref.invalidate(adminPaymentNotificationsProvider);

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/network/loading_timeout.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
@@ -50,19 +51,68 @@ final walletRepositoryProvider = Provider<WalletRepository>((ref) {
   return WalletRepositoryImpl(ref.watch(walletRemoteProvider));
 });
 
+/// Jeton/cüzdan bakiyesi — oturum boyunca cache, gereksiz API tekrarı yok.
+class WalletBalancesNotifier extends AsyncNotifier<WalletBalances> {
+  static const _fetchTimeout = Duration(seconds: 3);
+  static const _minRefreshGap = Duration(seconds: 20);
+
+  DateTime? _lastFetchedAt;
+  WalletBalances? _cached;
+
+  @override
+  Future<WalletBalances> build() async {
+    ref.keepAlive();
+    return _load(force: true);
+  }
+
+  Future<WalletBalances> refresh({bool force = false}) async {
+    if (!force &&
+        _cached != null &&
+        _lastFetchedAt != null &&
+        DateTime.now().difference(_lastFetchedAt!) < _minRefreshGap) {
+      return _cached!;
+    }
+    state = const AsyncLoading<WalletBalances>().copyWithPrevious(state);
+    final next = await AsyncValue.guard(() => _load(force: true));
+    state = next;
+    return next.value ?? _cached ?? WalletBalances.empty;
+  }
+
+  Future<WalletBalances> _load({required bool force}) async {
+    if (!force && _cached != null) return _cached!;
+    final balances = await LoadingTimeout.run(
+      ref.read(walletRepositoryProvider).balances(),
+      timeout: _fetchTimeout,
+      message: 'Cüzdan yüklenemedi',
+    );
+    _cached = balances;
+    _lastFetchedAt = DateTime.now();
+    return balances;
+  }
+}
+
+final walletBalancesProvider =
+    AsyncNotifierProvider<WalletBalancesNotifier, WalletBalances>(
+  WalletBalancesNotifier.new,
+);
+
+final coinBalanceProvider = Provider<int?>((ref) {
+  return ref.watch(walletBalancesProvider).valueOrNull?.jeton;
+});
+
+void invalidateWalletCacheFromRef(Ref ref) {
+  ref.read(walletBalancesProvider.notifier).refresh(force: true);
+}
+
+extension WalletCacheRefresh on WidgetRef {
+  Future<void> refreshWalletCache({bool force = true}) {
+    return read(walletBalancesProvider.notifier).refresh(force: force);
+  }
+}
+
 final userProfileProvider =
     FutureProvider.family<UserEntity, String>((ref, userId) async {
   return ref.watch(profileRepositoryProvider).getUser(userId);
-});
-
-final walletBalancesProvider = FutureProvider<WalletBalances>((ref) async {
-  ref.keepAlive();
-  return ref.watch(walletRepositoryProvider).balances();
-});
-
-final coinBalanceProvider = FutureProvider<int>((ref) async {
-  final b = await ref.watch(walletBalancesProvider.future);
-  return b.jeton;
 });
 
 final paymentConfigProvider = FutureProvider<PaymentConfigEntity>((ref) async {
@@ -81,13 +131,17 @@ final referralInfoProvider = FutureProvider<ReferralInfoEntity>((ref) async {
 
 final watchAdCreditProvider = FutureProvider.autoDispose<int>((ref) async {
   final reward = await ref.watch(walletRepositoryProvider).watchAdCredit();
-  ref.invalidate(walletBalancesProvider);
-  ref.invalidate(coinBalanceProvider);
+  await ref.read(walletBalancesProvider.notifier).refresh(force: true);
   return reward;
 });
 
 final profileStatsProvider = FutureProvider<ProfileStatsEntity>((ref) async {
-  return ref.watch(profileRepositoryProvider).myStats();
+  ref.keepAlive();
+  return LoadingTimeout.run(
+    ref.watch(profileRepositoryProvider).myStats(),
+    timeout: const Duration(seconds: 3),
+    message: 'Profil istatistikleri yüklenemedi',
+  );
 });
 
 final giftsReceivedSummaryProvider =

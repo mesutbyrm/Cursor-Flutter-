@@ -126,10 +126,10 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
     _OpenRoomChoice.standard => normalCost,
     _OpenRoomChoice.free => 0,
   };
-  ref.invalidate(walletBalancesProvider);
+  ref.read(walletBalancesProvider.notifier).refresh(force: false);
   try {
     balance = (await ref.read(walletBalancesProvider.future).timeout(
-          const Duration(seconds: 12),
+          const Duration(seconds: 3),
         ))
         .jeton;
   } catch (_) {
@@ -241,7 +241,7 @@ Future<void> _createAndEnter(
       );
     }
     ref.invalidate(voiceRoomsProvider);
-    ref.invalidate(walletBalancesProvider);
+    ref.refreshWalletCache(force: true);
     if (!context.mounted) return;
     _dismissLoadingDialog(context);
     _showSnackBar(

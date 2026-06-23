@@ -143,16 +143,23 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         emitPsychicLiveRequest(ref, session);
       },
       onStreamFortuneRequest: (map) {
-        ref.read(liveFortuneRequestsProvider(streamId).notifier).pushFromSse(map);
-        final entity = LiveFortuneRequestEntity.fromJson(map);
-        final request = map['request'];
-        final merged = request is Map
-            ? LiveFortuneRequestEntity.fromJson(
-                Map<String, dynamic>.from(request),
-              )
-            : entity;
+        ref
+            .read(liveFortuneRequestsProvider(streamId).notifier)
+            .pushFromSse(map);
+        final merged = ref
+            .read(liveFortuneRequestsProvider(streamId).notifier)
+            .state
+            .requests
+            .where((r) {
+              final id = map['request'] is Map
+                  ? (map['request'] as Map)['id']?.toString()
+                  : map['id']?.toString();
+              return id != null && r.id == id;
+            })
+            .firstOrNull;
         final userId = ref.read(authControllerProvider).valueOrNull?.id;
         if (userId != null &&
+            merged != null &&
             merged.userId == userId &&
             merged.status == LiveFortuneRequestStatus.answered) {
           state = state.copyWith(

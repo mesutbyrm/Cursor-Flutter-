@@ -32,7 +32,7 @@ class JetonPurchasePage extends ConsumerWidget {
                   child: RefreshIndicator(
                     color: AppThemeColors.accentPurple,
                     onRefresh: () async {
-                      ref.invalidate(walletBalancesProvider);
+                      ref.refreshWalletCache(force: true);
                       ref.invalidate(paymentConfigProvider);
                       await ref.read(walletBalancesProvider.future);
                     },

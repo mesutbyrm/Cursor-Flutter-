@@ -14,6 +14,28 @@ class WalletBalances extends Equatable {
     this.membershipExpiresAt,
   });
 
+  static const empty = WalletBalances();
+
+  WalletBalances copyWith({
+    int? jeton,
+    int? cfc,
+    String? role,
+    double? jetonTlRate,
+    int? withdrawalLimit,
+    String? membership,
+    String? membershipExpiresAt,
+  }) {
+    return WalletBalances(
+      jeton: jeton ?? this.jeton,
+      cfc: cfc ?? this.cfc,
+      role: role ?? this.role,
+      jetonTlRate: jetonTlRate ?? this.jetonTlRate,
+      withdrawalLimit: withdrawalLimit ?? this.withdrawalLimit,
+      membership: membership ?? this.membership,
+      membershipExpiresAt: membershipExpiresAt ?? this.membershipExpiresAt,
+    );
+  }
+
   factory WalletBalances.fromJson(Map<String, dynamic> json) {
     final jeton = asInt(
       pick(json, [

@@ -187,7 +187,7 @@ Future<void> showVoiceRoomGiftPickerLegacy(
                                       .read(voiceRoomGiftRealtimeProvider)
                                       .publishLocal(event);
                                   if (context.mounted) {
-                                    ref.invalidate(coinBalanceProvider);
+                                    ref.refreshWalletCache(force: true);
                                     ref
                                         .read(voiceRoomLiveProvider(room.liveKey).notifier)
                                         .refresh();

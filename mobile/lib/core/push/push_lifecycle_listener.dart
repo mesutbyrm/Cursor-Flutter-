@@ -99,7 +99,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
           if (update.isRejected) {
             ref.read(psychicBookingFeedbackProvider.notifier).state =
                 'Randevu reddedildi — jetonlar iade edildi';
-            ref.invalidate(coinBalanceProvider);
+            ref.refreshWalletCache(force: true);
           }
         },
         onSessionEndedData: (ended) {
@@ -119,7 +119,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
             message: ended.message,
             promptReview: true,
           );
-          ref.invalidate(coinBalanceProvider);
+          ref.refreshWalletCache(force: true);
         },
       );
       _queuePushSync(null, ref.read(authControllerProvider));

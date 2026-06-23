@@ -136,10 +136,30 @@ class LiveFortuneRequestsNotifier
   }
 
   void pushFromSse(Map<String, dynamic> map) {
-    final row = LiveFortuneRequestEntity.fromJson(map);
+    final row = _parseFortuneRequestFromSse(map);
     if (row.id.isEmpty) return;
     final existed = state.requests.any((r) => r.id == row.id);
     _upsert(row, notify: !existed);
+  }
+
+  LiveFortuneRequestEntity _parseFortuneRequestFromSse(Map<String, dynamic> map) {
+    final request = map['request'];
+    if (request is Map) {
+      return LiveFortuneRequestEntity.fromJson(
+        Map<String, dynamic>.from(request),
+      );
+    }
+    final data = map['data'];
+    if (data is Map) {
+      final inner = Map<String, dynamic>.from(data);
+      if (inner['request'] is Map) {
+        return LiveFortuneRequestEntity.fromJson(
+          Map<String, dynamic>.from(inner['request'] as Map),
+        );
+      }
+      return LiveFortuneRequestEntity.fromJson(inner);
+    }
+    return LiveFortuneRequestEntity.fromJson(map);
   }
 
   void _upsert(LiveFortuneRequestEntity row, {bool notify = false}) {

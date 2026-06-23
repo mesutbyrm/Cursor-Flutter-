@@ -64,7 +64,7 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
     final gifts = ref.watch(liveGiftCatalogProvider);
     final leaderboard = ref.watch(streamGiftLeaderboardProvider(widget.streamId));
     final coins = widget.controller.coinBalance ??
-        ref.watch(coinBalanceProvider).valueOrNull ??
+        ref.watch(coinBalanceProvider) ??
         0;
 
     return ClipRRect(
@@ -178,7 +178,7 @@ class _PremiumGiftPanelState extends ConsumerState<PremiumGiftPanel>
       senderId: widget.senderId,
       quantity: _qty,
     );
-    ref.invalidate(coinBalanceProvider);
+    ref.refreshWalletCache(force: true);
     if (mounted) widget.onClose();
   }
 }

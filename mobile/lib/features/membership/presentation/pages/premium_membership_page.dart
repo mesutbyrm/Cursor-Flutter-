@@ -57,7 +57,7 @@ class PremiumMembershipPage extends ConsumerWidget {
             color: AppThemeColors.accentPurple,
             onRefresh: () async {
               ref.invalidate(membershipCatalogProvider);
-              ref.invalidate(walletBalancesProvider);
+              ref.refreshWalletCache(force: true);
               ref.invalidate(paymentConfigProvider);
               await ref.read(membershipCatalogProvider.future);
             },
@@ -168,7 +168,7 @@ class PremiumMembershipPage extends ConsumerWidget {
           data: {'tierId': pkg.id},
         );
         ref.invalidate(membershipCatalogProvider);
-        ref.invalidate(walletBalancesProvider);
+        ref.refreshWalletCache(force: true);
         if (context.mounted) {
           final active = pkg.isActive && (pkg.daysRemaining ?? 0) > 0;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -217,7 +217,7 @@ class PremiumMembershipPage extends ConsumerWidget {
       paymentNotes: 'Gold üyelik · ${pkg.title} · ${pkg.durationDays} gün',
       onDone: () {
         ref.invalidate(membershipCatalogProvider);
-        ref.invalidate(walletBalancesProvider);
+        ref.refreshWalletCache(force: true);
         ref.invalidate(paymentRequestsNotifierProvider);
       },
     );

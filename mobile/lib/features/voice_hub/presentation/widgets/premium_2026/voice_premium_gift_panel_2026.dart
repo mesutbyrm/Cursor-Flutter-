@@ -97,7 +97,7 @@ class _VoicePremiumGiftPanel2026State
   @override
   Widget build(BuildContext context) {
     final gifts = ref.watch(voiceRoomGiftTypesProvider);
-    final coins = ref.watch(coinBalanceProvider).valueOrNull ?? 0;
+    final coins = ref.watch(coinBalanceProvider) ?? 0;
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -289,7 +289,7 @@ class _VoicePremiumGiftPanel2026State
         combo: _qty,
         rarity: PremiumGiftCatalog2026.rarity(g.id),
       );
-      ref.invalidate(coinBalanceProvider);
+      ref.refreshWalletCache(force: true);
       ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier).refresh();
       if (mounted) {
         widget.onSent(raw);
