@@ -183,10 +183,22 @@ String paymentRequestSummary(Map<String, dynamic> r) {
   final method = (r['method'] ?? '').toString();
   if (type == 'jeton') {
     final coins = r['coins'] ?? r['amount'];
-    final title = r['packageTitle']?.toString();
-    return '${title ?? '$coins Jeton'} · ${_methodTr(method)}';
+    final price = r['priceTry'];
+    final priceStr = price != null ? ' · ₺$price' : '';
+    return '$coins jeton$priceStr · ${_methodTr(method)}';
   }
   return '${r['amount']} CFC · ${_methodTr(method)}';
+}
+
+String paymentRequestDetailLine(Map<String, dynamic> r) {
+  final type = (r['requestType'] ?? 'cfc').toString();
+  if (type == 'jeton') {
+    final coins = r['coins'] ?? r['amount'] ?? '—';
+    final price = r['priceTry'] ?? '—';
+    final method = _methodTr((r['method'] ?? '').toString());
+    return 'Tutar: ₺$price · Jeton: $coins · $method';
+  }
+  return paymentRequestSummary(r);
 }
 
 String paymentNotificationSummary(Map<String, dynamic> n) {

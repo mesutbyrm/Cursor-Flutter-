@@ -504,9 +504,9 @@ walletRouter.patch(
 
       await createNotification({
         userId: row.userId,
-        title: isJeton ? "Ödemeniz onaylandı" : "CFC Yükleme Onaylandı",
+        title: isJeton ? "Jeton yüklendi" : "CFC Yükleme Onaylandı",
         body: isJeton
-          ? `Ödemeniz onaylandı. ${row.coins ?? row.amount} jeton hesabınıza yüklendi.`
+          ? "Jetonlarınız hesabınıza yüklendi."
           : `${row.amount} CFC hesabınıza eklendi.`,
         type: isJeton ? "jeton_payment_approved" : "cfc_payment_approved",
         data: { paymentRequestId: row.id, amount: row.amount, method: row.method },
@@ -533,8 +533,8 @@ walletRouter.patch(
 
       await createNotification({
         userId: row.userId,
-        title: isJeton ? "Ödeme bildiriminiz reddedildi" : "CFC Yükleme Reddedildi",
-        body: reviewNote?.trim() || "Ödeme bildiriminiz reddedildi.",
+        title: isJeton ? "Ödeme reddedildi" : "CFC Yükleme Reddedildi",
+        body: reviewNote?.trim() || "Ödeme talebiniz reddedildi.",
         type: isJeton ? "jeton_payment_rejected" : "cfc_payment_rejected",
         data: { paymentRequestId: row.id, amount: row.amount, method: row.method },
         targetPath: isJeton ? "/jeton-yukle" : "/cfc-store",

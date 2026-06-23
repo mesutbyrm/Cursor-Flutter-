@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.341+344 (2026-06-23)
+
+### Jeton Satın Al — Premium 2026
+
+- **Çift yönlü hesaplama:** TL ↔ jeton (1 jeton = ₺0,50); anlık senkron
+- **Hazır seçimler:** ₺250 / ₺500 / ₺1000 / ₺2500 kartları
+- **Ödeme yöntemleri:** Papara, Havale/EFT, WhatsApp — glassmorphism kartlar
+- **Papara/Havale:** `CANLIFAL-{userId}` açıklama kodu, dekont yükleme
+- **WhatsApp:** Tek tıkla önceden doldurulmuş mesaj
+- **Satın Al:** `POST /api/payment/requests` ödeme talebi
+- **Admin:** Ödeme Talepleri ekranı — tutar, jeton, yöntem, dekont, onayla/reddet
+- **Bildirim:** Onay «Jetonlarınız hesabınıza yüklendi.» · red «Ödeme talebiniz reddedildi.»
+
 ## 1.0.340+343 (2026-06-23)
 
 ### Falcı davet popup — kabul akışı ve siyah ekran

@@ -54,29 +54,21 @@ class _JetonPaymentStatusListenerState
           color: approved ? AppThemeColors.accentCyan : AppThemeColors.coinGold,
           size: 36,
         ),
-        title: Text(approved ? 'Jeton yüklendi' : 'Ödeme düzeltildi'),
+        title: Text(approved ? 'Jeton yüklendi' : 'Ödeme reddedildi'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              n.title,
-              style: const TextStyle(fontWeight: FontWeight.w800),
+              approved
+                  ? 'Jetonlarınız hesabınıza yüklendi.'
+                  : 'Ödeme talebiniz reddedildi.',
+              style: const TextStyle(fontWeight: FontWeight.w800, height: 1.35),
             ),
             if (n.body != null && n.body!.trim().isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(n.body!, style: const TextStyle(height: 1.35)),
             ],
-            const SizedBox(height: 12),
-            Text(
-              approved
-                  ? 'Jetonlar hesabınıza yansıtıldı. İyi kullanımlar!'
-                  : 'Admin ödemenizi kontrol etti. Aşağıdaki bilgi doğru tutar ve jeton miktarıdır.',
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.8),
-              ),
-            ),
           ],
         ),
         actions: [
