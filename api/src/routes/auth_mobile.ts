@@ -103,18 +103,21 @@ async function issueTokens(userId: string, device?: { label?: string; platform?:
   return { accessToken, refreshToken, expiresIn: accessExpiresIn };
 }
 
-function deviceFromRequest(req: Request) {
-  const label =
-    (typeof req.headers["x-device-label"] === "string"
+function deviceFromRequest(req: Request): { label?: string; platform?: string } {
+  const labelRaw =
+    typeof req.headers["x-device-label"] === "string"
       ? req.headers["x-device-label"]
       : typeof req.headers["x-device-name"] === "string"
         ? req.headers["x-device-name"]
-        : null) ?? null;
-  const platform =
+        : undefined;
+  const platformRaw =
     typeof req.headers["x-device-platform"] === "string"
       ? req.headers["x-device-platform"]
-      : null;
-  return { label, platform };
+      : undefined;
+  return {
+    ...(labelRaw ? { label: labelRaw } : {}),
+    ...(platformRaw ? { platform: platformRaw } : {}),
+  };
 }
 
 function verificationCode(): string {
