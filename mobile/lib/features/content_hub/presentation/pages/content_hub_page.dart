@@ -101,7 +101,9 @@ class ContentHubPage extends ConsumerWidget {
   void _openLink(BuildContext context, ContentLink link) {
     final path = link.path;
     if (path == '/canli-falcilar/dashboard' ||
+        path == '/falci-panel' ||
         path == '/canli-falcilar/apply' ||
+        path == '/falci-ol' ||
         path == '/ajans/dashboard') {
       context.push(path);
       return;

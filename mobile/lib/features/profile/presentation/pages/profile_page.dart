@@ -14,6 +14,7 @@ import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_admin_section.dart';
+import '../widgets/premium/profile_fortune_teller_panel.dart';
 import '../widgets/premium/profile_broadcaster_panel.dart';
 import '../widgets/premium/profile_gifts_row.dart';
 import '../widgets/premium/profile_neon_header.dart';
@@ -149,6 +150,8 @@ class ProfilePage extends ConsumerWidget {
                             ),
                             const SizedBox(height: 22),
                             const ProfileAdminSection(),
+                            const ProfileFortuneTellerPanel(),
+                            const SizedBox(height: 22),
                             ProfileBroadcasterPanel(
                               onHistory: () =>
                                   context.push('/profile/broadcast-history'),

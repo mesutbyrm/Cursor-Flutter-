@@ -30,13 +30,13 @@ class PsychicsListScreen extends ConsumerWidget {
         actions: [
           if (approved.isApprovedTeller)
             TextButton.icon(
-              onPressed: () => context.push('/canli-falcilar/dashboard'),
+              onPressed: () => context.push('/falci-panel'),
               icon: const Icon(Icons.dashboard_outlined, color: Colors.white),
-              label: const Text('Falcı Panel'),
+              label: const Text('Falcı Paneli'),
             )
           else if (ref.watch(authControllerProvider).valueOrNull != null)
             TextButton.icon(
-              onPressed: () => context.push('/canli-falcilar/apply'),
+              onPressed: () => context.push('/falci-ol'),
               icon: const Icon(Icons.workspace_premium_rounded, color: Colors.white),
               label: Text(
                 approved.profile != null && !approved.profile!.isApproved

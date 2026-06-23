@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.336+339 (2026-06-22)
+
+### Falcı paneli ve Falcı Ol sayfası
+
+- **`/falci-ol`:** Tanıtım, adımlar ve avantajlar; başvuru formuna yönlendirme
+- **`/falci-panel`:** Onaylı falcı → panel; değilse → Falcı Ol
+- **Falcı Paneli:** İstatistik kartları, hızlı işlemler, bekleyen talepler, çevrimiçi anahtarı
+- **Profil:** Falcı Paneli / Falcı Ol kartı eklendi
+- **Başvuru:** Admin onayı beklentisi açıkça gösteriliyor (`POST /api/fortune-tellers/apply`)
+- Yerel API mirror: `fortune-tellers/apply` ve pending `my-profile` yanıtı
+
 ## 1.0.335+338 (2026-06-22)
 
 ### Canlı Falcılar — randevu bildirimi regresyonu

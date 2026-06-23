@@ -17,13 +17,13 @@ class BranchRoleActions {
       return const TellerBranchAction(
         label: 'Falcı\nPanel',
         icon: Icons.dashboard_outlined,
-        route: '/canli-falcilar/dashboard',
+        route: '/falci-panel',
       );
     }
     return const TellerBranchAction(
       label: 'Falcı\nOl',
       icon: Icons.workspace_premium_rounded,
-      route: '/canli-falcilar/apply',
+      route: '/falci-ol',
     );
   }
 

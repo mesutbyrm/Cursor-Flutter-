@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/core/widgets/user_avatar.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_request_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
@@ -210,17 +212,57 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
     }
 
     if (profile == null || !profile.isUsable) {
+      final status = profile?.applicationStatus ?? 'yok';
       return Scaffold(
-        appBar: AppBar(title: const Text('Falcı Panel')),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              profile == null
-                  ? 'Falcı profili bulunamadı. Başvurunuz onaylandıktan sonra panel açılır.'
-                  : 'Başvuru durumu: ${profile.applicationStatus ?? "bilinmiyor"}. Onay bekleniyor.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: context.colors.onSurfaceMuted),
+        backgroundColor: const Color(0xFF0D0618),
+        appBar: AppBar(
+          title: const Text('Falcı Paneli'),
+          backgroundColor: Colors.transparent,
+        ),
+        body: CosmicGalaxyBackground(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    profile == null
+                        ? Icons.workspace_premium_outlined
+                        : Icons.hourglass_top_rounded,
+                    size: 52,
+                    color: context.colors.onSurfaceMuted,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    profile == null
+                        ? 'Henüz falcı değilsiniz'
+                        : 'Onay bekleniyor',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    profile == null
+                        ? 'Falcı başvurunuz admin panelinden onaylandıktan sonra bu panel açılır.'
+                        : 'Başvuru durumu: $status. Yönetici onayından sonra panele erişebilirsiniz.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: context.colors.onSurfaceMuted),
+                  ),
+                  const SizedBox(height: 20),
+                  FilledButton(
+                    onPressed: () => context.push(
+                      profile == null ? '/falci-ol' : '/canli-falcilar/apply',
+                    ),
+                    child: Text(
+                      profile == null ? 'Falcı Ol' : 'Başvuru Durumu',
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -229,8 +271,9 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0618),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Falcı Panel'),
+        title: const Text('Falcı Paneli'),
         backgroundColor: Colors.transparent,
         actions: [
           IconButton(
@@ -240,47 +283,191 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () =>
-            ref.read(psychicTellerDashboardProvider.notifier).refresh(),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-          children: [
-            _ProfileHeader(
-              profile: profile,
-              toggling: dash.togglingOnline,
-              onToggleOnline: () =>
-                  ref.read(psychicTellerDashboardProvider.notifier).toggleOnline(),
-            ),
-            const SizedBox(height: 12),
-            _TellerStatsPanel(tellerId: profile.id),
-            const SizedBox(height: 16),
-            Text(
-              'Bekleyen: ${dash.requests.length}',
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 12),
-            if (dash.requests.isEmpty)
-              Text(
-                'Bekleyen talep yok. Çevrimiçi olduğunuzda istekler burada görünür.',
-                style: TextStyle(color: context.colors.onSurfaceMuted),
-              )
-            else
-              ...dash.requests.map(
-                (req) => _PendingTile(
-                  request: req,
-                  processing: dash.processingId == req.sessionId,
-                  onAccept: () => ref
+      body: CosmicGalaxyBackground(
+        child: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: () =>
+                ref.read(psychicTellerDashboardProvider.notifier).refresh(),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              children: [
+                _ProfileHeader(
+                  profile: profile,
+                  toggling: dash.togglingOnline,
+                  onToggleOnline: () => ref
                       .read(psychicTellerDashboardProvider.notifier)
-                      .accept(context, req),
-                  onReject: () => ref
-                      .read(psychicTellerDashboardProvider.notifier)
-                      .reject(req),
+                      .toggleOnline(),
                 ),
-              ),
-          ],
+                const SizedBox(height: 12),
+                _TellerStatGrid(
+                  profile: profile,
+                  pendingCount: dash.requests.length,
+                ),
+                const SizedBox(height: 12),
+                _QuickActions(profile: profile),
+                const SizedBox(height: 12),
+                _TellerStatsPanel(tellerId: profile.id),
+                const SizedBox(height: 16),
+                Text(
+                  'Bekleyen talepler (${dash.requests.length})',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 12),
+                if (dash.requests.isEmpty)
+                  Text(
+                    profile.isOnline
+                        ? 'Bekleyen talep yok. Danışanlar sizi listede görebilir.'
+                        : 'Çevrimiçi olduğunuzda gelen talepler burada görünür.',
+                    style: TextStyle(color: context.colors.onSurfaceMuted),
+                  )
+                else
+                  ...dash.requests.map(
+                    (req) => _PendingTile(
+                      request: req,
+                      processing: dash.processingId == req.sessionId,
+                      onAccept: () => ref
+                          .read(psychicTellerDashboardProvider.notifier)
+                          .accept(context, req),
+                      onReject: () => ref
+                          .read(psychicTellerDashboardProvider.notifier)
+                          .reject(req),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _TellerStatGrid extends StatelessWidget {
+  const _TellerStatGrid({
+    required this.profile,
+    required this.pendingCount,
+  });
+
+  final PsychicEntity profile;
+  final int pendingCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _StatCard(
+            label: 'Puan',
+            value: profile.rating > 0
+                ? profile.rating.toStringAsFixed(1)
+                : '—',
+            icon: Icons.star_rounded,
+            color: const Color(0xFFFFD54F),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _StatCard(
+            label: 'Ücret',
+            value: profile.pricePerMinute > 0
+                ? '${profile.pricePerMinute} j/dk'
+                : '—',
+            icon: Icons.monetization_on_rounded,
+            color: const Color(0xFF00E676),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _StatCard(
+            label: 'Bekleyen',
+            value: '$pendingCount',
+            icon: Icons.pending_actions_rounded,
+            color: AppThemeColors.accentPurple,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.white.withValues(alpha: 0.55),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickActions extends StatelessWidget {
+  const _QuickActions({required this.profile});
+
+  final PsychicEntity profile;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => context.push('/canli-falcilar/${profile.id}'),
+            icon: const Icon(Icons.person_outline_rounded, size: 18),
+            label: const Text('Profilim'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.white,
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => context.push('/profile/earnings'),
+            icon: const Icon(Icons.payments_outlined, size: 18),
+            label: const Text('Kazançlar'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.white,
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

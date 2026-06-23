@@ -205,29 +205,6 @@ socialRouter.post("/fortune-tellers/session", requireAuth, async (req, res) => {
     tellerResponse: session.tellerResponse,
   });
 });
-/** POST /api/fortune-tellers/apply — falcı başvurusu */
-socialRouter.post(
-  "/fortune-tellers/apply",
-  requireAuth,
-  async (req, res) => {
-    const uid = req.userId!;
-    // Başvuruyu kabul et ve falcı profili dön
-    return ok(res, {
-      success: true,
-      teller: {
-        id: uid,
-        userId: uid,
-        tellerUserId: uid,
-        displayName: req.body?.displayName?.toString() ?? "Falcı",
-        isOnline: false,
-        rating: 5.0,
-        pricePerMinute: 12,
-        specialties: req.body?.specialties ?? ["tarot"],
-        image: "",
-      },
-    });
-  },
-);
 /** POST /api/fortune-tellers/toggle-online — üretim: falcı çevrimiçi */
 socialRouter.post(
   "/fortune-tellers/toggle-online",
@@ -241,30 +218,137 @@ socialRouter.post(
   },
 );
 
+/** Bekleyen falcı başvuruları (yerel mirror — üretimde admin onayı). */
+const fortuneTellerApplications = new Map<
+  string,
+  {
+    userId: string;
+    displayName: string;
+    specialties: string[];
+    bio?: string;
+    applicationNote?: string;
+    status: "pending" | "rejected" | "approved";
+    createdAt: string;
+  }
+>();
+
+/** POST /api/fortune-tellers/apply — falcı başvurusu */
+socialRouter.post("/fortune-tellers/apply", requireAuth, async (req, res) => {
+  const uid = req.userId!;
+  const existing = await prisma.fortuneTeller.findUnique({
+    where: { userId: uid },
+  });
+  if (existing) {
+    return ok(res, {
+      success: true,
+      data: {
+        teller: {
+          id: existing.id,
+          userId: existing.userId,
+          displayName: existing.displayName,
+          specialties: existing.specialties,
+          applicationStatus: "approved",
+          isOnline: existing.isOnline,
+          rating: existing.rating,
+          pricePerMinute: existing.pricePerMinute,
+        },
+      },
+    });
+  }
+  const pending = fortuneTellerApplications.get(uid);
+  if (pending) {
+    return ok(res, {
+      success: true,
+      data: {
+        teller: {
+          id: `pending-${uid}`,
+          userId: uid,
+          displayName: pending.displayName,
+          specialties: pending.specialties,
+          bio: pending.bio,
+          applicationStatus: pending.status,
+        },
+      },
+    });
+  }
+  const displayName = req.body?.displayName?.toString()?.trim();
+  const specialties = Array.isArray(req.body?.specialties)
+    ? req.body.specialties.map((s: unknown) => String(s).trim()).filter(Boolean)
+    : [];
+  if (!displayName) {
+    return fail(res, 400, "BAD_REQUEST", "displayName gerekli");
+  }
+  if (specialties.length === 0) {
+    return fail(res, 400, "BAD_REQUEST", "specialties gerekli");
+  }
+  const row = {
+    userId: uid,
+    displayName,
+    specialties,
+    bio: req.body?.bio?.toString()?.trim() || undefined,
+    applicationNote: req.body?.applicationNote?.toString()?.trim() || undefined,
+    status: "pending" as const,
+    createdAt: new Date().toISOString(),
+  };
+  fortuneTellerApplications.set(uid, row);
+  return ok(res, {
+    success: true,
+    data: {
+      teller: {
+        id: `pending-${uid}`,
+        userId: uid,
+        displayName: row.displayName,
+        specialties: row.specialties,
+        bio: row.bio,
+        applicationStatus: "pending",
+      },
+    },
+  });
+});
+
 /** GET /api/fortune-tellers/my-profile — falcı kendi profili */
 socialRouter.get(
   "/fortune-tellers/my-profile",
   requireAuth,
   async (req, res) => {
     const uid = req.userId!;
-    const user = await prisma.user.findUnique({
-      where: { id: uid },
-      select: { id: true, displayName: true, avatarUrl: true },
+    const teller = await prisma.fortuneTeller.findUnique({
+      where: { userId: uid },
+      include: { user: { select: { avatarUrl: true } } },
     });
-    if (!user) {
-      return fail(res, 404, "NOT_FOUND", "Kullanıcı bulunamadı");
+    if (!teller) {
+      const pending = fortuneTellerApplications.get(uid);
+      if (pending) {
+        return ok(res, {
+          teller: {
+            id: `pending-${uid}`,
+            userId: uid,
+            tellerUserId: uid,
+            displayName: pending.displayName,
+            specialties: pending.specialties,
+            bio: pending.bio,
+            applicationStatus: pending.status,
+            isOnline: false,
+            rating: 0,
+            pricePerMinute: 0,
+            image: "",
+          },
+        });
+      }
+      return fail(res, 404, "NOT_FOUND", "Falcı profili bulunamadı");
     }
     return ok(res, {
       teller: {
-        id: uid,
-        userId: uid,
-        tellerUserId: uid,
-        displayName: user.displayName ?? "Falcı",
-        isOnline: true,
-        rating: 5.0,
-        pricePerMinute: 12,
-        specialties: ["tarot", "kahve"],
-        image: user.avatarUrl ?? "",
+        id: teller.id,
+        userId: teller.userId,
+        tellerUserId: teller.userId,
+        displayName: teller.displayName,
+        isOnline: teller.isOnline,
+        rating: teller.rating,
+        pricePerMinute: teller.pricePerMinute,
+        specialties: teller.specialties,
+        applicationStatus: "approved",
+        image: teller.user.avatarUrl ?? "",
       },
     });
   },

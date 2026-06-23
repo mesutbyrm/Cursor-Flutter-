@@ -85,6 +85,7 @@ import '../../features/live_psychics/domain/entities/psychic_session_entity.dart
 import '../../features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import '../../features/live_psychics/presentation/screens/psychic_session_route.dart';
 import '../../features/live_psychics/presentation/screens/psychic_apply_screen.dart';
+import '../../features/live_psychics/presentation/screens/psychic_become_teller_page.dart';
 import '../../features/live_psychics/presentation/screens/psychic_teller_dashboard_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychic_profile_screen.dart';
 import '../../features/live_psychics/presentation/screens/psychics_list_screen.dart';
@@ -177,6 +178,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/falci-panel',
+        redirect: (context, state) async {
+          var approved = ref.read(approvedPsychicProvider);
+          if (!approved.checked) {
+            await ref.read(approvedPsychicProvider.notifier).refresh();
+            approved = ref.read(approvedPsychicProvider);
+          }
+          if (approved.isApprovedTeller) {
+            return '/canli-falcilar/dashboard';
+          }
+          return '/falci-ol';
+        },
+      ),
+      GoRoute(
         path: '/falci-ol',
         redirect: (context, state) async {
           var approved = ref.read(approvedPsychicProvider);
@@ -191,7 +206,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
-          child: const PsychicApplyScreen(),
+          child: const PsychicBecomeTellerPage(),
         ),
       ),
       GoRoute(
@@ -780,6 +795,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: 'dashboard',
+            redirect: (context, state) async {
+              var approved = ref.read(approvedPsychicProvider);
+              if (!approved.checked) {
+                await ref.read(approvedPsychicProvider.notifier).refresh();
+                approved = ref.read(approvedPsychicProvider);
+              }
+              if (!approved.isApprovedTeller) {
+                return '/falci-ol';
+              }
+              return null;
+            },
             pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
               key: state.pageKey,
               child: const PsychicTellerDashboardScreen(),

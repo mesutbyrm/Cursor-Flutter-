@@ -24,8 +24,8 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push('/canli-falcilar');
     return;
   }
-  if (p == '/falci-ol') {
-    context.push('/falci-ol');
+  if (p == '/falci-ol' || p == '/falci-panel') {
+    context.push(p == '/falci-panel' ? '/falci-panel' : '/falci-ol');
     return;
   }
   if (p.startsWith('/fortune') || p.contains('fal')) {
