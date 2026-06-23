@@ -96,6 +96,10 @@ class AuthController extends AsyncNotifier<UserEntity?> {
         message: 'Oturum kontrolü zaman aşımına uğradı',
       );
       AppStartupLog.authFinish(hasUser: user != null);
+      // Uygulama açılışında OneSignal'e kullanıcıyı kaydet
+      if (user?.id != null && user!.id.isNotEmpty) {
+        await OneSignalBootstrap.login(user.id);
+      }
       return user;
     } catch (_) {
       AppStartupLog.authFinish(hasUser: false, error: true);
