@@ -92,6 +92,14 @@ abstract final class PsychicModel {
     if (body is! Map) return null;
     final map = asJsonMap(body);
     if (map['success'] == false && map['error'] != null) return null;
+    if (map.containsKey('error') &&
+        map['success'] != true &&
+        !map.containsKey('teller') &&
+        !map.containsKey('fortuneTeller') &&
+        !map.containsKey('data') &&
+        !map.containsKey('id')) {
+      return null;
+    }
 
     final layers = <Map<String, dynamic>>[];
     if (map['data'] is Map) layers.add(asJsonMap(map['data']));

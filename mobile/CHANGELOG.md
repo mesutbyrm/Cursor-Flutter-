@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.338+341 (2026-06-22)
+
+### Falcı paneli / başvuru — kök neden düzeltmesi
+
+- **Hızlı rol algısı:** `my-profile` → `/api/me` → `/api/user/profile` → tek sayfa liste (100 kayıt); yavaş 3 sayfalık tarama kaldırıldı
+- **`/api/me` bayrakları:** `isFortuneTeller`, `canGoOnline`, `fortuneTellerId` ile onaylı falcı sentetik profili
+- **Başvuru formu:** Tam sayfa spinner kaldırıldı; form anında açılır; `apply` yanıtı hemen state'e yazılır
+- **Başvuru API:** Üretim `{error}` / `{success,data,teller}` gövdeleri; zaman aşımı ve sosyal yedek uç
+- **Router:** Falcı rol kontrolü 10 sn zaman aşımı — tıklama donması giderildi
+- **`refresh()`:** 15 sn timeout + hata durumunda `checked=true` (sonsuz loading yok)
+
 ## 1.0.337+340 (2026-06-22)
 
 ### Falcı paneli / başvuru düzeltmeleri

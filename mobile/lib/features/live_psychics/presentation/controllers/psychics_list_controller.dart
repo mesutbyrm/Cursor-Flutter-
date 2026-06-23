@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/loading_timeout.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/psychic_award_entity.dart';
 import '../../domain/entities/psychic_entity.dart';
@@ -291,6 +293,16 @@ class ApprovedPsychicNotifier extends Notifier<ApprovedPsychicState> {
     return ApprovedPsychicState(loading: user != null);
   }
 
+  void adoptProfile(PsychicEntity? profile) {
+    if (profile == null) return;
+    state = ApprovedPsychicState(
+      profile: profile,
+      loading: false,
+      checked: true,
+      lastDiagnostic: 'apply-response',
+    );
+  }
+
   Future<void> refresh() async {
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) {
@@ -298,20 +310,34 @@ class ApprovedPsychicNotifier extends Notifier<ApprovedPsychicState> {
       return;
     }
     state = state.copyWith(loading: true);
-    final resolved = await ref
-        .read(fortuneTellerProfileResolverProvider)
-        .resolveFortuneTellerProfile(user);
-    final diagnostic = TellerRoleDiagnostic.fromResolve(
-      user: user,
-      resolved: resolved,
-    );
-    diagnostic.emit();
-    state = ApprovedPsychicState(
-      profile: resolved.profile,
-      loading: false,
-      checked: true,
-      lastDiagnostic: resolved.source,
-    );
+    try {
+      final resolved = await LoadingTimeout.run(
+        ref
+            .read(fortuneTellerProfileResolverProvider)
+            .resolveFortuneTellerProfile(user),
+        timeout: const Duration(seconds: 15),
+        message: 'Falcı profili yüklenemedi',
+      );
+      final diagnostic = TellerRoleDiagnostic.fromResolve(
+        user: user,
+        resolved: resolved,
+      );
+      diagnostic.emit();
+      state = ApprovedPsychicState(
+        profile: resolved.profile,
+        loading: false,
+        checked: true,
+        lastDiagnostic: resolved.source,
+      );
+    } catch (e, st) {
+      debugPrint('[TellerDebug] refresh failed: $e\n$st');
+      state = ApprovedPsychicState(
+        profile: state.profile,
+        loading: false,
+        checked: true,
+        lastDiagnostic: 'error',
+      );
+    }
   }
 }
 

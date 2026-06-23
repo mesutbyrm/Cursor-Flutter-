@@ -27,10 +27,6 @@ class PsychicBecomeTellerPage extends ConsumerWidget {
         child: SafeArea(
           child: Builder(
             builder: (context) {
-              if (!approved.checked && approved.loading) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
               if (!authed) {
                 return _CenterMessage(
                   icon: Icons.login_rounded,

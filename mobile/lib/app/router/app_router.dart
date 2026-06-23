@@ -97,6 +97,7 @@ import '../../core/bootstrap/app_startup_log.dart';
 import '../../core/bootstrap/auth_redirect.dart';
 import '../../core/bootstrap/startup_route_observer.dart';
 import '../../core/navigation/app_page_transitions.dart';
+import '../../core/network/loading_timeout.dart';
 
 /// Push / global modal sheet'ler için kök navigator (oturum değişince yenilenir).
 GlobalKey<NavigatorState> rootNavigatorKey =
@@ -112,6 +113,18 @@ final shellSessionProvider = StateProvider<int>((ref) => 0);
 final goRouterProvider = Provider<GoRouter>((ref) {
   ref.watch(shellSessionProvider);
   ref.watch(approvedAgencyProvider);
+
+  Future<ApprovedPsychicState> readApprovedTellerState() async {
+    var approved = ref.read(approvedPsychicProvider);
+    if (approved.checked) return approved;
+    try {
+      await LoadingTimeout.run(
+        ref.read(approvedPsychicProvider.notifier).refresh(),
+        timeout: const Duration(seconds: 10),
+      );
+    } catch (_) {}
+    return ref.read(approvedPsychicProvider);
+  }
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
@@ -180,11 +193,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/falci-panel',
         redirect: (context, state) async {
-          var approved = ref.read(approvedPsychicProvider);
-          if (!approved.checked) {
-            await ref.read(approvedPsychicProvider.notifier).refresh();
-            approved = ref.read(approvedPsychicProvider);
-          }
+          final approved = await readApprovedTellerState();
           if (approved.isApprovedTeller) {
             return '/canli-falcilar/dashboard';
           }
@@ -198,11 +207,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/falci-ol',
         redirect: (context, state) async {
-          var approved = ref.read(approvedPsychicProvider);
-          if (!approved.checked) {
-            await ref.read(approvedPsychicProvider.notifier).refresh();
-            approved = ref.read(approvedPsychicProvider);
-          }
+          final approved = await readApprovedTellerState();
           if (approved.isApprovedTeller) {
             return '/canli-falcilar/dashboard';
           }
@@ -800,11 +805,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'dashboard',
             redirect: (context, state) async {
-              var approved = ref.read(approvedPsychicProvider);
-              if (!approved.checked) {
-                await ref.read(approvedPsychicProvider.notifier).refresh();
-                approved = ref.read(approvedPsychicProvider);
-              }
+              final approved = await readApprovedTellerState();
               if (!approved.isApprovedTeller) {
                 return '/falci-ol';
               }

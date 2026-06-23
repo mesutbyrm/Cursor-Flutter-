@@ -73,7 +73,7 @@ class _PsychicApplyScreenState extends ConsumerState<PsychicApplyScreen> {
     }
     setState(() => _submitting = true);
     try {
-      await ref.read(livePsychicsRepositoryProvider).applyAsTeller(
+      final applied = await ref.read(livePsychicsRepositoryProvider).applyAsTeller(
             displayName: name,
             specialties: _selected.toList(growable: false),
             bio: _bioCtrl.text.trim().isEmpty ? null : _bioCtrl.text.trim(),
@@ -82,8 +82,9 @@ class _PsychicApplyScreenState extends ConsumerState<PsychicApplyScreen> {
           );
       if (!mounted) return;
       setState(() => _submitted = true);
+      ref.read(approvedPsychicProvider.notifier).adoptProfile(applied);
       _snack('Başvurunuz alındı — onay bekleniyor');
-      unawaited(ref.read(approvedPsychicProvider.notifier).refresh());
+      ref.read(approvedPsychicProvider.notifier).refresh().ignore();
     } on ApiException catch (e) {
       if (!mounted) return;
       _snack(e.message);
@@ -117,9 +118,6 @@ class _PsychicApplyScreenState extends ConsumerState<PsychicApplyScreen> {
         child: SafeArea(
           child: Builder(
             builder: (context) {
-              if (!approved.checked && approved.loading) {
-                return const Center(child: CircularProgressIndicator());
-              }
               if (!authed) {
                 return const Center(
                   child: Padding(

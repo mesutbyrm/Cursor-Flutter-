@@ -67,11 +67,15 @@ class LivePsychicsRemoteDataSource {
   }
 
   /// `userId` (auth) ile eşleşen falcı — liste sayfalama; **authUser.id ile GET by id yapılmaz**.
-  Future<PsychicEntity?> findTellerByAuthUserId(String authUserId) async {
+  Future<PsychicEntity?> findTellerByAuthUserId(
+    String authUserId, {
+    int maxPages = 3,
+    int pageLimit = 50,
+  }) async {
     final uid = authUserId.trim();
     if (uid.isEmpty) return null;
-    for (var page = 1; page <= 3; page++) {
-      final batch = await fetchPsychics(page: page, limit: 50);
+    for (var page = 1; page <= maxPages; page++) {
+      final batch = await fetchPsychics(page: page, limit: pageLimit);
       if (batch.isEmpty) break;
       for (final t in batch) {
         if (t.userId?.trim() != uid) continue;
@@ -81,30 +85,9 @@ class LivePsychicsRemoteDataSource {
         }
         if (t.isUsable || t.isApproved || t.id.trim().isNotEmpty) return t;
       }
-      if (batch.length < 50) break;
+      if (batch.length < pageLimit) break;
     }
     return null;
-  }
-
-  /// Falcı panel uçlarına erişim (onaylı falcı probu).
-  Future<bool> canAccessTellerPanel() async {
-    for (final path in [
-      ApiEndpoints.fortuneTellerIncomingSessions,
-      ApiEndpoints.fortuneTellerMyProfile,
-    ]) {
-      try {
-        final res = await _dio.safeGet<dynamic>(path);
-        final body = res.data;
-        if (body is Map) {
-          final map = asJsonMap(body);
-          if (map['success'] == false && map['error'] != null) continue;
-        }
-        return true;
-      } on ApiException catch (e) {
-        if (e.statusCode == 401 || e.statusCode == 403) return false;
-      } catch (_) {}
-    }
-    return false;
   }
 
   Future<PsychicEntity?> fetchPsychic(String id) async {
@@ -141,6 +124,9 @@ class LivePsychicsRemoteDataSource {
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.fortuneTellerMyProfile);
       return res.data;
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 403) return null;
+      return {'error': e.message, 'statusCode': e.statusCode};
     } catch (e) {
       return {'error': e.toString()};
     }
@@ -172,39 +158,95 @@ class LivePsychicsRemoteDataSource {
     String? bio,
     String? applicationNote,
   }) async {
+    final payload = {
+      'displayName': displayName.trim(),
+      'specialties': specialties,
+      if (bio != null && bio.trim().isNotEmpty) 'bio': bio.trim(),
+      if (applicationNote != null && applicationNote.trim().isNotEmpty)
+        'applicationNote': applicationNote.trim(),
+    };
     try {
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.fortuneTellerApply,
-        data: {
-          'displayName': displayName.trim(),
-          'specialties': specialties,
-          if (bio != null && bio.trim().isNotEmpty) 'bio': bio.trim(),
-          if (applicationNote != null && applicationNote.trim().isNotEmpty)
-            'applicationNote': applicationNote.trim(),
-        },
+        data: payload,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 25),
+          sendTimeout: const Duration(seconds: 20),
+        ),
       );
-      if (res.data is! Map) {
-        throw ApiException('Başvuru yanıtı geçersiz');
+      return _parseApplyResponse(res.data);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 405) {
+        return _applyAsTellerFallback(payload);
       }
-      final map = asJsonMap(res.data);
-      if (map['success'] == false) {
-        throw ApiException(
-          map['error']?.toString() ??
-              map['message']?.toString() ??
-              'Başvuru gönderilemedi',
-        );
-      }
-      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      final tellerRaw = data['teller'] ?? data['fortuneTeller'] ?? data;
-      if (tellerRaw is Map) {
-        return PsychicModel.psychicFromJson(tellerRaw);
-      }
-      return PsychicModel.psychicFromJson(data);
+      rethrow;
+    } catch (e) {
+      throw ApiException(ApiException.userMessage(e));
+    }
+  }
+
+  Future<PsychicEntity?> _applyAsTellerFallback(
+    Map<String, dynamic> payload,
+  ) async {
+    try {
+      final res = await _dio.safePost<dynamic>(
+        ApiEndpoints.socialFortuneTellers,
+        data: payload,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 25),
+          sendTimeout: const Duration(seconds: 20),
+        ),
+      );
+      return _parseApplyResponse(res.data);
     } on ApiException {
       rethrow;
     } catch (e) {
       throw ApiException(ApiException.userMessage(e));
     }
+  }
+
+  PsychicEntity? _parseApplyResponse(dynamic body) {
+    if (body is! Map) {
+      throw const ApiException('Başvuru yanıtı geçersiz');
+    }
+    final map = asJsonMap(body);
+    if (map['success'] == false) {
+      throw ApiException(
+        _errorMessage(map) ?? 'Başvuru gönderilemedi',
+      );
+    }
+    final err = map['error'];
+    if (err != null && map['success'] != true && map['teller'] == null) {
+      final msg = err is Map
+          ? (err['message'] ?? err['code'])?.toString()
+          : err.toString();
+      if (msg != null && msg.trim().isNotEmpty) {
+        throw ApiException(msg.trim());
+      }
+    }
+
+    final fromMyProfileShape = PsychicModel.psychicFromMyProfileBody(map);
+    if (fromMyProfileShape != null) return fromMyProfileShape;
+
+    final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+    final tellerRaw = data['teller'] ?? data['fortuneTeller'] ?? data;
+    if (tellerRaw is Map) {
+      return PsychicModel.psychicFromJson(tellerRaw);
+    }
+    final parsed = PsychicModel.psychicFromJson(data);
+    if (parsed.id.isNotEmpty) return parsed;
+    if (map['success'] == true || map.containsKey('id')) {
+      return parsed;
+    }
+    throw const ApiException('Başvuru yanıtı işlenemedi');
+  }
+
+  String? _errorMessage(Map<String, dynamic> map) {
+    final err = map['error'];
+    if (err is Map) {
+      return (err['message'] ?? err['code'])?.toString();
+    }
+    return map['error']?.toString() ?? map['message']?.toString();
   }
 
   Future<List<PsychicReviewEntity>> fetchReviews(String tellerId) async {
