@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_refresh.dart';
-import '../../providers/fortune_api_providers.dart';
+import '../providers/fortune_api_providers.dart';
 import '../widgets/ultra_premium/ultra_fortune_app_bar.dart';
 import '../widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
 import '../widgets/ultra_premium/ultra_fortune_daily_energy.dart';

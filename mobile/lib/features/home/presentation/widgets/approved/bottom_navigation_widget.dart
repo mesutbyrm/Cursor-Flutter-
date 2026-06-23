@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../theme/home_approved_design.dart';
 
 /// Onaylı mockup — Ana Sayfa, Sosyal, Yayın/Medya, Jeton, Profil.

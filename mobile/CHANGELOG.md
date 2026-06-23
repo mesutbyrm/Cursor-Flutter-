@@ -1,6 +1,12 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.347+351 (2026-06-23)
+
+### Derleme düzeltmesi
+
+- Yanlış import yolları giderildi (fal hub, alt navigasyon)
+
 ## 1.0.346+350 (2026-06-23)
 
 ### UI bütünlük ve eksik düzeltmeleri
