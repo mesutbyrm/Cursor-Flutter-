@@ -225,24 +225,29 @@ socialRouter.get(
   requireAuth,
   async (req, res) => {
     const uid = req.userId!;
-    const teller = await prisma.fortuneTeller.findUnique({
-      where: { userId: uid },
-      include: { user: { select: { avatarUrl: true } } },
+    const user = await prisma.user.findUnique({
+      where: { id: uid },
+      select: {
+        id: true,
+        displayName: true,
+        avatarUrl: true,
+        role: true,
+      },
     });
-    if (!teller) {
+    if (!user || user.role !== "fortune_teller") {
       return fail(res, 404, "NOT_FOUND", "Falcı profili bulunamadı");
     }
     return ok(res, {
       teller: {
-        id: teller.id,
-        userId: teller.userId,
-        tellerUserId: teller.userId,
-        displayName: teller.displayName,
-        isOnline: teller.isOnline,
-        rating: teller.rating,
-        pricePerMinute: teller.pricePerMinute,
-        specialties: teller.specialties,
-        image: teller.user.avatarUrl ?? "",
+        id: uid,
+        userId: uid,
+        tellerUserId: uid,
+        displayName: user.displayName ?? "Falcı",
+        isOnline: true,
+        rating: 5.0,
+        pricePerMinute: 12,
+        specialties: ["tarot", "kahve"],
+        image: user.avatarUrl ?? "",
       },
     });
   },
