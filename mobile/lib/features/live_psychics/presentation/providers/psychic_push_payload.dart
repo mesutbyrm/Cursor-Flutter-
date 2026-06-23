@@ -77,10 +77,10 @@ Map<String, dynamic> mergePsychicInviteNestedFields(Map<String, dynamic> map) {
       merged = {...merged, ...asJsonMap(nested)};
     }
   }
-  final client = merged['client'] ?? merged['user'];
+  final client = merged['client'];
   if (client is Map) {
     final c = asJsonMap(client);
-    merged.putIfAbsent('clientId', () => pick(c, ['id', 'userId', 'clientId']));
+    merged.putIfAbsent('clientId', () => pick(c, ['id', 'clientId', 'userId']));
     merged.putIfAbsent('clientName', () => pick(c, [
           'displayName',
           'name',
@@ -91,6 +91,20 @@ Map<String, dynamic> mergePsychicInviteNestedFields(Map<String, dynamic> map) {
       'clientAvatarUrl',
       () => pick(c, ['avatarUrl', 'image', 'avatar']),
     );
+  }
+  // Üretim push: nested `user` çoğunlukla falcı anchor — clientId'ye yazma.
+  final user = merged['user'];
+  if (user is Map) {
+    final u = asJsonMap(user);
+    merged.putIfAbsent(
+      'tellerUserId',
+      () => pick(u, ['tellerUserId', 'userId', 'id']),
+    );
+    merged.putIfAbsent(
+      'tellerId',
+      () => pick(u, ['tellerId', 'fortuneTellerId', 'id']),
+    );
+    merged.putIfAbsent('clientName', () => pick(u, ['displayName', 'name']));
   }
   return merged;
 }
@@ -479,35 +493,114 @@ bool isPsychicInviteForClientUser(
   return clientId == uid;
 }
 
-/// Falcı cihazında gösterilecek gelen davet mi?
-bool shouldPresentPsychicIncomingInvite({
+/// Davet gösterim kararı + red nedeni (FAZ 1 teşhis).
+class PsychicInvitePresentationDecision {
+  const PsychicInvitePresentationDecision({
+    required this.present,
+    required this.reason,
+  });
+
+  final bool present;
+  final String reason;
+}
+
+PsychicInvitePresentationDecision evaluatePsychicIncomingInvite({
   required String? authUserId,
   required PsychicRequestEntity invite,
   String? tellerProfileId,
   bool isFortuneTeller = false,
 }) {
   final uid = authUserId?.trim() ?? '';
-  if (uid.isEmpty) return true;
-  if (isPsychicInviteForClientUser(uid, invite)) return false;
-
-  final tellerUid = invite.tellerUserId?.trim() ?? '';
-  if (tellerUid.isNotEmpty && tellerUid == uid) return true;
-
-  final profileId = tellerProfileId?.trim() ?? '';
-  if (profileId.isNotEmpty && invite.tellerId.trim() == profileId) return true;
-  if (invite.tellerId.trim() == uid) return true;
-
-  // Onaylı falcı: danışan değilse gelen isteği göster (clientId boş push dahil).
-  if (isFortuneTeller || profileId.isNotEmpty) {
-    final clientId = invite.clientId.trim();
-    return clientId.isEmpty || clientId != uid;
+  if (uid.isEmpty) {
+    return const PsychicInvitePresentationDecision(
+      present: true,
+      reason: 'authUserId boş — filtre atlandı',
+    );
+  }
+  if (isPsychicInviteForClientUser(uid, invite)) {
+    return PsychicInvitePresentationDecision(
+      present: false,
+      reason:
+          'clientId (${invite.clientId}) oturum kullanıcısı ile eşleşiyor — danışan kendi isteği',
+    );
   }
 
-  // Danışan: clientId yoksa minimal push — kendi isteği olabilir, dialog açma.
+  final tellerUid = invite.tellerUserId?.trim() ?? '';
+  if (tellerUid.isNotEmpty && tellerUid == uid) {
+    return const PsychicInvitePresentationDecision(
+      present: true,
+      reason: 'tellerUserId oturum kullanıcısı ile eşleşti',
+    );
+  }
+
+  final profileId = tellerProfileId?.trim() ?? '';
+  if (profileId.isNotEmpty && invite.tellerId.trim() == profileId) {
+    return const PsychicInvitePresentationDecision(
+      present: true,
+      reason: 'tellerId onaylı falcı profili ile eşleşti',
+    );
+  }
+  if (invite.tellerId.trim() == uid) {
+    return const PsychicInvitePresentationDecision(
+      present: true,
+      reason: 'tellerId oturum kullanıcısı ile eşleşti',
+    );
+  }
+
+  if (isFortuneTeller || profileId.isNotEmpty) {
+    final clientId = invite.clientId.trim();
+    if (clientId.isEmpty) {
+      return const PsychicInvitePresentationDecision(
+        present: true,
+        reason: 'onaylı falcı + clientId boş minimal push',
+      );
+    }
+    if (clientId != uid) {
+      return const PsychicInvitePresentationDecision(
+        present: true,
+        reason: 'onaylı falcı + clientId danışan değil',
+      );
+    }
+    return const PsychicInvitePresentationDecision(
+      present: false,
+      reason: 'onaylı falcı ama clientId oturum kullanıcısı ile aynı',
+    );
+  }
+
   final clientId = invite.clientId.trim();
-  if (clientId.isEmpty) return false;
-  return clientId != uid;
+  if (clientId.isEmpty) {
+    return const PsychicInvitePresentationDecision(
+      present: false,
+      reason:
+          'clientId boş + isFortuneTeller=false + teller eşleşmesi yok — '
+          'approvedPsychicProvider henüz çözülmemiş veya minimal push eksik',
+    );
+  }
+  if (clientId != uid) {
+    return const PsychicInvitePresentationDecision(
+      present: true,
+      reason: 'clientId farklı kullanıcı — muhtemelen falcı cihazı',
+    );
+  }
+  return const PsychicInvitePresentationDecision(
+    present: false,
+    reason: 'clientId oturum kullanıcısı ile eşleşiyor',
+  );
 }
+
+/// Falcı cihazında gösterilecek gelen davet mi?
+bool shouldPresentPsychicIncomingInvite({
+  required String? authUserId,
+  required PsychicRequestEntity invite,
+  String? tellerProfileId,
+  bool isFortuneTeller = false,
+}) =>
+    evaluatePsychicIncomingInvite(
+      authUserId: authUserId,
+      invite: invite,
+      tellerProfileId: tellerProfileId,
+      isFortuneTeller: isFortuneTeller,
+    ).present;
 
 final psychicIncomingQueueFromPushProvider =
     NotifierProvider<PsychicPushQueue, List<PsychicRequestEntity>>(

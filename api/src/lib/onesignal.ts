@@ -24,9 +24,11 @@ export async function sendOneSignalToUser(input: {
   data?: Record<string, string>;
   /** Ödeme onayı, mesaj vb. — kapalıyken bile hızlı teslim */
   urgent?: boolean;
-}): Promise<boolean> {
+}): Promise<{ ok: boolean; status?: number; error?: string }> {
   const cfg = config();
-  if (!cfg || !input.userId.trim()) return false;
+  if (!cfg || !input.userId.trim()) {
+    return { ok: false, error: "not_configured" };
+  }
 
   const payload: Record<string, unknown> = {
     app_id: cfg.appId,
@@ -57,11 +59,11 @@ export async function sendOneSignalToUser(input: {
     if (!res.ok) {
       const text = await res.text();
       console.warn(`OneSignal push failed (${res.status}): ${text.slice(0, 300)}`);
-      return false;
+      return { ok: false, status: res.status, error: text.slice(0, 300) };
     }
-    return true;
+    return { ok: true, status: res.status };
   } catch (e) {
     console.warn("OneSignal push error:", e);
-    return false;
+    return { ok: false, error: String(e) };
   }
 }

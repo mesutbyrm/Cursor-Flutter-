@@ -103,6 +103,44 @@ void main() {
     });
   });
 
+  group('mergePsychicInviteNestedFields', () {
+    test('does not map nested user.userId to clientId', () {
+      const tellerUserId = 'cmoks76yf00c4ph08ppcoqg98';
+      final invite = parsePsychicIncomingPayload({
+        'type': 'psychic_request_created',
+        'sessionId': 'sess_nested_user',
+        'user': {'userId': tellerUserId},
+      });
+
+      expect(invite, isNotNull);
+      expect(invite!.clientId, isEmpty);
+      expect(
+        shouldPresentPsychicIncomingInvite(
+          authUserId: tellerUserId,
+          invite: invite,
+          isFortuneTeller: true,
+        ),
+        isTrue,
+      );
+      expect(isPsychicInviteForClientUser(tellerUserId, invite), isFalse);
+    });
+  });
+
+  group('evaluatePsychicIncomingInvite', () {
+    test('explains rejection when profile unresolved and minimal push', () {
+      final invite = parsePsychicIncomingLoose({
+        'type': 'fortune_session_invite',
+        'targetId': 'sess_min',
+      })!;
+      final decision = evaluatePsychicIncomingInvite(
+        authUserId: 'teller_ilham',
+        invite: invite,
+      );
+      expect(decision.present, isFalse);
+      expect(decision.reason, contains('isFortuneTeller=false'));
+    });
+  });
+
   group('shouldPresentPsychicIncomingInvite', () {
     test('hides invite on client device for own request', () {
       const clientId = 'client_help';
