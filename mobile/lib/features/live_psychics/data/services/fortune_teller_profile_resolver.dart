@@ -19,7 +19,7 @@ class FortuneTellerProfileResolver {
   final Dio _dio;
   final LivePsychicsRemoteDataSource _psychics;
 
-  /// Sıra: my-profile → /api/me → /api/user/profile → liste (1 sayfa) → rol.
+  /// Sıra: liste (onaylı hızlı yol) → my-profile → /api/me → /api/user/profile → liste → rol.
   Future<FortuneTellerProfileResult> resolveFortuneTellerProfile(
     UserEntity user,
   ) async {
@@ -31,15 +31,34 @@ class FortuneTellerProfileResolver {
       );
     }
 
+    // Onaylı falcılar (İlhamperisi vb.) — herkese açık liste, my-profile gecikmesinden bağımsız.
+    final listFast = await _psychics.findTellerByAuthUserId(
+      authUserId,
+      username: user.username,
+      maxPages: 3,
+      pageLimit: 100,
+    );
+    if (listFast != null && listFast.isUsable) {
+      return _result(
+        profile: listFast,
+        authUserId: authUserId,
+        source: 'fortune-tellers-list-fast',
+      );
+    }
+
     final rawMyProfile = await _psychics.fetchMyProfileRaw();
     var profile = PsychicModel.psychicFromMyProfileBody(rawMyProfile);
+    PsychicEntity? pendingMyProfile;
     if (profile != null && profile.id.trim().isNotEmpty) {
-      return _result(
-        profile: profile,
-        authUserId: authUserId,
-        source: 'my-profile',
-        rawMyProfile: rawMyProfile,
-      );
+      if (profile.isUsable) {
+        return _result(
+          profile: profile,
+          authUserId: authUserId,
+          source: 'my-profile',
+          rawMyProfile: rawMyProfile,
+        );
+      }
+      pendingMyProfile = profile;
     }
 
     final fromMe = await _resolveFromMe(authUserId, user);
@@ -67,7 +86,8 @@ class FortuneTellerProfileResolver {
 
     profile = await _psychics.findTellerByAuthUserId(
       authUserId,
-      maxPages: 1,
+      username: user.username,
+      maxPages: 3,
       pageLimit: 100,
     );
     if (profile != null && profile.id.trim().isNotEmpty) {
@@ -96,6 +116,16 @@ class FortuneTellerProfileResolver {
         profile: synthetic,
         authUserId: authUserId,
         source: 'role-or-me-flag',
+        rawMyProfile: rawMyProfile,
+        rawMeSnippet: fromMe.rawMeSnippet,
+      );
+    }
+
+    if (pendingMyProfile != null) {
+      return _result(
+        profile: pendingMyProfile,
+        authUserId: authUserId,
+        source: 'my-profile-pending',
         rawMyProfile: rawMyProfile,
         rawMeSnippet: fromMe.rawMeSnippet,
       );

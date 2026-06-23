@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.339+342 (2026-06-23)
+
+### Falcı paneli, başvuru, TRTC video
+
+- **Onaylı falcı algısı:** `fortune-tellers` listesi önce taranır (İlhamperisi hızlı yol); `my-profile` yalnızca kullanılabilir profilde kısa devre
+- **Başvuru:** Onaylı kullanıcıya tekrar başvuru engeli; 22 sn zaman aşımı; «zaten falcı» hatasında panele yönlendirme
+- **TRTC:** Kabul sonrası `trtcRoomId` senkronu; `GET /api/room` + oturum yedekleri; `peerId` / rol ayrıştırması genişletildi
+
 ## 1.0.338+341 (2026-06-22)
 
 ### Falcı paneli / başvuru — kök neden düzeltmesi

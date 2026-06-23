@@ -72,6 +72,10 @@ abstract class LivePsychicsRepository {
 
   Future<PsychicEntity?> fetchPsychic(String id);
   Future<PsychicEntity?> fetchMyProfile();
+  Future<PsychicEntity?> findApprovedTellerForUser(
+    String authUserId, {
+    String? username,
+  });
   Future<bool> setOnline({required bool online});
   Future<Map<String, dynamic>?> fetchOnlineStatus();
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,11 +10,25 @@ import 'package:canlifal_social/features/auth/presentation/providers/auth_provid
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 
 /// Falcı ol — tanıtım ve başvuru girişi. Onay admin panelinden yapılır.
-class PsychicBecomeTellerPage extends ConsumerWidget {
+class PsychicBecomeTellerPage extends ConsumerStatefulWidget {
   const PsychicBecomeTellerPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PsychicBecomeTellerPage> createState() =>
+      _PsychicBecomeTellerPageState();
+}
+
+class _PsychicBecomeTellerPageState extends ConsumerState<PsychicBecomeTellerPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(ref.read(approvedPsychicProvider.notifier).refresh());
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authed = ref.watch(authControllerProvider).valueOrNull != null;
     final approved = ref.watch(approvedPsychicProvider);
 

@@ -35,6 +35,18 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
   Future<PsychicEntity?> fetchMyProfile() => _remote.fetchMyProfile();
 
   @override
+  Future<PsychicEntity?> findApprovedTellerForUser(
+    String authUserId, {
+    String? username,
+  }) =>
+      _remote.findTellerByAuthUserId(
+        authUserId,
+        username: username,
+        maxPages: 3,
+        pageLimit: 100,
+      );
+
+  @override
   Future<bool> setOnline({required bool online}) =>
       _remote.setOnline(online: online);
 

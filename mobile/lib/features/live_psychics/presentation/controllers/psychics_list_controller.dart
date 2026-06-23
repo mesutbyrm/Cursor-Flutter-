@@ -311,6 +311,23 @@ class ApprovedPsychicNotifier extends Notifier<ApprovedPsychicState> {
     }
     state = state.copyWith(loading: true);
     try {
+      final quick = await LoadingTimeout.run(
+        ref
+            .read(livePsychicsRepositoryProvider)
+            .findApprovedTellerForUser(user.id, username: user.username),
+        timeout: const Duration(seconds: 8),
+        message: 'Falcı listesi yüklenemedi',
+      );
+      if (quick != null && quick.isUsable) {
+        state = ApprovedPsychicState(
+          profile: quick,
+          loading: false,
+          checked: true,
+          lastDiagnostic: 'list-fast',
+        );
+        return;
+      }
+
       final resolved = await LoadingTimeout.run(
         ref
             .read(fortuneTellerProfileResolverProvider)

@@ -69,16 +69,22 @@ class LivePsychicsRemoteDataSource {
   /// `userId` (auth) ile eşleşen falcı — liste sayfalama; **authUser.id ile GET by id yapılmaz**.
   Future<PsychicEntity?> findTellerByAuthUserId(
     String authUserId, {
+    String? username,
     int maxPages = 3,
     int pageLimit = 50,
   }) async {
     final uid = authUserId.trim();
     if (uid.isEmpty) return null;
+    final uname = username?.trim().toLowerCase() ?? '';
     for (var page = 1; page <= maxPages; page++) {
       final batch = await fetchPsychics(page: page, limit: pageLimit);
       if (batch.isEmpty) break;
       for (final t in batch) {
-        if (t.userId?.trim() != uid) continue;
+        final tellerUid = t.userId?.trim() ?? '';
+        final nameMatch = uname.isNotEmpty &&
+            (t.name.trim().toLowerCase().contains(uname) ||
+                uname.contains(t.name.trim().toLowerCase()));
+        if (tellerUid != uid && !nameMatch) continue;
         final status = t.applicationStatus?.trim().toLowerCase() ?? '';
         if (status == 'pending' || status == 'rejected' || status == 'declined') {
           continue;
@@ -170,8 +176,8 @@ class LivePsychicsRemoteDataSource {
         ApiEndpoints.fortuneTellerApply,
         data: payload,
         options: Options(
-          receiveTimeout: const Duration(seconds: 25),
-          sendTimeout: const Duration(seconds: 20),
+          receiveTimeout: const Duration(seconds: 22),
+          sendTimeout: const Duration(seconds: 15),
         ),
       );
       return _parseApplyResponse(res.data);
@@ -179,10 +185,46 @@ class LivePsychicsRemoteDataSource {
       if (e.statusCode == 404 || e.statusCode == 405) {
         return _applyAsTellerFallback(payload);
       }
+      if (_looksLikeAlreadyTellerError(e)) {
+        final existing = await fetchMyProfile();
+        if (existing != null && existing.isUsable) return existing;
+        final user = await _tryFindSelfInList();
+        if (user != null) return user;
+      }
       rethrow;
     } catch (e) {
       throw ApiException(ApiException.userMessage(e));
     }
+  }
+
+  bool _looksLikeAlreadyTellerError(ApiException e) {
+    final msg = e.message.toLowerCase();
+    return e.statusCode == 400 ||
+        e.statusCode == 409 ||
+        msg.contains('zaten') ||
+        msg.contains('already') ||
+        msg.contains('onaylı') ||
+        msg.contains('approved');
+  }
+
+  Future<PsychicEntity?> _tryFindSelfInList() async {
+    try {
+      final me = await _dio.safeGet<dynamic>(ApiEndpoints.me);
+      final body = me.data;
+      if (body is! Map) return null;
+      final map = asJsonMap(body);
+      final layers = <Map<String, dynamic>>[];
+      if (map['data'] is Map) layers.add(asJsonMap(map['data']));
+      layers.add(map);
+      for (final layer in layers) {
+        final uid = pick(layer, ['id', 'userId'])?.toString().trim();
+        final username = pick(layer, ['username', 'displayName'])?.toString();
+        if (uid != null && uid.isNotEmpty) {
+          return findTellerByAuthUserId(uid, username: username, maxPages: 2);
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 
   Future<PsychicEntity?> _applyAsTellerFallback(
@@ -625,13 +667,34 @@ class LivePsychicsRemoteDataSource {
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.liveFortuneRoom(key));
       final body = res.data;
-      if (body is! Map) return null;
-      final map = asJsonMap(body);
-      final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      return PsychicModel.roomFromJson(data, fallbackId: key);
-    } catch (_) {
-      return null;
+      if (body is Map) {
+        final map = asJsonMap(body);
+        final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+        final room = PsychicModel.roomFromJson(data, fallbackId: key);
+        if (room.roomId != null && room.roomId!.trim().isNotEmpty) return room;
+        if (room.peerId != null && room.peerId!.trim().isNotEmpty) return room;
+      }
+    } catch (_) {}
+
+    for (final path in [
+      ApiEndpoints.fortuneTellerSessionQuery(key),
+      ApiEndpoints.fortuneTellerSessionStatus(key),
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final body = res.data;
+        if (body is! Map) continue;
+        final map = asJsonMap(body);
+        final data = map['data'] is Map ? asJsonMap(map['data']) : map;
+        final sessionMap =
+            data['session'] is Map ? asJsonMap(data['session']) : data;
+        final merged = {...sessionMap, ...data};
+        final room = PsychicModel.roomFromJson(merged, fallbackId: key);
+        if (room.roomId != null && room.roomId!.trim().isNotEmpty) return room;
+        if (room.tellerUserId != null || room.clientId != null) return room;
+      } catch (_) {}
     }
+    return null;
   }
 
   Future<Map<String, dynamic>?> roomAction(

@@ -233,17 +233,34 @@ abstract final class PsychicModel {
     if (timerRaw != null && timerRaw.isNotEmpty) {
       timerStartedAt = DateTime.tryParse(timerRaw);
     }
-    final user = asJsonMap(data['user']);
-    final teller = asJsonMap(data['teller']);
+    final user = asJsonMap(data['user'] ?? data['client']);
+    final teller = asJsonMap(data['teller'] ?? data['fortuneTeller']);
+    final role = (str(data, ['role', 'participantRole']) ?? '').toLowerCase();
     final tellerUserId = str(data, ['tellerUserId', 'anchorUserId']) ??
         str(teller, ['userId', 'tellerUserId']);
-    final clientId = str(data, ['clientId']) ?? str(user, ['id', 'userId']);
-    final isTeller = data['isTeller'] == true;
-    final peerId = isTeller
-        ? str(data, ['peerId', 'clientId', 'userId']) ?? clientId
-        : str(data, ['peerId', 'anchorUserId', 'tellerUserId']) ?? tellerUserId;
+    final clientId = str(data, ['clientId']) ??
+        str(user, ['id', 'userId', 'clientId']);
+    final isTeller = data['isTeller'] == true ||
+        data['isFortuneTeller'] == true ||
+        role == 'teller' ||
+        role == 'fortune_teller' ||
+        role == 'falci';
+    final isClient = data['isClient'] == true ||
+        data['isUser'] == true ||
+        role == 'client' ||
+        role == 'user' ||
+        (!isTeller && data['isTeller'] != true);
+    final peerId = str(data, [
+          'peerId',
+          'peerUserId',
+          'remoteUserId',
+          'otherUserId',
+        ]) ??
+        (isTeller ? clientId : tellerUserId);
     final statusRaw = str(data, ['status']) ?? 'active';
     final elapsed = asInt(pick(data, ['elapsedSeconds', 'elapsed_seconds']));
+    final roomId = str(data, ['roomId', 'trtcRoomId', 'trtc_room_id']) ??
+        str(asJsonMap(data['room']), ['roomId', 'trtcRoomId', 'id']);
     return PsychicRoomEntity(
       sessionId: id,
       status: PsychicSessionStatus.fromApi(statusRaw),
@@ -253,12 +270,12 @@ abstract final class PsychicModel {
       }(),
       timerStarted: data['timerStarted'] == true,
       elapsedSeconds: elapsed,
-      roomId: str(data, ['roomId', 'trtcRoomId']),
+      roomId: roomId,
       timerStartedAt: timerStartedAt,
       peerId: peerId,
       tellerUserId: tellerUserId,
       clientId: clientId,
-      isClient: data['isUser'] == true || data['isTeller'] != true,
+      isClient: isClient,
       isTeller: isTeller,
     );
   }
@@ -315,8 +332,9 @@ abstract final class PsychicModel {
         pick(data, ['maxMinutes', 'duration']) ??
             pick(sessionMap, ['maxMinutes', 'duration']),
       ),
-      trtcRoomId: pick(data, ['trtcRoomId', 'roomId'])?.toString() ??
-          pick(sessionMap, ['trtcRoomId', 'roomId'])?.toString(),
+      trtcRoomId: pick(data, ['trtcRoomId', 'roomId', 'trtc_room_id'])?.toString() ??
+          pick(sessionMap, ['trtcRoomId', 'roomId'])?.toString() ??
+          pick(asJsonMap(data['room']), ['trtcRoomId', 'roomId', 'id'])?.toString(),
     );
   }
 
@@ -345,8 +363,9 @@ abstract final class PsychicModel {
       tellerProfileId: pick(data, ['tellerId'])?.toString() ??
           pick(sessionMap, ['tellerId'])?.toString() ??
           pick(tellerMap, ['id'])?.toString(),
-      trtcRoomId: pick(data, ['trtcRoomId', 'roomId'])?.toString() ??
-          pick(sessionMap, ['trtcRoomId', 'roomId'])?.toString(),
+      trtcRoomId: pick(data, ['trtcRoomId', 'roomId', 'trtc_room_id'])?.toString() ??
+          pick(sessionMap, ['trtcRoomId', 'roomId'])?.toString() ??
+          pick(asJsonMap(data['room']), ['trtcRoomId', 'roomId', 'id'])?.toString(),
       durationMinutes: asInt(
         pick(data, ['durationMinutes', 'maxMinutes', 'duration']) ??
             pick(sessionMap, ['durationMinutes', 'maxMinutes', 'duration']),

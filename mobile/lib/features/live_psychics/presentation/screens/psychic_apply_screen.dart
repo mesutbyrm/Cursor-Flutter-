@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:canlifal_social/core/network/api_exception.dart';
+import 'package:canlifal_social/core/network/loading_timeout.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/ui/premium_2026/cosmic_galaxy_background.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
@@ -38,7 +39,18 @@ class _PsychicApplyScreenState extends ConsumerState<PsychicApplyScreen> {
       if (_nameCtrl.text.trim().isEmpty) {
         _nameCtrl.text = user?.displayName ?? '';
       }
+      unawaited(_bootstrapProfile());
     });
+  }
+
+  Future<void> _bootstrapProfile() async {
+    try {
+      await LoadingTimeout.run(
+        ref.read(approvedPsychicProvider.notifier).refresh(),
+        timeout: const Duration(seconds: 12),
+        message: 'Falcı profili kontrol edilemedi',
+      );
+    } catch (_) {}
   }
 
   @override
@@ -71,22 +83,59 @@ class _PsychicApplyScreenState extends ConsumerState<PsychicApplyScreen> {
       _snack('En az bir uzmanlık alanı seçin');
       return;
     }
+
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user != null) {
+      final existing = await LoadingTimeout.run(
+        ref
+            .read(livePsychicsRepositoryProvider)
+            .findApprovedTellerForUser(user.id, username: user.username),
+        timeout: const Duration(seconds: 8),
+        message: 'Falcı profili kontrol edilemedi',
+      );
+      if (!mounted) return;
+      if (existing != null && existing.isUsable) {
+        ref.read(approvedPsychicProvider.notifier).adoptProfile(existing);
+        _snack('Zaten onaylı falcısınız — panele yönlendiriliyorsunuz');
+        context.go('/canli-falcilar/dashboard');
+        return;
+      }
+    }
+
     setState(() => _submitting = true);
     try {
-      final applied = await ref.read(livePsychicsRepositoryProvider).applyAsTeller(
-            displayName: name,
-            specialties: _selected.toList(growable: false),
-            bio: _bioCtrl.text.trim().isEmpty ? null : _bioCtrl.text.trim(),
-            applicationNote:
-                _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
-          );
+      final applied = await LoadingTimeout.run(
+        ref.read(livePsychicsRepositoryProvider).applyAsTeller(
+              displayName: name,
+              specialties: _selected.toList(growable: false),
+              bio: _bioCtrl.text.trim().isEmpty ? null : _bioCtrl.text.trim(),
+              applicationNote:
+                  _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
+            ),
+        timeout: const Duration(seconds: 22),
+        message: 'Başvuru zaman aşımına uğradı — tekrar deneyin',
+      );
       if (!mounted) return;
       setState(() => _submitted = true);
-      ref.read(approvedPsychicProvider.notifier).adoptProfile(applied);
+      if (applied != null) {
+        ref.read(approvedPsychicProvider.notifier).adoptProfile(applied);
+      }
       _snack('Başvurunuz alındı — onay bekleniyor');
-      ref.read(approvedPsychicProvider.notifier).refresh().ignore();
+      unawaited(ref.read(approvedPsychicProvider.notifier).refresh());
     } on ApiException catch (e) {
       if (!mounted) return;
+      final msg = e.message.toLowerCase();
+      if (msg.contains('zaten') ||
+          msg.contains('already') ||
+          msg.contains('onaylı') ||
+          msg.contains('approved')) {
+        await ref.read(approvedPsychicProvider.notifier).refresh();
+        if (!mounted) return;
+        if (ref.read(approvedPsychicProvider).isApprovedTeller) {
+          context.go('/canli-falcilar/dashboard');
+          return;
+        }
+      }
       _snack(e.message);
     } catch (e) {
       if (!mounted) return;

@@ -339,6 +339,18 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
       state = state.copyWith(rtcError: 'Video bu cihazda desteklenmiyor');
       return;
     }
+
+    await _syncRoomInfo();
+    final repo = ref.read(livePsychicsRepositoryProvider);
+    final status = await repo.fetchSessionStatus(session.sessionId);
+    if (status?.trtcRoomId != null && status!.trtcRoomId!.trim().isNotEmpty) {
+      final updated = session.copyWith(
+        trtcRoomIdOverride: status.trtcRoomId,
+        tellerUserId: status.tellerUserId ?? session.tellerUserId,
+      );
+      unawaited(PsychicSessionStore.save(updated));
+    }
+
     if (state.room?.roomId == null || state.room!.roomId!.trim().isEmpty) {
       await _syncRoomInfo();
     }
@@ -365,8 +377,11 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
         isHost: !session.isClient,
         audioOnly: false,
         twoWayVideo: true,
-        expectedAnchorUserId:
-            remotePeerId.trim().isNotEmpty ? remotePeerId.trim() : null,
+        expectedAnchorUserId: session.isClient
+            ? (remotePeerId.trim().isNotEmpty
+                ? remotePeerId.trim()
+                : session.anchorUserId)
+            : (remotePeerId.trim().isNotEmpty ? remotePeerId.trim() : null),
       );
       state = state.copyWith(rtcReady: true, clearRtcError: true);
     } catch (e) {
