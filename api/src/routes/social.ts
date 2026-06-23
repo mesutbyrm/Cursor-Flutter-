@@ -164,7 +164,7 @@ socialRouter.post("/fortune-tellers/session", requireAuth, async (req, res) => {
   });
   const role = fortuneSessionRoleForUser(session, clientId);
   void createNotification({
-    userId: session.tellerUserId,
+    userId: tellerUserId,
     title: `Canlı fal isteği: ${session.clientName ?? "Bir danışan"}`,
     body: `${session.durationMinutes ?? 10} dk · ${session.totalJeton ?? 0} jeton — kabul etmek için uygulama açın`,
     type: "fortune_session_invite",
