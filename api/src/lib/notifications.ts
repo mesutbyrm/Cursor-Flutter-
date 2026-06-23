@@ -47,13 +47,22 @@ export async function createNotification(input: {
       }
     }
     // Sadece OneSignal kullan — FCM ayrıca çağrılmıyor (çift bildirim önleme)
-    void sendOneSignalToUser({
+    const pushResult = await sendOneSignalToUser({
       userId: input.userId,
       title: input.title,
       body: input.body,
       data: extra,
       urgent: input.urgent ?? isUrgentNotificationType(input.type),
     });
+    if (!pushResult.ok) {
+      console.warn(
+        `[createNotification] OneSignal failed userId=${input.userId} status=${pushResult.status ?? ""} err=${pushResult.error ?? ""}`,
+      );
+    } else {
+      console.info(
+        `[createNotification] OneSignal ok userId=${input.userId} status=${pushResult.status ?? 200}`,
+      );
+    }
   }
 
   return row;

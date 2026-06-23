@@ -14,6 +14,7 @@ import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_r
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_invite_diagnostic_card.dart';
 
 class PsychicTellerDashboardState {
   const PsychicTellerDashboardState({
@@ -298,6 +299,7 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                       .read(psychicTellerDashboardProvider.notifier)
                       .toggleOnline(),
                 ),
+                const PsychicInviteDiagnosticCard(),
                 const SizedBox(height: 12),
                 _TellerStatGrid(
                   profile: profile,

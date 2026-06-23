@@ -14,6 +14,7 @@ import '../../features/live_psychics/presentation/providers/live_psychics_provid
 import '../../features/live_psychics/presentation/providers/psychic_booking_feedback_provider.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart';
 import '../../features/live_psychics/presentation/controllers/psychics_list_controller.dart';
+import '../../features/live_psychics/presentation/diagnostics/psychic_invite_diagnostic_provider.dart';
 import '../../features/live_psychics/presentation/providers/psychic_push_payload.dart';
 import '../../features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
 import '../../features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
@@ -58,15 +59,19 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
           if (invite == null) return;
           final uid = ref.read(authControllerProvider).valueOrNull?.id;
           final approved = ref.read(approvedPsychicProvider);
-          if (!shouldPresentPsychicIncomingInvite(
+          final decision = evaluatePsychicIncomingInvite(
             authUserId: uid,
             invite: invite,
             tellerProfileId: approved.profile?.id,
             isFortuneTeller:
                 approved.profile != null && approved.profile!.isUsable,
-          )) {
-            return;
-          }
+          );
+          ref.read(psychicInviteDiagnosticProvider.notifier).record(
+                sessionId: invite.sessionId,
+                decision: decision,
+                source: 'push',
+              );
+          if (!decision.present) return;
           ref.read(psychicIncomingQueueProvider.notifier).enqueue(invite);
           PsychicInviteCoordinator.requestPresent(sessionId: invite.sessionId);
         },

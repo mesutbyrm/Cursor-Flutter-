@@ -1,0 +1,20 @@
+{
+  "base": "https://canlifal.com",
+  "ilhamTellerId": "cmokzl5u900w2od09rpqq2fs9",
+  "ilhamUserId": "cmoks76yf00c4ph08ppcoqg98",
+  "adminLoginOk": false,
+  "tellerLoginOk": false,
+  "createSessionHttp": "skipped",
+  "sessionId": "",
+  "pendingCountAfterCreate": "",
+  "createNotification": "sunucu tarafı — üretim log / DB appNotification satırı gerekir",
+  "oneSignalApiCalled": "createNotification userId doluysa sendOneSignalToUser çağrılır (api/src/lib/notifications.ts)",
+  "oneSignal200": "sunucu log: [createNotification] OneSignal ok status=200",
+  "pushReachedPhone": "fiziksel cihaz + OneSignal dashboard / uygulama teşhis kartı ile doğrulanır",
+  "notes": [
+    "Mobil filtre: evaluatePsychicIncomingInvite — Falcı Paneli teşhis kartı",
+    "Kök neden A: nested user.userId → clientId (düzeltildi)",
+    "Kök neden B: approvedPsychicProvider gecikmesi + minimal push",
+    "Kök neden C: OneSignal foreground preventDefault — filtre red ederse tray yok"
+  ]
+}

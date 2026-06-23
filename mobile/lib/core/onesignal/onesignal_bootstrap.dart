@@ -11,9 +11,13 @@ class OneSignalBootstrap {
   OneSignalBootstrap._();
 
   static bool _ready = false;
+  static String? _externalUserId;
   static OneSignalTokenRefreshCallback? onPushTokenChanged;
 
   static bool get isReady => _ready;
+
+  /// Son [login] ile eşlenen kullanıcı kimliği (OneSignal external_id).
+  static String? get externalUserId => _externalUserId;
 
   static Future<void> init() async {
     if (_ready || kIsWeb || !OneSignalConfig.enabled) return;
@@ -74,6 +78,7 @@ class OneSignalBootstrap {
     if (!_ready || externalUserId.isEmpty) return;
     try {
       await OneSignal.login(externalUserId);
+      _externalUserId = externalUserId;
       debugPrint('OneSignal login: $externalUserId');
     } catch (e) {
       debugPrint('OneSignal login failed: $e');
@@ -84,6 +89,7 @@ class OneSignalBootstrap {
     if (!_ready) return;
     try {
       await OneSignal.logout();
+      _externalUserId = null;
     } catch (e) {
       debugPrint('OneSignal logout failed: $e');
     }
