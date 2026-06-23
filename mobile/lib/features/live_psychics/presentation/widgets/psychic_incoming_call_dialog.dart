@@ -7,6 +7,7 @@ import 'package:canlifal_social/core/widgets/user_avatar.dart';
 
 import 'package:canlifal_social/features/live_psychics/domain/repositories/live_psychics_repository.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_fortune_types.dart';
 
 enum PsychicIncomingDialogAction { dismissed, rejected, accepted }
@@ -89,7 +90,8 @@ class _PsychicIncomingCallDialogState
     try {
       final respond = await ref
           .read(livePsychicsRepositoryProvider)
-          .respondSession(widget.sessionId, action: action);
+          .respondSession(widget.sessionId, action: action)
+          .timeout(const Duration(seconds: 28));
       if (!mounted) return;
 
       debugPrint(
@@ -148,6 +150,16 @@ class _PsychicIncomingCallDialogState
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<String?>(psychicSessionCancelSignalProvider, (prev, sessionId) {
+      if (sessionId != widget.sessionId || !mounted) return;
+      Navigator.pop(
+        context,
+        const PsychicIncomingDialogClose(
+          action: PsychicIncomingDialogAction.dismissed,
+        ),
+      );
+    });
+
     final timeLabel = TimeOfDay.now().format(context);
     final accepting = _busy && _busyAction == 'accept';
     final rejecting = _busy && _busyAction == 'reject';

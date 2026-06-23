@@ -266,6 +266,8 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     _inviteStatusWatch = null;
     final sessionId = _activePresentingSessionId;
     _activePresentingSessionId = null;
+    _presenting = false;
+    ref.read(psychicIncomingPresentingProvider.notifier).state = false;
     if (sessionId != null && addToDismissed) {
       ref.read(psychicIncomingQueueProvider.notifier).remove(sessionId);
       ref.read(psychicDismissedSessionsProvider.notifier).update(

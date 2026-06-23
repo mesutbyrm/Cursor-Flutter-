@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +10,8 @@ import 'package:canlifal_social/features/live/presentation/widgets/broadcast_roo
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_video_controller.dart';
 import 'package:canlifal_social/features/profile/presentation/widgets/premium/profile_glass.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_peer_left_provider.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
 import 'package:canlifal_social/features/trtc/presentation/trtc_room_manager.dart';
 
@@ -35,6 +39,13 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
       }
       if (next.leaving && prev?.leaving != true) {
         if (context.mounted) {
+          final peerMsg = ref.read(psychicPeerLeftProvider)?.message;
+          if (peerMsg != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(peerMsg)),
+            );
+            ref.read(psychicPeerLeftProvider.notifier).state = null;
+          }
           if (session.isClient) {
             ref.read(psychicSessionEndedProvider.notifier).state =
                 PsychicSessionEndedEvent(
@@ -43,13 +54,15 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
               tellerName: session.psychic.name,
               durationMinutes: session.durationMinutes,
               totalJeton: session.totalJeton,
-              promptReview: true,
+              promptReview: peerMsg == null,
               navigateAfter: true,
             );
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Seans sonlandı')),
-            );
+            if (peerMsg == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Seans sonlandı')),
+              );
+            }
             if (context.canPop()) {
               context.pop();
             } else {
@@ -58,6 +71,22 @@ class PsychicVideoSessionScreen extends ConsumerWidget {
           }
         }
       }
+    });
+
+    ref.listen<String?>(psychicSessionCancelSignalProvider, (prev, sessionId) {
+      if (sessionId != session.sessionId) return;
+      final leaving = ref.read(psychicVideoControllerProvider(session)).leaving;
+      if (leaving) return;
+      final msg = session.isClient
+          ? 'Falcı görüşmeyi sonlandırdı.'
+          : 'Kullanıcı görüşmeyi sonlandırdı.';
+      unawaited(ctrl.leave(silent: true, peerEndedMessage: msg));
+    });
+
+    ref.listen<PsychicPeerLeftEvent?>(psychicPeerLeftProvider, (prev, next) {
+      if (next == null || next.sessionId != session.sessionId) return;
+      if (ref.read(psychicVideoControllerProvider(session)).leaving) return;
+      unawaited(ctrl.leave(silent: true, peerEndedMessage: next.message));
     });
 
     return PopScope(

@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.342+345 (2026-06-23)
+
+### Jeton + canlı falcı oturumu
+
+- **Jeton uyarısı:** Papara/Havale öncesi DİKKAT metni (açıklama alanına yazı yazmayın)
+- **Ödeme bildirimi:** Dekont yükleme bloklamaz (12 sn); talep 35 sn zaman aşımı — sonsuz dönme giderildi
+- **Canlı falcı TRTC:** İki yönlü görüşmede `videoCall` sahnesi — karşı kamera bağlantısı
+- **Çift mesaj:** Sohbet optimistik ekleme kaldırıldı
+- **Anında kapanma:** İptal/sonlandırma sinyali + «Falcı/Kullanıcı kapattı» mesajı
+- **Davet dialog:** İptal sinyalinde anında kapanır; kabul API 28 sn timeout
+
 ## 1.0.341+344 (2026-06-23)
 
 ### Jeton Satın Al — Premium 2026

@@ -185,7 +185,7 @@ class PsychicWaitingController extends StateNotifier<PsychicWaitingState> {
     await PsychicSessionStore.clear();
     ref.invalidate(coinBalanceProvider);
     ref.read(psychicBookingFeedbackProvider.notifier).state =
-        'Falcı randevunuzu reddetti';
+        'Falcı görüşmeyi iptal etti — jetonlar iade edilir';
     ref.read(psychicWaitingExitProvider.notifier).state = session.psychic.id;
   }
 

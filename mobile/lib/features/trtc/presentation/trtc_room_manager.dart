@@ -186,10 +186,10 @@ class TrtcRoomManager {
       role: publishAsAnchor ? TRTCRoleType.anchor : TRTCRoleType.audience,
     );
 
-    // Üretim web canlı falcı `live` sahnesi kullanır; tüm katılımcılar aynı sahneyi paylaşmalı.
+    // İki yönlü görüşme: videoCall; tek yönlü yayın: live.
     final scene = audioOnly
         ? TRTCAppScene.voiceChatRoom
-        : TRTCAppScene.live;
+        : (twoWayVideo ? TRTCAppScene.videoCall : TRTCAppScene.live);
     _cloud!.enterRoom(params, scene);
 
     final enterResult = await _enterRoomCompleter!.future.timeout(

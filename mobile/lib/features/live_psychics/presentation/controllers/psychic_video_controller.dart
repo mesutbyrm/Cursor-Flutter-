@@ -14,7 +14,10 @@ import 'package:canlifal_social/features/live_psychics/presentation/widgets/psyc
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_room_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
+import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_status.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_peer_left_provider.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
 import 'package:canlifal_social/features/trtc/domain/entities/trtc_credentials.dart';
 import 'package:canlifal_social/features/trtc/presentation/providers/trtc_providers.dart';
@@ -264,9 +267,9 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           },
           onMessage: _onSseChatMessage,
           onRoomUpdate: _onSseRoomUpdate,
-          onSessionEnded: (_) {
+          onSessionEnded: (status) {
             if (_disposed || state.leaving) return;
-            unawaited(leave(silent: true));
+            unawaited(_handleRemoteSessionEnded(status));
           },
         );
   }
@@ -284,6 +287,13 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   void _onSseRoomUpdate(PsychicRoomEntity info) {
     if (_disposed || state.leaving) return;
+    if (info.status == PsychicSessionStatus.cancelled ||
+        info.status == PsychicSessionStatus.rejected ||
+        info.status == PsychicSessionStatus.ended ||
+        info.status == PsychicSessionStatus.expired) {
+      unawaited(_handleRemoteSessionEnded(info.status));
+      return;
+    }
     final previousRoomId = state.room?.roomId;
     var remaining = state.remaining;
     if (info.timerStarted) {
@@ -391,28 +401,35 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   Future<void> retryRtc() => _rejoinRtc();
 
+  Future<void> _handleRemoteSessionEnded(PsychicSessionStatus status) async {
+    if (_disposed || state.leaving) return;
+    final msg = session.isClient
+        ? 'Falcı görüşmeyi sonlandırdı.'
+        : 'Kullanıcı görüşmeyi sonlandırdı.';
+    ref.read(psychicPeerLeftProvider.notifier).state = PsychicPeerLeftEvent(
+      sessionId: session.sessionId,
+      message: msg,
+    );
+    await leave(silent: true, peerEndedMessage: msg);
+  }
+
   Future<void> sendChat(String text) async {
     final t = text.trim();
     if (t.isEmpty || state.sendingChat) return;
     state = state.copyWith(sendingChat: true);
-    final user = ref.read(authControllerProvider).valueOrNull;
-    final ok = await ref
-        .read(livePsychicsRepositoryProvider)
-        .sendMessage(session.sessionId, t);
-    state = state.copyWith(sendingChat: false);
-    if (ok) {
-      final mine = PsychicChatMessage(
-        id: 'local_${DateTime.now().millisecondsSinceEpoch}',
-        senderId: user?.id ?? '',
-        senderName: 'Sen',
-        text: t,
-        createdAt: DateTime.now(),
-        isMine: true,
-      );
-      _seenChatIds.add(mine.id);
-      state = state.copyWith(messages: [...state.messages, mine]);
+    try {
+      final ok = await ref
+          .read(livePsychicsRepositoryProvider)
+          .sendMessage(session.sessionId, t);
+      if (!ok && !_disposed) {
+        state = state.copyWith(sendingChat: false);
+        return;
+      }
+      // Optimistic ekleme yok — SSE/poll tek mesaj döndürür (çift gönderim önlenir).
+      unawaited(_pollChat());
+    } finally {
+      if (!_disposed) state = state.copyWith(sendingChat: false);
     }
-    unawaited(_pollChat());
   }
 
   Future<int?> openTipSheet(BuildContext context) async {
@@ -535,14 +552,28 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   void switchCamera() => _trtc.switchCamera();
 
-  Future<void> leave({bool silent = false}) async {
+  Future<void> leave({
+    bool silent = false,
+    String? peerEndedMessage,
+  }) async {
     if (state.leaving) return;
     state = state.copyWith(leaving: true);
     _tick?.cancel();
     _chatPoll?.cancel();
     _ping?.cancel();
     _roomPoll?.cancel();
-    await ref.read(psychicRoomSseServiceProvider).disconnect();
+    ref.read(psychicSessionCancelSignalProvider.notifier).signal(session.sessionId);
+    final user = ref.read(authControllerProvider).valueOrNull;
+    try {
+      await ref.read(livePsychicsRepositoryProvider).roomAction(
+            session.sessionId,
+            'end',
+            extra: {
+              'endedByRole': session.isClient ? 'client' : 'teller',
+              if (user?.id != null) 'endedBy': user!.id,
+            },
+          );
+    } catch (_) {}
     try {
       await ref.read(livePsychicsRepositoryProvider).endSession(session.sessionId);
     } catch (_) {}
@@ -551,9 +582,16 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
           .read(livePsychicsRepositoryProvider)
           .clearRoomSignals(session.sessionId);
     } catch (_) {}
+    await ref.read(psychicRoomSseServiceProvider).disconnect();
     await _trtc.leave();
     await PsychicSessionStore.clear();
     ref.invalidate(coinBalanceProvider);
+    if (peerEndedMessage != null) {
+      ref.read(psychicPeerLeftProvider.notifier).state = PsychicPeerLeftEvent(
+        sessionId: session.sessionId,
+        message: peerEndedMessage,
+      );
+    }
   }
 
   Future<UserEntity?> _waitForAuth() async {

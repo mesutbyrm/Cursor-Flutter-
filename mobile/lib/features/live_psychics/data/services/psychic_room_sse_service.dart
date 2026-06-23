@@ -9,6 +9,7 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../domain/entities/psychic_room_entity.dart';
 import '../../domain/entities/psychic_session_status.dart';
+import '../../domain/entities/psychic_session_status.dart';
 import '../../domain/repositories/live_psychics_repository.dart';
 import '../models/psychic_model.dart';
 
@@ -128,8 +129,16 @@ class PsychicRoomSseService {
       if (decoded is! Map) return;
       final map = Map<String, dynamic>.from(decoded);
       final type = (map['type'] ?? eventName ?? '').toString().toLowerCase();
-      if (type == 'ended' || type == 'session_ended') {
-        _onSessionEnded?.call(PsychicSessionStatus.ended);
+      if (type == 'ended' ||
+          type == 'session_ended' ||
+          type == 'cancelled' ||
+          type == 'session_cancelled' ||
+          type == 'rejected') {
+        _onSessionEnded?.call(
+          type.contains('cancel') || type == 'rejected'
+              ? PsychicSessionStatus.cancelled
+              : PsychicSessionStatus.ended,
+        );
         return;
       }
       final msg = PsychicModel.chatFromJson(map, myUserId: _myUserId);
@@ -143,6 +152,13 @@ class PsychicRoomSseService {
             : map,
         fallbackId: _sessionId ?? '',
       );
+      if (room.status == PsychicSessionStatus.cancelled ||
+          room.status == PsychicSessionStatus.rejected ||
+          room.status == PsychicSessionStatus.ended ||
+          room.status == PsychicSessionStatus.expired) {
+        _onSessionEnded?.call(room.status);
+        return;
+      }
       _onRoomUpdate?.call(room);
     } catch (_) {}
   }

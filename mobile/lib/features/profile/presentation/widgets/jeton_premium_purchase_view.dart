@@ -31,6 +31,12 @@ const double kJetonPurchaseTlRate = kDefaultJetonTlRate;
 
 const List<double> kJetonQuickTlPresets = [250, 500, 1000, 2500];
 
+const String kJetonPaymentTransferWarning =
+    'DİKKAT !!! ÖDEME YAPARKEN DİKKAT EDİNİZ... '
+    'Bireysel ödemeyi seçip, Açıklama kısmına birşey yazmayın... '
+    'açıklamada jeton, borç veya herhangi birşey yazılırsa kesintisi yapılıp '
+    'ücret iadesi aynı şekilde yapılacaktır.';
+
 enum JetonPayMethod { papara, bank, whatsapp }
 
 /// Premium 2026 jeton satın alma — çift yönlü TL/jeton, hazır tutarlar, ödeme yöntemleri.
@@ -203,10 +209,14 @@ class _JetonPremiumPurchaseViewState
     try {
       String? receiptUrl;
       if (_receiptPath != null && _receiptPath!.isNotEmpty) {
-        receiptUrl = await ref
-            .read(paymentReceiptUploadServiceProvider)
-            .uploadFile(File(_receiptPath!))
-            .timeout(const Duration(seconds: 45));
+        try {
+          receiptUrl = await ref
+              .read(paymentReceiptUploadServiceProvider)
+              .uploadFile(File(_receiptPath!))
+              .timeout(const Duration(seconds: 12));
+        } catch (_) {
+          receiptUrl = null;
+        }
       }
 
       final methodApi = switch (_method!) {
@@ -226,7 +236,10 @@ class _JetonPremiumPurchaseViewState
         receiptReference: receiptUrl,
       );
 
-      await ref.read(walletRepositoryProvider).submitPaymentRequest(body);
+      await ref
+          .read(walletRepositoryProvider)
+          .submitPaymentRequest(body)
+          .timeout(const Duration(seconds: 35));
       ref.invalidate(walletBalancesProvider);
       ref.invalidate(paymentRequestsNotifierProvider);
       ref.invalidate(adminPaymentRequestsProvider);
@@ -357,6 +370,8 @@ class _JetonPremiumPurchaseViewState
               },
             ),
             const SizedBox(height: 20),
+            const _PaymentWarningCard(),
+            const SizedBox(height: 16),
             const _SectionTitle('Ödeme Yöntemi'),
             const SizedBox(height: 10),
             _MethodTile(
@@ -478,6 +493,38 @@ class _JetonPremiumPurchaseViewState
             const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PaymentWarningCard extends StatelessWidget {
+  const _PaymentWarningCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return ProGlassCard(
+      blur: 12,
+      animateIn: false,
+      padding: const EdgeInsets.all(14),
+      borderRadius: BorderRadius.circular(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: Color(0xFFFF5252), size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              kJetonPaymentTransferWarning,
+              style: TextStyle(
+                fontSize: 12.5,
+                height: 1.45,
+                fontWeight: FontWeight.w600,
+                color: Colors.white.withValues(alpha: 0.92),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
