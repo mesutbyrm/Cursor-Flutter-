@@ -37,7 +37,7 @@ void navigateFromNotification(GoRouter router, AppNotificationEntity n) {
     case 'live':
       router.go('/live');
       return;
-    case 'fortune_session':
+    case 'fortune_session_invite':
     case 'fortune_session_request':
     case 'session_request':
     case 'psychic_request_created':
