@@ -1,6 +1,6 @@
 # GitHub Temizlik Raporu
 
-Oluşturulma: 2026-06-23 17:34 UTC
+Oluşturulma: 2026-06-23 18:23 UTC
 Mod: APPLIED
 Repo: `mesutbyrm/Cursor-Flutter-`
 Base: `main`
@@ -10,7 +10,7 @@ Base: `main`
 | Metrik | Adet |
 |--------|------|
 | Kapatılan PR | 0 |
-| Silinen remote dal | 1 |
+| Silinen remote dal | 0 |
 | Kalan açık PR | 0 |
 | Korunan / aktif dal | 0 |
 
@@ -24,7 +24,7 @@ Base: `main`
 
 | Dal | Neden |
 |-----|-------|
-| cursor/jeton-psychic-session-fix-53f7 | merged into main |
+| — | — |
 
 ## Kalan açık PR'lar
 
