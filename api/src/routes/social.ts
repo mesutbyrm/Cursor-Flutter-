@@ -230,7 +230,7 @@ socialRouter.post(
         rating: 5.0,
         pricePerMinute: 12,
         specialties: req.body?.specialties ?? ["tarot"],
-        image: user.avatarUrl ?? "",
+        image: "",
       },
     });
   },
