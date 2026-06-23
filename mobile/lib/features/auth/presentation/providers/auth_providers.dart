@@ -116,7 +116,12 @@ class AuthController extends AsyncNotifier<UserEntity?> {
           timeout: _actionTimeout,
           message: 'Giriş zaman aşımına uğradı',
         );
-        return _withSiteProfile(u);
+        final resolved = await _withSiteProfile(u);
+        // OneSignal'e kullanıcıyı kaydet — push bildirimleri için zorunlu
+        if (resolved?.id != null && resolved!.id.isNotEmpty) {
+          await OneSignalBootstrap.login(resolved.id);
+        }
+        return resolved;
       });
       _clearGuestModeOnSuccess();
     });
