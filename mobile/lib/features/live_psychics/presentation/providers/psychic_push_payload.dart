@@ -43,6 +43,7 @@ bool isPsychicInviteEventType(String type) {
   if (t.contains('session_update') || t.contains('session_ended')) return false;
 
   const known = {
+    'fortune_session_invite',
     'psychic_request_created',
     'psychic_request',
     'request_created',
