@@ -257,6 +257,49 @@ socialRouter.get(
     return ok(res, { sessions });
   },
 );
+/** GET /api/fortune-tellers/sessions/stream — falcı SSE gerçek zamanlı */
+socialRouter.get(
+  "/fortune-tellers/sessions/stream",
+  requireAuth,
+  async (req, res) => {
+    const uid = req.userId!;
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+    // Mevcut bekleyen oturumları hemen gönder
+    const pending = listIncomingFortuneSessionsForTeller(uid);
+    for (const session of pending) {
+      res.write(`event: fortune_session_invite\ndata: ${JSON.stringify({
+        type: "fortune_session_invite",
+        event: "fortune_session_invite",
+        sessionId: session.id,
+        tellerId: session.tellerId,
+        tellerUserId: session.tellerUserId,
+        clientId: session.clientId,
+        clientName: session.clientName ?? "",
+        durationMinutes: session.durationMinutes ?? 10,
+        totalJeton: session.totalJeton ?? 0,
+        trtcRoomId: session.trtcRoomId,
+        status: session.status,
+      })}\n\n`);
+    }
+
+    // Her 15 saniyede bir ping
+    const ping = setInterval(() => {
+      if (res.writableEnded) {
+        clearInterval(ping);
+        return;
+      }
+      res.write(`event: ping\ndata: {"type":"ping"}\n\n`);
+    }, 15000);
+
+    req.on("close", () => {
+      clearInterval(ping);
+      res.end();
+    });
+  },
+);
 
 /** PATCH /api/fortune-tellers/sessions/:sessionId — üretim: kabul / red / tamamla */
 socialRouter.patch(
