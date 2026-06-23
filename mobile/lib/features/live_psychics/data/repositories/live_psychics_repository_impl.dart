@@ -97,6 +97,7 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
     required int durationMinutes,
     required String fortuneType,
     bool staffExempt = false,
+    String? clientName,
   }) =>
       _remote.createSession(
         tellerId: tellerId,
@@ -104,6 +105,7 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
         durationMinutes: durationMinutes,
         fortuneType: fortuneType,
         staffExempt: staffExempt,
+        clientName: clientName,
       );
 
   @override

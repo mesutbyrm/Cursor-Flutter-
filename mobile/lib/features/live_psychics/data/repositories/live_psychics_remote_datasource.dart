@@ -357,17 +357,24 @@ class LivePsychicsRemoteDataSource {
     required int durationMinutes,
     required String fortuneType,
     bool staffExempt = false,
+    String? clientName,
   }) async {
     final id = tellerId.trim();
     if (id.isEmpty) return null;
+    final tellerUid = tellerUserId?.trim() ?? '';
     try {
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.fortuneTellerSession,
         data: {
           'tellerId': id,
+          if (tellerUid.isNotEmpty) 'tellerUserId': tellerUid,
+          if (tellerUid.isNotEmpty) 'anchorUserId': tellerUid,
           'fortuneType': fortuneType.trim().isNotEmpty ? fortuneType.trim() : 'general',
           'duration': durationMinutes,
+          'durationMinutes': durationMinutes,
           if (staffExempt) 'staffExempt': true,
+          if (clientName != null && clientName.trim().isNotEmpty)
+            'clientName': clientName.trim(),
         },
       );
       return PsychicModel.sessionCreateFromJson(res.data);

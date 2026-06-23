@@ -106,6 +106,7 @@ abstract class LivePsychicsRepository {
     required int durationMinutes,
     required String fortuneType,
     bool staffExempt = false,
+    String? clientName,
   });
 
   Future<PsychicSessionStatusResult?> fetchSessionStatus(String sessionId);

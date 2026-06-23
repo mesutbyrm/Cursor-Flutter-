@@ -465,6 +465,33 @@ String _clientNameFromNotification(AppNotificationEntity n) {
 bool isPsychicInviteNotification(AppNotificationEntity n) =>
     psychicInviteFromNotification(n) != null;
 
+/// Danışanın kendi oluşturduğu istek — falcı kabul dialog'u / davet push'u değil.
+bool isPsychicInviteForClientUser(
+  String authUserId,
+  PsychicRequestEntity invite,
+) {
+  final uid = authUserId.trim();
+  if (uid.isEmpty) return false;
+  return invite.clientId.trim() == uid;
+}
+
+/// Falcı cihazında gösterilecek gelen davet mi?
+bool shouldPresentPsychicIncomingInvite({
+  required String? authUserId,
+  required PsychicRequestEntity invite,
+  String? tellerProfileId,
+}) {
+  final uid = authUserId?.trim() ?? '';
+  if (uid.isEmpty) return true;
+  if (isPsychicInviteForClientUser(uid, invite)) return false;
+  final profileId = tellerProfileId?.trim() ?? '';
+  if (invite.tellerUserId?.trim() == uid) return true;
+  if (profileId.isNotEmpty && invite.tellerId.trim() == profileId) return true;
+  if (invite.tellerId.trim() == uid) return true;
+  // Gelen istek uçlarında teller boş olabilir; danışan değilse falcıya göster.
+  return invite.clientId.isEmpty || invite.clientId.trim() != uid;
+}
+
 final psychicIncomingQueueFromPushProvider =
     NotifierProvider<PsychicPushQueue, List<PsychicRequestEntity>>(
   PsychicPushQueue.new,

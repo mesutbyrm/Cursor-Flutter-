@@ -54,10 +54,16 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
         onReceived: _onPushReceived,
         onFortuneInviteData: (data) {
           final invite = parsePsychicIncomingLoose(data);
-          if (invite != null) {
-            ref.read(psychicIncomingQueueProvider.notifier).enqueue(invite);
-            PsychicInviteCoordinator.requestPresent(sessionId: invite.sessionId);
+          if (invite == null) return;
+          final uid = ref.read(authControllerProvider).valueOrNull?.id;
+          if (!shouldPresentPsychicIncomingInvite(
+            authUserId: uid,
+            invite: invite,
+          )) {
+            return;
           }
+          ref.read(psychicIncomingQueueProvider.notifier).enqueue(invite);
+          PsychicInviteCoordinator.requestPresent(sessionId: invite.sessionId);
         },
         onSessionCancelledData: (cancelled) {
           ref

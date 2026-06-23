@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.334+337 (2026-06-22)
+
+### Canlı Falcılar — randevu bildirimi (yanlış alıcı + çift bildirim)
+
+- **createSession:** `tellerUserId`, `anchorUserId` ve `clientName` artık API'ye gönderiliyor; sunucunun doğru falcıya yönlendirmesi için
+- **Danışan cihazı:** Kendi oluşturduğu randevu isteğinde push/SSE/bildirim listesinden falcı kabul dialog'u açılmıyor
+- **Falcı cihazı:** Gelen davet yalnızca `shouldPresentPsychicIncomingInvite` ile eşleşen kullanıcıda gösteriliyor
+- **Yerel API mirror:** `resolveTellerUserId` içindeki `body.userId` (danışan id) fallback kaldırıldı
+
 ## 1.0.333+336 (2026-06-22)
 
 ### Ana sayfa — sosyal akış kaldırıldı

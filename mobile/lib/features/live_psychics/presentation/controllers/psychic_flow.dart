@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/auth_route_paths.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/services/psychic_session_store.dart';
 import '../../domain/entities/psychic_entity.dart';
 import '../../domain/entities/psychic_session_entity.dart';
@@ -29,12 +30,14 @@ abstract final class PsychicFlow {
     final repo = ref.read(livePsychicsRepositoryProvider);
     final type = fortuneType ??
         (psychic.specialties.isNotEmpty ? psychic.specialties.first : 'general');
+    final clientName = ref.read(authControllerProvider).valueOrNull?.displayName;
     final created = await repo.createSession(
       tellerId: psychic.id,
-      tellerUserId: psychic.trtcUserId,
+      tellerUserId: psychic.userId ?? psychic.trtcUserId,
       durationMinutes: durationMinutes,
       fortuneType: type,
       staffExempt: staffExempt,
+      clientName: clientName,
     );
     if (created == null) return null;
     final session = PsychicSessionEntity(

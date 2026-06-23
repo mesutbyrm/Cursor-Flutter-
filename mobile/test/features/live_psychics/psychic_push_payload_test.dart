@@ -103,6 +103,48 @@ void main() {
     });
   });
 
+  group('shouldPresentPsychicIncomingInvite', () {
+    test('hides invite on client device for own request', () {
+      const clientId = 'client_help';
+      const tellerUserId = 'teller_ilham';
+      final invite = parsePsychicIncomingLoose({
+        'sessionId': 'sess_own',
+        'clientId': clientId,
+        'tellerUserId': tellerUserId,
+        'clientName': 'CanlıFal yardım',
+      })!;
+
+      expect(
+        shouldPresentPsychicIncomingInvite(
+          authUserId: clientId,
+          invite: invite,
+        ),
+        isFalse,
+      );
+      expect(isPsychicInviteForClientUser(clientId, invite), isTrue);
+    });
+
+    test('shows invite on teller device', () {
+      const clientId = 'client_help';
+      const tellerUserId = 'teller_ilham';
+      final invite = parsePsychicIncomingLoose({
+        'sessionId': 'sess_teller',
+        'clientId': clientId,
+        'tellerUserId': tellerUserId,
+        'clientName': 'CanlıFal yardım',
+      })!;
+
+      expect(
+        shouldPresentPsychicIncomingInvite(
+          authUserId: tellerUserId,
+          invite: invite,
+        ),
+        isTrue,
+      );
+      expect(isPsychicInviteForClientUser(tellerUserId, invite), isFalse);
+    });
+  });
+
   group('isPsychicInviteEventType', () {
     test('matches production psychic_request_created', () {
       expect(isPsychicInviteEventType('psychic_request_created'), isTrue);

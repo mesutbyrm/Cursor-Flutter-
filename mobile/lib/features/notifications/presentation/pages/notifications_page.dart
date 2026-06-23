@@ -10,6 +10,7 @@ import '../../../../core/performance/list_perf.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../domain/entities/app_notification_entity.dart';
 import '../../domain/notification_action.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live_psychics/presentation/controllers/psychic_incoming_controller.dart';
 import '../../../live_psychics/presentation/controllers/psychic_invite_coordinator.dart';
 import '../../../live_psychics/presentation/providers/psychic_push_payload.dart';
@@ -166,8 +167,19 @@ class _NotificationsListView extends ConsumerWidget {
               }
               final invite = psychicInviteFromNotification(n);
               if (invite != null) {
-                ref.read(psychicIncomingQueueProvider.notifier).enqueue(invite);
-                PsychicInviteCoordinator.requestPresent(sessionId: invite.sessionId);
+                final uid =
+                    ref.read(authControllerProvider).valueOrNull?.id;
+                if (shouldPresentPsychicIncomingInvite(
+                  authUserId: uid,
+                  invite: invite,
+                )) {
+                  ref
+                      .read(psychicIncomingQueueProvider.notifier)
+                      .enqueue(invite);
+                  PsychicInviteCoordinator.requestPresent(
+                    sessionId: invite.sessionId,
+                  );
+                }
                 return;
               }
               navigateFromNotification(router, n);

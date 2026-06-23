@@ -19,6 +19,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/controllers/
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_live_event_bus.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_push_payload.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_incoming_call_dialog.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_status.dart';
@@ -193,9 +194,15 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
   void _onSseRequest(PsychicRequestEntity req) {
     if (!mounted || !_mayRunTellerBackgroundSync()) return;
     if (!req.isPending) return;
+    final uid = ref.read(authControllerProvider).valueOrNull?.id;
+    if (!shouldPresentPsychicIncomingInvite(
+      authUserId: uid,
+      invite: req,
+      tellerProfileId: _tellerProfileId,
+    )) {
+      return;
+    }
     ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
-    final bus = ref.read(psychicLiveEventBusProvider);
-    if (!bus.isClosed) bus.add(req);
     PsychicInviteCoordinator.requestPresent(sessionId: req.sessionId);
     if (_mayPresentInvites()) {
       unawaited(_tryPresentNext());
@@ -219,6 +226,14 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
     if (!mounted) return;
     for (final req in incoming) {
       if (!req.isPending) continue;
+      final uid = ref.read(authControllerProvider).valueOrNull?.id;
+      if (!shouldPresentPsychicIncomingInvite(
+        authUserId: uid,
+        invite: req,
+        tellerProfileId: _tellerProfileId,
+      )) {
+        continue;
+      }
       ref.read(psychicIncomingQueueProvider.notifier).enqueue(req);
       PsychicInviteCoordinator.requestPresent(sessionId: req.sessionId);
     }

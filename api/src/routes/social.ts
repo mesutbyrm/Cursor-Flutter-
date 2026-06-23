@@ -114,6 +114,11 @@ async function resolveTellerUserId(
   tellerId: string,
   body?: Record<string, unknown>,
 ): Promise<string> {
+  const fromBody =
+    body?.tellerUserId?.toString()?.trim() ||
+    body?.anchorUserId?.toString()?.trim();
+  if (fromBody) return fromBody;
+
   const user = await prisma.user.findUnique({
     where: { email: "suna61722@gmail.com" },
     select: { id: true },
