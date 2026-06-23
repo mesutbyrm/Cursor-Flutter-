@@ -126,6 +126,39 @@ shortVideosRouter.get("/", optionalAuth, async (req, res) => {
   });
 });
 
+/** GET /api/short-videos/viewed/me — izlediğim videolar */
+shortVideosRouter.get("/viewed/me", requireAuth, async (req, res) => {
+  const userId = req.userId!;
+  const limit = Math.min(30, Math.max(1, Number(req.query.limit ?? 20)));
+  const cursor =
+    typeof req.query.cursor === "string" && req.query.cursor.trim()
+      ? req.query.cursor.trim()
+      : undefined;
+
+  const views = await prisma.shortVideoView.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: limit + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    include: {
+      video: { include: { user: true } },
+    },
+  });
+
+  const hasMore = views.length > limit;
+  const page = hasMore ? views.slice(0, limit) : views;
+  const videos = page
+    .map((v) => v.video)
+    .filter(Boolean)
+    .map((v) => videoPayload(v, { viewedByMe: true }));
+
+  return ok(res, {
+    videos,
+    nextCursor: hasMore ? page[page.length - 1]?.id : null,
+    hasMore,
+  });
+});
+
 /** POST /api/short-videos/upload — video + thumbnail (multipart) */
 shortVideosRouter.post(
   "/upload",

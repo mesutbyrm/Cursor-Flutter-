@@ -158,14 +158,20 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
             })
             .firstOrNull;
         final userId = ref.read(authControllerProvider).valueOrNull?.id;
-        if (userId != null &&
-            merged != null &&
-            merged.userId == userId &&
-            merged.status == LiveFortuneRequestStatus.answered) {
-          state = state.copyWith(
-            fortuneAnsweredNotice:
-                'Fal isteğiniz yanıtlandı. Canlı yayına katılarak falınızı dinleyebilirsiniz.',
-          );
+        if (userId == null || merged == null || merged.userId != userId) return;
+        final notice = switch (merged.status) {
+          LiveFortuneRequestStatus.reviewing =>
+            'Fal isteğiniz kabul edildi — yayıncı falınıza başlıyor.',
+          LiveFortuneRequestStatus.held =>
+            'Fal isteğiniz bekletildi — sıra size gelince bilgilendirileceksiniz.',
+          LiveFortuneRequestStatus.answered =>
+            'Fal isteğiniz yanıtlandı. Canlı yayına katılarak falınızı dinleyebilirsiniz.',
+          LiveFortuneRequestStatus.cancelled =>
+            'Fal isteğiniz reddedildi veya iptal edildi. Jetonlar iade edilir.',
+          LiveFortuneRequestStatus.pending => null,
+        };
+        if (notice != null) {
+          state = state.copyWith(fortuneAnsweredNotice: notice);
         }
       },
     );

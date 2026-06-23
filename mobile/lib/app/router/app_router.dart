@@ -66,6 +66,8 @@ import '../../features/profile/presentation/pages/growth_hub_page.dart';
 import '../../features/profile/presentation/pages/profile_help_support_page.dart';
 import '../../features/profile/presentation/pages/profile_payment_notice_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/profile/presentation/pages/settings_page.dart';
+import '../../features/profile/presentation/pages/active_devices_page.dart';
 import '../../features/profile/presentation/pages/profile_transactions_page.dart';
 import '../../features/profile/presentation/pages/user_profile_page.dart';
 import '../../features/shell/presentation/main_shell_page.dart';
@@ -521,6 +523,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           child: const GrowthHubPage(),
         ),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsPage(),
+      ),
+      GoRoute(
+        path: '/settings/devices',
+        builder: (context, state) => const ActiveDevicesPage(),
       ),
       GoRoute(
         path: '/profile/security',

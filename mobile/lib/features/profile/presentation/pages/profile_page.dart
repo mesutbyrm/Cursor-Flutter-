@@ -20,9 +20,9 @@ import '../widgets/premium/profile_gifts_row.dart';
 import '../widgets/premium/profile_neon_header.dart';
 import '../widgets/premium/profile_premium_banner.dart';
 import '../widgets/premium/profile_settings_menu.dart';
+import '../widgets/profile_content_tabs.dart';
 import '../widgets/premium/profile_wallet_section.dart';
 import '../widgets/premium/profile_glass.dart';
-import '../widgets/user_posts_timeline.dart';
 
 /// Profil — responsive ortalanmış içerik, premium neon düzen.
 class ProfilePage extends ConsumerWidget {
@@ -166,13 +166,12 @@ class ProfilePage extends ConsumerWidget {
                               onViewAll: () => context.push('/profile/gifts'),
                             ),
                             const SizedBox(height: 22),
-                            ProfileSectionTitle(title: 'Paylaşımlarım'),
-                            UserPostsTimeline(userId: user.id),
+                            ProfileSectionTitle(title: 'İçeriklerim'),
+                            ProfileContentTabs(userId: user.id),
                             const SizedBox(height: 16),
                             ProfileSettingsMenu(
                               onEditProfile: () => context.push('/profile/edit'),
-                              onSecurity: () =>
-                                  context.push('/profile/security'),
+                              onSecurity: () => context.push('/settings'),
                               onNotifications: () =>
                                   context.push('/notifications'),
                               onHelp: () => context.push('/profile/help'),

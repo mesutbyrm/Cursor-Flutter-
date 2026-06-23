@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -83,6 +84,14 @@ class _ProfileAccountSecurityPageState
                 title: Text('İki adımlı doğrulama'),
                 subtitle: Text('Yakında — SMS / e-posta OTP'),
                 trailing: Icon(Icons.schedule_rounded),
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.devices_rounded),
+                title: const Text('Aktif cihazlar'),
+                subtitle: const Text('Oturum açık cihazları yönet'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => context.push('/settings/devices'),
               ),
               const Divider(),
               TextField(

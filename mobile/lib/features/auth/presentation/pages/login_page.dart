@@ -17,13 +17,13 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
-  final _email = TextEditingController();
+  final _identifier = TextEditingController();
   final _password = TextEditingController();
   final _form = GlobalKey<FormState>();
 
   @override
   void dispose() {
-    _email.dispose();
+    _identifier.dispose();
     _password.dispose();
     super.dispose();
   }
@@ -92,14 +92,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             const AuthOrDividerPremium(),
             const SizedBox(height: 22),
             AuthFloatingField(
-              controller: _email,
-              label: 'E-posta',
-              hint: 'ornek@email.com',
-              prefixIcon: Icons.mail_outline_rounded,
-              keyboardType: TextInputType.emailAddress,
-              autofillHints: const [AutofillHints.email],
+              controller: _identifier,
+              label: 'E-posta veya kullanıcı adı',
+              hint: 'ornek@email.com veya kullanici_adi',
+              prefixIcon: Icons.alternate_email_rounded,
+              keyboardType: TextInputType.text,
+              autofillHints: const [AutofillHints.email, AutofillHints.username],
               validator: (v) =>
-                  v != null && v.contains('@') ? null : 'Geçerli e-posta girin',
+                  v != null && v.trim().length >= 3 ? null : 'En az 3 karakter',
             ),
             const SizedBox(height: 14),
             AuthFloatingField(
@@ -131,7 +131,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   : () async {
                       if (!_form.currentState!.validate()) return;
                       await ref.read(authControllerProvider.notifier).login(
-                            _email.text.trim(),
+                            _identifier.text.trim(),
                             _password.text,
                           );
                     },

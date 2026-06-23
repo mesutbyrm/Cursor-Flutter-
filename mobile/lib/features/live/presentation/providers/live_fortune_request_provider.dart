@@ -28,6 +28,7 @@ class LiveFortuneRequestsState {
       .where(
         (r) =>
             r.status == LiveFortuneRequestStatus.pending ||
+            r.status == LiveFortuneRequestStatus.held ||
             r.status == LiveFortuneRequestStatus.reviewing,
       )
       .length;

@@ -131,6 +131,21 @@ class PsychicTellerDashboardController
     );
   }
 
+  Future<void> hold(PsychicRequestEntity req) async {
+    state = state.copyWith(processingId: req.sessionId);
+    final respond = await ref
+        .read(livePsychicsRepositoryProvider)
+        .respondSession(req.sessionId, action: 'hold');
+    state = state.copyWith(
+      requests: respond.success
+          ? state.requests
+              .where((r) => r.sessionId != req.sessionId)
+              .toList(growable: false)
+          : state.requests,
+      clearProcessing: true,
+    );
+  }
+
   Future<bool> accept(
     BuildContext context,
     PsychicRequestEntity req,
@@ -330,6 +345,9 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
                       onAccept: () => ref
                           .read(psychicTellerDashboardProvider.notifier)
                           .accept(context, req),
+                      onHold: () => ref
+                          .read(psychicTellerDashboardProvider.notifier)
+                          .hold(req),
                       onReject: () => ref
                           .read(psychicTellerDashboardProvider.notifier)
                           .reject(req),
@@ -630,12 +648,14 @@ class _PendingTile extends StatelessWidget {
     required this.request,
     required this.processing,
     required this.onAccept,
+    required this.onHold,
     required this.onReject,
   });
 
   final PsychicRequestEntity request;
   final bool processing;
   final VoidCallback onAccept;
+  final VoidCallback onHold;
   final VoidCallback onReject;
 
   @override
@@ -671,7 +691,14 @@ class _PendingTile extends StatelessWidget {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Kabul Et'),
+                        : const Text('Kabul'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: processing ? null : onHold,
+                    child: const Text('Beklet'),
                   ),
                 ),
                 const SizedBox(width: 8),

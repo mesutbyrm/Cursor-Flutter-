@@ -178,6 +178,7 @@ class _FortuneTab extends ConsumerWidget {
             (r) => _FortuneSwipeCard(
               request: r,
               onAccept: () => _setStatus(ref, r.id, LiveFortuneRequestStatus.reviewing),
+              onHold: () => _setStatus(ref, r.id, LiveFortuneRequestStatus.held),
               onComplete: () => _setStatus(ref, r.id, LiveFortuneRequestStatus.answered),
               onCancel: () => _setStatus(ref, r.id, LiveFortuneRequestStatus.cancelled),
             ),
@@ -233,12 +234,14 @@ class _FortuneSwipeCard extends StatelessWidget {
   const _FortuneSwipeCard({
     required this.request,
     required this.onAccept,
+    required this.onHold,
     required this.onComplete,
     required this.onCancel,
   });
 
   final LiveFortuneRequestEntity request;
   final VoidCallback onAccept;
+  final VoidCallback onHold;
   final VoidCallback onComplete;
   final VoidCallback onCancel;
 
@@ -271,9 +274,29 @@ class _FortuneSwipeCard extends StatelessWidget {
             request.displayName,
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
           ),
-          subtitle: Text(
-            '${request.fortuneType}\n${request.question}\n$waitLabel · ${request.jetonCost} jeton',
-            style: const TextStyle(color: Colors.white70, fontSize: 11, height: 1.3),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${request.fortuneType}\n${request.question}\n$waitLabel · ${request.jetonCost} jeton',
+                style: const TextStyle(color: Colors.white70, fontSize: 11, height: 1.3),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                children: [
+                  TextButton(
+                    onPressed: onHold,
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.amber,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      minimumSize: const Size(0, 28),
+                    ),
+                    child: const Text('Beklet', style: TextStyle(fontSize: 11)),
+                  ),
+                ],
+              ),
+            ],
           ),
           trailing: Text(
             request.priority.label,

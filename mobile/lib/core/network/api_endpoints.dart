@@ -15,6 +15,11 @@ abstract final class ApiEndpoints {
   static const authMobileGoogle = '/api/auth/mobile-google';
   static const authMobileTiktok = '/api/auth/mobile-tiktok';
   static const authMobileRefresh = '/api/auth/mobile-refresh';
+  static const authMobileSendVerification = '/api/auth/mobile-send-verification';
+  static const authMobileVerifyEmail = '/api/auth/mobile-verify-email';
+  static const authMobileSessions = '/api/auth/mobile-sessions';
+  static String authMobileSessionRevoke(String id) =>
+      '/api/auth/mobile-sessions/$id';
   static const authMobileDeviceToken = '/api/auth/mobile/device-token';
   static const authForgotPassword = '/api/auth/forgot-password';
   static const authResetPassword = '/api/auth/reset-password';
@@ -500,6 +505,7 @@ abstract final class ApiEndpoints {
 
   // --- Kısa videolar (TikTok tarzı, R2 CDN) ---
   static const shortVideos = '/api/short-videos';
+  static const shortVideosViewedMe = '/api/short-videos/viewed/me';
   static const shortVideosUpload = '/api/short-videos/upload';
 
   /// Görsel fal — presigned yükleme (kahve fincanı, el falı vb.).

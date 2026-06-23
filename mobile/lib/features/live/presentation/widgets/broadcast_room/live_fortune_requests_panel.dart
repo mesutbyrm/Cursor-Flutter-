@@ -208,6 +208,11 @@ class _RequestCard extends StatelessWidget {
                 () => onStatusChange(request.id, LiveFortuneRequestStatus.pending),
               ),
               _statusChip(
+                'Beklet',
+                request.status == LiveFortuneRequestStatus.held,
+                () => onStatusChange(request.id, LiveFortuneRequestStatus.held),
+              ),
+              _statusChip(
                 'İnceleniyor',
                 request.status == LiveFortuneRequestStatus.reviewing,
                 () => onStatusChange(request.id, LiveFortuneRequestStatus.reviewing),

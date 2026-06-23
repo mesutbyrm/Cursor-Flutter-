@@ -14,6 +14,7 @@ enum LiveFortunePriority {
 /// Fal isteği durumu — yayıncı paneli.
 enum LiveFortuneRequestStatus {
   pending,
+  held,
   reviewing,
   answered,
   cancelled,
@@ -59,6 +60,7 @@ extension LiveFortunePriorityX on LiveFortunePriority {
 extension LiveFortuneRequestStatusX on LiveFortuneRequestStatus {
   String get label => switch (this) {
         LiveFortuneRequestStatus.pending => 'Beklemede',
+        LiveFortuneRequestStatus.held => 'Bekletildi',
         LiveFortuneRequestStatus.reviewing => 'İnceleniyor',
         LiveFortuneRequestStatus.answered => 'Yanıtlandı',
         LiveFortuneRequestStatus.cancelled => 'İptal',
@@ -67,7 +69,9 @@ extension LiveFortuneRequestStatusX on LiveFortuneRequestStatus {
   static LiveFortuneRequestStatus fromWire(String? raw) {
     final v = raw?.trim().toLowerCase() ?? '';
     return switch (v) {
-      'reviewing' || 'inceleniyor' || 'in_progress' => LiveFortuneRequestStatus.reviewing,
+      'held' || 'hold' || 'beklet' || 'on_hold' => LiveFortuneRequestStatus.held,
+      'reviewing' || 'inceleniyor' || 'in_progress' || 'accepted' =>
+        LiveFortuneRequestStatus.reviewing,
       'answered' || 'completed' || 'yanitlandi' => LiveFortuneRequestStatus.answered,
       'cancelled' || 'canceled' || 'rejected' => LiveFortuneRequestStatus.cancelled,
       _ => LiveFortuneRequestStatus.pending,

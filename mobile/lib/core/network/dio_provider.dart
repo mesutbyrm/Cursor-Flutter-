@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/env.dart';
 import 'api_exception.dart';
 import 'api_endpoints.dart';
+import 'device_headers.dart';
 import 'cookie_jar_provider.dart';
 import 'payment_request_interceptor.dart';
 import 'token_storage.dart';
@@ -59,6 +60,9 @@ final dioProvider = Provider<Dio>((ref) {
           }
         } else {
           options.headers.remove('Authorization');
+        }
+        for (final entry in deviceRequestHeaders().entries) {
+          options.headers[entry.key] = entry.value;
         }
         handler.next(options);
       },

@@ -11,16 +11,62 @@ class AuthRemoteDataSource {
   final Dio _dio;
 
   Future<Map<String, dynamic>> login({
-    required String email,
+    required String identifier,
     required String password,
   }) async {
     final path =
         Env.useMobileAuth ? ApiEndpoints.authMobileLogin : ApiEndpoints.authLogin;
+    final body = identifier.contains('@')
+        ? {'email': identifier.trim(), 'password': password}
+        : Env.useMobileAuth
+            ? {
+                'emailOrUsername': identifier.trim(),
+                'password': password,
+              }
+            : {'email': identifier.trim(), 'password': password};
     final res = await _dio.safePost<Map<String, dynamic>>(
       path,
-      data: {'email': email, 'password': password},
+      data: body,
     );
     return _unwrapAuthBody(res.data);
+  }
+
+  Future<void> sendEmailVerification({String? email}) async {
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.authMobileSendVerification,
+      data: {if (email != null && email.isNotEmpty) 'email': email},
+    );
+  }
+
+  Future<void> verifyEmail({
+    required String email,
+    required String code,
+  }) async {
+    await _dio.safePost<dynamic>(
+      ApiEndpoints.authMobileVerifyEmail,
+      data: {'email': email, 'code': code},
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchActiveSessions() async {
+    final res = await _dio.safeGet<Map<String, dynamic>>(
+      ApiEndpoints.authMobileSessions,
+    );
+    final root = res.data ?? {};
+    final sessions = root['sessions'] ?? root['data']?['sessions'];
+    if (sessions is List) {
+      return sessions
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(growable: false);
+    }
+    return const [];
+  }
+
+  Future<void> revokeSession(String sessionId) async {
+    await _dio.safeDelete<dynamic>(
+      ApiEndpoints.authMobileSessionRevoke(sessionId),
+    );
   }
 
   Future<Map<String, dynamic>> register({

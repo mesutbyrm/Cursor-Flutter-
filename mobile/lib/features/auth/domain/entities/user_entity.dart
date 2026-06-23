@@ -4,6 +4,7 @@ class UserEntity extends Equatable {
   const UserEntity({
     required this.id,
     required this.username,
+    this.email,
     this.displayName,
     this.avatarUrl,
     this.bio,
@@ -16,6 +17,7 @@ class UserEntity extends Equatable {
 
   final String id;
   final String username;
+  final String? email;
   final String? role;
   final String? displayName;
   final String? avatarUrl;
@@ -33,6 +35,7 @@ class UserEntity extends Equatable {
   List<Object?> get props => [
         id,
         username,
+        email,
         displayName,
         avatarUrl,
         bio,

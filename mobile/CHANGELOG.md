@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.345+348 (2026-06-23)
+
+### Denetim öncelikleri (P2–P8)
+
+- **P2 Fal beklet:** Yayın kuyruğu `held` durumu; falcı gelen çağrı + panelde **Beklet**; izleyici bildirimi
+- **P4 Giriş:** E-posta veya kullanıcı adı ile giriş; kayıt sonrası e-posta OTP doğrulama API
+- **P5 Cihaz güvenliği:** Aktif oturum listesi ve oturum sonlandırma (`/settings/devices`)
+- **P6 Profil:** TikTok sekmeleri — Videolarım, Fallarım, İzlediklerim
+- **P7 Ayarlar:** Merkezi `/settings` — hesap, güvenlik, gizlilik, bildirimler
+- **P8 Temizlik:** Kullanılmayan `splash_page.dart` kaldırıldı
+
 ## 1.0.344+347 (2026-06-23)
 
 ### Performans (Öncelik 1)

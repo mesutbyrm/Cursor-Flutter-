@@ -39,4 +39,6 @@ abstract class ShortsRepository {
   Future<void> deleteVideo(String videoId);
 
   Future<List<ShortVideoEntity>> fetchByUser(String userId);
+
+  Future<List<ShortVideoEntity>> fetchViewedByMe({int limit = 20});
 }

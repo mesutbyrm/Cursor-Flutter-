@@ -90,3 +90,8 @@ final userShortVideosProvider =
     FutureProvider.family<List<ShortVideoEntity>, String>((ref, userId) async {
   return ref.read(shortsRepositoryProvider).fetchByUser(userId);
 });
+
+final viewedShortsProvider =
+    FutureProvider.autoDispose<List<ShortVideoEntity>>((ref) async {
+  return ref.read(shortsRepositoryProvider).fetchViewedByMe();
+});

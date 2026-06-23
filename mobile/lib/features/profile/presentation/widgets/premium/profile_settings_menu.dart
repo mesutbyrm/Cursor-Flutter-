@@ -25,6 +25,11 @@ class ProfileSettingsMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = [
       (
+        icon: Icons.settings_outlined,
+        label: 'Ayarlar',
+        onTap: () => context.push('/settings'),
+      ),
+      (
         icon: Icons.person_outline_rounded,
         label: 'Profili Düzenle',
         onTap: onEditProfile ?? () => context.push('/user/me'),

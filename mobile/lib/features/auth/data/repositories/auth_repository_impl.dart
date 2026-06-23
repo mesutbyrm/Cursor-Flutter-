@@ -2,6 +2,7 @@ import 'package:cookie_jar/cookie_jar.dart';
 
 import '../../../../core/network/loading_timeout.dart';
 import '../../../../core/network/token_storage.dart';
+import '../../domain/entities/active_session_entity.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
@@ -106,10 +107,10 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserEntity> login({
-    required String email,
+    required String identifier,
     required String password,
   }) async {
-    final body = await _remote.login(email: email, password: password);
+    final body = await _remote.login(identifier: identifier, password: password);
     return _persistAndMap(body);
   }
 
@@ -176,6 +177,30 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> requestPasswordReset(String email) async {
     await _remote.requestPasswordReset(email);
+  }
+
+  @override
+  Future<void> sendEmailVerification({String? email}) async {
+    await _remote.sendEmailVerification(email: email);
+  }
+
+  @override
+  Future<void> verifyEmail({
+    required String email,
+    required String code,
+  }) async {
+    await _remote.verifyEmail(email: email, code: code);
+  }
+
+  @override
+  Future<List<ActiveSessionEntity>> fetchActiveSessions() async {
+    final rows = await _remote.fetchActiveSessions();
+    return rows.map(ActiveSessionEntity.fromJson).toList(growable: false);
+  }
+
+  @override
+  Future<void> revokeSession(String sessionId) async {
+    await _remote.revokeSession(sessionId);
   }
 
   @override

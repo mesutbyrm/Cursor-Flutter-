@@ -10,6 +10,7 @@ abstract class UserDto with _$UserDto {
   const factory UserDto({
     required String id,
     required String username,
+    String? email,
     String? displayName,
     String? avatarUrl,
     String? bio,
@@ -45,6 +46,7 @@ abstract class UserDto with _$UserDto {
     return UserDto(
       id: id,
       username: username.isEmpty ? 'user_$id' : username,
+      email: pick(json, ['email'])?.toString(),
       displayName:
           pick(json, ['displayName', 'display_name', 'name']) as String?,
       avatarUrl: pick(json, [
@@ -131,6 +133,7 @@ abstract class UserDto with _$UserDto {
   UserEntity toEntity({String? role}) => UserEntity(
         id: id,
         username: username,
+        email: email,
         displayName: displayName,
         avatarUrl: avatarUrl,
         bio: bio,

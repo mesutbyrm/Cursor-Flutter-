@@ -1,32 +1,40 @@
 import 'package:canlifal_social/core/config/env.dart';
+import 'package:canlifal_social/core/network/api_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../auth_navigation.dart';
+import '../providers/auth_providers.dart';
 import '../widgets/premium_auth_2026/premium_auth_2026.dart';
 
-/// 6 haneli OTP doğrulama — premium PIN girişi.
-class OtpVerifyPage extends StatefulWidget {
+/// 6 haneli e-posta doğrulama — mobil JWT API.
+class OtpVerifyPage extends ConsumerStatefulWidget {
   const OtpVerifyPage({super.key, this.email});
 
   final String? email;
 
   @override
-  State<OtpVerifyPage> createState() => _OtpVerifyPageState();
+  ConsumerState<OtpVerifyPage> createState() => _OtpVerifyPageState();
 }
 
-class _OtpVerifyPageState extends State<OtpVerifyPage> {
+class _OtpVerifyPageState extends ConsumerState<OtpVerifyPage> {
   final _controllers = List.generate(6, (_) => TextEditingController());
   final _nodes = List.generate(6, (_) => FocusNode());
+  var _busy = false;
+  var _resending = false;
 
   @override
   void initState() {
     super.initState();
-    if (Env.useMobileAuth) {
+    if (!Env.useMobileAuth) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         AuthNavigation.toForgotPassword(context);
       });
+      return;
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _sendCode(silent: true));
   }
 
   @override
@@ -42,6 +50,32 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
 
   String get _code => _controllers.map((c) => c.text).join();
 
+  String get _email =>
+      widget.email?.trim() ??
+      ref.read(authControllerProvider).valueOrNull?.email ??
+      '';
+
+  Future<void> _sendCode({bool silent = false}) async {
+    if (_resending) return;
+    setState(() => _resending = true);
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .sendEmailVerification(email: _email.isNotEmpty ? _email : null);
+      if (!mounted || silent) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Doğrulama kodu gönderildi')),
+      );
+    } catch (e) {
+      if (!mounted || silent) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _resending = false);
+    }
+  }
+
   void _onDigit(int index, String value) {
     if (value.length > 1) {
       _controllers[index].text = value.substring(value.length - 1);
@@ -54,20 +88,40 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
     }
   }
 
-  void _verify() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Doğrulama kodu alındı. Şifre sıfırlama site üzerinden tamamlanır.',
-        ),
-      ),
-    );
-    AuthNavigation.toLogin(context);
+  Future<void> _verify() async {
+    if (_busy || _code.length != 6) return;
+    final email = _email;
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Geçerli e-posta bulunamadı')),
+      );
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await ref.read(authRepositoryProvider).verifyEmail(
+            email: email,
+            code: _code,
+          );
+      await ref.read(authControllerProvider.notifier).refreshMe();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('E-posta doğrulandı')),
+      );
+      AuthNavigation.toLogin(context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final email = widget.email ?? '';
+    final email = _email;
 
     return AuthPremiumShell(
       showBack: true,
@@ -90,6 +144,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                   textAlign: TextAlign.center,
                   keyboardType: TextInputType.number,
                   maxLength: 1,
+                  enabled: !_busy,
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -121,17 +176,14 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
           ),
           const SizedBox(height: 28),
           AuthNeonButton(
-            label: 'Doğrula',
-            onPressed: _code.length == 6 ? _verify : null,
+            label: _busy ? 'Doğrulanıyor…' : 'Doğrula',
+            loading: _busy,
+            onPressed: _code.length == 6 && !_busy ? _verify : null,
           ),
           const SizedBox(height: 12),
           AuthTextLinkPremium(
-            label: 'Kodu tekrar gönder',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Yeni kod gönderildi.')),
-              );
-            },
+            label: _resending ? 'Gönderiliyor…' : 'Kodu tekrar gönder',
+            onPressed: _resending ? null : () => _sendCode(),
           ),
         ],
       ),

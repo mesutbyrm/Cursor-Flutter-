@@ -58,4 +58,8 @@ class ShortsRepositoryImpl implements ShortsRepository {
   @override
   Future<List<ShortVideoEntity>> fetchByUser(String userId) =>
       _remote.fetchByUser(userId);
+
+  @override
+  Future<List<ShortVideoEntity>> fetchViewedByMe({int limit = 20}) =>
+      _remote.fetchViewedByMe(limit: limit);
 }

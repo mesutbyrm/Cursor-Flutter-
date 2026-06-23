@@ -81,6 +81,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           birthTime: birthTimeStr,
           language: _language,
         );
+    if (!mounted) return;
+    if (Env.useMobileAuth && ref.read(authControllerProvider).valueOrNull != null) {
+      AuthNavigation.toOtpVerify(context, email: _email.text.trim());
+    }
   }
 
   @override

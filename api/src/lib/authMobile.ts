@@ -19,6 +19,8 @@ export function mobileUserPayload(user: User) {
     birthDate: user.birthDate?.toISOString() ?? null,
     birthTime: user.birthTime,
     bio: user.bio,
+    emailVerified: Boolean(user.emailVerifiedAt),
+    emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
     referralCode: user.id.slice(-8).toUpperCase(),
   };
 }

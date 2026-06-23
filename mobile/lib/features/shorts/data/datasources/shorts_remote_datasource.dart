@@ -228,6 +228,17 @@ class ShortsRemoteDataSource {
     return asJsonList(raw).map(_videoFrom).where((v) => v.id.isNotEmpty).toList();
   }
 
+  Future<List<ShortVideoEntity>> fetchViewedByMe({int limit = 20}) async {
+    final res = await _dio.safeGet<dynamic>(
+      ApiEndpoints.shortVideosViewedMe,
+      query: {'limit': limit},
+    );
+    final m = _unwrap(res.data);
+    final raw = m?['videos'];
+    if (raw is! List) return const [];
+    return asJsonList(raw).map(_videoFrom).where((v) => v.id.isNotEmpty).toList();
+  }
+
   static String _videoExtension(String path) {
     final lower = path.toLowerCase();
     if (lower.endsWith('.mov')) return 'mov';

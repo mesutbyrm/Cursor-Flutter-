@@ -13,6 +13,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/datasources/native_auth_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
+import '../../domain/entities/active_session_entity.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 
@@ -109,12 +110,12 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     }
   }
 
-  Future<void> login(String email, String password) async {
+  Future<void> login(String identifier, String password) async {
     await _runUserAction(() async {
       state = await AsyncValue.guard(() async {
         final u = await LoadingTimeout.run(
           ref.read(authRepositoryProvider).login(
-                email: email,
+                identifier: identifier,
                 password: password,
               ),
           timeout: _actionTimeout,
@@ -235,3 +236,8 @@ final authUserActionBusyProvider = StateProvider<bool>((ref) => false);
 
 final authControllerProvider =
     AsyncNotifierProvider<AuthController, UserEntity?>(AuthController.new);
+
+final activeSessionsProvider =
+    FutureProvider.autoDispose<List<ActiveSessionEntity>>((ref) async {
+  return ref.read(authRepositoryProvider).fetchActiveSessions();
+});

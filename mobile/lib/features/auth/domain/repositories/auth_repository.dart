@@ -1,7 +1,8 @@
+import '../entities/active_session_entity.dart';
 import '../entities/user_entity.dart';
 
 abstract class AuthRepository {
-  Future<UserEntity> login({required String email, required String password});
+  Future<UserEntity> login({required String identifier, required String password});
   Future<UserEntity> register({
     required String email,
     required String password,
@@ -16,6 +17,10 @@ abstract class AuthRepository {
   Future<UserEntity> loginWithTikTok();
   Future<UserEntity?> currentUser();
   Future<void> requestPasswordReset(String email);
+  Future<void> sendEmailVerification({String? email});
+  Future<void> verifyEmail({required String email, required String code});
+  Future<List<ActiveSessionEntity>> fetchActiveSessions();
+  Future<void> revokeSession(String sessionId);
   Future<void> resetPassword({
     required String token,
     required String password,

@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UserDto {
 
- String get id; String get username; String? get displayName; String? get avatarUrl; String? get bio; int get followersCount; int get followingCount; bool get isFollowing; int get coinBalance;
+ String get id; String get username; String? get email; String? get displayName; String? get avatarUrl; String? get bio; int get followersCount; int get followingCount; bool get isFollowing; int get coinBalance;
 /// Create a copy of UserDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $UserDtoCopyWith<UserDto> get copyWith => _$UserDtoCopyWithImpl<UserDto>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserDto&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.followersCount, followersCount) || other.followersCount == followersCount)&&(identical(other.followingCount, followingCount) || other.followingCount == followingCount)&&(identical(other.isFollowing, isFollowing) || other.isFollowing == isFollowing)&&(identical(other.coinBalance, coinBalance) || other.coinBalance == coinBalance));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserDto&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.email, email) || other.email == email)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.followersCount, followersCount) || other.followersCount == followersCount)&&(identical(other.followingCount, followingCount) || other.followingCount == followingCount)&&(identical(other.isFollowing, isFollowing) || other.isFollowing == isFollowing)&&(identical(other.coinBalance, coinBalance) || other.coinBalance == coinBalance));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,username,displayName,avatarUrl,bio,followersCount,followingCount,isFollowing,coinBalance);
+int get hashCode => Object.hash(runtimeType,id,username,email,displayName,avatarUrl,bio,followersCount,followingCount,isFollowing,coinBalance);
 
 @override
 String toString() {
-  return 'UserDto(id: $id, username: $username, displayName: $displayName, avatarUrl: $avatarUrl, bio: $bio, followersCount: $followersCount, followingCount: $followingCount, isFollowing: $isFollowing, coinBalance: $coinBalance)';
+  return 'UserDto(id: $id, username: $username, email: $email, displayName: $displayName, avatarUrl: $avatarUrl, bio: $bio, followersCount: $followersCount, followingCount: $followingCount, isFollowing: $isFollowing, coinBalance: $coinBalance)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $UserDtoCopyWith<$Res>  {
   factory $UserDtoCopyWith(UserDto value, $Res Function(UserDto) _then) = _$UserDtoCopyWithImpl;
 @useResult
 $Res call({
- String id, String username, String? displayName, String? avatarUrl, String? bio, int followersCount, int followingCount, bool isFollowing, int coinBalance
+ String id, String username, String? email, String? displayName, String? avatarUrl, String? bio, int followersCount, int followingCount, bool isFollowing, int coinBalance
 });
 
 
@@ -62,11 +62,12 @@ class _$UserDtoCopyWithImpl<$Res>
 
 /// Create a copy of UserDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? username = null,Object? displayName = freezed,Object? avatarUrl = freezed,Object? bio = freezed,Object? followersCount = null,Object? followingCount = null,Object? isFollowing = null,Object? coinBalance = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? username = null,Object? email = freezed,Object? displayName = freezed,Object? avatarUrl = freezed,Object? bio = freezed,Object? followersCount = null,Object? followingCount = null,Object? isFollowing = null,Object? coinBalance = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
-as String,displayName: freezed == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
+as String,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String?,displayName: freezed == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,bio: freezed == bio ? _self.bio : bio // ignore: cast_nullable_to_non_nullable
 as String?,followersCount: null == followersCount ? _self.followersCount : followersCount // ignore: cast_nullable_to_non_nullable
@@ -158,10 +159,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String username,  String? displayName,  String? avatarUrl,  String? bio,  int followersCount,  int followingCount,  bool isFollowing,  int coinBalance)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String username,  String? email,  String? displayName,  String? avatarUrl,  String? bio,  int followersCount,  int followingCount,  bool isFollowing,  int coinBalance)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UserDto() when $default != null:
-return $default(_that.id,_that.username,_that.displayName,_that.avatarUrl,_that.bio,_that.followersCount,_that.followingCount,_that.isFollowing,_that.coinBalance);case _:
+return $default(_that.id,_that.username,_that.email,_that.displayName,_that.avatarUrl,_that.bio,_that.followersCount,_that.followingCount,_that.isFollowing,_that.coinBalance);case _:
   return orElse();
 
 }
@@ -179,10 +180,10 @@ return $default(_that.id,_that.username,_that.displayName,_that.avatarUrl,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String username,  String? displayName,  String? avatarUrl,  String? bio,  int followersCount,  int followingCount,  bool isFollowing,  int coinBalance)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String username,  String? email,  String? displayName,  String? avatarUrl,  String? bio,  int followersCount,  int followingCount,  bool isFollowing,  int coinBalance)  $default,) {final _that = this;
 switch (_that) {
 case _UserDto():
-return $default(_that.id,_that.username,_that.displayName,_that.avatarUrl,_that.bio,_that.followersCount,_that.followingCount,_that.isFollowing,_that.coinBalance);case _:
+return $default(_that.id,_that.username,_that.email,_that.displayName,_that.avatarUrl,_that.bio,_that.followersCount,_that.followingCount,_that.isFollowing,_that.coinBalance);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +200,10 @@ return $default(_that.id,_that.username,_that.displayName,_that.avatarUrl,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String username,  String? displayName,  String? avatarUrl,  String? bio,  int followersCount,  int followingCount,  bool isFollowing,  int coinBalance)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String username,  String? email,  String? displayName,  String? avatarUrl,  String? bio,  int followersCount,  int followingCount,  bool isFollowing,  int coinBalance)?  $default,) {final _that = this;
 switch (_that) {
 case _UserDto() when $default != null:
-return $default(_that.id,_that.username,_that.displayName,_that.avatarUrl,_that.bio,_that.followersCount,_that.followingCount,_that.isFollowing,_that.coinBalance);case _:
+return $default(_that.id,_that.username,_that.email,_that.displayName,_that.avatarUrl,_that.bio,_that.followersCount,_that.followingCount,_that.isFollowing,_that.coinBalance);case _:
   return null;
 
 }
@@ -214,11 +215,12 @@ return $default(_that.id,_that.username,_that.displayName,_that.avatarUrl,_that.
 
 
 class _UserDto extends UserDto {
-  const _UserDto({required this.id, required this.username, this.displayName, this.avatarUrl, this.bio, this.followersCount = 0, this.followingCount = 0, this.isFollowing = false, this.coinBalance = 0}): super._();
+  const _UserDto({required this.id, required this.username, this.email, this.displayName, this.avatarUrl, this.bio, this.followersCount = 0, this.followingCount = 0, this.isFollowing = false, this.coinBalance = 0}): super._();
   
 
 @override final  String id;
 @override final  String username;
+@override final  String? email;
 @override final  String? displayName;
 @override final  String? avatarUrl;
 @override final  String? bio;
@@ -237,16 +239,16 @@ _$UserDtoCopyWith<_UserDto> get copyWith => __$UserDtoCopyWithImpl<_UserDto>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserDto&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.followersCount, followersCount) || other.followersCount == followersCount)&&(identical(other.followingCount, followingCount) || other.followingCount == followingCount)&&(identical(other.isFollowing, isFollowing) || other.isFollowing == isFollowing)&&(identical(other.coinBalance, coinBalance) || other.coinBalance == coinBalance));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserDto&&(identical(other.id, id) || other.id == id)&&(identical(other.username, username) || other.username == username)&&(identical(other.email, email) || other.email == email)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.followersCount, followersCount) || other.followersCount == followersCount)&&(identical(other.followingCount, followingCount) || other.followingCount == followingCount)&&(identical(other.isFollowing, isFollowing) || other.isFollowing == isFollowing)&&(identical(other.coinBalance, coinBalance) || other.coinBalance == coinBalance));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,username,displayName,avatarUrl,bio,followersCount,followingCount,isFollowing,coinBalance);
+int get hashCode => Object.hash(runtimeType,id,username,email,displayName,avatarUrl,bio,followersCount,followingCount,isFollowing,coinBalance);
 
 @override
 String toString() {
-  return 'UserDto(id: $id, username: $username, displayName: $displayName, avatarUrl: $avatarUrl, bio: $bio, followersCount: $followersCount, followingCount: $followingCount, isFollowing: $isFollowing, coinBalance: $coinBalance)';
+  return 'UserDto(id: $id, username: $username, email: $email, displayName: $displayName, avatarUrl: $avatarUrl, bio: $bio, followersCount: $followersCount, followingCount: $followingCount, isFollowing: $isFollowing, coinBalance: $coinBalance)';
 }
 
 
@@ -257,7 +259,7 @@ abstract mixin class _$UserDtoCopyWith<$Res> implements $UserDtoCopyWith<$Res> {
   factory _$UserDtoCopyWith(_UserDto value, $Res Function(_UserDto) _then) = __$UserDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String username, String? displayName, String? avatarUrl, String? bio, int followersCount, int followingCount, bool isFollowing, int coinBalance
+ String id, String username, String? email, String? displayName, String? avatarUrl, String? bio, int followersCount, int followingCount, bool isFollowing, int coinBalance
 });
 
 
@@ -274,11 +276,12 @@ class __$UserDtoCopyWithImpl<$Res>
 
 /// Create a copy of UserDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? username = null,Object? displayName = freezed,Object? avatarUrl = freezed,Object? bio = freezed,Object? followersCount = null,Object? followingCount = null,Object? isFollowing = null,Object? coinBalance = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? username = null,Object? email = freezed,Object? displayName = freezed,Object? avatarUrl = freezed,Object? bio = freezed,Object? followersCount = null,Object? followingCount = null,Object? isFollowing = null,Object? coinBalance = null,}) {
   return _then(_UserDto(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
-as String,displayName: freezed == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
+as String,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String?,displayName: freezed == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,bio: freezed == bio ? _self.bio : bio // ignore: cast_nullable_to_non_nullable
 as String?,followersCount: null == followersCount ? _self.followersCount : followersCount // ignore: cast_nullable_to_non_nullable
