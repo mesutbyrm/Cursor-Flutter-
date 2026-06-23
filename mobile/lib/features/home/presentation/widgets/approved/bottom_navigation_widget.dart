@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme_extensions.dart';
 import '../../theme/home_approved_design.dart';
 
 /// Onaylı mockup — Ana Sayfa, Sosyal, Yayın/Medya, Jeton, Profil.
@@ -10,6 +11,7 @@ class BottomNavigationWidget extends StatelessWidget {
     required this.onHome,
     required this.onSocial,
     required this.onCreate,
+    this.onCreateLongPress,
     required this.onJeton,
     required this.onProfile,
   });
@@ -18,19 +20,25 @@ class BottomNavigationWidget extends StatelessWidget {
   final VoidCallback onHome;
   final VoidCallback onSocial;
   final VoidCallback onCreate;
+  final VoidCallback? onCreateLongPress;
   final VoidCallback onJeton;
   final VoidCallback onProfile;
 
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final dark = context.isDarkTheme;
+    final bg = dark
+        ? HomeApprovedDesign.background
+        : context.colors.surface;
+    final borderColor = dark
+        ? HomeApprovedDesign.border
+        : context.colors.outlineVariant;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: HomeApprovedDesign.background,
-        border: Border(
-          top: BorderSide(color: HomeApprovedDesign.border),
-        ),
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border(top: BorderSide(color: borderColor)),
       ),
       padding: EdgeInsets.fromLTRB(8, 8, 8, bottom + 6),
       child: Row(
@@ -51,8 +59,9 @@ class BottomNavigationWidget extends StatelessWidget {
           _NavItem(
             icon: Icons.mic_rounded,
             label: 'Yayın',
-            active: false,
+            active: activeTab == HomeBottomTab.live,
             onTap: onCreate,
+            onLongPress: onCreateLongPress,
           ),
           _NavItem(
             icon: Icons.diamond_rounded,
@@ -72,7 +81,7 @@ class BottomNavigationWidget extends StatelessWidget {
   }
 }
 
-enum HomeBottomTab { home, social, jeton, profile }
+enum HomeBottomTab { home, social, live, jeton, profile }
 
 class _NavItem extends StatelessWidget {
   const _NavItem({
@@ -80,19 +89,27 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.active,
     required this.onTap,
+    this.onLongPress,
   });
 
   final IconData icon;
   final String label;
   final bool active;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? HomeApprovedDesign.purple : HomeApprovedDesign.textMuted;
+    final dark = context.isDarkTheme;
+    final color = active
+        ? (dark ? HomeApprovedDesign.purple : context.colors.primary)
+        : (dark
+            ? HomeApprovedDesign.textMuted
+            : context.colors.onSurfaceMuted);
 
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 56,

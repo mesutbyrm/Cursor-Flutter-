@@ -20,10 +20,8 @@ class VoiceSeatRestService {
     );
   }
 
-  /// Koltuktan in — üretim davranışı doğrulanmadı (`seatIndex: -1` vb.).
-  Future<void> leaveSeat(String roomId) async {
-    throw UnimplementedError(
-      'leaveSeat endpoint doğrulanmadı — üretim /seats body (seatIndex: -1) kontrol et',
-    );
+  /// Koltuktan in — `seatIndex: -1` ile üretim `/seats` uçları.
+  Future<void> leaveSeat(String roomId, {String? userId}) async {
+    await _remote.clearSeat(roomKey: roomId, userId: userId);
   }
 }

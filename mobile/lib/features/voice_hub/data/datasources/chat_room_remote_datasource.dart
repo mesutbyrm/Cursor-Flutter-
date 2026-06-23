@@ -1405,6 +1405,37 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  Future<void> clearSeat({
+    required String roomKey,
+    String? alternateKey,
+    String? userId,
+  }) async {
+    final body = jsonEncode({
+      'seatIndex': -1,
+      if (userId != null && userId.isNotEmpty) 'userId': userId,
+    });
+    final opts = Options(contentType: 'application/json');
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _dio.safePatch<dynamic>(
+          seatsPath(key),
+          data: body,
+          options: opts,
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 405 && e.statusCode != 404) rethrow;
+      }
+      try {
+        await _dio.safePost<dynamic>(seatsPath(key), data: body, options: opts);
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 405 && e.statusCode != 404) rethrow;
+      }
+      await _dio.safePost<dynamic>(presencePath(key), data: body, options: opts);
+    });
+  }
+
   Future<void> assignSeat({
     required String roomKey,
     String? alternateKey,

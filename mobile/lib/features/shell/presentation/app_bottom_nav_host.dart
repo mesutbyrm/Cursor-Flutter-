@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/app_router.dart';
+import '../../../core/theme/app_theme_extensions.dart';
 import '../../../core/ui/responsive/responsive_layout.dart';
-import '../../home/presentation/theme/home_approved_design.dart';
+import 'shell_ui.dart';
 import '../../home/presentation/widgets/approved/bottom_navigation_widget.dart';
 
 /// Sesli sohbet odası (RTC) dışındaki sayfalarda alt navigasyon.
@@ -61,10 +62,12 @@ class AppBottomNavHost extends ConsumerWidget {
     if (path.startsWith('/social') || path.startsWith('/shorts')) {
       return HomeBottomTab.social;
     }
+    if (path.startsWith('/live')) return HomeBottomTab.live;
     if (path.startsWith('/jeton-store') || path.startsWith('/wallet')) {
       return HomeBottomTab.jeton;
     }
     if (path.startsWith('/profile')) return HomeBottomTab.profile;
+    if (path.startsWith('/fortune')) return HomeBottomTab.home;
     if (path.startsWith('/messages') ||
         path.startsWith('/notifications') ||
         path.startsWith('/content-hub')) {
@@ -74,45 +77,7 @@ class AppBottomNavHost extends ConsumerWidget {
   }
 
   static void showCreateSheet(BuildContext context, GoRouter router) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: const Color(0xFF12081F),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'İçerik oluştur',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
-              ),
-              const SizedBox(height: 12),
-              ListTile(
-                leading: const Icon(Icons.videocam_rounded, color: Colors.redAccent),
-                title: const Text('Canlı yayın aç'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  router.push('/live/type');
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.video_library_rounded, color: Colors.purpleAccent),
-                title: const Text('Video yükle'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  router.push('/shorts/upload');
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    ShellUi.showCreateSheet(context, router);
   }
 
   @override
@@ -129,11 +94,12 @@ class AppBottomNavHost extends ConsumerWidget {
       final railIndex = switch (tab) {
         HomeBottomTab.home => 0,
         HomeBottomTab.social => 1,
+        HomeBottomTab.live => 2,
         HomeBottomTab.jeton => 3,
         HomeBottomTab.profile => 4,
       };
       return ColoredBox(
-        color: HomeApprovedDesign.background,
+        color: ShellUi.shellBackground(context),
         child: Row(
           children: [
             NavigationRail(
@@ -145,15 +111,19 @@ class AppBottomNavHost extends ConsumerWidget {
                   case 1:
                     router.go('/social');
                   case 2:
-                    AppBottomNavHost.showCreateSheet(context, router);
+                    if (location.startsWith('/live')) {
+                      AppBottomNavHost.showCreateSheet(context, router);
+                    } else {
+                      router.go('/live');
+                    }
                   case 3:
                     router.push('/jeton-store');
                   case 4:
                     router.go('/profile');
                 }
               },
-              backgroundColor: const Color(0xFF12081F),
-              indicatorColor: HomeApprovedDesign.purple.withValues(alpha: 0.2),
+              backgroundColor: ShellUi.bottomNavBackground(context),
+              indicatorColor: context.colors.primary.withValues(alpha: 0.2),
               labelType: NavigationRailLabelType.selected,
               destinations: const [
                 NavigationRailDestination(
@@ -191,7 +161,7 @@ class AppBottomNavHost extends ConsumerWidget {
     }
 
     return ColoredBox(
-      color: HomeApprovedDesign.background,
+      color: ShellUi.shellBackground(context),
       child: Column(
         children: [
           Expanded(child: child),
@@ -199,7 +169,15 @@ class AppBottomNavHost extends ConsumerWidget {
             activeTab: tab,
             onHome: () => router.go('/feed'),
             onSocial: () => router.go('/social'),
-            onCreate: () => AppBottomNavHost.showCreateSheet(context, router),
+            onCreate: () {
+              if (location.startsWith('/live')) {
+                AppBottomNavHost.showCreateSheet(context, router);
+              } else {
+                router.go('/live');
+              }
+            },
+            onCreateLongPress: () =>
+                AppBottomNavHost.showCreateSheet(context, router),
             onJeton: () => router.push('/jeton-store'),
             onProfile: () => router.go('/profile'),
           ),

@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.346+350 (2026-06-23)
+
+### UI bütünlük ve eksik düzeltmeleri
+
+- **Alt navigasyon:** Yayın sekmesi `/live` dalına bağlandı; uzun basınca oluşturma sayfası; aktif sekme `/live` ve `/fortune` için düzeltildi
+- **Tema:** Shell, ana sayfa ve oluşturma sayfası açık/koyu/AMOLED temaya uyumlu arka plan
+- **Fal hub:** Pull-to-refresh fal geçmişini yeniler; açık temada scaffold rengi
+- **Sesli oda:** `leaveSeat` REST (`seatIndex: -1`) uygulandı — `UnimplementedError` giderildi
+- **Oluşturma sayfası:** Fal & Tarot kısayolu eklendi; tema renkleri
+
 ## 1.0.345+348 (2026-06-23)
 
 ### Denetim öncelikleri (P2–P8)

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import '../providers/home_providers.dart';
 import '../providers/home_realtime_bridge.dart';
 import '../theme/home_approved_design.dart';
@@ -58,10 +59,16 @@ class _HomePageState extends ConsumerState<HomePage> {
     final bottom = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
-      backgroundColor: HomeApprovedDesign.background,
+      backgroundColor: context.isDarkTheme
+          ? HomeApprovedDesign.background
+          : context.colors.scaffoldBackground,
       body: RefreshIndicator(
-        color: HomeApprovedDesign.purple,
-        backgroundColor: HomeApprovedDesign.surface,
+        color: context.isDarkTheme
+            ? HomeApprovedDesign.purple
+            : context.colors.primary,
+        backgroundColor: context.isDarkTheme
+            ? HomeApprovedDesign.surface
+            : context.colors.surface,
         onRefresh: _onRefresh,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(

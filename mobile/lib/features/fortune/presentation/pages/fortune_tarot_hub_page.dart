@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/premium_2026/premium_2026.dart';
+import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_refresh.dart';
+import '../../providers/fortune_api_providers.dart';
 import '../widgets/ultra_premium/ultra_fortune_app_bar.dart';
 import '../widgets/ultra_premium/ultra_fortune_cosmic_background.dart';
 import '../widgets/ultra_premium/ultra_fortune_daily_energy.dart';
@@ -44,16 +46,24 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
     super.dispose();
   }
 
+  Future<void> _onRefresh() async {
+    ref.invalidate(fortuneHistoryProvider);
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final bg = context.isDarkTheme
+        ? UltraFortuneTokens.deepNight
+        : context.colors.scaffoldBackground;
 
     return Scaffold(
-      backgroundColor: UltraFortuneTokens.deepNight,
+      backgroundColor: bg,
       body: UltraFortuneCosmicBackground(
         scrollOffset: _scrollOffset,
         child: DiscoverRefresh.wrap(
-          onRefresh: () async {},
+          onRefresh: _onRefresh,
           child: CustomScrollView(
             controller: _scrollController,
             physics: PremiumMotion.listPhysics,

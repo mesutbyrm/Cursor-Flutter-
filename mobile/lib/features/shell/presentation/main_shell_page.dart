@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/bootstrap/shell_prefetch.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/exit_confirm_dialog.dart';
+import 'shell_ui.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../messages/presentation/providers/messages_providers.dart';
 import '../../notifications/presentation/providers/notifications_providers.dart';
@@ -36,6 +36,10 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
         return HomeBottomTab.home;
       case 1:
         return HomeBottomTab.social;
+      case 2:
+        return HomeBottomTab.live;
+      case 3:
+        return HomeBottomTab.home;
       case 4:
         return HomeBottomTab.profile;
       default:
@@ -43,59 +47,16 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
     }
   }
 
-  void _showCreateSheet(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: const Color(0xFF12081F),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'İçerik oluştur',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
-              ),
-              const SizedBox(height: 12),
-              ListTile(
-                leading: const Icon(Icons.videocam_rounded, color: Colors.redAccent),
-                title: const Text('Canlı yayın aç'),
-                subtitle: const Text('Kamera veya ekran yayını başlat'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  context.push('/live/type');
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.video_library_rounded, color: Colors.purpleAccent),
-                title: const Text('Video yükle'),
-                subtitle: const Text('Kısa video veya gönderi paylaş'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  context.push('/shorts/upload');
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _onYayinTap(BuildContext context) {
+    if (widget.navigationShell.currentIndex == 2) {
+      ShellUi.showCreateSheet(context, GoRouter.of(context));
+      return;
+    }
+    _goBranch(2);
+  }
+
+  void _onYayinLongPress(BuildContext context) {
+    ShellUi.showCreateSheet(context, GoRouter.of(context));
   }
 
   @override
@@ -137,13 +98,14 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
         );
       },
       child: Scaffold(
-        backgroundColor: HomeApprovedDesign.background,
+        backgroundColor: ShellUi.shellBackground(context),
         body: widget.navigationShell,
         bottomNavigationBar: BottomNavigationWidget(
           activeTab: _activeTab(widget.navigationShell.currentIndex),
           onHome: () => _goBranch(0),
           onSocial: () => _goBranch(1),
-          onCreate: () => _showCreateSheet(context),
+          onCreate: () => _onYayinTap(context),
+          onCreateLongPress: () => _onYayinLongPress(context),
           onJeton: () => context.push('/jeton-store'),
           onProfile: () => _goBranch(4),
         ),
