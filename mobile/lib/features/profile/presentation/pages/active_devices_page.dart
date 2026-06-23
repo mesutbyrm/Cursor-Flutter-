@@ -88,7 +88,7 @@ class _SessionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: context.colors.surfaceContainerHighest.withValues(alpha: 0.35),
+      color: context.colors.surfaceElevated.withValues(alpha: 0.35),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Row(

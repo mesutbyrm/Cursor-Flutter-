@@ -183,7 +183,7 @@ class _OtpVerifyPageState extends ConsumerState<OtpVerifyPage> {
           const SizedBox(height: 12),
           AuthTextLinkPremium(
             label: _resending ? 'Gönderiliyor…' : 'Kodu tekrar gönder',
-            onPressed: _resending ? null : () => _sendCode(),
+            onPressed: _resending ? () {} : () => _sendCode(),
           ),
         ],
       ),
