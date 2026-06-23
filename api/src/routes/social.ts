@@ -213,10 +213,10 @@ socialRouter.post(
     const uid = req.userId!;
     const user = await prisma.user.findUnique({
       where: { id: uid },
-      select: { id: true, displayName: true, avatarUrl: true },
+      select: { id: true, displayName: true, av
     });
     if (!user) {
-      return fail(res, 404, "NOT_FOUND", "Kullanıcı bulunamadı");
+      return fail(res, 404, "NOT_FOUND", "Kulla
     }
     // Başvuruyu kabul et ve falcı profili dön
     return ok(res, {
