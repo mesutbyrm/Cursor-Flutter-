@@ -64,3 +64,5 @@ dist/
 /curl-*.json
 /t-*.json
 /ci-runs.json
+docs/ACCEPTANCE_TEST_REPORT.json
+docs/ACCEPTANCE_TEST_REPORT.md

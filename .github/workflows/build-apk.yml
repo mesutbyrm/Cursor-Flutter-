@@ -35,6 +35,8 @@ on:
       - 'v*'
     paths:
       - 'mobile/**'
+      - 'scripts/acceptance-tests/**'
+      - 'scripts/run-acceptance-tests.sh'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -117,6 +119,34 @@ jobs:
 
       - name: Accept Android licenses
         run: yes | flutter doctor --android-licenses || true
+
+      - name: Release acceptance tests (20 madde — APK öncesi zorunlu)
+        working-directory: ${{ github.workspace }}
+        env:
+          CANLIFAL_BASE_URL: https://canlifal.com
+          ACCEPTANCE_USER_EMAIL: ${{ secrets.ACCEPTANCE_USER_EMAIL }}
+          ACCEPTANCE_USER_USERNAME: ${{ secrets.ACCEPTANCE_USER_USERNAME }}
+          ACCEPTANCE_USER_PASSWORD: ${{ secrets.ACCEPTANCE_USER_PASSWORD }}
+          ACCEPTANCE_HOST_EMAIL: ${{ secrets.ACCEPTANCE_HOST_EMAIL }}
+          ACCEPTANCE_HOST_PASSWORD: ${{ secrets.ACCEPTANCE_HOST_PASSWORD }}
+          ACCEPTANCE_VIEWER_EMAIL: ${{ secrets.ACCEPTANCE_VIEWER_EMAIL }}
+          ACCEPTANCE_VIEWER_PASSWORD: ${{ secrets.ACCEPTANCE_VIEWER_PASSWORD }}
+          ACCEPTANCE_ADMIN_EMAIL: ${{ secrets.ACCEPTANCE_ADMIN_EMAIL }}
+          ACCEPTANCE_ADMIN_PASSWORD: ${{ secrets.ACCEPTANCE_ADMIN_PASSWORD }}
+        run: |
+          set -eux
+          chmod +x scripts/run-acceptance-tests.sh scripts/acceptance-tests/*.sh
+          bash scripts/run-acceptance-tests.sh
+
+      - name: Acceptance raporu (başarısızlıkta)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-test-report
+          path: |
+            docs/ACCEPTANCE_TEST_REPORT.md
+            docs/ACCEPTANCE_TEST_REPORT.json
+          retention-days: 14
 
       - name: Firebase google-services.json
         working-directory: ${{ github.workspace }}

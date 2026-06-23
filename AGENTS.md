@@ -93,6 +93,10 @@ Kullanıcı mesajlarına cevap verirken **en sonda** şu sabit indirme bağlant�
 - **404 / eski build:** [Build release APK](https://github.com/mesutbyrm/Cursor-Flutter-/actions/workflows/build-apk.yml) → `main` → `apk-latest` güncellenir
 - Ayrıntı: [`APK_DOWNLOAD.md`](APK_DOWNLOAD.md)
 
+### Release acceptance testleri
+
+`main` push sonrası APK derlenmeden önce `scripts/run-acceptance-tests.sh` (20 madde) çalışır. Başarısızsa APK oluşturulmaz. Gerekli GitHub Secrets: `docs/ACCEPTANCE_TESTS.md`.
+
 ### Kullanıcı bildirimi — APK bitti + özellikler
 
 `main`’e mobil değişiklik push ettiysen oturum sonunda kullanıcıyı bilgilendir:

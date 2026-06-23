@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.348+352 (2026-06-23)
+
+### Release acceptance testleri (APK öncesi zorunlu)
+
+- **20 madde** otomatik test: giriş, kayıt, profil, jeton, sohbet, SSE, canlı yayın, fal isteği, video token, admin, push, müzik, tema, performans
+- `build-apk.yml` — testler geçmeden release APK oluşturulmaz
+- Rapor: `docs/ACCEPTANCE_TEST_REPORT.md` + CI artifact
+- Kurulum: `docs/ACCEPTANCE_TESTS.md` (GitHub Secrets)
+
 ## 1.0.347+351 (2026-06-23)
 
 ### Derleme düzeltmesi
