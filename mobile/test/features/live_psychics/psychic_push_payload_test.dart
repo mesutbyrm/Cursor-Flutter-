@@ -138,10 +138,49 @@ void main() {
         shouldPresentPsychicIncomingInvite(
           authUserId: tellerUserId,
           invite: invite,
+          isFortuneTeller: true,
         ),
         isTrue,
       );
       expect(isPsychicInviteForClientUser(tellerUserId, invite), isFalse);
+    });
+
+    test('does not treat top-level userId as clientId on teller push', () {
+      const clientId = 'client_help';
+      const tellerUserId = 'teller_ilham';
+      final invite = parsePsychicIncomingLoose({
+        'type': 'psychic_request_created',
+        'sessionId': 'sess_userid_trap',
+        'userId': tellerUserId,
+        'clientName': 'CanlıFal yardım',
+      })!;
+
+      expect(invite.clientId, isEmpty);
+      expect(
+        shouldPresentPsychicIncomingInvite(
+          authUserId: tellerUserId,
+          invite: invite,
+          isFortuneTeller: true,
+        ),
+        isTrue,
+      );
+      expect(isPsychicInviteForClientUser(tellerUserId, invite), isFalse);
+    });
+
+    test('hides minimal push on client without clientId', () {
+      final invite = parsePsychicIncomingLoose({
+        'type': 'psychic_request_created',
+        'sessionId': 'sess_minimal',
+        'userId': 'teller_ilham',
+      })!;
+
+      expect(
+        shouldPresentPsychicIncomingInvite(
+          authUserId: 'client_help',
+          invite: invite,
+        ),
+        isFalse,
+      );
     });
   });
 

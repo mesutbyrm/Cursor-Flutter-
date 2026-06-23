@@ -199,6 +199,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
       authUserId: uid,
       invite: req,
       tellerProfileId: _tellerProfileId,
+      isFortuneTeller: _isFortuneTeller,
     )) {
       return;
     }
@@ -231,6 +232,7 @@ class _PsychicIncomingHostState extends ConsumerState<PsychicIncomingHost>
         authUserId: uid,
         invite: req,
         tellerProfileId: _tellerProfileId,
+        isFortuneTeller: _isFortuneTeller,
       )) {
         continue;
       }

@@ -13,6 +13,7 @@ import '../../domain/notification_action.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live_psychics/presentation/controllers/psychic_incoming_controller.dart';
 import '../../../live_psychics/presentation/controllers/psychic_invite_coordinator.dart';
+import '../../../live_psychics/presentation/controllers/psychics_list_controller.dart';
 import '../../../live_psychics/presentation/providers/psychic_push_payload.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../providers/notifications_list_notifier.dart';
@@ -169,9 +170,13 @@ class _NotificationsListView extends ConsumerWidget {
               if (invite != null) {
                 final uid =
                     ref.read(authControllerProvider).valueOrNull?.id;
+                final approved = ref.read(approvedPsychicProvider);
                 if (shouldPresentPsychicIncomingInvite(
                   authUserId: uid,
                   invite: invite,
+                  tellerProfileId: approved.profile?.id,
+                  isFortuneTeller:
+                      approved.profile != null && approved.profile!.isUsable,
                 )) {
                   ref
                       .read(psychicIncomingQueueProvider.notifier)
@@ -179,6 +184,8 @@ class _NotificationsListView extends ConsumerWidget {
                   PsychicInviteCoordinator.requestPresent(
                     sessionId: invite.sessionId,
                   );
+                } else {
+                  navigateFromNotification(router, n);
                 }
                 return;
               }

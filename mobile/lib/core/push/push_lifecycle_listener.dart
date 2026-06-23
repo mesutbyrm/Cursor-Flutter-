@@ -13,6 +13,7 @@ import '../../features/live_psychics/presentation/controllers/psychic_incoming_c
 import '../../features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../features/live_psychics/presentation/providers/psychic_booking_feedback_provider.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart';
+import '../../features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import '../../features/live_psychics/presentation/providers/psychic_push_payload.dart';
 import '../../features/live_psychics/presentation/providers/psychic_session_ended_provider.dart';
 import '../../features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
@@ -56,9 +57,13 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
           final invite = parsePsychicIncomingLoose(data);
           if (invite == null) return;
           final uid = ref.read(authControllerProvider).valueOrNull?.id;
+          final approved = ref.read(approvedPsychicProvider);
           if (!shouldPresentPsychicIncomingInvite(
             authUserId: uid,
             invite: invite,
+            tellerProfileId: approved.profile?.id,
+            isFortuneTeller:
+                approved.profile != null && approved.profile!.isUsable,
           )) {
             return;
           }

@@ -179,8 +179,8 @@ abstract final class PsychicModel {
     final response = str(m, ['tellerResponse', 'response']) ?? 'pending';
     return PsychicRequestEntity(
       sessionId: str(m, ['requestId', 'id', 'sessionId']) ?? '',
-      clientId: str(m, ['clientId', 'userId']) ??
-          str(client, ['id', 'userId']) ??
+      clientId: str(m, ['clientId', 'client_id']) ??
+          str(client, ['id', 'userId', 'clientId']) ??
           '',
       clientName: str(m, ['clientName', 'clientDisplayName', 'userName']) ??
           str(client, ['displayName', 'name', 'username']) ??

@@ -292,7 +292,8 @@ PsychicRequestEntity? parsePsychicIncomingPayload(Map<String, dynamic>? raw) {
 
   return PsychicRequestEntity(
     sessionId: sessionId,
-    clientId: pick(map, ['clientId', 'client_id', 'userId'])?.toString() ?? '',
+    clientId:
+        pick(map, ['clientId', 'client_id'])?.toString() ?? '',
     clientName: pick(map, [
           'clientName',
           'client_name',
@@ -370,7 +371,7 @@ PsychicRequestEntity? parsePsychicIncomingLoose(
 
   return PsychicRequestEntity(
     sessionId: sessionId,
-    clientId: pick(map, ['clientId', 'userId'])?.toString() ?? '',
+    clientId: pick(map, ['clientId', 'client_id'])?.toString() ?? '',
     clientName: pick(map, ['clientName', 'displayName'])?.toString() ??
         _clientNameFromTitle(titleText),
     tellerId: pick(map, ['tellerId', 'fortuneTellerId'])?.toString() ?? '',
@@ -465,14 +466,16 @@ String _clientNameFromNotification(AppNotificationEntity n) {
 bool isPsychicInviteNotification(AppNotificationEntity n) =>
     psychicInviteFromNotification(n) != null;
 
-/// Danışanın kendi oluşturduğu istek — falcı kabul dialog'u / davet push'u değil.
+/// Danışanın kendi oluşturduğu istek — yalnızca açık `clientId` ile.
 bool isPsychicInviteForClientUser(
   String authUserId,
   PsychicRequestEntity invite,
 ) {
   final uid = authUserId.trim();
   if (uid.isEmpty) return false;
-  return invite.clientId.trim() == uid;
+  final clientId = invite.clientId.trim();
+  if (clientId.isEmpty) return false;
+  return clientId == uid;
 }
 
 /// Falcı cihazında gösterilecek gelen davet mi?
@@ -480,16 +483,29 @@ bool shouldPresentPsychicIncomingInvite({
   required String? authUserId,
   required PsychicRequestEntity invite,
   String? tellerProfileId,
+  bool isFortuneTeller = false,
 }) {
   final uid = authUserId?.trim() ?? '';
   if (uid.isEmpty) return true;
   if (isPsychicInviteForClientUser(uid, invite)) return false;
+
+  final tellerUid = invite.tellerUserId?.trim() ?? '';
+  if (tellerUid.isNotEmpty && tellerUid == uid) return true;
+
   final profileId = tellerProfileId?.trim() ?? '';
-  if (invite.tellerUserId?.trim() == uid) return true;
   if (profileId.isNotEmpty && invite.tellerId.trim() == profileId) return true;
   if (invite.tellerId.trim() == uid) return true;
-  // Gelen istek uçlarında teller boş olabilir; danışan değilse falcıya göster.
-  return invite.clientId.isEmpty || invite.clientId.trim() != uid;
+
+  // Onaylı falcı: danışan değilse gelen isteği göster (clientId boş push dahil).
+  if (isFortuneTeller || profileId.isNotEmpty) {
+    final clientId = invite.clientId.trim();
+    return clientId.isEmpty || clientId != uid;
+  }
+
+  // Danışan: clientId yoksa minimal push — kendi isteği olabilir, dialog açma.
+  final clientId = invite.clientId.trim();
+  if (clientId.isEmpty) return false;
+  return clientId != uid;
 }
 
 final psychicIncomingQueueFromPushProvider =

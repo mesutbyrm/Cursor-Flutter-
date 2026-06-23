@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.335+338 (2026-06-22)
+
+### Canlı Falcılar — randevu bildirimi regresyonu
+
+- **Kök neden:** Push/API gövdesindeki `userId` yanlışlıkla `clientId` sayılıyordu; falcı kendi isteğinin danışanı sanılıp bildirim/dialog filtreleniyordu
+- `clientId` yalnızca açık `clientId` / `client_id` alanlarından okunuyor
+- Onaylı falcıda minimal push (clientId boş) yine gösteriliyor; danışanda gösterilmiyor
+- Bildirim listesinde falcı olmayan kullanıcı yine ilgili sayfaya yönlendiriliyor
+
 ## 1.0.334+337 (2026-06-22)
 
 ### Canlı Falcılar — randevu bildirimi (yanlış alıcı + çift bildirim)

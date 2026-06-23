@@ -463,7 +463,12 @@ class LivePsychicsRemoteDataSource {
     final profileId = tellerProfileId?.trim() ?? '';
     return merged.where((r) {
       if (uid.isEmpty) return true;
-      if (r.clientId == uid) return false;
+      if (r.clientId == uid) {
+        // API bazen userId'yi clientId sanıyor; falcı eşleşmesi varsa düşürme.
+        if (r.tellerUserId == uid || r.tellerId == uid) return true;
+        if (profileId.isNotEmpty && r.tellerId == profileId) return true;
+        return false;
+      }
       if (r.tellerUserId == uid || r.tellerId == uid) return true;
       if (profileId.isNotEmpty && r.tellerId == profileId) return true;
       // Gelen istek uçlarında teller alanı boş gelebilir; falcıya yönlendirilmiş kayıtları düşürme.
