@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -26,6 +28,7 @@ class _PsychicApplyScreenState extends ConsumerState<PsychicApplyScreen> {
   final _noteCtrl = TextEditingController();
   final _selected = <String>{};
   var _submitting = false;
+  var _submitted = false;
 
   @override
   void initState() {
@@ -47,6 +50,7 @@ class _PsychicApplyScreenState extends ConsumerState<PsychicApplyScreen> {
   }
 
   _ApplyPhase _phaseFromProfile(ApprovedPsychicState? state) {
+    if (_submitted) return _ApplyPhase.pending;
     final profile = state?.profile;
     if (profile == null) return _ApplyPhase.form;
     if (profile.isUsable) return _ApplyPhase.approved;
@@ -76,18 +80,18 @@ class _PsychicApplyScreenState extends ConsumerState<PsychicApplyScreen> {
             applicationNote:
                 _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
           );
-      await ref.read(approvedPsychicProvider.notifier).refresh();
       if (!mounted) return;
+      setState(() => _submitted = true);
       _snack('Başvurunuz alındı — onay bekleniyor');
-      setState(() => _submitting = false);
+      unawaited(ref.read(approvedPsychicProvider.notifier).refresh());
     } on ApiException catch (e) {
       if (!mounted) return;
       _snack(e.message);
-      setState(() => _submitting = false);
     } catch (e) {
       if (!mounted) return;
       _snack(ApiException.userMessage(e));
-      setState(() => _submitting = false);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 

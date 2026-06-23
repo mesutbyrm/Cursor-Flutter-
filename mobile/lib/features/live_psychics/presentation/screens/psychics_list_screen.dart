@@ -30,7 +30,7 @@ class PsychicsListScreen extends ConsumerWidget {
         actions: [
           if (approved.isApprovedTeller)
             TextButton.icon(
-              onPressed: () => context.push('/falci-panel'),
+                      onPressed: () => context.push('/canli-falcilar/dashboard'),
               icon: const Icon(Icons.dashboard_outlined, color: Colors.white),
               label: const Text('Falcı Paneli'),
             )

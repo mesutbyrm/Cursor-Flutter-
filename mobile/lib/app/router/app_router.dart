@@ -190,6 +190,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           }
           return '/falci-ol';
         },
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const PsychicTellerDashboardScreen(),
+        ),
       ),
       GoRoute(
         path: '/falci-ol',

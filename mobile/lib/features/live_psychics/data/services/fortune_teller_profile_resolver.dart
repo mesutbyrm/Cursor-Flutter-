@@ -33,9 +33,10 @@ class FortuneTellerProfileResolver {
 
     final rawMyProfile = await _psychics.fetchMyProfileRaw();
     var profile = PsychicModel.psychicFromMyProfileBody(rawMyProfile);
-    if (_matchesAuthUser(profile, authUserId)) {
+    // my-profile oturum sahibine aittir — userId eşleşmesi şart değil.
+    if (profile != null && profile.id.trim().isNotEmpty) {
       return _result(
-        profile: profile!,
+        profile: profile,
         authUserId: authUserId,
         source: 'my-profile',
         rawMyProfile: rawMyProfile,
@@ -43,9 +44,9 @@ class FortuneTellerProfileResolver {
     }
 
     profile = await _psychics.findTellerByAuthUserId(authUserId);
-    if (_matchesAuthUser(profile, authUserId)) {
+    if (profile != null && profile.id.trim().isNotEmpty) {
       return _result(
-        profile: profile!,
+        profile: profile,
         authUserId: authUserId,
         source: 'fortune-tellers-list',
         rawMyProfile: rawMyProfile,
@@ -55,11 +56,27 @@ class FortuneTellerProfileResolver {
     String? rawMeSnippet;
     final fromMe = await _resolveFromMe(authUserId);
     rawMeSnippet = fromMe.rawMeSnippet;
-    if (_matchesAuthUser(fromMe.profile, authUserId)) {
+    if (fromMe.profile != null && fromMe.profile!.id.trim().isNotEmpty) {
       return _result(
         profile: fromMe.profile!,
         authUserId: authUserId,
         source: fromMe.source,
+        rawMyProfile: rawMyProfile,
+        rawMeSnippet: rawMeSnippet,
+      );
+    }
+
+    if (_roleLooksLikeTeller(user.role) || await _psychics.canAccessTellerPanel()) {
+      final synthetic = PsychicEntity(
+        id: fromMe.fortuneTellerId ?? authUserId,
+        userId: authUserId,
+        name: user.display,
+        applicationStatus: 'approved',
+      );
+      return _result(
+        profile: synthetic,
+        authUserId: authUserId,
+        source: 'role-or-endpoint-probe',
         rawMyProfile: rawMyProfile,
         rawMeSnippet: rawMeSnippet,
       );
@@ -73,35 +90,52 @@ class FortuneTellerProfileResolver {
     );
   }
 
-  Future<({PsychicEntity? profile, String source, String? rawMeSnippet})>
-      _resolveFromMe(String authUserId) async {
+  Future<
+      ({
+        PsychicEntity? profile,
+        String source,
+        String? rawMeSnippet,
+        String? fortuneTellerId,
+      })> _resolveFromMe(String authUserId) async {
     try {
       final res = await _dio.safeGet<dynamic>(ApiEndpoints.me);
       final rawMeSnippet = TellerRoleDiagnostic.truncateJson(res.data);
       final embedded = _parseTellerFromMeBody(res.data, authUserId);
-      if (_matchesAuthUser(embedded, authUserId)) {
+      final tellerId = _fortuneTellerIdFromMeBody(res.data);
+      if (embedded != null && embedded.id.trim().isNotEmpty) {
         return (
           profile: embedded,
           source: '/api/me',
           rawMeSnippet: rawMeSnippet,
+          fortuneTellerId: tellerId ?? embedded.id,
         );
       }
 
-      final tellerId = _fortuneTellerIdFromMeBody(res.data);
-      if (tellerId != null && tellerId.isNotEmpty && tellerId != authUserId) {
+      if (tellerId != null && tellerId.isNotEmpty) {
         final detail = await _psychics.fetchPsychic(tellerId);
-        if (_matchesAuthUser(detail, authUserId)) {
+        if (detail != null && detail.id.trim().isNotEmpty) {
           return (
             profile: detail,
             source: '/api/me→fortune-tellers/$tellerId',
             rawMeSnippet: rawMeSnippet,
+            fortuneTellerId: tellerId,
           );
         }
       }
 
-      return (profile: null, source: '/api/me', rawMeSnippet: rawMeSnippet);
+      return (
+        profile: null,
+        source: '/api/me',
+        rawMeSnippet: rawMeSnippet,
+        fortuneTellerId: tellerId,
+      );
     } catch (_) {
-      return (profile: null, source: '/api/me', rawMeSnippet: null);
+      return (
+        profile: null,
+        source: '/api/me',
+        rawMeSnippet: null,
+        fortuneTellerId: null,
+      );
     }
   }
 
@@ -125,7 +159,7 @@ class FortuneTellerProfileResolver {
         final nested = layer[key];
         if (nested is Map) {
           final parsed = PsychicModel.psychicFromJson(nested);
-          if (_matchesAuthUser(parsed, authUserId)) return parsed;
+          if (parsed.id.trim().isNotEmpty) return parsed;
         }
       }
     }
@@ -157,12 +191,13 @@ class FortuneTellerProfileResolver {
     return null;
   }
 
-  bool _matchesAuthUser(PsychicEntity? profile, String authUserId) {
-    if (profile == null || !profile.isUsable) return false;
-    if (authUserId.isEmpty) return true;
-    final uid = profile.userId?.trim() ?? '';
-    if (uid.isEmpty) return true;
-    return uid == authUserId;
+  bool _roleLooksLikeTeller(String? role) {
+    final r = role?.trim().toLowerCase() ?? '';
+    if (r.isEmpty) return false;
+    return r.contains('teller') ||
+        r.contains('fortune') ||
+        r.contains('falc') ||
+        r.contains('falci');
   }
 
   FortuneTellerProfileResult _result({

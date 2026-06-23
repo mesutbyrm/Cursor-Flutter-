@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.337+340 (2026-06-22)
+
+### Falcı paneli / başvuru düzeltmeleri
+
+- **Onaylı falcı algısı:** `my-profile` yanıtı artık userId eşleşmesi olmadan kabul ediliyor; `/api/me` ve panel uç probu eklendi
+- **Falcı Panel tıklama:** `/falci-panel` redirect-only hatası giderildi; doğrudan `/canli-falcilar/dashboard`
+- **Başvuru spinner:** `refresh()` beklemesi kaldırıldı; `finally` ile spinner durur, anında «inceleniyor» kartı
+
 ## 1.0.336+339 (2026-06-22)
 
 ### Falcı paneli ve Falcı Ol sayfası

@@ -17,7 +17,7 @@ class BranchRoleActions {
       return const TellerBranchAction(
         label: 'Falcı\nPanel',
         icon: Icons.dashboard_outlined,
-        route: '/falci-panel',
+        route: '/canli-falcilar/dashboard',
       );
     }
     return const TellerBranchAction(
@@ -60,8 +60,9 @@ class TellerBranchAction {
   final String? nativePath;
 
   void navigate(BuildContext context) {
-    if (route != null) {
-      context.push(route!);
+    final target = route ?? nativePath;
+    if (target != null && target.isNotEmpty) {
+      context.push(target);
     }
   }
 }

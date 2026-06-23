@@ -134,6 +134,14 @@ abstract final class PsychicModel {
         str(user, ['applicationStatus', 'approvalStatus']);
     if (explicit != null && explicit.isNotEmpty) return explicit;
 
+    if (m['canGoOnline'] == true ||
+        m['isFortuneTeller'] == true ||
+        m['isLiveFortuneTeller'] == true ||
+        user['canGoOnline'] == true ||
+        user['isFortuneTeller'] == true) {
+      return 'approved';
+    }
+
     final status = str(m, ['status']) ?? str(user, ['status']);
     if (status != null && status.isNotEmpty) {
       final s = status.toLowerCase();

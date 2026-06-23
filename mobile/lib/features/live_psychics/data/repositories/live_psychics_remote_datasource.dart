@@ -70,15 +70,41 @@ class LivePsychicsRemoteDataSource {
   Future<PsychicEntity?> findTellerByAuthUserId(String authUserId) async {
     final uid = authUserId.trim();
     if (uid.isEmpty) return null;
-    for (var page = 1; page <= 10; page++) {
+    for (var page = 1; page <= 3; page++) {
       final batch = await fetchPsychics(page: page, limit: 50);
       if (batch.isEmpty) break;
       for (final t in batch) {
-        if (t.userId?.trim() == uid && t.isUsable) return t;
+        if (t.userId?.trim() != uid) continue;
+        final status = t.applicationStatus?.trim().toLowerCase() ?? '';
+        if (status == 'pending' || status == 'rejected' || status == 'declined') {
+          continue;
+        }
+        if (t.isUsable || t.isApproved || t.id.trim().isNotEmpty) return t;
       }
       if (batch.length < 50) break;
     }
     return null;
+  }
+
+  /// Falcı panel uçlarına erişim (onaylı falcı probu).
+  Future<bool> canAccessTellerPanel() async {
+    for (final path in [
+      ApiEndpoints.fortuneTellerIncomingSessions,
+      ApiEndpoints.fortuneTellerMyProfile,
+    ]) {
+      try {
+        final res = await _dio.safeGet<dynamic>(path);
+        final body = res.data;
+        if (body is Map) {
+          final map = asJsonMap(body);
+          if (map['success'] == false && map['error'] != null) continue;
+        }
+        return true;
+      } on ApiException catch (e) {
+        if (e.statusCode == 401 || e.statusCode == 403) return false;
+      } catch (_) {}
+    }
+    return false;
   }
 
   Future<PsychicEntity?> fetchPsychic(String id) async {
@@ -169,8 +195,11 @@ class LivePsychicsRemoteDataSource {
         );
       }
       final data = map['data'] is Map ? asJsonMap(map['data']) : map;
-      final teller = data['teller'] ?? data;
-      return PsychicModel.psychicFromJson(teller);
+      final tellerRaw = data['teller'] ?? data['fortuneTeller'] ?? data;
+      if (tellerRaw is Map) {
+        return PsychicModel.psychicFromJson(tellerRaw);
+      }
+      return PsychicModel.psychicFromJson(data);
     } on ApiException {
       rethrow;
     } catch (e) {
