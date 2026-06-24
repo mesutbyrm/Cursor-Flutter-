@@ -16,6 +16,7 @@ import 'core/onesignal/onesignal_bootstrap.dart';
 import 'core/offline/api_cache_store.dart';
 import 'core/storage/local_cache.dart';
 import 'core/storage/theme_preferences.dart';
+import 'features/fortune/data/services/rewarded_ad_service.dart';
 import 'features/voice_hub/data/services/voice_room_debug_log.dart';
 
 Future<void> main() async {
@@ -46,6 +47,13 @@ Future<void> main() async {
   AppStartupLog.log('Firebase init done');
   await CrashReportingBootstrap.init();
   AppStartupLog.log('Crash reporting init done');
+
+  try {
+    await RewardedAdService.ensureInitialized();
+    RewardedAdService.instance.preload();
+  } catch (e) {
+    debugPrint('AdMob init failed: $e');
+  }
 
   GoogleFonts.config.allowRuntimeFetching = false;
 

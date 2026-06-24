@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.351+355 (2026-06-24)
+
+### Reklam veya Jeton ile AI Fal Sistemi (§11)
+
+- Tüm AI fal türlerinde ortak erişim kapısı: reklam hakkı, 10 jeton veya premium sınırsız
+- Google AdMob ödüllü reklam — tam izlenince +1 fal hakkı; yarıda kapanınca hak verilmez
+- Profilde **Reklamdan Kazanılan Fal Hakları** ve **Jeton Bakiyesi** gösterimi
+- Admin ayarları API (`/api/fortune-access/settings`) + yerel varsayılanlar
+- Jeton tüketimi `paymentMethod` ile fal API'sine iletilir
+
 ## 1.0.350+354 (2026-06-24)
 
 ### CI — release gate exit 1 düzeltmesi

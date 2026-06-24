@@ -23,6 +23,8 @@ class FortuneRemoteDataSource {
     bool? yesNoChoice,
     DateTime? birthDate,
     FortuneCloudImageInput? images,
+    String? paymentMethod,
+    int? jetonCost,
   }) {
     final input = userInput?.trim();
     final body = <String, dynamic>{
@@ -31,6 +33,9 @@ class FortuneRemoteDataSource {
       'slug': type.slug,
       'language': 'tr',
       'platform': 'mobile',
+      if (paymentMethod != null && paymentMethod.isNotEmpty)
+        'paymentMethod': paymentMethod,
+      if (jetonCost != null && jetonCost > 0) 'jetonCost': jetonCost,
       if (input != null && input.isNotEmpty) ...{
         'question': input,
         'text': input,
@@ -73,6 +78,8 @@ class FortuneRemoteDataSource {
     DateTime? birthDate,
     FortuneCloudImageInput? images,
     required String accessToken,
+    String? paymentMethod,
+    int? jetonCost,
   }) async* {
     final slug = _readingSlug(type, images);
     final body = _fortuneBody(
@@ -81,6 +88,8 @@ class FortuneRemoteDataSource {
       yesNoChoice: yesNoChoice,
       birthDate: birthDate,
       images: images,
+      paymentMethod: paymentMethod,
+      jetonCost: jetonCost,
     );
     await for (final chunk in _sse.streamReading(
       apiSlug: slug,
@@ -102,6 +111,8 @@ class FortuneRemoteDataSource {
     bool? yesNoChoice,
     DateTime? birthDate,
     FortuneCloudImageInput? images,
+    String? paymentMethod,
+    int? jetonCost,
   }) async {
     final path = ApiEndpoints.fortuneReading(_readingSlug(type, images));
     final res = await _dio.safePost<dynamic>(
@@ -112,6 +123,8 @@ class FortuneRemoteDataSource {
         yesNoChoice: yesNoChoice,
         birthDate: birthDate,
         images: images,
+        paymentMethod: paymentMethod,
+        jetonCost: jetonCost,
       ),
     );
     final map = _unwrapMap(res.data);
