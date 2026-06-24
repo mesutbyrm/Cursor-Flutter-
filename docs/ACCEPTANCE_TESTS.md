@@ -1,47 +1,43 @@
-# Release Acceptance Testleri
+# Release Gate (9 madde) — APK/AAB öncesi zorunlu
 
-Release APK (`build-apk.yml`) oluşturulmadan **önce** 20 maddelik acceptance testleri otomatik çalışır. Herhangi biri başarısızsa APK derlenmez.
+Release APK veya AAB (`build-apk.yml`) oluşturulmadan **önce** 9 maddelik release gate otomatik çalışır. **Herhangi biri başarısızsa APK/AAB ve sürüm etiketi oluşturulmaz.**
 
 ## Çalıştırma
 
 ```bash
-# Yerel (üretim API)
+# Yerel (üretim API — madde 3–8 için secrets gerekli)
 export ACCEPTANCE_USER_EMAIL="..."
 export ACCEPTANCE_USER_USERNAME="..."
 export ACCEPTANCE_USER_PASSWORD="..."
 export ACCEPTANCE_ADMIN_EMAIL="..."
 export ACCEPTANCE_ADMIN_PASSWORD="..."
-bash scripts/run-acceptance-tests.sh
+# İsteğe bağlı: ACCEPTANCE_HOST_*, ACCEPTANCE_VIEWER_*, ACCEPTANCE_TELLER_*
+
+bash scripts/run-release-gate.sh
+# Gate 9 (release build) yerelde:
+cd mobile && flutter build apk --release
 ```
 
-Rapor: `docs/ACCEPTANCE_TEST_REPORT.md` ve `docs/ACCEPTANCE_TEST_REPORT.json`
+Raporlar:
 
-## Test listesi
+- `docs/RELEASE_GATE_REPORT.md` — tüm 9 madde özeti
+- `docs/ACCEPTANCE_TEST_REPORT.md` — API detay (madde 3–8)
 
-| # | Test | Katman |
-|---|------|--------|
-| 1 | Giriş (e-posta) | API |
-| 2 | Giriş (kullanıcı adı) | API |
-| 3 | Kayıt (endpoint doğrulama) | API |
-| 4 | Profil yükleme (`/api/me`) | API |
-| 5 | Jeton görüntüleme (`/api/wallet`) | API |
-| 6 | Jeton satın alma ekranı (`/api/jeton`) | API |
-| 7 | Sohbet odaları | API |
-| 8 | SSE bağlantısı | API |
-| 9 | Canlı yayın açma | API |
-| 10 | Canlı yayına katılma | API |
-| 11 | Canlı yayında fal isteği | API |
-| 12 | Yayıncının isteği görmesi | API |
-| 13 | Yayıncının isteği kabul etmesi | API |
-| 14 | Görüntülü görüşme token (Agora/TRTC) | API |
-| 15 | Jeton düşümü | API |
-| 16 | Admin bildirimi | API |
-| 17 | Push cihaz token kaydı | API |
-| 18 | Müzik sistemi (!istek) | Flutter test |
-| 19 | Tema değiştirme | Flutter test |
-| 20 | Performans (API gecikme + tema) | API + Flutter |
+## 9 madde listesi
 
-## GitHub Secrets (zorunlu)
+| # | Kontrol | Katman |
+|---|---------|--------|
+| 1 | `flutter analyze` sıfır hata | Flutter |
+| 2 | `flutter test` tamamı geçer | Flutter |
+| 3 | Canlı falcı görüntülü görüşme (session + Agora token) | API |
+| 4 | Canlı yayın fal isteği (stream + istek + yayıncı listesi) | API |
+| 5 | Jeton satın alma bildirimi admin paneline düşer | API |
+| 6 | SSE bağlantıları (`/api/chat/rooms/{id}/stream`) | API |
+| 7 | Profil ekranı &lt; 2 sn (`/api/me` gecikmesi) | API |
+| 8 | Kullanıcı adı ile giriş (`emailOrUsername`) | API |
+| 9 | Release build başarılı (`flutter build apk --release`) | CI |
+
+## GitHub Secrets (madde 3–8 için zorunlu)
 
 Repository → **Settings → Secrets and variables → Actions**:
 
@@ -55,18 +51,25 @@ Repository → **Settings → Secrets and variables → Actions**:
 
 İsteğe bağlı (varsayılan: `ACCEPTANCE_USER_*`):
 
-- `ACCEPTANCE_HOST_EMAIL` / `ACCEPTANCE_HOST_PASSWORD` — canlı yayın açan hesap
-- `ACCEPTANCE_VIEWER_EMAIL` / `ACCEPTANCE_VIEWER_PASSWORD` — izleyici / fal isteği gönderen
+| Secret | Açıklama |
+|--------|----------|
+| `ACCEPTANCE_HOST_EMAIL` / `ACCEPTANCE_HOST_PASSWORD` | Canlı yayın açan hesap |
+| `ACCEPTANCE_VIEWER_EMAIL` / `ACCEPTANCE_VIEWER_PASSWORD` | Fal isteği gönderen izleyici |
+| `ACCEPTANCE_TELLER_EMAIL` / `ACCEPTANCE_TELLER_PASSWORD` | Falcı hesabı |
+| `ACCEPTANCE_TELLER_ID` / `ACCEPTANCE_TELLER_USER_ID` | Falcı kimlikleri (otomatik bulunamazsa) |
 
 ## CI davranışı
 
-1. `scripts/run-acceptance-tests.sh` çalışır
-2. Başarısızsa iş akışı durur, APK derlenmez
-3. Başarısızlıkta `acceptance-test-report` artifact yüklenir
-4. Başarılıysa `flutter build apk --release` devam eder
+1. `scripts/run-release-gate.sh` — madde 1–8
+2. Başarısızsa iş akışı durur; `release-gate-report` artifact yüklenir
+3. Başarılıysa `flutter build apk --release` (madde 9) ve `apk-latest` yüklemesi
+
+## Eski 20 maddelik acceptance testleri
+
+Genişletilmiş kontrol listesi için `scripts/run-acceptance-tests.sh` kullanılabilir. CI artık **9 maddelik release gate** ile çalışır.
 
 ## Notlar
 
 - Testler üretim API (`https://canlifal.com`) üzerinde çalışır
-- Canlı yayın testi geçici bir stream oluşturur ve işlem sonunda siler
-- Push testi gerçek cihaza bildirim göndermez; yalnızca token kayıt uçlarını doğrular
+- Canlı yayın testi geçici stream oluşturur ve işlem sonunda siler
+- Jeton testi gerçek ödeme yapmaz; `POST /api/payment/requests` + admin listesi doğrulanır

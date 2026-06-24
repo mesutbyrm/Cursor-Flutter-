@@ -66,3 +66,5 @@ dist/
 /ci-runs.json
 docs/ACCEPTANCE_TEST_REPORT.json
 docs/ACCEPTANCE_TEST_REPORT.md
+docs/RELEASE_GATE_REPORT.json
+docs/RELEASE_GATE_REPORT.md

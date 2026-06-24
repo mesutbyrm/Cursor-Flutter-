@@ -36,6 +36,7 @@ on:
     paths:
       - 'mobile/**'
       - 'scripts/acceptance-tests/**'
+      - 'scripts/run-release-gate.sh'
       - 'scripts/run-acceptance-tests.sh'
       - '.github/workflows/build-apk.yml'
 
@@ -120,7 +121,7 @@ jobs:
       - name: Accept Android licenses
         run: yes | flutter doctor --android-licenses || true
 
-      - name: Release acceptance tests (20 madde — APK öncesi zorunlu)
+      - name: Release gate (9 madde — APK/AAB öncesi zorunlu)
         working-directory: ${{ github.workspace }}
         env:
           CANLIFAL_BASE_URL: https://canlifal.com
@@ -133,17 +134,23 @@ jobs:
           ACCEPTANCE_VIEWER_PASSWORD: ${{ secrets.ACCEPTANCE_VIEWER_PASSWORD }}
           ACCEPTANCE_ADMIN_EMAIL: ${{ secrets.ACCEPTANCE_ADMIN_EMAIL }}
           ACCEPTANCE_ADMIN_PASSWORD: ${{ secrets.ACCEPTANCE_ADMIN_PASSWORD }}
+          ACCEPTANCE_TELLER_EMAIL: ${{ secrets.ACCEPTANCE_TELLER_EMAIL }}
+          ACCEPTANCE_TELLER_PASSWORD: ${{ secrets.ACCEPTANCE_TELLER_PASSWORD }}
+          ACCEPTANCE_TELLER_ID: ${{ secrets.ACCEPTANCE_TELLER_ID }}
+          ACCEPTANCE_TELLER_USER_ID: ${{ secrets.ACCEPTANCE_TELLER_USER_ID }}
         run: |
           set -eux
-          chmod +x scripts/run-acceptance-tests.sh scripts/acceptance-tests/*.sh
-          bash scripts/run-acceptance-tests.sh
+          chmod +x scripts/run-release-gate.sh scripts/acceptance-tests/*.sh
+          bash scripts/run-release-gate.sh
 
-      - name: Acceptance raporu (başarısızlıkta)
+      - name: Release gate raporu (başarısızlıkta)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: acceptance-test-report
+          name: release-gate-report
           path: |
+            docs/RELEASE_GATE_REPORT.md
+            docs/RELEASE_GATE_REPORT.json
             docs/ACCEPTANCE_TEST_REPORT.md
             docs/ACCEPTANCE_TEST_REPORT.json
           retention-days: 14
@@ -170,7 +177,7 @@ jobs:
             echo "GOOGLE_SERVICES_JSON_BASE64 not set — skipping Firebase config"
           fi
 
-      - name: flutter build apk --release
+      - name: flutter build apk --release (Gate 9)
         run: |
           set -eux
           DEFINES=""
@@ -180,12 +187,21 @@ jobs:
           flutter pub get
           # shellcheck disable=SC2086
           flutter build apk --release $DEFINES
+          test -s build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Gate 9 — release build doğrulama
+        run: |
+          set -eux
+          test -s build/app/outputs/flutter-apk/app-release.apk
+          ls -lh build/app/outputs/flutter-apk/app-release.apk
+          echo "Gate 9: release APK oluşturuldu"
 
       - name: Copy APK
         working-directory: ${{ github.workspace }}
         run: |
           cp mobile/build/app/outputs/flutter-apk/app-release.apk canlifal-mobile-release.apk
           ls -lh canlifal-mobile-release.apk
+          test -s canlifal-mobile-release.apk
 
       - name: Sürüm meta
         id: meta

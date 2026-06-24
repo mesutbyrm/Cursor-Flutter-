@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.349+353 (2026-06-23)
+
+### Release gate (9 madde — APK/AAB öncesi zorunlu)
+
+- **9 madde:** analyze, test, falcı video, canlı fal isteği, jeton admin bildirimi, SSE, profil hızı, kullanıcı adı girişi, release build
+- `scripts/run-release-gate.sh` + `scripts/acceptance-tests/api-release-gate.sh`
+- `build-apk.yml` — gate başarısızsa APK/etiket oluşturulmaz; Gate 9 doğrulama sırası düzeltildi
+- Dokümantasyon: `docs/ACCEPTANCE_TESTS.md`
+
 ## 1.0.348+352 (2026-06-23)
 
 ### Release acceptance testleri (APK öncesi zorunlu)
