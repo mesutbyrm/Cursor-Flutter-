@@ -101,14 +101,20 @@ class FortuneReadingCoordinator {
       subtitle: _loadingSubtitle(type, images),
       accent: type.accent,
     );
+    var loadingDismissed = false;
+    void dismissLoading() {
+      if (loadingDismissed || !context.mounted) return;
+      loadingDismissed = true;
+      Navigator.of(context, rootNavigator: true).maybePop();
+    }
 
     FortuneCloudImageInput? cloudImages;
     if (images != null && FortuneImageCaptureConfig.requiresCapture(type)) {
       try {
         cloudImages = await _uploadImages(ref, type, images);
       } catch (e) {
+        dismissLoading();
         if (context.mounted) {
-          Navigator.of(context, rootNavigator: true).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(ApiException.userMessage(e))),
           );
@@ -203,10 +209,8 @@ class FortuneReadingCoordinator {
           lower.contains('credit') ||
           lower.contains('bakiye') ||
           (e is ApiException && e.statusCode == 402);
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-      }
       if (needsPurchase) {
+        dismissLoading();
         if (context.mounted) {
           await _showPurchasePrompt(context, msg);
         }
@@ -230,9 +234,7 @@ class FortuneReadingCoordinator {
     }
 
     if (result == null) {
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-      }
+      dismissLoading();
       return null;
     }
 
@@ -266,7 +268,7 @@ class FortuneReadingCoordinator {
     }
 
     if (!context.mounted) return null;
-    Navigator.of(context, rootNavigator: true).pop();
+    dismissLoading();
     if (stayOnPage) return finalResult;
     if (replaceCurrentRoute) {
       context.pushReplacement('/fortune/${type.slug}/result', extra: finalResult);

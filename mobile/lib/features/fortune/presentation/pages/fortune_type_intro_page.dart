@@ -1,9 +1,11 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../domain/entities/fortune_type_entity.dart';
+import '../data/fortune_type_images.dart';
 import '../data/fortune_type_showcase.dart';
 import '../services/fortune_reading_coordinator.dart';
 import '../widgets/fortune_image_capture_panel.dart';
@@ -44,6 +46,11 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
   void initState() {
     super.initState();
     _scroll.addListener(() => setState(() => _scrollOffset = _scroll.offset));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final url = FortuneTypeImages.urlFor(type.slug, width: 1400);
+      precacheImage(CachedNetworkImageProvider(url), context);
+    });
   }
 
   @override
@@ -88,10 +95,13 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
   @override
   Widget build(BuildContext context) {
     if (_inlineResult != null) {
-      return FortuneInlineResultExperience(
-        result: _inlineResult!,
-        onOpenType: _openType,
-        onNewReading: _resetReading,
+      return Scaffold(
+        backgroundColor: const Color(0xFF0A0118),
+        body: FortuneInlineResultExperience(
+          result: _inlineResult!,
+          onOpenType: _openType,
+          onNewReading: _resetReading,
+        ),
       );
     }
 
@@ -108,7 +118,7 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF0A0118),
       body: FortuneTypeImmersiveScaffold(
         type: type,
         child: Column(

@@ -107,6 +107,8 @@ class _FortuneInlineResultExperienceState
                   scrollController: _scroll,
                   appBarTitle: 'Fal Sonucu',
                   showTopBar: false,
+                  showHero: false,
+                  useBackground: false,
                   header: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                     child: FortunePremiumResultCard(result: result),

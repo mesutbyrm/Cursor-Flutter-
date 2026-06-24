@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -34,9 +32,9 @@ class FortuneTypeImmersiveScaffold extends StatelessWidget {
               imageUrl: url,
               fit: BoxFit.cover,
               memCacheWidth: 1080,
-              fadeInDuration: const Duration(milliseconds: 280),
+              fadeInDuration: Duration.zero,
               placeholder: (_, _) => FortuneImageShimmer(accent: type.accent),
-              errorWidget: (_, _, _) => const ColoredBox(color: Color(0xFF0A0118)),
+              errorWidget: (_, _, _) => FortuneImageShimmer(accent: type.accent),
             ),
             DecoratedBox(
               decoration: BoxDecoration(
@@ -46,10 +44,6 @@ class FortuneTypeImmersiveScaffold extends StatelessWidget {
                   colors: overlays,
                 ),
               ),
-            ),
-            BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),
-              child: const SizedBox.expand(),
             ),
             child,
           ],

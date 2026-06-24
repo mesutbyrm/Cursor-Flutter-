@@ -9,7 +9,7 @@ import '../../../domain/entities/fortune_type_entity.dart';
 import '../../data/fortune_type_images.dart';
 import '../premium_2026/cinematic_fortune_hero.dart';
 
-/// Falını Aç — 2.5sn kamera zoom, kozmik patlama, kart dönüşü.
+/// Falını Aç — kısa kamera zoom, kozmik patlama.
 Future<void> runPremiumFortuneOpenTransition({
   required BuildContext context,
   required FortuneTypeEntity type,
@@ -57,7 +57,7 @@ class _OpenTransitionOverlayState extends State<_OpenTransitionOverlay>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2500),
+      duration: const Duration(milliseconds: 1100),
     )..forward().then((_) {
         if (mounted) widget.onDone();
       });
@@ -76,7 +76,7 @@ class _OpenTransitionOverlayState extends State<_OpenTransitionOverlay>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final heroTag = FortuneTypeImages.heroTagFor(widget.type.slug);
+    final heroTag = 'fortune-open-${widget.type.slug}';
     final glow = FortuneTypeImages.glowColor(widget.type.slug);
 
     return Material(

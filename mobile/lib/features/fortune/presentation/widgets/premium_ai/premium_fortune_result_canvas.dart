@@ -21,6 +21,8 @@ class PremiumFortuneResultCanvas extends StatefulWidget {
     this.readingSectionKey,
     this.appBarTitle = 'Fal Sonucu',
     this.showTopBar = true,
+    this.showHero = true,
+    this.useBackground = true,
     this.header,
     this.footer,
   });
@@ -31,6 +33,8 @@ class PremiumFortuneResultCanvas extends StatefulWidget {
   final GlobalKey? readingSectionKey;
   final String appBarTitle;
   final bool showTopBar;
+  final bool showHero;
+  final bool useBackground;
   final Widget? header;
   final Widget? footer;
 
@@ -89,7 +93,10 @@ class _PremiumFortuneResultCanvasState extends State<PremiumFortuneResultCanvas>
   }
 
   void _scheduleReveals() {
-    for (final section in _sections) {
+    if (_sections.isNotEmpty && mounted) {
+      setState(() => _visibleSections.add(_sections.first.key));
+    }
+    for (final section in _sections.skip(1)) {
       Future<void>.delayed(
         Duration(seconds: section.delaySeconds),
         () {
@@ -107,10 +114,7 @@ class _PremiumFortuneResultCanvasState extends State<PremiumFortuneResultCanvas>
     final energyTag = FortuneReadingHeadlines.energyTagFor(result);
     final glow = result.type.accent;
 
-    return RepaintBoundary(
-      child: FortuneDynamicBackground(
-        type: result.type,
-        child: Column(
+    final content = Column(
           children: [
             if (widget.showTopBar)
               SafeArea(
@@ -151,12 +155,13 @@ class _PremiumFortuneResultCanvasState extends State<PremiumFortuneResultCanvas>
                 padding: EdgeInsets.zero,
                 children: [
                   if (widget.header != null) widget.header!,
-                  CinematicFortuneHero(
-                    type: result.type,
-                    height: widget.header != null ? 220 : 320,
-                    scrollOffset: _scrollOffset,
-                    showTitle: widget.header == null,
-                  ),
+                  if (widget.showHero)
+                    CinematicFortuneHero(
+                      type: result.type,
+                      height: widget.header != null ? 220 : 320,
+                      scrollOffset: _scrollOffset,
+                      showTitle: widget.header == null,
+                    ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                     child: Column(
@@ -260,8 +265,12 @@ class _PremiumFortuneResultCanvasState extends State<PremiumFortuneResultCanvas>
               ),
             ),
           ],
-        ),
-      ),
+        );
+
+    return RepaintBoundary(
+      child: widget.useBackground
+          ? FortuneDynamicBackground(type: result.type, child: content)
+          : content,
     );
   }
 }
