@@ -68,7 +68,7 @@ class VoicePremiumStage extends StatelessWidget {
         .toList();
 
     final allVisible = [
-      if (owner != null) owner,
+      ?owner,
       ...speakers,
       ...listeners,
       ...extraListeners,

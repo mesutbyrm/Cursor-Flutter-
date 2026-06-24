@@ -13,7 +13,7 @@ abstract final class VoiceRoomBackgroundCatalog {
   static List<String> siteDefaults() {
     return List.generate(
       count,
-      (i) => '${_origin}/images/voice-bg-${i + 1}.jpg',
+      (i) => '$_origin/images/voice-bg-${i + 1}.jpg',
     );
   }
 

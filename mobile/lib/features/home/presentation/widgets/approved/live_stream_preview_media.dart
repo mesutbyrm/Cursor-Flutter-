@@ -79,7 +79,7 @@ class _LiveStreamPreviewMediaState extends State<LiveStreamPreviewMedia>
             fit: BoxFit.cover,
             memCacheWidth: widget.eager ? 480 : 320,
             fadeInDuration: widget.eager ? Duration.zero : const Duration(milliseconds: 180),
-            errorWidget: (_, __, ___) => _placeholder(),
+            errorWidget: (_, _, _) => _placeholder(),
           ),
           _liveShimmer(),
         ],

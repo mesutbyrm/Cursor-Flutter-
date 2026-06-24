@@ -27,8 +27,8 @@ class CachedCoverImage extends StatelessWidget {
       width: width,
       height: height,
       fit: fit,
-      placeholder: (_, __) => _placeholder(),
-      errorWidget: (_, __, ___) => fallback ?? _placeholder(),
+      placeholder: (_, _) => _placeholder(),
+      errorWidget: (_, _, _) => fallback ?? _placeholder(),
     );
 
     if (borderRadius != null) {

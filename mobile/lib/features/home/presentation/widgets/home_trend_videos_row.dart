@@ -19,7 +19,7 @@ class HomeTrendVideosRow extends ConsumerWidget {
 
     return videos.when(
       loading: () => _skeleton(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
         return Column(
@@ -35,7 +35,7 @@ class HomeTrendVideosRow extends ConsumerWidget {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: items.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (_, i) => GestureDetector(
                   onTap: () => context.push('/shorts?videoId=${items[i].id}'),
                   child: _TrendVideoCard(video: items[i]),
@@ -61,8 +61,8 @@ class HomeTrendVideosRow extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: 3,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (_, __) => const PremiumSkeleton(
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (_, _) => const PremiumSkeleton(
               width: 128,
               height: 160,
               borderRadius: BorderRadius.all(Radius.circular(HomePalette.radiusCard)),

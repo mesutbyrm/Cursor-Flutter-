@@ -62,8 +62,8 @@ class LiveStreamExtrasDataSource {
   }) async {
     final body = <String, dynamic>{
       'action': action,
-      if (targetStreamId != null) 'targetStreamId': targetStreamId,
-      if (battleId != null) 'battleId': battleId,
+      'targetStreamId': ?targetStreamId,
+      'battleId': ?battleId,
       if (action == 'create') 'streamId': streamId,
       if (action == 'create') 'duration': duration,
     };
@@ -81,9 +81,9 @@ class LiveStreamExtrasDataSource {
       ApiEndpoints.videoStreamPkBattle(streamId),
       data: {
         'action': action,
-        if (targetStreamId != null) 'targetStreamId': targetStreamId,
-        if (targetStreamId != null) 'opponentStreamId': targetStreamId,
-        if (battleId != null) 'battleId': battleId,
+        'targetStreamId': ?targetStreamId,
+        'opponentStreamId': ?targetStreamId,
+        'battleId': ?battleId,
       },
     );
     return _unwrapBattle(res.data);
@@ -148,9 +148,9 @@ class LiveStreamExtrasDataSource {
       ApiEndpoints.videoStreamSignal(streamId),
       data: {
         'type': type,
-        if (receiverId != null) 'receiverId': receiverId,
-        if (data != null) 'data': data,
-        if (payload != null) 'payload': payload,
+        'receiverId': ?receiverId,
+        'data': ?data,
+        'payload': ?payload,
       },
     );
   }
@@ -203,7 +203,7 @@ class LiveStreamExtrasDataSource {
       ApiEndpoints.videoStreamCoBroadcast(streamId),
       data: {
         'action': action,
-        if (userId != null) 'userId': userId,
+        'userId': ?userId,
       },
     );
     return _unwrapCoBroadcaster(res.data);
@@ -278,7 +278,7 @@ class LiveStreamExtrasDataSource {
   }) async {
     await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamBan(streamId),
-      data: {'userId': userId, if (reason != null) 'reason': reason},
+      data: {'userId': userId, 'reason': ?reason},
     );
   }
 
@@ -302,7 +302,7 @@ class LiveStreamExtrasDataSource {
       data: {
         'viewerId': viewerId,
         'userId': viewerId,
-        if (reason != null) 'reason': reason,
+        'reason': ?reason,
         if (expiresAt != null) 'expiresAt': expiresAt.toUtc().toIso8601String(),
       },
     );

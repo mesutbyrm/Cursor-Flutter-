@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -271,9 +270,8 @@ class _GiftsTab extends StatelessWidget {
             ),
             Expanded(
               child: ListView.builder(
-                scrollDirection: Axis.horizontal,
+                cacheExtent: 400, scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                cacheExtent: 400,
                 itemCount: filtered.length,
                 itemBuilder: (ctx, i) {
                   final entity = filtered[i];

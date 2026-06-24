@@ -83,10 +83,10 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
                         child: CachedNetworkImage(
                           imageUrl: p.mediaUrl!,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) => Container(
+                          placeholder: (_, _) => Container(
                             color: AppTheme.surfaceElevated,
                           ),
-                          errorWidget: (_, __, ___) => Container(
+                          errorWidget: (_, _, _) => Container(
                             color: AppTheme.surfaceElevated,
                             alignment: Alignment.center,
                             child: const Icon(

@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -47,7 +46,7 @@ class _UltraFortuneCrystalBallState extends State<UltraFortuneCrystalBall>
 
     return AnimatedBuilder(
       animation: Listenable.merge([_rotate, _breathe]),
-      builder: (_, __) {
+      builder: (_, _) {
         return Transform.scale(
           scale: breatheScale,
           child: SizedBox(

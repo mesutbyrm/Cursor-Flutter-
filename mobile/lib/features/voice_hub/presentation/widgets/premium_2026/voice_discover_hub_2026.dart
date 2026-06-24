@@ -203,7 +203,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(horizontal: metrics.horizontalPad),
               itemCount: _tabs.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, i) {
                 final t = _tabs[i];
                 final active = _tab == t.id;
@@ -238,8 +238,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
         ),
         Expanded(
           child: ListView.builder(
-            controller: _scroll,
-            cacheExtent: ListPerf.cacheExtent,
+            cacheExtent: ListPerf.cacheExtent, controller: _scroll,
             padding: EdgeInsets.fromLTRB(
               metrics.horizontalPad,
               16,
@@ -310,7 +309,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: popular.take(10).length,
-          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          separatorBuilder: (_, _) => const SizedBox(width: 12),
           itemBuilder: (context, j) => _PopularRoomCard(
             room: popular[j],
             index: j,
@@ -344,7 +343,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: live.length.clamp(0, 12),
-          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          separatorBuilder: (_, _) => const SizedBox(width: 12),
           itemBuilder: (context, j) => _LiveStreamCard(
             stream: live[j],
             onTap: () => openLiveFromDiscover(context, ref, live[j]),
@@ -410,7 +409,7 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: vipRooms.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, j) => _VipRoomCard(
               room: vipRooms[j],
               onTap: () => widget.onRoomTap(vipRooms[j]),

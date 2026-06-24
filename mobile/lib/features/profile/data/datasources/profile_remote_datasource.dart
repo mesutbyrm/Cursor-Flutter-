@@ -93,14 +93,14 @@ class ProfileRemoteDataSource {
           'name': displayName,
           'displayName': displayName,
         },
-        if (bio != null) 'bio': bio,
+        'bio': ?bio,
         if (avatarUrl != null) ...{
           'image': avatarUrl,
           'avatarUrl': avatarUrl,
         },
-        if (username != null) 'username': username,
-        if (currentPassword != null) 'currentPassword': currentPassword,
-        if (newPassword != null) 'newPassword': newPassword,
+        'username': ?username,
+        'currentPassword': ?currentPassword,
+        'newPassword': ?newPassword,
       },
     );
     final body = res.data ?? {};

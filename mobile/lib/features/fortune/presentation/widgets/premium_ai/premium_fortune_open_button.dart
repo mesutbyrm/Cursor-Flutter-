@@ -58,7 +58,7 @@ class _PremiumFortuneOpenButtonState extends State<PremiumFortuneOpenButton>
       opacity: opacity,
       child: AnimatedBuilder(
         animation: _glow,
-        builder: (_, __) {
+        builder: (_, _) {
           final pulse = 0.5 + 0.5 * _glow.value;
           return Container(
             decoration: BoxDecoration(
@@ -167,7 +167,7 @@ class _PremiumFortuneLoadingOverlayState extends State<PremiumFortuneLoadingOver
             children: [
               AnimatedBuilder(
                 animation: _spin,
-                builder: (_, __) {
+                builder: (_, _) {
                   return SizedBox(
                     width: 120,
                     height: 120,
@@ -294,7 +294,7 @@ class _ShimmerBarState extends State<_ShimmerBar>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, __) {
+      builder: (_, _) {
         return Container(
           height: 4,
           width: 200,

@@ -136,7 +136,7 @@ class _VoiceSeatAvatarFrameState extends State<VoiceSeatAvatarFrame>
                     'assets/gifts/lottie/crown.json',
                     repeat: true,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => Icon(
+                    errorBuilder: (_, _, _) => Icon(
                       Icons.workspace_premium_rounded,
                       size: widget.size * 0.22,
                       color: VoiceRoomTokens.gold,

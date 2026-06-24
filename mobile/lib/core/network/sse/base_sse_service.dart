@@ -255,7 +255,7 @@ abstract class BaseSseService {
       }
       return map;
     } catch (_) {
-      return {'content': payload, if (eventName != null) 'type': eventName};
+      return {'content': payload, 'type': ?eventName};
     }
   }
 }

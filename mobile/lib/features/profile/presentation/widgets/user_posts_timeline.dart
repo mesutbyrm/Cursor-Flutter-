@@ -90,9 +90,8 @@ class _UserPostsTimelineState extends ConsumerState<UserPostsTimeline> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListView.builder(
-              shrinkWrap: true,
+              cacheExtent: ListPerf.cacheExtent, shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              cacheExtent: ListPerf.cacheExtent,
               itemCount: posts.length,
               itemBuilder: (context, index) {
                 final post = posts[index];

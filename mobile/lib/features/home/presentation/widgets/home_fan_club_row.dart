@@ -26,7 +26,7 @@ class HomeFanClubRow extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: HomeSiteCatalog.fanClubs.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (_, i) {
               final club = HomeSiteCatalog.fanClubs[i];
               return _FanClubCard(

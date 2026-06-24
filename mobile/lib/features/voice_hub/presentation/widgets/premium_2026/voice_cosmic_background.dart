@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -58,7 +57,7 @@ class _VoiceCosmicBackgroundState extends State<VoiceCosmicBackground>
             placeholder: (_, _) => const DecoratedBox(
               decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
             ),
-            errorWidget: (_, _, __) => const DecoratedBox(
+            errorWidget: (_, _, _) => const DecoratedBox(
               decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
             ),
             color: Colors.black.withValues(alpha: 0.42),

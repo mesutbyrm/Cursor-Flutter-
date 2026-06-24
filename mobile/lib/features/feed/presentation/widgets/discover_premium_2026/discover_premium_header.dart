@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../core/ui/platform_blur.dart';
-import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/ui/premium/premium.dart';
 import 'discover_premium_visual.dart';
 import '../../../../../core/widgets/messages_notifications_actions.dart';

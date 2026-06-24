@@ -100,14 +100,14 @@ abstract final class VoiceRoomDebugLog {
     log('SSE CONNECT', {
       'roomId': roomId,
       'count': _sseConnectCount,
-      if (url != null) 'url': url,
+      'url': ?url,
     });
   }
 
   static void sseDisconnect({String? roomId, String reason = 'manual'}) {
     _sseDisconnectCount++;
     log('SSE DISCONNECT', {
-      if (roomId != null) 'roomId': roomId,
+      'roomId': ?roomId,
       'reason': reason,
       'count': _sseDisconnectCount,
     });
@@ -189,14 +189,14 @@ abstract final class VoiceRoomDebugLog {
     String? streamUrl,
   }) {
     log('MUSIC START', {
-      if (videoId != null) 'videoId': videoId,
-      if (title != null) 'title': title,
+      'videoId': ?videoId,
+      'title': ?title,
       if (streamUrl != null) 'stream': _shortUrl(streamUrl),
     });
   }
 
   static void musicStop({String? reason}) {
-    log('MUSIC STOP', {if (reason != null) 'reason': reason});
+    log('MUSIC STOP', {'reason': ?reason});
   }
 
   static void musicError({
@@ -209,7 +209,7 @@ abstract final class VoiceRoomDebugLog {
       'phase': phase,
       if (error != null) 'error': error.toString(),
       if (url != null) 'url': _shortUrl(url),
-      if (videoId != null) 'videoId': videoId,
+      'videoId': ?videoId,
     });
   }
 
@@ -233,7 +233,7 @@ abstract final class VoiceRoomDebugLog {
   static void jwtStatus({required bool hasToken, int? tokenLength}) {
     log('jwt.status', {
       'hasToken': hasToken,
-      if (tokenLength != null) 'len': tokenLength,
+      'len': ?tokenLength,
     });
   }
 
@@ -247,9 +247,9 @@ abstract final class VoiceRoomDebugLog {
     log('api.response', {
       'method': method,
       'path': path,
-      if (status != null) 'status': status,
-      if (summary != null) 'body': summary,
-      if (elapsedMs != null) 'ms': elapsedMs,
+      'status': ?status,
+      'body': ?summary,
+      'ms': ?elapsedMs,
     });
   }
 

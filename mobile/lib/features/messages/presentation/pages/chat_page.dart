@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/performance/list_perf.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
@@ -179,10 +178,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   final rows = state.visible;
                   final showOlder = state.hasMore;
                   return ListView.builder(
-                    controller: _scroll,
+                    cacheExtent: ListPerf.cacheExtent, controller: _scroll,
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
                     physics: ListPerf.listPhysics,
-                    cacheExtent: ListPerf.cacheExtent,
                     itemCount: rows.length + (showOlder ? 1 : 0),
                     itemBuilder: (ctx, i) {
                       if (showOlder && i == 0) {

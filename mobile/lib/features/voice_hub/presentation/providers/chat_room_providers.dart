@@ -13,12 +13,10 @@ import '../../../live/presentation/providers/live_providers.dart';
 import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_debug_log.dart';
-import '../../data/services/exo_player_probe.dart';
 import '../../data/services/voice_room_music_pipeline_log.dart';
 import '../../data/services/chat_room_sse_service.dart';
 import '../../data/services/voice_room_gift_socket.dart';
 import '../../data/services/voice_seat_rest_service.dart';
-import '../../domain/pk/pk_battle_remote_models.dart';
 import 'pk_battle_provider.dart';
 import 'pk_battle_remote_provider.dart';
 import 'voice_room_sse_provider.dart';
@@ -205,7 +203,7 @@ class VoiceRoomLiveController
   Timer? _presenceHeartbeat;
   Timer? _enterBannerTimer;
   Timer? _musicRequestFlashTimer;
-  var _pollPaused = false;
+  final _pollPaused = false;
   var _pollTick = 0;
   String? _lastDjPlaybackSignature;
   final Set<String> _shownEntranceKeys = {};
@@ -311,58 +309,6 @@ class VoiceRoomLiveController
         ref.read(youtubeStreamResolverProvider).resolveByVideoId(videoId),
       );
     }
-  }
-
-  /// Web `buildDjPayload` uyumu: önce Piped / youtube_explode, sonra sunucu stream.
-  Future<String?> _resolvePlaybackStreamUrl({
-    required String? videoId,
-    String? serverMusicUrl,
-  }) async {
-    final resolver = ref.read(youtubeStreamResolverProvider);
-    if (videoId != null && videoId.isNotEmpty) {
-      VoiceRoomMusicPipelineLog.compareFields(
-        stage: 'resolvePlaybackStream.start',
-        roomId: _roomKey,
-        videoId: videoId,
-        serverMusicUrl: serverMusicUrl,
-      );
-      final fresh = await resolver.resolveByVideoId(videoId);
-      if (fresh != null && fresh.startsWith('http')) {
-        final client = VoiceRoomDjStreamLoader.clientPlaybackUrl(fresh);
-        VoiceRoomMusicPipelineLog.compareFields(
-          stage: 'resolvePlaybackStream.client',
-          roomId: _roomKey,
-          videoId: videoId,
-          resolvedStreamUrl: client,
-        );
-        return client;
-      }
-      try {
-        final api = await ref.read(resolveStreamUseCaseProvider)(
-          roomId: _roomKey,
-          videoId: videoId,
-        );
-        if (api != null && api.startsWith('http')) {
-          return VoiceRoomDjStreamLoader.clientPlaybackUrl(api);
-        }
-      } catch (e, st) {
-        VoiceRoomMusicPipelineLog.justAudioError(
-          e,
-          st,
-          phase: 'resolvePlaybackStream.api',
-          url: videoId,
-        );
-      }
-    }
-
-    final server = serverMusicUrl?.trim();
-    if (server != null &&
-        server.startsWith('http') &&
-        !ChatRoomDjState.isEphemeralStreamUrl(server) &&
-        !YoutubeStreamResolver.isYoutubePageUrl(server)) {
-      return VoiceRoomDjStreamLoader.clientPlaybackUrl(server);
-    }
-    return null;
   }
 
   DateTime? get _lastMessageAt {
@@ -1721,7 +1667,7 @@ class VoiceRoomLiveController
       if (user != null && nowPlaying != null) {
         nowPlaying = _musicItemWithRequester(nowPlaying, user);
         queue = queue
-            .map((e) => e.id == nowPlaying!.id ? nowPlaying! : e)
+            .map((e) => e.id == nowPlaying!.id ? nowPlaying : e)
             .toList();
       }
 
@@ -2125,39 +2071,6 @@ class VoiceRoomLiveController
         error: ApiException.userMessage(e),
       );
     }
-  }
-
-  bool _musicItemHasPlayableUrl(MusicQueueItem? item) {
-    final url = item?.youtubeUrl.trim() ?? '';
-    return url.isNotEmpty &&
-        (url.contains('youtube') ||
-            url.contains('youtu.be') ||
-            url.startsWith('http'));
-  }
-
-  bool _musicLooksQueued(String song) {
-    final needle = song.trim().toLowerCase();
-    if (needle.isEmpty) return false;
-    final tokens = needle
-        .split(RegExp(r'[\s\-–—]+'))
-        .where((part) => part.length >= 3)
-        .toList();
-    bool match(String? value) =>
-        value != null &&
-        (value.toLowerCase().contains(needle) ||
-            (tokens.isNotEmpty &&
-                tokens.every((token) => value.toLowerCase().contains(token))));
-    final dj = state.dj;
-    final now = dj.nowPlaying;
-    if (_musicItemHasPlayableUrl(now) &&
-        (match(now?.title) || match(now?.youtubeUrl))) {
-      return true;
-    }
-    return dj.musicQueue.any(
-      (item) =>
-          _musicItemHasPlayableUrl(item) &&
-          (match(item.title) || match(item.youtubeUrl)),
-    );
   }
 
   Future<void> _applyRoomCommandFallback(String raw) async {

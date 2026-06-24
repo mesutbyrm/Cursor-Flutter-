@@ -37,8 +37,8 @@ class VoiceRoomSection extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
               itemCount: 2,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (_, __) => const PremiumSkeleton(
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              itemBuilder: (_, _) => const PremiumSkeleton(
                 width: HomeApprovedDesign.voiceCardW,
                 height: HomeApprovedDesign.voiceCardH,
                 borderRadius: BorderRadius.all(
@@ -95,7 +95,7 @@ class VoiceRoomSection extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
             itemCount: rooms.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (context, i) => _VoiceRoomCard(
               room: rooms[i],
               onTap: () => openVoiceRoomWithVipGate(context, ref, rooms[i]),

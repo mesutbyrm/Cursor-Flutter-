@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../feed/domain/entities/post_entity.dart';
-import '../../domain/repositories/social_repository.dart';
 import 'social_providers.dart';
 
 class UserSocialPostsNotifier

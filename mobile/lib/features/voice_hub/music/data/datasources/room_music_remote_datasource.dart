@@ -150,9 +150,9 @@ class RoomMusicRemoteDataSource {
       'videoId': videoId,
       'title': title,
       'youtubeUrl': 'https://www.youtube.com/watch?v=$videoId',
-      if (channelTitle != null) 'artist': channelTitle,
-      if (thumbUrl != null) 'thumbUrl': thumbUrl,
-      if (duration != null) 'duration': duration,
+      'artist': ?channelTitle,
+      'thumbUrl': ?thumbUrl,
+      'duration': ?duration,
       'priority': priority,
       if (skipPayment) 'skipPayment': true,
     };
@@ -215,7 +215,7 @@ class RoomMusicRemoteDataSource {
       '/api/chat/rooms/$roomId/dj',
       data: {
         'playing': true,
-        if (musicUrl != null) 'musicUrl': musicUrl,
+        'musicUrl': ?musicUrl,
       },
     );
   }

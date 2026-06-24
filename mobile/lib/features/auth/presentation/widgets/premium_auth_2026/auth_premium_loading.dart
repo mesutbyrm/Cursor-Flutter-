@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/ui/premium_2026/premium_motion.dart';
 
 /// Splash / auth — neon halka yükleme göstergesi.
 class AuthPremiumLoading extends StatefulWidget {

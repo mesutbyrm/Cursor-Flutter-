@@ -60,7 +60,7 @@ class DiscoverPremiumRoomRow extends StatelessWidget {
               parent: AlwaysScrollableScrollPhysics(),
             ),
             itemCount: rooms.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, i) {
               final room = rooms[i];
               return DiscoverPremiumRoomCard(

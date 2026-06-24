@@ -100,7 +100,7 @@ class _DailyFortunePremiumHeroState extends State<DailyFortunePremiumHero>
               ),
               AnimatedBuilder(
                 animation: _rings,
-                builder: (_, __) => CustomPaint(
+                builder: (_, _) => CustomPaint(
                   painter: _EnergyRingsPainter(
                     t: _rings.value,
                     color: glow,
@@ -109,7 +109,7 @@ class _DailyFortunePremiumHeroState extends State<DailyFortunePremiumHero>
               ),
               AnimatedBuilder(
                 animation: _particles,
-                builder: (_, __) => CustomPaint(
+                builder: (_, _) => CustomPaint(
                   painter: _FloatingParticlesPainter(t: _particles.value),
                 ),
               ),

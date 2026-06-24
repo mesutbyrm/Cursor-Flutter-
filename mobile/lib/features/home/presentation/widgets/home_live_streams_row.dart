@@ -35,8 +35,8 @@ class HomeLiveStreamsRow extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: 3,
-            separatorBuilder: (_, __) => const SizedBox(width: 14),
-            itemBuilder: (_, __) => PremiumSkeleton(
+            separatorBuilder: (_, _) => const SizedBox(width: 14),
+            itemBuilder: (_, _) => PremiumSkeleton(
               width: _cardWidth,
               height: _cardWidth / _aspectRatio,
               borderRadius:
@@ -45,7 +45,7 @@ class HomeLiveStreamsRow extends ConsumerWidget {
           ),
         ),
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (items) {
         final live = items.where((s) => s.isLive).toList();
         if (live.isEmpty) return const SizedBox.shrink();
@@ -120,11 +120,10 @@ class _LiveBroadcastListState extends ConsumerState<_LiveBroadcastList> {
     return SizedBox(
       height: cardHeight,
       child: ListView.separated(
-        scrollDirection: Axis.horizontal,
+        cacheExtent: HomeLiveStreamsRow._cardWidth * HomeLiveStreamsRow._eagerCount, scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        cacheExtent: HomeLiveStreamsRow._cardWidth * HomeLiveStreamsRow._eagerCount,
         itemCount: widget.streams.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 14),
+        separatorBuilder: (_, _) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
           final stream = widget.streams[index];
           final eager = index < HomeLiveStreamsRow._eagerCount;
@@ -268,8 +267,8 @@ class _PreviewImage extends StatelessWidget {
       fit: BoxFit.cover,
       memCacheWidth: eagerLoad ? 720 : 480,
       fadeInDuration: eagerLoad ? Duration.zero : const Duration(milliseconds: 200),
-      placeholder: (_, __) => _placeholder(),
-      errorWidget: (_, __, ___) => _placeholder(),
+      placeholder: (_, _) => _placeholder(),
+      errorWidget: (_, _, _) => _placeholder(),
     );
   }
 

@@ -54,7 +54,7 @@ abstract final class AppStartupLog {
   final tail = [
       if (popped > 0) 'popped=$popped',
       if (canStillPop != null) 'canPop=$canStillPop',
-      if (note != null) note,
+      ?note,
     ].join(' ');
     log('OVERLAY_HIDE reason=$reason${tail.isEmpty ? '' : ' $tail'}');
   }

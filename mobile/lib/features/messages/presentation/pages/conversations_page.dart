@@ -9,7 +9,6 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
-import '../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../providers/conversations_list_notifier.dart';

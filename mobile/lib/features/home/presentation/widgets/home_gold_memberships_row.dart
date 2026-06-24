@@ -19,7 +19,7 @@ class HomeGoldMembershipsRow extends ConsumerWidget {
 
     return catalog.when(
       loading: () => _skeleton(),
-      error: (_, __) => _fallback(context),
+      error: (_, _) => _fallback(context),
       data: (cat) => _content(context, cat.packages),
     );
   }
@@ -37,8 +37,8 @@ class HomeGoldMembershipsRow extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: 20),
             itemCount: 4,
-            separatorBuilder: (_, __) => SizedBox(width: 12),
-            itemBuilder: (_, __) => PremiumSkeleton(
+            separatorBuilder: (_, _) => SizedBox(width: 12),
+            itemBuilder: (_, _) => PremiumSkeleton(
               width: 120,
               height: 155,
               borderRadius: BorderRadius.all(Radius.circular(HomePalette.radiusCard)),
@@ -103,7 +103,7 @@ class HomeGoldMembershipsRow extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: packages.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (_, i) => _TierCard(
               pkg: packages[i],
               onTap: () => context.push('/premium-membership'),

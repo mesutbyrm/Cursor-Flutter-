@@ -80,7 +80,7 @@ class LiveFortuneRequestsPanel extends StatelessWidget {
                         controller: scroll,
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                         itemCount: sorted.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, i) {
                           final r = sorted[i];
                           return _RequestCard(

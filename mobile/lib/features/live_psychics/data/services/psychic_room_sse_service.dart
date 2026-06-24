@@ -9,8 +9,6 @@ import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../domain/entities/psychic_room_entity.dart';
 import '../../domain/entities/psychic_session_status.dart';
-import '../../domain/entities/psychic_session_status.dart';
-import '../../domain/repositories/live_psychics_repository.dart';
 import '../models/psychic_model.dart';
 
 /// Seans oda SSE — `GET /api/room/{sessionId}/stream`.

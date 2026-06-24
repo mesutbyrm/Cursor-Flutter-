@@ -154,7 +154,7 @@ class VoiceFeaturedRooms2026 extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: featured.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, i) {
               return _FeaturedCard(
                 room: featured[i],

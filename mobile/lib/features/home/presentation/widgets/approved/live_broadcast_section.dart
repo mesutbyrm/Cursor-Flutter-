@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -36,8 +35,8 @@ class LiveBroadcastSection extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
               itemCount: 3,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (_, __) => const PremiumSkeleton(
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              itemBuilder: (_, _) => const PremiumSkeleton(
                 width: HomeApprovedDesign.liveCardW,
                 height: HomeApprovedDesign.liveCardH,
                 borderRadius: BorderRadius.all(
@@ -77,7 +76,7 @@ class LiveBroadcastSection extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
             itemCount: streams.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (context, i) => _LiveCard(
               stream: streams[i],
               eager: i < 5,
@@ -207,15 +206,6 @@ class _LiveCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _placeholder() {
-    return const ColoredBox(
-      color: HomeApprovedDesign.surface,
-      child: Center(
-        child: Icon(Icons.live_tv_rounded, color: Colors.white24, size: 40),
       ),
     );
   }

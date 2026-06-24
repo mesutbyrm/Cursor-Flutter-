@@ -13,7 +13,6 @@ import 'package:canlifal_social/core/widgets/user_avatar.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_booking_feedback_provider.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_close_dialog.dart';
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
-import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_room_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_status.dart';
 import 'package:canlifal_social/features/live_psychics/domain/repositories/live_psychics_repository.dart';

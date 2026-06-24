@@ -66,7 +66,7 @@ class PkBattleRemoteDataSource {
     final res = await _dio.safeGet<dynamic>(
       ApiEndpoints.pkHistory,
       query: {
-        if (battleType != null) 'battleType': battleType,
+        'battleType': ?battleType,
         'limit': '$limit',
       },
     );
@@ -179,9 +179,9 @@ class PkBattleRemoteDataSource {
           ApiEndpoints.chatRoomPk(key),
           data: {
             'action': action,
-            if (battleId != null) 'battleId': battleId,
-            if (targetRoomId != null) 'targetRoomId': targetRoomId,
-            if (duration != null) 'duration': duration,
+            'battleId': ?battleId,
+            'targetRoomId': ?targetRoomId,
+            'duration': ?duration,
           },
         );
         final battle = _parseBattle(res.data);
@@ -204,8 +204,8 @@ class PkBattleRemoteDataSource {
       ApiEndpoints.videoStreamPkBattle(streamId),
       data: {
         'action': action,
-        if (battleId != null) 'battleId': battleId,
-        if (opponentStreamId != null) 'opponentStreamId': opponentStreamId,
+        'battleId': ?battleId,
+        'opponentStreamId': ?opponentStreamId,
       },
     );
     return _parseBattle(res.data);

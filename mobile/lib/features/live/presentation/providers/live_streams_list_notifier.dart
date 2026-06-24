@@ -17,7 +17,7 @@ class LiveStreamsListNotifier extends AsyncNotifier<List<LiveStreamEntity>> {
 
   @override
   Future<List<LiveStreamEntity>> build() async {
-    ref.listen(liveDiscoverCategoryProvider, (_, __) {
+    ref.listen(liveDiscoverCategoryProvider, (_, _) {
       unawaited(refresh());
     });
     _page = 1;

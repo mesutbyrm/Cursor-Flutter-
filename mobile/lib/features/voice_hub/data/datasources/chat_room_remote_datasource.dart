@@ -228,7 +228,7 @@ class ChatRoomRemoteDataSource {
         'roomId': key,
         'status': res.statusCode,
         'count': list.length,
-        if (seatIndex != null) 'seatIndex': seatIndex,
+        'seatIndex': ?seatIndex,
       });
       return list;
     });
@@ -299,7 +299,7 @@ class ChatRoomRemoteDataSource {
       final res = await _dio.safePost<dynamic>(
         djPath(key),
         data: jsonEncode({
-          if (musicUrl != null) 'musicUrl': musicUrl,
+          'musicUrl': ?musicUrl,
           'playing': playing,
         }),
         options: Options(contentType: 'application/json'),
@@ -451,9 +451,9 @@ class ChatRoomRemoteDataSource {
       await _dio.safePatch<dynamic>(
         '/api/chat/rooms/$key/music-settings',
         data: jsonEncode({
-          if (musicEnabled != null) 'musicEnabled': musicEnabled,
-          if (musicRequestCost != null) 'musicRequestCost': musicRequestCost,
-          if (maxMusicQueue != null) 'maxMusicQueue': maxMusicQueue,
+          'musicEnabled': ?musicEnabled,
+          'musicRequestCost': ?musicRequestCost,
+          'maxMusicQueue': ?maxMusicQueue,
         }),
         options: Options(contentType: 'application/json'),
       );
@@ -551,7 +551,7 @@ class ChatRoomRemoteDataSource {
           'targetUserId': targetUserId,
         if (role != null && role.isNotEmpty) 'role': role,
         if (reason != null && reason.isNotEmpty) 'reason': reason,
-        if (duration != null) 'duration': duration,
+        'duration': ?duration,
       }),
       options: Options(contentType: 'application/json'),
     );
@@ -577,7 +577,7 @@ class ChatRoomRemoteDataSource {
       }
       await _dio.safePost<dynamic>(
         banPath(key, userId),
-        data: jsonEncode({if (reason != null) 'reason': reason}),
+        data: jsonEncode({'reason': ?reason}),
         options: Options(contentType: 'application/json'),
       );
     });
@@ -649,7 +649,7 @@ class ChatRoomRemoteDataSource {
         kickPath(key),
         data: jsonEncode({
           'userId': userId,
-          if (reason != null) 'reason': reason,
+          'reason': ?reason,
         }),
         options: Options(contentType: 'application/json'),
       );
@@ -682,7 +682,7 @@ class ChatRoomRemoteDataSource {
           'userId': userId,
           'minutes': minutes,
           'durationMinutes': minutes,
-          if (reason != null) 'reason': reason,
+          'reason': ?reason,
         }),
         options: Options(contentType: 'application/json'),
       );
@@ -1161,9 +1161,9 @@ class ChatRoomRemoteDataSource {
         'djMusicControl': djMusicControl,
       });
       final songRequestBody = jsonEncode({
-        if (vid != null) 'videoId': vid,
+        'videoId': ?vid,
         'title': title,
-        if (durationLabel != null) 'duration': durationLabel,
+        'duration': ?durationLabel,
         if (dedicationText != null && dedicationText.isNotEmpty)
           'dedication': dedicationText,
         if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
@@ -1173,20 +1173,20 @@ class ChatRoomRemoteDataSource {
       final legacyBody = jsonEncode({
         'title': title,
         'youtubeUrl': youtubeUrl,
-        if (vid != null) 'videoId': vid,
-        if (thumbUrl != null) 'thumbUrl': thumbUrl,
+        'videoId': ?vid,
+        'thumbUrl': ?thumbUrl,
         if (dedicationText != null && dedicationText.isNotEmpty)
           'dedication': dedicationText,
         if (giftTo != null && giftTo.trim().isNotEmpty) 'giftTo': giftTo.trim(),
         if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
         if (priority) 'priority': true,
         if (skipPayment) 'skipPayment': true,
-        if (durationLabel != null) 'duration': durationLabel,
+        'duration': ?durationLabel,
       });
       final djMusicBody = jsonEncode({
         'title': title,
-        if (vid != null) 'videoId': vid,
-        if (durationLabel != null) 'duration': durationLabel,
+        'videoId': ?vid,
+        'duration': ?durationLabel,
       });
       final opts = Options(contentType: 'application/json');
       Response<dynamic> res;
@@ -1378,7 +1378,7 @@ class ChatRoomRemoteDataSource {
     String? userId,
   }) async {
     final body = jsonEncode({
-      if (seatIndex != null) 'seatIndex': seatIndex,
+      'seatIndex': ?seatIndex,
       if (userId != null && userId.isNotEmpty) 'userId': userId,
     });
     final opts = Options(contentType: 'application/json');
@@ -1520,7 +1520,7 @@ class ChatRoomRemoteDataSource {
       djPath(roomKey),
       data: jsonEncode({
         'action': action,
-        if (userId != null) 'userId': userId,
+        'userId': ?userId,
       }),
       options: Options(contentType: 'application/json'),
     );
@@ -1688,28 +1688,6 @@ class ChatRoomRemoteDataSource {
     final m = sec ~/ 60;
     final s = sec % 60;
     return '$m:${s.toString().padLeft(2, '0')}';
-  }
-
-  int? _durationToSeconds(String? duration) {
-    final raw = duration?.trim();
-    if (raw == null || raw.isEmpty) return null;
-    final direct = int.tryParse(raw);
-    if (direct != null && direct > 0) return direct;
-    final parts = raw.split(':');
-    if (parts.length == 2) {
-      final m = int.tryParse(parts[0]);
-      final s = int.tryParse(parts[1]);
-      if (m != null && s != null && m >= 0 && s >= 0) return m * 60 + s;
-    }
-    if (parts.length == 3) {
-      final h = int.tryParse(parts[0]);
-      final m = int.tryParse(parts[1]);
-      final s = int.tryParse(parts[2]);
-      if (h != null && m != null && s != null) {
-        return h * 3600 + m * 60 + s;
-      }
-    }
-    return null;
   }
 
   String? _extractYoutubeId(String url) {

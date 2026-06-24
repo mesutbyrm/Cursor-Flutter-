@@ -1,11 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import '../../app/router/app_router.dart';
 import 'app_startup_log.dart';
-import 'startup_route_observer.dart';
 
 /// Kök navigator overlay teşhisi + giriş sonrası zorla temizlik.
 abstract final class RootOverlayPurge {

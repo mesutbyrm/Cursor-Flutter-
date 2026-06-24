@@ -40,7 +40,7 @@ class _HomeBannerCarouselState extends ConsumerState<HomeBannerCarousel> {
           borderRadius: BorderRadius.all(Radius.circular(HomePalette.radiusCard)),
         ),
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
         return Column(
@@ -126,7 +126,7 @@ class _BannerCard extends StatelessWidget {
                     width: 140,
                     height: 140,
                     fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                    errorWidget: (_, _, _) => const SizedBox.shrink(),
                   ),
                 ),
               ),

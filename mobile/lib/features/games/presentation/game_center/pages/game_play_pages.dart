@@ -645,7 +645,7 @@ class _LiveRoomLauncher extends ConsumerWidget {
           Expanded(
             child: rooms.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Center(child: Text('Odalar yüklenemedi')),
+              error: (_, _) => const Center(child: Text('Odalar yüklenemedi')),
               data: (list) {
                 final filtered = list
                     .where((r) => r.gameId.contains(gameId.split('-').first))

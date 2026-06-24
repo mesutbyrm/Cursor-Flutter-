@@ -194,7 +194,7 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
                 child: ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: others.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final r = others[i];
                     return ListTile(

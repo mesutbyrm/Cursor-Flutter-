@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/messages_notifications_actions.dart';
@@ -216,10 +215,9 @@ class _LiveStreamsTab extends ConsumerWidget {
                   .hasMore;
               final extra = hasMore ? 1 : 0;
               return ListView.separated(
-                controller: scrollController,
+                cacheExtent: ListPerf.cacheExtent, controller: scrollController,
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
                 physics: ListPerf.listPhysics,
-                cacheExtent: ListPerf.cacheExtent,
                 itemCount: streams.length + extra,
                 separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (ctx, i) {

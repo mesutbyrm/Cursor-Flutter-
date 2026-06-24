@@ -110,7 +110,7 @@ class _PremiumFortuneCoverState extends State<PremiumFortuneCover>
             ),
             AnimatedBuilder(
               animation: _shimmer,
-              builder: (_, __) {
+              builder: (_, _) {
                 return CustomPaint(
                   painter: _MysticLightPainter(
                     progress: _shimmer.value,

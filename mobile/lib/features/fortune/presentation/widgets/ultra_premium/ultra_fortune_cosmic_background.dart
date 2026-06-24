@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -65,7 +64,7 @@ class _UltraFortuneCosmicBackgroundState extends State<UltraFortuneCosmicBackgro
         ),
         AnimatedBuilder(
           animation: _nebula,
-          builder: (_, __) => CustomPaint(
+          builder: (_, _) => CustomPaint(
             painter: _NebulaPainter(breath: _nebula.value, scrollY: parallax * 0.15),
             size: size,
           ),
@@ -83,14 +82,14 @@ class _UltraFortuneCosmicBackgroundState extends State<UltraFortuneCosmicBackgro
         ),
         AnimatedBuilder(
           animation: _fog,
-          builder: (_, __) => CustomPaint(
+          builder: (_, _) => CustomPaint(
             painter: _FogPainter(phase: _fog.value, scrollY: parallax * 0.25),
             size: size,
           ),
         ),
         AnimatedBuilder(
           animation: _particles,
-          builder: (_, __) => CustomPaint(
+          builder: (_, _) => CustomPaint(
             painter: _CosmicParticlePainter(
               progress: _particles.value,
               scrollY: parallax * 0.35,

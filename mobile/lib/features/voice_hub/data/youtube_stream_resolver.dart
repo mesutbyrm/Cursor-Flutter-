@@ -137,7 +137,7 @@ class YoutubeStreamResolver {
 
     final cached = _cache[trimmed];
     if (cached != null &&
-        DateTime.now().difference(cached.at) < const Duration(minutes: 8) &&
+        DateTime.now().difference(cached.at) < _cacheTtl &&
         !cached.url.contains('googlevideo.com')) {
       return cached.url;
     }

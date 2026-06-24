@@ -186,7 +186,7 @@ class _FloatingHeartState extends State<_FloatingHeart>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, __) => Positioned(
+      builder: (_, _) => Positioned(
         bottom: 60 + _position.value,
         left: 35 + widget.particle.offsetX,
         child: Opacity(

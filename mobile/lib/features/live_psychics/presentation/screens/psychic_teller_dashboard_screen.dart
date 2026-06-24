@@ -504,10 +504,10 @@ class _TellerStatsPanel extends ConsumerWidget {
 
     return awards.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (awardList) => gifts.when(
         loading: () => const SizedBox.shrink(),
-        error: (_, __) => const SizedBox.shrink(),
+        error: (_, _) => const SizedBox.shrink(),
         data: (giftList) {
           if (awardList.isEmpty && giftList.isEmpty) {
             return const SizedBox.shrink();

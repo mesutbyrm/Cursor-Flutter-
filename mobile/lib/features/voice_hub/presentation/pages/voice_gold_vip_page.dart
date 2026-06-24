@@ -30,11 +30,11 @@ class VoiceGoldVipPage extends StatelessWidget {
       PageRouteBuilder<void>(
         opaque: false,
         barrierColor: Colors.black87,
-        pageBuilder: (_, __, ___) => VoiceGoldVipPage(
+        pageBuilder: (_, _, _) => VoiceGoldVipPage(
           room: room,
           onJoinRoom: onJoinRoom,
         ),
-        transitionsBuilder: (_, anim, __, child) {
+        transitionsBuilder: (_, anim, _, child) {
           return FadeTransition(
             opacity: CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
             child: ScaleTransition(

@@ -198,9 +198,8 @@ class _SettingsTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.trailing,
     this.destructive = false,
-  });
+  }) : trailing = null;
 
   final IconData icon;
   final String label;

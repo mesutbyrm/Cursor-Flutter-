@@ -43,8 +43,8 @@ class PsychicsHomeSection extends ConsumerWidget {
                 horizontal: HomeApprovedDesign.hPad,
               ),
               itemCount: 3,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (_, __) => const PremiumSkeleton(
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              itemBuilder: (_, _) => const PremiumSkeleton(
                 width: HomeApprovedDesign.tellerCardW,
                 height: HomeApprovedDesign.tellerCardH,
                 borderRadius: BorderRadius.all(
@@ -80,7 +80,7 @@ class PsychicsHomeSection extends ConsumerWidget {
               horizontal: HomeApprovedDesign.hPad,
             ),
             itemCount: list.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (_, i) => _PsychicCard(psychic: list[i]),
           ),
         ),

@@ -43,7 +43,7 @@ abstract final class FirebaseOptionsGenerated {
         );
       default:
         throw UnsupportedError(
-          'FirebaseOptionsGenerated: ${defaultTargetPlatform} desteklenmiyor',
+          'FirebaseOptionsGenerated: $defaultTargetPlatform desteklenmiyor',
         );
     }
   }

@@ -4,7 +4,6 @@ import '../entities/psychic_gift_entity.dart';
 import '../entities/psychic_request_entity.dart';
 import '../entities/psychic_review_entity.dart';
 import '../entities/psychic_room_entity.dart';
-import '../entities/psychic_session_entity.dart';
 import '../entities/psychic_session_status.dart';
 
 class PsychicSessionCreateResult {

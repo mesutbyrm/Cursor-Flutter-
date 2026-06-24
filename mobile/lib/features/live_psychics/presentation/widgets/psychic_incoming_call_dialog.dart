@@ -39,7 +39,7 @@ Future<PsychicIncomingDialogClose?> showPsychicIncomingCallDialog(
     barrierLabel: 'Canlı fal isteği',
     barrierColor: Colors.black.withValues(alpha: 0.85),
     transitionDuration: const Duration(milliseconds: 220),
-    pageBuilder: (ctx, _, __) => _PsychicIncomingCallDialog(
+    pageBuilder: (ctx, _, _) => _PsychicIncomingCallDialog(
       sessionId: sessionId,
       clientName: clientName,
       fortuneType: fortuneType,

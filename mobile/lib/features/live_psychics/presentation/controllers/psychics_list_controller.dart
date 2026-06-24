@@ -162,7 +162,7 @@ class PsychicsListController extends AutoDisposeAsyncNotifier<PsychicsListState>
   Future<void> loadMore() async {
     final current = state.valueOrNull;
     if (current == null || current.favoritesOnly) return;
-    if (current == null || !current.hasMore || current.isLoadingMore) return;
+    if (!current.hasMore || current.isLoadingMore) return;
     state = AsyncData(current.copyWith(isLoadingMore: true));
     try {
       final repo = ref.read(livePsychicsRepositoryProvider);

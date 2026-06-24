@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 
 import '../firebase/firebase_bootstrap.dart';
 import '../firebase/firebase_options.dart';

@@ -27,7 +27,7 @@ class FanClubSection extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
             itemCount: HomeSiteCatalog.fanClubs.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (_, i) {
               final club = HomeSiteCatalog.fanClubs[i];
               return _FanClubCard(

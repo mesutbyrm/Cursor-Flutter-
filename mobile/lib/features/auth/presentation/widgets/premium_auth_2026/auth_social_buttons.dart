@@ -5,7 +5,6 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import '../../../../../core/config/env.dart';
 import '../../../../../core/ui/platform_blur.dart';
 import '../../../../../core/ui/premium_2026/liquid_glass.dart';
-import '../../../../../core/ui/premium_2026/premium_motion.dart';
 import '../google_sign_in_button.dart';
 
 /// Google, TikTok, Apple ve misafir giriş satırları.
@@ -126,7 +125,7 @@ class _AuthGlassSocialButton extends StatelessWidget {
             ),
           ),
         ),
-        if (trailing != null) trailing!,
+        ?trailing,
       ],
     );
 

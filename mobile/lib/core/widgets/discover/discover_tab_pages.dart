@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
 import '../discover_refresh.dart';
 import '../../../features/feed/presentation/widgets/discover/discover_background.dart';
 import 'discover_tab_header.dart';
@@ -40,7 +39,7 @@ class DiscoverTabPage extends StatelessWidget {
           subtitle: subtitle,
           actions: actions,
         ),
-        if (bottom != null) bottom!,
+        ?bottom,
         Expanded(
           child: Padding(
             padding: padding,
@@ -69,7 +68,7 @@ class DiscoverTabPage extends StatelessWidget {
                     subtitle: subtitle,
                     actions: actions,
                   ),
-                  if (bottom != null) bottom!,
+                  ?bottom,
                   Expanded(child: Padding(padding: padding, child: body)),
                 ],
               ),

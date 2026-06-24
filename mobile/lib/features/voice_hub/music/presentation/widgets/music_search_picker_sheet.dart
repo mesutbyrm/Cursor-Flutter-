@@ -129,7 +129,7 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
                     controller: scrollController,
                     padding: EdgeInsets.fromLTRB(16, 0, 16, bottom + 16),
                     itemCount: items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (context, i) {
                       final hit = items[i];
                       return _SearchResultTile(

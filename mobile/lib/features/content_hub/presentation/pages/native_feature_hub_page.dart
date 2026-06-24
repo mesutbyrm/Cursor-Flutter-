@@ -362,8 +362,8 @@ class _FeatureLeading extends StatelessWidget {
           width: 46,
           height: 46,
           fit: BoxFit.cover,
-          placeholder: (_, __) => _IconBox(icon: item.icon),
-          errorWidget: (_, __, ___) => _IconBox(icon: item.icon),
+          placeholder: (_, _) => _IconBox(icon: item.icon),
+          errorWidget: (_, _, _) => _IconBox(icon: item.icon),
         ),
       );
     }

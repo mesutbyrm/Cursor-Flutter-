@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../domain/entities/fortune_type_entity.dart';
-import '../data/fortune_image_capture_config.dart';
 import '../data/fortune_type_showcase.dart';
 import '../services/fortune_reading_coordinator.dart';
 import '../widgets/fortune_image_capture_panel.dart';

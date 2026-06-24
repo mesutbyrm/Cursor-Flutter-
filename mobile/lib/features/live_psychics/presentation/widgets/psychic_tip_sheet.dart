@@ -14,7 +14,7 @@ Future<int?> showPsychicTipSheet(
     barrierLabel: 'Bahşiş ver',
     barrierColor: Colors.black.withValues(alpha: 0.72),
     transitionDuration: const Duration(milliseconds: 200),
-    pageBuilder: (ctx, _, __) => Center(
+    pageBuilder: (ctx, _, _) => Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Material(

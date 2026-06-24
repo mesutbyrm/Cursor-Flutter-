@@ -4,7 +4,6 @@ import 'package:canlifal_social/app/app.dart';
 import 'package:canlifal_social/core/network/cookie_jar_provider.dart';
 import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
-import 'package:canlifal_social/features/games/domain/game_center_models.dart';
 import 'package:canlifal_social/features/games/presentation/game_center/providers/game_center_providers.dart';
 import 'package:canlifal_social/features/home/presentation/providers/home_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
@@ -18,7 +17,6 @@ import 'package:canlifal_social/features/shorts/presentation/providers/shorts_pr
 import 'package:canlifal_social/features/social/presentation/providers/social_providers.dart';
 import 'package:canlifal_social/features/wallet/domain/wallet_balances.dart';
 import 'package:cookie_jar/cookie_jar.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

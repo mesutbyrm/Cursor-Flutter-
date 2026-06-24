@@ -64,7 +64,7 @@ class _UltraFortuneRippleButtonState extends State<UltraFortuneRippleButton>
       onTap: widget.onPressed,
       child: AnimatedBuilder(
         animation: _ripple,
-        builder: (_, __) {
+        builder: (_, _) {
           return UltraFortuneLiquidSurface(
             goldAccent: true,
             borderRadius: BorderRadius.circular(compact ? 20 : 28),

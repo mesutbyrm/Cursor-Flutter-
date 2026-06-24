@@ -42,7 +42,7 @@ class PkGiftFeedPanel extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       itemCount: gifts.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 6),
+      separatorBuilder: (_, _) => const SizedBox(height: 6),
       itemBuilder: (context, i) => _GiftFeedRow(message: gifts[i]),
     );
   }

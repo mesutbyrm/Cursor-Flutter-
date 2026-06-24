@@ -97,7 +97,7 @@ class _CinematicFortuneHeroState extends State<CinematicFortuneHero>
               ),
               AnimatedBuilder(
                 animation: _stars,
-                builder: (_, __) => CustomPaint(
+                builder: (_, _) => CustomPaint(
                   painter: _StarDriftPainter(t: _stars.value, color: glow),
                 ),
               ),

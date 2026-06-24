@@ -27,8 +27,8 @@ class HomeGamesRow extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               itemCount: 5,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (_, __) => const PremiumSkeleton(
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (_, _) => const PremiumSkeleton(
                 width: 96,
                 height: 96,
                 borderRadius: BorderRadius.all(Radius.circular(20)),
@@ -37,7 +37,7 @@ class HomeGamesRow extends ConsumerWidget {
           ),
         ],
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (gameItems) {
         final rewardItems = rewards.valueOrNull ?? const <DailyRewardEntity>[];
         final merged = <_GameTile>[
@@ -72,7 +72,7 @@ class HomeGamesRow extends ConsumerWidget {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: merged.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (_, i) {
                   final tile = merged[i];
                   return _GameCard(

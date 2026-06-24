@@ -80,7 +80,7 @@ class LiveBackgroundPickerSheet extends StatelessWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: presets.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
                 itemBuilder: (ctx, i) {
                   final p = presets[i];
                   final selected = selectedUrl == p.$2;
@@ -102,7 +102,7 @@ class LiveBackgroundPickerSheet extends StatelessWidget {
                         image: DecorationImage(
                           image: NetworkImage(p.$2),
                           fit: BoxFit.cover,
-                          onError: (_, __) {},
+                          onError: (_, _) {},
                         ),
                       ),
                       alignment: Alignment.bottomCenter,

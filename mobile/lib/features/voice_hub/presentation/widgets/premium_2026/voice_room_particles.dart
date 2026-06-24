@@ -35,7 +35,7 @@ class _VoiceRoomParticlesState extends State<VoiceRoomParticles>
       child: IgnorePointer(
         child: AnimatedBuilder(
           animation: _ctrl,
-          builder: (_, __) => CustomPaint(
+          builder: (_, _) => CustomPaint(
             painter: _ParticlesPainter(_ctrl.value),
             size: Size.infinite,
           ),

@@ -20,7 +20,6 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../gifts/presentation/widgets/premium_gift_panel.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
-import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../agora/presentation/agora_room_manager.dart';
 import '../../../agora/presentation/providers/agora_providers.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
@@ -47,7 +46,6 @@ import '../widgets/broadcast_room/live_pk_score_bar.dart';
 import '../providers/live_fortune_request_provider.dart';
 import '../providers/live_broadcast_settings_provider.dart';
 import '../widgets/broadcast_room/live_fortune_request_form.dart';
-import '../widgets/broadcast_room/live_fortune_requests_panel.dart';
 import '../widgets/broadcast_room/live_gift_leaderboard.dart';
 import '../widgets/broadcast_room/live_like_realtime.dart';
 import '../widgets/broadcast_room/live_moderation_sheet.dart';
@@ -262,33 +260,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       final l = t.toLowerCase();
       return l.contains('fal') || l.contains('tarot');
     });
-  }
-
-  Future<void> _openFortuneRequestsPanel(String streamId) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => Consumer(
-        builder: (context, ref, __) {
-          final state = ref.watch(liveFortuneRequestsProvider(streamId));
-          ref.listen(liveFortuneRequestsProvider(streamId), (prev, next) {
-            if ((next.newRequestPulse) > (prev?.newRequestPulse ?? 0)) {
-              // Yeni istek — görsel pulse (ses asset yok).
-            }
-          });
-          return LiveFortuneRequestsPanel(
-            requests: state.requests,
-            loading: state.loading,
-            onStatusChange: (id, status) {
-              ref
-                  .read(liveFortuneRequestsProvider(streamId).notifier)
-                  .setStatus(id, status);
-            },
-          );
-        },
-      ),
-    );
   }
 
   Future<bool> _submitStreamFortuneRequest({
@@ -833,7 +804,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           CachedNetworkImage(
             imageUrl: s.backgroundUrl!,
             fit: BoxFit.cover,
-            errorWidget: (_, __, ___) => const SizedBox.shrink(),
+            errorWidget: (_, _, _) => const SizedBox.shrink(),
           ),
           _mainVideo(s),
         ],
@@ -1629,32 +1600,5 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     );
     if (ok != true || !context.mounted) return;
     await _exitBroadcast(context);
-  }
-}
-
-class _HostBadge extends StatelessWidget {
-  const _HostBadge({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return ProfileGlass(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      borderRadius: 14,
-      blur: 8,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: AppColors.accentCyan),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
-    );
   }
 }

@@ -17,7 +17,7 @@ class LiveKitRemoteDataSource {
       ApiEndpoints.livekitToken,
       data: {
         'roomId': roomId,
-        if (roomName != null) 'roomName': roomName,
+        'roomName': ?roomName,
       },
     );
     final cred = LiveKitCredentials.fromJson(res.data ?? {});

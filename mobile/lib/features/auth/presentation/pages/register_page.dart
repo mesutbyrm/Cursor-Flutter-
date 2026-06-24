@@ -198,7 +198,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _language,
+                initialValue: _language,
                 dropdownColor: const Color(0xFF1A1030),
                 decoration: InputDecoration(
                   labelText: 'Dil',

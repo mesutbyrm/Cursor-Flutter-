@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_exception.dart';
@@ -39,7 +38,7 @@ class ActiveDevicesPage extends ConsumerWidget {
               return ListView.separated(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                 itemCount: rows.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final row = rows[index];
                   return _SessionCard(

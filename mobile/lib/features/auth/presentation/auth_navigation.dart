@@ -10,9 +10,6 @@ import 'pages/reset_password_page.dart';
 
 /// Auth ekranları — gateway state (/login) veya go_router (derin link).
 abstract final class AuthNavigation {
-  static bool _useGatewayState(BuildContext context) =>
-      AuthOverlayController.maybeOf(context) != null;
-
   static Route<T> instantRoute<T>(Widget child, RouteSettings settings) {
     return PageRouteBuilder<T>(
       settings: settings,

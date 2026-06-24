@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../core/theme/app_theme_extensions.dart';
-import '../../../../../core/widgets/discover/discover_segmented_tabs.dart';
 import '../../../../../core/widgets/discover_tab_layout.dart';
 import '../../../domain/game_center_models.dart';
 import '../providers/game_center_providers.dart';
@@ -63,7 +62,7 @@ class _GameCenterLeaderboardPageState
           Expanded(
             child: data.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Center(child: Text('Liste yüklenemedi')),
+              error: (_, _) => const Center(child: Text('Liste yüklenemedi')),
               data: (entries) {
                 final top3 = entries.take(3).toList();
                 final rest = entries.length > 3

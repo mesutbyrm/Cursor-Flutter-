@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -105,7 +104,7 @@ class _LiveGiftPanelState extends ConsumerState<LiveGiftPanel> {
                   height: 120,
                   child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
                 ),
-                error: (_, __) => const Text('Hediyeler yüklenemedi'),
+                error: (_, _) => const Text('Hediyeler yüklenemedi'),
                 data: (all) {
                   final featured = LiveGiftCatalog.featuredFrom(all);
                   if (_selected == null && featured.isNotEmpty) {
@@ -116,7 +115,7 @@ class _LiveGiftPanelState extends ConsumerState<LiveGiftPanel> {
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: featured.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 10),
+                      separatorBuilder: (_, _) => const SizedBox(width: 10),
                       itemBuilder: (ctx, i) {
                         final g = featured[i];
                         final sel = _selected?.id == g.id;

@@ -34,8 +34,8 @@ class TrendingVideoSection extends ConsumerWidget {
                 horizontal: HomeApprovedDesign.hPad,
               ),
               itemCount: 3,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (_, __) => const PremiumSkeleton(
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              itemBuilder: (_, _) => const PremiumSkeleton(
                 width: HomeApprovedDesign.trendThumb,
                 height: HomeApprovedDesign.trendThumb,
                 borderRadius: BorderRadius.all(
@@ -46,7 +46,7 @@ class TrendingVideoSection extends ConsumerWidget {
           ),
         ],
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
         return _content(context, items);
@@ -69,7 +69,7 @@ class TrendingVideoSection extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
             itemCount: videos.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (_, i) => _TrendThumb(
               video: videos[i],
               onTap: () => context.push('/shorts?videoId=${videos[i].id}'),

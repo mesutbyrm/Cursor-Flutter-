@@ -224,7 +224,7 @@ class _JetonPremiumPurchaseViewState
         JetonPayMethod.bank => 'bank_transfer',
         JetonPayMethod.whatsapp => 'whatsapp',
       };
-      final username = me.display ?? me.username ?? 'Kullanıcı';
+      final username = me.display;
       final refCode = _paymentRef(me.id);
       final body = buildCustomJetonPaymentRequest(
         coins: amounts.jeton,
@@ -308,7 +308,7 @@ class _JetonPremiumPurchaseViewState
             wallet.when(
               data: (b) => _BalanceCard(jeton: b.jeton),
               loading: () => const _BalanceCard(jeton: null),
-              error: (_, __) => const _BalanceCard(jeton: null),
+              error: (_, _) => const _BalanceCard(jeton: null),
             ),
             const SizedBox(height: 20),
             const _SectionTitle('Tutar Belirle'),

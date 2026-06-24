@@ -37,6 +37,7 @@ on:
       - 'mobile/**'
       - 'scripts/acceptance-tests/**'
       - 'scripts/run-release-gate.sh'
+      - 'scripts/dart-analyze-gate.sh'
       - 'scripts/run-acceptance-tests.sh'
       - '.github/workflows/build-apk.yml'
 

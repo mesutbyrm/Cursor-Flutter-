@@ -159,7 +159,7 @@ class _GlobalSearchPageState extends ConsumerState<GlobalSearchPage> {
               bottom: 32,
             ),
             itemCount: users.length,
-            separatorBuilder: (_, __) => Divider(
+            separatorBuilder: (_, _) => Divider(
               height: 1,
               color: palette.divider,
             ),

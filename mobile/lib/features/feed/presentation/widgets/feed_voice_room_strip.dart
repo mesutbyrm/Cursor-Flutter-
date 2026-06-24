@@ -76,11 +76,10 @@ class FeedVoiceRoomStrip extends StatelessWidget {
           SizedBox(
             height: 108,
             child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              cacheExtent: 400,
+              cacheExtent: 400, scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               itemCount: _rooms.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 14),
+              separatorBuilder: (_, _) => const SizedBox(width: 14),
               itemBuilder: (context, i) {
                 final r = _rooms[i];
                 return Column(

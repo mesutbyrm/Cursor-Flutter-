@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -36,7 +35,7 @@ class JetonNativeCheckout extends ConsumerStatefulWidget {
 
 class _JetonNativeCheckoutState extends ConsumerState<JetonNativeCheckout> {
   PaymentMethodKind _method = PaymentMethodKind.whatsapp;
-  var _submitting = false;
+  final _submitting = false;
 
   @override
   Widget build(BuildContext context) {

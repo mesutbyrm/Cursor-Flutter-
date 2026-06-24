@@ -143,7 +143,7 @@ class _LiveFortuneRequestFormState extends State<LiveFortuneRequestForm> {
               _field(_question, 'Fal Sorusu', 'Sorunuzu yazın…', maxLines: 3),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: types.any((t) => t.key == _fortuneType)
+                initialValue: types.any((t) => t.key == _fortuneType)
                     ? _fortuneType
                     : types.first.key,
                 dropdownColor: const Color(0xFF1A1030),
@@ -157,7 +157,7 @@ class _LiveFortuneRequestFormState extends State<LiveFortuneRequestForm> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<LiveFortunePriority>(
-                value: _priority,
+                initialValue: _priority,
                 dropdownColor: const Color(0xFF1A1030),
                 style: const TextStyle(color: Colors.white, fontSize: 13),
                 decoration: _decoration('Öncelik Türü'),

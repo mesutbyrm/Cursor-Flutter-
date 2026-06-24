@@ -83,7 +83,7 @@ class _OpenTransitionOverlayState extends State<_OpenTransitionOverlay>
       color: Colors.transparent,
       child: AnimatedBuilder(
         animation: _ctrl,
-        builder: (_, __) {
+        builder: (_, _) {
           final t = Curves.easeInOutCubic.transform(_ctrl.value);
           final zoomT = Curves.easeOutCubic.transform(
             (_ctrl.value / 0.7).clamp(0.0, 1.0),

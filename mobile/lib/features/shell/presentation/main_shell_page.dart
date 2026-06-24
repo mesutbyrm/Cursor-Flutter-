@@ -8,7 +8,6 @@ import 'shell_ui.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../messages/presentation/providers/messages_providers.dart';
 import '../../notifications/presentation/providers/notifications_providers.dart';
-import '../../home/presentation/theme/home_approved_design.dart';
 import '../../home/presentation/widgets/approved/bottom_navigation_widget.dart';
 
 class MainShellPage extends ConsumerStatefulWidget {

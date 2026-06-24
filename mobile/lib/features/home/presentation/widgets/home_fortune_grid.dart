@@ -167,7 +167,7 @@ class _FortuneTile extends StatelessWidget {
                 width: 32,
                 height: 32,
                 fit: BoxFit.cover,
-                errorWidget: (_, __, ___) =>
+                errorWidget: (_, _, _) =>
                     Text(emoji, style: const TextStyle(fontSize: 26)),
               ),
             )

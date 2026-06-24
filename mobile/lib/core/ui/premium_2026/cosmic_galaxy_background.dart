@@ -104,7 +104,7 @@ class _CosmicGalaxyBackgroundState extends State<CosmicGalaxyBackground>
           ),
           AnimatedBuilder(
             animation: _drift,
-            builder: (_, __) => CustomPaint(
+            builder: (_, _) => CustomPaint(
               painter: _GalaxyParticlePainter(progress: _drift.value),
               size: Size.infinite,
             ),

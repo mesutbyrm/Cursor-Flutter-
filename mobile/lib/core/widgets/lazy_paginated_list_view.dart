@@ -81,10 +81,9 @@ class _LazyPaginatedListViewState extends State<LazyPaginatedListView> {
 
     if (widget.separatorBuilder != null) {
       return ListView.separated(
-        controller: _scroll,
+        cacheExtent: widget.cacheExtent, controller: _scroll,
         padding: widget.padding,
         physics: widget.physics ?? ListPerf.listPhysics,
-        cacheExtent: widget.cacheExtent,
         itemCount: total,
         separatorBuilder: (context, index) {
           if (index >= visible - 1) return const SizedBox.shrink();
@@ -103,10 +102,9 @@ class _LazyPaginatedListViewState extends State<LazyPaginatedListView> {
     }
 
     return ListView.builder(
-      controller: _scroll,
+      cacheExtent: widget.cacheExtent, controller: _scroll,
       padding: widget.padding,
       physics: widget.physics ?? ListPerf.listPhysics,
-      cacheExtent: widget.cacheExtent,
       itemCount: total,
       itemBuilder: (context, index) {
         if (index >= visible) {

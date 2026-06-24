@@ -41,14 +41,14 @@ abstract final class VoiceRoomMusicPipelineLog {
       'endpoint': endpoint,
       'method': method,
       'caller': caller,
-      if (statusCode != null) 'status': statusCode,
+      'status': ?statusCode,
       'musicUrl': musicUrl ?? '(null)',
-      if (videoId != null) 'videoId': videoId,
-      if (playing != null) 'playing': playing,
-      if (rawPlayingField != null) 'rawPlaying': rawPlayingField,
-      if (nowPlayingTitle != null) 'nowPlaying': nowPlayingTitle,
-      if (nowPlayingYoutube != null) 'npYoutube': nowPlayingYoutube,
-      if (queueLen != null) 'queueLen': queueLen,
+      'videoId': ?videoId,
+      'playing': ?playing,
+      'rawPlaying': ?rawPlayingField,
+      'nowPlaying': ?nowPlayingTitle,
+      'npYoutube': ?nowPlayingYoutube,
+      'queueLen': ?queueLen,
     });
     if (musicUrl == null || musicUrl.isEmpty) {
       nullMusicUrl(
@@ -74,12 +74,12 @@ abstract final class VoiceRoomMusicPipelineLog {
   }) {
     _emit('musicUrl.null', {
       'reason': reason,
-      if (endpoint != null) 'endpoint': endpoint,
-      if (caller != null) 'caller': caller,
-      if (playing != null) 'playing': playing,
-      if (queueLen != null) 'queueLen': queueLen,
-      if (hasNowPlaying != null) 'hasNowPlaying': hasNowPlaying,
-      if (detail != null) 'detail': detail,
+      'endpoint': ?endpoint,
+      'caller': ?caller,
+      'playing': ?playing,
+      'queueLen': ?queueLen,
+      'hasNowPlaying': ?hasNowPlaying,
+      'detail': ?detail,
     });
   }
 
@@ -101,16 +101,16 @@ abstract final class VoiceRoomMusicPipelineLog {
     _emit('fields.compare', {
       'stage': stage,
       'room': roomId,
-      if (endpoint != null) 'endpoint': endpoint,
+      'endpoint': ?endpoint,
       'serverMusicUrl': serverMusicUrl ?? '(null)',
       'mergedMusicUrl': mergedMusicUrl ?? '(null)',
       'nowPlayingYoutube': nowPlayingYoutube ?? '(null)',
       'videoId': videoId ?? '(null)',
       'playbackSource': playbackSource ?? '(null)',
       'youtubeFallback': youtubeFallback ?? '(null)',
-      if (playing != null) 'playing': playing,
-      if (shouldPlay != null) 'shouldPlay': shouldPlay,
-      if (resolvedStreamUrl != null) 'resolvedStream': resolvedStreamUrl,
+      'playing': ?playing,
+      'shouldPlay': ?shouldPlay,
+      'resolvedStream': ?resolvedStreamUrl,
     });
   }
 
@@ -152,10 +152,10 @@ abstract final class VoiceRoomMusicPipelineLog {
     _emit('istek.done', {
       'song': song,
       'room': roomId,
-      if (requestEndpoint != null) 'endpoint': requestEndpoint,
+      'endpoint': ?requestEndpoint,
       'responseMusicUrl': responseMusicUrl ?? '(null)',
-      if (responsePlaying != null) 'playing': responsePlaying,
-      if (queuePosition != null) 'queuePos': queuePosition,
+      'playing': ?responsePlaying,
+      'queuePos': ?queuePosition,
     });
   }
 
@@ -166,10 +166,10 @@ abstract final class VoiceRoomMusicPipelineLog {
     String? roomId,
   }) {
     _emit('setAudioSource.before', {
-      if (roomId != null) 'room': roomId,
+      'room': ?roomId,
       'type': sourceType,
       'url': sourceUrl,
-      if (metadataTitle != null) 'title': metadataTitle,
+      'title': ?metadataTitle,
     });
   }
 
@@ -178,7 +178,7 @@ abstract final class VoiceRoomMusicPipelineLog {
     String? roomId,
   }) {
     _emit('play.entered', {
-      if (roomId != null) 'room': roomId,
+      'room': ?roomId,
       'url': sourceUrl,
     });
   }
@@ -194,10 +194,10 @@ abstract final class VoiceRoomMusicPipelineLog {
     _emit('player.state', {
       'playing': playing,
       'processing': processingState,
-      if (positionMs != null) 'posMs': positionMs,
-      if (durationMs != null) 'durMs': durationMs,
-      if (url != null) 'url': url,
-      if (source != null) 'via': source,
+      'posMs': ?positionMs,
+      'durMs': ?durationMs,
+      'url': ?url,
+      'via': ?source,
     });
   }
 
@@ -209,10 +209,10 @@ abstract final class VoiceRoomMusicPipelineLog {
     String? candidate,
   }) {
     _emit('backend.audioUrl', {
-      if (roomId != null) 'room': roomId,
-      if (stage != null) 'stage': stage,
+      'room': ?roomId,
+      'stage': ?stage,
       'audioUrl': audioUrl,
-      if (candidate != null) 'candidate': candidate,
+      'candidate': ?candidate,
     });
   }
 
@@ -228,10 +228,10 @@ abstract final class VoiceRoomMusicPipelineLog {
     _emit('setAudioSource.result', {
       'url': url,
       'ok': ok,
-      if (processingState != null) 'processing': processingState,
-      if (durationMs != null) 'durMs': durationMs,
-      if (playing != null) 'playing': playing,
-      if (error != null) 'error': error,
+      'processing': ?processingState,
+      'durMs': ?durationMs,
+      'playing': ?playing,
+      'error': ?error,
     });
   }
 
@@ -242,8 +242,8 @@ abstract final class VoiceRoomMusicPipelineLog {
   }) {
     _emit('duration', {
       'durMs': durationMs ?? -1,
-      if (url != null) 'url': url,
-      if (source != null) 'via': source,
+      'url': ?url,
+      'via': ?source,
     });
   }
 
@@ -258,10 +258,10 @@ abstract final class VoiceRoomMusicPipelineLog {
     _emit('playbackEvent', {
       'processing': processingState,
       'playing': playing,
-      if (positionMs != null) 'posMs': positionMs,
-      if (bufferedMs != null) 'bufMs': bufferedMs,
-      if (durationMs != null) 'durMs': durationMs,
-      if (url != null) 'url': url,
+      'posMs': ?positionMs,
+      'bufMs': ?bufferedMs,
+      'durMs': ?durationMs,
+      'url': ?url,
     });
   }
 
@@ -274,8 +274,8 @@ abstract final class VoiceRoomMusicPipelineLog {
     _emit('playerStateStream', {
       'playing': playing,
       'processing': processingState,
-      if (positionMs != null) 'posMs': positionMs,
-      if (url != null) 'url': url,
+      'posMs': ?positionMs,
+      'url': ?url,
     });
   }
 
@@ -289,11 +289,11 @@ abstract final class VoiceRoomMusicPipelineLog {
   }) {
     _emit('audioService', {
       'action': action,
-      if (title != null) 'title': title,
-      if (playing != null) 'playing': playing,
-      if (processingState != null) 'processing': processingState,
-      if (positionMs != null) 'posMs': positionMs,
-      if (durationMs != null) 'durMs': durationMs,
+      'title': ?title,
+      'playing': ?playing,
+      'processing': ?processingState,
+      'posMs': ?positionMs,
+      'durMs': ?durationMs,
     });
   }
 
@@ -308,10 +308,10 @@ abstract final class VoiceRoomMusicPipelineLog {
     _emit('play.result', {
       'started': started,
       'url': url,
-      if (processingState != null) 'processing': processingState,
-      if (playing != null) 'playing': playing,
-      if (durationMs != null) 'durMs': durationMs,
-      if (detail != null) 'detail': detail,
+      'processing': ?processingState,
+      'playing': ?playing,
+      'durMs': ?durationMs,
+      'detail': ?detail,
     });
   }
 
@@ -322,8 +322,8 @@ abstract final class VoiceRoomMusicPipelineLog {
     String? url,
   }) {
     _emit('just_audio.error', {
-      if (phase != null) 'phase': phase,
-      if (url != null) 'url': url,
+      'phase': ?phase,
+      'url': ?url,
       'type': error.runtimeType.toString(),
       'message': error.toString(),
       if (stack != null)
@@ -341,9 +341,9 @@ abstract final class VoiceRoomMusicPipelineLog {
     _emit('exo.probe', {
       'url': url,
       'ok': ok,
-      if (errorCode != null) 'code': errorCode,
-      if (errorMessage != null) 'error': errorMessage,
-      if (elapsedMs != null) 'ms': elapsedMs,
+      'code': ?errorCode,
+      'error': ?errorMessage,
+      'ms': ?elapsedMs,
     });
   }
 
@@ -360,8 +360,8 @@ abstract final class VoiceRoomMusicPipelineLog {
       'msg': message,
       'djMusicUrl': fetchDjMusicUrl ?? '(null)',
       'queueMusicUrl': fetchQueueMusicUrl ?? '(null)',
-      if (fetchDjPlaying != null) 'djPlaying': fetchDjPlaying,
-      if (fetchQueuePlaying != null) 'queuePlaying': fetchQueuePlaying,
+      'djPlaying': ?fetchDjPlaying,
+      'queuePlaying': ?fetchQueuePlaying,
     });
   }
 

@@ -327,7 +327,7 @@ class _ProfileBody extends ConsumerWidget {
         ),
         reviewsAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
           data: (reviews) {
             if (reviews.isEmpty) return const SizedBox.shrink();
             return Column(
@@ -400,7 +400,7 @@ class _ProfileBody extends ConsumerWidget {
         ),
         awardsAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
           data: (awards) {
             if (awards.isEmpty) return const SizedBox.shrink();
             return Column(
@@ -446,7 +446,7 @@ class _ProfileBody extends ConsumerWidget {
         ),
         giftsAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
           data: (gifts) {
             if (gifts.isEmpty) return const SizedBox.shrink();
             return Column(

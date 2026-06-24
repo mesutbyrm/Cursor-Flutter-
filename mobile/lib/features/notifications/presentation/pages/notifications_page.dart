@@ -8,7 +8,6 @@ import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
-import '../../domain/entities/app_notification_entity.dart';
 import '../../domain/notification_action.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live_psychics/presentation/controllers/psychic_incoming_controller.dart';
@@ -135,8 +134,7 @@ class _NotificationsListView extends ConsumerWidget {
     final router = GoRouter.of(context);
 
     return ListView.separated(
-      controller: scrollController,
-      cacheExtent: ListPerf.cacheExtent,
+      cacheExtent: ListPerf.cacheExtent, controller: scrollController,
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
       itemCount: items.length + (state.hasMore ? 1 : 0),
       separatorBuilder: (_, _) => SizedBox(height: 10),

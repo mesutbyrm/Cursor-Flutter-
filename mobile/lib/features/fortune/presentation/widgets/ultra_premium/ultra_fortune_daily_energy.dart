@@ -87,7 +87,7 @@ class UltraFortuneDailyEnergy extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: _cards.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final card = _cards[index];
               return _EnergyCrystalCard(item: card);

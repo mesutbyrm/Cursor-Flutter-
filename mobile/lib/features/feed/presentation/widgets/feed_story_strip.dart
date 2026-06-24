@@ -37,11 +37,10 @@ class FeedStoryStrip extends StatelessWidget {
     return SizedBox(
       height: 100,
       child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        cacheExtent: 400,
+        cacheExtent: 400, scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
         itemCount: users.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemBuilder: (context, i) {
           final u = users[i];
           return Column(
@@ -80,8 +79,8 @@ class FeedStoryStrip extends StatelessWidget {
                             child: CachedNetworkImage(
                               imageUrl: u.avatarUrl!,
                               fit: BoxFit.cover,
-                              placeholder: (_, __) => _fallbackAvatar(u.name),
-                              errorWidget: (_, __, ___) =>
+                              placeholder: (_, _) => _fallbackAvatar(u.name),
+                              errorWidget: (_, _, _) =>
                                   _fallbackAvatar(u.name),
                             ),
                           )

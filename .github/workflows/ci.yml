@@ -9,12 +9,14 @@ on:
     paths:
       - 'mobile/**'
       - 'api/**'
+      - 'scripts/dart-analyze-gate.sh'
       - '.github/workflows/ci.yml'
   pull_request:
     branches: [main]
     paths:
       - 'mobile/**'
       - 'api/**'
+      - 'scripts/dart-analyze-gate.sh'
       - '.github/workflows/ci.yml'
   workflow_dispatch:
 
@@ -46,13 +48,9 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Flutter — dart analyze (yalnızca error)
-        working-directory: mobile
+      - name: Flutter — dart analyze (yalnızca ERROR)
+        working-directory: ${{ github.workspace }}
         run: |
           set -eux
-          flutter pub get
-          set +e
-          dart analyze lib
-          ec=$?
-          if [ "$ec" -eq 3 ]; then exit 1; fi
-          exit 0
+          chmod +x scripts/dart-analyze-gate.sh
+          bash scripts/dart-analyze-gate.sh

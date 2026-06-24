@@ -88,7 +88,7 @@ class HomeGameCenterSection extends ConsumerWidget {
                             jeton.when(
                               data: (b) => '${formatter.format(b)} Jeton',
                               loading: () => 'Jeton yükleniyor…',
-                              error: (_, __) => 'Kader Çarkı, Quiz, Tavla ve daha fazlası',
+                              error: (_, _) => 'Kader Çarkı, Quiz, Tavla ve daha fazlası',
                             ),
                             style: const TextStyle(
                               fontSize: 12,
@@ -122,7 +122,7 @@ class HomeGameCenterSection extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
             itemCount: GameCenterCatalog.popular.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (_, i) {
               final game = GameCenterCatalog.popular[i];
               return _QuickGameChip(

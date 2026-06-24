@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -411,7 +410,7 @@ class _EffectsSheet extends StatelessWidget {
       initialChildSize: 0.55,
       minChildSize: 0.4,
       maxChildSize: 0.85,
-      builder: (_, __) => VoiceGlass(
+      builder: (_, _) => VoiceGlass(
         borderRadius: 24,
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         child: Column(
@@ -534,7 +533,7 @@ class _RoomSettingsSheet extends StatelessWidget {
       initialChildSize: 0.65,
       minChildSize: 0.45,
       maxChildSize: 0.9,
-      builder: (_, __) => VoiceGlass(
+      builder: (_, _) => VoiceGlass(
         borderRadius: 24,
         padding: const EdgeInsets.fromLTRB(8, 16, 8, 24),
         child: Column(

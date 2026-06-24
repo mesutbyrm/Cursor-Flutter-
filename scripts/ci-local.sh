@@ -14,29 +14,9 @@ echo "=== API (TypeScript) ==="
   npm run build
 )
 
-echo "=== Flutter (dart analyze lib) ==="
-if command -v flutter >/dev/null 2>&1; then
-  FLUTTER=flutter
-elif [[ -x /tmp/flutter/bin/flutter ]]; then
-  FLUTTER=/tmp/flutter/bin/flutter
-else
-  echo "Flutter bulunamadı. PATH'e ekleyin veya: git clone -b stable https://github.com/flutter/flutter.git /tmp/flutter"
-  exit 1
-fi
-
-(
-  cd mobile
-  "$FLUTTER" pub get
-  set +e
-  "$FLUTTER" analyze lib
-  ec=$?
-  set -e
-  if [[ "$ec" -eq 3 ]]; then
-    echo "dart analyze: ERROR seviyesinde sorun var (exit $ec)"
-    exit 1
-  fi
-  echo "dart analyze tamam (exit $ec — yalnızca uyarı/info olabilir)"
-)
+echo "=== Flutter (dart analyze lib — yalnızca ERROR engeller) ==="
+chmod +x scripts/dart-analyze-gate.sh
+bash scripts/dart-analyze-gate.sh
 
 echo ""
 echo "Yerel CI tamam. GitHub'da kırmızı X için: docs/GITHUB_ACTIONS_CI.md"

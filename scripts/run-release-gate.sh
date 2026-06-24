@@ -117,21 +117,15 @@ echo "║  Canlifal Release Gate (9 madde)                         ║"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo ""
 
-# Gate 1 — flutter analyze
+# Gate 1 — flutter analyze (yalnızca ERROR engeller)
 echo "── Gate 1: flutter analyze ──"
 ANALYZE_OK=0
 if command -v flutter >/dev/null 2>&1; then
-  cd "$ROOT/mobile"
-  flutter pub get >/dev/null
-  set +e
-  dart analyze lib 2>&1 | tee /tmp/canlifal-analyze.txt
-  ec=$?
-  set -e
-  if [[ $ec -eq 3 ]] || grep -qE 'error •' /tmp/canlifal-analyze.txt; then
-    gate_record 1 "flutter analyze sıfır hata" FAIL "exit $ec"
-  else
-    gate_record 1 "flutter analyze sıfır hata" PASS "hata yok"
+  if bash "$ROOT/scripts/dart-analyze-gate.sh"; then
+    gate_record 1 "flutter analyze sıfır hata" PASS "ERROR yok"
     ANALYZE_OK=1
+  else
+    gate_record 1 "flutter analyze sıfır hata" FAIL "ERROR var — /tmp/canlifal-analyze.txt"
   fi
 else
   gate_record 1 "flutter analyze sıfır hata" FAIL "flutter SDK yok"

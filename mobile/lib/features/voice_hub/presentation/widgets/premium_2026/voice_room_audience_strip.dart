@@ -55,7 +55,7 @@ class VoiceRoomAudienceStrip extends StatelessWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: visible.length + (extra > 0 ? 1 : 0),
-                separatorBuilder: (_, __) => SizedBox(width: 6),
+                separatorBuilder: (_, _) => SizedBox(width: 6),
                 itemBuilder: (context, i) {
                   if (i < visible.length) {
                     final u = visible[i];

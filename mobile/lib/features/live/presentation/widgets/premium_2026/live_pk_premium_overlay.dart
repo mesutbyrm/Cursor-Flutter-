@@ -155,7 +155,7 @@ class _LivePkPremiumOverlayState extends State<LivePkPremiumOverlay>
           ),
           AnimatedBuilder(
             animation: _confetti,
-            builder: (_, __) {
+            builder: (_, _) {
               if (_confetti.value <= 0) return const SizedBox.shrink();
               return CustomPaint(
                 painter: _ConfettiPainter(_confetti.value),

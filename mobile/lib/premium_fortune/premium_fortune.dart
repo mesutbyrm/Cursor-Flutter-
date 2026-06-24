@@ -1,5 +1,5 @@
 /// Premium Fortune — MVVM modül giriş noktası.
-library premium_fortune;
+library;
 
 export 'core/config/pf_config.dart';
 export 'core/di/pf_providers.dart';

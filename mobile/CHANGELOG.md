@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.354+358 (2026-06-24)
+
+### CI / lint
+
+- APK derlemesi yalnızca `dart analyze` **ERROR**, test veya release build hatasında durur
+- `scripts/dart-analyze-gate.sh`: WARNING raporlanır, INFO yok sayılır
+- Toplu lint düzeltmesi (`dart fix`, gereksiz import/underscore/null-aware)
+- Kullanılmayan özel metotlar ve alanlar temizlendi
+
 ## 1.0.353+357 (2026-06-24)
 
 ### Fal & Tarot — Premium 2026 deneyimi

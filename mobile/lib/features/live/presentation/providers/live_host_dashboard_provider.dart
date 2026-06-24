@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../gifts/live_gift_controller.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import 'live_room_interaction_provider.dart';
 import 'live_room_providers.dart';
@@ -41,16 +40,15 @@ class LiveHostDashboardNotifier
   final List<int> _giftSamples = [];
   Timer? _tick;
   DateTime? _startedAt;
-  int _lastGiftCount = 0;
 
   @override
   LiveHostDashboardState build(String streamId) {
     _startedAt = DateTime.now();
     ref.onDispose(() => _tick?.cancel());
     _tick = Timer.periodic(const Duration(seconds: 5), (_) => _sample(streamId));
-    ref.listen(liveGiftControllerProvider, (_, __) => _sample(streamId));
-    ref.listen(liveRoomProvider(streamId), (_, __) => _sample(streamId));
-    ref.listen(liveRoomInteractionProvider(streamId), (_, __) => _sample(streamId));
+    ref.listen(liveGiftControllerProvider, (_, _) => _sample(streamId));
+    ref.listen(liveRoomProvider(streamId), (_, _) => _sample(streamId));
+    ref.listen(liveRoomInteractionProvider(streamId), (_, _) => _sample(streamId));
     Future.microtask(() => _sample(streamId));
     return const LiveHostDashboardState();
   }
@@ -76,8 +74,6 @@ class LiveHostDashboardNotifier
         DateTime.now().difference(_startedAt ?? DateTime.now()).inMinutes.clamp(1, 9999);
     final perMin = (jeton / elapsedMin).round();
     final perHour = (perMin * 60).round();
-
-    _lastGiftCount = gifts;
 
     state = LiveHostDashboardState(
       totalJeton: jeton,

@@ -505,11 +505,11 @@ class LiveRemoteDataSource {
     await _dio.safePatch<dynamic>(
       ApiEndpoints.videoStream(streamId),
       data: {
-        if (title != null) 'title': title,
-        if (description != null) 'description': description,
-        if (broadcastImage != null) 'broadcastImage': broadcastImage,
-        if (isImageMode != null) 'isImageMode': isImageMode,
-        if (backgroundUrl != null) 'backgroundUrl': backgroundUrl,
+        'title': ?title,
+        'description': ?description,
+        'broadcastImage': ?broadcastImage,
+        'isImageMode': ?isImageMode,
+        'backgroundUrl': ?backgroundUrl,
       },
     );
   }

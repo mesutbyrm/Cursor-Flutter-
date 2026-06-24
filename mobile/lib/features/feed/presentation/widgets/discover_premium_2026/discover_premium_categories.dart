@@ -39,7 +39,7 @@ class DiscoverPremiumCategories extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             physics: PremiumMotion.listPhysics,
             itemCount: DiscoverCategories.all.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (context, i) {
               final c = DiscoverCategories.all[i];
               final selected = selectedId == c.id;

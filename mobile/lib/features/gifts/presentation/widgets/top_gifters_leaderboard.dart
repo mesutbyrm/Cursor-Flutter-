@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/widgets/user_avatar.dart';
@@ -89,7 +88,7 @@ class _LeaderRow extends StatelessWidget {
           SizedBox(
             width: 32,
             child: Text(
-              '$medal',
+              medal,
               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
             ),
           ),

@@ -13,7 +13,6 @@ import '../../domain/entities/psychic_gift_entity.dart';
 import '../../domain/entities/psychic_request_entity.dart';
 import '../../domain/entities/psychic_review_entity.dart';
 import '../../domain/entities/psychic_room_entity.dart';
-import '../../domain/entities/psychic_session_status.dart';
 import '../../domain/repositories/live_psychics_repository.dart';
 import '../models/psychic_model.dart';
 
@@ -789,7 +788,7 @@ class LivePsychicsRemoteDataSource {
         ApiEndpoints.liveFortuneRoom(key),
         data: {
           'action': act,
-          if (extra != null) ...extra,
+          ...?extra,
         },
       );
       final body = res.data;
@@ -880,8 +879,8 @@ class LivePsychicsRemoteDataSource {
         data: {
           'sessionId': sessionId.trim(),
           'amount': amount,
-          if (tellerId != null) 'tellerId': tellerId,
-          if (tellerUserId != null) 'tellerUserId': tellerUserId,
+          'tellerId': ?tellerId,
+          'tellerUserId': ?tellerUserId,
         },
       );
       return true;

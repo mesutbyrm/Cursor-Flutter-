@@ -234,9 +234,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         streamerHandle: user.username,
         avatarUrl: user.avatarUrl,
         backgroundUrl: _backgroundUrl,
-        coverImageUrl: _localBackgroundPath != null
-            ? _localBackgroundPath
-            : _backgroundUrl ?? user.avatarUrl,
+        coverImageUrl: _localBackgroundPath ?? _backgroundUrl ?? user.avatarUrl,
       ).copyWith(
         streamId: roomId,
         agora: agora,
@@ -595,7 +593,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        errorWidget: (_, __, ___) => const ColoredBox(color: Color(0xFF1A0F32)),
+        errorWidget: (_, _, _) => const ColoredBox(color: Color(0xFF1A0F32)),
       );
     }
     return const DecoratedBox(

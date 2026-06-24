@@ -24,7 +24,7 @@ class StoriesSection extends ConsumerWidget {
 
     return ringsAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (rings) {
         final withStories = rings
             .where(

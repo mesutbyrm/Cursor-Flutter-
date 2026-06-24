@@ -66,8 +66,8 @@ class GoldSection extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
               itemCount: 4,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (_, __) => const PremiumSkeleton(
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              itemBuilder: (_, _) => const PremiumSkeleton(
                 width: 110,
                 height: 140,
                 borderRadius: BorderRadius.all(
@@ -78,7 +78,7 @@ class GoldSection extends ConsumerWidget {
           ),
         ],
       ),
-      error: (_, __) => _content(context, _fallbackPackages),
+      error: (_, _) => _content(context, _fallbackPackages),
       data: (cat) => _content(
         context,
         cat.packages.isNotEmpty ? cat.packages : _fallbackPackages,
@@ -101,7 +101,7 @@ class GoldSection extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
             itemCount: packages.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (_, i) => _TierCard(
               pkg: packages[i],
               onTap: () => context.push('/premium-membership'),

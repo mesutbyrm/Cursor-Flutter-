@@ -51,8 +51,8 @@ class HomeVoiceRoomsRow extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: 4,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
-            itemBuilder: (_, __) => const PremiumSkeleton(
+            separatorBuilder: (_, _) => const SizedBox(width: 16),
+            itemBuilder: (_, _) => const PremiumSkeleton(
               width: 72,
               height: 72,
               borderRadius: BorderRadius.all(Radius.circular(36)),
@@ -108,7 +108,7 @@ class HomeVoiceRoomsRow extends ConsumerWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: count,
-        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        separatorBuilder: (_, _) => const SizedBox(width: 16),
         itemBuilder: (_, i) {
           if (preview.isEmpty) {
             return HomeCircularOrb(

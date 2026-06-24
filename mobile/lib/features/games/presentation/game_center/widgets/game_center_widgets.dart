@@ -201,7 +201,7 @@ class GameCenterPopularRow extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 14),
+        separatorBuilder: (_, _) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
           final item = items[index];
           return _PopularOrb(item: item, onTap: () => onTap(item));

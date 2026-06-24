@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -44,7 +42,7 @@ class _LruMemoryCache<K, V> {
   _LruMemoryCache({required this.maxEntries});
 
   final int maxEntries;
-  final _map = LinkedHashMap<K, V>();
+  final _map = <K, V>{};
 
   V? get(K key) {
     final v = _map.remove(key);

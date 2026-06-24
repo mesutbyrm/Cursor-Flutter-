@@ -32,8 +32,8 @@ class HomeAdvisorsRow extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               itemCount: 4,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (_, __) => const PremiumSkeleton(
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (_, _) => const PremiumSkeleton(
                 width: 100,
                 height: 130,
                 borderRadius: BorderRadius.all(Radius.circular(20)),
@@ -42,7 +42,7 @@ class HomeAdvisorsRow extends ConsumerWidget {
           ),
         ],
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (items) {
         final online = items.where((a) => a.isOnline).toList();
         final list = online.isNotEmpty ? online : items;
@@ -61,7 +61,7 @@ class HomeAdvisorsRow extends ConsumerWidget {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: list.length.clamp(0, 12),
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (_, i) => _AdvisorCard(advisor: list[i]),
               ),
             ),

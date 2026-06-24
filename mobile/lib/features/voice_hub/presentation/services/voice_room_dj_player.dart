@@ -76,7 +76,7 @@ class VoiceRoomDjPlayer {
         fastForwardInterval: Duration(seconds: 10),
         rewindInterval: Duration(seconds: 10),
       ),
-    ) as VoiceRoomAudioHandler;
+    );
     _handler = handler;
     handler.onDiagnosticsChanged = (value) {
       diagnostics.value = value;

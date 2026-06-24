@@ -26,8 +26,8 @@ Future<void> showVoiceRoomCommandsPanel(
     barrierLabel: 'Oda Komutları',
     barrierColor: Colors.black.withValues(alpha: 0.55),
     transitionDuration: const Duration(milliseconds: 280),
-    pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
-    transitionBuilder: (ctx, anim, _, __) {
+    pageBuilder: (ctx, _, _) => const SizedBox.shrink(),
+    transitionBuilder: (ctx, anim, _, _) {
       final slide = Tween<Offset>(
         begin: const Offset(1, 0),
         end: Offset.zero,
