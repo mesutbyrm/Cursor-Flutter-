@@ -8,14 +8,15 @@ import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../canlifal_web/presentation/canlifal_web_view_page.dart';
 import '../../domain/entities/fortune_type_entity.dart';
 import '../services/fortune_reading_coordinator.dart';
-import '../widgets/fortune_mystic_background.dart';
 import '../widgets/fortune_mystic_bar_button.dart';
 import '../widgets/fortune_mystic_title_bar.dart';
 import '../widgets/premium_2026/daily_fortune_premium_hero.dart';
+import '../widgets/premium_2026/fortune_type_immersive_scaffold.dart';
+import '../widgets/premium_ai/fortune_inline_result_experience.dart';
 import '../widgets/premium_ai/premium_fortune_detail_transition.dart';
 import '../widgets/premium_ai/premium_fortune_open_button.dart';
 
-/// Günlük fal — sinematik tarot hero + premium Falını Aç geçişi.
+/// Günlük fal — inline sonuç, tür özel arka plan.
 class DailyFortuneOpenPage extends ConsumerStatefulWidget {
   const DailyFortuneOpenPage({super.key, required this.type});
 
@@ -27,18 +28,17 @@ class DailyFortuneOpenPage extends ConsumerStatefulWidget {
 }
 
 class _DailyFortuneOpenPageState extends ConsumerState<DailyFortuneOpenPage> {
-  var _loading = false;
+  var _opening = false;
   final _scroll = ScrollController();
   double _scrollOffset = 0;
+  FortuneReadingResult? _inlineResult;
 
   FortuneTypeEntity get type => widget.type;
 
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(() {
-      setState(() => _scrollOffset = _scroll.offset);
-    });
+    _scroll.addListener(() => setState(() => _scrollOffset = _scroll.offset));
   }
 
   @override
@@ -52,14 +52,19 @@ class _DailyFortuneOpenPageState extends ConsumerState<DailyFortuneOpenPage> {
       context: context,
       type: type,
       onOpen: () async {
-        if (_loading) return;
-        setState(() => _loading = true);
-        await FortuneReadingCoordinator.openReading(
+        if (_opening) return;
+        setState(() => _opening = true);
+        final result = await FortuneReadingCoordinator.openReading(
           context: context,
           ref: ref,
           type: type,
+          stayOnPage: true,
         );
-        if (mounted) setState(() => _loading = false);
+        if (!mounted) return;
+        setState(() {
+          _opening = false;
+          _inlineResult = result;
+        });
       },
     );
   }
@@ -76,9 +81,18 @@ class _DailyFortuneOpenPageState extends ConsumerState<DailyFortuneOpenPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_inlineResult != null) {
+      return FortuneInlineResultExperience(
+        result: _inlineResult!,
+        onNewReading: () => setState(() => _inlineResult = null),
+        onOpenType: (t) => context.pushReplacement('/fortune/${t.slug}'),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: FortuneMysticBackground(
+      body: FortuneTypeImmersiveScaffold(
+        type: type,
         child: Column(
           children: [
             FortuneMysticTitleBar(
@@ -105,11 +119,15 @@ class _DailyFortuneOpenPageState extends ConsumerState<DailyFortuneOpenPage> {
                     const SizedBox(height: 28),
                     PremiumFortuneOpenButton(
                       accent: AppThemeColors.accentPurple,
-                      enabled: !_loading,
+                      enabled: !_opening,
                       onPressed: _openFortune,
                     ),
-                    if (_loading) ...[
+                    if (_opening) ...[
                       const SizedBox(height: 16),
+                      const LinearProgressIndicator(
+                        color: AppThemeColors.accentPurple,
+                      ),
+                      const SizedBox(height: 8),
                       Text(
                         'Kozmik enerji okunuyor…',
                         textAlign: TextAlign.center,

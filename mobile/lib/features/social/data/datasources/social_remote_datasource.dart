@@ -172,6 +172,8 @@ class SocialRemoteDataSource {
           'fortuneId': input.fortuneId,
         if (input.visualAnalysis != null && input.visualAnalysis!.isNotEmpty)
           'visualAnalysis': input.visualAnalysis,
+        if (input.visibility != null && input.visibility!.isNotEmpty)
+          'visibility': input.visibility,
       },
     );
     return _parseCreatedPost(res.data, caption: input.summary, type: 'fortune');

@@ -8,15 +8,16 @@ import '../data/fortune_image_capture_config.dart';
 import '../data/fortune_type_showcase.dart';
 import '../services/fortune_reading_coordinator.dart';
 import '../widgets/fortune_image_capture_panel.dart';
-import '../widgets/fortune_mystic_background.dart';
 import '../widgets/fortune_mystic_bar_button.dart';
 import '../widgets/fortune_mystic_title_bar.dart';
 import '../widgets/fortune_popular_readings_section.dart';
 import '../widgets/premium_2026/cinematic_fortune_hero.dart';
+import '../widgets/premium_2026/fortune_type_immersive_scaffold.dart';
+import '../widgets/premium_ai/fortune_inline_result_experience.dart';
 import '../widgets/premium_ai/premium_fortune_detail_transition.dart';
 import '../widgets/premium_ai/premium_fortune_open_button.dart';
 
-/// Premium AI fal vitrin — tam ekran kapak, parallax, Falını Aç CTA.
+/// Premium AI fal vitrin — tür özel arka plan, inline fal sonucu.
 class FortuneTypeIntroPage extends ConsumerStatefulWidget {
   const FortuneTypeIntroPage({super.key, required this.type});
 
@@ -31,6 +32,8 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
   FortuneLocalImageInput _images = const FortuneLocalImageInput();
   final _scroll = ScrollController();
   double _scrollOffset = 0;
+  FortuneReadingResult? _inlineResult;
+  var _opening = false;
 
   FortuneTypeEntity get type => widget.type;
 
@@ -41,9 +44,7 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(() {
-      setState(() => _scrollOffset = _scroll.offset);
-    });
+    _scroll.addListener(() => setState(() => _scrollOffset = _scroll.offset));
   }
 
   @override
@@ -52,21 +53,49 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
     super.dispose();
   }
 
+  void _resetReading() => setState(() => _inlineResult = null);
+
+  void _openType(FortuneTypeEntity t) {
+    if (t.slug == type.slug) {
+      _resetReading();
+      return;
+    }
+    context.pushReplacement('/fortune/${t.slug}');
+  }
+
   Future<void> _openFortune() {
     return runPremiumFortuneOpenTransition(
       context: context,
       type: type,
-      onOpen: () => FortuneReadingCoordinator.openReading(
-        context: context,
-        ref: ref,
-        type: type,
-        localImages: _needsCapture ? _images : null,
-      ),
+      onOpen: () async {
+        if (_opening) return;
+        setState(() => _opening = true);
+        final result = await FortuneReadingCoordinator.openReading(
+          context: context,
+          ref: ref,
+          type: type,
+          localImages: _needsCapture ? _images : null,
+          stayOnPage: true,
+        );
+        if (!mounted) return;
+        setState(() {
+          _opening = false;
+          _inlineResult = result;
+        });
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_inlineResult != null) {
+      return FortuneInlineResultExperience(
+        result: _inlineResult!,
+        onOpenType: _openType,
+        onNewReading: _resetReading,
+      );
+    }
+
     final showcase = FortuneTypeShowcase.forSlug(type.slug);
     if (showcase == null) {
       return Scaffold(
@@ -79,17 +108,10 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
       );
     }
 
-    void open(FortuneTypeEntity t) {
-      FortuneReadingCoordinator.openReading(
-        context: context,
-        ref: ref,
-        type: t,
-      );
-    }
-
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: FortuneMysticBackground(
+      body: FortuneTypeImmersiveScaffold(
+        type: type,
         child: Column(
           children: [
             FortuneMysticTitleBar(
@@ -97,7 +119,7 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
               onBack: () => context.pop(),
               trailing: FortuneMysticBarButton(
                 icon: Icons.auto_awesome,
-                onPressed: _canOpen ? _openFortune : () {},
+                onPressed: _canOpen && !_opening ? _openFortune : () {},
               ),
             ),
             Expanded(
@@ -128,40 +150,28 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
                           ],
                           PremiumFortuneOpenButton(
                             accent: type.accent,
-                            enabled: _canOpen,
-                            onPressed: _canOpen
-                                ? _openFortune
-                                : () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          FortuneImageCaptureConfig.isCoffee(type)
-                                              ? 'Lütfen fincan içi fotoğrafını yükleyin'
-                                              : 'Lütfen el fotoğrafını yükleyin',
-                                        ),
-                                      ),
-                                    );
-                                  },
+                            enabled: _canOpen && !_opening,
+                            onPressed: _canOpen ? _openFortune : () {},
                           ),
-                          if (!_canOpen)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                FortuneImageCaptureConfig.isCoffee(type)
-                                    ? 'Falını açmak için fincan içi fotoğrafı zorunludur.'
-                                    : 'Falını açmak için avuç içi fotoğrafı zorunludur.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: type.accent.withValues(alpha: 0.85),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                          if (_opening) ...[
+                            const SizedBox(height: 14),
+                            LinearProgressIndicator(
+                              color: type.accent,
+                              backgroundColor: type.accent.withValues(alpha: 0.15),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'AI yorumun hazırlanıyor…',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                fontSize: 12,
                               ),
                             ),
+                          ],
                           const SizedBox(height: 20),
                           Text(
-                            'AI, kapak görselindeki sembolleri ve enerjini analiz ederek '
-                            'sana özel en az 200 kelimelik yorum üretir. Her açılış benzersizdir.',
+                            'Fal açıldığında sonuç bu sayfada anında gösterilir.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.72),
@@ -177,7 +187,7 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: FortunePopularReadingsSection(
                         excludeSlug: type.slug,
-                        onOpenReading: open,
+                        onOpenReading: _openType,
                       ),
                     ),
                   ],

@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.353+357 (2026-06-24)
+
+### Fal & Tarot — Premium 2026 deneyimi
+
+- Tür özel tam ekran kapak arka planı (`FortuneTypeImmersiveScaffold`, WebP CDN)
+- Fal sonucu **aynı sayfada** inline gösterim — ayrı rota yok
+- Premium sonuç kartı: enerji, aşk, para, kariyer, şans skorları
+- Genişletilmiş paylaşım sayfası (sosyal, profil, herkese açık, link, WhatsApp, Telegram, X, Facebook, IG hikaye)
+- Ayarlarda **Fal Sonuçlarımı Otomatik Paylaş** (kapalı / profil / takipçiler / herkese açık)
+- Benzer fallar + yatay **Diğer Fallara Göz At** carousel
+- `Fal Sonucu` başlığı; `Yorumu Oku` kaldırıldı
+
 ## 1.0.352+356 (2026-06-24)
 
 ### Düzeltme — profil fal erişim rozetleri import

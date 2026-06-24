@@ -74,9 +74,14 @@ class _CosmicPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final base = switch (slug) {
       'tarot' || 'melek-kartlari' => const [Color(0xFF1A0F2E), Color(0xFF0A0118)],
-      'kahve-fali' => const [Color(0xFF2A1508), Color(0xFF0A0118)],
-      'ruya-tabiri' || 'pendul' => const [Color(0xFF10183A), Color(0xFF0A0118)],
+      'kahve-fali' || 'cin-fali' => const [Color(0xFF2A1508), Color(0xFF0A0118)],
+      'el-fali' => const [Color(0xFF142A18), Color(0xFF0A0118)],
+      'numeroloji' => const [Color(0xFF1A1808), Color(0xFF0A0118)],
+      'ruya-tabiri' || 'pendul' || 'istihare' => const [Color(0xFF10183A), Color(0xFF0A0118)],
       'yildiz-haritasi' => const [Color(0xFF0C1A3A), Color(0xFF050210)],
+      'ask-fali' || 'katina' => const [Color(0xFF2A0A20), Color(0xFF0A0118)],
+      'runik' || 'aura' => const [Color(0xFF181028), Color(0xFF0A0118)],
+      'evet-hayir' => const [Color(0xFF1A1608), Color(0xFF0A0118)],
       _ => [accent.withValues(alpha: 0.35), const Color(0xFF0A0118)],
     };
 

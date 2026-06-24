@@ -8,6 +8,7 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/theme_mode_selector.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../fortune/presentation/widgets/fortune_auto_share_setting_tile.dart';
 import '../widgets/premium/profile_glass.dart';
 
 /// Merkezi ayarlar — hesap, güvenlik, gizlilik, bildirimler.
@@ -108,6 +109,12 @@ class SettingsPage extends ConsumerWidget {
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 20),
+              const _SectionLabel('Fal & Paylaşım'),
+              const ProfileGlass(
+                padding: EdgeInsets.zero,
+                child: FortuneAutoShareSettingTile(),
               ),
               const SizedBox(height: 20),
               const _SectionLabel('Görünüm'),

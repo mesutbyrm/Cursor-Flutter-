@@ -19,12 +19,20 @@ class PremiumFortuneResultCanvas extends StatefulWidget {
     this.onShare,
     this.scrollController,
     this.readingSectionKey,
+    this.appBarTitle = 'Fal Sonucu',
+    this.showTopBar = true,
+    this.header,
+    this.footer,
   });
 
   final FortuneReadingResult result;
   final VoidCallback? onShare;
   final ScrollController? scrollController;
   final GlobalKey? readingSectionKey;
+  final String appBarTitle;
+  final bool showTopBar;
+  final Widget? header;
+  final Widget? footer;
 
   @override
   State<PremiumFortuneResultCanvas> createState() =>
@@ -104,64 +112,79 @@ class _PremiumFortuneResultCanvasState extends State<PremiumFortuneResultCanvas>
         type: result.type,
         child: Column(
           children: [
-            SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.of(context).maybePop(),
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        '${result.type.title} — Kehanet',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
+            if (widget.showTopBar)
+              SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
                           color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
                         ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: widget.onShare,
-                      icon: const Icon(Icons.ios_share_rounded, color: Colors.white),
-                    ),
-                  ],
+                      Expanded(
+                        child: Text(
+                          widget.appBarTitle,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: widget.onShare,
+                        icon: const Icon(Icons.ios_share_rounded, color: Colors.white),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
             Expanded(
               child: ListView(
                 controller: widget.scrollController,
                 padding: EdgeInsets.zero,
                 children: [
+                  if (widget.header != null) widget.header!,
                   CinematicFortuneHero(
                     type: result.type,
-                    height: 320,
+                    height: widget.header != null ? 220 : 320,
                     scrollOffset: _scrollOffset,
-                    showTitle: false,
+                    showTitle: widget.header == null,
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _HeadlineCard(
-                          headline: headline,
-                          summary: result.summary,
-                          energyTag: energyTag,
-                          accent: glow,
-                        ).animate().fadeIn(duration: 500.ms).slideY(
-                              begin: 0.06,
-                              end: 0,
-                              curve: Curves.easeOutCubic,
+                        if (widget.header == null)
+                          _HeadlineCard(
+                            headline: headline,
+                            summary: result.summary,
+                            energyTag: energyTag,
+                            accent: glow,
+                          ).animate().fadeIn(duration: 500.ms).slideY(
+                                begin: 0.06,
+                                end: 0,
+                                curve: Curves.easeOutCubic,
+                              )
+                        else ...[
+                          Text(
+                            'Yapay Zeka Yorumu',
+                            style: TextStyle(
+                              color: glow.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                              letterSpacing: 0.6,
                             ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                         if (result.visualAnalysis != null) ...[
                           const SizedBox(height: 12),
                           _GlassPanel(
@@ -229,6 +252,7 @@ class _PremiumFortuneResultCanvasState extends State<PremiumFortuneResultCanvas>
                             ],
                           ),
                         ],
+                        if (widget.footer != null) widget.footer!,
                       ],
                     ),
                   ),

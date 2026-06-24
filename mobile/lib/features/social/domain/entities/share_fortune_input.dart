@@ -8,6 +8,7 @@ class ShareFortuneInput {
     this.imageUrl,
     this.fortuneId,
     this.visualAnalysis,
+    this.visibility,
   });
 
   final String fortuneSlug;
@@ -17,4 +18,5 @@ class ShareFortuneInput {
   final String? imageUrl;
   final String? fortuneId;
   final String? visualAnalysis;
+  final String? visibility;
 }

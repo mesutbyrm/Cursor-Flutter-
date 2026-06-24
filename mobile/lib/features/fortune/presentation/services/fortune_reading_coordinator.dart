@@ -27,7 +27,7 @@ class FortuneReadingCoordinator {
   static final _service = FortuneReadingService();
   static final _rng = Random();
 
-  static Future<void> openReading({
+  static Future<FortuneReadingResult?> openReading({
     required BuildContext context,
     required WidgetRef ref,
     required FortuneTypeEntity type,
@@ -36,14 +36,15 @@ class FortuneReadingCoordinator {
     DateTime? birthDate,
     bool replaceCurrentRoute = false,
     FortuneLocalImageInput? localImages,
+    bool stayOnPage = false,
   }) async {
-    if (!context.mounted) return;
+    if (!context.mounted) return null;
 
     FortuneLocalImageInput? images = localImages;
     if (FortuneImageCaptureConfig.requiresCapture(type) &&
         (images == null || !images.isValidFor(type))) {
       images = await showFortuneImageCaptureSheet(context: context, type: type);
-      if (images == null || !images.isValidFor(type)) return;
+      if (images == null || !images.isValidFor(type)) return null;
     }
 
     final authed = ref.read(authControllerProvider).valueOrNull;
@@ -55,13 +56,13 @@ class FortuneReadingCoordinator {
         type: type,
         isAuthenticated: true,
       );
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       if (accessGrant == null &&
           ref.read(fortuneAccessServiceProvider).isGateRequired(
                 type,
                 isAuthenticated: true,
               )) {
-        return;
+        return null;
       }
       if (accessGrant != null) {
         try {
@@ -75,7 +76,7 @@ class FortuneReadingCoordinator {
               SnackBar(content: Text(ApiException.userMessage(e))),
             );
           }
-          return;
+          return null;
         }
       }
     }
@@ -114,7 +115,7 @@ class FortuneReadingCoordinator {
             SnackBar(content: Text(ApiException.userMessage(e))),
           );
         }
-        return;
+        return null;
       }
     }
 
@@ -211,7 +212,7 @@ class FortuneReadingCoordinator {
         if (context.mounted) {
           await _showPurchasePrompt(context, msg);
         }
-        return;
+        return null;
       }
       result = _service.generate(
         type,
@@ -234,7 +235,7 @@ class FortuneReadingCoordinator {
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pop();
       }
-      return;
+      return null;
     }
 
     var finalResult = result;
@@ -266,13 +267,15 @@ class FortuneReadingCoordinator {
       }
     }
 
-    if (!context.mounted) return;
+    if (!context.mounted) return null;
     Navigator.of(context, rootNavigator: true).pop();
+    if (stayOnPage) return finalResult;
     if (replaceCurrentRoute) {
       context.pushReplacement('/fortune/${type.slug}/result', extra: finalResult);
     } else {
       context.push('/fortune/${type.slug}/result', extra: finalResult);
     }
+    return finalResult;
   }
 
   static String? _imageHint(
