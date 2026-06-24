@@ -6,7 +6,7 @@ import {
 } from "./payment_admin_email";
 
 const STAFF_ROLES = ["admin", "yonetici", "moderator", "destek", "yardim"] as const;
-
+const PAYMENT_FALLBACK_EMAIL = process.env.PAYMENT_ALERT_EMAIL ?? "mesutbyrm1@gmail.com";
 /** Yeni DM — alıcıya anında push */
 export async function notifyDirectMessage(input: {
   conversationId: string;
