@@ -71,5 +71,7 @@ Genişletilmiş kontrol listesi için `scripts/run-acceptance-tests.sh` kullanı
 ## Notlar
 
 - Testler üretim API (`https://canlifal.com`) üzerinde çalışır
+- **Secret yoksa** API testleri `SKIP` olur; `flutter analyze` + `flutter test` geçtiyse APK oluşturulur
+- Secret varken API testi başarısızsa APK **engellenir**
 - Canlı yayın testi geçici stream oluşturur ve işlem sonunda siler
 - Jeton testi gerçek ödeme yapmaz; `POST /api/payment/requests` + admin listesi doğrulanır

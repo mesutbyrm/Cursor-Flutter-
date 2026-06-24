@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.350+354 (2026-06-24)
+
+### CI — release gate exit 1 düzeltmesi
+
+- Eksik GitHub Secrets artık **FAIL değil SKIP** — client testleri geçince APK engellenmez
+- `set -e` + `|| return` hatası giderildi (`return 0`)
+- `build-apk.yml` — başarılı build sonrası APK artifact yüklemesi
+
 ## 1.0.349+353 (2026-06-23)
 
 ### Release gate (9 madde — APK/AAB öncesi zorunlu)

@@ -210,6 +210,15 @@ jobs:
           VERSION=$(grep -E '^version:' mobile/pubspec.yaml | head -1 | sed 's/version:[[:space:]]*//')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: APK artifact yükle
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canlifal-mobile-release-${{ steps.meta.outputs.version }}
+          path: canlifal-mobile-release.apk
+          retention-days: 30
+          if-no-files-found: error
+
       - name: Release notları (minimal)
         if: always() && steps.meta.outputs.version != ''
         working-directory: ${{ github.workspace }}

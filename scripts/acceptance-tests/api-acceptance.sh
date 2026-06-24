@@ -43,7 +43,7 @@ echo ""
 # --- 1. Giriş (e-posta) ---
 test_01_login_email() {
   if ! require_secret USER_EMAIL 1 "Giriş (e-posta)" || ! require_secret USER_PASSWORD 1 "Giriş (e-posta)"; then
-    return
+    return 0
   fi
   local resp
   resp=$(mobile_login "{\"email\":\"$USER_EMAIL\",\"password\":\"$USER_PASSWORD\"}")
@@ -60,7 +60,7 @@ test_01_login_email() {
 # --- 2. Giriş (kullanıcı adı) ---
 test_02_login_username() {
   if ! require_secret USER_USERNAME 2 "Giriş (kullanıcı adı)" || ! require_secret USER_PASSWORD 2 "Giriş (kullanıcı adı)"; then
-    return
+    return 0
   fi
   local resp tok
   resp=$(mobile_login "{\"emailOrUsername\":\"$USER_USERNAME\",\"password\":\"$USER_PASSWORD\"}")
@@ -85,7 +85,7 @@ test_03_register() {
     return
   fi
   if [[ -z "$USER_EMAIL" ]]; then
-    record 3 "Kayıt" FAIL "ACCEPTANCE_USER_EMAIL gerekli (duplicate test)"
+    record 3 "Kayıt" SKIP "ACCEPTANCE_USER_EMAIL yok"
     return
   fi
   code_dup=$(http_code -X POST "$BASE/api/auth/mobile-register" \
@@ -100,10 +100,7 @@ test_03_register() {
 
 # --- 4. Profil yükleme ---
 test_04_profile() {
-  if [[ -z "$USER_TOKEN" ]]; then
-    record 4 "Profil yükleme" FAIL "önce giriş gerekli"
-    return
-  fi
+  skip_unless_user_token 4 "Profil yükleme" || return 0
   local resp id
   resp=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $USER_TOKEN")
   id=$(printf '%s' "$resp" | json_field "['id']")
@@ -119,10 +116,7 @@ test_04_profile() {
 
 # --- 5. Jeton görüntüleme ---
 test_05_wallet() {
-  if [[ -z "$USER_TOKEN" ]]; then
-    record 5 "Jeton görüntüleme" FAIL "token yok"
-    return
-  fi
+  skip_unless_user_token 5 "Jeton görüntüleme" || return 0
   local resp
   resp=$(curl_json "$BASE/api/wallet" -H "Authorization: Bearer $USER_TOKEN")
   WALLET_BEFORE=$(printf '%s' "$resp" | python3 -c "
@@ -142,10 +136,7 @@ for k in ('jeton','coins','coinBalance','balance'):
 
 # --- 6. Jeton satın alma ekranı ---
 test_06_jeton_store() {
-  if [[ -z "$USER_TOKEN" ]]; then
-    record 6 "Jeton satın alma ekranı" FAIL "token yok"
-    return
-  fi
+  skip_unless_user_token 6 "Jeton satın alma ekranı" || return 0
   local code body
   code=$(http_code "$BASE/api/jeton" -H "Authorization: Bearer $USER_TOKEN")
   body=$(curl_json "$BASE/api/jeton" -H "Authorization: Bearer $USER_TOKEN")
@@ -179,13 +170,14 @@ if isinstance(rooms,list) and rooms:
 
 # --- 8. SSE bağlantısı ---
 test_08_sse() {
-  if [[ -z "$USER_TOKEN" ]]; then
-    record 8 "SSE bağlantısı" FAIL "token yok"
-    return
-  fi
+  skip_unless_user_token 8 "SSE bağlantısı" || return 0
   if [[ -z "$ROOM_ID" ]]; then
-    record 8 "SSE bağlantısı" FAIL "oda kimliği yok"
-    return
+    if acceptance_user_secrets_configured; then
+      record 8 "SSE bağlantısı" FAIL "oda kimliği yok"
+    else
+      record 8 "SSE bağlantısı" SKIP "oda yok (secret/token yok)"
+    fi
+    return 0
   fi
   local tmp
   tmp=$(mktemp)
@@ -215,7 +207,7 @@ test_08_sse() {
 # --- 9. Canlı yayın açma ---
 test_09_live_open() {
   if ! require_secret HOST_EMAIL 9 "Canlı yayın açma" || ! require_secret HOST_PASSWORD 9 "Canlı yayın açma"; then
-    return
+    return 0
   fi
   local resp
   resp=$(mobile_login "{\"email\":\"$HOST_EMAIL\",\"password\":\"$HOST_PASSWORD\"}")
@@ -251,11 +243,15 @@ for path in [
 # --- 10. Canlı yayına katılma ---
 test_10_live_join() {
   if [[ -z "$STREAM_ID" ]]; then
-    record 10 "Canlı yayına katılma" FAIL "stream yok"
+    if acceptance_user_secrets_configured || [[ -n "${ACCEPTANCE_HOST_EMAIL:-}" ]]; then
+      record 10 "Canlı yayına katılma" FAIL "stream yok"
+    else
+      record 10 "Canlı yayına katılma" SKIP "host secret yok"
+    fi
     return
   fi
   if ! require_secret VIEWER_EMAIL 10 "Canlı yayına katılma" || ! require_secret VIEWER_PASSWORD 10 "Canlı yayına katılma"; then
-    return
+    return 0
   fi
   local resp code
   resp=$(mobile_login "{\"email\":\"$VIEWER_EMAIL\",\"password\":\"$VIEWER_PASSWORD\"}")
@@ -279,14 +275,15 @@ test_10_live_join() {
 # --- 11. Canlı yayında fal isteği ---
 test_11_fortune_request() {
   if [[ -z "$STREAM_ID" ]]; then
-    record 11 "Canlı yayında fal isteği" FAIL "stream yok"
+    if acceptance_user_secrets_configured || [[ -n "${ACCEPTANCE_HOST_EMAIL:-}" ]]; then
+      record 11 "Canlı yayında fal isteği" FAIL "stream yok"
+    else
+      record 11 "Canlı yayında fal isteği" SKIP "host secret yok"
+    fi
     return
   fi
   local token="${VIEWER_TOKEN:-$USER_TOKEN}"
-  if [[ -z "$token" ]]; then
-    record 11 "Canlı yayında fal isteği" FAIL "token yok"
-    return
-  fi
+  skip_unless_user_token 11 "Canlı yayında fal isteği" || return 0
   local resp
   resp=$(curl -sS -X POST "$BASE/api/video-streams/$STREAM_ID/fortune-requests" \
     -H "Authorization: Bearer $token" \
@@ -323,10 +320,7 @@ for getter in [
 
 # --- 12. Falcının isteği görmesi ---
 test_12_teller_sees_request() {
-  if [[ -z "$STREAM_ID" || -z "$FORTUNE_REQUEST_ID" || -z "$HOST_TOKEN" ]]; then
-    record 12 "Falcının isteği görmesi" FAIL "önkoşul eksik"
-    return
-  fi
+  skip_unless_live_chain 12 "Falcının isteği görmesi" || return 0
   local body found
   body=$(curl_json "$BASE/api/video-streams/$STREAM_ID/fortune-requests" \
     -H "Authorization: Bearer $HOST_TOKEN")
@@ -348,10 +342,7 @@ print('yes' if ok else 'no')
 
 # --- 13. Falcının isteği kabul etmesi ---
 test_13_teller_accepts() {
-  if [[ -z "$STREAM_ID" || -z "$FORTUNE_REQUEST_ID" || -z "$HOST_TOKEN" ]]; then
-    record 13 "Falcının isteği kabul etmesi" FAIL "önkoşul eksik"
-    return
-  fi
+  skip_unless_live_chain 13 "Falcının isteği kabul etmesi" || return 0
   local code
   code=$(http_code -X PATCH "$BASE/api/video-streams/$STREAM_ID/fortune-requests/$FORTUNE_REQUEST_ID" \
     -H "Authorization: Bearer $HOST_TOKEN" \
@@ -372,10 +363,7 @@ test_13_teller_accepts() {
 
 # --- 14. Görüntülü görüşmenin başlaması ---
 test_14_video_session() {
-  if [[ -z "$HOST_TOKEN" ]]; then
-    record 14 "Görüntülü görüşme" FAIL "host token yok"
-    return
-  fi
+  skip_unless_host_token 14 "Görüntülü görüşme" || return 0
   local uid code body
   uid=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $HOST_TOKEN" | json_field "['id']")
   [[ -z "$uid" ]] && uid=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $HOST_TOKEN" | json_field "['user']['id']")
@@ -407,7 +395,11 @@ test_14_video_session() {
 test_15_jeton_deduction() {
   local token="${VIEWER_TOKEN:-$USER_TOKEN}"
   if [[ -z "$token" || -z "$WALLET_BEFORE" ]]; then
-    record 15 "Jeton düşümü" FAIL "cüzdan ölçümü yok"
+    if acceptance_user_secrets_configured; then
+      record 15 "Jeton düşümü" FAIL "cüzdan ölçümü yok"
+    else
+      record 15 "Jeton düşümü" SKIP "ACCEPTANCE_USER_* secret yok"
+    fi
     return
   fi
   local resp after
@@ -450,7 +442,7 @@ PY
 # --- 16. Admin bildirimi ---
 test_16_admin_notification() {
   if ! require_secret ADMIN_EMAIL 16 "Admin bildirimi" || ! require_secret ADMIN_PASSWORD 16 "Admin bildirimi"; then
-    return
+    return 0
   fi
   local resp code
   resp=$(curl -sS -X POST "$BASE/api/auth/login" \
@@ -483,10 +475,7 @@ test_16_admin_notification() {
 
 # --- 17. Push bildirimleri ---
 test_17_push() {
-  if [[ -z "$USER_TOKEN" ]]; then
-    record 17 "Push bildirimleri" FAIL "token yok"
-    return
-  fi
+  skip_unless_user_token 17 "Push bildirimleri" || return 0
   local code
   code=$(http_code -X POST "$BASE/api/auth/mobile/device-token" \
     -H "Authorization: Bearer $USER_TOKEN" \

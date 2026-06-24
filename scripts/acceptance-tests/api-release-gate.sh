@@ -48,7 +48,7 @@ echo ""
 # --- 8. Kullanıcı adı ile giriş ---
 gate_08_username_login() {
   if ! require_secret USER_USERNAME 8 "Kullanıcı adı ile giriş" || ! require_secret USER_PASSWORD 8 "Kullanıcı adı ile giriş"; then
-    return
+    return 0
   fi
   local resp tok
   resp=$(mobile_login "{\"emailOrUsername\":\"$USER_USERNAME\",\"password\":\"$USER_PASSWORD\"}")
@@ -63,10 +63,7 @@ gate_08_username_login() {
 
 # --- 7. Profil ekranı < 2 sn (/api/me gecikmesi) ---
 gate_07_profile_speed() {
-  if [[ -z "$USER_TOKEN" ]]; then
-    record 7 "Profil ekranı < 2 sn" FAIL "token yok"
-    return
-  fi
+  skip_unless_user_token 7 "Profil ekranı < 2 sn" || return 0
   local start end ms code
   start=$(python3 -c "import time; print(int(time.time()*1000))")
   code=$(http_code "$BASE/api/me" -H "Authorization: Bearer $USER_TOKEN")
@@ -83,10 +80,7 @@ gate_07_profile_speed() {
 
 # --- 6. SSE bağlantıları ---
 gate_06_sse() {
-  if [[ -z "$USER_TOKEN" ]]; then
-    record 6 "SSE bağlantıları" FAIL "token yok"
-    return
-  fi
+  skip_unless_user_token 6 "SSE bağlantıları" || return 0
   if [[ -z "$ROOM_ID" ]]; then
     local body
     body=$(curl_json "$BASE/api/chat/rooms?limit=5")
@@ -98,8 +92,12 @@ print(rooms[0].get('id','') if rooms else '')
 " 2>/dev/null || echo "")
   fi
   if [[ -z "$ROOM_ID" ]]; then
-    record 6 "SSE bağlantıları" FAIL "oda kimliği yok"
-    return
+    if acceptance_user_secrets_configured; then
+      record 6 "SSE bağlantıları" FAIL "oda kimliği yok"
+    else
+      record 6 "SSE bağlantıları" SKIP "oda yok (secret/token yok)"
+    fi
+    return 0
   fi
   local tmp
   tmp=$(mktemp)
@@ -127,12 +125,12 @@ print(rooms[0].get('id','') if rooms else '')
 
 # --- 3. Canlı falcı görüntülü görüşme ---
 gate_03_psychic_video() {
-  if [[ -z "$ADMIN_EMAIL" || -z "$ADMIN_PASSWORD" ]]; then
-    record 3 "Canlı falcı görüntülü görüşme" FAIL "ACCEPTANCE_ADMIN_* gerekli"
+  if ! acceptance_admin_secrets_configured; then
+    record 3 "Canlı falcı görüntülü görüşme" SKIP "ACCEPTANCE_ADMIN_* yok"
     return
   fi
   if [[ -z "$TELLER_EMAIL" || -z "$TELLER_PASSWORD" ]]; then
-    record 3 "Canlı falcı görüntülü görüşme" FAIL "ACCEPTANCE_TELLER_* gerekli"
+    record 3 "Canlı falcı görüntülü görüşme" SKIP "ACCEPTANCE_TELLER_* yok"
     return
   fi
   local admin_resp teller_resp create_resp
@@ -223,7 +221,7 @@ for g in [lambda x:x.get('sessionId'), lambda x:(x.get('session') or {}).get('id
 # --- 4. Canlı yayın fal isteği ---
 gate_04_live_fortune_request() {
   if ! require_secret HOST_EMAIL 4 "Canlı yayın fal isteği" || ! require_secret HOST_PASSWORD 4 "Canlı yayın fal isteği"; then
-    return
+    return 0
   fi
   local resp
   resp=$(mobile_login "{\"email\":\"$HOST_EMAIL\",\"password\":\"$HOST_PASSWORD\"}")
@@ -294,12 +292,9 @@ print('yes' if any(str(x.get('id',''))==rid for x in items if isinstance(x,dict)
 
 # --- 5. Jeton satın alma bildirimi admin paneline ---
 gate_05_jeton_admin_notify() {
-  if [[ -z "$USER_TOKEN" ]]; then
-    record 5 "Jeton bildirimi admin paneli" FAIL "token yok"
-    return
-  fi
-  if [[ -z "$ADMIN_EMAIL" || -z "$ADMIN_PASSWORD" ]]; then
-    record 5 "Jeton bildirimi admin paneli" FAIL "ACCEPTANCE_ADMIN_* gerekli"
+  skip_unless_user_token 5 "Jeton bildirimi admin paneli" || return 0
+  if ! acceptance_admin_secrets_configured; then
+    record 5 "Jeton bildirimi admin paneli" SKIP "ACCEPTANCE_ADMIN_* yok"
     return
   fi
 

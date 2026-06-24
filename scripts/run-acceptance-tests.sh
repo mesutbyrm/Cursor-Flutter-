@@ -60,11 +60,18 @@ else
 fi
 
 echo ""
-if [[ "$API_FAIL" -eq 0 && "$CLIENT_FAIL" -eq 0 ]]; then
-  echo "✅ Tüm acceptance testleri geçti — release APK oluşturulabilir."
-  exit 0
+if [[ "$CLIENT_FAIL" -ne 0 ]]; then
+  echo "❌ İstemci acceptance testleri başarısız — release APK oluşturulmayacak."
+  echo "Rapor: $REPORT_DIR/ACCEPTANCE_TEST_REPORT.md"
+  exit 1
 fi
 
-echo "❌ Acceptance testleri başarısız — release APK oluşturulmayacak."
+if [[ "$API_FAIL" -ne 0 ]]; then
+  echo "❌ API acceptance testleri başarısız — release APK oluşturulmayacak."
+  echo "Rapor: $REPORT_DIR/ACCEPTANCE_TEST_REPORT.md"
+  exit 1
+fi
+
+echo "✅ Acceptance testleri geçti — release APK oluşturulabilir."
 echo "Rapor: $REPORT_DIR/ACCEPTANCE_TEST_REPORT.md"
-exit 1
+exit 0

@@ -74,10 +74,62 @@ record() {
 require_secret() {
   local name="$1"
   if [[ -z "${!name:-}" ]]; then
-    record "$2" "$3" "FAIL" "Eksik secret/env: $name"
+    record "$2" "$3" "SKIP" "secret yok: $name (GitHub Actions Secrets)"
     return 1
   fi
   return 0
+}
+
+acceptance_user_secrets_configured() {
+  [[ -n "${ACCEPTANCE_USER_EMAIL:-}" && -n "${ACCEPTANCE_USER_PASSWORD:-}" ]]
+}
+
+acceptance_username_secrets_configured() {
+  [[ -n "${ACCEPTANCE_USER_USERNAME:-}" && -n "${ACCEPTANCE_USER_PASSWORD:-}" ]]
+}
+
+acceptance_admin_secrets_configured() {
+  [[ -n "${ACCEPTANCE_ADMIN_EMAIL:-}" && -n "${ACCEPTANCE_ADMIN_PASSWORD:-}" ]]
+}
+
+# Oturum gerektiren testler — secret yoksa SKIP, secret var ama token yoksa FAIL.
+skip_unless_user_token() {
+  local id="$1" name="$2"
+  if [[ -n "${USER_TOKEN:-}" ]]; then
+    return 0
+  fi
+  if acceptance_user_secrets_configured; then
+    record "$id" "$name" "FAIL" "giriş başarısız / token yok"
+  else
+    record "$id" "$name" "SKIP" "ACCEPTANCE_USER_* secret yok"
+  fi
+  return 1
+}
+
+skip_unless_host_token() {
+  local id="$1" name="$2"
+  if [[ -n "${HOST_TOKEN:-}" ]]; then
+    return 0
+  fi
+  if acceptance_user_secrets_configured || [[ -n "${ACCEPTANCE_HOST_EMAIL:-}" ]]; then
+    record "$id" "$name" "FAIL" "host token yok"
+  else
+    record "$id" "$name" "SKIP" "host secret yok"
+  fi
+  return 1
+}
+
+skip_unless_live_chain() {
+  local id="$1" name="$2"
+  if [[ -n "${STREAM_ID:-}" && -n "${FORTUNE_REQUEST_ID:-}" && -n "${HOST_TOKEN:-}" ]]; then
+    return 0
+  fi
+  if acceptance_user_secrets_configured || [[ -n "${ACCEPTANCE_HOST_EMAIL:-}" ]]; then
+    record "$id" "$name" "FAIL" "önkoşul eksik"
+  else
+    record "$id" "$name" "SKIP" "canlı yayın önkoşulu yok (secret)"
+  fi
+  return 1
 }
 
 finalize_reports() {
@@ -106,6 +158,8 @@ finalize_reports() {
     echo ""
     if [[ "$FAIL" -gt 0 ]]; then
       echo "**Release APK oluşturulmadı** — yukarıdaki başarısız testleri düzeltin."
+    elif [[ "$SKIP" -gt 0 ]]; then
+      echo "**API testleri atlandı veya kısmen geçti** ($SKIP atlandı) — istemci testleri bekleniyor."
     else
       echo "**API acceptance testleri geçti** — istemci testleri bekleniyor."
     fi

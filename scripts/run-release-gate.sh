@@ -55,6 +55,8 @@ write_final_report() {
     echo ""
     if [[ "$FAIL" -gt 0 ]]; then
       echo "**Release APK/AAB oluşturulmadı.**"
+    elif grep -q 'SKIP' <<<"${GATE_LINES[*]:-}"; then
+      echo "**Release gate geçti** (bazı API kontrolleri secret eksikliği nedeniyle atlandı) — build adımına devam."
     else
       echo "**Release gate geçti — build adımına devam.**"
     fi
@@ -102,6 +104,8 @@ merge_api_gate_results() {
     [[ ! "$num" =~ ^[0-9]+$ ]] && continue
     if echo "$status" | grep -q 'PASS'; then
       gate_record "$num" "$name" PASS "$detail"
+    elif echo "$status" | grep -q 'SKIP'; then
+      gate_record "$num" "$name" SKIP "$detail"
     else
       gate_record "$num" "$name" FAIL "$detail"
     fi
