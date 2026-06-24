@@ -1,6 +1,12 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.352+356 (2026-06-24)
+
+### Düzeltme — profil fal erişim rozetleri import
+
+- `ProfileFortuneAccessBadges` AppThemeColors import yolu düzeltildi (CI analyze)
+
 ## 1.0.351+355 (2026-06-24)
 
 ### Reklam veya Jeton ile AI Fal Sistemi (§11)
