@@ -33,8 +33,9 @@ const mobileRegisterSchema = z.object({
 const mobileLoginSchema = z.object({
   emailOrUsername: z.string().min(1).optional(),
   email: z.string().min(1).optional(),
+  username: z.string().min(1).optional(),
   password: z.string().min(1),
-}).refine((d) => (d.emailOrUsername ?? d.email)?.trim(), {
+}).refine((d) => (d.emailOrUsername ?? d.email ?? d.username)?.trim(), {
   message: "E-posta veya kullanıcı adı gerekli",
 });
 
@@ -186,7 +187,10 @@ authMobileRouter.post("/mobile-login", async (req, res) => {
   if (!parsed.success) {
     return jsonError(res, 400, "E-posta/kullanıcı adı ve şifre gereklidir");
   }
-  const identifier = (parsed.data.emailOrUsername ?? parsed.data.email ?? "")
+  const identifier = (parsed.data.emailOrUsername ??
+      parsed.data.email ??
+      parsed.data.username ??
+      "")
     .trim()
     .toLowerCase();
   let user = null as Awaited<ReturnType<typeof prisma.user.findUnique>> | null;

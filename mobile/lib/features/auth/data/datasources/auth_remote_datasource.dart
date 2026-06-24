@@ -21,6 +21,7 @@ class AuthRemoteDataSource {
         : Env.useMobileAuth
             ? {
                 'emailOrUsername': identifier.trim(),
+                'username': identifier.trim(),
                 'password': password,
               }
             : {'email': identifier.trim(), 'password': password};

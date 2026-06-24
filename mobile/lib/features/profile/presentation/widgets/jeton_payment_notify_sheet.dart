@@ -135,6 +135,7 @@ class _JetonPaymentNotifySheetState
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     final raw = _amountCtrl.text.trim().replaceAll(',', '.');
     final priceTry = double.tryParse(raw);
     if (priceTry == null || priceTry <= 0) {
@@ -159,7 +160,12 @@ class _JetonPaymentNotifySheetState
             ? null
             : _receiptCtrl.text.trim(),
       );
-      await ref.read(walletRepositoryProvider).submitPaymentRequest(body);
+      await ref.read(walletRepositoryProvider).submitPaymentRequest(body).timeout(
+            const Duration(seconds: 35),
+            onTimeout: () => throw const ApiException(
+              'Ödeme bildirimi zaman aşımına uğradı. Tekrar deneyin.',
+            ),
+          );
       await _prefs.saveLastPackageId(pkg.id);
       await _prefs.saveLastPaymentMethod(_methodApi);
       ref.refreshWalletCache(force: true);

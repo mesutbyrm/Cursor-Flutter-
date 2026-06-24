@@ -176,14 +176,6 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
   String? _receiptImagePath;
   final _prefs = JetonPurchasePrefs();
 
-  @override
-  void initState() {
-    super.initState();
-    if (widget.method == _JetonPayMethod.whatsapp) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _openWhatsAppChat());
-    }
-  }
-
   String get _userLabel {
     final me = ref.read(authControllerProvider).valueOrNull;
     return me?.display ?? me?.username ?? 'Kullanıcı';
@@ -281,13 +273,18 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
                 padding: const EdgeInsets.all(16),
                 child: Text(
                   'Ödemeyi yaptıktan sonra «Ödeme Bildir» ile talebi iletin. '
-                  'Admin ekibine bildirim gider; onay sonrası jetonlar hesabınıza yansır.',
+                  'İsterseniz önce WhatsApp ile iletişime geçebilirsiniz.',
                   style: TextStyle(
                     color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
                     height: 1.4,
                     fontSize: 14,
                   ),
                 ),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => unawaited(_openWhatsAppChat()),
+                icon: const Icon(Icons.chat_rounded, color: Color(0xFF25D366)),
+                label: const Text('WhatsApp ile yaz'),
               ),
               _ReceiptPickerSection(
                 imagePath: _receiptImagePath,
@@ -450,7 +447,12 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
             senderLabel: _userLabel,
             receiptReference: receipt.isEmpty ? null : receipt,
           );
-    await ref.read(walletRepositoryProvider).submitPaymentRequest(body);
+    await ref.read(walletRepositoryProvider).submitPaymentRequest(body).timeout(
+          const Duration(seconds: 35),
+          onTimeout: () => throw const ApiException(
+            'Ödeme bildirimi zaman aşımına uğradı. İnternet bağlantınızı kontrol edip tekrar deneyin.',
+          ),
+        );
     await _prefs.saveLastPackageId(widget.package.id);
     await _prefs.saveLastPaymentMethod(_methodApi);
     ref.refreshWalletCache(force: true);
@@ -489,18 +491,15 @@ class _JetonPaymentDetailPageState extends ConsumerState<_JetonPaymentDetailPage
   }
 
   Future<void> _submitAndClose({String? extraReceiptRef}) async {
+    if (_submitting) return;
     setState(() => _submitting = true);
     try {
       await _submitRequest(extraReceiptRef: extraReceiptRef);
       if (!mounted) return;
-      if (widget.method == _JetonPayMethod.whatsapp) {
-        await _openWhatsAppChat();
-      }
-      if (!mounted) return;
       await _showWaitDialog();
       if (!mounted) return;
-      widget.onDone();
       Navigator.of(context).pop(true);
+      widget.onDone();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

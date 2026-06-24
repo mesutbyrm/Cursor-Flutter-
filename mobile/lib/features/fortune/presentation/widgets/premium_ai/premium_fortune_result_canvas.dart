@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -434,35 +432,30 @@ class _GlassPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = accent ?? Colors.white;
 
-    Widget panel = ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withValues(alpha: 0.22)),
-            gradient: LinearGradient(
-              colors: [
-                Colors.white.withValues(alpha: 0.12),
-                Colors.black.withValues(alpha: 0.35),
-              ],
-            ),
-            boxShadow: glowPulse
-                ? [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.2),
-                      blurRadius: 20,
-                      spreadRadius: 0,
-                    ),
-                  ]
-                : null,
-          ),
-          child: child,
+    Widget panel = Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+        color: const Color(0xFF1A1030).withValues(alpha: 0.88),
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withValues(alpha: 0.10),
+            const Color(0xFF0A0118).withValues(alpha: 0.92),
+          ],
         ),
+        boxShadow: glowPulse
+            ? [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.2),
+                  blurRadius: 20,
+                  spreadRadius: 0,
+                ),
+              ]
+            : null,
       ),
+      child: child,
     );
 
     if (glowPulse) {

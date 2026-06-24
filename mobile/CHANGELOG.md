@@ -1,6 +1,24 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.357+361 (2026-06-24)
+
+### Fal — sonuç ekranı + tür görselleri
+
+- Fal sonucunda **siyah ekran**: sonuç kartı ve bölüm panellerinde kalan `BackdropFilter` kaldırıldı
+- Her fal türü için **yerel kapak görselleri** (`assets/fortune/`) + çevrimdışı sanat katmanı
+- Ağ görseli yüklenene kadar tarot, kahve, katina vb. temalı kapak görünür
+
+### Giriş — kullanıcı adı
+
+- Mobil girişte `emailOrUsername` + `username` alanları birlikte gönderilir
+
+### Jeton — çift yükleme ve ödeme bildirimi
+
+- Jeton talebinde yalnızca `coins` gönderilir (`amount` kaldırıldı; 1000 istek → 2000 yükleme düzeltmesi)
+- **Ödeme Bildir** sonsuz dönme: tek API uç noktası, 35 sn zaman aşımı, navigasyon sırası düzeltildi
+- WhatsApp otomatik açılış kaldırıldı; isteğe bağlı «WhatsApp ile yaz» butonu
+
 ## 1.0.356+360 (2026-06-24)
 
 ### Güvenlik — şifre gizliliği

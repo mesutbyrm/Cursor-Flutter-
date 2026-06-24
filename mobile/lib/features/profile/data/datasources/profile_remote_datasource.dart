@@ -418,8 +418,6 @@ class WalletRemoteDataSource {
 
     final paths = <String>[
       ApiEndpoints.paymentRequests,
-      '/api/jeton/payment-request',
-      '/api/payment/request',
     ];
 
     ApiException? lastError;

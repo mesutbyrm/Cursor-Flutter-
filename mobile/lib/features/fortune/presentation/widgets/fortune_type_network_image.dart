@@ -1,8 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../data/fortune_type_images.dart';
-import 'premium_ai/fortune_image_shimmer.dart';
+import 'fortune_type_cover_image.dart';
 
 /// Fal türü vitrin görseli — shimmer, hero, premium gradient overlay.
 class FortuneTypeNetworkImage extends StatelessWidget {
@@ -27,18 +26,16 @@ class FortuneTypeNetworkImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final url = FortuneTypeImages.urlFor(slug, width: imageWidth);
     final tag = heroTag ?? FortuneTypeImages.heroTagFor(slug);
     final overlays = FortuneTypeImages.overlayColors(slug);
 
     Widget image = RepaintBoundary(
-      child: CachedNetworkImage(
-        imageUrl: url,
+      child: FortuneTypeCoverImage(
+        slug: slug,
+        accent: accent,
         fit: fit,
-        fadeInDuration: const Duration(milliseconds: 400),
-        memCacheWidth: imageWidth,
-        placeholder: (_, _) => FortuneImageShimmer(accent: accent),
-        errorWidget: (_, _, _) => FortuneImageShimmer(accent: accent),
+        imageWidth: imageWidth,
+        showOverlay: false,
       ),
     );
 

@@ -4,6 +4,14 @@ import 'package:flutter/material.dart';
 abstract final class FortuneTypeImages {
   static const _base = 'https://images.unsplash.com';
 
+  static String sceneSlug(String slug) => _sceneSlug(slug);
+
+  static String? assetPathFor(String slug) {
+    final scene = _sceneSlug(slug);
+    final file = _assetFiles[scene];
+    return file != null ? 'assets/fortune/$file' : null;
+  }
+
   static String urlFor(String slug, {int width = 1400}) {
     final scene = _sceneSlug(slug);
     final id = _photoIds[scene] ?? _photoIds['tarot']!;
@@ -42,6 +50,24 @@ abstract final class FortuneTypeImages {
     'aura': 'center',
     'el-fali': 'center',
     'ruya-tabiri': 'top',
+  };
+
+  static const _assetFiles = <String, String>{
+    'tarot': 'tarot.png',
+    'kahve-fali': 'kahve-fali.png',
+    'ask-fali': 'ask-fali.png',
+    'yildiz-haritasi': 'yildiz-haritasi.png',
+    'el-fali': 'el-fali.png',
+    'katina': 'katina.png',
+    'iskambil': 'iskambil.png',
+    'melek-kartlari': 'melek-kartlari.png',
+    'numeroloji': 'numeroloji.png',
+    'ruya-tabiri': 'ruya-tabiri.png',
+    'cin-fali': 'cin-fali.png',
+    'istihare': 'pendul.png',
+    'aura': 'runik.png',
+    'evet-hayir': 'evet-hayir.png',
+    'gunluk-fal': 'tarot.png',
   };
 
   static const _photoIds = <String, String>{
