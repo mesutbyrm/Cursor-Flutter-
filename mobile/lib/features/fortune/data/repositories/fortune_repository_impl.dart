@@ -18,6 +18,8 @@ class FortuneRepositoryImpl implements FortuneRepository {
     DateTime? birthDate,
     FortuneCloudImageInput? images,
     required String accessToken,
+    String? paymentMethod,
+    int? jetonCost,
   }) =>
       _remote.streamFortune(
         type: type,
@@ -26,6 +28,8 @@ class FortuneRepositoryImpl implements FortuneRepository {
         birthDate: birthDate,
         images: images,
         accessToken: accessToken,
+        paymentMethod: paymentMethod,
+        jetonCost: jetonCost,
       );
 
   @override
@@ -35,13 +39,17 @@ class FortuneRepositoryImpl implements FortuneRepository {
     bool? yesNoChoice,
     DateTime? birthDate,
     FortuneCloudImageInput? images,
+    String? paymentMethod,
+    int? jetonCost,
   }) => _remote.readFortune(
-    type: type,
-    userInput: userInput,
-    yesNoChoice: yesNoChoice,
-    birthDate: birthDate,
-    images: images,
-  );
+        type: type,
+        userInput: userInput,
+        yesNoChoice: yesNoChoice,
+        birthDate: birthDate,
+        images: images,
+        paymentMethod: paymentMethod,
+        jetonCost: jetonCost,
+      );
 
   @override
   Future<PagedResult<UserFortuneEntity>> history({

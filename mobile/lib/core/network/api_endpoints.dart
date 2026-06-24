@@ -448,6 +448,12 @@ abstract final class ApiEndpoints {
 
   static String fortuneReading(String slug) => '/api/fortunes/$slug';
 
+  /// AI fal erişim ayarları (admin panel — mobil salt okunur).
+  static const fortuneAccessSettings = '/api/fortune-access/settings';
+
+  /// Jeton ile fal kilidi tüketimi (opsiyonel; yoksa fal POST'unda düşülür).
+  static const fortuneAccessConsume = '/api/fortune-access/consume';
+
   static String userFortuneDetail(String fortuneId) =>
       '/api/user/fortunes/$fortuneId';
 

@@ -12,11 +12,13 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../shell/presentation/widgets/branch_quick_actions.dart';
+import '../../../fortune/presentation/providers/fortune_access_providers.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/premium/profile_admin_section.dart';
 import '../widgets/premium/profile_fortune_teller_panel.dart';
 import '../widgets/premium/profile_broadcaster_panel.dart';
 import '../widgets/premium/profile_gifts_row.dart';
+import '../widgets/premium/profile_fortune_access_badges.dart';
 import '../widgets/premium/profile_neon_header.dart';
 import '../widgets/premium/profile_premium_banner.dart';
 import '../widgets/premium/profile_settings_menu.dart';
@@ -32,6 +34,7 @@ class ProfilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
     final wallet = ref.watch(walletBalancesProvider);
+    final accessAsync = ref.watch(fortuneAccessStateProvider);
     final stats = ref.watch(profileStatsProvider);
     final top = MediaQuery.paddingOf(context).top;
 
@@ -40,6 +43,7 @@ class ProfilePage extends ConsumerWidget {
       await ref.read(walletBalancesProvider.notifier).refresh(force: true);
       ref.invalidate(profileStatsProvider);
       ref.invalidate(giftsReceivedSummaryProvider);
+      ref.invalidate(fortuneAccessStateProvider);
     }
 
     return Scaffold(
@@ -75,6 +79,10 @@ class ProfilePage extends ConsumerWidget {
               );
               final jeton = balances?.jeton ?? user.coinBalance;
               final cfc = balances?.cfc ?? 0;
+              final adCredits = accessAsync.maybeWhen(
+                data: (s) => s.adCredits,
+                orElse: () => balances?.fortuneAdCredits ?? 0,
+              );
               final membership = balances?.membership;
               final membershipDays = balances?.membershipDaysRemaining;
 
@@ -124,6 +132,11 @@ class ProfilePage extends ConsumerWidget {
                               onFollowingTap: () => context.push(
                                 '/profile/following?userId=${user.id}',
                               ),
+                            ),
+                            const SizedBox(height: 16),
+                            ProfileFortuneAccessBadges(
+                              adCredits: adCredits,
+                              jeton: jeton,
                             ),
                             const SizedBox(height: 16),
                             const ProfileBranchQuickActions(),

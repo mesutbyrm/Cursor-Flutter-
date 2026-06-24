@@ -12,6 +12,7 @@ class WalletBalances extends Equatable {
     this.withdrawalLimit = 0,
     this.membership,
     this.membershipExpiresAt,
+    this.fortuneAdCredits,
   });
 
   static const empty = WalletBalances();
@@ -24,6 +25,7 @@ class WalletBalances extends Equatable {
     int? withdrawalLimit,
     String? membership,
     String? membershipExpiresAt,
+    int? fortuneAdCredits,
   }) {
     return WalletBalances(
       jeton: jeton ?? this.jeton,
@@ -33,6 +35,7 @@ class WalletBalances extends Equatable {
       withdrawalLimit: withdrawalLimit ?? this.withdrawalLimit,
       membership: membership ?? this.membership,
       membershipExpiresAt: membershipExpiresAt ?? this.membershipExpiresAt,
+      fortuneAdCredits: fortuneAdCredits ?? this.fortuneAdCredits,
     );
   }
 
@@ -50,6 +53,14 @@ class WalletBalances extends Equatable {
     final cfc = asInt(
       pick(json, ['cfcBalance', 'cfc', 'cfc_balance', 'diamonds']),
     );
+    final rawCredits = pick(json, [
+      'fortuneAdCredits',
+      'fortune_ad_credits',
+      'adFortuneCredits',
+      'freeFortuneCredits',
+    ]);
+    final fortuneAdCredits =
+        rawCredits != null ? asInt(rawCredits) : null;
     return WalletBalances(
       jeton: jeton,
       cfc: cfc,
@@ -61,6 +72,7 @@ class WalletBalances extends Equatable {
       membership: pick(json, ['membership'])?.toString(),
       membershipExpiresAt:
           pick(json, ['membershipExpiresAt', 'membership_expires_at'])?.toString(),
+      fortuneAdCredits: fortuneAdCredits,
     );
   }
 
@@ -71,6 +83,7 @@ class WalletBalances extends Equatable {
   final int withdrawalLimit;
   final String? membership;
   final String? membershipExpiresAt;
+  final int? fortuneAdCredits;
 
   /// Kalan üyelik günü (`membershipExpiresAt` ISO).
   int? get membershipDaysRemaining {
@@ -95,6 +108,13 @@ class WalletBalances extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [jeton, cfc, role, jetonTlRate, withdrawalLimit, membership];
+  List<Object?> get props => [
+        jeton,
+        cfc,
+        role,
+        jetonTlRate,
+        withdrawalLimit,
+        membership,
+        fortuneAdCredits,
+      ];
 }

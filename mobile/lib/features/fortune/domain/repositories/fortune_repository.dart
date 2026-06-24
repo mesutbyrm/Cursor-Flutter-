@@ -52,6 +52,8 @@ abstract class FortuneRepository {
     DateTime? birthDate,
     FortuneCloudImageInput? images,
     required String accessToken,
+    String? paymentMethod,
+    int? jetonCost,
   });
 
   Future<FortuneReadingResult> readFortune({
@@ -60,6 +62,8 @@ abstract class FortuneRepository {
     bool? yesNoChoice,
     DateTime? birthDate,
     FortuneCloudImageInput? images,
+    String? paymentMethod,
+    int? jetonCost,
   });
 
   Future<PagedResult<UserFortuneEntity>> history({

@@ -13,8 +13,11 @@ import '../../domain/entities/fortune_type_entity.dart';
 import '../../domain/repositories/fortune_repository.dart';
 import '../data/fortune_image_capture_config.dart';
 import '../providers/fortune_api_providers.dart';
+import '../providers/fortune_access_providers.dart';
 import '../widgets/fortune_image_capture_panel.dart';
 import '../widgets/premium_ai/premium_fortune_open_button.dart';
+import '../../domain/fortune_access_config.dart';
+import 'fortune_access_gate.dart';
 import 'fortune_reading_service.dart';
 
 /// Fal okuma akışı — premium yükleme, yapılandırılmış AI yorum, sonuç sayfası.
@@ -42,6 +45,45 @@ class FortuneReadingCoordinator {
       images = await showFortuneImageCaptureSheet(context: context, type: type);
       if (images == null || !images.isValidFor(type)) return;
     }
+
+    final authed = ref.read(authControllerProvider).valueOrNull;
+    FortuneAccessGrant? accessGrant;
+    if (authed != null) {
+      accessGrant = await FortuneAccessGate.request(
+        context: context,
+        ref: ref,
+        type: type,
+        isAuthenticated: true,
+      );
+      if (!context.mounted) return;
+      if (accessGrant == null &&
+          ref.read(fortuneAccessServiceProvider).isGateRequired(
+                type,
+                isAuthenticated: true,
+              )) {
+        return;
+      }
+      if (accessGrant != null) {
+        try {
+          await ref.read(fortuneAccessServiceProvider).consumeGrant(
+                type: type,
+                grant: accessGrant,
+              );
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(ApiException.userMessage(e))),
+            );
+          }
+          return;
+        }
+      }
+    }
+
+    final paymentMethod = accessGrant != null
+        ? ref.read(fortuneAccessServiceProvider).paymentMethodFor(accessGrant)
+        : null;
+    final jetonCost = accessGrant?.jetonCost;
 
     final resolvedYesNo = type.kind == FortuneSessionKind.yesNo
         ? (yesNoChoice ?? _rng.nextBool())
@@ -80,7 +122,6 @@ class FortuneReadingCoordinator {
     var usedRemote = false;
 
     try {
-      final authed = ref.read(authControllerProvider).valueOrNull;
       if (authed != null) {
         final accessToken = await ref.read(tokenStorageProvider).readAccess();
         var streamed = false;
@@ -96,6 +137,8 @@ class FortuneReadingCoordinator {
                       birthDate: resolvedBirth,
                       images: cloudImages,
                       accessToken: accessToken,
+                      paymentMethod: paymentMethod,
+                      jetonCost: jetonCost,
                     )) {
               text = update.text;
               fortuneId = update.fortuneId ?? fortuneId;
@@ -122,6 +165,8 @@ class FortuneReadingCoordinator {
                 yesNoChoice: resolvedYesNo,
                 birthDate: resolvedBirth,
                 images: cloudImages,
+                paymentMethod: paymentMethod,
+                jetonCost: jetonCost,
               );
           usedRemote = true;
           result = _service.enrichFromApiText(
@@ -193,7 +238,6 @@ class FortuneReadingCoordinator {
     }
 
     var finalResult = result;
-    final authed = ref.read(authControllerProvider).valueOrNull;
     if (authed != null) {
       try {
         final saved = finalResult.recordId != null && usedRemote
