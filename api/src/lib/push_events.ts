@@ -72,7 +72,7 @@ export async function notifyStaffPaymentPending(input: {
 
   // Admin e-posta hesabı staff listesinde değilse uygulama içi bildirim de gönder.
   const alertUser = await prisma.user.findUnique({
-    where: { email: PAYMENT_ALERT_EMAIL },
+    where: { email: PAYMENT_FALLBACK_EMAIL },
     select: { id: true },
   });
   if (alertUser) {
