@@ -1,6 +1,27 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.356+360 (2026-06-24)
+
+### Güvenlik — şifre gizliliği
+
+- Giriş / kayıt ekranlarında **otomatik şifre doldurma kapalı** (web’den senkron şifre önerisi yok)
+- Android **FLAG_SECURE**: şifre ekranlarında ekran görüntüsü ve son uygulamalar önizlemesi engeli
+- Şifre alanlarında klavye öğrenimi ve öneri kapalı; giriş sonrası alan temizlenir
+- Hesap güvenliği sayfası güvenli mod + bilgilendirme metni
+- Oturum listesinde şifre alanı asla kullanılmaz
+
+## 1.0.355+359 (2026-06-24)
+
+### Fal — siyah ekran düzeltmesi + tür görselleri
+
+- Tarot ve diğer fallarda **Falını Aç** sonrası siyah ekran: çift `Navigator.pop` ve şeffaf `Scaffold` düzeltildi
+- Inline sonuç artık güvenli `Scaffold` + tek yükleme diyaloğu kapatma
+- `BackdropFilter` katmanı kaldırıldı (Android gri/siyah ekran)
+- Açılış animasyonu 2.5sn → 1.1sn; Hero çakışması giderildi
+- Tür özel kapak görselleri: Tarot kartları, kahve fincanı, Katina, melek kartları vb.
+- Sonuç metni anında görünür (ilk bölüm gecikmesiz)
+
 ## 1.0.354+358 (2026-06-24)
 
 ### CI / lint

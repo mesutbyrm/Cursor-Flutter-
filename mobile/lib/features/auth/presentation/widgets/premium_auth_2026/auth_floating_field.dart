@@ -5,6 +5,7 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import '../../../../../core/ui/premium_2026/premium_motion.dart';
 
 /// Cam yüzey üzerinde floating label + neon focus.
+/// Şifre alanlarında otomatik doldurma ve klavye öğrenimi kapalıdır.
 class AuthFloatingField extends StatefulWidget {
   const AuthFloatingField({
     super.key,
@@ -40,6 +41,8 @@ class AuthFloatingField extends StatefulWidget {
 class _AuthFloatingFieldState extends State<AuthFloatingField> {
   late final FocusNode _focus;
   var _focused = false;
+
+  bool get _isPasswordField => widget.obscureText;
 
   @override
   void initState() {
@@ -83,9 +86,12 @@ class _AuthFloatingFieldState extends State<AuthFloatingField> {
       child: TextFormField(
         controller: widget.controller,
         focusNode: _focus,
-        obscureText: widget.obscureText,
+        obscureText: _isPasswordField,
+        enableSuggestions: !_isPasswordField,
+        autocorrect: !_isPasswordField,
+        enableIMEPersonalizedLearning: !_isPasswordField,
+        autofillHints: _isPasswordField ? const <String>[] : widget.autofillHints,
         keyboardType: widget.keyboardType,
-        autofillHints: widget.autofillHints,
         textCapitalization: widget.textCapitalization,
         validator: widget.validator,
         onChanged: widget.onChanged,

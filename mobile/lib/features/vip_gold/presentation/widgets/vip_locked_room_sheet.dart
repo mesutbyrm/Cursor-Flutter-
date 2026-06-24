@@ -111,6 +111,10 @@ class _LockedSheetState extends State<_LockedSheet> {
                 TextField(
                   controller: _ctrl,
                   obscureText: true,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  enableIMEPersonalizedLearning: false,
+                  autofillHints: const <String>[],
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: 'Oda şifresi',

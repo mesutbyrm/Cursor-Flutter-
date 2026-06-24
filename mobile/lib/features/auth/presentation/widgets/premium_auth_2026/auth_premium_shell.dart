@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/security/secure_screen.dart';
 import 'auth_plain_shell.dart';
 
 /// Giriş / kayıt — tüm platformlarda opak kabuk (blur/cam Android'de gri ekran yapıyordu).
@@ -23,13 +24,15 @@ class AuthPremiumShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AuthPlainShell(
-      showBack: showBack,
-      onBack: onBack,
-      heroLogo: heroLogo,
-      topTitle: topTitle,
-      topSubtitle: topSubtitle,
-      child: child,
+    return SecureScreen(
+      child: AuthPlainShell(
+        showBack: showBack,
+        onBack: onBack,
+        heroLogo: heroLogo,
+        topTitle: topTitle,
+        topSubtitle: topSubtitle,
+        child: child,
+      ),
     );
   }
 }

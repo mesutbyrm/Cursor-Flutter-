@@ -41,6 +41,6 @@ extension VoiceRoomAccess on VoiceRoomEntity {
         t.contains('private');
   }
 
-  /// Demo şifre — API yokken yerel doğrulama.
+  /// Demo şifre — API yokken yerel doğrulama (istemcide gösterilmez).
   String get demoPassword => 'gold2026';
 }

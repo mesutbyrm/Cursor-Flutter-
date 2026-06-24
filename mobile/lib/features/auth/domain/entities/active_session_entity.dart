@@ -27,9 +27,14 @@ class ActiveSessionEntity extends Equatable {
       return DateTime.now();
     }
 
+    // API'den şifre alanı gelirse asla kullanılmaz / gösterilmez.
+    final label = json['deviceLabel']?.toString() ??
+        json['deviceName']?.toString() ??
+        'Bilinmeyen cihaz';
+
     return ActiveSessionEntity(
       id: json['id']?.toString() ?? '',
-      deviceLabel: json['deviceLabel']?.toString() ?? 'Bilinmeyen cihaz',
+      deviceLabel: label,
       devicePlatform: json['devicePlatform']?.toString() ?? 'unknown',
       lastSeenAt: parseDate(json['lastSeenAt']),
       createdAt: parseDate(json['createdAt']),

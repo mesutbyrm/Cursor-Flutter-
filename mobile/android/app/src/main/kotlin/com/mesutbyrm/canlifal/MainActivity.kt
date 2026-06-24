@@ -1,5 +1,6 @@
 package com.mesutbyrm.canlifal
 
+import android.view.WindowManager
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import com.ryanheise.audioservice.AudioServiceActivity
@@ -21,6 +22,25 @@ class MainActivity : AudioServiceActivity() {
                     ExoPlayerProbe.probe(this, url) { probeResult ->
                         result.success(probeResult)
                     }
+                }
+                else -> result.notImplemented()
+            }
+        }
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "com.mesutbyrm.canlifal/security",
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "setSecure" -> {
+                    val enabled = call.argument<Boolean>("enabled") ?: false
+                    runOnUiThread {
+                        if (enabled) {
+                            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                        } else {
+                            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                        }
+                    }
+                    result.success(null)
                 }
                 else -> result.notImplemented()
             }

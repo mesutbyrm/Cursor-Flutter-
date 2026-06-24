@@ -108,7 +108,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               hint: '••••••••',
               prefixIcon: Icons.lock_outline_rounded,
               obscureText: true,
-              autofillHints: const [AutofillHints.password],
               validator: (v) =>
                   v != null && v.length >= 6 ? null : 'En az 6 karakter',
             ),
@@ -134,6 +133,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             _identifier.text.trim(),
                             _password.text,
                           );
+                      _password.clear();
                     },
             ),
             const SizedBox(height: 6),
