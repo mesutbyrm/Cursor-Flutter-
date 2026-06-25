@@ -84,6 +84,7 @@ class LiveStreamExtrasDataSource {
         'targetStreamId': ?targetStreamId,
         'opponentStreamId': ?targetStreamId,
         'battleId': ?battleId,
+        if (action == 'create') 'duration': duration,
       },
     );
     return _unwrapBattle(res.data);

@@ -199,6 +199,7 @@ class PkBattleRemoteDataSource {
     required String action,
     String? battleId,
     String? opponentStreamId,
+    int? duration,
   }) async {
     final res = await _dio.safePost<dynamic>(
       ApiEndpoints.videoStreamPkBattle(streamId),
@@ -206,6 +207,7 @@ class PkBattleRemoteDataSource {
         'action': action,
         'battleId': ?battleId,
         'opponentStreamId': ?opponentStreamId,
+        if (action == 'create' && duration != null) 'duration': duration,
       },
     );
     return _parseBattle(res.data);

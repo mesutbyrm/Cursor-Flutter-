@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_stream_entity.dart';
+import '../../../voice_hub/domain/pk/pk_duration_options.dart';
 import '../../../voice_hub/presentation/providers/pk_battle_remote_provider.dart';
+import '../../../voice_hub/presentation/widgets/premium_2026/pk/pk_duration_picker.dart';
 import '../providers/live_providers.dart';
 
 /// Canlı yayın PK daveti — karşı yayıncı seçimi.
@@ -19,6 +21,7 @@ class LivePkInvitePage extends ConsumerStatefulWidget {
 
 class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
   var _loading = false;
+  var _durationSeconds = pkDefaultDurationSeconds;
   String? _error;
 
   String? get _streamId => widget.session.streamId?.trim();
@@ -51,6 +54,7 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
       final battle = await ref.read(pkBattleRemoteProvider.notifier).inviteStream(
             streamId: streamId,
             opponentStreamId: opponent.id,
+            durationSeconds: _durationSeconds,
           );
       if (!mounted) return;
       if (battle == null) {
@@ -131,10 +135,16 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
             }
             return ListView.separated(
               padding: const EdgeInsets.all(16),
-              itemCount: others.length,
+              itemCount: others.length + 1,
               separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (context, i) {
-                final s = others[i];
+                if (i == 0) {
+                  return PkDurationPicker(
+                    selectedSeconds: _durationSeconds,
+                    onChanged: (s) => setState(() => _durationSeconds = s),
+                  );
+                }
+                final s = others[i - 1];
                 return ListTile(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

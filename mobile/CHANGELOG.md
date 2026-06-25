@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.358+362 (2026-06-25)
+
+### Premium 2026 — PK Savaşları (canlı yayın + sesli sohbet)
+
+- TikTok tarzı PK: yayıncıdan yayıncıya davet, kabulde ekran ikiye bölünür
+- PK süresi seçimi: **1 / 3 / 5 / 10 dakika** (sesli oda + canlı yayın davet ekranı)
+- Her iki tarafın aldığı jeton ayrı skor çubuklarında gösterilir
+- Süre bitince kazanan otomatik hesaplanır (sunucu + yerel zamanlayıcı)
+- Kaybeden animasyonu: grileşme, sarsılma ve «KAYBETTİ» damgası
+- PK sırasında hediye patlaması ve tam ekran hediye animasyonları (canlı PK sayfası)
+- Canlı PK split-screen: Agora önizleme + rakip küçük resim
+
 ## 1.0.357+361 (2026-06-24)
 
 ### Fal — sonuç ekranı + tür görselleri

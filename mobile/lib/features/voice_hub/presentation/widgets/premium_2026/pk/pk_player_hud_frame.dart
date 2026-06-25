@@ -110,7 +110,7 @@ class PkPlayerHudFrame extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.star_rounded,
+                  const Icon(Icons.monetization_on_rounded,
                       size: 14, color: VoiceRoomTokens.gold),
                   const SizedBox(width: 4),
                   Text(
@@ -118,6 +118,15 @@ class PkPlayerHudFrame extends StatelessWidget {
                     style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Jeton',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white.withValues(alpha: 0.7),
                     ),
                   ),
                 ],

@@ -7,6 +7,7 @@ import '../../../../domain/pk/pk_battle_mode.dart';
 import '../../../../domain/pk/pk_battle_state.dart';
 import '../../../theme/voice_room_tokens.dart';
 import 'pk_animated_score_bar.dart';
+import 'pk_loser_side_overlay.dart';
 
 /// Kazanan animasyonu — konfeti, taç, neon burst.
 class PkWinnerCelebration extends StatelessWidget {
@@ -48,6 +49,16 @@ class PkWinnerCelebration extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
+          if (winner == PkBattleWinner.left)
+            const PkLoserSideOverlay(
+              visible: true,
+              alignment: Alignment.centerRight,
+            ),
+          if (winner == PkBattleWinner.right)
+            const PkLoserSideOverlay(
+              visible: true,
+              alignment: Alignment.centerLeft,
+            ),
           Container(color: Colors.black.withValues(alpha: 0.72)),
           CustomPaint(
             painter: _ConfettiPainter(seed: state.reactionBurst),

@@ -30,6 +30,7 @@ import 'audio/voice_room_audio_coordinator.dart';
 import 'providers/chat_room_providers.dart';
 import '../music/presentation/widgets/music_search_picker_sheet.dart';
 import 'providers/pk_battle_remote_provider.dart';
+import '../domain/pk/pk_duration_options.dart';
 import 'utils/voice_room_image_prefetch.dart';
 import 'providers/voice_gift_providers.dart';
 import 'providers/voice_room_audio_providers.dart';
@@ -523,14 +524,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
   Future<void> _showIncomingPkInvite(String battleId) async {
     if (!mounted) return;
+    final battle = ref.read(pkBattleRemoteProvider);
+    final durationLabel = battle != null
+        ? pkDurationBySeconds(battle.durationSeconds).label
+        : '3 dakika';
     final accept = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1A0F2E),
         title: const Text('PK Daveti', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'Bir oda size PK daveti gönderdi. Kabul ediyor musunuz?',
-          style: TextStyle(color: Colors.white70),
+        content: Text(
+          'Bir oda size PK daveti gönderdi.\nSüre: $durationLabel\n\nKabul ediyor musunuz?',
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(

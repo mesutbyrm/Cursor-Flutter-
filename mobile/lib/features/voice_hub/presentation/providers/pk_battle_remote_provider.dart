@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../data/datasources/pk_battle_remote_datasource.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
+import '../../domain/pk/pk_duration_options.dart';
 import 'pk_battle_provider.dart';
 
 final pkBattleRemoteDataSourceProvider = Provider<PkBattleRemoteDataSource>((ref) {
@@ -90,11 +91,13 @@ class PkBattleRemoteController extends Notifier<PkBattleRemote?> {
   Future<PkBattleRemote?> inviteStream({
     required String streamId,
     required String opponentStreamId,
+    int durationSeconds = pkDefaultDurationSeconds,
   }) async {
     final battle = await _api.streamPkAction(
       streamId: streamId,
       action: 'create',
       opponentStreamId: opponentStreamId,
+      duration: durationSeconds,
     );
     if (battle != null) _apply(battle, 'pk:invite');
     return battle;

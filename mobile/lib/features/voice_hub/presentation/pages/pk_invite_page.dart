@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
+import '../../domain/pk/pk_duration_options.dart';
 import '../providers/pk_battle_remote_provider.dart';
+import '../widgets/premium_2026/pk/pk_duration_picker.dart';
 
 /// PK daveti — karşı oda seçimi.
 class PkInvitePage extends ConsumerStatefulWidget {
@@ -20,6 +22,7 @@ class PkInvitePage extends ConsumerStatefulWidget {
 class _PkInvitePageState extends ConsumerState<PkInvitePage> {
   var _loading = false;
   var _syncing = true;
+  var _durationSeconds = pkDefaultDurationSeconds;
   String? _error;
 
   String get _roomKey =>
@@ -93,6 +96,7 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
         alternateRoomId: _altRoomKey,
         opponentRoomId: oppKey,
         alternateOpponentRoomId: opponent.slug != oppKey ? opponent.slug : null,
+        durationSeconds: _durationSeconds,
       );
       if (!mounted) return;
       if (battle == null) {
@@ -162,6 +166,14 @@ class _PkInvitePageState extends ConsumerState<PkInvitePage> {
 
           return Column(
             children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: PkDurationPicker(
+                  selectedSeconds: _durationSeconds,
+                  onChanged: (s) => setState(() => _durationSeconds = s),
+                ),
+              ),
+              const SizedBox(height: 12),
               if (_syncing)
                 const LinearProgressIndicator(minHeight: 2),
               if (_error != null)

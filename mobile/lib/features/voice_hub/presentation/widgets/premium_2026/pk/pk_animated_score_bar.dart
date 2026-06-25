@@ -60,9 +60,23 @@ class PkAnimatedScoreBar extends StatelessWidget {
                           ),
                           alignment: Alignment.centerLeft,
                           padding: const EdgeInsets.only(left: 12),
-                          child: _ScoreLabel(
-                            value: state.left.total,
-                            align: TextAlign.left,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _ScoreLabel(
+                                value: state.left.total,
+                                align: TextAlign.left,
+                              ),
+                              Text(
+                                'Jeton',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white.withValues(alpha: 0.65),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         Expanded(
@@ -80,9 +94,23 @@ class PkAnimatedScoreBar extends StatelessWidget {
                             ),
                             alignment: Alignment.centerRight,
                             padding: const EdgeInsets.only(right: 12),
-                            child: _ScoreLabel(
-                              value: state.right.total,
-                              align: TextAlign.right,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                _ScoreLabel(
+                                  value: state.right.total,
+                                  align: TextAlign.right,
+                                ),
+                                Text(
+                                  'Jeton',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white.withValues(alpha: 0.65),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

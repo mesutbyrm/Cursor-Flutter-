@@ -39,13 +39,26 @@ class LivePkScoreBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(
-                '$leftScore',
-                style: const TextStyle(
-                  color: AppColors.accentPink,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$leftScore',
+                    style: const TextStyle(
+                      color: AppColors.accentPink,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const Text(
+                    'Jeton',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
               const Spacer(),
               Text(
@@ -58,13 +71,26 @@ class LivePkScoreBar extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Text(
-                '$rightScore',
-                style: const TextStyle(
-                  color: AppColors.accentCyan,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$rightScore',
+                    style: const TextStyle(
+                      color: AppColors.accentCyan,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const Text(
+                    'Jeton',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
