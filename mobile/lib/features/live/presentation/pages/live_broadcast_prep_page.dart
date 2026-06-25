@@ -193,7 +193,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
                 title: _title.text.trim(),
                 description: _args.subtitle ?? _args.category,
                 category: apiCategory,
-                tags: [_args.category],
+                tags: [_args.fortuneTypeSlug ?? _args.category],
                 thumbnailUrl: user.avatarUrl,
                 isPrivate: false,
                 isImageMode: false,
@@ -228,7 +228,7 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
       final session = LiveBroadcastSession.demoHost(
         title: _title.text.trim(),
         category: _args.category,
-        tags: [_args.category],
+        tags: [_args.fortuneTypeSlug ?? _args.category],
         description: _args.subtitle ?? '',
         streamerName: user.display,
         streamerHandle: user.username,

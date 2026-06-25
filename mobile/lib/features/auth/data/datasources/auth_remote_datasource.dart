@@ -16,15 +16,17 @@ class AuthRemoteDataSource {
   }) async {
     final path =
         Env.useMobileAuth ? ApiEndpoints.authMobileLogin : ApiEndpoints.authLogin;
-    final body = identifier.contains('@')
-        ? {'email': identifier.trim(), 'password': password}
+    final trimmed = identifier.trim();
+    final body = trimmed.contains('@')
+        ? {'email': trimmed, 'password': password}
         : Env.useMobileAuth
             ? {
-                'emailOrUsername': identifier.trim(),
-                'username': identifier.trim(),
+                'emailOrUsername': trimmed,
+                if (!RegExp(r'^\+?[\d\s\-()]{10,}$').hasMatch(trimmed))
+                  'username': trimmed,
                 'password': password,
               }
-            : {'email': identifier.trim(), 'password': password};
+            : {'email': trimmed, 'password': password};
     final res = await _dio.safePost<Map<String, dynamic>>(
       path,
       data: body,

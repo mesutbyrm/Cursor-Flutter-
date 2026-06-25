@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../fortune/data/services/rewarded_ad_service.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
@@ -181,6 +182,14 @@ class GrowthHubPage extends ConsumerWidget {
 
   static Future<void> _claimAdReward(BuildContext context, WidgetRef ref) async {
     try {
+      final watched = await RewardedAdService.instance.show();
+      if (!watched) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Reklam tamamlanmadı; ödül verilmedi.')),
+        );
+        return;
+      }
       final reward = await ref.read(watchAdCreditProvider.future);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

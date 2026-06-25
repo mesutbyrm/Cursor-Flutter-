@@ -69,7 +69,6 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
   LiveRoomState build(String streamId) {
     ref.onDispose(() {
       _poll?.cancel();
-      ref.read(liveGiftSocketBridgeProvider).disconnect();
       ref.read(videoStreamSseServiceProvider).disconnect();
       unawaited(ref.read(liveRemoteProvider).leaveVideoStream(streamId));
     });
@@ -173,23 +172,6 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
         if (notice != null) {
           state = state.copyWith(fortuneAnsweredNotice: notice);
         }
-      },
-    );
-
-    ref.read(liveGiftSocketBridgeProvider).connect(
-      streamId: streamId,
-      onEvent: (ev) => ref.read(liveGiftRealtimeProvider).publishRemote(ev),
-      onChat: (msg) {
-        if (!state.sseConnected) _mergeMessages([msg]);
-      },
-      onViewerCount: (count) {
-        if (!state.sseConnected && count >= 0) {
-          state = state.copyWith(viewerCount: count);
-        }
-      },
-      onStreamEnded: () => state = state.copyWith(streamEnded: true),
-      onPkBattle: (battle) {
-        ref.read(liveVideoPkProvider(streamId).notifier).applyRemoteBattle(battle);
       },
     );
   }

@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.359+363 (2026-06-25)
+
+### Premium 2026 spec (PK hariç)
+
+- **Canlı yayın:** Socket.IO kaldırıldı — hediye/sohbet/izleyici yalnızca SSE
+- **İzleyici listesi:** Profil, VIP, moderatör, yayıncı rozetleri; profile git
+- **Beğeni:** Otomatik ambient kalpler kaldırıldı; API spam koruması (900ms)
+- **Fal yayını:** Tür slug eşlemesi (`coffee`, `tarot`…); Fal İste yalnızca fal yayınında
+- **Sesli oda listesi:** 25 sn'de bir otomatik yenileme
+- **Giriş:** Telefon / e-posta / kullanıcı adı (`emailOrUsername`)
+- **Reklam ödülü:** Growth hub'da önce Rewarded Video, sonra API kredisi
+
 ## 1.0.358+362 (2026-06-25)
 
 ### Premium 2026 — PK Savaşları (canlı yayın + sesli sohbet)

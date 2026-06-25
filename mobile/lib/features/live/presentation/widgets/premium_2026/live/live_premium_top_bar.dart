@@ -21,6 +21,7 @@ class LivePremiumTopBar extends StatelessWidget {
     required this.onClose,
     this.onBack,
     this.onProfileTap,
+    this.onViewersTap,
   });
 
   final LiveBroadcastSession session;
@@ -31,6 +32,7 @@ class LivePremiumTopBar extends StatelessWidget {
   final VoidCallback onClose;
   final VoidCallback? onBack;
   final VoidCallback? onProfileTap;
+  final VoidCallback? onViewersTap;
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +106,11 @@ class LivePremiumTopBar extends StatelessWidget {
               const SizedBox(width: 8),
               const LiveBadge(compact: true),
               const SizedBox(width: 6),
-              _StatPill(icon: Icons.visibility_rounded, label: _fmt(viewers)),
+              _StatPill(
+                icon: Icons.visibility_rounded,
+                label: _fmt(viewers),
+                onTap: onViewersTap,
+              ),
               const SizedBox(width: 4),
               _StatPill(icon: Icons.schedule_rounded, label: time),
               IconButton(
@@ -164,14 +170,19 @@ class _FollowButton extends StatelessWidget {
 }
 
 class _StatPill extends StatelessWidget {
-  const _StatPill({required this.icon, required this.label});
+  const _StatPill({
+    required this.icon,
+    required this.label,
+    this.onTap,
+  });
 
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final pill = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
@@ -189,5 +200,7 @@ class _StatPill extends StatelessWidget {
         ],
       ),
     );
+    if (onTap == null) return pill;
+    return GestureDetector(onTap: onTap, child: pill);
   }
 }

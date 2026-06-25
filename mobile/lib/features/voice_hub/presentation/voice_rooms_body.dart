@@ -1,4 +1,6 @@
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,8 +32,25 @@ class VoiceRoomsBody extends ConsumerStatefulWidget {
 
 class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     with AutomaticKeepAliveClientMixin {
+  Timer? _roomListRefresh;
+
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _roomListRefresh = Timer.periodic(const Duration(seconds: 25), (_) {
+      if (!mounted) return;
+      ref.invalidate(voiceRoomsProvider);
+    });
+  }
+
+  @override
+  void dispose() {
+    _roomListRefresh?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

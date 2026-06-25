@@ -8,6 +8,8 @@ class PsychicBroadcastSideRail extends StatelessWidget {
     required this.viewerCount,
     required this.onGift,
     required this.onFortuneRequest,
+    this.showFortuneRequest = true,
+    this.onViewersTap,
     this.onNickname,
     this.onToggleAudio,
     this.onExit,
@@ -17,6 +19,8 @@ class PsychicBroadcastSideRail extends StatelessWidget {
   final int viewerCount;
   final VoidCallback onGift;
   final VoidCallback onFortuneRequest;
+  final bool showFortuneRequest;
+  final VoidCallback? onViewersTap;
   final VoidCallback? onNickname;
   final VoidCallback? onToggleAudio;
   final VoidCallback? onExit;
@@ -31,6 +35,7 @@ class PsychicBroadcastSideRail extends StatelessWidget {
           icon: Icons.people_alt_rounded,
           label: '$viewerCount',
           gradient: const [Color(0xFF7C4DFF), Color(0xFF536DFE)],
+          onTap: onViewersTap,
         ),
         const SizedBox(height: 12),
         _RailBtn(
@@ -39,13 +44,15 @@ class PsychicBroadcastSideRail extends StatelessWidget {
           gradient: const [Color(0xFFFF9800), Color(0xFFFFB300)],
           onTap: onGift,
         ),
-        const SizedBox(height: 12),
-        _RailBtn(
-          icon: Icons.coffee_rounded,
-          label: 'Fal İste',
-          gradient: const [Color(0xFF8D6E63), Color(0xFFA1887F)],
-          onTap: onFortuneRequest,
-        ),
+        if (showFortuneRequest) ...[
+          const SizedBox(height: 12),
+          _RailBtn(
+            icon: Icons.coffee_rounded,
+            label: 'Fal İste',
+            gradient: const [Color(0xFF8D6E63), Color(0xFFA1887F)],
+            onTap: onFortuneRequest,
+          ),
+        ],
         const SizedBox(height: 12),
         _RailBtn(
           icon: Icons.person_outline_rounded,

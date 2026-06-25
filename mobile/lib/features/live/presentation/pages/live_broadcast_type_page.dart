@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/live_broadcast_prep_args.dart';
+import '../../domain/utils/live_fortune_type_slug.dart';
 
 /// Yayın türü seçimi — fal kategorileri + sohbet/müzik.
 class LiveBroadcastTypePage extends StatelessWidget {
@@ -34,6 +35,7 @@ class LiveBroadcastTypePage extends StatelessWidget {
         category: category,
         icon: icon,
         isFortune: fortune,
+        fortuneTypeSlug: fortune ? liveFortuneCategoryToSlug(category) : null,
         subtitle: fortune ? 'Canlı fal yayını' : 'Canlı yayın',
       ),
     );

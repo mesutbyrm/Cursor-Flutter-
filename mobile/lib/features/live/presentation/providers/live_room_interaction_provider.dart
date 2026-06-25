@@ -47,6 +47,9 @@ class LiveRoomInteractionState {
 
 class LiveRoomInteractionNotifier
     extends AutoDisposeFamilyNotifier<LiveRoomInteractionState, String> {
+  DateTime? _lastLikeSync;
+  static const _likeCooldown = Duration(milliseconds: 900);
+
   @override
   LiveRoomInteractionState build(String streamId) => const LiveRoomInteractionState();
 
@@ -56,6 +59,7 @@ class LiveRoomInteractionNotifier
 
   /// Yalnızca kullanıcı çift dokunuşu — sunucuya beğeni gönderir.
   void burstHearts({int likes = 1}) {
+    if (!_canSyncLike()) return;
     state = state.copyWith(
       likeCount: state.likeCount + likes,
       heartBurstToken: state.heartBurstToken + 1,
@@ -80,6 +84,7 @@ class LiveRoomInteractionNotifier
   }
 
   void triggerSuperLike() {
+    if (!_canSyncLike()) return;
     state = state.copyWith(
       likeCount: state.likeCount + 5,
       superLikeToken: state.superLikeToken + 1,
@@ -120,6 +125,16 @@ class LiveRoomInteractionNotifier
   void setFollowing(bool v) => state = state.copyWith(following: v);
 
   void setFollowLoading(bool v) => state = state.copyWith(followLoading: v);
+
+  bool _canSyncLike() {
+    final now = DateTime.now();
+    if (_lastLikeSync != null &&
+        now.difference(_lastLikeSync!) < _likeCooldown) {
+      return false;
+    }
+    _lastLikeSync = now;
+    return true;
+  }
 }
 
 final liveRoomInteractionProvider = NotifierProvider.autoDispose

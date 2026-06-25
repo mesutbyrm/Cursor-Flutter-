@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 
-/// Çift dokunuş kalpleri + sürekli yüzen tepkiler.
+/// Çift dokunuş kalpleri — yalnızca gerçek beğeni dokunuşunda animasyon.
 class LiveFloatingHeartsOverlay extends StatefulWidget {
   const LiveFloatingHeartsOverlay({
     super.key,
@@ -32,7 +32,6 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
   late AnimationController _ctrl;
   final _hearts = <_HeartParticle>[];
   final _rand = Random();
-  Timer? _ambient;
   Offset? _lastTap;
   int _tapCount = 0;
   Timer? _tapReset;
@@ -44,10 +43,6 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
       vsync: this,
       duration: const Duration(seconds: 4),
     )..repeat();
-    _ambient = Timer.periodic(const Duration(milliseconds: 1400), (_) {
-      if (!widget.enabled || !mounted) return;
-      _spawn(count: 1);
-    });
   }
 
   @override
@@ -92,7 +87,6 @@ class LiveFloatingHeartsOverlayState extends State<LiveFloatingHeartsOverlay>
 
   @override
   void dispose() {
-    _ambient?.cancel();
     _tapReset?.cancel();
     _ctrl.dispose();
     super.dispose();
