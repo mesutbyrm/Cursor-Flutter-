@@ -16,11 +16,23 @@ HOST_PASSWORD="${ACCEPTANCE_HOST_PASSWORD:-$USER_PASSWORD}"
 VIEWER_EMAIL="${ACCEPTANCE_VIEWER_EMAIL:-$USER_EMAIL}"
 VIEWER_PASSWORD="${ACCEPTANCE_VIEWER_PASSWORD:-$USER_PASSWORD}"
 ADMIN_EMAIL="${ACCEPTANCE_ADMIN_EMAIL:-}"
+ADMIN_USERNAME="${ACCEPTANCE_ADMIN_USERNAME:-}"
 ADMIN_PASSWORD="${ACCEPTANCE_ADMIN_PASSWORD:-}"
 TELLER_EMAIL="${ACCEPTANCE_TELLER_EMAIL:-}"
+TELLER_USERNAME="${ACCEPTANCE_TELLER_USERNAME:-}"
 TELLER_PASSWORD="${ACCEPTANCE_TELLER_PASSWORD:-}"
 TELLER_ID="${ACCEPTANCE_TELLER_ID:-}"
 TELLER_USER_ID="${ACCEPTANCE_TELLER_USER_ID:-}"
+
+# Secret değerlerindeki boşlukları temizle.
+for _var in USER_EMAIL USER_USERNAME USER_PASSWORD HOST_EMAIL HOST_PASSWORD \
+  VIEWER_EMAIL VIEWER_PASSWORD ADMIN_EMAIL ADMIN_USERNAME ADMIN_PASSWORD \
+  TELLER_EMAIL TELLER_USERNAME TELLER_PASSWORD TELLER_ID TELLER_USER_ID; do
+  if [[ -n "${!_var:-}" ]]; then
+    printf -v "$_var" '%s' "${!_var#"${!_var%%[![:space:]]*}"}"
+    printf -v "$_var" '%s' "${!_var%"${!_var##*[![:space:]]}"}"
+  fi
+done
 
 USER_TOKEN=""
 HOST_TOKEN=""
@@ -45,19 +57,36 @@ echo "=== API Release Gate (madde 3–8) ==="
 echo "Base: $BASE"
 echo ""
 
+# E-posta ile oturum (diğer testler için); madde 8 kullanıcı adını ayrı doğrular.
+bootstrap_user_token || true
+
 # --- 8. Kullanıcı adı ile giriş ---
 gate_08_username_login() {
-  if ! require_secret USER_USERNAME 8 "Kullanıcı adı ile giriş" || ! require_secret USER_PASSWORD 8 "Kullanıcı adı ile giriş"; then
+  if ! require_secret USER_PASSWORD 8 "Kullanıcı adı ile giriş"; then
     return 0
   fi
-  local resp tok
-  resp=$(mobile_login "{\"emailOrUsername\":\"$USER_USERNAME\",\"password\":\"$USER_PASSWORD\"}")
+  local try_username="$USER_USERNAME" resp tok err me
+  if [[ -z "$try_username" ]]; then
+    bootstrap_user_token || true
+    if [[ -n "${USER_TOKEN:-}" ]]; then
+      me=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $USER_TOKEN")
+      try_username=$(printf '%s' "$me" | json_field "['username']")
+      [[ -z "$try_username" ]] && try_username=$(printf '%s' "$me" | json_field "['user']['username']")
+    fi
+  fi
+  if [[ -z "$try_username" ]]; then
+    record 8 "Kullanıcı adı ile giriş" SKIP "ACCEPTANCE_USER_USERNAME yok"
+    return 0
+  fi
+  resp=$(mobile_login_identifier username "$try_username" "$USER_PASSWORD")
   tok=$(extract_token "$resp")
   if [[ -n "$tok" ]]; then
     USER_TOKEN="$tok"
-    record 8 "Kullanıcı adı ile giriş" PASS "token alındı"
+    record 8 "Kullanıcı adı ile giriş" PASS "token alındı (@$try_username)"
   else
-    record 8 "Kullanıcı adı ile giriş" FAIL "token yok"
+    err=$(login_error_detail "$resp")
+    bootstrap_user_token || true
+    record 8 "Kullanıcı adı ile giriş" FAIL "token yok ($err)"
   fi
 }
 
@@ -129,15 +158,28 @@ gate_03_psychic_video() {
     record 3 "Canlı falcı görüntülü görüşme" SKIP "ACCEPTANCE_ADMIN_* yok"
     return
   fi
-  if [[ -z "$TELLER_EMAIL" || -z "$TELLER_PASSWORD" ]]; then
+  if ! acceptance_teller_secrets_configured; then
     record 3 "Canlı falcı görüntülü görüşme" SKIP "ACCEPTANCE_TELLER_* yok"
     return
   fi
-  local admin_resp teller_resp create_resp
-  admin_resp=$(mobile_login "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}")
-  local admin_token
+  local admin_resp teller_resp create_resp admin_token
+  if [[ -n "$ADMIN_EMAIL" ]]; then
+    admin_resp=$(mobile_login_identifier email "$ADMIN_EMAIL" "$ADMIN_PASSWORD")
+  elif [[ -n "$ADMIN_USERNAME" ]]; then
+    admin_resp=$(mobile_login_identifier username "$ADMIN_USERNAME" "$ADMIN_PASSWORD")
+  else
+    record 3 "Canlı falcı görüntülü görüşme" SKIP "ACCEPTANCE_ADMIN_* yok"
+    return
+  fi
   admin_token=$(extract_token "$admin_resp")
-  teller_resp=$(mobile_login "{\"email\":\"$TELLER_EMAIL\",\"password\":\"$TELLER_PASSWORD\"}")
+  if [[ -n "$TELLER_EMAIL" ]]; then
+    teller_resp=$(mobile_login_identifier email "$TELLER_EMAIL" "$TELLER_PASSWORD")
+  elif [[ -n "$TELLER_USERNAME" ]]; then
+    teller_resp=$(mobile_login_identifier username "$TELLER_USERNAME" "$TELLER_PASSWORD")
+  else
+    record 3 "Canlı falcı görüntülü görüşme" SKIP "ACCEPTANCE_TELLER_* yok"
+    return
+  fi
   TELLER_TOKEN=$(extract_token "$teller_resp")
   if [[ -z "$admin_token" || -z "$TELLER_TOKEN" ]]; then
     record 3 "Canlı falcı görüntülü görüşme" FAIL "admin/teller token yok"
@@ -223,35 +265,47 @@ gate_04_live_fortune_request() {
   if ! require_secret HOST_EMAIL 4 "Canlı yayın fal isteği" || ! require_secret HOST_PASSWORD 4 "Canlı yayın fal isteği"; then
     return 0
   fi
-  local resp
-  resp=$(mobile_login "{\"email\":\"$HOST_EMAIL\",\"password\":\"$HOST_PASSWORD\"}")
-  HOST_TOKEN=$(extract_token "$resp")
-  if [[ -z "$HOST_TOKEN" ]]; then
+  if ! bootstrap_host_token; then
     record 4 "Canlı yayın fal isteği" FAIL "host token yok"
     return
   fi
-  local create_resp
-  create_resp=$(curl -sS -X POST "$BASE/api/live" \
+  local create_resp create_code create_body
+  create_body=$(CREATE_TITLE="Gate $RUN_ID" python3 -c 'import json,os; print(json.dumps({"title":os.environ["CREATE_TITLE"],"name":os.environ["CREATE_TITLE"],"status":"live","requestType":"live","category":"live","tags":["gate"]}))')
+  create_resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/video-streams" \
     -H "Authorization: Bearer $HOST_TOKEN" \
     -H "Content-Type: application/json" \
-    -d "{\"title\":\"Gate $RUN_ID\",\"status\":\"live\",\"requestType\":\"live\"}")
-  STREAM_ID=$(printf '%s' "$create_resp" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-for g in [lambda x:x.get('id'), lambda x:x.get('streamId'), lambda x:(x.get('stream') or {}).get('id'), lambda x:(x.get('data') or {}).get('id')]:
-    v=g(d)
-    if v: print(v); break
-" 2>/dev/null || echo "")
+    -d "$create_body")
+  create_code=$(echo "$create_resp" | tail -1 | sed 's/HTTP://')
+  create_resp=$(echo "$create_resp" | sed '$d')
+  STREAM_ID=$(extract_stream_id "$create_resp")
+  if [[ -z "$STREAM_ID" && "$create_code" == "404" ]]; then
+    # Eski mirror uyumluluğu
+    create_resp=$(curl -sS -X POST "$BASE/api/live" \
+      -H "Authorization: Bearer $HOST_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$create_body")
+    STREAM_ID=$(extract_stream_id "$create_resp")
+  fi
   if [[ -z "$STREAM_ID" ]]; then
-    record 4 "Canlı yayın fal isteği" FAIL "stream oluşturulamadı"
+    local err
+    err=$(login_error_detail "$create_resp")
+    record 4 "Canlı yayın fal isteği" FAIL "stream oluşturulamadı (HTTP ${create_code:-?}, $err)"
     return
   fi
 
   local token="${VIEWER_TOKEN:-$USER_TOKEN}"
   if [[ -z "$token" ]]; then
-    resp=$(mobile_login "{\"email\":\"$VIEWER_EMAIL\",\"password\":\"$VIEWER_PASSWORD\"}")
+    bootstrap_user_token || true
+    token="${USER_TOKEN:-}"
+  fi
+  if [[ -z "$token" ]]; then
+    resp=$(mobile_login_identifier email "$VIEWER_EMAIL" "$VIEWER_PASSWORD")
     token=$(extract_token "$resp")
     VIEWER_TOKEN="$token"
+  fi
+  if [[ -z "$token" ]]; then
+    record 4 "Canlı yayın fal isteği" FAIL "izleyici token yok"
+    return
   fi
   local freq
   freq=$(curl -sS -X POST "$BASE/api/video-streams/$STREAM_ID/fortune-requests" \
@@ -340,7 +394,11 @@ for g in [lambda x:x.get('id'), lambda x:(x.get('request') or {}).get('id'), lam
   fi
 
   local admin_resp
-  admin_resp=$(mobile_login "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}")
+  if [[ -n "$ADMIN_EMAIL" ]]; then
+    admin_resp=$(mobile_login_identifier email "$ADMIN_EMAIL" "$ADMIN_PASSWORD")
+  else
+    admin_resp=$(mobile_login_identifier username "$ADMIN_USERNAME" "$ADMIN_PASSWORD")
+  fi
   ADMIN_TOKEN=$(extract_token "$admin_resp")
   if [[ -z "$ADMIN_TOKEN" ]]; then
     record 5 "Jeton bildirimi admin paneli" FAIL "admin token yok"

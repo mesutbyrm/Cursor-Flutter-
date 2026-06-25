@@ -135,7 +135,7 @@ jobs:
           ACCEPTANCE_USER_USERNAME: ${{ secrets.ACCEPTANCE_USER_USERNAME }}
           ACCEPTANCE_ADMIN_USERNAME: ${{ secrets.ACCEPTANCE_ADMIN_USERNAME }}
           ACCEPTANCE_TELLER_USERNAME: ${{ secrets.ACCEPTANCE_TELLER_USERNAME }}
-        run: bash scripts/acceptance-tests/api-release-gate.sh
+        run: bash scripts/run-release-gate.sh
 
       - name: Release gate raporu (başarısızlıkta)
         if: failure()

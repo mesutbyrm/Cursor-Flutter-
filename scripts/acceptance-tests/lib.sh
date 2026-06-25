@@ -2,7 +2,16 @@
 # Acceptance test yardımcıları — kaynak: scripts/run-acceptance-tests.sh
 set -euo pipefail
 
-BASE="${CANLIFAL_BASE_URL:-${API_BASE_URL:-https://canlifal.com}}"
+_normalize_base_url() {
+  local u="${1:-https://canlifal.com}"
+  u="${u#"${u%%[![:space:]]*}"}"
+  u="${u%"${u##*[![:space:]]}"}"
+  while [[ "$u" == */ ]]; do u="${u%/}"; done
+  if [[ "$u" == */api ]]; then u="${u%/api}"; fi
+  printf '%s' "$u"
+}
+
+BASE="$(_normalize_base_url "${CANLIFAL_BASE_URL:-${API_BASE_URL:-https://canlifal.com}}")"
 REPORT_DIR="${ACCEPTANCE_REPORT_DIR:-docs}"
 REPORT_JSON="${REPORT_DIR}/ACCEPTANCE_TEST_REPORT.json"
 REPORT_MD="${REPORT_DIR}/ACCEPTANCE_TEST_REPORT.md"
@@ -42,6 +51,48 @@ mobile_login() {
     -d "$body"
 }
 
+# Özel karakterli şifreler için güvenli JSON gövdesi.
+mobile_login_payload() {
+  LOGIN_KIND="${1:-}" LOGIN_ID="${2:-}" LOGIN_PASS="${3:-}" python3 - <<'PY'
+import json, os
+kind = os.environ.get("LOGIN_KIND", "")
+ident = os.environ.get("LOGIN_ID", "")
+password = os.environ.get("LOGIN_PASS", "")
+body = {"password": password}
+if kind == "email":
+    body["email"] = ident
+    body["emailOrUsername"] = ident
+else:
+    body["emailOrUsername"] = ident
+    body["username"] = ident
+print(json.dumps(body))
+PY
+}
+
+mobile_login_identifier() {
+  local kind="$1" ident="$2" pass="$3"
+  mobile_login "$(mobile_login_payload "$kind" "$ident" "$pass")"
+}
+
+login_error_detail() {
+  local resp="$1"
+  printf '%s' "$resp" | python3 -c "
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw:
+    print('boş yanıt'); sys.exit()
+try:
+    d=json.loads(raw)
+except json.JSONDecodeError:
+    print(raw[:120]); sys.exit()
+for k in ('error','message','detail'):
+    v=d.get(k)
+    if isinstance(v,str) and v.strip():
+        print(v.strip()[:160]); sys.exit()
+print(raw[:120])
+" 2>/dev/null || echo "bilinmeyen hata"
+}
+
 extract_token() {
   local resp="$1"
   local tok
@@ -56,6 +107,87 @@ extract_token() {
     tok=$(printf '%s' "$resp" | json_field "['data']['token']")
   fi
   printf '%s' "$tok"
+}
+
+extract_stream_id() {
+  local resp="$1"
+  printf '%s' "$resp" | python3 -c "
+import json,sys
+def pick_id(d):
+    if not isinstance(d, dict):
+        return ''
+    if d.get('success') is True and d.get('data') is not None:
+        return pick_id(d['data'])
+    for key in ('stream', 'videoStream', 'broadcast'):
+        nested = d.get(key)
+        if isinstance(nested, dict):
+            got = pick_id(nested)
+            if got:
+                return got
+    for key in ('id', '_id', 'streamId', 'roomId'):
+        v = d.get(key)
+        if v is not None and str(v).strip():
+            return str(v).strip()
+    return ''
+raw = sys.stdin.read().strip()
+if not raw:
+    sys.exit(0)
+try:
+    data = json.loads(raw)
+except json.JSONDecodeError:
+    sys.exit(0)
+print(pick_id(data))
+" 2>/dev/null || true
+}
+
+# Oturum: önce kullanıcı adı, sonra e-posta.
+bootstrap_user_token() {
+  local resp tok
+  if [[ -n "${USER_TOKEN:-}" ]]; then
+    return 0
+  fi
+  if [[ -n "${ACCEPTANCE_USER_USERNAME:-}" && -n "${ACCEPTANCE_USER_PASSWORD:-}" ]]; then
+    resp=$(mobile_login_identifier username "$ACCEPTANCE_USER_USERNAME" "$ACCEPTANCE_USER_PASSWORD")
+    tok=$(extract_token "$resp")
+    if [[ -n "$tok" ]]; then
+      USER_TOKEN="$tok"
+      return 0
+    fi
+  fi
+  if acceptance_user_secrets_configured; then
+    resp=$(mobile_login_identifier email "$ACCEPTANCE_USER_EMAIL" "$ACCEPTANCE_USER_PASSWORD")
+    tok=$(extract_token "$resp")
+    if [[ -n "$tok" ]]; then
+      USER_TOKEN="$tok"
+      return 0
+    fi
+  fi
+  return 1
+}
+
+bootstrap_host_token() {
+  local resp tok
+  if [[ -n "${HOST_TOKEN:-}" ]]; then
+    return 0
+  fi
+  if [[ -z "${HOST_EMAIL:-}" || -z "${HOST_PASSWORD:-}" ]]; then
+    return 1
+  fi
+  resp=$(mobile_login_identifier email "$HOST_EMAIL" "$HOST_PASSWORD")
+  tok=$(extract_token "$resp")
+  if [[ -n "$tok" ]]; then
+    HOST_TOKEN="$tok"
+    return 0
+  fi
+  if [[ -n "${ACCEPTANCE_USER_USERNAME:-}" ]]; then
+    resp=$(mobile_login_identifier username "$ACCEPTANCE_USER_USERNAME" "$HOST_PASSWORD")
+    tok=$(extract_token "$resp")
+    if [[ -n "$tok" ]]; then
+      HOST_TOKEN="$tok"
+      return 0
+    fi
+  fi
+  return 1
 }
 
 record() {
@@ -89,16 +221,23 @@ acceptance_username_secrets_configured() {
 }
 
 acceptance_admin_secrets_configured() {
-  [[ -n "${ACCEPTANCE_ADMIN_EMAIL:-}" && -n "${ACCEPTANCE_ADMIN_PASSWORD:-}" ]]
+  [[ -n "${ACCEPTANCE_ADMIN_EMAIL:-}" && -n "${ACCEPTANCE_ADMIN_PASSWORD:-}" ]] ||
+    [[ -n "${ACCEPTANCE_ADMIN_USERNAME:-}" && -n "${ACCEPTANCE_ADMIN_PASSWORD:-}" ]]
+}
+
+acceptance_teller_secrets_configured() {
+  [[ -n "${ACCEPTANCE_TELLER_EMAIL:-}" && -n "${ACCEPTANCE_TELLER_PASSWORD:-}" ]] ||
+    [[ -n "${ACCEPTANCE_TELLER_USERNAME:-}" && -n "${ACCEPTANCE_TELLER_PASSWORD:-}" ]]
 }
 
 # Oturum gerektiren testler — secret yoksa SKIP, secret var ama token yoksa FAIL.
 skip_unless_user_token() {
   local id="$1" name="$2"
+  bootstrap_user_token || true
   if [[ -n "${USER_TOKEN:-}" ]]; then
     return 0
   fi
-  if acceptance_user_secrets_configured; then
+  if acceptance_user_secrets_configured || acceptance_username_secrets_configured; then
     record "$id" "$name" "FAIL" "giriş başarısız / token yok"
   else
     record "$id" "$name" "SKIP" "ACCEPTANCE_USER_* secret yok"
