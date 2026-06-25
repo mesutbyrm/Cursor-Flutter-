@@ -337,6 +337,33 @@ print(pick(d))
 " 2>/dev/null || true
 }
 
+pick_live_fortune_stream_id() {
+  local token="$1"
+  local body
+  body=$(curl_json "$BASE/api/video-streams?limit=20&status=live" \
+    -H "Authorization: Bearer $token")
+  printf '%s' "$body" | python3 -c "
+import json,sys
+try:
+    d=json.load(sys.stdin)
+except json.JSONDecodeError:
+    sys.exit(0)
+items=d if isinstance(d,list) else d.get('items') or d.get('streams') or d.get('videoStreams') or (d.get('data') or {}).get('items') or []
+if isinstance(items,dict):
+    items=items.get('items') or items.get('streams') or []
+for s in items:
+    if not isinstance(s,dict):
+        continue
+    sid=str(s.get('id') or s.get('streamId') or '').strip()
+    if not sid:
+        continue
+    cat=str(s.get('category') or '').lower()
+    tags=s.get('tags') or []
+    if cat=='fortune' or 'fortune' in cat or (isinstance(tags,list) and 'fortune' in [str(t).lower() for t in tags]):
+        print(sid); break
+" 2>/dev/null || true
+}
+
 post_fortune_request() {
   local stream_id="$1" token="$2" host_token="${3:-}"
   local jeton_cost body resp code rid err attempt
