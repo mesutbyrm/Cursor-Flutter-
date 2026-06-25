@@ -222,9 +222,16 @@ for r in rooms:
 }
 
 create_video_stream() {
-  local token="$1" title="$2"
+  local token="$1" title="$2" category="${3:-fortune}"
   local create_body create_resp create_code
-  create_body=$(CREATE_TITLE="$title" python3 -c 'import json,os; print(json.dumps({"title":os.environ["CREATE_TITLE"],"name":os.environ["CREATE_TITLE"],"status":"live","requestType":"live","category":"live","tags":["gate"]}))')
+  create_body=$(CREATE_TITLE="$title" CREATE_CATEGORY="$category" python3 -c 'import json,os; print(json.dumps({
+    "title":os.environ["CREATE_TITLE"],
+    "name":os.environ["CREATE_TITLE"],
+    "status":"live","requestType":"live",
+    "category":os.environ["CREATE_CATEGORY"],
+    "tags":["gate","fortune"],
+    "isFortune": True
+  }))')
   create_resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/video-streams" \
     -H "Authorization: Bearer $token" \
     -H "Content-Type: application/json" \
@@ -331,32 +338,76 @@ print(pick(d))
 }
 
 post_fortune_request() {
-  local stream_id="$1" token="$2"
-  local jeton_cost body resp code rid err
+  local stream_id="$1" token="$2" host_token="${3:-}"
+  local jeton_cost body resp code rid err attempt
   jeton_cost=$(user_jeton_balance "$token")
   if [[ -z "$jeton_cost" || "$jeton_cost" -lt 1 ]]; then
     jeton_cost=10
   elif [[ "$jeton_cost" -gt 500 ]]; then
     jeton_cost=10
   fi
-  body=$(JETON_COST="$jeton_cost" python3 -c 'import json,os; print(json.dumps({
-    "displayName":"GateTest",
-    "question":"Release gate canlı yayın test fal sorusu?",
-    "fortuneType":"tarot","type":"tarot",
-    "priority":"standard","jetonCost":int(os.environ["JETON_COST"])
-  }))')
-  resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/video-streams/$stream_id/fortune-requests" \
-    -H "Authorization: Bearer $token" \
-    -H "Content-Type: application/json" \
-    -d "$body")
-  code=$(echo "$resp" | tail -1 | sed 's/HTTP://')
-  resp=$(echo "$resp" | sed '$d')
-  rid=$(extract_request_id "$resp")
-  if [[ -n "$rid" ]]; then
-    printf '%s|%s|' "$rid" "$code"
-    return 0
+  local question="Release gate canlı yayın test fal sorusu?"
+  for attempt in 1 2; do
+    if [[ "$attempt" -eq 1 ]]; then
+      body=$(QUESTION="$question" JETON_COST="$jeton_cost" python3 -c 'import json,os; print(json.dumps({
+        "displayName":"GateTest",
+        "question":os.environ["QUESTION"],
+        "fortuneType":"tarot","type":"tarot",
+        "priority":"standard","jetonCost":int(os.environ["JETON_COST"])
+      }))')
+    else
+      body=$(QUESTION="$question" python3 -c 'import json,os; print(json.dumps({
+        "type":"tarot","fortuneType":"tarot","question":os.environ["QUESTION"]
+      }))')
+    fi
+    resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/video-streams/$stream_id/fortune-requests" \
+      -H "Authorization: Bearer $token" \
+      -H "Content-Type: application/json" \
+      -d "$body")
+    code=$(echo "$resp" | tail -1 | sed 's/HTTP://')
+    resp=$(echo "$resp" | sed '$d')
+    rid=$(extract_request_id "$resp")
+    if [[ -n "$rid" ]]; then
+      printf '%s|%s|' "$rid" "$code"
+      return 0
+    fi
+    err=$(login_error_detail "$resp")
+    if [[ "$code" != "500" && "$code" != "502" && "$code" != "503" ]]; then
+      break
+    fi
+  done
+  if [[ -n "$host_token" ]]; then
+    local list found_id
+    list=$(curl_json "$BASE/api/video-streams/$stream_id/fortune-requests" \
+      -H "Authorization: Bearer $host_token")
+    found_id=$(printf '%s' "$list" | QUESTION="$question" python3 -c "
+import json,os,sys
+q=os.environ.get('QUESTION','')
+try:
+    d=json.load(sys.stdin)
+except json.JSONDecodeError:
+    sys.exit(0)
+def items(node):
+    if isinstance(node,list): return node
+    if isinstance(node,dict):
+        for k in ('requests','items','data'):
+            v=node.get(k)
+            if isinstance(v,list): return v
+            if isinstance(v,dict):
+                for kk in ('requests','items'):
+                    vv=v.get(kk)
+                    if isinstance(vv,list): return vv
+    return []
+for x in items(d):
+    if not isinstance(x,dict): continue
+    if q and q in str(x.get('question','')):
+        print(x.get('id','')); break
+" 2>/dev/null || echo "")
+    if [[ -n "$found_id" ]]; then
+      printf '%s|200|' "$found_id"
+      return 0
+    fi
   fi
-  err=$(login_error_detail "$resp")
   printf '|%s|%s' "$code" "$err"
 }
 

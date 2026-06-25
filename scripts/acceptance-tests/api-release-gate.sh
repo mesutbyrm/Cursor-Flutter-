@@ -308,8 +308,12 @@ gate_04_live_fortune_request() {
     record 4 "Canlı yayın fal isteği" FAIL "izleyici token yok"
     return
   fi
+  curl -sS -o /dev/null -X POST "$BASE/api/video-streams/$STREAM_ID/join" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -d '{}' || true
   local freq_result freq_code freq_err
-  freq_result=$(post_fortune_request "$STREAM_ID" "$token")
+  freq_result=$(post_fortune_request "$STREAM_ID" "$token" "$HOST_TOKEN")
   FORTUNE_REQUEST_ID="${freq_result%%|*}"
   freq_code=$(echo "$freq_result" | cut -d'|' -f2)
   freq_err=$(echo "$freq_result" | cut -d'|' -f3)
