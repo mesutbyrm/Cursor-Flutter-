@@ -32,6 +32,7 @@ import '../../domain/voice_music_sync.dart';
 import '../../domain/voice_official_join.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/voice_music_access.dart';
+import '../utils/voice_room_message_merge.dart';
 import '../widgets/voice_room/voice_room_music_request_flash.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_my_permissions.dart';
@@ -332,25 +333,7 @@ class VoiceRoomLiveController
     List<ChatRoomMessage> current,
     List<ChatRoomMessage> fetched,
   ) {
-    final byId = <String, ChatRoomMessage>{};
-    for (final m in current) {
-      byId[m.id] = m;
-    }
-    for (final m in fetched) {
-      final dup = byId.entries.where(
-        (e) =>
-            e.key.startsWith('local-') &&
-            e.value.content == m.content &&
-            e.value.user?.id == m.user?.id,
-      );
-      for (final d in dup) {
-        byId.remove(d.key);
-      }
-      byId[m.id] = m;
-    }
-    final merged = byId.values.toList()
-      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    return merged;
+    return VoiceRoomMessageMerge.merge(current, fetched);
   }
 
   bool _markEntranceOnce(String raw) {

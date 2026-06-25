@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.365+369 (2026-06-25)
+
+### Sesli sohbet — Concurrent modification düzeltmesi
+
+- **Kök neden:** Sohbet mesajları birleştirilirken `local-*` optimistic id'ler silinirken Map üzerinde eşzamanlı iterasyon
+- `VoiceRoomMessageMerge`: duplicate anahtarlar önce listelenip sonra siliniyor (`_Map len:N` çökmesi giderildi)
+- Özellikle `!istek` / şarkı isteği + SSE yenileme sırasında tetikleniyordu
+
 ## 1.0.364+368 (2026-06-25)
 
 ### Sesli oda — müzik + moderasyon API uyumu
