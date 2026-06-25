@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.364+368 (2026-06-25)
+
+### Sesli oda — müzik + moderasyon API uyumu
+
+- **Şarkı isteği:** `requestType: audio|video` (ses 10 / video 20 jeton); GET `requestCosts` eşlemesi
+- **Kuyruk:** `DELETE /music` sonrası `autoAdvanced` — sıradaki parça otomatik başlar
+- **Moderasyon REST:** `announce`, `clear_messages`; kick yanıtı `kickCount` / `autoBanned`
+- **SSE `type: system`:** `ANNOUNCEMENT`, `CHAT_CLEARED`, `USER_KICKED`, `ROOM_MUTED` vb.
+- **Komutlar paneli:** `!duyuru` ve `!temizle` doğrudan moderasyon API'sine gider
+
 ## 1.0.363+367 (2026-06-25)
 
 ### Sesli sohbet — web parity (müzik & oda UX)

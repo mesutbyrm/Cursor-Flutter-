@@ -126,7 +126,39 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
   }
 
   Future<void> _runCommand(String cmd) async {
-    await ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier).sendMessage(cmd);
+    final trimmed = cmd.trim();
+    final notifier =
+        ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
+    if (trimmed.startsWith('!duyuru') || trimmed.startsWith('/duyuru')) {
+      final message =
+          trimmed.replaceFirst(RegExp(r'^[!/]duyuru\s*', caseSensitive: false), '').trim();
+      if (message.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Duyuru metni girin')),
+        );
+        return;
+      }
+      final err = await notifier.postModeratorAnnouncement(message);
+      if (!mounted) return;
+      if (err != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        return;
+      }
+      Navigator.pop(context);
+      return;
+    }
+    if (trimmed == '!temizle' || trimmed == '/temizle') {
+      final err = await notifier.clearChatAsModerator();
+      if (!mounted) return;
+      if (err != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        return;
+      }
+      Navigator.pop(context);
+      return;
+    }
+    await notifier.sendMessage(cmd);
     if (!mounted) return;
     Navigator.pop(context);
   }

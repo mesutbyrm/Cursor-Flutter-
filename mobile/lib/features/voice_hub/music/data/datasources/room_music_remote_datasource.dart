@@ -156,6 +156,7 @@ class RoomMusicRemoteDataSource {
       'duration': ?duration,
       'priority': priority,
       if (skipPayment) 'skipPayment': true,
+      'requestType': withVideo ? 'video' : 'audio',
       if (withVideo) 'withVideo': true,
       if (withVideo) 'videoMode': 'video',
       if (!withVideo) 'videoMode': 'audio',

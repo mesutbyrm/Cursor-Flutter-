@@ -14,6 +14,7 @@ class MusicQueueItem extends Equatable {
     this.note,
     this.uploader,
     this.duration,
+    this.requestType,
     this.withVideo = false,
   });
 
@@ -46,12 +47,26 @@ class MusicQueueItem extends Equatable {
           json['channel']?.toString() ??
           json['artist']?.toString(),
       duration: json['duration']?.toString(),
-      withVideo: json['withVideo'] == true ||
-          json['playWithVideo'] == true ||
-          json['isVideo'] == true ||
-          json['videoMode']?.toString().toLowerCase() == 'video' ||
-          json['mode']?.toString().toLowerCase() == 'video',
+      requestType: _parseRequestType(json),
+      withVideo: _isVideoRequest(json),
     );
+  }
+
+  static String? _parseRequestType(Map<String, dynamic> json) {
+    final raw = json['requestType']?.toString().toLowerCase().trim();
+    if (raw == 'audio' || raw == 'video') return raw;
+    return null;
+  }
+
+  static bool _isVideoRequest(Map<String, dynamic> json) {
+    final type = _parseRequestType(json);
+    if (type == 'video') return true;
+    if (type == 'audio') return false;
+    return json['withVideo'] == true ||
+        json['playWithVideo'] == true ||
+        json['isVideo'] == true ||
+        json['videoMode']?.toString().toLowerCase() == 'video' ||
+        json['mode']?.toString().toLowerCase() == 'video';
   }
 
   final String id;
@@ -64,7 +79,11 @@ class MusicQueueItem extends Equatable {
   final String? note;
   final String? uploader;
   final String? duration;
+  final String? requestType;
   final bool withVideo;
+
+  bool get isVideoRequest => requestType == 'video' || withVideo;
+  bool get isAudioRequest => requestType == 'audio' || !isVideoRequest;
 
   String get artistLine {
     final parts = <String>[];
@@ -85,6 +104,7 @@ class MusicQueueItem extends Equatable {
         note,
         uploader,
         duration,
+        requestType,
         withVideo,
       ];
 }

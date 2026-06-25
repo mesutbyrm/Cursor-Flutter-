@@ -16,6 +16,7 @@ import '../services/voice_room_debug_log.dart';
 import '../services/voice_room_music_pipeline_log.dart';
 import '../youtube_music_search_cache.dart';
 import '../../domain/entities/music_queue_item.dart';
+import '../../domain/entities/moderation_result.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 import '../../domain/entities/chat_room_my_permissions.dart';
 
@@ -368,18 +369,20 @@ class ChatRoomRemoteDataSource {
     });
   }
 
-  Future<void> clearMusicQueue({
+  Future<MusicClearResult> clearMusicQueue({
     required String roomKey,
     String? alternateKey,
   }) async {
-    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      Response<dynamic> res;
       try {
-        await _dio.safeDelete<dynamic>(musicPath(key));
-        return;
+        res = await _dio.safeDelete<dynamic>(musicPath(key));
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        res = await _dio.safeDelete<dynamic>('/api/chat/rooms/$key/music-queue');
       }
-      await _dio.safeDelete<dynamic>('/api/chat/rooms/$key/music-queue');
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      return MusicClearResult.fromJson(map.isEmpty ? null : map);
     });
   }
 
@@ -535,15 +538,17 @@ class ChatRoomRemoteDataSource {
 
   static String rolePath(String roomId) => '/api/chat/rooms/$roomId/roles';
 
-  Future<void> _postModeration({
+  Future<Map<String, dynamic>?> _postModeration({
     required String roomKey,
     required String action,
     String? targetUserId,
     String? role,
     String? reason,
     int? duration,
+    String? message,
+    int? ttl,
   }) async {
-    await _dio.safePost<dynamic>(
+    final res = await _dio.safePost<dynamic>(
       moderationPath(roomKey),
       data: jsonEncode({
         'action': action,
@@ -551,10 +556,44 @@ class ChatRoomRemoteDataSource {
           'targetUserId': targetUserId,
         if (role != null && role.isNotEmpty) 'role': role,
         if (reason != null && reason.isNotEmpty) 'reason': reason,
+        if (message != null && message.trim().isNotEmpty) 'message': message.trim(),
+        if (ttl != null && ttl > 0) 'ttl': ttl,
         'duration': ?duration,
       }),
       options: Options(contentType: 'application/json'),
     );
+    final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+    return map.isEmpty ? null : map;
+  }
+
+  Future<void> postAnnouncement({
+    required String roomKey,
+    String? alternateKey,
+    required String message,
+    int ttl = 15,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _postModeration(
+        roomKey: key,
+        action: 'announce',
+        message: message,
+        ttl: ttl,
+      );
+    });
+  }
+
+  Future<void> clearChatViaModeration({
+    required String roomKey,
+    String? alternateKey,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _postModeration(roomKey: key, action: 'clear_messages');
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        await _dio.safeDelete<dynamic>(messagesPath(key));
+      }
+    });
   }
 
   Future<void> banUser({
@@ -627,21 +666,21 @@ class ChatRoomRemoteDataSource {
     });
   }
 
-  Future<void> kickUser({
+  Future<ModerationKickResult> kickUser({
     required String roomKey,
     String? alternateKey,
     required String userId,
     String? reason,
   }) async {
-    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       try {
-        await _postModeration(
+        final map = await _postModeration(
           roomKey: key,
           action: 'kick_user',
           targetUserId: userId,
           reason: reason,
         );
-        return;
+        return ModerationKickResult.fromJson(map);
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       }
@@ -653,6 +692,7 @@ class ChatRoomRemoteDataSource {
         }),
         options: Options(contentType: 'application/json'),
       );
+      return const ModerationKickResult();
     });
   }
 
@@ -975,9 +1015,7 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
   }) async {
     try {
-      await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-        await _dio.safeDelete<dynamic>(messagesPath(key));
-      });
+      await clearChatViaModeration(roomKey: roomKey, alternateKey: alternateKey);
     } catch (_) {}
   }
 
@@ -1102,23 +1140,11 @@ class ChatRoomRemoteDataSource {
     ])?.toString();
     final playingRaw = pick(map, ['playing', 'isPlaying']);
     final canRequestRaw = pick(map, ['canRequestMusic', 'canRequest']);
+    final costs = _parseRequestCosts(map);
     return (
       queue: queue,
-      cost: asInt(pick(map, ['cost', 'musicRequestCost', 'requestCost'])) == 0
-          ? 10
-          : asInt(pick(map, ['cost', 'musicRequestCost', 'requestCost'])),
-      videoRequestCost: () {
-        final v = asInt(
-          pick(map, [
-            'videoRequestCost',
-            'videoMusicRequestCost',
-            'videoCost',
-          ]),
-        );
-        if (v > 0) return v;
-        final audio = asInt(pick(map, ['cost', 'musicRequestCost', 'requestCost']));
-        return audio > 0 ? audio * 2 : 20;
-      }(),
+      cost: costs.audio,
+      videoRequestCost: costs.video,
       maxMusicQueue:
           asInt(pick(map, ['maxMusicQueue', 'maxQueueLength', 'limit'])) == 0
           ? 20
@@ -1130,6 +1156,32 @@ class ChatRoomRemoteDataSource {
       musicUrl: musicUrlRaw != null && musicUrlRaw.isNotEmpty
           ? musicUrlRaw
           : null,
+    );
+  }
+
+  ({int audio, int video}) _parseRequestCosts(Map<String, dynamic> map) {
+    final raw = map['requestCosts'];
+    if (raw is Map) {
+      final audio = asInt(raw['audio']);
+      final video = asInt(raw['video']);
+      if (audio > 0 && video > 0) {
+        return (audio: audio, video: video);
+      }
+      if (audio > 0) {
+        return (audio: audio, video: video > 0 ? video : audio * 2);
+      }
+      if (video > 0) {
+        return (audio: 10, video: video);
+      }
+    }
+    final audioCost = asInt(pick(map, ['cost', 'musicRequestCost', 'requestCost']));
+    final resolvedAudio = audioCost == 0 ? 10 : audioCost;
+    final videoCost = asInt(
+      pick(map, ['videoRequestCost', 'videoMusicRequestCost', 'videoCost']),
+    );
+    return (
+      audio: resolvedAudio,
+      video: videoCost > 0 ? videoCost : resolvedAudio * 2,
     );
   }
 
@@ -1179,6 +1231,7 @@ class ChatRoomRemoteDataSource {
         'videoId': ?vid,
         'title': title,
         'duration': ?durationLabel,
+        'requestType': withVideo ? 'video' : 'audio',
         if (withVideo) 'withVideo': true,
         if (withVideo) 'videoMode': 'video',
         if (!withVideo) 'videoMode': 'audio',

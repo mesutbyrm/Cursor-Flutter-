@@ -10,6 +10,7 @@ enum ChatRoomSseEventType {
   userLeave,
   roomUpdate,
   moderation,
+  system,
   announcement,
   gift,
   presence,
@@ -55,6 +56,8 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
     case 'ban':
     case 'mute':
       return ChatRoomSseEventType.moderation;
+    case 'system':
+      return ChatRoomSseEventType.system;
     case 'announcement':
     case 'duyuru':
       return ChatRoomSseEventType.announcement;

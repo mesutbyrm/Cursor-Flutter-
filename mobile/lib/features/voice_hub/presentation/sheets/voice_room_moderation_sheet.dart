@@ -120,19 +120,21 @@ class VoiceModerationNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<bool> kickUser(String userId) async {
+  Future<String?> kickUser(String userId) async {
     state = const AsyncLoading();
     try {
-      await _ref.read(chatRoomRemoteProvider).kickUser(
-            roomKey: _roomKey,
-            userId: userId,
-            reason: 'Oda moderasyonu',
-          );
+      final result = await _ref
+          .read(voiceRoomLiveProvider(_roomKey).notifier)
+          .kickUserModeration(userId: userId, reason: 'Oda moderasyonu');
+      if (result == null) {
+        state = AsyncError('Atma işlemi başarısız', StackTrace.current);
+        return 'Atma işlemi başarısız';
+      }
       state = const AsyncData(null);
-      return true;
+      return result.feedbackMessage;
     } catch (e, st) {
       state = AsyncError(e, st);
-      return false;
+      return ApiException.userMessage(e);
     }
   }
 }
@@ -349,13 +351,13 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
               label: 'Odadan At',
               color: Colors.redAccent,
               onTap: () async {
-                final ok = await notifier.kickUser(targetUser.id);
+                final msg = await notifier.kickUser(targetUser.id);
                 if (!context.mounted) return;
                 Navigator.pop(context);
                 _showSnack(
                   context,
-                  ok ? '${targetUser.username} atıldı' : 'Hata',
-                  ok,
+                  msg ?? '${targetUser.username} atıldı',
+                  msg != null && !msg.toLowerCase().contains('başarısız'),
                 );
               },
             ),

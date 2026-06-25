@@ -26,6 +26,7 @@ class ChatRoomSseService extends BaseSseService {
   void Function(Map<String, dynamic> payload)? _onRoomUpdate;
   void Function(Map<String, dynamic> payload)? _onModeration;
   void Function(Map<String, dynamic> payload)? _onAnnouncement;
+  void Function(Map<String, dynamic> payload)? _onSystem;
   void Function(Map<String, dynamic> payload)? _onFortuneRequest;
   void Function(PkBattleRemote battle, String event)? _onPk;
   void Function(List<String> users)? _onTyping;
@@ -54,6 +55,7 @@ class ChatRoomSseService extends BaseSseService {
     void Function(Map<String, dynamic> payload)? onRoomUpdate,
     void Function(Map<String, dynamic> payload)? onModeration,
     void Function(Map<String, dynamic> payload)? onAnnouncement,
+    void Function(Map<String, dynamic> payload)? onSystem,
     void Function(Map<String, dynamic> payload)? onFortuneRequest,
     void Function(PkBattleRemote battle, String event)? onPk,
     void Function(List<String> users)? onTyping,
@@ -70,6 +72,7 @@ class ChatRoomSseService extends BaseSseService {
     _onRoomUpdate = onRoomUpdate;
     _onModeration = onModeration;
     _onAnnouncement = onAnnouncement;
+    _onSystem = onSystem;
     _onFortuneRequest = onFortuneRequest;
     _onPk = onPk;
     _onTyping = onTyping;
@@ -158,6 +161,9 @@ class ChatRoomSseService extends BaseSseService {
       case ChatRoomSseEventType.moderation:
         _onModeration?.call(map);
         return;
+      case ChatRoomSseEventType.system:
+        _dispatchSystemEvent(map);
+        return;
       case ChatRoomSseEventType.announcement:
         _onAnnouncement?.call(map);
         return;
@@ -187,6 +193,29 @@ class ChatRoomSseService extends BaseSseService {
         }
         final msg = _parseMessage(map);
         if (msg != null) _onMessage?.call(msg);
+    }
+  }
+
+  void _dispatchSystemEvent(Map<String, dynamic> map) {
+    _onSystem?.call(map);
+    final event = map['event']?.toString().toUpperCase().trim() ?? '';
+    switch (event) {
+      case 'ANNOUNCEMENT':
+        _onAnnouncement?.call(map);
+        return;
+      case 'USER_KICKED':
+      case 'USER_BANNED':
+      case 'USER_MUTED':
+      case 'USER_UNMUTED':
+      case 'CHAT_CLEARED':
+      case 'ROOM_MUTED':
+      case 'ROOM_UNMUTED':
+        _onModeration?.call(map);
+        return;
+      default:
+        if (map['message'] != null) {
+          _onAnnouncement?.call(map);
+        }
     }
   }
 

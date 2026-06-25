@@ -53,6 +53,7 @@ class ChatRoomDjState {
       nowPlaying = queue.first;
     }
     final canControl = json['canControlMusic'] == true || canPlay;
+    final costs = _parseRequestCosts(json);
     return ChatRoomDjState(
       djUsers: users,
       activeDjId: json['activeDjId']?.toString() ?? json['djId']?.toString(),
@@ -67,13 +68,8 @@ class ChatRoomDjState {
       playing: json['playing'] == true || json['isPlaying'] == true,
       musicQueue: queue,
       nowPlaying: nowPlaying,
-      musicRequestCost: json['musicRequestCost'] as int? ??
-          json['cost'] as int? ??
-          10,
-      videoRequestCost: json['videoRequestCost'] as int? ??
-          json['videoMusicRequestCost'] as int? ??
-          json['videoCost'] as int? ??
-          ((json['musicRequestCost'] as int? ?? json['cost'] as int? ?? 10) * 2),
+      musicRequestCost: costs.audio,
+      videoRequestCost: costs.video,
       maxMusicQueue: json['maxMusicQueue'] as int? ??
           json['maxQueueLength'] as int? ??
           20,
@@ -249,4 +245,35 @@ class ChatRoomDjState {
 
   static bool _isYoutubeWatchUrl(String url) =>
       url.contains('youtube.com') || url.contains('youtu.be');
+
+  static ({int audio, int video}) _parseRequestCosts(Map<String, dynamic> json) {
+    final raw = json['requestCosts'];
+    if (raw is Map) {
+      final audio = _asInt(raw['audio']);
+      final video = _asInt(raw['video']);
+      if (audio > 0 && video > 0) {
+        return (audio: audio, video: video);
+      }
+      if (audio > 0) {
+        return (audio: audio, video: video > 0 ? video : audio * 2);
+      }
+      if (video > 0) {
+        return (audio: 10, video: video);
+      }
+    }
+    final audioCost = _asInt(json['musicRequestCost'] ?? json['cost']);
+    final resolvedAudio = audioCost > 0 ? audioCost : 10;
+    final videoCost = _asInt(
+      json['videoRequestCost'] ?? json['videoMusicRequestCost'] ?? json['videoCost'],
+    );
+    return (
+      audio: resolvedAudio,
+      video: videoCost > 0 ? videoCost : resolvedAudio * 2,
+    );
+  }
+
+  static int _asInt(dynamic value) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
 }
