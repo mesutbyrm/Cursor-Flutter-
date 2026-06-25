@@ -1,6 +1,21 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.361+365 (2026-06-25)
+
+### Profil — Premium 2026 kişisel kontrol merkezi
+
+- **Yeni tasarım:** Dark purple + glassmorphism; kapak, avatar rozetleri, üst aksiyonlar
+- **İstatistikler:** Takipçi, takip, beğeni, yayın — tek premium kart
+- **Hızlı işlemler:** 15 kartlı 3 sütun grid (canlı yayın, jeton, fal, görevler…)
+- **Cüzdan:** Jeton/CFC, kazanç, premium/abonelik + 6 alt aksiyon
+- **İçeriklerim:** 6 sekme — videolar, fallar, canlı yayınlar, izlenenler, favoriler, taslaklar
+- **Paneller:** Yayıncı, falcı, admin (yetkili) grid kartları
+- **Premium kart:** Gradient glow + Avantajları Gör
+- **Ayarlar:** Tam liste + tema seçici + çıkış
+- **Responsive:** Telefon / tablet / geniş ekran 2–3 sütun düzeni
+- **Performans:** RepaintBoundary, skeleton loading, CachedNetworkImage, Hero animasyonlar
+
 ## 1.0.360+364 (2026-06-25)
 
 ### Canlı yayın — çoklu konuk, moderasyon, etkileşim
