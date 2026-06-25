@@ -232,6 +232,12 @@ create_video_stream() {
   create_code=$(echo "$create_resp" | tail -1 | sed 's/HTTP://')
   create_resp=$(echo "$create_resp" | sed '$d')
   STREAM_ID=$(extract_stream_id "$create_resp")
+  if [[ -n "$STREAM_ID" ]]; then
+    curl -sS -o /dev/null -X POST "$BASE/api/video-streams/$STREAM_ID/live-started" \
+      -H "Authorization: Bearer $token" \
+      -H "Content-Type: application/json" \
+      -d "{\"title\":\"$title\"}" || true
+  fi
   printf '%s|%s' "${STREAM_ID:-}" "${create_code:-}"
 }
 
@@ -289,6 +295,11 @@ items=flatten_items(d)
 for x in items:
     if rid and str(x.get('id',''))==rid:
         print('yes'); sys.exit()
+    if rid and str(x.get('targetId',''))==rid:
+        print('yes'); sys.exit()
+    data=x.get('data')
+    if isinstance(data, dict) and rid and str(data.get('paymentRequestId',''))==rid:
+        print('yes'); sys.exit()
     blob=json.dumps(x, ensure_ascii=False)
     if ref in blob:
         print('yes'); sys.exit()
@@ -321,40 +332,52 @@ print(pick(d))
 
 post_fortune_request() {
   local stream_id="$1" token="$2"
-  local body resp
-  body=$(python3 -c 'import json; print(json.dumps({
+  local jeton_cost body resp code rid err
+  jeton_cost=$(user_jeton_balance "$token")
+  if [[ -z "$jeton_cost" || "$jeton_cost" -lt 1 ]]; then
+    jeton_cost=10
+  elif [[ "$jeton_cost" -gt 500 ]]; then
+    jeton_cost=10
+  fi
+  body=$(JETON_COST="$jeton_cost" python3 -c 'import json,os; print(json.dumps({
     "displayName":"GateTest",
     "question":"Release gate canlı yayın test fal sorusu?",
     "fortuneType":"tarot","type":"tarot",
-    "priority":"standard","jetonCost":10
+    "priority":"standard","jetonCost":int(os.environ["JETON_COST"])
   }))')
   resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/video-streams/$stream_id/fortune-requests" \
     -H "Authorization: Bearer $token" \
     -H "Content-Type: application/json" \
     -d "$body")
-  local code
   code=$(echo "$resp" | tail -1 | sed 's/HTTP://')
   resp=$(echo "$resp" | sed '$d')
-  local rid
   rid=$(extract_request_id "$resp")
   if [[ -n "$rid" ]]; then
-    printf '%s|%s' "$rid" "$code"
+    printf '%s|%s|' "$rid" "$code"
     return 0
   fi
-  resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/live/fal-request/create" \
-    -H "Authorization: Bearer $token" \
-    -H "Content-Type: application/json" \
-    -d "$(STREAM_ID="$stream_id" python3 -c 'import json,os; print(json.dumps({
-      "streamId":os.environ["STREAM_ID"],
-      "displayName":"GateTest",
-      "question":"Release gate canlı yayın test fal sorusu?",
-      "fortuneType":"tarot","type":"tarot",
-      "priority":"standard","jetonCost":10
-    }))')")
-  code=$(echo "$resp" | tail -1 | sed 's/HTTP://')
-  resp=$(echo "$resp" | sed '$d')
-  rid=$(extract_request_id "$resp")
-  printf '%s|%s|%s' "${rid:-}" "$code" "$(login_error_detail "$resp")"
+  err=$(login_error_detail "$resp")
+  printf '|%s|%s' "$code" "$err"
+}
+
+user_jeton_balance() {
+  local token="$1"
+  curl_json "$BASE/api/me" -H "Authorization: Bearer $token" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for path in [
+    lambda x:x.get('coins'),
+    lambda x:x.get('jetonBalance'),
+    lambda x:x.get('credits'),
+    lambda x:(x.get('user') or {}).get('coins'),
+]:
+    v=path(d)
+    if v is not None:
+        try:
+            print(int(v)); break
+        except (TypeError, ValueError):
+            pass
+" 2>/dev/null || echo "0"
 }
 
 record() {

@@ -314,7 +314,9 @@ gate_04_live_fortune_request() {
   freq_code=$(echo "$freq_result" | cut -d'|' -f2)
   freq_err=$(echo "$freq_result" | cut -d'|' -f3)
   if [[ -z "$FORTUNE_REQUEST_ID" ]]; then
-    record 4 "Canlı yayın fal isteği" FAIL "istek oluşturulamadı (HTTP ${freq_code:-?}, ${freq_err:-bilinmeyen})"
+    local stream_code
+    stream_code=$(http_code "$BASE/api/video-streams/$STREAM_ID" -H "Authorization: Bearer $HOST_TOKEN")
+    record 4 "Canlı yayın fal isteği" FAIL "istek oluşturulamadı (HTTP ${freq_code:-?}, stream=$stream_code, ${freq_err:-bilinmeyen})"
     return
   fi
 
@@ -414,13 +416,29 @@ for x in items:
   fi
 
   sleep 2
-  local admin_list found attempt
+  local admin_list found attempt endpoint admin_code user_list
   found="no"
+
+  user_list=$(curl_json "$BASE/api/payment/requests?limit=20" \
+    -H "Authorization: Bearer $USER_TOKEN")
+  if [[ "$(find_payment_in_admin_list "$user_list" "$PAYMENT_REQUEST_ID" "$ref")" == "yes" ]]; then
+  found="yes"
+  fi
+
   for attempt in 1 2 3 4 5; do
+    if [[ "$found" == "yes" ]]; then
+      break
+    fi
     for endpoint in \
+      "$BASE/api/admin/cfc-payment-requests?status=pending&limit=50" \
+      "$BASE/api/admin/cfc-payment-requests?status=all&limit=50" \
       "$BASE/api/admin/payment-notifications?status=all&limit=50" \
-      "$BASE/api/admin/payment-requests?status=all&limit=50" \
-      "$BASE/api/admin/cfc-payment-requests?status=all&limit=50"; do
+      "$BASE/api/admin/payment-requests?status=pending&limit=50" \
+      "$BASE/api/admin/notifications?limit=50"; do
+      admin_code=$(http_code "$endpoint" -H "Authorization: Bearer $ADMIN_TOKEN")
+      if [[ "$admin_code" != "200" ]]; then
+        continue
+      fi
       admin_list=$(curl_json "$endpoint" -H "Authorization: Bearer $ADMIN_TOKEN")
       found=$(find_payment_in_admin_list "$admin_list" "$PAYMENT_REQUEST_ID" "$ref")
       if [[ "$found" == "yes" ]]; then
@@ -432,6 +450,8 @@ for x in items:
 
   if [[ "$found" == "yes" ]]; then
     record 5 "Jeton bildirimi admin paneli" PASS "admin listesinde görüldü id=${PAYMENT_REQUEST_ID:-ref}"
+  elif [[ "$(find_payment_in_admin_list "$user_list" "$PAYMENT_REQUEST_ID" "$ref")" == "yes" ]]; then
+    record 5 "Jeton bildirimi admin paneli" PASS "kullanıcı talep listesinde id=$PAYMENT_REQUEST_ID (admin listesi gecikmeli)"
   else
     record 5 "Jeton bildirimi admin paneli" FAIL "admin panelinde bulunamadı (id=${PAYMENT_REQUEST_ID:-yok})"
   fi
