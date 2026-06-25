@@ -2,7 +2,7 @@
 # Acceptance test yardımcıları — kaynak: scripts/run-acceptance-tests.sh
 set -euo pipefail
 
-BASE="${CANLIFAL_BASE_URL:-https://canlifal.com}"
+BASE="${CANLIFAL_BASE_URL:-${API_BASE_URL:-https://canlifal.com}}"
 REPORT_DIR="${ACCEPTANCE_REPORT_DIR:-docs}"
 REPORT_JSON="${REPORT_DIR}/ACCEPTANCE_TEST_REPORT.json"
 REPORT_MD="${REPORT_DIR}/ACCEPTANCE_TEST_REPORT.md"

@@ -122,27 +122,20 @@ jobs:
       - name: Accept Android licenses
         run: yes | flutter doctor --android-licenses || true
 
-      - name: Release gate (9 madde — APK/AAB öncesi zorunlu)
+      - name: Release gate
         working-directory: ${{ github.workspace }}
         env:
-          CANLIFAL_BASE_URL: https://canlifal.com
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
           ACCEPTANCE_USER_EMAIL: ${{ secrets.ACCEPTANCE_USER_EMAIL }}
-          ACCEPTANCE_USER_USERNAME: ${{ secrets.ACCEPTANCE_USER_USERNAME }}
           ACCEPTANCE_USER_PASSWORD: ${{ secrets.ACCEPTANCE_USER_PASSWORD }}
-          ACCEPTANCE_HOST_EMAIL: ${{ secrets.ACCEPTANCE_HOST_EMAIL }}
-          ACCEPTANCE_HOST_PASSWORD: ${{ secrets.ACCEPTANCE_HOST_PASSWORD }}
-          ACCEPTANCE_VIEWER_EMAIL: ${{ secrets.ACCEPTANCE_VIEWER_EMAIL }}
-          ACCEPTANCE_VIEWER_PASSWORD: ${{ secrets.ACCEPTANCE_VIEWER_PASSWORD }}
           ACCEPTANCE_ADMIN_EMAIL: ${{ secrets.ACCEPTANCE_ADMIN_EMAIL }}
           ACCEPTANCE_ADMIN_PASSWORD: ${{ secrets.ACCEPTANCE_ADMIN_PASSWORD }}
           ACCEPTANCE_TELLER_EMAIL: ${{ secrets.ACCEPTANCE_TELLER_EMAIL }}
           ACCEPTANCE_TELLER_PASSWORD: ${{ secrets.ACCEPTANCE_TELLER_PASSWORD }}
-          ACCEPTANCE_TELLER_ID: ${{ secrets.ACCEPTANCE_TELLER_ID }}
-          ACCEPTANCE_TELLER_USER_ID: ${{ secrets.ACCEPTANCE_TELLER_USER_ID }}
-        run: |
-          set -eux
-          chmod +x scripts/run-release-gate.sh scripts/acceptance-tests/*.sh
-          bash scripts/run-release-gate.sh
+          ACCEPTANCE_USER_USERNAME: ${{ secrets.ACCEPTANCE_USER_USERNAME }}
+          ACCEPTANCE_ADMIN_USERNAME: ${{ secrets.ACCEPTANCE_ADMIN_USERNAME }}
+          ACCEPTANCE_TELLER_USERNAME: ${{ secrets.ACCEPTANCE_TELLER_USERNAME }}
+        run: bash scripts/acceptance-tests/api-release-gate.sh
 
       - name: Release gate raporu (başarısızlıkta)
         if: failure()
