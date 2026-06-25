@@ -190,6 +190,112 @@ bootstrap_host_token() {
   return 1
 }
 
+pick_first_room_id() {
+  local body="$1"
+  printf '%s' "$body" | python3 -c "
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw:
+    sys.exit(0)
+d=json.loads(raw)
+rooms=[]
+if isinstance(d, list):
+    rooms=d
+elif isinstance(d, dict):
+    if d.get('success') is True and d.get('data') is not None:
+        data=d['data']
+        if isinstance(data, list):
+            rooms=data
+        elif isinstance(data, dict):
+            rooms=data.get('rooms') or data.get('items') or []
+    else:
+        rooms=d.get('rooms') or d.get('items') or []
+        if isinstance(rooms, dict):
+            rooms=rooms.get('rooms') or rooms.get('items') or []
+for r in rooms:
+    if isinstance(r, dict):
+        rid=str(r.get('id') or r.get('roomId') or '').strip()
+        if rid:
+            print(rid)
+            break
+" 2>/dev/null || true
+}
+
+create_video_stream() {
+  local token="$1" title="$2"
+  local create_body create_resp create_code
+  create_body=$(CREATE_TITLE="$title" python3 -c 'import json,os; print(json.dumps({"title":os.environ["CREATE_TITLE"],"name":os.environ["CREATE_TITLE"],"status":"live","requestType":"live","category":"live","tags":["gate"]}))')
+  create_resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/video-streams" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -d "$create_body")
+  create_code=$(echo "$create_resp" | tail -1 | sed 's/HTTP://')
+  create_resp=$(echo "$create_resp" | sed '$d')
+  STREAM_ID=$(extract_stream_id "$create_resp")
+  printf '%s|%s' "${STREAM_ID:-}" "${create_code:-}"
+}
+
+login_as_teller() {
+  local resp
+  if [[ -n "${ACCEPTANCE_TELLER_EMAIL:-}" ]]; then
+    resp=$(mobile_login_identifier email "$ACCEPTANCE_TELLER_EMAIL" "$ACCEPTANCE_TELLER_PASSWORD")
+  elif [[ -n "${ACCEPTANCE_TELLER_USERNAME:-}" ]]; then
+    resp=$(mobile_login_identifier username "$ACCEPTANCE_TELLER_USERNAME" "$ACCEPTANCE_TELLER_PASSWORD")
+  else
+    return 1
+  fi
+  TELLER_TOKEN=$(extract_token "$resp")
+  [[ -n "${TELLER_TOKEN:-}" ]]
+}
+
+login_as_admin() {
+  local resp
+  if [[ -n "${ACCEPTANCE_ADMIN_EMAIL:-}" ]]; then
+    resp=$(mobile_login_identifier email "$ACCEPTANCE_ADMIN_EMAIL" "$ACCEPTANCE_ADMIN_PASSWORD")
+  elif [[ -n "${ACCEPTANCE_ADMIN_USERNAME:-}" ]]; then
+    resp=$(mobile_login_identifier username "$ACCEPTANCE_ADMIN_USERNAME" "$ACCEPTANCE_ADMIN_PASSWORD")
+  else
+    return 1
+  fi
+  ADMIN_TOKEN=$(extract_token "$resp")
+  [[ -n "${ADMIN_TOKEN:-}" ]]
+}
+
+find_payment_in_admin_list() {
+  local list="$1" rid="$2" ref="$3"
+  printf '%s' "$list" | python3 -c "
+import json,sys
+rid=sys.argv[1]
+ref=sys.argv[2]
+raw=sys.stdin.read().strip()
+if not raw:
+    print('no'); sys.exit()
+d=json.loads(raw)
+def flatten_items(node):
+    if isinstance(node, list):
+        return [x for x in node if isinstance(x, dict)]
+    if not isinstance(node, dict):
+        return []
+    for key in ('requests','items','notifications','paymentNotifications','data'):
+        val=node.get(key)
+        if isinstance(val, list):
+            return [x for x in val if isinstance(x, dict)]
+        if isinstance(val, dict):
+            nested=flatten_items(val)
+            if nested:
+                return nested
+    return []
+items=flatten_items(d)
+for x in items:
+    if rid and str(x.get('id',''))==rid:
+        print('yes'); sys.exit()
+    blob=json.dumps(x, ensure_ascii=False)
+    if ref in blob:
+        print('yes'); sys.exit()
+print('no')
+" "$rid" "$ref" 2>/dev/null || echo "no"
+}
+
 record() {
   local id="$1" name="$2" status="$3" detail="${4:-}"
   local icon

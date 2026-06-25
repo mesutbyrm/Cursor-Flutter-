@@ -112,13 +112,13 @@ gate_06_sse() {
   skip_unless_user_token 6 "SSE bağlantıları" || return 0
   if [[ -z "$ROOM_ID" ]]; then
     local body
-    body=$(curl_json "$BASE/api/chat/rooms?limit=5")
-    ROOM_ID=$(printf '%s' "$body" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-rooms=d.get('rooms') or d.get('data',{}).get('rooms') or d.get('items') or []
-print(rooms[0].get('id','') if rooms else '')
-" 2>/dev/null || echo "")
+    body=$(curl_json "$BASE/api/chat/rooms?limit=10&withCounts=true" \
+      -H "Authorization: Bearer $USER_TOKEN")
+    ROOM_ID=$(pick_first_room_id "$body")
+  fi
+  if [[ -z "$ROOM_ID" ]]; then
+    body=$(curl_json "$BASE/api/chat/rooms?limit=10&withCounts=true")
+    ROOM_ID=$(pick_first_room_id "$body")
   fi
   if [[ -z "$ROOM_ID" ]]; then
     if acceptance_user_secrets_configured; then
@@ -265,33 +265,37 @@ gate_04_live_fortune_request() {
   if ! require_secret HOST_EMAIL 4 "Canlı yayın fal isteği" || ! require_secret HOST_PASSWORD 4 "Canlı yayın fal isteği"; then
     return 0
   fi
-  if ! bootstrap_host_token; then
-    record 4 "Canlı yayın fal isteği" FAIL "host token yok"
-    return
-  fi
-  local create_resp create_code create_body
-  create_body=$(CREATE_TITLE="Gate $RUN_ID" python3 -c 'import json,os; print(json.dumps({"title":os.environ["CREATE_TITLE"],"name":os.environ["CREATE_TITLE"],"status":"live","requestType":"live","category":"live","tags":["gate"]}))')
-  create_resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/video-streams" \
-    -H "Authorization: Bearer $HOST_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "$create_body")
-  create_code=$(echo "$create_resp" | tail -1 | sed 's/HTTP://')
-  create_resp=$(echo "$create_resp" | sed '$d')
-  STREAM_ID=$(extract_stream_id "$create_resp")
-  if [[ -z "$STREAM_ID" && "$create_code" == "404" ]]; then
-    # Eski mirror uyumluluğu
-    create_resp=$(curl -sS -X POST "$BASE/api/live" \
-      -H "Authorization: Bearer $HOST_TOKEN" \
-      -H "Content-Type: application/json" \
-      -d "$create_body")
-    STREAM_ID=$(extract_stream_id "$create_resp")
+  local host_token="" create_result="" create_code="" err
+  if bootstrap_host_token; then
+    host_token="$HOST_TOKEN"
+    create_result=$(create_video_stream "$host_token" "Gate $RUN_ID")
+    STREAM_ID="${create_result%%|*}"
+    create_code="${create_result##*|}"
   fi
   if [[ -z "$STREAM_ID" ]]; then
-    local err
-    err=$(login_error_detail "$create_resp")
-    record 4 "Canlı yayın fal isteği" FAIL "stream oluşturulamadı (HTTP ${create_code:-?}, $err)"
+    if login_as_teller; then
+      host_token="$TELLER_TOKEN"
+      HOST_TOKEN="$TELLER_TOKEN"
+      create_result=$(create_video_stream "$host_token" "Gate $RUN_ID")
+      STREAM_ID="${create_result%%|*}"
+      create_code="${create_result##*|}"
+    fi
+  fi
+  if [[ -z "$STREAM_ID" ]]; then
+    if login_as_admin; then
+      host_token="$ADMIN_TOKEN"
+      HOST_TOKEN="$ADMIN_TOKEN"
+      create_result=$(create_video_stream "$host_token" "Gate $RUN_ID")
+      STREAM_ID="${create_result%%|*}"
+      create_code="${create_result##*|}"
+    fi
+  fi
+  if [[ -z "$STREAM_ID" ]]; then
+    err="HTTP ${create_code:-?}"
+    record 4 "Canlı yayın fal isteği" FAIL "stream oluşturulamadı ($err)"
     return
   fi
+  HOST_TOKEN="$host_token"
 
   local token="${VIEWER_TOKEN:-$USER_TOKEN}"
   if [[ -z "$token" ]]; then
@@ -358,38 +362,59 @@ gate_05_jeton_admin_notify() {
   [[ -z "$uid" ]] && uid=$(printf '%s' "$me" | json_field "['user']['id']")
   username=$(printf '%s' "$me" | json_field "['username']")
   local ref="CANLIFAL-GATE-$RUN_ID"
-  local pay_resp pay_code
+  local pay_body pay_code
+  pay_body=$(GATE_REF="$ref" GATE_USER="${username:-gate}" python3 -c 'import json,os; print(json.dumps({
+    "requestType":"jeton","type":"jeton","method":"papara",
+    "packageId":"gate_test","packageTitle":"Gate Test Jeton",
+    "coins":50,"priceTry":25,
+    "notes":"Release gate test "+os.environ["GATE_REF"],
+    "receiptReference":os.environ["GATE_REF"],
+    "notifyAdmins":True,"notifyStaff":True,
+    "source":"mobile_jeton_checkout","senderInfo":os.environ["GATE_USER"]
+  }))')
+  local pay_resp
   pay_resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/payment/requests" \
     -H "Authorization: Bearer $USER_TOKEN" \
     -H "Content-Type: application/json" \
-    -d "{
-      \"requestType\": \"jeton\",
-      \"type\": \"jeton\",
-      \"method\": \"papara\",
-      \"packageId\": \"gate_test\",
-      \"packageTitle\": \"Gate Test Jeton\",
-      \"coins\": 50,
-      \"amount\": 50,
-      \"priceTry\": 25,
-      \"notes\": \"Release gate test $ref\",
-      \"notifyAdmins\": true,
-      \"notifyStaff\": true,
-      \"source\": \"mobile_jeton_checkout\",
-      \"senderInfo\": \"${username:-gate}\"
-    }")
+    -d "$pay_body")
   pay_code=$(echo "$pay_resp" | tail -1 | sed 's/HTTP://')
-  local pay_body
-  pay_body=$(echo "$pay_resp" | sed '$d')
-  PAYMENT_REQUEST_ID=$(printf '%s' "$pay_body" | python3 -c "
+  local pay_resp_body
+  pay_resp_body=$(echo "$pay_resp" | sed '$d')
+  PAYMENT_REQUEST_ID=$(printf '%s' "$pay_resp_body" | python3 -c "
 import json,sys
 d=json.load(sys.stdin)
-for g in [lambda x:x.get('id'), lambda x:(x.get('request') or {}).get('id'), lambda x:(x.get('data') or {}).get('id')]:
+for g in [
+    lambda x:x.get('id'),
+    lambda x:(x.get('request') or {}).get('id'),
+    lambda x:(x.get('data') or {}).get('id'),
+    lambda x:((x.get('data') or {}).get('request') or {}).get('id'),
+]:
     v=g(d)
     if v: print(v); break
 " 2>/dev/null || echo "")
 
+  if [[ "$pay_code" == "400" ]]; then
+    local pending_err
+    pending_err=$(login_error_detail "$pay_resp_body")
+    if echo "$pending_err" | grep -qi 'bekleyen'; then
+      PAYMENT_REQUEST_ID=$(curl_json "$BASE/api/payment/requests?status=pending&limit=5" \
+        -H "Authorization: Bearer $USER_TOKEN" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+items=d if isinstance(d,list) else d.get('requests') or d.get('items') or (d.get('data') or {}).get('requests') or []
+if isinstance(items,dict): items=items.get('requests') or items.get('items') or []
+for x in items:
+    if isinstance(x,dict) and x.get('status')=='pending':
+        print(x.get('id','')); break
+" 2>/dev/null || echo "")
+      if [[ -n "$PAYMENT_REQUEST_ID" ]]; then
+        pay_code="200"
+      fi
+    fi
+  fi
+
   if [[ "$pay_code" != "200" && "$pay_code" != "201" ]]; then
-    record 5 "Jeton bildirimi admin paneli" FAIL "POST payment HTTP $pay_code"
+    record 5 "Jeton bildirimi admin paneli" FAIL "POST payment HTTP $pay_code ($(login_error_detail "$pay_resp_body"))"
     return
   fi
 
@@ -406,38 +431,26 @@ for g in [lambda x:x.get('id'), lambda x:(x.get('request') or {}).get('id'), lam
   fi
 
   sleep 2
-  local admin_list found
-  admin_list=$(curl_json "$BASE/api/admin/payment-requests?limit=30" \
-    -H "Authorization: Bearer $ADMIN_TOKEN")
-  if [[ -z "$admin_list" || "$admin_list" == "{}" ]]; then
-    admin_list=$(curl_json "$BASE/api/admin/payment-notifications?limit=30" \
-      -H "Authorization: Bearer $ADMIN_TOKEN")
-  fi
-  found=$(printf '%s' "$admin_list" | python3 -c "
-import json,sys
-rid=sys.argv[1]
-ref=sys.argv[2]
-raw=sys.stdin.read()
-if not raw.strip():
-    print('no'); sys.exit()
-d=json.loads(raw)
-items=d.get('requests') or d.get('items') or d.get('notifications') or d.get('data') or []
-if isinstance(items,dict):
-    items=items.get('requests') or items.get('items') or items.get('notifications') or []
-for x in items:
-    if not isinstance(x,dict): continue
-    if rid and str(x.get('id',''))==rid:
-        print('yes'); sys.exit()
-    blob=json.dumps(x,ensure_ascii=False)
-    if ref in blob:
-        print('yes'); sys.exit()
-print('no')
-" "$PAYMENT_REQUEST_ID" "$ref" 2>/dev/null || echo "no")
+  local admin_list found attempt
+  found="no"
+  for attempt in 1 2 3 4 5; do
+    for endpoint in \
+      "$BASE/api/admin/payment-notifications?status=all&limit=50" \
+      "$BASE/api/admin/payment-requests?status=all&limit=50" \
+      "$BASE/api/admin/cfc-payment-requests?status=all&limit=50"; do
+      admin_list=$(curl_json "$endpoint" -H "Authorization: Bearer $ADMIN_TOKEN")
+      found=$(find_payment_in_admin_list "$admin_list" "$PAYMENT_REQUEST_ID" "$ref")
+      if [[ "$found" == "yes" ]]; then
+        break 2
+      fi
+    done
+    sleep 2
+  done
 
   if [[ "$found" == "yes" ]]; then
     record 5 "Jeton bildirimi admin paneli" PASS "admin listesinde görüldü id=${PAYMENT_REQUEST_ID:-ref}"
   else
-    record 5 "Jeton bildirimi admin paneli" FAIL "admin panelinde bulunamadı"
+    record 5 "Jeton bildirimi admin paneli" FAIL "admin panelinde bulunamadı (id=${PAYMENT_REQUEST_ID:-yok})"
   fi
 }
 
