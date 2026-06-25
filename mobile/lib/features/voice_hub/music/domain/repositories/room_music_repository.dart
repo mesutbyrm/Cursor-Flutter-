@@ -21,6 +21,7 @@ abstract class RoomMusicRepository {
     String? duration,
     bool priority,
     bool skipPayment,
+    bool withVideo,
   });
 
   Future<String?> resolveStreamUrl({

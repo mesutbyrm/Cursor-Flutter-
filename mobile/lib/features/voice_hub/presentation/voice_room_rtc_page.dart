@@ -50,9 +50,9 @@ import 'utils/voice_room_responsive_metrics.dart';
 import 'widgets/premium/voice_gift_flight_overlay.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
-import 'widgets/voice_room/voice_room_right_slide_panel.dart';
 import 'widgets/voice_room/voice_room_spec_footer.dart';
 import 'sheets/voice_room_commands_panel.dart';
+import 'sheets/music_mode_picker_sheet.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
@@ -82,6 +82,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   String? _audioError;
   String? _loginError;
   var _isMicMuted = false;
+  var _micAutoMutedByMusic = false;
   var _leaving = false;
   LiveGiftEvent? _fullscreenGift;
   var _showVipEntrance = false;
@@ -958,16 +959,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         live.dj.canPlayMusic ||
         (user != null && room.djUserIds.contains(user.id)) ||
         live.dj.djUsers.any((u) => user != null && u.id == user.id);
-    final canManageDjPanel = isOwner ||
-        perms.canManageRoom ||
-        perms.canModerate ||
-        perms.canManageDj;
-    final showDjControls = canManageDjPanel || isDj;
-    final showMusicCard = VoiceMusicAccess.canShowMusicCard(
-      dj: live.dj,
-      perms: perms,
-      jetonBalance: jeton,
-    );
     final canControlMusic = live.dj.canControlMusic ||
         live.dj.canPlayMusic ||
         (user != null && live.dj.nowPlaying?.requestedBy?.id == user.id) ||
@@ -1062,7 +1053,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         final hit = await showMusicSearchPickerSheet(context, ref, query: q);
         ctrl.clearPendingMusicSearch();
         if (!mounted || hit == null) return;
-        final err = await ctrl.submitSelectedSong(hit);
+        final liveDj = ref.read(voiceRoomLiveProvider(_liveRoomKey)).dj;
+        final withVideo = await showMusicModePickerSheet(
+          context,
+          audioCost: liveDj.musicRequestCost,
+          videoCost: liveDj.videoRequestCost,
+        );
+        if (!mounted || withVideo == null) return;
+        final err = await ctrl.submitSelectedSong(hit, withVideo: withVideo);
         if (!mounted || err == null) return;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
       }());
@@ -1107,6 +1105,27 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       }
     });
 
+    ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
+      final wasPlaying =
+          (prev?.dj.playing ?? false) && prev?.dj.nowPlaying != null;
+      final nowPlaying = next.dj.playing && next.dj.nowPlaying != null;
+      if (!wasPlaying && nowPlaying && !isOwner && _audioReady) {
+        if (!_isMicMuted) {
+          _audio?.setMicEnabled(false);
+          setState(() {
+            _isMicMuted = true;
+            _micAutoMutedByMusic = true;
+          });
+        }
+      } else if (wasPlaying && !nowPlaying && _micAutoMutedByMusic) {
+        _audio?.setMicEnabled(true);
+        setState(() {
+          _isMicMuted = false;
+          _micAutoMutedByMusic = false;
+        });
+      }
+    });
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
@@ -1120,8 +1139,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
-            if (videoActive)
-              YoutubeVideoBackground(roomKey: _liveRoomKey),
             Column(
               children: [
                 Expanded(
@@ -1243,8 +1260,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         Expanded(
                           child: Column(
                             children: [
-                              Expanded(
-                                child: LayoutBuilder(
+                        Expanded(
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              if (videoActive)
+                                YoutubeVideoBackground(roomKey: _liveRoomKey),
+                              LayoutBuilder(
                                   builder: (context, constraints) {
                                     final chatH = keyboardOpen
                                         ? chatMaxH
@@ -1374,48 +1396,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                     );
                                   },
                                 ),
-                              ),
+                            ],
+                          ),
+                        ),
                               if (!keyboardOpen)
                                 VoiceRoomBottomDock(
                                   room: room,
                                   session: room,
                                   live: live,
-                                  perms: perms,
-                                  isOwner: isOwner,
-                                  showDjControls: showDjControls,
-                                  showMusicCard: showMusicCard,
                                   canControlMusic: canControlMusic,
-                                  musicMuted: !ui.backgroundMusicEnabled,
-                                  pkActive: ref
-                                          .watch(pkBattleRemoteProvider)
-                                          ?.isActive ==
-                                      true,
                                   staffBanner: staffBanner,
-                                  onPkTap: () {
-                                    final active =
-                                        ref.read(pkBattleRemoteProvider);
-                                    if (active?.isActive == true) {
-                                      _openActivePk(room);
-                                    } else {
-                                      unawaited(_openPkInvite(room));
-                                    }
-                                  },
-                                  onMuteToggle: () {
-                                    final notifier =
-                                        ref.read(voiceRoomUiProvider.notifier);
-                                    notifier.toggleBackgroundMusic();
-                                    final enabled = ref
-                                        .read(voiceRoomUiProvider)
-                                        .backgroundMusicEnabled;
-                                    unawaited(
-                                      ref
-                                          .read(
-                                            voiceRoomLiveProvider(_liveRoomKey)
-                                                .notifier,
-                                          )
-                                          .toggleBackgroundMusic(enabled),
-                                    );
-                                  },
                                 ),
                             ],
                           ),
@@ -1459,12 +1449,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                   ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
             ),
             PremiumGiftFullscreenOverlay(event: _fullscreenGift),
-            if (!keyboardOpen)
-              VoiceRoomRightSlidePanel(
-                room: room,
-                perms: perms,
-                isOwner: isOwner,
-              ),
             if (_showVipEntrance && user != null)
               VipEntranceOverlay(
                 tier: ref.watch(vipTierProvider),

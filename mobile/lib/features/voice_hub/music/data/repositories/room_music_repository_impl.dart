@@ -30,6 +30,7 @@ class RoomMusicRepositoryImpl implements RoomMusicRepository {
     String? duration,
     bool priority = false,
     bool skipPayment = false,
+    bool withVideo = false,
   }) async {
     final key = roomId.trim();
     final alt = alternateRoomId?.trim();
@@ -43,6 +44,7 @@ class RoomMusicRepositoryImpl implements RoomMusicRepository {
         duration: duration,
         priority: priority,
         skipPayment: skipPayment,
+        withVideo: withVideo,
       );
     } catch (e) {
       if (alt != null && alt.isNotEmpty && alt != key) {
@@ -55,6 +57,7 @@ class RoomMusicRepositoryImpl implements RoomMusicRepository {
           duration: duration,
           priority: priority,
           skipPayment: skipPayment,
+          withVideo: withVideo,
         );
       }
       rethrow;

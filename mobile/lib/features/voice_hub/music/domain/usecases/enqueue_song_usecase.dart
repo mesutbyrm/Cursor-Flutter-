@@ -23,6 +23,7 @@ class EnqueueSongUseCase {
     String? duration,
     bool priority = false,
     bool skipPayment = false,
+    bool withVideo = false,
   }) =>
       _repository.enqueueSong(
         roomId: roomId,
@@ -34,5 +35,6 @@ class EnqueueSongUseCase {
         duration: duration,
         priority: priority,
         skipPayment: skipPayment,
+        withVideo: withVideo,
       );
 }

@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.363+367 (2026-06-25)
+
+### Sesli sohbet — web parity (müzik & oda UX)
+
+- **Alt menü:** Müzik Aç / DJ / PK ve sağ ok paneli kaldırıldı; müzik `!istek` + arama popup ile
+- **Kuyruk senkronu:** Aynı parça çalarken yeni istek oynatıcıyı yeniden başlatmaz; SSE konum senkronu korunur
+- **Jeton modu:** Sadece Ses (backend `musicRequestCost`) / Videolu (`videoRequestCost`) seçim popup'ı
+- **Video oynatıcı:** Ortada floating player; sohbet açıkken kapanmaz
+- **6 dk limit:** Ses ve video için maksimum oynatma süresi
+- **Mikrofon:** Şarkı başlayınca oda sahibi hariç otomatik kapanır; bitince normale döner
+- **Giriş bildirimi:** Koltuk altı modal kart (rol önekleri backend'den)
+- **Arka plan:** Yalnızca yetkililer değiştirebilir; tam çözünürlük
+
 ## 1.0.362+366 (2026-06-25)
 
 ### Jeton yükleme — ödeme talebi düzeltmesi

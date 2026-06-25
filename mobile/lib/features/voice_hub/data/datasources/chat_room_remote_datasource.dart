@@ -985,6 +985,7 @@ class ChatRoomRemoteDataSource {
     ({
       List<MusicQueueItem> queue,
       int cost,
+      int videoRequestCost,
       int maxMusicQueue,
       bool musicEnabled,
       MusicQueueItem? nowPlaying,
@@ -1051,16 +1052,17 @@ class ChatRoomRemoteDataSource {
     });
   }
 
-  ({
-    List<MusicQueueItem> queue,
-    int cost,
-    int maxMusicQueue,
-    bool musicEnabled,
-    MusicQueueItem? nowPlaying,
-    bool? playing,
-    bool? canRequestMusic,
-    String? musicUrl,
-  })
+    ({
+      List<MusicQueueItem> queue,
+      int cost,
+      int videoRequestCost,
+      int maxMusicQueue,
+      bool musicEnabled,
+      MusicQueueItem? nowPlaying,
+      bool? playing,
+      bool? canRequestMusic,
+      String? musicUrl,
+    })
   _parseMusicQueueResponse(dynamic body) {
     final map = _unwrapMap(body) ?? asJsonMap(body);
     final raw = pick(map, [
@@ -1105,6 +1107,18 @@ class ChatRoomRemoteDataSource {
       cost: asInt(pick(map, ['cost', 'musicRequestCost', 'requestCost'])) == 0
           ? 10
           : asInt(pick(map, ['cost', 'musicRequestCost', 'requestCost'])),
+      videoRequestCost: () {
+        final v = asInt(
+          pick(map, [
+            'videoRequestCost',
+            'videoMusicRequestCost',
+            'videoCost',
+          ]),
+        );
+        if (v > 0) return v;
+        final audio = asInt(pick(map, ['cost', 'musicRequestCost', 'requestCost']));
+        return audio > 0 ? audio * 2 : 20;
+      }(),
       maxMusicQueue:
           asInt(pick(map, ['maxMusicQueue', 'maxQueueLength', 'limit'])) == 0
           ? 20
@@ -1143,6 +1157,7 @@ class ChatRoomRemoteDataSource {
     bool priority = true,
     bool skipPayment = false,
     bool djMusicControl = false,
+    bool withVideo = false,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final vid = videoId?.trim().isNotEmpty == true
@@ -1164,6 +1179,9 @@ class ChatRoomRemoteDataSource {
         'videoId': ?vid,
         'title': title,
         'duration': ?durationLabel,
+        if (withVideo) 'withVideo': true,
+        if (withVideo) 'videoMode': 'video',
+        if (!withVideo) 'videoMode': 'audio',
         if (dedicationText != null && dedicationText.isNotEmpty)
           'dedication': dedicationText,
         if (note != null && note.trim().isNotEmpty) 'note': note.trim(),

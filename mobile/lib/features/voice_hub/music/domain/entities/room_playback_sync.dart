@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../domain/voice_playback_limits.dart';
+
 /// Sunucu otoriteli oda müziği senkron durumu (SSE / Socket).
 class RoomPlaybackSync extends Equatable {
   const RoomPlaybackSync({
@@ -17,10 +19,13 @@ class RoomPlaybackSync extends Equatable {
   final String? streamUrl;
 
   int resolvedPositionMs({DateTime? now}) {
-    if (!isPlaying || trackStartedAtMs == null) return currentPositionMs;
+    if (!isPlaying || trackStartedAtMs == null) {
+      return VoicePlaybackLimits.clampPositionMs(currentPositionMs);
+    }
     final t = now ?? DateTime.now();
-    return currentPositionMs +
+    final raw = currentPositionMs +
         (t.millisecondsSinceEpoch - trackStartedAtMs!).clamp(0, 1 << 30);
+    return VoicePlaybackLimits.clampPositionMs(raw);
   }
 
   factory RoomPlaybackSync.fromPayload(Map<String, dynamic> map) {

@@ -11,6 +11,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/music_queue_item.dart';
+import '../sheets/music_mode_picker_sheet.dart';
 import '../providers/chat_room_providers.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_music_access.dart';
@@ -232,6 +233,16 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
     }
 
     setState(() => _submitting = true);
+    final withVideo = await showMusicModePickerSheet(
+      context,
+      audioCost: djState.musicRequestCost,
+      videoCost: djState.videoRequestCost,
+    );
+    if (!mounted) return;
+    if (withVideo == null) {
+      setState(() => _submitting = false);
+      return;
+    }
     final isDjFree = widget.perms.canManageDj || djState.canPlayMusic;
     final queueHint = await ref
         .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
@@ -242,6 +253,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
           videoId: hit.videoId,
           giftTo: _giftMode ? _giftCtrl.text.trim() : null,
           priority: !isDjFree,
+          withVideo: withVideo,
         );
     if (!mounted) return;
     setState(() => _submitting = false);

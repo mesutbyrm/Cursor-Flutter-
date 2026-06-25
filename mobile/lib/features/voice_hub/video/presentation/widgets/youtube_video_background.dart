@@ -281,27 +281,45 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     return RepaintBoundary(
       child: IgnorePointer(
         ignoring: true,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (_loadFailed) _thumbFallback(video),
-            Positioned.fill(child: web),
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.28),
-                      Colors.black.withValues(alpha: 0.08),
-                      Colors.black.withValues(alpha: 0.32),
-                    ],
+        child: Center(
+          child: Container(
+            width: (MediaQuery.sizeOf(context).width * 0.72).clamp(220.0, 320.0),
+            height: (MediaQuery.sizeOf(context).width * 0.72 * 9 / 16)
+                .clamp(124.0, 180.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  blurRadius: 24,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (_loadFailed) _thumbFallback(video),
+                Positioned.fill(child: web),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.12),
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.18),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

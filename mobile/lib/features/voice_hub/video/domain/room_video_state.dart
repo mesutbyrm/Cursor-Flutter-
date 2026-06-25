@@ -65,6 +65,10 @@ class RoomVideoState extends Equatable {
     required ChatRoomDjState dj,
     RoomPlaybackSync? sync,
   }) {
+    final np = dj.nowPlaying;
+    if (np != null && !np.withVideo) {
+      return const RoomVideoState();
+    }
     final videoId = YoutubeVideoId.fromDj(
       currentVideoId: sync?.currentVideoId,
       nowPlayingUrl: dj.nowPlaying?.youtubeUrl,
@@ -72,7 +76,6 @@ class RoomVideoState extends Equatable {
     if (videoId == null) {
       return const RoomVideoState();
     }
-    final np = dj.nowPlaying;
     final playing = sync?.isPlaying ?? dj.playing;
     return RoomVideoState(
       videoId: videoId,

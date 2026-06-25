@@ -6,47 +6,26 @@ import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../../music/presentation/widgets/room_music_queue_sheet.dart';
-import '../../pages/voice_music_hub_page.dart';
 import '../../providers/chat_room_providers.dart';
-import '../../sheets/voice_room_dj_sheet.dart';
-import '../../utils/voice_room_permissions.dart';
 import '../../utils/voice_room_responsive_metrics.dart';
-import 'voice_room_action_row.dart';
-import 'voice_room_music_queue_section.dart';
-import 'voice_staff_entrance_marquee.dart';
+import 'voice_room_entry_notification.dart';
 
-/// Müzik / DJ / kuyruk — mesaj kutusunun hemen üstünde sabit blok.
+/// Kuyruk + giriş bildirimi — mesaj kutusunun hemen üstünde sabit blok.
 class VoiceRoomBottomDock extends ConsumerWidget {
   const VoiceRoomBottomDock({
     super.key,
     required this.room,
     required this.session,
     required this.live,
-    required this.perms,
-    required this.isOwner,
-    required this.showDjControls,
-    required this.showMusicCard,
     required this.canControlMusic,
-    required this.musicMuted,
-    required this.pkActive,
     required this.staffBanner,
-    required this.onPkTap,
-    required this.onMuteToggle,
   });
 
   final VoiceRoomEntity room;
   final VoiceRoomEntity session;
   final VoiceRoomLiveState live;
-  final VoiceRoomPermissions perms;
-  final bool isOwner;
-  final bool showDjControls;
-  final bool showMusicCard;
   final bool canControlMusic;
-  final bool musicMuted;
-  final bool pkActive;
   final String? staffBanner;
-  final VoidCallback onPkTap;
-  final VoidCallback onMuteToggle;
 
   static List<MusicQueueItem> _waitingQueueItems(ChatRoomDjState dj) {
     final npId = dj.nowPlaying?.id;
@@ -76,46 +55,6 @@ class VoiceRoomBottomDock extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (showDjControls || showMusicCard)
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: m.horizontalPad),
-                child: VoiceRoomActionRow(
-                  dj: live.dj,
-                  showMusicCard: showMusicCard,
-                  showDjCard: showDjControls,
-                  showPkCard: isOwner,
-                  pkActive: pkActive,
-                  canManageDj: perms.canManageDj ||
-                      perms.canManageRoom ||
-                      perms.isRoomOwner ||
-                      perms.isSiteAdmin ||
-                      isOwner,
-                  onMusicTap: () => showVoiceMusicHubPage(
-                    context,
-                    ref,
-                    room: room,
-                    perms: perms,
-                    isOwner: isOwner,
-                  ),
-                  onDjTap: () => showVoiceRoomDjSheet(
-                    context,
-                    ref,
-                    room: room,
-                    live: live,
-                    perms: perms,
-                    isOwner: isOwner,
-                  ),
-                  onDjAddTap: () => showVoiceRoomDjSheet(
-                    context,
-                    ref,
-                    room: room,
-                    live: live,
-                    perms: perms,
-                    isOwner: isOwner,
-                  ),
-                  onPkTap: onPkTap,
-                ),
-              ),
             if (_waitingQueueItems(live.dj).isNotEmpty)
               GestureDetector(
                 onTap: () => showRoomMusicQueueSheet(
@@ -125,18 +64,57 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                   dj: live.dj,
                   canControlMusic: canControlMusic,
                 ),
-                child: VoiceRoomMusicQueueSection(
-                  dj: live.dj,
-                  coinCost: live.dj.musicRequestCost,
-                  maxItems: 5,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: m.horizontalPad),
+                  child: _QueueStrip(dj: live.dj),
                 ),
               ),
-            VoiceStaffEntranceMarquee(
+            VoiceRoomEntryNotificationCard(
               message: staffBanner,
               roomName: room.nameTr,
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _QueueStrip extends StatelessWidget {
+  const _QueueStrip({required this.dj});
+
+  final ChatRoomDjState dj;
+
+  @override
+  Widget build(BuildContext context) {
+    final waiting = VoiceRoomBottomDock._waitingQueueItems(dj);
+    if (waiting.isEmpty) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.queue_music_rounded, color: Colors.white70, size: 16),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'Sırada ${waiting.length} şarkı',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: Colors.white38, size: 18),
+        ],
       ),
     );
   }

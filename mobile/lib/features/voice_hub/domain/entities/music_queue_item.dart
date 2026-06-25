@@ -14,6 +14,7 @@ class MusicQueueItem extends Equatable {
     this.note,
     this.uploader,
     this.duration,
+    this.withVideo = false,
   });
 
   factory MusicQueueItem.fromJson(Map<String, dynamic> json) {
@@ -45,6 +46,11 @@ class MusicQueueItem extends Equatable {
           json['channel']?.toString() ??
           json['artist']?.toString(),
       duration: json['duration']?.toString(),
+      withVideo: json['withVideo'] == true ||
+          json['playWithVideo'] == true ||
+          json['isVideo'] == true ||
+          json['videoMode']?.toString().toLowerCase() == 'video' ||
+          json['mode']?.toString().toLowerCase() == 'video',
     );
   }
 
@@ -58,6 +64,7 @@ class MusicQueueItem extends Equatable {
   final String? note;
   final String? uploader;
   final String? duration;
+  final bool withVideo;
 
   String get artistLine {
     final parts = <String>[];
@@ -67,8 +74,19 @@ class MusicQueueItem extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, title, youtubeUrl, thumbUrl, createdAt, requestedBy, giftTo, note, uploader, duration];
+  List<Object?> get props => [
+        id,
+        title,
+        youtubeUrl,
+        thumbUrl,
+        createdAt,
+        requestedBy,
+        giftTo,
+        note,
+        uploader,
+        duration,
+        withVideo,
+      ];
 }
 
 class YoutubeSearchHit extends Equatable {

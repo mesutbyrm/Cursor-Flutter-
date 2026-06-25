@@ -145,6 +145,7 @@ class RoomMusicRemoteDataSource {
     String? duration,
     bool priority = false,
     bool skipPayment = false,
+    bool withVideo = false,
   }) async {
     final body = <String, dynamic>{
       'videoId': videoId,
@@ -155,6 +156,9 @@ class RoomMusicRemoteDataSource {
       'duration': ?duration,
       'priority': priority,
       if (skipPayment) 'skipPayment': true,
+      if (withVideo) 'withVideo': true,
+      if (withVideo) 'videoMode': 'video',
+      if (!withVideo) 'videoMode': 'audio',
     };
     final res = await _dio.post<dynamic>(
       '/api/chat/rooms/$roomId/song-request',

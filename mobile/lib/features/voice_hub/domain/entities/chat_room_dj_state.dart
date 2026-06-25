@@ -16,6 +16,7 @@ class ChatRoomDjState {
     this.musicQueue = const [],
     this.nowPlaying,
     this.musicRequestCost = 10,
+    this.videoRequestCost = 20,
     this.maxMusicQueue = 20,
     this.musicEnabled = true,
     this.maxDj = 5,
@@ -69,6 +70,10 @@ class ChatRoomDjState {
       musicRequestCost: json['musicRequestCost'] as int? ??
           json['cost'] as int? ??
           10,
+      videoRequestCost: json['videoRequestCost'] as int? ??
+          json['videoMusicRequestCost'] as int? ??
+          json['videoCost'] as int? ??
+          ((json['musicRequestCost'] as int? ?? json['cost'] as int? ?? 10) * 2),
       maxMusicQueue: json['maxMusicQueue'] as int? ??
           json['maxQueueLength'] as int? ??
           20,
@@ -90,6 +95,7 @@ class ChatRoomDjState {
   final List<MusicQueueItem> musicQueue;
   final MusicQueueItem? nowPlaying;
   final int musicRequestCost;
+  final int videoRequestCost;
   final int maxMusicQueue;
   final bool musicEnabled;
   final int maxDj;
@@ -119,6 +125,7 @@ class ChatRoomDjState {
       musicQueue: musicQueue ?? this.musicQueue,
       nowPlaying: clearNowPlaying ? null : (nowPlaying ?? this.nowPlaying),
       musicRequestCost: musicRequestCost,
+      videoRequestCost: videoRequestCost,
       maxMusicQueue: maxMusicQueue,
       musicEnabled: musicEnabled,
       maxDj: maxDj,
@@ -130,6 +137,7 @@ class ChatRoomDjState {
     MusicQueueItem? nowPlaying,
     bool? playing,
     int? musicRequestCost,
+    int? videoRequestCost,
     int? maxMusicQueue,
     bool? musicEnabled,
     bool? canRequestMusic,
@@ -159,6 +167,7 @@ class ChatRoomDjState {
       musicQueue: queue,
       nowPlaying: resolvedNowPlaying,
       musicRequestCost: musicRequestCost ?? this.musicRequestCost,
+      videoRequestCost: videoRequestCost ?? this.videoRequestCost,
       maxMusicQueue: maxMusicQueue ?? this.maxMusicQueue,
       musicEnabled: musicEnabled ?? this.musicEnabled,
       maxDj: maxDj,

@@ -7,9 +7,11 @@ abstract final class YoutubeEmbedHtml {
     required String videoId,
     required bool playing,
     int startSec = 0,
+    int maxDurationSec = 360,
   }) {
     final autoplay = playing ? 1 : 0;
     final start = startSec.clamp(0, 86400);
+    final endAt = (start + maxDurationSec).clamp(start + 1, 86400);
     final origin = refererOrigin;
     return '''
 <!DOCTYPE html>
@@ -56,6 +58,7 @@ abstract final class YoutubeEmbedHtml {
           rel: 0,
           modestbranding: 1,
           start: $start,
+          end: $endAt,
           origin: '$origin',
           enablejsapi: 1
         },

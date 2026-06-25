@@ -27,6 +27,7 @@ import '../../music/presentation/providers/room_music_providers.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/chat_room_message.dart';
+import '../../domain/voice_playback_limits.dart';
 import '../../domain/voice_music_sync.dart';
 import '../../domain/voice_official_join.dart';
 import '../utils/voice_room_permissions.dart';
@@ -806,7 +807,7 @@ class VoiceRoomLiveController
         ) ??
         '';
     return '${effective.playing}|$videoId|${effective.nowPlaying?.id}|'
-        '${effective.musicQueue.length}|'
+        '${effective.nowPlaying?.withVideo == true}|'
         '${effective.musicEnabled}|$muted';
   }
 
@@ -922,6 +923,7 @@ class VoiceRoomLiveController
                   as ({
                     List<MusicQueueItem> queue,
                     int cost,
+                    int videoRequestCost,
                     int maxMusicQueue,
                     bool musicEnabled,
                     MusicQueueItem? nowPlaying,
@@ -1038,6 +1040,7 @@ class VoiceRoomLiveController
     ({
       List<MusicQueueItem> queue,
       int cost,
+      int videoRequestCost,
       int maxMusicQueue,
       bool musicEnabled,
       MusicQueueItem? nowPlaying,
@@ -1076,6 +1079,7 @@ class VoiceRoomLiveController
       nowPlaying: mq.nowPlaying,
       playing: mq.playing,
       musicRequestCost: mq.cost,
+      videoRequestCost: mq.videoRequestCost,
       maxMusicQueue: mq.maxMusicQueue,
       musicEnabled: mq.musicEnabled,
       canRequestMusic: mq.canRequestMusic,
@@ -1181,7 +1185,10 @@ class VoiceRoomLiveController
     }
   }
 
-  Future<String?> submitSelectedSong(YoutubeSearchHit hit) async {
+  Future<String?> submitSelectedSong(
+    YoutubeSearchHit hit, {
+    bool withVideo = false,
+  }) async {
     state = state.copyWith(sending: true, clearPendingMusicSearch: true);
     try {
       final result = await ref.read(enqueueSongUseCaseProvider)(
@@ -1193,6 +1200,7 @@ class VoiceRoomLiveController
             thumbUrl: hit.thumbUrl,
             duration: hit.duration,
             skipPayment: false,
+            withVideo: withVideo,
           );
       if (result.newBalance != null) {
         invalidateWalletCacheFromRef(ref);
@@ -1348,15 +1356,17 @@ class VoiceRoomLiveController
     final ui = ref.read(voiceRoomUiProvider);
     final muted = !ui.backgroundMusicEnabled;
     final session = ref.read(voiceRoomMusicSessionProvider);
-    await ref.read(voiceRoomDjPlayerProvider).stop();
+    final player = ref.read(voiceRoomDjPlayerProvider);
 
     if (session.dismissed || session.userDismissedPlayer) {
+      await player.stop();
       _syncRoomVideo(const ChatRoomDjState(), sync: sync);
       _lastDjPlaybackSignature = _djPlaybackSignature(dj, muted: muted);
       return dj;
     }
 
     if (!dj.musicEnabled) {
+      await player.stop();
       _syncRoomVideo(dj.copyWith(playing: false), sync: sync);
       _lastDjPlaybackSignature = _djPlaybackSignature(dj, muted: muted);
       return dj.copyWith(playing: false);
@@ -1367,24 +1377,45 @@ class VoiceRoomLiveController
       currentVideoId: sync?.currentVideoId,
       nowPlayingUrl: effectiveDj.nowPlaying?.youtubeUrl,
     );
-    final shouldPlay = (sync?.isPlaying ?? effectiveDj.playing) &&
-        videoId != null;
+    final shouldPlay =
+        (sync?.isPlaying ?? effectiveDj.playing) && videoId != null;
+    final withVideo = effectiveDj.nowPlaying?.withVideo == true;
+    final startPos = Duration(
+      milliseconds: VoicePlaybackLimits.clampPositionMs(
+        sync?.resolvedPositionMs() ?? 0,
+      ),
+    );
+    final sig = _djPlaybackSignature(effectiveDj, muted: muted);
+    final sameTrack = sig == _lastDjPlaybackSignature;
 
-    if (shouldPlay) {
+    if (shouldPlay && withVideo) {
+      if (!sameTrack) await player.stop();
       _syncRoomVideo(effectiveDj, sync: sync);
-      VoiceRoomDebugLog.log('roomVideo.active', {
-        'videoId': videoId,
-        'room': _roomKey,
-        'positionMs': sync?.resolvedPositionMs() ?? 0,
-        'muted': muted,
-      });
-      _lastDjPlaybackSignature = _djPlaybackSignature(
-        effectiveDj,
-        muted: muted,
-      );
+      _lastDjPlaybackSignature = sig;
       return effectiveDj;
     }
 
+    if (shouldPlay) {
+      ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+      if (!sameTrack) {
+        await player.stop();
+      }
+      final streamUrl = sync?.streamUrl ?? effectiveDj.musicUrl;
+      await player.sync(
+        musicUrl: effectiveDj.musicUrl,
+        resolveSeed: effectiveDj.playbackResolveSeed,
+        fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
+        nowPlaying: effectiveDj.nowPlaying,
+        playing: true,
+        muted: muted,
+        serverStreamUrl: streamUrl,
+        startPosition: sameTrack ? startPos : startPos,
+      );
+      _lastDjPlaybackSignature = sig;
+      return effectiveDj;
+    }
+
+    await player.stop();
     _syncRoomVideo(effectiveDj.copyWith(playing: false), sync: sync);
     _lastDjPlaybackSignature = _djPlaybackSignature(
       effectiveDj,
@@ -1413,6 +1444,7 @@ class VoiceRoomLiveController
             as ({
               List<MusicQueueItem> queue,
               int cost,
+              int videoRequestCost,
               int maxMusicQueue,
               bool musicEnabled,
               MusicQueueItem? nowPlaying,
@@ -2376,6 +2408,7 @@ class VoiceRoomLiveController
     ({
       List<MusicQueueItem> queue,
       int cost,
+      int videoRequestCost,
       int maxMusicQueue,
       bool musicEnabled,
       MusicQueueItem? nowPlaying,
@@ -2556,6 +2589,7 @@ class VoiceRoomLiveController
     String? note,
     bool priority = true,
     bool djMusicControl = false,
+    bool withVideo = false,
   }) async {
     try {
       var resolvedUrl = youtubeUrl.trim();
@@ -2599,6 +2633,7 @@ class VoiceRoomLiveController
             note: note,
             priority: priority,
             djMusicControl: djMusicControl,
+            withVideo: withVideo,
           )
           .timeout(
             const Duration(seconds: 45),
