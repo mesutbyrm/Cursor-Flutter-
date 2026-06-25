@@ -167,7 +167,7 @@ class ProfilePage extends ConsumerWidget {
                             ProfileBroadcasterPanel(
                               onHistory: () =>
                                   context.push('/profile/broadcast-history'),
-                              onSchedule: () => context.push('/live/type'),
+                              onSchedule: () => context.push('/live/schedule'),
                               onStats: () =>
                                   context.push('/profile/broadcaster-stats'),
                               onEquipment: () =>

@@ -8,8 +8,10 @@ import '../../../../core/network/token_storage.dart';
 import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
+import '../../domain/utils/live_chat_guard.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import 'live_providers.dart';
+import 'live_stream_engagement_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../gifts/providers/live_gift_providers.dart';
 import 'live_fortune_request_provider.dart';
@@ -225,6 +227,20 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
   Future<void> sendMessage(String text, {required String selfName}) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty || state.sending || state.streamEnded) return;
+
+    if (ref.read(liveStreamEngagementProvider.notifier).tryVoteFromChat(
+          trimmed,
+          selfName,
+        )) {
+      return;
+    }
+
+    final guardError = LiveChatGuard.validate(trimmed);
+    if (guardError != null) {
+      state = state.copyWith(error: guardError);
+      return;
+    }
+
     final optimisticId = 'local-${DateTime.now().millisecondsSinceEpoch}';
     state = state.copyWith(
       sending: true,
@@ -246,10 +262,11 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
           LiveRoomChatMessage(
             id: sent.id,
             user: sent.displayName,
-            text: sent.content,
+            text: LiveChatGuard.sanitizeForDisplay(sent.content),
           ),
         );
       }
+      LiveChatGuard.markSent(trimmed);
       state = state.copyWith(messages: list, sending: false);
     } catch (e) {
       state = state.copyWith(

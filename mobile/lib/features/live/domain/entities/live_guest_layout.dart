@@ -2,9 +2,9 @@
 enum LiveGuestLayout {
   solo(1, 'Tek kişi', 1),
   duo(2, '2 kişi', 1),
-  quad(4, '4 kişi', 2),
-  sextet(6, '6 kişi', 2),
-  nonet(9, '9 kişi', 3);
+  quad(4, '4\'lü yayın', 2),
+  sextet(6, '6\'lı yayın', 2),
+  nonet(9, '9\'lu yayın', 3);
 
   const LiveGuestLayout(this.seats, this.label, this.crossAxisCount);
 

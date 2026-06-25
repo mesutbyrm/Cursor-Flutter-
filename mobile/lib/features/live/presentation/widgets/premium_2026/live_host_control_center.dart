@@ -7,9 +7,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../domain/entities/live_fortune_request_entity.dart';
 import '../../gifts/providers/live_gift_providers.dart';
 import '../../providers/co_broadcast_provider.dart';
+import '../../providers/live_guest_grid_provider.dart';
 import '../../providers/live_fortune_request_provider.dart';
 import '../../providers/live_host_dashboard_provider.dart';
 import '../../providers/live_video_pk_provider.dart';
+import '../../providers/live_stream_engagement_provider.dart';
+import '../../providers/live_stream_viewers_provider.dart';
+import '../../widgets/broadcast_room/live_moderation_sheet.dart';
 import 'live_host_dashboard_chart.dart';
 
 /// Sağdan açılan yayıncı kontrol merkezi — 6 sekme.
@@ -62,7 +66,7 @@ class _LiveHostControlCenterState extends ConsumerState<_LiveHostControlCenter>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 6, vsync: this);
+    _tabs = TabController(length: 7, vsync: this);
   }
 
   @override
@@ -134,6 +138,7 @@ class _LiveHostControlCenterState extends ConsumerState<_LiveHostControlCenter>
                       Tab(text: 'PK'),
                       Tab(text: 'Konuk'),
                       Tab(text: 'Mod'),
+                      Tab(text: 'Etkinlik'),
                       Tab(text: 'İstatistik'),
                     ],
                   ),
@@ -146,6 +151,7 @@ class _LiveHostControlCenterState extends ConsumerState<_LiveHostControlCenter>
                         _PkTab(streamId: widget.streamId),
                         _GuestsTab(streamId: widget.streamId),
                         _ModerationTab(streamId: widget.streamId),
+                        _EngagementTab(streamId: widget.streamId),
                         _StatsTab(streamId: widget.streamId),
                       ],
                     ),
@@ -434,6 +440,13 @@ class _GuestsTab extends ConsumerWidget {
                         streamId: streamId,
                         userId: uid,
                       );
+                  ref.read(liveGuestGridProvider.notifier).addGuest(
+                        slotIndex: 1,
+                        userId: uid,
+                        displayName: r['userName']?.toString() ??
+                            r['displayName']?.toString() ??
+                            'Konuk',
+                      );
                 }
               },
               child: const Text('Kabul'),
@@ -454,31 +467,232 @@ class _GuestsTab extends ConsumerWidget {
   }
 }
 
-class _ModerationTab extends ConsumerWidget {
+class _ModerationTab extends ConsumerStatefulWidget {
   const _ModerationTab({required this.streamId});
   final String streamId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ModerationTab> createState() => _ModerationTabState();
+}
+
+class _ModerationTabState extends ConsumerState<_ModerationTab> {
+  final _userIdCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _userIdCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _quickMod(String action) async {
+    final userId = _userIdCtrl.text.trim();
+    if (userId.isEmpty) return;
+    final mod = ref.read(liveModerationProvider(widget.streamId).notifier);
+    final ok = switch (action) {
+      'mute' => await mod.muteUser(userId),
+      'kick' => await mod.kickUser(userId),
+      'ban' => await mod.banUser(userId),
+      'mod' => await mod.addModerator(userId),
+      _ => false,
+    };
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok ? 'İşlem uygulandı' : 'İşlem başarısız')),
+    );
+    if (ok) {
+      ref.read(liveStreamEngagementProvider.notifier).logViolation(
+            '$action → $userId',
+          );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final violations = ref.watch(liveStreamEngagementProvider).violations;
+
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       children: [
-        const Text(
-          'Sohbet mesajına uzun basarak moderasyon menüsünü açabilirsiniz.',
-          style: TextStyle(color: Colors.white60, fontSize: 12),
-        ),
-        const SizedBox(height: 12),
-        ListTile(
-          leading: const Icon(Icons.shield_rounded, color: Colors.white70),
-          title: const Text('Hızlı moderasyon', style: TextStyle(color: Colors.white)),
-          subtitle: const Text(
-            'Kullanıcı ID ile moderasyon',
-            style: TextStyle(color: Colors.white54, fontSize: 11),
+        TextField(
+          controller: _userIdCtrl,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            labelText: 'Kullanıcı ID',
+            hintText: 'Moderasyon hedefi',
+            labelStyle: TextStyle(color: Colors.white70),
           ),
-          onTap: () {
-            // Host uses chat long-press in room.
-          },
         ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _modBtn('Sustur', Icons.volume_off_rounded, () => _quickMod('mute')),
+            _modBtn('At', Icons.logout_rounded, () => _quickMod('kick')),
+            _modBtn('Ban', Icons.block_rounded, () => _quickMod('ban')),
+            _modBtn('Mod yap', Icons.shield_rounded, () => _quickMod('mod')),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _sectionTitle('İhlal günlüğü'),
+        if (violations.isEmpty)
+          const Text('Kayıt yok', style: TextStyle(color: Colors.white54)),
+        for (final v in violations.reversed.take(20))
+          ListTile(
+            dense: true,
+            leading: const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 18),
+            title: Text(v, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+          ),
+        const SizedBox(height: 8),
+        const Text(
+          'Sohbette uzun basarak da moderasyon açabilirsiniz.',
+          style: TextStyle(color: Colors.white38, fontSize: 11),
+        ),
+      ],
+    );
+  }
+
+  Widget _modBtn(String label, IconData icon, VoidCallback onTap) {
+    return FilledButton.tonalIcon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 16),
+      label: Text(label, style: const TextStyle(fontSize: 11)),
+    );
+  }
+}
+
+class _EngagementTab extends ConsumerStatefulWidget {
+  const _EngagementTab({required this.streamId});
+  final String streamId;
+
+  @override
+  ConsumerState<_EngagementTab> createState() => _EngagementTabState();
+}
+
+class _EngagementTabState extends ConsumerState<_EngagementTab> {
+  final _pollQ = TextEditingController();
+  final _opt1 = TextEditingController();
+  final _opt2 = TextEditingController();
+  final _banner = TextEditingController();
+
+  @override
+  void dispose() {
+    _pollQ.dispose();
+    _opt1.dispose();
+    _opt2.dispose();
+    _banner.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final eng = ref.watch(liveStreamEngagementProvider);
+    final poll = eng.activePoll;
+
+    return ListView(
+      padding: const EdgeInsets.all(12),
+      children: [
+        _sectionTitle('Anket'),
+        TextField(
+          controller: _pollQ,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            labelText: 'Soru',
+            labelStyle: TextStyle(color: Colors.white70),
+          ),
+        ),
+        TextField(
+          controller: _opt1,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            labelText: 'Seçenek 1',
+            labelStyle: TextStyle(color: Colors.white70),
+          ),
+        ),
+        TextField(
+          controller: _opt2,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            labelText: 'Seçenek 2',
+            labelStyle: TextStyle(color: Colors.white70),
+          ),
+        ),
+        Row(
+          children: [
+            FilledButton(
+              onPressed: () {
+                ref.read(liveStreamEngagementProvider.notifier).createPoll(
+                      question: _pollQ.text,
+                      optionLabels: [_opt1.text, _opt2.text],
+                    );
+              },
+              child: const Text('Başlat'),
+            ),
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: () =>
+                  ref.read(liveStreamEngagementProvider.notifier).closePoll(),
+              child: const Text('Kapat'),
+            ),
+          ],
+        ),
+        if (poll != null) ...[
+          Text(
+            poll.question,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+          ),
+          for (final o in poll.options)
+            ListTile(
+              dense: true,
+              title: Text(o.label, style: const TextStyle(color: Colors.white70)),
+              trailing: Text('${o.votes}', style: const TextStyle(color: Colors.amber)),
+            ),
+          Text(
+            'İzleyiciler sohbete !oy 1 veya !oy 2 yazarak oy verir.',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 10),
+          ),
+        ],
+        const SizedBox(height: 16),
+        _sectionTitle('Etkinlik duyurusu'),
+        TextField(
+          controller: _banner,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            labelText: 'Banner metni',
+            labelStyle: TextStyle(color: Colors.white70),
+          ),
+        ),
+        FilledButton.tonal(
+          onPressed: () => ref
+              .read(liveStreamEngagementProvider.notifier)
+              .setEventBanner(_banner.text),
+          child: const Text('Yayınla'),
+        ),
+        if (eng.eventBanner != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(eng.eventBanner!, style: const TextStyle(color: Colors.cyanAccent)),
+          ),
+        const SizedBox(height: 16),
+        _sectionTitle('Çekiliş'),
+        FilledButton.icon(
+          onPressed: () async {
+            final viewers = await ref.read(liveStreamViewersProvider(widget.streamId).future);
+            final names = viewers.map((v) => v.displayName).where((n) => n.isNotEmpty).toList();
+            final winner = ref.read(liveStreamEngagementProvider.notifier).pickGiveawayWinner(names);
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(winner != null ? 'Kazanan: $winner' : 'İzleyici yok')),
+            );
+          },
+          icon: const Icon(Icons.casino_rounded),
+          label: const Text('Rastgele kazanan seç'),
+        ),
+        if (eng.lastGiveawayWinner != null)
+          Text(
+            'Son kazanan: ${eng.lastGiveawayWinner}',
+            style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.w800),
+          ),
       ],
     );
   }

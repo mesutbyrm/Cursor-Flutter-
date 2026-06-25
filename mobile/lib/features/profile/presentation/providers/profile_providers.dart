@@ -13,7 +13,9 @@ import '../../domain/entities/referral_info_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../../data/datasources/canlifal_user_api_datasource.dart';
 import '../../data/datasources/achievements_remote_datasource.dart';
+import '../../data/datasources/daily_tasks_remote_datasource.dart';
 import '../../data/datasources/profile_remote_datasource.dart';
+import '../../domain/entities/daily_task_entity.dart';
 import '../../data/repositories/profile_repository_impl.dart';
 
 final profileRemoteProvider = Provider<ProfileRemoteDataSource>((ref) {
@@ -22,6 +24,19 @@ final profileRemoteProvider = Provider<ProfileRemoteDataSource>((ref) {
 
 final achievementsRemoteProvider = Provider<AchievementsRemoteDataSource>((ref) {
   return AchievementsRemoteDataSource(ref.watch(dioProvider));
+});
+
+final dailyTasksRemoteProvider = Provider<DailyTasksRemoteDataSource>((ref) {
+  return DailyTasksRemoteDataSource(ref.watch(dioProvider));
+});
+
+final userDailyTasksProvider =
+    FutureProvider<List<DailyTaskEntity>>((ref) async {
+  return ref.watch(dailyTasksRemoteProvider).fetchDailyTasks();
+});
+
+final userLevelProvider = FutureProvider<UserLevelEntity>((ref) async {
+  return ref.watch(dailyTasksRemoteProvider).fetchUserLevel();
 });
 
 final userAchievementsProvider =

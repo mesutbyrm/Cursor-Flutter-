@@ -13,6 +13,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../home/domain/entities/home_game_entity.dart';
 import '../../../home/presentation/providers/home_providers.dart';
 import '../../data/datasources/achievements_remote_datasource.dart';
+import '../../domain/entities/daily_task_entity.dart';
 import '../../domain/entities/growth_progress_entity.dart';
 import '../../domain/entities/profile_stats_entity.dart';
 import '../providers/profile_providers.dart';
@@ -29,6 +30,8 @@ class GrowthHubPage extends ConsumerWidget {
     final walletAsync = ref.watch(walletBalancesProvider);
     final referralAsync = ref.watch(referralInfoProvider);
     final achievementsAsync = ref.watch(userAchievementsProvider);
+    final serverTasksAsync = ref.watch(userDailyTasksProvider);
+    final serverLevelAsync = ref.watch(userLevelProvider);
 
     final user = auth.valueOrNull;
     final stats = statsAsync.valueOrNull ?? const ProfileStatsEntity();
@@ -45,6 +48,32 @@ class GrowthHubPage extends ConsumerWidget {
       invitedCount: referral?.invitedCount ?? 0,
       hasPremium: hasPremium,
     );
+    final serverLevel = serverLevelAsync.valueOrNull;
+    final displayLevel = serverLevel != null && serverLevel.level > 0
+        ? serverLevel.level
+        : progress.level;
+    final displayXp = serverLevel != null && serverLevel.xp > 0
+        ? serverLevel.xp
+        : progress.xp;
+    final serverTasks = serverTasksAsync.valueOrNull ?? const <DailyTaskEntity>[];
+    final taskCards = serverTasks.isNotEmpty
+        ? serverTasks
+            .map(
+              (t) => GrowthTaskEntity(
+                id: t.id,
+                title: t.title,
+                description: t.description ?? '',
+                current: t.current,
+                target: t.target,
+                rewardLabel: t.rewardJeton > 0
+                    ? '+${t.rewardJeton} Jeton'
+                    : (t.rewardXp > 0 ? '+${t.rewardXp} XP' : '+XP'),
+                route: t.route ?? '/feed',
+                icon: t.icon ?? '✅',
+              ),
+            )
+            .toList()
+        : progress.tasks;
     final loading = auth.isLoading ||
         statsAsync.isLoading ||
         rewardsAsync.isLoading ||
@@ -80,10 +109,14 @@ class GrowthHubPage extends ConsumerWidget {
                   _LevelHero(
                     displayName: user?.display ?? 'Canlifal üyesi',
                     progress: progress,
+                    level: displayLevel,
+                    xp: displayXp,
+                    vipTier: serverLevel?.vipTier,
+                    isVip: serverLevel?.isVip ?? hasPremium,
                   ),
                   const SizedBox(height: 20),
                   const ProfileSectionTitle(title: 'Bugünün görevleri'),
-                  for (final task in progress.tasks) ...[
+                  for (final task in taskCards) ...[
                     _TaskCard(
                       task: task,
                       onTap: () => _openTask(context, task.route),
@@ -146,6 +179,8 @@ class GrowthHubPage extends ConsumerWidget {
     ref.refreshWalletCache(force: true);
     ref.invalidate(referralInfoProvider);
     ref.invalidate(userAchievementsProvider);
+    ref.invalidate(userDailyTasksProvider);
+    ref.invalidate(userLevelProvider);
     await Future.wait([
       _ignore(ref.read(authControllerProvider.notifier).refreshMe()),
       _ignore(ref.read(profileStatsProvider.future)),
@@ -153,6 +188,8 @@ class GrowthHubPage extends ConsumerWidget {
       _ignore(ref.read(walletBalancesProvider.future)),
       _ignore(ref.read(referralInfoProvider.future)),
       _ignore(ref.read(userAchievementsProvider.future)),
+      _ignore(ref.read(userDailyTasksProvider.future)),
+      _ignore(ref.read(userLevelProvider.future)),
     ]);
   }
 
@@ -214,10 +251,18 @@ class _LevelHero extends StatelessWidget {
   const _LevelHero({
     required this.displayName,
     required this.progress,
+    this.level,
+    this.xp,
+    this.vipTier,
+    this.isVip = false,
   });
 
   final String displayName;
   final GrowthProgressEntity progress;
+  final int? level;
+  final int? xp;
+  final String? vipTier;
+  final bool isVip;
 
   @override
   Widget build(BuildContext context) {
@@ -256,7 +301,7 @@ class _LevelHero extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  '${progress.level}',
+                  '${level ?? progress.level}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -281,12 +326,33 @@ class _LevelHero extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${profileFormatCoins(progress.xp)} XP • Sıradaki seviye ${progress.nextLevelXp} XP',
+                      '${profileFormatCoins(xp ?? progress.xp)} XP • Sıradaki seviye ${progress.nextLevelXp} XP',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.86),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                    if (isVip) ...[
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          vipTier?.isNotEmpty == true ? 'VIP · $vipTier' : 'VIP',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

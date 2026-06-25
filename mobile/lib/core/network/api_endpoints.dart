@@ -470,6 +470,8 @@ abstract final class ApiEndpoints {
 
   static const dailyLogin = '/api/daily-login';
   static const dailyMissions = '/api/daily-missions';
+  static const leaderboards = '/api/leaderboards';
+  static const leaderboard = '/api/leaderboard';
 
   static const userFavorites = '/api/user/favorites';
 

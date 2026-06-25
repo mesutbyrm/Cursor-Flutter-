@@ -7,11 +7,13 @@ import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../domain/entities/live_stream_viewer.dart';
 import '../../providers/live_stream_viewers_provider.dart';
+import 'live_moderation_sheet.dart';
 
 Future<void> showLiveViewersSheet(
   BuildContext context,
   WidgetRef ref, {
   required String streamId,
+  bool isHost = false,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -64,8 +66,11 @@ Future<void> showLiveViewersSheet(
                       child: ListView.builder(
                         controller: scroll,
                         itemCount: viewers.length,
-                        itemBuilder: (context, i) =>
-                            _ViewerTile(viewer: viewers[i]),
+                        itemBuilder: (context, i) => _ViewerTile(
+                          viewer: viewers[i],
+                          streamId: streamId,
+                          isHost: isHost,
+                        ),
                       ),
                     );
                   },
@@ -79,13 +84,19 @@ Future<void> showLiveViewersSheet(
   );
 }
 
-class _ViewerTile extends StatelessWidget {
-  const _ViewerTile({required this.viewer});
+class _ViewerTile extends ConsumerWidget {
+  const _ViewerTile({
+    required this.viewer,
+    required this.streamId,
+    this.isHost = false,
+  });
 
   final LiveStreamViewer viewer;
+  final String streamId;
+  final bool isHost;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final seen = viewer.lastSeen != null
         ? DateFormat('HH:mm').format(viewer.lastSeen!.toLocal())
         : null;
@@ -113,6 +124,19 @@ class _ViewerTile extends StatelessWidget {
           if (viewer.isVip) _Badge('VIP', AppThemeColors.coinGold),
         ],
       ),
+      onLongPress: isHost && viewer.id.isNotEmpty
+          ? () {
+              showLiveModerationSheet(
+                context: context,
+                ref: ref,
+                streamId: streamId,
+                targetUserId: viewer.id,
+                targetDisplayName: viewer.displayName,
+                targetAvatarUrl: viewer.avatarUrl,
+                isModerator: viewer.isModerator,
+              );
+            }
+          : null,
       onTap: viewer.id.isEmpty
           ? null
           : () {

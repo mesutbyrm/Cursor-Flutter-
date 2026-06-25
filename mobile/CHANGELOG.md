@@ -1,6 +1,27 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.360+364 (2026-06-25)
+
+### Canlı yayın — çoklu konuk, moderasyon, etkileşim
+
+- **4'lü / 6'lı / 9'lu yayın:** Grid etiketleri; co-broadcast onayı konuk slotlarına yazılır
+- **Moderatör paneli:** Kontrol merkezi Mod sekmesi — sustur, at, ban, mod ata, ihlal günlüğü
+- **İzleyici listesi:** Uzun basışla moderasyon; VIP/mod rozetleri
+- **Anket / çekiliş / etkinlik:** Host kontrol merkezi Etkinlik sekmesi (`!oy 1` oylama)
+- **Video kalitesi:** 360p / 720p / 1080p / Otomatik + düşük gecikme Agora encoder
+- **Sohbet koruması:** Spam throttle, küfür filtresi, tekrar mesaj engeli
+
+### Seviye, görevler, liderlik
+
+- **Günlük görevler:** `/api/user/daily-tasks` ve `/api/daily-missions` API bağlantısı
+- **Seviye / VIP:** `/api/me` level, XP ve VIP rozeti growth hub'da
+- **Hediye liderleri:** Haftalık/aylık tablo (`/gifts/leaderboard`, `/api/leaderboards`)
+
+### Yayın planlama
+
+- **Yayın Planla:** `/live/schedule` — yerel plan + hatırlatma bildirimi
+
 ## 1.0.359+363 (2026-06-25)
 
 ### Premium 2026 spec (PK hariç)

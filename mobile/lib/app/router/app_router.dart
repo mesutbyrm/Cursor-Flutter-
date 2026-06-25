@@ -33,7 +33,9 @@ import '../../features/gifts/presentation/pages/gift_send_page.dart';
 import '../../features/live/domain/entities/live_broadcast_session.dart';
 import '../../features/live/domain/entities/live_broadcast_prep_args.dart';
 import '../../features/live/presentation/pages/live_broadcast_prep_page.dart';
+import '../../features/live/presentation/pages/live_broadcast_schedule_page.dart';
 import '../../features/live/presentation/pages/live_broadcast_type_page.dart';
+import '../../features/gifts/presentation/pages/gift_leaderboard_hub_page.dart';
 import '../../features/live/domain/entities/live_swipe_feed_args.dart';
 import '../../features/live/presentation/pages/live_broadcast_room_page.dart';
 import '../../features/live/presentation/pages/live_page.dart';
@@ -397,6 +399,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
+        path: '/live/schedule',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const LiveBroadcastSchedulePage(),
+        ),
+      ),
+      GoRoute(
         path: '/live/type',
         pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
           key: state.pageKey,
@@ -515,6 +524,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/gifts',
         builder: (context, state) => const ProfileGiftsPage(),
+      ),
+      GoRoute(
+        path: '/gifts/leaderboard',
+        pageBuilder: (context, state) => AppPageTransitions.fadeSlide(
+          key: state.pageKey,
+          child: const GiftLeaderboardHubPage(),
+        ),
       ),
       GoRoute(
         path: '/profile/growth',

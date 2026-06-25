@@ -7,6 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/services.dart';
 
 import '../domain/entities/agora_credentials.dart';
+import '../../live/domain/entities/live_stream_quality_preset.dart';
 
 /// Agora RTC — canlı video yayını (üretim: `POST /api/agora/token`).
 class AgoraRoomManager {
@@ -24,6 +25,10 @@ class AgoraRoomManager {
   final ValueNotifier<int?> remoteUidNotifier = ValueNotifier<int?>(null);
   final ValueNotifier<bool> remoteVideoAvailable = ValueNotifier(false);
   final ValueNotifier<List<int>> remoteUidsNotifier = ValueNotifier<List<int>>([]);
+
+  final ValueNotifier<int> networkQuality = ValueNotifier<int>(4);
+
+  LiveStreamQualityPreset _qualityPreset = LiveStreamQualityPreset.auto;
 
   final Set<int> _remoteUids = {};
 
@@ -163,6 +168,15 @@ class AgoraRoomManager {
           remoteVideoAvailable.value = remoteUid != null;
         }
       },
+      onNetworkQuality: (connection, remoteUid, txQuality, rxQuality) {
+        final q = txQuality.index.clamp(0, 5);
+        networkQuality.value = q;
+        if (_isHost && _qualityPreset.isAuto) {
+          unawaited(_applyEncoderPreset(
+            _qualityPreset.downgradeFromNetwork(q),
+          ));
+        }
+      },
       onError: (err, msg) {
         debugPrint('Agora error $err: $msg');
         if (err == ErrorCodeType.errJoinChannelRejected) {
@@ -210,6 +224,38 @@ class AgoraRoomManager {
     if (isHost) {
       await _engine!.enableLocalVideo(true);
       await _engine!.enableLocalAudio(true);
+      await _applyEncoderPreset(_qualityPreset);
+    }
+  }
+
+  Future<void> setStreamQuality(LiveStreamQualityPreset preset) async {
+    _qualityPreset = preset;
+    await _applyEncoderPreset(preset);
+  }
+
+  Future<void> _applyEncoderPreset(LiveStreamQualityPreset preset) async {
+    if (_engine == null || !_isHost) return;
+    final resolved = preset.isAuto
+        ? preset.downgradeFromNetwork(networkQuality.value)
+        : preset;
+    if (resolved.bitrateKbps <= 0) return;
+    await _engine!.setVideoEncoderConfiguration(
+      VideoEncoderConfiguration(
+        dimensions: VideoDimensions(
+          width: resolved.width,
+          height: resolved.height,
+        ),
+        frameRate: resolved.fps,
+        bitrate: resolved.bitrateKbps,
+        minBitrate: (resolved.bitrateKbps * 0.6).round(),
+        orientationMode: OrientationMode.orientationModeAdaptive,
+        degradationPreference: DegradationPreference.maintainFramerate,
+      ),
+    );
+    if (resolved.lowLatency) {
+      await _engine!.setParameters(
+        '{"che.audio.lowlatency":true,"che.video.lowlatency":true}',
+      );
     }
   }
 

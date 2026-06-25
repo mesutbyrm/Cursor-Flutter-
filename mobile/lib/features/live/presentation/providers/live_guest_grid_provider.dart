@@ -100,6 +100,27 @@ class LiveGuestGridNotifier extends Notifier<LiveGuestGridState> {
     state = state.copyWith(slots: list);
   }
 
+  void syncCoBroadcasters(List<Map<String, dynamic>> guests) {
+    if (state.layout == LiveGuestLayout.solo) return;
+    final list = [...state.slots];
+    var slot = 1;
+    for (final g in guests) {
+      if (slot >= list.length) break;
+      final userId = g['userId']?.toString() ?? '';
+      final name = g['userName']?.toString() ??
+          g['displayName']?.toString() ??
+          'Konuk $slot';
+      if (userId.isEmpty) continue;
+      list[slot] = list[slot].copyWith(
+        userId: userId,
+        displayName: name,
+        agoraUid: int.tryParse('${g['agoraUid'] ?? g['uid'] ?? ''}'),
+      );
+      slot++;
+    }
+    state = state.copyWith(slots: list);
+  }
+
   void _upsert(
     int index, {
     String? userId,

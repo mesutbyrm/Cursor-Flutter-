@@ -45,11 +45,12 @@ import '../widgets/live_tiktok/live_background_picker_sheet.dart';
 import '../widgets/live_tiktok/live_guest_grid.dart';
 import '../widgets/broadcast_room/live_pk_score_bar.dart';
 import '../providers/live_fortune_request_provider.dart';
-import '../providers/live_broadcast_settings_provider.dart';
+import '../providers/live_stream_quality_provider.dart';
 import '../widgets/broadcast_room/live_fortune_request_form.dart';
 import '../widgets/broadcast_room/live_gift_leaderboard.dart';
 import '../widgets/broadcast_room/live_like_realtime.dart';
 import '../widgets/broadcast_room/live_moderation_sheet.dart';
+import '../providers/live_broadcast_settings_provider.dart';
 import '../widgets/broadcast_room/live_broadcast_settings_sheet.dart';
 import '../widgets/broadcast_room/live_viewers_sheet.dart';
 import '../widgets/broadcast_room/live_room_chat_fal_panel.dart';
@@ -163,6 +164,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     _remoteUidsListener ??= _onRemoteUidsChanged;
     _agora.remoteUidsNotifier.addListener(_remoteUidsListener!);
     _onRemoteUidsChanged();
+    final quality = ref.read(liveStreamQualityProvider);
+    unawaited(_agora.setStreamQuality(quality));
   }
 
   Future<void> _initAgora() async {
@@ -573,6 +576,11 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
               streamId: streamId,
               userId: userId,
             );
+        ref.read(liveGuestGridProvider.notifier).addGuest(
+              slotIndex: _nextEmptyGuestSlot(),
+              userId: userId,
+              displayName: name,
+            );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('$name yayına eklendi')),
@@ -622,6 +630,14 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       return settings.guestLayout;
     }
     return widget.session.guestLayout;
+  }
+
+  int _nextEmptyGuestSlot() {
+    final slots = ref.read(liveGuestGridProvider).slots;
+    for (var i = 1; i < slots.length; i++) {
+      if (slots[i].isEmpty) return i;
+    }
+    return slots.length > 1 ? 1 : 1;
   }
 
   void _onRemoteUidsChanged() {
@@ -989,7 +1005,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
             onFortuneRequest: () => unawaited(_onFortuneRequest(s)),
             showFortuneRequest: _isFortuneBroadcast(s),
             onViewersTap: streamId != null && streamId.isNotEmpty
-                ? () => showLiveViewersSheet(context, ref, streamId: streamId)
+                ? () => showLiveViewersSheet(
+                      context,
+                      ref,
+                      streamId: streamId,
+                      isHost: s.isHost,
+                    )
                 : null,
             onNickname: () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -1048,6 +1069,9 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
 
     if (hasStream && s.isHost) {
       ref.listen(coBroadcastProvider, (prev, next) {
+        ref
+            .read(liveGuestGridProvider.notifier)
+            .syncCoBroadcasters(next.coBroadcasters);
         for (final req in next.joinRequests) {
           if ((req['status']?.toString() ?? 'pending') == 'pending') {
             unawaited(_promptGuestJoinRequest(req));
@@ -1229,6 +1253,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                                 context,
                                 ref,
                                 streamId: streamId,
+                                isHost: s.isHost,
                               )
                           : null,
                       onProfileTap: s.hostUserId != null || s.streamerHandle != null
