@@ -297,35 +297,24 @@ gate_04_live_fortune_request() {
   fi
   HOST_TOKEN="$host_token"
 
-  local token="${VIEWER_TOKEN:-$USER_TOKEN}"
-  if [[ -z "$token" ]]; then
-    bootstrap_user_token || true
-    token="${USER_TOKEN:-}"
-  fi
-  if [[ -z "$token" ]]; then
-    resp=$(mobile_login_identifier email "$VIEWER_EMAIL" "$VIEWER_PASSWORD")
-    token=$(extract_token "$resp")
-    VIEWER_TOKEN="$token"
+  local token=""
+  bootstrap_user_token || true
+  token="$USER_TOKEN"
+  if [[ -z "$token" && -n "$USER_EMAIL" ]]; then
+    token=$(extract_token "$(mobile_login_identifier email "$USER_EMAIL" "$USER_PASSWORD")")
+    USER_TOKEN="$token"
   fi
   if [[ -z "$token" ]]; then
     record 4 "Canlı yayın fal isteği" FAIL "izleyici token yok"
     return
   fi
-  local freq
-  freq=$(curl -sS -X POST "$BASE/api/video-streams/$STREAM_ID/fortune-requests" \
-    -H "Authorization: Bearer $token" \
-    -H "Content-Type: application/json" \
-    -d '{"displayName":"GateTest","question":"Test?","fortuneType":"tarot","type":"tarot","priority":"normal","jetonCost":10}')
-  FORTUNE_REQUEST_ID=$(printf '%s' "$freq" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-for g in [lambda x:x.get('id'), lambda x:(x.get('request') or {}).get('id'), lambda x:(x.get('data') or {}).get('id')]:
-    v=g(d)
-    if v: print(v); break
-" 2>/dev/null || echo "")
-
+  local freq_result freq_code freq_err
+  freq_result=$(post_fortune_request "$STREAM_ID" "$token")
+  FORTUNE_REQUEST_ID="${freq_result%%|*}"
+  freq_code=$(echo "$freq_result" | cut -d'|' -f2)
+  freq_err=$(echo "$freq_result" | cut -d'|' -f3)
   if [[ -z "$FORTUNE_REQUEST_ID" ]]; then
-    record 4 "Canlı yayın fal isteği" FAIL "istek oluşturulamadı"
+    record 4 "Canlı yayın fal isteği" FAIL "istek oluşturulamadı (HTTP ${freq_code:-?}, ${freq_err:-bilinmeyen})"
     return
   fi
 
@@ -363,14 +352,14 @@ gate_05_jeton_admin_notify() {
   username=$(printf '%s' "$me" | json_field "['username']")
   local ref="CANLIFAL-GATE-$RUN_ID"
   local pay_body pay_code
-  pay_body=$(GATE_REF="$ref" GATE_USER="${username:-gate}" python3 -c 'import json,os; print(json.dumps({
-    "requestType":"jeton","type":"jeton","method":"papara",
-    "packageId":"gate_test","packageTitle":"Gate Test Jeton",
-    "coins":50,"priceTry":25,
-    "notes":"Release gate test "+os.environ["GATE_REF"],
-    "receiptReference":os.environ["GATE_REF"],
-    "notifyAdmins":True,"notifyStaff":True,
-    "source":"mobile_jeton_checkout","senderInfo":os.environ["GATE_USER"]
+  pay_body=$(GATE_REF="$ref" python3 -c 'import json,os; print(json.dumps({
+    "requestType":"jeton",
+    "method":"papara",
+    "packageId":"p50",
+    "packageTitle":"50 Jeton",
+    "coins":50,
+    "priceTry":25,
+    "notes":"Release gate test "+os.environ["GATE_REF"]
   }))')
   local pay_resp
   pay_resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/payment/requests" \
@@ -393,29 +382,23 @@ for g in [
     if v: print(v); break
 " 2>/dev/null || echo "")
 
-  if [[ "$pay_code" == "400" ]]; then
-    local pending_err
-    pending_err=$(login_error_detail "$pay_resp_body")
-    if echo "$pending_err" | grep -qi 'bekleyen'; then
-      PAYMENT_REQUEST_ID=$(curl_json "$BASE/api/payment/requests?status=pending&limit=5" \
-        -H "Authorization: Bearer $USER_TOKEN" | python3 -c "
+  if [[ "$pay_code" != "200" && "$pay_code" != "201" ]]; then
+    PAYMENT_REQUEST_ID=$(curl_json "$BASE/api/payment/requests?status=pending&limit=5" \
+      -H "Authorization: Bearer $USER_TOKEN" | python3 -c "
 import json,sys
 d=json.load(sys.stdin)
 items=d if isinstance(d,list) else d.get('requests') or d.get('items') or (d.get('data') or {}).get('requests') or []
 if isinstance(items,dict): items=items.get('requests') or items.get('items') or []
 for x in items:
-    if isinstance(x,dict) and x.get('status')=='pending':
+    if isinstance(x,dict) and str(x.get('status','')).lower()=='pending':
         print(x.get('id','')); break
 " 2>/dev/null || echo "")
-      if [[ -n "$PAYMENT_REQUEST_ID" ]]; then
-        pay_code="200"
-      fi
+    if [[ -n "$PAYMENT_REQUEST_ID" ]]; then
+      pay_code="200"
+    else
+      record 5 "Jeton bildirimi admin paneli" FAIL "POST payment HTTP $pay_code ($(login_error_detail "$pay_resp_body"))"
+      return
     fi
-  fi
-
-  if [[ "$pay_code" != "200" && "$pay_code" != "201" ]]; then
-    record 5 "Jeton bildirimi admin paneli" FAIL "POST payment HTTP $pay_code ($(login_error_detail "$pay_resp_body"))"
-    return
   fi
 
   local admin_resp

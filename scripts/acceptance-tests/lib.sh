@@ -296,6 +296,67 @@ print('no')
 " "$rid" "$ref" 2>/dev/null || echo "no"
 }
 
+extract_request_id() {
+  local resp="$1"
+  printf '%s' "$resp" | python3 -c "
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw:
+    sys.exit(0)
+d=json.loads(raw)
+def pick(node):
+    if isinstance(node, dict):
+        for k in ('id','requestId'):
+            v=node.get(k)
+            if v: return str(v)
+        for k in ('request','data'):
+            nested=node.get(k)
+            if isinstance(nested, dict):
+                got=pick(nested)
+                if got: return got
+    return ''
+print(pick(d))
+" 2>/dev/null || true
+}
+
+post_fortune_request() {
+  local stream_id="$1" token="$2"
+  local body resp
+  body=$(python3 -c 'import json; print(json.dumps({
+    "displayName":"GateTest",
+    "question":"Release gate canlı yayın test fal sorusu?",
+    "fortuneType":"tarot","type":"tarot",
+    "priority":"standard","jetonCost":10
+  }))')
+  resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/video-streams/$stream_id/fortune-requests" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -d "$body")
+  local code
+  code=$(echo "$resp" | tail -1 | sed 's/HTTP://')
+  resp=$(echo "$resp" | sed '$d')
+  local rid
+  rid=$(extract_request_id "$resp")
+  if [[ -n "$rid" ]]; then
+    printf '%s|%s' "$rid" "$code"
+    return 0
+  fi
+  resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/live/fal-request/create" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -d "$(STREAM_ID="$stream_id" python3 -c 'import json,os; print(json.dumps({
+      "streamId":os.environ["STREAM_ID"],
+      "displayName":"GateTest",
+      "question":"Release gate canlı yayın test fal sorusu?",
+      "fortuneType":"tarot","type":"tarot",
+      "priority":"standard","jetonCost":10
+    }))')")
+  code=$(echo "$resp" | tail -1 | sed 's/HTTP://')
+  resp=$(echo "$resp" | sed '$d')
+  rid=$(extract_request_id "$resp")
+  printf '%s|%s|%s' "${rid:-}" "$code" "$(login_error_detail "$resp")"
+}
+
 record() {
   local id="$1" name="$2" status="$3" detail="${4:-}"
   local icon
