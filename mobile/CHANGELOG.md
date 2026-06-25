@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.367+371 (2026-06-23)
+
+### Sesli oda — donma, !istek ses, çıkış düzeltmeleri
+
+- **!istek / DJ SSE:** `musicUrl` stream URL'si varken `videoId` zorunluluğu kaldırıldı; oynatıcı SSE `dj` event'inde ses başlatır
+- **Oynatma:** İmza aynı olsa bile çalmıyorsa yeniden sync; şarkı seçiminden sonra zorunlu `_playDjInBackground`
+- **Concurrent modification:** `VoiceRoomMessageMerge` — `Map.from(byId).entries` ile güvenli iterasyon
+- **Odadan çıkış:** `leaveRoomSession` ve TRTC/LiveKit `leave` artık UI'ı bloklamaz; navigasyon önce, temizlik arka planda
+- **dispose:** SSE/gift subscription iptali; ses motoru `leave` → `dispose` sırası
+
 ## 1.0.366+370 (2026-06-23)
 
 ### Sesli sohbet — web parity tamamlama

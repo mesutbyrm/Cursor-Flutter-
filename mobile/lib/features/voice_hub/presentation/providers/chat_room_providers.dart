@@ -510,6 +510,7 @@ class VoiceRoomLiveController
   }
 
   /// Odadan çıkış — presence, SSE ve müzik temizliği (RTC sayfası).
+  /// Ağır işlemler UI'ı bloklamaz; navigasyon hemen yapılabilir.
   Future<void> leaveRoomSession({String source = 'ui_leave'}) async {
     if (!_sessionActive) return;
     _sessionActive = false;
@@ -519,15 +520,29 @@ class VoiceRoomLiveController
     _sseStarted = false;
     _giftSocketStarted = false;
     _presenceJoined = false;
-    await _leavePresence();
-    await ref.read(voiceRoomSseServiceProvider).disconnect();
+    unawaited(_leavePresence());
+    unawaited(ref.read(voiceRoomSseServiceProvider).disconnect());
     ref.read(voiceRoomGiftSocketProvider).disconnect();
-    await ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer();
-    await ref.read(voiceRoomDjPlayerProvider).shutdown();
+    unawaited(ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer());
+    unawaited(ref.read(voiceRoomDjPlayerProvider).shutdown());
     if (_roomKey.isNotEmpty) {
       ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
     }
     _closeRoomKeepAlive();
+  }
+
+  bool _hasDjPlayableSource(
+    ChatRoomDjState dj, {
+    RoomPlaybackSync? sync,
+    String? videoId,
+  }) {
+    if (videoId != null && videoId.isNotEmpty) return true;
+    if (sync?.streamUrl?.trim().isNotEmpty == true) return true;
+    if (dj.musicUrl?.trim().isNotEmpty == true) return true;
+    if (dj.playbackResolveSeed?.trim().isNotEmpty == true) return true;
+    if (dj.youtubeFallbackSource?.trim().isNotEmpty == true) return true;
+    if (dj.nowPlaying?.youtubeUrl.trim().isNotEmpty == true) return true;
+    return false;
   }
 
   Future<void> _joinPresence() async {
@@ -1360,6 +1375,11 @@ class VoiceRoomLiveController
         invalidateWalletCacheFromRef(ref);
       }
       await _syncMusicFromServerIfNeeded(force: true);
+      final dj = state.dj;
+      if (dj.playing || dj.nowPlaying != null || dj.musicQueue.isNotEmpty) {
+        _lastDjPlaybackSignature = '';
+        await _playDjInBackground(dj);
+      }
       state = state.copyWith(sending: false);
       _showMusicRequestFlashLine('✅ «${hit.title}» kuyruğa eklendi');
       return null;
@@ -1474,7 +1494,15 @@ class VoiceRoomLiveController
     _syncRoomVideo(dj, sync: sync);
     final ui = ref.read(voiceRoomUiProvider);
     final sig = _djPlaybackSignature(dj, muted: !ui.backgroundMusicEnabled);
-    if (sig != _lastDjPlaybackSignature) {
+    final player = ref.read(voiceRoomDjPlayerProvider);
+    final wantsPlay = dj.playing &&
+        _hasDjPlayableSource(
+          dj,
+          sync: sync,
+          videoId: eventVideoId,
+        );
+    final playerIdle = !player.playback.value.playing;
+    if (sig != _lastDjPlaybackSignature || (wantsPlay && playerIdle)) {
       unawaited(_playDjInBackground(dj, sync: sync));
       return;
     }
@@ -1494,7 +1522,9 @@ class VoiceRoomLiveController
   ChatRoomDjState _djWithQueuePlaybackFallback(ChatRoomDjState dj) {
     if (dj.playing) return dj;
     if (dj.musicQueue.isEmpty && dj.nowPlaying == null) return dj;
-    if (dj.playbackSource == null && dj.youtubeFallbackSource == null) {
+    if (dj.playbackSource == null &&
+        dj.youtubeFallbackSource == null &&
+        dj.musicUrl?.trim().isEmpty != false) {
       return dj;
     }
     return dj.copyWith(playing: true);
@@ -1528,8 +1558,8 @@ class VoiceRoomLiveController
       currentVideoId: sync?.currentVideoId,
       nowPlayingUrl: effectiveDj.nowPlaying?.youtubeUrl,
     );
-    final shouldPlay =
-        (sync?.isPlaying ?? effectiveDj.playing) && videoId != null;
+    final shouldPlay = (sync?.isPlaying ?? effectiveDj.playing) &&
+        _hasDjPlayableSource(effectiveDj, sync: sync, videoId: videoId);
     final withVideo = effectiveDj.nowPlaying?.withVideo == true;
     final startPos = Duration(
       milliseconds: VoicePlaybackLimits.clampPositionMs(

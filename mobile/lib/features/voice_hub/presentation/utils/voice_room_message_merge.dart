@@ -11,7 +11,8 @@ abstract final class VoiceRoomMessageMerge {
       byId[m.id] = m;
     }
     for (final m in fetched) {
-      final dupKeys = byId.entries
+      final dupKeys = Map<String, ChatRoomMessage>.from(byId)
+          .entries
           .where(
             (e) =>
                 e.key.startsWith('local-') &&

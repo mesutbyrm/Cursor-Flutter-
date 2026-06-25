@@ -157,10 +157,20 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   @override
   void dispose() {
     _giftSub?.cancel();
+    _giftSub = null;
     _messageCtrl.dispose();
     _messageFocus.dispose();
-    unawaited(_audio?.leave());
-    _audio?.dispose();
+    final audio = _audio;
+    _audio = null;
+    if (audio != null) {
+      unawaited(
+        audio.leave().whenComplete(() {
+          try {
+            audio.dispose();
+          } catch (_) {}
+        }),
+      );
+    }
     super.dispose();
   }
 
@@ -412,10 +422,25 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _leaving = true;
     ref.read(pkBattleRemoteProvider.notifier).clear();
     ref.read(voiceRoomGiftRealtimeProvider).stop();
-    await ref
-        .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
-        .leaveRoomSession(source: 'rtc_leave');
-    await _audio?.leave();
+    _giftSub?.cancel();
+    _giftSub = null;
+
+    final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+    final audio = _audio;
+    _audio = null;
+
+    // Oturumu ve ses motorunu arka planda kapat — UI donmasın.
+    unawaited(liveCtrl.leaveRoomSession(source: 'rtc_leave'));
+    if (audio != null) {
+      unawaited(
+        audio.leave().whenComplete(() {
+          try {
+            audio.dispose();
+          } catch (_) {}
+        }),
+      );
+    }
+
     if (!mounted) return;
     if (context.canPop()) {
       context.pop();
@@ -1046,37 +1071,35 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           ),
         );
       }
-    });
 
-    ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
       final q = next.pendingMusicSearchQuery;
-      if (q == null || q.isEmpty) return;
-      if (prev?.pendingMusicSearchQuery == q) return;
-      if (!mounted) return;
-      final skipPayment = next.pendingMusicSearchSkipPayment;
-      final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
-      unawaited(() async {
-        final hit = await showMusicSearchPickerSheet(context, ref, query: q);
-        ctrl.clearPendingMusicSearch();
-        if (!mounted || hit == null) return;
-        final liveDj = ref.read(voiceRoomLiveProvider(_liveRoomKey)).dj;
-        final picked = await showMusicModePickerSheet(
-          context,
-          audioCost: liveDj.musicRequestCost,
-          videoCost: liveDj.videoRequestCost,
-        );
-        if (!mounted || picked == null) return;
-        final err = await ctrl.submitSelectedSong(
-          hit,
-          withVideo: picked,
-          skipPayment: skipPayment,
-        );
-        if (!mounted || err == null) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-      }());
-    });
+      if (q != null &&
+          q.isNotEmpty &&
+          prev?.pendingMusicSearchQuery != q &&
+          mounted) {
+        final skipPayment = next.pendingMusicSearchSkipPayment;
+        final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+        unawaited(() async {
+          final hit = await showMusicSearchPickerSheet(context, ref, query: q);
+          ctrl.clearPendingMusicSearch();
+          if (!mounted || hit == null) return;
+          final liveDj = ref.read(voiceRoomLiveProvider(_liveRoomKey)).dj;
+          final picked = await showMusicModePickerSheet(
+            context,
+            audioCost: liveDj.musicRequestCost,
+            videoCost: liveDj.videoRequestCost,
+          );
+          if (!mounted || picked == null) return;
+          final err = await ctrl.submitSelectedSong(
+            hit,
+            withVideo: picked,
+            skipPayment: skipPayment,
+          );
+          if (!mounted || err == null) return;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        }());
+      }
 
-    ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
       final toast = next.moderationToast;
       if (toast != null && toast != prev?.moderationToast && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1104,6 +1127,29 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             ),
           ),
         );
+      }
+
+      final wasPlaying =
+          (prev?.dj.playing ?? false) && prev?.dj.nowPlaying != null;
+      final nowPlaying = next.dj.playing && next.dj.nowPlaying != null;
+      if (!wasPlaying && nowPlaying && !isOwner && _audioReady) {
+        if (!_isMicMuted) {
+          _audio?.setMicEnabled(false);
+          if (mounted) {
+            setState(() {
+              _isMicMuted = true;
+              _micAutoMutedByMusic = true;
+            });
+          }
+        }
+      } else if (wasPlaying && !nowPlaying && _micAutoMutedByMusic) {
+        _audio?.setMicEnabled(true);
+        if (mounted) {
+          setState(() {
+            _isMicMuted = false;
+            _micAutoMutedByMusic = false;
+          });
+        }
       }
     });
 
@@ -1143,27 +1189,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       final hadKey = _roomSynced(prev?.valueOrNull).apiRoomKey.isNotEmpty;
       if (!hadKey && !_audioReady && !_leaving) {
         unawaited(_joinRoom());
-      }
-    });
-
-    ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
-      final wasPlaying =
-          (prev?.dj.playing ?? false) && prev?.dj.nowPlaying != null;
-      final nowPlaying = next.dj.playing && next.dj.nowPlaying != null;
-      if (!wasPlaying && nowPlaying && !isOwner && _audioReady) {
-        if (!_isMicMuted) {
-          _audio?.setMicEnabled(false);
-          setState(() {
-            _isMicMuted = true;
-            _micAutoMutedByMusic = true;
-          });
-        }
-      } else if (wasPlaying && !nowPlaying && _micAutoMutedByMusic) {
-        _audio?.setMicEnabled(true);
-        setState(() {
-          _isMicMuted = false;
-          _micAutoMutedByMusic = false;
-        });
       }
     });
 
