@@ -52,3 +52,36 @@ List<JetonPackageEntity> mergeJetonPackagesWithPresets(
   }
   return byCoins.values.toList()..sort((a, b) => a.coins.compareTo(b.coins));
 }
+
+/// Özel tutar → site/API ile uyumlu paket kimliği.
+JetonPackageEntity resolveJetonPackageForPurchase({
+  required int coins,
+  required double priceTry,
+  List<JetonPackageEntity> remote = const [],
+}) {
+  final merged = mergeJetonPackagesWithPresets(remote);
+  JetonPackageEntity? byCoins;
+  JetonPackageEntity? byPrice;
+  for (final p in merged) {
+    if (p.coins == coins) byCoins = p;
+    final pt = p.priceTry;
+    if (pt != null && (pt - priceTry).abs() < 0.02) byPrice = p;
+  }
+  final match = byCoins ?? byPrice;
+  if (match != null) {
+    return JetonPackageEntity(
+      id: match.id,
+      title: match.title,
+      coins: coins,
+      priceTry: priceTry,
+      priceLabel: match.priceLabel,
+      badge: match.badge,
+    );
+  }
+  return JetonPackageEntity(
+    id: 'p$coins',
+    title: '$coins Jeton',
+    coins: coins,
+    priceTry: priceTry,
+  );
+}

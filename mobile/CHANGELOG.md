@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.362+366 (2026-06-25)
+
+### Jeton yükleme — ödeme talebi düzeltmesi
+
+- **Geçersiz miktar:** API'ye `amount` + geçerli `packageId` (`p500` vb.) gönderiliyor; CFC dalına düşme hatası giderildi
+- **Hazır seçimler:** Tutar doğrulaması jeton/TL senkronuna göre gevşetildi
+- **Açıklama alanı kaldırıldı:** `CANLIFAL-…` kopya satırı yerine dekont üstünde kopyalanamaz **DİKKAT** uyarısı
+
 ## 1.0.361+365 (2026-06-25)
 
 ### Profil — Premium 2026 kişisel kontrol merkezi

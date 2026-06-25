@@ -1,35 +1,38 @@
 import '../domain/entities/jeton_package_entity.dart';
 
-/// Özel TL/jeton tutarıyla jeton talebi — `CANLIFAL-{userId}` açıklama kodu.
+/// Özel TL/jeton tutarıyla jeton talebi — site `POST /api/payment/requests`.
 Map<String, dynamic> buildCustomJetonPaymentRequest({
   required int coins,
   required double priceTry,
   required String method,
   required String userId,
   String? username,
-  String? paymentReference,
+  String? packageId,
   String? receiptReference,
 }) {
   final safeCoins = coins > 0 ? coins : 1;
-  final ref = (paymentReference ?? 'CANLIFAL-$userId').trim();
+  final pkgId = (packageId ?? 'p$safeCoins').trim();
   final receipt = receiptReference?.trim();
+  final sender = username?.trim();
+  final priceLabel = priceTry == priceTry.roundToDouble()
+      ? priceTry.toInt().toString()
+      : priceTry.toStringAsFixed(2);
   final notes = StringBuffer()
     ..writeln('Jeton yükleme · $method')
-    ..writeln('Açıklama: $ref')
-    ..writeln('$safeCoins jeton · ₺${priceTry.toStringAsFixed(priceTry == priceTry.roundToDouble() ? 0 : 2)}');
-  if (username != null && username.trim().isNotEmpty) {
-    notes.writeln('Kullanıcı: ${username.trim()}');
+    ..writeln('$safeCoins jeton · ₺$priceLabel');
+  if (sender != null && sender.isNotEmpty) {
+    notes.writeln('Gönderen: $sender');
   }
   return {
     'requestType': 'jeton',
     'type': 'jeton',
     'method': method,
-    'packageId': 'custom_$safeCoins',
+    'packageId': pkgId,
     'packageTitle': '$safeCoins Jeton',
     'coins': safeCoins,
+    'amount': safeCoins,
     'priceTry': priceTry,
-    if (username != null && username.trim().isNotEmpty)
-      'senderInfo': username.trim(),
+    if (sender != null && sender.isNotEmpty) 'senderInfo': sender,
     if (receipt != null && receipt.isNotEmpty) ...{
       'receiptReference': receipt,
       'receiptUrl': receipt,
@@ -60,6 +63,7 @@ Map<String, dynamic> buildJetonPaymentRequest({
     'packageId': package.id,
     'packageTitle': package.title,
     'coins': coins,
+    'amount': coins,
     if (package.priceTry != null) 'priceTry': package.priceTry,
     if (senderLabel != null && senderLabel.trim().isNotEmpty)
       'senderInfo': senderLabel.trim(),
@@ -99,6 +103,7 @@ Map<String, dynamic> buildMembershipPaymentRequest({
     'tierId': tierId,
     'membershipTier': tierId,
     'coins': coins,
+    'amount': coins,
     if (package.priceTry != null) 'priceTry': package.priceTry,
     if (senderLabel != null && senderLabel.trim().isNotEmpty)
       'senderInfo': senderLabel.trim(),

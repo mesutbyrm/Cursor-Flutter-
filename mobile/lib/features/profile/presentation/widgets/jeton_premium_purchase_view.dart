@@ -22,6 +22,7 @@ import '../../../notifications/presentation/providers/notifications_providers.da
 import '../../data/jeton_packages_catalog.dart';
 import '../../data/jeton_payment_request.dart';
 import '../../data/services/payment_receipt_upload_service.dart';
+import '../../domain/entities/jeton_package_entity.dart';
 import '../../domain/entities/payment_config_entity.dart';
 import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
@@ -111,32 +112,29 @@ class _JetonPremiumPurchaseViewState
   }
 
   ({int jeton, double tl, bool valid, String? error}) _parseAmounts() {
-    final jeton = int.tryParse(_jetonCtrl.text.trim());
-    final tl = double.tryParse(_tlCtrl.text.trim().replaceAll(',', '.'));
+    final jetonRaw = int.tryParse(_jetonCtrl.text.trim().replaceAll(RegExp(r'[^\d]'), ''));
+    final tlRaw = double.tryParse(_tlCtrl.text.trim().replaceAll(',', '.'));
+    final jetonFromTl = tlRaw != null && tlRaw > 0
+        ? (tlRaw / kJetonPurchaseTlRate).round()
+        : null;
+
+    final jeton = jetonRaw ?? jetonFromTl;
     if (jeton == null || jeton < 1) {
       return (jeton: 0, tl: 0, valid: false, error: 'En az 1 jeton girin');
     }
-    if (tl == null || tl < kJetonPurchaseTlRate) {
-      return (
-        jeton: jeton,
-        tl: tl ?? 0,
-        valid: false,
-        error: 'Geçerli bir TL tutarı girin (min ₺0,50)',
-      );
-    }
-    final expectedJeton = (tl / kJetonPurchaseTlRate).round();
-    if ((expectedJeton - jeton).abs() > 1) {
+
+    final tl = tlRaw ?? (jeton * kJetonPurchaseTlRate);
+    if (tl < kJetonPurchaseTlRate) {
       return (
         jeton: jeton,
         tl: tl,
         valid: false,
-        error: 'TL ve jeton tutarları uyuşmuyor',
+        error: 'Geçerli bir TL tutarı girin (min ₺0,50)',
       );
     }
+
     return (jeton: jeton, tl: tl, valid: true, error: null);
   }
-
-  String _paymentRef(String userId) => 'CANLIFAL-$userId';
 
   PaymentConfigEntity _config() {
     final remote = ref.read(paymentConfigProvider).valueOrNull;
@@ -225,14 +223,18 @@ class _JetonPremiumPurchaseViewState
         JetonPayMethod.whatsapp => 'whatsapp',
       };
       final username = me.display;
-      final refCode = _paymentRef(me.id);
-      final body = buildCustomJetonPaymentRequest(
+      final remotePackages =
+          await ref.read(jetonPackagesProvider.future).catchError((_) => <JetonPackageEntity>[]);
+      final package = resolveJetonPackageForPurchase(
         coins: amounts.jeton,
         priceTry: amounts.tl,
+        remote: remotePackages,
+      );
+      final body = buildJetonPaymentRequest(
+        package: package,
         method: methodApi,
-        userId: me.id,
-        username: username,
-        paymentReference: refCode,
+        notes: 'Jeton yükleme · $methodApi · $username',
+        senderLabel: username,
         receiptReference: receiptUrl,
       );
 
@@ -294,9 +296,7 @@ class _JetonPremiumPurchaseViewState
     final config = ref.watch(paymentConfigProvider).valueOrNull;
     final cfg = config != null ? PaymentDefaults.merge(config) : PaymentDefaults.config;
     final me = ref.watch(authControllerProvider).valueOrNull;
-    final userId = me?.id ?? '';
     final username = me?.display ?? me?.username ?? 'Kullanıcı';
-    final refCode = userId.isNotEmpty ? _paymentRef(userId) : 'CANLIFAL-…';
     final amounts = _parseAmounts();
 
     return ResponsiveConstrained(
@@ -370,8 +370,6 @@ class _JetonPremiumPurchaseViewState
               },
             ),
             const SizedBox(height: 20),
-            const _PaymentWarningCard(),
-            const SizedBox(height: 16),
             const _SectionTitle('Ödeme Yöntemi'),
             const SizedBox(height: 10),
             _MethodTile(
@@ -415,10 +413,13 @@ class _JetonPremiumPurchaseViewState
               _DetailCard(
                 children: [
                   _CopyRow(label: 'Papara No', value: cfg.paparaAddress),
-                  const Divider(height: 20, color: Colors.white12),
-                  _CopyRow(label: 'Açıklama', value: refCode),
+                  if (cfg.bankAccountHolder.isNotEmpty) ...[
+                    const Divider(height: 20, color: Colors.white12),
+                    _InfoRow(label: 'Alıcı', value: cfg.bankAccountHolder),
+                  ],
                 ],
               ),
+              const _PaymentWarningCard(),
               _ReceiptSection(
                 path: _receiptPath,
                 onGallery: () => _pickReceipt(ImageSource.gallery),
@@ -436,10 +437,9 @@ class _JetonPremiumPurchaseViewState
                   _InfoRow(label: 'Alıcı', value: cfg.bankAccountHolder),
                   const Divider(height: 16, color: Colors.white12),
                   _CopyRow(label: 'IBAN', value: cfg.bankIban),
-                  const Divider(height: 16, color: Colors.white12),
-                  _CopyRow(label: 'Açıklama', value: refCode),
                 ],
               ),
+              const _PaymentWarningCard(),
               _ReceiptSection(
                 path: _receiptPath,
                 onGallery: () => _pickReceipt(ImageSource.gallery),
@@ -503,28 +503,33 @@ class _PaymentWarningCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ProGlassCard(
-      blur: 12,
-      animateIn: false,
-      padding: const EdgeInsets.all(14),
-      borderRadius: BorderRadius.circular(16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.warning_amber_rounded, color: Color(0xFFFF5252), size: 22),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              kJetonPaymentTransferWarning,
-              style: TextStyle(
-                fontSize: 12.5,
-                height: 1.45,
-                fontWeight: FontWeight.w600,
-                color: Colors.white.withValues(alpha: 0.92),
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: SelectionContainer.disabled(
+        child: ProGlassCard(
+          blur: 12,
+          animateIn: false,
+          padding: const EdgeInsets.all(14),
+          borderRadius: BorderRadius.circular(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Color(0xFFFF5252), size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  kJetonPaymentTransferWarning,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.45,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withValues(alpha: 0.92),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
