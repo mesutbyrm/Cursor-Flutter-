@@ -9,6 +9,7 @@ import '../../data/services/voice_room_music_pipeline_log.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../data/youtube_stream_resolver.dart';
 import '../../domain/entities/music_queue_item.dart';
+import '../../domain/voice_playback_limits.dart';
 import '../audio/voice_room_dj_stream_loader.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import 'voice_room_music_control_delegate.dart';
@@ -749,6 +750,14 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
       }
     });
     _player.positionStream.listen((position) {
+      final clamped = VoicePlaybackLimits.clampPosition(position);
+      if (clamped != position && _player.playing) {
+        unawaited(_player.seek(clamped));
+        if (clamped >= VoicePlaybackLimits.maxPlaybackDuration) {
+          onTrackComplete?.call();
+        }
+        return;
+      }
       _emitPlayback(_playbackValue.value.copyWith(position: position));
     });
     _player.playingStream.listen((playing) {

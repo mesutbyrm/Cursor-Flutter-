@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.366+370 (2026-06-23)
+
+### Sesli sohbet — web parity tamamlama
+
+- **!istek akışı:** Chat'e komut yazılır → YouTube arama popup (300ms debounce) → jeton modu → kuyruk; çalan parça yeniden başlamaz
+- **Komutlar paneli:** `!duyuru`, `!temizle`, `!kick`, `!ban`, `!unban` kutu ızgarası; kick/ban renk kodlu kullanıcı listesi
+- **Moderasyon popup:** Hediye, +V ses, @/& rol, DJ, koltuk, mic, ban, kick, oda devri — 3 sütun kutu ızgarası
+- **!temizle:** Müzik durmaz; «Sohbet Temizlendi» yeşil animasyon (3 yanıp sönme)
+- **Duyuru:** Sohbet üstü sabit şerit + 15 sn zamanlı banner; kick uyarısı dialog
+- **6 dk ses limiti:** DJ oynatıcıda `VoicePlaybackLimits` konum kelepçesi
+
 ## 1.0.365+369 (2026-06-25)
 
 ### Sesli sohbet — Concurrent modification düzeltmesi

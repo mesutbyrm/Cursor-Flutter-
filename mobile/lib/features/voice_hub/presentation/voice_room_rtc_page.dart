@@ -727,12 +727,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         );
 
     if (permissions.canModerate || owner) {
+      final djIds = liveState.dj.djUsers.map((u) => u.id).toSet();
       showVoiceRoomModerationSheet(
         context: context,
         ref: ref,
         room: effectiveRoom,
         targetUser: VoiceRoomModerationTarget.fromPresence(user),
         isOwnerOrMod: true,
+        perms: permissions,
+        isOwner: owner,
+        isTargetDj: djIds.contains(user.id),
         onGift: openGift,
       );
       return;
@@ -1049,22 +1053,58 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (q == null || q.isEmpty) return;
       if (prev?.pendingMusicSearchQuery == q) return;
       if (!mounted) return;
+      final skipPayment = next.pendingMusicSearchSkipPayment;
       final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
       unawaited(() async {
         final hit = await showMusicSearchPickerSheet(context, ref, query: q);
         ctrl.clearPendingMusicSearch();
         if (!mounted || hit == null) return;
         final liveDj = ref.read(voiceRoomLiveProvider(_liveRoomKey)).dj;
-        final withVideo = await showMusicModePickerSheet(
+        final picked = await showMusicModePickerSheet(
           context,
           audioCost: liveDj.musicRequestCost,
           videoCost: liveDj.videoRequestCost,
         );
-        if (!mounted || withVideo == null) return;
-        final err = await ctrl.submitSelectedSong(hit, withVideo: withVideo);
+        if (!mounted || picked == null) return;
+        final err = await ctrl.submitSelectedSong(
+          hit,
+          withVideo: picked,
+          skipPayment: skipPayment,
+        );
         if (!mounted || err == null) return;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
       }());
+    });
+
+    ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
+      final toast = next.moderationToast;
+      if (toast != null && toast != prev?.moderationToast && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(toast),
+            duration: const Duration(seconds: 5),
+            backgroundColor: const Color(0xFF22C55E),
+          ),
+        );
+      }
+      final kickWarn = next.kickStrikeWarning;
+      if (kickWarn != null && kickWarn != prev?.kickStrikeWarning && mounted) {
+        unawaited(
+          showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Uyarı'),
+              content: Text(kickWarn),
+              actions: [
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Tamam'),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
     });
 
     ref.listen(pkBattleRemoteProvider, (prev, next) {
@@ -1374,6 +1414,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             embedded: true,
                             welcomeMarquee: staffBanner,
                             roomName: room.nameTr,
+                            pinnedAnnouncement: live.pinnedAnnouncement,
                             onUserTap: (id, _) {
                               for (final e in live.presence) {
                                 if (e.id == id) {

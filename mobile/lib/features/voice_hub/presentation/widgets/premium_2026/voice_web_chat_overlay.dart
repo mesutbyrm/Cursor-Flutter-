@@ -18,6 +18,7 @@ class VoiceWebChatOverlay extends StatelessWidget {
     this.embedded = false,
     this.welcomeMarquee,
     this.roomName,
+    this.pinnedAnnouncement,
   });
 
   final List<ChatRoomMessage> messages;
@@ -27,6 +28,7 @@ class VoiceWebChatOverlay extends StatelessWidget {
   final bool embedded;
   final String? welcomeMarquee;
   final String? roomName;
+  final String? pinnedAnnouncement;
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +88,9 @@ class VoiceWebChatOverlay extends StatelessWidget {
       );
     }
 
+    final pinned = pinnedAnnouncement?.trim();
+    final hasPinned = pinned != null && pinned.isNotEmpty;
+
     final list = ListView.builder(
       reverse: true,
       shrinkWrap: embedded,
@@ -93,9 +98,13 @@ class VoiceWebChatOverlay extends StatelessWidget {
           ? const NeverScrollableScrollPhysics()
           : const ClampingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      itemCount: slice.length,
+      itemCount: slice.length + (hasPinned ? 1 : 0),
       itemBuilder: (context, i) {
-        final msg = slice[slice.length - 1 - i];
+        if (hasPinned && i == 0) {
+          return _PinnedAnnouncementBar(text: pinned);
+        }
+        final msgIndex = hasPinned ? i - 1 : i;
+        final msg = slice[slice.length - 1 - msgIndex];
         if (_isMusicSystemLine(msg.content)) {
           return MusicSystemChatLine(
             key: ValueKey(msg.id),
@@ -160,6 +169,49 @@ bool _isMusicSystemLine(String content) {
       c.startsWith('⏭️') ||
       c.startsWith('🗑️') ||
       c.startsWith('🧹');
+}
+
+/// !duyuru — sohbet listesinin üstünde sabit duyuru şeridi.
+class _PinnedAnnouncementBar extends StatelessWidget {
+  const _PinnedAnnouncementBar({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFFF0080).withValues(alpha: 0.35),
+            const Color(0xFF7B2FF7).withValues(alpha: 0.35),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: const Color(0xFFFF4FD8).withValues(alpha: 0.55),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.campaign_rounded, color: Color(0xFFFFD700), size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Web giriş çubuğu — yalnızca metin ve gönder (mikrofon alt barda).

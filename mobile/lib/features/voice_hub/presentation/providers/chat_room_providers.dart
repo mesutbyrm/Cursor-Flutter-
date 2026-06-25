@@ -117,7 +117,12 @@ class VoiceRoomLiveState {
     this.typingUsers = const [],
     this.roomMuted = false,
     this.pendingMusicSearchQuery,
+    this.pendingMusicSearchSkipPayment = false,
     this.moderatorAnnouncement,
+    this.pinnedAnnouncement,
+    this.chatClearedBannerNonce = 0,
+    this.moderationToast,
+    this.kickStrikeWarning,
   });
 
   final List<ChatRoomMessage> messages;
@@ -137,7 +142,12 @@ class VoiceRoomLiveState {
   final List<String> typingUsers;
   final bool roomMuted;
   final String? pendingMusicSearchQuery;
+  final bool pendingMusicSearchSkipPayment;
   final String? moderatorAnnouncement;
+  final String? pinnedAnnouncement;
+  final int chatClearedBannerNonce;
+  final String? moderationToast;
+  final String? kickStrikeWarning;
 
   bool get isAnyoneTyping => typingUsers.isNotEmpty;
 
@@ -170,8 +180,16 @@ class VoiceRoomLiveState {
     bool? roomMuted,
     String? pendingMusicSearchQuery,
     bool clearPendingMusicSearch = false,
+    bool? pendingMusicSearchSkipPayment,
     String? moderatorAnnouncement,
     bool clearModeratorAnnouncement = false,
+    String? pinnedAnnouncement,
+    bool clearPinnedAnnouncement = false,
+    int? chatClearedBannerNonce,
+    String? moderationToast,
+    bool clearModerationToast = false,
+    String? kickStrikeWarning,
+    bool clearKickStrikeWarning = false,
     bool clearError = false,
   }) {
     return VoiceRoomLiveState(
@@ -200,9 +218,23 @@ class VoiceRoomLiveState {
       pendingMusicSearchQuery: clearPendingMusicSearch
           ? null
           : (pendingMusicSearchQuery ?? this.pendingMusicSearchQuery),
+      pendingMusicSearchSkipPayment: clearPendingMusicSearch
+          ? false
+          : (pendingMusicSearchSkipPayment ?? this.pendingMusicSearchSkipPayment),
       moderatorAnnouncement: clearModeratorAnnouncement
           ? null
           : (moderatorAnnouncement ?? this.moderatorAnnouncement),
+      pinnedAnnouncement: clearPinnedAnnouncement
+          ? null
+          : (pinnedAnnouncement ?? this.pinnedAnnouncement),
+      chatClearedBannerNonce:
+          chatClearedBannerNonce ?? this.chatClearedBannerNonce,
+      moderationToast: clearModerationToast
+          ? null
+          : (moderationToast ?? this.moderationToast),
+      kickStrikeWarning: clearKickStrikeWarning
+          ? null
+          : (kickStrikeWarning ?? this.kickStrikeWarning),
     );
   }
 }
@@ -214,6 +246,9 @@ class VoiceRoomLiveController
   Timer? _enterBannerTimer;
   Timer? _musicRequestFlashTimer;
   Timer? _announcementTimer;
+  Timer? _pinnedAnnouncementTimer;
+  Timer? _moderationToastTimer;
+  Timer? _kickWarningTimer;
   final _pollPaused = false;
   var _pollTick = 0;
   String? _lastDjPlaybackSignature;
@@ -358,6 +393,9 @@ class VoiceRoomLiveController
       _enterBannerTimer?.cancel();
       _musicRequestFlashTimer?.cancel();
       _announcementTimer?.cancel();
+      _pinnedAnnouncementTimer?.cancel();
+      _moderationToastTimer?.cancel();
+      _kickWarningTimer?.cancel();
       if (_sessionActive) {
         _leavePresence();
         unawaited(ref.read(voiceRoomSseServiceProvider).disconnect());
@@ -737,11 +775,32 @@ class VoiceRoomLiveController
         return;
       case 'USER_KICKED':
       case 'USER_BANNED':
-      case 'USER_MUTED':
-      case 'USER_UNMUTED':
+        final targetId = payload['targetUserId']?.toString() ??
+            payload['userId']?.toString();
+        final selfId = ref.read(authControllerProvider).valueOrNull?.id;
+        if (event == 'USER_KICKED' &&
+            targetId != null &&
+            selfId != null &&
+            targetId == selfId) {
+          final count = payload['kickCount'] is int
+              ? payload['kickCount'] as int
+              : int.tryParse(payload['kickCount']?.toString() ?? '') ?? 1;
+          _showKickStrikeWarning(
+            '$count ihtardan ${count.clamp(1, 3)}’ini aldınız. '
+            '${(3 - count).clamp(0, 2)} kez daha kicklenirseniz odadan atılacaksınız. '
+            'Oda sahibi banı kaldırana kadar giriş yapamayacaksınız.',
+          );
+        }
         final msg = payload['message']?.toString().trim();
         if (msg != null && msg.isNotEmpty) {
           _showMusicRequestFlashLine(msg);
+        }
+        return;
+      case 'USER_MUTED':
+      case 'USER_UNMUTED':
+        final muteMsg = payload['message']?.toString().trim();
+        if (muteMsg != null && muteMsg.isNotEmpty) {
+          _showMusicRequestFlashLine(muteMsg);
         }
         return;
       default:
@@ -751,11 +810,43 @@ class VoiceRoomLiveController
 
   void _showModeratorAnnouncement(String text) {
     _announcementTimer?.cancel();
-    state = state.copyWith(moderatorAnnouncement: text);
+    _pinnedAnnouncementTimer?.cancel();
+    state = state.copyWith(
+      moderatorAnnouncement: text,
+      pinnedAnnouncement: text,
+    );
     _announcementTimer = Timer(const Duration(seconds: 15), () {
       if (!_sessionActive) return;
       state = state.copyWith(clearModeratorAnnouncement: true);
     });
+    _pinnedAnnouncementTimer = Timer(const Duration(seconds: 15), () {
+      if (!_sessionActive) return;
+      state = state.copyWith(clearPinnedAnnouncement: true);
+    });
+  }
+
+  void showModerationToast(String text) {
+    _moderationToastTimer?.cancel();
+    state = state.copyWith(moderationToast: text);
+    _moderationToastTimer = Timer(const Duration(seconds: 5), () {
+      if (!_sessionActive) return;
+      state = state.copyWith(clearModerationToast: true);
+    });
+  }
+
+  void _showKickStrikeWarning(String text) {
+    _kickWarningTimer?.cancel();
+    state = state.copyWith(kickStrikeWarning: text);
+    _kickWarningTimer = Timer(const Duration(seconds: 12), () {
+      if (!_sessionActive) return;
+      state = state.copyWith(clearKickStrikeWarning: true);
+    });
+  }
+
+  void _triggerChatClearedBanner() {
+    state = state.copyWith(
+      chatClearedBannerNonce: state.chatClearedBannerNonce + 1,
+    );
   }
 
   void _startGiftSocket() {
@@ -1250,6 +1341,7 @@ class VoiceRoomLiveController
   Future<String?> submitSelectedSong(
     YoutubeSearchHit hit, {
     bool withVideo = false,
+    bool skipPayment = false,
   }) async {
     state = state.copyWith(sending: true, clearPendingMusicSearch: true);
     try {
@@ -1261,19 +1353,16 @@ class VoiceRoomLiveController
             channelTitle: hit.uploader,
             thumbUrl: hit.thumbUrl,
             duration: hit.duration,
-            skipPayment: false,
+            skipPayment: skipPayment,
             withVideo: withVideo,
           );
       if (result.newBalance != null) {
         invalidateWalletCacheFromRef(ref);
       }
       await _syncMusicFromServerIfNeeded(force: true);
-      final playErr = await _playDjInBackgroundAndReport(state.dj);
-      state = state.copyWith(sending: false, error: playErr);
-      if (playErr == null) {
-        _showMusicRequestFlashLine('✅ «${hit.title}» kuyruğa eklendi');
-      }
-      return playErr;
+      state = state.copyWith(sending: false);
+      _showMusicRequestFlashLine('✅ «${hit.title}» kuyruğa eklendi');
+      return null;
     } catch (e) {
       state = state.copyWith(
         sending: false,
@@ -2018,17 +2107,10 @@ class VoiceRoomLiveController
   void _applyLocalChatClear() {
     _shownMusicRequestFlashKeys.clear();
     state = state.copyWith(
-      messages: state.messages.where((m) {
-        if (m.id.startsWith('song-chat-')) return false;
-        if (VoiceMusicSync.isQueueUpdateMessage(m.content)) return false;
-        if (m.kind != ChatMessageKind.text) return false;
-        if (m.content.contains('temizlendi')) return true;
-        if (m.content.toUpperCase().contains('DUYURU')) return true;
-        return false;
-      }).toList(),
+      messages: const [],
       clearMusicRequestFlash: true,
     );
-    unawaited(closeMusicPlayer());
+    _triggerChatClearedBanner();
   }
 
   Future<void> sendMessage(String text) async {
@@ -2042,24 +2124,15 @@ class VoiceRoomLiveController
         _showMusicRequestFlashLine('🎵 Kullanım: !istek Sanatçı - Şarkı adı');
         return;
       }
-      VoiceRoomDebugLog.log('music.istek.api', {'song': song, 'room': _roomKey});
+      VoiceRoomDebugLog.log('music.istek.search', {'song': song, 'room': _roomKey});
       ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
       _showMusicRequestFlashLine('🔍 «$song» aranıyor…');
-      state = state.copyWith(sending: true, clearError: true);
-      try {
-        final err = await _submitMusicRequestByTitle(song, priority: false);
-        state = state.copyWith(sending: false);
-        if (err != null) {
-          state = state.copyWith(error: err);
-          _showMusicRequestFlashLine('⚠️ $err');
-        } else {
-          _showMusicRequestFlashLine('✅ «$song» kuyruğa eklendi');
-        }
-      } catch (e) {
-        final msg = ApiException.userMessage(e);
-        state = state.copyWith(sending: false, error: msg);
-        _showMusicRequestFlashLine('⚠️ $msg');
-      }
+      unawaited(_postChatLineOnly(trimmed));
+      state = state.copyWith(
+        pendingMusicSearchQuery: song,
+        pendingMusicSearchSkipPayment: true,
+        clearError: true,
+      );
       return;
     } else if (_isLocalHelpCommand(trimmed)) {
       VoiceRoomDebugLog.log('chat.command.local_help', {'cmd': trimmed});
@@ -2394,6 +2467,56 @@ class VoiceRoomLiveController
     }
   }
 
+  Future<String?> banUserModeration({
+    required String userId,
+    String? reason,
+  }) async {
+    final perms = _permissions();
+    if (!perms.canBanUsers && !perms.isRoomOwner) {
+      return 'Ban yetkiniz yok.';
+    }
+    try {
+      await ref.read(chatRoomRemoteProvider).banUser(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            userId: userId,
+            reason: reason,
+          );
+      showModerationToast('Kullanıcı banlandı');
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> unbanUserModeration({required String userId}) async {
+    final perms = _permissions();
+    if (!perms.canBanUsers && !perms.isRoomOwner) {
+      return 'Ban kaldırma yetkiniz yok.';
+    }
+    try {
+      await ref.read(chatRoomRemoteProvider).unbanUser(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            userId: userId,
+          );
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<void> _postChatLineOnly(String content) async {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    try {
+      await ref.read(chatRoomRemoteProvider).sendMessage(
+            roomKey: _roomKey,
+            content: content,
+            nickname: _effectiveNickname(user),
+          );
+    } catch (_) {}
+  }
+
   Future<String?> requestSpeak() async {
     try {
       await ref.read(chatRoomRemoteProvider).requestSpeak(_roomKey);
@@ -2718,6 +2841,20 @@ class VoiceRoomLiveController
         state = state.copyWith(presence: list, selfInRoom: true);
         return null;
       }
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> clearUserSeat({required String userId}) async {
+    try {
+      await ref.read(chatRoomRemoteProvider).clearSeat(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            userId: userId,
+          );
+      await refresh();
+      return null;
+    } catch (e) {
       return ApiException.userMessage(e);
     }
   }

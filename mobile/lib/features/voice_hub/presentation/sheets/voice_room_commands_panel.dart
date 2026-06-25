@@ -10,6 +10,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/chat_room_providers.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_room_permissions.dart';
+import 'voice_moderation_user_picker_sheet.dart';
 import 'voice_youtube_song_sheet.dart';
 
 /// Sağ «‹» — Oda Komutları paneli (canlifal.com).
@@ -83,13 +84,12 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
     _Cmd('!yardım', 'Bu paneli açar', Icons.menu_book_outlined),
   ];
 
-  static const _staff = [
-    _Cmd('!ban kullanıcı', 'Kullanıcıyı odadan banlar', Icons.block_rounded, AppThemeColors.liveRed),
-    _Cmd('!sessiz kullanıcı', '30 dakika susturur', Icons.volume_off_rounded, AppThemeColors.liveRed),
-    _Cmd('!at kullanıcı', 'Kullanıcıyı odadan atar', Icons.back_hand_rounded, Color(0xFFB8860B)),
-    _Cmd('!temizle', 'Tüm sohbeti temizler', Icons.auto_fix_high_rounded, VoiceRoomTokens.gold),
-    _Cmd('!duyuru mesaj', 'Duyuru mesajı yayınlar', Icons.campaign_rounded, AppThemeColors.liveRed),
-    _Cmd('!yetki kullanıcı sembol', 'Rol verir', Icons.verified_rounded, Color(0xFF22C55E)),
+  static const _modGrid = [
+    _Cmd('!duyuru', '15 sn duyuru yayınla', Icons.campaign_rounded, AppThemeColors.liveRed),
+    _Cmd('!temizle', 'Sohbeti temizle', Icons.auto_fix_high_rounded, VoiceRoomTokens.gold),
+    _Cmd('!kick', 'Kullanıcı at', Icons.back_hand_rounded, Color(0xFF22C55E)),
+    _Cmd('!ban', 'Kullanıcı banla', Icons.block_rounded, AppThemeColors.liveRed),
+    _Cmd('!unban', 'Ban kaldır', Icons.lock_open_rounded, Color(0xFF38BDF8)),
   ];
 
   static const _roleTags = [
@@ -164,6 +164,70 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
   }
 
   Future<void> _onCommandTap(_Cmd c) async {
+    final cmd = c.command.trim();
+    if (cmd == '!duyuru') {
+      final message = await _promptDuyuru();
+      if (message == null || !mounted) return;
+      await _runCommand('!duyuru $message');
+      return;
+    }
+    if (cmd == '!kick') {
+      if (!widget.perms.canKickUsers && !widget.isOwner) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kick yetkiniz yok')),
+        );
+        return;
+      }
+      final live = ref.read(voiceRoomLiveProvider(widget.room.liveKey));
+      Navigator.pop(context);
+      await showVoiceModerationUserPicker(
+        context: context,
+        ref: ref,
+        room: widget.room,
+        perms: widget.perms,
+        action: VoiceModerationPickerAction.kick,
+        presence: live.presence,
+      );
+      return;
+    }
+    if (cmd == '!ban') {
+      if (!widget.perms.canBanUsers && !widget.isOwner) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ban yetkiniz yok')),
+        );
+        return;
+      }
+      final live = ref.read(voiceRoomLiveProvider(widget.room.liveKey));
+      Navigator.pop(context);
+      await showVoiceModerationUserPicker(
+        context: context,
+        ref: ref,
+        room: widget.room,
+        perms: widget.perms,
+        action: VoiceModerationPickerAction.ban,
+        presence: live.presence,
+      );
+      return;
+    }
+    if (cmd == '!unban') {
+      if (!widget.perms.canBanUsers && !widget.isOwner) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ban kaldırma yetkiniz yok')),
+        );
+        return;
+      }
+      final live = ref.read(voiceRoomLiveProvider(widget.room.liveKey));
+      Navigator.pop(context);
+      await showVoiceModerationUserPicker(
+        context: context,
+        ref: ref,
+        room: widget.room,
+        perms: widget.perms,
+        action: VoiceModerationPickerAction.unban,
+        presence: live.presence,
+      );
+      return;
+    }
     if (c.command.startsWith('!istek')) {
       final nav = Navigator.of(context);
       nav.pop();
@@ -191,6 +255,35 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
       return;
     }
     await _runCommand(c.command.split(' ').first);
+  }
+
+  Future<String?> _promptDuyuru() async {
+    final ctrl = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0E38),
+        title: const Text('!duyuru'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          maxLines: 3,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: 'Duyuru metnini yazın…',
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('İptal')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Gönder'),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    return result;
   }
 
   Future<String?> _promptCommandArgs(String template) async {
@@ -303,9 +396,28 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                   title: 'YETKİLİ KOMUTLARI',
                   color: const Color(0xFF38BDF8),
                 ),
-                ..._staff.map(
-                  (c) => _CommandCard(cmd: c, onTap: () => _onCommandTap(c)),
-                ),
+                if (canModerate)
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 2.4,
+                    children: _modGrid
+                        .map(
+                          (c) => _CommandCard(cmd: c, onTap: () => _onCommandTap(c)),
+                        )
+                        .toList(),
+                  )
+                else
+                  Text(
+                    'Yetkili komutlar için moderasyon yetkisi gerekir.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.white.withValues(alpha: 0.55),
+                    ),
+                  ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 6,

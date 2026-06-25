@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../providers/room_music_providers.dart';
 
-/// `!istek` sonrası YouTube arama sonuçları — ilk 10 (web ile aynı).
+/// Web parity — anlık YouTube arama, 300ms debounce, önbellek (use case).
 Future<YoutubeSearchHit?> showMusicSearchPickerSheet(
   BuildContext context,
   WidgetRef ref, {
@@ -18,26 +20,80 @@ Future<YoutubeSearchHit?> showMusicSearchPickerSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (ctx) => _MusicSearchPicker(query: query),
+    builder: (ctx) => _MusicSearchPicker(initialQuery: query),
   );
 }
 
 class _MusicSearchPicker extends ConsumerStatefulWidget {
-  const _MusicSearchPicker({required this.query});
+  const _MusicSearchPicker({required this.initialQuery});
 
-  final String query;
+  final String initialQuery;
 
   @override
   ConsumerState<_MusicSearchPicker> createState() => _MusicSearchPickerState();
 }
 
 class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
-  late Future<List<YoutubeSearchHit>> _future;
+  late final TextEditingController _queryCtrl;
+  Timer? _debounce;
+  var _searchGen = 0;
+  var _searching = false;
+  List<YoutubeSearchHit> _hits = const [];
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _future = ref.read(searchMusicUseCaseProvider)(widget.query);
+    _queryCtrl = TextEditingController(text: widget.initialQuery);
+    _queryCtrl.addListener(() => _onQueryChanged(_queryCtrl.text));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.initialQuery.trim().length >= 2) {
+        _search(widget.initialQuery.trim());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _queryCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onQueryChanged(String value) {
+    _debounce?.cancel();
+    final trimmed = value.trim();
+    if (trimmed.length < 2) {
+      setState(() {
+        _hits = const [];
+        _searching = false;
+        _error = null;
+      });
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 300), () => _search(trimmed));
+  }
+
+  Future<void> _search(String q) async {
+    final gen = ++_searchGen;
+    setState(() {
+      _searching = true;
+      _error = null;
+    });
+    try {
+      final hits = await ref.read(searchMusicUseCaseProvider)(q);
+      if (!mounted || gen != _searchGen) return;
+      setState(() {
+        _hits = hits;
+        _searching = false;
+      });
+    } catch (e) {
+      if (!mounted || gen != _searchGen) return;
+      setState(() {
+        _searching = false;
+        _error = e.toString();
+      });
+    }
   }
 
   @override
@@ -45,7 +101,7 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
     final bottom = MediaQuery.paddingOf(context).bottom;
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.72,
+      initialChildSize: 0.78,
       minChildSize: 0.45,
       maxChildSize: 0.92,
       builder: (context, scrollController) {
@@ -64,28 +120,27 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+              padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
               child: Row(
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Şarkı seç',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                              ),
+                    child: TextField(
+                      controller: _queryCtrl,
+                      autofocus: true,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Şarkı veya sanatçı ara…',
+                        hintStyle: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.45),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '«${widget.query}»',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white60),
+                        prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF8B5CF6)),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.08),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
                         ),
-                      ],
+                      ),
                     ),
                   ),
                   IconButton(
@@ -95,53 +150,56 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
                 ],
               ),
             ),
-            Expanded(
-              child: FutureBuilder<List<YoutubeSearchHit>>(
-                future: _future,
-                builder: (context, snap) {
-                  if (snap.connectionState != ConnectionState.done) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
-                    );
-                  }
-                  if (snap.hasError) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          'Arama başarısız: ${snap.error}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                      ),
-                    );
-                  }
-                  final items = snap.data ?? [];
-                  if (items.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'Sonuç bulunamadı',
-                        style: TextStyle(color: Colors.white60),
-                      ),
-                    );
-                  }
-                  return ListView.separated(
-                    controller: scrollController,
-                    padding: EdgeInsets.fromLTRB(16, 0, 16, bottom + 16),
-                    itemCount: items.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 8),
-                    itemBuilder: (context, i) {
-                      final hit = items[i];
-                      return _SearchResultTile(
-                        hit: hit,
-                        onTap: () => Navigator.pop(context, hit),
-                      );
-                    },
-                  );
-                },
+            if (_searching)
+              const LinearProgressIndicator(
+                minHeight: 2,
+                color: Color(0xFF8B5CF6),
+                backgroundColor: Colors.white12,
               ),
-            ),
+            Expanded(child: _buildBody(scrollController, bottom)),
           ],
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(ScrollController scrollController, double bottom) {
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            'Arama başarısız: $_error',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white70),
+          ),
+        ),
+      );
+    }
+    if (_queryCtrl.text.trim().length < 2) {
+      return const Center(
+        child: Text(
+          'En az 2 karakter yazın',
+          style: TextStyle(color: Colors.white60),
+        ),
+      );
+    }
+    if (!_searching && _hits.isEmpty) {
+      return const Center(
+        child: Text('Sonuç bulunamadı', style: TextStyle(color: Colors.white60)),
+      );
+    }
+    return ListView.separated(
+      controller: scrollController,
+      padding: EdgeInsets.fromLTRB(16, 8, 16, bottom + 16),
+      itemCount: _hits.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      itemBuilder: (context, i) {
+        final hit = _hits[i];
+        return _SearchResultTile(
+          hit: hit,
+          compact: i < 3,
+          onTap: () => Navigator.pop(context, hit),
         );
       },
     );
@@ -149,13 +207,19 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
 }
 
 class _SearchResultTile extends StatelessWidget {
-  const _SearchResultTile({required this.hit, required this.onTap});
+  const _SearchResultTile({
+    required this.hit,
+    required this.onTap,
+    this.compact = false,
+  });
 
   final YoutubeSearchHit hit;
   final VoidCallback onTap;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final thumb = compact ? 56.0 : 72.0;
     return Material(
       color: const Color(0xFF1E1E2A),
       borderRadius: BorderRadius.circular(14),
@@ -169,13 +233,10 @@ class _SearchResultTile extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: SizedBox(
-                  width: 72,
-                  height: 72,
+                  width: thumb,
+                  height: thumb,
                   child: hit.thumbUrl != null && hit.thumbUrl!.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: hit.thumbUrl!,
-                          fit: BoxFit.cover,
-                        )
+                      ? CachedNetworkImage(imageUrl: hit.thumbUrl!, fit: BoxFit.cover)
                       : const ColoredBox(
                           color: Color(0xFF2A2A3A),
                           child: Icon(Icons.music_note, color: Colors.white38),
@@ -191,9 +252,10 @@ class _SearchResultTile extends StatelessWidget {
                       hit.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: compact ? FontWeight.w700 : FontWeight.w600,
+                        fontSize: compact ? 13 : 14,
                       ),
                     ),
                     if (hit.uploader != null && hit.uploader!.isNotEmpty)
@@ -201,17 +263,12 @@ class _SearchResultTile extends StatelessWidget {
                         hit.uploader!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white54, fontSize: 13),
-                      ),
-                    if (hit.duration != null && hit.duration!.isNotEmpty)
-                      Text(
-                        hit.duration!,
-                        style: const TextStyle(color: Color(0xFF8B5CF6), fontSize: 12),
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
                       ),
                   ],
                 ),
               ),
-              const Icon(Icons.play_circle_fill_rounded, color: Color(0xFF8B5CF6), size: 36),
+              const Icon(Icons.play_circle_fill_rounded, color: Color(0xFF8B5CF6), size: 32),
             ],
           ),
         ),

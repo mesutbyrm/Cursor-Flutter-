@@ -8,6 +8,7 @@ import '../../../domain/entities/music_queue_item.dart';
 import '../../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../utils/voice_room_responsive_metrics.dart';
+import 'voice_chat_cleared_banner.dart';
 import 'voice_room_entry_notification.dart';
 
 /// Kuyruk + giriş bildirimi — mesaj kutusunun hemen üstünde sabit blok.
@@ -68,6 +69,10 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                   padding: EdgeInsets.symmetric(horizontal: m.horizontalPad),
                   child: _QueueStrip(dj: live.dj),
                 ),
+              ),
+            if (live.chatClearedBannerNonce > 0)
+              VoiceChatClearedBanner(
+                key: ValueKey(live.chatClearedBannerNonce),
               ),
             VoiceRoomEntryNotificationCard(
               message: staffBanner,
