@@ -36,28 +36,13 @@ class _FortuneInlineResultExperienceState
     extends ConsumerState<FortuneInlineResultExperience> {
   final _scroll = ScrollController();
   final _shareCardKey = GlobalKey();
-  var _autoShared = false;
 
   FortuneReadingResult get result => widget.result;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoShare());
-  }
 
   @override
   void dispose() {
     _scroll.dispose();
     super.dispose();
-  }
-
-  Future<void> _maybeAutoShare() async {
-    if (_autoShared) return;
-    _autoShared = true;
-    try {
-      await ref.read(fortuneShareHandlerProvider).autoShareIfEnabled(result);
-    } catch (_) {}
   }
 
   Future<void> _shareWithStory() async {

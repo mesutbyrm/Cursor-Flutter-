@@ -5,6 +5,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/live_debug_log.dart';
 import '../../../../core/util/json_util.dart';
+import '../../domain/agora_channel_names.dart';
 import '../../domain/entities/agora_credentials.dart';
 
 class AgoraRemoteDataSource {
@@ -18,9 +19,10 @@ class AgoraRemoteDataSource {
     required String role,
     int uid = 0,
   }) async {
+    final channel = AgoraChannelNames.forRoom(channelName);
     final started = DateTime.now();
     LiveDebugLog.log('agora.token.request', {
-      'channel': channelName,
+      'channel': channel,
       'role': role,
       'uid': uid,
     });
@@ -28,7 +30,7 @@ class AgoraRemoteDataSource {
       final res = await _dio.safePost<dynamic>(
         ApiEndpoints.agoraToken,
         data: {
-          'channelName': channelName,
+          'channelName': channel,
           'role': role,
           'uid': uid,
         },
@@ -42,7 +44,7 @@ class AgoraRemoteDataSource {
       }
       final cred = AgoraCredentials.fromJson(
         map,
-        requestedChannel: channelName,
+        requestedChannel: channel,
       );
       if (cred.token.isEmpty || cred.channelName.isEmpty) {
         throw ApiException('Agora token alınamadı');
@@ -55,7 +57,7 @@ class AgoraRemoteDataSource {
       return cred;
     } on ApiException catch (e) {
       LiveDebugLog.log('agora.token.fail', {
-        'channel': channelName,
+        'channel': channel,
         'status': e.statusCode,
         'message': e.message,
       });

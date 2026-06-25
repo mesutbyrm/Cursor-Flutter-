@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.368+372 (2026-06-23)
+
+### Agora, Tarot takılma, otomatik paylaşım
+
+- **Agora:** `enableAudio()` + `enableVideo()` motor başlatmada; token isteği `room_{id}` formatına normalize
+- **Canlı falcı video:** Agora kanal adı `AgoraChannelNames.forRoom` ile üretim sözleşmesine uyumlu
+- **Tarot / fal yükleme:** SSE akışına 90 sn üst sınır + 28 sn boşta kalma zaman aşımı; JSON yanıt yedek parse
+- **Yükleme overlay:** İptal butonu ve geri tuşu — «Tarot açılıyor…» ekranında takılma giderildi
+- **Otomatik paylaşım:** Fal tamamlanınca `FortuneReadingCoordinator` ayara göre sosyal/profil paylaşımı (tek nokta)
+
 ## 1.0.367+371 (2026-06-23)
 
 ### Sesli oda — donma, !istek ses, çıkış düzeltmeleri

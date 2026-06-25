@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -17,6 +18,7 @@ import '../widgets/premium_ai/premium_fortune_open_button.dart';
 import '../../domain/fortune_access_config.dart';
 import 'fortune_access_gate.dart';
 import 'fortune_reading_service.dart';
+import 'fortune_share_handler.dart';
 
 /// Fal okuma akışı — premium yükleme, yapılandırılmış AI yorum, sonuç sayfası.
 class FortuneReadingCoordinator {
@@ -24,6 +26,9 @@ class FortuneReadingCoordinator {
 
   static final _service = FortuneReadingService();
   static final _rng = Random();
+
+  static const _streamMaxWait = Duration(seconds: 90);
+  static const _streamIdleGap = Duration(seconds: 28);
 
   static Future<FortuneReadingResult?> openReading({
     required BuildContext context,
@@ -95,11 +100,13 @@ class FortuneReadingCoordinator {
 
     final imageHint = _imageHint(type, images);
 
+    var loadingCancelled = false;
     showPremiumFortuneLoading(
       context: context,
       title: _loadingTitle(type, images),
       subtitle: _loadingSubtitle(type, images),
       accent: type.accent,
+      onCancel: () => loadingCancelled = true,
     );
     var loadingDismissed = false;
     void dismissLoading() {
@@ -108,54 +115,50 @@ class FortuneReadingCoordinator {
       Navigator.of(context, rootNavigator: true).maybePop();
     }
 
-    FortuneCloudImageInput? cloudImages;
-    if (images != null && FortuneImageCaptureConfig.requiresCapture(type)) {
-      try {
-        cloudImages = await _uploadImages(ref, type, images);
-      } catch (e) {
-        dismissLoading();
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(ApiException.userMessage(e))),
-          );
-        }
-        return null;
-      }
-    }
-
     FortuneReadingResult? result;
     var usedRemote = false;
 
     try {
+      FortuneCloudImageInput? cloudImages;
+      if (images != null && FortuneImageCaptureConfig.requiresCapture(type)) {
+        try {
+          cloudImages = await _uploadImages(ref, type, images);
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(ApiException.userMessage(e))),
+            );
+          }
+          return null;
+        }
+      }
+
+      if (loadingCancelled) return null;
+
       if (authed != null) {
         final accessToken = await ref.read(tokenStorageProvider).readAccess();
         var streamed = false;
         if (accessToken != null && accessToken.trim().isNotEmpty) {
           try {
-            var text = '';
-            String? fortuneId;
-            await for (final update
-                in ref.read(fortuneRepositoryProvider).streamFortune(
-                      type: type,
-                      userInput: userInput,
-                      yesNoChoice: resolvedYesNo,
-                      birthDate: resolvedBirth,
-                      images: cloudImages,
-                      accessToken: accessToken,
-                      paymentMethod: paymentMethod,
-                      jetonCost: jetonCost,
-                    )) {
-              text = update.text;
-              fortuneId = update.fortuneId ?? fortuneId;
-              if (update.done) break;
-            }
-            if (text.trim().isNotEmpty) {
+            final streamedData = await _streamWithGuards(
+              ref: ref,
+              type: type,
+              userInput: userInput,
+              yesNoChoice: resolvedYesNo,
+              birthDate: resolvedBirth,
+              images: cloudImages,
+              accessToken: accessToken,
+              paymentMethod: paymentMethod,
+              jetonCost: jetonCost,
+              cancelled: () => loadingCancelled,
+            );
+            if (streamedData != null && streamedData.text.trim().isNotEmpty) {
               streamed = true;
               usedRemote = true;
               result = _service.enrichFromApiText(
                 type: type,
-                text: text,
-                recordId: fortuneId,
+                text: streamedData.text,
+                recordId: streamedData.fortuneId,
                 imageHint: imageHint,
               );
             }
@@ -163,6 +166,7 @@ class FortuneReadingCoordinator {
             streamed = false;
           }
         }
+        if (loadingCancelled) return null;
         if (!streamed) {
           final remote = await ref.read(fortuneRepositoryProvider).readFortune(
                 type: type,
@@ -201,6 +205,7 @@ class FortuneReadingCoordinator {
         }
       }
     } catch (e) {
+      if (loadingCancelled) return null;
       final msg = ApiException.userMessage(e);
       final lower = msg.toLowerCase();
       final needsPurchase =
@@ -210,7 +215,6 @@ class FortuneReadingCoordinator {
           lower.contains('bakiye') ||
           (e is ApiException && e.statusCode == 402);
       if (needsPurchase) {
-        dismissLoading();
         if (context.mounted) {
           await _showPurchasePrompt(context, msg);
         }
@@ -231,12 +235,11 @@ class FortuneReadingCoordinator {
           ),
         );
       }
+    } finally {
+      dismissLoading();
     }
 
-    if (result == null) {
-      dismissLoading();
-      return null;
-    }
+    if (loadingCancelled || result == null) return null;
 
     var finalResult = result;
     if (authed != null) {
@@ -265,10 +268,16 @@ class FortuneReadingCoordinator {
       } catch (_) {
         // Yerel sonuç yine gösterilir.
       }
+
+      unawaited(
+        ref
+            .read(fortuneShareHandlerProvider)
+            .autoShareIfEnabled(finalResult)
+            .catchError((_) {}),
+      );
     }
 
     if (!context.mounted) return null;
-    dismissLoading();
     if (stayOnPage) return finalResult;
     if (replaceCurrentRoute) {
       context.pushReplacement('/fortune/${type.slug}/result', extra: finalResult);
@@ -276,6 +285,66 @@ class FortuneReadingCoordinator {
       context.push('/fortune/${type.slug}/result', extra: finalResult);
     }
     return finalResult;
+  }
+
+  static Future<({String text, String? fortuneId})?> _streamWithGuards({
+    required WidgetRef ref,
+    required FortuneTypeEntity type,
+    String? userInput,
+    bool? yesNoChoice,
+    DateTime? birthDate,
+    FortuneCloudImageInput? images,
+    required String accessToken,
+    String? paymentMethod,
+    int? jetonCost,
+    required bool Function() cancelled,
+  }) async {
+    final stream = ref.read(fortuneRepositoryProvider).streamFortune(
+          type: type,
+          userInput: userInput,
+          yesNoChoice: yesNoChoice,
+          birthDate: birthDate,
+          images: images,
+          accessToken: accessToken,
+          paymentMethod: paymentMethod,
+          jetonCost: jetonCost,
+        );
+
+    var text = '';
+    String? fortuneId;
+    final done = Completer<void>();
+    Timer? idleTimer;
+    StreamSubscription<FortuneStreamUpdate>? sub;
+
+    void finish() {
+      idleTimer?.cancel();
+      if (!done.isCompleted) done.complete();
+    }
+
+    sub = stream.listen(
+      (update) {
+        if (cancelled()) {
+          finish();
+          return;
+        }
+        text = update.text;
+        fortuneId = update.fortuneId ?? fortuneId;
+        idleTimer?.cancel();
+        idleTimer = Timer(_streamIdleGap, finish);
+        if (update.done) finish();
+      },
+      onDone: finish,
+      onError: (_) => finish(),
+      cancelOnError: true,
+    );
+
+    Timer(_streamMaxWait, finish);
+    await done.future;
+    await sub.cancel();
+    idleTimer?.cancel();
+
+    if (cancelled() || text.trim().isEmpty) return null;
+    return (text: text, fortuneId: fortuneId);
   }
 
   static String? _imageHint(

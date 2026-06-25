@@ -9,6 +9,7 @@ import 'package:canlifal_social/core/network/live_debug_log.dart';
 import 'package:canlifal_social/features/auth/domain/entities/user_entity.dart';
 import 'package:canlifal_social/core/network/token_storage.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
+import 'package:canlifal_social/features/agora/domain/agora_channel_names.dart';
 import 'package:canlifal_social/features/agora/presentation/agora_room_manager.dart';
 import 'package:canlifal_social/features/agora/presentation/providers/agora_providers.dart';
 import 'package:canlifal_social/features/live/presentation/providers/live_beauty_provider.dart';
@@ -119,8 +120,10 @@ class PsychicVideoController extends StateNotifier<PsychicVideoState> {
 
   String get channelId {
     final fromRoom = state.room?.roomId?.trim();
-    if (fromRoom != null && fromRoom.isNotEmpty) return fromRoom;
-    return session.trtcRoomId;
+    final raw = (fromRoom != null && fromRoom.isNotEmpty)
+        ? fromRoom
+        : session.trtcRoomId;
+    return AgoraChannelNames.forRoom(raw);
   }
 
   Future<void> _bootstrap() async {

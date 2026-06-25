@@ -76,18 +76,19 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
       onOpen: () async {
         if (_opening) return;
         setState(() => _opening = true);
-        final result = await FortuneReadingCoordinator.openReading(
-          context: context,
-          ref: ref,
-          type: type,
-          localImages: _needsCapture ? _images : null,
-          stayOnPage: true,
-        );
-        if (!mounted) return;
-        setState(() {
-          _opening = false;
-          _inlineResult = result;
-        });
+        try {
+          final result = await FortuneReadingCoordinator.openReading(
+            context: context,
+            ref: ref,
+            type: type,
+            localImages: _needsCapture ? _images : null,
+            stayOnPage: true,
+          );
+          if (!mounted) return;
+          setState(() => _inlineResult = result);
+        } finally {
+          if (mounted) setState(() => _opening = false);
+        }
       },
     );
   }

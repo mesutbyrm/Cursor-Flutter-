@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/util/json_util.dart';
 
 /// Fal LLM yanıtı — `POST /api/fortunes/*` SSE (`text/event-stream`).
 class FortuneStreamChunk {
@@ -116,10 +117,49 @@ class FortuneSseService {
           fortuneId: fortuneId,
           done: true,
         );
+      } else {
+        final tail = buffer.toString().trim();
+        final fromJson = _parseJsonFortuneBody(tail);
+        if (fromJson != null) {
+          yield FortuneStreamChunk(
+            content: fromJson.text,
+            fortuneId: fromJson.fortuneId,
+            done: true,
+          );
+        } else {
+          throw StateError('empty_fortune_stream');
+        }
       }
     } finally {
       cancel.cancel('done');
       dio.close(force: true);
+    }
+  }
+
+  ({String text, String? fortuneId})? _parseJsonFortuneBody(String raw) {
+    if (raw.isEmpty || !raw.startsWith('{')) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return null;
+      final map = Map<String, dynamic>.from(decoded);
+      final nested = map['data'] is Map
+          ? Map<String, dynamic>.from(map['data'] as Map)
+          : map;
+      final text = pick(nested, [
+        'detail',
+        'interpretation',
+        'reading',
+        'content',
+        'text',
+        'summary',
+      ])?.toString();
+      if (text == null || text.trim().isEmpty) return null;
+      return (
+        text: text,
+        fortuneId: pick(nested, ['id', 'fortuneId', 'recordId'])?.toString(),
+      );
+    } catch (_) {
+      return null;
     }
   }
 }

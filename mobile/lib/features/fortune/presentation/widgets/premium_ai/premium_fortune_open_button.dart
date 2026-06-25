@@ -125,11 +125,13 @@ class PremiumFortuneLoadingOverlay extends StatefulWidget {
     required this.title,
     required this.subtitle,
     required this.accent,
+    this.onCancel,
   });
 
   final String title;
   final String subtitle;
   final Color accent;
+  final VoidCallback? onCancel;
 
   @override
   State<PremiumFortuneLoadingOverlay> createState() =>
@@ -212,6 +214,17 @@ class _PremiumFortuneLoadingOverlayState extends State<PremiumFortuneLoadingOver
               ),
               const SizedBox(height: 20),
               _ShimmerBar(accent: widget.accent),
+              if (widget.onCancel != null) ...[
+                const SizedBox(height: 28),
+                TextButton.icon(
+                  onPressed: widget.onCancel,
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  label: const Text('İptal'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white.withValues(alpha: 0.75),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -327,17 +340,27 @@ void showPremiumFortuneLoading({
   required String title,
   required String subtitle,
   required Color accent,
+  VoidCallback? onCancel,
 }) {
   showDialog<void>(
     context: context,
-    barrierDismissible: false,
+    barrierDismissible: onCancel != null,
     barrierColor: Colors.black87,
-    builder: (_) => PopScope(
-      canPop: false,
+    builder: (dialogContext) => PopScope(
+      canPop: onCancel != null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) onCancel?.call();
+      },
       child: PremiumFortuneLoadingOverlay(
         title: title,
         subtitle: subtitle,
         accent: accent,
+        onCancel: onCancel == null
+            ? null
+            : () {
+                onCancel();
+                Navigator.of(dialogContext).pop();
+              },
       ),
     ),
   );

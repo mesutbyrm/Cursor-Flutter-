@@ -27,7 +27,6 @@ class FortuneResultPage extends ConsumerStatefulWidget {
 class _FortuneResultPageState extends ConsumerState<FortuneResultPage> {
   final _scroll = ScrollController();
   final _shareCardKey = GlobalKey();
-  var _autoShared = false;
   var _manualShared = false;
   var _socialSharing = false;
 
@@ -37,20 +36,6 @@ class _FortuneResultPageState extends ConsumerState<FortuneResultPage> {
   void dispose() {
     _scroll.dispose();
     super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAutoShare());
-  }
-
-  Future<void> _maybeAutoShare() async {
-    if (_autoShared) return;
-    _autoShared = true;
-    try {
-      await ref.read(fortuneShareHandlerProvider).autoShareIfEnabled(result);
-    } catch (_) {}
   }
 
   Future<void> _shareToSocialFeed() async {
