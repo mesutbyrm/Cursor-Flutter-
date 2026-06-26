@@ -13,6 +13,10 @@ import 'canlifal_tokens.dart';
 class AppTheme {
   AppTheme._();
 
+  static ThemeData? _lightCache;
+  static ThemeData? _darkCache;
+  static ThemeData? _amoledCache;
+
   // Geriye dönük sabitler (yeni kod: context.colors)
   static const Color background = Color(0xFF0B0B1E);
   static const Color surface = Color(0xFF14141C);
@@ -22,11 +26,22 @@ class AppTheme {
   static const Color onBackground = Color(0xFFFFFFFF);
   static const Color muted = Color(0xFF6E6E82);
 
-  static ThemeData dark() => _build(AppThemeColors.dark, CanlifalTokens.dark);
+  static ThemeData dark() =>
+      _darkCache ??= _build(AppThemeColors.dark, CanlifalTokens.dark);
 
-  static ThemeData amoled() => _build(AppThemeColors.amoled, CanlifalTokens.dark);
+  static ThemeData amoled() =>
+      _amoledCache ??= _build(AppThemeColors.amoled, CanlifalTokens.dark);
 
-  static ThemeData light() => _build(AppThemeColors.light, CanlifalTokens.light);
+  static ThemeData light() =>
+      _lightCache ??= _build(AppThemeColors.light, CanlifalTokens.light);
+
+  /// Test / hot-reload — tema önbelleğini temizler.
+  @visibleForTesting
+  static void clearCacheForTest() {
+    _lightCache = null;
+    _darkCache = null;
+    _amoledCache = null;
+  }
 
   static ThemeData _build(AppThemeColors c, CanlifalTokens tokens) {
     final palette = AppPalette(c);

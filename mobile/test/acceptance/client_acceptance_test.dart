@@ -68,6 +68,8 @@ void main() {
   });
 
   group('20 — Uygulama performans testi', () {
+    setUp(AppTheme.clearCacheForTest);
+
     test('tema fabrikası 50 çağrı < 2 sn', () {
       final stopwatch = Stopwatch()..start();
       for (var i = 0; i < 50; i++) {
