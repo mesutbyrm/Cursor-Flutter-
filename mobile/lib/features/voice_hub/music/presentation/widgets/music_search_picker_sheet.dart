@@ -13,6 +13,7 @@ Future<YoutubeSearchHit?> showMusicSearchPickerSheet(
   WidgetRef ref, {
   required String query,
 }) async {
+  final container = ProviderScope.containerOf(context);
   return showModalBottomSheet<YoutubeSearchHit>(
     context: context,
     isScrollControlled: true,
@@ -20,7 +21,10 @@ Future<YoutubeSearchHit?> showMusicSearchPickerSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (ctx) => _MusicSearchPicker(initialQuery: query),
+    builder: (ctx) => UncontrolledProviderScope(
+      container: container,
+      child: _MusicSearchPicker(initialQuery: query),
+    ),
   );
 }
 

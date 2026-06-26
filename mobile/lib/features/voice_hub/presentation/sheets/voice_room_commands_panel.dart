@@ -21,6 +21,7 @@ Future<void> showVoiceRoomCommandsPanel(
   required VoiceRoomPermissions perms,
   required bool isOwner,
 }) {
+  final container = ProviderScope.containerOf(context);
   return showGeneralDialog(
     context: context,
     barrierDismissible: true,
@@ -43,10 +44,13 @@ Future<void> showVoiceRoomCommandsPanel(
             child: SizedBox(
               width: (w * 0.92).clamp(300.0, 420.0),
               height: MediaQuery.sizeOf(ctx).height,
-              child: _VoiceRoomCommandsPanel(
-                room: room,
-                perms: perms,
-                isOwner: isOwner,
+              child: UncontrolledProviderScope(
+                container: container,
+                child: _VoiceRoomCommandsPanel(
+                  room: room,
+                  perms: perms,
+                  isOwner: isOwner,
+                ),
               ),
             ),
           ),

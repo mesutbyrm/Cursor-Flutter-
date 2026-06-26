@@ -54,7 +54,8 @@ class VoiceRoomDjStreamLoader {
     return '$base/api/chat/youtube-audio?url=${Uri.encodeComponent(trimmed)}';
   }
 
-  /// Android: önce doğrudan CDN (Referer başlıkları), sonra yerel önbellek; proxy en son.
+  /// Backend ile aynı: Android googlevideo → `/api/chat/youtube-audio` proxy (Referer sunucuda).
+  /// Sıra: proxy → doğrudan CDN → yerel önbellek.
   Future<List<String>> buildPlaybackTargets(String streamUrl) async {
     final trimmed = streamUrl.trim();
     if (trimmed.isEmpty) return const [];
@@ -68,12 +69,17 @@ class VoiceRoomDjStreamLoader {
       targets.add(u);
     }
 
+    if (trimmed.contains('/api/chat/youtube-audio')) {
+      add(trimmed);
+      return targets;
+    }
+
     final isYtCdn = needsLocalDownload(trimmed);
 
     if (!kIsWeb && Platform.isAndroid && isYtCdn) {
+      add(proxyPlaybackUrl(trimmed));
       add(trimmed);
       add(await downloadFallback(trimmed));
-      add(proxyPlaybackUrl(trimmed));
       return targets;
     }
 
@@ -81,9 +87,15 @@ class VoiceRoomDjStreamLoader {
     return targets;
   }
 
-  /// Çözümlenmiş akış URL'si — googlevideo doğrudan oynatılır (proxy yalnızca yedek hedef).
+  /// Android istemci giriş URL'si — googlevideo backend proxy'sine yönlendirilir.
   static String clientPlaybackUrl(String streamUrl) {
-    return streamUrl.trim();
+    final trimmed = streamUrl.trim();
+    if (trimmed.isEmpty) return trimmed;
+    if (trimmed.contains('/api/chat/youtube-audio')) return trimmed;
+    if (!kIsWeb && Platform.isAndroid && needsLocalDownload(trimmed)) {
+      return proxyPlaybackUrl(trimmed) ?? trimmed;
+    }
+    return trimmed;
   }
 
   Future<String?> downloadFallback(String streamUrl) async {

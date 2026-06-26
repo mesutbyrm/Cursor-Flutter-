@@ -106,7 +106,7 @@ class VoiceRoomDjPlayer {
     final resolvedVideoId = videoId ??
         VoiceRoomMusicPipelineLog.videoIdFromUrl(nowPlaying?.youtubeUrl ?? '') ??
         ChatRoomDjState.videoIdFromLoose(streamUrl);
-    var url = VoiceRoomDjStreamLoader.clientPlaybackUrl(streamUrl.trim());
+    var url = streamUrl.trim();
     if (YoutubeStreamResolver.needsResolveBeforePlay(url)) {
       final resolved = await _resolveSource(url);
       if (resolved == null || !resolved.startsWith('http')) {
@@ -117,7 +117,7 @@ class VoiceRoomDjPlayer {
         );
         return false;
       }
-      url = VoiceRoomDjStreamLoader.clientPlaybackUrl(resolved);
+      url = resolved.trim();
     }
     if (YoutubeStreamResolver.isYoutubeStreamApiUrl(url)) {
       VoiceRoomDebugLog.musicError(
@@ -687,9 +687,25 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
     final deadline = DateTime.now().add(timeout);
     final startupLogDeadline = DateTime.now().add(startupLogAt);
     var startupLogged = false;
+    var loadingSince = DateTime.now();
     while (DateTime.now().isBefore(deadline)) {
       _refreshDiagnostics();
       final state = _player.processingState;
+      if (state == ja.ProcessingState.loading) {
+        if (DateTime.now().difference(loadingSince).inSeconds >= 12) {
+          VoiceRoomMusicPipelineLog.playResult(
+            started: false,
+            url: _currentSource ?? '(none)',
+            processingState: state.name,
+            playing: _player.playing,
+            durationMs: currentDurationMs,
+            detail: 'loading_timeout_12s',
+          );
+          return false;
+        }
+      } else {
+        loadingSince = DateTime.now();
+      }
       if (_player.playing &&
           (state == ja.ProcessingState.ready ||
               state == ja.ProcessingState.buffering)) {

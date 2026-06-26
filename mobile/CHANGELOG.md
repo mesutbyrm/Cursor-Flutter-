@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.382+386 (2026-06-26)
+
+### Sesli oda müzik — backend proxy parity + ProviderScope
+
+- **Backend ile aynı akış:** Android googlevideo → `GET /api/chat/youtube-audio?url=` (Referer sunucuda) önce; CDN ve yerel önbellek yedek
+- **`playServerStream`:** Çözümleme sonrası ham googlevideo URL ile hedef listesi (proxy çift dönüşüm yok)
+- **Loading takılması:** 12 sn loading timeout → sonraki hedefe geçiş
+- **ProviderScope:** `!istek` arama, şarkı sheet ve oda komutları paneli `UncontrolledProviderScope` ile sarmalandı (`Bileşen hatası` giderildi)
+
 ## 1.0.381+385 (2026-06-26)
 
 ### Sesli oda müzik — Android Source error düzeltmesi

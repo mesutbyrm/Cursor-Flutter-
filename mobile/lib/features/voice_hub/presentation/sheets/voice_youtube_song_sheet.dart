@@ -26,12 +26,13 @@ Future<void> showVoiceYoutubeSongSheet(
   VoiceRoomPermissions? perms,
   bool? isOwner,
 }) {
+  final container = ProviderScope.containerOf(context);
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => ProviderScope(
-      parent: ProviderScope.containerOf(context),
+    builder: (ctx) => UncontrolledProviderScope(
+      container: container,
       child: _YoutubeSongSheet(room: room),
     ),
   );
