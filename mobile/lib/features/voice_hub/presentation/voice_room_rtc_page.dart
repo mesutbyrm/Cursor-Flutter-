@@ -872,7 +872,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     showVoiceUserProfileSheet(
       context,
       user: user,
-      isOwner: owner,
       onGift: openGift,
     );
   }

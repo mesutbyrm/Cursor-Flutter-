@@ -96,7 +96,6 @@ Future<void> showVoiceRoomSettingsSheet(
 Future<void> showVoiceUserProfileSheet(
   BuildContext context, {
   required ChatRoomPresence user,
-  required bool isOwner,
   VoidCallback? onGift,
 }) {
   return showModalBottomSheet(
@@ -104,7 +103,6 @@ Future<void> showVoiceUserProfileSheet(
     backgroundColor: Colors.transparent,
     builder: (ctx) => _UserProfileSheet(
       user: user,
-      isOwner: isOwner,
       onGift: onGift,
     ),
   );
@@ -950,12 +948,10 @@ class _ModAction extends StatelessWidget {
 class _UserProfileSheet extends StatelessWidget {
   const _UserProfileSheet({
     required this.user,
-    required this.isOwner,
     this.onGift,
   });
 
   final ChatRoomPresence user;
-  final bool isOwner;
   final VoidCallback? onGift;
 
   @override
@@ -995,12 +991,6 @@ class _UserProfileSheet extends StatelessWidget {
                     icon: const Icon(Icons.card_giftcard_rounded),
                     tooltip: 'Hediye gönder',
                     color: AppThemeColors.coinGold,
-                  ),
-                if (isOwner)
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.mic_off_rounded),
-                    tooltip: 'Sustur',
                   ),
                 IconButton(
                   onPressed: () => context.push('/user/${user.id}'),
