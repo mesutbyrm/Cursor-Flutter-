@@ -3173,7 +3173,7 @@ class VoiceRoomLiveController
         responsePlaying: result.playing,
         queuePosition: result.queuePosition,
       );
-      final queue = result.queue.isNotEmpty
+      var queue = result.queue.isNotEmpty
           ? result.queue
           : state.dj.musicQueue;
       var nowPlaying = _resolveNowPlayingFromRequest(
