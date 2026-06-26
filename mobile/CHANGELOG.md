@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.377+381 (2026-06-26)
+
+### CI — derleme hatası
+
+- **Hediye flaşı:** `premium_gift_fullscreen_overlay.dart` — eksik `GiftRarity` import (release gate Gate 2)
+
+## 1.0.376+380 (2026-06-26)
+
+### CI — release gate performans testi
+
+- **AppTheme:** light/dark/amoled tema önbelleği (50× fabrika çağrısı CI < 2 sn)
+- Acceptance test #20: `clearCacheForTest` ile ölçüm tutarlılığı
+
 ## 1.0.375+379 (2026-06-26)
 
 ### Performans ve backend senkron (Claude dalı — tam diff)
