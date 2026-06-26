@@ -101,9 +101,9 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
     final bottom = MediaQuery.paddingOf(context).bottom;
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.78,
-      minChildSize: 0.45,
-      maxChildSize: 0.92,
+      initialChildSize: 0.82,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -119,8 +119,50 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
                 ),
               ),
             ),
+            const SizedBox(height: 14),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Text('🎵', style: TextStyle(fontSize: 22)),
+                      SizedBox(width: 8),
+                      Text(
+                        'Müzik',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 20,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: const Text(
+                      'maksimum 6 dakika',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF8B5CF6),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 8, 8),
               child: Row(
                 children: [
                   Expanded(
@@ -157,6 +199,17 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
                 backgroundColor: Colors.white12,
               ),
             Expanded(child: _buildBody(scrollController, bottom)),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16, 8, 16, bottom + 12),
+              child: Text(
+                'YouTube üzerinden çalınmaktadır.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white.withValues(alpha: 0.35),
+                ),
+              ),
+            ),
           ],
         );
       },
@@ -264,6 +317,16 @@ class _SearchResultTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      ),
+                    if (hit.duration != null && hit.duration!.isNotEmpty)
+                      Text(
+                        hit.duration!,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withValues(alpha: 0.45),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                   ],
                 ),

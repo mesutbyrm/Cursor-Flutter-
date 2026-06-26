@@ -1158,6 +1158,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             context,
             audioCost: liveDj.musicRequestCost,
             videoCost: liveDj.videoRequestCost,
+            songTitle: hit.title,
           );
           if (!mounted || picked == null) return;
           final err = await ctrl.submitSelectedSong(

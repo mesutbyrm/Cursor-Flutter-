@@ -8,6 +8,7 @@ Future<bool?> showMusicModePickerSheet(
   BuildContext context, {
   required int audioCost,
   required int videoCost,
+  String? songTitle,
 }) {
   return showModalBottomSheet<bool>(
     context: context,
@@ -41,6 +42,20 @@ Future<bool?> showMusicModePickerSheet(
               color: Colors.white,
             ),
           ),
+          if (songTitle != null && songTitle.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              songTitle,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.white.withValues(alpha: 0.75),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
           const SizedBox(height: 6),
           Text(
             'Jeton ücreti seçiminize göre kesilir',
@@ -65,6 +80,15 @@ Future<bool?> showMusicModePickerSheet(
             subtitle: '$videoCost Jeton',
             gradient: const [Color(0xFFFF0080), Color(0xFF7B2FF7)],
             onTap: () => Navigator.pop(ctx, true),
+          ),
+          const SizedBox(height: 10),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white54,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            child: const Text('İptal', style: TextStyle(fontSize: 14)),
           ),
         ],
       ),
