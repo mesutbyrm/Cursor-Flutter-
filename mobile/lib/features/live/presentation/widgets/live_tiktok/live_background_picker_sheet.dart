@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -100,7 +101,7 @@ class LiveBackgroundPickerSheet extends StatelessWidget {
                           width: selected ? 2 : 1,
                         ),
                         image: DecorationImage(
-                          image: NetworkImage(p.$2),
+                          image: CachedNetworkImageProvider(p.$2),
                           fit: BoxFit.cover,
                           onError: (_, _) {},
                         ),

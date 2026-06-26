@@ -695,7 +695,7 @@ class _RecipientChip extends StatelessWidget {
               child: CircleAvatar(
                 radius: 22,
                 backgroundImage:
-                    user.image != null ? NetworkImage(user.image!) : null,
+                    user.image != null ? CachedNetworkImageProvider(user.image!) : null,
                 child: user.image == null
                     ? Text(
                         user.displayName.isNotEmpty

@@ -406,7 +406,7 @@ class VoiceRoomLiveController
       _moderationToastTimer?.cancel();
       _kickWarningTimer?.cancel();
       if (_sessionActive) {
-        _leavePresence();
+        unawaited(_leavePresence());
         unawaited(ref.read(voiceRoomSseServiceProvider).disconnect());
         ref.read(voiceRoomGiftSocketProvider).disconnect();
       }

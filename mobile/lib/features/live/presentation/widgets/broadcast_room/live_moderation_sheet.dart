@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -128,7 +129,7 @@ class _LiveModerationSheet extends ConsumerWidget {
               CircleAvatar(
                 radius: 24,
                 backgroundImage: targetAvatarUrl != null && targetAvatarUrl!.isNotEmpty
-                    ? NetworkImage(targetAvatarUrl!)
+                    ? CachedNetworkImageProvider(targetAvatarUrl!)
                     : null,
                 backgroundColor: const Color(0xFF6C3FC5),
                 child: targetAvatarUrl == null || targetAvatarUrl!.isEmpty

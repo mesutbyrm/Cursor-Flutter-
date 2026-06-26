@@ -678,12 +678,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     );
   }
 
-  ({
-    int? secondsLeft,
-    String? topSupporter,
-    String? mvpName,
-    String? winnerSide,
-  })? _pkBattleExtras(Map<String, dynamic>? battle) {
+  Map<String, dynamic>? _pkBattleExtras(Map<String, dynamic>? battle) {
     if (battle == null) return null;
     final seconds = battle['secondsLeft'] ?? battle['remainingSeconds'];
     final top = battle['topSupporter'] ?? battle['top_supporter'];
@@ -694,12 +689,19 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       final num v => v.round(),
       final v => int.tryParse('$v'),
     };
-    return (
-      secondsLeft: parsedSeconds,
-      topSupporter: top?.toString(),
-      mvpName: mvp?.toString(),
-      winnerSide: winner?.toString(),
-    );
+    return {
+      'secondsLeft': parsedSeconds,
+      'topSupporter': top?.toString(),
+      'mvpName': mvp?.toString(),
+      'winnerSide': winner?.toString(),
+    };
+  }
+
+  int? _pkOverlayInt(Map<String, dynamic>? extras, String key) {
+    final v = extras?[key];
+    if (v is int) return v;
+    if (v is num) return v.round();
+    return int.tryParse('$v');
   }
 
   Future<void> _openPkPanel() async {
@@ -1225,10 +1227,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                 leftScore: pkState!.leftScore,
                 rightScore: pkState.rightScore,
                 status: pkStatus,
-                secondsLeft: pkExtras?.secondsLeft,
-                topSupporter: pkExtras?.topSupporter,
-                mvpName: pkExtras?.mvpName,
-                winnerSide: pkExtras?.winnerSide,
+                secondsLeft: _pkOverlayInt(pkExtras, 'secondsLeft'),
+                topSupporter: pkExtras?['topSupporter']?.toString(),
+                mvpName: pkExtras?['mvpName']?.toString(),
+                winnerSide: pkExtras?['winnerSide']?.toString(),
               ),
             if (_vipBannerName != null)
               Positioned(

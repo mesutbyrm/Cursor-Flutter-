@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -127,7 +128,7 @@ class _AgencyHeader extends StatelessWidget {
                 radius: 28,
                 backgroundColor: const Color(0xFF2196F3),
                 backgroundImage:
-                    agency.logoUrl != null ? NetworkImage(agency.logoUrl!) : null,
+                    agency.logoUrl != null ? CachedNetworkImageProvider(agency.logoUrl!) : null,
                 child: agency.logoUrl == null
                     ? const Icon(Icons.business, color: Colors.white, size: 28)
                     : null,
@@ -291,7 +292,7 @@ class _MemberTile extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundImage:
-              member.avatarUrl != null ? NetworkImage(member.avatarUrl!) : null,
+              member.avatarUrl != null ? CachedNetworkImageProvider(member.avatarUrl!) : null,
           child: member.avatarUrl == null
               ? Text(member.name.isNotEmpty ? member.name[0] : '?')
               : null,

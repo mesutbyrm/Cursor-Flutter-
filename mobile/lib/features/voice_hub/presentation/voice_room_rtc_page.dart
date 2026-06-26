@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
@@ -963,7 +964,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               (p) => ListTile(
                 leading: CircleAvatar(
                   backgroundImage: p.image != null && p.image!.isNotEmpty
-                      ? NetworkImage(p.image!)
+                      ? CachedNetworkImageProvider(p.image!)
                       : null,
                   child: p.image == null || p.image!.isEmpty
                       ? const Icon(Icons.person)

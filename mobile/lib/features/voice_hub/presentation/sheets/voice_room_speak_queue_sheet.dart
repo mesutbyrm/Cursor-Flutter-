@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -147,7 +148,7 @@ class _ListenerTile extends StatelessWidget {
       leading: CircleAvatar(
         backgroundImage:
             user.image != null && user.image!.isNotEmpty
-                ? NetworkImage(user.image!)
+                ? CachedNetworkImageProvider(user.image!)
                 : null,
         child: user.image == null || user.image!.isEmpty
             ? const Icon(Icons.person)

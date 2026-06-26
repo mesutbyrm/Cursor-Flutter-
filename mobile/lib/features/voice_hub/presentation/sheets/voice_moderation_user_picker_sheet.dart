@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -108,7 +109,7 @@ class _KickBanPickerSheet extends ConsumerWidget {
                     leading: CircleAvatar(
                       backgroundColor: border.withValues(alpha: 0.35),
                       backgroundImage: u.image != null && u.image!.isNotEmpty
-                          ? NetworkImage(u.image!)
+                          ? CachedNetworkImageProvider(u.image!)
                           : null,
                       child: u.image == null || u.image!.isEmpty
                           ? Text(
@@ -269,7 +270,7 @@ class _UnbanBanListSheetState extends ConsumerState<_UnbanBanListSheet> {
                       leading: CircleAvatar(
                         backgroundImage: ban.imageUrl != null &&
                                 ban.imageUrl!.isNotEmpty
-                            ? NetworkImage(ban.imageUrl!)
+                            ? CachedNetworkImageProvider(ban.imageUrl!)
                             : null,
                         child: ban.imageUrl == null || ban.imageUrl!.isEmpty
                             ? Text(

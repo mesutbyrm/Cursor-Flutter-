@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.375+379 (2026-06-26)
+
+### Performans ve backend senkron (Claude dalı — tam diff)
+
+- **Map literal:** `?field` → `if (field != null) 'key': field` (müzik/DJ dosyaları)
+- **Avatar/resim:** `NetworkImage` → `CachedNetworkImageProvider` (13 dosya)
+- **Müzik uçları:** `pauseDj` → `DELETE /music`, `resumeDj` → `POST /music`
+- **`_parseQueueResponse`:** güvenli `int.tryParse` / `num.round`
+- **PK overlay:** `pkExtras` Map + güvenli cast'ler; `_pkPollTimer?.cancel()`
+- **`main.dart`:** image cache 150 görsel / 80 MB
+- **`unawaited(_leavePresence())`** async uyarı düzeltmesi
+
 ## 1.0.374+378 (2026-06-26)
 
 ### Sesli oda — performans, müzik, kamera düzeltmeleri

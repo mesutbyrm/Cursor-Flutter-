@@ -47,10 +47,14 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
   LiveStreamExtrasDataSource get _remote => ref.read(liveStreamExtrasProvider);
 
   Timer? _poll;
+  Timer? _pkPollTimer;
 
   @override
   LiveVideoPkState build(String streamId) {
-    ref.onDispose(() => _poll?.cancel());
+    ref.onDispose(() {
+      _poll?.cancel();
+      _pkPollTimer?.cancel();
+    });
     Future.microtask(() => refresh());
     _startPolling();
     return const LiveVideoPkState();
@@ -58,7 +62,9 @@ class LiveVideoPkNotifier extends AutoDisposeFamilyNotifier<LiveVideoPkState, St
 
   void _startPolling() {
     _poll?.cancel();
+    _pkPollTimer?.cancel();
     _poll = Timer.periodic(const Duration(seconds: 3), (_) => refresh());
+    _pkPollTimer = _poll;
   }
 
   Future<void> refresh() async {

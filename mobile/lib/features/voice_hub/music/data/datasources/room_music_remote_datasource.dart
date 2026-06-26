@@ -151,9 +151,9 @@ class RoomMusicRemoteDataSource {
       'videoId': videoId,
       'title': title,
       'youtubeUrl': 'https://www.youtube.com/watch?v=$videoId',
-      'artist': ?channelTitle,
-      'thumbUrl': ?thumbUrl,
-      'duration': ?duration,
+      if (channelTitle != null) 'artist': channelTitle,
+      if (thumbUrl != null) 'thumbUrl': thumbUrl,
+      if (duration != null) 'duration': duration,
       'priority': priority,
       if (skipPayment) 'skipPayment': true,
       'requestType': withVideo ? 'video' : 'audio',
@@ -197,12 +197,21 @@ class RoomMusicRemoteDataSource {
     return (
       item: item,
       queue: queue,
-      queuePosition: map['queuePosition'] as int?,
+      queuePosition: _parseOptionalInt(map['queuePosition']),
       streamUrl: map['musicUrl']?.toString(),
       playing: map['playing'] == true,
-      newBalance: map['newBalance'] as int? ?? map['coinBalance'] as int?,
+      newBalance: _parseOptionalInt(map['newBalance']) ??
+          _parseOptionalInt(map['coinBalance']),
     );
   }
+
+  int? _parseOptionalInt(dynamic raw) {
+    if (raw is int) return raw;
+    if (raw is num) return raw.round();
+    return int.tryParse('$raw');
+  }
+
+  static String _musicPath(String roomId) => '/api/chat/rooms/$roomId/music';
 
   Future<RoomPlaybackSync?> fetchDjSync(String roomId) async {
     final res = await _dio.get<dynamic>('/api/chat/rooms/$roomId/music-queue');
@@ -212,18 +221,15 @@ class RoomMusicRemoteDataSource {
   }
 
   Future<void> pauseDj(String roomId) async {
-    await _dio.post<dynamic>(
-      ApiEndpoints.chatRoomDj(roomId),
-      data: {'playing': false},
-    );
+    await _dio.delete<dynamic>(_musicPath(roomId));
   }
 
   Future<void> resumeDj(String roomId, {String? musicUrl}) async {
     await _dio.post<dynamic>(
-      ApiEndpoints.chatRoomDj(roomId),
+      _musicPath(roomId),
       data: {
         'playing': true,
-        'musicUrl': ?musicUrl,
+        if (musicUrl != null) 'musicUrl': musicUrl,
       },
     );
   }

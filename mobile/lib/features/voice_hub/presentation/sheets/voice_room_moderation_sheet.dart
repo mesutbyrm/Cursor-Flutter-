@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -450,7 +451,7 @@ class _VoiceRoomModerationSheet extends ConsumerWidget {
                 radius: 22,
                 backgroundImage: targetUser.avatarUrl != null &&
                         targetUser.avatarUrl!.isNotEmpty
-                    ? NetworkImage(targetUser.avatarUrl!)
+                    ? CachedNetworkImageProvider(targetUser.avatarUrl!)
                     : null,
                 backgroundColor: const Color(0xFF6C3FC5),
                 child: targetUser.avatarUrl == null || targetUser.avatarUrl!.isEmpty
