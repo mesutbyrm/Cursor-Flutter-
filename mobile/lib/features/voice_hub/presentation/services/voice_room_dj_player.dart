@@ -119,6 +119,14 @@ class VoiceRoomDjPlayer {
       }
       url = VoiceRoomDjStreamLoader.clientPlaybackUrl(resolved);
     }
+    if (YoutubeStreamResolver.isYoutubeStreamApiUrl(url)) {
+      VoiceRoomDebugLog.musicError(
+        phase: 'playServerStream.unresolved_api',
+        url: url,
+        videoId: resolvedVideoId,
+      );
+      return false;
+    }
     if (!url.startsWith('http')) {
       VoiceRoomMusicPipelineLog.nullMusicUrl(
         reason: 'playServerStream_invalid_url',
@@ -208,8 +216,10 @@ class VoiceRoomDjPlayer {
             startPosition: startPosition ?? Duration.zero,
             nowPlaying: nowPlaying,
             muted: muted,
+            videoId: ChatRoomDjState.videoIdFromLoose(direct),
           );
         }
+        // Çözümleme başarısız — aday listesi (nowPlaying watch URL vb.) ile devam et.
       } else {
         return playServerStream(
           streamUrl: direct,
@@ -320,7 +330,15 @@ class VoiceRoomDjPlayer {
       return _resolver.resolvePlayableUrl(absolute);
     }
     if (trimmed.startsWith('/')) {
-      return trimmed;
+      final absolute = _absolutizeStreamUrl(trimmed);
+      if (absolute == null) return null;
+      if (YoutubeStreamResolver.isYoutubeStreamApiUrl(absolute)) {
+        return _resolver.resolvePlayableUrl(absolute);
+      }
+      if (YoutubeStreamResolver.needsResolveBeforePlay(absolute)) {
+        return _resolver.resolvePlayableUrl(absolute);
+      }
+      return absolute;
     }
     return _resolver.resolvePlayableUrl(trimmed);
   }
@@ -876,6 +894,9 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
     String? candidateLabel,
     bool deferMediaSession = false,
   }) async {
+    if (YoutubeStreamResolver.isYoutubeStreamApiUrl(source)) {
+      throw StateError('youtube-stream API URL cannot be played directly');
+    }
     _completionFired = false;
     final needsReload = _currentSource != source ||
         _player.processingState == ja.ProcessingState.idle ||

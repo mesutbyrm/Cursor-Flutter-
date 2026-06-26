@@ -119,7 +119,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
             diag.playbackSource ??
             dj.musicUrl ??
             displayTrack.youtubeUrl;
-        final debugLine = _debugLine(diag, debugUrl);
+        final debugLine = _debugLine(diag, debugUrl, dj.musicUrl);
 
         return Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
@@ -385,10 +385,19 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
         );
   }
 
-  String? _debugLine(VoiceRoomMusicDiagnostics diag, String? url) {
+  String? _debugLine(
+    VoiceRoomMusicDiagnostics diag,
+    String? url,
+    String? serverMusicUrl,
+  ) {
     final parts = <String>[];
     if (url != null && url.isNotEmpty) {
-      parts.add('url=${_shortUrl(url)}');
+      parts.add('play=${_shortUrl(url)}');
+    }
+    if (serverMusicUrl != null &&
+        serverMusicUrl.isNotEmpty &&
+        serverMusicUrl != url) {
+      parts.add('srv=${_shortUrl(serverMusicUrl)}');
     }
     if (diag.processingState != null) {
       parts.add('state=${diag.processingState}');

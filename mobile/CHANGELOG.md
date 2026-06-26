@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.381+385 (2026-06-26)
+
+### Sesli oda müzik — Android Source error düzeltmesi
+
+- **Android oynatma sırası:** googlevideo doğrudan CDN + Referer başlıkları önce; yerel önbellek ikinci; `/api/chat/youtube-audio` proxy en son (sık 404 / Source error)
+- **`clientPlaybackUrl`:** Artık googlevideo'yu proxy'ye çevirmiyor — çözümlenmiş akış doğrudan oynatılır
+- **Güvenlik:** `youtube-stream` JSON uç noktası `just_audio`'ya asla verilmez; çözümleme başarısızsa watch URL adayları denenir
+- **Teşhis:** Mini player `play=` ve `srv=` ile oynatılan vs sunucu URL'sini ayırır
+
 ## 1.0.380+384 (2026-06-26)
 
 ### Sesli oda müzik — kalıcı oynatma düzeltmesi
