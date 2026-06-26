@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.378+382 (2026-06-26)
+
+### Sesli oda müzik — youtube-stream URL çözümleme
+
+- **`/api/chat/youtube-stream?videoId=`** artık doğrudan oynatılmıyor; önce JSON'dan gerçek ses akışı URL'si alınıyor
+- **`videoIdFrom`:** `videoId` sorgu parametresi desteği
+- **`just_audio`:** `ProcessingState.ready` olunca otomatik `play()` (loading'de takılma)
+- **Android:** `usesCleartextTraffic="true"` (HTTP yedek akışlar)
+
 ## 1.0.377+381 (2026-06-26)
 
 ### CI — derleme hatası

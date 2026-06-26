@@ -107,11 +107,11 @@ class VoiceRoomDjPlayer {
         VoiceRoomMusicPipelineLog.videoIdFromUrl(nowPlaying?.youtubeUrl ?? '') ??
         ChatRoomDjState.videoIdFromLoose(streamUrl);
     var url = VoiceRoomDjStreamLoader.clientPlaybackUrl(streamUrl.trim());
-    if (YoutubeStreamResolver.isYoutubePageUrl(url)) {
+    if (YoutubeStreamResolver.needsResolveBeforePlay(url)) {
       final resolved = await _resolveSource(url);
       if (resolved == null || !resolved.startsWith('http')) {
         VoiceRoomDebugLog.musicError(
-          phase: 'playServerStream.youtube_unresolved',
+          phase: 'playServerStream.unresolved',
           url: url,
           videoId: resolvedVideoId,
         );
@@ -196,7 +196,9 @@ class VoiceRoomDjPlayer {
     Duration? startPosition,
   }) async {
     final direct = _absolutizeStreamUrl(serverStreamUrl ?? musicUrl);
-    if (direct != null && direct.startsWith('http')) {
+    if (direct != null &&
+        direct.startsWith('http') &&
+        !YoutubeStreamResolver.isYoutubeStreamApiUrl(direct)) {
       return playServerStream(
         streamUrl: direct,
         playing: playing,
@@ -228,6 +230,8 @@ class VoiceRoomDjPlayer {
 
     addCandidate(resolveSeed);
     addCandidate(fallbackYoutubeUrl);
+    addCandidate(musicUrl);
+    addCandidate(serverStreamUrl);
     if (nowPlaying != null) {
       addCandidate(nowPlaying.youtubeUrl);
       final videoId = VoiceRoomMusicPipelineLog.videoIdFromUrl(
@@ -297,6 +301,10 @@ class VoiceRoomDjPlayer {
     }
     if (trimmed.contains('/api/chat/youtube-audio')) {
       return trimmed;
+    }
+    if (YoutubeStreamResolver.isYoutubeStreamApiUrl(trimmed)) {
+      final absolute = _absolutizeStreamUrl(trimmed) ?? trimmed;
+      return _resolver.resolvePlayableUrl(absolute);
     }
     if (trimmed.startsWith('/')) {
       return trimmed;
@@ -961,7 +969,49 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
         ),
       );
     }
-    await playLocal();
+    await _playWhenReady();
+  }
+
+  /// `setAudioSource` sonrası loading'de takılı kalırsa ready olunca oynat.
+  Future<void> _playWhenReady() async {
+    if (_player.playing &&
+        (_player.processingState == ja.ProcessingState.ready ||
+            _player.processingState == ja.ProcessingState.buffering)) {
+      return;
+    }
+    if (_player.processingState == ja.ProcessingState.ready) {
+      await playLocal();
+      return;
+    }
+
+    StreamSubscription<ja.PlayerState>? sub;
+    try {
+      sub = _player.playerStateStream.listen((state) {
+        if (state.processingState == ja.ProcessingState.ready &&
+            !state.playing &&
+            _currentSource != null) {
+          unawaited(playLocal());
+        }
+      });
+      await _player.processingStateStream
+          .firstWhere(
+            (s) =>
+                s == ja.ProcessingState.ready ||
+                s == ja.ProcessingState.completed,
+          )
+          .timeout(const Duration(seconds: 45));
+      if (!_player.playing &&
+          _player.processingState == ja.ProcessingState.ready) {
+        await playLocal();
+      }
+    } on TimeoutException {
+      if (!_player.playing &&
+          _player.processingState == ja.ProcessingState.ready) {
+        await playLocal();
+      }
+    } finally {
+      await sub?.cancel();
+    }
   }
 
   Future<void> playLocal() async {

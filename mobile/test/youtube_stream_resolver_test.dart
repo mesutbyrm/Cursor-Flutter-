@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:canlifal_social/features/voice_hub/data/youtube_stream_resolver.dart';
@@ -57,6 +58,24 @@ void main() {
       expect(
         YoutubeStreamResolver.wrapForMobilePlayback(cdn),
         cdn,
+      );
+    });
+
+    test('detects youtube-stream API URL as needing resolve', () {
+      const api =
+          'https://canlifal.com/api/chat/youtube-stream?videoId=dQw4w9WgXcQ';
+      expect(YoutubeStreamResolver.isYoutubeStreamApiUrl(api), isTrue);
+      expect(YoutubeStreamResolver.needsResolveBeforePlay(api), isTrue);
+      expect(YoutubeStreamResolver.isDirectPlayableUrl(api), isFalse);
+    });
+
+    test('videoIdFrom reads videoId query param on site API URL', () {
+      final resolver = YoutubeStreamResolver(Dio());
+      expect(
+        resolver.videoIdFrom(
+          'https://canlifal.com/api/chat/youtube-stream?videoId=dQw4w9WgXcQ',
+        ),
+        'dQw4w9WgXcQ',
       );
     });
   });

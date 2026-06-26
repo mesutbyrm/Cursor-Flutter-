@@ -76,6 +76,18 @@ class YoutubeStreamResolver {
         RegExp(r'youtube\.com/v/').hasMatch(u);
   }
 
+  /// Sunucu bazen `musicUrl` olarak JSON çözümleyici uç noktasını döner — doğrudan oynatılamaz.
+  static bool isYoutubeStreamApiUrl(String url) {
+    return url.trim().toLowerCase().contains('/api/chat/youtube-stream');
+  }
+
+  /// Oynatmadan önce gerçek ses akışına çözümlenmesi gereken URL'ler.
+  static bool needsResolveBeforePlay(String url) {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return false;
+    return isYoutubePageUrl(trimmed) || isYoutubeStreamApiUrl(trimmed);
+  }
+
   static bool isDirectAudioStreamUrl(String url) {
     if (isYoutubePageUrl(url)) return false;
     return isDirectPlayableUrl(url);
@@ -88,17 +100,28 @@ class YoutubeStreamResolver {
 
   String? videoIdFrom(String url) {
     final trimmed = url.trim();
-    if (trimmed.length <= 15 && !trimmed.contains('/')) return trimmed;
+    if (trimmed.length <= 15 &&
+        !trimmed.contains('/') &&
+        !trimmed.contains('?')) {
+      return trimmed;
+    }
     try {
       final u = Uri.parse(trimmed);
+      final fromQuery = u.queryParameters['videoId'] ?? u.queryParameters['v'];
+      if (fromQuery != null && fromQuery.isNotEmpty) return fromQuery;
       if (u.host.contains('youtu.be')) {
         return u.pathSegments.isNotEmpty ? u.pathSegments.first : null;
       }
-      return u.queryParameters['v'];
     } catch (_) {
-      final m = RegExp(r'(?:v=|youtu\.be/)([a-zA-Z0-9_-]{6,})').firstMatch(trimmed);
+      final m = RegExp(
+        r'(?:v=|youtu\.be/|videoId=)([a-zA-Z0-9_-]{6,})',
+      ).firstMatch(trimmed);
       return m?.group(1);
     }
+    final m = RegExp(
+      r'(?:v=|youtu\.be/|videoId=)([a-zA-Z0-9_-]{6,})',
+    ).firstMatch(trimmed);
+    return m?.group(1);
   }
 
   Future<String?> prefetch(String musicUrl) => resolvePlayableUrl(musicUrl);
@@ -107,6 +130,20 @@ class YoutubeStreamResolver {
 
   Future<String?> resolvePlayableUrl(String musicUrl) async {
     if (musicUrl.isEmpty) return null;
+
+    // Sunucu musicUrl olarak /api/chat/youtube-stream?videoId= dönebilir — JSON uç, ses değil.
+    if (isYoutubeStreamApiUrl(musicUrl)) {
+      final id = videoIdFrom(musicUrl);
+      final watch = id != null && id.isNotEmpty
+          ? 'https://www.youtube.com/watch?v=$id'
+          : musicUrl;
+      final viaApi = await _resolveViaSiteApi(watch);
+      if (viaApi != null) return wrapForMobilePlayback(viaApi);
+      if (id != null && id.isNotEmpty) {
+        return resolveByVideoId(id);
+      }
+      return null;
+    }
 
     final id = videoIdFrom(musicUrl);
 
