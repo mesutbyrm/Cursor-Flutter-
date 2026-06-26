@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../domain/voice_playback_limits.dart';
+import '../../../presentation/utils/voice_sse_dj_payload.dart';
 
 /// Sunucu otoriteli oda müziği senkron durumu (SSE / Socket).
 class RoomPlaybackSync extends Equatable {
@@ -29,14 +30,21 @@ class RoomPlaybackSync extends Equatable {
   }
 
   factory RoomPlaybackSync.fromPayload(Map<String, dynamic> map) {
-    final pos = map['currentPosition'] ?? map['positionMs'];
-    final started = map['trackStartedAt'];
+    final flat = unwrapVoiceSseDjPayload(map);
+    final pos = flat['currentPosition'] ?? flat['positionMs'];
+    final started = flat['trackStartedAt'] ?? flat['startedAt'];
+    final np = flat['nowPlaying'];
+    String? videoId = flat['currentVideoId']?.toString() ??
+        flat['videoId']?.toString();
+    if ((videoId == null || videoId.isEmpty) && np is Map) {
+      videoId = np['videoId']?.toString();
+    }
     return RoomPlaybackSync(
-      currentVideoId: map['currentVideoId']?.toString(),
+      currentVideoId: videoId,
       currentPositionMs: pos is num ? pos.round() : 0,
-      isPlaying: map['isPlaying'] == true || map['playing'] == true,
-      trackStartedAtMs: started is num ? started.round() : null,
-      streamUrl: map['musicUrl']?.toString() ?? map['streamUrl']?.toString(),
+      isPlaying: voiceSseDjIsPlaying(flat),
+      trackStartedAtMs: voiceSseTrackStartedAtMs(started),
+      streamUrl: flat['musicUrl']?.toString() ?? flat['streamUrl']?.toString(),
     );
   }
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
@@ -23,6 +24,7 @@ import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_ov
 import 'providers/voice_gift_combo_tracker.dart';
 import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
+import '../domain/entities/chat_room_dj_state.dart';
 import '../domain/entities/chat_room_presence.dart';
 import '../domain/entities/chat_room_my_permissions.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
@@ -77,6 +79,8 @@ class VoiceRoomRtcPage extends ConsumerStatefulWidget {
 
 class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   VoiceRoomAudioCoordinator? _audio;
+  AudioPlayer? _sseDjPlayer;
+  String? _sseDjUrl;
   StreamSubscription<LiveGiftEvent>? _giftSub;
   final _messageCtrl = TextEditingController();
   var _audioJoining = true;
@@ -161,6 +165,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _giftSub = null;
     _messageCtrl.dispose();
     _messageFocus.dispose();
+    final djPlayer = _sseDjPlayer;
+    _sseDjPlayer = null;
+    _sseDjUrl = null;
+    if (djPlayer != null) {
+      unawaited(djPlayer.dispose());
+    }
     final audio = _audio;
     _audio = null;
     if (audio != null) {
@@ -173,6 +183,38 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       );
     }
     super.dispose();
+  }
+
+  /// SSE `dj` event — doğrudan HTTP stream yedek oynatıcı (audioplayers).
+  Future<void> _syncSseDjFallbackAudio(ChatRoomDjState dj) async {
+    final ui = ref.read(voiceRoomUiProvider);
+    if (!ui.backgroundMusicEnabled || !dj.musicEnabled) {
+      await _sseDjPlayer?.stop();
+      return;
+    }
+    if (!dj.playing) {
+      await _sseDjPlayer?.stop();
+      _sseDjUrl = null;
+      return;
+    }
+    final raw = dj.musicUrl?.trim() ?? '';
+    if (raw.isEmpty ||
+        !raw.startsWith('http') ||
+        ChatRoomDjState.isEphemeralStreamUrl(raw) ||
+        raw.contains('youtube.com/watch') ||
+        raw.contains('youtu.be/')) {
+      return;
+    }
+    if (_sseDjUrl == raw && _sseDjPlayer != null) return;
+    _sseDjPlayer ??= AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+    _sseDjUrl = raw;
+    try {
+      await _sseDjPlayer!.stop();
+      await _sseDjPlayer!.play(UrlSource(raw));
+      VoiceRoomDebugLog.log('music.sse_audioplayers.play', {'url': raw});
+    } catch (e) {
+      VoiceRoomDebugLog.log('music.sse_audioplayers.fail', {'error': '$e'});
+    }
   }
 
   Future<void> _logJwtStatus() async {
@@ -1110,6 +1152,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             backgroundColor: const Color(0xFF22C55E),
           ),
         );
+      }
+      if (prev?.dj != next.dj) {
+        unawaited(_syncSseDjFallbackAudio(next.dj));
       }
       final kickWarn = next.kickStrikeWarning;
       if (kickWarn != null && kickWarn != prev?.kickStrikeWarning && mounted) {

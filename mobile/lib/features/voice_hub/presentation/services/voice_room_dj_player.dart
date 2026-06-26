@@ -4,6 +4,7 @@ import 'package:audio_service/audio_service.dart' as audio;
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart' as ja;
 
+import '../../../../core/config/env.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import '../../data/services/voice_room_music_pipeline_log.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
@@ -173,6 +174,17 @@ class VoiceRoomDjPlayer {
     return ok;
   }
 
+  static String? _absolutizeStreamUrl(String? raw) {
+    final trimmed = raw?.trim() ?? '';
+    if (trimmed.isEmpty) return null;
+    if (trimmed.startsWith('http')) return trimmed;
+    if (trimmed.startsWith('/')) {
+      final base = Env.apiBaseUrl.replaceAll(RegExp(r'/$'), '');
+      return '$base$trimmed';
+    }
+    return null;
+  }
+
   Future<bool> sync({
     String? musicUrl,
     String? resolveSeed,
@@ -183,7 +195,7 @@ class VoiceRoomDjPlayer {
     String? serverStreamUrl,
     Duration? startPosition,
   }) async {
-    final direct = serverStreamUrl?.trim();
+    final direct = _absolutizeStreamUrl(serverStreamUrl ?? musicUrl);
     if (direct != null && direct.startsWith('http')) {
       return playServerStream(
         streamUrl: direct,

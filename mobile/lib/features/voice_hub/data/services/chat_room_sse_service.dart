@@ -6,6 +6,7 @@ import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
 import '../../domain/pk/pk_battle_remote_models.dart';
+import '../../presentation/utils/voice_sse_dj_payload.dart';
 import 'voice_room_debug_log.dart';
 
 /// Sohbet odası SSE — `GET /api/chat/rooms/{roomId}/stream`.
@@ -133,19 +134,23 @@ class ChatRoomSseService extends BaseSseService {
         }
         return;
       case ChatRoomSseEventType.dj:
-      case ChatRoomSseEventType.music:
+      case ChatRoomSseEventType.music: {
+        final djMap = unwrapVoiceSseDjPayload(map);
         VoiceRoomDebugLog.djUpdate(
           roomId: _roomId ?? '',
-          playing: map['playing'] == true,
-          musicUrl: map['musicUrl']?.toString(),
+          playing: voiceSseDjIsPlaying(djMap),
+          musicUrl: djMap['musicUrl']?.toString(),
           source: 'sse',
         );
-        _onDjUpdate?.call(map);
+        _onDjUpdate?.call(djMap);
         return;
-      case ChatRoomSseEventType.song:
-        _onSong?.call(map);
-        _onDjUpdate?.call(map);
+      }
+      case ChatRoomSseEventType.song: {
+        final djMap = unwrapVoiceSseDjPayload(map);
+        _onSong?.call(djMap);
+        _onDjUpdate?.call(djMap);
         return;
+      }
       case ChatRoomSseEventType.gift:
         _onGift?.call(map);
         return;
@@ -192,8 +197,11 @@ class ChatRoomSseService extends BaseSseService {
               .toList();
           if (users.isNotEmpty) _onTyping?.call(users);
         }
-        if (map.containsKey('musicUrl') || map.containsKey('playing')) {
-          _onDjUpdate?.call(map);
+        if (map.containsKey('musicUrl') ||
+            map.containsKey('playing') ||
+            map.containsKey('isPlaying') ||
+            map['data'] is Map) {
+          _onDjUpdate?.call(unwrapVoiceSseDjPayload(map));
           return;
         }
         if (_tryEmitPk(map)) return;

@@ -32,6 +32,7 @@ import '../../domain/voice_music_sync.dart';
 import '../../domain/voice_official_join.dart';
 import '../utils/voice_room_permissions.dart';
 import '../utils/kick_strike_ui.dart';
+import '../utils/voice_sse_dj_payload.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_message_merge.dart';
 import '../widgets/voice_room/voice_room_music_request_flash.dart';
@@ -1448,44 +1449,60 @@ class VoiceRoomLiveController
   }
 
   Future<void> _applyDjRealtimePayload(Map<String, dynamic> payload) async {
-    final np = payload['nowPlaying'];
+    final map = unwrapVoiceSseDjPayload(payload);
+    final np = map['nowPlaying'];
     String? title;
     String? eventVideoId;
     if (np is Map) {
       title = np['title']?.toString();
       eventVideoId = np['videoId']?.toString() ?? np['youtubeUrl']?.toString();
     }
-    eventVideoId ??= payload['currentVideoId']?.toString();
+    eventVideoId ??= map['currentVideoId']?.toString() ?? map['videoId']?.toString();
     VoiceRoomDebugLog.djUpdate(
       roomId: _roomKey,
-      playing: payload['playing'] == true,
-      musicUrl: payload['musicUrl']?.toString(),
+      playing: voiceSseDjIsPlaying(map),
+      musicUrl: map['musicUrl']?.toString(),
       videoId: eventVideoId,
       title: title,
-      source: payload['type']?.toString() ?? 'realtime',
+      source: map['type']?.toString() ?? 'realtime',
     );
     VoiceRoomDebugLog.log('music.realtime.recv', {
-      'playing': payload['playing'],
-      'hasUrl': payload['musicUrl'] != null,
-      'hasQueue': payload['queue'] != null,
-      'type': payload['type'],
+      'playing': map['playing'],
+      'isPlaying': map['isPlaying'],
+      'hasUrl': map['musicUrl'] != null,
+      'hasQueue': map['queue'] != null,
+      'type': map['type'],
     });
     var dj = state.dj;
-    if (payload.containsKey('playing')) {
-      dj = dj.copyWith(playing: payload['playing'] == true);
+    final isPlaying = voiceSseDjIsPlaying(map);
+    if (map.containsKey('playing') ||
+        map.containsKey('isPlaying') ||
+        isPlaying) {
+      dj = dj.copyWith(playing: isPlaying);
     }
-    if (payload['musicUrl'] is String) {
-      final url = payload['musicUrl'] as String;
+    if (map['musicUrl'] is String) {
+      final url = map['musicUrl'] as String;
       if (url.isNotEmpty) dj = dj.copyWith(musicUrl: url);
     }
-    if (payload['nowPlaying'] is Map) {
+    if (map['nowPlaying'] is Map) {
       dj = dj.copyWith(
         nowPlaying: MusicQueueItem.fromJson(
-          Map<String, dynamic>.from(payload['nowPlaying'] as Map),
+          Map<String, dynamic>.from(map['nowPlaying'] as Map),
         ),
+        playing: isPlaying || dj.playing,
       );
+    } else if (isPlaying && dj.nowPlaying == null) {
+      final queueRaw = map['queue'] ?? map['musicQueue'];
+      if (queueRaw is List && queueRaw.isNotEmpty && queueRaw.first is Map) {
+        dj = dj.copyWith(
+          nowPlaying: MusicQueueItem.fromJson(
+            Map<String, dynamic>.from(queueRaw.first as Map),
+          ),
+          playing: true,
+        );
+      }
     }
-    final queueRaw = payload['queue'] ?? payload['musicQueue'];
+    final queueRaw = map['queue'] ?? map['musicQueue'];
     if (queueRaw is List) {
       final queue = queueRaw
           .whereType<Map>()
@@ -1493,8 +1510,8 @@ class VoiceRoomLiveController
           .toList();
       dj = dj.copyWith(musicQueue: queue);
     }
-    if (payload['djUserIds'] is List) {
-      final ids = (payload['djUserIds'] as List)
+    if (map['djUserIds'] is List) {
+      final ids = (map['djUserIds'] as List)
           .map((e) => e.toString())
           .where((s) => s.isNotEmpty)
           .toList();
@@ -1513,8 +1530,8 @@ class VoiceRoomLiveController
         ),
         state.presence,
       );
-    } else if (payload['djUsers'] is List) {
-      final users = (payload['djUsers'] as List)
+    } else if (map['djUsers'] is List) {
+      final users = (map['djUsers'] as List)
           .whereType<Map>()
           .map(
             (e) => ChatRoomUserRef(
@@ -1532,12 +1549,12 @@ class VoiceRoomLiveController
       }
     }
     _commitDjUi(dj);
-    final sync = RoomPlaybackSync.fromPayload(payload);
+    final sync = RoomPlaybackSync.fromPayload(map);
     _syncRoomVideo(dj, sync: sync);
     final ui = ref.read(voiceRoomUiProvider);
     final sig = _djPlaybackSignature(dj, muted: !ui.backgroundMusicEnabled);
     final player = ref.read(voiceRoomDjPlayerProvider);
-    final wantsPlay = dj.playing &&
+    final wantsPlay = (dj.playing || sync.isPlaying) &&
         _hasDjPlayableSource(
           dj,
           sync: sync,
@@ -1547,6 +1564,9 @@ class VoiceRoomLiveController
     if (sig != _lastDjPlaybackSignature || (wantsPlay && playerIdle)) {
       unawaited(_playDjInBackground(dj, sync: sync));
       return;
+    }
+    if (!wantsPlay && (map['queue'] != null || map['musicQueue'] != null)) {
+      unawaited(_syncMusicFromServerIfNeeded(force: true));
     }
     if (!sync.isPlaying) {
       return;

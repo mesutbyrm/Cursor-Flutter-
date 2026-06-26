@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.370+374 (2026-06-23)
+
+### Sesli oda — SSE dj müzik oynatma
+
+- **SSE dj event:** `data`/`payload` sarmalayıcıları düzleştirilir; `isPlaying` + `playing` birlikte okunur
+- **Oynatma:** SSE sonrası `isPlaying` ile `_playDjInBackground` tetiklenir; kuyruk güncellemesinde sunucu sync
+- **audioplayers:** Oda widget'ında HTTP stream yedek `AudioPlayer` (dispose'da kapatılır)
+- **Stream URL:** Göreli `/api/chat/youtube-audio/...` yolları mutlak URL'ye çevrilir
+- **startedAt:** ISO `startedAt` → playback seek senkronu
+
 ## 1.0.369+373 (2026-06-23)
 
 ### Sesli oda — moderasyon, SSE, müzik parity (49 görsel spec)
