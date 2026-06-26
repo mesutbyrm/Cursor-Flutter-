@@ -1451,7 +1451,7 @@ class VoiceRoomLiveController
   }
 
   /// SSE `dj` — VoiceRoomDjPlayer (just_audio) üzerinden tek oynatıcı.
-  Future<void> _playDjInBackgroundAndReport(
+  Future<String?> _playDjInBackgroundAndReport(
     ChatRoomDjState dj, {
     RoomPlaybackSync? sync,
   }) async {
