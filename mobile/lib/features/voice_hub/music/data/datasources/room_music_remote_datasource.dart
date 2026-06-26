@@ -212,12 +212,15 @@ class RoomMusicRemoteDataSource {
   }
 
   Future<void> pauseDj(String roomId) async {
-    await _dio.post<dynamic>('/api/chat/rooms/$roomId/dj', data: {'playing': false});
+    await _dio.post<dynamic>(
+      ApiEndpoints.chatRoomDj(roomId),
+      data: {'playing': false},
+    );
   }
 
   Future<void> resumeDj(String roomId, {String? musicUrl}) async {
     await _dio.post<dynamic>(
-      '/api/chat/rooms/$roomId/dj',
+      ApiEndpoints.chatRoomDj(roomId),
       data: {
         'playing': true,
         'musicUrl': ?musicUrl,

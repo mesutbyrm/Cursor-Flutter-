@@ -678,18 +678,28 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     );
   }
 
-  Map<String, dynamic>? _pkBattleExtras(Map<String, dynamic>? battle) {
+  ({
+    int? secondsLeft,
+    String? topSupporter,
+    String? mvpName,
+    String? winnerSide,
+  })? _pkBattleExtras(Map<String, dynamic>? battle) {
     if (battle == null) return null;
     final seconds = battle['secondsLeft'] ?? battle['remainingSeconds'];
     final top = battle['topSupporter'] ?? battle['top_supporter'];
     final mvp = battle['mvp'] ?? battle['mvpName'];
     final winner = battle['winner'] ?? battle['winnerSide'];
-    return {
-      'secondsLeft': seconds is num ? seconds.round() : int.tryParse('$seconds'),
-      'topSupporter': top?.toString(),
-      'mvpName': mvp?.toString(),
-      'winnerSide': winner?.toString(),
+    final parsedSeconds = switch (seconds) {
+      final int v => v,
+      final num v => v.round(),
+      final v => int.tryParse('$v'),
     };
+    return (
+      secondsLeft: parsedSeconds,
+      topSupporter: top?.toString(),
+      mvpName: mvp?.toString(),
+      winnerSide: winner?.toString(),
+    );
   }
 
   Future<void> _openPkPanel() async {
@@ -1215,10 +1225,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                 leftScore: pkState!.leftScore,
                 rightScore: pkState.rightScore,
                 status: pkStatus,
-                secondsLeft: pkExtras?['secondsLeft'] as int?,
-                topSupporter: pkExtras?['topSupporter'] as String?,
-                mvpName: pkExtras?['mvpName'] as String?,
-                winnerSide: pkExtras?['winnerSide'] as String?,
+                secondsLeft: pkExtras?.secondsLeft,
+                topSupporter: pkExtras?.topSupporter,
+                mvpName: pkExtras?.mvpName,
+                winnerSide: pkExtras?.winnerSide,
               ),
             if (_vipBannerName != null)
               Positioned(

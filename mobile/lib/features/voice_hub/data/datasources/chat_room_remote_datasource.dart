@@ -322,18 +322,12 @@ class ChatRoomRemoteDataSource {
     required bool playing,
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
-      if (!playing) {
-        try {
-          await _dio.safeDelete<dynamic>(musicPath(key));
-          return fetchDj(key);
-        } on ApiException catch (e) {
-          if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-        }
-      }
+      // Duraklat/devam: müzik kontrol ucu (POST /dj). DELETE /music kuyruk
+      // temizler — pause ile karıştırılmamalı.
       final res = await _dio.safePost<dynamic>(
         djPath(key),
         data: jsonEncode({
-          'musicUrl': ?musicUrl,
+          if (musicUrl != null && musicUrl.isNotEmpty) 'musicUrl': musicUrl,
           'playing': playing,
         }),
         options: Options(contentType: 'application/json'),

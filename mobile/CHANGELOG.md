@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.373+377 (2026-06-26)
+
+### Performans ve backend senkron (Claude dalı)
+
+- **PK overlay:** `as Type?` cast çökmeleri giderildi; güvenli `toString()` / sayı ayrıştırma
+- **DJ duraklat:** `pauseMusic` artık `DELETE /music` (kuyruk temizleme) yerine `POST /dj` müzik kontrol ucunu kullanır
+- **SSE:** Sesli oda gerçek zamanlı güncellemeler SSE üzerinden; Socket.IO yedek
+
 ## 1.0.372+376 (2026-06-23)
 
 ### Sesli oda — sağ DJ & müzik paneli
