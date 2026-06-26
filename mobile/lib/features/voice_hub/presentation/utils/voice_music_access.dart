@@ -7,6 +7,17 @@ import 'voice_room_permissions.dart';
 
 /// «Müzik Aç» kartı: DJ yetkisi veya yeterli jeton.
 abstract final class VoiceMusicAccess {
+  /// Sağ ‹ DJ & müzik paneli — DJ, oda sahibi veya site admin.
+  static bool canShowDjMusicPanel({
+    required VoiceRoomPermissions perms,
+    required bool isDj,
+  }) {
+    return perms.isRoomOwner ||
+        perms.isSiteAdmin ||
+        perms.canManageDj ||
+        isDj;
+  }
+
   static bool canShowMusicCard({
     required ChatRoomDjState dj,
     required VoiceRoomPermissions perms,

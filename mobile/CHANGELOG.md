@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.372+376 (2026-06-23)
+
+### Sesli oda — sağ DJ & müzik paneli
+
+- **Sağ ‹ ok:** DJ, oda sahibi ve admin için kaydırmalı DJ & müzik paneli
+- **Hızlı kontroller:** Duraklat / devam, geç, durdur; çalan parça önizlemesi
+- **Müzik Aç:** Tam YouTube müzik hub'ına kısayol
+- **DJ Yönet:** DJ listesi ve atama diyaloğu
+
 ## 1.0.371+375 (2026-06-26)
 
 ### CI — release gate Gate 4 (canlı fal isteği)
