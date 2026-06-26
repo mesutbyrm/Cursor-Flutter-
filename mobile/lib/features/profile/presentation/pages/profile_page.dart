@@ -103,6 +103,8 @@ class ProfilePage extends ConsumerWidget {
                             onFollowingTap: () => context.push(
                               '/profile/following?userId=${user.id}',
                             ),
+                            onVisitorsTap: () =>
+                                context.push('/profile/visitors'),
                           ),
                           quickActions: const ProfileQuickActions(),
                           wallet: ProfileWalletCard(

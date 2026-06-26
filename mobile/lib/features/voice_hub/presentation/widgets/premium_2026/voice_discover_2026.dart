@@ -11,10 +11,12 @@ class VoiceDiscoverCategories2026 extends StatelessWidget {
     super.key,
     required this.onCategoryTap,
     this.selectedId,
+    this.onClose,
   });
 
   final ValueChanged<String> onCategoryTap;
   final String? selectedId;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -38,10 +40,11 @@ class VoiceDiscoverCategories2026 extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.close_rounded, color: Colors.white54),
-            ),
+            if (onClose != null)
+              IconButton(
+                onPressed: onClose,
+                icon: const Icon(Icons.close_rounded, color: Colors.white54),
+              ),
           ],
         ),
         const SizedBox(height: 12),

@@ -22,6 +22,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
     required this.onUserSettings,
     required this.onTopUp,
     this.onGiftTap,
+    this.onEmojiTap,
   });
 
   final TextEditingController controller;
@@ -38,6 +39,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
   final VoidCallback onUserSettings;
   final VoidCallback onTopUp;
   final VoidCallback? onGiftTap;
+  final VoidCallback? onEmojiTap;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +66,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  onPressed: () {},
+                  onPressed: onEmojiTap,
                   icon: Icon(
                     Icons.emoji_emotions_outlined,
                     color: Colors.white.withValues(alpha: 0.75),

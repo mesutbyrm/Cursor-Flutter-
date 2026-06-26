@@ -562,6 +562,36 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  Future<List<String>> fetchSpeakRequests(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    List<String> result = [];
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(
+        '/api/chat/rooms/$key/speak-requests',
+      );
+      final data = res?.data;
+      if (data is Map) {
+        final ids = data['userIds'];
+        if (ids is List) result = ids.map((e) => e.toString()).toList();
+      }
+    });
+    return result;
+  }
+
+  Future<void> approveSpeakRequest(
+    String roomKey,
+    String targetUserId, {
+    String? alternateKey,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        '/api/chat/rooms/$key/speak-requests/$targetUserId/approve',
+      );
+    });
+  }
+
   static String banPath(String roomId, String userId) =>
       '/api/chat/rooms/$roomId/bans/$userId';
 

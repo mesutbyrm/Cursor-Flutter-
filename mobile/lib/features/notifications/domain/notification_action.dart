@@ -64,6 +64,25 @@ void navigateFromNotification(GoRouter router, AppNotificationEntity n) {
       }
       router.go('/messages');
       return;
+    case 'voice_room':
+    case 'voice':
+    case 'chat_room':
+      if (n.targetId != null && n.targetId!.isNotEmpty) {
+        router.push('/voice-room/${n.targetId}');
+        return;
+      }
+      router.go('/voice-rooms');
+      return;
+    case 'follow':
+    case 'mention':
+    case 'comment':
+    case 'like':
+      if (n.targetId != null && n.targetId!.isNotEmpty) {
+        router.push('/user/${n.targetId}');
+        return;
+      }
+      router.go('/social');
+      return;
     case 'social':
       router.go('/social');
       return;

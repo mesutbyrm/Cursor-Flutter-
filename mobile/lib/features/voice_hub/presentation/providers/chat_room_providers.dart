@@ -2713,6 +2713,25 @@ class VoiceRoomLiveController
     }
   }
 
+  Future<List<String>> fetchSpeakRequests() async {
+    try {
+      return await ref.read(chatRoomRemoteProvider).fetchSpeakRequests(_roomKey);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<String?> approveSpeakRequest(String userId) async {
+    try {
+      await ref
+          .read(chatRoomRemoteProvider)
+          .approveSpeakRequest(_roomKey, userId);
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
   bool _canControlMusic() {
     if (state.dj.canControlMusic || state.dj.canPlayMusic) return true;
     final user = ref.read(authControllerProvider).valueOrNull;

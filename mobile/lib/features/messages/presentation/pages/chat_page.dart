@@ -30,7 +30,6 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   var _sending = false;
   var _peerTyping = false;
   Timer? _typingHideTimer;
-  Timer? _typingEmitTimer;
   Timer? _poll;
 
   @override
@@ -51,7 +50,6 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     _poll?.cancel();
     _scroll.removeListener(_onScroll);
     _typingHideTimer?.cancel();
-    _typingEmitTimer?.cancel();
     _text.dispose();
     _scroll.dispose();
     super.dispose();
@@ -80,16 +78,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   }
 
   void _onComposerChanged(String value) {
-    _typingEmitTimer?.cancel();
-    if (value.trim().isEmpty) return;
-    _typingEmitTimer = Timer(const Duration(milliseconds: 400), () {
-      if (!mounted) return;
-      setState(() => _peerTyping = true);
-      _typingHideTimer?.cancel();
-      _typingHideTimer = Timer(const Duration(seconds: 3), () {
-        if (mounted) setState(() => _peerTyping = false);
-      });
-    });
+    // Typing indicator is driven by SSE events from peer, not local input.
   }
 
   Future<void> _send() async {

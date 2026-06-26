@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../social/presentation/utils/open_social_create_post.dart';
 import '../providers/feed_providers.dart';
 
 class FeedComposerBar extends ConsumerStatefulWidget {
@@ -100,16 +101,16 @@ class _FeedComposerBarState extends ConsumerState<FeedComposerBar> {
                     Row(
                       children: [
                         IconButton(
-                          tooltip: 'Fotoğraf',
-                          onPressed: () {},
+                          tooltip: 'Fotoğraf / Video',
+                          onPressed: () => openSocialCreatePost(context, ref),
                           icon: Icon(
                             Icons.image_outlined,
                             color: AppTheme.accentSecondary.withValues(alpha: 0.95),
                           ),
                         ),
                         IconButton(
-                          tooltip: 'Canlı',
-                          onPressed: () {},
+                          tooltip: 'Canlı yayın',
+                          onPressed: () => openSocialCreatePost(context, ref),
                           icon: Icon(
                             Icons.videocam_outlined,
                             color: AppTheme.accent.withValues(alpha: 0.95),

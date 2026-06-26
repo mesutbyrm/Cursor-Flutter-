@@ -56,6 +56,39 @@ class VoicePremiumMessageBar extends StatelessWidget {
   final VoidCallback onGift;
   final bool sending;
 
+  void _showEmojiPicker(BuildContext context) {
+    const emojis = [
+      '😀', '😂', '❤️', '🔥', '👏', '🎉', '💎', '🎤',
+      '🙏', '✨', '💜', '😍', '🤣', '👋', '🌙', '⭐',
+    ];
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        decoration: BoxDecoration(
+          color: const Color(0xFF14101F).withValues(alpha: 0.96),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: emojis
+              .map(
+                (e) => InkWell(
+                  onTap: () {
+                    controller.text = '${controller.text}$e';
+                    Navigator.pop(ctx);
+                  },
+                  child: Text(e, style: const TextStyle(fontSize: 28)),
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
@@ -74,7 +107,7 @@ class VoicePremiumMessageBar extends StatelessWidget {
           child: Row(
             children: [
               IconButton(
-                onPressed: () {},
+                onPressed: () => _showEmojiPicker(context),
                 icon: const Icon(Icons.emoji_emotions_outlined,
                     color: Colors.white70, size: 22),
               ),

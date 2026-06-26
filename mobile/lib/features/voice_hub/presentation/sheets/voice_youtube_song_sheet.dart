@@ -13,6 +13,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../pages/voice_music_hub_page.dart';
 import '../providers/chat_room_providers.dart';
+import '../sheets/music_mode_picker_sheet.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_permissions.dart';
@@ -152,6 +153,17 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
   Future<void> _submit() async {
     final hit = _selected;
     if (hit == null || _submitting) return;
+
+    // Ses/video seçim ekranı (web ile aynı akış)
+    final liveDj = ref.read(voiceRoomLiveProvider(widget.room.liveKey)).dj;
+    final withVideo = await showMusicModePickerSheet(
+      context,
+      audioCost: liveDj.musicRequestCost,
+      videoCost: liveDj.videoRequestCost,
+      songTitle: hit.title,
+    );
+    if (!mounted || withVideo == null) return;
+
     setState(() => _submitting = true);
     String? err;
     try {
@@ -164,6 +176,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
             videoId: hit.videoId,
             giftTo: _giftCtrl.text.trim().isEmpty ? null : _giftCtrl.text.trim(),
             note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
+            withVideo: withVideo,
           );
     } catch (e) {
       err = ApiException.userMessage(e);
@@ -177,8 +190,9 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
     }
     ref.refreshWalletCache(force: true);
     Navigator.pop(context);
+    final cost = withVideo ? liveDj.videoRequestCost : liveDj.musicRequestCost;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Şarkı sıraya eklendi · $_cost jeton')),
+      SnackBar(content: Text('Şarkı sıraya eklendi · $cost jeton')),
     );
   }
 

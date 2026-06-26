@@ -237,6 +237,7 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
       context,
       audioCost: djState.musicRequestCost,
       videoCost: djState.videoRequestCost,
+      songTitle: hit.title,
     );
     if (!mounted) return;
     if (withVideo == null) {

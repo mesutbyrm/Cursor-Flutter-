@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/otp_verify_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
@@ -67,6 +68,7 @@ import '../../features/profile/presentation/pages/growth_hub_page.dart';
 import '../../features/profile/presentation/pages/profile_help_support_page.dart';
 import '../../features/profile/presentation/pages/profile_payment_notice_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/profile/presentation/pages/profile_visitors_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
 import '../../features/profile/presentation/pages/active_devices_page.dart';
 import '../../features/profile/presentation/pages/profile_transactions_page.dart';
@@ -182,7 +184,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/auth/forgot-password',
-        redirect: (context, state) => '/feed',
+        pageBuilder: (context, state) => AppPageTransitions.none(
+          key: state.pageKey,
+          child: const ForgotPasswordPage(),
+        ),
       ),
       GoRoute(
         path: '/auth/reset-password',
@@ -578,6 +583,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             tab: ProfileFollowTab.following,
           );
         },
+      ),
+      GoRoute(
+        path: '/profile/visitors',
+        builder: (context, state) => const ProfileVisitorsPage(),
       ),
       GoRoute(
         path: '/user/:id',

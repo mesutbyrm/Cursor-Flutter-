@@ -17,6 +17,42 @@ class ChatComposer extends StatelessWidget {
   final bool sending;
   final ValueChanged<String>? onChanged;
 
+  void _showEmojiPicker(BuildContext context) {
+    const emojis = [
+      '😀', '😂', '❤️', '🔥', '👏', '🎉', '💎', '🙏',
+      '✨', '😍', '🤣', '👋', '🌙', '⭐', '😊', '💜',
+    ];
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheet) => Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.92),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: emojis
+              .map(
+                (e) => InkWell(
+                  onTap: () {
+                    controller.text = '${controller.text}$e';
+                    controller.selection = TextSelection.fromPosition(
+                      TextPosition(offset: controller.text.length),
+                    );
+                    Navigator.pop(sheet);
+                  },
+                  child: Text(e, style: const TextStyle(fontSize: 28)),
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -26,7 +62,7 @@ class ChatComposer extends StatelessWidget {
         child: Row(
           children: [
             IconButton(
-              onPressed: () {},
+              onPressed: () => _showEmojiPicker(context),
               icon: Icon(
                 Icons.add_circle_outline_rounded,
                 color: AppThemeColors.accentPurple.withValues(alpha: 0.9),
