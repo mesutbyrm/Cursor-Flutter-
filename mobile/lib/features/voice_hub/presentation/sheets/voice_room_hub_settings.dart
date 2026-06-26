@@ -13,6 +13,7 @@ import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import 'voice_room_sheets.dart';
+import 'voice_room_tools_sheet.dart';
 import 'voice_youtube_song_sheet.dart';
 
 Future<void> showVoiceRoomHubSettingsSheet(
@@ -352,6 +353,22 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
               title: const Text('Oda komutları'),
               subtitle: const Text('Moderasyon komutları'),
               onTap: _openRoomCommands,
+            ),
+            ListTile(
+              leading: const Icon(Icons.build_rounded, color: VoiceRoomTokens.neonPurple),
+              title: const Text('Oda araçları'),
+              subtitle: const Text('Kurallar, komutlar, jeton'),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () {
+                Navigator.pop(context);
+                showVoiceRoomToolsSheet(
+                  context,
+                  ref,
+                  room: widget.room,
+                  perms: widget.perms,
+                  isOwner: widget.isOwner,
+                );
+              },
             ),
             ListTile(
               leading: const Icon(Icons.headphones_rounded, color: AppThemeColors.coinGold),
