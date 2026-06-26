@@ -759,15 +759,6 @@ class _PromoActionCard extends StatelessWidget {
   }
 }
 
-class _Cmd {
-  const _Cmd(this.command, this.hint, this.icon, [this.iconColor]);
-
-  final String command;
-  final String hint;
-  final IconData icon;
-  final Color? iconColor;
-}
-
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({
     required this.icon,
@@ -797,76 +788,6 @@ class _SectionHeader extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CommandCard extends StatelessWidget {
-  const _CommandCard({required this.cmd, required this.onTap});
-
-  final _Cmd cmd;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: const Color(0xFF2A1548).withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: const Color(0xFF7B2FF7).withValues(alpha: 0.35),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(cmd.icon, size: 22, color: cmd.iconColor ?? Colors.white70),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        cmd.command,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                          color: VoiceRoomTokens.gold,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        cmd.hint,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.65),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.copy_rounded, size: 16),
-                  color: Colors.white38,
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: cmd.command));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Komut kopyalandı')),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
