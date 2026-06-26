@@ -21,6 +21,8 @@ class ChatRoomSseService extends BaseSseService {
   void Function()? _onConnected;
   void Function(ChatRoomMessage message)? _onMessage;
   void Function(List<ChatRoomPresence> users)? _onPresence;
+  void Function(Map<String, dynamic> payload)? _onUserJoin;
+  void Function(Map<String, dynamic> payload)? _onUserLeave;
   void Function(Map<String, dynamic> payload)? _onDjUpdate;
   void Function(Map<String, dynamic> payload)? _onSong;
   void Function(Map<String, dynamic> payload)? _onGift;
@@ -50,6 +52,8 @@ class ChatRoomSseService extends BaseSseService {
     void Function()? onConnected,
     void Function(ChatRoomMessage message)? onMessage,
     void Function(List<ChatRoomPresence> users)? onPresence,
+    void Function(Map<String, dynamic> payload)? onUserJoin,
+    void Function(Map<String, dynamic> payload)? onUserLeave,
     void Function(Map<String, dynamic> payload)? onDjUpdate,
     void Function(Map<String, dynamic> payload)? onSong,
     void Function(Map<String, dynamic> payload)? onGift,
@@ -67,6 +71,8 @@ class ChatRoomSseService extends BaseSseService {
     _onConnected = onConnected;
     _onMessage = onMessage;
     _onPresence = onPresence;
+    _onUserJoin = onUserJoin;
+    _onUserLeave = onUserLeave;
     _onDjUpdate = onDjUpdate;
     _onSong = onSong;
     _onGift = onGift;
@@ -155,10 +161,20 @@ class ChatRoomSseService extends BaseSseService {
         _onGift?.call(map);
         return;
       case ChatRoomSseEventType.presence:
-      case ChatRoomSseEventType.userJoin:
-      case ChatRoomSseEventType.userLeave:
         final users = _parseUsers(map);
         if (users != null && users.isNotEmpty) _onPresence?.call(users);
+        return;
+      case ChatRoomSseEventType.userJoin:
+        _onUserJoin?.call(map);
+        final joined = _parseUsers(map);
+        if (joined != null && joined.isNotEmpty) _onPresence?.call(joined);
+        return;
+      case ChatRoomSseEventType.userLeave:
+        _onUserLeave?.call(map);
+        final remaining = _parseUsers(map);
+        if (remaining != null && remaining.isNotEmpty) {
+          _onPresence?.call(remaining);
+        }
         return;
       case ChatRoomSseEventType.roomUpdate:
         _onRoomUpdate?.call(map);
@@ -246,6 +262,12 @@ class ChatRoomSseService extends BaseSseService {
   List<ChatRoomPresence>? _parseUsers(Map<String, dynamic> map) {
     dynamic raw = map['users'] ?? map['presence'] ?? map['members'];
     if (raw == null && map['user'] is Map) raw = [map['user']];
+    if (raw == null) {
+      final userId = map['userId']?.toString() ?? map['id']?.toString();
+      if (userId != null && userId.isNotEmpty) {
+        raw = [map];
+      }
+    }
     if (raw is! List) return null;
     return raw
         .whereType<Map>()

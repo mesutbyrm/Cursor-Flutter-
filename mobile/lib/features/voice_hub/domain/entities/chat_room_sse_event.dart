@@ -43,10 +43,12 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
     case 'music':
       return ChatRoomSseEventType.music;
     case 'user_join':
+    case 'user_joined':
     case 'userjoined':
     case 'join':
       return ChatRoomSseEventType.userJoin;
     case 'user_leave':
+    case 'user_left':
     case 'userleft':
     case 'leave':
       return ChatRoomSseEventType.userLeave;

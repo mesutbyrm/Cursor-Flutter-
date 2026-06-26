@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
+import '../../../../agora/presentation/agora_room_manager.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
@@ -23,6 +24,10 @@ class VoiceMicSeat extends StatelessWidget {
     this.room,
     this.djUserIds = const [],
     this.onTap,
+    this.agora,
+    this.agoraReady = false,
+    this.selfUserId,
+    this.remoteAgoraUid,
   });
 
   final ChatRoomPresence? user;
@@ -34,6 +39,10 @@ class VoiceMicSeat extends StatelessWidget {
   final VoiceRoomEntity? room;
   final List<String> djUserIds;
   final VoidCallback? onTap;
+  final AgoraRoomManager? agora;
+  final bool agoraReady;
+  final String? selfUserId;
+  final int? remoteAgoraUid;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +58,7 @@ class VoiceMicSeat extends StatelessWidget {
     final vipTier = VipTier.fromMembership(user!.membership);
     final vip = vipTier.isVip;
     final levelLabel = _levelLabel(user!);
+    final videoChild = _agoraVideoChild();
 
     final avatar = Column(
       mainAxisSize: MainAxisSize.min,
@@ -58,17 +68,25 @@ class VoiceMicSeat extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: onTap,
-              child: VoiceSeatAvatarFrame(
-                imageUrl: user!.image,
-                size: size,
-                role: SeatAvatarRoleResolver.resolve(
-                  user: user!,
-                  isHost: isHost,
-                  isRoomDj: djUserIds.contains(user!.id) ||
-                      room?.djUserIds.contains(user!.id) == true,
-                ),
-                speaking: speaking,
-              ),
+              child: videoChild != null
+                  ? ClipOval(
+                      child: SizedBox(
+                        width: size,
+                        height: size,
+                        child: videoChild,
+                      ),
+                    )
+                  : VoiceSeatAvatarFrame(
+                      imageUrl: user!.image,
+                      size: size,
+                      role: SeatAvatarRoleResolver.resolve(
+                        user: user!,
+                        isHost: isHost,
+                        isRoomDj: djUserIds.contains(user!.id) ||
+                            room?.djUserIds.contains(user!.id) == true,
+                      ),
+                      speaking: speaking,
+                    ),
             ),
             if (vip && !isHost)
               Positioned(
@@ -146,6 +164,24 @@ class VoiceMicSeat extends StatelessWidget {
       goldHost: isHost,
       child: avatar,
     );
+  }
+
+  Widget? _agoraVideoChild() {
+    final manager = agora;
+    if (!agoraReady || manager == null || user == null) return null;
+    final uid = user!.id;
+    final self = selfUserId;
+    if (self != null && uid == self && manager.isHost && manager.cameraOn) {
+      return AgoraLocalVideoView(manager: manager);
+    }
+    final remote = remoteAgoraUid ?? manager.remoteUid;
+    if (remote != null &&
+        remote > 0 &&
+        uid != self &&
+        manager.remoteVideoAvailable.value) {
+      return AgoraRemoteVideoView(manager: manager, uid: remote);
+    }
+    return null;
   }
 }
 

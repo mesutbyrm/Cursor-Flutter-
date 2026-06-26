@@ -24,8 +24,11 @@ import '../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_ov
 import 'providers/voice_gift_combo_tracker.dart';
 import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
+import '../../agora/presentation/agora_room_manager.dart';
+import '../../agora/presentation/providers/agora_providers.dart';
 import '../domain/entities/chat_room_dj_state.dart';
 import '../domain/entities/chat_room_presence.dart';
+import '../domain/entities/chat_room_sse_event.dart';
 import '../domain/entities/chat_room_my_permissions.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
 import 'audio/voice_room_audio_coordinator.dart';
@@ -37,6 +40,7 @@ import 'utils/voice_room_image_prefetch.dart';
 import 'providers/voice_gift_providers.dart';
 import 'providers/voice_room_audio_providers.dart';
 import 'providers/voice_room_diagnostic_provider.dart';
+import 'providers/voice_room_sse_provider.dart';
 import 'providers/voice_room_ui_provider.dart';
 import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
@@ -80,9 +84,13 @@ class VoiceRoomRtcPage extends ConsumerStatefulWidget {
 
 class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   VoiceRoomAudioCoordinator? _audio;
+  final _agora = AgoraRoomManager();
   AudioPlayer? _sseDjPlayer;
   String? _sseDjUrl;
   StreamSubscription<LiveGiftEvent>? _giftSub;
+  StreamSubscription<ChatRoomSseEvent>? _sseParticipantsSub;
+  final _participants = <String, Map<String, dynamic>>{};
+  var _agoraReady = false;
   final _messageCtrl = TextEditingController();
   var _audioJoining = true;
   var _audioReady = false;
@@ -132,7 +140,82 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       }
       _joinRoom();
       _prefetchRoomImages();
+      _bindSseParticipants();
     });
+  }
+
+  void _bindSseParticipants() {
+    _sseParticipantsSub?.cancel();
+    _sseParticipantsSub =
+        ref.read(voiceRoomSseServiceProvider).events.listen((event) {
+      if (!mounted) return;
+      final data = event.data;
+      if (event.type == ChatRoomSseEventType.userJoin) {
+        final userId =
+            data['userId']?.toString() ?? data['id']?.toString() ?? '';
+        if (userId.isEmpty) return;
+        setState(() {
+          _participants[userId] = data;
+        });
+      } else if (event.type == ChatRoomSseEventType.userLeave) {
+        final userId =
+            data['userId']?.toString() ?? data['id']?.toString() ?? '';
+        if (userId.isEmpty) return;
+        setState(() {
+          _participants.remove(userId);
+        });
+      } else if (event.type == ChatRoomSseEventType.dj) {
+        final musicUrl = data['musicUrl'] as String?;
+        if (musicUrl != null && musicUrl.trim().isNotEmpty) {
+          unawaited(
+            _playSseDjUrl(musicUrl.trim()),
+          );
+        }
+      }
+    });
+  }
+
+  Future<void> _playSseDjUrl(String musicUrl) async {
+    final ui = ref.read(voiceRoomUiProvider);
+    if (!ui.backgroundMusicEnabled) return;
+    if (!musicUrl.startsWith('http') ||
+        ChatRoomDjState.isEphemeralStreamUrl(musicUrl)) {
+      return;
+    }
+    if (_sseDjUrl == musicUrl && _sseDjPlayer != null) return;
+    _sseDjPlayer ??= AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+    _sseDjUrl = musicUrl;
+    try {
+      await _sseDjPlayer!.play(UrlSource(musicUrl));
+      VoiceRoomDebugLog.log('music.sse_audioplayers.play', {'url': musicUrl});
+    } catch (e) {
+      VoiceRoomDebugLog.log('music.sse_audioplayers.fail', {'error': '$e'});
+    }
+  }
+
+  Future<void> _joinAgoraVideo({
+    required VoiceRoomEntity room,
+    required UserEntity user,
+    required bool publishVideo,
+  }) async {
+    if (!_agora.isSupported) return;
+    try {
+      final cred = await ref.read(agoraRemoteProvider).fetchToken(
+            channelName: room.trtcRoomId,
+            role: publishVideo ? 'host' : 'audience',
+          );
+      await _agora.joinVoiceRoomVideo(
+        credentials: cred,
+        publishVideo: publishVideo,
+      );
+      if (mounted) setState(() => _agoraReady = true);
+      VoiceRoomDebugLog.log('agora.voice_room.joined', {
+        'channel': cred.channelName,
+        'publishVideo': publishVideo,
+      });
+    } catch (e) {
+      VoiceRoomDebugLog.log('agora.voice_room.fail', {'error': '$e'});
+    }
   }
 
   VoiceRoomEntity _roomSynced(List<VoiceRoomEntity>? rooms) {
@@ -164,6 +247,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   void dispose() {
     _giftSub?.cancel();
     _giftSub = null;
+    _sseParticipantsSub?.cancel();
+    _sseParticipantsSub = null;
+    _participants.clear();
     _messageCtrl.dispose();
     _messageFocus.dispose();
     final djPlayer = _sseDjPlayer;
@@ -183,6 +269,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         }),
       );
     }
+    unawaited(_agora.dispose());
     super.dispose();
   }
 
@@ -409,6 +496,19 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
         _maybeShowVipEntrance(user);
         unawaited(_connectPkBattle());
+        final onSeat = liveForPerms.presence.any(
+          (p) => p.id == user.id && p.seatIndex != null,
+        );
+        unawaited(
+          _joinAgoraVideo(
+            room: room,
+            user: user,
+            publishVideo: perms.isRoomOwner ||
+                perms.isSiteAdmin ||
+                onSeat ||
+                _isRoomOwner(user.id, user.username, room),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -472,6 +572,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
     final audio = _audio;
     _audio = null;
+    unawaited(_agora.leave());
+    if (mounted) setState(() => _agoraReady = false);
 
     // Oturumu ve ses motorunu arka planda kapat — UI donmasın.
     unawaited(liveCtrl.leaveRoomSession(source: 'rtc_leave'));
@@ -1458,6 +1560,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                               occupant: user,
                             ),
                           ),
+                          agora: _agora,
+                          agoraReady: _agoraReady,
+                          selfUserId: user?.id,
+                          remoteAgoraUid: _agora.remoteUid,
                         ),
                         RoomVideoOverlay(
                           roomKey: _liveRoomKey,
