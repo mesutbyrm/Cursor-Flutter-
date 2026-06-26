@@ -20,31 +20,133 @@ void showVoiceSpeakQueueSheet(
     return;
   }
 
-  final onStage = live.presence
-      .where((p) => p.seatIndex != null && p.seatIndex! >= 0)
-      .map((p) => p.id)
-      .toSet();
-  final occupiedSeats = live.presence
-      .map((p) => p.seatIndex)
-      .whereType<int>()
-      .toSet();
-  final listeners = live.presence.where((p) => !onStage.contains(p.id)).toList();
-
-  int? firstFreeSeat() {
-    for (var i = 2; i <= 11; i++) {
-      if (!occupiedSeats.contains(i)) return i;
-    }
-    return null;
-  }
-
   showModalBottomSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    builder: (ctx) => DraggableScrollableSheet(
-      initialChildSize: 0.55,
+    builder: (ctx) => _SpeakQueueSheet(
+      room: room,
+      live: live,
+      perms: perms,
+    ),
+  );
+}
+
+class _SpeakQueueSheet extends ConsumerStatefulWidget {
+  const _SpeakQueueSheet({
+    required this.room,
+    required this.live,
+    required this.perms,
+  });
+
+  final VoiceRoomEntity room;
+  final VoiceRoomLiveState live;
+  final VoiceRoomPermissions perms;
+
+  @override
+  ConsumerState<_SpeakQueueSheet> createState() => _SpeakQueueSheetState();
+}
+
+class _SpeakQueueSheetState extends ConsumerState<_SpeakQueueSheet>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabs;
+  List<String> _pendingIds = [];
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabs = TabController(length: 2, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadPending());
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadPending() async {
+    if (_loading) return;
+    setState(() => _loading = true);
+    try {
+      final ids = await ref
+          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
+          .fetchSpeakRequests();
+      if (mounted) setState(() => _pendingIds = ids);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Set<int> get _occupiedSeats => widget.live.presence
+      .map((p) => p.seatIndex)
+      .whereType<int>()
+      .toSet();
+
+  Set<String> get _onStageIds => widget.live.presence
+      .where((p) => p.seatIndex != null && p.seatIndex! >= 0)
+      .map((p) => p.id)
+      .toSet();
+
+  int? _firstFreeSeat() {
+    for (var i = 2; i <= 11; i++) {
+      if (!_occupiedSeats.contains(i)) return i;
+    }
+    return null;
+  }
+
+  Future<void> _assign(ChatRoomPresence user) async {
+    final seat = _firstFreeSeat();
+    if (seat == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Boş koltuk yok')),
+        );
+      }
+      return;
+    }
+    final ctrl = ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
+    final err = await ctrl.assignSeat(seatIndex: seat, userId: user.id);
+    if (mounted && err != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+    }
+  }
+
+  Future<void> _approve(String userId) async {
+    final ctrl = ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
+    final err = await ctrl.approveSpeakRequest(userId);
+    if (mounted) {
+      if (err != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      } else {
+        setState(() => _pendingIds.remove(userId));
+      }
+    }
+  }
+
+  Future<void> _makeDj(String userId) async {
+    final ctrl = ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
+    final err = await ctrl.addRoomDj(userId);
+    if (mounted && err != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final listeners = widget.live.presence
+        .where((p) => !_onStageIds.contains(p.id))
+        .toList();
+
+    final pendingUsers = widget.live.presence
+        .where((p) => _pendingIds.contains(p.id))
+        .toList();
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
       minChildSize: 0.35,
-      maxChildSize: 0.9,
+      maxChildSize: 0.92,
       expand: false,
       builder: (_, scroll) => VoiceGlass(
         borderRadius: 24,
@@ -53,92 +155,110 @@ void showVoiceSpeakQueueSheet(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Konuşmacı sırası',
+              'Konuşmacı yönetimi',
               style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
             ),
-            const SizedBox(height: 4),
-            Text(
-              '${listeners.length} dinleyici — koltuk atayarak sahneye alın',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
-                fontSize: 13,
-              ),
+            const SizedBox(height: 8),
+            TabBar(
+              controller: _tabs,
+              tabs: [
+                Tab(text: 'El kaldıranlar (${pendingUsers.length})'),
+                Tab(text: 'Tüm dinleyiciler (${listeners.length})'),
+              ],
+              labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+              unselectedLabelStyle: const TextStyle(fontSize: 12),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Expanded(
-              child: listeners.isEmpty
-                  ? Center(
-                      child: Text(
-                        'Bekleyen dinleyici yok',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      controller: scroll,
-                      itemCount: listeners.length,
-                      itemBuilder: (_, i) {
-                        final p = listeners[i];
-                        return _ListenerTile(
-                          user: p,
-                          onAssign: () async {
-                            final seat = firstFreeSeat();
-                            if (seat == null) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Boş koltuk yok'),
+              child: TabBarView(
+                controller: _tabs,
+                children: [
+                  // El kaldıranlar
+                  _loading
+                      ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+                      : pendingUsers.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.pan_tool_outlined,
+                                      size: 36, color: Colors.white38),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'El kaldıran yok',
+                                    style: TextStyle(
+                                        color: Colors.white.withValues(alpha: 0.5)),
                                   ),
+                                  const SizedBox(height: 12),
+                                  TextButton.icon(
+                                    onPressed: _loadPending,
+                                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                                    label: const Text('Yenile'),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              controller: scroll,
+                              itemCount: pendingUsers.length,
+                              itemBuilder: (_, i) {
+                                final p = pendingUsers[i];
+                                return _ListenerTile(
+                                  user: p,
+                                  approveLabel: 'Onayla',
+                                  onApprove: () => _approve(p.id),
+                                  onDj: widget.perms.canManageDj
+                                      ? () => _makeDj(p.id)
+                                      : null,
                                 );
-                              }
-                              return;
-                            }
-                            final ctrl = ref
-                                .read(voiceRoomLiveProvider(room.liveKey).notifier);
-                            final err = await ctrl.assignSeat(
-                              seatIndex: seat,
-                              userId: p.id,
+                              },
+                            ),
+
+                  // Tüm dinleyiciler
+                  listeners.isEmpty
+                      ? Center(
+                          child: Text(
+                            'Bekleyen dinleyici yok',
+                            style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.5)),
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: scroll,
+                          itemCount: listeners.length,
+                          itemBuilder: (_, i) {
+                            final p = listeners[i];
+                            return _ListenerTile(
+                              user: p,
+                              approveLabel: 'Ses ver',
+                              onApprove: () => _assign(p),
+                              onDj: widget.perms.canManageDj
+                                  ? () => _makeDj(p.id)
+                                  : null,
                             );
-                            if (context.mounted && err != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(err)),
-                              );
-                            }
                           },
-                          onDj: perms.canManageDj
-                              ? () async {
-                                  final ctrl = ref.read(
-                                    voiceRoomLiveProvider(room.liveKey).notifier,
-                                  );
-                                  final err = await ctrl.addRoomDj(p.id);
-                                  if (context.mounted && err != null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(err)),
-                                    );
-                                  }
-                                }
-                              : null,
-                        );
-                      },
-                    ),
+                        ),
+                ],
+              ),
             ),
           ],
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _ListenerTile extends StatelessWidget {
   const _ListenerTile({
     required this.user,
-    required this.onAssign,
+    required this.approveLabel,
+    required this.onApprove,
     this.onDj,
   });
 
   final ChatRoomPresence user;
-  final VoidCallback onAssign;
+  final String approveLabel;
+  final VoidCallback onApprove;
   final VoidCallback? onDj;
 
   @override
@@ -146,10 +266,9 @@ class _ListenerTile extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
-        backgroundImage:
-            user.image != null && user.image!.isNotEmpty
-                ? CachedNetworkImageProvider(user.image!)
-                : null,
+        backgroundImage: user.image != null && user.image!.isNotEmpty
+            ? CachedNetworkImageProvider(user.image!)
+            : null,
         child: user.image == null || user.image!.isEmpty
             ? const Icon(Icons.person)
             : null,
@@ -168,8 +287,8 @@ class _ListenerTile extends StatelessWidget {
               onPressed: onDj,
             ),
           FilledButton.tonal(
-            onPressed: onAssign,
-            child: const Text('Ses ver'),
+            onPressed: onApprove,
+            child: Text(approveLabel),
           ),
         ],
       ),
