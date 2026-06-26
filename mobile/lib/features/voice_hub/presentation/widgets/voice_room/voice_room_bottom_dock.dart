@@ -82,6 +82,9 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                     await notifier.resumeMusic();
                   }
                 },
+                onPrevious: () {
+                  ref.read(voiceRoomDjPlayerProvider).seekToStart();
+                },
                 onSkip: canControlMusic
                     ? () {
                         ref
