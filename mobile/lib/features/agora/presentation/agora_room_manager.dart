@@ -222,6 +222,8 @@ class AgoraRoomManager {
     );
     _inChannel = true;
 
+    await _engine!.muteAllRemoteVideoStreams(false);
+
     if (isHost) {
       await _engine!.enableLocalVideo(true);
       await _engine!.enableLocalAudio(true);
@@ -374,8 +376,27 @@ class AgoraRoomManager {
       onTimeout: () => throw StateError('Agora kanala bağlanılamadı'),
     );
     _inChannel = true;
+    await _engine!.muteAllRemoteVideoStreams(false);
     await _engine!.enableLocalVideo(true);
     await _engine!.enableLocalAudio(true);
+  }
+
+  /// Sesli oda — video açık katılım (koltuk / yayıncı).
+  Future<void> joinVoiceRoomVideo({
+    required AgoraCredentials credentials,
+    required bool publishVideo,
+  }) async {
+    await join(credentials: credentials, isHost: publishVideo);
+    final engine = _engine;
+    if (engine == null) return;
+    await engine.enableVideo();
+    await engine.muteAllRemoteVideoStreams(false);
+    if (publishVideo) {
+      await engine.startPreview();
+      await engine.enableLocalVideo(true);
+      await engine.muteLocalVideoStream(false);
+      _cameraOn = true;
+    }
   }
 
   void setMicEnabled(bool enabled) {

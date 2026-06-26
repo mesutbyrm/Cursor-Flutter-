@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/auth/voice_staff_rank.dart';
@@ -269,6 +270,8 @@ class VoiceRoomLiveController
   var _giftSocketStarted = false;
   var _sessionActive = true;
   var _autoSeatAttempted = false;
+  AudioPlayer? _sseDjPlayer;
+  String? _sseDjUrl;
 
   String? _effectiveNickname(UserEntity? user) {
     final server = state.myNickname?.trim();
@@ -534,6 +537,12 @@ class VoiceRoomLiveController
     ref.read(voiceRoomGiftSocketProvider).disconnect();
     unawaited(ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer());
     unawaited(ref.read(voiceRoomDjPlayerProvider).shutdown());
+    final djPlayer = _sseDjPlayer;
+    _sseDjPlayer = null;
+    _sseDjUrl = null;
+    if (djPlayer != null) {
+      unawaited(djPlayer.dispose());
+    }
     if (_roomKey.isNotEmpty) {
       ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
     }
@@ -728,6 +737,8 @@ class VoiceRoomLiveController
                 .setPresence(joined: true, count: merged.length);
             if (!wasSse) _schedulePoll();
           },
+          onUserJoin: _handleSseUserJoin,
+          onUserLeave: _handleSseUserLeave,
           onTyping: (users) {
             state = state.copyWith(typingUsers: users);
           },
@@ -858,6 +869,70 @@ class VoiceRoomLiveController
       default:
         return;
     }
+  }
+
+  void _handleSseUserJoin(Map<String, dynamic> payload) {
+    final users = _presenceFromSsePayload(payload);
+    if (users.isEmpty) return;
+    final byId = {for (final p in state.presence) p.id: p};
+    for (final user in users) {
+      byId[user.id] = user;
+    }
+    final merged = _mergePresenceStable(
+      byId.values.toList(),
+      source: 'sse_user_join',
+    );
+    state = state.copyWith(
+      presence: merged,
+      sseConnected: true,
+      selfInRoom: true,
+    );
+    ref
+        .read(voiceRoomDiagnosticProvider.notifier)
+        .setPresence(joined: true, count: merged.length);
+    for (final user in users) {
+      final name = user.displayName.trim().isNotEmpty
+          ? user.displayName.trim()
+          : user.name.trim();
+      if (name.isEmpty) continue;
+      final symbol = user.roleSymbol?.trim() ?? '';
+      final prefix = symbol.isNotEmpty ? '$symbol ' : '';
+      final banner = '$prefix$name odaya katıldı';
+      if (_markEntranceOnce(banner)) {
+        _showEnterBanner(banner);
+      }
+    }
+  }
+
+  void _handleSseUserLeave(Map<String, dynamic> payload) {
+    final userId = payload['userId']?.toString() ?? payload['id']?.toString();
+    if (userId == null || userId.isEmpty) return;
+    final remaining = state.presence.where((p) => p.id != userId).toList();
+    if (remaining.length == state.presence.length) return;
+    state = state.copyWith(presence: remaining);
+    ref
+        .read(voiceRoomDiagnosticProvider.notifier)
+        .setPresence(joined: true, count: remaining.length);
+    VoiceRoomDebugLog.log('sse.user_left', {'userId': userId});
+  }
+
+  List<ChatRoomPresence> _presenceFromSsePayload(Map<String, dynamic> payload) {
+    dynamic raw = payload['users'] ?? payload['presence'] ?? payload['members'];
+    if (raw == null && payload['user'] is Map) {
+      raw = [payload['user']];
+    }
+    if (raw == null) {
+      final userId = payload['userId']?.toString() ?? payload['id']?.toString();
+      if (userId != null && userId.isNotEmpty) {
+        raw = [payload];
+      }
+    }
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => ChatRoomPresence.fromJson(Map<String, dynamic>.from(e)))
+        .where((u) => u.id.isNotEmpty)
+        .toList();
   }
 
   void _showModeratorAnnouncement(String text) {
@@ -1285,8 +1360,12 @@ class VoiceRoomLiveController
         fetchQueuePlaying: mq.playing,
       );
     }
+    final effectiveQueue = mq.queue.isNotEmpty ||
+            !((mq.playing ?? dj.playing) || dj.musicQueue.isNotEmpty)
+        ? mq.queue
+        : dj.musicQueue;
     final merged = dj.mergeMusicQueue(
-      queue: mq.queue,
+      queue: effectiveQueue,
       nowPlaying: mq.nowPlaying,
       playing: mq.playing,
       musicRequestCost: mq.cost,
@@ -1373,6 +1452,30 @@ class VoiceRoomLiveController
   }) async {
     final applied = await _applyDjPlayback(dj, sync: sync);
     state = state.copyWith(dj: applied);
+  }
+
+  /// SSE `dj` — doğrudan HTTP stream (audioplayers yedek).
+  Future<void> _playSseDjAudioplayers(String musicUrl) async {
+    final ui = ref.read(voiceRoomUiProvider);
+    if (!ui.backgroundMusicEnabled || !state.dj.musicEnabled) {
+      await _sseDjPlayer?.stop();
+      return;
+    }
+    if (!musicUrl.startsWith('http') ||
+        ChatRoomDjState.isEphemeralStreamUrl(musicUrl) ||
+        musicUrl.contains('youtube.com/watch') ||
+        musicUrl.contains('youtu.be/')) {
+      return;
+    }
+    if (_sseDjUrl == musicUrl && _sseDjPlayer != null) return;
+    _sseDjPlayer ??= AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+    _sseDjUrl = musicUrl;
+    try {
+      await _sseDjPlayer!.play(UrlSource(musicUrl));
+      VoiceRoomDebugLog.log('music.sse_audioplayers.play', {'url': musicUrl});
+    } catch (e) {
+      VoiceRoomDebugLog.log('music.sse_audioplayers.fail', {'error': '$e'});
+    }
   }
 
   Future<String?> _playDjInBackgroundAndReport(
@@ -1508,7 +1611,14 @@ class VoiceRoomLiveController
           .whereType<Map>()
           .map((e) => MusicQueueItem.fromJson(Map<String, dynamic>.from(e)))
           .toList();
-      dj = dj.copyWith(musicQueue: queue);
+      final player = ref.read(voiceRoomDjPlayerProvider);
+      final musicActive =
+          dj.playing || state.dj.playing || player.playback.value.playing;
+      if (queue.isNotEmpty || !musicActive) {
+        dj = dj.copyWith(musicQueue: queue);
+      } else if (state.dj.musicQueue.isNotEmpty) {
+        dj = dj.copyWith(musicQueue: state.dj.musicQueue);
+      }
     }
     if (map['djUserIds'] is List) {
       final ids = (map['djUserIds'] as List)
@@ -1551,6 +1661,12 @@ class VoiceRoomLiveController
     _commitDjUi(dj);
     final sync = RoomPlaybackSync.fromPayload(map);
     _syncRoomVideo(dj, sync: sync);
+    final musicUrl = map['musicUrl']?.toString();
+    if (musicUrl != null &&
+        musicUrl.trim().isNotEmpty &&
+        (isPlaying || dj.playing)) {
+      unawaited(_playSseDjAudioplayers(musicUrl.trim()));
+    }
     final ui = ref.read(voiceRoomUiProvider);
     final sig = _djPlaybackSignature(dj, muted: !ui.backgroundMusicEnabled);
     final player = ref.read(voiceRoomDjPlayerProvider);
@@ -3093,7 +3209,9 @@ class VoiceRoomLiveController
       _prefetchYoutubePlayback(dj);
       _commitDjUi(dj);
       unawaited(_playDjInBackground(dj));
-      unawaited(_syncMusicFromServerIfNeeded());
+      if (!shouldPlay) {
+        unawaited(_syncMusicFromServerIfNeeded());
+      }
       if (result.queuePosition != null && result.queuePosition! > 1) {
         return 'Sıranız: #${result.queuePosition}';
       }

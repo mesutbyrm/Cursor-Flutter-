@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../agora/presentation/agora_room_manager.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../utils/voice_room_seat_layout.dart';
@@ -15,6 +16,10 @@ class VoiceWebOwnerStage extends StatelessWidget {
     this.speakingUserId,
     this.onUserTap,
     this.onSeatTap,
+    this.agora,
+    this.agoraReady = false,
+    this.selfUserId,
+    this.remoteAgoraUid,
   });
 
   final VoiceRoomEntity room;
@@ -23,6 +28,10 @@ class VoiceWebOwnerStage extends StatelessWidget {
   final String? speakingUserId;
   final void Function(ChatRoomPresence user)? onUserTap;
   final void Function(int internalSeatIndex, ChatRoomPresence? user)? onSeatTap;
+  final AgoraRoomManager? agora;
+  final bool agoraReady;
+  final String? selfUserId;
+  final int? remoteAgoraUid;
 
   List<String> get _effectiveDjIds =>
       djUserIds ?? room.djUserIds;
@@ -65,6 +74,10 @@ class VoiceWebOwnerStage extends StatelessWidget {
                   speaking:
                       speakingUserId == host?.id || host?.isSpeaking == true,
                   onTap: () => onSeatTap?.call(1, host),
+                  agora: agora,
+                  agoraReady: agoraReady,
+                  selfUserId: selfUserId,
+                  remoteAgoraUid: remoteAgoraUid,
                 ),
                 const SizedBox(width: gap),
                 Expanded(
@@ -140,6 +153,10 @@ class VoiceWebOwnerStage extends StatelessWidget {
           djUserIds: _effectiveDjIds,
           speaking: speakingUserId == user?.id || user?.isSpeaking == true,
           onTap: () => onSeatTap?.call(internal, user),
+          agora: agora,
+          agoraReady: agoraReady,
+          selfUserId: selfUserId,
+          remoteAgoraUid: remoteAgoraUid,
         );
       }),
     );

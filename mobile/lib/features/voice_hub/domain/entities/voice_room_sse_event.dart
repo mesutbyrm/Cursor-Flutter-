@@ -24,9 +24,11 @@ VoiceRoomSseKind voiceRoomSseKindFrom(String? raw) {
     case 'presenceupdated':
     case 'users':
       return VoiceRoomSseKind.presence;
+    case 'user_joined':
     case 'userjoined':
     case 'join':
       return VoiceRoomSseKind.userJoined;
+    case 'user_left':
     case 'userleft':
     case 'leave':
       return VoiceRoomSseKind.userLeft;
