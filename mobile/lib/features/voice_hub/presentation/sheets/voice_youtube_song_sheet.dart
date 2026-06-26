@@ -17,8 +17,27 @@ import '../theme/voice_room_tokens.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_permissions.dart';
 
-/// Web ile aynı modal — tam sayfa veya alt sayfa açılmaz.
+/// Web ile aynı modal — şarkı isteği (10 jeton).
 Future<void> showVoiceYoutubeSongSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  required VoiceRoomEntity room,
+  VoiceRoomPermissions? perms,
+  bool? isOwner,
+}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => ProviderScope(
+      parent: ProviderScope.containerOf(context),
+      child: _YoutubeSongSheet(room: room),
+    ),
+  );
+}
+
+/// DJ / moderasyon — tam müzik hub (arama, çal, durdur).
+Future<void> showVoiceMusicControlHub(
   BuildContext context,
   WidgetRef ref, {
   required VoiceRoomEntity room,

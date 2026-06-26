@@ -54,6 +54,7 @@ import 'widgets/voice_room/voice_room_spec_footer.dart';
 import 'sheets/voice_room_commands_panel.dart';
 import 'sheets/music_mode_picker_sheet.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
+import 'utils/kick_strike_ui.dart';
 import 'widgets/premium_2026/voice_timed_duyuru.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
@@ -1112,14 +1113,27 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       }
       final kickWarn = next.kickStrikeWarning;
       if (kickWarn != null && kickWarn != prev?.kickStrikeWarning && mounted) {
+        final strikeCount = next.kickStrikeCount.clamp(1, 3);
+        final strikeColor = KickStrikeUi.colorFor(strikeCount);
         unawaited(
           showDialog<void>(
             context: context,
             builder: (ctx) => AlertDialog(
-              title: const Text('Uyarı'),
-              content: Text(kickWarn),
+              backgroundColor: const Color(0xFF1A1028),
+              title: Text(
+                KickStrikeUi.titleFor(strikeCount),
+                style: TextStyle(
+                  color: strikeColor,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              content: Text(
+                kickWarn,
+                style: const TextStyle(color: Colors.white70, height: 1.35),
+              ),
               actions: [
                 FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: strikeColor),
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('Tamam'),
                 ),

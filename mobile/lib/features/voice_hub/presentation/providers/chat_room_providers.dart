@@ -31,12 +31,14 @@ import '../../domain/voice_playback_limits.dart';
 import '../../domain/voice_music_sync.dart';
 import '../../domain/voice_official_join.dart';
 import '../utils/voice_room_permissions.dart';
+import '../utils/kick_strike_ui.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_message_merge.dart';
 import '../widgets/voice_room/voice_room_music_request_flash.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/moderation_result.dart';
+import '../../domain/entities/voice_room_ban_entry.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/youtube_stream_resolver.dart';
@@ -123,6 +125,7 @@ class VoiceRoomLiveState {
     this.chatClearedBannerNonce = 0,
     this.moderationToast,
     this.kickStrikeWarning,
+    this.kickStrikeCount = 0,
   });
 
   final List<ChatRoomMessage> messages;
@@ -148,6 +151,7 @@ class VoiceRoomLiveState {
   final int chatClearedBannerNonce;
   final String? moderationToast;
   final String? kickStrikeWarning;
+  final int kickStrikeCount;
 
   bool get isAnyoneTyping => typingUsers.isNotEmpty;
 
@@ -189,6 +193,7 @@ class VoiceRoomLiveState {
     String? moderationToast,
     bool clearModerationToast = false,
     String? kickStrikeWarning,
+    int? kickStrikeCount,
     bool clearKickStrikeWarning = false,
     bool clearError = false,
   }) {
@@ -235,6 +240,9 @@ class VoiceRoomLiveState {
       kickStrikeWarning: clearKickStrikeWarning
           ? null
           : (kickStrikeWarning ?? this.kickStrikeWarning),
+      kickStrikeCount: clearKickStrikeWarning
+          ? 0
+          : (kickStrikeCount ?? this.kickStrikeCount),
     );
   }
 }
@@ -757,6 +765,7 @@ class VoiceRoomLiveController
     final event = payload['event']?.toString().toUpperCase().trim() ?? '';
     switch (event) {
       case 'CHAT_CLEARED':
+      case 'MESSAGES_CLEARED':
         _applyLocalChatClear();
         return;
       case 'ROOM_MUTED':
@@ -780,8 +789,36 @@ class VoiceRoomLiveController
         _handleSseAnnouncement(payload);
         return;
       case 'CHAT_CLEARED':
+      case 'MESSAGES_CLEARED':
         _applyLocalChatClear();
         return;
+      case 'ROLE_CHANGED':
+      case 'ROLE_REMOVED': {
+        final name = payload['userName']?.toString() ?? 'Kullanıcı';
+        final newRole = payload['newRole']?.toString();
+        final removed = payload['removedRole']?.toString();
+        if (event == 'ROLE_CHANGED' && newRole != null) {
+          showModerationToast('$name → $newRole rolü verildi');
+        } else if (removed != null) {
+          showModerationToast('$name → $removed rolü alındı');
+        }
+        unawaited(_presenceHeartbeatTick());
+        return;
+      }
+      case 'ENTRY_ANNOUNCEMENT': {
+        final name = payload['userName']?.toString() ?? 'Kullanıcı';
+        final symbol = payload['roleSymbol']?.toString() ?? '';
+        final entry = payload['entryType']?.toString() ?? '';
+        state = state.copyWith(
+          enterBanner: '$symbol $name odaya katıldı${entry.isNotEmpty ? ' ($entry)' : ''}',
+        );
+        _enterBannerTimer?.cancel();
+        _enterBannerTimer = Timer(const Duration(seconds: 8), () {
+          if (!_sessionActive) return;
+          state = state.copyWith(clearEnterBanner: true);
+        });
+        return;
+      }
       case 'ROOM_MUTED':
         state = state.copyWith(roomMuted: true);
         return;
@@ -801,9 +838,8 @@ class VoiceRoomLiveController
               ? payload['kickCount'] as int
               : int.tryParse(payload['kickCount']?.toString() ?? '') ?? 1;
           _showKickStrikeWarning(
-            '$count ihtardan ${count.clamp(1, 3)}’ini aldınız. '
-            '${(3 - count).clamp(0, 2)} kez daha kicklenirseniz odadan atılacaksınız. '
-            'Oda sahibi banı kaldırana kadar giriş yapamayacaksınız.',
+            count,
+            autoBanned: count >= 3,
           );
         }
         final msg = payload['message']?.toString().trim();
@@ -849,9 +885,15 @@ class VoiceRoomLiveController
     });
   }
 
-  void _showKickStrikeWarning(String text) {
+  void _showKickStrikeWarning(int strikeCount, {bool autoBanned = false}) {
     _kickWarningTimer?.cancel();
-    state = state.copyWith(kickStrikeWarning: text);
+    state = state.copyWith(
+      kickStrikeWarning: KickStrikeUi.messageFor(
+        strikeCount,
+        autoBanned: autoBanned,
+      ),
+      kickStrikeCount: strikeCount.clamp(1, 3),
+    );
     _kickWarningTimer = Timer(const Duration(seconds: 12), () {
       if (!_sessionActive) return;
       state = state.copyWith(clearKickStrikeWarning: true);
@@ -3110,6 +3152,18 @@ class VoiceRoomLiveController
   Future<List<String>> fetchBannedWords() async {
     try {
       return await ref.read(chatRoomRemoteProvider).fetchBannedWords(_roomKey);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<List<VoiceRoomBanEntry>> fetchModerationBans() async {
+    try {
+      final snap = await ref.read(chatRoomRemoteProvider).fetchModeration(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+          );
+      return snap.bans;
     } catch (_) {
       return const [];
     }

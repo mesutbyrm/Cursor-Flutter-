@@ -173,6 +173,17 @@ class ChatRoomSseService extends BaseSseService {
       case ChatRoomSseEventType.pk:
         _emitPk(map);
         return;
+      case ChatRoomSseEventType.typing:
+        final users = (map['users'] is List
+                ? map['users'] as List
+                : map['typing'] is List
+                    ? map['typing'] as List
+                    : const [])
+            .map((e) => e.toString())
+            .where((s) => s.isNotEmpty)
+            .toList();
+        if (users.isNotEmpty) _onTyping?.call(users);
+        return;
       case ChatRoomSseEventType.unknown:
         if (map['typing'] is List) {
           final users = (map['typing'] as List)
@@ -208,9 +219,14 @@ class ChatRoomSseService extends BaseSseService {
       case 'USER_MUTED':
       case 'USER_UNMUTED':
       case 'CHAT_CLEARED':
+      case 'MESSAGES_CLEARED':
       case 'ROOM_MUTED':
       case 'ROOM_UNMUTED':
         _onModeration?.call(map);
+        return;
+      case 'ROLE_CHANGED':
+      case 'ROLE_REMOVED':
+      case 'ENTRY_ANNOUNCEMENT':
         return;
       default:
         if (map['message'] != null) {

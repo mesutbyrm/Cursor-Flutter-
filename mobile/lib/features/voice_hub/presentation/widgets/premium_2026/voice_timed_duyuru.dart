@@ -1,30 +1,31 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 
 import '../../../../../core/storage/local_cache.dart';
 import '../voice_room/voice_room_announcement.dart';
 
-/// Duyuru — 15 saniye gösterilir; kapatılınca oda+metin anahtarıyla kaydedilir.
+/// Duyuru — varsayılan 15 sn; üstte sabit + geri sayım çubuğu (web parity).
 class VoiceTimedDuyuru extends StatefulWidget {
   const VoiceTimedDuyuru({
     super.key,
     required this.roomKey,
     required this.text,
+    this.ttl = const Duration(seconds: 15),
   });
 
   final String roomKey;
   final String text;
+  final Duration ttl;
 
   @override
   State<VoiceTimedDuyuru> createState() => _VoiceTimedDuyuruState();
 }
 
-class _VoiceTimedDuyuruState extends State<VoiceTimedDuyuru> {
-  static const _showDuration = Duration(seconds: 15);
-
+class _VoiceTimedDuyuruState extends State<VoiceTimedDuyuru>
+    with SingleTickerProviderStateMixin {
   Timer? _hideTimer;
+  late AnimationController _progress;
   var _visible = false;
   var _dismissed = false;
 
@@ -36,6 +37,7 @@ class _VoiceTimedDuyuruState extends State<VoiceTimedDuyuru> {
   @override
   void initState() {
     super.initState();
+    _progress = AnimationController(vsync: this, duration: widget.ttl);
     _init();
   }
 
@@ -47,7 +49,8 @@ class _VoiceTimedDuyuruState extends State<VoiceTimedDuyuru> {
       return;
     }
     if (mounted) setState(() => _visible = true);
-    _hideTimer = Timer(_showDuration, () {
+    _progress.forward(from: 0);
+    _hideTimer = Timer(widget.ttl, () {
       if (mounted) setState(() => _visible = false);
     });
   }
@@ -55,12 +58,14 @@ class _VoiceTimedDuyuruState extends State<VoiceTimedDuyuru> {
   @override
   void dispose() {
     _hideTimer?.cancel();
+    _progress.dispose();
     super.dispose();
   }
 
   Future<void> _dismiss() async {
     await LocalCache.setBool(_cacheKey, true);
     _hideTimer?.cancel();
+    _progress.stop();
     if (mounted) {
       setState(() {
         _dismissed = true;
@@ -76,83 +81,19 @@ class _VoiceTimedDuyuruState extends State<VoiceTimedDuyuru> {
     }
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          VoiceRoomAnnouncement(
+      child: AnimatedBuilder(
+        animation: _progress,
+        builder: (context, _) {
+          final remaining = (1 - _progress.value).clamp(0.0, 1.0);
+          final secondsLeft =
+              (widget.ttl.inSeconds * remaining).ceil().clamp(0, 999);
+          return VoiceRoomAnnouncement(
             text: widget.text,
             onDismiss: _dismiss,
-          ),
-          Positioned(
-            top: 6,
-            right: 44,
-            child: _CountdownBadge(
-              duration: _showDuration,
-              onFinished: () {
-                if (mounted) setState(() => _visible = false);
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CountdownBadge extends StatefulWidget {
-  const _CountdownBadge({
-    required this.duration,
-    required this.onFinished,
-  });
-
-  final Duration duration;
-  final VoidCallback onFinished;
-
-  @override
-  State<_CountdownBadge> createState() => _CountdownBadgeState();
-}
-
-class _CountdownBadgeState extends State<_CountdownBadge> {
-  late int _secondsLeft;
-  Timer? _tick;
-
-  @override
-  void initState() {
-    super.initState();
-    _secondsLeft = widget.duration.inSeconds;
-    _tick = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) return;
-      if (_secondsLeft <= 1) {
-        t.cancel();
-        widget.onFinished();
-        return;
-      }
-      setState(() => _secondsLeft--);
-    });
-  }
-
-  @override
-  void dispose() {
-    _tick?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppThemeColors.accentPink.withValues(alpha: 0.5)),
-      ),
-      child: Text(
-        '${_secondsLeft}s',
-        style: const TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w800,
-          color: AppThemeColors.accentPink,
-        ),
+            progress: remaining,
+            autoCloseLabel: secondsLeft > 0 ? '$secondsLeft sn' : null,
+          );
+        },
       ),
     );
   }

@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.369+373 (2026-06-23)
+
+### Sesli oda — moderasyon, SSE, müzik parity (49 görsel spec)
+
+- **Komutlar paneli:** MÜZİK & GENEL promo kartları; Şarkı İsteği ile Müzik Aç (DJ hub) ayrı girişler
+- **Ban listesi:** `GET /moderation` ile !unban kullanıcı listesi; API ban satırları parse
+- **Kick 3 vuruş:** Sarı / turuncu / kırmızı snackbar + RTC uyarı diyaloğu (`KickStrikeUi`)
+- **SSE:** `MESSAGES_CLEARED`, `ROLE_CHANGED`, `ENTRY_ANNOUNCEMENT`, `typing` olayları
+- **Duyuru TTL:** Üstte sabit duyuru + geri sayım progress bar (15 sn)
+- **Presence çıkış:** `POST presence?_delete=1&leave=1` yedek akışı
+
 ## 1.0.368+372 (2026-06-23)
 
 ### Agora, Tarot takılma, otomatik paylaşım

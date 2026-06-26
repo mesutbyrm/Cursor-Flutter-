@@ -77,19 +77,73 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
   var _loadingWords = true;
   List<String> _words = const [];
 
-  static const _everyone = [
-    _Cmd('!istek şarkı adı', 'Şarkı isteği gönderir (yetkililere görünür)', Icons.music_note_rounded),
-    _Cmd('!kural', 'Oda kurallarını gösterir', Icons.article_outlined),
-    _Cmd('!bilgi', 'Oda bilgilerini gösterir', Icons.info_outline_rounded),
-    _Cmd('!yardım', 'Bu paneli açar', Icons.menu_book_outlined),
+  static const _musicGeneral = [
+    _PromoCard(
+      title: 'Şarkı İsteği',
+      subtitle: "YouTube'dan şarkı iste (10 💎)",
+      icon: Icons.music_note_rounded,
+      color: Color(0xFF7B2FF7),
+      kind: _PromoKind.songRequest,
+    ),
+    _PromoCard(
+      title: 'Oda Kuralları',
+      subtitle: 'Kuralları görüntüle',
+      icon: Icons.shield_outlined,
+      color: Color(0xFF38BDF8),
+      kind: _PromoKind.rules,
+    ),
+    _PromoCard(
+      title: 'Oda Bilgisi',
+      subtitle: 'Oda detaylarını gör',
+      icon: Icons.visibility_outlined,
+      color: Color(0xFF38BDF8),
+      kind: _PromoKind.info,
+    ),
   ];
 
   static const _modGrid = [
-    _Cmd('!duyuru', '15 sn duyuru yayınla', Icons.campaign_rounded, AppThemeColors.liveRed),
-    _Cmd('!temizle', 'Sohbeti temizle', Icons.auto_fix_high_rounded, VoiceRoomTokens.gold),
-    _Cmd('!kick', 'Kullanıcı at', Icons.back_hand_rounded, Color(0xFF22C55E)),
-    _Cmd('!ban', 'Kullanıcı banla', Icons.block_rounded, AppThemeColors.liveRed),
-    _Cmd('!unban', 'Ban kaldır', Icons.lock_open_rounded, Color(0xFF38BDF8)),
+    _PromoCard(
+      title: 'Duyuru Yayınla',
+      subtitle: '15 saniye sabit mesaj',
+      icon: Icons.campaign_rounded,
+      color: Color(0xFF3B82F6),
+      kind: _PromoKind.duyuru,
+    ),
+    _PromoCard(
+      title: 'Sohbet Temizle',
+      subtitle: 'Tüm mesajları sil',
+      icon: Icons.delete_sweep_rounded,
+      color: Color(0xFF22C55E),
+      kind: _PromoKind.temizle,
+    ),
+    _PromoCard(
+      title: 'Kick (At)',
+      subtitle: '3 ihtar = otomatik ban',
+      icon: Icons.back_hand_rounded,
+      color: Color(0xFFEAB308),
+      kind: _PromoKind.kick,
+    ),
+    _PromoCard(
+      title: 'Banla',
+      subtitle: 'Kullanıcıyı odadan banla',
+      icon: Icons.block_rounded,
+      color: AppThemeColors.liveRed,
+      kind: _PromoKind.ban,
+    ),
+    _PromoCard(
+      title: 'Ban Kaldır',
+      subtitle: 'Banlanan kullanıcıları gör',
+      icon: Icons.lock_open_rounded,
+      color: Color(0xFF166534),
+      kind: _PromoKind.unban,
+    ),
+    _PromoCard(
+      title: 'Müzik Aç',
+      subtitle: "YouTube'dan müzik çal/yönet",
+      icon: Icons.library_music_rounded,
+      color: Color(0xFF7B2FF7),
+      kind: _PromoKind.musicHub,
+    ),
   ];
 
   static const _roleTags = [
@@ -161,6 +215,46 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
     await notifier.sendMessage(cmd);
     if (!mounted) return;
     Navigator.pop(context);
+  }
+
+  Future<void> _onPromoTap(_PromoCard card) async {
+    switch (card.kind) {
+      case _PromoKind.songRequest:
+        Navigator.pop(context);
+        await showVoiceYoutubeSongSheet(context, ref, room: widget.room);
+        return;
+      case _PromoKind.rules:
+        await _runCommand('!kural');
+        return;
+      case _PromoKind.info:
+        await _runCommand('!bilgi');
+        return;
+      case _PromoKind.duyuru:
+        await _onCommandTap(_Cmd('!duyuru', card.subtitle, card.icon, card.color));
+        return;
+      case _PromoKind.temizle:
+        await _runCommand('!temizle');
+        return;
+      case _PromoKind.kick:
+        await _onCommandTap(_Cmd('!kick', card.subtitle, card.icon, card.color));
+        return;
+      case _PromoKind.ban:
+        await _onCommandTap(_Cmd('!ban', card.subtitle, card.icon, card.color));
+        return;
+      case _PromoKind.unban:
+        await _onCommandTap(_Cmd('!unban', card.subtitle, card.icon, card.color));
+        return;
+      case _PromoKind.musicHub:
+        Navigator.pop(context);
+        await showVoiceMusicControlHub(
+          context,
+          ref,
+          room: widget.room,
+          perms: widget.perms,
+          isOwner: widget.isOwner,
+        );
+        return;
+    }
   }
 
   Future<void> _onCommandTap(_Cmd c) async {
@@ -383,12 +477,12 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
               children: [
                 _SectionHeader(
-                  icon: Icons.person_outline_rounded,
-                  title: 'HERKES',
-                  color: const Color(0xFF38BDF8),
+                  icon: Icons.music_note_rounded,
+                  title: 'MÜZİK & GENEL',
+                  color: const Color(0xFF7B2FF7),
                 ),
-                ..._everyone.map(
-                  (c) => _CommandCard(cmd: c, onTap: () => _onCommandTap(c)),
+                ..._musicGeneral.map(
+                  (c) => _PromoActionCard(card: c, onTap: () => _onPromoTap(c)),
                 ),
                 const SizedBox(height: 16),
                 _SectionHeader(
@@ -403,10 +497,14 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                     crossAxisCount: 2,
                     mainAxisSpacing: 8,
                     crossAxisSpacing: 8,
-                    childAspectRatio: 2.4,
+                    childAspectRatio: 1.55,
                     children: _modGrid
                         .map(
-                          (c) => _CommandCard(cmd: c, onTap: () => _onCommandTap(c)),
+                          (c) => _PromoActionCard(
+                            card: c,
+                            compact: true,
+                            onTap: () => _onPromoTap(c),
+                          ),
                         )
                         .toList(),
                   )
@@ -521,6 +619,141 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _Cmd {
+  const _Cmd(this.command, this.hint, this.icon, [this.iconColor]);
+
+  final String command;
+  final String hint;
+  final IconData icon;
+  final Color? iconColor;
+}
+
+enum _PromoKind {
+  songRequest,
+  rules,
+  info,
+  duyuru,
+  temizle,
+  kick,
+  ban,
+  unban,
+  musicHub,
+}
+
+class _PromoCard {
+  const _PromoCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.kind,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final _PromoKind kind;
+}
+
+class _PromoActionCard extends StatelessWidget {
+  const _PromoActionCard({
+    required this.card,
+    required this.onTap,
+    this.compact = false,
+  });
+
+  final _PromoCard card;
+  final VoidCallback onTap;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: compact ? 0 : 8),
+      child: Material(
+        color: card.color.withValues(alpha: compact ? 0.22 : 0.14),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: compact ? 10 : 12,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: card.color.withValues(alpha: 0.45)),
+            ),
+            child: compact
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(card.icon, color: card.color, size: 20),
+                      const SizedBox(height: 6),
+                      Text(
+                        card.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        card.subtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: Colors.white.withValues(alpha: 0.65),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Icon(card.icon, color: card.color, size: 24),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              card.title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              card.subtitle,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.white.withValues(alpha: 0.65),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: Colors.white.withValues(alpha: 0.35),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
       ),
     );
   }

@@ -16,6 +16,7 @@ enum ChatRoomSseEventType {
   presence,
   fortuneRequest,
   pk,
+  typing,
   unknown,
 }
 
@@ -69,6 +70,8 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
     case 'presenceupdated':
     case 'users':
       return ChatRoomSseEventType.presence;
+    case 'typing':
+      return ChatRoomSseEventType.typing;
     case 'fal_request':
     case 'live_fal_request':
     case 'fortune_request':

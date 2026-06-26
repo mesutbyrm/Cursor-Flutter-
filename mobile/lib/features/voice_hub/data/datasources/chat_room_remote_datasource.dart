@@ -17,6 +17,7 @@ import '../services/voice_room_music_pipeline_log.dart';
 import '../youtube_music_search_cache.dart';
 import '../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/moderation_result.dart';
+import '../../domain/entities/voice_room_ban_entry.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 import '../../domain/entities/chat_room_my_permissions.dart';
 
@@ -238,12 +239,44 @@ class ChatRoomRemoteDataSource {
   Future<void> leavePresence(String roomKey, {String? alternateKey}) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       try {
+        await _dio.safePost<dynamic>(
+          '${presencePath(key)}?_delete=1&leave=1',
+          data: '{}',
+          options: Options(contentType: 'application/json'),
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      } catch (_) {}
+      try {
         await _dio.safeDelete<dynamic>('${presencePath(key)}?leave=1');
         return;
       } on ApiException catch (e) {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       }
       await _dio.safeDelete<dynamic>(presencePath(key));
+    });
+  }
+
+  Future<({List<VoiceRoomBanEntry> bans, bool canManage})> fetchModeration({
+    required String roomKey,
+    String? alternateKey,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(moderationPath(key));
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['bans'] ?? map['items'];
+      final bans = raw is List
+          ? raw
+              .whereType<Map>()
+              .map((e) => VoiceRoomBanEntry.fromJson(
+                    Map<String, dynamic>.from(e),
+                  ))
+              .where((b) => b.userId.isNotEmpty)
+              .toList()
+          : <VoiceRoomBanEntry>[];
+      final canManage = map['canManage'] == true;
+      return (bans: bans, canManage: canManage);
     });
   }
 
