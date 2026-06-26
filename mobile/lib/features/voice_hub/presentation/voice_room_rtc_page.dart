@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
@@ -26,12 +25,12 @@ import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
 import '../../agora/presentation/agora_room_manager.dart';
 import '../../agora/presentation/providers/agora_providers.dart';
-import '../domain/entities/chat_room_dj_state.dart';
 import '../domain/entities/chat_room_presence.dart';
 import '../domain/entities/chat_room_sse_event.dart';
 import '../domain/entities/chat_room_my_permissions.dart';
 import '../../trtc/presentation/providers/trtc_providers.dart';
 import 'audio/voice_room_audio_coordinator.dart';
+import 'audio/voice_room_music_audio_session.dart';
 import 'providers/chat_room_providers.dart';
 import '../music/presentation/widgets/music_search_picker_sheet.dart';
 import 'providers/pk_battle_remote_provider.dart';
@@ -85,8 +84,6 @@ class VoiceRoomRtcPage extends ConsumerStatefulWidget {
 class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   VoiceRoomAudioCoordinator? _audio;
   final _agora = AgoraRoomManager();
-  AudioPlayer? _sseDjPlayer;
-  String? _sseDjUrl;
   StreamSubscription<LiveGiftEvent>? _giftSub;
   StreamSubscription<ChatRoomSseEvent>? _sseParticipantsSub;
   final _participants = <String, Map<String, dynamic>>{};
@@ -164,33 +161,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         setState(() {
           _participants.remove(userId);
         });
-      } else if (event.type == ChatRoomSseEventType.dj) {
-        final musicUrl = data['musicUrl'] as String?;
-        if (musicUrl != null && musicUrl.trim().isNotEmpty) {
-          unawaited(
-            _playSseDjUrl(musicUrl.trim()),
-          );
-        }
       }
     });
-  }
-
-  Future<void> _playSseDjUrl(String musicUrl) async {
-    final ui = ref.read(voiceRoomUiProvider);
-    if (!ui.backgroundMusicEnabled) return;
-    if (!musicUrl.startsWith('http') ||
-        ChatRoomDjState.isEphemeralStreamUrl(musicUrl)) {
-      return;
-    }
-    if (_sseDjUrl == musicUrl && _sseDjPlayer != null) return;
-    _sseDjPlayer ??= AudioPlayer()..setReleaseMode(ReleaseMode.stop);
-    _sseDjUrl = musicUrl;
-    try {
-      await _sseDjPlayer!.play(UrlSource(musicUrl));
-      VoiceRoomDebugLog.log('music.sse_audioplayers.play', {'url': musicUrl});
-    } catch (e) {
-      VoiceRoomDebugLog.log('music.sse_audioplayers.fail', {'error': '$e'});
-    }
   }
 
   Future<void> _joinAgoraVideo({
@@ -252,12 +224,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _participants.clear();
     _messageCtrl.dispose();
     _messageFocus.dispose();
-    final djPlayer = _sseDjPlayer;
-    _sseDjPlayer = null;
-    _sseDjUrl = null;
-    if (djPlayer != null) {
-      unawaited(djPlayer.dispose());
-    }
     final audio = _audio;
     _audio = null;
     if (audio != null) {
@@ -271,38 +237,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
     unawaited(_agora.dispose());
     super.dispose();
-  }
-
-  /// SSE `dj` event — doğrudan HTTP stream yedek oynatıcı (audioplayers).
-  Future<void> _syncSseDjFallbackAudio(ChatRoomDjState dj) async {
-    final ui = ref.read(voiceRoomUiProvider);
-    if (!ui.backgroundMusicEnabled || !dj.musicEnabled) {
-      await _sseDjPlayer?.stop();
-      return;
-    }
-    if (!dj.playing) {
-      await _sseDjPlayer?.stop();
-      _sseDjUrl = null;
-      return;
-    }
-    final raw = dj.musicUrl?.trim() ?? '';
-    if (raw.isEmpty ||
-        !raw.startsWith('http') ||
-        ChatRoomDjState.isEphemeralStreamUrl(raw) ||
-        raw.contains('youtube.com/watch') ||
-        raw.contains('youtu.be/')) {
-      return;
-    }
-    if (_sseDjUrl == raw && _sseDjPlayer != null) return;
-    _sseDjPlayer ??= AudioPlayer()..setReleaseMode(ReleaseMode.stop);
-    _sseDjUrl = raw;
-    try {
-      await _sseDjPlayer!.stop();
-      await _sseDjPlayer!.play(UrlSource(raw));
-      VoiceRoomDebugLog.log('music.sse_audioplayers.play', {'url': raw});
-    } catch (e) {
-      VoiceRoomDebugLog.log('music.sse_audioplayers.fail', {'error': '$e'});
-    }
   }
 
   Future<void> _logJwtStatus() async {
@@ -486,6 +420,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               result: 1,
             );
         ref.read(voiceRoomDiagnosticProvider.notifier).setAudioReady(true);
+        unawaited(VoiceRoomMusicAudioSession.activateForPlayback());
         setState(() {
           _audioJoining = false;
           _audioReady = true;
@@ -496,19 +431,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
         _maybeShowVipEntrance(user);
         unawaited(_connectPkBattle());
-        final onSeat = liveForPerms.presence.any(
-          (p) => p.id == user.id && p.seatIndex != null,
-        );
-        unawaited(
-          _joinAgoraVideo(
-            room: room,
-            user: user,
-            publishVideo: perms.isRoomOwner ||
-                perms.isSiteAdmin ||
-                onSeat ||
-                _isRoomOwner(user.id, user.username, room),
-          ),
-        );
+        // Agora kamera yalnızca kullanıcı açtığında — oda girişinde otomatik değil.
       }
     } catch (e) {
       if (mounted) {
@@ -1255,9 +1178,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
             backgroundColor: const Color(0xFF22C55E),
           ),
         );
-      }
-      if (prev?.dj != next.dj) {
-        unawaited(_syncSseDjFallbackAudio(next.dj));
       }
       final kickWarn = next.kickStrikeWarning;
       if (kickWarn != null && kickWarn != prev?.kickStrikeWarning && mounted) {

@@ -50,16 +50,18 @@ abstract final class RoomVideoSocketEvents {
   }
 
   static bool isVideoPayload(Map<String, dynamic> map) {
-    if (map.containsKey('currentVideoId')) return true;
     if (map['type']?.toString().toLowerCase() == 'roomvideo') return true;
+    if (map.containsKey('currentVideoId')) return true;
     if (map.containsKey('nowPlaying')) {
       final np = map['nowPlaying'];
-      if (np is Map &&
-          (np['videoId'] != null || np['youtubeUrl'] != null)) {
-        return true;
+      if (np is Map) {
+        final withVideo = np['withVideo'] == true ||
+            np['requestType']?.toString().toLowerCase() == 'video' ||
+            np['videoMode']?.toString().toLowerCase() == 'video';
+        if (!withVideo) return false;
+        return np['videoId'] != null || np['youtubeUrl'] != null;
       }
     }
-    return map.containsKey('playing') &&
-        (map.containsKey('musicUrl') || map.containsKey('queue'));
+    return false;
   }
 }

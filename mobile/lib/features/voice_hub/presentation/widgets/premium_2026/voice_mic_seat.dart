@@ -174,6 +174,8 @@ class VoiceMicSeat extends StatelessWidget {
     if (self != null && uid == self && manager.isHost && manager.cameraOn) {
       return AgoraLocalVideoView(manager: manager);
     }
+    // Uzak kamera yalnızca HOST koltuğunda — tüm koltuklara yansıtılmaz.
+    if (!isHost) return null;
     final remote = remoteAgoraUid ?? manager.remoteUid;
     if (remote != null &&
         remote > 0 &&

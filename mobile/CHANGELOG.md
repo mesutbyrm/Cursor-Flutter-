@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.374+378 (2026-06-26)
+
+### Sesli oda — performans, müzik, kamera düzeltmeleri
+
+- **Müzik (TRTC):** Üçlü oynatıcı (audioplayers + just_audio + SSE yedek) kaldırıldı; tek `VoiceRoomDjPlayer` yolu
+- **SSE/Socket:** DJ olayları SSE bağlıyken yalnızca SSE'den işlenir (çift oynatma ve audio focus çakışması giderildi)
+- **TRTC sonrası:** `activateForPlayback()` — müzik ses oturumu TRTC girişinden sonra yeniden etkinleştirilir
+- **Küçük kameralar:** Oda girişinde Agora otomatik kamera yayını kapatıldı; uzak video yalnızca HOST koltuğunda
+- **Video modu:** Ses-only DJ olayları artık yanlışlıkla video overlay açmaz (`withVideo` zorunlu)
+- **Performans:** SSE varken poll 30–60 sn; gereksiz DJ/mesaj yinelenmesi azaltıldı
+
 ## 1.0.373+377 (2026-06-26)
 
 ### Performans ve backend senkron (Claude dalı)
