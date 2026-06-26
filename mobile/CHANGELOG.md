@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.380+384 (2026-06-26)
+
+### Sesli oda müzik — kalıcı oynatma düzeltmesi
+
+- **Hibrit oynatma:** Videolu isteklerde ses `just_audio` ile her zaman çalar; YouTube overlay sessiz (`mute: 1`)
+- **Mini player kapatma** artık oda içi müziği durdurmaz (`userDismissedPlayer` yalnızca UI)
+- **youtube-stream API** URL'si çözümlenip doğrudan akışa dönüştürülür
+- **SSE:** `withVideo` bayrağı sunucu düşürse istemci korur
+- **Android:** `/api/chat/youtube-audio` çift proxy hatası giderildi
+
 ## 1.0.379+383 (2026-06-26)
 
 ### Sesli oda — ortadan !istek videolu müzik

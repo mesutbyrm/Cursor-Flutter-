@@ -415,6 +415,7 @@ class VoiceRoomLiveController
       _closeRoomKeepAlive();
     });
     Future.microtask(() async {
+      ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
       await VoiceRoomMusicAudioSession.ensureConfigured();
       await Future.wait([_joinPresence(), _warmBackgrounds()]);
       await refresh(includeDj: true);
@@ -1541,6 +1542,21 @@ class VoiceRoomLiveController
     return item ?? fallback;
   }
 
+  /// SSE nowPlaying bazen withVideo düşürür — istemci video modunu korur.
+  MusicQueueItem _mergeNowPlayingFromSse(
+    Map<String, dynamic> json, {
+    MusicQueueItem? previous,
+  }) {
+    final incoming = MusicQueueItem.fromJson(json);
+    if (incoming.isVideoRequest) return incoming;
+    if (previous == null || !previous.isVideoRequest) return incoming;
+    final sameTrack = incoming.id == previous.id ||
+        (incoming.youtubeUrl.isNotEmpty &&
+            incoming.youtubeUrl == previous.youtubeUrl);
+    if (!sameTrack) return incoming;
+    return incoming.asVideoRequest();
+  }
+
   Future<void> _applyDjRealtimePayload(Map<String, dynamic> payload) async {
     final map = unwrapVoiceSseDjPayload(payload);
     final np = map['nowPlaying'];
@@ -1579,8 +1595,9 @@ class VoiceRoomLiveController
     }
     if (map['nowPlaying'] is Map) {
       dj = dj.copyWith(
-        nowPlaying: MusicQueueItem.fromJson(
+        nowPlaying: _mergeNowPlayingFromSse(
           Map<String, dynamic>.from(map['nowPlaying'] as Map),
+          previous: state.dj.nowPlaying,
         ),
         playing: isPlaying || dj.playing,
       );
@@ -1697,7 +1714,7 @@ class VoiceRoomLiveController
     final session = ref.read(voiceRoomMusicSessionProvider);
     final player = ref.read(voiceRoomDjPlayerProvider);
 
-    if (session.dismissed || session.userDismissedPlayer) {
+    if (session.dismissed) {
       await player.stop();
       _syncRoomVideo(const ChatRoomDjState(), sync: sync);
       _lastDjPlaybackSignature = _djPlaybackSignature(dj, muted: muted);
@@ -1727,21 +1744,18 @@ class VoiceRoomLiveController
     final sig = _djPlaybackSignature(effectiveDj, muted: muted);
     final sameTrack = sig == _lastDjPlaybackSignature;
 
-    if (shouldPlay && withVideo) {
-      if (!sameTrack) await player.stop();
-      _syncRoomVideo(effectiveDj, sync: sync);
-      _lastDjPlaybackSignature = sig;
-      return effectiveDj;
-    }
-
     if (shouldPlay) {
       await VoiceRoomMusicAudioSession.activateForPlayback();
-      ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+      if (withVideo) {
+        _syncRoomVideo(effectiveDj, sync: sync);
+      } else {
+        ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+      }
       if (!sameTrack) {
         await player.stop();
       }
       final streamUrl = sync?.streamUrl ?? effectiveDj.musicUrl;
-      await player.sync(
+      final audioOk = await player.sync(
         musicUrl: effectiveDj.musicUrl,
         resolveSeed: effectiveDj.playbackResolveSeed,
         fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
@@ -1751,6 +1765,12 @@ class VoiceRoomLiveController
         serverStreamUrl: streamUrl,
         startPosition: sameTrack ? startPos : startPos,
       );
+      if (!audioOk && withVideo) {
+        VoiceRoomDebugLog.log('music.audio_failed_video_only', {
+          'room': _roomKey,
+          'videoId': videoId,
+        });
+      }
       _lastDjPlaybackSignature = sig;
       return effectiveDj;
     }
