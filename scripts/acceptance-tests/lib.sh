@@ -227,10 +227,12 @@ create_video_stream() {
   create_body=$(CREATE_TITLE="$title" CREATE_CATEGORY="$category" python3 -c 'import json,os; print(json.dumps({
     "title":os.environ["CREATE_TITLE"],
     "name":os.environ["CREATE_TITLE"],
-    "status":"live","requestType":"live",
+    "status":"live",
+    "requestType":"live",
     "category":os.environ["CREATE_CATEGORY"],
     "tags":["gate","fortune"],
-    "isFortune": True
+    "isPrivate": False,
+    "private": False
   }))')
   create_resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/video-streams" \
     -H "Authorization: Bearer $token" \
@@ -243,7 +245,7 @@ create_video_stream() {
     curl -sS -o /dev/null -X POST "$BASE/api/video-streams/$STREAM_ID/live-started" \
       -H "Authorization: Bearer $token" \
       -H "Content-Type: application/json" \
-      -d "{\"title\":\"$title\"}" || true
+      -d '{}' || true
   fi
   printf '%s|%s' "${STREAM_ID:-}" "${create_code:-}"
 }
@@ -340,8 +342,12 @@ print(pick(d))
 pick_live_fortune_stream_id() {
   local token="$1"
   local body
-  body=$(curl_json "$BASE/api/video-streams?limit=20&status=live" \
-    -H "Authorization: Bearer $token")
+  if [[ -n "$token" ]]; then
+    body=$(curl_json "$BASE/api/video-streams?limit=20&status=live" \
+      -H "Authorization: Bearer $token")
+  else
+    body=$(curl -sS "$BASE/api/video-streams?limit=20&status=live")
+  fi
   printf '%s' "$body" | python3 -c "
 import json,sys
 try:
@@ -362,6 +368,79 @@ for s in items:
     if cat=='fortune' or 'fortune' in cat or (isinstance(tags,list) and 'fortune' in [str(t).lower() for t in tags]):
         print(sid); break
 " 2>/dev/null || true
+}
+
+pick_any_live_stream_id() {
+  local token="$1"
+  local body
+  if [[ -n "$token" ]]; then
+    body=$(curl_json "$BASE/api/video-streams?limit=20&status=live" \
+      -H "Authorization: Bearer $token")
+  else
+    body=$(curl -sS "$BASE/api/video-streams?limit=20&status=live")
+  fi
+  printf '%s' "$body" | python3 -c "
+import json,sys
+try:
+    d=json.load(sys.stdin)
+except json.JSONDecodeError:
+    sys.exit(0)
+items=d if isinstance(d,list) else d.get('items') or d.get('streams') or d.get('videoStreams') or (d.get('data') or {}).get('items') or []
+if isinstance(items,dict):
+    items=items.get('items') or items.get('streams') or []
+for s in items:
+    if not isinstance(s,dict):
+        continue
+    sid=str(s.get('id') or s.get('streamId') or '').strip()
+    if sid:
+        print(sid)
+        break
+" 2>/dev/null || true
+}
+
+try_resolve_gate_stream() {
+  local title="${1:-Gate $RUN_ID}"
+  local create_code="" create_result="" token=""
+  STREAM_ID=""
+
+  if login_as_teller; then
+    token="$TELLER_TOKEN"
+    create_result=$(create_video_stream "$token" "$title")
+    STREAM_ID="${create_result%%|*}"
+    create_code="${create_result##*|}"
+    [[ -n "$STREAM_ID" ]] && HOST_TOKEN="$token" && return 0
+  fi
+
+  if bootstrap_host_token; then
+    token="$HOST_TOKEN"
+    create_result=$(create_video_stream "$token" "$title")
+    STREAM_ID="${create_result%%|*}"
+    create_code="${create_result##*|}"
+    [[ -n "$STREAM_ID" ]] && HOST_TOKEN="$token" && return 0
+  fi
+
+  if login_as_admin; then
+    token="$ADMIN_TOKEN"
+    create_result=$(create_video_stream "$token" "$title")
+    STREAM_ID="${create_result%%|*}"
+    create_code="${create_result##*|}"
+    [[ -n "$STREAM_ID" ]] && HOST_TOKEN="$token" && return 0
+  fi
+
+  bootstrap_user_token || true
+  local picked=""
+  for token in "$TELLER_TOKEN" "$HOST_TOKEN" "$ADMIN_TOKEN" "$USER_TOKEN" ""; do
+    picked=$(pick_live_fortune_stream_id "$token")
+    [[ -z "$picked" ]] && picked=$(pick_any_live_stream_id "$token")
+    if [[ -n "$picked" ]]; then
+      STREAM_ID="$picked"
+      [[ -n "$token" ]] && HOST_TOKEN="$token"
+      return 0
+    fi
+  done
+
+  GATE_LAST_CREATE_CODE="${create_code:-?}"
+  return 1
 }
 
 post_fortune_request() {

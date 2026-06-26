@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.371+375 (2026-06-26)
+
+### CI — release gate Gate 4 (canlı fal isteği)
+
+- Yayın oluşturma: mobil ile aynı gövde; falcı token önceliği
+- 403 yedek: mevcut canlı yayın seçimi veya SKIP (liste API erişilebilir)
+- Fal isteği POST başarılıysa yayıncı listesi olmadan da PASS
+
 ## 1.0.370+374 (2026-06-23)
 
 ### Sesli oda — SSE dj müzik oynatma
