@@ -259,6 +259,39 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     await prefetchVoiceRoomImages(context, primaryUrl: bg);
   }
 
+  void _showEmojiPicker(BuildContext ctx, TextEditingController ctrl) {
+    const emojis = [
+      '😀', '😂', '❤️', '🔥', '👏', '🎉', '💎', '🎤',
+      '🙏', '✨', '💜', '😍', '🤣', '👋', '🌙', '⭐',
+    ];
+    showModalBottomSheet<void>(
+      context: ctx,
+      backgroundColor: Colors.transparent,
+      builder: (sheet) => Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        decoration: BoxDecoration(
+          color: const Color(0xFF14101F).withValues(alpha: 0.96),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: emojis
+              .map(
+                (e) => InkWell(
+                  onTap: () {
+                    ctrl.text = '${ctrl.text}$e';
+                    Navigator.pop(sheet);
+                  },
+                  child: Text(e, style: const TextStyle(fontSize: 28)),
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+  }
+
   void _sendChatMessage(VoiceRoomEntity room) {
     final text = VoiceOfficialJoin.normalizeCommandInput(
       _messageCtrl.text.trim(),
@@ -1604,6 +1637,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         room: room,
                         presence: live.presence,
                       ),
+                  onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
                 ),
               ],
             ),

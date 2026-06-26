@@ -107,8 +107,8 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                     .read(voiceRoomUiProvider.notifier)
                     .toggleBackgroundMusic(),
                 onClose: () => ref
-                    .read(voiceRoomMusicSessionProvider.notifier)
-                    .markUserDismissed(),
+                    .read(voiceRoomLiveProvider(session.liveKey).notifier)
+                    .closeMusicPlayer(),
                 onTap: () => showRoomMusicQueueSheet(
                   context,
                   ref,
