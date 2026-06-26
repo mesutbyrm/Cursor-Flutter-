@@ -42,6 +42,7 @@ class ProfileScreenState extends Equatable {
   int get likes => stats.likes;
   int get liveStreams => stats.liveStreams;
   int get totalEarnings => stats.earningsJeton;
+  int get profileViews => stats.profileViews;
 
   @override
   List<Object?> get props => [user.id, jeton, cfc, stats, level.level];

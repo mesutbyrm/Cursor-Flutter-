@@ -12,11 +12,13 @@ class ProfileStats extends StatelessWidget {
     required this.state,
     this.onFollowersTap,
     this.onFollowingTap,
+    this.onVisitorsTap,
   });
 
   final ProfileScreenState state;
   final VoidCallback? onFollowersTap;
   final VoidCallback? onFollowingTap;
+  final VoidCallback? onVisitorsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +56,14 @@ class ProfileStats extends StatelessWidget {
               child: _StatCell(
                 label: 'Yayın',
                 value: profileFormatCount(state.liveStreams),
+              ),
+            ),
+            _divider(),
+            Expanded(
+              child: _StatCell(
+                label: 'Ziyaret',
+                value: profileFormatCount(state.profileViews),
+                onTap: onVisitorsTap,
               ),
             ),
           ],

@@ -28,10 +28,12 @@ class PremiumGiftFullscreenOverlay extends StatefulWidget {
 }
 
 class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverlay>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final _particlesKey = GlobalKey<FloatingGiftParticlesState>();
   final _coinKey = GlobalKey<GiftCoinBurstOverlayState>();
   late AnimationController _glowCtrl;
+  AnimationController? _flashCtrl;
+  Animation<double>? _flashAnim;
 
   @override
   void initState() {
@@ -54,13 +56,31 @@ class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverl
 
   void _triggerEffects(LiveGiftEvent e) {
     final emoji = PremiumGiftCatalog2026.emoji(e.giftId);
-    _particlesKey.currentState?.burst(emoji, count: 10 + e.combo.clamp(0, 20));
+    final rarity = PremiumGiftCatalog2026.rarity(e.giftId);
+    final comboBonus = e.combo.clamp(0, 20);
+    _particlesKey.currentState?.burst(emoji, count: 10 + comboBonus);
     _coinKey.currentState?.burst(count: 8 + (e.coinCost ~/ 50).clamp(0, 16));
+
+    // Epic+ hediyeler için ekran flaşı
+    if (rarity.index >= GiftRarity.epic.index) {
+      _flashCtrl?.dispose();
+      _flashCtrl = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 600),
+      );
+      _flashAnim = TweenSequence<double>([
+        TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.55), weight: 30),
+        TweenSequenceItem(tween: Tween(begin: 0.55, end: 0.0), weight: 70),
+      ]).animate(CurvedAnimation(parent: _flashCtrl!, curve: Curves.easeOut));
+      _flashCtrl!.forward();
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
     _glowCtrl.dispose();
+    _flashCtrl?.dispose();
     super.dispose();
   }
 
@@ -103,6 +123,15 @@ class PremiumGiftFullscreenOverlayState extends State<PremiumGiftFullscreenOverl
             spawnFromGiftId: e.giftId,
           ),
           GiftCoinBurstOverlay(key: _coinKey, active: true),
+          if (_flashAnim != null)
+            AnimatedBuilder(
+              animation: _flashAnim!,
+              builder: (_, __) => IgnorePointer(
+                child: Container(
+                  color: glow.withValues(alpha: _flashAnim!.value),
+                ),
+              ),
+            ),
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,

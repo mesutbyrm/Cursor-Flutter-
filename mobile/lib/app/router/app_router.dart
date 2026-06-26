@@ -67,6 +67,7 @@ import '../../features/profile/presentation/pages/growth_hub_page.dart';
 import '../../features/profile/presentation/pages/profile_help_support_page.dart';
 import '../../features/profile/presentation/pages/profile_payment_notice_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/profile/presentation/pages/profile_visitors_page.dart';
 import '../../features/profile/presentation/pages/settings_page.dart';
 import '../../features/profile/presentation/pages/active_devices_page.dart';
 import '../../features/profile/presentation/pages/profile_transactions_page.dart';
@@ -578,6 +579,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             tab: ProfileFollowTab.following,
           );
         },
+      ),
+      GoRoute(
+        path: '/profile/visitors',
+        builder: (context, state) => const ProfileVisitorsPage(),
       ),
       GoRoute(
         path: '/user/:id',

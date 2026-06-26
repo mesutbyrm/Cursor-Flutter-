@@ -10,6 +10,7 @@ class ProfileStatsEntity {
     this.giftsReceivedCoins = 0,
     this.earningsJeton = 0,
     this.approvedTopUpTotal = 0,
+    this.profileViews = 0,
   });
 
   factory ProfileStatsEntity.fromJson(Map<String, dynamic> json) {
@@ -23,6 +24,7 @@ class ProfileStatsEntity {
       giftsReceivedCoins: asInt(pick(m, ['giftsReceivedCoins', 'earningsJeton'])),
       earningsJeton: asInt(pick(m, ['earningsJeton', 'giftsReceivedCoins'])),
       approvedTopUpTotal: asInt(pick(m, ['approvedTopUpTotal'])),
+      profileViews: asInt(pick(m, ['profileViews', 'profile_views', 'viewCount'])),
     );
   }
 
@@ -34,6 +36,7 @@ class ProfileStatsEntity {
   final int giftsReceivedCoins;
   final int earningsJeton;
   final int approvedTopUpTotal;
+  final int profileViews;
 }
 
 class GiftReceivedSummaryEntity {
