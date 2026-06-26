@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:canlifal_social/features/voice_hub/domain/entities/music_queue_item.dart';
 import 'package:canlifal_social/features/voice_hub/data/youtube_stream_resolver.dart';
 import 'package:canlifal_social/features/voice_hub/domain/entities/chat_room_dj_state.dart';
 import 'package:canlifal_social/features/voice_hub/domain/entities/music_queue_item.dart';
@@ -77,6 +78,22 @@ void main() {
         ),
         'dQw4w9WgXcQ',
       );
+    });
+  });
+
+  group('MusicQueueItem video mode', () {
+    test('asVideoRequest marks audio item as video request', () {
+      final item = MusicQueueItem(
+        id: '1',
+        title: 'Test',
+        youtubeUrl: 'https://www.youtube.com/watch?v=abc12345678',
+        createdAt: DateTime(2026),
+      );
+      expect(item.isVideoRequest, isFalse);
+      final video = item.asVideoRequest();
+      expect(video.isVideoRequest, isTrue);
+      expect(video.withVideo, isTrue);
+      expect(video.requestType, 'video');
     });
   });
 }

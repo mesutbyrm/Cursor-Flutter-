@@ -66,7 +66,7 @@ class RoomVideoState extends Equatable {
     RoomPlaybackSync? sync,
   }) {
     final np = dj.nowPlaying;
-    if (np != null && !np.withVideo) {
+    if (np != null && !np.isVideoRequest) {
       return const RoomVideoState();
     }
     final videoId = YoutubeVideoId.fromDj(

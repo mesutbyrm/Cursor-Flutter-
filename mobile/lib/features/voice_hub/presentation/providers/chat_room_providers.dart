@@ -1088,7 +1088,7 @@ class VoiceRoomLiveController
         ) ??
         '';
     return '${effective.playing}|$videoId|${effective.nowPlaying?.id}|'
-        '${effective.nowPlaying?.withVideo == true}|'
+        '${effective.nowPlaying?.isVideoRequest == true}|'
         '${effective.musicEnabled}|$muted|'
         '${effective.musicUrl?.trim() ?? ''}';
   }
@@ -1493,13 +1493,30 @@ class VoiceRoomLiveController
       if (result.newBalance != null) {
         invalidateWalletCacheFromRef(ref);
       }
-      await _syncMusicFromServerIfNeeded(force: true);
-      final dj = state.dj;
-      if (dj.playing || dj.nowPlaying != null || dj.musicQueue.isNotEmpty) {
-        _lastDjPlaybackSignature = '';
+      var queue = result.queue;
+      var nowPlaying = result.item ?? (queue.isNotEmpty ? queue.first : null);
+      if (withVideo && nowPlaying != null) {
+        nowPlaying = nowPlaying.asVideoRequest();
+        queue = queue
+            .map((e) => e.id == nowPlaying!.id ? nowPlaying : e)
+            .toList();
+      }
+      final shouldPlay = result.playing ||
+          result.queuePosition == 1 ||
+          (queue.isNotEmpty && nowPlaying != null);
+      var dj = state.dj.copyWith(
+        musicQueue: queue,
+        nowPlaying: nowPlaying,
+        playing: shouldPlay,
+        musicUrl: result.streamUrl ?? nowPlaying?.youtubeUrl,
+      );
+      dj = _djWithQueuePlaybackFallback(dj);
+      _lastDjPlaybackSignature = '';
+      state = state.copyWith(dj: dj, sending: false);
+      if (shouldPlay) {
         await _playDjInBackground(dj);
       }
-      state = state.copyWith(sending: false);
+      unawaited(_syncMusicFromServerIfNeeded(force: true));
       _showMusicRequestFlashLine('✅ «${hit.title}» kuyruğa eklendi');
       return null;
     } catch (e) {
@@ -1701,7 +1718,7 @@ class VoiceRoomLiveController
     );
     final shouldPlay = (sync?.isPlaying ?? effectiveDj.playing) &&
         _hasDjPlayableSource(effectiveDj, sync: sync, videoId: videoId);
-    final withVideo = effectiveDj.nowPlaying?.withVideo == true;
+    final withVideo = effectiveDj.nowPlaying?.isVideoRequest == true;
     final startPos = Duration(
       milliseconds: VoicePlaybackLimits.clampPositionMs(
         sync?.resolvedPositionMs() ?? 0,
@@ -1962,6 +1979,7 @@ class VoiceRoomLiveController
               duration: hit.duration,
               priority: priority,
               skipPayment: true,
+              withVideo: true,
             )
             .timeout(
               const Duration(seconds: 45),
@@ -2025,6 +2043,12 @@ class VoiceRoomLiveController
             .map((e) => e.id == nowPlaying!.id ? nowPlaying : e)
             .toList();
       }
+      if (skipPayment && nowPlaying != null) {
+        nowPlaying = nowPlaying.asVideoRequest();
+        queue = queue
+            .map((e) => e.id == nowPlaying!.id ? nowPlaying : e)
+            .toList();
+      }
 
       final shouldPlay = result.playing ||
           result.queuePosition == 1 ||
@@ -2044,9 +2068,12 @@ class VoiceRoomLiveController
         }
       }
       _prefetchYoutubePlayback(dj);
+      _lastDjPlaybackSignature = '';
       state = state.copyWith(dj: dj);
-      await _syncMusicFromServerIfNeeded(force: true);
-      await _playDjInBackground(state.dj);
+      if (shouldPlay) {
+        await _playDjInBackground(dj);
+      }
+      unawaited(_syncMusicFromServerIfNeeded(force: true));
       return null;
     } on TimeoutException {
       return await _recoverMusicRequestAfterTimeout(title);
@@ -3149,12 +3176,18 @@ class VoiceRoomLiveController
       final queue = result.queue.isNotEmpty
           ? result.queue
           : state.dj.musicQueue;
-      final nowPlaying = _resolveNowPlayingFromRequest(
+      var nowPlaying = _resolveNowPlayingFromRequest(
         queue: queue,
         item: result.item,
         queuePosition: result.queuePosition,
         fallback: state.dj.nowPlaying,
       );
+      if (withVideo && nowPlaying != null) {
+        nowPlaying = nowPlaying.asVideoRequest();
+        queue = queue
+            .map((e) => e.id == nowPlaying!.id ? nowPlaying : e)
+            .toList();
+      }
       final shouldPlay =
           result.playing ||
           result.queuePosition == 1 ||

@@ -58,7 +58,6 @@ import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/voice_room/voice_room_spec_footer.dart';
 import 'sheets/voice_room_commands_panel.dart';
-import 'sheets/music_mode_picker_sheet.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'utils/kick_strike_ui.dart';
 import 'widgets/premium_2026/voice_timed_duyuru.dart';
@@ -1185,17 +1184,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           final hit = await showMusicSearchPickerSheet(context, ref, query: q);
           ctrl.clearPendingMusicSearch();
           if (!mounted || hit == null) return;
-          final liveDj = ref.read(voiceRoomLiveProvider(_liveRoomKey)).dj;
-          final picked = await showMusicModePickerSheet(
-            context,
-            audioCost: liveDj.musicRequestCost,
-            videoCost: liveDj.videoRequestCost,
-            songTitle: hit.title,
-          );
-          if (!mounted || picked == null) return;
+          // Ortadan !istek — önceki davranış: videolu müzik (ortada YouTube oynatıcı)
           final err = await ctrl.submitSelectedSong(
             hit,
-            withVideo: picked,
+            withVideo: true,
             skipPayment: skipPayment,
           );
           if (!mounted || err == null) return;

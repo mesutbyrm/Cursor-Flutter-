@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.379+383 (2026-06-26)
+
+### Sesli oda — ortadan !istek videolu müzik
+
+- **!istek (sohbet):** Şarkı seçiminden sonra otomatik **videolu** mod (ortada YouTube oynatıcı)
+- **`withVideo` yedek:** Sunucu bayrağı eksikse istemci `nowPlaying.asVideoRequest()` ile video modunu korur
+- **Oynatma:** `isVideoRequest` ile ses-only parçalar video overlay açmaz
+
 ## 1.0.378+382 (2026-06-26)
 
 ### Sesli oda müzik — youtube-stream URL çözümleme
