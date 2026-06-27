@@ -13,6 +13,7 @@ import '../../providers/live_host_dashboard_provider.dart';
 import '../../providers/live_video_pk_provider.dart';
 import '../../providers/live_stream_engagement_provider.dart';
 import '../../providers/live_stream_viewers_provider.dart';
+import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../widgets/broadcast_room/live_moderation_sheet.dart';
 import 'live_host_dashboard_chart.dart';
 
@@ -174,31 +175,49 @@ class _FortuneTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(liveFortuneRequestsProvider(streamId));
     final grouped = _groupByPriority(state.requests);
+    if (state.requests.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text('Fal isteği yok', style: TextStyle(color: Colors.white54)),
+        ),
+      );
+    }
 
-    return ListView(
+    final sections = grouped.entries.toList(growable: false);
+    final rows = <_FortuneRow>[];
+    for (var s = 0; s < sections.length; s++) {
+      final entry = sections[s];
+      rows.add(_FortuneRow.title(entry.key));
+      for (final r in entry.value) {
+        rows.add(_FortuneRow.request(r));
+      }
+      if (s < sections.length - 1) {
+        rows.add(const _FortuneRow.gap());
+      }
+    }
+
+    return LazyListView(
       padding: const EdgeInsets.all(12),
-      children: [
-        for (final entry in grouped.entries) ...[
-          _sectionTitle(entry.key),
-          ...entry.value.map(
-            (r) => _FortuneSwipeCard(
-              request: r,
-              onAccept: () => _setStatus(ref, r.id, LiveFortuneRequestStatus.reviewing),
-              onHold: () => _setStatus(ref, r.id, LiveFortuneRequestStatus.held),
-              onComplete: () => _setStatus(ref, r.id, LiveFortuneRequestStatus.answered),
-              onCancel: () => _setStatus(ref, r.id, LiveFortuneRequestStatus.cancelled),
+      itemCount: rows.length,
+      itemBuilder: (context, index) {
+        final row = rows[index];
+        return switch (row) {
+          _FortuneTitle(:final label) => _sectionTitle(label),
+          _FortuneRequest(:final request) => _FortuneSwipeCard(
+              request: request,
+              onAccept: () =>
+                  _setStatus(ref, request.id, LiveFortuneRequestStatus.reviewing),
+              onHold: () =>
+                  _setStatus(ref, request.id, LiveFortuneRequestStatus.held),
+              onComplete: () =>
+                  _setStatus(ref, request.id, LiveFortuneRequestStatus.answered),
+              onCancel: () =>
+                  _setStatus(ref, request.id, LiveFortuneRequestStatus.cancelled),
             ),
-          ),
-          const SizedBox(height: 8),
-        ],
-        if (state.requests.isEmpty)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Text('Fal isteği yok', style: TextStyle(color: Colors.white54)),
-            ),
-          ),
-      ],
+          _FortuneGap() => const SizedBox(height: 8),
+        };
+      },
     );
   }
 
@@ -422,12 +441,20 @@ class _GuestsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final co = ref.watch(coBroadcastProvider);
-    return ListView(
+    final requests = co.joinRequests;
+    final guests = co.coBroadcasters;
+    final itemCount = 1 + requests.length + 1 + guests.length;
+
+    return LazyListView(
       padding: const EdgeInsets.all(12),
-      children: [
-        _sectionTitle('Bekleyen istekler'),
-        ...co.joinRequests.map(
-          (r) => ListTile(
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return _sectionTitle('Bekleyen istekler');
+        }
+        if (index <= requests.length) {
+          final r = requests[index - 1];
+          return ListTile(
             title: Text(
               r['userName']?.toString() ?? r['displayName']?.toString() ?? 'İzleyici',
               style: const TextStyle(color: Colors.white),
@@ -451,18 +478,19 @@ class _GuestsTab extends ConsumerWidget {
               },
               child: const Text('Kabul'),
             ),
+          );
+        }
+        if (index == requests.length + 1) {
+          return _sectionTitle('Aktif konuklar');
+        }
+        final g = guests[index - requests.length - 2];
+        return ListTile(
+          title: Text(
+            g['userName']?.toString() ?? 'Konuk',
+            style: const TextStyle(color: Colors.white),
           ),
-        ),
-        _sectionTitle('Aktif konuklar'),
-        ...co.coBroadcasters.map(
-          (g) => ListTile(
-            title: Text(
-              g['userName']?.toString() ?? 'Konuk',
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
@@ -509,45 +537,61 @@ class _ModerationTabState extends ConsumerState<_ModerationTab> {
   @override
   Widget build(BuildContext context) {
     final violations = ref.watch(liveStreamEngagementProvider).violations;
+    final log = violations.reversed.take(20).toList(growable: false);
 
-    return ListView(
-      padding: const EdgeInsets.all(12),
-      children: [
-        TextField(
-          controller: _userIdCtrl,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            labelText: 'Kullanıcı ID',
-            hintText: 'Moderasyon hedefi',
-            labelStyle: TextStyle(color: Colors.white70),
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.all(12),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate.fixed([
+              TextField(
+                controller: _userIdCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Kullanıcı ID',
+                  hintText: 'Moderasyon hedefi',
+                  labelStyle: TextStyle(color: Colors.white70),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _modBtn('Sustur', Icons.volume_off_rounded, () => _quickMod('mute')),
+                  _modBtn('At', Icons.logout_rounded, () => _quickMod('kick')),
+                  _modBtn('Ban', Icons.block_rounded, () => _quickMod('ban')),
+                  _modBtn('Mod yap', Icons.shield_rounded, () => _quickMod('mod')),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _sectionTitle('İhlal günlüğü'),
+              if (log.isEmpty)
+                const Text('Kayıt yok', style: TextStyle(color: Colors.white54)),
+              const SizedBox(height: 8),
+              const Text(
+                'Sohbette uzun basarak da moderasyon açabilirsiniz.',
+                style: TextStyle(color: Colors.white38, fontSize: 11),
+              ),
+            ]),
           ),
         ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _modBtn('Sustur', Icons.volume_off_rounded, () => _quickMod('mute')),
-            _modBtn('At', Icons.logout_rounded, () => _quickMod('kick')),
-            _modBtn('Ban', Icons.block_rounded, () => _quickMod('ban')),
-            _modBtn('Mod yap', Icons.shield_rounded, () => _quickMod('mod')),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _sectionTitle('İhlal günlüğü'),
-        if (violations.isEmpty)
-          const Text('Kayıt yok', style: TextStyle(color: Colors.white54)),
-        for (final v in violations.reversed.take(20))
-          ListTile(
-            dense: true,
-            leading: const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 18),
-            title: Text(v, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+        if (log.isNotEmpty)
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            sliver: SliverList.builder(
+              itemCount: log.length,
+              itemBuilder: (context, index) => ListTile(
+                dense: true,
+                leading: const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 18),
+                title: Text(
+                  log[index],
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
+                ),
+              ),
+            ),
           ),
-        const SizedBox(height: 8),
-        const Text(
-          'Sohbette uzun basarak da moderasyon açabilirsiniz.',
-          style: TextStyle(color: Colors.white38, fontSize: 11),
-        ),
       ],
     );
   }
@@ -763,4 +807,26 @@ Widget _sectionTitle(String t) {
       ),
     ),
   );
+}
+
+sealed class _FortuneRow {
+  const _FortuneRow();
+  const factory _FortuneRow.title(String label) = _FortuneTitle;
+  const factory _FortuneRow.request(LiveFortuneRequestEntity request) =
+      _FortuneRequest;
+  const factory _FortuneRow.gap() = _FortuneGap;
+}
+
+final class _FortuneTitle extends _FortuneRow {
+  const _FortuneTitle(this.label);
+  final String label;
+}
+
+final class _FortuneRequest extends _FortuneRow {
+  const _FortuneRequest(this.request);
+  final LiveFortuneRequestEntity request;
+}
+
+final class _FortuneGap extends _FortuneRow {
+  const _FortuneGap();
 }

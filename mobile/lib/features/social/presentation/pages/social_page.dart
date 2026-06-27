@@ -73,12 +73,10 @@ class _SocialPageState extends ConsumerState<SocialPage> {
                   physics: PremiumMotion.listPhysics,
                   slivers: [
                     social.when(
-                      loading: () => SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (_, i) => const RepaintBoundary(
-                            child: PremiumPostSkeleton(),
-                          ),
-                          childCount: 3,
+                      loading: () => SliverList.builder(
+                        itemCount: 3,
+                        itemBuilder: (_, _) => const RepaintBoundary(
+                          child: PremiumPostSkeleton(),
                         ),
                       ),
                       error: (e, _) => SliverFillRemaining(
@@ -108,24 +106,22 @@ class _SocialPageState extends ConsumerState<SocialPage> {
                           );
                         }
                         final feedCount = SocialFeedLayout.itemCount(posts.length);
-                        return SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, i) {
-                              final postIdx =
-                                  SocialFeedLayout.postIndexAt(i, posts.length);
-                              if (postIdx != null) {
-                                return RepaintBoundary(
-                                  child: SocialInstagramPostCard(
-                                    post: posts[postIdx],
-                                  ),
-                                );
-                              }
-                              return const RepaintBoundary(
-                                child: SocialActiveRooms(embeddedInFeed: true),
+                        return SliverList.builder(
+                          itemCount: feedCount,
+                          itemBuilder: (context, i) {
+                            final postIdx =
+                                SocialFeedLayout.postIndexAt(i, posts.length);
+                            if (postIdx != null) {
+                              return RepaintBoundary(
+                                child: SocialInstagramPostCard(
+                                  post: posts[postIdx],
+                                ),
                               );
-                            },
-                            childCount: feedCount,
-                          ),
+                            }
+                            return const RepaintBoundary(
+                              child: SocialActiveRooms(embeddedInFeed: true),
+                            );
+                          },
                         );
                       },
                     ),

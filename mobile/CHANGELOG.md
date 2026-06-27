@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.396+400 (2026-06-27)
+
+### Performans — Görev 5: Liste performansı
+
+- **`LazyListView` / `LazyHorizontalListView` / `LazyGridView`:** `ListView.builder` sarmalayıcıları
+- **Story şeritleri:** `SocialStoriesRail`, `StoriesSection` — yatay lazy builder
+- **Canlı yayın:** sesli oda keşif story satırı, yayıncı kontrol merkezi (fal/konuk)
+- **Mesajlar:** konuşma listesi `SliverList.builder`
+- **Sosyal akış:** feed `SliverList.builder`
+- **Sesli oda:** DJ presence listesi, YouTube/müzik arama sonuçları lazy
+- **GridView.count → GridView.builder:** moderasyon komut paneli
+
 ## 1.0.395+399 (2026-06-27)
 
 ### Performans — Görev 4: Görsel optimizasyonu

@@ -12,6 +12,7 @@ import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
 import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/performance/list_perf.dart';
+import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/providers/auth_selectors.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
@@ -756,19 +757,22 @@ class _LiveStoriesRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final streams = live.take(8).toList(growable: false);
     return SizedBox(
       height: height,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
+      child: LazyHorizontalListView(
         padding: EdgeInsets.symmetric(horizontal: horizontalPad),
-        children: [
-          _StoryOpenRoom(onTap: onOpenRoom),
-          const SizedBox(width: 12),
-          for (final s in live.take(8)) ...[
-            _StoryLiveItem(stream: s, onTap: () => onStreamTap(s)),
-            const SizedBox(width: 12),
-          ],
-        ],
+        itemCount: 1 + streams.length,
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _StoryOpenRoom(onTap: onOpenRoom);
+          }
+          final stream = streams[index - 1];
+          return Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: _StoryLiveItem(stream: stream, onTap: () => onStreamTap(stream)),
+          );
+        },
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/di/pf_providers.dart';
 import '../../core/theme/pf_theme.dart';
+import '../../../core/widgets/lazy_list_views.dart';
 import '../../domain/entities/pf_fortune_teller.dart';
 import '../widgets/pf_glass_card.dart';
 import '../widgets/pf_section_header.dart';
@@ -24,15 +25,18 @@ class PfLiveTellersPage extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('Canlı Falcılar')),
       body: tellers.when(
-        data: (list) => ListView(
+        data: (list) => LazyListView(
           padding: const EdgeInsets.only(bottom: 100),
-          children: [
-            const PfSectionHeader(
-              title: 'Online Falcılar',
-              subtitle: 'Sesli & görüntülü görüşme',
-            ),
-            ...list.map((t) => _TellerCard(teller: t)),
-          ],
+          itemCount: 1 + list.length,
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return const PfSectionHeader(
+                title: 'Online Falcılar',
+                subtitle: 'Sesli & görüntülü görüşme',
+              );
+            }
+            return _TellerCard(teller: list[index - 1]);
+          },
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/domain/entities/user_entity.dart';
@@ -85,19 +86,21 @@ class _StoriesList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final others = rings.where((r) => r.user.id != me?.id).toList();
+    final itemCount = 1 + others.length;
 
-    return ListView(
-      scrollDirection: Axis.horizontal,
+    return LazyHorizontalListView(
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      children: [
-        _OwnStoryChip(user: me),
-        ...others.map(
-          (r) => Padding(
-            padding: const EdgeInsets.only(left: 14),
-            child: _StoryRingChip(ring: r),
-          ),
-        ),
-      ],
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return _OwnStoryChip(user: me);
+        }
+        final ring = others[index - 1];
+        return Padding(
+          padding: const EdgeInsets.only(left: 14),
+          child: _StoryRingChip(ring: ring),
+        );
+      },
     );
   }
 }

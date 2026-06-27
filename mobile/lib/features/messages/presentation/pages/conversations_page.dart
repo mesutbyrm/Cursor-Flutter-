@@ -94,26 +94,23 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
                 }
                 return SliverPadding(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (ctx, i) {
-                        if (i >= items.length) {
-                          if (state.hasMore) {
-                            return Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              child: Center(
-                                child: SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                              ),
-                            );
-                          }
-                          return null;
-                        }
-                        final c = items[i];
+                  sliver: SliverList.builder(
+                    itemCount: items.length + (state.hasMore ? 1 : 0),
+                    itemBuilder: (ctx, i) {
+                      if (i >= items.length) {
                         return Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        );
+                      }
+                      final c = items[i];
+                      return Padding(
                           padding: const EdgeInsets.only(bottom: 10),
                           child: ProGlassListTile(
                             onTap: () => context.push('/chat/${c.id}'),
@@ -183,9 +180,7 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
                             ),
                           ),
                         );
-                      },
-                      childCount: items.length + (state.hasMore ? 1 : 0),
-                    ),
+                    },
                   ),
                 );
               },

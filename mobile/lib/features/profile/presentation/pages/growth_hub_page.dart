@@ -97,7 +97,7 @@ class GrowthHubPage extends ConsumerWidget {
           physics: PremiumMotion.listPhysics,
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   if (loading) const LinearProgressIndicator(minHeight: 2),
@@ -116,13 +116,26 @@ class GrowthHubPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 20),
                   const ProfileSectionTitle(title: 'Bugünün görevleri'),
-                  for (final task in taskCards) ...[
-                    _TaskCard(
-                      task: task,
-                      onTap: () => _openTask(context, task.route),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
+                ]),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+              sliver: SliverList.builder(
+                itemCount: taskCards.length,
+                itemBuilder: (context, index) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _TaskCard(
+                    task: taskCards[index],
+                    onTap: () => _openTask(context, taskCards[index].route),
+                  ),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
                   const SizedBox(height: 8),
                   ProfileSectionTitle(
                     title: 'Rozet albümü',

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/widgets/lazy_list_views.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -474,12 +475,15 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
           ),
         Expanded(
           child: _hits.isNotEmpty
-              ? ListView(
+              ? LazyListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                  children: [
-                    _sectionTitle('Sonuçlar (${_hits.length})'),
-                    ..._hits.map(_hitTile),
-                  ],
+                  itemCount: 1 + _hits.length,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return _sectionTitle('Sonuçlar (${_hits.length})');
+                    }
+                    return _hitTile(_hits[index - 1]);
+                  },
                 )
               : Center(
                   child: Padding(

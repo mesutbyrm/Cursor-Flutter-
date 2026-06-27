@@ -495,22 +495,24 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                   color: const Color(0xFF38BDF8),
                 ),
                 if (canModerate)
-                  GridView.count(
+                  GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 1.55,
-                    children: _modGrid
-                        .map(
-                          (c) => _PromoActionCard(
-                            card: c,
-                            compact: true,
-                            onTap: () => _onPromoTap(c),
-                          ),
-                        )
-                        .toList(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 1.55,
+                    ),
+                    itemCount: _modGrid.length,
+                    itemBuilder: (context, index) {
+                      final c = _modGrid[index];
+                      return _PromoActionCard(
+                        card: c,
+                        compact: true,
+                        onTap: () => _onPromoTap(c),
+                      );
+                    },
                   )
                 else
                   Text(

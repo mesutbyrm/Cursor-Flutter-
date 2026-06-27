@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../../../../core/widgets/discover_tab_layout.dart';
 import '../../../domain/game_center_models.dart';
@@ -68,13 +69,18 @@ class _GameCenterLeaderboardPageState
                 final rest = entries.length > 3
                     ? entries.sublist(3)
                     : <LeaderboardEntry>[];
-                return ListView(
+                final headerCount = top3.isNotEmpty ? 2 : 0;
+                return LazyListView(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 88),
-                  children: [
-                    if (top3.isNotEmpty) _Podium(entries: top3),
-                    const SizedBox(height: 16),
-                    ...rest.map((e) => _RankTile(entry: e)),
-                  ],
+                  itemCount: headerCount + rest.length,
+                  itemBuilder: (context, index) {
+                    if (top3.isNotEmpty) {
+                      if (index == 0) return _Podium(entries: top3);
+                      if (index == 1) return const SizedBox(height: 16);
+                      return _RankTile(entry: rest[index - 2]);
+                    }
+                    return _RankTile(entry: rest[index]);
+                  },
                 );
               },
             ),
