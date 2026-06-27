@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/bootstrap/startup_perf.dart';
 import '../../../../../core/widgets/canlifal_logo.dart';
+import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../messages/presentation/providers/messages_providers.dart';
 import '../../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
@@ -31,7 +31,7 @@ class HomeHeader extends StatelessWidget {
             children: [
               const CanlifalWordmark(fontSize: 24, compact: true),
               const Spacer(),
-              const _HomeHeaderBadgesGate(),
+              const _HomeHeaderBadges(),
             ],
           ),
           const SizedBox(height: 12),
@@ -71,54 +71,7 @@ class HomeHeader extends StatelessWidget {
   }
 }
 
-/// Rozetler — önce statik ikonlar, gecikme sonrası API.
-class _HomeHeaderBadgesGate extends StatefulWidget {
-  const _HomeHeaderBadgesGate();
-
-  @override
-  State<_HomeHeaderBadgesGate> createState() => _HomeHeaderBadgesGateState();
-}
-
-class _HomeHeaderBadgesGateState extends State<_HomeHeaderBadgesGate> {
-  var _ready = false;
-
-  @override
-  void initState() {
-    super.initState();
-    Future<void>.delayed(StartupPerf.homeHeaderBadgesDelay, () {
-      if (mounted) setState(() => _ready = true);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_ready) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _IconBadge(
-            icon: Icons.notifications_none_rounded,
-            onTap: () => context.push('/notifications'),
-          ),
-          const SizedBox(width: 10),
-          _IconBadge(
-            icon: Icons.chat_bubble_outline_rounded,
-            onTap: () => context.push('/messages'),
-          ),
-          const SizedBox(width: 10),
-          _CoinPill(
-            balance: 0,
-            onTap: () => context.push('/jeton-store'),
-            onAdd: () => context.push('/jeton-store'),
-          ),
-        ],
-      );
-    }
-    return const _HomeHeaderBadges();
-  }
-}
-
-/// Rozetler ve jeton — açılışta API tetiklemez; gecikmeli yüklenir.
+/// Bildirim, mesaj, jeton — anında render; cüzdan shell prefetch ile güncellenir.
 class _HomeHeaderBadges extends ConsumerWidget {
   const _HomeHeaderBadges();
 
@@ -165,14 +118,19 @@ class _MessagesBadge extends ConsumerWidget {
   }
 }
 
+/// Rozetler — jeton oturum cache + cüzdan API.
 class _HomeJetonPill extends ConsumerWidget {
   const _HomeJetonPill();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final jeton = ref.watch(
-      walletBalancesProvider.select((w) => w.valueOrNull?.jeton ?? 0),
+    final walletJeton = ref.watch(
+      walletBalancesProvider.select((w) => w.valueOrNull?.jeton),
     );
+    final authJeton = ref.watch(
+      authControllerProvider.select((a) => a.valueOrNull?.coinBalance),
+    );
+    final jeton = walletJeton ?? authJeton ?? 0;
     return _CoinPill(
       balance: jeton,
       onTap: () => context.push('/jeton-store'),

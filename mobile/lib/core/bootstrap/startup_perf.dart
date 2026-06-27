@@ -9,14 +9,14 @@ abstract final class StartupPerf {
   /// runApp sonrası ağır SDK init gecikmesi (AdMob, analytics).
   static const deferredSdkDelay = Duration(milliseconds: 800);
 
-  /// Kabuk prefetch — bildirim, cüzdan, mesajlar.
-  static const shellPrefetchDelay = Duration(seconds: 2);
+  /// Kabuk prefetch — bildirim, cüzdan, mesajlar (jeton gecikmesiz).
+  static const shellPrefetchDelay = Duration(milliseconds: 400);
 
   /// SSE presence + psikolog/ajans yenileme.
   static const shellRealtimeDelay = Duration(seconds: 3);
 
-  /// Ana sayfa üst bar rozetleri (bildirim, mesaj, jeton).
-  static const homeHeaderBadgesDelay = Duration(milliseconds: 1200);
+  /// Ana sayfa üst bar rozetleri — anında (API shell prefetch ile).
+  static const homeHeaderBadgesDelay = Duration.zero;
 
   /// Banner carousel API.
   static const homeBannerDelay = Duration(milliseconds: 400);

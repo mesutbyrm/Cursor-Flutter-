@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../../core/providers/auth_selectors.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../voice_hub/presentation/pages/voice_gold_vip_page.dart';
@@ -35,6 +36,7 @@ Future<void> openVoiceRoomWithVipGate(
       room: room,
       onJoinRoom: () {
         if (context.mounted) {
+          VoiceRoomEntryPerf.prewarmOnRoomTap(ref, room);
           context.push('/voice-room/${room.apiRoomKey}', extra: room);
         }
       },
@@ -43,5 +45,6 @@ Future<void> openVoiceRoomWithVipGate(
   }
 
   if (!context.mounted) return;
+  VoiceRoomEntryPerf.prewarmOnRoomTap(ref, room);
   context.push('/voice-room/${room.apiRoomKey}', extra: room);
 }

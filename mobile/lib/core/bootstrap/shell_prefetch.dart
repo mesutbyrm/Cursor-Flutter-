@@ -6,6 +6,7 @@ import '../../../features/messages/presentation/providers/messages_providers.dar
 import '../../../features/notifications/presentation/providers/notifications_providers.dart';
 import '../../../features/profile/presentation/providers/profile_providers.dart';
 import 'startup_perf.dart';
+import '../performance/voice_room_entry_perf.dart';
 
 /// Ana kabuk açıldığında sık kullanılan verileri arka planda önceden yükler.
 void prefetchShellData(
@@ -14,6 +15,7 @@ void prefetchShellData(
 }) {
   unawaited(
     Future<void>.delayed(delay, () {
+      VoiceRoomEntryPerf.prewarmShell();
       ref.read(notificationsListProvider.future).ignore();
       ref.read(walletBalancesProvider.future).ignore();
       ref.read(jetonPackagesProvider.future).ignore();

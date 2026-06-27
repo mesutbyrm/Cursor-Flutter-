@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../livekit/data/datasources/livekit_remote_datasource.dart';
 import '../../../livekit/presentation/livekit_room_manager.dart';
 import '../../../trtc/data/datasources/trtc_remote_datasource.dart';
+import '../../../trtc/domain/entities/trtc_credentials.dart';
 import '../../../trtc/presentation/trtc_room_manager.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import '../../domain/entities/voice_audio_engine.dart';
@@ -42,8 +46,9 @@ class VoiceRoomAudioCoordinator {
     required bool isHost,
     LiveKitRemoteDataSource? liveKitRemote,
     TrtcRemoteDataSource? trtcRemote,
+    TrtcCredentials? prefetchedTrtc,
   }) async {
-    await VoiceRoomMusicAudioSession.ensureConfigured();
+    unawaited(VoiceRoomMusicAudioSession.ensureConfigured());
     final lkRemote = liveKitRemote ?? _liveKitRemote;
     final trtcDs = trtcRemote ?? _trtcRemote;
 
@@ -84,7 +89,10 @@ class VoiceRoomAudioCoordinator {
         'roomId': roomKey,
         'userId': userId,
       });
-      final cred = await trtcDs.fetchUserSig(userId: userId, roomId: roomKey);
+      final cached = prefetchedTrtc ??
+          VoiceRoomEntryPerf.takeTrtc(userId: userId, roomId: roomKey);
+      final cred = cached ??
+          await trtcDs.fetchUserSig(userId: userId, roomId: roomKey);
       await _trtc.join(
         credentials: cred,
         isHost: isHost,

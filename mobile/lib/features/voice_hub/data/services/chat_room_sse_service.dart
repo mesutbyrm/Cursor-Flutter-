@@ -2,6 +2,7 @@ import 'dart:async';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/base_sse_service.dart';
+import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
@@ -46,6 +47,16 @@ class ChatRoomSseService extends BaseSseService {
   @override
   bool get requiresAuth => false;
 
+  String? get activeRoomId => _roomId;
+
+  bool isLiveForRoom(String roomId) {
+    final id = roomId.trim();
+    if (_roomId != id || id.isEmpty) return false;
+    final phase = status.value.phase;
+    return phase == SseConnectionPhase.connected ||
+        phase == SseConnectionPhase.connecting;
+  }
+
   Future<void> connect({
     required String roomId,
     required Future<String?> Function() accessToken,
@@ -83,6 +94,13 @@ class ChatRoomSseService extends BaseSseService {
     _onFortuneRequest = onFortuneRequest;
     _onPk = onPk;
     _onTyping = onTyping;
+    if (isLiveForRoom(id)) {
+      VoiceRoomDebugLog.log('sse.connect.skip', {
+        'roomId': id,
+        'reason': 'already_connected',
+      });
+      return;
+    }
     VoiceRoomDebugLog.sseConnect(roomId: id, url: streamUrlFor(id));
     await super.openConnection(accessToken: accessToken);
   }

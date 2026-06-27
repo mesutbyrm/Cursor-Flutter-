@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/performance/voice_room_entry_perf.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -51,7 +52,7 @@ class VoiceRoomBasicPage extends ConsumerStatefulWidget {
 class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   VoiceRoomAudioCoordinator? _audio;
   String? _pinnedLiveRoomKey;
-  var _audioJoining = true;
+  var _audioJoining = false;
   var _audioReady = false;
   String? _audioError;
   String? _loginError;
@@ -93,7 +94,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       if (widget.room.apiRoomKey.isEmpty) {
         unawaited(ref.read(voiceRoomsProvider.future));
       }
-      unawaited(_joinAudio());
+      _startPremiumRealtime(ref.read(authControllerProvider).valueOrNull);
+      unawaited(_joinAudioBackground());
     });
   }
 
@@ -122,7 +124,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     if (!auth.isLoading) return auth.valueOrNull;
     try {
       return await ref.read(authControllerProvider.future).timeout(
-            const Duration(seconds: 12),
+            VoiceRoomEntryPerf.entryBudget,
           );
     } catch (_) {
       return ref.read(authControllerProvider).valueOrNull;
@@ -137,7 +139,14 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     return uname.isNotEmpty && slug == uname;
   }
 
-  Future<void> _joinAudio() async {
+  void _startPremiumRealtime(UserEntity? user) {
+    if (user == null) return;
+    _startGiftRealtime();
+    _maybeShowVipEntrance(user);
+    unawaited(connectVoiceRoomBasicPkBattle(ref, _effectiveRoom()));
+  }
+
+  Future<void> _joinAudioBackground() async {
     if (!mounted) return;
     setState(() {
       _audioJoining = true;
@@ -190,6 +199,10 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         isHost: _isRoomOwner(user, room) || perms.isSiteAdmin,
         liveKitRemote: ref.read(liveKitRemoteProvider),
         trtcRemote: ref.read(trtcRemoteProvider),
+        prefetchedTrtc: VoiceRoomEntryPerf.takeTrtc(
+          userId: user.id,
+          roomId: room.trtcRoomId,
+        ),
       );
       if (!mounted) return;
       unawaited(VoiceRoomMusicAudioSession.activateForPlayback());
@@ -226,12 +239,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     ref.read(voiceRoomUiProvider.notifier).toggleHeadphones();
     _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
     setState(() {});
-  }
-
-  void _startPremiumRealtime(UserEntity user) {
-    _startGiftRealtime();
-    _maybeShowVipEntrance(user);
-    unawaited(connectVoiceRoomBasicPkBattle(ref, _effectiveRoom()));
   }
 
   void _startGiftRealtime() {

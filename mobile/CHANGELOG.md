@@ -1,6 +1,54 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.406+410 (2026-06-27)
+
+### Performans — Görev 18: Sonuç (performans serisi tamamlandı)
+
+**Hedef:** Anında açılış, anında dokunma tepkisi, akıcı geçişler, yağ gibi scroll, gecikmesiz jeton — **aynı canlifal.com backend** (yeni backend yok).
+
+| Görev | Konu | Modül |
+|-------|------|-------|
+| 1 | Açılış ≤1s, SDK defer | `StartupPerf` |
+| 2 | Lazy ekran bölümleri | `LazyLoadPerf` |
+| 3 | HTTP API cache | `ApiHttpCache` |
+| 4 | Görsel cache / thumbnail | `CanlifalNetworkImage` |
+| 5 | Lazy liste/grid | `LazyListView` |
+| 6 | Hedefli state rebuild | `StatePerf` |
+| 7 | Animasyon 60 FPS | `AnimationPerf` |
+| 8 | Paralel API | `NetworkPerf` |
+| 10 | Blur/glass önbellek | `EffectsPerf` |
+| 11 | Scroll frame drop yok | `ScrollPerf` |
+| 12 | Merkezi SSE | `SseConnectionHub` |
+| 13 | Sesli oda hızlı giriş | `VoiceRoomEntryPerf` |
+| 18 | Jeton anında, geçişler | `PerfResult` |
+
+- **Jeton pill:** 1,2 sn gecikme kaldırıldı; oturum `coinBalance` + cüzdan API
+- **Shell prefetch:** cüzdan/bildirim 400 ms'de arka planda
+- **Sayfa geçişleri:** fade-slide 240 ms
+- **Backend:** yalnızca `https://canlifal.com` — API, DB, iş mantığı web ile aynı
+
+## 1.0.405+409 (2026-06-27)
+
+### Performans — Görev 13: Sesli oda hızlı giriş
+
+- **`VoiceRoomEntryPerf`:** liste dokunuşunda AudioSession + TRTC token önbelleği
+- **Oda bootstrap:** SSE hemen; presence/DJ/hediye arka planda paralel
+- **RTC / Basic sayfa:** UI anında; ses TRTC/LiveKit arka planda bağlanır
+- **Shell prefetch:** AudioSession kabuk açılışında ısıtılır
+- **`loading: false`:** oda ekranı spinner beklemeden açılır
+
+## 1.0.404+408 (2026-06-27)
+
+### Performans — Görev 12: SSE (merkezi bağlantı)
+
+- **`SseConnectionHub`:** oda/yayın başına tek SSE, ref sayacı ile paylaşım
+- **`sseConnectionHubProvider`:** keepAlive merkezi hub
+- **Sesli oda:** keşfet presence + canlı oda aynı bağlantıyı paylaşır (12 ayrı bağlantı kaldırıldı)
+- **`ChatRoomSseService`:** aynı oda için yeniden bağlanma atlanır (`isLiveForRoom`)
+- **Canlı video yayın:** hub üzerinden attach/release — sayfa dispose'da ref sıfırlanınca kapanır
+- **`voiceRoomSseForProvider` / `videoStreamSseForProvider`:** oda/yayın bazlı servis erişimi
+
 ## 1.0.403+407 (2026-06-27)
 
 ### Performans — Görev 8: Ağ işlemleri (paralel API)
