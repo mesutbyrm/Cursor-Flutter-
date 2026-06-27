@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
@@ -157,7 +157,7 @@ class _VideoCard extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               if (thumb != null && thumb.isNotEmpty)
-                CachedNetworkImage(imageUrl: thumb, fit: BoxFit.cover)
+                CanlifalNetworkImage(url: thumb, fit: BoxFit.cover)
               else
                 Center(
                   child: Icon(
@@ -448,8 +448,8 @@ class _FavoritesTab extends ConsumerWidget {
                     if (fav.imageUrl != null && fav.imageUrl!.isNotEmpty)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: CachedNetworkImage(
-                          imageUrl: fav.imageUrl!,
+                        child: CanlifalNetworkImage(
+                          url: fav.imageUrl!,
                           height: 48,
                           width: double.infinity,
                           fit: BoxFit.cover,
@@ -542,7 +542,7 @@ class _ShortsGrid extends StatelessWidget {
             child: DecoratedBox(
               decoration: const BoxDecoration(color: Color(0xFF1A0F3D)),
               child: thumb != null && thumb.isNotEmpty
-                  ? CachedNetworkImage(imageUrl: thumb, fit: BoxFit.cover)
+                  ? CanlifalNetworkImage(url: thumb, fit: BoxFit.cover)
                   : const Center(
                       child: Icon(Icons.play_circle_outline_rounded),
                     ),

@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
@@ -193,7 +193,7 @@ class _VisitorTile extends StatelessWidget {
         radius: 24,
         backgroundColor: context.colors.surfaceElevated,
         backgroundImage: visitor.avatarUrl != null && visitor.avatarUrl!.isNotEmpty
-            ? CachedNetworkImageProvider(visitor.avatarUrl!)
+            ? canlifalImageProvider(visitor.avatarUrl!)
             : null,
         child: visitor.avatarUrl == null || visitor.avatarUrl!.isEmpty
             ? Text(

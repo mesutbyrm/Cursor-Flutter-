@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
@@ -403,8 +403,8 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                         onTap: () => _applyBackground(url),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: CachedNetworkImage(
-                            imageUrl: url,
+                          child: CanlifalNetworkImage(
+                            url: url,
                             width: 160,
                             height: 120,
                             fit: BoxFit.cover,

@@ -1,8 +1,8 @@
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../domain/entities/live_guest_layout.dart';
 import '../../../domain/entities/live_guest_slot.dart';
@@ -268,7 +268,7 @@ class _SlotCell extends StatelessWidget {
             if (avatar?.isNotEmpty == true)
               CircleAvatar(
                 radius: 24,
-                backgroundImage: CachedNetworkImageProvider(avatar!),
+                backgroundImage: canlifalImageProvider(avatar!),
               )
             else
               const Icon(Icons.person_rounded, color: Colors.white54, size: 40),

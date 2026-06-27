@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
@@ -588,12 +588,12 @@ class _LiveBroadcastPrepPageState extends ConsumerState<LiveBroadcastPrepPage> {
       );
     }
     if (_backgroundUrl?.isNotEmpty == true) {
-      return CachedNetworkImage(
-        imageUrl: _backgroundUrl!,
+      return CanlifalNetworkImage(
+        url: _backgroundUrl!,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        errorWidget: (_, _, _) => const ColoredBox(color: Color(0xFF1A0F32)),
+        errorWidget: const ColoredBox(color: Color(0xFF1A0F32)),
       );
     }
     return const DecoratedBox(

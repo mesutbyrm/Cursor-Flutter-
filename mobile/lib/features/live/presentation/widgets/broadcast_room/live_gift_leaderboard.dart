@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../providers/live_gift_leaderboard_provider.dart';
 
@@ -142,7 +142,7 @@ class _GiftSenderRow extends StatelessWidget {
           CircleAvatar(
             radius: 14,
             backgroundImage: sender.avatarUrl != null && sender.avatarUrl!.isNotEmpty
-                ? CachedNetworkImageProvider(sender.avatarUrl!)
+                ? canlifalImageProvider(sender.avatarUrl!)
                 : null,
             backgroundColor: const Color(0xFF6C3FC5),
             child: sender.avatarUrl == null || sender.avatarUrl!.isEmpty

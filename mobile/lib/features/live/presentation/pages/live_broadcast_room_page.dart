@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -845,10 +845,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       return Stack(
         fit: StackFit.expand,
         children: [
-          CachedNetworkImage(
-            imageUrl: s.backgroundUrl!,
+          CanlifalNetworkImage(
+            url: s.backgroundUrl!,
             fit: BoxFit.cover,
-            errorWidget: (_, _, _) => const SizedBox.shrink(),
+            errorWidget: const SizedBox.shrink(),
           ),
           _mainVideo(s),
         ],
@@ -877,7 +877,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                       backgroundColor: Colors.white.withValues(alpha: 0.08),
                       backgroundImage: s.avatarUrl != null &&
                               s.avatarUrl!.trim().isNotEmpty
-                          ? CachedNetworkImageProvider(s.avatarUrl!)
+                          ? canlifalImageProvider(s.avatarUrl!)
                           : null,
                       child: s.avatarUrl == null || s.avatarUrl!.trim().isEmpty
                           ? const Icon(Icons.person_rounded,
@@ -964,10 +964,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        CachedNetworkImage(
-          imageUrl: url,
+        CanlifalNetworkImage(
+          url: url,
           fit: BoxFit.cover,
-          errorWidget: (_, _, _) => const LiveRoomVideoBackground(),
+          errorWidget: const LiveRoomVideoBackground(),
         ),
         DecoratedBox(
           decoration: BoxDecoration(

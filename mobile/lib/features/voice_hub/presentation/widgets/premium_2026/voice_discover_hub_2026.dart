@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -19,6 +18,7 @@ import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import 'package:canlifal_social/features/vip_gold/domain/voice_room_access.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/theme/vip_gold_tokens.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../live/presentation/utils/open_live_stream.dart';
 import '../../utils/open_voice_chat_room_flow.dart';
 import '../../theme/voice_room_tokens.dart';
@@ -561,7 +561,7 @@ class _DiscoverHeader extends StatelessWidget {
               CircleAvatar(
                 radius: 26,
                 backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
-                    ? CachedNetworkImageProvider(avatarUrl!)
+                    ? canlifalImageProvider(avatarUrl!)
                     : null,
                 child: avatarUrl == null || avatarUrl!.isEmpty
                     ? Text(
@@ -831,7 +831,7 @@ class _StoryLiveItem extends StatelessWidget {
               backgroundColor: Colors.white12,
               backgroundImage: stream.thumbnailUrl != null &&
                       stream.thumbnailUrl!.isNotEmpty
-                  ? CachedNetworkImageProvider(stream.thumbnailUrl!)
+                  ? canlifalImageProvider(stream.thumbnailUrl!)
                   : null,
               child: stream.thumbnailUrl == null || stream.thumbnailUrl!.isEmpty
                   ? Text(name.isNotEmpty ? name[0] : '?')
@@ -1038,7 +1038,7 @@ class _PopularRoomCard extends StatelessWidget {
                       fit: StackFit.expand,
                       children: [
                         if (bg != null && bg.isNotEmpty)
-                          CachedNetworkImage(imageUrl: bg, fit: BoxFit.cover)
+                          CanlifalNetworkImage(url: bg, fit: BoxFit.cover)
                         else
                           const DecoratedBox(
                             decoration: BoxDecoration(
@@ -1161,8 +1161,8 @@ class _LiveStreamCard extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 if (stream.thumbnailUrl != null && stream.thumbnailUrl!.isNotEmpty)
-                  CachedNetworkImage(
-                    imageUrl: stream.thumbnailUrl!,
+                  CanlifalNetworkImage(
+                    url: stream.thumbnailUrl!,
                     fit: BoxFit.cover,
                   )
                 else

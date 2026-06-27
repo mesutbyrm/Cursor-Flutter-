@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/chat_room_message.dart';
 
@@ -278,7 +278,7 @@ class _DjAvatars extends StatelessWidget {
                   child: () {
                     final img = users[i].image;
                     if (img != null && img.isNotEmpty) {
-                      return CachedNetworkImage(imageUrl: img, fit: BoxFit.cover);
+                      return CanlifalNetworkImage(url: img, fit: BoxFit.cover);
                     }
                     return ColoredBox(
                       color: AppThemeColors.dark.scaffoldBackground,

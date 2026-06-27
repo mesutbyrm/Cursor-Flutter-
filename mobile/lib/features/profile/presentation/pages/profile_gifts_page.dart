@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
@@ -78,11 +78,10 @@ class _ProfileGiftsPageState extends ConsumerState<ProfileGiftsPage> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 if (isUrl)
-                                  CachedNetworkImage(
-                                    imageUrl: g.icon,
+                                  CanlifalNetworkImage(
+                                    url: g.icon,
                                     height: 36,
-                                    errorWidget: (_, _, _) =>
-                                        Text(g.name, maxLines: 1),
+                                    errorWidget: Text(g.name, maxLines: 1),
                                   )
                                 else
                           Text(g.icon, style: const TextStyle(fontSize: 32)),

@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:rive/rive.dart' hide LinearGradient;
 
 import '../../../live/domain/entities/live_gift_event.dart';
@@ -198,13 +198,12 @@ class _IconOrEmoji extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (iconUrl != null && iconUrl!.isNotEmpty) {
-      return CachedNetworkImage(
-        imageUrl: iconUrl!,
+      return CanlifalNetworkImage(
+        url: iconUrl!,
         width: size,
         height: size,
         fit: BoxFit.contain,
-        errorWidget: (_, _, _) =>
-            Text(emoji, style: TextStyle(fontSize: size * 0.45)),
+        errorWidget: Text(emoji, style: TextStyle(fontSize: size * 0.45)),
       );
     }
     return Text(emoji, style: TextStyle(fontSize: size * 0.45));

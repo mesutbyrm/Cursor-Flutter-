@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
@@ -439,8 +439,8 @@ class _SearchResultTile extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: hit.thumbUrl != null && hit.thumbUrl!.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: hit.thumbUrl!,
+                      ? CanlifalNetworkImage(
+                          url: hit.thumbUrl!,
                           width: 72,
                           height: 48,
                           fit: BoxFit.cover,

@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -74,12 +74,12 @@ class _LiveStreamPreviewMediaState extends State<LiveStreamPreviewMedia>
       return Stack(
         fit: StackFit.expand,
         children: [
-          CachedNetworkImage(
-            imageUrl: thumb,
+          CanlifalNetworkImage(
+            url: thumb,
             fit: BoxFit.cover,
-            memCacheWidth: widget.eager ? 480 : 320,
-            fadeInDuration: widget.eager ? Duration.zero : const Duration(milliseconds: 180),
-            errorWidget: (_, _, _) => _placeholder(),
+            thumbnailWidth: widget.eager ? 480 : 320,
+            fadeIn: !widget.eager,
+            errorWidget: _placeholder(),
           ),
           _liveShimmer(),
         ],

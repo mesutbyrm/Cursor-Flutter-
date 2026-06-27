@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../domain/entities/profile_stats_entity.dart';
 import '../../providers/profile_providers.dart';
@@ -128,12 +128,12 @@ class _GiftTile extends StatelessWidget {
                   ),
                   child: isUrl
                       ? ClipOval(
-                          child: CachedNetworkImage(
-                            imageUrl: gift.icon,
+                          child: CanlifalNetworkImage(
+                            url: gift.icon,
                             width: 54,
                             height: 54,
                             fit: BoxFit.cover,
-                            errorWidget: (_, _, _) => const Text(
+                            errorWidget: const Text(
                               '🎁',
                               style: TextStyle(fontSize: 26),
                             ),

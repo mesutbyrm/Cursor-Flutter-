@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -134,8 +134,8 @@ class _FortuneCard extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             if (_hasImage)
-              CachedNetworkImage(
-                imageUrl: imageUrl!,
+              CanlifalNetworkImage(
+                url: imageUrl!,
                 fit: BoxFit.cover,
               )
             else

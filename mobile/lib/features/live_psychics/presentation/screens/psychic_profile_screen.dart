@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +16,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/widgets/psyc
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_favorite_button.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_fortune_types.dart';
 import 'package:canlifal_social/features/profile/presentation/providers/profile_providers.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 final _profileBookingProvider = StateProvider.autoDispose<bool>((ref) => false);
 
@@ -199,7 +199,7 @@ class _ProfileBody extends ConsumerWidget {
                     ? CircleAvatar(
                         radius: 52,
                         backgroundImage:
-                            CachedNetworkImageProvider(psychic.avatarUrl!),
+                            canlifalImageProvider(psychic.avatarUrl!),
                       )
                     : const UserAvatar(radius: 52),
               ),

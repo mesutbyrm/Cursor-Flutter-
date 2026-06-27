@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -107,7 +107,7 @@ class _LiveBroadcastListState extends ConsumerState<_LiveBroadcastList> {
       final url = widget.streams[i].thumbnailUrl;
       if (url == null || url.isEmpty) continue;
       precacheImage(
-        CachedNetworkImageProvider(url),
+        canlifalImageProvider(url),
         context,
       );
     }
@@ -262,13 +262,13 @@ class _PreviewImage extends StatelessWidget {
       return _placeholder();
     }
 
-    return CachedNetworkImage(
-      imageUrl: url!,
+    return CanlifalNetworkImage(
+      url: url!,
       fit: BoxFit.cover,
-      memCacheWidth: eagerLoad ? 720 : 480,
-      fadeInDuration: eagerLoad ? Duration.zero : const Duration(milliseconds: 200),
-      placeholder: (_, _) => _placeholder(),
-      errorWidget: (_, _, _) => _placeholder(),
+      thumbnailWidth: eagerLoad ? 720 : 480,
+      fadeIn: !eagerLoad,
+      placeholder: _placeholder(),
+      errorWidget: _placeholder(),
     );
   }
 

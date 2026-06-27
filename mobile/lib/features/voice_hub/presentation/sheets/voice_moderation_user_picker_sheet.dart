@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -109,7 +109,7 @@ class _KickBanPickerSheet extends ConsumerWidget {
                     leading: CircleAvatar(
                       backgroundColor: border.withValues(alpha: 0.35),
                       backgroundImage: u.image != null && u.image!.isNotEmpty
-                          ? CachedNetworkImageProvider(u.image!)
+                          ? canlifalImageProvider(u.image!)
                           : null,
                       child: u.image == null || u.image!.isEmpty
                           ? Text(
@@ -270,7 +270,7 @@ class _UnbanBanListSheetState extends ConsumerState<_UnbanBanListSheet> {
                       leading: CircleAvatar(
                         backgroundImage: ban.imageUrl != null &&
                                 ban.imageUrl!.isNotEmpty
-                            ? CachedNetworkImageProvider(ban.imageUrl!)
+                            ? canlifalImageProvider(ban.imageUrl!)
                             : null,
                         child: ban.imageUrl == null || ban.imageUrl!.isEmpty
                             ? Text(

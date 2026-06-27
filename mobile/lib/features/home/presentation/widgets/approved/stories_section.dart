@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../../core/network/api_exception.dart';
@@ -174,8 +174,8 @@ class _StoryChip extends StatelessWidget {
                   ),
                   child: ClipOval(
                     child: ring.user.avatarUrl != null
-                        ? CachedNetworkImage(
-                            imageUrl: ring.user.avatarUrl!,
+                        ? CanlifalNetworkImage(
+                            url: ring.user.avatarUrl!,
                             fit: BoxFit.cover,
                             width: HomeApprovedDesign.storySize,
                             height: HomeApprovedDesign.storySize,

@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../domain/entities/fortune_type_entity.dart';
 import '../../data/fortune_type_images.dart';
@@ -73,14 +73,11 @@ class _CinematicFortuneHeroState extends State<CinematicFortuneHero>
                     tag: tag,
                     child: Material(
                       type: MaterialType.transparency,
-                      child: CachedNetworkImage(
-                        imageUrl: url,
+                      child: CanlifalNetworkImage(
+                        url: url,
                         fit: BoxFit.cover,
-                        memCacheWidth: 1200,
-                        placeholder: (_, _) =>
-                            FortuneImageShimmer(accent: type.accent),
-                        errorWidget: (_, _, _) =>
-                            FortuneImageShimmer(accent: type.accent),
+                        placeholder: FortuneImageShimmer(accent: type.accent),
+                        errorWidget: FortuneImageShimmer(accent: type.accent),
                       ),
                     ),
                   ),

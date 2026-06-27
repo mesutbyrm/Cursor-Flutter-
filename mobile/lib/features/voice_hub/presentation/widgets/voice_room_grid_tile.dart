@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../vip_gold/domain/voice_room_access.dart';
@@ -85,7 +85,7 @@ class VoiceRoomGridTile extends StatelessWidget {
                       child: _OnlineBadge(count: room.displayOnline),
                     ),
                   if (bg != null && bg.isNotEmpty)
-                    CachedNetworkImage(imageUrl: bg, fit: BoxFit.cover)
+                    CanlifalNetworkImage(url: bg, fit: BoxFit.cover)
                   else
                     const DecoratedBox(
                       decoration: BoxDecoration(
@@ -276,7 +276,7 @@ class _MiniAvatar extends StatelessWidget {
       ),
       child: ClipOval(
         child: url != null && url!.isNotEmpty
-            ? CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover)
+            ? CanlifalNetworkImage(url: url!, fit: BoxFit.cover)
             : ColoredBox(
                 color: context.colors.surfaceContainer,
                 child: Icon(

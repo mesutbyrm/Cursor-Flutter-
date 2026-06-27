@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.395+399 (2026-06-27)
+
+### Performans — Görev 4: Görsel optimizasyonu
+
+- **`CanlifalNetworkImage`:** tüm ağ görselleri `CachedNetworkImage` + ortak disk cache
+- **Thumbnail varsayılan:** liste/kart/avatar için düşük çözünürlük URL (`CanlifalImageUrls`)
+- **Tam çözünürlük isteğe bağlı:** `CanlifalNetworkImage.full` ve dokununca tam ekran viewer
+- **Disk cache:** 30 gün, 600 dosya (`CanlifalImageCacheManager`)
+- **Prefetch:** `prefetchCanlifalImages` — oda/feed kapakları önceden cache
+- **Kapsam:** feed, sosyal, ana sayfa, canlı, sesli oda, profil, fal modülleri migrate edildi
+
 ## 1.0.394+398 (2026-06-27)
 
 ### Performans — Görev 3: API optimizasyonu

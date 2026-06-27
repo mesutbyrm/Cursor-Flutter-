@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../domain/entities/chat_room_presence.dart';
 import '../../../theme/voice_room_tokens.dart';
@@ -59,7 +59,7 @@ class PkPlayerHudFrame extends StatelessWidget {
                     ),
                     child: ClipOval(
                       child: img != null && img.isNotEmpty
-                          ? CachedNetworkImage(imageUrl: img, fit: BoxFit.cover)
+                          ? CanlifalNetworkImage(url: img, fit: BoxFit.cover)
                           : ColoredBox(
                               color: Colors.white10,
                               child: Icon(Icons.person, size: 52, color: accent),

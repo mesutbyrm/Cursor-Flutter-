@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -79,14 +79,13 @@ class _DailyFortunePremiumHeroState extends State<DailyFortunePremiumHero>
               ),
               Transform.translate(
                 offset: Offset(0, parallax),
-                child: CachedNetworkImage(
-                  imageUrl: url,
+                child: CanlifalNetworkImage(
+                  url: url,
                   fit: BoxFit.cover,
-                  memCacheWidth: 1000,
+                  thumbnailWidth: 1000,
                   color: Colors.white.withValues(alpha: 0.35),
                   colorBlendMode: BlendMode.softLight,
-                  placeholder: (_, _) =>
-                      const FortuneImageShimmer(accent: Color(0xFFB832FF)),
+                  placeholder: const FortuneImageShimmer(accent: Color(0xFFB832FF)),
                 ),
               ),
               DecoratedBox(

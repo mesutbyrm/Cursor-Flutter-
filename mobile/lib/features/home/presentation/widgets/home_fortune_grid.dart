@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -162,13 +162,13 @@ class _FortuneTile extends StatelessWidget {
           if (img != null && img.startsWith('http'))
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: img,
+              child: CanlifalNetworkImage(
+                url: img,
                 width: 32,
                 height: 32,
                 fit: BoxFit.cover,
-                errorWidget: (_, _, _) =>
-                    Text(emoji, style: const TextStyle(fontSize: 26)),
+                thumbnailWidth: 128,
+                errorWidget: Text(emoji, style: const TextStyle(fontSize: 26)),
               ),
             )
           else

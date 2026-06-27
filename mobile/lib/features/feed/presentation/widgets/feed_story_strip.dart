@@ -1,5 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/hero_tags.dart';
@@ -76,12 +76,11 @@ class FeedStoryStrip extends StatelessWidget {
                     child: u.avatarUrl != null && u.avatarUrl!.isNotEmpty
                         ? HeroAvatar(
                             userId: u.name,
-                            child: CachedNetworkImage(
-                              imageUrl: u.avatarUrl!,
+                            child: CanlifalNetworkImage(
+                              url: u.avatarUrl!,
                               fit: BoxFit.cover,
-                              placeholder: (_, _) => _fallbackAvatar(u.name),
-                              errorWidget: (_, _, _) =>
-                                  _fallbackAvatar(u.name),
+                              placeholder: _fallbackAvatar(u.name),
+                              errorWidget: _fallbackAvatar(u.name),
                             ),
                           )
                         : _fallbackAvatar(u.name),

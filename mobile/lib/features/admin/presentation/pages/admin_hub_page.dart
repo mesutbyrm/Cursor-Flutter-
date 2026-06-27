@@ -6,6 +6,7 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
@@ -342,7 +343,7 @@ class _PendingPaymentsTab extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               InteractiveViewer(
-                child: Image.network(url, fit: BoxFit.contain),
+                child: CanlifalNetworkImage.full(url: url, fit: BoxFit.contain),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx),

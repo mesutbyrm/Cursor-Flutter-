@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 /// Yayın arka planı — hazır görseller + galeri.
 class LiveBackgroundPickerSheet extends StatelessWidget {
@@ -101,7 +101,7 @@ class LiveBackgroundPickerSheet extends StatelessWidget {
                           width: selected ? 2 : 1,
                         ),
                         image: DecorationImage(
-                          image: CachedNetworkImageProvider(p.$2),
+                          image: canlifalImageProvider(p.$2),
                           fit: BoxFit.cover,
                           onError: (_, _) {},
                         ),

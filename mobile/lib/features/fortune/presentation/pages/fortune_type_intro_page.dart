@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../domain/entities/fortune_type_entity.dart';
@@ -49,7 +49,7 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final url = FortuneTypeImages.urlFor(type.slug, width: 1400);
-      precacheImage(CachedNetworkImageProvider(url), context);
+      precacheImage(canlifalImageProvider(url), context);
     });
   }
 

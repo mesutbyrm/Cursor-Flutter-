@@ -1,6 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../images/canlifal_image_urls.dart';
+import '../images/canlifal_network_image.dart';
 import '../theme/app_theme.dart';
 
 class UserAvatar extends StatelessWidget {
@@ -15,23 +16,18 @@ class UserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final r = BorderRadius.circular(radius);
     final side = (radius * 2).clamp(24.0, 128.0);
-    final cachePx = side.round();
-    if (url != null && url!.isNotEmpty) {
+    if (url != null && url!.trim().isNotEmpty) {
       return ClipRRect(
-        borderRadius: r,
-        child: CachedNetworkImage(
-          imageUrl: url!,
+        borderRadius: BorderRadius.circular(radius),
+        child: CanlifalNetworkImage(
+          url: url,
           width: side,
           height: side,
           fit: BoxFit.cover,
-          memCacheWidth: cachePx,
-          memCacheHeight: cachePx,
-          maxWidthDiskCache: 128,
-          maxHeightDiskCache: 128,
-          placeholder: (_, _) => _fallback(),
-          errorWidget: (_, _, _) => _fallback(),
+          thumbnailWidth: CanlifalImageUrls.avatarThumbnailWidth,
+          errorWidget: _fallback(),
+          placeholder: _fallback(),
         ),
       );
     }

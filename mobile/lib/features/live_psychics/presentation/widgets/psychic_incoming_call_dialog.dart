@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/network/api_exception.dart';
@@ -9,6 +8,7 @@ import 'package:canlifal_social/features/live_psychics/domain/repositories/live_
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_session_cancel_signal.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_fortune_types.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 enum PsychicIncomingDialogAction { dismissed, rejected, accepted, held }
 
@@ -213,7 +213,7 @@ class _PsychicIncomingCallDialogState
                       ? CircleAvatar(
                           radius: 56,
                           backgroundImage:
-                              CachedNetworkImageProvider(widget.clientAvatarUrl!),
+                              canlifalImageProvider(widget.clientAvatarUrl!),
                         )
                       : const UserAvatar(radius: 56),
                 ),

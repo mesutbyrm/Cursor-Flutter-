@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../feed/presentation/widgets/discover/discover_section_header.dart';
@@ -346,12 +346,12 @@ class _Avatar extends StatelessWidget {
   Widget build(BuildContext context) {
     if (url != null && url!.isNotEmpty) {
       return ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: url!,
+        child: CanlifalNetworkImage(
+          url: url!,
           width: 62,
           height: 62,
           fit: BoxFit.cover,
-          errorWidget: (_, _, _) => UserAvatar(url: url, radius: 31),
+          errorWidget: UserAvatar(url: url, radius: 31),
         ),
       );
     }

@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
@@ -560,11 +560,9 @@ class _VoiceMusicHubPageState extends ConsumerState<VoiceMusicHubPage>
                 width: 56,
                 height: 56,
                 child: hit.thumbUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: hit.thumbUrl!,
+                    ? CanlifalNetworkImage(
+                        url: hit.thumbUrl!,
                         fit: BoxFit.cover,
-                        memCacheWidth: 112,
-                        memCacheHeight: 112,
                       )
                     : const ColoredBox(color: Colors.white12),
               ),

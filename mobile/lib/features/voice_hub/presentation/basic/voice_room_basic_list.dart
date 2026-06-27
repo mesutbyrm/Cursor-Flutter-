@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
@@ -42,7 +43,7 @@ class VoiceRoomBasicList extends StatelessWidget {
                     backgroundColor: AppThemeColors.accentPink.withValues(alpha: 0.2),
                     backgroundImage: room.ownerAvatarUrl != null &&
                             room.ownerAvatarUrl!.isNotEmpty
-                        ? NetworkImage(room.ownerAvatarUrl!)
+                        ? canlifalImageProvider(room.ownerAvatarUrl!)
                         : null,
                     child: room.ownerAvatarUrl == null ||
                             room.ownerAvatarUrl!.isEmpty

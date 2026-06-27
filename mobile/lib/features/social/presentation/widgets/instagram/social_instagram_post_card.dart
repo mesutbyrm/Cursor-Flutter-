@@ -1,10 +1,10 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../../core/providers/auth_selectors.dart';
@@ -579,11 +579,11 @@ class _PostMediaBlock extends StatelessWidget {
             )
           : AspectRatio(
               aspectRatio: 4 / 5,
-              child: CachedNetworkImage(
-                imageUrl: mediaUrl,
+              child: CanlifalNetworkImage(
+                url: mediaUrl,
                 fit: BoxFit.cover,
-                placeholder: (_, _) => const _MysticMediaPlaceholder(),
-                errorWidget: (_, _, _) => const _MysticMediaPlaceholder(),
+                placeholder: const _MysticMediaPlaceholder(),
+                errorWidget: const _MysticMediaPlaceholder(),
               ),
             ),
     );

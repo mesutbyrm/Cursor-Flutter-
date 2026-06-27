@@ -1,10 +1,10 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/user_avatar.dart';
@@ -279,13 +279,13 @@ class _RingAvatar extends StatelessWidget {
 
     if (url != null && url.isNotEmpty) {
       return ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: url,
+        child: CanlifalNetworkImage(
+          url: url,
           width: 66,
           height: 66,
           fit: BoxFit.cover,
-          placeholder: (_, _) => const _AvatarPlaceholder(),
-          errorWidget: (_, _, _) => UserAvatar(url: avatarUrl, radius: 33),
+          placeholder: const _AvatarPlaceholder(),
+          errorWidget: UserAvatar(url: avatarUrl, radius: 33),
         ),
       );
     }
