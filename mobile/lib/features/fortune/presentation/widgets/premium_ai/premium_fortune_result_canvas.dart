@@ -1,4 +1,5 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:canlifal_social/core/performance/animation_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -43,7 +44,7 @@ class PremiumFortuneResultCanvas extends StatefulWidget {
 
 class _PremiumFortuneResultCanvasState extends State<PremiumFortuneResultCanvas> {
   final _visibleSections = <String>{};
-  double _scrollOffset = 0;
+  late final ScrollParallaxNotifier _scrollParallax;
 
   List<FortuneReadingSection> get _sections {
     if (widget.result.sections.isNotEmpty) return widget.result.sections;
@@ -60,6 +61,7 @@ class _PremiumFortuneResultCanvasState extends State<PremiumFortuneResultCanvas>
   @override
   void initState() {
     super.initState();
+    _scrollParallax = ScrollParallaxNotifier(threshold: 1);
     widget.scrollController?.addListener(_onScroll);
     _scheduleReveals();
   }
@@ -80,14 +82,12 @@ class _PremiumFortuneResultCanvasState extends State<PremiumFortuneResultCanvas>
   @override
   void dispose() {
     widget.scrollController?.removeListener(_onScroll);
+    _scrollParallax.dispose();
     super.dispose();
   }
 
   void _onScroll() {
-    final offset = widget.scrollController?.offset ?? 0;
-    if ((offset - _scrollOffset).abs() > 1) {
-      setState(() => _scrollOffset = offset);
-    }
+    _scrollParallax.update(widget.scrollController?.offset ?? 0);
   }
 
   void _scheduleReveals() {
@@ -157,7 +157,7 @@ class _PremiumFortuneResultCanvasState extends State<PremiumFortuneResultCanvas>
                     CinematicFortuneHero(
                       type: result.type,
                       height: widget.header != null ? 220 : 320,
-                      scrollOffset: _scrollOffset,
+                      scrollParallax: _scrollParallax,
                       showTitle: widget.header == null,
                     ),
                   Padding(

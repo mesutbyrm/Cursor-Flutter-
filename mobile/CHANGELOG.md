@@ -1,6 +1,20 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.398+402 (2026-06-27)
+
+### Performans — Görev 7: Animasyon (60–120 FPS, UI thread kilidi yok)
+
+- **`AnimationPerf`:** izole `RepaintBoundary`, paint-only katman, parçacık sınırları
+- **`ScrollParallaxNotifier`:** scroll parallax yalnızca arka plan katmanını yeniler — sayfa setState yok
+- **`TabIndexListenable`:** sekme swipe sırasında her karede değil, index değişince rebuild
+- **`FloatingEmojiPaintLayer`:** hediye/PK yüzen emojiler — CustomPaint + `repaint`, setState yok
+- **`DeferredTickerMode`:** açılışta animasyon ticker'ı 120ms ertelenir
+- **Canlı etkileşim overlay:** parçacık fizikleri paint katmanında; TextPainter cache
+- **Sesli oda parçacıkları:** önceden hesaplanmış yörüngeler — paint içinde Random yok
+- **Kozmik fal arka planı:** yıldız/orbit alanları önbellek; parallax izole
+- **Canlı chat feed:** liste satırlarından `flutter_animate` kaldırıldı
+
 ## 1.0.397+401 (2026-06-27)
 
 ### Performans — Görev 6: State yönetimi (hedefli rebuild)

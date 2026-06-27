@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:canlifal_social/core/performance/animation_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,12 +18,14 @@ class CinematicFortuneHero extends StatefulWidget {
     required this.type,
     this.height = 320,
     this.scrollOffset = 0,
+    this.scrollParallax,
     this.showTitle = true,
   });
 
   final FortuneTypeEntity type;
   final double height;
   final double scrollOffset;
+  final ScrollParallaxNotifier? scrollParallax;
   final bool showTitle;
 
   @override
@@ -53,8 +56,39 @@ class _CinematicFortuneHeroState extends State<CinematicFortuneHero>
     final type = widget.type;
     final url = FortuneTypeImages.urlFor(type.slug, width: 1600);
     final tag = FortuneTypeImages.heroTagFor(type.slug);
-    final parallax = widget.scrollOffset * 0.28;
     final glow = FortuneTypeImages.glowColor(type.slug);
+
+    Widget parallaxImage() {
+      Widget imageAt(double y) {
+        return Transform.translate(
+          offset: Offset(0, y),
+          child: Transform.scale(
+            scale: 1.08,
+            child: Hero(
+              tag: tag,
+              child: Material(
+                type: MaterialType.transparency,
+                child: CanlifalNetworkImage(
+                  url: url,
+                  fit: BoxFit.cover,
+                  placeholder: FortuneImageShimmer(accent: type.accent),
+                  errorWidget: FortuneImageShimmer(accent: type.accent),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+
+      final parallaxNotifier = widget.scrollParallax;
+      if (parallaxNotifier == null) {
+        return imageAt(widget.scrollOffset * 0.28);
+      }
+      return ListenableBuilder(
+        listenable: parallaxNotifier,
+        builder: (_, _) => imageAt(parallaxNotifier.offset * 0.28),
+      );
+    }
 
     return RepaintBoundary(
       child: SizedBox(
@@ -65,24 +99,7 @@ class _CinematicFortuneHeroState extends State<CinematicFortuneHero>
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Transform.translate(
-                offset: Offset(0, parallax),
-                child: Transform.scale(
-                  scale: 1.08,
-                  child: Hero(
-                    tag: tag,
-                    child: Material(
-                      type: MaterialType.transparency,
-                      child: CanlifalNetworkImage(
-                        url: url,
-                        fit: BoxFit.cover,
-                        placeholder: FortuneImageShimmer(accent: type.accent),
-                        errorWidget: FortuneImageShimmer(accent: type.accent),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              parallaxImage(),
               DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(

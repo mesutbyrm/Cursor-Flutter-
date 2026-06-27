@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/performance/animation_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -32,15 +33,18 @@ class ProfileContentSection extends ConsumerStatefulWidget {
 class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
+  late final TabIndexListenable _tabIndex;
 
   @override
   void initState() {
     super.initState();
     _tabs = TabController(length: 6, vsync: this);
+    _tabIndex = TabIndexListenable(_tabs);
   }
 
   @override
   void dispose() {
+    _tabIndex.dispose();
     _tabs.dispose();
     super.dispose();
   }
@@ -71,10 +75,10 @@ class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
             ],
           ),
           const SizedBox(height: 12),
-          AnimatedBuilder(
-            animation: _tabs,
+          ListenableBuilder(
+            listenable: _tabIndex,
             builder: (context, _) {
-              return switch (_tabs.index) {
+              return switch (_tabIndex.index) {
                 1 => _FortunesTab(),
                 2 => _LiveStreamsTab(),
                 3 => _WatchedTab(),

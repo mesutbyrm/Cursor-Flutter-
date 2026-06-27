@@ -1,8 +1,7 @@
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/material.dart';
 
 import '../../broadcast_room/live_room_chat_message.dart';
 import '../live_vip_chat_badge.dart';
@@ -51,10 +50,7 @@ class LivePremiumChatFeed extends StatelessWidget {
                     child: bubble,
                   )
                 : bubble;
-            return child
-                .animate(delay: (20 * (i % 4)).ms)
-                .fadeIn(duration: 220.ms)
-                .slideX(begin: -0.04, end: 0);
+            return child;
           },
         ),
       ),
