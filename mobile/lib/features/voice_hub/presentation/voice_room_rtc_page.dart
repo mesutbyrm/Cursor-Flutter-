@@ -144,7 +144,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   void _bindSseParticipants() {
     _sseParticipantsSub?.cancel();
     _sseParticipantsSub =
-        ref.read(voiceRoomSseServiceProvider).events.listen((event) {
+        ref.read(voiceRoomSseForProvider(_liveRoomKey)).events.listen((event) {
       if (!mounted) return;
       final data = event.data;
       if (event.type == ChatRoomSseEventType.userJoin) {

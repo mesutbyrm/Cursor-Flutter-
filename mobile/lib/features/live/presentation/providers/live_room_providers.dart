@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/live_debug_log.dart';
 import '../../../../core/performance/network_perf.dart';
+import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
@@ -73,7 +74,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
   LiveRoomState build(String streamId) {
     ref.onDispose(() {
       _poll?.cancel();
-      ref.read(videoStreamSseServiceProvider).disconnect();
+      ref.read(sseConnectionHubProvider).releaseVideoStream(streamId);
       unawaited(ref.read(liveRemoteProvider).leaveVideoStream(streamId));
     });
     Future.microtask(() => _bootstrap(streamId));
@@ -118,8 +119,11 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
 
   void _startRealtime(String streamId) {
     final storage = ref.read(tokenStorageProvider);
+    final hub = ref.read(sseConnectionHubProvider);
+    hub.attachVideoStream(streamId);
+    final sse = hub.videoStream(streamId);
 
-    ref.read(videoStreamSseServiceProvider).connect(
+    sse.connect(
       streamId: streamId,
       accessToken: storage.readAccess,
       onConnected: () {

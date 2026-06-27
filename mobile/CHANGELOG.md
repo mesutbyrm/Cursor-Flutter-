@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.404+408 (2026-06-27)
+
+### Performans — Görev 12: SSE (merkezi bağlantı)
+
+- **`SseConnectionHub`:** oda/yayın başına tek SSE, ref sayacı ile paylaşım
+- **`sseConnectionHubProvider`:** keepAlive merkezi hub
+- **Sesli oda:** keşfet presence + canlı oda aynı bağlantıyı paylaşır (12 ayrı bağlantı kaldırıldı)
+- **`ChatRoomSseService`:** aynı oda için yeniden bağlanma atlanır (`isLiveForRoom`)
+- **Canlı video yayın:** hub üzerinden attach/release — sayfa dispose'da ref sıfırlanınca kapanır
+- **`voiceRoomSseForProvider` / `videoStreamSseForProvider`:** oda/yayın bazlı servis erişimi
+
 ## 1.0.403+407 (2026-06-27)
 
 ### Performans — Görev 8: Ağ işlemleri (paralel API)

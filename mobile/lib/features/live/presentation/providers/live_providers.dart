@@ -9,7 +9,7 @@ import '../../data/datasources/live_remote_datasource.dart';
 import '../../data/datasources/live_stream_extras_datasource.dart';
 import '../../data/repositories/live_repository_impl.dart';
 import '../../data/services/video_webrtc_signal_service.dart';
-import '../../data/services/video_stream_sse_service.dart';
+import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../gifts/providers/live_gift_providers.dart';
 
 final liveRemoteProvider = Provider<LiveRemoteDataSource>((ref) {
@@ -24,12 +24,6 @@ final videoWebrtcSignalServiceProvider =
     Provider<VideoWebrtcSignalService>((ref) {
   final s = VideoWebrtcSignalService(ref.watch(liveStreamExtrasProvider));
   ref.onDispose(s.dispose);
-  return s;
-});
-
-final videoStreamSseServiceProvider = Provider<VideoStreamSseService>((ref) {
-  final s = VideoStreamSseService(ref.watch(liveGiftsRemoteProvider));
-  ref.onDispose(s.disconnect);
   return s;
 });
 
@@ -48,7 +42,6 @@ final voiceRoomsProvider = FutureProvider<List<VoiceRoomEntity>>((ref) async {
 final voiceRoomByIdProvider =
     FutureProvider.autoDispose.family<VoiceRoomEntity?, String>((ref, id) async {
   final needle = id.trim().toLowerCase();
-  if (needle.isEmpty) return null;
   final cached = ref.watch(voiceRoomsProvider).valueOrNull;
   if (cached != null) {
     String norm(String s) =>

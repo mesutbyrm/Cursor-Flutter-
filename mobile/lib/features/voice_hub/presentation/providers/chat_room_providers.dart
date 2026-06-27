@@ -20,7 +20,7 @@ import '../../data/services/voice_room_gift_socket.dart';
 import '../../data/services/voice_seat_rest_service.dart';
 import 'pk_battle_provider.dart';
 import 'pk_battle_remote_provider.dart';
-import 'voice_room_sse_provider.dart';
+import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../data/youtube_music_search_cache.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 import '../../music/domain/entities/room_playback_sync.dart';
@@ -414,7 +414,7 @@ class VoiceRoomLiveController
       _kickWarningTimer?.cancel();
       if (_sessionActive) {
         unawaited(_leavePresence());
-        unawaited(ref.read(voiceRoomSseServiceProvider).disconnect());
+        ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
         ref.read(voiceRoomGiftSocketProvider).disconnect();
       }
       unawaited(ref.read(voiceRoomDjPlayerProvider).shutdown());
@@ -655,7 +655,7 @@ class VoiceRoomLiveController
     _giftSocketStarted = false;
     _presenceJoined = false;
     unawaited(_leavePresence());
-    unawaited(ref.read(voiceRoomSseServiceProvider).disconnect());
+    ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
     ref.read(voiceRoomGiftSocketProvider).disconnect();
     unawaited(ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer());
     unawaited(ref.read(voiceRoomDjPlayerProvider).shutdown());
@@ -783,13 +783,16 @@ class VoiceRoomLiveController
     }
     _sseStarted = true;
     final storage = ref.read(tokenStorageProvider);
+    final hub = ref.read(sseConnectionHubProvider);
+    hub.attachVoiceRoom(_roomKey);
+    final sse = hub.voiceRoom(_roomKey);
     VoiceRoomDebugLog.log('sse.subscribe', {
       'url': ChatRoomSseService.streamUrlFor(_roomKey),
       'roomId': _roomKey,
+      'refs': hub.voiceRoomRefCount(_roomKey),
     });
     final giftsRemote = ref.read(liveGiftsRemoteProvider);
-    ref
-        .read(voiceRoomSseServiceProvider)
+    sse
         .connect(
           roomId: _roomKey,
           accessToken: storage.readAccess,
