@@ -291,11 +291,13 @@ class _Avatar extends StatelessWidget {
       return ClipOval(
         child: CachedNetworkImage(
           imageUrl: url!,
+          width: 56,
+          height: 56,
           fit: BoxFit.cover,
-          errorWidget: (_, _, _) => UserAvatar(name: name, radius: 28),
+          errorWidget: (_, _, _) => const UserAvatar(radius: 28),
         ),
       );
     }
-    return UserAvatar(name: name, radius: 28);
+    return const UserAvatar(radius: 28);
   }
 }
