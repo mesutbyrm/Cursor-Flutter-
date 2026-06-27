@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/bootstrap/app_startup_log.dart';
+import '../core/bootstrap/startup_perf.dart';
 import '../core/bootstrap/root_overlay_purge.dart';
 import '../core/l10n/app_localizations_config.dart';
 import '../core/providers/theme_mode_provider.dart';
@@ -26,8 +27,8 @@ class CanlifalApp extends ConsumerStatefulWidget {
 }
 
 class _CanlifalAppState extends ConsumerState<CanlifalApp> {
-  /// Splash / bootstrap en fazla 2 saniye bloklar; sonra uygulama açılır.
-  static const _maxBootstrap = Duration(seconds: 2);
+  /// Splash / bootstrap en fazla 1 saniye bloklar; sonra uygulama açılır.
+  static const _maxBootstrap = StartupPerf.bootstrapCap;
   Timer? _bootstrapCap;
   var _bootstrapCapReached = false;
 

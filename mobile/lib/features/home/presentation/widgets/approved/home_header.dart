@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/bootstrap/startup_perf.dart';
 import '../../../../../core/widgets/canlifal_logo.dart';
 import '../../../../messages/presentation/providers/messages_providers.dart';
 import '../../../../notifications/presentation/providers/notifications_providers.dart';
@@ -9,15 +10,12 @@ import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../theme/home_approved_design.dart';
 
 /// Onaylı mockup — logo, arama, bildirim, mesaj, jeton.
-class HomeHeader extends ConsumerWidget {
+class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final top = MediaQuery.paddingOf(context).top;
-    final unreadNotif = ref.watch(notificationsUnreadCountProvider);
-    final unreadMsg = ref.watch(messagesUnreadCountProvider);
-    final jeton = ref.watch(walletBalancesProvider).valueOrNull?.jeton ?? 0;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -33,23 +31,7 @@ class HomeHeader extends ConsumerWidget {
             children: [
               const CanlifalWordmark(fontSize: 24, compact: true),
               const Spacer(),
-              _IconBadge(
-                icon: Icons.notifications_none_rounded,
-                badge: unreadNotif,
-                onTap: () => context.push('/notifications'),
-              ),
-              const SizedBox(width: 10),
-              _IconBadge(
-                icon: Icons.chat_bubble_outline_rounded,
-                badge: unreadMsg,
-                onTap: () => context.push('/messages'),
-              ),
-              const SizedBox(width: 10),
-              _CoinPill(
-                balance: jeton,
-                onTap: () => context.push('/jeton-store'),
-                onAdd: () => context.push('/jeton-store'),
-              ),
+              const _HomeHeaderBadgesGate(),
             ],
           ),
           const SizedBox(height: 12),
@@ -85,6 +67,88 @@ class HomeHeader extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Rozetler — önce statik ikonlar, gecikme sonrası API.
+class _HomeHeaderBadgesGate extends StatefulWidget {
+  const _HomeHeaderBadgesGate();
+
+  @override
+  State<_HomeHeaderBadgesGate> createState() => _HomeHeaderBadgesGateState();
+}
+
+class _HomeHeaderBadgesGateState extends State<_HomeHeaderBadgesGate> {
+  var _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.delayed(StartupPerf.homeHeaderBadgesDelay, () {
+      if (mounted) setState(() => _ready = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_ready) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _IconBadge(
+            icon: Icons.notifications_none_rounded,
+            onTap: () => context.push('/notifications'),
+          ),
+          const SizedBox(width: 10),
+          _IconBadge(
+            icon: Icons.chat_bubble_outline_rounded,
+            onTap: () => context.push('/messages'),
+          ),
+          const SizedBox(width: 10),
+          _CoinPill(
+            balance: 0,
+            onTap: () => context.push('/jeton-store'),
+            onAdd: () => context.push('/jeton-store'),
+          ),
+        ],
+      );
+    }
+    return const _HomeHeaderBadges();
+  }
+}
+
+/// Rozetler ve jeton — açılışta API tetiklemez; gecikmeli yüklenir.
+class _HomeHeaderBadges extends ConsumerWidget {
+  const _HomeHeaderBadges();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadNotif = ref.watch(notificationsUnreadCountProvider);
+    final unreadMsg = ref.watch(messagesUnreadCountProvider);
+    final jeton = ref.watch(walletBalancesProvider).valueOrNull?.jeton ?? 0;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _IconBadge(
+          icon: Icons.notifications_none_rounded,
+          badge: unreadNotif,
+          onTap: () => context.push('/notifications'),
+        ),
+        const SizedBox(width: 10),
+        _IconBadge(
+          icon: Icons.chat_bubble_outline_rounded,
+          badge: unreadMsg,
+          onTap: () => context.push('/messages'),
+        ),
+        const SizedBox(width: 10),
+        _CoinPill(
+          balance: jeton,
+          onTap: () => context.push('/jeton-store'),
+          onAdd: () => context.push('/jeton-store'),
+        ),
+      ],
     );
   }
 }

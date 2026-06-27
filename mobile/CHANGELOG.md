@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.392+396 (2026-06-27)
+
+### Performans — Görev 1: Uygulama açılışı
+
+- **Splash üst sınırı 1 sn:** auth bootstrap cap 2 sn → 1 sn
+- **Auth hızlı yol:** açılışta yalnızca `/api/me`; site profili + OneSignal login arka planda
+- **SDK erteleme:** AdMob preload, FCM token ve `logAppOpen` runApp sonrasına alındı
+- **Ana sayfa ilk kare:** üst bar rozetleri, banner, canlı yayın ve realtime poll geciktirildi
+- **Kabuk prefetch:** bildirim/cüzdan/mesaj istekleri 2 sn gecikmeli; SSE presence 3 sn
+
 ## 1.0.391+395 (2026-06-27)
 
 ### Sesli oda — UI düzenlemesi (temel mod)
