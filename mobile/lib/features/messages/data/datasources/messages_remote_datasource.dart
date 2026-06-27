@@ -14,13 +14,16 @@ class MessagesRemoteDataSource {
 
   final Dio _dio;
 
-  Future<List<ConversationEntity>> conversations() async {
+  Future<List<ConversationEntity>> conversations({bool forceRefresh = false}) async {
     final paths = Env.useMobileAuth
         ? [ApiEndpoints.messages, ApiEndpoints.messagesConversations]
         : [ApiEndpoints.messagesConversations, ApiEndpoints.messages];
     for (final path in paths) {
       try {
-        final res = await _dio.safeGet<dynamic>(path);
+        final res = await _dio.safeGet<dynamic>(
+          path,
+          forceRefresh: forceRefresh,
+        );
         final parsed = _parseConversations(res.data);
         if (parsed != null && parsed.isNotEmpty) return parsed;
         if (parsed != null) return parsed;
@@ -91,12 +94,16 @@ class MessagesRemoteDataSource {
   Future<List<MessageEntity>> messages(
     String peerUserId, {
     String? currentUserId,
+    bool forceRefresh = false,
   }) async {
     try {
       final path = Env.useMobileAuth
           ? ApiEndpoints.messagesWithUser(peerUserId)
           : ApiEndpoints.conversationMessages(peerUserId);
-      final res = await _dio.safeGet<dynamic>(path);
+      final res = await _dio.safeGet<dynamic>(
+        path,
+        forceRefresh: forceRefresh,
+      );
       final parsed = _parseMessages(res.data, currentUserId: currentUserId);
       if (parsed != null) return parsed;
     } on ApiException catch (e) {

@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/performance/scroll_perf.dart';
-import '../../../../core/performance/widget_perf.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../providers/chat_messages_list_notifier.dart';
 import '../widgets/chat_message_bubble.dart';
 
-/// Sohbet mesaj listesi — yalnızca mesaj state'ini izler.
+/// Sohbet mesaj listesi — cache-first; yalnızca mesaj state'ini izler.
 class ChatMessagesListPane extends ConsumerStatefulWidget {
   const ChatMessagesListPane({
     super.key,
@@ -27,16 +25,11 @@ class ChatMessagesListPane extends ConsumerStatefulWidget {
 }
 
 class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
-  var _ready = false;
-  CancellableDelay? _readyDelay;
   ProviderSubscription<AsyncValue<ChatMessagesListState>>? _msgSub;
 
   @override
   void initState() {
     super.initState();
-    _readyDelay = WidgetPerf.delay(LazyLoadPerf.chatMessages, () {
-      if (mounted) setState(() => _ready = true);
-    });
     _msgSub = ref.listenManual(
       chatMessagesListNotifierProvider(widget.conversationId),
       (previous, next) {
@@ -47,17 +40,12 @@ class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
 
   @override
   void dispose() {
-    _readyDelay?.cancel();
     _msgSub?.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_ready) {
-      return const DiscoverAccentLoader();
-    }
-
     final msgs = ref.watch(
       chatMessagesListNotifierProvider(widget.conversationId).select(
         (async) => async.when(
@@ -75,7 +63,7 @@ class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
 
     final loading = ref.watch(
       chatMessagesListNotifierProvider(widget.conversationId).select(
-        (async) => async.isLoading,
+        (async) => async.isLoading && async.valueOrNull == null,
       ),
     );
     final error = ref.watch(

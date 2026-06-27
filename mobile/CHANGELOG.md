@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.413+417 (2026-06-27)
+
+### Performans — Görev 16: Mesajlar cache-first
+
+- **`MessagesLoadPerf` + `CacheFirstLoader`:** konuşma listesi ve sohbet thread'i disk cache'den anında açılır
+- **Arka plan güncelleme:** açılış sonrası ve 8s/20s poll sessiz `forceRefresh` ile UI güncellenir
+- **Gönder sonrası:** thread + konuşma cache temizlenir, zorunlu yenileme
+- **Shell prefetch:** `conversationsListNotifierProvider` kabukta ısıtılır
+- **Lazy gate kaldırıldı:** mesaj listesi / sohbet pane cache ile gecikmesiz render
+
 ## 1.0.412+416 (2026-06-27)
 
 ### Performans — Görev 17: Widget rebuild & sızıntı temizliği

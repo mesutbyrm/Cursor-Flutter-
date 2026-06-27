@@ -27,8 +27,10 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
     _scroll.addListener(_onScroll);
     _poll = Timer.periodic(const Duration(seconds: 20), (_) {
       if (!mounted) return;
-      ref.read(conversationsListNotifierProvider.notifier).refresh();
-      ref.invalidate(conversationsProvider);
+      ref.read(conversationsListNotifierProvider.notifier).refresh(
+            silent: true,
+            forceRefresh: true,
+          );
     });
   }
 
@@ -49,7 +51,9 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
   }
 
   Future<void> _refresh() async {
-    await ref.read(conversationsListNotifierProvider.notifier).refresh();
+    await ref.read(conversationsListNotifierProvider.notifier).refresh(
+          forceRefresh: true,
+        );
     ref.invalidate(conversationsProvider);
   }
 

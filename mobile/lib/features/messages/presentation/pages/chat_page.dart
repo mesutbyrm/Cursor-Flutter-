@@ -9,6 +9,7 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/chat_messages_list_notifier.dart';
 import '../providers/messages_providers.dart';
 import '../widgets/chat_composer_bar.dart';
@@ -38,7 +39,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       if (!mounted) return;
       ref
           .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
-          .refresh();
+          .refresh(silent: true, forceRefresh: true);
     });
   }
 
@@ -73,14 +74,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   }
 
   Future<void> _sendMessage(String text) async {
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
     await ref.read(messagesRepositoryProvider).sendMessage(
           widget.conversationId,
           text,
+          currentUserId: userId,
         );
     _text.clear();
     await ref
         .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
-        .refresh();
+        .refresh(forceRefresh: true);
     ref.invalidate(conversationsProvider);
     _scrollToEnd();
   }

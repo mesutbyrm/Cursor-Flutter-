@@ -49,6 +49,9 @@ abstract final class PerfResult {
   /// Görev 15 — profil dilimleri bağımsız yükleme
   static const moduleProfileLoad = 'ProfileLoadPerf';
 
+  /// Görev 16 — mesajlar cache-first + arka plan güncelleme
+  static const moduleMessagesLoad = 'MessagesLoadPerf / CacheFirstLoader';
+
   /// Görev 17 — gereksiz rebuild/setState/timer sızıntı temizliği
   static const moduleWidgetPerf = 'WidgetPerf / CancellableDelay';
 
