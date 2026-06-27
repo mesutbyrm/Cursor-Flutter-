@@ -49,6 +49,9 @@ abstract final class PerfResult {
   /// Görev 15 — profil dilimleri bağımsız yükleme
   static const moduleProfileLoad = 'ProfileLoadPerf';
 
+  /// Görev 17 — gereksiz rebuild/setState/timer sızıntı temizliği
+  static const moduleWidgetPerf = 'WidgetPerf / CancellableDelay';
+
   /// Görev 18 — jeton/cüzdan anında, geçişler akıcı
   static const moduleWalletUi = 'WalletBalancesNotifier + shell prefetch';
 }

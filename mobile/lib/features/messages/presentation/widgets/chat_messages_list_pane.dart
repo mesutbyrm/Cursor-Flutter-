@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/performance/scroll_perf.dart';
+import '../../../../core/performance/widget_perf.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../providers/chat_messages_list_notifier.dart';
 import '../widgets/chat_message_bubble.dart';
@@ -27,19 +28,28 @@ class ChatMessagesListPane extends ConsumerStatefulWidget {
 
 class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
   var _ready = false;
+  CancellableDelay? _readyDelay;
+  ProviderSubscription<AsyncValue<ChatMessagesListState>>? _msgSub;
 
   @override
   void initState() {
     super.initState();
-    Future<void>.delayed(LazyLoadPerf.chatMessages, () {
+    _readyDelay = WidgetPerf.delay(LazyLoadPerf.chatMessages, () {
       if (mounted) setState(() => _ready = true);
     });
-    ref.listenManual(
+    _msgSub = ref.listenManual(
       chatMessagesListNotifierProvider(widget.conversationId),
       (previous, next) {
         next.whenData((_) => widget.onScrollToEnd());
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _readyDelay?.cancel();
+    _msgSub?.close();
+    super.dispose();
   }
 
   @override

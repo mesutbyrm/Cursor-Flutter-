@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'widget_perf.dart';
+
 /// Ekran açıldıktan sonra bölümü gecikmeli mount eder — API isteklerini sıraya sokar.
 class LazyScreenSection extends StatefulWidget {
   const LazyScreenSection({
@@ -19,6 +21,7 @@ class LazyScreenSection extends StatefulWidget {
 
 class _LazyScreenSectionState extends State<LazyScreenSection> {
   var _ready = false;
+  CancellableDelay? _delay;
 
   @override
   void initState() {
@@ -27,9 +30,15 @@ class _LazyScreenSectionState extends State<LazyScreenSection> {
       _ready = true;
       return;
     }
-    Future<void>.delayed(widget.delay, () {
+    _delay = WidgetPerf.delay(widget.delay, () {
       if (mounted) setState(() => _ready = true);
     });
+  }
+
+  @override
+  void dispose() {
+    _delay?.cancel();
+    super.dispose();
   }
 
   @override
@@ -60,6 +69,7 @@ class LazyScreenGate extends StatefulWidget {
 
 class _LazyScreenGateState extends State<LazyScreenGate> {
   var _ready = false;
+  CancellableDelay? _delay;
 
   @override
   void initState() {
@@ -68,9 +78,15 @@ class _LazyScreenGateState extends State<LazyScreenGate> {
       _ready = true;
       return;
     }
-    Future<void>.delayed(widget.delay, () {
+    _delay = WidgetPerf.delay(widget.delay, () {
       if (mounted) setState(() => _ready = true);
     });
+  }
+
+  @override
+  void dispose() {
+    _delay?.cancel();
+    super.dispose();
   }
 
   @override

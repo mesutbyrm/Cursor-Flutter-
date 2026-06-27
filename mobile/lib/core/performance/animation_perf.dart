@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -117,6 +118,7 @@ class FloatingEmojiPaintLayerState extends State<FloatingEmojiPaintLayer>
   late final AnimationController _tick;
   final _particles = <_FloatEmoji>[];
   final _rand = math.Random();
+  Timer? _ambientTimer;
 
   @override
   void initState() {
@@ -129,7 +131,8 @@ class FloatingEmojiPaintLayerState extends State<FloatingEmojiPaintLayer>
   }
 
   void _scheduleAmbient() {
-    Future<void>.delayed(widget.ambientInterval, () {
+    _ambientTimer?.cancel();
+    _ambientTimer = Timer(widget.ambientInterval, () {
       if (!mounted || !widget.enabled) return;
       _spawn();
       _scheduleAmbient();
@@ -164,6 +167,7 @@ class FloatingEmojiPaintLayerState extends State<FloatingEmojiPaintLayer>
 
   @override
   void dispose() {
+    _ambientTimer?.cancel();
     _tick.dispose();
     super.dispose();
   }

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/scroll_perf.dart';
+import '../../../../core/performance/widget_perf.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
@@ -22,13 +23,20 @@ class ConversationsListSliver extends ConsumerStatefulWidget {
 
 class _ConversationsListSliverState extends ConsumerState<ConversationsListSliver> {
   var _ready = false;
+  CancellableDelay? _readyDelay;
 
   @override
   void initState() {
     super.initState();
-    Future<void>.delayed(LazyLoadPerf.messagesList, () {
+    _readyDelay = WidgetPerf.delay(LazyLoadPerf.messagesList, () {
       if (mounted) setState(() => _ready = true);
     });
+  }
+
+  @override
+  void dispose() {
+    _readyDelay?.cancel();
+    super.dispose();
   }
 
   Future<void> _refresh() async {

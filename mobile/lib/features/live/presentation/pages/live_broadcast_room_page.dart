@@ -93,6 +93,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   var _viewerAudioOn = true;
   VideoWebrtcSignalService? _signalService;
   Timer? _guestJoinPoll;
+  Timer? _lazyGiftsTimer;
+  Timer? _lazyExtrasTimer;
   final Set<String> _seenGuestJoinIds = {};
   final Set<String> _seenVipEntrances = {};
   String? _vipBannerName;
@@ -109,10 +111,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           ..loadInitialLikeCount();
       }
       _initAgora();
-      Timer(LazyLoadPerf.liveRoomGifts, () {
+      _lazyGiftsTimer = Timer(LazyLoadPerf.liveRoomGifts, () {
         if (mounted) _initGifts();
       });
-      Timer(LazyLoadPerf.liveRoomExtras, () {
+      _lazyExtrasTimer = Timer(LazyLoadPerf.liveRoomExtras, () {
         if (mounted) _initStreamExtras();
       });
     });
@@ -253,6 +255,8 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
 
   @override
   void dispose() {
+    _lazyGiftsTimer?.cancel();
+    _lazyExtrasTimer?.cancel();
     _guestJoinPoll?.cancel();
     _signalService?.stop();
     if (_remoteUidsListener != null) {

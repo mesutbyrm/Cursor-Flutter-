@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.412+416 (2026-06-27)
+
+### Performans — Görev 17: Widget rebuild & sızıntı temizliği
+
+- **`WidgetPerf` / `CancellableDelay`:** gecikmeli callback'ler dispose'da iptal
+- **Bellek:** PK poll timer, chat `listenManual`, rumuz dialog controller, HLS video init, YouTube WebView, lazy live room timer'ları
+- **FutureBuilder kaldırıldı:** falcı oturum restore, profil takip listesi, shorts/social yorum sheet'leri
+- **StreamBuilder → Riverpod:** premium fal sohbet mesajları `pfMessagesStreamProvider`
+- **SVGA hediye:** FutureBuilder yerine arka planda cache prefetch
+- **`LazyScreenSection` / animasyon parçacıkları:** iptal edilebilir timer
+
 ## 1.0.411+415 (2026-06-27)
 
 ### Performans — Görev 9: JSON isolate parse

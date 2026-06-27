@@ -16,6 +16,13 @@ final pfConversationsProvider =
   return result.valueOrNull ?? [];
 });
 
+final pfMessagesStreamProvider =
+    StreamProvider.autoDispose.family<List<PfChatMessage>, String>(
+  (ref, conversationId) {
+    return ref.watch(pfChatRepositoryProvider).watchMessages(conversationId);
+  },
+);
+
 class PfChatListPage extends ConsumerWidget {
   const PfChatListPage({super.key});
 
@@ -121,7 +128,6 @@ class _PfChatRoomPageState extends ConsumerState<PfChatRoomPage> {
           text: text,
         );
     _textCtrl.clear();
-    setState(() {});
   }
 
   Future<void> _sendImage() async {
@@ -134,14 +140,13 @@ class _PfChatRoomPageState extends ConsumerState<PfChatRoomPage> {
           senderId: user.id,
           localImagePath: file.path,
         );
-    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(pfEffectiveUserProvider);
-    final messagesStream =
-        ref.read(pfChatRepositoryProvider).watchMessages(widget.conversationId);
+    final messagesAsync =
+        ref.watch(pfMessagesStreamProvider(widget.conversationId));
 
     return Scaffold(
       backgroundColor: PfTheme.surface,
@@ -149,64 +154,62 @@ class _PfChatRoomPageState extends ConsumerState<PfChatRoomPage> {
       body: Column(
         children: [
           Expanded(
-            child: StreamBuilder<List<PfChatMessage>>(
-              stream: messagesStream,
-              builder: (context, snap) {
-                final messages = snap.data ?? [];
-                return ListView.builder(
-                  controller: _scrollCtrl,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: messages.length,
-                  itemBuilder: (context, i) {
-                    final m = messages[i];
-                    final isMe = m.senderId == user?.id;
-                    return Align(
-                      alignment:
-                          isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.sizeOf(context).width * 0.75,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isMe
-                              ? PfTheme.purple.withValues(alpha: 0.6)
-                              : PfTheme.card,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (m.type == PfMessageType.image)
-                              const Icon(Icons.image_rounded, size: 40)
-                            else if (m.type == PfMessageType.audio)
-                              const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.mic_rounded, size: 20),
-                                  SizedBox(width: 4),
-                                  Text('Ses kaydı'),
-                                ],
-                              )
-                            else
-                              Text(m.content),
-                            if (m.isRead && isMe)
-                              const Align(
-                                alignment: Alignment.bottomRight,
-                                child: Icon(Icons.done_all, size: 14,
-                                    color: Colors.white38),
-                              ),
-                          ],
-                        ),
+            child: messagesAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('$e')),
+              data: (messages) => ListView.builder(
+                controller: _scrollCtrl,
+                padding: const EdgeInsets.all(16),
+                itemCount: messages.length,
+                itemBuilder: (context, i) {
+                  final m = messages[i];
+                  final isMe = m.senderId == user?.id;
+                  return Align(
+                    alignment:
+                        isMe ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
                       ),
-                    );
-                  },
-                );
-              },
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.sizeOf(context).width * 0.75,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isMe
+                            ? PfTheme.purple.withValues(alpha: 0.6)
+                            : PfTheme.card,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (m.type == PfMessageType.image)
+                            const Icon(Icons.image_rounded, size: 40)
+                          else if (m.type == PfMessageType.audio)
+                            const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.mic_rounded, size: 20),
+                                SizedBox(width: 4),
+                                Text('Ses kaydı'),
+                              ],
+                            )
+                          else
+                            Text(m.content),
+                          if (m.isRead && isMe)
+                            const Align(
+                              alignment: Alignment.bottomRight,
+                              child: Icon(Icons.done_all, size: 14,
+                                  color: Colors.white38),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
           SafeArea(

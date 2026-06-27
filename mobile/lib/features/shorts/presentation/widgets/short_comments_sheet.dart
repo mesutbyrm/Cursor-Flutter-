@@ -34,7 +34,9 @@ class _ShortCommentsSheet extends ConsumerStatefulWidget {
 
 class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
   final _controller = TextEditingController();
-  late Future<List<ShortCommentEntity>> _commentsFuture;
+  List<ShortCommentEntity>? _comments;
+  Object? _loadError;
+  var _commentsLoading = true;
   var _commentsCount = 0;
   var _sending = false;
 
@@ -42,9 +44,30 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
   void initState() {
     super.initState();
     _commentsCount = widget.video.commentsCount;
-    _commentsFuture = ref.read(shortsRepositoryProvider).fetchComments(
-          widget.video.id,
-        );
+    _loadComments();
+  }
+
+  Future<void> _loadComments() async {
+    setState(() {
+      _commentsLoading = true;
+      _loadError = null;
+    });
+    try {
+      final list = await ref.read(shortsRepositoryProvider).fetchComments(
+            widget.video.id,
+          );
+      if (!mounted) return;
+      setState(() {
+        _comments = list;
+        _commentsLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = e;
+        _commentsLoading = false;
+      });
+    }
   }
 
   @override
@@ -63,12 +86,8 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
             text,
           );
       _controller.clear();
-      setState(() {
-        _commentsCount = res.commentsCount;
-        _commentsFuture = ref.read(shortsRepositoryProvider).fetchComments(
-              widget.video.id,
-            );
-      });
+      setState(() => _commentsCount = res.commentsCount);
+      await _loadComments();
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -104,76 +123,7 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
               ),
             ),
             Expanded(
-              child: FutureBuilder(
-                future: _commentsFuture,
-                builder: (context, snap) {
-                  if (snap.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: Colors.white54),
-                    );
-                  }
-                  final comments = snap.data ?? const [];
-                  if (comments.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'İlk yorumu sen yap',
-                        style: TextStyle(color: Colors.white54),
-                      ),
-                    );
-                  }
-                  return ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: comments.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, i) {
-                      final c = comments[i];
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundColor: Colors.white12,
-                            backgroundImage: c.author.avatarUrl != null
-                                ? canlifalImageProvider(c.author.avatarUrl!)
-                                : null,
-                            child: c.author.avatarUrl == null
-                                ? Text(
-                                    c.author.label.characters.first
-                                        .toUpperCase(),
-                                    style: const TextStyle(fontSize: 12),
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  c.author.label,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  c.content,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
+              child: _buildCommentsList(),
             ),
             SafeArea(
               top: false,
@@ -220,6 +170,81 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCommentsList() {
+    if (_commentsLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.white54),
+      );
+    }
+    if (_loadError != null) {
+      return Center(
+        child: Text(
+          _loadError.toString(),
+          style: const TextStyle(color: Colors.white54),
+        ),
+      );
+    }
+    final comments = _comments ?? const [];
+    if (comments.isEmpty) {
+      return const Center(
+        child: Text(
+          'İlk yorumu sen yap',
+          style: TextStyle(color: Colors.white54),
+        ),
+      );
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: comments.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (context, i) {
+        final c = comments[i];
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.white12,
+              backgroundImage: c.author.avatarUrl != null
+                  ? canlifalImageProvider(c.author.avatarUrl!)
+                  : null,
+              child: c.author.avatarUrl == null
+                  ? Text(
+                      c.author.label.characters.first.toUpperCase(),
+                      style: const TextStyle(fontSize: 12),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    c.author.label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    c.content,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

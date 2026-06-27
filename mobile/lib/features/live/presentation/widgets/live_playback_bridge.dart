@@ -39,14 +39,21 @@ class _LivePlaybackBridgeState extends State<LivePlaybackBridge> {
   Future<void> _initVideo() async {
     final url = widget.playbackUrl?.trim();
     if (url == null || url.isEmpty) return;
+    VideoPlayerController? c;
     try {
-      final c = VideoPlayerController.networkUrl(Uri.parse(url));
+      c = VideoPlayerController.networkUrl(Uri.parse(url));
       await c.initialize();
       await c.setLooping(true);
       await c.setVolume(0);
       await c.play();
-      if (mounted) setState(() => _controller = c);
-    } catch (_) {}
+      if (!mounted) {
+        await c.dispose();
+        return;
+      }
+      setState(() => _controller = c);
+    } catch (_) {
+      await c?.dispose();
+    }
   }
 
   @override

@@ -102,43 +102,47 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
 
   Future<void> _changeNickname() async {
     final controller = TextEditingController();
-    final err = await showDialog<String?>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Oda rumuzu'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Sohbette görünecek rumuz',
-            border: OutlineInputBorder(),
+    try {
+      final err = await showDialog<String?>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Oda rumuzu'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: 'Sohbette görünecek rumuz',
+              border: OutlineInputBorder(),
+            ),
+            maxLength: 32,
           ),
-          maxLength: 32,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('İptal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, controller.text),
+              child: const Text('Kaydet'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('İptal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('Kaydet'),
-          ),
-        ],
-      ),
-    );
-    if (!mounted || err == null) return;
-    final message = await ref
-        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
-        .updateRoomNickname(err);
-    if (!mounted) return;
-    if (message != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rumuz güncellendi')),
-      );
+      if (!mounted || err == null) return;
+      final message = await ref
+          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
+          .updateRoomNickname(err);
+      if (!mounted) return;
+      if (message != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Rumuz güncellendi')),
+        );
+      }
+    } finally {
+      controller.dispose();
     }
   }
 

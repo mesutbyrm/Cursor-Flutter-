@@ -44,6 +44,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   final _agora = AgoraRoomManager();
   var _lastGiftSideLeft = true;
   var _agoraReady = false;
+  Timer? _pkPollTimer;
 
   String? get _streamId => widget.session.streamId?.trim();
 
@@ -92,7 +93,8 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   }
 
   void _pollPk() {
-    Timer.periodic(const Duration(seconds: 3), (t) async {
+    _pkPollTimer?.cancel();
+    _pkPollTimer = Timer.periodic(const Duration(seconds: 3), (t) async {
       if (!mounted) {
         t.cancel();
         return;
@@ -115,6 +117,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
 
   @override
   void dispose() {
+    _pkPollTimer?.cancel();
     ref.read(liveGiftControllerProvider).detach();
     ref.read(liveGiftSocketBridgeProvider).disconnect();
     ref.read(pkBattleRemoteProvider.notifier).disconnectSocket();
