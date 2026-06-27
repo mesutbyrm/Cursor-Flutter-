@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/performance/live_entry_perf.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -57,6 +58,7 @@ import '../widgets/broadcast_room/live_viewers_sheet.dart';
 import '../widgets/broadcast_room/live_room_chat_fal_panel.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import '../widgets/broadcast_room/live_room_video_background.dart';
+import '../widgets/live_playback_bridge.dart';
 import '../widgets/premium_2026/live_premium_2026.dart';
 
 /// Premium 2026 canlı yayın — TRTC + immersive overlay + hediye + kalpler.
@@ -193,10 +195,22 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
 
       var cred = widget.session.agora;
       if (cred == null || !cred.matchesChannel(roomId)) {
-        cred = await ref.read(agoraRemoteProvider).fetchToken(
-              channelName: roomId,
-              role: widget.session.isHost ? 'host' : 'audience',
-            );
+        cred = LiveEntryPerf.takeAgora(userId: user.id, streamId: roomId);
+      }
+      if (cred == null || !cred.matchesChannel(roomId)) {
+        if (widget.session.isHost) {
+          cred = await ref.read(agoraRemoteProvider).fetchToken(
+                channelName: roomId,
+                role: 'host',
+              );
+        } else {
+          cred = await LiveEntryPerf.fetchAgoraParallel(
+            ref,
+            streamId: roomId,
+            role: 'audience',
+            userId: user.id,
+          );
+        }
       }
 
       await _agora.join(
@@ -860,44 +874,26 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       return Stack(
         fit: StackFit.expand,
         children: [
-          _imageModeLayer(s),
-          if (_rtcError == null)
+          if (!s.isHost)
+            LivePlaybackBridge(
+              playbackUrl: s.playbackUrl,
+              thumbnailUrl: s.coverImageUrl ?? s.avatarUrl,
+            )
+          else
+            _imageModeLayer(s),
+          if (_rtcError == null && s.isHost)
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (!s.isHost) ...[
-                    CircleAvatar(
-                      radius: 48,
-                      backgroundColor: Colors.white.withValues(alpha: 0.08),
-                      backgroundImage: s.avatarUrl != null &&
-                              s.avatarUrl!.trim().isNotEmpty
-                          ? canlifalImageProvider(s.avatarUrl!)
-                          : null,
-                      child: s.avatarUrl == null || s.avatarUrl!.trim().isEmpty
-                          ? const Icon(Icons.person_rounded,
-                              size: 48, color: Colors.white54)
-                          : null,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '@${s.streamerHandle ?? s.streamerName ?? 'yayinci'}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white70,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ] else ...[
-                    const Icon(
-                      Icons.sensors_rounded,
-                      size: 56,
-                      color: Color(0xFFB832FF),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                  const Icon(
+                    Icons.sensors_rounded,
+                    size: 56,
+                    color: Color(0xFFB832FF),
+                  ),
+                  const SizedBox(height: 16),
                   Text(
-                    s.isHost ? 'Yayın başlatılıyor…' : 'Bağlanıyor...',
+                    'Yayın başlatılıyor…',
                     style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 18,
@@ -915,6 +911,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                   ),
                 ],
               ),
+            ),
+          if (_rtcError == null && !s.isHost)
+            Positioned(
+              left: 16,
+              bottom: 128,
+              child: _liveConnectingBadge(),
             ),
           if (_rtcError != null)
             Center(
@@ -948,6 +950,41 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           onGuestAction: s.isHost ? _onGuestAction : null,
         );
       },
+    );
+  }
+
+  Widget _liveConnectingBadge() {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white70,
+              ),
+            ),
+            SizedBox(width: 8),
+            Text(
+              'Canlı bağlanıyor',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

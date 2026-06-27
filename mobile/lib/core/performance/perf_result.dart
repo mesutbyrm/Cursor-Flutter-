@@ -40,6 +40,9 @@ abstract final class PerfResult {
   /// Görev 13 — sesli oda hızlı giriş
   static const moduleVoiceEntry = 'VoiceRoomEntryPerf';
 
+  /// Görev 14 — canlı yayın ilk kare + arka plan bağlantı
+  static const moduleLiveEntry = 'LiveEntryPerf';
+
   /// Görev 18 — jeton/cüzdan anında, geçişler akıcı
   static const moduleWalletUi = 'WalletBalancesNotifier + shell prefetch';
 }

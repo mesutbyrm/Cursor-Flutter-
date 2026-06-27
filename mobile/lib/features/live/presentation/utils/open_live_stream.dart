@@ -1,11 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/performance/live_entry_perf.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../agora/presentation/providers/agora_providers.dart';
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/entities/live_swipe_feed_args.dart';
@@ -21,16 +23,36 @@ Future<LiveBroadcastSession> buildLiveSessionForStream(
     throw StateError('İzlemek için giriş yapın');
   }
 
-  final agora = await ref.read(agoraRemoteProvider).fetchToken(
-        channelName: stream.id,
-        role: 'audience',
-      );
+  final agora = await LiveEntryPerf.fetchAgoraParallel(
+    ref,
+    streamId: stream.id,
+    role: 'audience',
+    userId: user.id,
+  );
 
   return LiveBroadcastSession.fromStream(stream).copyWith(
     streamId: stream.id,
     agora: agora,
     hostUserId: stream.hostUserId,
   );
+}
+
+Future<void> _validateStreamStillLive(
+  WidgetRef ref,
+  BuildContext context,
+  LiveStreamEntity stream,
+) async {
+  if (!Env.useMobileAuth) return;
+  try {
+    final meta = await ref.read(liveRemoteProvider).fetchStream(stream.id);
+    if (meta != null && !meta.isLive && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Yayın sona erdi')),
+      );
+      ref.invalidate(liveStreamsProvider);
+      if (context.canPop()) context.pop();
+    }
+  } catch (_) {}
 }
 
 /// Tek yayın — premium tam ekran oda.
@@ -55,26 +77,18 @@ Future<void> openLiveStreamNative(
     return;
   }
 
+  LiveEntryPerf.prewarmOnStreamTap(ref, stream);
+
   try {
-    if (Env.useMobileAuth) {
-      final meta = await ref.read(liveRemoteProvider).fetchStream(stream.id);
-      if (meta != null && !meta.isLive) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Yayın sona erdi')),
-          );
-        }
-        ref.invalidate(liveStreamsProvider);
-        return;
-      }
-    }
     if (swipeMode) {
+      unawaited(_validateStreamStillLive(ref, context, stream));
       await openLiveStreamSwipe(context, ref, stream);
       return;
     }
 
-    final session = await buildLiveSessionForStream(ref, stream);
     if (!context.mounted) return;
+    final session = LiveBroadcastSession.fromStream(stream);
+    unawaited(_validateStreamStillLive(ref, context, stream));
     context.push('/live/room', extra: session);
   } catch (e) {
     if (context.mounted) {

@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.409+413 (2026-06-27)
+
+### Performans — Görev 14: Canlı yayın hızlı giriş
+
+- **`LiveEntryPerf`:** liste dokunuşunda Agora token + join önbelleği; `fetchAgoraParallel`
+- **Anında navigasyon:** swipe/oda ekranı token beklemeden açılır; doğrulama arka planda
+- **HLS köprüsü:** `LivePlaybackBridge` — Agora hazır olana kadar HLS/thumbnail (izleyici)
+- **Bağlanırken bekleme yok:** tam ekran spinner kaldırıldı; küçük “Canlı bağlanıyor” rozeti
+- **Backend:** yalnızca `https://canlifal.com` — yeni backend yok
+
 ## 1.0.408+412 (2026-06-27)
 
 ### CI — Gate 3 jeton yetersizliği SKIP

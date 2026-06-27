@@ -24,6 +24,7 @@ class LiveBroadcastSession {
     this.isImageMode = false,
     this.coverImageUrl,
     this.backgroundUrl,
+    this.playbackUrl,
     this.guestLayout = LiveGuestLayout.solo,
   });
 
@@ -45,6 +46,8 @@ class LiveBroadcastSession {
   final bool isImageMode;
   final String? coverImageUrl;
   final String? backgroundUrl;
+  /// HLS köprüsü — Agora ilk kare gelene kadar.
+  final String? playbackUrl;
   final LiveGuestLayout guestLayout;
 
   factory LiveBroadcastSession.fromStream(LiveStreamEntity stream) {
@@ -64,6 +67,7 @@ class LiveBroadcastSession {
       trtc: null,
       hostUserId: stream.hostUserId,
       coverImageUrl: stream.thumbnailUrl,
+      playbackUrl: stream.playbackUrl,
     );
   }
 
@@ -81,6 +85,7 @@ class LiveBroadcastSession {
     bool? isImageMode,
     String? coverImageUrl,
     String? backgroundUrl,
+    String? playbackUrl,
     LiveGuestLayout? guestLayout,
   }) {
     return LiveBroadcastSession(
@@ -102,6 +107,7 @@ class LiveBroadcastSession {
       isImageMode: isImageMode ?? this.isImageMode,
       coverImageUrl: coverImageUrl ?? this.coverImageUrl,
       backgroundUrl: backgroundUrl ?? this.backgroundUrl,
+      playbackUrl: playbackUrl ?? this.playbackUrl,
       guestLayout: guestLayout ?? this.guestLayout,
     );
   }
