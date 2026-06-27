@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.390+394 (2026-06-27)
+
+### Sesli oda — premium özellikler (web parity, temel mod)
+
+- **Hediyeler:** mağaza, uçan animasyon, fullscreen nadir hediye, SSE + gift socket
+- **PK:** davet, gelen PK dialog, aktif PK sayfasına geçiş
+- **Efektler:** ses efekt paneli (`showVoiceEffectsSheet`)
+- **Oda temaları:** kozmik arka plan + hub ayarlarından tema seçimi
+- **Sohbet + emoji:** mesaj gönderme, hediye satırları, emoji picker
+- **Profil kartları:** neon avatar, rol rozeti, hediye kısayolu
+- **VIP giriş animasyonu:** üyelik tier’ına göre overlay
+- **Backend:** değişiklik yok — mevcut canlifal.com API/SSE
+
 ## 1.0.389+393 (2026-06-27)
 
 ### Sesli oda — moderasyon (web parity, temel mod)

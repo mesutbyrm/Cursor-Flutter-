@@ -15,6 +15,7 @@ import '../sheets/voice_room_sheets.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium_2026/voice_web_owner_stage.dart';
+import 'voice_room_basic_premium_section.dart';
 
 /// Sahne, moderasyon araç çubuğu ve konuşma isteği — temel mod (web parity).
 class VoiceRoomBasicModerationSection extends ConsumerWidget {
@@ -222,6 +223,13 @@ void openVoiceRoomBasicUser(
       return;
     }
     final djIds = liveState.dj.djUsers.map((u) => u.id).toSet();
+    void openGift() => openVoiceRoomBasicGiftShop(
+          context,
+          ref,
+          room: room,
+          presence: liveState.presence,
+          receiver: user,
+        );
     showVoiceRoomModerationSheet(
       context: context,
       ref: ref,
@@ -231,11 +239,23 @@ void openVoiceRoomBasicUser(
       perms: permissions,
       isOwner: isOwner,
       isTargetDj: djIds.contains(user.id),
+      onGift: openGift,
     );
     return;
   }
 
-  showVoiceUserProfileSheet(context, user: user);
+  void openGift() => openVoiceRoomBasicGiftShop(
+        context,
+        ref,
+        room: room,
+        presence: liveState.presence,
+        receiver: user,
+      );
+  showVoiceUserProfileSheet(
+    context,
+    user: user,
+    onGift: openGift,
+  );
 }
 
 Future<void> onVoiceRoomBasicSeatTap({

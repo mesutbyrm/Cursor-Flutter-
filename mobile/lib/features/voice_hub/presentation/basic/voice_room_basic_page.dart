@@ -7,10 +7,18 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../../domain/voice_official_join.dart';
+import '../../../gifts/domain/premium_gift_catalog_2026.dart';
+import '../../../gifts/presentation/widgets/premium_2026/premium_gift_fullscreen_overlay.dart';
+import '../providers/voice_gift_combo_tracker.dart';
+import '../providers/voice_gift_leaderboard_provider.dart';
+import '../providers/pk_battle_remote_provider.dart';
+import '../providers/voice_gift_providers.dart';
 import '../audio/voice_room_audio_coordinator.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import '../providers/chat_room_providers.dart';
@@ -20,8 +28,14 @@ import '../sheets/voice_room_sheets.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../domain/voice_music_sync.dart';
 import '../utils/voice_room_permissions.dart';
+import '../theme/voice_room_tokens.dart';
+import '../widgets/premium/voice_gift_flight_overlay.dart';
+import '../widgets/premium_2026/voice_cosmic_background.dart';
+import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
+import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'voice_room_basic_music_section.dart';
 import 'voice_room_basic_moderation_section.dart';
+import 'voice_room_basic_premium_section.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
 import '../utils/kick_strike_ui.dart';
 import 'voice_room_basic_realtime_feed.dart';
@@ -47,6 +61,12 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   var _isMicMuted = true;
   var _leaving = false;
   final _istekCtrl = TextEditingController();
+  final _messageCtrl = TextEditingController();
+  StreamSubscription<LiveGiftEvent>? _giftSub;
+  LiveGiftEvent? _fullscreenGift;
+  var _showVipEntrance = false;
+  var _vipEntrancePlayed = false;
+  String? _shownPkInviteId;
 
   String get _liveRoomKey {
     final pinned = _pinnedLiveRoomKey?.trim();
@@ -83,6 +103,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   @override
   void dispose() {
     _istekCtrl.dispose();
+    _messageCtrl.dispose();
+    _giftSub?.cancel();
+    ref.read(voiceRoomGiftRealtimeProvider).stop();
     final audio = _audio;
     _audio = null;
     if (audio != null) {
@@ -153,6 +176,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         _audioJoining = false;
         _audioError = 'Ses bu cihazda desteklenmiyor';
       });
+      _startPremiumRealtime(user);
       return;
     }
 
@@ -178,12 +202,14 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         _audioReady = true;
         _isMicMuted = !_audio!.micOn;
       });
+      _startPremiumRealtime(user);
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _audioJoining = false;
         _audioError = ApiException.userMessage(e);
       });
+      _startPremiumRealtime(user);
     }
   }
 
@@ -205,9 +231,88 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     setState(() {});
   }
 
+  void _startPremiumRealtime(UserEntity user) {
+    _startGiftRealtime();
+    _maybeShowVipEntrance(user);
+    unawaited(connectVoiceRoomBasicPkBattle(ref, _effectiveRoom()));
+  }
+
+  void _startGiftRealtime() {
+    final room = _effectiveRoom();
+    final key = room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
+    if (key.isEmpty) return;
+    final service = ref.read(voiceRoomGiftRealtimeProvider);
+    service.start(key);
+    _giftSub?.cancel();
+    _giftSub = service.events.listen(_onGiftEvent);
+  }
+
+  void _onGiftEvent(LiveGiftEvent raw) {
+    if (!mounted) return;
+    final ui = ref.read(voiceRoomUiProvider);
+    if (!ui.giftAnimationsEnabled) return;
+
+    final event = ref.read(voiceGiftComboTrackerProvider.notifier).enrich(raw);
+    ref.read(voiceSessionGiftLeaderboardProvider.notifier).record(event);
+    ref.read(voiceGiftFlightQueueProvider.notifier).enqueue(event);
+
+    final showFullscreen = PremiumGiftCatalog2026.triggersFullscreen(
+      giftId: event.giftId,
+      coinCost: event.coinCost,
+      combo: event.combo,
+    );
+    if (showFullscreen) {
+      setState(() => _fullscreenGift = event);
+      final duration = PremiumGiftCatalog2026.rarity(event.giftId).fullscreenDuration;
+      Future.delayed(duration, () {
+        if (mounted && _fullscreenGift?.id == event.id) {
+          setState(() => _fullscreenGift = null);
+        }
+      });
+    }
+  }
+
+  void _maybeShowVipEntrance(UserEntity user) {
+    if (_vipEntrancePlayed || !mounted) return;
+    final tier = ref.read(vipTierProvider);
+    if (!tier.hasEntranceFx) return;
+    _vipEntrancePlayed = true;
+    setState(() => _showVipEntrance = true);
+  }
+
+  void _openGiftShop(
+    VoiceRoomEntity room,
+    List<ChatRoomPresence> presence, {
+    ChatRoomPresence? receiver,
+  }) {
+    openVoiceRoomBasicGiftShop(
+      context,
+      ref,
+      room: room,
+      presence: presence,
+      receiver: receiver,
+    );
+  }
+
+  void _sendChatMessage() {
+    final text = VoiceOfficialJoin.normalizeCommandInput(
+      _messageCtrl.text.trim(),
+    );
+    if (text.isEmpty) return;
+    _messageCtrl.clear();
+    unawaited(
+      ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).sendMessage(text),
+    );
+  }
+
   Future<void> _leaveRoom() async {
     if (_leaving) return;
     _leaving = true;
+
+    ref.read(pkBattleRemoteProvider.notifier).clear();
+    ref.read(voiceRoomGiftRealtimeProvider).stop();
+    _giftSub?.cancel();
+    _giftSub = null;
 
     final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
     final audio = _audio;
@@ -353,6 +458,27 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _permissions(user, live, room);
     final canControlMusic = _canControlMusic(live, room, user, perms);
+    final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
+    final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
+    final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
+
+    ref.listen(pkBattleRemoteProvider, (prev, next) {
+      if (next == null || !isOwner || !next.isPending) return;
+      final opp = next.opponentVoiceRoomId;
+      final isTarget = opp == room.apiRoomKey ||
+          opp == room.id ||
+          opp == room.slug;
+      if (!isTarget || _shownPkInviteId == next.id) return;
+      _shownPkInviteId = next.id;
+      unawaited(
+        showVoiceRoomBasicIncomingPkInvite(
+          context: context,
+          ref: ref,
+          room: room,
+          battleId: next.id,
+        ),
+      );
+    });
 
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
       if (!mounted) return;
@@ -440,7 +566,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         if (!didPop) unawaited(_confirmLeave());
       },
       child: Scaffold(
+        backgroundColor: VoiceRoomTokens.bgDeep,
         appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.92),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -463,6 +591,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             ],
           ),
           actions: [
+            IconButton(
+              onPressed: () => _openGiftShop(room, live.presence),
+              icon: const Icon(Icons.card_giftcard_rounded),
+              tooltip: 'Hediye',
+            ),
             TextButton.icon(
               onPressed: () => _openParticipants(room, live.presence),
               icon: const Icon(Icons.people_outline_rounded, size: 20),
@@ -470,7 +603,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             ),
           ],
         ),
-        body: Column(
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            VoiceCosmicBackground(imageUrl: bgUrl),
+            Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (live.roomMuted)
@@ -486,6 +623,16 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                 child: Center(child: CircularProgressIndicator()),
               )
             else ...[
+              VoiceRoomBasicPremiumToolbar(
+                room: room,
+                liveKey: _liveRoomKey,
+                live: live,
+                perms: perms,
+                isOwner: isOwner,
+                onGift: () => _openGiftShop(room, live.presence),
+                onPk: () => openVoiceRoomBasicPkInvite(context, room),
+                onOpenUser: (p) => _openUser(p, room, perms),
+              ),
               VoiceRoomBasicModerationSection(
                 room: room,
                 liveKey: _liveRoomKey,
@@ -522,6 +669,13 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                         ),
                       ),
                       VoiceRoomBasicRealtimeFeed(events: live.realtimeEvents),
+                      VoiceRoomBasicChatSection(
+                        messages: live.messages,
+                        messageController: _messageCtrl,
+                        onSend: _sendChatMessage,
+                        onEmoji: () =>
+                            showVoiceRoomBasicEmojiPicker(context, _messageCtrl),
+                      ),
                       VoiceRoomBasicMusicSection(
                         room: room,
                         liveKey: _liveRoomKey,
@@ -548,6 +702,25 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   ),
                 ),
             ],
+          ],
+        ),
+            VoiceGiftFlightOverlay(
+              events: flightQueue,
+              enabled: ui.giftAnimationsEnabled,
+              onFinished: (id) =>
+                  ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
+            ),
+            PremiumGiftFullscreenOverlay(event: _fullscreenGift),
+            if (_showVipEntrance && user != null)
+              VipEntranceOverlay(
+                tier: ref.watch(vipTierProvider),
+                userName: user.displayName?.trim().isNotEmpty == true
+                    ? user.displayName!.trim()
+                    : user.username,
+                onFinished: () {
+                  if (mounted) setState(() => _showVipEntrance = false);
+                },
+              ),
           ],
         ),
         bottomNavigationBar: SafeArea(

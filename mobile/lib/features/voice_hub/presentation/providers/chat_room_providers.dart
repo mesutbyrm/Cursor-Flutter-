@@ -432,6 +432,9 @@ class VoiceRoomLiveController
           player.onTrackComplete = () => unawaited(_onDjTrackComplete());
           _wireMusicControls();
         }
+        if (VoiceRoomBasicMode.premiumEnabled) {
+          _startGiftSocket();
+        }
         _schedulePoll(sseConnected: false);
         return;
       }
@@ -555,6 +558,34 @@ class VoiceRoomLiveController
   void _notifyRealtimeIfBasic(VoiceRoomRealtimeKind kind, String message) {
     if (!VoiceRoomBasicMode.enabled) return;
     _pushRealtimeEvent(kind, message);
+  }
+
+  void _pushBasicChatEvent(ChatRoomMessage msg) {
+    if (!VoiceRoomBasicMode.enabled) return;
+    final name = msg.user?.displayName.trim().isNotEmpty == true
+        ? msg.user!.displayName.trim()
+        : (msg.user?.name.trim().isNotEmpty == true
+            ? msg.user!.name.trim()
+            : 'Biri');
+    switch (msg.kind) {
+      case ChatMessageKind.gift:
+        final emoji = msg.giftEmoji ?? '🎁';
+        _pushRealtimeEvent(
+          VoiceRoomRealtimeKind.system,
+          '$name $emoji hediye gönderdi',
+        );
+      case ChatMessageKind.systemJoin:
+        _pushRealtimeEvent(VoiceRoomRealtimeKind.join, msg.content.trim());
+      case ChatMessageKind.systemLeave:
+        _pushRealtimeEvent(VoiceRoomRealtimeKind.leave, msg.content.trim());
+      case ChatMessageKind.text:
+        final text = msg.content.trim();
+        if (text.isNotEmpty) {
+          _pushRealtimeEvent(VoiceRoomRealtimeKind.system, '$name: $text');
+        }
+      case ChatMessageKind.unknown:
+        break;
+    }
   }
 
   void _detectMicChanges(List<ChatRoomPresence> next) {
@@ -766,7 +797,8 @@ class VoiceRoomLiveController
               state = state.copyWith(sseConnected: true);
             }
             ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);
-            if (!VoiceRoomBasicMode.enabled) {
+            if (!VoiceRoomBasicMode.enabled ||
+                VoiceRoomBasicMode.premiumEnabled) {
               ref.read(voiceRoomGiftRealtimeProvider).setSocketPreferred(false);
             }
             _notifyRealtimeIfBasic(
@@ -792,7 +824,10 @@ class VoiceRoomLiveController
             _showMusicRequestFlashLine('🎵 Şarkı kuyruğa eklendi');
           },
           onGift: (payload) {
-            if (VoiceRoomBasicMode.enabled) return;
+            if (!VoiceRoomBasicMode.premiumEnabled &&
+                VoiceRoomBasicMode.enabled) {
+              return;
+            }
             final giftRaw = payload['gift'] ?? payload;
             if (giftRaw is! Map) return;
             final ev = giftsRemote.parseGiftEvent(
@@ -804,11 +839,16 @@ class VoiceRoomLiveController
             }
           },
           onMessage: (msg) {
-            if (VoiceRoomBasicMode.enabled) return;
+            if (VoiceRoomBasicMode.enabled && !VoiceRoomBasicMode.premiumEnabled) {
+              return;
+            }
             final exists = state.messages.any((m) => m.id == msg.id);
             if (exists) return;
             state = state.copyWith(messages: [...state.messages, msg]);
             _onMusicRelatedChatMessage(msg);
+            if (VoiceRoomBasicMode.enabled) {
+              _pushBasicChatEvent(msg);
+            }
             if (msg.kind == ChatMessageKind.systemJoin &&
                 VoiceOfficialJoin.isEntranceWorthy(
                   content: msg.content,
@@ -846,7 +886,9 @@ class VoiceRoomLiveController
             emitPsychicLiveRequest(ref, session);
           },
           onPk: (battle, event) {
-            if (VoiceRoomBasicMode.enabled) return;
+            if (VoiceRoomBasicMode.enabled && !VoiceRoomBasicMode.premiumEnabled) {
+              return;
+            }
             // PK battle — artık ayrı bir Socket.IO bağlantısı yerine
             // odanın ana SSE akışından besleniyor.
             ref.read(pkBattleProvider.notifier).applyRemoteBattle(battle);

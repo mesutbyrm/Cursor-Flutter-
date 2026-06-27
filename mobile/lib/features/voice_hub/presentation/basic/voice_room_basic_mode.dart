@@ -1,4 +1,4 @@
-/// Sesli oda — aşama 1: temel akış; aşama 2: SSE; aşama 3: müzik (web parity).
+/// Sesli oda — temel mod: SSE, müzik, moderasyon ve premium (web parity).
 ///
 /// `--dart-define=VOICE_ROOM_FULL=true` → tam RTC sayfası (`VoiceRoomRtcPage`).
 class VoiceRoomBasicMode {
@@ -6,9 +6,12 @@ class VoiceRoomBasicMode {
 
   static const _full = bool.fromEnvironment('VOICE_ROOM_FULL', defaultValue: false);
 
-  /// `true` → `VoiceRoomBasicPage` (temel + müzik; hediye/PK/video yok).
+  /// `true` → `VoiceRoomBasicPage` (web parity istemci; backend değişmez).
   static bool get enabled => !_full;
 
   /// Temel sayfada web parity müzik (!istek, kuyruk, DJ, mini player).
   static bool get musicEnabled => enabled;
+
+  /// Hediye, PK, sohbet, efekt, tema — mevcut canlifal.com API/SSE ile.
+  static bool get premiumEnabled => enabled;
 }
