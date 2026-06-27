@@ -1000,16 +1000,20 @@ class _PopularRoomCard extends StatelessWidget {
   final double width;
   final VoidCallback onTap;
 
-  String get _badge => switch (index % 4) {
-        0 => 'Sıcak',
-        1 => 'VIP',
-        2 => 'Gece',
-        _ => 'Oyun',
+  String get _badge => switch (room.resolvedRoomType) {
+        'VIP' => 'VIP',
+        'FREE' => 'Ücretsiz',
+        _ => switch (index % 3) {
+            0 => 'Sıcak',
+            1 => 'Gece',
+            _ => 'Oyun',
+          },
       };
 
   Color get _badgeColor => switch (_badge) {
-        'Sıcak' => AppThemeColors.liveRed,
         'VIP' => VipGoldTokens.goldMid,
+        'Ücretsiz' => const Color(0xFF22C55E),
+        'Sıcak' => AppThemeColors.liveRed,
         'Gece' => VoiceRoomTokens.neonPurple,
         _ => VoiceRoomTokens.neonBlue,
       };

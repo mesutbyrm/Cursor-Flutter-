@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:share_plus/share_plus.dart';
 import '../../../../core/performance/voice_room_entry_perf.dart';
+import '../utils/kick_strike_ui.dart';
+import '../widgets/voice_room_error_boundary.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -36,8 +39,12 @@ import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'voice_room_basic_moderation_section.dart';
 import 'voice_room_basic_premium_section.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
-import '../utils/kick_strike_ui.dart';
-import '../widgets/voice_room_error_boundary.dart';
+import '../utils/voice_music_access.dart';
+import '../widgets/premium_2026/voice_live_action_bar_2026.dart';
+import '../widgets/premium_2026/voice_live_header_2026.dart';
+import '../widgets/premium_2026/voice_top_spenders_strip.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../../core/navigation/wallet_navigation.dart';
 
 /// Aşama 1 — oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcılar, oda sahibi.
 class VoiceRoomBasicPage extends ConsumerStatefulWidget {
@@ -460,13 +467,25 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final ui = ref.watch(voiceRoomUiProvider);
     final room = _effectiveRoom();
     final online = live.onlineCountFor(room);
-    final speakerOn = ui.headphonesOn;
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _permissions(user, live, room);
     final canControlMusic = _canControlMusic(live, room, user, perms);
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
     final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
+    final jeton = VoiceMusicAccess.jetonFromBalances(
+      ref.watch(walletBalancesProvider).valueOrNull,
+    );
+    String? hostAvatar;
+    final ownerId = room.ownerId;
+    if (ownerId != null) {
+      for (final p in live.presence) {
+        if (p.id == ownerId) {
+          hostAvatar = p.image;
+          break;
+        }
+      }
+    }
 
     ref.listen(pkBattleRemoteProvider, (prev, next) {
       if (next == null || !isOwner || !next.isPending) return;
@@ -573,55 +592,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       },
       child: Scaffold(
         resizeToAvoidBottomInset: true,
+        extendBodyBehindAppBar: true,
         backgroundColor: VoiceRoomTokens.bgDeep,
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.92),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(room.displayTitle, style: const TextStyle(fontSize: 16)),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.circle,
-                    size: 8,
-                    color: live.sseConnected ? Colors.greenAccent : Colors.orange,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    live.sseConnected ? 'Canlı' : 'Bağlanıyor…',
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '$online online',
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            IconButton(
-              onPressed: () => _openGiftShop(room, live.presence),
-              icon: const Icon(Icons.card_giftcard_rounded),
-              tooltip: 'Hediye',
-            ),
-            IconButton(
-              onPressed: () => _openTools(
-                room,
-                live,
-                perms,
-                isOwner,
-                user,
-                canControlMusic,
-              ),
-              icon: const Icon(Icons.settings_rounded),
-              tooltip: 'Ayarlar',
-            ),
-          ],
-        ),
         body: Stack(
           fit: StackFit.expand,
           children: [
@@ -629,6 +601,27 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                VoiceLiveHeader2026(
+                  room: room,
+                  onlineCount: online,
+                  coinBalance: jeton,
+                  hostAvatarUrl: hostAvatar,
+                  onBack: () => unawaited(_confirmLeave()),
+                  onExit: () => unawaited(_confirmLeave()),
+                  onMore: () => _openTools(
+                    room,
+                    live,
+                    perms,
+                    isOwner,
+                    user,
+                    canControlMusic,
+                  ),
+                  onCoinsTap: () => openJetonStore(context, ref: ref),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+                  child: const VoiceTopSpendersStrip(),
+                ),
                 if (live.roomMuted)
                   _Banner(message: 'Oda susturulmuş (yalnızca yetkililer konuşabilir)'),
                 if (_loginError != null)
@@ -674,6 +667,36 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                         ),
                       ),
                     ),
+                  VoiceRoomBasicMessageBar(
+                    controller: _messageCtrl,
+                    onSend: _sendChatMessage,
+                    onEmoji: () =>
+                        showVoiceRoomBasicEmojiPicker(context, _messageCtrl),
+                  ),
+                  VoiceLiveActionBar2026(
+                    micOn: !_isMicMuted,
+                    micEnabled: _audioReady && !_audioJoining,
+                    onMic: _toggleMic,
+                    onGift: () => _openGiftShop(room, live.presence),
+                    onMusic: () => _openTools(
+                      room,
+                      live,
+                      perms,
+                      isOwner,
+                      user,
+                      canControlMusic,
+                    ),
+                    onEffects: _toggleSpeaker,
+                    onInvite: () => _shareRoom(room),
+                    onSettings: () => _openTools(
+                      room,
+                      live,
+                      perms,
+                      isOwner,
+                      user,
+                      canControlMusic,
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -696,31 +719,16 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
               ),
           ],
         ),
-        bottomNavigationBar: Material(
-          elevation: 8,
-          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.96),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                VoiceRoomBasicMessageBar(
-                  controller: _messageCtrl,
-                  onSend: _sendChatMessage,
-                  onEmoji: () =>
-                      showVoiceRoomBasicEmojiPicker(context, _messageCtrl),
-                ),
-                VoiceRoomBasicCompactControls(
-                  isMicMuted: _isMicMuted,
-                  speakerOn: speakerOn,
-                  onMic: _toggleMic,
-                  onSpeaker: _toggleSpeaker,
-                  onLeave: _confirmLeave,
-                ),
-              ],
-            ),
-          ),
-        ),
+      ),
+    );
+  }
+
+  Future<void> _shareRoom(VoiceRoomEntity room) async {
+    await SharePlus.instance.share(
+      ShareParams(
+        text:
+            'Canlifal sesli oda: ${room.displayTitle}\n'
+            'https://canlifal.com/voice-room/${room.slug.isNotEmpty ? room.slug : room.id}',
       ),
     );
   }

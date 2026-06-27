@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.414+418 (2026-06-27)
+
+### Sesli sohbet — Premium 2026 UI (yalnızca arayüz)
+
+- **Backend değişmedi:** mevcut canlifal.com API, SSE, JWT, PostgreSQL — endpoint/tablo/iş mantığı aynı
+- **Keşfet:** `VoiceDiscoverHub2026` varsayılan (referans mockup — sekmeler, VIP, PK, trend)
+- **Oda içi:** `VoiceLiveHeader2026` + `VoiceLiveActionBar2026` + top spender şeridi
+- **Oda tipi rozetleri:** FREE / NORMAL / VIP (`resolvedRoomType`)
+- **Top 3 hediye:** `voiceSessionGiftLeaderboardProvider` artık UI'da görünür
+
 ## 1.0.413+417 (2026-06-27)
 
 ### Performans — Görev 16: Mesajlar cache-first

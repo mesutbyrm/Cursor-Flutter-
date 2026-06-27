@@ -17,8 +17,6 @@ import '../../live/presentation/providers/live_providers.dart';
 import 'providers/voice_rooms_presence_provider.dart';
 import 'utils/open_voice_chat_room_flow.dart';
 import '../../vip_gold/presentation/utils/open_voice_room_vip.dart';
-import 'basic/voice_room_basic_list.dart';
-import 'basic/voice_room_basic_mode.dart';
 import 'widgets/premium_2026/voice_discover_hub_2026.dart';
 
 /// Sesli sohbet keşfet — Premium 2026 hub (referans görsel).
@@ -83,7 +81,7 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     }
 
     final rooms = ref.watch(voiceRoomsProvider);
-    final liveStreams = _liveStreamsReady && !VoiceRoomBasicMode.enabled
+    final liveStreams = _liveStreamsReady
         ? ref.watch(liveStreamsProvider)
         : const AsyncValue<List<LiveStreamEntity>>.data([]);
     final mq = MediaQuery.paddingOf(context);
@@ -118,19 +116,15 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
             backgroundColor: DiscoverPremiumVisual.backgroundMid,
             onRefresh: () async {
               ref.invalidate(voiceRoomsProvider);
-              if (!VoiceRoomBasicMode.enabled) {
-                ref.invalidate(liveStreamsProvider);
-              }
+              ref.invalidate(liveStreamsProvider);
             },
-            child: VoiceRoomBasicMode.enabled
-                ? VoiceRoomBasicList(rooms: ordered, ref: ref)
-                : VoiceDiscoverHub2026(
-                    rooms: ordered,
-                    liveStreams: live,
-                    topPadding: topPad,
-                    onRoomTap: (r) => openVoiceRoomWithVipGate(context, ref, r),
-                    onSearchChanged: (_) {},
-                  ),
+            child: VoiceDiscoverHub2026(
+              rooms: ordered,
+              liveStreams: live,
+              topPadding: topPad,
+              onRoomTap: (r) => openVoiceRoomWithVipGate(context, ref, r),
+              onSearchChanged: (_) {},
+            ),
           ),
         );
       },

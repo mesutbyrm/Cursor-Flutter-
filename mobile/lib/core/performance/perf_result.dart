@@ -52,6 +52,9 @@ abstract final class PerfResult {
   /// Görev 16 — mesajlar cache-first + arka plan güncelleme
   static const moduleMessagesLoad = 'MessagesLoadPerf / CacheFirstLoader';
 
+  /// Sesli oda Premium 2026 UI — mevcut API/SSE, yalnızca Flutter arayüz
+  static const moduleVoiceUi2026 = 'VoiceDiscoverHub2026 / VoiceLiveHeader2026';
+
   /// Görev 17 — gereksiz rebuild/setState/timer sızıntı temizliği
   static const moduleWidgetPerf = 'WidgetPerf / CancellableDelay';
 
