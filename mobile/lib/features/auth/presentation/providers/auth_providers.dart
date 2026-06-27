@@ -3,11 +3,15 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/bootstrap/app_startup_log.dart';
+import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/config/env.dart';
+import '../../../../core/network/api_http_cache.dart';
+import '../../../../core/offline/api_cache_store.dart';
 import '../../../../core/onesignal/onesignal_bootstrap.dart';
 import '../../../../core/network/cookie_jar_provider.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/loading_timeout.dart';
+import '../../../../core/performance/network_perf.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
@@ -35,9 +39,9 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 class AuthController extends AsyncNotifier<UserEntity?> {
-  static const _sessionTimeout = Duration(seconds: 2);
+  static const _sessionTimeout = StartupPerf.authBootTimeout;
   static const _profileTimeout = Duration(seconds: 2);
-  static const _bootTimeout = Duration(seconds: 2);
+  static const _bootTimeout = StartupPerf.authBootTimeout;
   static const _actionTimeout = Duration(seconds: 30);
 
   Timer? _bootWatchdog;
@@ -63,12 +67,45 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     }
   }
 
-  Future<UserEntity?> _resolvedUser() async {
+  Future<UserEntity?> _resolvedUser({bool includeSiteProfile = true}) async {
     try {
-      final base = await _sessionUser();
-      return await _withSiteProfile(base);
+      if (!includeSiteProfile || Env.useMobileAuth || !Env.useNextAuth) {
+        return await _sessionUser();
+      }
+      final pair = await NetworkPerf.parallel<Object?>([
+        _sessionUser(),
+        () async {
+          try {
+            return await LoadingTimeout.run(
+              ref.read(profileRemoteProvider).mySiteProfile(),
+              timeout: _profileTimeout,
+              message: 'Profil yüklenemedi',
+            );
+          } catch (_) {
+            return null;
+          }
+        }(),
+      ]);
+      final base = pair[0];
+      if (base == null) return null;
+      return (pair[1] as UserEntity?) ?? base as UserEntity;
     } catch (_) {
       return null;
+    }
+  }
+
+  /// Açılış sonrası profil birleştirme + push kaydı — kritik yolu bloklamaz.
+  Future<void> _enrichUserAfterBoot(UserEntity base) async {
+    try {
+      final enriched = await _withSiteProfile(base);
+      if (enriched != null && state.valueOrNull?.id == enriched.id) {
+        state = AsyncValue.data(enriched);
+      }
+    } catch (_) {}
+
+    final id = base.id;
+    if (id.isNotEmpty) {
+      unawaited(OneSignalBootstrap.login(id));
     }
   }
 
@@ -81,7 +118,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   Future<UserEntity?> build() async {
     AppStartupLog.authStart();
     _cancelBootWatchdog();
-    _bootWatchdog = Timer(_bootTimeout + const Duration(milliseconds: 500), () {
+    _bootWatchdog = Timer(_bootTimeout + const Duration(milliseconds: 200), () {
       final current = state;
       if (current.isLoading && !current.hasValue) {
         AppStartupLog.authFinish(hasUser: false, error: true);
@@ -92,14 +129,13 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
     try {
       final user = await LoadingTimeout.run(
-        _resolvedUser(),
+        _sessionUser(),
         timeout: _bootTimeout,
         message: 'Oturum kontrolü zaman aşımına uğradı',
       );
       AppStartupLog.authFinish(hasUser: user != null);
-      // Uygulama açılışında OneSignal'e kullanıcıyı kaydet
-      if (user?.id != null && user!.id.isNotEmpty) {
-        await OneSignalBootstrap.login(user.id);
+      if (user != null) {
+        unawaited(_enrichUserAfterBoot(user));
       }
       return user;
     } catch (_) {
@@ -196,6 +232,10 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     ref.read(authUserActionBusyProvider.notifier).state = false;
     ref.read(guestModeProvider.notifier).state = false;
     await OneSignalBootstrap.logout();
+    await NetworkPerf.parallel([
+      ApiHttpCache.clearAll(),
+      ApiCacheStore.clearAll(),
+    ]);
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncValue.data(null);
   }

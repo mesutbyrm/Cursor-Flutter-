@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
+import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../domain/notification_action.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -28,26 +30,26 @@ class NotificationsPage extends ConsumerStatefulWidget {
 
 class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   final _scroll = ScrollController();
+  var _listReady = false;
+  late final VoidCallback _detachPagination;
 
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(_onScroll);
+    _detachPagination = ScrollPerf.bindPagination(
+      _scroll,
+      () => ref.read(notificationsListNotifierProvider.notifier).loadMore(),
+    );
+    Future<void>.delayed(LazyLoadPerf.notificationsList, () {
+      if (mounted) setState(() => _listReady = true);
+    });
   }
 
   @override
   void dispose() {
-    _scroll.removeListener(_onScroll);
+    _detachPagination();
     _scroll.dispose();
     super.dispose();
-  }
-
-  void _onScroll() {
-    if (!_scroll.hasClients) return;
-    if (_scroll.position.pixels >=
-        _scroll.position.maxScrollExtent - ListPerf.preloadThresholdPx) {
-      ref.read(notificationsListNotifierProvider.notifier).loadMore();
-    }
   }
 
   Future<void> _refresh() async {
@@ -57,8 +59,37 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final list = ref.watch(notificationsListNotifierProvider);
     final fmt = DateFormat('HH:mm');
+    Widget listBody;
+    if (!_listReady) {
+      listBody = const DiscoverAccentLoader();
+    } else {
+      listBody = ref.watch(notificationsListNotifierProvider).when(
+            loading: () => const DiscoverAccentLoader(),
+            error: (e, _) => DiscoverEmptyState(
+              icon: Icons.notifications_off_outlined,
+              message: ApiException.userMessage(e),
+              actionLabel: 'Yenile',
+              action: _refresh,
+            ),
+            data: (state) {
+              if (state.all.isEmpty) {
+                return const DiscoverEmptyState(
+                  icon: Icons.notifications_none_rounded,
+                  message: 'Henüz bildirimin yok.',
+                );
+              }
+              return _NotificationsListView(
+                state: state,
+                fmt: fmt,
+                scrollController: _scroll,
+                onLoadMore: () => ref
+                    .read(notificationsListNotifierProvider.notifier)
+                    .loadMore(),
+              );
+            },
+          );
+    }
 
     return DiscoverSubPage(
       title: 'Bildirimler',
@@ -82,33 +113,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const NotificationPermissionBanner(),
-          Expanded(
-            child: list.when(
-              loading: () => const DiscoverAccentLoader(),
-              error: (e, _) => DiscoverEmptyState(
-                icon: Icons.notifications_off_outlined,
-                message: ApiException.userMessage(e),
-                actionLabel: 'Yenile',
-                action: _refresh,
-              ),
-              data: (state) {
-                if (state.all.isEmpty) {
-                  return const DiscoverEmptyState(
-                    icon: Icons.notifications_none_rounded,
-                    message: 'Henüz bildirimin yok.',
-                  );
-                }
-                return _NotificationsListView(
-                  state: state,
-                  fmt: fmt,
-                  scrollController: _scroll,
-                  onLoadMore: () => ref
-                      .read(notificationsListNotifierProvider.notifier)
-                      .loadMore(),
-                );
-              },
-            ),
-          ),
+          Expanded(child: listBody),
         ],
       ),
     );

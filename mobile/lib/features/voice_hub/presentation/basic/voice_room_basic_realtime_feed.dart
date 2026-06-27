@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
@@ -129,7 +130,7 @@ class VoiceRoomBasicParticipantStrip extends StatelessWidget {
                   CircleAvatar(
                     radius: 22,
                     backgroundImage: p.image != null && p.image!.isNotEmpty
-                        ? NetworkImage(p.image!)
+                        ? canlifalImageProvider(p.image!)
                         : null,
                     child: p.image == null || p.image!.isEmpty
                         ? Text(

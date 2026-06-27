@@ -1,9 +1,9 @@
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter/services.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../theme/voice_room_tokens.dart';
@@ -217,7 +217,7 @@ class _RoomAvatarRing extends StatelessWidget {
         radius: 22,
         backgroundColor: Colors.black54,
         backgroundImage: url != null && url!.isNotEmpty
-            ? CachedNetworkImageProvider(url!)
+            ? canlifalImageProvider(url!)
             : null,
         child: url == null || url!.isEmpty
             ? Text(fallback, style: const TextStyle(fontSize: 18))
@@ -295,7 +295,7 @@ class VoiceWebRoomInfoPill extends StatelessWidget {
                 radius: 14,
                 backgroundColor: Colors.white12,
                 backgroundImage: ownerAvatarUrl != null && ownerAvatarUrl!.isNotEmpty
-                    ? CachedNetworkImageProvider(ownerAvatarUrl!)
+                    ? canlifalImageProvider(ownerAvatarUrl!)
                     : null,
                 child: ownerAvatarUrl == null || ownerAvatarUrl!.isEmpty
                     ? const Icon(Icons.call_rounded, size: 14, color: VoiceRoomTokens.gold)

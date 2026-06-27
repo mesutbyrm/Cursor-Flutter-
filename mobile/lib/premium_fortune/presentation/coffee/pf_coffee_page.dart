@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -181,12 +182,13 @@ class PfCoffeeResultPage extends StatelessWidget {
           if (reading.imageUrl.isNotEmpty && !reading.imageUrl.startsWith('/'))
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Image.network(
-                reading.imageUrl,
+              child: CanlifalNetworkImage(
+                url: reading.imageUrl,
                 height: 180,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                onTapOpenFull: true,
+                errorWidget: const SizedBox.shrink(),
               ),
             ),
           const SizedBox(height: 16),

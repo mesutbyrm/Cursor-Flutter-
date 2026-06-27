@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../theme/voice_room_tokens.dart';
@@ -197,7 +197,7 @@ class _FeaturedCard extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   if (bg != null && bg.isNotEmpty)
-                    CachedNetworkImage(imageUrl: bg, fit: BoxFit.cover)
+                    CanlifalNetworkImage(url: bg, fit: BoxFit.cover)
                   else
                     const DecoratedBox(
                       decoration: BoxDecoration(

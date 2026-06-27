@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../home/domain/entities/home_banner_entity.dart';
 import '../../../home/presentation/providers/home_providers.dart';
@@ -76,7 +76,7 @@ class _PsychicAdminAdPanelState extends ConsumerState<PsychicAdminAdPanel> {
         gradient: _gradientFromBanner(banner),
         image: banner?.imageUrl != null && banner!.imageUrl!.isNotEmpty
             ? DecorationImage(
-                image: CachedNetworkImageProvider(banner.imageUrl!),
+                image: canlifalImageProvider(banner.imageUrl!),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
                   Colors.black.withValues(alpha: 0.45),

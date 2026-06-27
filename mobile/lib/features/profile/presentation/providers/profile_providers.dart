@@ -96,7 +96,7 @@ class WalletBalancesNotifier extends AsyncNotifier<WalletBalances> {
   Future<WalletBalances> _load({required bool force}) async {
     if (!force && _cached != null) return _cached!;
     final balances = await LoadingTimeout.run(
-      ref.read(walletRepositoryProvider).balances(),
+      ref.read(walletRepositoryProvider).balances(forceRefresh: force),
       timeout: _fetchTimeout,
       message: 'Cüzdan yüklenemedi',
     );

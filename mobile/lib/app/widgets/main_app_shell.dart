@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/bootstrap/auth_route_paths.dart';
+import '../../core/bootstrap/startup_perf.dart';
 import '../../features/agency/presentation/providers/agency_providers.dart';
 import '../../features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import '../../features/live_psychics/presentation/widgets/psychic_incoming_host.dart';
@@ -34,6 +35,8 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
   GoRouter? _router;
   String _location = '/feed';
   var _listenerAttached = false;
+  var _realtimeReady = false;
+  Timer? _realtimeTimer;
 
   @override
   void initState() {
@@ -42,14 +45,19 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
     _location = router.routerDelegate.currentConfiguration.uri.path;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      _attachRouter(ref.read(goRouterProvider));
+    });
+    _realtimeTimer = Timer(StartupPerf.shellRealtimeDelay, () {
+      if (!mounted) return;
+      setState(() => _realtimeReady = true);
       unawaited(ref.read(approvedPsychicProvider.notifier).refresh());
       unawaited(ref.read(approvedAgencyProvider.notifier).refresh());
-      _attachRouter(ref.read(goRouterProvider));
     });
   }
 
   @override
   void dispose() {
+    _realtimeTimer?.cancel();
     _detachRouter();
     super.dispose();
   }
@@ -110,8 +118,8 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
       body = AppBottomNavHost(location: location, child: body);
     }
 
-    // SSE presence — keşfet online sayıları (poll yerine).
-    if (!isAuthRoute) {
+    // SSE presence — keşfet online sayıları; açılışta geciktirilir.
+    if (!isAuthRoute && _realtimeReady) {
       ref.watch(voiceRoomsPresenceProvider);
     }
 

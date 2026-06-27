@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
@@ -121,12 +121,12 @@ class _BannerCard extends StatelessWidget {
                 bottom: -8,
                 child: Opacity(
                   opacity: 0.85,
-                  child: CachedNetworkImage(
-                    imageUrl: banner.imageUrl!,
+                  child: CanlifalNetworkImage(
+                    url: banner.imageUrl!,
                     width: 140,
                     height: 140,
                     fit: BoxFit.cover,
-                    errorWidget: (_, _, _) => const SizedBox.shrink(),
+                    errorWidget: const SizedBox.shrink(),
                   ),
                 ),
               ),

@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
@@ -291,8 +291,8 @@ class _NowPlayingCard extends StatelessWidget {
           if (thumb != null && thumb.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: thumb,
+              child: CanlifalNetworkImage(
+                url: thumb,
                 width: 44,
                 height: 44,
                 fit: BoxFit.cover,

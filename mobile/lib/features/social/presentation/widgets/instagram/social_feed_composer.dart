@@ -182,8 +182,16 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
       }
     });
 
-    final me = ref.watch(authControllerProvider).valueOrNull;
-    final displayName = me?.display ?? 'sen';
+    final isLoggedIn = ref.watch(
+      authControllerProvider.select((a) => a.valueOrNull != null),
+    );
+    final me = ref.watch(
+      authControllerProvider.select(
+        (a) => (a.valueOrNull?.avatarUrl, a.valueOrNull?.display),
+      ),
+    );
+    final displayName = me.$2 ?? 'sen';
+    final avatarUrl = me.$1;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
@@ -210,7 +218,7 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  UserAvatar(url: me?.avatarUrl, radius: 20),
+                  UserAvatar(url: avatarUrl, radius: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _expanded
@@ -240,7 +248,7 @@ class _SocialFeedComposerState extends ConsumerState<SocialFeedComposer> {
                             onChanged: (_) => setState(() {}),
                           )
                         : GestureDetector(
-                            onTap: me == null
+                            onTap: !isLoggedIn
                                 ? () {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(

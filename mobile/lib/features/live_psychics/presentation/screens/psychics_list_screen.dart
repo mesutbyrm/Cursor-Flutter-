@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
@@ -158,7 +158,7 @@ class PsychicListTile extends StatelessWidget {
                       ? CircleAvatar(
                           radius: 28,
                           backgroundImage:
-                              CachedNetworkImageProvider(psychic.avatarUrl!),
+                              canlifalImageProvider(psychic.avatarUrl!),
                         )
                       : const UserAvatar(radius: 28),
                   if (psychic.isOnline)

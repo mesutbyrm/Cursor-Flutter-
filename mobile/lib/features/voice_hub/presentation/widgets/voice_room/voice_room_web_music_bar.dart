@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../domain/entities/chat_room_dj_state.dart';
@@ -341,7 +341,7 @@ class _VoiceRoomWebMusicBarState extends ConsumerState<VoiceRoomWebMusicBar> {
   Widget _thumb(MusicQueueItem track) {
     final url = track.thumbUrl;
     if (url != null && url.isNotEmpty) {
-      return CachedNetworkImage(imageUrl: url, fit: BoxFit.cover);
+      return CanlifalNetworkImage(url: url, fit: BoxFit.cover);
     }
     return ColoredBox(
       color: AppThemeColors.accentPurple.withValues(alpha: 0.45),

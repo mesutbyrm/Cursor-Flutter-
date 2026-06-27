@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter/services.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
@@ -131,8 +131,8 @@ class _OwnerReservedSeat extends StatelessWidget {
                             Colors.black.withValues(alpha: 0.35),
                             BlendMode.darken,
                           ),
-                          child: CachedNetworkImage(
-                            imageUrl: avatarUrl!,
+                          child: CanlifalNetworkImage(
+                            url: avatarUrl!,
                             fit: BoxFit.cover,
                           ),
                         )
@@ -209,7 +209,7 @@ class _OccupiedSeat extends StatelessWidget {
                 ),
                 child: ClipOval(
                   child: avatarUrl != null && avatarUrl!.isNotEmpty
-                      ? CachedNetworkImage(imageUrl: avatarUrl!, fit: BoxFit.cover)
+                      ? CanlifalNetworkImage(url: avatarUrl!, fit: BoxFit.cover)
                       : ColoredBox(
                           color: context.colors.surfaceContainer,
                           child: Icon(Icons.person, color: Colors.white54, size: 28),

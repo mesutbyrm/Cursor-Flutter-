@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
@@ -13,14 +12,17 @@ import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
 import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../../core/performance/list_perf.dart';
+import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/providers/auth_selectors.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import 'package:canlifal_social/features/vip_gold/domain/voice_room_access.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/theme/vip_gold_tokens.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../live/presentation/utils/open_live_stream.dart';
 import '../../utils/open_voice_chat_room_flow.dart';
+import '../voice_room_online_count.dart';
 import '../../theme/voice_room_tokens.dart';
 import 'voice_discover_2026.dart';
 
@@ -561,7 +563,7 @@ class _DiscoverHeader extends StatelessWidget {
               CircleAvatar(
                 radius: 26,
                 backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
-                    ? CachedNetworkImageProvider(avatarUrl!)
+                    ? canlifalImageProvider(avatarUrl!)
                     : null,
                 child: avatarUrl == null || avatarUrl!.isEmpty
                     ? Text(
@@ -756,19 +758,22 @@ class _LiveStoriesRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final streams = live.take(8).toList(growable: false);
     return SizedBox(
       height: height,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
+      child: LazyHorizontalListView(
         padding: EdgeInsets.symmetric(horizontal: horizontalPad),
-        children: [
-          _StoryOpenRoom(onTap: onOpenRoom),
-          const SizedBox(width: 12),
-          for (final s in live.take(8)) ...[
-            _StoryLiveItem(stream: s, onTap: () => onStreamTap(s)),
-            const SizedBox(width: 12),
-          ],
-        ],
+        itemCount: 1 + streams.length,
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _StoryOpenRoom(onTap: onOpenRoom);
+          }
+          final stream = streams[index - 1];
+          return Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: _StoryLiveItem(stream: stream, onTap: () => onStreamTap(stream)),
+          );
+        },
       ),
     );
   }
@@ -831,7 +836,7 @@ class _StoryLiveItem extends StatelessWidget {
               backgroundColor: Colors.white12,
               backgroundImage: stream.thumbnailUrl != null &&
                       stream.thumbnailUrl!.isNotEmpty
-                  ? CachedNetworkImageProvider(stream.thumbnailUrl!)
+                  ? canlifalImageProvider(stream.thumbnailUrl!)
                   : null,
               child: stream.thumbnailUrl == null || stream.thumbnailUrl!.isEmpty
                   ? Text(name.isNotEmpty ? name[0] : '?')
@@ -1038,7 +1043,7 @@ class _PopularRoomCard extends StatelessWidget {
                       fit: StackFit.expand,
                       children: [
                         if (bg != null && bg.isNotEmpty)
-                          CachedNetworkImage(imageUrl: bg, fit: BoxFit.cover)
+                          CanlifalNetworkImage(url: bg, fit: BoxFit.cover)
                         else
                           const DecoratedBox(
                             decoration: BoxDecoration(
@@ -1092,9 +1097,12 @@ class _PopularRoomCard extends StatelessWidget {
                             Icon(Icons.people_alt_rounded,
                                 size: 12, color: AppThemeColors.onlineGreen),
                             const SizedBox(width: 4),
-                            Text(
-                              VoiceLiveHeader2026Format.count(room.displayOnline),
-                              style: const TextStyle(fontSize: 10),
+                            VoiceRoomOnlineCount(
+                              room: room,
+                              builder: (context, count) => Text(
+                                VoiceLiveHeader2026Format.count(count),
+                                style: const TextStyle(fontSize: 10),
+                              ),
                             ),
                             const Spacer(),
                             Container(
@@ -1161,8 +1169,8 @@ class _LiveStreamCard extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 if (stream.thumbnailUrl != null && stream.thumbnailUrl!.isNotEmpty)
-                  CachedNetworkImage(
-                    imageUrl: stream.thumbnailUrl!,
+                  CanlifalNetworkImage(
+                    url: stream.thumbnailUrl!,
                     fit: BoxFit.cover,
                   )
                 else
@@ -1386,11 +1394,14 @@ class _VipRoomCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  '${VoiceLiveHeader2026Format.count(room.displayOnline)} kullanıcı',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: VipGoldTokens.goldMid.withValues(alpha: 0.95),
+                VoiceRoomOnlineCount(
+                  room: room,
+                  builder: (context, count) => Text(
+                    '${VoiceLiveHeader2026Format.count(count)} kullanıcı',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: VipGoldTokens.goldMid.withValues(alpha: 0.95),
+                    ),
                   ),
                 ),
               ],
@@ -1436,11 +1447,14 @@ class _CompactRoomRow extends StatelessWidget {
                       room.displayTitle,
                       style: const TextStyle(fontWeight: FontWeight.w800),
                     ),
-                    Text(
-                      '${VoiceLiveHeader2026Format.count(room.displayOnline)} çevrimiçi',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
+                    VoiceRoomOnlineCount(
+                      room: room,
+                      builder: (context, count) => Text(
+                        '${VoiceLiveHeader2026Format.count(count)} çevrimiçi',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
+                        ),
                       ),
                     ),
                   ],

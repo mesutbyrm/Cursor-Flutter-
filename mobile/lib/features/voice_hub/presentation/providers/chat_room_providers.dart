@@ -6,6 +6,7 @@ import '../../../../core/auth/voice_staff_rank.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/token_storage.dart';
+import '../../../../core/performance/network_perf.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -1428,44 +1429,67 @@ class VoiceRoomLiveController
       var playDjInBackground = false;
       if (includeDj) {
         try {
-          if (state.dj.playing || state.dj.nowPlaying != null) {
-            try {
-              final musicState = await remote.fetchMusicState(
-                _roomKey,
-                alternateKey: _musicAlternateKey,
-              );
-              dj = state.dj.copyWith(
-                musicQueue: musicState.queue.isNotEmpty
-                    ? musicState.queue
-                    : state.dj.musicQueue,
-                nowPlaying: musicState.nowPlaying ?? state.dj.nowPlaying,
-                playing: musicState.playing ?? state.dj.playing,
-                musicUrl: musicState.musicUrl ?? state.dj.musicUrl,
-              );
-            } catch (_) {}
-          }
-          final pair = await Future.wait([
+          final needMusicState =
+              state.dj.playing || state.dj.nowPlaying != null;
+          final djFutures = <Future<Object?>>[
             remote.fetchDj(_roomKey, alternateKey: _musicAlternateKey),
             remote.fetchMusicQueue(
               _roomKey,
               alternateKey: _musicAlternateKey,
             ),
-          ]);
-          final djBase = pair[0] as ChatRoomDjState;
-          final mq =
-              pair[1]
-                  as ({
-                    List<MusicQueueItem> queue,
-                    int cost,
-                    int videoRequestCost,
-                    int maxMusicQueue,
-                    bool musicEnabled,
-                    MusicQueueItem? nowPlaying,
-                    bool? playing,
-                    bool? canRequestMusic,
-                    String? musicUrl,
-                  });
-          dj = _mergeMusicQueueRecord(djBase, mq);
+            if (needMusicState)
+              remote.fetchMusicState(
+                _roomKey,
+                alternateKey: _musicAlternateKey,
+              ),
+          ];
+          final djResults = await NetworkPerf.parallel(
+            djFutures.map(
+              (future) => future.catchError((Object e) {
+                refreshError ??= e;
+                return null;
+              }),
+            ),
+          );
+          final djBase = djResults[0] as ChatRoomDjState?;
+          final mq = djResults.length > 1
+              ? djResults[1]
+              : null;
+          if (djBase != null && mq != null) {
+            dj = _mergeMusicQueueRecord(
+              djBase,
+              mq as ({
+                List<MusicQueueItem> queue,
+                int cost,
+                int videoRequestCost,
+                int maxMusicQueue,
+                bool musicEnabled,
+                MusicQueueItem? nowPlaying,
+                bool? playing,
+                bool? canRequestMusic,
+                String? musicUrl,
+              }),
+            );
+          } else if (djBase != null) {
+            dj = djBase;
+          }
+          if (needMusicState && djResults.length > 2) {
+            final musicState = djResults[2];
+            if (musicState != null) {
+              final ms = musicState as ({
+                List<MusicQueueItem> queue,
+                MusicQueueItem? nowPlaying,
+                bool? playing,
+                String? musicUrl,
+              });
+              dj = dj.copyWith(
+                musicQueue: ms.queue.isNotEmpty ? ms.queue : dj.musicQueue,
+                nowPlaying: ms.nowPlaying ?? dj.nowPlaying,
+                playing: ms.playing ?? dj.playing,
+                musicUrl: ms.musicUrl ?? dj.musicUrl,
+              );
+            }
+          }
         } catch (_) {
           try {
             dj = await remote.fetchDj(

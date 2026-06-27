@@ -1,11 +1,12 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/domain/entities/user_entity.dart';
@@ -82,8 +83,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   String? _rtcError;
   final _chat = TextEditingController();
 
-  late Timer _timer;
-  Duration _elapsed = Duration.zero;
   final _particlesKey = GlobalKey<FloatingGiftParticlesState>();
   final _heartsKey = GlobalKey<LiveFloatingHeartsOverlayState>();
   Key _localPreviewKey = UniqueKey();
@@ -100,9 +99,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _elapsed += const Duration(seconds: 1));
-    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final streamId = widget.session.streamId?.trim();
       if (streamId != null && streamId.isNotEmpty) {
@@ -111,8 +107,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           ..loadInitialLikeCount();
       }
       _initAgora();
-      _initGifts();
-      _initStreamExtras();
+      Timer(LazyLoadPerf.liveRoomGifts, () {
+        if (mounted) _initGifts();
+      });
+      Timer(LazyLoadPerf.liveRoomExtras, () {
+        if (mounted) _initStreamExtras();
+      });
     });
   }
 
@@ -244,7 +244,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     if (_remoteUidsListener != null) {
       _agora.remoteUidsNotifier.removeListener(_remoteUidsListener!);
     }
-    _timer.cancel();
+    _guestJoinPoll?.cancel();
     _chat.dispose();
     if (!_leaving &&
         widget.session.isHost &&
@@ -840,10 +840,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
       return Stack(
         fit: StackFit.expand,
         children: [
-          CachedNetworkImage(
-            imageUrl: s.backgroundUrl!,
+          CanlifalNetworkImage(
+            url: s.backgroundUrl!,
             fit: BoxFit.cover,
-            errorWidget: (_, _, _) => const SizedBox.shrink(),
+            errorWidget: const SizedBox.shrink(),
           ),
           _mainVideo(s),
         ],
@@ -872,7 +872,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                       backgroundColor: Colors.white.withValues(alpha: 0.08),
                       backgroundImage: s.avatarUrl != null &&
                               s.avatarUrl!.trim().isNotEmpty
-                          ? CachedNetworkImageProvider(s.avatarUrl!)
+                          ? canlifalImageProvider(s.avatarUrl!)
                           : null,
                       child: s.avatarUrl == null || s.avatarUrl!.trim().isEmpty
                           ? const Icon(Icons.person_rounded,
@@ -959,10 +959,10 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        CachedNetworkImage(
-          imageUrl: url,
+        CanlifalNetworkImage(
+          url: url,
           fit: BoxFit.cover,
-          errorWidget: (_, _, _) => const LiveRoomVideoBackground(),
+          errorWidget: const LiveRoomVideoBackground(),
         ),
         DecoratedBox(
           decoration: BoxDecoration(
@@ -978,13 +978,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
         ),
       ],
     );
-  }
-
-  String get _timeLabel {
-    final h = _elapsed.inHours.toString().padLeft(2, '0');
-    final m = _elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = _elapsed.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$h:$m:$s';
   }
 
   void _openHostProfile(BuildContext context, LiveBroadcastSession s) {
@@ -1258,7 +1251,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                     padding: EdgeInsets.fromLTRB(12, top > 0 ? 4 : 12, 12, 0),
                     child: LivePremiumTopBar(
                       session: s,
-                      time: _timeLabel,
+                      elapsedBadge: const LiveElapsedTimePill(),
                       following: interaction.following,
                       followLoading: interaction.followLoading,
                       onFollow: _onFollow,

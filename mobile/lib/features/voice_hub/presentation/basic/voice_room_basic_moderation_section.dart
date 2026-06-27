@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -247,7 +247,7 @@ Future<void> showVoiceRoomBasicAssignSeatSheet({
             (p) => ListTile(
               leading: CircleAvatar(
                 backgroundImage: p.image != null && p.image!.isNotEmpty
-                    ? CachedNetworkImageProvider(p.image!)
+                    ? canlifalImageProvider(p.image!)
                     : null,
                 child: p.image == null || p.image!.isEmpty
                     ? const Icon(Icons.person)

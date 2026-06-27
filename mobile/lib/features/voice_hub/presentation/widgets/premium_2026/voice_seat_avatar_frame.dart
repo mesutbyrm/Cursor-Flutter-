@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/images/canlifal_image_urls.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -180,11 +181,12 @@ class _VoiceSeatAvatarFrameState extends State<VoiceSeatAvatarFrame>
           padding: const EdgeInsets.all(2),
           child: ClipOval(
             child: url != null && url.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: url,
+                ? CanlifalNetworkImage(
+                    url: url,
                     width: widget.size,
                     height: widget.size,
                     fit: BoxFit.cover,
+                    thumbnailWidth: CanlifalImageUrls.avatarThumbnailWidth,
                   )
                 : ColoredBox(
                     color: Colors.white.withValues(alpha: 0.08),
@@ -239,13 +241,12 @@ class _VoiceSeatAvatarFrameState extends State<VoiceSeatAvatarFrame>
   Widget _avatarImage(double inner) {
     final url = widget.imageUrl?.trim();
     if (url != null && url.isNotEmpty) {
-      return CachedNetworkImage(
-        imageUrl: url,
+      return CanlifalNetworkImage(
+        url: url,
         width: inner,
         height: inner,
         fit: BoxFit.cover,
-        alignment: Alignment.center,
-        memCacheWidth: (inner * 2).round(),
+        thumbnailWidth: (inner * 2).round(),
       );
     }
     return ColoredBox(

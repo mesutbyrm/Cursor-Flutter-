@@ -1,7 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/performance/animation_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../domain/entities/fortune_type_entity.dart';
@@ -32,7 +33,7 @@ class FortuneTypeIntroPage extends ConsumerStatefulWidget {
 class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
   FortuneLocalImageInput _images = const FortuneLocalImageInput();
   final _scroll = ScrollController();
-  double _scrollOffset = 0;
+  final _scrollParallax = ScrollParallaxNotifier();
   FortuneReadingResult? _inlineResult;
   var _opening = false;
 
@@ -45,16 +46,17 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(() => setState(() => _scrollOffset = _scroll.offset));
+    _scrollParallax.bind(_scroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final url = FortuneTypeImages.urlFor(type.slug, width: 1400);
-      precacheImage(CachedNetworkImageProvider(url), context);
+      precacheImage(canlifalImageProvider(url), context);
     });
   }
 
   @override
   void dispose() {
+    _scrollParallax.dispose();
     _scroll.dispose();
     super.dispose();
   }
@@ -142,7 +144,7 @@ class _FortuneTypeIntroPageState extends ConsumerState<FortuneTypeIntroPage> {
                   children: [
                     CinematicFortuneHero(
                       type: type,
-                      scrollOffset: _scrollOffset,
+                      scrollParallax: _scrollParallax,
                       height: 320,
                     ),
                     Padding(

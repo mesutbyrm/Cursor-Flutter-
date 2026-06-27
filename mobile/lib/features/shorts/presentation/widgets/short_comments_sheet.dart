@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../domain/entities/short_comment_entity.dart';
 import '../../domain/entities/short_video_entity.dart';
@@ -134,7 +134,7 @@ class _ShortCommentsSheetState extends ConsumerState<_ShortCommentsSheet> {
                             radius: 16,
                             backgroundColor: Colors.white12,
                             backgroundImage: c.author.avatarUrl != null
-                                ? CachedNetworkImageProvider(c.author.avatarUrl!)
+                                ? canlifalImageProvider(c.author.avatarUrl!)
                                 : null,
                             child: c.author.avatarUrl == null
                                 ? Text(

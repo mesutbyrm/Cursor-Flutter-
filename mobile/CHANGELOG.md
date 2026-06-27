@@ -1,6 +1,130 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.403+407 (2026-06-27)
+
+### Performans — Görev 8: Ağ işlemleri (paralel API)
+
+- **`NetworkPerf`:** `parallel()` + `waitSilent()` — bağımsız istekler `Future.wait` ile
+- **Profil stats:** `/me/stats` + site profili paralel
+- **Profil refresh:** auth, cüzdan, stats, level, hediye, fal erişimi paralel
+- **`refreshMe`:** oturum + site profili paralel
+- **Ana sayfa refresh:** shorts feed dahil 11 provider paralel
+- **Bildirimler:** liste + activity feed paralel
+- **Canlı oda:** join + mesaj geçmişi; poll mesaj + meta paralel
+- **Sesli oda DJ refresh:** fetchDj + queue + musicState paralel
+- **Oyunlar / admin / fal erişim / logout cache:** paralel batch
+
+## 1.0.402+406 (2026-06-27)
+
+### Performans — Görev 11: Scroll (takılma / frame drop yok)
+
+- **`ScrollPerf`:** feed/chat/grid cacheExtent, throttle'lı sayfalama, `ScrollPerf.item`
+- **`LazyNestedGridView`:** iç içe grid — lazy builder + `NeverScrollableScrollPhysics`
+- **`LazyListView` / `LazyGridView`:** `addAutomaticKeepAlives: false`, `addRepaintBoundaries: false`
+- **Ana sayfa / profil / sosyal feed:** `CustomScrollView` cacheExtent
+- **Canlı & sesli chat:** chat cacheExtent + izole satır repaint
+- **Profil içerik gridleri:** 6 sekme `LazyNestedGridView`
+- **Bildirimler:** `ScrollPerf.bindPagination` — scroll listener throttle
+- **Fal sonucu / jeton / cüzdan:** scroll cache + lazy grid
+
+## 1.0.401+405 (2026-06-27)
+
+### Performans — Görev 10: Görsel efektler (blur / shadow / glass)
+
+- **`EffectsPerf` / `GlassTier`:** blur filter önbelleği, gölge önbelleği, `RepaintBoundary`
+- **`ThemedGlassCard` / `LiquidGlass` / `ProGlass`:** merkezi blur; liste satırında blur kapalı
+- **`ProGlassListTile`:** `GlassTier.static` — gölge + fill, BackdropFilter yok
+- **Canlı chat feed:** balon başına blur kaldırıldı — opak fill
+- **Sesli oda chat dock:** tek `chromeBar` blur katmanı (feed + input)
+- **Ana sayfa grid:** 8 hücre blur yok; CTA tek elevated blur
+- **`PfGlassCard`:** `ThemedGlassCard` + opacity animasyon (blur yeniden oluşturulmaz)
+- **Fal geçiş overlay:** sabit σ=12 blur, yalnızca opaklık animasyonu
+- **Neon quick action:** BackdropFilter kaldırıldı, gölge önbelleği
+
+## 1.0.398+402 (2026-06-27)
+
+### Performans — Görev 7: Animasyon (60–120 FPS, UI thread kilidi yok)
+
+- **`AnimationPerf`:** izole `RepaintBoundary`, paint-only katman, parçacık sınırları
+- **`ScrollParallaxNotifier`:** scroll parallax yalnızca arka plan katmanını yeniler — sayfa setState yok
+- **`TabIndexListenable`:** sekme swipe sırasında her karede değil, index değişince rebuild
+- **`FloatingEmojiPaintLayer`:** hediye/PK yüzen emojiler — CustomPaint + `repaint`, setState yok
+- **`DeferredTickerMode`:** açılışta animasyon ticker'ı 120ms ertelenir
+- **Canlı etkileşim overlay:** parçacık fizikleri paint katmanında; TextPainter cache
+- **Sesli oda parçacıkları:** önceden hesaplanmış yörüngeler — paint içinde Random yok
+- **Kozmik fal arka planı:** yıldız/orbit alanları önbellek; parallax izole
+- **Canlı chat feed:** liste satırlarından `flutter_animate` kaldırıldı
+
+## 1.0.397+401 (2026-06-27)
+
+### Performans — Görev 6: State yönetimi (hedefli rebuild)
+
+- **`StatePerf` / `SelectiveConsumer`:** `ref.select` ile izole widget rebuild
+- **Sosyal akış:** feed watch `SocialFeedScrollView`'a taşındı — app bar/composer etkilenmez
+- **Sohbet:** mesaj listesi + composer ayrı state; gönderim yalnızca composer'ı yeniler
+- **Mesajlar:** `ConversationsListSliver` — liste watch sayfa dışında
+- **Canlı oda:** yayın süresi `LiveElapsedTimePill` — 1 Hz timer tüm sayfayı rebuild etmez
+- **Ana sayfa rozetleri:** bildirim / mesaj / jeton ayrı `Consumer` + `select`
+- **Profil cüzdan:** `walletBalancesProvider.select` — jeton değişince yalnızca ilgili kart
+- **Sesli oda keşif:** `VoiceRoomOnlineCount` — presence satır bazlı
+
+## 1.0.396+400 (2026-06-27)
+
+### Performans — Görev 5: Liste performansı
+
+- **`LazyListView` / `LazyHorizontalListView` / `LazyGridView`:** `ListView.builder` sarmalayıcıları
+- **Story şeritleri:** `SocialStoriesRail`, `StoriesSection` — yatay lazy builder
+- **Canlı yayın:** sesli oda keşif story satırı, yayıncı kontrol merkezi (fal/konuk)
+- **Mesajlar:** konuşma listesi `SliverList.builder`
+- **Sosyal akış:** feed `SliverList.builder`
+- **Sesli oda:** DJ presence listesi, YouTube/müzik arama sonuçları lazy
+- **GridView.count → GridView.builder:** moderasyon komut paneli
+
+## 1.0.395+399 (2026-06-27)
+
+### Performans — Görev 4: Görsel optimizasyonu
+
+- **`CanlifalNetworkImage`:** tüm ağ görselleri `CachedNetworkImage` + ortak disk cache
+- **Thumbnail varsayılan:** liste/kart/avatar için düşük çözünürlük URL (`CanlifalImageUrls`)
+- **Tam çözünürlük isteğe bağlı:** `CanlifalNetworkImage.full` ve dokununca tam ekran viewer
+- **Disk cache:** 30 gün, 600 dosya (`CanlifalImageCacheManager`)
+- **Prefetch:** `prefetchCanlifalImages` — oda/feed kapakları önceden cache
+- **Kapsam:** feed, sosyal, ana sayfa, canlı, sesli oda, profil, fal modülleri migrate edildi
+
+## 1.0.394+398 (2026-06-27)
+
+### Performans — Görev 3: API optimizasyonu
+
+- **`ApiCacheInterceptor`:** tüm cacheable GET istekleri için Dio katmanında cache
+- **Bellek cache:** LRU (256 girdi) + TTL
+- **Disk cache:** `ApiCacheStore` ham JSON (`SharedPreferences`)
+- **TTL:** endpoint bazlı (`ApiCachePolicy`) — canlı 15 sn, mesaj 30 sn, banner 5 dk vb.
+- **Dedupe:** aynı URL + auth için eşzamanlı tek HTTP isteği
+- **Stale fallback:** ağ hatasında süresi dolmuş disk/bellek yanıtı
+- **Bypass:** `forceRefresh` / `noCache` extra; çıkışta tüm cache temizlenir
+
+## 1.0.393+397 (2026-06-27)
+
+### Performans — Görev 2: Lazy loading
+
+- **`LazyScreenSection` / `LazyScreenGate`:** ekran açıldıktan sonra kademeli mount
+- **Profil:** header anında; istatistik → cüzdan → premium → yayıncı → içerik sırayla (80–640 ms)
+- **Canlı yayın:** liste 120 ms, kategoriler 200 ms; oda içi hediye/PK 400–700 ms
+- **Sesli oda listesi:** odalar önce; SSE presence 450 ms; canlı yayın şeridi 900 ms
+- **Fal hub:** hero anında; kehanet/türler/günlük enerji kademeli; rozetler 1 sn
+- **Mesajlar / bildirimler / sohbet:** liste API 80–100 ms gecikmeli
+
+## 1.0.392+396 (2026-06-27)
+
+### Performans — Görev 1: Uygulama açılışı
+
+- **Splash üst sınırı 1 sn:** auth bootstrap cap 2 sn → 1 sn
+- **Auth hızlı yol:** açılışta yalnızca `/api/me`; site profili + OneSignal login arka planda
+- **SDK erteleme:** AdMob preload, FCM token ve `logAppOpen` runApp sonrasına alındı
+- **Ana sayfa ilk kare:** üst bar rozetleri, banner, canlı yayın ve realtime poll geciktirildi
+- **Kabuk prefetch:** bildirim/cüzdan/mesaj istekleri 2 sn gecikmeli; SSE presence 3 sn
+
 ## 1.0.391+395 (2026-06-27)
 
 ### Sesli oda — UI düzenlemesi (temel mod)

@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../domain/entities/home_trend_video_entity.dart';
@@ -100,8 +100,8 @@ class _TrendThumb extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               if (video.thumbnailUrl != null && video.thumbnailUrl!.isNotEmpty)
-                CachedNetworkImage(
-                  imageUrl: video.thumbnailUrl!,
+                CanlifalNetworkImage(
+                  url: video.thumbnailUrl!,
                   fit: BoxFit.cover,
                 )
               else

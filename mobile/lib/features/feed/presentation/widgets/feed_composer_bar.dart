@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -68,7 +68,7 @@ class _FeedComposerBarState extends ConsumerState<FeedComposerBar> {
                 radius: 20,
                 backgroundColor: AppTheme.surfaceElevated,
                 backgroundImage:
-                    avatar != null && avatar.isNotEmpty ? CachedNetworkImageProvider(avatar) : null,
+                    avatar != null && avatar.isNotEmpty ? canlifalImageProvider(avatar) : null,
                 child: avatar == null || avatar.isEmpty
                     ? const Icon(Icons.person_rounded, color: AppTheme.muted)
                     : null,

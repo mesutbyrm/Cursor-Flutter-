@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../theme/voice_room_tokens.dart';
 
@@ -102,8 +102,8 @@ class _VoiceNeonAvatarState extends State<VoiceNeonAvatar>
             width: inner,
             height: inner,
             child: widget.url != null && widget.url!.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: widget.url!,
+                ? CanlifalNetworkImage(
+                    url: widget.url!,
                     width: inner,
                     height: inner,
                     fit: BoxFit.cover,

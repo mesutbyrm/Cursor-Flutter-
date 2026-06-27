@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/config/env.dart';
 import '../../../../../core/network/api_exception.dart';
@@ -476,7 +476,7 @@ class _PremiumGiftTile extends StatelessWidget {
               height: 52,
               child: url.isEmpty
                   ? PremiumGiftIcon(giftId: canonical, size: 48, animate: selected)
-                  : CachedNetworkImage(imageUrl: url, fit: BoxFit.contain),
+                  : CanlifalNetworkImage(url: url, fit: BoxFit.contain),
             ),
             Text(
               name,
@@ -695,7 +695,7 @@ class _RecipientChip extends StatelessWidget {
               child: CircleAvatar(
                 radius: 22,
                 backgroundImage:
-                    user.image != null ? CachedNetworkImageProvider(user.image!) : null,
+                    user.image != null ? canlifalImageProvider(user.image!) : null,
                 child: user.image == null
                     ? Text(
                         user.displayName.isNotEmpty

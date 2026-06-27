@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 
@@ -38,7 +38,7 @@ class VoiceRoomSeatGrid extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         if (backgroundUrl != null && backgroundUrl!.isNotEmpty)
-          CachedNetworkImage(imageUrl: backgroundUrl!, fit: BoxFit.cover)
+          CanlifalNetworkImage(url: backgroundUrl!, fit: BoxFit.cover)
         else
           const DecoratedBox(
             decoration: BoxDecoration(
@@ -140,8 +140,8 @@ class _CenterStage extends StatelessWidget {
             ),
             child: avatarUrl != null
                 ? ClipOval(
-                    child: CachedNetworkImage(
-                      imageUrl: avatarUrl!,
+                    child: CanlifalNetworkImage(
+                      url: avatarUrl!,
                       fit: BoxFit.cover,
                     ),
                   )
@@ -203,8 +203,8 @@ class _SeatBubble extends StatelessWidget {
           ),
           child: avatarUrl != null
               ? ClipOval(
-                  child: CachedNetworkImage(
-                    imageUrl: avatarUrl!,
+                  child: CanlifalNetworkImage(
+                    url: avatarUrl!,
                     fit: BoxFit.cover,
                   ),
                 )

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -330,15 +331,12 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     if (thumb == null || thumb.isEmpty) {
       return const ColoredBox(color: Color(0x66000000));
     }
-    return Image.network(
-      thumb,
+    return CanlifalNetworkImage(
+      url: thumb,
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      errorBuilder: (_, e, _) {
-        VoiceRoomDebugLog.log('roomVideo.thumb.fail', {'error': e.toString()});
-        return const ColoredBox(color: Color(0x66000000));
-      },
+      errorWidget: const ColoredBox(color: Color(0x66000000)),
     );
   }
 }

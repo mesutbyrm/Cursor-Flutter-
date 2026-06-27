@@ -1,11 +1,11 @@
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/config/env.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
@@ -253,7 +253,7 @@ class _GiftGlowTile extends StatelessWidget {
                       LiveGiftCatalog.emojiById[gift.id] ?? '🎁',
                       style: const TextStyle(fontSize: 32),
                     )
-                  : CachedNetworkImage(imageUrl: url, fit: BoxFit.contain),
+                  : CanlifalNetworkImage(url: url, fit: BoxFit.contain),
             ),
             Text(
               name,

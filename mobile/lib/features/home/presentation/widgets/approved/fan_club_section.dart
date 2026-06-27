@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/navigation/native_site_routes.dart';
 import '../../../domain/home_site_catalog.dart';
@@ -80,8 +80,8 @@ class _FanClubCard extends StatelessWidget {
                   top: Radius.circular(HomeApprovedDesign.cardRadius),
                 ),
                 child: item.imageUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: item.imageUrl!,
+                    ? CanlifalNetworkImage(
+                        url: item.imageUrl!,
                         fit: BoxFit.cover,
                       )
                     : ColoredBox(

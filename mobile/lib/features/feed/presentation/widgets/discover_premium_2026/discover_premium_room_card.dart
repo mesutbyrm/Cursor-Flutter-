@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/ui/premium_2026/premium_motion.dart';
 import 'discover_premium_visual.dart';
@@ -64,7 +64,7 @@ class _DiscoverPremiumRoomCardState extends State<DiscoverPremiumRoomCard> {
               fit: StackFit.expand,
               children: [
                 if (bg != null && bg.isNotEmpty)
-                  CachedNetworkImage(imageUrl: bg, fit: BoxFit.cover)
+                  CanlifalNetworkImage(url: bg, fit: BoxFit.cover)
                 else
                   const DecoratedBox(
                     decoration: BoxDecoration(
@@ -233,7 +233,7 @@ class _AvatarStrip extends StatelessWidget {
               child: CircleAvatar(
                 radius: 11,
                 backgroundColor: const Color(0xFF1E1033),
-                backgroundImage: CachedNetworkImageProvider(urls[i]),
+                backgroundImage: canlifalImageProvider(urls[i]),
               ),
             ),
         ],

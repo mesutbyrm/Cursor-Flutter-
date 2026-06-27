@@ -1,20 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/config/env.dart';
-import '../../../../core/network/api_exception.dart';
-import '../../../../core/widgets/discover_refresh.dart';
-import '../../../../core/ui/premium/premium_skeleton.dart';
-import '../../../../core/ui/premium_2026/premium_motion.dart';
-import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
-import '../providers/social_providers.dart';
-import '../utils/social_feed_layout.dart';
-import '../widgets/instagram/social_active_rooms.dart';
 import '../widgets/instagram/social_instagram_app_bar.dart';
-import '../widgets/instagram/social_instagram_post_card.dart';
-import '../providers/social_composer_providers.dart';
 import '../widgets/instagram/social_feed_composer.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../providers/social_providers.dart';
+import '../widgets/social_feed_scroll_view.dart';
 
 /// CanlıFal Sosyal — premium mistik akış.
 class SocialPage extends ConsumerStatefulWidget {
@@ -54,7 +47,6 @@ class _SocialPageState extends ConsumerState<SocialPage> {
 
   @override
   Widget build(BuildContext context) {
-    final social = ref.watch(socialNotifierProvider);
     final bottom = MediaQuery.paddingOf(context).bottom + 88;
 
     return Scaffold(
@@ -66,72 +58,10 @@ class _SocialPageState extends ConsumerState<SocialPage> {
             const RepaintBoundary(child: SocialInstagramAppBar()),
             const RepaintBoundary(child: SocialFeedComposer()),
             Expanded(
-              child: DiscoverRefresh.wrap(
+              child: SocialFeedScrollView(
+                controller: _scroll,
                 onRefresh: _refresh,
-                child: CustomScrollView(
-                  controller: _scroll,
-                  physics: PremiumMotion.listPhysics,
-                  slivers: [
-                    social.when(
-                      loading: () => SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (_, i) => const RepaintBoundary(
-                            child: PremiumPostSkeleton(),
-                          ),
-                          childCount: 3,
-                        ),
-                      ),
-                      error: (e, _) => SliverFillRemaining(
-                        child: DiscoverEmptyState(
-                          icon: Icons.cloud_off_rounded,
-                          message: ApiException.userMessage(e),
-                          actionLabel: 'Tekrar dene',
-                          action: () => ref
-                              .read(socialNotifierProvider.notifier)
-                              .refresh(),
-                        ),
-                      ),
-                      data: (posts) {
-                        if (posts.isEmpty) {
-                          return SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: DiscoverEmptyState(
-                              icon: Icons.photo_camera_outlined,
-                              message: Env.useNextAuth
-                                  ? 'Henüz paylaşım yok.\nİlk gönderini paylaş veya canlifal.com oturumunu kontrol et.'
-                                  : 'Henüz paylaşım yok.\nİlk gönderini şimdi paylaş.',
-                              actionLabel: 'Paylaşım oluştur',
-                              action: () => ref
-                                  .read(socialComposerExpandedProvider.notifier)
-                                  .state = true,
-                            ),
-                          );
-                        }
-                        final feedCount = SocialFeedLayout.itemCount(posts.length);
-                        return SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, i) {
-                              final postIdx =
-                                  SocialFeedLayout.postIndexAt(i, posts.length);
-                              if (postIdx != null) {
-                                return RepaintBoundary(
-                                  child: SocialInstagramPostCard(
-                                    post: posts[postIdx],
-                                  ),
-                                );
-                              }
-                              return const RepaintBoundary(
-                                child: SocialActiveRooms(embeddedInFeed: true),
-                              );
-                            },
-                            childCount: feedCount,
-                          ),
-                        );
-                      },
-                    ),
-                    SliverToBoxAdapter(child: SizedBox(height: bottom)),
-                  ],
-                ),
+                bottomPadding: bottom,
               ),
             ),
           ],

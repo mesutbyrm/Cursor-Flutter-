@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/performance/list_perf.dart';
 import '../../../feed/domain/entities/post_entity.dart';
@@ -136,10 +136,10 @@ class _TikTokPostTile extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             if (hasMedia)
-              CachedNetworkImage(
-                imageUrl: post.mediaUrl!,
+              CanlifalNetworkImage(
+                url: post.mediaUrl!,
                 fit: BoxFit.cover,
-                errorWidget: (_, _, _) => _textBackdrop(caption),
+                errorWidget: _textBackdrop(caption),
               )
             else
               _textBackdrop(caption),
@@ -266,8 +266,8 @@ class _TikTokPostTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   child: AspectRatio(
                     aspectRatio: 4 / 5,
-                    child: CachedNetworkImage(
-                      imageUrl: post.mediaUrl!,
+                    child: CanlifalNetworkImage(
+                      url: post.mediaUrl!,
                       fit: BoxFit.cover,
                     ),
                   ),

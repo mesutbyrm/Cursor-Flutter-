@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/widgets/lazy_list_views.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -86,23 +87,52 @@ class _ProfileTransactionsPageState
                     message: 'Henüz işlem kaydı yok.',
                   );
                 }
-                return ListView(
+                final payCount = payRows.length;
+                final actCount = actRows.length;
+                final hasMore = ref
+                        .read(paymentRequestsNotifierProvider.notifier)
+                        .hasMore ||
+                    ref.read(profileActivityNotifierProvider.notifier).hasMore;
+                var itemCount = 0;
+                if (payCount > 0) itemCount += 1 + payCount;
+                if (actCount > 0) itemCount += 1 + actCount;
+                if (hasMore) itemCount += 1;
+
+                return LazyListView(
                   controller: _scroll,
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                   physics: ListPerf.listPhysics,
-                  children: [
-                    if (payRows.isNotEmpty) ...[
-                      const _SectionTitle('Ödeme talepleri'),
-                      ...payRows.map((r) => _PaymentTile(row: r)),
-                    ],
-                    if (actRows.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      const _SectionTitle('Site hareketleri'),
-                      ...actRows.map((r) => _ActivityTile(row: r)),
-                    ],
-                    if (ref.read(paymentRequestsNotifierProvider.notifier).hasMore ||
-                        ref.read(profileActivityNotifierProvider.notifier).hasMore)
-                      const Padding(
+                  itemCount: itemCount,
+                  itemBuilder: (context, index) {
+                    var cursor = index;
+                    if (payCount > 0) {
+                      if (cursor == 0) {
+                        return const _SectionTitle('Ödeme talepleri');
+                      }
+                      cursor--;
+                      if (cursor < payCount) {
+                        return _PaymentTile(row: payRows[cursor]);
+                      }
+                      cursor -= payCount;
+                    }
+                    if (actCount > 0) {
+                      if (cursor == 0) {
+                        return const Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SizedBox(height: 16),
+                            _SectionTitle('Site hareketleri'),
+                          ],
+                        );
+                      }
+                      cursor--;
+                      if (cursor < actCount) {
+                        return _ActivityTile(row: actRows[cursor]);
+                      }
+                      cursor -= actCount;
+                    }
+                    if (hasMore && cursor == 0) {
+                      return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 16),
                         child: Center(
                           child: SizedBox(
@@ -111,8 +141,10 @@ class _ProfileTransactionsPageState
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         ),
-                      ),
-                  ],
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
                 );
               },
             ),

@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/ui/premium/premium_skeleton.dart';
@@ -199,8 +199,8 @@ class _VoiceRoomCard extends StatelessWidget {
               children: [
                 ClipOval(
                   child: room.ownerAvatarUrl != null
-                      ? CachedNetworkImage(
-                          imageUrl: room.ownerAvatarUrl!,
+                      ? CanlifalNetworkImage(
+                          url: room.ownerAvatarUrl!,
                           width: 48,
                           height: 48,
                           fit: BoxFit.cover,
@@ -275,8 +275,8 @@ class _VoiceRoomCard extends StatelessWidget {
                                   ),
                                 ),
                                 child: ClipOval(
-                                  child: CachedNetworkImage(
-                                    imageUrl: avatars[i],
+                                  child: CanlifalNetworkImage(
+                                    url: avatars[i],
                                     fit: BoxFit.cover,
                                   ),
                                 ),

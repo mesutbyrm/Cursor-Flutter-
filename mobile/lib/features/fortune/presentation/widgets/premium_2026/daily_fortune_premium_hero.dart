@@ -1,7 +1,8 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+import 'package:canlifal_social/core/performance/animation_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,10 +16,12 @@ class DailyFortunePremiumHero extends StatefulWidget {
     super.key,
     this.height = 280,
     this.parallaxOffset = 0,
+    this.scrollParallax,
   });
 
   final double height;
   final double parallaxOffset;
+  final ScrollParallaxNotifier? scrollParallax;
 
   @override
   State<DailyFortunePremiumHero> createState() => _DailyFortunePremiumHeroState();
@@ -51,9 +54,20 @@ class _DailyFortunePremiumHeroState extends State<DailyFortunePremiumHero>
 
   @override
   Widget build(BuildContext context) {
+    final parallaxNotifier = widget.scrollParallax;
+    if (parallaxNotifier != null) {
+      return ListenableBuilder(
+        listenable: parallaxNotifier,
+        builder: (_, _) => _buildContent(parallaxNotifier.offset),
+      );
+    }
+    return _buildContent(widget.parallaxOffset);
+  }
+
+  Widget _buildContent(double scrollOffset) {
     final url = FortuneTypeImages.urlFor('gunluk-fal', width: 1200);
     final glow = FortuneTypeImages.glowColor('tarot');
-    final parallax = widget.parallaxOffset * 0.2;
+    final parallax = scrollOffset * 0.2;
 
     return RepaintBoundary(
       child: SizedBox(
@@ -79,14 +93,13 @@ class _DailyFortunePremiumHeroState extends State<DailyFortunePremiumHero>
               ),
               Transform.translate(
                 offset: Offset(0, parallax),
-                child: CachedNetworkImage(
-                  imageUrl: url,
+                child: CanlifalNetworkImage(
+                  url: url,
                   fit: BoxFit.cover,
-                  memCacheWidth: 1000,
+                  thumbnailWidth: 1000,
                   color: Colors.white.withValues(alpha: 0.35),
                   colorBlendMode: BlendMode.softLight,
-                  placeholder: (_, _) =>
-                      const FortuneImageShimmer(accent: Color(0xFFB832FF)),
+                  placeholder: const FortuneImageShimmer(accent: Color(0xFFB832FF)),
                 ),
               ),
               DecoratedBox(

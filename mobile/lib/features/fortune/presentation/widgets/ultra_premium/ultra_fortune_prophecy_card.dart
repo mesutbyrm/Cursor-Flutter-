@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../data/fortune_catalog.dart';
 import '../../data/fortune_type_images.dart';
@@ -99,12 +99,10 @@ class _CinematicTarotThumb extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            CachedNetworkImage(
-              imageUrl: url,
+            CanlifalNetworkImage(
+              url: url,
               fit: BoxFit.cover,
-              memCacheWidth: 300,
-              placeholder: (_, _) =>
-                  const FortuneImageShimmer(accent: Color(0xFFB832FF)),
+              placeholder: const FortuneImageShimmer(accent: Color(0xFFB832FF)),
             ),
             DecoratedBox(
               decoration: BoxDecoration(

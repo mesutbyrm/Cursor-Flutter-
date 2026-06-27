@@ -1,11 +1,12 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../auth/domain/entities/user_entity.dart';
@@ -85,19 +86,21 @@ class _StoriesList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final others = rings.where((r) => r.user.id != me?.id).toList();
+    final itemCount = 1 + others.length;
 
-    return ListView(
-      scrollDirection: Axis.horizontal,
+    return LazyHorizontalListView(
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      children: [
-        _OwnStoryChip(user: me),
-        ...others.map(
-          (r) => Padding(
-            padding: const EdgeInsets.only(left: 14),
-            child: _StoryRingChip(ring: r),
-          ),
-        ),
-      ],
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return _OwnStoryChip(user: me);
+        }
+        final ring = others[index - 1];
+        return Padding(
+          padding: const EdgeInsets.only(left: 14),
+          child: _StoryRingChip(ring: ring),
+        );
+      },
     );
   }
 }
@@ -279,13 +282,13 @@ class _RingAvatar extends StatelessWidget {
 
     if (url != null && url.isNotEmpty) {
       return ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: url,
+        child: CanlifalNetworkImage(
+          url: url,
           width: 66,
           height: 66,
           fit: BoxFit.cover,
-          placeholder: (_, _) => const _AvatarPlaceholder(),
-          errorWidget: (_, _, _) => UserAvatar(url: avatarUrl, radius: 33),
+          placeholder: const _AvatarPlaceholder(),
+          errorWidget: UserAvatar(url: avatarUrl, radius: 33),
         ),
       );
     }

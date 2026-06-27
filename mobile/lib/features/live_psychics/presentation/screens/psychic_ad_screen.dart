@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +8,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/widgets/psyc
 import 'package:canlifal_social/features/live_psychics/data/services/psychic_session_store.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/agora/presentation/agora_room_manager.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 final _psychicAdNavProvider =
     StateProvider.autoDispose<PsychicSessionEntity?>((ref) => null);
@@ -53,7 +53,7 @@ class PsychicAdScreen extends ConsumerWidget {
                       ? CircleAvatar(
                           radius: 52,
                           backgroundImage:
-                              CachedNetworkImageProvider(psychic.avatarUrl!),
+                              canlifalImageProvider(psychic.avatarUrl!),
                         )
                       : const UserAvatar(radius: 52),
                 ),

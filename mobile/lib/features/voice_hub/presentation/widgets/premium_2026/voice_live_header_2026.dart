@@ -1,10 +1,10 @@
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter/services.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../theme/voice_room_tokens.dart';
@@ -77,7 +77,7 @@ class VoiceLiveHeader2026 extends StatelessWidget {
                   radius: 22,
                   backgroundColor: Colors.white12,
                   backgroundImage: hostAvatarUrl != null && hostAvatarUrl!.isNotEmpty
-                      ? CachedNetworkImageProvider(hostAvatarUrl!)
+                      ? canlifalImageProvider(hostAvatarUrl!)
                       : null,
                   child: hostAvatarUrl == null || hostAvatarUrl!.isEmpty
                       ? Text(room.icon ?? '🎤', style: const TextStyle(fontSize: 20))

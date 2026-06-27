@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/fortune_type_images.dart';
@@ -62,11 +62,11 @@ class _PremiumFortuneCoverState extends State<PremiumFortuneCover>
       child: Transform.scale(
         scale: 1.06,
         child: widget.imageUrl != null
-            ? CachedNetworkImage(
-                imageUrl: url,
+            ? CanlifalNetworkImage(
+                url: url,
                 fit: BoxFit.cover,
-                fadeInDuration: const Duration(milliseconds: 500),
-                placeholder: (_, _) => FortuneImageShimmer(accent: accent),
+                thumbnailWidth: 1200,
+                placeholder: FortuneImageShimmer(accent: accent),
               )
             : FortuneTypeNetworkImage(
                 slug: widget.type.slug,

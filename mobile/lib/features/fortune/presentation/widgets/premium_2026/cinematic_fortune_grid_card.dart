@@ -1,5 +1,4 @@
-import 'dart:ui';
-
+import 'package:canlifal_social/core/performance/effects_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -91,18 +90,13 @@ class _CinematicFortuneGridCardState extends State<CinematicFortuneGridCard> {
                     left: 0,
                     right: 0,
                     height: 48,
-                    child: ClipRect(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.white.withValues(alpha: 0.08),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withValues(alpha: 0.08),
+                            Colors.transparent,
+                          ],
                         ),
                       ),
                     ),

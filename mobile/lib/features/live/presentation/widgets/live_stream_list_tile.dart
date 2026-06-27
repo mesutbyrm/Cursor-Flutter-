@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/ui/premium/live_badge.dart';
@@ -141,11 +141,10 @@ class _Thumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (url != null && url!.isNotEmpty) {
-      return CachedNetworkImage(
-        imageUrl: url!,
+      return CanlifalNetworkImage(
+        url: url!,
         fit: BoxFit.cover,
-        memCacheWidth: 220,
-        errorWidget: (_, _, _) => const _Fallback(),
+        errorWidget: const _Fallback(),
       );
     }
     return const _Fallback();

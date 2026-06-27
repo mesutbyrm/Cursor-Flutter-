@@ -1,8 +1,9 @@
 import 'dart:math' as math;
 
+import 'package:canlifal_social/core/performance/animation_perf.dart';
 import 'package:flutter/material.dart';
 
-/// Sesli oda — hafif yüzen parçacıklar (RepaintBoundary içinde).
+/// Sesli oda — hafif yüzen parçacıklar (RepaintBoundary + önceden hesaplanmış yörüngeler).
 class VoiceRoomParticles extends StatefulWidget {
   const VoiceRoomParticles({super.key});
 
@@ -13,10 +14,12 @@ class VoiceRoomParticles extends StatefulWidget {
 class _VoiceRoomParticlesState extends State<VoiceRoomParticles>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
+  late final PrecomputedDriftParticles _field;
 
   @override
   void initState() {
     super.initState();
+    _field = PrecomputedDriftParticles.generate(seed: 11, count: 24);
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 24),
@@ -31,14 +34,11 @@ class _VoiceRoomParticlesState extends State<VoiceRoomParticles>
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: IgnorePointer(
-        child: AnimatedBuilder(
-          animation: _ctrl,
-          builder: (_, _) => CustomPaint(
-            painter: _ParticlesPainter(_ctrl.value),
-            size: Size.infinite,
-          ),
+    return AnimationPerf.isolated(
+      IgnorePointer(
+        child: AnimationPerf.paintLayer(
+          repaint: _ctrl,
+          painter: _ParticlesPainter(_field, _ctrl),
         ),
       ),
     );
@@ -46,24 +46,28 @@ class _VoiceRoomParticlesState extends State<VoiceRoomParticles>
 }
 
 class _ParticlesPainter extends CustomPainter {
-  _ParticlesPainter(this.progress);
+  _ParticlesPainter(this.field, this.tick) : super(repaint: tick);
 
-  final double progress;
+  final PrecomputedDriftParticles field;
+  final Animation<double> tick;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final rnd = math.Random(11);
-    for (var i = 0; i < 24; i++) {
-      final bx = rnd.nextDouble() * size.width;
-      final by = rnd.nextDouble() * size.height * 0.55;
+    final progress = tick.value;
+    for (var i = 0; i < field.points.length; i++) {
+      final p = field.points[i];
       final drift = math.sin((progress + i * 0.08) * math.pi * 2) * 6;
       final paint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.04 + rnd.nextDouble() * 0.08)
+        ..color = Colors.white.withValues(alpha: p.alpha)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-      canvas.drawCircle(Offset(bx + drift, by - drift), 1.2 + rnd.nextDouble(), paint);
+      canvas.drawCircle(
+        Offset(p.x * size.width + drift, p.y * size.height - drift),
+        p.radius,
+        paint,
+      );
     }
   }
 
   @override
-  bool shouldRepaint(covariant _ParticlesPainter old) => old.progress != progress;
+  bool shouldRepaint(covariant _ParticlesPainter old) => true;
 }

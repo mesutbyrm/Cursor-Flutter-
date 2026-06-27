@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/performance/network_perf.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../vip_gold/domain/vip_tier.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
@@ -29,8 +30,12 @@ class FortuneAccessService {
   }
 
   Future<FortuneAccessState> loadState() async {
-    final config = await _ref.read(fortuneAccessConfigProvider.future);
-    final store = await _store();
+    final pair = await NetworkPerf.parallel([
+      _ref.read(fortuneAccessConfigProvider.future),
+      _store(),
+    ]);
+    final config = pair[0] as FortuneAccessConfig;
+    final store = pair[1] as FortuneAccessLocalStore;
     final wallet = _ref.read(walletBalancesProvider).valueOrNull;
     final tier = _ref.read(vipTierProvider);
     final jeton = wallet?.jeton ?? 0;

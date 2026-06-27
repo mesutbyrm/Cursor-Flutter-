@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme/voice_room_tokens.dart';
@@ -48,16 +48,15 @@ class _VoiceCosmicBackgroundState extends State<VoiceCosmicBackground>
           decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
         ),
         if (widget.imageUrl != null && widget.imageUrl!.isNotEmpty)
-          CachedNetworkImage(
+          CanlifalNetworkImage(
             key: ValueKey(widget.imageUrl),
-            imageUrl: widget.imageUrl!,
+            url: widget.imageUrl!,
             fit: BoxFit.cover,
-            fadeInDuration: Duration.zero,
-            fadeOutDuration: Duration.zero,
-            placeholder: (_, _) => const DecoratedBox(
+            fadeIn: false,
+            placeholder: const DecoratedBox(
               decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
             ),
-            errorWidget: (_, _, _) => const DecoratedBox(
+            errorWidget: const DecoratedBox(
               decoration: BoxDecoration(gradient: VoiceRoomTokens.cosmicGradient),
             ),
             color: Colors.black.withValues(alpha: 0.42),
