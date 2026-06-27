@@ -637,7 +637,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       return;
     }
     try {
-      await context.push('/voice-room/$key/pk-invite', extra: room.stableSessionKey);
+      await context.push('/voice-room/$key/pk-invite', extra: room);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

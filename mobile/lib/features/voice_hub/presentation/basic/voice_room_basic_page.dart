@@ -24,7 +24,6 @@ import '../audio/voice_room_music_audio_session.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_audio_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
-import '../sheets/voice_room_sheets.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../domain/voice_music_sync.dart';
 import '../utils/voice_room_permissions.dart';
@@ -33,12 +32,10 @@ import '../widgets/premium/voice_gift_flight_overlay.dart';
 import '../widgets/premium_2026/voice_cosmic_background.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
-import 'voice_room_basic_music_section.dart';
 import 'voice_room_basic_moderation_section.dart';
 import 'voice_room_basic_premium_section.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
 import '../utils/kick_strike_ui.dart';
-import 'voice_room_basic_realtime_feed.dart';
 import '../widgets/voice_room_error_boundary.dart';
 
 /// Aşama 1 — oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcılar, oda sahibi.
@@ -359,26 +356,28 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     if (leave == true && mounted) await _leaveRoom();
   }
 
-  void _openParticipants(
+  void _openTools(
     VoiceRoomEntity room,
-    List<ChatRoomPresence> presence,
+    VoiceRoomLiveState live,
+    VoiceRoomPermissions perms,
+    bool isOwner,
+    UserEntity? user,
+    bool canControlMusic,
   ) {
-    showVoiceSpeakerListSheet(
+    showVoiceRoomBasicToolsSheet(
       context,
-      presence: presence,
+      ref,
       room: room,
-      onUserTap: (user) => openVoiceRoomBasicUser(
-        context,
-        ref,
-        room: room,
-        liveKey: _liveRoomKey,
-        user: user,
-        perms: _permissions(
-          ref.read(authControllerProvider).valueOrNull,
-          ref.read(voiceRoomLiveProvider(_liveRoomKey)),
-          room,
-        ),
-      ),
+      liveKey: _liveRoomKey,
+      live: live,
+      perms: perms,
+      isOwner: isOwner,
+      onPk: () => openVoiceRoomBasicPkInvite(context, room),
+      onOpenUser: (p) => _openUser(p, room, perms),
+      onSendIstek: _sendIstek,
+      istekCtrl: _istekCtrl,
+      canControlMusic: canControlMusic,
+      user: user,
     );
   }
 
@@ -566,6 +565,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         if (!didPop) unawaited(_confirmLeave());
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: true,
         backgroundColor: VoiceRoomTokens.bgDeep,
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.92),
@@ -583,7 +583,12 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    live.sseConnected ? 'Canlı (SSE)' : 'Bağlanıyor…',
+                    live.sseConnected ? 'Canlı' : 'Bağlanıyor…',
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$online online',
                     style: Theme.of(context).textTheme.labelSmall,
                   ),
                 ],
@@ -596,10 +601,17 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
               icon: const Icon(Icons.card_giftcard_rounded),
               tooltip: 'Hediye',
             ),
-            TextButton.icon(
-              onPressed: () => _openParticipants(room, live.presence),
-              icon: const Icon(Icons.people_outline_rounded, size: 20),
-              label: Text('$online'),
+            IconButton(
+              onPressed: () => _openTools(
+                room,
+                live,
+                perms,
+                isOwner,
+                user,
+                canControlMusic,
+              ),
+              icon: const Icon(Icons.settings_rounded),
+              tooltip: 'Ayarlar',
             ),
           ],
         ),
@@ -608,102 +620,56 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
             Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (live.roomMuted)
-              _Banner(message: 'Oda susturulmuş (yalnızca yetkililer konuşabilir)'),
-            if (_loginError != null)
-              _Banner(message: _loginError!, isError: true),
-            if (_audioError != null)
-              _Banner(message: _audioError!, isError: true),
-            if (_audioJoining)
-              const LinearProgressIndicator(minHeight: 2),
-            if (live.loading && live.presence.isEmpty)
-              const Expanded(
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else ...[
-              VoiceRoomBasicPremiumToolbar(
-                room: room,
-                liveKey: _liveRoomKey,
-                live: live,
-                perms: perms,
-                isOwner: isOwner,
-                onGift: () => _openGiftShop(room, live.presence),
-                onPk: () => openVoiceRoomBasicPkInvite(context, room),
-                onOpenUser: (p) => _openUser(p, room, perms),
-              ),
-              VoiceRoomBasicModerationSection(
-                room: room,
-                liveKey: _liveRoomKey,
-                live: live,
-                perms: perms,
-                user: user,
-              ),
-              const SizedBox(height: 8),
-              VoiceRoomBasicParticipantStrip(
-                presence: live.presence,
-                ownerId: room.ownerId,
-                onUserTap: (p) => _openUser(p, room, perms),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: OutlinedButton.icon(
-                  onPressed: () => _openParticipants(room, live.presence),
-                  icon: const Icon(Icons.group_rounded),
-                  label: Text('Katılımcılar ($online)'),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-                        child: Text(
-                          'Canlı olaylar',
-                          style: Theme.of(context).textTheme.titleSmall,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (live.roomMuted)
+                  _Banner(message: 'Oda susturulmuş (yalnızca yetkililer konuşabilir)'),
+                if (_loginError != null)
+                  _Banner(message: _loginError!, isError: true),
+                if (_audioError != null)
+                  _Banner(message: _audioError!, isError: true),
+                if (_audioJoining)
+                  const LinearProgressIndicator(minHeight: 2),
+                if (live.loading && live.presence.isEmpty)
+                  const Expanded(child: Center(child: CircularProgressIndicator()))
+                else ...[
+                  VoiceRoomBasicModerationSection(
+                    room: room,
+                    liveKey: _liveRoomKey,
+                    live: live,
+                    perms: perms,
+                    user: user,
+                  ),
+                  VoiceRoomBasicJoinTicker(
+                    events: live.realtimeEvents,
+                    messages: live.messages,
+                    onlineCount: online,
+                  ),
+                  VoiceRoomBasicFloatingMiniPlayer(
+                    room: room,
+                    liveKey: _liveRoomKey,
+                    live: live,
+                    canControlMusic: canControlMusic,
+                    perms: perms,
+                  ),
+                  Expanded(
+                    child: VoiceRoomBasicChatFeed(messages: live.messages),
+                  ),
+                  if (live.error != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        live.error!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontSize: 12,
                         ),
                       ),
-                      VoiceRoomBasicRealtimeFeed(events: live.realtimeEvents),
-                      VoiceRoomBasicChatSection(
-                        messages: live.messages,
-                        messageController: _messageCtrl,
-                        onSend: _sendChatMessage,
-                        onEmoji: () =>
-                            showVoiceRoomBasicEmojiPicker(context, _messageCtrl),
-                      ),
-                      VoiceRoomBasicMusicSection(
-                        room: room,
-                        liveKey: _liveRoomKey,
-                        live: live,
-                        istekController: _istekCtrl,
-                        onSendIstek: _sendIstek,
-                        canControlMusic: canControlMusic,
-                        perms: perms,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (live.error != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    live.error!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                      fontSize: 13,
                     ),
-                  ),
-                ),
-            ],
-          ],
-        ),
+                ],
+              ],
+            ),
             VoiceGiftFlightOverlay(
               events: flightQueue,
               enabled: ui.giftAnimationsEnabled,
@@ -723,98 +689,29 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
               ),
           ],
         ),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: Row(
+        bottomNavigationBar: Material(
+          elevation: 8,
+          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.96),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: _ControlButton(
-                    icon: _isMicMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
-                    label: _isMicMuted ? 'Mic kapalı' : 'Mic açık',
-                    active: !_isMicMuted,
-                    onTap: _toggleMic,
-                  ),
+                VoiceRoomBasicMessageBar(
+                  controller: _messageCtrl,
+                  onSend: _sendChatMessage,
+                  onEmoji: () =>
+                      showVoiceRoomBasicEmojiPicker(context, _messageCtrl),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ControlButton(
-                    icon: speakerOn
-                        ? Icons.volume_up_rounded
-                        : Icons.hearing_disabled_rounded,
-                    label: speakerOn ? 'Hoparlör' : 'Sessiz',
-                    active: speakerOn,
-                    onTap: _toggleSpeaker,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ControlButton(
-                    icon: Icons.logout_rounded,
-                    label: 'Çık',
-                    active: false,
-                    danger: true,
-                    onTap: _confirmLeave,
-                  ),
+                VoiceRoomBasicCompactControls(
+                  isMicMuted: _isMicMuted,
+                  speakerOn: speakerOn,
+                  onMic: _toggleMic,
+                  onSpeaker: _toggleSpeaker,
+                  onLeave: _confirmLeave,
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ControlButton extends StatelessWidget {
-  const _ControlButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    required this.active,
-    this.danger = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool active;
-  final bool danger;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final bg = danger
-        ? scheme.errorContainer
-        : active
-            ? scheme.primaryContainer
-            : scheme.surfaceContainerHighest;
-    final fg = danger
-        ? scheme.onErrorContainer
-        : active
-            ? scheme.onPrimaryContainer
-            : scheme.onSurface;
-    return Material(
-      color: bg,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: fg),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg),
-              ),
-            ],
           ),
         ),
       ),

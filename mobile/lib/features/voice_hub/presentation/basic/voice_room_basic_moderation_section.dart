@@ -36,24 +36,9 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ui = ref.watch(voiceRoomUiProvider);
-    final onStage = voiceWebOnStageIds(room: room, presence: live.presence);
-    final selfOnStage = user != null && onStage.contains(user!.id);
-    final canRequestSpeak = user != null &&
-        !selfOnStage &&
-        !perms.canAssignSeats &&
-        !perms.canTakeSeat;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (perms.canModerate || perms.isRoomOwner || perms.isSiteAdmin)
-          VoiceRoomBasicModerationBar(
-            room: room,
-            liveKey: liveKey,
-            live: live,
-            perms: perms,
-          ),
         VoiceWebOwnerStage(
           room: room,
           presence: live.presence,
@@ -71,119 +56,7 @@ class VoiceRoomBasicModerationSection extends ConsumerWidget {
             ),
           ),
         ),
-        if (canRequestSpeak) ...[
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: FilledButton.tonalIcon(
-              onPressed: () => unawaited(
-                requestVoiceRoomBasicSpeak(
-                  context: context,
-                  ref: ref,
-                  liveKey: liveKey,
-                  pending: ui.requestSpeakPending,
-                ),
-              ),
-              icon: Icon(
-                ui.requestSpeakPending
-                    ? Icons.hourglass_top_rounded
-                    : Icons.record_voice_over_outlined,
-              ),
-              label: Text(
-                ui.requestSpeakPending
-                    ? 'Konuşma isteği bekliyor…'
-                    : 'Konuşma iste',
-              ),
-            ),
-          ),
-        ],
       ],
-    );
-  }
-}
-
-/// Yetkili moderasyon kısayolları — oda susturma, rol rozeti.
-class VoiceRoomBasicModerationBar extends ConsumerWidget {
-  const VoiceRoomBasicModerationBar({
-    super.key,
-    required this.room,
-    required this.liveKey,
-    required this.live,
-    required this.perms,
-  });
-
-  final VoiceRoomEntity room;
-  final String liveKey;
-  final VoiceRoomLiveState live;
-  final VoiceRoomPermissions perms;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final roleLabel = _roleLabel(perms);
-    final canRoomMute = perms.canMuteRoom || perms.isRoomOwner || perms.isSiteAdmin;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 6,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          if (roleLabel != null)
-            Chip(
-              avatar: Icon(
-                _roleIcon(perms),
-                size: 16,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              label: Text(roleLabel),
-              visualDensity: VisualDensity.compact,
-            ),
-          if (canRoomMute)
-            ActionChip(
-              avatar: Icon(
-                live.roomMuted ? Icons.volume_up_rounded : Icons.volume_off_rounded,
-                size: 16,
-              ),
-              label: Text(live.roomMuted ? 'Oda sesini aç' : 'Odayı sustur'),
-              onPressed: () => unawaited(
-                _toggleRoomMute(context, ref),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  String? _roleLabel(VoiceRoomPermissions p) {
-    if (p.isSiteAdmin) return 'Admin';
-    if (p.isRoomOwner) return 'Oda sahibi';
-    if (p.canBanUsers) return 'Yetkili (&)';
-    if (p.canModerate) return 'Moderatör';
-    return null;
-  }
-
-  IconData _roleIcon(VoiceRoomPermissions p) {
-    if (p.isSiteAdmin) return Icons.admin_panel_settings_rounded;
-    if (p.isRoomOwner) return Icons.star_rounded;
-    if (p.canBanUsers) return Icons.verified_user_rounded;
-    return Icons.shield_rounded;
-  }
-
-  Future<void> _toggleRoomMute(BuildContext context, WidgetRef ref) async {
-    final mute = !live.roomMuted;
-    final err = await ref
-        .read(voiceRoomLiveProvider(liveKey).notifier)
-        .toggleRoomMute(mute: mute);
-    if (!context.mounted) return;
-    if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mute ? 'Oda susturuldu' : 'Oda sesi açıldı'),
-      ),
     );
   }
 }

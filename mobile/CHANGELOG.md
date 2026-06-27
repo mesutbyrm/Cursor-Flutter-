@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.391+395 (2026-06-27)
+
+### Sesli oda — UI düzenlemesi (temel mod)
+
+- **PK düzeltmesi:** davet sayfasına tam oda nesnesi gönderilir (`extra: room`)
+- **Çark menüsü:** hediye yanında ⚙️ — PK, efekt, tema, oda sustur, DJ, !istek, kuyruk
+- **Koltuk altı:** katılımcı şeridi ve “Katılımcılar” butonu kaldırıldı
+- **Giriş ticker:** koltukların altında açılır/kapanır kayan “odaya girenler” bandı
+- **Sabit alt bar:** mesaj yaz + kompakt mic/ses/jeton/çık (jeton → mağaza, odadan çıkmadan)
+- **Sohbet:** mesaj listesi ortada; yazı alanı klavye üstünde sabit
+
 ## 1.0.390+394 (2026-06-27)
 
 ### Sesli oda — premium özellikler (web parity, temel mod)
