@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.405+409 (2026-06-27)
+
+### Performans — Görev 13: Sesli oda hızlı giriş
+
+- **`VoiceRoomEntryPerf`:** liste dokunuşunda AudioSession + TRTC token önbelleği
+- **Oda bootstrap:** SSE hemen; presence/DJ/hediye arka planda paralel
+- **RTC / Basic sayfa:** UI anında; ses TRTC/LiveKit arka planda bağlanır
+- **Shell prefetch:** AudioSession kabuk açılışında ısıtılır
+- **`loading: false`:** oda ekranı spinner beklemeden açılır
+
 ## 1.0.404+408 (2026-06-27)
 
 ### Performans — Görev 12: SSE (merkezi bağlantı)

@@ -421,36 +421,7 @@ class VoiceRoomLiveController
       ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer();
       _closeRoomKeepAlive();
     });
-    Future.microtask(() async {
-      if (VoiceRoomBasicMode.enabled) {
-        ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
-        await VoiceRoomMusicAudioSession.ensureConfigured();
-        await Future.wait([_joinPresence(), _warmBackgrounds()]);
-        await refresh(includeDj: VoiceRoomBasicMode.musicEnabled);
-        _startSse();
-        if (VoiceRoomBasicMode.musicEnabled) {
-          final player = ref.read(voiceRoomDjPlayerProvider);
-          player.onTrackComplete = () => unawaited(_onDjTrackComplete());
-          _wireMusicControls();
-        }
-        if (VoiceRoomBasicMode.premiumEnabled) {
-          _startGiftSocket();
-        }
-        _schedulePoll(sseConnected: false);
-        return;
-      }
-      ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
-      await VoiceRoomMusicAudioSession.ensureConfigured();
-      await Future.wait([_joinPresence(), _warmBackgrounds()]);
-      await refresh(includeDj: true);
-      _startSse();
-      _startGiftSocket();
-      final player = ref.read(voiceRoomDjPlayerProvider);
-      player.onTrackComplete = () => unawaited(_onDjTrackComplete());
-      _wireMusicControls();
-      // build() bitmeden state okunamaz — poll yalnızca microtask içinde.
-      _schedulePoll(sseConnected: false);
-    });
+    Future.microtask(() => _beginRoomSession());
     _presenceHeartbeat = Timer.periodic(const Duration(seconds: 20), (_) {
       if (state.selfInRoom) {
         unawaited(_presenceHeartbeatTick());
@@ -460,7 +431,54 @@ class VoiceRoomLiveController
       backgroundUrl: room.backgroundImageUrl?.trim().isNotEmpty == true
           ? room.backgroundImageUrl
           : null,
+      loading: false,
     );
+  }
+
+  /// Hızlı giriş — SSE hemen; presence/DJ arka planda.
+  Future<void> _beginRoomSession() async {
+    ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
+    unawaited(VoiceRoomMusicAudioSession.ensureConfigured());
+    state = state.copyWith(loading: false);
+    _startSse();
+    _schedulePoll(sseConnected: false);
+
+    unawaited(_bootstrapRoomData());
+  }
+
+  Future<void> _bootstrapRoomData() async {
+    try {
+      await NetworkPerf.parallel([
+        _joinPresence(),
+        _warmBackgrounds(),
+      ]);
+    } catch (_) {
+      state = state.copyWith(loading: false);
+    }
+
+    final includeDj = VoiceRoomBasicMode.enabled
+        ? VoiceRoomBasicMode.musicEnabled
+        : true;
+    try {
+      await refresh(includeDj: includeDj);
+    } catch (_) {}
+
+    if (VoiceRoomBasicMode.enabled) {
+      if (VoiceRoomBasicMode.musicEnabled) {
+        final player = ref.read(voiceRoomDjPlayerProvider);
+        player.onTrackComplete = () => unawaited(_onDjTrackComplete());
+        _wireMusicControls();
+      }
+      if (VoiceRoomBasicMode.premiumEnabled) {
+        _startGiftSocket();
+      }
+      return;
+    }
+
+    _startGiftSocket();
+    final player = ref.read(voiceRoomDjPlayerProvider);
+    player.onTrackComplete = () => unawaited(_onDjTrackComplete());
+    _wireMusicControls();
   }
 
   List<ChatRoomPresence> _mergeSelf(List<ChatRoomPresence> list) {

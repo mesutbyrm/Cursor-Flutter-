@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/performance/voice_room_entry_perf.dart';
 import '../../../core/network/token_storage.dart';
 import '../../../core/widgets/cached_cover_image.dart';
 import '../../../core/navigation/wallet_navigation.dart';
@@ -89,7 +90,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   final _participants = <String, Map<String, dynamic>>{};
   var _agoraReady = false;
   final _messageCtrl = TextEditingController();
-  var _audioJoining = true;
+  var _audioJoining = false;
   var _audioReady = false;
   String? _audioError;
   String? _loginError;
@@ -135,7 +136,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (roomKey.isEmpty) {
         unawaited(ref.read(voiceRoomsProvider.future));
       }
-      _joinRoom();
+      _startGiftRealtime();
+      unawaited(_joinAudioBackground());
       _prefetchRoomImages();
       _bindSseParticipants();
     });
@@ -370,14 +372,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
   }
 
-  Future<void> _joinRoom() async {
+  Future<void> _joinAudioBackground() async {
     if (!mounted) return;
     setState(() {
       _audioJoining = true;
       _audioError = null;
     });
 
-    final user = await _waitForAuth();
+    final user = await _waitForAuth(timeout: VoiceRoomEntryPerf.entryBudget);
     if (!mounted) return;
     if (user == null) {
       setState(() {
@@ -416,6 +418,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       return;
     }
 
+    _startGiftRealtime();
+    unawaited(_connectPkBattle());
+
     _audio = ref.read(voiceRoomAudioCoordinatorProvider);
     if (!_audio!.isSupported) {
       if (mounted) {
@@ -437,12 +442,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         room: room,
         server: liveForPerms.serverPermissions,
       );
+      final prefetched = VoiceRoomEntryPerf.takeTrtc(
+        userId: user.id,
+        roomId: room.trtcRoomId,
+      );
       await _audio!.join(
         trtcRoomId: room.trtcRoomId,
         userId: user.id,
         isHost: _isRoomOwner(user.id, user.username, room) || perms.isSiteAdmin,
         liveKitRemote: ref.read(liveKitRemoteProvider),
         trtcRemote: ref.read(trtcRemoteProvider),
+        prefetchedTrtc: prefetched,
       );
       if (perms.isSiteAdmin) {
         _audio?.setMicEnabled(true);
@@ -1287,7 +1297,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       final wasGuest = prev?.valueOrNull == null;
       final nowUser = next.valueOrNull;
       if (wasGuest && nowUser != null && _loginError != null && !_audioReady) {
-        unawaited(_joinRoom());
+        unawaited(_joinAudioBackground());
       }
     });
 
@@ -1296,7 +1306,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (synced.apiRoomKey.isEmpty) return;
       final hadKey = _roomSynced(prev?.valueOrNull).apiRoomKey.isNotEmpty;
       if (!hadKey && !_audioReady && !_leaving) {
-        unawaited(_joinRoom());
+        unawaited(_joinAudioBackground());
       }
     });
 
@@ -1388,7 +1398,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               trailing: TextButton(
-                                onPressed: _joinRoom,
+                                onPressed: _joinAudioBackground,
                                 child: const Text('Tekrar'),
                               ),
                             ),
