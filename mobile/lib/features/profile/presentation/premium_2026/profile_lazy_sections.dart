@@ -32,8 +32,9 @@ class ProfileLazyStats extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final stats =
-        ref.watch(profileStatsProvider).valueOrNull ?? base.stats;
+    final stats = ref.watch(
+      profileStatsProvider.select((s) => s.valueOrNull ?? base.stats),
+    );
     final state = base.copyWith(stats: stats);
 
     return LazyScreenSection(
@@ -61,7 +62,9 @@ class ProfileLazyWallet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final wallet = ref.watch(walletBalancesProvider).valueOrNull;
+    final wallet = ref.watch(
+      walletBalancesProvider.select((w) => w.valueOrNull),
+    );
     final state = buildProfileWalletState(base, wallet);
 
     return LazyScreenSection(
@@ -87,14 +90,22 @@ class ProfileLazyPremium extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final wallet = ref.watch(walletBalancesProvider).valueOrNull;
-    final state = buildProfileWalletState(base, wallet);
+    final membership = ref.watch(
+      walletBalancesProvider.select(
+        (w) => buildProfileWalletState(base, w.valueOrNull).membership,
+      ),
+    );
+    final daysRemaining = ref.watch(
+      walletBalancesProvider.select(
+        (w) => buildProfileWalletState(base, w.valueOrNull).membershipDays,
+      ),
+    );
 
     return LazyScreenSection(
       delay: LazyLoadPerf.profilePremium,
       child: ProfilePremiumCard(
-        membership: state.membership,
-        daysRemaining: state.membershipDays,
+        membership: membership,
+        daysRemaining: daysRemaining,
         onViewPrivileges: () => context.push('/vip-gold'),
       ),
     );

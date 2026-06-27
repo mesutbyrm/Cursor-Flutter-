@@ -83,8 +83,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   String? _rtcError;
   final _chat = TextEditingController();
 
-  late Timer _timer;
-  Duration _elapsed = Duration.zero;
   final _particlesKey = GlobalKey<FloatingGiftParticlesState>();
   final _heartsKey = GlobalKey<LiveFloatingHeartsOverlayState>();
   Key _localPreviewKey = UniqueKey();
@@ -101,9 +99,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _elapsed += const Duration(seconds: 1));
-    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final streamId = widget.session.streamId?.trim();
       if (streamId != null && streamId.isNotEmpty) {
@@ -249,7 +244,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     if (_remoteUidsListener != null) {
       _agora.remoteUidsNotifier.removeListener(_remoteUidsListener!);
     }
-    _timer.cancel();
+    _guestJoinPoll?.cancel();
     _chat.dispose();
     if (!_leaving &&
         widget.session.isHost &&
@@ -985,13 +980,6 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
     );
   }
 
-  String get _timeLabel {
-    final h = _elapsed.inHours.toString().padLeft(2, '0');
-    final m = _elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = _elapsed.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$h:$m:$s';
-  }
-
   void _openHostProfile(BuildContext context, LiveBroadcastSession s) {
     final handle = s.streamerHandle?.trim();
     if (handle != null && handle.isNotEmpty) {
@@ -1263,7 +1251,7 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
                     padding: EdgeInsets.fromLTRB(12, top > 0 ? 4 : 12, 12, 0),
                     child: LivePremiumTopBar(
                       session: s,
-                      time: _timeLabel,
+                      elapsedBadge: const LiveElapsedTimePill(),
                       following: interaction.following,
                       followLoading: interaction.followLoading,
                       onFollow: _onFollow,

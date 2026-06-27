@@ -124,31 +124,59 @@ class _HomeHeaderBadges extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unreadNotif = ref.watch(notificationsUnreadCountProvider);
-    final unreadMsg = ref.watch(messagesUnreadCountProvider);
-    final jeton = ref.watch(walletBalancesProvider).valueOrNull?.jeton ?? 0;
-
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        _IconBadge(
-          icon: Icons.notifications_none_rounded,
-          badge: unreadNotif,
-          onTap: () => context.push('/notifications'),
-        ),
-        const SizedBox(width: 10),
-        _IconBadge(
-          icon: Icons.chat_bubble_outline_rounded,
-          badge: unreadMsg,
-          onTap: () => context.push('/messages'),
-        ),
-        const SizedBox(width: 10),
-        _CoinPill(
-          balance: jeton,
-          onTap: () => context.push('/jeton-store'),
-          onAdd: () => context.push('/jeton-store'),
-        ),
+      children: const [
+        _NotificationBadge(),
+        SizedBox(width: 10),
+        _MessagesBadge(),
+        SizedBox(width: 10),
+        _HomeJetonPill(),
       ],
+    );
+  }
+}
+
+class _NotificationBadge extends ConsumerWidget {
+  const _NotificationBadge();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadNotif = ref.watch(notificationsUnreadCountProvider);
+    return _IconBadge(
+      icon: Icons.notifications_none_rounded,
+      badge: unreadNotif,
+      onTap: () => context.push('/notifications'),
+    );
+  }
+}
+
+class _MessagesBadge extends ConsumerWidget {
+  const _MessagesBadge();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadMsg = ref.watch(messagesUnreadCountProvider);
+    return _IconBadge(
+      icon: Icons.chat_bubble_outline_rounded,
+      badge: unreadMsg,
+      onTap: () => context.push('/messages'),
+    );
+  }
+}
+
+class _HomeJetonPill extends ConsumerWidget {
+  const _HomeJetonPill();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jeton = ref.watch(
+      walletBalancesProvider.select((w) => w.valueOrNull?.jeton ?? 0),
+    );
+    return _CoinPill(
+      balance: jeton,
+      onTap: () => context.push('/jeton-store'),
+      onAdd: () => context.push('/jeton-store'),
     );
   }
 }

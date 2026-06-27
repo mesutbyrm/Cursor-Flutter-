@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.397+401 (2026-06-27)
+
+### Performans — Görev 6: State yönetimi (hedefli rebuild)
+
+- **`StatePerf` / `SelectiveConsumer`:** `ref.select` ile izole widget rebuild
+- **Sosyal akış:** feed watch `SocialFeedScrollView`'a taşındı — app bar/composer etkilenmez
+- **Sohbet:** mesaj listesi + composer ayrı state; gönderim yalnızca composer'ı yeniler
+- **Mesajlar:** `ConversationsListSliver` — liste watch sayfa dışında
+- **Canlı oda:** yayın süresi `LiveElapsedTimePill` — 1 Hz timer tüm sayfayı rebuild etmez
+- **Ana sayfa rozetleri:** bildirim / mesaj / jeton ayrı `Consumer` + `select`
+- **Profil cüzdan:** `walletBalancesProvider.select` — jeton değişince yalnızca ilgili kart
+- **Sesli oda keşif:** `VoiceRoomOnlineCount` — presence satır bazlı
+
 ## 1.0.396+400 (2026-06-27)
 
 ### Performans — Görev 5: Liste performansı

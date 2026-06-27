@@ -49,7 +49,10 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
   void initState() {
     super.initState();
     _presenceTimer = Timer(LazyLoadPerf.voiceRoomPresence, () {
-      if (mounted) setState(() => _presenceReady = true);
+      if (mounted) {
+        ref.read(voiceRoomsPresenceProvider);
+        setState(() => _presenceReady = true);
+      }
     });
     _liveStreamsTimer = Timer(LazyLoadPerf.voiceRoomLiveStreams, () {
       if (mounted) setState(() => _liveStreamsReady = true);
@@ -80,9 +83,6 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     }
 
     final rooms = ref.watch(voiceRoomsProvider);
-    final presence = _presenceReady
-        ? ref.watch(voiceRoomsPresenceProvider)
-        : const VoiceRoomsPresenceState();
     final liveStreams = _liveStreamsReady && !VoiceRoomBasicMode.enabled
         ? ref.watch(liveStreamsProvider)
         : const AsyncValue<List<LiveStreamEntity>>.data([]);
@@ -110,13 +110,6 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
         }
 
         final ordered = _orderedRooms(list, ref.watch(myVoiceRoomProvider));
-        final withPresence = ordered
-            .map(
-              (r) => r.copyWith(
-                onlineCount: presence.countFor(r),
-              ),
-            )
-            .toList();
         final live = liveStreams.valueOrNull ?? const [];
 
         return PremiumImmersiveBackground(
@@ -130,9 +123,9 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
               }
             },
             child: VoiceRoomBasicMode.enabled
-                ? VoiceRoomBasicList(rooms: withPresence, ref: ref)
+                ? VoiceRoomBasicList(rooms: ordered, ref: ref)
                 : VoiceDiscoverHub2026(
-                    rooms: withPresence,
+                    rooms: ordered,
                     liveStreams: live,
                     topPadding: topPad,
                     onRoomTap: (r) => openVoiceRoomWithVipGate(context, ref, r),

@@ -22,6 +22,7 @@ import 'package:canlifal_social/features/vip_gold/presentation/theme/vip_gold_to
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../live/presentation/utils/open_live_stream.dart';
 import '../../utils/open_voice_chat_room_flow.dart';
+import '../voice_room_online_count.dart';
 import '../../theme/voice_room_tokens.dart';
 import 'voice_discover_2026.dart';
 
@@ -1096,9 +1097,12 @@ class _PopularRoomCard extends StatelessWidget {
                             Icon(Icons.people_alt_rounded,
                                 size: 12, color: AppThemeColors.onlineGreen),
                             const SizedBox(width: 4),
-                            Text(
-                              VoiceLiveHeader2026Format.count(room.displayOnline),
-                              style: const TextStyle(fontSize: 10),
+                            VoiceRoomOnlineCount(
+                              room: room,
+                              builder: (context, count) => Text(
+                                VoiceLiveHeader2026Format.count(count),
+                                style: const TextStyle(fontSize: 10),
+                              ),
                             ),
                             const Spacer(),
                             Container(
@@ -1390,11 +1394,14 @@ class _VipRoomCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  '${VoiceLiveHeader2026Format.count(room.displayOnline)} kullanıcı',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: VipGoldTokens.goldMid.withValues(alpha: 0.95),
+                VoiceRoomOnlineCount(
+                  room: room,
+                  builder: (context, count) => Text(
+                    '${VoiceLiveHeader2026Format.count(count)} kullanıcı',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: VipGoldTokens.goldMid.withValues(alpha: 0.95),
+                    ),
                   ),
                 ),
               ],
@@ -1440,11 +1447,14 @@ class _CompactRoomRow extends StatelessWidget {
                       room.displayTitle,
                       style: const TextStyle(fontWeight: FontWeight.w800),
                     ),
-                    Text(
-                      '${VoiceLiveHeader2026Format.count(room.displayOnline)} çevrimiçi',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
+                    VoiceRoomOnlineCount(
+                      room: room,
+                      builder: (context, count) => Text(
+                        '${VoiceLiveHeader2026Format.count(count)} çevrimiçi',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
+                        ),
                       ),
                     ),
                   ],

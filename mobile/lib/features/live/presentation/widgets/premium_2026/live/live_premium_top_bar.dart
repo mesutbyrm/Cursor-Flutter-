@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -14,7 +15,7 @@ class LivePremiumTopBar extends StatelessWidget {
   const LivePremiumTopBar({
     super.key,
     required this.session,
-    required this.time,
+    required this.elapsedBadge,
     required this.following,
     required this.followLoading,
     required this.onFollow,
@@ -25,7 +26,7 @@ class LivePremiumTopBar extends StatelessWidget {
   });
 
   final LiveBroadcastSession session;
-  final String time;
+  final Widget elapsedBadge;
   final bool following;
   final bool followLoading;
   final VoidCallback onFollow;
@@ -112,7 +113,7 @@ class LivePremiumTopBar extends StatelessWidget {
                 onTap: onViewersTap,
               ),
               const SizedBox(width: 4),
-              _StatPill(icon: Icons.schedule_rounded, label: time),
+              elapsedBadge,
               IconButton(
                 onPressed: onClose,
                 icon: const Icon(Icons.close_rounded, size: 22),
@@ -130,6 +131,45 @@ class LivePremiumTopBar extends StatelessWidget {
     if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
     if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
     return '$n';
+  }
+}
+
+/// Yayın süresi — saniyelik timer yalnızca bu widget'ı yeniler.
+class LiveElapsedTimePill extends StatefulWidget {
+  const LiveElapsedTimePill({super.key});
+
+  @override
+  State<LiveElapsedTimePill> createState() => _LiveElapsedTimePillState();
+}
+
+class _LiveElapsedTimePillState extends State<LiveElapsedTimePill> {
+  late final Timer _timer;
+  Duration _elapsed = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _elapsed += const Duration(seconds: 1));
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  String get _label {
+    final h = _elapsed.inHours.toString().padLeft(2, '0');
+    final m = _elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = _elapsed.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$h:$m:$s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _StatPill(icon: Icons.schedule_rounded, label: _label);
   }
 }
 
