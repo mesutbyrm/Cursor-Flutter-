@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.386+390 (2026-06-27)
+
+### Sesli oda — aşama 1 (temel akış)
+
+- **Temel mod (varsayılan):** oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcı listesi, oda sahibi
+- **Hafif oturum:** presence + SSE; DJ, PK, hediye ve müzik alt sistemleri başlatılmaz
+- **Tam web UI:** `--dart-define=VOICE_ROOM_FULL=true` ile eski RTC sayfası
+
 ## 1.0.385+389 (2026-06-27)
 
 ### Sesli oda sistemi — web parity ile yeniden eklendi

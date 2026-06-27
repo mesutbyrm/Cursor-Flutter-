@@ -15,6 +15,8 @@ import '../../live/presentation/providers/live_providers.dart';
 import 'providers/voice_rooms_presence_provider.dart';
 import 'utils/open_voice_chat_room_flow.dart';
 import '../../vip_gold/presentation/utils/open_voice_room_vip.dart';
+import 'basic/voice_room_basic_list.dart';
+import 'basic/voice_room_basic_mode.dart';
 import 'widgets/premium_2026/voice_discover_hub_2026.dart';
 
 /// Sesli sohbet keşfet — Premium 2026 hub (referans görsel).
@@ -105,15 +107,19 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
             backgroundColor: DiscoverPremiumVisual.backgroundMid,
             onRefresh: () async {
               ref.invalidate(voiceRoomsProvider);
-              ref.invalidate(liveStreamsProvider);
+              if (!VoiceRoomBasicMode.enabled) {
+                ref.invalidate(liveStreamsProvider);
+              }
             },
-            child: VoiceDiscoverHub2026(
-              rooms: withPresence,
-              liveStreams: live,
-              topPadding: topPad,
-              onRoomTap: (r) => openVoiceRoomWithVipGate(context, ref, r),
-              onSearchChanged: (_) {},
-            ),
+            child: VoiceRoomBasicMode.enabled
+                ? VoiceRoomBasicList(rooms: withPresence, ref: ref)
+                : VoiceDiscoverHub2026(
+                    rooms: withPresence,
+                    liveStreams: live,
+                    topPadding: topPad,
+                    onRoomTap: (r) => openVoiceRoomWithVipGate(context, ref, r),
+                    onSearchChanged: (_) {},
+                  ),
           ),
         );
       },

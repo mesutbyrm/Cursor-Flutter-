@@ -37,6 +37,7 @@ import '../utils/voice_sse_dj_payload.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_message_merge.dart';
 import '../widgets/voice_room/voice_room_music_request_flash.dart';
+import '../basic/voice_room_basic_mode.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/moderation_result.dart';
@@ -415,6 +416,13 @@ class VoiceRoomLiveController
       _closeRoomKeepAlive();
     });
     Future.microtask(() async {
+      if (VoiceRoomBasicMode.enabled) {
+        await _joinPresence();
+        await refresh(includeDj: false);
+        _startSse();
+        _schedulePoll(sseConnected: false);
+        return;
+      }
       ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
       await VoiceRoomMusicAudioSession.ensureConfigured();
       await Future.wait([_joinPresence(), _warmBackgrounds()]);
