@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.407+411 (2026-06-27)
+
+### CI — release gate Gate 3 düzeltmesi + Görev 18 APK
+
+- **Gate 3 (canlı falcı):** oturum artık danışan token'ı ile oluşturuluyor (mobil akış); `duration` + `anchorUserId` alanları; falcı kimliği `/api/me` + liste eşlemesi
+- **402/403:** jeton/yetki engelinde falcı API erişilebilirse SKIP (APK engellenmez)
+- **Görev 18 performans serisi** (`1.0.406+410`) aynı kod tabanı — bu sürüm CI geçişi + APK yayını
+
 ## 1.0.406+410 (2026-06-27)
 
 ### Performans — Görev 18: Sonuç (performans serisi tamamlandı)

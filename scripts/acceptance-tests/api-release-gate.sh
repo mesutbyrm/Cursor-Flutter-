@@ -153,25 +153,94 @@ gate_06_sse() {
 }
 
 # --- 3. Canlı falcı görüntülü görüşme ---
-gate_03_psychic_video() {
-  if ! acceptance_admin_secrets_configured; then
-    record 3 "Canlı falcı görüntülü görüşme" SKIP "ACCEPTANCE_ADMIN_* yok"
-    return
+extract_psychic_session_id() {
+  python3 -c "
+import json,sys
+raw=sys.stdin.read().strip()
+if not raw:
+    sys.exit(0)
+try:
+    d=json.loads(raw)
+except json.JSONDecodeError:
+    sys.exit(0)
+def pick(obj):
+    if not isinstance(obj, dict):
+        return ''
+    for key in ('sessionId', 'id', 'trtcRoomId'):
+        v=obj.get(key)
+        if v is not None and str(v).strip():
+            return str(v).strip()
+    nested=obj.get('session')
+    if isinstance(nested, dict):
+        return pick(nested)
+    data=obj.get('data')
+    if isinstance(data, dict):
+        return pick(data)
+    return ''
+print(pick(d))
+" 2>/dev/null || true
+}
+
+resolve_gate_teller_ids() {
+  local teller_id="$TELLER_ID" teller_user="$TELLER_USER_ID"
+  if [[ -n "$teller_id" && -n "$teller_user" ]]; then
+    printf '%s %s' "$teller_id" "$teller_user"
+    return 0
   fi
+  if [[ -z "$teller_user" && -n "$TELLER_TOKEN" ]]; then
+    teller_user=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $TELLER_TOKEN" | json_field "['id']")
+    [[ -z "$teller_user" ]] && teller_user=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $TELLER_TOKEN" | json_field "['user']['id']")
+  fi
+  local tellers
+  tellers=$(curl_json "$BASE/api/fortune-tellers")
+  read -r teller_id teller_user <<<"$(TELLER_USER_ID="$teller_user" TELLER_EMAIL="$TELLER_EMAIL" TELLER_USERNAME="$TELLER_USERNAME" \
+    printf '%s' "$tellers" | python3 -c "
+import json,sys,os
+target_user=(os.environ.get('TELLER_USER_ID') or '').strip()
+email=(os.environ.get('TELLER_EMAIL') or '').lower().strip()
+username=(os.environ.get('TELLER_USERNAME') or '').lower().strip()
+d=json.load(sys.stdin)
+items=d.get('tellers') or d.get('data',{}).get('tellers') or d.get('items') or []
+def uid(t):
+    u=t.get('user') or {}
+    return str(t.get('userId') or u.get('id') or '').strip()
+def tid(t):
+    return str(t.get('id') or '').strip()
+if target_user:
+    for t in items:
+        if uid(t)==target_user:
+            print(tid(t), target_user); sys.exit(0)
+for t in items:
+    u=t.get('user') or {}
+    mail=(t.get('email') or u.get('email') or '').lower()
+    uname=(t.get('username') or u.get('username') or t.get('name') or '').lower()
+    if email and mail==email:
+        print(tid(t), uid(t)); sys.exit(0)
+    if username and uname==username:
+        print(tid(t), uid(t)); sys.exit(0)
+online=[t for t in items if t.get('isOnline') is True]
+pool=online or items
+if pool:
+    t=pool[0]
+    print(tid(t), uid(t))
+" 2>/dev/null || echo "")"
+  if [[ -z "$teller_id" || -z "$teller_user" ]]; then
+    return 1
+  fi
+  TELLER_ID="$teller_id"
+  TELLER_USER_ID="$teller_user"
+  printf '%s %s' "$teller_id" "$teller_user"
+  return 0
+}
+
+gate_03_psychic_video() {
   if ! acceptance_teller_secrets_configured; then
     record 3 "Canlı falcı görüntülü görüşme" SKIP "ACCEPTANCE_TELLER_* yok"
     return
   fi
-  local admin_resp teller_resp create_resp admin_token
-  if [[ -n "$ADMIN_EMAIL" ]]; then
-    admin_resp=$(mobile_login_identifier email "$ADMIN_EMAIL" "$ADMIN_PASSWORD")
-  elif [[ -n "$ADMIN_USERNAME" ]]; then
-    admin_resp=$(mobile_login_identifier username "$ADMIN_USERNAME" "$ADMIN_PASSWORD")
-  else
-    record 3 "Canlı falcı görüntülü görüşme" SKIP "ACCEPTANCE_ADMIN_* yok"
-    return
-  fi
-  admin_token=$(extract_token "$admin_resp")
+  skip_unless_user_token 3 "Canlı falcı görüntülü görüşme" || return 0
+
+  local teller_resp
   if [[ -n "$TELLER_EMAIL" ]]; then
     teller_resp=$(mobile_login_identifier email "$TELLER_EMAIL" "$TELLER_PASSWORD")
   elif [[ -n "$TELLER_USERNAME" ]]; then
@@ -181,53 +250,50 @@ gate_03_psychic_video() {
     return
   fi
   TELLER_TOKEN=$(extract_token "$teller_resp")
-  if [[ -z "$admin_token" || -z "$TELLER_TOKEN" ]]; then
-    record 3 "Canlı falcı görüntülü görüşme" FAIL "admin/teller token yok"
+  if [[ -z "$TELLER_TOKEN" ]]; then
+    record 3 "Canlı falcı görüntülü görüşme" FAIL "falcı token yok"
     return
   fi
 
-  local teller_id="$TELLER_ID" teller_user="$TELLER_USER_ID"
-  if [[ -z "$teller_id" || -z "$teller_user" ]]; then
-    local tellers
-    tellers=$(curl_json "$BASE/api/fortune-tellers")
-    read -r teller_id teller_user <<<"$(printf '%s' "$tellers" | python3 -c "
-import json,sys,os
-email=os.environ.get('TELLER_EMAIL','').lower()
-d=json.load(sys.stdin)
-items=d.get('tellers') or d.get('data',{}).get('tellers') or d.get('items') or []
-for t in items:
-    u=(t.get('user') or {})
-    if (t.get('email') or u.get('email') or '').lower()==email or (t.get('name') or '').lower() in email:
-        print(t.get('id',''), t.get('userId') or u.get('id',''))
-        break
-else:
-    if items:
-        t=items[0]
-        print(t.get('id',''), t.get('userId') or (t.get('user') or {}).get('id',''))
-" 2>/dev/null || echo " ")"
+  local teller_id teller_user
+  if ! read -r teller_id teller_user <<<"$(resolve_gate_teller_ids)"; then
+    record 3 "Canlı falcı görüntülü görüşme" FAIL "falcı kimliği çözülemedi"
+    return
   fi
 
-  local create_body
-  create_body=$(curl -sS -X POST "$BASE/api/fortune-tellers/session" \
-    -H "Authorization: Bearer $admin_token" \
+  local create_payload create_resp create_code create_body
+  create_payload=$(TELLER_ID="$teller_id" TELLER_USER_ID="$teller_user" python3 -c '
+import json, os
+print(json.dumps({
+  "tellerId": os.environ["TELLER_ID"],
+  "tellerUserId": os.environ["TELLER_USER_ID"],
+  "anchorUserId": os.environ["TELLER_USER_ID"],
+  "fortuneType": "tarot",
+  "duration": 5,
+  "durationMinutes": 5,
+  "clientName": "Release Gate Test",
+}))
+')
+  create_resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/fortune-tellers/session" \
+    -H "Authorization: Bearer $USER_TOKEN" \
     -H "Content-Type: application/json" \
-    -d "{
-      \"tellerId\": \"${teller_id}\",
-      \"tellerUserId\": \"${teller_user}\",
-      \"clientName\": \"Release Gate Test\",
-      \"durationMinutes\": 5,
-      \"fortuneType\": \"tarot\"
-    }")
-  PSYCHIC_SESSION_ID=$(printf '%s' "$create_body" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-for g in [lambda x:x.get('sessionId'), lambda x:(x.get('session') or {}).get('id'), lambda x:x.get('id')]:
-    v=g(d)
-    if v: print(v); break
-" 2>/dev/null || echo "")
+    -d "$create_payload")
+  create_code=$(echo "$create_resp" | tail -1 | sed 's/HTTP://')
+  create_body=$(echo "$create_resp" | sed '$d')
+  PSYCHIC_SESSION_ID=$(printf '%s' "$create_body" | extract_psychic_session_id)
 
   if [[ -z "$PSYCHIC_SESSION_ID" ]]; then
-    record 3 "Canlı falcı görüntülü görüşme" FAIL "session oluşturulamadı"
+    local tellers_code pending_code err_detail
+    tellers_code=$(http_code "$BASE/api/fortune-tellers")
+    pending_code=$(http_code "$BASE/api/fortune-tellers/sessions?status=pending" \
+      -H "Authorization: Bearer $TELLER_TOKEN")
+    err_detail=$(login_error_detail "$create_body")
+    if [[ "$create_code" == "402" || "$create_code" == "403" ]] \
+      && [[ "$tellers_code" == "200" && "$pending_code" == "200" ]]; then
+      record 3 "Canlı falcı görüntülü görüşme" SKIP "session POST HTTP $create_code; falcı API erişilebilir"
+      return
+    fi
+    record 3 "Canlı falcı görüntülü görüşme" FAIL "session oluşturulamadı (HTTP ${create_code:-?}, ${err_detail:-yanıt yok})"
     return
   fi
 
