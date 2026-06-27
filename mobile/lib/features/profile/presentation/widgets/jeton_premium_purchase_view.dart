@@ -6,6 +6,7 @@ import 'package:canlifal_social/core/widgets/lazy_list_views.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -18,8 +19,10 @@ import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
 import '../../../admin/presentation/providers/admin_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../notifications/presentation/providers/notifications_list_notifier.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
+import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../data/jeton_packages_catalog.dart';
 import '../../data/jeton_payment_request.dart';
 import '../../data/services/payment_receipt_upload_service.dart';
@@ -59,6 +62,16 @@ class _JetonPremiumPurchaseViewState
   double? _selectedPresetTl;
   JetonPayMethod? _method;
   String? _receiptPath;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(walletBalancesProvider.notifier).refresh(force: true);
+      ref.read(paymentRequestsNotifierProvider.notifier).refresh();
+    });
+  }
 
   @override
   void dispose() {
@@ -294,11 +307,22 @@ class _JetonPremiumPurchaseViewState
   @override
   Widget build(BuildContext context) {
     final wallet = ref.watch(walletBalancesProvider);
+    final walletJeton = wallet.valueOrNull?.jeton;
+    final authJeton = ref.watch(
+      authControllerProvider.select((a) => a.valueOrNull?.coinBalance),
+    );
+    final displayJeton = walletJeton ?? authJeton;
+    final pendingRequests = ref.watch(paymentRequestsNotifierProvider);
+    final pendingJeton = pendingRequests.valueOrNull
+            ?.where((r) => r.isJeton && r.status.toLowerCase() == 'pending')
+            .toList() ??
+        const [];
     final config = ref.watch(paymentConfigProvider).valueOrNull;
     final cfg = config != null ? PaymentDefaults.merge(config) : PaymentDefaults.config;
     final me = ref.watch(authControllerProvider).valueOrNull;
     final username = me?.display ?? me?.username ?? 'Kullanıcı';
     final amounts = _parseAmounts();
+    final staff = ref.watch(staffAccessProvider);
 
     return ResponsiveConstrained(
       child: Padding(
@@ -306,11 +330,17 @@ class _JetonPremiumPurchaseViewState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            wallet.when(
-              data: (b) => _BalanceCard(jeton: b.jeton),
-              loading: () => const _BalanceCard(jeton: null),
-              error: (_, _) => const _BalanceCard(jeton: null),
+            _BalanceCard(
+              jeton: displayJeton,
+              loading: wallet.isLoading && displayJeton == null,
             ),
+            if (pendingJeton.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _PendingPaymentBanner(
+                request: pendingJeton.first,
+                staffCanManage: staff.canManagePayments,
+              ),
+            ],
             const SizedBox(height: 20),
             const _SectionTitle('Tutar Belirle'),
             const SizedBox(height: 4),
@@ -500,6 +530,61 @@ class _JetonPremiumPurchaseViewState
   }
 }
 
+class _PendingPaymentBanner extends StatelessWidget {
+  const _PendingPaymentBanner({
+    required this.request,
+    required this.staffCanManage,
+  });
+
+  final CfcPaymentRequestEntity request;
+  final bool staffCanManage;
+
+  @override
+  Widget build(BuildContext context) {
+    return ProGlassCard(
+      blur: 12,
+      animateIn: false,
+      padding: const EdgeInsets.all(14),
+      borderRadius: BorderRadius.circular(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.hourglass_top_rounded, color: AppThemeColors.coinGold, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Bekleyen ödeme talebiniz var',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${request.displayLine}\nOnay sonrası jetonlar hesabınıza yansır.',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.4,
+                    color: context.colors.onSurfaceMuted,
+                  ),
+                ),
+                if (staffCanManage) ...[
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () => context.push('/admin'),
+                    icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
+                    label: const Text('Admin panelinde onayla'),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PaymentWarningCard extends StatelessWidget {
   const _PaymentWarningCard();
 
@@ -538,12 +623,16 @@ class _PaymentWarningCard extends StatelessWidget {
 }
 
 class _BalanceCard extends StatelessWidget {
-  const _BalanceCard({this.jeton});
+  const _BalanceCard({this.jeton, this.loading = false});
 
   final int? jeton;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
+    final label = jeton == null
+        ? (loading ? '…' : '—')
+        : NumberFormat.decimalPattern('tr_TR').format(jeton);
     return ProGlassCard(
       blur: 16,
       animateIn: false,
@@ -584,7 +673,7 @@ class _BalanceCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  jeton == null ? '…' : '$jeton',
+                  label,
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w900,

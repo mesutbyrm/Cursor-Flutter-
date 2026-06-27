@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.417+421 (2026-06-27)
+
+### Jeton, admin ödeme ve sesli oda düzeltmeleri
+
+- **Jeton al:** Mevcut jeton bakiyesi oturum cache fallback ile gösterilir; cüzdan API zaman aşımı 12s
+- **Bekleyen ödeme:** Jeton sayfasında bekleyen talep banner'ı; admin için panel kısayolu
+- **Admin bildirimleri:** `jeton_payment_request` / `cfc_payment_request` admin hesabında `/admin` paneline yönlendirir
+- **Sesli oda aç:** `POST /api/chat/rooms/create` için zorunlu `name`, `description`, `icon` alanları gönderilir
+
 ## 1.0.416+420 (2026-06-27)
 
 ### Entegrasyon kılavuzu — tek kaynak

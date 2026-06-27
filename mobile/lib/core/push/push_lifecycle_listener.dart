@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/router/app_router.dart';
 import '../../features/admin/presentation/providers/admin_providers.dart';
+import '../../features/admin/presentation/providers/staff_access_provider.dart';
 import '../../features/auth/domain/entities/user_entity.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/live_psychics/presentation/controllers/psychic_flow.dart';
@@ -122,6 +123,8 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
           ref.refreshWalletCache(force: true);
         },
       );
+      PushNavigationHandler.staffCanManagePayments = () =>
+          ref.read(staffAccessProvider).canManagePayments;
       _queuePushSync(null, ref.read(authControllerProvider));
     });
 

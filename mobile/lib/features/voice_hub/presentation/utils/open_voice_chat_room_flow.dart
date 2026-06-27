@@ -24,7 +24,9 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
 
   const normalCost = LiveRemoteDataSource.voiceRoomNormalOpenJetonCost;
   const vipCost = LiveRemoteDataSource.voiceRoomVipOpenJetonCost;
-  var balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ?? 0;
+  var balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ??
+      ref.read(authControllerProvider).valueOrNull?.coinBalance ??
+      0;
   // Önbellekli bakiye ile hemen sheet aç; güncelleme arka planda.
   ref.read(walletBalancesProvider.future).then((b) {
     balance = b.jeton;

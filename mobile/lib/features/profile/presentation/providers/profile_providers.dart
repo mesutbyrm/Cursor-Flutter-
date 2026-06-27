@@ -68,7 +68,7 @@ final walletRepositoryProvider = Provider<WalletRepository>((ref) {
 
 /// Jeton/cüzdan bakiyesi — oturum boyunca cache, gereksiz API tekrarı yok.
 class WalletBalancesNotifier extends AsyncNotifier<WalletBalances> {
-  static const _fetchTimeout = Duration(seconds: 3);
+  static const _fetchTimeout = Duration(seconds: 12);
   static const _minRefreshGap = Duration(seconds: 20);
 
   DateTime? _lastFetchedAt;

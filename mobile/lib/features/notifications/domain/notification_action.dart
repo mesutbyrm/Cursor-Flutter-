@@ -3,7 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'entities/app_notification_entity.dart';
 
 /// Bildirime tıklanınca hedef route.
-void navigateFromNotification(GoRouter router, AppNotificationEntity n) {
+void navigateFromNotification(
+  GoRouter router,
+  AppNotificationEntity n, {
+  bool staffCanManagePayments = false,
+}) {
   final path = n.targetPath?.trim();
   if (path != null && path.isNotEmpty) {
     if (path.startsWith('/user/') && n.targetId != null) {
@@ -20,11 +24,23 @@ void navigateFromNotification(GoRouter router, AppNotificationEntity n) {
 
   switch (n.type?.toLowerCase()) {
     case 'cfc_payment_request':
+      if (staffCanManagePayments) {
+        router.push('/admin');
+        return;
+      }
+      router.push('/cfc-store');
+      return;
     case 'cfc_payment_approved':
     case 'cfc_payment_rejected':
       router.push('/cfc-store');
       return;
     case 'jeton_payment_request':
+      if (staffCanManagePayments) {
+        router.push('/admin');
+        return;
+      }
+      router.push('/jeton-store');
+      return;
     case 'jeton_payment_approved':
     case 'jeton_payment_rejected':
       router.push('/jeton-store');

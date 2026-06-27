@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import 'package:go_router/go_router.dart';
+
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
@@ -11,6 +13,7 @@ import '../../../../core/performance/list_perf.dart';
 import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../domain/notification_action.dart';
+import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live_psychics/presentation/controllers/psychic_incoming_controller.dart';
 import '../../../live_psychics/presentation/controllers/psychic_invite_coordinator.dart';
@@ -137,6 +140,7 @@ class _NotificationsListView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final items = state.visible;
     final router = GoRouter.of(context);
+    final staffCanManage = ref.watch(staffAccessProvider).canManagePayments;
 
     return ListView.separated(
       cacheExtent: ListPerf.cacheExtent, controller: scrollController,
@@ -188,11 +192,19 @@ class _NotificationsListView extends ConsumerWidget {
                     sessionId: invite.sessionId,
                   );
                 } else {
-                  navigateFromNotification(router, n);
+                  navigateFromNotification(
+                    router,
+                    n,
+                    staffCanManagePayments: staffCanManage,
+                  );
                 }
                 return;
               }
-              navigateFromNotification(router, n);
+              navigateFromNotification(
+                router,
+                n,
+                staffCanManagePayments: staffCanManage,
+              );
             },
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,

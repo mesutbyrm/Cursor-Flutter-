@@ -132,6 +132,27 @@ class LiveRemoteDataSource {
     return vip ? voiceRoomVipOpenJetonCost : voiceRoomNormalOpenJetonCost;
   }
 
+  /// Üretim `POST /api/chat/rooms/create` — name, description ve icon zorunlu.
+  static ({String name, String description, String icon}) voiceRoomCreateMetadata({
+    required String roomType,
+    String? roomName,
+  }) {
+    final t = roomType.toLowerCase();
+    final isVip = t == 'vip';
+    final isFree = t == 'free' || t == 'ucretsiz';
+    final trimmed = roomName?.trim();
+    final baseName =
+        (trimmed != null && trimmed.isNotEmpty ? trimmed : 'Sohbet');
+    final name = baseName.length > 40 ? baseName.substring(0, 40) : baseName;
+    final description = isVip
+        ? 'VIP sesli sohbet odası'
+        : isFree
+            ? 'Ücretsiz sesli sohbet odası'
+            : 'Sesli sohbet odası';
+    final icon = isVip ? '⭐' : isFree ? '🎙️' : '🎤';
+    return (name: name, description: description, icon: icon);
+  }
+
   /// canlifal.com `POST /api/chat/rooms/create` (yedek: `POST /api/chat/rooms`)
   Future<VoiceRoomEntity> createVoiceChatRoom({
     bool vip = false,
@@ -141,7 +162,11 @@ class LiveRemoteDataSource {
     final resolvedType = roomType ??
         (vip ? 'vip' : 'normal');
     final cost = openRoomJetonCost(vip: vip, roomType: resolvedType);
-    final name = roomName?.trim();
+    final meta = voiceRoomCreateMetadata(
+      roomType: resolvedType,
+      roomName: roomName,
+    );
+    final name = meta.name;
     final payload = <String, dynamic>{
       'cost': cost,
       'jeton': cost,
@@ -152,12 +177,14 @@ class LiveRemoteDataSource {
       if (vip || resolvedType == 'vip') 'vip': true,
       'roomType': resolvedType,
       'type': resolvedType,
-      if (name != null && name.isNotEmpty) ...{
-        'name': name,
-        'nameTr': name,
-        'title': name,
-        'roomName': name,
-      },
+      'name': name,
+      'nameTr': name,
+      'title': name,
+      'roomName': name,
+      'description': meta.description,
+      'descTr': meta.description,
+      'desc': meta.description,
+      'icon': meta.icon,
     };
 
     DioException? lastError;
