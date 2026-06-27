@@ -59,6 +59,17 @@ class SocialBranchQuickActions extends StatelessWidget {
             onTap: () => context.go('/feed'),
           ),
         ],
+        [
+          QuickActionTile(
+            icon: Icons.graphic_eq_rounded,
+            label: 'Sesli\nodalar',
+            gradient: [
+              const Color(0xFF1E2A38).withValues(alpha: 0.95),
+              const Color(0xFF101820).withValues(alpha: 0.95),
+            ],
+            onTap: () => context.push('/voice-rooms'),
+          ),
+        ],
       ],
     );
   }
@@ -190,6 +201,82 @@ class MessagesBranchQuickActions extends StatelessWidget {
   }
 }
 
+/// Canlı → Sohbet (sesli odalar) sekmesi üstü.
+class LiveVoiceBranchQuickActions extends StatelessWidget {
+  const LiveVoiceBranchQuickActions({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return QuickActionsSection(
+      sectionIcon: Icons.headset_mic_rounded,
+      sectionTitle: 'Hızlı işlemler',
+      accent: AppColors.accentPink,
+      rows: [
+        [
+          QuickActionTile(
+            icon: Icons.monetization_on_rounded,
+            label: 'Jeton\nyükle',
+            gradient: [
+              const Color(0xFF5C4020).withValues(alpha: 0.85),
+              const Color(0xFF2A1C10).withValues(alpha: 0.9),
+            ],
+            onTap: () => context.push('/jeton-store'),
+          ),
+          QuickActionTile(
+            icon: Icons.card_giftcard_rounded,
+            label: 'Davet\npaylaş',
+            gradient: [
+              AppColors.accentPink.withValues(alpha: 0.45),
+              AppColors.accentCyan.withValues(alpha: 0.3),
+            ],
+            onTap: () => context.push('/invite-friends'),
+          ),
+        ],
+        [
+          QuickActionTile(
+            icon: Icons.home_rounded,
+            label: 'Ana\nakış',
+            gradient: [
+              AppColors.accentCyan.withValues(alpha: 0.35),
+              AppColors.accentPink.withValues(alpha: 0.22),
+            ],
+            onTap: () => context.go('/feed'),
+          ),
+          QuickActionTile(
+            icon: Icons.forum_rounded,
+            label: 'Sosyal\nakış',
+            gradient: [
+              const Color(0xFF1A2430).withValues(alpha: 0.95),
+              const Color(0xFF120C18).withValues(alpha: 0.95),
+            ],
+            onTap: () => context.go('/social'),
+          ),
+        ],
+        [
+          QuickActionTile(
+            icon: Icons.maps_home_work_outlined,
+            label: 'Tüm\nodalar',
+            gradient: [
+              const Color(0xFF1E2A38).withValues(alpha: 0.95),
+              const Color(0xFF101820).withValues(alpha: 0.95),
+            ],
+            onTap: () => context.push('/voice-rooms'),
+          ),
+          QuickActionTile(
+            icon: Icons.auto_awesome_rounded,
+            label: 'Fal&\nTarot',
+            gradient: [
+              AppColors.accentPurple.withValues(alpha: 0.5),
+              const Color(0xFF312E81).withValues(alpha: 0.95),
+            ],
+            onTap: () => context.go('/fortune'),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 /// Profil sekmesi — kısayollar.
 class ProfileBranchQuickActions extends ConsumerWidget {
   const ProfileBranchQuickActions({super.key});
@@ -270,6 +357,15 @@ class ProfileBranchQuickActions extends ConsumerWidget {
               const Color(0xFF312E81).withValues(alpha: 0.95),
             ],
             onTap: () => context.go('/fortune'),
+          ),
+          QuickActionTile(
+            icon: Icons.graphic_eq_rounded,
+            label: 'Sesli\nodalar',
+            gradient: [
+              const Color(0xFF1E2A38).withValues(alpha: 0.95),
+              const Color(0xFF101820).withValues(alpha: 0.95),
+            ],
+            onTap: () => context.push('/voice-rooms'),
           ),
         ],
         [

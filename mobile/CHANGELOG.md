@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.385+389 (2026-06-27)
+
+### Sesli oda sistemi — web parity ile yeniden eklendi
+
+- **Modüller:** `voice_hub/` (SSE, TRTC, DJ müzik, PK, hediye, video overlay), `livekit/` yedek RTC
+- **Canlifal web ile aynı API:** `/api/chat/rooms/*`, SSE `…/stream`, presence 20s, TRTC `voice_room_{id}`, `!istek`, IRC rolleri
+- **Müzik:** Android googlevideo → `/api/chat/youtube-audio` proxy önce (backend parity); CDN ve yerel önbellek yedek
+- **ProviderScope:** `!istek` arama, şarkı sheet ve komut paneli modal güvenli
+- **Rotalar:** `/voice-rooms`, `/voice-room/:id`, PK sayfaları; ana sayfa / keşfet / canlı sekmesi sesli oda bölümleri
+- **Android:** `AudioService` + ExoPlayer probe (DJ müzik teşhisi)
+
 ## 1.0.384+388 (2026-06-27)
 
 ### Sesli oda kaldırma — Android derleme düzeltmesi

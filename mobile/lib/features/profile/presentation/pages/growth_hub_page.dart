@@ -206,7 +206,8 @@ class GrowthHubPage extends ConsumerWidget {
       context.go(route);
       return;
     }
-    if (route == '/invite-friends' ||
+    if (route == '/voice-rooms' ||
+        route == '/invite-friends' ||
         route == '/profile/gifts' ||
         route == '/ad-rewards' ||
         route == '/vip-gold') {

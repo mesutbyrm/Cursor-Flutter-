@@ -18,6 +18,7 @@ import 'package:canlifal_social/features/live_psychics/presentation/widgets/psyc
 import '../widgets/approved/more_fortunes_button.dart';
 import '../widgets/approved/stories_section.dart';
 import '../widgets/approved/trending_video_section.dart';
+import '../widgets/approved/voice_room_section.dart';
 import '../widgets/home_deferred_section.dart';
 import '../widgets/home_game_center_section.dart';
 import '../widgets/home_games_row.dart';
@@ -80,6 +81,12 @@ class _HomePageState extends ConsumerState<HomePage> {
             const SliverToBoxAdapter(
               child: HomeDeferredSection(
                 child: LiveBroadcastSection(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: Duration(milliseconds: 80),
+                child: VoiceRoomSection(),
               ),
             ),
             const SliverToBoxAdapter(

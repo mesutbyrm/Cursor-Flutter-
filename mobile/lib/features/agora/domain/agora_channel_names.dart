@@ -6,7 +6,9 @@ class AgoraChannelNames {
   static String forRoom(String roomId) {
     final id = roomId.trim();
     if (id.isEmpty) return '';
-    if (id.startsWith('room_') || id.startsWith('live-')) {
+    if (id.startsWith('room_') ||
+        id.startsWith('voice_room_') ||
+        id.startsWith('live-')) {
       return id;
     }
     return 'room_$id';

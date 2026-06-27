@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/widgets/cached_cover_image.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glow_panel.dart';
 import '../../../../core/widgets/quick_action_tile.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
+import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../live/presentation/utils/open_live_stream.dart';
 
@@ -221,6 +223,151 @@ class _LiveChip extends StatelessWidget {
                   ],
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Site ile aynı sesli sohbet odaları (`/api/chat/rooms`).
+class FeedVoiceRoomsStrip extends ConsumerWidget {
+  const FeedVoiceRoomsStrip({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!Env.useNextAuth) return const SizedBox.shrink();
+    final rooms = ref.watch(voiceRoomsProvider);
+    return rooms.when(
+      loading: () => const SizedBox(
+        height: 72,
+        child: Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      ),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (list) {
+        if (list.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: GlowPanel(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SectionTitleRow(
+                  icon: Icons.graphic_eq_rounded,
+                  title: 'Sesli sohbet odaları',
+                  accent: AppTheme.accent,
+                  trailing: TextButton(
+                    onPressed: () => context.push('/voice-rooms'),
+                    child: const Text('Tümü'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 112,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.zero,
+                    itemCount: list.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 10),
+                    itemBuilder: (ctx, i) => _RoomChip(room: list[i]),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RoomChip extends StatelessWidget {
+  const _RoomChip({required this.room});
+
+  final VoiceRoomEntity room;
+
+  void _open(BuildContext context) {
+    context.push('/voice-room/${room.id}', extra: room);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFF1E1E2A),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: () => _open(context),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: 124,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppTheme.accent.withValues(alpha: 0.22),
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.accent.withValues(alpha: 0.08),
+                Colors.transparent,
+              ],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(room.icon ?? '💬', style: const TextStyle(fontSize: 20)),
+                  const Spacer(),
+                  if (room.onlineCount > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${room.onlineCount}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.lightGreenAccent,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                room.nameTr,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+              if (room.ownerName != null) ...[
+                const Spacer(),
+                Text(
+                  room.ownerName!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppTheme.muted, fontSize: 10),
+                ),
+              ],
             ],
           ),
         ),

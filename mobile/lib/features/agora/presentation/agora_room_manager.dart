@@ -381,6 +381,24 @@ class AgoraRoomManager {
     await _engine!.enableLocalAudio(true);
   }
 
+  /// Sesli oda — video açık katılım (koltuk / yayıncı).
+  Future<void> joinVoiceRoomVideo({
+    required AgoraCredentials credentials,
+    required bool publishVideo,
+  }) async {
+    await join(credentials: credentials, isHost: publishVideo);
+    final engine = _engine;
+    if (engine == null) return;
+    await engine.enableVideo();
+    await engine.muteAllRemoteVideoStreams(false);
+    if (publishVideo) {
+      await engine.startPreview();
+      await engine.enableLocalVideo(true);
+      await engine.muteLocalVideoStream(false);
+      _cameraOn = true;
+    }
+  }
+
   void setMicEnabled(bool enabled) {
     if (_engine == null || !_isHost) return;
     _engine!.muteLocalAudioStream(!enabled);

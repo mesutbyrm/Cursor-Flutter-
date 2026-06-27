@@ -62,6 +62,8 @@ flutter {
 dependencies {
     // flutter_local_notifications release derlemesi için zorunlu
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // MusicPipeline ExoPlayer URL doğrulama (just_audio ile aynı motor)
+    implementation("androidx.media3:media3-exoplayer:1.5.1")
 }
 
 if (file("google-services.json").exists()) {

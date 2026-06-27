@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/navigation/wallet_navigation.dart';
+import '../../../../voice_hub/presentation/utils/open_voice_chat_room_flow.dart';
 import '../../theme/home_approved_design.dart';
 
-/// Ana sayfa hızlı erişim — fal, jeton, canlı yayın.
+/// Ana sayfa hızlı erişim — sesli oda, fal, jeton, odalar.
 class HomeQuickActions extends ConsumerWidget {
   const HomeQuickActions({super.key});
 
@@ -22,10 +23,10 @@ class HomeQuickActions extends ConsumerWidget {
         children: [
           Expanded(
             child: _ActionChip(
-              icon: Icons.live_tv_rounded,
-              label: 'Canlı Yayın',
-              colors: const [Color(0xFFDC2626), Color(0xFFDB2777)],
-              onTap: () => context.go('/live'),
+              icon: Icons.mic_rounded,
+              label: 'Sesli Oda',
+              colors: const [Color(0xFF7C3AED), Color(0xFFDB2777)],
+              onTap: () => context.push('/voice-rooms'),
             ),
           ),
           const SizedBox(width: 8),
@@ -49,10 +50,10 @@ class HomeQuickActions extends ConsumerWidget {
           const SizedBox(width: 8),
           Expanded(
             child: _ActionChip(
-              icon: Icons.videocam_rounded,
-              label: 'Yayın Aç',
+              icon: Icons.add_circle_outline_rounded,
+              label: 'Oda Aç',
               colors: const [Color(0xFF059669), Color(0xFF10B981)],
-              onTap: () => context.push('/live/type'),
+              onTap: () => showOpenVoiceChatRoomFlow(context, ref),
             ),
           ),
         ],

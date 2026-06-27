@@ -42,19 +42,15 @@ class DiscoverQuickActions extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               NeonQuickActionCard(
-                label: 'Canlı\nYayın',
+                label: 'Sesli Odaya\nGir',
                 gradient: const [Color(0xFF6366F1), Color(0xFF312E81)],
                 glowColor: const Color(0xFF818CF8),
                 size: _cardSize,
                 icon: const NeonQuickActionIcon(
                   glowColor: Color(0xFFC7D2FE),
-                  child: Icon(
-                    Icons.live_tv_rounded,
-                    color: Colors.white,
-                    size: 34,
-                  ),
+                  child: _VoiceWaveIcon(),
                 ),
-                onTap: () => context.go('/live'),
+                onTap: () => context.push('/voice-rooms'),
               ),
               const SizedBox(width: 12),
               NeonQuickActionCard(

@@ -8,7 +8,7 @@ import '../../../core/ui/responsive/responsive_layout.dart';
 import 'shell_ui.dart';
 import '../../home/presentation/widgets/approved/bottom_navigation_widget.dart';
 
-/// Canlı yayın odası dışındaki sayfalarda alt navigasyon.
+/// Sesli sohbet odası (RTC) dışındaki sayfalarda alt navigasyon.
 class AppBottomNavHost extends ConsumerWidget {
   const AppBottomNavHost({
     super.key,
@@ -28,6 +28,7 @@ class AppBottomNavHost extends ConsumerWidget {
         path.startsWith('/auth/')) {
       return true;
     }
+    if (path.startsWith('/voice-room/')) return true;
     if (path == '/live/room' || path.startsWith('/live/room/')) return true;
     if (path.contains('/session') && path.startsWith('/canli-falcilar')) {
       return true;

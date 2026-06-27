@@ -1,4 +1,5 @@
 import '../../../live/domain/entities/live_stream_entity.dart';
+import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/domain/repositories/live_repository.dart';
 import '../../../social/domain/repositories/social_repository.dart';
 import '../../domain/entities/home_banner_entity.dart';
@@ -29,6 +30,9 @@ class HomeRepositoryImpl implements HomeRepository {
   @override
   Future<List<LiveStreamEntity>> fetchLiveStreams() =>
       _live.fetchStreams(page: 1);
+
+  @override
+  Future<List<VoiceRoomEntity>> fetchVoiceRooms() => _live.fetchVoiceRooms();
 
   @override
   Future<HomeFeedBundle> fetchFeedPosts({required int page}) async {

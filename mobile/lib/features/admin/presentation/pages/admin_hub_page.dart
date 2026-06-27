@@ -15,6 +15,7 @@ import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/admin_providers.dart';
 import '../providers/staff_access_provider.dart';
+import '../widgets/admin_voice_room_settings_panel.dart';
 
 /// Admin / yönetici — site ödeme istekleri ve bildirimler.
 class AdminHubPage extends ConsumerStatefulWidget {
@@ -32,7 +33,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 2, vsync: this);
+    _tabs = TabController(length: 3, vsync: this);
     _poll = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted) return;
       ref.invalidate(adminPaymentRequestsProvider);
@@ -147,6 +148,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                       ],
                     ),
                   ),
+                  Tab(text: 'Sesli Oda'),
                 ],
               ),
             ),
@@ -201,6 +203,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                     onRefresh: _refreshAll,
                     onOpenPending: () => _tabs.animateTo(0),
                   ),
+                  const AdminVoiceRoomSettingsPanel(),
                 ],
               ),
             ),

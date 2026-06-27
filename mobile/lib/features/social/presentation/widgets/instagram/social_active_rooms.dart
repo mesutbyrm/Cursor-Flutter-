@@ -8,10 +8,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../feed/presentation/widgets/discover/discover_section_header.dart';
 import '../../../../live/domain/entities/live_stream_entity.dart';
+import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../live/presentation/providers/live_providers.dart';
 import '../../../../live/presentation/utils/open_live_stream.dart';
 
-/// «Aktif Odalar» — canlı yayın yatay şeridi.
+/// «Aktif Odalar» — canlı yayın ve ses odaları yatay şeridi.
 class SocialActiveRooms extends ConsumerWidget {
   const SocialActiveRooms({super.key, this.embeddedInFeed = false});
 
@@ -21,8 +22,9 @@ class SocialActiveRooms extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final live = ref.watch(liveStreamsProvider);
+    final rooms = ref.watch(voiceRoomsProvider);
 
-    final chips = _buildChips(live.valueOrNull);
+    final chips = _buildChips(live.valueOrNull, rooms.valueOrNull);
     if (chips.isEmpty && live.isLoading) {
       return SizedBox(
         height: 140,
@@ -48,7 +50,7 @@ class SocialActiveRooms extends ConsumerWidget {
         children: [
           if (!embeddedInFeed)
             DiscoverSectionHeader(
-              title: 'Aktif Yayınlar',
+              title: 'Aktif Odalar',
               actionLabel: 'Tümünü Gör',
               onAction: () => context.go('/live'),
             )
@@ -58,13 +60,13 @@ class SocialActiveRooms extends ConsumerWidget {
               child: Row(
                 children: [
                   Icon(
-                    Icons.live_tv_rounded,
+                    Icons.mic_rounded,
                     size: 18,
                     color: AppThemeColors.accentPurple.withValues(alpha: 0.95),
                   ),
                   SizedBox(width: 8),
                   Text(
-                    'Canlı yayınlar',
+                    'Sesli sohbet odaları',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
@@ -97,13 +99,16 @@ class SocialActiveRooms extends ConsumerWidget {
     );
   }
 
-  List<_ActiveRoomChipData> _buildChips(List<LiveStreamEntity>? streams) {
+  List<_ActiveRoomChipData> _buildChips(
+    List<LiveStreamEntity>? streams,
+    List<VoiceRoomEntity>? rooms,
+  ) {
     final out = <_ActiveRoomChipData>[];
     final ringColors = _ringPalette;
 
     if (streams != null) {
       var i = 0;
-      for (final s in streams.where((x) => x.isLive).take(8)) {
+      for (final s in streams.where((x) => x.isLive).take(4)) {
         out.add(
           _ActiveRoomChipData(
             id: s.id,
@@ -116,6 +121,27 @@ class SocialActiveRooms extends ConsumerWidget {
           ),
         );
         i++;
+      }
+    }
+
+    if (rooms != null) {
+      var j = out.length;
+      for (final r in rooms.take(6 - out.length)) {
+        out.add(
+          _ActiveRoomChipData(
+            id: r.id,
+            kind: _ActiveRoomKind.voice,
+            name: r.ownerName ?? r.displayTitle,
+            viewers: r.displayOnline,
+            avatarUrl: r.ownerAvatarUrl ??
+                (r.recentUserAvatars.isNotEmpty
+                    ? r.recentUserAvatars.first
+                    : null),
+            ringColor: ringColors[j % ringColors.length],
+            voiceRoom: r,
+          ),
+        );
+        j++;
       }
     }
 
@@ -180,13 +206,20 @@ class SocialActiveRooms extends ConsumerWidget {
         } else {
           context.go('/live');
         }
+      case _ActiveRoomKind.voice:
+        if (chip.voiceRoom != null) {
+          final room = chip.voiceRoom!;
+          context.push('/voice-room/${room.id}', extra: room);
+        } else {
+          context.push('/voice-rooms');
+        }
       case _ActiveRoomKind.demo:
         context.go('/live');
     }
   }
 }
 
-enum _ActiveRoomKind { live, demo }
+enum _ActiveRoomKind { live, voice, demo }
 
 class _ActiveRoomChipData {
   const _ActiveRoomChipData({
@@ -197,6 +230,7 @@ class _ActiveRoomChipData {
     required this.ringColor,
     this.avatarUrl,
     this.liveStream,
+    this.voiceRoom,
   });
 
   final String id;
@@ -206,6 +240,7 @@ class _ActiveRoomChipData {
   final Color ringColor;
   final String? avatarUrl;
   final LiveStreamEntity? liveStream;
+  final VoiceRoomEntity? voiceRoom;
 }
 
 class _ActiveRoomChip extends StatelessWidget {
@@ -243,17 +278,18 @@ class _ActiveRoomChip extends StatelessWidget {
                     width: 14,
                     height: 14,
                     decoration: BoxDecoration(
-                      color: chip.kind == _ActiveRoomKind.live
-                          ? AppThemeColors.liveRed
-                          : AppThemeColors.accentPurple,
+                      color: AppThemeColors.onlineGreen,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(
+                        color: context.scaffoldBg,
+                        width: 2,
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 8),
             Text(
               chip.name,
               maxLines: 1,
@@ -265,17 +301,38 @@ class _ActiveRoomChip extends StatelessWidget {
                 color: context.colors.onSurface,
               ),
             ),
-            Text(
-              '${chip.viewers}',
-              style: TextStyle(
-                fontSize: 10,
-                color: context.colors.onSurfaceMuted,
-              ),
+            SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.local_fire_department_rounded,
+                  size: 12,
+                  color: chip.ringColor.withValues(alpha: 0.95),
+                ),
+                SizedBox(width: 2),
+                Text(
+                  _formatViewers(chip.viewers),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  static String _formatViewers(int n) {
+    if (n >= 1000) {
+      final k = n / 1000;
+      return k >= 10 ? '${k.round()}K' : '${k.toStringAsFixed(1)}K';
+    }
+    return '$n';
   }
 }
 
@@ -291,13 +348,13 @@ class _Avatar extends StatelessWidget {
       return ClipOval(
         child: CachedNetworkImage(
           imageUrl: url!,
-          width: 56,
-          height: 56,
+          width: 62,
+          height: 62,
           fit: BoxFit.cover,
-          errorWidget: (_, _, _) => const UserAvatar(radius: 28),
+          errorWidget: (_, _, _) => UserAvatar(url: url, radius: 31),
         ),
       );
     }
-    return const UserAvatar(radius: 28);
+    return UserAvatar(url: url, radius: 31);
   }
 }

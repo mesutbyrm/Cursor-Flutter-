@@ -14,6 +14,7 @@ import '../core/scroll/modern_social_scroll_behavior.dart';
 import '../core/theme/app_theme.dart';
 import '../features/auth/presentation/auth_flow_app.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
+import '../features/voice_hub/presentation/widgets/voice_room_music_lifecycle_host.dart';
 import 'router/app_router.dart';
 import 'widgets/main_app_shell.dart';
 
@@ -113,36 +114,38 @@ class _CanlifalAppState extends ConsumerState<CanlifalApp> {
     final shellSession = ref.watch(shellSessionProvider);
     final router = ref.watch(goRouterProvider);
 
-    return PushLifecycleListener(
-      child: MaterialApp.router(
-        key: ValueKey('main-$shellSession'),
-        title: 'Canlifal',
-        debugShowCheckedModeBanner: false,
-        scrollBehavior: const ModernSocialScrollBehavior(),
-        locale: AppLocalizationsConfig.locale,
-        supportedLocales: AppLocalizationsConfig.supportedLocales,
-        localizationsDelegates: AppLocalizationsConfig.delegates,
-        theme: AppTheme.light(),
-        darkTheme: darkTheme,
-        themeMode: themeMode,
-        builder: (context, child) {
-          final brightness = Theme.of(context).brightness;
-          SystemChrome.setSystemUIOverlayStyle(
-            SystemUiOverlayStyle(
-              statusBarIconBrightness: brightness == Brightness.dark
-                  ? Brightness.light
-                  : Brightness.dark,
-              statusBarBrightness: brightness == Brightness.dark
-                  ? Brightness.dark
-                  : Brightness.light,
-            ),
-          );
+    return VoiceRoomMusicLifecycleHost(
+      child: PushLifecycleListener(
+        child: MaterialApp.router(
+          key: ValueKey('main-$shellSession'),
+          title: 'Canlifal',
+          debugShowCheckedModeBanner: false,
+          scrollBehavior: const ModernSocialScrollBehavior(),
+          locale: AppLocalizationsConfig.locale,
+          supportedLocales: AppLocalizationsConfig.supportedLocales,
+          localizationsDelegates: AppLocalizationsConfig.delegates,
+          theme: AppTheme.light(),
+          darkTheme: darkTheme,
+          themeMode: themeMode,
+          builder: (context, child) {
+            final brightness = Theme.of(context).brightness;
+            SystemChrome.setSystemUIOverlayStyle(
+              SystemUiOverlayStyle(
+                statusBarIconBrightness: brightness == Brightness.dark
+                    ? Brightness.light
+                    : Brightness.dark,
+                statusBarBrightness: brightness == Brightness.dark
+                    ? Brightness.dark
+                    : Brightness.light,
+              ),
+            );
 
-          return MainAppShell(
-            child: child ?? const ColoredBox(color: Color(0xFF05050D)),
-          );
-        },
-        routerConfig: router,
+            return MainAppShell(
+              child: child ?? const ColoredBox(color: Color(0xFF05050D)),
+            );
+          },
+          routerConfig: router,
+        ),
       ),
     );
   }
