@@ -1,6 +1,6 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
+import 'package:canlifal_social/core/performance/effects_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -88,7 +88,7 @@ class _OpenTransitionOverlayState extends State<_OpenTransitionOverlay>
           final zoomT = Curves.easeOutCubic.transform(
             (_ctrl.value / 0.7).clamp(0.0, 1.0),
           );
-          final blur = 12.0 * zoomT;
+          final blurOpacity = zoomT;
           final scale = 1.0 + 0.28 * zoomT;
           final spin = math.sin(t * math.pi) * 0.06;
           final burst = (_ctrl.value > 0.35 && _ctrl.value < 0.75)
@@ -98,10 +98,10 @@ class _OpenTransitionOverlayState extends State<_OpenTransitionOverlay>
           return Stack(
             fit: StackFit.expand,
             children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+              EffectsPerf.backdrop(
+                sigma: 12,
                 child: Container(
-                  color: Colors.black.withValues(alpha: 0.55 * zoomT),
+                  color: Colors.black.withValues(alpha: 0.55 * blurOpacity),
                 ),
               ),
               if (burst > 0)

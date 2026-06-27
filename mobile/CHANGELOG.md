@@ -1,6 +1,20 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.401+405 (2026-06-27)
+
+### Performans — Görev 10: Görsel efektler (blur / shadow / glass)
+
+- **`EffectsPerf` / `GlassTier`:** blur filter önbelleği, gölge önbelleği, `RepaintBoundary`
+- **`ThemedGlassCard` / `LiquidGlass` / `ProGlass`:** merkezi blur; liste satırında blur kapalı
+- **`ProGlassListTile`:** `GlassTier.static` — gölge + fill, BackdropFilter yok
+- **Canlı chat feed:** balon başına blur kaldırıldı — opak fill
+- **Sesli oda chat dock:** tek `chromeBar` blur katmanı (feed + input)
+- **Ana sayfa grid:** 8 hücre blur yok; CTA tek elevated blur
+- **`PfGlassCard`:** `ThemedGlassCard` + opacity animasyon (blur yeniden oluşturulmaz)
+- **Fal geçiş overlay:** sabit σ=12 blur, yalnızca opaklık animasyonu
+- **Neon quick action:** BackdropFilter kaldırıldı, gölge önbelleği
+
 ## 1.0.398+402 (2026-06-27)
 
 ### Performans — Görev 7: Animasyon (60–120 FPS, UI thread kilidi yok)

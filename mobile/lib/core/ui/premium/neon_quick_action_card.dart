@@ -1,5 +1,4 @@
-import 'dart:ui';
-
+import 'package:canlifal_social/core/performance/effects_perf.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme/app_spacing.dart';
@@ -65,37 +64,31 @@ class _NeonQuickActionCardState extends State<NeonQuickActionCard> {
                     width: 1.2,
                   ),
                   boxShadow: [
-                    BoxShadow(
+                    ...EffectsPerf.cachedShadow(
                       color: widget.glowColor.withValues(alpha: glowBoost),
                       blurRadius: _pressed ? 22 : 16,
                       spreadRadius: _pressed ? 2 : 0,
                       offset: const Offset(0, 6),
                     ),
-                    BoxShadow(
+                    ...EffectsPerf.cachedShadow(
                       color: widget.gradient.last.withValues(alpha: 0.35),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.14),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                      child: Center(child: widget.icon),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.14),
+                        Colors.transparent,
+                      ],
                     ),
                   ),
+                  child: Center(child: widget.icon),
                 ),
               ),
               const SizedBox(height: 10),

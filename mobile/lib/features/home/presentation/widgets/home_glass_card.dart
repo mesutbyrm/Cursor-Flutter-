@@ -1,5 +1,5 @@
-import 'dart:ui';
-
+import 'package:canlifal_social/core/performance/effects_perf.dart';
+import 'package:canlifal_social/core/widgets/themed_glass_card.dart';
 import 'package:flutter/material.dart';
 
 import '../../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
@@ -15,6 +15,7 @@ class HomeGlassCard extends StatelessWidget {
     this.borderRadius,
     this.gradient,
     this.glowColor,
+    this.tier = GlassTier.static,
   });
 
   final Widget child;
@@ -24,39 +25,43 @@ class HomeGlassCard extends StatelessWidget {
   final Gradient? gradient;
   final Color? glowColor;
 
+  /// Grid hücreleri: [GlassTier.static] (blur yok). CTA: [GlassTier.elevated].
+  final GlassTier tier;
+
   @override
   Widget build(BuildContext context) {
     final radius = borderRadius ?? HomePalette.radiusCard;
-    final content = ClipRRect(
-      borderRadius: BorderRadius.circular(radius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: DiscoverPremiumVisual.glassBlur,
-          sigmaY: DiscoverPremiumVisual.glassBlur,
-        ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(radius),
-            gradient: gradient,
-            color: gradient == null ? DiscoverPremiumVisual.glassFill : null,
-            border: Border.all(color: DiscoverPremiumVisual.glassBorder),
-            boxShadow: DiscoverPremiumVisual.cardGlow(color: glowColor),
-          ),
-          child: Padding(
-            padding: padding ?? const EdgeInsets.all(14),
-            child: child,
-          ),
-        ),
-      ),
-    );
+    final sigma = EffectsPerf.sigma(tier, context);
 
-    if (onTap == null) return content;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
+    if (sigma <= 0) {
+      return EffectsPerf.listSurface(
         onTap: onTap,
+        padding: padding ?? const EdgeInsets.all(14),
         borderRadius: BorderRadius.circular(radius),
-        child: content,
+        decoration: BoxDecoration(
+          gradient: gradient,
+          color: gradient == null ? DiscoverPremiumVisual.glassFill : null,
+          border: Border.all(color: DiscoverPremiumVisual.glassBorder),
+          boxShadow: DiscoverPremiumVisual.cardGlow(color: glowColor),
+        ),
+        child: child,
+      );
+    }
+
+    return ThemedGlassCard(
+      onTap: onTap,
+      padding: padding ?? const EdgeInsets.all(14),
+      borderRadius: BorderRadius.circular(radius),
+      blur: sigma,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: gradient,
+          color: gradient == null ? DiscoverPremiumVisual.glassFill : null,
+          borderRadius: BorderRadius.circular(radius),
+          border: Border.all(color: DiscoverPremiumVisual.glassBorder),
+          boxShadow: DiscoverPremiumVisual.cardGlow(color: glowColor),
+        ),
+        child: child,
       ),
     );
   }

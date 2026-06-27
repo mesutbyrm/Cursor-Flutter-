@@ -1,11 +1,9 @@
-import 'dart:ui';
-
+import 'package:canlifal_social/core/performance/effects_perf.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter/material.dart';
 
-import '../performance/list_perf.dart';
 import '../theme/app_spacing.dart';
 import '../ui/platform_blur.dart';
-import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 /// Premium cam / kart — koyu modda glassmorphism, açık modda yumuşak gölge.
 class ThemedGlassCard extends StatelessWidget {
@@ -18,6 +16,7 @@ class ThemedGlassCard extends StatelessWidget {
     this.borderRadius,
     this.elevated = false,
     this.blur,
+    this.tier,
   });
 
   final Widget child;
@@ -27,12 +26,15 @@ class ThemedGlassCard extends StatelessWidget {
   final BorderRadius? borderRadius;
   final bool elevated;
   final double? blur;
+  final GlassTier? tier;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final radius = borderRadius ?? BorderRadius.circular(AppSpacing.radiusLg);
+    final tierSigma = tier != null ? EffectsPerf.sigma(tier!, context) : null;
     final sigma = blur ??
+        tierSigma ??
         (c.useGlassBlur && PlatformBlur.supportsBackdropBlur ? 18.0 : 0.0);
     final shadows = elevated ? c.elevatedShadow : c.cardShadow;
 
@@ -51,17 +53,11 @@ class ThemedGlassCard extends StatelessWidget {
       child: child,
     );
 
-    if (PlatformBlur.supportsBackdropBlur && c.useGlassBlur && sigma > 0) {
-      content = ClipRRect(
-        borderRadius: radius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-          child: content,
-        ),
-      );
-    }
-
-    content = ListPerf.repaint(content);
+    content = EffectsPerf.backdrop(
+      sigma: sigma,
+      borderRadius: radius,
+      child: content,
+    );
 
     if (onTap == null) return content;
 

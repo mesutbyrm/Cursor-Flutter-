@@ -1,5 +1,4 @@
-import 'dart:ui';
-
+import 'package:canlifal_social/core/performance/effects_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
@@ -65,16 +64,18 @@ class VoiceLiveChatFeed extends StatelessWidget {
         VoiceFloatingGiftsStrip(messages: messages, maxItems: 1),
         ClipRRect(
           borderRadius: BorderRadius.circular(18),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+          child: EffectsPerf.chromeBar(
+            context: context,
+            sigma: 14,
+            borderRadius: BorderRadius.circular(18),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            ),
             child: Container(
               constraints: BoxConstraints(maxHeight: maxHeight),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.35),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-              ),
               child: ListView.builder(
                 reverse: true,
                 shrinkWrap: true,
@@ -117,59 +118,56 @@ class VoiceLiveMessageInput extends StatelessWidget {
       color: Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
-        child: ClipRRect(
+        child: EffectsPerf.chromeBar(
+          context: context,
+          sigma: 16,
           borderRadius: BorderRadius.circular(26),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.55),
-                borderRadius: BorderRadius.circular(26),
-                border: Border.all(
-                  color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.4),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(
+              color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.4),
+            ),
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.emoji_emotions_outlined,
+                    color: Colors.white54, size: 22),
+                onPressed: () => _showEmojiPicker(context, controller),
+              ),
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  style: const TextStyle(fontSize: 15, color: Colors.white),
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => onSend(),
+                  decoration: InputDecoration(
+                    hintText: hintText,
+                    hintStyle: TextStyle(
+                      color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
+                    ),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                 ),
               ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.emoji_emotions_outlined,
-                        color: Colors.white54, size: 22),
-                    onPressed: () => _showEmojiPicker(context, controller),
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      style: const TextStyle(fontSize: 15, color: Colors.white),
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => onSend(),
-                      decoration: InputDecoration(
-                        hintText: hintText,
-                        hintStyle: TextStyle(
-                          color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
-                        ),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              IconButton(
+                onPressed: sending ? null : onSend,
+                icon: sending
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        Icons.send_rounded,
+                        color: VoiceRoomTokens.neonBlue,
                       ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: sending ? null : onSend,
-                    icon: sending
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Icon(
-                            Icons.send_rounded,
-                            color: VoiceRoomTokens.neonBlue,
-                          ),
-                  ),
-                ],
               ),
-            ),
+            ],
           ),
         ),
       ),
