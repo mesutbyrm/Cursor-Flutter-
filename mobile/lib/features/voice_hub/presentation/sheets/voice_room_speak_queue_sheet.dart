@@ -24,10 +24,13 @@ void showVoiceSpeakQueueSheet(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    builder: (ctx) => _SpeakQueueSheet(
-      room: room,
-      live: live,
-      perms: perms,
+    builder: (ctx) => ProviderScope(
+      parent: ProviderScope.containerOf(context),
+      child: _SpeakQueueSheet(
+        room: room,
+        live: live,
+        perms: perms,
+      ),
     ),
   );
 }

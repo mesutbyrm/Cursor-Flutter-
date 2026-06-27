@@ -26,10 +26,13 @@ Future<void> showVoiceRoomToolsSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => _VoiceRoomToolsSheet(
-      room: room,
-      perms: perms,
-      isOwner: isOwner,
+    builder: (ctx) => ProviderScope(
+      parent: ProviderScope.containerOf(context),
+      child: _VoiceRoomToolsSheet(
+        room: room,
+        perms: perms,
+        isOwner: isOwner,
+      ),
     ),
   );
 }
