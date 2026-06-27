@@ -19,6 +19,9 @@ import '../providers/voice_room_audio_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../sheets/voice_room_sheets.dart';
 import '../utils/voice_room_permissions.dart';
+import '../../domain/entities/voice_room_realtime_event.dart';
+import '../utils/kick_strike_ui.dart';
+import 'voice_room_basic_realtime_feed.dart';
 import '../widgets/voice_room_error_boundary.dart';
 
 /// Aşama 1 — oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcılar, oda sahibi.
@@ -288,6 +291,55 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final owner = _resolveOwner(room, live.presence);
     final speakerOn = ui.headphonesOn;
 
+    ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
+      if (!mounted) return;
+
+      final toast = next.moderationToast;
+      if (toast != null && toast != prev?.moderationToast) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(toast), duration: const Duration(seconds: 4)),
+        );
+      }
+
+      final banner = next.enterBanner;
+      if (banner != null && banner != prev?.enterBanner) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(banner),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+
+      final kick = next.kickStrikeWarning;
+      if (kick != null && kick != prev?.kickStrikeWarning) {
+        unawaited(
+          showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text(KickStrikeUi.titleFor(next.kickStrikeCount)),
+              content: Text(kick),
+              actions: [
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Tamam'),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      if (next.realtimeEvents.length > (prev?.realtimeEvents.length ?? 0)) {
+        final latest = next.realtimeEvents.first;
+        if (latest.kind == VoiceRoomRealtimeKind.moderation &&
+            latest.message.toLowerCase().contains('yasaklandınız')) {
+          unawaited(_leaveRoom());
+        }
+      }
+    });
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -295,7 +347,27 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(room.displayTitle),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(room.displayTitle, style: const TextStyle(fontSize: 16)),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.circle,
+                    size: 8,
+                    color: live.sseConnected ? Colors.greenAccent : Colors.orange,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    live.sseConnected ? 'Canlı (SSE)' : 'Bağlanıyor…',
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                ],
+              ),
+            ],
+          ),
           actions: [
             TextButton.icon(
               onPressed: () => _openParticipants(room, live.presence),
@@ -307,6 +379,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (live.roomMuted)
+              _Banner(message: 'Oda susturulmuş (yalnızca yetkililer konuşabilir)'),
             if (_loginError != null)
               _Banner(message: _loginError!, isError: true),
             if (_audioError != null)
@@ -322,6 +396,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                 padding: const EdgeInsets.all(20),
                 child: _OwnerCard(owner: owner, room: room),
               ),
+              VoiceRoomBasicParticipantStrip(
+                presence: live.presence,
+                ownerId: room.ownerId,
+              ),
+              const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: OutlinedButton.icon(
@@ -330,7 +409,24 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   label: Text('Katılımcılar ($online)'),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 8),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                        child: Text(
+                          'Canlı olaylar',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                      ),
+                      VoiceRoomBasicRealtimeFeed(events: live.realtimeEvents),
+                    ],
+                  ),
+                ),
+              ),
               if (live.error != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),

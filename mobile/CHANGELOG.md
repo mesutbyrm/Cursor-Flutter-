@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.387+391 (2026-06-27)
+
+### Sesli oda — SSE gerçek zamanlı olaylar (temel mod)
+
+- **SSE akışı:** giriş/çıkış, presence, mikrofon (`isSpeaking`), susturma, moderasyon, oda güncellemesi
+- **`VoiceRoomBasicPage`:** canlı olay listesi, katılımcı şeridi (mic göstergesi), SSE bağlantı durumu
+- **`onRoomUpdate`:** SSE oda güncellemeleri artık işleniyor
+- **Temel mod:** DJ/hediye/PK SSE yan etkileri atlanır; yalnızca oda olayları
+
 ## 1.0.386+390 (2026-06-27)
 
 ### Sesli oda — aşama 1 (temel akış)

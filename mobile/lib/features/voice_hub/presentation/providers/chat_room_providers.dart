@@ -42,6 +42,7 @@ import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/moderation_result.dart';
 import '../../domain/entities/voice_room_ban_entry.dart';
+import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../domain/entities/popular_music_suggestion.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/youtube_stream_resolver.dart';
@@ -128,6 +129,7 @@ class VoiceRoomLiveState {
     this.moderationToast,
     this.kickStrikeWarning,
     this.kickStrikeCount = 0,
+    this.realtimeEvents = const [],
   });
 
   final List<ChatRoomMessage> messages;
@@ -154,6 +156,7 @@ class VoiceRoomLiveState {
   final String? moderationToast;
   final String? kickStrikeWarning;
   final int kickStrikeCount;
+  final List<VoiceRoomRealtimeEvent> realtimeEvents;
 
   bool get isAnyoneTyping => typingUsers.isNotEmpty;
 
@@ -197,6 +200,7 @@ class VoiceRoomLiveState {
     String? kickStrikeWarning,
     int? kickStrikeCount,
     bool clearKickStrikeWarning = false,
+    List<VoiceRoomRealtimeEvent>? realtimeEvents,
     bool clearError = false,
   }) {
     return VoiceRoomLiveState(
@@ -245,6 +249,7 @@ class VoiceRoomLiveState {
       kickStrikeCount: clearKickStrikeWarning
           ? 0
           : (kickStrikeCount ?? this.kickStrikeCount),
+      realtimeEvents: realtimeEvents ?? this.realtimeEvents,
     );
   }
 }
@@ -527,6 +532,78 @@ class VoiceRoomLiveController
     return merged;
   }
 
+  void _pushRealtimeEvent(VoiceRoomRealtimeKind kind, String message) {
+    final line = message.trim();
+    if (line.isEmpty) return;
+    final event = VoiceRoomRealtimeEvent(
+      kind: kind,
+      message: line,
+      at: DateTime.now(),
+    );
+    state = state.copyWith(
+      realtimeEvents: VoiceRoomRealtimeEvent.append(state.realtimeEvents, event),
+    );
+  }
+
+  void _notifyRealtimeIfBasic(VoiceRoomRealtimeKind kind, String message) {
+    if (!VoiceRoomBasicMode.enabled) return;
+    _pushRealtimeEvent(kind, message);
+  }
+
+  void _detectMicChanges(List<ChatRoomPresence> next) {
+    if (!VoiceRoomBasicMode.enabled) return;
+    final prev = {for (final p in state.presence) p.id: p.isSpeaking};
+    for (final p in next) {
+      final was = prev[p.id];
+      if (was == null || was == p.isSpeaking) continue;
+      final name = p.displayName.trim().isNotEmpty
+          ? p.displayName.trim()
+          : p.name.trim();
+      if (name.isEmpty) continue;
+      _pushRealtimeEvent(
+        p.isSpeaking ? VoiceRoomRealtimeKind.micOn : VoiceRoomRealtimeKind.micOff,
+        p.isSpeaking ? '$name konuşuyor' : '$name sustu',
+      );
+    }
+  }
+
+  void _handleSseRoomUpdate(Map<String, dynamic> payload) {
+    final users = _presenceFromSsePayload(payload);
+    if (users.isNotEmpty) {
+      final merged = _mergePresenceStable(users, source: 'sse_room_update');
+      _detectMicChanges(merged);
+      state = state.copyWith(
+        presence: merged,
+        sseConnected: true,
+        selfInRoom: true,
+      );
+      ref
+          .read(voiceRoomDiagnosticProvider.notifier)
+          .setPresence(joined: true, count: merged.length);
+    }
+
+    final msg = payload['message']?.toString().trim();
+    if (msg != null && msg.isNotEmpty) {
+      _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.roomUpdate, msg);
+      if (VoiceRoomBasicMode.enabled) {
+        showModerationToast(msg);
+      }
+    } else {
+      _notifyRealtimeIfBasic(
+        VoiceRoomRealtimeKind.roomUpdate,
+        'Oda güncellendi',
+      );
+    }
+
+    final bg = payload['backgroundImageUrl']?.toString().trim() ??
+        payload['backgroundUrl']?.toString().trim();
+    if (bg != null && bg.isNotEmpty) {
+      state = state.copyWith(backgroundUrl: bg);
+    }
+
+    unawaited(refresh(includeDj: !VoiceRoomBasicMode.enabled));
+  }
+
   /// Odadan çıkış — presence, SSE ve müzik temizliği (RTC sayfası).
   /// Ağır işlemler UI'ı bloklamaz; navigasyon hemen yapılabilir.
   Future<void> leaveRoomSession({String source = 'ui_leave'}) async {
@@ -682,9 +759,16 @@ class VoiceRoomLiveController
               state = state.copyWith(sseConnected: true);
             }
             ref.read(voiceRoomDiagnosticProvider.notifier).setSse(true);
-            ref.read(voiceRoomGiftRealtimeProvider).setSocketPreferred(false);
+            if (!VoiceRoomBasicMode.enabled) {
+              ref.read(voiceRoomGiftRealtimeProvider).setSocketPreferred(false);
+            }
+            _notifyRealtimeIfBasic(
+              VoiceRoomRealtimeKind.system,
+              'Canlı bağlantı kuruldu',
+            );
           },
           onDjUpdate: (payload) {
+            if (VoiceRoomBasicMode.enabled) return;
             if (payload.isNotEmpty) {
               _applyRoomVideoPayload(payload);
               unawaited(_applyDjRealtimePayload(payload));
@@ -693,11 +777,13 @@ class VoiceRoomLiveController
             }
           },
           onSong: (payload) {
+            if (VoiceRoomBasicMode.enabled) return;
             _applyRoomVideoPayload(payload);
             unawaited(_applyDjRealtimePayload(payload));
             _showMusicRequestFlashLine('🎵 Şarkı kuyruğa eklendi');
           },
           onGift: (payload) {
+            if (VoiceRoomBasicMode.enabled) return;
             final giftRaw = payload['gift'] ?? payload;
             if (giftRaw is! Map) return;
             final ev = giftsRemote.parseGiftEvent(
@@ -709,6 +795,7 @@ class VoiceRoomLiveController
             }
           },
           onMessage: (msg) {
+            if (VoiceRoomBasicMode.enabled) return;
             final exists = state.messages.any((m) => m.id == msg.id);
             if (exists) return;
             state = state.copyWith(messages: [...state.messages, msg]);
@@ -725,6 +812,7 @@ class VoiceRoomLiveController
           },
           onPresence: (users) {
             final merged = _mergePresenceStable(users, source: 'sse');
+            _detectMicChanges(merged);
             final wasSse = state.sseConnected;
             state = state.copyWith(
               presence: merged,
@@ -743,11 +831,13 @@ class VoiceRoomLiveController
             state = state.copyWith(typingUsers: users);
           },
           onFortuneRequest: (payload) {
+            if (VoiceRoomBasicMode.enabled) return;
             final session = parsePsychicSsePayload(payload);
             if (session == null) return;
             emitPsychicLiveRequest(ref, session);
           },
           onPk: (battle, event) {
+            if (VoiceRoomBasicMode.enabled) return;
             // PK battle — artık ayrı bir Socket.IO bağlantısı yerine
             // odanın ana SSE akışından besleniyor.
             ref.read(pkBattleProvider.notifier).applyRemoteBattle(battle);
@@ -762,6 +852,7 @@ class VoiceRoomLiveController
           onSystem: _handleSseSystemEvent,
           onAnnouncement: _handleSseAnnouncement,
           onModeration: _handleSseModeration,
+          onRoomUpdate: _handleSseRoomUpdate,
         );
   }
 
@@ -770,6 +861,7 @@ class VoiceRoomLiveController
         payload['content']?.toString().trim() ??
         payload['text']?.toString().trim();
     if (text == null || text.isEmpty) return;
+    _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.system, text);
     _showModeratorAnnouncement(text);
   }
 
@@ -779,17 +871,62 @@ class VoiceRoomLiveController
       case 'CHAT_CLEARED':
       case 'MESSAGES_CLEARED':
         _applyLocalChatClear();
+        _notifyRealtimeIfBasic(
+          VoiceRoomRealtimeKind.moderation,
+          'Sohbet temizlendi',
+        );
         return;
       case 'ROOM_MUTED':
         state = state.copyWith(roomMuted: true);
+        _notifyRealtimeIfBasic(
+          VoiceRoomRealtimeKind.mute,
+          payload['message']?.toString().trim() ?? 'Oda susturuldu',
+        );
         return;
       case 'ROOM_UNMUTED':
         state = state.copyWith(roomMuted: false);
+        _notifyRealtimeIfBasic(
+          VoiceRoomRealtimeKind.unmute,
+          payload['message']?.toString().trim() ?? 'Oda susturması kaldırıldı',
+        );
+        return;
+      case 'USER_MUTED':
+        _notifyRealtimeIfBasic(
+          VoiceRoomRealtimeKind.mute,
+          payload['message']?.toString().trim() ??
+              '${payload['userName'] ?? 'Kullanıcı'} susturuldu',
+        );
+        return;
+      case 'USER_UNMUTED':
+        _notifyRealtimeIfBasic(
+          VoiceRoomRealtimeKind.unmute,
+          payload['message']?.toString().trim() ??
+              '${payload['userName'] ?? 'Kullanıcı'} susturması kaldırıldı',
+        );
+        return;
+      case 'USER_KICKED':
+        _notifyRealtimeIfBasic(
+          VoiceRoomRealtimeKind.moderation,
+          payload['message']?.toString().trim() ??
+              '${payload['userName'] ?? 'Kullanıcı'} odadan atıldı',
+        );
+        return;
+      case 'USER_BANNED':
+        _notifyRealtimeIfBasic(
+          VoiceRoomRealtimeKind.moderation,
+          payload['message']?.toString().trim() ??
+              '${payload['userName'] ?? 'Kullanıcı'} yasaklandı',
+        );
         return;
       case 'ANNOUNCEMENT':
         _handleSseAnnouncement(payload);
         return;
       default:
+        final msg = payload['message']?.toString().trim();
+        if (msg != null && msg.isNotEmpty) {
+          _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.moderation, msg);
+          if (VoiceRoomBasicMode.enabled) showModerationToast(msg);
+        }
         return;
     }
   }
@@ -810,9 +947,13 @@ class VoiceRoomLiveController
         final newRole = payload['newRole']?.toString();
         final removed = payload['removedRole']?.toString();
         if (event == 'ROLE_CHANGED' && newRole != null) {
-          showModerationToast('$name → $newRole rolü verildi');
+          final line = '$name → $newRole rolü verildi';
+          showModerationToast(line);
+          _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.moderation, line);
         } else if (removed != null) {
-          showModerationToast('$name → $removed rolü alındı');
+          final line = '$name → $removed rolü alındı';
+          showModerationToast(line);
+          _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.moderation, line);
         }
         unawaited(_presenceHeartbeatTick());
         return;
@@ -821,9 +962,10 @@ class VoiceRoomLiveController
         final name = payload['userName']?.toString() ?? 'Kullanıcı';
         final symbol = payload['roleSymbol']?.toString() ?? '';
         final entry = payload['entryType']?.toString() ?? '';
-        state = state.copyWith(
-          enterBanner: '$symbol $name odaya katıldı${entry.isNotEmpty ? ' ($entry)' : ''}',
-        );
+        final banner =
+            '$symbol $name odaya katıldı${entry.isNotEmpty ? ' ($entry)' : ''}';
+        state = state.copyWith(enterBanner: banner.trim());
+        _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.join, banner.trim());
         _enterBannerTimer?.cancel();
         _enterBannerTimer = Timer(const Duration(seconds: 8), () {
           if (!_sessionActive) return;
@@ -833,9 +975,17 @@ class VoiceRoomLiveController
       }
       case 'ROOM_MUTED':
         state = state.copyWith(roomMuted: true);
+        _notifyRealtimeIfBasic(
+          VoiceRoomRealtimeKind.mute,
+          payload['message']?.toString().trim() ?? 'Oda susturuldu',
+        );
         return;
       case 'ROOM_UNMUTED':
         state = state.copyWith(roomMuted: false);
+        _notifyRealtimeIfBasic(
+          VoiceRoomRealtimeKind.unmute,
+          payload['message']?.toString().trim() ?? 'Oda susturması kaldırıldı',
+        );
         return;
       case 'USER_KICKED':
       case 'USER_BANNED':
@@ -854,16 +1004,40 @@ class VoiceRoomLiveController
             autoBanned: count >= 3,
           );
         }
-        final msg = payload['message']?.toString().trim();
-        if (msg != null && msg.isNotEmpty) {
-          _showMusicRequestFlashLine(msg);
+        if (event == 'USER_BANNED' &&
+            targetId != null &&
+            selfId != null &&
+            targetId == selfId) {
+          _notifyRealtimeIfBasic(
+            VoiceRoomRealtimeKind.moderation,
+            'Odadan yasaklandınız',
+          );
+        }
+        final modMsg = payload['message']?.toString().trim();
+        if (modMsg != null && modMsg.isNotEmpty) {
+          if (VoiceRoomBasicMode.enabled) {
+            _pushRealtimeEvent(VoiceRoomRealtimeKind.moderation, modMsg);
+            showModerationToast(modMsg);
+          } else {
+            _showMusicRequestFlashLine(modMsg);
+          }
         }
         return;
       case 'USER_MUTED':
       case 'USER_UNMUTED':
         final muteMsg = payload['message']?.toString().trim();
         if (muteMsg != null && muteMsg.isNotEmpty) {
-          _showMusicRequestFlashLine(muteMsg);
+          _pushRealtimeEvent(
+            event == 'USER_MUTED'
+                ? VoiceRoomRealtimeKind.mute
+                : VoiceRoomRealtimeKind.unmute,
+            muteMsg,
+          );
+          if (VoiceRoomBasicMode.enabled) {
+            showModerationToast(muteMsg);
+          } else {
+            _showMusicRequestFlashLine(muteMsg);
+          }
         }
         return;
       default:
@@ -882,6 +1056,7 @@ class VoiceRoomLiveController
       byId.values.toList(),
       source: 'sse_user_join',
     );
+    _detectMicChanges(merged);
     state = state.copyWith(
       presence: merged,
       sseConnected: true,
@@ -898,6 +1073,7 @@ class VoiceRoomLiveController
       final symbol = user.roleSymbol?.trim() ?? '';
       final prefix = symbol.isNotEmpty ? '$symbol ' : '';
       final banner = '$prefix$name odaya katıldı';
+      _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.join, banner);
       if (_markEntranceOnce(banner)) {
         _showEnterBanner(banner);
       }
@@ -907,6 +1083,22 @@ class VoiceRoomLiveController
   void _handleSseUserLeave(Map<String, dynamic> payload) {
     final userId = payload['userId']?.toString() ?? payload['id']?.toString();
     if (userId == null || userId.isEmpty) return;
+    ChatRoomPresence? departed;
+    for (final p in state.presence) {
+      if (p.id == userId) {
+        departed = p;
+        break;
+      }
+    }
+    final name = departed?.displayName.trim().isNotEmpty == true
+        ? departed!.displayName.trim()
+        : (payload['userName']?.toString().trim().isNotEmpty == true
+            ? payload['userName'].toString().trim()
+            : 'Bir kullanıcı');
+    _notifyRealtimeIfBasic(
+      VoiceRoomRealtimeKind.leave,
+      '$name odadan ayrıldı',
+    );
     final remaining = state.presence.where((p) => p.id != userId).toList();
     if (remaining.length == state.presence.length) return;
     state = state.copyWith(presence: remaining);
