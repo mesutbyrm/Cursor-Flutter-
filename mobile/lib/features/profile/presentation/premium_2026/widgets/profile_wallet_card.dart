@@ -13,6 +13,7 @@ class ProfileWalletCard extends StatelessWidget {
   const ProfileWalletCard({
     super.key,
     required this.state,
+    this.cfcLoading = false,
     this.onTopUp,
     this.onCfcTopUp,
     this.onEarnings,
@@ -22,6 +23,7 @@ class ProfileWalletCard extends StatelessWidget {
   });
 
   final ProfileScreenState state;
+  final bool cfcLoading;
   final VoidCallback? onTopUp;
   final VoidCallback? onCfcTopUp;
   final VoidCallback? onEarnings;
@@ -63,6 +65,7 @@ class ProfileWalletCard extends StatelessWidget {
                         value: profileFormatCount(state.cfc),
                         icon: Icons.diamond_rounded,
                         color: AppThemeColors.diamondBlue,
+                        isLoading: cfcLoading,
                       ),
                     ),
                   ],
@@ -167,12 +170,14 @@ class _BalanceBlock extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.color,
+    this.isLoading = false,
   });
 
   final String label;
   final String value;
   final IconData icon;
   final Color color;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -185,11 +190,11 @@ class _BalanceBlock extends StatelessWidget {
           Icon(icon, color: color, size: 22),
           const SizedBox(height: 8),
           Text(
-            value,
+            isLoading ? '…' : value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: isLoading ? 0.45 : 1),
               fontWeight: FontWeight.w900,
               fontSize: 20,
             ),

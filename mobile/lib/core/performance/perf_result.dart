@@ -43,6 +43,9 @@ abstract final class PerfResult {
   /// Görev 14 — canlı yayın ilk kare + arka plan bağlantı
   static const moduleLiveEntry = 'LiveEntryPerf';
 
+  /// Görev 15 — profil dilimleri bağımsız yükleme
+  static const moduleProfileLoad = 'ProfileLoadPerf';
+
   /// Görev 18 — jeton/cüzdan anında, geçişler akıcı
   static const moduleWalletUi = 'WalletBalancesNotifier + shell prefetch';
 }

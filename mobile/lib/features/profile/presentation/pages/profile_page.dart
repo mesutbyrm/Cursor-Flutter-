@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/performance/network_perf.dart';
+import '../../../../core/performance/profile_load_perf.dart';
 import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
@@ -14,6 +15,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../fortune/presentation/providers/fortune_access_providers.dart';
 import '../providers/profile_providers.dart';
+import '../../../social/presentation/providers/user_social_posts_notifier.dart';
 import '../premium_2026/profile_page_layout.dart';
 import '../premium_2026/profile_lazy_sections.dart';
 import '../premium_2026/profile_screen_builder.dart';
@@ -34,6 +36,10 @@ class ProfilePage extends ConsumerWidget {
       ref.invalidate(userLevelProvider);
       ref.invalidate(giftsReceivedSummaryProvider);
       ref.invalidate(fortuneAccessStateProvider);
+      final userId = ref.read(authControllerProvider).valueOrNull?.id;
+      if (userId != null) {
+        ref.invalidate(userSocialPostsNotifierProvider(userId));
+      }
       await NetworkPerf.waitSilent([
         ref.read(authControllerProvider.notifier).refreshMe(),
         ref.read(walletBalancesProvider.notifier).refresh(force: true),
@@ -41,6 +47,8 @@ class ProfilePage extends ConsumerWidget {
         ref.read(userLevelProvider.future),
         ref.read(giftsReceivedSummaryProvider.future),
         ref.read(fortuneAccessStateProvider.future),
+        if (userId != null)
+          ref.read(userSocialPostsNotifierProvider(userId).future),
       ]);
     }
 
@@ -73,6 +81,7 @@ class ProfilePage extends ConsumerWidget {
               }
 
               final base = profileScreenStateFromUser(user);
+              ProfileLoadPerf.prefetchOnOpen(ref, user.id);
               final onLogout =
                   () => ref.read(authControllerProvider.notifier).logout();
 

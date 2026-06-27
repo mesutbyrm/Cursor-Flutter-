@@ -85,24 +85,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
     }
 
-    if (stats.liveStreams == 0) {
-      try {
-        final history = await _canlifal.broadcastHistory(page: 1, limit: 100);
-        if (history.items.isNotEmpty) {
-          stats = ProfileStatsEntity(
-            liveStreams: history.items.length,
-            likes: stats.likes,
-            followers: stats.followers,
-            following: stats.following,
-            giftsReceivedCount: stats.giftsReceivedCount,
-            giftsReceivedCoins: stats.giftsReceivedCoins,
-            earningsJeton: stats.earningsJeton,
-            approvedTopUpTotal: stats.approvedTopUpTotal,
-          );
-        }
-      } catch (_) {}
-    }
-
     if (stats.likes == 0 && stats.giftsReceivedCount > 0) {
       stats = ProfileStatsEntity(
         liveStreams: stats.liveStreams,

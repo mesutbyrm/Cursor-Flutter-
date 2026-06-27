@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/performance/lazy_screen_section.dart';
+import '../../../../core/performance/profile_load_perf.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../auth/domain/entities/user_entity.dart';
@@ -32,22 +33,21 @@ class ProfileLazyStats extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final stats = ref.watch(
-      profileStatsProvider.select((s) => s.valueOrNull ?? base.stats),
-    );
+    final statsAsync = ref.watch(profileStatsProvider);
+    final stats = statsAsync.valueOrNull ?? base.stats;
     final state = base.copyWith(stats: stats);
+    final followersLoading = statsAsync.isLoading &&
+        statsAsync.valueOrNull == null &&
+        base.user.followersCount <= 0;
 
-    return LazyScreenSection(
-      delay: LazyLoadPerf.profileStats,
-      placeholder: const PremiumProfileStatsSkeleton(),
-      child: ProfileStats(
-        state: state,
-        onFollowersTap: () =>
-            context.push('/profile/followers?userId=${user.id}'),
-        onFollowingTap: () =>
-            context.push('/profile/following?userId=${user.id}'),
-        onVisitorsTap: () => context.push('/profile/visitors'),
-      ),
+    return ProfileStats(
+      state: state,
+      followersLoading: followersLoading,
+      onFollowersTap: () =>
+          context.push('/profile/followers?userId=${user.id}'),
+      onFollowingTap: () =>
+          context.push('/profile/following?userId=${user.id}'),
+      onVisitorsTap: () => context.push('/profile/visitors'),
     );
   }
 }
@@ -62,23 +62,20 @@ class ProfileLazyWallet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final wallet = ref.watch(
-      walletBalancesProvider.select((w) => w.valueOrNull),
-    );
+    final walletAsync = ref.watch(walletBalancesProvider);
+    final wallet = walletAsync.valueOrNull;
     final state = buildProfileWalletState(base, wallet);
+    final cfcLoading = walletAsync.isLoading && wallet == null;
 
-    return LazyScreenSection(
-      delay: LazyLoadPerf.profileWallet,
-      placeholder: const PremiumProfileWalletSkeleton(),
-      child: ProfileWalletCard(
-        state: state,
-        onTopUp: () => openJetonStore(context, ref: ref),
-        onCfcTopUp: () => openCfcStore(context, ref: ref),
-        onEarnings: () => context.push('/profile/earnings'),
-        onTransactions: () => context.push('/profile/transactions'),
-        onPaymentNotice: () => context.push('/profile/payment-notice'),
-        onSubscriptions: () => context.push('/wallet'),
-      ),
+    return ProfileWalletCard(
+      state: state,
+      cfcLoading: cfcLoading,
+      onTopUp: () => openJetonStore(context, ref: ref),
+      onCfcTopUp: () => openCfcStore(context, ref: ref),
+      onEarnings: () => context.push('/profile/earnings'),
+      onTransactions: () => context.push('/profile/transactions'),
+      onPaymentNotice: () => context.push('/profile/payment-notice'),
+      onSubscriptions: () => context.push('/wallet'),
     );
   }
 }
@@ -169,11 +166,8 @@ class ProfileLazyContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return LazyScreenSection(
-      delay: LazyLoadPerf.profileContent,
-      placeholder: const PremiumProfileContentSkeleton(),
-      child: ProfileContentSection(userId: userId),
-    );
+    ProfileLoadPerf.prefetchOnOpen(ref, userId);
+    return ProfileContentSection(userId: userId);
   }
 }
 

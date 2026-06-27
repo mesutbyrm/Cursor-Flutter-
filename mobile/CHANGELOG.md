@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.410+414 (2026-06-27)
+
+### Performans — Görev 15: Profil bağımsız yükleme
+
+- **`ProfileLoadPerf`:** Jeton, CFC, takipçi, gönderiler paralel prefetch
+- **Jeton:** oturum `coinBalance` anında; cüzdan API gelince güncellenir
+- **CFC:** yalnızca CFC alanı yüklenirken `…` gösterir; Jeton bekletmez
+- **Takipçi:** auth sayacı anında; istatistik API arka planda
+- **Gönderiler:** içerik bölümü gecikmesiz; video sekmesi kendi skeleton'ı
+- **`myStats`:** broadcastHistory takipçi yolunu artık bloklamaz
+- **Shell prefetch:** `profileStatsProvider` kabukta ısıtılır
+
 ## 1.0.409+413 (2026-06-27)
 
 ### Performans — Görev 14: Canlı yayın hızlı giriş

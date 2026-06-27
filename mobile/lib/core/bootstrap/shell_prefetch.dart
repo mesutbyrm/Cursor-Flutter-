@@ -18,6 +18,7 @@ void prefetchShellData(
       VoiceRoomEntryPerf.prewarmShell();
       ref.read(notificationsListProvider.future).ignore();
       ref.read(walletBalancesProvider.future).ignore();
+      ref.read(profileStatsProvider.future).ignore();
       ref.read(jetonPackagesProvider.future).ignore();
       try {
         ref.read(conversationsProvider.future).ignore();
