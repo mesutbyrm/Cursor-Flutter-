@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.388+392 (2026-06-27)
+
+### Sesli oda — müzik sistemi (web parity, temel mod)
+
+- **!istek:** sohbet komutu + arama sheet; jeton / ücretsiz komut yolu
+- **Kuyruk:** sıradaki şarkılar, tam kuyruk sheet (silme DJ için)
+- **DJ:** panel hub, oynat/duraklat/sonraki/durdur (sunucu sync)
+- **Mini player:** kapak, ilerleme, kontroller
+- **SSE:** `dj` / `song` olayları temel modda aktif; otomatik oynatma
+
 ## 1.0.387+391 (2026-06-27)
 
 ### Sesli oda — SSE gerçek zamanlı olaylar (temel mod)

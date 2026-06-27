@@ -1,11 +1,14 @@
-/// Sesli oda — aşama 1: yalnızca temel akış (liste, giriş/çıkış, mic, hoparlör, katılımcılar, sahip).
+/// Sesli oda — aşama 1: temel akış; aşama 2: SSE; aşama 3: müzik (web parity).
 ///
-/// İleride `--dart-define=VOICE_ROOM_FULL=true` ile tam web parity UI açılabilir.
+/// `--dart-define=VOICE_ROOM_FULL=true` → tam RTC sayfası (`VoiceRoomRtcPage`).
 class VoiceRoomBasicMode {
   VoiceRoomBasicMode._();
 
   static const _full = bool.fromEnvironment('VOICE_ROOM_FULL', defaultValue: false);
 
-  /// `true` → temel oda sayfası ve hafif presence oturumu.
+  /// `true` → `VoiceRoomBasicPage` (temel + müzik; hediye/PK/video yok).
   static bool get enabled => !_full;
+
+  /// Temel sayfada web parity müzik (!istek, kuyruk, DJ, mini player).
+  static bool get musicEnabled => enabled;
 }

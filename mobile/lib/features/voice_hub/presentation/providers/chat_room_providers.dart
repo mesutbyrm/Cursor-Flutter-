@@ -422,9 +422,16 @@ class VoiceRoomLiveController
     });
     Future.microtask(() async {
       if (VoiceRoomBasicMode.enabled) {
-        await _joinPresence();
-        await refresh(includeDj: false);
+        ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
+        await VoiceRoomMusicAudioSession.ensureConfigured();
+        await Future.wait([_joinPresence(), _warmBackgrounds()]);
+        await refresh(includeDj: VoiceRoomBasicMode.musicEnabled);
         _startSse();
+        if (VoiceRoomBasicMode.musicEnabled) {
+          final player = ref.read(voiceRoomDjPlayerProvider);
+          player.onTrackComplete = () => unawaited(_onDjTrackComplete());
+          _wireMusicControls();
+        }
         _schedulePoll(sseConnected: false);
         return;
       }
@@ -601,7 +608,7 @@ class VoiceRoomLiveController
       state = state.copyWith(backgroundUrl: bg);
     }
 
-    unawaited(refresh(includeDj: !VoiceRoomBasicMode.enabled));
+    unawaited(refresh(includeDj: true));
   }
 
   /// Odadan çıkış — presence, SSE ve müzik temizliği (RTC sayfası).
@@ -768,17 +775,19 @@ class VoiceRoomLiveController
             );
           },
           onDjUpdate: (payload) {
-            if (VoiceRoomBasicMode.enabled) return;
             if (payload.isNotEmpty) {
-              _applyRoomVideoPayload(payload);
+              if (!VoiceRoomBasicMode.enabled) {
+                _applyRoomVideoPayload(payload);
+              }
               unawaited(_applyDjRealtimePayload(payload));
             } else {
               unawaited(refresh(includeDj: true));
             }
           },
           onSong: (payload) {
-            if (VoiceRoomBasicMode.enabled) return;
-            _applyRoomVideoPayload(payload);
+            if (!VoiceRoomBasicMode.enabled) {
+              _applyRoomVideoPayload(payload);
+            }
             unawaited(_applyDjRealtimePayload(payload));
             _showMusicRequestFlashLine('🎵 Şarkı kuyruğa eklendi');
           },

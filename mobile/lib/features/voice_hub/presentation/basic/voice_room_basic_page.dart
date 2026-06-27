@@ -18,8 +18,12 @@ import '../providers/chat_room_providers.dart';
 import '../providers/voice_room_audio_providers.dart';
 import '../providers/voice_room_ui_provider.dart';
 import '../sheets/voice_room_sheets.dart';
-import '../utils/voice_room_permissions.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
+import '../../domain/voice_music_sync.dart';
+import '../utils/voice_room_permissions.dart';
+import '../utils/voice_music_access.dart';
+import 'voice_room_basic_music_section.dart';
+import '../../music/presentation/widgets/music_search_picker_sheet.dart';
 import '../utils/kick_strike_ui.dart';
 import 'voice_room_basic_realtime_feed.dart';
 import '../widgets/voice_room_error_boundary.dart';
@@ -43,6 +47,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   String? _loginError;
   var _isMicMuted = true;
   var _leaving = false;
+  final _istekCtrl = TextEditingController();
 
   String get _liveRoomKey {
     final pinned = _pinnedLiveRoomKey?.trim();
@@ -78,6 +83,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
   @override
   void dispose() {
+    _istekCtrl.dispose();
     final audio = _audio;
     _audio = null;
     if (audio != null) {
@@ -280,6 +286,49 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     );
   }
 
+  bool _canControlMusic(
+    VoiceRoomLiveState live,
+    VoiceRoomEntity room,
+    UserEntity? user,
+    VoiceRoomPermissions perms,
+  ) {
+    final isDj = perms.canManageDj ||
+        live.dj.canPlayMusic ||
+        (user != null && room.djUserIds.contains(user.id)) ||
+        live.dj.djUsers.any((u) => user != null && u.id == user.id);
+    return live.dj.canControlMusic ||
+        live.dj.canPlayMusic ||
+        (user != null && live.dj.nowPlaying?.requestedBy?.id == user.id) ||
+        perms.isRoomOwner ||
+        perms.isSiteAdmin ||
+        isDj;
+  }
+
+  Future<void> _sendIstek() async {
+    final text = _istekCtrl.text.trim();
+    if (text.isEmpty) {
+      _istekCtrl.text = '!istek ';
+      return;
+    }
+    final cmd = VoiceMusicSync.isIstekCommand(text) ? text : '!istek $text';
+    await ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).sendMessage(cmd);
+    if (!VoiceMusicSync.isIstekCommand(text)) {
+      _istekCtrl.clear();
+    }
+  }
+
+  VoiceRoomPermissions _permissions(
+    UserEntity? user,
+    VoiceRoomLiveState live,
+    VoiceRoomEntity room,
+  ) {
+    return VoiceMusicAccess.permissionsFor(
+      user: user,
+      room: room,
+      presence: live.presence,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final roomKey = _liveRoomKey.isNotEmpty ? _liveRoomKey : widget.room.id;
@@ -290,6 +339,9 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final online = live.onlineCountFor(room);
     final owner = _resolveOwner(room, live.presence);
     final speakerOn = ui.headphonesOn;
+    final user = ref.watch(authControllerProvider).valueOrNull;
+    final perms = _permissions(user, live, room);
+    final canControlMusic = _canControlMusic(live, room, user, perms);
 
     ref.listen<VoiceRoomLiveState>(voiceRoomLiveProvider(_liveRoomKey), (prev, next) {
       if (!mounted) return;
@@ -336,6 +388,37 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         if (latest.kind == VoiceRoomRealtimeKind.moderation &&
             latest.message.toLowerCase().contains('yasaklandınız')) {
           unawaited(_leaveRoom());
+        }
+      }
+
+      final q = next.pendingMusicSearchQuery;
+      if (q != null &&
+          q.isNotEmpty &&
+          prev?.pendingMusicSearchQuery != q &&
+          mounted) {
+        final skipPayment = next.pendingMusicSearchSkipPayment;
+        final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+        unawaited(() async {
+          final hit = await showMusicSearchPickerSheet(context, ref, query: q);
+          ctrl.clearPendingMusicSearch();
+          if (!mounted || hit == null) return;
+          final err = await ctrl.submitSelectedSong(
+            hit,
+            withVideo: false,
+            skipPayment: skipPayment,
+          );
+          if (!mounted || err == null) return;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        }());
+      }
+
+      if (next.error != null && next.error != prev?.error && mounted) {
+        final err = next.error!;
+        if (err.contains('jeton')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(err)),
+          );
+          ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearError();
         }
       }
     });
@@ -423,6 +506,15 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                         ),
                       ),
                       VoiceRoomBasicRealtimeFeed(events: live.realtimeEvents),
+                      VoiceRoomBasicMusicSection(
+                        room: room,
+                        liveKey: _liveRoomKey,
+                        live: live,
+                        istekController: _istekCtrl,
+                        onSendIstek: _sendIstek,
+                        canControlMusic: canControlMusic,
+                        perms: perms,
+                      ),
                     ],
                   ),
                 ),
