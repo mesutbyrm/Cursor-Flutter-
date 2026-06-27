@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/bootstrap/app_startup_log.dart';
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/config/env.dart';
+import '../../../../core/network/api_http_cache.dart';
+import '../../../../core/offline/api_cache_store.dart';
 import '../../../../core/onesignal/onesignal_bootstrap.dart';
 import '../../../../core/network/cookie_jar_provider.dart';
 import '../../../../core/network/dio_provider.dart';
@@ -212,6 +214,8 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     ref.read(authUserActionBusyProvider.notifier).state = false;
     ref.read(guestModeProvider.notifier).state = false;
     await OneSignalBootstrap.logout();
+    await ApiHttpCache.clearAll();
+    await ApiCacheStore.clearAll();
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncValue.data(null);
   }

@@ -228,9 +228,12 @@ class WalletRemoteDataSource {
     return b.jeton;
   }
 
-  Future<WalletBalances> balances() async {
+  Future<WalletBalances> balances({bool forceRefresh = false}) async {
     if (!Env.useMobileAuth) {
-      final res = await _dio.safeGet<Map<String, dynamic>>(ApiEndpoints.wallet);
+      final res = await _dio.safeGet<Map<String, dynamic>>(
+        ApiEndpoints.wallet,
+        forceRefresh: forceRefresh,
+      );
       return WalletBalances.fromJson(_unwrap(res.data));
     }
 
@@ -238,7 +241,10 @@ class WalletRemoteDataSource {
     for (final path in [ApiEndpoints.me, ApiEndpoints.userCredits]) {
       try {
         final res = await _dio
-            .safeGet<Map<String, dynamic>>(path)
+            .safeGet<Map<String, dynamic>>(
+              path,
+              forceRefresh: forceRefresh,
+            )
             .timeout(const Duration(seconds: 18));
         final body = res.data ?? {};
         final err = body['error'];

@@ -166,7 +166,8 @@ class WalletRepositoryImpl implements WalletRepository {
   Future<int> coinBalance() => _remote.balance();
 
   @override
-  Future<WalletBalances> balances() => _remote.balances();
+  Future<WalletBalances> balances({bool forceRefresh = false}) =>
+      _remote.balances(forceRefresh: forceRefresh);
 
   @override
   Future<List<JetonPackageEntity>> jetonPackages() => _remote.jetonPackages();

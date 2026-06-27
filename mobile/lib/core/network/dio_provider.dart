@@ -6,6 +6,7 @@ import '../config/env.dart';
 import 'api_exception.dart';
 import 'api_endpoints.dart';
 import 'device_headers.dart';
+import 'api_cache_interceptor.dart';
 import 'cookie_jar_provider.dart';
 import 'payment_request_interceptor.dart';
 import 'token_storage.dart';
@@ -88,6 +89,8 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
 
+  dio.interceptors.add(ApiCacheInterceptor());
+
   return dio;
 });
 
@@ -128,9 +131,16 @@ extension DioApi on Dio {
   Future<Response<T>> safeGet<T>(
     String path, {
     Map<String, dynamic>? query,
+    bool forceRefresh = false,
   }) async {
     try {
-      return await get<T>(path, queryParameters: query);
+      return await get<T>(
+        path,
+        queryParameters: query,
+        options: Options(
+          extra: forceRefresh ? {'forceRefresh': true} : null,
+        ),
+      );
     } on DioException catch (e) {
       throw _mapDio(e);
     }

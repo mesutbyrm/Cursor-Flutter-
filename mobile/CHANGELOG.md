@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.394+398 (2026-06-27)
+
+### Performans — Görev 3: API optimizasyonu
+
+- **`ApiCacheInterceptor`:** tüm cacheable GET istekleri için Dio katmanında cache
+- **Bellek cache:** LRU (256 girdi) + TTL
+- **Disk cache:** `ApiCacheStore` ham JSON (`SharedPreferences`)
+- **TTL:** endpoint bazlı (`ApiCachePolicy`) — canlı 15 sn, mesaj 30 sn, banner 5 dk vb.
+- **Dedupe:** aynı URL + auth için eşzamanlı tek HTTP isteği
+- **Stale fallback:** ağ hatasında süresi dolmuş disk/bellek yanıtı
+- **Bypass:** `forceRefresh` / `noCache` extra; çıkışta tüm cache temizlenir
+
 ## 1.0.393+397 (2026-06-27)
 
 ### Performans — Görev 2: Lazy loading
