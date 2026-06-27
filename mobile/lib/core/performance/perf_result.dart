@@ -28,6 +28,9 @@ abstract final class PerfResult {
   /// Görev 8 — paralel API Future.wait
   static const moduleNetwork = 'NetworkPerf';
 
+  /// Görev 9 — büyük JSON parse isolate (≥50 KB; Dio + disk cache)
+  static const moduleJsonIsolate = 'JsonIsolatePerf / FusedTransformer';
+
   /// Görev 10 — blur/glass önbellek
   static const moduleEffects = 'EffectsPerf';
 

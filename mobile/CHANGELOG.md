@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.411+415 (2026-06-27)
+
+### Performans — Görev 9: JSON isolate parse
+
+- **`JsonIsolatePerf`:** ≥50 KB JSON gövdeleri `compute` ile ayrı isolate'te decode
+- **Dio:** `FusedTransformer` eşiği açıkça `JsonIsolatePerf.largeThreshold` ile hizalandı
+- **Disk cache:** `ApiHttpCache` + `ApiCacheStore` okuma yolları isolate decode kullanır
+- **Küçük yanıtlar:** eşik altında senkron parse (gereksiz isolate maliyeti yok)
+- **SSE / push:** küçük olay gövdeleri mevcut senkron parse ile kalır
+
 ## 1.0.410+414 (2026-06-27)
 
 ### Performans — Görev 15: Profil bağımsız yükleme

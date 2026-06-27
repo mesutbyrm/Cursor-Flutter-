@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 
 import '../offline/api_cache_store.dart';
+import '../performance/json_isolate_perf.dart';
 import 'api_cache_policy.dart';
 
 /// Bellek + disk HTTP önbelleği ve eşzamanlı istek tekilleştirme.
@@ -45,7 +46,8 @@ abstract final class ApiHttpCache {
     final raw = await ApiCacheStore.readRaw('$_diskPrefix$key', maxAge: ttl);
     if (raw == null) return null;
     try {
-      final map = jsonDecode(raw) as Map<String, dynamic>;
+      final map = await JsonIsolatePerf.decodeMap(raw);
+      if (map == null) return null;
       return _CacheEntry.fromJson(map);
     } catch (_) {
       await ApiCacheStore.clearRaw('$_diskPrefix$key');
@@ -62,7 +64,9 @@ abstract final class ApiHttpCache {
     );
     if (raw == null) return null;
     try {
-      return _CacheEntry.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      final map = await JsonIsolatePerf.decodeMap(raw);
+      if (map == null) return null;
+      return _CacheEntry.fromJson(map);
     } catch (_) {
       return null;
     }

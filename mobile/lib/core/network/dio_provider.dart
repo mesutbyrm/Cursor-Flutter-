@@ -3,6 +3,7 @@ import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/env.dart';
+import '../performance/json_isolate_perf.dart';
 import 'api_exception.dart';
 import 'api_endpoints.dart';
 import 'device_headers.dart';
@@ -42,6 +43,11 @@ final dioProvider = Provider<Dio>((ref) {
         'Content-Type': 'application/json',
       },
     ),
+  );
+
+  // Görev 9 — ≥50 KB JSON yanıtları isolate'te parse (UI thread jank yok).
+  dio.transformer = FusedTransformer(
+    contentLengthIsolateThreshold: JsonIsolatePerf.largeThreshold,
   );
 
   dio.interceptors.add(CookieManager(cookieJar));

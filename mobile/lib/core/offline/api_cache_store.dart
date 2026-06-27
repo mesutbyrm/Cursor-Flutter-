@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../performance/json_isolate_perf.dart';
+
 /// GET yanıtları için TTL'li offline önbellek (feed, profil, oda listesi).
 abstract final class ApiCacheStore {
   static const _prefix = 'api_cache_v1_';
@@ -21,7 +23,8 @@ abstract final class ApiCacheStore {
     final raw = _prefs!.getString('$_prefix$key');
     if (raw == null || raw.isEmpty) return null;
     try {
-      final envelope = jsonDecode(raw) as Map<String, dynamic>;
+      final envelope = await JsonIsolatePerf.decodeMap(raw);
+      if (envelope == null) return null;
       final savedAt = DateTime.tryParse(envelope['savedAt']?.toString() ?? '');
       if (savedAt == null ||
           DateTime.now().difference(savedAt) > maxAge) {
@@ -59,7 +62,8 @@ abstract final class ApiCacheStore {
     final raw = _prefs!.getString('$_prefix$key');
     if (raw == null || raw.isEmpty) return null;
     try {
-      final envelope = jsonDecode(raw) as Map<String, dynamic>;
+      final envelope = await JsonIsolatePerf.decodeMap(raw);
+      if (envelope == null) return null;
       final savedAt = DateTime.tryParse(envelope['savedAt']?.toString() ?? '');
       if (savedAt == null ||
           DateTime.now().difference(savedAt) > maxAge) {
