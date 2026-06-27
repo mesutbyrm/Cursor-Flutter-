@@ -64,8 +64,35 @@ class ChatRoomRemoteDataSource {
 
   static String typingPath(String roomId) => ApiEndpoints.chatRoomTyping(roomId);
 
-  /// Üretim presence/voice body alanı — FLUTTER_ENTegrasyon_KILAVUZU.md §9.3 (`action`).
+  /// Üretim presence/voice — API dokümantasyonu (`type` join/leave, heartbeat POST).
   static const presenceHeartbeatInterval = Duration(seconds: 25);
+
+  /// Odaya giriş — `POST /presence` (gövde yok).
+  Future<void> postPresence(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(presencePath(key));
+    });
+  }
+
+  /// Heartbeat — `POST /presence` her 25 sn.
+  Future<void> presenceHeartbeat(
+    String roomKey, {
+    String? alternateKey,
+  }) =>
+      postPresence(roomKey, alternateKey: alternateKey);
+
+  /// Odaya giriş: POST presence + GET presence listesi.
+  Future<List<ChatRoomPresence>> enterPresence(
+    String roomKey, {
+    String? alternateKey,
+    String? nickname,
+  }) async {
+    await postPresence(roomKey, alternateKey: alternateKey);
+    return fetchPresence(roomKey, alternateKey: alternateKey);
+  }
 
   Map<String, dynamic>? _unwrapMap(dynamic body) {
     if (body is Map<String, dynamic>) {
@@ -246,32 +273,28 @@ class ChatRoomRemoteDataSource {
   Future<void> leavePresence(String roomKey, {String? alternateKey}) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       try {
+        await _dio.safeDelete<dynamic>('${presencePath(key)}?leave=1');
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      } catch (_) {}
+      try {
+        await _dio.safePost<dynamic>(
+          presencePath(key),
+          data: jsonEncode({'type': 'leave'}),
+          options: Options(contentType: 'application/json'),
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      } catch (_) {}
+      try {
         await _dio.safePost<dynamic>(
           presencePath(key),
           data: jsonEncode({'action': 'leave'}),
           options: Options(contentType: 'application/json'),
         );
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       } catch (_) {}
-      try {
-        await _dio.safePost<dynamic>(
-          '${presencePath(key)}?_delete=1&leave=1',
-          data: '{}',
-          options: Options(contentType: 'application/json'),
-        );
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-      } catch (_) {}
-      try {
-        await _dio.safeDelete<dynamic>('${presencePath(key)}?leave=1');
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-      }
-      await _dio.safeDelete<dynamic>(presencePath(key));
     });
   }
 
@@ -279,7 +302,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         voicePath(key),
-        data: jsonEncode({'action': 'join'}),
+        data: jsonEncode({'type': 'join'}),
         options: Options(contentType: 'application/json'),
       );
     });
@@ -289,7 +312,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         voicePath(key),
-        data: jsonEncode({'action': 'leave'}),
+        data: jsonEncode({'type': 'leave'}),
         options: Options(contentType: 'application/json'),
       );
     });

@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.418+422 (2026-06-27)
+
+### Sesli sohbet — API dokümantasyonu (Agora + SSE)
+
+- **Agora:** App ID only (`f1cf983a38114b04a4e9102c303ba63e`), token `''`, kanal = oda `roomId`
+- **Giriş akışı:** POST presence → GET messages → SSE → heartbeat 25 sn
+- **Voice:** `POST /voice` `{type: join|leave}` sonra Agora katılımı
+- **SSE:** presence tam liste, dj `musicUrl`, typing, gift, system
+- **Çıkış:** DELETE presence `?leave=1`, Agora leave/release
+- TRTC/LiveKit sesli oda yolu kaldırıldı (Agora tek motor)
+
 ## 1.0.417+421 (2026-06-27)
 
 ### Jeton, admin ödeme ve sesli oda düzeltmeleri

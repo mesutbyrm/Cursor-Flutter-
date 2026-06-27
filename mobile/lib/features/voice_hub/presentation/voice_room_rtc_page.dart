@@ -30,7 +30,6 @@ import '../../agora/presentation/providers/agora_providers.dart';
 import '../domain/entities/chat_room_presence.dart';
 import '../domain/entities/chat_room_sse_event.dart';
 import '../domain/entities/chat_room_my_permissions.dart';
-import '../../trtc/presentation/providers/trtc_providers.dart';
 import 'audio/voice_room_audio_coordinator.dart';
 import 'audio/voice_room_music_audio_session.dart';
 import 'providers/chat_room_providers.dart';
@@ -72,7 +71,7 @@ import '../video/presentation/widgets/room_video_overlay.dart';
 import '../video/presentation/widgets/youtube_video_background.dart';
 import '../video/presentation/room_video_controller.dart';
 
-/// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
+/// Sesli sohbet odası — Agora (App ID only) + canlifal.com chat API.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
   const VoiceRoomRtcPage({super.key, required this.room});
 
@@ -87,7 +86,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   final _agora = AgoraRoomManager();
   StreamSubscription<LiveGiftEvent>? _giftSub;
   StreamSubscription<ChatRoomSseEvent>? _sseParticipantsSub;
-  final _participants = <String, Map<String, dynamic>>{};
+  var _participants = <String, Map<String, dynamic>>{};
   var _agoraReady = false;
   final _messageCtrl = TextEditingController();
   var _audioJoining = false;
@@ -148,8 +147,29 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _sseParticipantsSub =
         ref.read(voiceRoomSseForProvider(_liveRoomKey)).events.listen((event) {
       if (!mounted) return;
+      if (event.type == ChatRoomSseEventType.presence) {
+        final raw = event.data['users'];
+        if (raw is! List) return;
+        setState(() {
+          _participants = {
+            for (final u in raw.whereType<Map>())
+              (u['id']?.toString() ?? ''): Map<String, dynamic>.from(u),
+          }..removeWhere((key, _) => key.isEmpty);
+        });
+        return;
+      }
       final data = event.data;
       if (event.type == ChatRoomSseEventType.userJoin) {
+        final users = data['users'];
+        if (users is List && users.isNotEmpty) {
+          setState(() {
+            _participants = {
+              for (final u in users.whereType<Map>())
+                (u['id']?.toString() ?? ''): Map<String, dynamic>.from(u),
+            }..removeWhere((key, _) => key.isEmpty);
+          });
+          return;
+        }
         final userId =
             data['userId']?.toString() ?? data['id']?.toString() ?? '';
         if (userId.isEmpty) return;
@@ -157,6 +177,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _participants[userId] = data;
         });
       } else if (event.type == ChatRoomSseEventType.userLeave) {
+        final users = data['users'];
+        if (users is List && users.isNotEmpty) {
+          setState(() {
+            _participants = {
+              for (final u in users.whereType<Map>())
+                (u['id']?.toString() ?? ''): Map<String, dynamic>.from(u),
+            }..removeWhere((key, _) => key.isEmpty);
+          });
+          return;
+        }
         final userId =
             data['userId']?.toString() ?? data['id']?.toString() ?? '';
         if (userId.isEmpty) return;
@@ -315,12 +345,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final muted = !_isMicMuted;
     _audio?.setMicEnabled(!muted);
     setState(() => _isMicMuted = muted);
-    final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
-    if (muted) {
-      unawaited(liveCtrl.leaveVoiceSession());
-    } else {
-      unawaited(liveCtrl.joinVoiceSession());
-    }
   }
 
   void _onChatChanged(String text) {
@@ -450,24 +474,20 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         room: room,
         server: liveForPerms.serverPermissions,
       );
-      final prefetched = VoiceRoomEntryPerf.takeTrtc(
-        userId: user.id,
-        roomId: room.trtcRoomId,
-      );
+      final isOwner =
+          _isRoomOwner(user.id, user.username, room) || perms.isSiteAdmin;
+      final roomId = room.apiRoomKey;
       await _audio!.join(
-        trtcRoomId: room.trtcRoomId,
-        userId: user.id,
-        isHost: _isRoomOwner(user.id, user.username, room) || perms.isSiteAdmin,
-        liveKitRemote: ref.read(liveKitRemoteProvider),
-        trtcRemote: ref.read(trtcRemoteProvider),
-        prefetchedTrtc: prefetched,
+        roomId: roomId,
+        remote: ref.read(chatRoomRemoteProvider),
+        enableMic: isOwner,
       );
-      if (perms.isSiteAdmin) {
+      if (isOwner) {
         _audio?.setMicEnabled(true);
       }
       if (mounted) {
         ref.read(voiceRoomDiagnosticProvider.notifier).setTrtc(
-              roomId: room.trtcRoomId,
+              roomId: roomId,
               result: 1,
             );
         ref.read(voiceRoomDiagnosticProvider.notifier).setAudioReady(true);
@@ -477,11 +497,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _audioReady = true;
           _isMicMuted = !_audio!.micOn;
         });
-        if (!_isMicMuted) {
-          unawaited(
-            ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).joinVoiceSession(),
-          );
-        }
         _startGiftRealtime();
         ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(true);
         _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);

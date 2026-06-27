@@ -45,7 +45,7 @@ class ChatRoomSseService extends BaseSseService {
   String streamPath() => ApiEndpoints.chatRoomStream(_roomId ?? '');
 
   @override
-  bool get requiresAuth => false;
+  bool get requiresAuth => true;
 
   String? get activeRoomId => _roomId;
 
@@ -183,16 +183,21 @@ class ChatRoomSseService extends BaseSseService {
         if (users != null && users.isNotEmpty) _onPresence?.call(users);
         return;
       case ChatRoomSseEventType.userJoin:
+        // Üretimde ayrı join yok — tam liste `presence` ile gelir.
+        final snapshot = _parseUsers(map);
+        if (snapshot != null && snapshot.isNotEmpty) {
+          _onPresence?.call(snapshot);
+          return;
+        }
         _onUserJoin?.call(map);
-        final joined = _parseUsers(map);
-        if (joined != null && joined.isNotEmpty) _onPresence?.call(joined);
         return;
       case ChatRoomSseEventType.userLeave:
-        _onUserLeave?.call(map);
         final remaining = _parseUsers(map);
         if (remaining != null && remaining.isNotEmpty) {
           _onPresence?.call(remaining);
+          return;
         }
+        _onUserLeave?.call(map);
         return;
       case ChatRoomSseEventType.roomUpdate:
         _onRoomUpdate?.call(map);

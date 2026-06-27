@@ -14,7 +14,6 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
-import '../../../trtc/presentation/providers/trtc_providers.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/voice_official_join.dart';
 import '../../../gifts/domain/premium_gift_catalog_2026.dart';
@@ -200,16 +199,12 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         room: room,
         server: live.serverPermissions,
       );
+      final isOwner = _isRoomOwner(user, room) || perms.isSiteAdmin;
+      final roomId = room.apiRoomKey;
       await _audio!.join(
-        trtcRoomId: room.trtcRoomId,
-        userId: user.id,
-        isHost: _isRoomOwner(user, room) || perms.isSiteAdmin,
-        liveKitRemote: ref.read(liveKitRemoteProvider),
-        trtcRemote: ref.read(trtcRemoteProvider),
-        prefetchedTrtc: VoiceRoomEntryPerf.takeTrtc(
-          userId: user.id,
-          roomId: room.trtcRoomId,
-        ),
+        roomId: roomId,
+        remote: ref.read(chatRoomRemoteProvider),
+        enableMic: isOwner,
       );
       if (!mounted) return;
       unawaited(VoiceRoomMusicAudioSession.activateForPlayback());
@@ -219,11 +214,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         _audioReady = true;
         _isMicMuted = !_audio!.micOn;
       });
-      if (!_isMicMuted) {
-        unawaited(
-          ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).joinVoiceSession(),
-        );
-      }
       _startPremiumRealtime(user);
     } catch (e) {
       if (!mounted) return;
@@ -245,12 +235,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final muted = !_isMicMuted;
     _audio!.setMicEnabled(!muted);
     setState(() => _isMicMuted = muted);
-    final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
-    if (muted) {
-      unawaited(liveCtrl.leaveVoiceSession());
-    } else {
-      unawaited(liveCtrl.joinVoiceSession());
-    }
   }
 
   void _onChatChanged(String text) {
