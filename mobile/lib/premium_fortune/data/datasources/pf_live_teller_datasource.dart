@@ -71,8 +71,9 @@ class PfLiveTellerDatasource {
     );
   }
 
+  /// Sesli görüşme kanalı (Premium Fal).
   Future<String> startVoiceCall(String userId, String tellerId) async {
-    return 'voice_room_pf_${tellerId}_$userId';
+    return 'pf_call_${tellerId}_$userId';
   }
 
   Future<String> startVideoCall(String userId, String tellerId) async {

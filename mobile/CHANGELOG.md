@@ -1,6 +1,14 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.384+388 (2026-06-27)
+
+### Sesli oda kaldırma — Android derleme düzeltmesi
+
+- **MainActivity:** `FlutterActivity` (audio_service kaldırıldı)
+- **AndroidManifest:** AudioService / MediaButtonReceiver / media playback FGS kaldırıldı
+- **ExoPlayerProbe:** sesli oda müzik teşhisi silindi
+
 ## 1.0.383+387 (2026-06-27)
 
 ### Sesli sohbet odaları tamamen kaldırıldı

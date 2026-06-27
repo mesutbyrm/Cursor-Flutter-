@@ -4,7 +4,6 @@ enum ReportTargetType {
   post,
   message,
   liveStream,
-  voiceRoom,
   conversation,
 }
 
@@ -27,7 +26,6 @@ class ReportTarget {
         ReportTargetType.post => 'Gönderi',
         ReportTargetType.message => 'Mesaj',
         ReportTargetType.liveStream => 'Canlı yayın',
-        ReportTargetType.voiceRoom => 'Sesli oda',
         ReportTargetType.conversation => 'Sohbet',
       };
 
@@ -36,7 +34,6 @@ class ReportTarget {
         ReportTargetType.post => 'post',
         ReportTargetType.message => 'message',
         ReportTargetType.liveStream => 'live_stream',
-        ReportTargetType.voiceRoom => 'voice_room',
         ReportTargetType.conversation => 'conversation',
       };
 }
