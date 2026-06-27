@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.383+387 (2026-06-27)
+
+### Sesli sohbet odaları tamamen kaldırıldı
+
+- **Kaldırılan modüller:** `voice_hub/`, `livekit/`, sesli oda entity/widget/sayfa dosyaları
+- **Canlı sekmesi:** yalnızca video yayınları; sesli oda sekmesi ve global müzik çubuğu yok
+- **Rotalar:** `/voice-rooms`, `/voice-room/:id`, PK sayfaları (`/pk/*`, `/live/pk*`) kaldırıldı
+- **Ana sayfa / keşfet / sosyal:** sesli oda bölümleri ve kısayollar canlı yayına yönlendirildi
+- **Bağımlılıklar:** `livekit_client`, `just_audio`, `audio_service`, `audio_session`, `youtube_explode_dart`, `flutter_webrtc` kaldırıldı
+
 ## 1.0.382+386 (2026-06-26)
 
 ### Sesli oda müzik — backend proxy parity + ProviderScope

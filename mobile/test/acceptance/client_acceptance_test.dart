@@ -4,29 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:canlifal_social/core/storage/theme_preferences.dart';
 import 'package:canlifal_social/core/theme/app_theme.dart';
-import 'package:canlifal_social/features/voice_hub/domain/voice_music_sync.dart';
 
-/// İstemci tarafı acceptance testleri — 18, 19, 20.
+/// İstemci tarafı acceptance testleri — 19, 20.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  group('18 — Müzik sistemi (!istek)', () {
-    test('!istek komutu parse edilir', () {
-      expect(
-        VoiceMusicSync.parseIstekSongTitle('!istek Tarkan - Kış Güneşi'),
-        'Tarkan - Kış Güneşi',
-      );
-    });
-
-    test('SONG_REQUEST_FREE kuyruk satırı tanınır', () {
-      expect(
-        VoiceMusicSync.isQueueUpdateMessage(
-          '[SONG_REQUEST_FREE] abc|Title|||',
-        ),
-        isTrue,
-      );
-    });
-  });
 
   group('19 — Tema değiştirme', () {
     setUp(() async {
@@ -78,11 +59,7 @@ void main() {
         AppTheme.amoled();
       }
       stopwatch.stop();
-      expect(
-        stopwatch.elapsedMilliseconds,
-        lessThan(2000),
-        reason: 'Tema oluşturma çok yavaş',
-      );
+      expect(stopwatch.elapsedMilliseconds, lessThan(2000));
     });
   });
 }

@@ -43,16 +43,4 @@ class Env {
 
   static bool get hasTikTokLogin =>
       tiktokClientKey.trim().isNotEmpty && !kIsWeb;
-
-  /// `auto` | `livekit` | `trtc` — sesli oda ses motoru.
-  static const String voiceEngine = String.fromEnvironment(
-    'VOICE_ENGINE',
-    defaultValue: 'auto',
-  );
-
-  static bool get preferLiveKit =>
-      voiceEngine == 'livekit' ||
-      (voiceEngine == 'auto' && !kIsWeb);
-
-  static bool get forceTrtc => voiceEngine == 'trtc';
 }

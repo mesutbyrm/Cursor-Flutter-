@@ -113,7 +113,6 @@ List<Override> _diagnosticOverrides(Override authOverride) {
     homeFortuneCardsProvider.overrideWith((ref) async => []),
     homeAdvisorsProvider.overrideWith((ref) async => []),
     homeLiveStreamsProvider.overrideWith((ref) async => []),
-    homeVoiceRoomsProvider.overrideWith((ref) async => []),
     homeGamesProvider.overrideWith((ref) async => []),
     homeDailyRewardsProvider.overrideWith((ref) async => []),
     homeTrendVideosProvider.overrideWith((ref) async => []),

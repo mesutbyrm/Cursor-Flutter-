@@ -1,19 +1,7 @@
 import '../entities/live_stream_entity.dart';
-import '../entities/voice_room_entity.dart';
 
 abstract class LiveRepository {
   Future<List<LiveStreamEntity>> fetchStreams({int page = 1, String? category});
-
-  Future<List<VoiceRoomEntity>> fetchVoiceRooms();
-
-  Future<VoiceRoomEntity?> fetchVoiceRoomById(String id);
-
-  /// canlifal.com — ücretsiz / normal (100) / VIP (5000) jeton ile sesli sohbet odası aç.
-  Future<VoiceRoomEntity> createVoiceChatRoom({
-    bool vip = false,
-    String? roomType,
-    String? roomName,
-  });
 
   Future<String> createVideoStream({
     required String title,

@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
-import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../social/domain/entities/social_story_ring_entity.dart';
 import '../../../social/presentation/providers/social_providers.dart';
@@ -33,11 +32,10 @@ final platformStatsProvider = FutureProvider<PlatformStatsEntity>((ref) async {
     );
   }
 
-  final rooms = await ref.watch(voiceRoomsProvider.future);
   final live = await ref.watch(liveStreamsProvider.future);
   final rings = await ref.watch(socialStoryRingsProvider.future);
 
-  return _aggregate(rooms, live, rings);
+  return _aggregate(live, rings);
 });
 
 Future<List<RecentLoginEntity>> _recentFromStories(Ref ref) async {
@@ -67,16 +65,13 @@ List<RecentLoginEntity> _ringsToRecent(List<SocialStoryRingEntity> rings) {
 }
 
 PlatformStatsEntity _aggregate(
-  List<VoiceRoomEntity> rooms,
   List<LiveStreamEntity> live,
   List<SocialStoryRingEntity> rings,
 ) {
-  final voiceOnline =
-      rooms.fold<int>(0, (s, r) => s + r.displayOnline);
   final liveViewers =
       live.fold<int>(0, (s, l) => s + (l.viewerCount > 0 ? l.viewerCount : 1));
   final social = rings.length * 48;
-  final online = (voiceOnline + liveViewers + social + 1200).clamp(100, 99999);
+  final online = (liveViewers + social + 1200).clamp(100, 99999);
   final recent = _ringsToRecent(rings);
 
   return PlatformStatsEntity(
@@ -84,7 +79,7 @@ PlatformStatsEntity _aggregate(
     inGames: (online * 0.17).round(),
     inSocial: (online * 0.38).round(),
     onLive: live.isNotEmpty ? live.length * 42 : (online * 0.04).round(),
-    inVoiceChat: voiceOnline > 0 ? voiceOnline : (online * 0.18).round(),
+    inVoiceChat: (online * 0.18).round(),
     fortuneActive: (online * 0.12).round(),
     browsing: (online * 0.43).round(),
     todayLogins: (online * 1.74).round(),

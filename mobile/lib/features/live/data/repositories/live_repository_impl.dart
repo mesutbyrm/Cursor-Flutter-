@@ -1,5 +1,4 @@
 import '../../domain/entities/live_stream_entity.dart';
-import '../../domain/entities/voice_room_entity.dart';
 import '../../domain/repositories/live_repository.dart';
 import '../datasources/live_remote_datasource.dart';
 
@@ -11,25 +10,6 @@ class LiveRepositoryImpl implements LiveRepository {
   @override
   Future<List<LiveStreamEntity>> fetchStreams({int page = 1, String? category}) =>
       _remote.fetch(page: page, category: category);
-
-  @override
-  Future<List<VoiceRoomEntity>> fetchVoiceRooms() => _remote.fetchVoiceRooms();
-
-  @override
-  Future<VoiceRoomEntity?> fetchVoiceRoomById(String id) =>
-      _remote.fetchVoiceRoomById(id);
-
-  @override
-  Future<VoiceRoomEntity> createVoiceChatRoom({
-    bool vip = false,
-    String? roomType,
-    String? roomName,
-  }) =>
-      _remote.createVoiceChatRoom(
-        vip: vip,
-        roomType: roomType,
-        roomName: roomName,
-      );
 
   @override
   Future<String> createVideoStream({

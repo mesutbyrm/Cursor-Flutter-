@@ -14,7 +14,6 @@ import '../../domain/entities/online_advisor_entity.dart';
 import '../../domain/repositories/home_repository.dart';
 import '../../../live_psychics/presentation/controllers/psychics_list_controller.dart';
 import '../../../live/domain/entities/live_stream_entity.dart';
-import '../../../live/domain/entities/voice_room_entity.dart';
 
 final homeRemoteProvider = Provider<HomeRemoteDataSource>((ref) {
   return HomeRemoteDataSource(ref.watch(dioProvider));
@@ -47,11 +46,6 @@ final homeLiveStreamsProvider =
   return ref.watch(homeRepositoryProvider).fetchLiveStreams();
 });
 
-final homeVoiceRoomsProvider =
-    FutureProvider<List<VoiceRoomEntity>>((ref) async {
-  return ref.watch(homeRepositoryProvider).fetchVoiceRooms();
-});
-
 final homeGamesProvider = FutureProvider<List<HomeGameEntity>>((ref) async {
   return ref.watch(homeRepositoryProvider).fetchGames();
 });
@@ -72,7 +66,6 @@ Future<void> refreshHomeData(WidgetRef ref) async {
   ref.invalidate(psychicsListControllerProvider);
   ref.invalidate(homeAdvisorsProvider);
   ref.invalidate(homeLiveStreamsProvider);
-  ref.invalidate(homeVoiceRoomsProvider);
   ref.invalidate(homeGamesProvider);
   ref.invalidate(homeDailyRewardsProvider);
   ref.invalidate(homeFortuneCardsProvider);
@@ -85,7 +78,6 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(psychicsListControllerProvider.future),
     ref.refresh(homeAdvisorsProvider.future),
     ref.refresh(homeLiveStreamsProvider.future),
-    ref.refresh(homeVoiceRoomsProvider.future),
     ref.refresh(homeGamesProvider.future),
     ref.refresh(homeDailyRewardsProvider.future),
     ref.refresh(homeFortuneCardsProvider.future),

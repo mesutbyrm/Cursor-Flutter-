@@ -8,9 +8,8 @@ import '../../../live/presentation/gifts/widgets/floating_gift_particles.dart';
 import '../../../live/presentation/gifts/widgets/gift_fullscreen_overlay.dart';
 import '../../../live/presentation/gifts/widgets/gift_notification_stack.dart';
 import '../widgets/premium_gift_panel.dart';
-import '../widgets/room_gift_panel.dart';
 
-/// Web’e gitmeden hediye gönder — canlı yayın veya oda.
+/// Web’e gitmeden hediye gönder — canlı yayın.
 class GiftSendPage extends ConsumerStatefulWidget {
   const GiftSendPage({
     super.key,
@@ -48,16 +47,10 @@ class _GiftSendPageState extends ConsumerState<GiftSendPage> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).valueOrNull;
     final giftCtrl = ref.watch(liveGiftControllerProvider);
     final streamId = widget.streamId ?? '';
-    final roomId = widget.roomId ?? '';
 
     ref.listen(liveGiftControllerProvider, (_, next) {
       final e = next.activeFullscreen;
@@ -90,18 +83,12 @@ class _GiftSendPageState extends ConsumerState<GiftSendPage> {
                 onClose: () => Navigator.of(context).pop(),
               ),
             )
-          else if (roomId.isNotEmpty)
-            RoomGiftPanel(
-              roomId: roomId,
-              receiverName: widget.receiverName,
-              onSent: () => Navigator.of(context).pop(),
-            )
           else
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Hediye göndermek için geçerli bir yayın veya oda gerekli.',
+                  'Hediye göndermek için geçerli bir canlı yayın gerekli.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: context.colors.onSurfaceMuted.withValues(alpha: 0.95),

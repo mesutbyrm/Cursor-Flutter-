@@ -12,8 +12,6 @@ import '../../features/live_psychics/presentation/widgets/psychic_session_ended_
 import '../../features/profile/presentation/widgets/jeton_payment_status_listener.dart';
 import '../../features/shell/presentation/app_bottom_nav_host.dart';
 import '../../features/video_call/presentation/incoming_video_call_screen.dart';
-import '../../features/voice_hub/presentation/providers/voice_rooms_presence_provider.dart';
-import '../../features/voice_hub/presentation/widgets/voice_room/voice_room_global_music_bar.dart';
 import '../router/app_router.dart';
 
 /// MaterialApp.router [builder] içeriği — [ListenableBuilder] kullanmaz.
@@ -98,8 +96,6 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
     final location =
         router.routerDelegate.currentConfiguration.uri.path;
     final isAuthRoute = AuthRoutePaths.isPublicAuthPath(location);
-    final showGlobalMusic =
-        VoiceRoomGlobalMusicBar.shouldShowForRoute(location) && !isAuthRoute;
 
     var body = widget.child;
     if (!isAuthRoute) {
@@ -110,21 +106,6 @@ class _MainAppShellState extends ConsumerState<MainAppShell> {
       body = AppBottomNavHost(location: location, child: body);
     }
 
-    // SSE presence — keşfet online sayıları (poll yerine).
-    if (!isAuthRoute) {
-      ref.watch(voiceRoomsPresenceProvider);
-    }
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        body,
-        if (showGlobalMusic)
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: VoiceRoomGlobalMusicBar(routePath: location),
-          ),
-      ],
-    );
+    return body;
   }
 }

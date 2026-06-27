@@ -17,8 +17,6 @@ import 'core/offline/api_cache_store.dart';
 import 'core/storage/local_cache.dart';
 import 'core/storage/theme_preferences.dart';
 import 'features/fortune/data/services/rewarded_ad_service.dart';
-import 'features/voice_hub/data/services/voice_room_debug_log.dart';
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   PaintingBinding.instance.imageCache
@@ -83,6 +81,9 @@ Future<void> main() async {
         ),
       );
     },
-    (error, stack) => VoiceRoomDebugLog.recordZoneError(error, stack),
+    (error, stack) {
+      debugPrint('Uncaught zone error: $error\n$stack');
+      CrashReportingBootstrap.recordZoneError(error, stack);
+    },
   );
 }

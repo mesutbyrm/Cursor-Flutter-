@@ -59,16 +59,6 @@ class GrowthProgressEntity extends Equatable {
           icon: '🎁',
         ),
         GrowthTaskEntity(
-          id: 'voice-room',
-          title: 'Bir sesli odaya katıl',
-          description: 'Sohbet odalarında görünür ol, arkadaş çevreni büyüt.',
-          current: stats.following > 0 ? 1 : 0,
-          target: 1,
-          rewardLabel: '+60 XP',
-          route: '/voice-rooms',
-          icon: '🎙️',
-        ),
-        GrowthTaskEntity(
           id: 'live-discovery',
           title: 'Canlı yayınları keşfet',
           description: 'Yayınlara katıl, beğeni ve hediye etkileşimini artır.',

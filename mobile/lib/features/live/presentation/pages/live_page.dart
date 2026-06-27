@@ -11,9 +11,7 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/messages_notifications_actions.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../shell/presentation/widgets/branch_quick_actions.dart';
-import '../../../voice_hub/presentation/voice_rooms_body.dart';
 import '../providers/live_streams_list_notifier.dart';
-import '../providers/live_providers.dart';
 import '../utils/open_live_stream.dart';
 import '../widgets/live_discover_category_chips.dart';
 import '../widgets/live_stream_list_tile.dart';
@@ -25,35 +23,25 @@ class LivePage extends ConsumerStatefulWidget {
   ConsumerState<LivePage> createState() => _LivePageState();
 }
 
-class _LivePageState extends ConsumerState<LivePage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tab;
+class _LivePageState extends ConsumerState<LivePage> {
   final _liveScroll = ScrollController();
   Timer? _listRefresh;
-  Timer? _voiceListRefresh;
 
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 2, vsync: this);
     _liveScroll.addListener(_onLiveScroll);
     _listRefresh = Timer.periodic(const Duration(seconds: 12), (_) {
-      if (!mounted || _tab.index != 0) return;
+      if (!mounted) return;
       ref.read(liveStreamsListNotifierProvider.notifier).refresh();
-    });
-    _voiceListRefresh = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (!mounted || _tab.index != 1) return;
-      ref.invalidate(voiceRoomsProvider);
     });
   }
 
   @override
   void dispose() {
     _listRefresh?.cancel();
-    _voiceListRefresh?.cancel();
     _liveScroll.removeListener(_onLiveScroll);
     _liveScroll.dispose();
-    _tab.dispose();
     super.dispose();
   }
 
@@ -67,7 +55,6 @@ class _LivePageState extends ConsumerState<LivePage>
 
   void _refresh() {
     ref.read(liveStreamsListNotifierProvider.notifier).refresh();
-    ref.invalidate(voiceRoomsProvider);
   }
 
   @override
@@ -83,7 +70,7 @@ class _LivePageState extends ConsumerState<LivePage>
             SizedBox(height: top + 8),
             DiscoverTabHeader(
               title: 'Canlı',
-              subtitle: 'Yayınlar ve sesli sohbet odaları',
+              subtitle: 'Canlı video yayınları',
               actions: [
                 const MessagesNotificationsActions(spacing: 4),
                 DiscoverIconButton(
@@ -97,71 +84,12 @@ class _LivePageState extends ConsumerState<LivePage>
                 ),
               ],
             ),
-            DiscoverSegmentedTabs(
-              controller: _tab,
-              tabs: const [
-                (label: 'Yayınlar', icon: Icons.live_tv_rounded),
-                (label: 'Sohbet', icon: Icons.headset_mic_rounded),
-              ],
-            ),
             Expanded(
-              child: TabBarView(
-                controller: _tab,
-                children: [
-                  _LiveStreamsTab(scrollController: _liveScroll),
-                  _LazyVoiceTab(tabController: _tab),
-                ],
-              ),
+              child: _LiveStreamsTab(scrollController: _liveScroll),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _LazyVoiceTab extends StatelessWidget {
-  const _LazyVoiceTab({required this.tabController});
-
-  final TabController tabController;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: tabController,
-      builder: (context, _) {
-        if (tabController.index != 1) return const SizedBox.shrink();
-        return const _VoiceTab();
-      },
-    );
-  }
-}
-
-class _VoiceTab extends StatefulWidget {
-  const _VoiceTab();
-
-  @override
-  State<_VoiceTab> createState() => _VoiceTabState();
-}
-
-class _VoiceTabState extends State<_VoiceTab> with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: LiveVoiceBranchQuickActions(),
-        ),
-        Expanded(
-          child: VoiceRoomsBody(embeddedInLiveShellTab: true),
-        ),
-      ],
     );
   }
 }
@@ -215,7 +143,8 @@ class _LiveStreamsTab extends ConsumerWidget {
                   .hasMore;
               final extra = hasMore ? 1 : 0;
               return ListView.separated(
-                cacheExtent: ListPerf.cacheExtent, controller: scrollController,
+                cacheExtent: ListPerf.cacheExtent,
+                controller: scrollController,
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
                 physics: ListPerf.listPhysics,
                 itemCount: streams.length + extra,

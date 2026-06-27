@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 
 import '../firebase/firebase_bootstrap.dart';
 import '../firebase/firebase_options.dart';
-import '../../features/voice_hub/data/services/voice_room_debug_log.dart';
 import 'sentry_bootstrap.dart';
 
 /// Yakalanmamış hatalar — Crashlytics + Sentry (hazır).
@@ -19,21 +18,20 @@ abstract final class CrashReportingBootstrap {
 
     FlutterError.onError = (details) {
       FlutterError.presentError(details);
-      VoiceRoomDebugLog.recordFlutterError(
-        details.exception,
-        details.stack,
-      );
       _recordFlutterError(details);
     };
 
     PlatformDispatcher.instance.onError = (error, stack) {
-      VoiceRoomDebugLog.recordPlatformError(error, stack);
       _recordError(error, stack, fatal: true);
       return true;
     };
 
     await SentryBootstrap.init();
     _ready = true;
+  }
+
+  static void recordZoneError(Object error, StackTrace stack) {
+    _recordError(error, stack, fatal: true);
   }
 
   static void _recordFlutterError(FlutterErrorDetails details) {

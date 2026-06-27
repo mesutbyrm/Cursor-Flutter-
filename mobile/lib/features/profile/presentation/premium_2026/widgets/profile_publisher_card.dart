@@ -40,7 +40,7 @@ class ProfilePublisherCard extends StatelessWidget {
       (Icons.mic_external_on_rounded, 'Ekipman', onEquipment),
       (Icons.account_balance_wallet_rounded, 'Gelirler', onEarnings),
       (Icons.card_giftcard_rounded, 'Hediyeler', onGifts),
-      (Icons.sports_martial_arts_rounded, 'PK Geçmişi', onPkHistory ?? () => context.push('/pk/history')),
+      (Icons.sports_martial_arts_rounded, 'PK Geçmişi', onPkHistory ?? () => context.go('/live')),
       (Icons.dashboard_rounded, 'Panele Git', onPanel ?? () => context.push('/live/type')),
     ];
 

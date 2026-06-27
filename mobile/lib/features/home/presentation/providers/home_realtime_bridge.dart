@@ -30,9 +30,7 @@ class HomeRealtimeBridge {
   void _tick() {
     if (_disposed || _pollTimer == null) return;
     _ref.invalidate(homeLiveStreamsProvider);
-    _ref.invalidate(homeVoiceRoomsProvider);
     _ref.invalidate(liveStreamsProvider);
-    // voiceRoomsProvider: SSE presence (voiceRoomsPresenceProvider) ile güncellenir.
   }
 
   void dispose() {

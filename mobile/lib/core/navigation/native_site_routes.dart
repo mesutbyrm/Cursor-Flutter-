@@ -47,7 +47,7 @@ void openNativeSitePath(BuildContext context, String path) {
     return;
   }
   if (p.contains('sohbet') || p.contains('voice')) {
-    context.push('/voice-rooms');
+    context.go('/live');
     return;
   }
   if (p.startsWith('/canli-falcilar')) {

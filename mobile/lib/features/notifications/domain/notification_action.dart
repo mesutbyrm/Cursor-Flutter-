@@ -67,11 +67,7 @@ void navigateFromNotification(GoRouter router, AppNotificationEntity n) {
     case 'voice_room':
     case 'voice':
     case 'chat_room':
-      if (n.targetId != null && n.targetId!.isNotEmpty) {
-        router.push('/voice-room/${n.targetId}');
-        return;
-      }
-      router.go('/voice-rooms');
+      router.go('/live');
       return;
     case 'follow':
     case 'mention':

@@ -69,9 +69,9 @@ class ProfileQuickActions extends ConsumerWidget {
         ic: null,
       ),
       (
-        icon: Icons.graphic_eq_rounded,
-        label: 'Sesli Odalar',
-        onTap: () => context.push('/voice-rooms'),
+        icon: Icons.live_tv_rounded,
+        label: 'Canlı Yayın',
+        onTap: () => context.go('/live'),
         g: [const Color(0xFF1E2A38), const Color(0xFF101820)],
         ic: null,
       ),
