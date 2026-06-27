@@ -444,23 +444,42 @@ class VoiceRoomLiveController
     );
   }
 
-  /// Hızlı giriş — SSE hemen; presence/DJ arka planda.
+  /// Odaya giriş — POST presence → GET messages → SSE → heartbeat.
   Future<void> _beginRoomSession() async {
     ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
     unawaited(VoiceRoomMusicAudioSession.ensureConfigured());
     state = state.copyWith(loading: false);
+
+    try {
+      await _joinPresence();
+      await _loadInitialMessages();
+    } catch (_) {
+      state = state.copyWith(loading: false);
+    }
+
     _startSse();
     _schedulePoll(sseConnected: false);
-
     unawaited(_bootstrapRoomData());
+  }
+
+  Future<void> _loadInitialMessages() async {
+    if (_roomKey.isEmpty) return;
+    try {
+      final bundle =
+          await ref.read(chatRoomRemoteProvider).fetchMessages(_roomKey);
+      state = state.copyWith(
+        messages: _mergeMessages(state.messages, bundle.messages),
+        serverPermissions: bundle.myPermissions ?? state.serverPermissions,
+        myNickname: bundle.myNickname ?? state.myNickname,
+        roomMuted: bundle.roomMuted ?? state.roomMuted,
+        loading: false,
+      );
+    } catch (_) {}
   }
 
   Future<void> _bootstrapRoomData() async {
     try {
-      await NetworkPerf.parallel([
-        _joinPresence(),
-        _warmBackgrounds(),
-      ]);
+      await _warmBackgrounds();
     } catch (_) {
       state = state.copyWith(loading: false);
     }
@@ -745,10 +764,8 @@ class VoiceRoomLiveController
       final user = ref.read(authControllerProvider).valueOrNull;
       final nick = _effectiveNickname(user);
       _presenceNickname = nick;
-      final joined = await ref.read(chatRoomRemoteProvider).joinPresence(
-            _roomKey,
-            nickname: nick,
-          );
+      await ref.read(chatRoomRemoteProvider).postPresence(_roomKey);
+      final joined = await ref.read(chatRoomRemoteProvider).fetchPresence(_roomKey);
       final merged = _mergeSelf(joined);
       VoiceRoomDebugLog.log('api.presence.join.ok', {
         'count': merged.length,
@@ -853,16 +870,7 @@ class VoiceRoomLiveController
     if (_roomKey.isEmpty) return;
     try {
       VoiceRoomDebugLog.log('api.presence.heartbeat', {'room': _roomKey});
-      final user = ref.read(authControllerProvider).valueOrNull;
-      final list = await ref.read(chatRoomRemoteProvider).joinPresence(
-            _roomKey,
-            nickname: _effectiveNickname(user),
-          );
-      final merged = _mergeSelf(list);
-      state = state.copyWith(
-        presence: _mergePresenceStable(merged, source: 'heartbeat'),
-        selfInRoom: true,
-      );
+      await ref.read(chatRoomRemoteProvider).presenceHeartbeat(_roomKey);
     } catch (e) {
       VoiceRoomDebugLog.log('api.presence.heartbeat.fail', {
         'error': e.toString(),
