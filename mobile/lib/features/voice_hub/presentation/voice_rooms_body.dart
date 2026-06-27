@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/bootstrap/startup_perf.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/ui/premium_2026/premium_immersive_background.dart';
 import '../../feed/presentation/widgets/discover_premium_2026/discover_premium_visual.dart';
 import '../../../core/widgets/discover_tab_layout.dart';
+import '../../live/domain/entities/live_stream_entity.dart';
 import '../../live/domain/entities/voice_room_entity.dart';
 import '../../live/domain/entities/voice_room_sort.dart';
 import '../../live/presentation/providers/live_providers.dart';
@@ -35,6 +37,10 @@ class VoiceRoomsBody extends ConsumerStatefulWidget {
 class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     with AutomaticKeepAliveClientMixin {
   Timer? _roomListRefresh;
+  Timer? _presenceTimer;
+  Timer? _liveStreamsTimer;
+  var _presenceReady = false;
+  var _liveStreamsReady = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -42,6 +48,12 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
   @override
   void initState() {
     super.initState();
+    _presenceTimer = Timer(LazyLoadPerf.voiceRoomPresence, () {
+      if (mounted) setState(() => _presenceReady = true);
+    });
+    _liveStreamsTimer = Timer(LazyLoadPerf.voiceRoomLiveStreams, () {
+      if (mounted) setState(() => _liveStreamsReady = true);
+    });
     _roomListRefresh = Timer.periodic(const Duration(seconds: 25), (_) {
       if (!mounted) return;
       ref.invalidate(voiceRoomsProvider);
@@ -50,6 +62,8 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
 
   @override
   void dispose() {
+    _presenceTimer?.cancel();
+    _liveStreamsTimer?.cancel();
     _roomListRefresh?.cancel();
     super.dispose();
   }
@@ -66,8 +80,12 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     }
 
     final rooms = ref.watch(voiceRoomsProvider);
-    final presence = ref.watch(voiceRoomsPresenceProvider);
-    final liveStreams = ref.watch(liveStreamsProvider);
+    final presence = _presenceReady
+        ? ref.watch(voiceRoomsPresenceProvider)
+        : const VoiceRoomsPresenceState();
+    final liveStreams = _liveStreamsReady && !VoiceRoomBasicMode.enabled
+        ? ref.watch(liveStreamsProvider)
+        : const AsyncValue<List<LiveStreamEntity>>.data([]);
     final mq = MediaQuery.paddingOf(context);
     final topPad = widget.embeddedInLiveShellTab
         ? 8.0

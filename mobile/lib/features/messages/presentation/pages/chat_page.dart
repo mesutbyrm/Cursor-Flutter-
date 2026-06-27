@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
@@ -29,6 +30,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   final _scroll = ScrollController();
   var _sending = false;
   var _peerTyping = false;
+  var _messagesReady = false;
   Timer? _typingHideTimer;
   Timer? _poll;
 
@@ -36,6 +38,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
+    Future<void>.delayed(LazyLoadPerf.chatMessages, () {
+      if (mounted) setState(() => _messagesReady = true);
+    });
     _poll = Timer.periodic(const Duration(seconds: 8), (_) {
       if (!mounted) return;
       ref
@@ -103,13 +108,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    final msgs =
-        ref.watch(chatMessagesListNotifierProvider(widget.conversationId));
+    if (_messagesReady) {
+      ref.listen(chatMessagesListNotifierProvider(widget.conversationId),
+          (_, next) {
+        next.whenData((_) => _scrollToEnd());
+      });
+    }
 
-    ref.listen(chatMessagesListNotifierProvider(widget.conversationId),
-        (_, next) {
-      next.whenData((_) => _scrollToEnd());
-    });
+    final msgs = _messagesReady
+        ? ref.watch(chatMessagesListNotifierProvider(widget.conversationId))
+        : null;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -151,7 +159,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               ),
             ),
             Expanded(
-              child: msgs.when(
+              child: msgs == null
+                  ? const DiscoverAccentLoader()
+                  : msgs.when(
                 loading: () => const DiscoverAccentLoader(),
                 error: (e, _) => DiscoverEmptyState(
                   icon: Icons.chat_bubble_outline,

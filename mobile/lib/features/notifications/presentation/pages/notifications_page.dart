@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
@@ -28,11 +29,15 @@ class NotificationsPage extends ConsumerStatefulWidget {
 
 class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   final _scroll = ScrollController();
+  var _listReady = false;
 
   @override
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
+    Future<void>.delayed(LazyLoadPerf.notificationsList, () {
+      if (mounted) setState(() => _listReady = true);
+    });
   }
 
   @override
@@ -57,8 +62,37 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final list = ref.watch(notificationsListNotifierProvider);
     final fmt = DateFormat('HH:mm');
+    Widget listBody;
+    if (!_listReady) {
+      listBody = const DiscoverAccentLoader();
+    } else {
+      listBody = ref.watch(notificationsListNotifierProvider).when(
+            loading: () => const DiscoverAccentLoader(),
+            error: (e, _) => DiscoverEmptyState(
+              icon: Icons.notifications_off_outlined,
+              message: ApiException.userMessage(e),
+              actionLabel: 'Yenile',
+              action: _refresh,
+            ),
+            data: (state) {
+              if (state.all.isEmpty) {
+                return const DiscoverEmptyState(
+                  icon: Icons.notifications_none_rounded,
+                  message: 'Henüz bildirimin yok.',
+                );
+              }
+              return _NotificationsListView(
+                state: state,
+                fmt: fmt,
+                scrollController: _scroll,
+                onLoadMore: () => ref
+                    .read(notificationsListNotifierProvider.notifier)
+                    .loadMore(),
+              );
+            },
+          );
+    }
 
     return DiscoverSubPage(
       title: 'Bildirimler',
@@ -82,33 +116,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const NotificationPermissionBanner(),
-          Expanded(
-            child: list.when(
-              loading: () => const DiscoverAccentLoader(),
-              error: (e, _) => DiscoverEmptyState(
-                icon: Icons.notifications_off_outlined,
-                message: ApiException.userMessage(e),
-                actionLabel: 'Yenile',
-                action: _refresh,
-              ),
-              data: (state) {
-                if (state.all.isEmpty) {
-                  return const DiscoverEmptyState(
-                    icon: Icons.notifications_none_rounded,
-                    message: 'Henüz bildirimin yok.',
-                  );
-                }
-                return _NotificationsListView(
-                  state: state,
-                  fmt: fmt,
-                  scrollController: _scroll,
-                  onLoadMore: () => ref
-                      .read(notificationsListNotifierProvider.notifier)
-                      .loadMore(),
-                );
-              },
-            ),
-          ),
+          Expanded(child: listBody),
         ],
       ),
     );

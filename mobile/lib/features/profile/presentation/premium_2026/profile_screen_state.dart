@@ -44,6 +44,38 @@ class ProfileScreenState extends Equatable {
   int get totalEarnings => stats.earningsJeton;
   int get profileViews => stats.profileViews;
 
+  ProfileScreenState copyWith({
+    UserEntity? user,
+    WalletBalances? wallet,
+    ProfileStatsEntity? stats,
+    UserLevelEntity? level,
+    int? jeton,
+    int? cfc,
+    int? adCredits,
+    String? membership,
+    int? membershipDays,
+    bool? isVip,
+    bool? isStaff,
+    bool? isAdmin,
+    bool? isApprovedTeller,
+  }) {
+    return ProfileScreenState(
+      user: user ?? this.user,
+      wallet: wallet ?? this.wallet,
+      stats: stats ?? this.stats,
+      level: level ?? this.level,
+      jeton: jeton ?? this.jeton,
+      cfc: cfc ?? this.cfc,
+      adCredits: adCredits ?? this.adCredits,
+      membership: membership ?? this.membership,
+      membershipDays: membershipDays ?? this.membershipDays,
+      isVip: isVip ?? this.isVip,
+      isStaff: isStaff ?? this.isStaff,
+      isAdmin: isAdmin ?? this.isAdmin,
+      isApprovedTeller: isApprovedTeller ?? this.isApprovedTeller,
+    );
+  }
+
   @override
   List<Object?> get props => [user.id, jeton, cfc, stats, level.level];
 }

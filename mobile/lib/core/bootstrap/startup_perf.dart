@@ -27,3 +27,43 @@ abstract final class StartupPerf {
   /// Ana sayfa periyodik poll köprüsü.
   static const homeRealtimeBridgeDelay = Duration(seconds: 4);
 }
+
+/// Ekran içi lazy load gecikmeleri — Görev 2.
+abstract final class LazyLoadPerf {
+  static const step = Duration(milliseconds: 80);
+
+  // Profil — üstten alta kademeli
+  static const profileStats = Duration(milliseconds: 80);
+  static const profileWallet = Duration(milliseconds: 160);
+  static const profilePremium = Duration(milliseconds: 240);
+  static const profilePublisher = Duration(milliseconds: 320);
+  static const profileTeller = Duration(milliseconds: 400);
+  static const profileAdmin = Duration(milliseconds: 480);
+  static const profileContent = Duration(milliseconds: 560);
+  static const profileSettings = Duration(milliseconds: 640);
+
+  // Canlı yayın listesi
+  static const liveList = Duration(milliseconds: 120);
+  static const liveCategories = Duration(milliseconds: 200);
+
+  // Canlı oda — RTC sonrası ek yükler
+  static const liveRoomGifts = Duration(milliseconds: 400);
+  static const liveRoomExtras = Duration(milliseconds: 700);
+
+  // Sesli oda listesi
+  static const voiceRoomList = Duration.zero;
+  static const voiceRoomPresence = Duration(milliseconds: 450);
+  static const voiceRoomLiveStreams = Duration(milliseconds: 900);
+
+  // Fal hub
+  static const fortuneHero = Duration.zero;
+  static const fortuneProphecy = Duration(milliseconds: 120);
+  static const fortuneTypes = Duration(milliseconds: 240);
+  static const fortuneDaily = Duration(milliseconds: 360);
+  static const fortuneBadges = Duration(milliseconds: 1000);
+
+  // Mesajlar / bildirimler
+  static const messagesList = Duration(milliseconds: 100);
+  static const chatMessages = Duration(milliseconds: 80);
+  static const notificationsList = Duration(milliseconds: 100);
+}

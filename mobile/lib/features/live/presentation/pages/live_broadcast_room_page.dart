@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/domain/entities/user_entity.dart';
@@ -111,8 +112,12 @@ class _LiveBroadcastRoomPageState extends ConsumerState<LiveBroadcastRoomPage> {
           ..loadInitialLikeCount();
       }
       _initAgora();
-      _initGifts();
-      _initStreamExtras();
+      Timer(LazyLoadPerf.liveRoomGifts, () {
+        if (mounted) _initGifts();
+      });
+      Timer(LazyLoadPerf.liveRoomExtras, () {
+        if (mounted) _initStreamExtras();
+      });
     });
   }
 

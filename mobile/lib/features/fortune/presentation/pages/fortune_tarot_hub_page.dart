@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/bootstrap/startup_perf.dart';
+import '../../../../core/performance/lazy_screen_section.dart';
 import '../../../../core/ui/premium_2026/premium_2026.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_refresh.dart';
@@ -70,9 +72,24 @@ class _FortuneTarotHubPageState extends ConsumerState<FortuneTarotHubPage> {
             slivers: [
               const SliverToBoxAdapter(child: UltraFortuneAppBar()),
               const SliverToBoxAdapter(child: UltraFortuneHeroSection()),
-              const SliverToBoxAdapter(child: UltraFortuneProphecyCard()),
-              const SliverToBoxAdapter(child: UltraFortuneTypesSection()),
-              const SliverToBoxAdapter(child: UltraFortuneDailyEnergy()),
+              const SliverToBoxAdapter(
+                child: LazyScreenSection(
+                  delay: LazyLoadPerf.fortuneProphecy,
+                  child: UltraFortuneProphecyCard(),
+                ),
+              ),
+              const SliverToBoxAdapter(
+                child: LazyScreenSection(
+                  delay: LazyLoadPerf.fortuneTypes,
+                  child: UltraFortuneTypesSection(),
+                ),
+              ),
+              const SliverToBoxAdapter(
+                child: LazyScreenSection(
+                  delay: LazyLoadPerf.fortuneDaily,
+                  child: UltraFortuneDailyEnergy(),
+                ),
+              ),
               SliverToBoxAdapter(child: SizedBox(height: bottom + 100)),
             ],
           ),

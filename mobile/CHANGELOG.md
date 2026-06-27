@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.393+397 (2026-06-27)
+
+### Performans — Görev 2: Lazy loading
+
+- **`LazyScreenSection` / `LazyScreenGate`:** ekran açıldıktan sonra kademeli mount
+- **Profil:** header anında; istatistik → cüzdan → premium → yayıncı → içerik sırayla (80–640 ms)
+- **Canlı yayın:** liste 120 ms, kategoriler 200 ms; oda içi hediye/PK 400–700 ms
+- **Sesli oda listesi:** odalar önce; SSE presence 450 ms; canlı yayın şeridi 900 ms
+- **Fal hub:** hero anında; kehanet/türler/günlük enerji kademeli; rozetler 1 sn
+- **Mesajlar / bildirimler / sohbet:** liste API 80–100 ms gecikmeli
+
 ## 1.0.392+396 (2026-06-27)
 
 ### Performans — Görev 1: Uygulama açılışı
