@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/performance/network_perf.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../social/presentation/providers/social_providers.dart';
@@ -80,7 +81,7 @@ Future<void> refreshHomeData(WidgetRef ref) async {
   ref.invalidate(socialStoryRingsProvider);
   ref.invalidate(shortsFeedProvider);
 
-  await Future.wait([
+  await NetworkPerf.parallel([
     ref.refresh(homeBannersProvider.future),
     ref.refresh(psychicsListControllerProvider.future),
     ref.refresh(homeAdvisorsProvider.future),
@@ -91,5 +92,6 @@ Future<void> refreshHomeData(WidgetRef ref) async {
     ref.refresh(homeFortuneCardsProvider.future),
     ref.refresh(homeTrendVideosProvider.future),
     ref.refresh(socialStoryRingsProvider.future),
+    ref.refresh(shortsFeedProvider.future),
   ]);
 }

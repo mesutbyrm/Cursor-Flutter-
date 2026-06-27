@@ -11,6 +11,7 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/performance/network_perf.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -236,8 +237,10 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
         },
       );
       _refreshAll();
-      await ref.read(adminPaymentRequestsProvider.future);
-      await ref.read(adminPaymentNotificationsProvider.future);
+      await NetworkPerf.parallel([
+        ref.read(adminPaymentRequestsProvider.future),
+        ref.read(adminPaymentNotificationsProvider.future),
+      ]);
       ref.refreshWalletCache(force: true);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

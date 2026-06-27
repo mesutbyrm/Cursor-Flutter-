@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/performance/network_perf.dart';
 import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
@@ -29,12 +30,18 @@ class ProfilePage extends ConsumerWidget {
     final top = MediaQuery.paddingOf(context).top;
 
     Future<void> refresh() async {
-      await ref.read(authControllerProvider.notifier).refreshMe();
-      await ref.read(walletBalancesProvider.notifier).refresh(force: true);
       ref.invalidate(profileStatsProvider);
       ref.invalidate(userLevelProvider);
       ref.invalidate(giftsReceivedSummaryProvider);
       ref.invalidate(fortuneAccessStateProvider);
+      await NetworkPerf.waitSilent([
+        ref.read(authControllerProvider.notifier).refreshMe(),
+        ref.read(walletBalancesProvider.notifier).refresh(force: true),
+        ref.read(profileStatsProvider.future),
+        ref.read(userLevelProvider.future),
+        ref.read(giftsReceivedSummaryProvider.future),
+        ref.read(fortuneAccessStateProvider.future),
+      ]);
     }
 
     return Scaffold(

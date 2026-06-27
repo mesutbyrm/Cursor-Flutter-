@@ -11,6 +11,7 @@ import '../../../../core/onesignal/onesignal_bootstrap.dart';
 import '../../../../core/network/cookie_jar_provider.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/loading_timeout.dart';
+import '../../../../core/performance/network_perf.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
@@ -68,9 +69,26 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
   Future<UserEntity?> _resolvedUser({bool includeSiteProfile = true}) async {
     try {
-      final base = await _sessionUser();
-      if (base == null || !includeSiteProfile) return base;
-      return await _withSiteProfile(base);
+      if (!includeSiteProfile || Env.useMobileAuth || !Env.useNextAuth) {
+        return await _sessionUser();
+      }
+      final pair = await NetworkPerf.parallel<Object?>([
+        _sessionUser(),
+        () async {
+          try {
+            return await LoadingTimeout.run(
+              ref.read(profileRemoteProvider).mySiteProfile(),
+              timeout: _profileTimeout,
+              message: 'Profil yüklenemedi',
+            );
+          } catch (_) {
+            return null;
+          }
+        }(),
+      ]);
+      final base = pair[0];
+      if (base == null) return null;
+      return (pair[1] as UserEntity?) ?? base as UserEntity;
     } catch (_) {
       return null;
     }
@@ -214,8 +232,10 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     ref.read(authUserActionBusyProvider.notifier).state = false;
     ref.read(guestModeProvider.notifier).state = false;
     await OneSignalBootstrap.logout();
-    await ApiHttpCache.clearAll();
-    await ApiCacheStore.clearAll();
+    await NetworkPerf.parallel([
+      ApiHttpCache.clearAll(),
+      ApiCacheStore.clearAll(),
+    ]);
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncValue.data(null);
   }

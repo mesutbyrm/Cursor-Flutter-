@@ -15,6 +15,7 @@ import 'core/firebase/firebase_bootstrap.dart';
 import 'core/network/cookie_jar_provider.dart';
 import 'core/onesignal/onesignal_bootstrap.dart';
 import 'core/offline/api_cache_store.dart';
+import 'core/performance/network_perf.dart';
 import 'core/storage/local_cache.dart';
 import 'core/storage/theme_preferences.dart';
 import 'features/voice_hub/data/services/voice_room_debug_log.dart';
@@ -27,21 +28,19 @@ Future<void> main() async {
   AppStartupLog.log('main() begin');
 
   try {
-    await LocalCache.init();
+    await NetworkPerf.parallel([
+      LocalCache.init().catchError((Object e) {
+        debugPrint('LocalCache init failed: $e');
+      }),
+      ThemePreferences.init().catchError((Object e) {
+        debugPrint('ThemePreferences init failed: $e');
+      }),
+      ApiCacheStore.init().catchError((Object e) {
+        debugPrint('ApiCacheStore init failed: $e');
+      }),
+    ]);
   } catch (e) {
-    debugPrint('LocalCache init failed: $e');
-  }
-
-  try {
-    await ThemePreferences.init();
-  } catch (e) {
-    debugPrint('ThemePreferences init failed: $e');
-  }
-
-  try {
-    await ApiCacheStore.init();
-  } catch (e) {
-    debugPrint('ApiCacheStore init failed: $e');
+    debugPrint('Local storage init failed: $e');
   }
 
   await OneSignalBootstrap.init();

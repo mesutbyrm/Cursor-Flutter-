@@ -1,6 +1,20 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.403+407 (2026-06-27)
+
+### Performans — Görev 8: Ağ işlemleri (paralel API)
+
+- **`NetworkPerf`:** `parallel()` + `waitSilent()` — bağımsız istekler `Future.wait` ile
+- **Profil stats:** `/me/stats` + site profili paralel
+- **Profil refresh:** auth, cüzdan, stats, level, hediye, fal erişimi paralel
+- **`refreshMe`:** oturum + site profili paralel
+- **Ana sayfa refresh:** shorts feed dahil 11 provider paralel
+- **Bildirimler:** liste + activity feed paralel
+- **Canlı oda:** join + mesaj geçmişi; poll mesaj + meta paralel
+- **Sesli oda DJ refresh:** fetchDj + queue + musicState paralel
+- **Oyunlar / admin / fal erişim / logout cache:** paralel batch
+
 ## 1.0.402+406 (2026-06-27)
 
 ### Performans — Görev 11: Scroll (takılma / frame drop yok)
