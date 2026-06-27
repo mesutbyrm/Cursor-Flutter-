@@ -1,6 +1,13 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.408+412 (2026-06-27)
+
+### CI — Gate 3 jeton yetersizliği SKIP
+
+- Test kullanıcısında jeton yoksa (HTTP 400) falcı + Agora API erişilebilirse Gate 3 SKIP
+- Admin `staffExempt` yedek denemesi korundu
+
 ## 1.0.407+411 (2026-06-27)
 
 ### CI — release gate Gate 3 düzeltmesi + Görev 18 APK

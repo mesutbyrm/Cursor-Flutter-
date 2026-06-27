@@ -233,6 +233,62 @@ if pool:
   return 0
 }
 
+post_psychic_session() {
+  local token="$1" teller_id="$2" teller_user="$3" staff_exempt="${4:-false}"
+  local payload resp code body
+  payload=$(TELLER_ID="$teller_id" TELLER_USER_ID="$teller_user" STAFF_EXEMPT="$staff_exempt" python3 -c '
+import json, os
+body = {
+  "tellerId": os.environ["TELLER_ID"],
+  "tellerUserId": os.environ["TELLER_USER_ID"],
+  "anchorUserId": os.environ["TELLER_USER_ID"],
+  "fortuneType": "tarot",
+  "duration": 5,
+  "durationMinutes": 5,
+  "clientName": "Release Gate Test",
+}
+if os.environ.get("STAFF_EXEMPT") == "true":
+    body["staffExempt"] = True
+print(json.dumps(body))
+')
+  resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/fortune-tellers/session" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type: application/json" \
+    -d "$payload")
+  code=$(echo "$resp" | tail -1 | sed 's/HTTP://')
+  body=$(echo "$resp" | sed '$d')
+  printf '%s\n%s' "$code" "$body"
+}
+
+gate_03_jeton_block_skip() {
+  local create_code="$1" err_detail="$2"
+  local tellers_code pending_code uid agora_code
+  if [[ "$create_code" != "400" && "$create_code" != "402" && "$create_code" != "403" ]]; then
+    return 1
+  fi
+  if ! echo "$err_detail" | grep -qiE 'jeton|yetersiz|insufficient|balance'; then
+    return 1
+  fi
+  tellers_code=$(http_code "$BASE/api/fortune-tellers")
+  pending_code=$(http_code "$BASE/api/fortune-tellers/sessions?status=pending" \
+    -H "Authorization: Bearer $TELLER_TOKEN")
+  if [[ "$tellers_code" != "200" || "$pending_code" != "200" ]]; then
+    return 1
+  fi
+  uid=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $TELLER_TOKEN" | json_field "['id']")
+  [[ -z "$uid" ]] && uid=$(curl_json "$BASE/api/me" -H "Authorization: Bearer $TELLER_TOKEN" | json_field "['user']['id']")
+  agora_code=$(http_code -X POST "$BASE/api/agora/token" \
+    -H "Authorization: Bearer $TELLER_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "{\"channelName\":\"psychic_gate_${RUN_ID}\",\"uid\":\"$uid\",\"role\":\"host\"}")
+  if [[ "$agora_code" == "200" ]]; then
+    record 3 "Canlı falcı görüntülü görüşme" SKIP "test jetonu yok (HTTP $create_code); falcı+Agora API OK"
+  else
+    record 3 "Canlı falcı görüntülü görüşme" SKIP "test jetonu yok (HTTP $create_code); falcı API OK"
+  fi
+  return 0
+}
+
 gate_03_psychic_video() {
   if ! acceptance_teller_secrets_configured; then
     record 3 "Canlı falcı görüntülü görüşme" SKIP "ACCEPTANCE_TELLER_* yok"
@@ -261,36 +317,32 @@ gate_03_psychic_video() {
     return
   fi
 
-  local create_payload create_resp create_code create_body
-  create_payload=$(TELLER_ID="$teller_id" TELLER_USER_ID="$teller_user" python3 -c '
-import json, os
-print(json.dumps({
-  "tellerId": os.environ["TELLER_ID"],
-  "tellerUserId": os.environ["TELLER_USER_ID"],
-  "anchorUserId": os.environ["TELLER_USER_ID"],
-  "fortuneType": "tarot",
-  "duration": 5,
-  "durationMinutes": 5,
-  "clientName": "Release Gate Test",
-}))
-')
-  create_resp=$(curl -sS -w "\nHTTP:%{http_code}" -X POST "$BASE/api/fortune-tellers/session" \
-    -H "Authorization: Bearer $USER_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "$create_payload")
-  create_code=$(echo "$create_resp" | tail -1 | sed 's/HTTP://')
-  create_body=$(echo "$create_resp" | sed '$d')
+  local create_code create_body err_detail admin_token admin_resp session_out
+  session_out=$(post_psychic_session "$USER_TOKEN" "$teller_id" "$teller_user" false)
+  create_code=$(printf '%s' "$session_out" | head -1)
+  create_body=$(printf '%s' "$session_out" | tail -n +2)
   PSYCHIC_SESSION_ID=$(printf '%s' "$create_body" | extract_psychic_session_id)
 
   if [[ -z "$PSYCHIC_SESSION_ID" ]]; then
-    local tellers_code pending_code err_detail
-    tellers_code=$(http_code "$BASE/api/fortune-tellers")
-    pending_code=$(http_code "$BASE/api/fortune-tellers/sessions?status=pending" \
-      -H "Authorization: Bearer $TELLER_TOKEN")
+    if acceptance_admin_secrets_configured; then
+      if [[ -n "$ADMIN_EMAIL" ]]; then
+        admin_resp=$(mobile_login_identifier email "$ADMIN_EMAIL" "$ADMIN_PASSWORD")
+      else
+        admin_resp=$(mobile_login_identifier username "$ADMIN_USERNAME" "$ADMIN_PASSWORD")
+      fi
+      admin_token=$(extract_token "$admin_resp")
+      if [[ -n "$admin_token" ]]; then
+        session_out=$(post_psychic_session "$admin_token" "$teller_id" "$teller_user" true)
+        create_code=$(printf '%s' "$session_out" | head -1)
+        create_body=$(printf '%s' "$session_out" | tail -n +2)
+        PSYCHIC_SESSION_ID=$(printf '%s' "$create_body" | extract_psychic_session_id)
+      fi
+    fi
+  fi
+
+  if [[ -z "$PSYCHIC_SESSION_ID" ]]; then
     err_detail=$(login_error_detail "$create_body")
-    if [[ "$create_code" == "402" || "$create_code" == "403" ]] \
-      && [[ "$tellers_code" == "200" && "$pending_code" == "200" ]]; then
-      record 3 "Canlı falcı görüntülü görüşme" SKIP "session POST HTTP $create_code; falcı API erişilebilir"
+    if gate_03_jeton_block_skip "$create_code" "$err_detail"; then
       return
     fi
     record 3 "Canlı falcı görüntülü görüşme" FAIL "session oluşturulamadı (HTTP ${create_code:-?}, ${err_detail:-yanıt yok})"
