@@ -1,15 +1,24 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.416+420 (2026-06-27)
+
+### Entegrasyon kılavuzu — tek kaynak
+
+- **`docs/FLUTTER_ENTegrasyon_KILAVUZU.md`** repoya eklendi; agent kuralı + `AGENTS.md` güncellendi
+- Chat presence/voice body: kılavuz §9.3 — `{action: join|leave}` (`type` kaldırıldı)
+- Presence çıkış: önce `POST .../presence` + `{action: leave}`
+
 ## 1.0.415+419 (2026-06-27)
 
-### Sesli sohbet — API dokümantasyonu uyumu (`sesli-sohbet-api-dokumantasyonu.md`)
+### Sesli sohbet — API dokümantasyonu uyumu
 
-- **Presence heartbeat:** 20s → **25s** (doküman §6)
-- **`POST/GET /voice`:** mikrofon açılış/kapanış + oda çıkışında sunucu VoiceSession kaydı
-- **`POST /typing`:** mesaj yazarken yazıyor göstergesi (SSE ile birlikte)
-- **`GET /gifts` lider tablosu:** oda açılışında API'den seed + oturum içi SSE/socket ile güncelleme
-- **Çıkış sırası düzeltmesi:** presence/voice bayrakları API çağrısından önce sıfırlanmıyordu
+- **Referans:** `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.3 (tek kaynak)
+- **Presence heartbeat:** 20s → **25s**
+- **`POST /voice`:** `{action: join|leave}` — mikrofon + çıkış
+- **`POST /typing`:** yazıyor göstergesi
+- **`GET /gifts` lider tablosu:** oda açılışında API seed
+- **Presence:** `{action: join|leave}` (kılavuz §9.3)
 
 ## 1.0.414+418 (2026-06-27)
 

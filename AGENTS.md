@@ -1,5 +1,14 @@
 # Canlifal — Agent talimatları
 
+## Flutter entegrasyon kılavuzu (tek kaynak — zorunlu)
+
+Tüm mobil API entegrasyonu **yalnızca** [`docs/FLUTTER_ENTegrasyon_KILAVUZU.md`](docs/FLUTTER_ENTegrasyon_KILAVUZU.md) dosyasına göre yapılır. Bu kılavuz dışına çıkma: endpoint path, HTTP metodu, JSON body alanları, auth/SSE/retry kuralları buradan gelir.
+
+- **Base URL:** `https://canlifal.com` — **Auth:** JWT Bearer (`/api/auth/mobile-login`, `/api/auth/mobile-refresh`, `/api/me`)
+- **Repository grupları:** kılavuz §9 (Auth, User, ChatRoom, LiveStream, Fortune, …)
+- **SSE:** kılavuz §5–6 (5 endpoint, reconnect backoff)
+- **Eski dokümanlar** (`sesli-sohbet-api-dokumantasyonu.md`, `FLUTTER_API_DOCS.md` vb.) yalnızca arka plan; **çelişkide bu kılavuz geçerlidir**
+
 ## Git iş akışı (zorunlu)
 
 - **PR otomatik açma** — Agent'lar Pull Request oluşturmaz.
@@ -20,19 +29,19 @@ Bu repo, **canlifal.com** (Next.js 14 + Prisma + PostgreSQL) platformunun **Flut
 
 **Mobil dokunulan başlıca sistemler (rapor §3):**
 
-- **Sohbet / sesli oda (§3.3–3.4):** `room.id` (cuid), SSE `GET /api/chat/rooms/{id}/stream`, presence **20s**, TRTC `voice_room_{id}`, IRC rolleri, DJ + YouTube müzik, `!istek` komutu
+- **Sohbet / sesli oda:** kılavuz §9.3 `ChatRoomRepository` — SSE `GET /api/chat/rooms/{id}/stream`, presence `{action: join|leave}`, voice `{action: join}`, Agora token `/api/agora/token`
 - **Auth (§3 + §7.5):** NextAuth (web) + **mobil JWT** (`/api/auth/mobile/*`, `/api/me`); `sub` ≠ kullanıcı anahtarı — `realCid` / `gcid`
 - **Kredi / jeton (§3.12):** CFC + Jeton; mobil cüzdan uçları
 - **Video / TRTC (§3.5):** LiveKit/TRTC token uçları; PK, hediye
 - **Fal, sosyal, bildirim, oyun** vb.: rapordaki endpoint listesi; mobilde `api_endpoints.dart` + feature modülleri
 
-**Gerçek zamanlı (§6):** Sohbet = **SSE + polling** (Socket.IO değil). Fal = SSE streaming. Presence heartbeat 20s.
+**Gerçek zamanlı:** kılavuz §5 — SSE (Socket.IO değil). Fal streaming ayrı SSE.
 
 **Değişiklik yaparken:**
 
-1. Rapordaki ilgili bölümü (sayfa / API / model) kontrol et
-2. Üretim uçlarını değiştirmeden önce mobilin zaten hangi path’i kullandığını `grep` ile doğrula
-3. `api/` mirror’a eklenen davranış, canlifal.com’da yoksa dokümante et veya yalnızca mobil-safe fallback kullan
+1. Önce `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9 ilgili repository tablosunu oku
+2. Mobil path/body için `grep` ile mevcut kullanımı doğrula; kılavuzla hizala
+3. `api/` mirror üretimde yoksa yalnızca mobil-safe fallback veya dokümantasyon
 4. Admin / Stripe / reklam gibi **web-only** sistemlere mobilde gereksiz bağımlılık ekleme
 
 Güncel envanter metni (dış kaynak): https://canlifal.com/canlifal-envanter-raporu.txt

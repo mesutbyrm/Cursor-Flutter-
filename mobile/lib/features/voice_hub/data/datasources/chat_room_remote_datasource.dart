@@ -64,7 +64,7 @@ class ChatRoomRemoteDataSource {
 
   static String typingPath(String roomId) => ApiEndpoints.chatRoomTyping(roomId);
 
-  /// Üretim heartbeat aralığı — sesli-sohbet-api-dokumantasyonu.md §6.
+  /// Üretim presence/voice body alanı — FLUTTER_ENTegrasyon_KILAVUZU.md §9.3 (`action`).
   static const presenceHeartbeatInterval = Duration(seconds: 25);
 
   Map<String, dynamic>? _unwrapMap(dynamic body) {
@@ -222,7 +222,7 @@ class ChatRoomRemoteDataSource {
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final nick = nickname?.trim();
-      final body = <String, dynamic>{};
+      final body = <String, dynamic>{'action': 'join'};
       if (nick != null && nick.isNotEmpty) body['nickname'] = nick;
       if (seatIndex != null && seatIndex >= 0) body['seatIndex'] = seatIndex;
       final res = await _dio.safePost<dynamic>(
@@ -247,6 +247,16 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       try {
         await _dio.safePost<dynamic>(
+          presencePath(key),
+          data: jsonEncode({'action': 'leave'}),
+          options: Options(contentType: 'application/json'),
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      } catch (_) {}
+      try {
+        await _dio.safePost<dynamic>(
           '${presencePath(key)}?_delete=1&leave=1',
           data: '{}',
           options: Options(contentType: 'application/json'),
@@ -269,7 +279,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         voicePath(key),
-        data: jsonEncode({'type': 'join'}),
+        data: jsonEncode({'action': 'join'}),
         options: Options(contentType: 'application/json'),
       );
     });
@@ -279,7 +289,7 @@ class ChatRoomRemoteDataSource {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _dio.safePost<dynamic>(
         voicePath(key),
-        data: jsonEncode({'type': 'leave'}),
+        data: jsonEncode({'action': 'leave'}),
         options: Options(contentType: 'application/json'),
       );
     });
