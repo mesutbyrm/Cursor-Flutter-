@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../../core/widgets/user_avatar.dart';
@@ -84,9 +85,10 @@ class _ConversationsListSliverState extends ConsumerState<ConversationsListSlive
                     );
                   }
                   final c = items[i];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: ProGlassListTile(
+                  return ScrollPerf.item(
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: ProGlassListTile(
                       onTap: () => context.push('/chat/${c.id}'),
                       child: Row(
                         children: [
@@ -152,6 +154,7 @@ class _ConversationsListSliverState extends ConsumerState<ConversationsListSlive
                             ),
                         ],
                       ),
+                    ),
                     ),
                   );
                 },

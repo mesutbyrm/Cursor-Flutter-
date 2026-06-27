@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/bootstrap/startup_perf.dart';
-import '../../../../core/performance/list_perf.dart';
+import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../providers/chat_messages_list_notifier.dart';
 import '../widgets/chat_message_bubble.dart';
@@ -94,10 +94,12 @@ class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
     }
 
     return ListView.builder(
-      cacheExtent: ListPerf.cacheExtent,
+      cacheExtent: ScrollPerf.chatCacheExtent,
       controller: widget.scrollController,
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-      physics: ListPerf.listPhysics,
+      physics: ScrollPerf.feedPhysics,
+      addAutomaticKeepAlives: false,
+      addRepaintBoundaries: false,
       itemCount: msgs.rows.length + (msgs.hasMore ? 1 : 0),
       itemBuilder: (ctx, i) {
         if (msgs.hasMore && i == 0) {
@@ -122,7 +124,7 @@ class _ChatMessagesListPaneState extends ConsumerState<ChatMessagesListPane> {
           );
         }
         final idx = msgs.hasMore ? i - 1 : i;
-        return ListPerf.repaint(
+        return ScrollPerf.item(
           ChatMessageBubble(message: msgs.rows[idx]),
         );
       },

@@ -8,6 +8,7 @@ import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
+import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../domain/notification_action.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -30,11 +31,15 @@ class NotificationsPage extends ConsumerStatefulWidget {
 class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   final _scroll = ScrollController();
   var _listReady = false;
+  late final VoidCallback _detachPagination;
 
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(_onScroll);
+    _detachPagination = ScrollPerf.bindPagination(
+      _scroll,
+      () => ref.read(notificationsListNotifierProvider.notifier).loadMore(),
+    );
     Future<void>.delayed(LazyLoadPerf.notificationsList, () {
       if (mounted) setState(() => _listReady = true);
     });
@@ -42,17 +47,9 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
 
   @override
   void dispose() {
-    _scroll.removeListener(_onScroll);
+    _detachPagination();
     _scroll.dispose();
     super.dispose();
-  }
-
-  void _onScroll() {
-    if (!_scroll.hasClients) return;
-    if (_scroll.position.pixels >=
-        _scroll.position.maxScrollExtent - ListPerf.preloadThresholdPx) {
-      ref.read(notificationsListNotifierProvider.notifier).loadMore();
-    }
   }
 
   Future<void> _refresh() async {

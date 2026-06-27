@@ -1,5 +1,6 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:canlifal_social/core/performance/animation_perf.dart';
+import 'package:canlifal_social/core/performance/scroll_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -151,6 +152,10 @@ class _PremiumFortuneResultCanvasState extends State<PremiumFortuneResultCanvas>
               child: ListView(
                 controller: widget.scrollController,
                 padding: EdgeInsets.zero,
+                cacheExtent: ScrollPerf.feedCacheExtent,
+                physics: ScrollPerf.feedPhysics,
+                addAutomaticKeepAlives: false,
+                addRepaintBoundaries: false,
                 children: [
                   if (widget.header != null) widget.header!,
                   if (widget.showHero)

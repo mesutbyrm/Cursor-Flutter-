@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:canlifal_social/core/bootstrap/app_startup_log.dart';
 import 'package:canlifal_social/core/bootstrap/startup_perf.dart';
+import 'package:canlifal_social/core/performance/scroll_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import '../providers/home_providers.dart';
 import '../providers/home_realtime_bridge.dart';
@@ -81,6 +82,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             : context.colors.surface,
         onRefresh: _onRefresh,
         child: CustomScrollView(
+          cacheExtent: ScrollPerf.feedCacheExtent,
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
           ),

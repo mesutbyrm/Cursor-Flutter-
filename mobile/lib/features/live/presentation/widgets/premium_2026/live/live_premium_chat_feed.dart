@@ -1,4 +1,5 @@
 import 'package:canlifal_social/core/performance/effects_perf.dart';
+import 'package:canlifal_social/core/performance/scroll_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -33,13 +34,17 @@ class LivePremiumChatFeed extends StatelessWidget {
             stops: const [0.0, 0.12, 1.0],
           ).createShader(rect),
           blendMode: BlendMode.dstIn,
-          child: ListView.builder(
-            reverse: true,
-            padding: EdgeInsets.zero,
-            itemCount: messages.length,
-            itemBuilder: (ctx, i) {
-              final m = messages[messages.length - 1 - i];
-              final bubble = _ChatBubble(message: m);
+        child: ListView.builder(
+          reverse: true,
+          padding: EdgeInsets.zero,
+          cacheExtent: ScrollPerf.chatCacheExtent,
+          addAutomaticKeepAlives: false,
+          addRepaintBoundaries: false,
+          physics: ScrollPerf.feedPhysics,
+          itemCount: messages.length,
+          itemBuilder: (ctx, i) {
+            final m = messages[messages.length - 1 - i];
+            final bubble = ScrollPerf.item(_ChatBubble(message: m));
               final child = canModerate &&
                       onMessageLongPress != null &&
                       !m.isSystem &&
@@ -110,7 +115,7 @@ class _ChatBubble extends StatelessWidget {
               ),
               TextSpan(
                 text: '${message.user} ',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w900,
                   color: AppThemeColors.accentPink,
                 ),

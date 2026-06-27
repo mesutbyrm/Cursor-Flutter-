@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.402+406 (2026-06-27)
+
+### Performans — Görev 11: Scroll (takılma / frame drop yok)
+
+- **`ScrollPerf`:** feed/chat/grid cacheExtent, throttle'lı sayfalama, `ScrollPerf.item`
+- **`LazyNestedGridView`:** iç içe grid — lazy builder + `NeverScrollableScrollPhysics`
+- **`LazyListView` / `LazyGridView`:** `addAutomaticKeepAlives: false`, `addRepaintBoundaries: false`
+- **Ana sayfa / profil / sosyal feed:** `CustomScrollView` cacheExtent
+- **Canlı & sesli chat:** chat cacheExtent + izole satır repaint
+- **Profil içerik gridleri:** 6 sekme `LazyNestedGridView`
+- **Bildirimler:** `ScrollPerf.bindPagination` — scroll listener throttle
+- **Fal sonucu / jeton / cüzdan:** scroll cache + lazy grid
+
 ## 1.0.401+405 (2026-06-27)
 
 ### Performans — Görev 10: Görsel efektler (blur / shadow / glass)

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/widgets/discover_refresh.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
@@ -34,6 +35,7 @@ class SocialFeedScrollView extends ConsumerWidget {
       onRefresh: onRefresh,
       child: CustomScrollView(
         controller: controller,
+        cacheExtent: ScrollPerf.feedCacheExtent,
         physics: PremiumMotion.listPhysics,
         slivers: [
           social.when(
@@ -73,8 +75,8 @@ class SocialFeedScrollView extends ConsumerWidget {
                 itemBuilder: (context, i) {
                   final postIdx = SocialFeedLayout.postIndexAt(i, posts.length);
                   if (postIdx != null) {
-                    return RepaintBoundary(
-                      child: SocialInstagramPostCard(
+                    return ScrollPerf.item(
+                      SocialInstagramPostCard(
                         post: posts[postIdx],
                       ),
                     );

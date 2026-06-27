@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
+import '../../../../core/performance/scroll_perf.dart';
 import '../../../../core/ui/premium_2026/premium_motion.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
@@ -69,6 +70,7 @@ class ProfilePage extends ConsumerWidget {
                   () => ref.read(authControllerProvider.notifier).logout();
 
               return CustomScrollView(
+                cacheExtent: ScrollPerf.feedCacheExtent,
                 physics: PremiumMotion.listPhysics,
                 slivers: [
                   SliverToBoxAdapter(child: SizedBox(height: top + 8)),

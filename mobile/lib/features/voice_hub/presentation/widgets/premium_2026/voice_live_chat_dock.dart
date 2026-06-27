@@ -1,4 +1,5 @@
 import 'package:canlifal_social/core/performance/effects_perf.dart';
+import 'package:canlifal_social/core/performance/scroll_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
@@ -80,11 +81,16 @@ class VoiceLiveChatFeed extends StatelessWidget {
                 reverse: true,
                 shrinkWrap: true,
                 padding: EdgeInsets.zero,
+                cacheExtent: ScrollPerf.chatCacheExtent,
+                addAutomaticKeepAlives: false,
+                addRepaintBoundaries: false,
                 physics: const ClampingScrollPhysics(),
                 itemCount: visible.length,
                 itemBuilder: (context, i) {
                   final msg = visible[visible.length - 1 - i];
-                  return _Bubble(message: msg, onUserTap: onUserTap);
+                  return ScrollPerf.item(
+                    _Bubble(message: msg, onUserTap: onUserTap),
+                  );
                 },
               ),
             ),

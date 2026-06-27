@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:canlifal_social/core/widgets/lazy_list_views.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -350,22 +351,23 @@ class _JetonPremiumPurchaseViewState
             LayoutBuilder(
               builder: (context, constraints) {
                 final cols = constraints.maxWidth >= 520 ? 4 : 2;
-                return GridView.count(
-                  crossAxisCount: cols,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: cols == 4 ? 1.55 : 1.8,
-                  children: [
-                    for (final tl in kJetonQuickTlPresets)
-                      _PresetCard(
-                        tl: tl,
-                        jeton: (tl / kJetonPurchaseTlRate).round(),
-                        selected: _selectedPresetTl == tl,
-                        onTap: () => _applyPreset(tl),
-                      ),
-                  ],
+                return LazyNestedGridView(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: cols,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: cols == 4 ? 1.55 : 1.8,
+                  ),
+                  itemCount: kJetonQuickTlPresets.length,
+                  itemBuilder: (context, index) {
+                    final tl = kJetonQuickTlPresets[index];
+                    return _PresetCard(
+                      tl: tl,
+                      jeton: (tl / kJetonPurchaseTlRate).round(),
+                      selected: _selectedPresetTl == tl,
+                      onTap: () => _applyPreset(tl),
+                    );
+                  },
                 );
               },
             ),
