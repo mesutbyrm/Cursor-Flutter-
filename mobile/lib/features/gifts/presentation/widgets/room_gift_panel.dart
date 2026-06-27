@@ -9,6 +9,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
+import '../../../voice_hub/presentation/providers/voice_gift_providers.dart';
 import '../../../voice_hub/presentation/widgets/voice_room_gift_sheet.dart';
 
 /// Ses odası hediyeleri — web’e gitmeden uygulama içi gönderim.
