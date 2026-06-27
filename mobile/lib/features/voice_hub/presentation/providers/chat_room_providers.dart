@@ -53,6 +53,7 @@ import '../services/voice_room_music_control_delegate.dart';
 import '../../video/domain/youtube_video_id.dart';
 import '../../video/presentation/room_video_controller.dart';
 import 'voice_gift_providers.dart';
+import 'voice_gift_leaderboard_provider.dart';
 import 'voice_room_diagnostic_provider.dart';
 import 'voice_room_ui_provider.dart';
 
@@ -259,6 +260,7 @@ class VoiceRoomLiveController
     extends AutoDisposeFamilyNotifier<VoiceRoomLiveState, String> {
   Timer? _poll;
   Timer? _presenceHeartbeat;
+  Timer? _typingStopTimer;
   Timer? _enterBannerTimer;
   Timer? _musicRequestFlashTimer;
   Timer? _announcementTimer;
@@ -272,6 +274,8 @@ class VoiceRoomLiveController
   final Set<String> _shownMusicRequestFlashKeys = {};
   String? _presenceNickname;
   var _presenceJoined = false;
+  var _voiceJoined = false;
+  var _typingActive = false;
   var _sseStarted = false;
   var _giftSocketStarted = false;
   var _sessionActive = true;
@@ -406,6 +410,7 @@ class VoiceRoomLiveController
       }
       _poll?.cancel();
       _presenceHeartbeat?.cancel();
+      _typingStopTimer?.cancel();
       _enterBannerTimer?.cancel();
       _musicRequestFlashTimer?.cancel();
       _announcementTimer?.cancel();
@@ -413,7 +418,9 @@ class VoiceRoomLiveController
       _moderationToastTimer?.cancel();
       _kickWarningTimer?.cancel();
       if (_sessionActive) {
+        unawaited(_leaveVoiceSession());
         unawaited(_leavePresence());
+        unawaited(_stopTyping());
         ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
         ref.read(voiceRoomGiftSocketProvider).disconnect();
       }
@@ -422,7 +429,9 @@ class VoiceRoomLiveController
       _closeRoomKeepAlive();
     });
     Future.microtask(() => _beginRoomSession());
-    _presenceHeartbeat = Timer.periodic(const Duration(seconds: 20), (_) {
+    _presenceHeartbeat = Timer.periodic(
+      ChatRoomRemoteDataSource.presenceHeartbeatInterval,
+      (_) {
       if (state.selfInRoom) {
         unawaited(_presenceHeartbeatTick());
       }
@@ -472,6 +481,7 @@ class VoiceRoomLiveController
       if (VoiceRoomBasicMode.premiumEnabled) {
         _startGiftSocket();
       }
+      unawaited(_loadGiftLeaderboard());
       return;
     }
 
@@ -479,6 +489,19 @@ class VoiceRoomLiveController
     final player = ref.read(voiceRoomDjPlayerProvider);
     player.onTrackComplete = () => unawaited(_onDjTrackComplete());
     _wireMusicControls();
+    unawaited(_loadGiftLeaderboard());
+  }
+
+  Future<void> _loadGiftLeaderboard() async {
+    if (_roomKey.isEmpty) return;
+    try {
+      final entries = await ref
+          .read(chatRoomGiftsRemoteProvider)
+          .fetchRoomGiftLeaderboard(roomId: _roomKey);
+      if (entries.isNotEmpty) {
+        ref.read(voiceSessionGiftLeaderboardProvider.notifier).seedFromApi(entries);
+      }
+    } catch (_) {}
   }
 
   List<ChatRoomPresence> _mergeSelf(List<ChatRoomPresence> list) {
@@ -669,10 +692,12 @@ class VoiceRoomLiveController
     VoiceRoomDebugLog.roomLeave(roomId: _roomKey, source: source);
     _poll?.cancel();
     _presenceHeartbeat?.cancel();
+    _typingStopTimer?.cancel();
     _sseStarted = false;
     _giftSocketStarted = false;
-    _presenceJoined = false;
+    unawaited(_leaveVoiceSession());
     unawaited(_leavePresence());
+    unawaited(_stopTyping());
     ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
     ref.read(voiceRoomGiftSocketProvider).disconnect();
     unawaited(ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer());
@@ -769,6 +794,58 @@ class VoiceRoomLiveController
     _presenceJoined = false;
     try {
       await ref.read(chatRoomRemoteProvider).leavePresence(_roomKey);
+    } catch (_) {}
+  }
+
+  Future<void> joinVoiceSession() async {
+    if (_roomKey.isEmpty || _voiceJoined) return;
+    try {
+      await ref.read(chatRoomRemoteProvider).joinVoiceSession(_roomKey);
+      _voiceJoined = true;
+      VoiceRoomDebugLog.log('api.voice.join.ok', {'room': _roomKey});
+    } on Object catch (e) {
+      VoiceRoomDebugLog.log('api.voice.join.fail', {'error': e.toString()});
+    }
+  }
+
+  Future<void> leaveVoiceSession() async {
+    await _leaveVoiceSession();
+  }
+
+  Future<void> _leaveVoiceSession() async {
+    if (_roomKey.isEmpty || !_voiceJoined) return;
+    _voiceJoined = false;
+    try {
+      await ref.read(chatRoomRemoteProvider).leaveVoiceSession(_roomKey);
+      VoiceRoomDebugLog.log('api.voice.leave.ok', {'room': _roomKey});
+    } catch (_) {}
+  }
+
+  /// Yazıyor göstergesi — POST /typing (SSE ile birlikte).
+  void notifyTyping(bool active) {
+    if (_roomKey.isEmpty) return;
+    if (active) {
+      _typingStopTimer?.cancel();
+      if (!_typingActive) {
+        _typingActive = true;
+        unawaited(
+          ref.read(chatRoomRemoteProvider).setTyping(_roomKey, isTyping: true),
+        );
+      }
+      _typingStopTimer = Timer(const Duration(seconds: 2), () {
+        unawaited(_stopTyping());
+      });
+    } else {
+      unawaited(_stopTyping());
+    }
+  }
+
+  Future<void> _stopTyping() async {
+    _typingStopTimer?.cancel();
+    if (!_typingActive || _roomKey.isEmpty) return;
+    _typingActive = false;
+    try {
+      await ref.read(chatRoomRemoteProvider).setTyping(_roomKey, isTyping: false);
     } catch (_) {}
   }
 
@@ -2631,6 +2708,7 @@ class VoiceRoomLiveController
   Future<void> sendMessage(String text) async {
     final trimmed = VoiceOfficialJoin.normalizeCommandInput(text.trim());
     if (trimmed.isEmpty || _roomKey.isEmpty) return;
+    unawaited(_stopTyping());
 
     if (VoiceMusicSync.isIstekCommand(trimmed)) {
       final song = VoiceMusicSync.parseIstekSongTitle(trimmed);

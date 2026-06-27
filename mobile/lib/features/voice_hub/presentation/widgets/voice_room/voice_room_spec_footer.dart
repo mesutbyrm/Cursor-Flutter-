@@ -23,6 +23,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
     required this.onTopUp,
     this.onGiftTap,
     this.onEmojiTap,
+    this.onChanged,
   });
 
   final TextEditingController controller;
@@ -40,6 +41,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
   final VoidCallback onTopUp;
   final VoidCallback? onGiftTap;
   final VoidCallback? onEmojiTap;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +79,7 @@ class VoiceRoomSpecFooter extends StatelessWidget {
                   child: TextField(
                     controller: controller,
                     focusNode: focusNode,
+                    onChanged: onChanged,
                     style: const TextStyle(fontSize: 14, color: Colors.white),
                     minLines: 1,
                     maxLines: 3,

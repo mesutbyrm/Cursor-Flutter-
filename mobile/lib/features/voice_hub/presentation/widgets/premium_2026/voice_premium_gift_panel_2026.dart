@@ -19,6 +19,7 @@ import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../providers/chat_room_providers.dart';
+import '../../providers/voice_gift_providers.dart';
 import '../voice_room_gift_sheet.dart';
 
 /// TikTok Live — blur panel, 8 premium hediye, combo, sıralama.

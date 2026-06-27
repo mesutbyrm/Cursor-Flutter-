@@ -10,6 +10,22 @@ class VoiceSessionGiftLeaderboard extends Notifier<List<GiftLeaderboardEntry>> {
   @override
   List<GiftLeaderboardEntry> build() => const [];
 
+  void seedFromApi(List<GiftLeaderboardEntry> entries) {
+    _totals.clear();
+    for (final e in entries) {
+      final id = e.userId ?? e.displayName;
+      if (id.isEmpty) continue;
+      _totals[id] = _Agg(
+        userId: id,
+        displayName: e.displayName,
+        avatarUrl: e.avatarUrl,
+        totalCoins: e.totalCoins,
+        giftCount: e.giftCount > 0 ? e.giftCount : 1,
+      );
+    }
+    _publish();
+  }
+
   void record(LiveGiftEvent event) {
     final id = event.senderId ?? event.senderName;
     final prev = _totals[id];

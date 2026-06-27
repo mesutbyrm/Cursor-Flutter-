@@ -60,6 +60,13 @@ class ChatRoomRemoteDataSource {
 
   static String seatsPath(String roomId) => '/api/chat/rooms/$roomId/seats';
 
+  static String voicePath(String roomId) => ApiEndpoints.chatRoomVoice(roomId);
+
+  static String typingPath(String roomId) => ApiEndpoints.chatRoomTyping(roomId);
+
+  /// Üretim heartbeat aralığı — sesli-sohbet-api-dokumantasyonu.md §6.
+  static const presenceHeartbeatInterval = Duration(seconds: 25);
+
   Map<String, dynamic>? _unwrapMap(dynamic body) {
     if (body is Map<String, dynamic>) {
       if (body['success'] == true && body['data'] != null) {
@@ -255,6 +262,66 @@ class ChatRoomRemoteDataSource {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       }
       await _dio.safeDelete<dynamic>(presencePath(key));
+    });
+  }
+
+  Future<void> joinVoiceSession(String roomKey, {String? alternateKey}) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        voicePath(key),
+        data: jsonEncode({'type': 'join'}),
+        options: Options(contentType: 'application/json'),
+      );
+    });
+  }
+
+  Future<void> leaveVoiceSession(String roomKey, {String? alternateKey}) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        voicePath(key),
+        data: jsonEncode({'type': 'leave'}),
+        options: Options(contentType: 'application/json'),
+      );
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> fetchVoiceUsers(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(voicePath(key));
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['voiceUsers'] ?? map['users'] ?? map['data'];
+      if (raw is! List) return const [];
+      return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+    });
+  }
+
+  Future<void> setTyping(
+    String roomKey, {
+    required bool isTyping,
+    String? alternateKey,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        typingPath(key),
+        data: jsonEncode({'isTyping': isTyping}),
+        options: Options(contentType: 'application/json'),
+      );
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> fetchTypingUsers(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(typingPath(key));
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['typingUsers'] ?? map['users'] ?? map['data'];
+      if (raw is! List) return const [];
+      return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
     });
   }
 

@@ -465,11 +465,13 @@ class VoiceRoomBasicMessageBar extends StatelessWidget {
     required this.controller,
     required this.onSend,
     required this.onEmoji,
+    this.onChanged,
   });
 
   final TextEditingController controller;
   final VoidCallback onSend;
   final VoidCallback onEmoji;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -487,6 +489,7 @@ class VoiceRoomBasicMessageBar extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
+              onChanged: onChanged,
               decoration: InputDecoration(
                 hintText: 'Mesaj yaz…',
                 isDense: true,

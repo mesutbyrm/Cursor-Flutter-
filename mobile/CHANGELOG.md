@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.415+419 (2026-06-27)
+
+### Sesli sohbet — API dokümantasyonu uyumu (`sesli-sohbet-api-dokumantasyonu.md`)
+
+- **Presence heartbeat:** 20s → **25s** (doküman §6)
+- **`POST/GET /voice`:** mikrofon açılış/kapanış + oda çıkışında sunucu VoiceSession kaydı
+- **`POST /typing`:** mesaj yazarken yazıyor göstergesi (SSE ile birlikte)
+- **`GET /gifts` lider tablosu:** oda açılışında API'den seed + oturum içi SSE/socket ile güncelleme
+- **Çıkış sırası düzeltmesi:** presence/voice bayrakları API çağrısından önce sıfırlanmıyordu
+
 ## 1.0.414+418 (2026-06-27)
 
 ### Sesli sohbet — Premium 2026 UI (yalnızca arayüz)

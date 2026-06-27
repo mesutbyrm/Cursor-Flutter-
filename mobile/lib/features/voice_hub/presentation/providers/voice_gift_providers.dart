@@ -8,6 +8,14 @@ import '../../data/services/voice_room_gift_realtime_service.dart';
 import '../../data/services/voice_room_gift_socket.dart';
 import '../../../live/presentation/gifts/providers/live_gift_providers.dart';
 
+final chatRoomGiftsRemoteProvider = Provider<ChatRoomGiftsRemoteDataSource>((ref) {
+  final dio = ref.watch(dioProvider);
+  return ChatRoomGiftsRemoteDataSource(
+    dio,
+    ref.watch(liveGiftsRemoteProvider),
+  );
+});
+
 final voiceRoomGiftRealtimeProvider =
     Provider<VoiceRoomGiftRealtimeService>((ref) {
   final dio = ref.watch(dioProvider);

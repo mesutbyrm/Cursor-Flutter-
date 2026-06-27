@@ -219,6 +219,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         _audioReady = true;
         _isMicMuted = !_audio!.micOn;
       });
+      if (!_isMicMuted) {
+        unawaited(
+          ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).joinVoiceSession(),
+        );
+      }
       _startPremiumRealtime(user);
     } catch (e) {
       if (!mounted) return;
@@ -240,6 +245,18 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final muted = !_isMicMuted;
     _audio!.setMicEnabled(!muted);
     setState(() => _isMicMuted = muted);
+    final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+    if (muted) {
+      unawaited(liveCtrl.leaveVoiceSession());
+    } else {
+      unawaited(liveCtrl.joinVoiceSession());
+    }
+  }
+
+  void _onChatChanged(String text) {
+    ref
+        .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+        .notifyTyping(text.trim().isNotEmpty);
   }
 
   void _toggleSpeaker() {
@@ -670,6 +687,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   VoiceRoomBasicMessageBar(
                     controller: _messageCtrl,
                     onSend: _sendChatMessage,
+                    onChanged: _onChatChanged,
                     onEmoji: () =>
                         showVoiceRoomBasicEmojiPicker(context, _messageCtrl),
                   ),

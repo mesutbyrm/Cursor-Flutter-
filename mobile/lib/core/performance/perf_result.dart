@@ -54,6 +54,8 @@ abstract final class PerfResult {
 
   /// Sesli oda Premium 2026 UI — mevcut API/SSE, yalnızca Flutter arayüz
   static const moduleVoiceUi2026 = 'VoiceDiscoverHub2026 / VoiceLiveHeader2026';
+  /// Sesli sohbet API dokümanı — voice/typing/25s heartbeat/gifts LB
+  static const moduleVoiceApiDoc = 'ChatRoomRemoteDataSource voice+typing §6';
 
   /// Görev 17 — gereksiz rebuild/setState/timer sızıntı temizliği
   static const moduleWidgetPerf = 'WidgetPerf / CancellableDelay';

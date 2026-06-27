@@ -5,30 +5,20 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../gifts/presentation/providers/gift_providers.dart';
 import '../../../gifts/domain/premium_gift_catalog_2026.dart';
-import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_catalog.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
-import '../../data/datasources/chat_room_gifts_remote_datasource.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/voice_gift_combo_tracker.dart';
 import '../providers/voice_gift_leaderboard_provider.dart';
 import '../providers/voice_gift_providers.dart';
 import 'premium_2026/voice_premium_gift_panel_2026.dart';
-
-final chatRoomGiftsRemoteProvider = Provider<ChatRoomGiftsRemoteDataSource>((ref) {
-  return ChatRoomGiftsRemoteDataSource(
-    ref.watch(dioProvider),
-    LiveGiftsRemoteDataSource(ref.watch(dioProvider)),
-  );
-});
 
 final voiceRoomGiftTypesProvider = FutureProvider.autoDispose((ref) async {
   return ref.watch(chatRoomGiftsRemoteProvider).fetchGiftTypes();

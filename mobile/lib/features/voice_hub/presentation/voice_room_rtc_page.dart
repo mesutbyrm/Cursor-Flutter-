@@ -315,10 +315,18 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final muted = !_isMicMuted;
     _audio?.setMicEnabled(!muted);
     setState(() => _isMicMuted = muted);
-    // Mikrofon yalnızca TRTC/LiveKit client-side; backend REST yok.
-    // TODO(mic-sync): Socket.IO'da mic/audio-state event'i YOK (mobile/lib/core/socket
-    // klasörü de yok). Diğer kullanıcılara mic durumu senkronu için backend'de yeni
-    // event/endpoint gerekir — ayrı backend talebi.
+    final liveCtrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
+    if (muted) {
+      unawaited(liveCtrl.leaveVoiceSession());
+    } else {
+      unawaited(liveCtrl.joinVoiceSession());
+    }
+  }
+
+  void _onChatChanged(String text) {
+    ref
+        .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+        .notifyTyping(text.trim().isNotEmpty);
   }
 
   void _toggleHeadphones() {
@@ -469,6 +477,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _audioReady = true;
           _isMicMuted = !_audio!.micOn;
         });
+        if (!_isMicMuted) {
+          unawaited(
+            ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).joinVoiceSession(),
+          );
+        }
         _startGiftRealtime();
         ref.read(voiceRoomDiagnosticProvider.notifier).setSocket(true);
         _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
@@ -1639,6 +1652,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         presence: live.presence,
                       ),
                   onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
+                  onChanged: _onChatChanged,
                 ),
               ],
             ),
