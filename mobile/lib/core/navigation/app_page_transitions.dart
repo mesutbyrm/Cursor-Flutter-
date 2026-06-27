@@ -35,7 +35,7 @@ abstract final class AppPageTransitions {
   static CustomTransitionPage<T> fadeSlide<T>({
     required LocalKey? key,
     required Widget child,
-    Duration duration = const Duration(milliseconds: 320),
+    Duration duration = const Duration(milliseconds: 240),
   }) {
     return CustomTransitionPage<T>(
       key: key,
