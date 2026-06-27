@@ -85,10 +85,12 @@ class VoiceRoomBasicParticipantStrip extends StatelessWidget {
     super.key,
     required this.presence,
     required this.ownerId,
+    this.onUserTap,
   });
 
   final List<ChatRoomPresence> presence;
   final String? ownerId;
+  final void Function(ChatRoomPresence user)? onUserTap;
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +118,9 @@ class VoiceRoomBasicParticipantStrip extends StatelessWidget {
         itemBuilder: (context, index) {
           final p = sorted[index];
           final isOwner = ownerId != null && p.id == ownerId;
-          return Column(
+          return GestureDetector(
+            onTap: onUserTap == null ? null : () => onUserTap!(p),
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Stack(
@@ -168,6 +172,7 @@ class VoiceRoomBasicParticipantStrip extends StatelessWidget {
                 ),
               ),
             ],
+          ),
           );
         },
       ),

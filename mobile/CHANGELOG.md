@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.389+393 (2026-06-27)
+
+### Sesli oda — moderasyon (web parity, temel mod)
+
+- **Sahne:** Admin koltuk 1 + 2×5 koltuk grid; dokun → moderasyon / koltuk ata
+- **Admin / Moderatör / Yetkili:** rol rozeti; kullanıcıya dokun → moderasyon paneli
+- **Kick / Ban / Sessize alma:** mevcut moderasyon sheet temel modda bağlandı
+- **Mikrofon izni:** +V ses ver, koltuğa al/indir, konuşma isteği
+- **Oda susturma:** yetkililer için tek dokunuşla oda mute/unmute
+- **Katılımcı şeridi:** dokun → profil veya moderasyon
+
 ## 1.0.388+392 (2026-06-27)
 
 ### Sesli oda — müzik sistemi (web parity, temel mod)

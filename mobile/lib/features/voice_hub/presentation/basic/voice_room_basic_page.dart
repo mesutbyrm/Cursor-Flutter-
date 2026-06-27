@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,8 +20,8 @@ import '../sheets/voice_room_sheets.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../domain/voice_music_sync.dart';
 import '../utils/voice_room_permissions.dart';
-import '../utils/voice_music_access.dart';
 import 'voice_room_basic_music_section.dart';
+import 'voice_room_basic_moderation_section.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
 import '../utils/kick_strike_ui.dart';
 import 'voice_room_basic_realtime_feed.dart';
@@ -255,34 +254,37 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     if (leave == true && mounted) await _leaveRoom();
   }
 
-  ChatRoomPresence? _resolveOwner(
+  void _openParticipants(
     VoiceRoomEntity room,
     List<ChatRoomPresence> presence,
   ) {
-    final ownerId = room.ownerId;
-    if (ownerId != null) {
-      for (final p in presence) {
-        if (p.id == ownerId) return p;
-      }
-    }
-    final name = room.ownerName?.trim();
-    if (name != null && name.isNotEmpty) {
-      return ChatRoomPresence(
-        id: ownerId ?? 'owner',
-        name: name,
-        image: room.ownerAvatarUrl,
-        chatRole: 'owner',
-        seatIndex: 1,
-      );
-    }
-    return null;
-  }
-
-  void _openParticipants(VoiceRoomEntity room, List<ChatRoomPresence> presence) {
     showVoiceSpeakerListSheet(
       context,
       presence: presence,
       room: room,
+      onUserTap: (user) => openVoiceRoomBasicUser(
+        context,
+        ref,
+        room: room,
+        liveKey: _liveRoomKey,
+        user: user,
+        perms: _permissions(
+          ref.read(authControllerProvider).valueOrNull,
+          ref.read(voiceRoomLiveProvider(_liveRoomKey)),
+          room,
+        ),
+      ),
+    );
+  }
+
+  void _openUser(ChatRoomPresence user, VoiceRoomEntity room, VoiceRoomPermissions perms) {
+    openVoiceRoomBasicUser(
+      context,
+      ref,
+      room: room,
+      liveKey: _liveRoomKey,
+      user: user,
+      perms: perms,
     );
   }
 
@@ -322,10 +324,20 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     VoiceRoomLiveState live,
     VoiceRoomEntity room,
   ) {
-    return VoiceMusicAccess.permissionsFor(
+    ChatRoomPresence? self;
+    if (user != null) {
+      for (final p in live.presence) {
+        if (p.id == user.id) {
+          self = p;
+          break;
+        }
+      }
+    }
+    return VoiceRoomPermissions.forUser(
       user: user,
       room: room,
-      presence: live.presence,
+      selfPresence: self,
+      server: live.serverPermissions,
     );
   }
 
@@ -337,7 +349,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final ui = ref.watch(voiceRoomUiProvider);
     final room = _effectiveRoom();
     final online = live.onlineCountFor(room);
-    final owner = _resolveOwner(room, live.presence);
     final speakerOn = ui.headphonesOn;
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _permissions(user, live, room);
@@ -475,13 +486,18 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                 child: Center(child: CircularProgressIndicator()),
               )
             else ...[
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: _OwnerCard(owner: owner, room: room),
+              VoiceRoomBasicModerationSection(
+                room: room,
+                liveKey: _liveRoomKey,
+                live: live,
+                perms: perms,
+                user: user,
               ),
+              const SizedBox(height: 8),
               VoiceRoomBasicParticipantStrip(
                 presence: live.presence,
                 ownerId: room.ownerId,
+                onUserTap: (p) => _openUser(p, room, perms),
               ),
               const SizedBox(height: 8),
               Padding(
@@ -571,59 +587,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _OwnerCard extends StatelessWidget {
-  const _OwnerCard({required this.owner, required this.room});
-
-  final ChatRoomPresence? owner;
-  final VoiceRoomEntity room;
-
-  @override
-  Widget build(BuildContext context) {
-    final name = owner?.displayName ?? room.ownerName ?? 'Oda sahibi';
-    final image = owner?.image ?? room.ownerAvatarUrl;
-    return Card(
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 32,
-              backgroundImage: image != null && image.isNotEmpty
-                  ? CachedNetworkImageProvider(image)
-                  : null,
-              child: image == null || image.isEmpty
-                  ? const Icon(Icons.star_rounded, size: 32)
-                  : null,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Oda sahibi',
-                    style: Theme.of(context).textTheme.labelMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.verified_rounded, color: Colors.amber),
-          ],
         ),
       ),
     );
