@@ -71,7 +71,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
               diag: diag,
               displayTrack: displayTrack,
               isQueuedOnly: isQueuedOnly,
-              djName: _resolveDjName(dj),
+              djName: _resolveTrackLabel(dj, displayTrack),
             );
           },
         );
@@ -79,18 +79,21 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
     );
   }
 
-  String _resolveDjName(ChatRoomDjState dj) {
-    String djName = 'Admin';
-    if (dj.activeDjId != null) {
-      for (final u in dj.djUsers) {
-        if (u.id == dj.activeDjId) {
-          return u.displayName;
-        }
-      }
-    } else if (dj.djUsers.isNotEmpty) {
-      djName = dj.djUsers.first.displayName;
+  String _resolveTrackLabel(ChatRoomDjState dj, MusicQueueItem track) {
+    final requester = track.requestedBy?.displayName.trim();
+    if (requester != null && requester.isNotEmpty) {
+      return 'İsteyen: $requester';
     }
-    return djName;
+    final active = dj.activeDjId?.trim();
+    if (active != null && active.isNotEmpty) {
+      for (final u in dj.djUsers) {
+        if (u.id == active) return 'DJ: ${u.displayName}';
+      }
+    }
+    if (dj.djUsers.isNotEmpty) {
+      return 'DJ: ${dj.djUsers.first.displayName}';
+    }
+    return 'Oda müziği';
   }
 
   Widget _buildPlayer(
@@ -191,7 +194,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
                                 ),
                               ),
                             Text(
-                              'DJ: $djName',
+                              djName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(

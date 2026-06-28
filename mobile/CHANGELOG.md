@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.423+427 (2026-06-27)
+
+### Sesli oda müzik — oynatma + DJ etiketi
+
+- **Müzik çalmama:** `/api/chat/youtube-stream` URL'si doğrudan oynatılmıyordu; videoId ile akış çözülüp yedek adaylar denenir
+- **Oynatıcı:** `playServerStream` başarısız olunca diğer kaynaklara düşer; AudioService init hatasında yerel yedek
+- **DJ etiketi:** Şarkıyı isteyen kullanıcı gösterilir (`İsteyen: …`); liste sırası sabitlenir, SSE'de DJ listesi korunur
+- **Ayarlar:** DJ ekle/çıkar zaten Ayarlar → DJ menüsünde (oda sahibi/moderatör)
+
 ## 1.0.422+426 (2026-06-27)
 
 ### Bildirimler + sesli oda müzik

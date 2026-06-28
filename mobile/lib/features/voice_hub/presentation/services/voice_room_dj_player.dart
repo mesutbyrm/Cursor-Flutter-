@@ -63,30 +63,49 @@ class VoiceRoomDjPlayer {
 
   Future<VoiceRoomAudioHandler> _initHandler() async {
     await VoiceRoomMusicAudioSession.ensureConfigured();
-    final handler = await audio.AudioService.init(
-      builder: () => VoiceRoomAudioHandler(
+    try {
+      final handler = await audio.AudioService.init(
+        builder: () => VoiceRoomAudioHandler(
+          onTrackComplete: _onTrackComplete,
+          delegateProvider: () => controlDelegate,
+        ),
+        config: const audio.AudioServiceConfig(
+          androidNotificationChannelId: 'com.mesutbyrm.canlifal.voice_music',
+          androidNotificationChannelName: 'Canlifal sesli oda müziği',
+          androidNotificationChannelDescription:
+              'Sesli sohbet odası DJ müziği ve medya kontrolleri',
+          androidStopForegroundOnPause: false,
+          preloadArtwork: true,
+          fastForwardInterval: Duration(seconds: 10),
+          rewindInterval: Duration(seconds: 10),
+        ),
+      );
+      _wireHandler(handler);
+      return handler;
+    } catch (e, st) {
+      VoiceRoomDebugLog.musicError(
+        phase: 'AudioService.init',
+        error: e,
+      );
+      debugPrint('AudioService.init fallback: $e\n$st');
+      final handler = VoiceRoomAudioHandler(
         onTrackComplete: _onTrackComplete,
         delegateProvider: () => controlDelegate,
-      ),
-      config: const audio.AudioServiceConfig(
-        androidNotificationChannelId: 'com.mesutbyrm.canlifal.voice_music',
-        androidNotificationChannelName: 'Canlifal sesli oda müziği',
-        androidNotificationChannelDescription:
-            'Sesli sohbet odası DJ müziği ve medya kontrolleri',
-        androidStopForegroundOnPause: false,
-        preloadArtwork: true,
-        fastForwardInterval: Duration(seconds: 10),
-        rewindInterval: Duration(seconds: 10),
-      ),
-    );
+      );
+      _wireHandler(handler);
+      return handler;
+    }
+  }
+
+  void _wireHandler(VoiceRoomAudioHandler handler) {
     _handler = handler;
     handler.onDiagnosticsChanged = (value) {
       diagnostics.value = value;
     };
+    _playbackSub?.cancel();
     _playbackSub = handler.playbackValueStream.listen((value) {
       playback.value = value;
     });
-    return handler;
   }
 
   /// Sunucu yt-dlp / stream URL — doğrudan oynat (YouTube çözümleme yok).
@@ -201,35 +220,9 @@ class VoiceRoomDjPlayer {
     required bool playing,
     bool muted = false,
     String? serverStreamUrl,
+    String? preResolvedStream,
     Duration? startPosition,
   }) async {
-    final direct = _absolutizeStreamUrl(serverStreamUrl ?? musicUrl);
-    if (direct != null && direct.startsWith('http')) {
-      if (YoutubeStreamResolver.isYoutubeStreamApiUrl(direct)) {
-        final resolved = await _resolveSource(direct);
-        if (resolved != null &&
-            resolved.startsWith('http') &&
-            !YoutubeStreamResolver.isYoutubeStreamApiUrl(resolved)) {
-          return playServerStream(
-            streamUrl: resolved,
-            playing: playing,
-            startPosition: startPosition ?? Duration.zero,
-            nowPlaying: nowPlaying,
-            muted: muted,
-            videoId: ChatRoomDjState.videoIdFromLoose(direct),
-          );
-        }
-        // Çözümleme başarısız — aday listesi (nowPlaying watch URL vb.) ile devam et.
-      } else {
-        return playServerStream(
-          streamUrl: direct,
-          playing: playing,
-          startPosition: startPosition ?? Duration.zero,
-          nowPlaying: nowPlaying,
-          muted: muted,
-        );
-      }
-    }
     _muted = muted;
 
     if (!playing) {
@@ -239,22 +232,66 @@ class VoiceRoomDjPlayer {
 
     await VoiceRoomMusicAudioSession.ensureConfigured();
 
+    Future<bool> tryDirect(String url, {String? videoId}) async {
+      if (YoutubeStreamResolver.isYoutubeStreamApiUrl(url) ||
+          YoutubeStreamResolver.isYoutubePageUrl(url)) {
+        return false;
+      }
+      return playServerStream(
+        streamUrl: url,
+        playing: true,
+        startPosition: startPosition ?? Duration.zero,
+        nowPlaying: nowPlaying,
+        muted: muted,
+        videoId: videoId,
+      );
+    }
+
+    final pre = preResolvedStream?.trim();
+    if (pre != null && pre.isNotEmpty) {
+      if (await tryDirect(
+        pre,
+        videoId: ChatRoomDjState.videoIdFromLoose(pre),
+      )) {
+        return true;
+      }
+    }
+
+    final direct = _absolutizeStreamUrl(serverStreamUrl ?? musicUrl);
+    if (direct != null && direct.startsWith('http')) {
+      if (YoutubeStreamResolver.isYoutubeStreamApiUrl(direct)) {
+        final resolved = await _resolveSource(direct);
+        if (resolved != null &&
+            resolved.startsWith('http') &&
+            !YoutubeStreamResolver.isYoutubeStreamApiUrl(resolved) &&
+            await tryDirect(
+              resolved,
+              videoId: ChatRoomDjState.videoIdFromLoose(direct),
+            )) {
+          return true;
+        }
+      } else if (await tryDirect(
+        direct,
+        videoId: ChatRoomDjState.videoIdFromLoose(direct),
+      )) {
+        return true;
+      }
+    }
+
     final handler = await _ensureHandler();
 
     final candidates = <String>[];
     void addCandidate(String? url) {
       final trimmed = url?.trim();
       if (trimmed == null || trimmed.isEmpty) return;
-      if (ChatRoomDjState.isEphemeralStreamUrl(trimmed)) {
-        return;
-      }
+      if (ChatRoomDjState.isEphemeralStreamUrl(trimmed)) return;
+      if (YoutubeStreamResolver.isYoutubeStreamApiUrl(trimmed)) return;
       if (!candidates.contains(trimmed)) candidates.add(trimmed);
     }
 
+    addCandidate(pre);
     addCandidate(resolveSeed);
     addCandidate(fallbackYoutubeUrl);
-    addCandidate(musicUrl);
-    addCandidate(serverStreamUrl);
     if (nowPlaying != null) {
       addCandidate(nowPlaying.youtubeUrl);
       final videoId = VoiceRoomMusicPipelineLog.videoIdFromUrl(
@@ -265,6 +302,8 @@ class VoiceRoomDjPlayer {
         addCandidate('https://www.youtube.com/watch?v=$videoId');
       }
     }
+    addCandidate(musicUrl);
+    addCandidate(serverStreamUrl);
 
     if (candidates.isEmpty) {
       VoiceRoomMusicPipelineLog.nullMusicUrl(

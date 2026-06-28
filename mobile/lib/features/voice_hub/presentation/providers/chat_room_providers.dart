@@ -338,14 +338,28 @@ class VoiceRoomLiveController
     ChatRoomDjState dj,
     List<ChatRoomPresence> presence,
   ) {
-    final ids = <String>{
-      ..._roomMeta.djUserIds,
-      ...dj.djUsers.map((u) => u.id),
-      ...presence.where((p) => p.chatRole == 'dj').map((p) => p.id),
-    };
-    if (ids.isEmpty) return dj;
+    final orderedIds = <String>[];
+    void addId(String id) {
+      final trimmed = id.trim();
+      if (trimmed.isEmpty || orderedIds.contains(trimmed)) return;
+      orderedIds.add(trimmed);
+    }
+
+    final active = dj.activeDjId?.trim();
+    if (active != null && active.isNotEmpty) addId(active);
+    for (final u in dj.djUsers) {
+      addId(u.id);
+    }
+    for (final id in _roomMeta.djUserIds) {
+      addId(id);
+    }
+    for (final p in presence) {
+      if (p.chatRole == 'dj') addId(p.id);
+    }
+    if (orderedIds.isEmpty) return dj;
+
     final users = <ChatRoomUserRef>[];
-    for (final id in ids) {
+    for (final id in orderedIds) {
       final existing = dj.djUsers.where((u) => u.id == id).firstOrNull;
       if (existing != null) {
         users.add(existing);
@@ -355,7 +369,7 @@ class VoiceRoomLiveController
       users.add(
         ChatRoomUserRef(
           id: id,
-          name: p?.displayName ?? 'DJ',
+          name: p?.displayName ?? _djChatLabel(id) ?? 'DJ',
           nickname: p?.nickname,
           image: p?.image,
           chatRole: 'dj',
@@ -363,6 +377,50 @@ class VoiceRoomLiveController
       );
     }
     return dj.copyWith(djUsers: users);
+  }
+
+  Future<String?> _resolveDjStreamUrl(
+    ChatRoomDjState dj, {
+    RoomPlaybackSync? sync,
+  }) async {
+    final resolver = ref.read(youtubeStreamResolverProvider);
+    final videoId = ChatRoomDjState.videoIdFromLoose(
+          dj.nowPlaying?.youtubeUrl ??
+              sync?.currentVideoId ??
+              dj.playbackResolveSeed ??
+              dj.musicUrl ??
+              '',
+        ) ??
+        YoutubeVideoId.fromDj(
+          currentVideoId: sync?.currentVideoId,
+          nowPlayingUrl: dj.nowPlaying?.youtubeUrl,
+        );
+    if (videoId != null && videoId.isNotEmpty) {
+      final viaId = await resolver.resolveByVideoId(videoId);
+      if (viaId != null &&
+          viaId.startsWith('http') &&
+          !YoutubeStreamResolver.isYoutubeStreamApiUrl(viaId)) {
+        return viaId;
+      }
+    }
+    final seed = dj.playbackResolveSeed ?? dj.youtubeFallbackSource;
+    if (seed != null && seed.trim().isNotEmpty) {
+      final resolved = await resolver.resolvePlayableUrl(seed);
+      if (resolved != null &&
+          resolved.startsWith('http') &&
+          !YoutubeStreamResolver.isYoutubeStreamApiUrl(resolved)) {
+        return resolved;
+      }
+    }
+    final raw = sync?.streamUrl ?? dj.musicUrl;
+    if (raw != null &&
+        raw.trim().isNotEmpty &&
+        !YoutubeStreamResolver.isYoutubeStreamApiUrl(raw) &&
+        !ChatRoomDjState.isEphemeralStreamUrl(raw) &&
+        !YoutubeStreamResolver.isYoutubePageUrl(raw)) {
+      return raw.trim();
+    }
+    return null;
   }
 
   void _prefetchYoutubePlayback(ChatRoomDjState dj) {
@@ -2045,6 +2103,8 @@ class VoiceRoomLiveController
       if (users.isNotEmpty) {
         dj = dj.copyWith(djUsers: users);
       }
+    } else if (state.dj.djUsers.isNotEmpty) {
+      dj = dj.copyWith(djUsers: state.dj.djUsers);
     }
     _commitDjUi(dj);
     final sync = RoomPlaybackSync.fromPayload(map);
@@ -2135,17 +2195,32 @@ class VoiceRoomLiveController
       if (!sameTrack) {
         await player.stop();
       }
-      final streamUrl = sync?.streamUrl ?? effectiveDj.musicUrl;
+      final resolvedStream = await _resolveDjStreamUrl(effectiveDj, sync: sync);
+      var serverUrl = sync?.streamUrl ?? effectiveDj.musicUrl;
+      if (serverUrl != null &&
+          YoutubeStreamResolver.isYoutubeStreamApiUrl(serverUrl)) {
+        serverUrl = resolvedStream;
+      }
       final audioOk = await player.sync(
-        musicUrl: effectiveDj.musicUrl,
+        musicUrl: resolvedStream ?? effectiveDj.musicUrl,
         resolveSeed: effectiveDj.playbackResolveSeed,
         fallbackYoutubeUrl: effectiveDj.youtubeFallbackSource,
         nowPlaying: effectiveDj.nowPlaying,
         playing: true,
         muted: muted,
-        serverStreamUrl: streamUrl,
+        serverStreamUrl: resolvedStream ?? serverUrl,
+        preResolvedStream: resolvedStream,
         startPosition: sameTrack ? startPos : startPos,
       );
+      if (!audioOk && resolvedStream == null && effectiveDj.nowPlaying != null) {
+        VoiceRoomDebugLog.musicError(
+          phase: 'applyDjPlayback.unresolved',
+          url: effectiveDj.musicUrl,
+          videoId: ChatRoomDjState.videoIdFromLoose(
+            effectiveDj.nowPlaying!.youtubeUrl,
+          ),
+        );
+      }
       if (!audioOk && withVideo) {
         VoiceRoomDebugLog.log('music.audio_failed_video_only', {
           'room': _roomKey,
