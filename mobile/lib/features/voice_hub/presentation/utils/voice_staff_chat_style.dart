@@ -8,6 +8,14 @@ import '../theme/voice_room_tokens.dart';
 abstract final class VoiceStaffChatStyle {
   static bool isStaffUser(ChatRoomUserRef? user) {
     if (user == null) return false;
+    final symbol = user.roleSymbol?.trim();
+    if (symbol == '%' ||
+        symbol == '~' ||
+        symbol == '&' ||
+        symbol == '@' ||
+        symbol == '+') {
+      return true;
+    }
     final role = user.chatRole?.toLowerCase() ?? '';
     if (role == 'admin' ||
         role == 'superadmin' ||
@@ -15,20 +23,19 @@ abstract final class VoiceStaffChatStyle {
         role == 'owner' ||
         role == 'sop' ||
         role == 'moderator' ||
+        role == 'mod' ||
         role == 'op' ||
         role == 'dj') {
       return true;
     }
-    final rank = VoiceStaffRankParser.resolve(
-      username: user.nickname ?? user.name,
-      chatRole: user.chatRole,
-    );
+    final rank = rankOf(user);
     return VoiceStaffRankParser.powerLevel(rank) >=
-        VoiceStaffRankParser.powerLevel(VoiceStaffRank.op);
+        VoiceStaffRankParser.powerLevel(VoiceStaffRank.voice);
   }
 
   static VoiceStaffRank rankOf(ChatRoomUserRef? user) {
     if (user == null) return VoiceStaffRank.none;
+    if (user.chatRole == 'dj') return VoiceStaffRank.op;
     final symbol = user.roleSymbol?.trim();
     if (symbol == '%') return VoiceStaffRank.admin;
     if (symbol == '~') return VoiceStaffRank.founder;
@@ -47,23 +54,31 @@ abstract final class VoiceStaffChatStyle {
         VoiceStaffRank.none => VoiceRoomTokens.neonPurple,
       };
 
+  static Color accentForUser(ChatRoomUserRef? user) {
+    if (user == null) return VoiceRoomTokens.neonPurple;
+    if (user.chatRole == 'dj') return VoiceRoomTokens.neonPink;
+    return accentFor(rankOf(user));
+  }
+
   static List<Color> ringGradient(VoiceStaffRank rank) {
     final c = accentFor(rank);
     return [
       c,
       Color.lerp(c, VoiceRoomTokens.neonPurple, 0.45)!,
       Color.lerp(c, VoiceRoomTokens.neonPink, 0.35)!,
+      Colors.white.withValues(alpha: 0.85),
     ];
   }
 
+  /// Hafif ışık — okunaklı kalsın diye siyah halo ile.
   static List<Shadow> nameGlow(Color color) => [
-        Shadow(color: color.withValues(alpha: 0.85), blurRadius: 10),
-        Shadow(color: color.withValues(alpha: 0.45), blurRadius: 18),
-        const Shadow(color: Colors.black87, blurRadius: 4),
+        const Shadow(color: Colors.black87, blurRadius: 6, offset: Offset(0, 1)),
+        Shadow(color: color.withValues(alpha: 0.9), blurRadius: 12),
+        Shadow(color: color.withValues(alpha: 0.5), blurRadius: 20),
       ];
 
   static List<Shadow> bodyGlow(Color color) => [
-        Shadow(color: color.withValues(alpha: 0.35), blurRadius: 6),
-        const Shadow(color: Colors.black87, blurRadius: 5),
+        const Shadow(color: Colors.black87, blurRadius: 5, offset: Offset(0, 1)),
+        Shadow(color: color.withValues(alpha: 0.4), blurRadius: 8),
       ];
 }

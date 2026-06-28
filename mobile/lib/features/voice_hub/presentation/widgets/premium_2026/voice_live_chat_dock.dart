@@ -3,9 +3,9 @@ import 'package:canlifal_social/core/performance/scroll_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
-import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import '../../theme/voice_room_tokens.dart';
+import '../chat/chat_message_widgets.dart';
 import 'voice_floating_gifts_strip.dart';
 
 /// Yalnızca mesaj akışı — sahne üzerinde yüzen feed.
@@ -269,105 +269,12 @@ class _Bubble extends StatelessWidget {
   Widget build(BuildContext context) {
     if (message.kind == ChatMessageKind.systemJoin ||
         message.kind == ChatMessageKind.systemLeave) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
-        child: Text(
-          message.content,
-          style: TextStyle(
-            fontSize: 10,
-            color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
-            fontStyle: FontStyle.italic,
-          ),
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
-    if (message.kind == ChatMessageKind.gift) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            gradient: LinearGradient(
-              colors: [
-                VoiceRoomTokens.gold.withValues(alpha: 0.35),
-                VoiceRoomTokens.neonPink.withValues(alpha: 0.2),
-              ],
-            ),
-            border: Border.all(color: VoiceRoomTokens.gold.withValues(alpha: 0.5)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                const Icon(Icons.card_giftcard_rounded,
-                    color: VoiceRoomTokens.gold, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    message.content,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                      color: VoiceRoomTokens.gold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    final user = message.user;
-    final name = user?.displayWithPrefix ?? 'Kullanıcı';
-    final tier = VipTier.fromMembership(user?.membership);
-    final vip = user?.isBroadcaster == true || tier.index >= VipTier.gold.index;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
-      child: GestureDetector(
-        onTap: user != null ? () => onUserTap?.call(user.id, name) : null,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            gradient: LinearGradient(
-              colors: [
-                (vip ? VoiceRoomTokens.gold : VoiceRoomTokens.neonPurple)
-                    .withValues(alpha: 0.22),
-                Colors.black.withValues(alpha: 0.35),
-              ],
-            ),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.08),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            child: RichText(
-              text: TextSpan(
-                style:
-                    const TextStyle(fontSize: 13, height: 1.35, color: Colors.white),
-                children: [
-                  TextSpan(
-                    text: '$name: ',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      foreground: Paint()
-                        ..shader = (vip
-                                ? VoiceRoomTokens.goldRing
-                                : VoiceRoomTokens.neonRing)
-                            .createShader(const Rect.fromLTWH(0, 0, 120, 16)),
-                    ),
-                  ),
-                  TextSpan(text: message.content),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+    return ChatMessageWidget(
+      message: message,
+      onUserTap: onUserTap,
     );
   }
 }

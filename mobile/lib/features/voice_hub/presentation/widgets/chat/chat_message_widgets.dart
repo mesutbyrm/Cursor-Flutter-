@@ -142,10 +142,7 @@ class _StaffChatLine extends StatelessWidget {
   final bool showIstek;
   final VoidCallback? onTap;
 
-  Color get _accent {
-    if (user?.chatRole == 'dj') return VoiceRoomTokens.neonPink;
-    return VoiceStaffChatStyle.accentFor(rank);
-  }
+  Color get _accent => VoiceStaffChatStyle.accentForUser(user);
 
   @override
   Widget build(BuildContext context) {
@@ -157,7 +154,8 @@ class _StaffChatLine extends StatelessWidget {
           VoiceStaffChatAvatar(
             rank: rank,
             imageUrl: user?.image,
-            size: 34,
+            accent: _accent,
+            size: 36,
           ),
           const SizedBox(width: 8),
           Expanded(

@@ -12,9 +12,11 @@
 
 ### Faz 8 — Yetkili sohbet tasarımı
 
-- Yetkililer: animasyonlu neon profil çerçevesi (yetkiye göre renk)
-- Kullanıcı adı **kutu içinde değil**; hafif ışıklı, okunaklı metin
-- Mesaj gövdesi neon gölge ile okunabilir kalır
+- Yetkililer: animasyonlu neon profil çerçevesi (dönen halka + parıltı yayı + nabız)
+- Yetkiye göre renk: Admin altın, Kurucu/SOP turuncu, OP mavi, Voice yeşil, DJ pembe
+- Kullanıcı adı **kutu içinde değil**; hafif ışıklı neon metin (siyah halo ile okunaklı)
+- Mesaj gövdesi hafif neon gölge ile okunabilir kalır
+- Premium canlı sohbet de aynı `ChatMessageWidget` tasarımını kullanır
 
 ## 1.0.435+439 (2026-06-26)
 
