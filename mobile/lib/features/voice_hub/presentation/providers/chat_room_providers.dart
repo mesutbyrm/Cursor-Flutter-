@@ -30,6 +30,7 @@ import '../../domain/entities/music_queue_item.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/voice_playback_limits.dart';
 import '../../domain/voice_music_sync.dart';
+import '../../domain/utils/voice_banned_word_filter.dart';
 import '../../domain/voice_official_join.dart';
 import '../audio/voice_room_music_audio_session.dart';
 import '../utils/voice_room_permissions.dart';
@@ -141,6 +142,7 @@ class VoiceRoomLiveState {
     this.kickStrikeCount = 0,
     this.realtimeEvents = const [],
     this.musicLikeCount = 0,
+    this.bannedWords = const [],
   });
 
   final List<ChatRoomMessage> messages;
@@ -169,6 +171,7 @@ class VoiceRoomLiveState {
   final int kickStrikeCount;
   final List<VoiceRoomRealtimeEvent> realtimeEvents;
   final int musicLikeCount;
+  final List<String> bannedWords;
 
   bool get isAnyoneTyping => typingUsers.isNotEmpty;
 
@@ -214,6 +217,7 @@ class VoiceRoomLiveState {
     bool clearKickStrikeWarning = false,
     List<VoiceRoomRealtimeEvent>? realtimeEvents,
     int? musicLikeCount,
+    List<String>? bannedWords,
     bool clearError = false,
   }) {
     return VoiceRoomLiveState(
@@ -264,6 +268,7 @@ class VoiceRoomLiveState {
           : (kickStrikeCount ?? this.kickStrikeCount),
       realtimeEvents: realtimeEvents ?? this.realtimeEvents,
       musicLikeCount: musicLikeCount ?? this.musicLikeCount,
+      bannedWords: bannedWords ?? this.bannedWords,
     );
   }
 }
@@ -556,6 +561,7 @@ class VoiceRoomLiveController
   }
 
   Future<void> _bootstrapRoomData() async {
+    unawaited(_loadBannedWords());
     try {
       await _warmBackgrounds();
     } catch (_) {
@@ -587,6 +593,15 @@ class VoiceRoomLiveController
     player.onTrackComplete = () => unawaited(_onDjTrackComplete());
     _wireMusicControls();
     unawaited(_loadGiftLeaderboard());
+  }
+
+  Future<void> _loadBannedWords() async {
+    if (_roomKey.isEmpty) return;
+    try {
+      final words =
+          await ref.read(chatRoomRemoteProvider).fetchBannedWords(_roomKey);
+      state = state.copyWith(bannedWords: words);
+    } catch (_) {}
   }
 
   Future<void> _loadGiftLeaderboard() async {
@@ -2917,6 +2932,14 @@ class VoiceRoomLiveController
     final user = ref.read(authControllerProvider).valueOrNull;
     final isClear = VoiceOfficialJoin.isClearChatCommand(trimmed);
     final perms = _permissions();
+    if (!perms.canModerate &&
+        !perms.isRoomOwner &&
+        !perms.isSiteAdmin &&
+        state.bannedWords.isNotEmpty &&
+        VoiceBannedWordFilter.containsBannedWord(trimmed, state.bannedWords)) {
+      state = state.copyWith(error: 'Mesajınız yasaklı kelime içeriyor.');
+      return;
+    }
     final optimisticId = 'local-${DateTime.now().millisecondsSinceEpoch}';
     final optimistic = user != null
         ? ChatRoomMessage(
@@ -3931,9 +3954,12 @@ class VoiceRoomLiveController
 
   Future<List<String>> fetchBannedWords() async {
     try {
-      return await ref.read(chatRoomRemoteProvider).fetchBannedWords(_roomKey);
+      final words =
+          await ref.read(chatRoomRemoteProvider).fetchBannedWords(_roomKey);
+      state = state.copyWith(bannedWords: words);
+      return words;
     } catch (_) {
-      return const [];
+      return state.bannedWords;
     }
   }
 
@@ -3951,9 +3977,10 @@ class VoiceRoomLiveController
 
   Future<String?> addBannedWord(String word) async {
     try {
-      await ref
+      final words = await ref
           .read(chatRoomRemoteProvider)
           .addBannedWord(roomKey: _roomKey, word: word);
+      state = state.copyWith(bannedWords: words);
       return null;
     } catch (e) {
       return ApiException.userMessage(e);
@@ -3962,9 +3989,10 @@ class VoiceRoomLiveController
 
   Future<String?> removeBannedWord(String word) async {
     try {
-      await ref
+      final words = await ref
           .read(chatRoomRemoteProvider)
           .removeBannedWord(roomKey: _roomKey, word: word);
+      state = state.copyWith(bannedWords: words);
       return null;
     } catch (e) {
       return ApiException.userMessage(e);

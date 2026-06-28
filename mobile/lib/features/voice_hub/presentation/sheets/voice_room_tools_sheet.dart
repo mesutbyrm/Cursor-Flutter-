@@ -314,7 +314,7 @@ class _BannedWordsSectionState extends ConsumerState<_BannedWordsSection> {
       children: [
         const _SectionTitle('Yasaklı kelimeler'),
         Text(
-          'Bu kelimeler sohbette engellenir (oda moderatörleri).',
+          'Tam kelime eşleşmesi — örn. «am» yalnızca «am» engellenir; «ama», «amca» geçer.',
           style: TextStyle(fontSize: 11, color: context.colors.onSurfaceMuted),
         ),
         const SizedBox(height: 8),

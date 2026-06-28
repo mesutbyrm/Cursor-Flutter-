@@ -717,10 +717,17 @@ export function removeRoomBannedWord(roomId: string, actor: User, word: string) 
   return { ok: true as const, words: listRoomBannedWords(roomId) };
 }
 
+function wholeWordBannedRegex(word: string) {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, "iu");
+}
+
 function containsBannedWord(roomId: string, text: string) {
-  const lower = text.toLowerCase();
+  const trimmed = text.trim();
+  if (!trimmed) return false;
   for (const w of bannedWordsForRoom(roomId)) {
-    if (w.length >= 2 && lower.includes(w)) return true;
+    if (w.length < 2) continue;
+    if (wholeWordBannedRegex(w).test(trimmed)) return true;
   }
   return false;
 }

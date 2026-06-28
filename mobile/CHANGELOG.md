@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.434+438 (2026-06-26)
+
+### Faz 5 — Yasak Kelime Sistemi
+
+- Regex ile **tam kelime** eşleşmesi (kelime sınırı)
+- Büyük/küçük harf duyarsız (`am`, `AM`, `Am` engellenir)
+- İçinde geçen kelimeler engellenmez (`ama`, `amca`, `aman` geçer)
+- Oda girişinde yasaklı kelime listesi yüklenir; gönderim öncesi istemci kontrolü
+- Yerel API mirror aynı regex mantığına güncellendi
+
 ## 1.0.433+437 (2026-06-26)
 
 ### Faz 4 — Yetki Yönetimi
