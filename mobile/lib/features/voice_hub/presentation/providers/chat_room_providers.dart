@@ -1953,19 +1953,27 @@ class VoiceRoomLiveController
             .map((e) => e.id == nowPlaying!.id ? nowPlaying : e)
             .toList();
       }
-      final shouldPlay = result.playing ||
-          result.queuePosition == 1 ||
-          (queue.isNotEmpty && nowPlaying != null);
-      var dj = state.dj.copyWith(
-        musicQueue: queue,
-        nowPlaying: nowPlaying,
-        playing: shouldPlay,
-        musicUrl: result.streamUrl ?? nowPlaying?.youtubeUrl,
-      );
-      dj = _djWithQueuePlaybackFallback(dj);
+      final queuePosition = result.queuePosition ?? 0;
+      final player = ref.read(voiceRoomDjPlayerProvider);
+      final currentlyPlaying =
+          state.dj.playing || player.playback.value.playing;
+      final isQueuedOnly = currentlyPlaying && queuePosition > 1;
+      final shouldPlay = !isQueuedOnly &&
+          (result.playing || queuePosition <= 1 || !currentlyPlaying);
+      var dj = isQueuedOnly
+          ? state.dj.copyWith(musicQueue: queue)
+          : state.dj.copyWith(
+              musicQueue: queue,
+              nowPlaying: nowPlaying,
+              playing: shouldPlay,
+              musicUrl: result.streamUrl ?? nowPlaying?.youtubeUrl,
+            );
+      if (!isQueuedOnly) {
+        dj = _djWithQueuePlaybackFallback(dj);
+      }
       _lastDjPlaybackSignature = '';
       state = state.copyWith(dj: dj, sending: false);
-      if (shouldPlay) {
+      if (shouldPlay && !isQueuedOnly) {
         await _playDjInBackground(dj);
       }
       unawaited(_syncMusicFromServerIfNeeded(force: true));

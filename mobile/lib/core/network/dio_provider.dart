@@ -122,8 +122,13 @@ Future<bool> _tryRefresh(
       refresh: newRefresh ?? refresh,
     );
     return true;
+  } on DioException catch (e) {
+    final code = e.response?.statusCode;
+    if (code == 401 || code == 403) {
+      await storage.clear();
+    }
+    return false;
   } catch (_) {
-    await storage.clear();
     return false;
   }
 }

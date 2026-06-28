@@ -7,12 +7,9 @@ import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../../providers/chat_room_providers.dart';
-import '../../providers/voice_room_ui_provider.dart';
-import '../../services/voice_room_dj_player.dart';
 import '../../utils/voice_room_responsive_metrics.dart';
 import 'voice_chat_cleared_banner.dart';
 import 'voice_room_entry_notification.dart';
-import 'voice_room_music_mini_player.dart';
 
 /// Kuyruk + mini player + giriş bildirimi — mesaj kutusunun hemen üstünde sabit blok.
 class VoiceRoomBottomDock extends ConsumerWidget {
@@ -44,12 +41,7 @@ class VoiceRoomBottomDock extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final m = VoiceRoomResponsiveMetrics.of(context);
     final dj = live.dj;
-    final ui = ref.watch(voiceRoomUiProvider);
-    final musicMuted = !ui.backgroundMusicEnabled;
-    final musicSession = ref.watch(voiceRoomMusicSessionProvider);
-    final showMiniPlayer = (dj.playing || dj.nowPlaying != null) &&
-        !musicSession.dismissed &&
-        !musicSession.userDismissedPlayer;
+    final waiting = _waitingQueueItems(dj);
 
     return RepaintBoundary(
       child: DecoratedBox(
@@ -66,58 +58,7 @@ class VoiceRoomBottomDock extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (showMiniPlayer)
-              VoiceRoomMusicMiniPlayer(
-                dj: dj,
-                canControl: canControlMusic,
-                canModerate: canControlMusic,
-                musicMuted: musicMuted,
-                showClose: true,
-                onPlayPause: () async {
-                  final notifier = ref
-                      .read(voiceRoomLiveProvider(session.liveKey).notifier);
-                  if (dj.playing) {
-                    await notifier.pauseMusic();
-                  } else {
-                    await notifier.resumeMusic();
-                  }
-                },
-                onPrevious: () {
-                  ref.read(voiceRoomDjPlayerProvider).seekToStart();
-                },
-                onSkip: canControlMusic
-                    ? () {
-                        ref
-                            .read(
-                              voiceRoomLiveProvider(session.liveKey).notifier,
-                            )
-                            .skipMusic();
-                      }
-                    : null,
-                onStop: canControlMusic
-                    ? () {
-                        ref
-                            .read(
-                              voiceRoomLiveProvider(session.liveKey).notifier,
-                            )
-                            .stopMusic();
-                      }
-                    : null,
-                onMuteToggle: () => ref
-                    .read(voiceRoomUiProvider.notifier)
-                    .toggleBackgroundMusic(),
-                onClose: () => ref
-                    .read(voiceRoomLiveProvider(session.liveKey).notifier)
-                    .closeMusicPlayer(),
-                onTap: () => showRoomMusicQueueSheet(
-                  context,
-                  ref,
-                  liveKey: session.liveKey,
-                  dj: live.dj,
-                  canControlMusic: canControlMusic,
-                ),
-              ),
-            if (_waitingQueueItems(dj).isNotEmpty)
+            if (waiting.isNotEmpty)
               GestureDetector(
                 onTap: () => showRoomMusicQueueSheet(
                   context,

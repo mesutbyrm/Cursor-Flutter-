@@ -65,6 +65,7 @@ import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_dj_music_slide_panel.dart';
+import 'widgets/voice_room/voice_room_center_music_panel.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import '../video/presentation/widgets/room_video_overlay.dart';
@@ -1101,6 +1102,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         perms.isRoomOwner ||
         perms.isSiteAdmin ||
         isDj;
+    final canCloseMusic = isOwner ||
+        perms.isSiteAdmin ||
+        perms.canModerate ||
+        (user != null && live.dj.nowPlaying?.requestedBy?.id == user.id);
     final videoState = ref.watch(roomVideoControllerProvider(_liveRoomKey));
     final videoActive = videoState.hasActiveVideo;
     final speakingIds = <String>{
@@ -1516,6 +1521,13 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           selfUserId: user?.id,
                           remoteAgoraUid: _agora.remoteUid,
                         ),
+                        if (!keyboardOpen)
+                          VoiceRoomCenterMusicPanel(
+                            room: room,
+                            live: live,
+                            canControlMusic: canControlMusic,
+                            canCloseMusic: canCloseMusic,
+                          ),
                         RoomVideoOverlay(
                           roomKey: _liveRoomKey,
                           perms: perms,

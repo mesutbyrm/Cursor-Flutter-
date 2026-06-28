@@ -6,13 +6,18 @@ import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../agora/data/datasources/agora_remote_datasource.dart';
+import '../../../agora/domain/agora_channel_names.dart';
 import '../../../agora/domain/entities/agora_credentials.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import 'voice_agora_exception.dart';
 
-/// Sesli sohbet — App ID only (token boş), kanal = oda kimliği.
+/// Sesli sohbet — sunucu token + yedek App ID only.
 class VoiceAgoraEngine {
-  VoiceAgoraEngine();
+  VoiceAgoraEngine({AgoraRemoteDataSource? tokenSource})
+      : _tokenSource = tokenSource;
+
+  final AgoraRemoteDataSource? _tokenSource;
 
   RtcEngine? _engine;
   RtcEngineEventHandler? _handler;
@@ -62,12 +67,11 @@ class VoiceAgoraEngine {
       );
     }
 
-    final channel = rawRoomId;
+    final channel = AgoraChannelNames.forVoiceRoom(rawRoomId);
     VoiceRoomDebugLog.log('audio.agora.prepare', {
       'roomId': rawRoomId,
       'channel': channel,
       'publishMic': publishMic,
-      'mode': 'app_id_only',
     });
 
     try {
@@ -89,20 +93,47 @@ class VoiceAgoraEngine {
         await Future<void>.delayed(const Duration(milliseconds: 250));
       }
 
-      final appId = Env.agoraVoiceAppId.trim();
+      final role = publishMic ? 'host' : 'audience';
+      AgoraCredentials? credentials;
+      final tokenSource = _tokenSource;
+      if (tokenSource != null) {
+        try {
+          credentials = await tokenSource.fetchVoiceRoomToken(
+            roomId: rawRoomId,
+            role: role,
+          );
+        } catch (e, st) {
+          _logFailure('fetchVoiceRoomToken', e, st, extra: {'channel': channel});
+          VoiceRoomDebugLog.log('audio.agora.token.fallback', {
+            'channel': channel,
+            'error': e.toString(),
+          });
+        }
+      }
+
+      final appId = credentials?.appId.trim().isNotEmpty == true
+          ? credentials!.appId.trim()
+          : Env.agoraVoiceAppId.trim();
       if (appId.isEmpty) {
         throw const VoiceAgoraException(
-          'Agora App ID eksik (AGORA_VOICE_APP_ID).',
+          'Agora App ID eksik (sunucu yanıtı ve AGORA_VOICE_APP_ID boş).',
           phase: 'app_id',
         );
       }
 
+      final joinToken = credentials?.token.trim() ?? '';
+      final joinChannel = credentials?.channelName.trim().isNotEmpty == true
+          ? credentials!.channelName.trim()
+          : channel;
+      final joinUid = credentials?.uid ?? 0;
+      final mode = joinToken.isNotEmpty ? 'server_token' : 'app_id_only';
+
       VoiceRoomDebugLog.log('audio.agora.token', {
-        'channel': channel,
-        'uid': 0,
+        'channel': joinChannel,
+        'uid': joinUid,
         'appIdPrefix': appId.length >= 8 ? appId.substring(0, 8) : appId,
-        'tokenLength': 0,
-        'mode': 'app_id_only',
+        'tokenLength': joinToken.length,
+        'mode': mode,
       });
 
       await _createAndInitializeEngine(appId);
@@ -163,19 +194,19 @@ class VoiceAgoraEngine {
       }
       _engine!.registerEventHandler(_handler!);
 
-      _channelId = channel;
+      _channelId = joinChannel;
       _lastCredentials = AgoraCredentials(
         appId: appId,
-        token: '',
-        channelName: channel,
-        uid: 0,
+        token: joinToken,
+        channelName: joinChannel,
+        uid: joinUid,
       );
 
       try {
         await _engine!.joinChannel(
-          token: '',
-          channelId: channel,
-          uid: 0,
+          token: joinToken,
+          channelId: joinChannel,
+          uid: joinUid,
           options: ChannelMediaOptions(
             channelProfile: ChannelProfileType.channelProfileCommunication,
             clientRoleType: clientRole,
