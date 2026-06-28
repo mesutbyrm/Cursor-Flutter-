@@ -19,13 +19,13 @@ void main() {
       }
     });
 
-    test('buildPlaybackTargets adds proxy first on Android', () async {
+    test('buildPlaybackTargets prefers direct CDN on Android', () async {
       final loader = VoiceRoomDjStreamLoader(Dio());
       final targets = await loader.buildPlaybackTargets(cdn);
       expect(targets, isNotEmpty);
       if (Platform.isAndroid) {
-        expect(targets.first, contains('/api/chat/youtube-audio'));
-        expect(targets, contains(cdn));
+        expect(targets.first, cdn);
+        expect(targets, contains('/api/chat/youtube-audio'));
       } else {
         expect(targets.first, cdn);
       }

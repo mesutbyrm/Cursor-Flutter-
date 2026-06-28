@@ -446,7 +446,7 @@ class VoiceRoomLiveController
 
   /// Odaya giriş — POST presence → GET messages → SSE → heartbeat.
   Future<void> _beginRoomSession() async {
-    ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
+    ref.read(voiceRoomMusicSessionProvider.notifier).prepareForRoomEntry();
     unawaited(VoiceRoomMusicAudioSession.ensureConfigured());
     state = state.copyWith(loading: false);
 
@@ -2095,7 +2095,7 @@ class VoiceRoomLiveController
     final session = ref.read(voiceRoomMusicSessionProvider);
     final player = ref.read(voiceRoomDjPlayerProvider);
 
-    if (session.dismissed) {
+    if (session.userDismissedPlayer) {
       await player.stop();
       _syncRoomVideo(const ChatRoomDjState(), sync: sync);
       _lastDjPlaybackSignature = _djPlaybackSignature(dj, muted: muted);
@@ -3918,6 +3918,15 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
     if (!dismissed) {
       _ensureBackgroundSync(room);
     }
+  }
+
+  /// Odaya giriş — önceki odadan kalan `dismissed` müziği engellemesin.
+  void prepareForRoomEntry() {
+    state = state.copyWith(
+      dismissed: false,
+      userDismissedPlayer: false,
+      visible: false,
+    );
   }
 
   void clearUserDismissed() {

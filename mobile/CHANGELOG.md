@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.422+426 (2026-06-27)
+
+### Bildirimler + sesli oda müzik
+
+- **Bildirim tıklama:** Önce ilgili sayfaya gider (ödeme → jeton/admin, seans/randevu → canlı falcılar); okundu işareti arka planda
+- **Tümünü oku:** Önbellek temizlenir, liste anında güncellenir, aktivite + site bildirimleri okunur
+- **Aktivite API:** `targetPath` / `targetId` ve başlık tabanlı yönlendirme (`jeton_payment`, ödeme bildirimi vb.)
+- **Müzik:** Odaya girişte `dismissed` sıfırlanır — önceki odadan kalan engel kalkar
+- **Müzik akışı:** Android googlevideo sırası CDN → proxy → önbellek
+- **Video müzik:** Temel oda sayfasına YouTube video arka planı eklendi
+
 ## 1.0.421+425 (2026-06-27)
 
 ### Sesli oda UI + jeton talep temizliği

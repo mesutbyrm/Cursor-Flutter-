@@ -97,10 +97,23 @@ class ProfileActivityItemEntity {
     this.status = '',
     this.amount = 0,
     this.createdAt,
+    this.targetPath,
+    this.targetId,
   });
 
   factory ProfileActivityItemEntity.fromJson(Map<String, dynamic> json) {
     final read = json['read'] == true || json['isRead'] == true;
+    final meta = json['metadata'] is Map
+        ? Map<String, dynamic>.from(json['metadata'] as Map)
+        : json['data'] is Map
+            ? Map<String, dynamic>.from(json['data'] as Map)
+            : null;
+    String? pickField(String key) {
+      final v = json[key] ?? meta?[key];
+      final s = v?.toString().trim();
+      return s != null && s.isNotEmpty ? s : null;
+    }
+
     return ProfileActivityItemEntity(
       id: json['id']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
@@ -116,6 +129,16 @@ class ProfileActivityItemEntity {
               (json['read'] == false ? 'unread' : '')),
       amount: asInt(json['amount']),
       createdAt: json['createdAt']?.toString(),
+      targetPath: pickField('targetPath') ??
+          pickField('actionUrl') ??
+          pickField('link') ??
+          pickField('href'),
+      targetId: pickField('targetId') ??
+          pickField('entityId') ??
+          pickField('sessionId') ??
+          pickField('session_id') ??
+          pickField('roomId') ??
+          pickField('room_id'),
     );
   }
 
@@ -126,4 +149,6 @@ class ProfileActivityItemEntity {
   final String status;
   final int amount;
   final String? createdAt;
+  final String? targetPath;
+  final String? targetId;
 }

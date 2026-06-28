@@ -83,8 +83,8 @@ class VoiceRoomDjStreamLoader {
     final isYtCdn = needsLocalDownload(trimmed);
 
     if (!kIsWeb && Platform.isAndroid && isYtCdn) {
-      add(proxyPlaybackUrl(trimmed));
       add(trimmed);
+      add(proxyPlaybackUrl(trimmed));
       add(await downloadFallback(trimmed));
       return targets;
     }

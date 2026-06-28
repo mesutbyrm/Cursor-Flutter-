@@ -5,6 +5,7 @@ import '../../../profile/data/datasources/canlifal_user_api_datasource.dart';
 import '../../../profile/domain/entities/profile_stats_entity.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/performance/network_perf.dart';
+import '../../../../core/offline/api_cache_store.dart';
 import '../../../../core/offline/cache_first_loader.dart';
 
 class NotificationsRepositoryImpl implements NotificationsRepository {
@@ -16,10 +17,11 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   static const _cacheKey = 'notifications_list_v1';
 
   @override
-  Future<List<AppNotificationEntity>> fetch() {
+  Future<List<AppNotificationEntity>> fetch({bool forceRefresh = false}) {
     return CacheFirstLoader.load(
       cacheKey: _cacheKey,
       maxAge: const Duration(minutes: 10),
+      forceRefresh: forceRefresh,
       fetch: _fetchFresh,
       encode: (list) => {
         'items': list.map(_encodeNotification).toList(),
@@ -81,6 +83,8 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
         'read': n.read,
         'createdAt': n.createdAt?.toIso8601String(),
         'type': n.type,
+        'targetPath': n.targetPath,
+        'targetId': n.targetId,
       };
 
   static AppNotificationEntity _decodeNotification(Map<String, dynamic> json) {
@@ -91,12 +95,18 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       read: json['read'] == true,
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
       type: json['type']?.toString(),
+      targetPath: json['targetPath']?.toString(),
+      targetId: json['targetId']?.toString(),
     );
   }
 
   AppNotificationEntity _activityToNotification(ProfileActivityItemEntity a) {
-    final read = a.status.toLowerCase() == 'read' ||
-        a.status.toLowerCase() == 'seen';
+    final status = a.status.toLowerCase();
+    final read = status == 'read' ||
+        status == 'seen' ||
+        status == 'approved' ||
+        status == 'completed' ||
+        status == 'rejected';
     return AppNotificationEntity(
       id: a.id,
       title: a.title,
@@ -104,11 +114,16 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       read: read,
       createdAt: DateTime.tryParse(a.createdAt ?? ''),
       type: a.type,
+      targetPath: a.targetPath,
+      targetId: a.targetId,
     );
   }
 
+  Future<void> _invalidateCache() => ApiCacheStore.clear(_cacheKey);
+
   @override
   Future<void> markRead(String id) async {
+    await _invalidateCache();
     if (Env.useMobileAuth) {
       try {
         await _canlifal.markActivityRead(id);
@@ -122,9 +137,13 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
 
   @override
   Future<void> markAllRead() async {
+    await _invalidateCache();
     if (Env.useMobileAuth) {
       await _canlifal.markAllActivityRead();
     }
+    try {
+      await _remote.markAllRead();
+    } catch (_) {}
   }
 
   @override

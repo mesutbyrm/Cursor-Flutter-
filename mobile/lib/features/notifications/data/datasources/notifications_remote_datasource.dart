@@ -84,6 +84,17 @@ class NotificationsRemoteDataSource {
     await _dio.safePatch(ApiEndpoints.notificationRead(id), data: const {});
   }
 
+  Future<void> markAllRead() async {
+    try {
+      await _dio.safePatch(ApiEndpoints.notifications, data: const {'readAll': true});
+    } catch (_) {
+      await _dio.safePatch(
+        ApiEndpoints.notifications,
+        data: const {'markAllRead': true},
+      );
+    }
+  }
+
   Future<void> clearPaymentNotifications() async {
     await _dio.safeDelete(ApiEndpoints.notificationsPaymentClear);
   }

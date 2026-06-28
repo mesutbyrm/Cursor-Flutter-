@@ -4,10 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import 'package:go_router/go_router.dart';
-
 import '../../../../core/bootstrap/startup_perf.dart';
-import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/performance/scroll_perf.dart';
@@ -21,6 +18,7 @@ import '../../../live_psychics/presentation/controllers/psychics_list_controller
 import '../../../live_psychics/presentation/providers/psychic_push_payload.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../providers/notifications_list_notifier.dart';
+import '../../domain/entities/app_notification_entity.dart';
 import '../providers/notifications_providers.dart';
 import '../widgets/notification_permission_banner.dart';
 
@@ -60,6 +58,65 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     ref.invalidate(notificationsListProvider);
   }
 
+  Future<void> _markAllRead() async {
+    ref.read(notificationsListNotifierProvider.notifier).markAllReadLocally();
+    try {
+      await ref.read(notificationsRepositoryProvider).markAllRead();
+      await _refresh();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tüm bildirimler okundu')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+      await _refresh();
+    }
+  }
+
+  Future<void> _onNotificationTap(
+    AppNotificationEntity n,
+    GoRouter router,
+    bool staffCanManage,
+  ) async {
+    final invite = psychicInviteFromNotification(n);
+    if (invite != null) {
+      final uid = ref.read(authControllerProvider).valueOrNull?.id;
+      final approved = ref.read(approvedPsychicProvider);
+      if (shouldPresentPsychicIncomingInvite(
+        authUserId: uid,
+        invite: invite,
+        tellerProfileId: approved.profile?.id,
+        isFortuneTeller:
+            approved.profile != null && approved.profile!.isUsable,
+      )) {
+        ref.read(psychicIncomingQueueProvider.notifier).enqueue(invite);
+        PsychicInviteCoordinator.requestPresent(sessionId: invite.sessionId);
+      } else {
+        navigateFromNotification(
+          router,
+          n,
+          staffCanManagePayments: staffCanManage,
+        );
+      }
+    } else {
+      navigateFromNotification(
+        router,
+        n,
+        staffCanManagePayments: staffCanManage,
+      );
+    }
+
+    if (!n.read) {
+      ref.read(notificationsListNotifierProvider.notifier).markOneReadLocally(n.id);
+      try {
+        await ref.read(notificationsRepositoryProvider).markRead(n.id);
+      } catch (_) {}
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final fmt = DateFormat('HH:mm');
@@ -89,6 +146,11 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
                 onLoadMore: () => ref
                     .read(notificationsListNotifierProvider.notifier)
                     .loadMore(),
+                onTap: (n) => _onNotificationTap(
+                  n,
+                  GoRouter.of(context),
+                  ref.watch(staffAccessProvider).canManagePayments,
+                ),
               );
             },
           );
@@ -99,14 +161,10 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       subtitle: 'Son aktiviteler ve uyarılar',
       onRefresh: _refresh,
       actions: [
-        if (Env.useMobileAuth)
-          TextButton(
-            onPressed: () async {
-              await ref.read(notificationsRepositoryProvider).markAllRead();
-              await _refresh();
-            },
-            child: Text('Tümünü oku'),
-          ),
+        TextButton(
+          onPressed: _markAllRead,
+          child: const Text('Tümünü oku'),
+        ),
         DiscoverIconButton(
           icon: Icons.refresh_rounded,
           onPressed: _refresh,
@@ -123,34 +181,35 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   }
 }
 
-class _NotificationsListView extends ConsumerWidget {
+class _NotificationsListView extends StatelessWidget {
   const _NotificationsListView({
     required this.state,
     required this.fmt,
     required this.scrollController,
     required this.onLoadMore,
+    required this.onTap,
   });
 
   final NotificationsListState state;
   final DateFormat fmt;
   final ScrollController scrollController;
   final VoidCallback onLoadMore;
+  final ValueChanged<AppNotificationEntity> onTap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final items = state.visible;
-    final router = GoRouter.of(context);
-    final staffCanManage = ref.watch(staffAccessProvider).canManagePayments;
 
     return ListView.separated(
-      cacheExtent: ListPerf.cacheExtent, controller: scrollController,
+      cacheExtent: ListPerf.cacheExtent,
+      controller: scrollController,
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
       itemCount: items.length + (state.hasMore ? 1 : 0),
-      separatorBuilder: (_, _) => SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (ctx, i) {
         if (i >= items.length) {
           onLoadMore();
-          return Padding(
+          return const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Center(
               child: SizedBox(
@@ -163,103 +222,70 @@ class _NotificationsListView extends ConsumerWidget {
         }
         final n = items[i];
         return ListPerf.repaint(
-          ProGlassListTile(
-            onTap: () async {
-              if (!n.read) {
-                await ref
-                    .read(notificationsRepositoryProvider)
-                    .markRead(n.id);
-                await ref
-                    .read(notificationsListNotifierProvider.notifier)
-                    .refresh();
-              }
-              final invite = psychicInviteFromNotification(n);
-              if (invite != null) {
-                final uid =
-                    ref.read(authControllerProvider).valueOrNull?.id;
-                final approved = ref.read(approvedPsychicProvider);
-                if (shouldPresentPsychicIncomingInvite(
-                  authUserId: uid,
-                  invite: invite,
-                  tellerProfileId: approved.profile?.id,
-                  isFortuneTeller:
-                      approved.profile != null && approved.profile!.isUsable,
-                )) {
-                  ref
-                      .read(psychicIncomingQueueProvider.notifier)
-                      .enqueue(invite);
-                  PsychicInviteCoordinator.requestPresent(
-                    sessionId: invite.sessionId,
-                  );
-                } else {
-                  navigateFromNotification(
-                    router,
-                    n,
-                    staffCanManagePayments: staffCanManage,
-                  );
-                }
-                return;
-              }
-              navigateFromNotification(
-                router,
-                n,
-                staffCanManagePayments: staffCanManage,
-              );
-            },
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: n.read ? null : context.colors.brandGradient,
-                    color: n.read
-                        ? Colors.white.withValues(alpha: 0.06)
-                        : null,
-                  ),
-                  child: Icon(
-                    Icons.notifications_rounded,
-                    size: 20,
-                    color: n.read ? context.colors.onSurfaceMuted : Colors.white,
-                  ),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        n.title,
-                        style: TextStyle(
-                          fontWeight:
-                              n.read ? FontWeight.w600 : FontWeight.w800,
-                          fontSize: 15,
-                        ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => onTap(n),
+              child: ProGlassListTile(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        gradient: n.read ? null : context.colors.brandGradient,
+                        color: n.read
+                            ? Colors.white.withValues(alpha: 0.06)
+                            : null,
                       ),
-                      if (n.body != null && n.body!.isNotEmpty) ...[
-                        SizedBox(height: 4),
-                        Text(
-                          n.body!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: context.colors.onSurfaceMuted,
-                            fontSize: 13,
+                      child: Icon(
+                        Icons.notifications_rounded,
+                        size: 20,
+                        color:
+                            n.read ? context.colors.onSurfaceMuted : Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            n.title,
+                            style: TextStyle(
+                              fontWeight:
+                                  n.read ? FontWeight.w600 : FontWeight.w800,
+                              fontSize: 15,
+                            ),
                           ),
-                        ),
-                      ],
-                    ],
-                  ),
+                          if (n.body != null && n.body!.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              n.body!,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: context.colors.onSurfaceMuted,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Text(
+                      fmt.format((n.createdAt ?? DateTime.now()).toLocal()),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: context.colors.onSurfaceMuted
+                            .withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  fmt.format((n.createdAt ?? DateTime.now()).toLocal()),
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: context.colors.onSurfaceMuted.withValues(alpha: 0.85),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         );
