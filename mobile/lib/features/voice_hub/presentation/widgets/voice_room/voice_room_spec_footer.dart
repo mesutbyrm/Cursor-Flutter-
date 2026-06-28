@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
+import '../../../domain/entities/chat_room_message.dart';
+import '../../../domain/entities/voice_room_realtime_event.dart';
 import '../../theme/voice_room_tokens.dart';
 import 'voice_room_bottom_action_bar.dart';
+import 'voice_room_join_toast_stack.dart';
 
 /// Alt bar — mesaj satırı + Faz 6 aksiyon menüsü.
 class VoiceRoomSpecFooter extends StatelessWidget {
@@ -21,6 +24,8 @@ class VoiceRoomSpecFooter extends StatelessWidget {
     required this.onMusicVideo,
     required this.onGift,
     required this.onInvite,
+    this.events = const [],
+    this.messages = const [],
     this.onEmojiTap,
     this.onChanged,
   });
@@ -38,6 +43,8 @@ class VoiceRoomSpecFooter extends StatelessWidget {
   final VoidCallback onMusicVideo;
   final VoidCallback onGift;
   final VoidCallback onInvite;
+  final List<VoiceRoomRealtimeEvent> events;
+  final List<ChatRoomMessage> messages;
   final VoidCallback? onEmojiTap;
   final ValueChanged<String>? onChanged;
 
@@ -132,6 +139,10 @@ class VoiceRoomSpecFooter extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+            VoiceRoomJoinToastStack(
+              events: events,
+              messages: messages,
             ),
             VoiceRoomBottomActionBar(
               headphonesOn: headphonesOn,

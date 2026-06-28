@@ -39,7 +39,7 @@ import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'voice_room_basic_moderation_section.dart';
 import '../sheets/voice_room_menu_sheet.dart';
 import 'voice_room_basic_premium_section.dart';
-import '../widgets/voice_room/voice_room_join_entry_strip.dart';
+import '../widgets/voice_room/voice_room_join_toast_stack.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
 import '../sheets/music_mode_picker_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
@@ -739,10 +739,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     perms: perms,
                     user: user,
                   ),
-                  VoiceRoomJoinEntryStrip(
-                    events: live.realtimeEvents,
-                    messages: live.messages,
-                  ),
                   VoiceRoomBasicFloatingMiniPlayer(
                     room: room,
                     liveKey: _liveRoomKey,
@@ -772,6 +768,10 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     onChanged: _onChatChanged,
                     onEmoji: () =>
                         showVoiceRoomBasicEmojiPicker(context, _messageCtrl),
+                  ),
+                  VoiceRoomJoinToastStack(
+                    events: live.realtimeEvents,
+                    messages: live.messages,
                   ),
                   VoiceLiveActionBar2026(
                     micOn: !_isMicMuted,

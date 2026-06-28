@@ -1,6 +1,21 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.436+440 (2026-06-26)
+
+### Faz 7 — Sohbet giriş bildirimleri
+
+- Odaya giren **herkes** altta görünür: «Ali giriş yaptı.»
+- Birden fazla giriş üst üste listelenir
+- **10 saniye** sonra otomatik kaybolur
+- RTC ve Basic oda alt menüsünün hemen üstünde
+
+### Faz 8 — Yetkili sohbet tasarımı
+
+- Yetkililer: animasyonlu neon profil çerçevesi (yetkiye göre renk)
+- Kullanıcı adı **kutu içinde değil**; hafif ışıklı, okunaklı metin
+- Mesaj gövdesi neon gölge ile okunabilir kalır
+
 ## 1.0.435+439 (2026-06-26)
 
 ### Faz 6 — Alt Menü

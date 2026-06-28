@@ -6,6 +6,8 @@ import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 
 import '../../../domain/entities/chat_room_message.dart';
 import '../../theme/voice_room_tokens.dart';
+import '../../utils/voice_staff_chat_style.dart';
+import 'voice_staff_chat_avatar.dart';
 
 /// Sohbet satırı — RepaintBoundary ile izole çizim.
 class ChatMessageWidget extends StatelessWidget {
@@ -57,16 +59,25 @@ class _ChatMessageBody extends StatelessWidget {
     }
 
     final user = message.user;
-    final name = user?.displayWithPrefix ?? 'Kullanıcı';
+    final name = user?.displayName ?? 'Kullanıcı';
     final tier = VipTier.fromMembership(user?.membership);
     final vip = user?.isBroadcaster == true || tier.index >= VipTier.gold.index;
-    final rank = VoiceStaffRankParser.resolve(
-      username: user?.nickname ?? user?.name,
-      chatRole: user?.chatRole,
-    );
-    final styled = _isStyledName(user, vip, rank);
-    final nameColor = _usernameColor(user, vip, rank);
+    final rank = VoiceStaffChatStyle.rankOf(user);
+    final isStaff = VoiceStaffChatStyle.isStaffUser(user);
     final showIstek = _isIstekLine(message.content);
+
+    if (isStaff) {
+      return _StaffChatLine(
+        name: name,
+        content: message.content,
+        user: user,
+        rank: rank,
+        showIstek: showIstek,
+        onTap: user != null ? () => onUserTap?.call(user.id, name) : null,
+      );
+    }
+
+    final nameColor = _usernameColor(user, vip, rank);
 
     return GestureDetector(
       onTap: user != null ? () => onUserTap?.call(user.id, name) : null,
@@ -75,11 +86,7 @@ class _ChatMessageBody extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.38),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: styled
-                ? nameColor.withValues(alpha: 0.35)
-                : Colors.white.withValues(alpha: 0.08),
-          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,9 +110,6 @@ class _ChatMessageBody extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                         fontSize: 12,
                         color: nameColor,
-                        shadows: styled
-                            ? const [Shadow(color: Colors.black87, blurRadius: 6)]
-                            : null,
                       ),
                     ),
                     TextSpan(text: message.content),
@@ -113,24 +117,101 @@ class _ChatMessageBody extends StatelessWidget {
                 ),
               ),
             ),
-            if (showIstek)
-              Container(
-                margin: const EdgeInsets.only(left: 6, top: 2),
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'İSTEK',
+            if (showIstek) _IstekBadge(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StaffChatLine extends StatelessWidget {
+  const _StaffChatLine({
+    required this.name,
+    required this.content,
+    required this.user,
+    required this.rank,
+    required this.showIstek,
+    this.onTap,
+  });
+
+  final String name;
+  final String content;
+  final ChatRoomUserRef? user;
+  final VoiceStaffRank rank;
+  final bool showIstek;
+  final VoidCallback? onTap;
+
+  Color get _accent {
+    if (user?.chatRole == 'dj') return VoiceRoomTokens.neonPink;
+    return VoiceStaffChatStyle.accentFor(rank);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          VoiceStaffChatAvatar(
+            rank: rank,
+            imageUrl: user?.image,
+            size: 34,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 8,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    fontSize: 12.5,
+                    color: _accent,
+                    shadows: VoiceStaffChatStyle.nameGlow(_accent),
                   ),
                 ),
-              ),
-          ],
+                const SizedBox(height: 2),
+                Text(
+                  content,
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withValues(alpha: 0.94),
+                    shadows: VoiceStaffChatStyle.bodyGlow(_accent),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (showIstek) _IstekBadge(),
+        ],
+      ),
+    );
+  }
+}
+
+class _IstekBadge extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(left: 6, top: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: const Text(
+        'İSTEK',
+        style: TextStyle(
+          fontSize: 8,
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
         ),
       ),
     );
@@ -212,42 +293,13 @@ class _SystemJoinLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = _joinIcon(content);
-    final color = _joinColor(content);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            content,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ),
-      ],
-    );
+    return const SizedBox.shrink();
   }
 }
 
 bool _isIstekLine(String content) {
   final c = content.trim().toLowerCase();
   return c.startsWith('!istek') || c.contains('şarkı isteği');
-}
-
-bool _isStyledName(
-  ChatRoomUserRef? user,
-  bool vip,
-  VoiceStaffRank rank,
-) {
-  if (vip) return true;
-  if (user?.chatRole == 'owner' || user?.chatRole == 'founder') return true;
-  return VoiceStaffRankParser.powerLevel(rank) >=
-      VoiceStaffRankParser.powerLevel(VoiceStaffRank.op);
 }
 
 Color _usernameColor(ChatRoomUserRef? user, bool vip, VoiceStaffRank rank) {
@@ -263,25 +315,4 @@ Color _usernameColor(ChatRoomUserRef? user, bool vip, VoiceStaffRank rank) {
   if (user?.isBroadcaster == true) return VoiceRoomTokens.neonBlue;
   if (vip) return VoiceRoomTokens.gold;
   return const Color(0xFF4ADE80);
-}
-
-IconData _joinIcon(String content) {
-  final u = content.toUpperCase();
-  if (u.contains('ADMIN') || u.contains('KURUCU') || u.contains('FOUNDER')) {
-    return Icons.workspace_premium_rounded;
-  }
-  if (u.contains('DJ')) return Icons.auto_awesome_rounded;
-  if (u.contains('GOLD') || u.contains('VIP')) {
-    return Icons.hexagon_rounded;
-  }
-  return Icons.person_add_alt_1_rounded;
-}
-
-Color _joinColor(String content) {
-  final u = content.toUpperCase();
-  if (u.contains('ADMIN') || u.contains('GOLD') || u.contains('VIP')) {
-    return VoiceRoomTokens.gold;
-  }
-  if (u.contains('DJ')) return VoiceRoomTokens.neonPink;
-  return VoiceRoomTokens.neonBlue;
 }

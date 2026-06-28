@@ -1242,7 +1242,7 @@ class VoiceRoomLiveController
         state = state.copyWith(enterBanner: banner.trim());
         _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.join, banner.trim());
         _enterBannerTimer?.cancel();
-        _enterBannerTimer = Timer(const Duration(seconds: 8), () {
+        _enterBannerTimer = Timer(const Duration(seconds: 10), () {
           if (!_sessionActive) return;
           state = state.copyWith(clearEnterBanner: true);
         });
@@ -2768,7 +2768,7 @@ class VoiceRoomLiveController
     if (formatted.isEmpty) return;
     state = state.copyWith(enterBanner: formatted);
     _enterBannerTimer?.cancel();
-    _enterBannerTimer = Timer(const Duration(seconds: 8), () {
+    _enterBannerTimer = Timer(const Duration(seconds: 10), () {
       state = state.copyWith(clearEnterBanner: true);
     });
   }

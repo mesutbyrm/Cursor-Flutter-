@@ -9,7 +9,6 @@ import '../../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../utils/voice_room_responsive_metrics.dart';
 import 'voice_chat_cleared_banner.dart';
-import 'voice_room_entry_notification.dart';
 
 /// Kuyruk + mini player + giriş bildirimi — mesaj kutusunun hemen üstünde sabit blok.
 class VoiceRoomBottomDock extends ConsumerWidget {
@@ -19,8 +18,7 @@ class VoiceRoomBottomDock extends ConsumerWidget {
     required this.session,
     required this.live,
     required this.canControlMusic,
-    required this.canStopMusic,
-    this.staffBanner,
+    required     this.canStopMusic,
   });
 
   final VoiceRoomEntity room;
@@ -28,7 +26,6 @@ class VoiceRoomBottomDock extends ConsumerWidget {
   final VoiceRoomLiveState live;
   final bool canControlMusic;
   final bool canStopMusic;
-  final String? staffBanner;
 
   static List<MusicQueueItem> _waitingQueueItems(ChatRoomDjState dj) {
     final npId = dj.nowPlaying?.id;
@@ -79,10 +76,6 @@ class VoiceRoomBottomDock extends ConsumerWidget {
               VoiceChatClearedBanner(
                 key: ValueKey(live.chatClearedBannerNonce),
               ),
-            VoiceRoomEntryNotificationCard(
-              message: staffBanner,
-              roomName: room.nameTr,
-            ),
           ],
         ),
       ),
