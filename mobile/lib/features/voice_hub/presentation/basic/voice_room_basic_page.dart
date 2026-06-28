@@ -570,11 +570,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
         );
       }
 
-      final banner = next.enterBanner;
-      if (banner != null && banner != prev?.enterBanner) {
-        // Giriş bildirimi koltuk altı şeritte (VoiceRoomJoinEntryStrip).
-      }
-
       final kick = next.kickStrikeWarning;
       if (kick != null && kick != prev?.kickStrikeWarning) {
         unawaited(

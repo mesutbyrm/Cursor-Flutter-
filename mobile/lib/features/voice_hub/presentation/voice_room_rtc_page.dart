@@ -70,6 +70,7 @@ import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_dj_music_slide_panel.dart';
 import 'widgets/voice_room/voice_room_center_music_panel.dart';
+import 'widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import '../video/presentation/widgets/room_video_overlay.dart';
@@ -1629,6 +1630,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           agoraReady: _agoraReady,
                           selfUserId: user?.id,
                           remoteAgoraUid: _agora.remoteUid,
+                        ),
+                        VoiceRoomStaffJoinBanner(
+                          events: live.realtimeEvents,
+                          messages: live.messages,
+                          enterBanner: live.enterBanner,
                         ),
                         if (!keyboardOpen)
                           VoiceRoomCenterMusicPanel(

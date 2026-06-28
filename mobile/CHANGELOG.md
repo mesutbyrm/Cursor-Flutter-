@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.437+441 (2026-06-26)
+
+### Faz 9 — Yetkili giriş animasyonu
+
+- Yetkili odaya girince koltukların **altından** sağdan sola animasyon geçer
+- Örnek: «👑 Admin Mesut odaya giriş yaptı»
+- Yetkiye göre emoji ve neon renk (Admin, Kurucu, SOP, Mod, DJ, Voice)
+- **Tüm kullanıcılar** görür — RTC ve Basic oda
+- VIP/Gold girişleri bu animasyona dahil değil (Faz 7 alt toast devam eder)
+
 ## 1.0.436+440 (2026-06-26)
 
 ### Faz 7 — Sohbet giriş bildirimleri

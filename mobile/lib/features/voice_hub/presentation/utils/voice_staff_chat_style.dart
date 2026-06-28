@@ -81,4 +81,77 @@ abstract final class VoiceStaffChatStyle {
         const Shadow(color: Colors.black87, blurRadius: 5, offset: Offset(0, 1)),
         Shadow(color: color.withValues(alpha: 0.4), blurRadius: 8),
       ];
+
+  /// Faz 9 — koltuk altı giriş animasyonu metni: «👑 Admin Mesut odaya giriş yaptı».
+  static String entryRoleLabel(ChatRoomUserRef? user) {
+    if (user?.chatRole == 'dj') return 'DJ';
+    return switch (rankOf(user)) {
+      VoiceStaffRank.admin => 'Admin',
+      VoiceStaffRank.founder => 'Kurucu',
+      VoiceStaffRank.sop => 'SOP',
+      VoiceStaffRank.op => 'Mod',
+      VoiceStaffRank.voice => 'Voice',
+      VoiceStaffRank.none => 'Yetkili',
+    };
+  }
+
+  static String entryEmoji(ChatRoomUserRef? user) {
+    if (user?.chatRole == 'dj') return '🎧';
+    return switch (rankOf(user)) {
+      VoiceStaffRank.admin => '👑',
+      VoiceStaffRank.founder => '🏛️',
+      VoiceStaffRank.sop => '⭐',
+      VoiceStaffRank.op => '🛡️',
+      VoiceStaffRank.voice => '🎤',
+      VoiceStaffRank.none => '✨',
+    };
+  }
+
+  static String formatStaffEntryLine(String name, {ChatRoomUserRef? user}) {
+    final clean = name.trim();
+    final displayName =
+        clean.isEmpty ? 'Kullanıcı' : (clean.length > 28 ? '${clean.substring(0, 26)}…' : clean);
+    return '${entryEmoji(user)} ${entryRoleLabel(user)} $displayName odaya giriş yaptı';
+  }
+
+  /// Yetkili giriş animasyonu — VIP/Gold hariç.
+  static bool isStaffEntry({
+    required String content,
+    ChatRoomUserRef? user,
+  }) {
+    if (user != null && isStaffUser(user)) return true;
+    final raw = content.trim();
+    if (raw.isEmpty) return false;
+    if (raw.startsWith('[SYSTEM_VIP_JOIN:')) return false;
+    final upper = raw.toUpperCase();
+    if (upper.contains(' VIP ') || upper.startsWith('VIP ')) return false;
+    if (upper.contains(' GOLD ') || upper.startsWith('GOLD ')) return false;
+    if (raw.startsWith('%') ||
+        raw.startsWith('~') ||
+        raw.startsWith('&') ||
+        raw.startsWith('@') ||
+        raw.startsWith('+')) {
+      return true;
+    }
+    final role = user?.chatRole?.toLowerCase() ?? '';
+    if (role == 'admin' ||
+        role == 'superadmin' ||
+        role == 'founder' ||
+        role == 'owner' ||
+        role == 'sop' ||
+        role == 'moderator' ||
+        role == 'mod' ||
+        role == 'op' ||
+        role == 'dj') {
+      return true;
+    }
+    return upper.contains('ADMIN') ||
+        upper.contains('MODERATOR') ||
+        upper.contains('MODERAT') ||
+        upper.contains('KURUCU') ||
+        upper.contains('FOUNDER') ||
+        upper.contains('STAFF') ||
+        upper.contains('YETKİLİ') ||
+        upper.contains('YETKILI');
+  }
 }

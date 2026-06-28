@@ -34,5 +34,31 @@ void main() {
       expect(VoiceStaffChatStyle.isStaffUser(voice), isTrue);
       expect(VoiceStaffChatStyle.rankOf(voice), VoiceStaffRank.voice);
     });
+
+    test('formatStaffEntryLine for admin', () {
+      const user = ChatRoomUserRef(
+        id: '3',
+        name: 'Mesut',
+        chatRole: 'admin',
+        roleSymbol: '%',
+      );
+      expect(
+        VoiceStaffChatStyle.formatStaffEntryLine('Mesut', user: user),
+        '👑 Admin Mesut odaya giriş yaptı',
+      );
+    });
+
+    test('isStaffEntry excludes VIP banner', () {
+      expect(
+        VoiceStaffChatStyle.isStaffEntry(
+          content: '[SYSTEM_VIP_JOIN:gold:Ali]',
+        ),
+        isFalse,
+      );
+      expect(
+        VoiceStaffChatStyle.isStaffEntry(content: '% Ali odaya katıldı'),
+        isTrue,
+      );
+    });
   });
 }
