@@ -502,6 +502,27 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  Future<void> reorderMusicQueue({
+    required String roomKey,
+    String? alternateKey,
+    required List<String> orderedItemIds,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _dio.safePatch<dynamic>(
+          '/api/chat/rooms/$key/music-queue',
+          data: {'order': orderedItemIds},
+        );
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        await _dio.safePost<dynamic>(
+          '/api/chat/rooms/$key/music-queue/reorder',
+          data: {'order': orderedItemIds},
+        );
+      }
+    });
+  }
+
   Future<MusicClearResult> clearMusicQueue({
     required String roomKey,
     String? alternateKey,

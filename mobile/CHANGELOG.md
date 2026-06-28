@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.430+434 (2026-06-26)
+
+### Faz 1 — Ses ve Müzik Sistemi
+
+- **Arka plan müzik:** Odadan çıkınca çalmaya devam; yalnızca farklı odaya girince durur
+- **Durdurma yetkisi:** Müziği yalnızca oda sahibi, site admin veya şarkıyı isteyen durdurabilir
+- **Kuyruk:** Yeni istek mevcut parçayı kesmez; otomatik sıra
+- **Jeton:** Sesli istek 10, videolu istek 20 jeton
+- **DJ paneli:** Kuyruk görüntüle, sil, sırala, geç, tekrar çal; global mini player
+
 ## 1.0.429+433 (2026-06-26)
 
 ### Sesli oda UX — admin koltuk, müzik, chat, ayarlar

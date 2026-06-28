@@ -19,13 +19,15 @@ class VoiceRoomBottomDock extends ConsumerWidget {
     required this.session,
     required this.live,
     required this.canControlMusic,
-    required this.staffBanner,
+    required this.canStopMusic,
+    this.staffBanner,
   });
 
   final VoiceRoomEntity room;
   final VoiceRoomEntity session;
   final VoiceRoomLiveState live;
   final bool canControlMusic;
+  final bool canStopMusic;
   final String? staffBanner;
 
   static List<MusicQueueItem> _waitingQueueItems(ChatRoomDjState dj) {
@@ -66,6 +68,7 @@ class VoiceRoomBottomDock extends ConsumerWidget {
                   liveKey: session.liveKey,
                   dj: live.dj,
                   canControlMusic: canControlMusic,
+                  canStopMusic: canStopMusic,
                 ),
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: m.horizontalPad),

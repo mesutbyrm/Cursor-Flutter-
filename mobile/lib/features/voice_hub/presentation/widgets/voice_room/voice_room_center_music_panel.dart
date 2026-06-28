@@ -64,6 +64,7 @@ class VoiceRoomCenterMusicPanel extends ConsumerWidget {
               liveKey: sessionKey,
               dj: dj,
               canControlMusic: canControlMusic,
+              canStopMusic: canCloseMusic,
             ),
           ),
       ],

@@ -1142,10 +1142,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         perms.isRoomOwner ||
         perms.isSiteAdmin ||
         isDj;
-    final canCloseMusic = isOwner ||
-        perms.isSiteAdmin ||
-        perms.canModerate ||
-        (user != null && live.dj.nowPlaying?.requestedBy?.id == user.id);
+    final canCloseMusic = VoiceMusicAccess.canStopMusic(
+      user: user,
+      perms: perms,
+      nowPlaying: live.dj.nowPlaying,
+    );
     final videoState = ref.watch(roomVideoControllerProvider(_liveRoomKey));
     final videoActive = videoState.hasActiveVideo;
     final speakingIds = <String>{
@@ -1663,6 +1664,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                   session: room,
                                   live: live,
                                   canControlMusic: canControlMusic,
+                                  canStopMusic: canCloseMusic,
                                   staffBanner: null,
                                 ),
                             ],

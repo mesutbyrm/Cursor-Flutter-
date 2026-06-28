@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/theme/app_theme_colors.dart';
+import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/music_queue_item.dart';
+import '../../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../sheets/voice_room_dj_sheet.dart';
 import '../../sheets/voice_youtube_song_sheet.dart';
@@ -62,6 +64,18 @@ class _VoiceDjMusicSlidePanelState extends ConsumerState<VoiceDjMusicSlidePanel>
     final dj = widget.live.dj;
     final np = dj.nowPlaying;
     final ctrl = ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
+    final user = ref.watch(authControllerProvider).valueOrNull;
+    final canStopMusic = VoiceMusicAccess.canStopMusic(
+      user: user,
+      perms: widget.perms,
+      nowPlaying: np,
+    );
+    final canControlMusic = widget.live.dj.canControlMusic ||
+        widget.live.dj.canPlayMusic ||
+        widget.isDj ||
+        widget.perms.isRoomOwner ||
+        widget.perms.isSiteAdmin ||
+        (user != null && np?.requestedBy?.id == user.id);
 
     return Positioned(
       top: MediaQuery.paddingOf(context).top + 88,
@@ -146,16 +160,26 @@ class _VoiceDjMusicSlidePanelState extends ConsumerState<VoiceDjMusicSlidePanel>
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: _MiniBtn(
-                                    icon: Icons.stop_rounded,
-                                    label: 'Durdur',
-                                    color: AppThemeColors.liveRed,
+                                    icon: Icons.replay_rounded,
+                                    label: 'Tekrar',
                                     onTap: _busy
                                         ? null
-                                        : () => _run(ctrl.stopMusic),
+                                        : () => _run(ctrl.replayMusic),
                                   ),
                                 ),
                               ],
                             ),
+                            if (canStopMusic) ...[
+                              const SizedBox(height: 6),
+                              _MiniBtn(
+                                icon: Icons.stop_rounded,
+                                label: 'Durdur',
+                                color: AppThemeColors.liveRed,
+                                onTap: _busy
+                                    ? null
+                                    : () => _run(ctrl.stopMusic),
+                              ),
+                            ],
                           ] else
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -189,6 +213,35 @@ class _VoiceDjMusicSlidePanelState extends ConsumerState<VoiceDjMusicSlidePanel>
                               style: TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(38),
+                              foregroundColor: VoiceRoomTokens.gold,
+                              side: BorderSide(
+                                color: VoiceRoomTokens.gold.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            onPressed: () {
+                              setState(() => _expanded = false);
+                              showRoomMusicQueueSheet(
+                                context,
+                                ref,
+                                liveKey: widget.room.liveKey,
+                                dj: dj,
+                                canControlMusic: canControlMusic,
+                                canStopMusic: canStopMusic,
+                              );
+                            },
+                            icon: const Icon(Icons.queue_music_rounded, size: 16),
+                            label: Text(
+                              'Kuyruk (${dj.musicQueue.length})',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11,
                               ),
                             ),
                           ),

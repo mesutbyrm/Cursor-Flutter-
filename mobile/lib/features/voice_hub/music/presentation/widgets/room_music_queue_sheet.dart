@@ -7,13 +7,14 @@ import '../../../presentation/providers/chat_room_providers.dart';
 import '../../../presentation/theme/voice_room_tokens.dart';
 import '../../../presentation/widgets/premium/voice_glass.dart';
 
-/// Tam müzik kuyruğu — DJ silme / sıra görünümü.
+/// Tam müzik kuyruğu — DJ: sıra gör, sil, sırala, geç, tekrar çal.
 Future<void> showRoomMusicQueueSheet(
   BuildContext context,
   WidgetRef ref, {
   required String liveKey,
   required ChatRoomDjState dj,
   required bool canControlMusic,
+  bool canStopMusic = false,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -28,28 +29,77 @@ Future<void> showRoomMusicQueueSheet(
         liveKey: liveKey,
         dj: dj,
         canControlMusic: canControlMusic,
+        canStopMusic: canStopMusic,
       ),
     ),
   );
 }
 
-class _RoomMusicQueueSheet extends ConsumerWidget {
+class _RoomMusicQueueSheet extends ConsumerStatefulWidget {
   const _RoomMusicQueueSheet({
     required this.liveKey,
     required this.dj,
     required this.canControlMusic,
+    required this.canStopMusic,
   });
 
   final String liveKey;
   final ChatRoomDjState dj;
   final bool canControlMusic;
+  final bool canStopMusic;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_RoomMusicQueueSheet> createState() =>
+      _RoomMusicQueueSheetState();
+}
+
+class _RoomMusicQueueSheetState extends ConsumerState<_RoomMusicQueueSheet> {
+  late List<MusicQueueItem> _queue;
+  var _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _queue = List<MusicQueueItem>.from(widget.dj.musicQueue);
+  }
+
+  @override
+  void didUpdateWidget(covariant _RoomMusicQueueSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.dj.musicQueue.length != widget.dj.musicQueue.length ||
+        oldWidget.dj.nowPlaying?.id != widget.dj.nowPlaying?.id) {
+      _queue = List<MusicQueueItem>.from(widget.dj.musicQueue);
+    }
+  }
+
+  Future<void> _run(Future<String?> Function() action) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final err = await action();
+    if (mounted) setState(() => _busy = false);
+    if (!mounted || err == null) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+  }
+
+  ChatRoomDjState get _liveDj =>
+      ref.read(voiceRoomLiveProvider(widget.liveKey)).dj;
+
+  String? get _nowPlayingId => _liveDj.nowPlaying?.id ?? widget.dj.nowPlaying?.id;
+
+  Future<void> _persistOrder() async {
+    final ids = _queue.map((e) => e.id).toList();
+    await _run(
+      () => ref
+          .read(voiceRoomLiveProvider(widget.liveKey).notifier)
+          .reorderMusicQueue(ids),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
-    final ctrl = ref.read(voiceRoomLiveProvider(liveKey).notifier);
-    final queue = dj.musicQueue;
-    final nowId = dj.nowPlaying?.id;
+    final ctrl = ref.read(voiceRoomLiveProvider(widget.liveKey).notifier);
+    final nowId = _nowPlayingId;
 
     return DraggableScrollableSheet(
       expand: false,
@@ -77,7 +127,7 @@ class _RoomMusicQueueSheet extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Müzik kuyruğu (${queue.length})',
+                      'Müzik kuyruğu (${_queue.length})',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -91,38 +141,91 @@ class _RoomMusicQueueSheet extends ConsumerWidget {
                 ],
               ),
             ),
+            if (widget.canControlMusic)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _ActionChip(
+                      icon: Icons.skip_next_rounded,
+                      label: 'Geç',
+                      onTap: _busy ? null : () => _run(ctrl.skipMusic),
+                    ),
+                    _ActionChip(
+                      icon: Icons.replay_rounded,
+                      label: 'Tekrar',
+                      onTap: _busy ? null : () => _run(ctrl.replayMusic),
+                    ),
+                    if (widget.canStopMusic)
+                      _ActionChip(
+                        icon: Icons.stop_rounded,
+                        label: 'Durdur',
+                        color: Colors.redAccent,
+                        onTap: _busy ? null : () => _run(ctrl.stopMusic),
+                      ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 8),
             Expanded(
-              child: queue.isEmpty
+              child: _queue.isEmpty
                   ? const Center(
                       child: Text(
                         'Kuyruk boş',
                         style: TextStyle(color: Colors.white60),
                       ),
                     )
-                  : ListView.separated(
-                      controller: scrollController,
-                      padding: EdgeInsets.fromLTRB(16, 0, 16, bottom + 16),
-                      itemCount: queue.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 8),
-                      itemBuilder: (context, i) {
-                        final item = queue[i];
-                        final isNow = item.id == nowId;
-                        return _QueueTile(
-                          index: i + 1,
-                          item: item,
-                          isNowPlaying: isNow,
-                          canRemove: canControlMusic && !isNow,
-                          onRemove: () async {
-                            final err = await ctrl.removeQueueItem(item.id);
-                            if (context.mounted && err != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(err)),
-                              );
-                            }
+                  : widget.canControlMusic
+                      ? ReorderableListView.builder(
+                          scrollController: scrollController,
+                          padding: EdgeInsets.fromLTRB(16, 0, 16, bottom + 16),
+                          itemCount: _queue.length,
+                          onReorder: (oldIndex, newIndex) async {
+                            if (newIndex > oldIndex) newIndex--;
+                            setState(() {
+                              final item = _queue.removeAt(oldIndex);
+                              _queue.insert(newIndex, item);
+                            });
+                            await _persistOrder();
                           },
-                        );
-                      },
-                    ),
+                          itemBuilder: (context, i) {
+                            final item = _queue[i];
+                            return _QueueTile(
+                              key: ValueKey(item.id),
+                              index: i + 1,
+                              item: item,
+                              isNowPlaying: item.id == nowId,
+                              canRemove: widget.canControlMusic &&
+                                  item.id != nowId,
+                              showDragHandle: widget.canControlMusic,
+                              onRemove: () async {
+                                await _run(
+                                  () => ctrl.removeQueueItem(item.id),
+                                );
+                              },
+                            );
+                          },
+                        )
+                      : ListView.separated(
+                          controller: scrollController,
+                          padding: EdgeInsets.fromLTRB(16, 0, 16, bottom + 16),
+                          itemCount: _queue.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 8),
+                          itemBuilder: (context, i) {
+                            final item = _queue[i];
+                            return _QueueTile(
+                              key: ValueKey(item.id),
+                              index: i + 1,
+                              item: item,
+                              isNowPlaying: item.id == nowId,
+                              canRemove: false,
+                              showDragHandle: false,
+                              onRemove: () {},
+                            );
+                          },
+                        ),
             ),
           ],
         );
@@ -131,12 +234,40 @@ class _RoomMusicQueueSheet extends ConsumerWidget {
   }
 }
 
+class _ActionChip extends StatelessWidget {
+  const _ActionChip({
+    required this.icon,
+    required this.label,
+    this.onTap,
+    this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? VoiceRoomTokens.neonPurple;
+    return ActionChip(
+      avatar: Icon(icon, size: 16, color: c),
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      backgroundColor: c.withValues(alpha: 0.18),
+      side: BorderSide(color: c.withValues(alpha: 0.35)),
+      onPressed: onTap,
+    );
+  }
+}
+
 class _QueueTile extends StatelessWidget {
   const _QueueTile({
+    super.key,
     required this.index,
     required this.item,
     required this.isNowPlaying,
     required this.canRemove,
+    required this.showDragHandle,
     required this.onRemove,
   });
 
@@ -144,68 +275,82 @@ class _QueueTile extends StatelessWidget {
   final MusicQueueItem item;
   final bool isNowPlaying;
   final bool canRemove;
+  final bool showDragHandle;
   final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) {
     final requester = item.requestedBy?.displayName ?? '—';
-    return VoiceGlass(
-      borderRadius: 14,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Row(
-        children: [
-          Text(
-            '$index',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 14,
-              color: isNowPlaying ? VoiceRoomTokens.gold : Colors.white54,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: VoiceGlass(
+        borderRadius: 14,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            if (showDragHandle)
+              ReorderableDragStartListener(
+                index: index - 1,
+                child: Icon(
+                  Icons.drag_handle_rounded,
+                  color: Colors.white.withValues(alpha: 0.45),
+                  size: 20,
                 ),
-                Text(
-                  '${item.uploader ?? item.artistLine.split(' • ').firstOrNull ?? '—'} • $requester'
-                  '${item.duration?.isNotEmpty == true ? ' • ${item.duration}' : ''}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (isNowPlaying)
-            Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Icon(
-                Icons.equalizer_rounded,
-                color: VoiceRoomTokens.gold,
-                size: 20,
+              ),
+            if (showDragHandle) const SizedBox(width: 6),
+            Text(
+              '$index',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
+                color: isNowPlaying ? VoiceRoomTokens.gold : Colors.white54,
               ),
             ),
-          if (canRemove)
-            IconButton(
-              onPressed: onRemove,
-              icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-              tooltip: 'Kuyruktan sil',
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    '${item.uploader ?? item.artistLine.split(' • ').firstOrNull ?? '—'} • $requester'
+                    '${item.duration?.isNotEmpty == true ? ' • ${item.duration}' : ''}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.white.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
             ),
-        ],
+            if (isNowPlaying)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Icon(
+                  Icons.equalizer_rounded,
+                  color: VoiceRoomTokens.gold,
+                  size: 20,
+                ),
+              ),
+            if (canRemove)
+              IconButton(
+                onPressed: onRemove,
+                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                tooltip: 'Kuyruktan sil',
+              ),
+          ],
+        ),
       ),
     );
   }

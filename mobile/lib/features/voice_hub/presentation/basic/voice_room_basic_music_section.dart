@@ -42,10 +42,11 @@ class VoiceRoomBasicMusicSection extends ConsumerWidget {
         !musicSession.dismissed &&
         !musicSession.userDismissedPlayer;
     final user = ref.watch(authControllerProvider).valueOrNull;
-    final canCloseMusic = perms.isRoomOwner ||
-        perms.isSiteAdmin ||
-        perms.canModerate ||
-        (user != null && dj.nowPlaying?.requestedBy?.id == user.id);
+    final canCloseMusic = VoiceMusicAccess.canStopMusic(
+      user: user,
+      perms: perms,
+      nowPlaying: dj.nowPlaying,
+    );
     final jeton = VoiceMusicAccess.jetonFromBalances(
       ref.watch(walletBalancesProvider).valueOrNull,
     );
@@ -147,6 +148,7 @@ class VoiceRoomBasicMusicSection extends ConsumerWidget {
               liveKey: liveKey,
               dj: dj,
               canControlMusic: canControlMusic,
+              canStopMusic: canCloseMusic,
             ),
           ),
         if (dj.musicQueue.isNotEmpty)
@@ -159,6 +161,7 @@ class VoiceRoomBasicMusicSection extends ConsumerWidget {
                 liveKey: liveKey,
                 dj: dj,
                 canControlMusic: canControlMusic,
+                canStopMusic: canCloseMusic,
               ),
               icon: const Icon(Icons.queue_music_rounded),
               label: Text('Kuyruk (${dj.musicQueue.length})'),

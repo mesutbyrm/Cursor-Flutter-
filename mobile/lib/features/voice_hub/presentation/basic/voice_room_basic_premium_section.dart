@@ -52,6 +52,11 @@ Future<void> showVoiceRoomBasicToolsSheet(
   final pkActive = pk != null && !pk.isEnded;
   final authUser = user ?? ref.read(authControllerProvider).valueOrNull;
   final dj = live.dj;
+  final canCloseMusic = VoiceMusicAccess.canStopMusic(
+    user: authUser,
+    perms: perms,
+    nowPlaying: dj.nowPlaying,
+  );
   final jeton = VoiceMusicAccess.jetonFromBalances(
     ref.read(walletBalancesProvider).valueOrNull,
   );
@@ -233,6 +238,7 @@ Future<void> showVoiceRoomBasicToolsSheet(
                     liveKey: liveKey,
                     dj: dj,
                     canControlMusic: canControlMusic,
+                    canStopMusic: canCloseMusic,
                   );
                 },
               ),
@@ -918,6 +924,7 @@ class VoiceRoomBasicFloatingMiniPlayer extends ConsumerWidget {
         liveKey: liveKey,
         dj: dj,
         canControlMusic: canControlMusic,
+        canStopMusic: canCloseMusic,
       ),
     );
   }

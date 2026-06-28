@@ -468,6 +468,7 @@ class VoiceRoomLiveController
   }
 
   Object? _roomKeepAliveLink;
+  var _keepAliveTransferred = false;
 
   @override
   VoiceRoomLiveState build(String roomKey) {
@@ -493,9 +494,14 @@ class VoiceRoomLiveController
         ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
         ref.read(voiceRoomGiftSocketProvider).disconnect();
       }
-      unawaited(ref.read(voiceRoomDjPlayerProvider).shutdown());
-      ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer();
-      _closeRoomKeepAlive();
+      final session = ref.read(voiceRoomMusicSessionProvider);
+      final detachedHere =
+          session.room?.liveKey == roomKey && session.hasActiveMusic;
+      if (!_keepAliveTransferred && !detachedHere) {
+        unawaited(ref.read(voiceRoomDjPlayerProvider).shutdown());
+        ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer();
+        _closeRoomKeepAlive();
+      }
     });
     Future.microtask(() => _beginRoomSession());
     _presenceHeartbeat = Timer.periodic(
@@ -515,7 +521,9 @@ class VoiceRoomLiveController
 
   /// Odaya giriş — POST presence → GET messages → SSE → heartbeat.
   Future<void> _beginRoomSession() async {
-    ref.read(voiceRoomMusicSessionProvider.notifier).prepareForRoomEntry();
+    ref
+        .read(voiceRoomMusicSessionProvider.notifier)
+        .prepareForRoomEntry(_roomMeta);
     unawaited(VoiceRoomMusicAudioSession.ensureConfigured());
     state = state.copyWith(loading: false);
 
@@ -788,17 +796,32 @@ class VoiceRoomLiveController
     unawaited(_stopTyping());
     ref.read(sseConnectionHubProvider).releaseVoiceRoom(_roomKey);
     ref.read(voiceRoomGiftSocketProvider).disconnect();
-    unawaited(ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer());
-    unawaited(ref.read(voiceRoomDjPlayerProvider).shutdown());
-    unawaited(
-      ref
-          .read(voiceRoomSseAudioPlayerProvider)
-          .handleDjEvent(const {'playing': false}),
-    );
-    if (_roomKey.isNotEmpty) {
-      ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+
+    final player = ref.read(voiceRoomDjPlayerProvider);
+    final dj = state.dj;
+    final stillPlaying = player.playback.value.playing ||
+        dj.playing ||
+        dj.nowPlaying != null ||
+        dj.musicQueue.isNotEmpty;
+
+    if (stillPlaying && _roomKeepAliveLink != null) {
+      ref.read(voiceRoomMusicSessionProvider.notifier).onRoomDetached(
+            room: _roomMeta,
+            dj: dj,
+            canSyncServer: _canControlMusic(),
+            canStopMusic: _canStopMusic(),
+            keepAliveLink: _roomKeepAliveLink!,
+          );
+      _keepAliveTransferred = true;
+      _roomKeepAliveLink = null;
+    } else {
+      unawaited(ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer());
+      unawaited(player.shutdown());
+      if (_roomKey.isNotEmpty) {
+        ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+      }
+      _closeRoomKeepAlive();
     }
-    _closeRoomKeepAlive();
   }
 
   bool _hasDjPlayableSource(
@@ -1872,6 +1895,7 @@ class VoiceRoomLiveController
       room: _roomMeta,
       dj: dj,
       canSyncServer: _canControlMusic(),
+      canStopMusic: _canStopMusic(),
     );
     final musicActive = dj.playing || dj.nowPlaying != null;
     if (musicActive != wasMusicActive) {
@@ -1908,12 +1932,12 @@ class VoiceRoomLiveController
             }
           },
           onStop: () async {
-            if (canSync) {
+            if (_canStopMusic()) {
               await stopMusic();
             } else {
-              await ref
+              ref
                   .read(voiceRoomMusicSessionProvider.notifier)
-                  .closePlayer();
+                  .markUserDismissed();
             }
           },
           onSkipToNext: canSync ? () async => skipMusic() : null,
@@ -1960,6 +1984,21 @@ class VoiceRoomLiveController
   }) async {
     state = state.copyWith(sending: true, clearPendingMusicSearch: true);
     try {
+      if (!skipPayment) {
+        final balances = ref.read(walletBalancesProvider).valueOrNull;
+        final jeton = VoiceMusicAccess.jetonFromBalances(balances);
+        if (!VoiceMusicAccess.canAffordRequest(
+          dj: state.dj,
+          jetonBalance: jeton,
+          withVideo: withVideo,
+        )) {
+          final cost = withVideo
+              ? VoiceMusicAccess.videoRequestCost(state.dj)
+              : VoiceMusicAccess.audioRequestCost(state.dj);
+          state = state.copyWith(sending: false);
+          return 'Yetersiz jeton. Gerekli: $cost';
+        }
+      }
       if (withVideo) {
         final videoState = ref.read(roomVideoControllerProvider(_roomKey));
         if (videoState.hasActiveVideo) {
@@ -1993,11 +2032,12 @@ class VoiceRoomLiveController
       }
       final queuePosition = result.queuePosition ?? 0;
       final player = ref.read(voiceRoomDjPlayerProvider);
-      final currentlyPlaying =
-          state.dj.playing || player.playback.value.playing;
-      final isQueuedOnly = currentlyPlaying && queuePosition > 1;
-      final shouldPlay = !isQueuedOnly &&
-          (result.playing || queuePosition <= 1 || !currentlyPlaying);
+      final currentlyPlaying = state.dj.playing ||
+          player.playback.value.playing ||
+          state.dj.nowPlaying != null;
+      final isQueuedOnly = currentlyPlaying;
+      final shouldPlay = !currentlyPlaying &&
+          (result.playing || queuePosition <= 1);
       var dj = isQueuedOnly
           ? state.dj.copyWith(musicQueue: queue)
           : state.dj.copyWith(
@@ -3340,6 +3380,15 @@ class VoiceRoomLiveController
     return perms.isRoomOwner || perms.isSiteAdmin || perms.canManageDj;
   }
 
+  bool _canStopMusic() {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    return VoiceMusicAccess.canStopMusic(
+      user: user,
+      perms: _permissions(),
+      nowPlaying: state.dj.nowPlaying,
+    );
+  }
+
   Future<String?> pauseMusic() async {
     if (!_canControlMusic()) {
       return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
@@ -3385,7 +3434,12 @@ class VoiceRoomLiveController
     }
   }
 
-  Future<String?> stopMusic() => clearMusicQueue();
+  Future<String?> stopMusic() async {
+    if (!_canStopMusic()) {
+      return 'Müziği yalnızca oda sahibi, admin veya şarkıyı isteyen durdurabilir.';
+    }
+    return clearMusicQueue();
+  }
 
   Future<String?> toggleBackgroundMusic(bool enabled) async {
     try {
@@ -3472,6 +3526,9 @@ class VoiceRoomLiveController
       ref.read(chatRoomRemoteProvider).fetchPopularMusic();
 
   Future<String?> skipMusic() async {
+    if (!_canControlMusic()) {
+      return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
+    }
     try {
       await ref.read(chatRoomRemoteProvider).skipMusicQueue(
         roomKey: _roomKey,
@@ -3484,7 +3541,46 @@ class VoiceRoomLiveController
     }
   }
 
+  Future<String?> replayMusic() async {
+    if (!_canControlMusic()) {
+      return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
+    }
+    if (state.dj.nowPlaying == null) {
+      return 'Tekrar çalınacak parça yok.';
+    }
+    try {
+      _lastDjPlaybackSignature = '';
+      final dj = state.dj.copyWith(playing: true);
+      final applied = await _applyDjPlayback(dj);
+      state = state.copyWith(dj: applied);
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
+  Future<String?> reorderMusicQueue(List<String> orderedItemIds) async {
+    if (!_canControlMusic()) {
+      return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
+    }
+    if (orderedItemIds.isEmpty) return null;
+    try {
+      await ref.read(chatRoomRemoteProvider).reorderMusicQueue(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            orderedItemIds: orderedItemIds,
+          );
+      await refresh(includeDj: true);
+      return null;
+    } catch (e) {
+      return ApiException.userMessage(e);
+    }
+  }
+
   Future<String?> removeQueueItem(String itemId) async {
+    if (!_canControlMusic()) {
+      return 'Bu işlemi gerçekleştirme yetkiniz bulunmamaktadır.';
+    }
     try {
       await ref
           .read(chatRoomRemoteProvider)
@@ -3497,6 +3593,9 @@ class VoiceRoomLiveController
   }
 
   Future<String?> clearMusicQueue() async {
+    if (!_canStopMusic()) {
+      return 'Müziği yalnızca oda sahibi, admin veya şarkıyı isteyen durdurabilir.';
+    }
     try {
       final result = await ref.read(chatRoomRemoteProvider).clearMusicQueue(
         roomKey: _roomKey,
@@ -3514,39 +3613,37 @@ class VoiceRoomLiveController
     }
   }
 
-  /// X / kapat — yerel oynatıcıyı durdur; DJ/owner ise sunucu kuyruğunu da temizle.
+  /// X / kapat — yalnızca yetkili kullanıcılar sunucu kuyruğunu durdurur.
   Future<void> closeMusicPlayer() async {
+    if (!_canStopMusic()) {
+      ref.read(voiceRoomMusicSessionProvider.notifier).markUserDismissed();
+      ref.read(voiceRoomMusicSessionProvider.notifier).dismissAfterClose();
+      return;
+    }
     ref.read(voiceRoomMusicSessionProvider.notifier).markUserDismissed();
     await ref.read(voiceRoomDjPlayerProvider).stop();
-    if (_canControlMusic()) {
-      try {
-        final result = await ref.read(chatRoomRemoteProvider).clearMusicQueue(
-          roomKey: _roomKey,
-          alternateKey: _musicAlternateKey,
-        );
-        if (result.autoAdvanced) {
-          await refresh();
-          return;
-        }
+    try {
+      final result = await ref.read(chatRoomRemoteProvider).clearMusicQueue(
+        roomKey: _roomKey,
+        alternateKey: _musicAlternateKey,
+      );
+      if (result.autoAdvanced) {
         await refresh();
-      } catch (_) {
-        state = state.copyWith(
-          dj: state.dj.copyWith(
-            playing: false,
-            clearNowPlaying: true,
-            clearMusicUrl: true,
-            musicQueue: const [],
-          ),
-        );
+        return;
       }
-    } else {
+      await refresh();
+    } catch (_) {
       state = state.copyWith(
         dj: state.dj.copyWith(
           playing: false,
           clearNowPlaying: true,
           clearMusicUrl: true,
+          musicQueue: const [],
         ),
       );
+    }
+    if (_roomKey.isNotEmpty) {
+      ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
     }
     ref.read(voiceRoomMusicSessionProvider.notifier).dismissAfterClose();
   }
@@ -3982,6 +4079,7 @@ class VoiceRoomMusicSessionState {
     this.dismissed = false,
     this.userDismissedPlayer = false,
     this.canSyncServer = false,
+    this.canStopMusic = false,
   });
 
   final VoiceRoomEntity? room;
@@ -3991,6 +4089,7 @@ class VoiceRoomMusicSessionState {
   /// Kullanıcı X ile kapattı — sunucu hâlâ çalsa bile mini player açılmasın.
   final bool userDismissedPlayer;
   final bool canSyncServer;
+  final bool canStopMusic;
 
   bool get hasActiveMusic =>
       !dismissed &&
@@ -4005,6 +4104,7 @@ class VoiceRoomMusicSessionState {
     bool? dismissed,
     bool? userDismissedPlayer,
     bool? canSyncServer,
+    bool? canStopMusic,
   }) {
     return VoiceRoomMusicSessionState(
       room: clearRoom ? null : (room ?? this.room),
@@ -4013,6 +4113,7 @@ class VoiceRoomMusicSessionState {
       dismissed: dismissed ?? this.dismissed,
       userDismissedPlayer: userDismissedPlayer ?? this.userDismissedPlayer,
       canSyncServer: canSyncServer ?? this.canSyncServer,
+      canStopMusic: canStopMusic ?? this.canStopMusic,
     );
   }
 }
@@ -4037,6 +4138,7 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
     required VoiceRoomEntity room,
     required ChatRoomDjState dj,
     required bool canSyncServer,
+    required bool canStopMusic,
   }) {
     final playing =
         dj.playing ||
@@ -4052,6 +4154,7 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
           room: room,
           dj: dj,
           canSyncServer: canSyncServer,
+          canStopMusic: canStopMusic,
         );
       } else {
         state = state.copyWith(
@@ -4060,6 +4163,7 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
           visible: false,
           dismissed: true,
           canSyncServer: canSyncServer,
+          canStopMusic: canStopMusic,
         );
       }
       return;
@@ -4083,6 +4187,7 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
       dj: dj,
       visible: !dismissed,
       canSyncServer: canSyncServer,
+      canStopMusic: canStopMusic,
       dismissed: dismissed,
     );
     if (!dismissed) {
@@ -4090,8 +4195,17 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
     }
   }
 
-  /// Odaya giriş — önceki odadan kalan `dismissed` müziği engellemesin.
-  void prepareForRoomEntry() {
+  /// Odaya giriş — farklı odadaysa önceki müziği durdur.
+  void prepareForRoomEntry(VoiceRoomEntity room) {
+    final prev = state.room;
+    if (prev != null &&
+        prev.liveKey.isNotEmpty &&
+        prev.liveKey != room.liveKey) {
+      unawaited(ref.read(voiceRoomDjPlayerProvider).stop());
+      ref.read(roomVideoControllerProvider(prev.liveKey).notifier).clear();
+      _closeDetachedKeepAlive();
+      state = const VoiceRoomMusicSessionState();
+    }
     state = state.copyWith(
       dismissed: false,
       userDismissedPlayer: false,
@@ -4108,11 +4222,15 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
     required VoiceRoomEntity room,
     required ChatRoomDjState dj,
     required bool canSyncServer,
+    required bool canStopMusic,
     required Object keepAliveLink,
   }) {
     final player = ref.read(voiceRoomDjPlayerProvider);
     final stillPlaying =
-        player.playback.value.playing || dj.playing || dj.nowPlaying != null;
+        player.playback.value.playing ||
+        dj.playing ||
+        dj.nowPlaying != null ||
+        dj.musicQueue.isNotEmpty;
     if (!stillPlaying || state.dismissed) {
       _tryCloseKeepAlive(keepAliveLink);
       return;
@@ -4123,6 +4241,7 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
       dj: dj,
       visible: !state.dismissed,
       canSyncServer: canSyncServer,
+      canStopMusic: canStopMusic,
     );
     _ensureBackgroundSync(room);
   }

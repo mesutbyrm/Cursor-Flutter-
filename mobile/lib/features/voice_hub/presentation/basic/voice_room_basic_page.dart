@@ -477,10 +477,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final perms = _permissions(user, live, room);
     final canControlMusic = _canControlMusic(live, room, user, perms);
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
-    final canCloseMusic = isOwner ||
-        perms.isSiteAdmin ||
-        perms.canModerate ||
-        (user != null && live.dj.nowPlaying?.requestedBy?.id == user.id);
+    final canCloseMusic = VoiceMusicAccess.canStopMusic(
+      user: user,
+      perms: perms,
+      nowPlaying: live.dj.nowPlaying,
+    );
     final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
     final jeton = VoiceMusicAccess.jetonFromBalances(
