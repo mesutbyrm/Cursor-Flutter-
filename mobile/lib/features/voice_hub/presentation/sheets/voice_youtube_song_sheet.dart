@@ -94,9 +94,8 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
 
   Future<void> _loadQueueMeta() async {
     try {
-      final data = await ref
-          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
-          .fetchMusicQueue();
+      final notifier = ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
+      final data = await notifier.fetchMusicQueue();
       if (mounted) setState(() => _cost = data.cost);
     } catch (_) {}
   }
@@ -132,10 +131,9 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
       _error = null;
       _selected = null;
     });
+    final notifier = ref.read(voiceRoomLiveProvider(widget.room.liveKey).notifier);
     try {
-      final hits = await ref
-          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
-          .searchYoutube(q.trim());
+      final hits = await notifier.searchYoutube(q.trim());
       if (mounted) {
         setState(() {
           _hits = hits;
@@ -157,11 +155,15 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
     if (hit == null || _submitting) return;
 
     // Ses/video seçim ekranı (web ile aynı akış)
-    final liveDj = ref.read(voiceRoomLiveProvider(widget.room.liveKey)).dj;
+    final liveKey = widget.room.liveKey;
+    final liveDj = ref.read(voiceRoomLiveProvider(liveKey)).dj;
+    final audioCost = liveDj.musicRequestCost;
+    final videoCost = liveDj.videoRequestCost;
+
     final withVideo = await showMusicModePickerSheet(
       context,
-      audioCost: liveDj.musicRequestCost,
-      videoCost: liveDj.videoRequestCost,
+      audioCost: audioCost,
+      videoCost: videoCost,
       songTitle: hit.title,
     );
     if (!mounted || withVideo == null) return;
@@ -170,7 +172,7 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
     String? err;
     try {
       err = await ref
-          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
+          .read(voiceRoomLiveProvider(liveKey).notifier)
           .requestMusic(
             title: hit.title,
             youtubeUrl: hit.url,
@@ -190,16 +192,20 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
       return;
     }
-    ref.refreshWalletCache(force: true);
-    Navigator.pop(context);
-    final cost = withVideo ? liveDj.videoRequestCost : liveDj.musicRequestCost;
-    ScaffoldMessenger.of(context).showSnackBar(
+    final cost = withVideo ? videoCost : audioCost;
+    final messenger = ScaffoldMessenger.of(context);
+    if (mounted) ref.refreshWalletCache(force: true);
+    if (mounted) Navigator.pop(context);
+    messenger.showSnackBar(
       SnackBar(content: Text('Şarkı sıraya eklendi · $cost jeton')),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    // autoDispose provider'ı canlı tut — sheet açık kaldığı sürece dispose olmasın.
+    ref.watch(voiceRoomLiveProvider(widget.room.liveKey));
+
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
     final coins = ref.watch(coinBalanceProvider) ?? 0;
     final balanceLabel = NumberFormat.decimalPattern('tr').format(coins);
