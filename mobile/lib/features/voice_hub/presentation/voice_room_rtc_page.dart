@@ -63,8 +63,8 @@ import 'widgets/voice_room/voice_room_spec_footer.dart';
 import 'sheets/voice_room_commands_panel.dart';
 import 'sheets/voice_youtube_song_sheet.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
+import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
 import 'utils/kick_strike_ui.dart';
-import 'widgets/premium_2026/voice_timed_duyuru.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
@@ -1648,16 +1648,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           perms: perms,
                           isDj: isDj,
                         ),
-                        if (!keyboardOpen &&
-                            (live.moderatorAnnouncement?.trim().isNotEmpty ==
-                                true))
-                          VoiceTimedDuyuru(
-                            key: ValueKey(live.moderatorAnnouncement),
-                            roomKey: room.apiRoomKey.isNotEmpty
-                                ? room.apiRoomKey
-                                : room.id,
-                            text: live.moderatorAnnouncement!,
-                          ),
                         if (!keyboardOpen)
                           VoiceRoomPersistentDuyuru(
                             roomKey: room.apiRoomKey.isNotEmpty
@@ -1796,6 +1786,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 perms: perms,
                 isOwner: isOwner,
                 isDj: isDj,
+              ),
+            if (live.moderatorAnnouncement?.trim().isNotEmpty == true)
+              Positioned(
+                top: MediaQuery.paddingOf(context).top + 2,
+                left: 0,
+                right: 0,
+                child: VoiceRoomDuyuruTicker(
+                  key: ValueKey(live.moderatorAnnouncement),
+                  text: live.moderatorAnnouncement!,
+                ),
               ),
           ],
         ),

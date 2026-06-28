@@ -731,6 +731,8 @@ class ChatRoomRemoteDataSource {
     int? duration,
     String? message,
     int? ttl,
+    bool skipPayment = false,
+    int? jetonCost,
   }) async {
     final res = await _dio.safePost<dynamic>(
       moderationPath(roomKey),
@@ -742,6 +744,8 @@ class ChatRoomRemoteDataSource {
         if (reason != null && reason.isNotEmpty) 'reason': reason,
         if (message != null && message.trim().isNotEmpty) 'message': message.trim(),
         if (ttl != null && ttl > 0) 'ttl': ttl,
+        if (skipPayment) 'skipPayment': true,
+        if (jetonCost != null && jetonCost > 0) 'jetonCost': jetonCost,
         'duration': ?duration,
       }),
       options: Options(contentType: 'application/json'),
@@ -755,6 +759,8 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     required String message,
     int ttl = 15,
+    bool skipPayment = false,
+    int? jetonCost,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _postModeration(
@@ -762,6 +768,8 @@ class ChatRoomRemoteDataSource {
         action: 'announce',
         message: message,
         ttl: ttl,
+        skipPayment: skipPayment,
+        jetonCost: jetonCost,
       );
     });
   }

@@ -49,7 +49,7 @@ class _VoiceRoomToolsSheet extends ConsumerWidget {
   final bool isOwner;
 
   static const _roomCommands = [
-    ('!duyuru', 'Duyuru yayınla (moderatör)'),
+    ('!duyuru', 'Duyuru yayınla (yetkili ücretsiz / 5 jeton)'),
     ('!temizle', 'Sohbeti temizle'),
     ('!muzik', 'Müzik / DJ bilgisi'),
   ];

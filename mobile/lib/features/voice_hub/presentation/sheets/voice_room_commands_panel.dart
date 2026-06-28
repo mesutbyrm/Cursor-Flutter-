@@ -9,6 +9,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/chat_room_providers.dart';
 import '../theme/voice_room_tokens.dart';
+import '../utils/voice_room_duyuru_access.dart';
 import '../utils/voice_room_permissions.dart';
 import 'voice_moderation_user_picker_sheet.dart';
 import 'voice_youtube_song_sheet.dart';
@@ -108,7 +109,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
   static const _modGrid = [
     _PromoCard(
       title: 'Duyuru Yayınla',
-      subtitle: '15 saniye sabit mesaj',
+      subtitle: 'Üst bant · yetkili ücretsiz / 5 jeton',
       icon: Icons.campaign_rounded,
       color: Color(0xFF3B82F6),
       kind: _PromoKind.duyuru,
@@ -357,6 +358,7 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
 
   Future<String?> _promptDuyuru() async {
     final ctrl = TextEditingController();
+    final cost = VoiceRoomDuyuruAccess.costLabel(widget.perms);
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -366,9 +368,11 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
           controller: ctrl,
           autofocus: true,
           maxLines: 3,
+          maxLength: VoiceRoomDuyuruAccess.maxLength,
           style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'Duyuru metnini yazın…',
+            helperText: 'Max ${VoiceRoomDuyuruAccess.maxLength} karakter · $cost',
           ),
         ),
         actions: [

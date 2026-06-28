@@ -490,10 +490,15 @@ function tryHandleRoomCommand(
 
   if (head === "/duyuru") {
     const text = parts.slice(1).join(" ").trim();
-    if (!priv.canModerate && !priv.owner) {
-      return system("⚠️ Duyuru yayınlamak için yetkiniz yok.");
-    }
     if (!text) return system("⚠️ Kullanım: /duyuru mesajınız");
+    if (text.length > 100) {
+      return system("⚠️ Duyuru en fazla 100 karakter olabilir.");
+    }
+    const isAdmin = priv.canModerate || priv.owner || priv.admin;
+    const cost = 5;
+    if (!isAdmin && (actor.coins ?? 0) < cost) {
+      return system(`⚠️ Yetersiz jeton. Duyuru için ${cost} jeton gerekir.`);
+    }
     return system(`📢 DUYURU: ${text}`);
   }
 

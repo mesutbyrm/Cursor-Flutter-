@@ -40,6 +40,7 @@ import 'voice_room_basic_moderation_section.dart';
 import '../sheets/voice_room_menu_sheet.dart';
 import 'voice_room_basic_premium_section.dart';
 import '../widgets/voice_room/voice_room_join_toast_stack.dart';
+import '../widgets/voice_room/voice_room_duyuru_ticker.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
 import '../sheets/music_mode_picker_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
@@ -805,6 +806,16 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
             ),
             PremiumGiftFullscreenOverlay(event: _fullscreenGift),
+            if (live.moderatorAnnouncement?.trim().isNotEmpty == true)
+              Positioned(
+                top: MediaQuery.paddingOf(context).top + 2,
+                left: 0,
+                right: 0,
+                child: VoiceRoomDuyuruTicker(
+                  key: ValueKey(live.moderatorAnnouncement),
+                  text: live.moderatorAnnouncement!,
+                ),
+              ),
             if (_showVipEntrance && user != null)
               VipEntranceOverlay(
                 tier: ref.watch(vipTierProvider),

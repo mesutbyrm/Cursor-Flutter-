@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.438+442 (2026-06-26)
+
+### Faz 10 — Duyuru sistemi
+
+- Komut: `!duyuru Mesaj`
+- **Admin / yetkili:** ücretsiz
+- **Diğer kullanıcılar:** 5 jeton
+- Maksimum **100 karakter**
+- Duyuru ekranın **üst kısmında kayan bant** olarak gösterilir (15 sn, tüm kullanıcılar)
+
 ## 1.0.437+441 (2026-06-26)
 
 ### Faz 9 — Yetkili giriş animasyonu

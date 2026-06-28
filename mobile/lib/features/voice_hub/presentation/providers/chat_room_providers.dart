@@ -37,6 +37,7 @@ import '../utils/voice_room_permissions.dart';
 import '../utils/kick_strike_ui.dart';
 import '../utils/voice_sse_dj_payload.dart';
 import '../utils/voice_music_access.dart';
+import '../utils/voice_room_duyuru_access.dart';
 import '../utils/voice_room_seat_priority.dart';
 import '../utils/voice_room_message_merge.dart';
 import '../widgets/voice_room/voice_room_music_request_flash.dart';
@@ -1407,15 +1408,11 @@ class VoiceRoomLiveController
     _pinnedAnnouncementTimer?.cancel();
     state = state.copyWith(
       moderatorAnnouncement: text,
-      pinnedAnnouncement: text,
+      clearPinnedAnnouncement: true,
     );
-    _announcementTimer = Timer(const Duration(seconds: 15), () {
+    _announcementTimer = Timer(VoiceRoomDuyuruAccess.displayTtl, () {
       if (!_sessionActive) return;
       state = state.copyWith(clearModeratorAnnouncement: true);
-    });
-    _pinnedAnnouncementTimer = Timer(const Duration(seconds: 15), () {
-      if (!_sessionActive) return;
-      state = state.copyWith(clearPinnedAnnouncement: true);
     });
   }
 
@@ -2917,6 +2914,20 @@ class VoiceRoomLiveController
         clearError: true,
       );
       return;
+    }
+
+    final duyuruMessage = VoiceRoomDuyuruAccess.parseCommand(trimmed);
+    if (duyuruMessage != null) {
+      final err = await sendDuyuruAnnouncement(duyuruMessage);
+      if (err != null) {
+        state = state.copyWith(error: err);
+      } else {
+        state = state.copyWith(clearError: true);
+      }
+      return;
+    } else if (_looksLikeDuyuruCommand(trimmed)) {
+      state = state.copyWith(error: VoiceRoomDuyuruAccess.validateMessage(''));
+      return;
     } else if (_isLocalHelpCommand(trimmed)) {
       VoiceRoomDebugLog.log('chat.command.local_help', {'cmd': trimmed});
       state = state.copyWith(
@@ -3110,14 +3121,11 @@ class VoiceRoomLiveController
           }
           break;
         case 'duyuru':
-          if (_permissions().canModerate || _permissions().isRoomOwner) {
-            final msg = command.reason?.trim();
-            if (msg != null && msg.isNotEmpty) {
-              await remote.postAnnouncement(
-                roomKey: _roomKey,
-                alternateKey: _roomMeta.slug,
-                message: msg,
-              );
+          final msg = command.reason?.trim();
+          if (msg != null && msg.isNotEmpty) {
+            final err = await sendDuyuruAnnouncement(msg);
+            if (err != null) {
+              state = state.copyWith(error: err);
             }
           }
           break;
@@ -3204,23 +3212,47 @@ class VoiceRoomLiveController
     );
   }
 
-  Future<String?> postModeratorAnnouncement(String message) async {
+  Future<String?> sendDuyuruAnnouncement(String message) async {
+    final validation = VoiceRoomDuyuruAccess.validateMessage(message);
+    if (validation != null) return validation;
+
     final text = message.trim();
-    if (text.isEmpty) return 'Duyuru metni boş olamaz.';
     final perms = _permissions();
-    if (!perms.canModerate && !perms.isRoomOwner) {
-      return 'Duyuru yayınlama yetkiniz yok.';
+    final isFree = VoiceRoomDuyuruAccess.isAdminFree(perms);
+    if (!isFree) {
+      final jeton = VoiceMusicAccess.jetonFromBalances(
+        ref.read(walletBalancesProvider).valueOrNull,
+      );
+      if (!VoiceRoomDuyuruAccess.canAfford(perms: perms, jetonBalance: jeton)) {
+        return 'Yetersiz jeton. Duyuru için ${VoiceRoomDuyuruAccess.jetonCost} jeton gerekir.';
+      }
     }
+
     try {
       await ref.read(chatRoomRemoteProvider).postAnnouncement(
             roomKey: _roomKey,
             alternateKey: _musicAlternateKey,
             message: text,
+            ttl: VoiceRoomDuyuruAccess.displayTtl.inSeconds,
+            skipPayment: isFree,
+            jetonCost: isFree ? null : VoiceRoomDuyuruAccess.jetonCost,
           );
+      _showModeratorAnnouncement(text);
+      if (!isFree) {
+        invalidateWalletCacheFromRef(ref);
+      }
       return null;
     } catch (e) {
       return ApiException.userMessage(e);
     }
+  }
+
+  Future<String?> postModeratorAnnouncement(String message) async =>
+      sendDuyuruAnnouncement(message);
+
+  bool _looksLikeDuyuruCommand(String trimmed) {
+    final lower = trimmed.toLowerCase();
+    return lower.startsWith('!duyuru') || lower.startsWith('/duyuru');
   }
 
   Future<String?> clearChatAsModerator() async {
