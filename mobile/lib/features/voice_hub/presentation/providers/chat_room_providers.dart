@@ -881,7 +881,11 @@ class VoiceRoomLiveController
   }
 
   Future<void> _leavePresence() async {
-    if (_roomKey.isEmpty || !_presenceJoined) return;
+    if (_roomKey.isEmpty) return;
+    // selfInRoom=true means join was acknowledged by backend; even if the
+    // _presenceJoined flag wasn't set yet (race during room switch), still
+    // send DELETE to avoid the user appearing in the old room.
+    if (!_presenceJoined && !state.selfInRoom) return;
     _presenceJoined = false;
     try {
       await ref.read(chatRoomRemoteProvider).leavePresence(_roomKey);
@@ -2265,7 +2269,7 @@ class VoiceRoomLiveController
     );
     final shouldPlay = (sync?.isPlaying ?? effectiveDj.playing) &&
         _hasDjPlayableSource(effectiveDj, sync: sync, videoId: videoId);
-    final withVideo = effectiveDj.nowPlaying?.isVideoRequest == true;
+    final withVideo = videoId != null;
     final startPos = Duration(
       milliseconds: VoicePlaybackLimits.clampPositionMs(
         sync?.resolvedPositionMs() ?? 0,

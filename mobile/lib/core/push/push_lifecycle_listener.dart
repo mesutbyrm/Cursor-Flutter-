@@ -14,6 +14,7 @@ import '../../features/live_psychics/presentation/controllers/psychic_incoming_c
 import '../../features/live_psychics/presentation/providers/live_psychics_providers.dart';
 import '../../features/live_psychics/presentation/providers/psychic_booking_feedback_provider.dart';
 import '../../features/profile/presentation/providers/profile_providers.dart';
+import '../../features/wallet/domain/wallet_balances.dart';
 import '../../features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import '../../features/live_psychics/presentation/diagnostics/psychic_invite_diagnostic_provider.dart';
 import '../../features/live_psychics/presentation/providers/psychic_push_payload.dart';
@@ -135,10 +136,21 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
       _queuePushSync,
     );
 
-    _adminPollTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+    _adminPollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (!mounted) return;
       _pollAdminPayments();
     });
+
+    // Wallet yüklenir yüklenmez admin kontrolü yap.
+    ref.listenManual<AsyncValue<WalletBalances>>(
+      walletBalancesProvider,
+      (prev, next) {
+        if (!mounted) return;
+        if (next.hasValue && !prev!.hasValue) {
+          unawaited(_pollAdminPayments());
+        }
+      },
+    );
   }
 
   Future<void> _pollAdminPayments() async {
@@ -217,6 +229,8 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
     ref.invalidate(conversationsProvider);
     ref.invalidate(adminPaymentNotificationsProvider);
     ref.invalidate(adminPaymentRequestsProvider);
+    // Push gelince admin bekleyen talep sayısını hemen kontrol et.
+    unawaited(_pollAdminPayments());
   }
 
   @override

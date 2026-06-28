@@ -19,10 +19,10 @@ abstract final class StartupPerf {
   static const homeHeaderBadgesDelay = Duration.zero;
 
   /// Banner carousel API.
-  static const homeBannerDelay = Duration(milliseconds: 400);
+  static const homeBannerDelay = Duration.zero;
 
   /// Canlı yayın bölümü ilk istek.
-  static const homeLiveSectionDelay = Duration(milliseconds: 500);
+  static const homeLiveSectionDelay = Duration(milliseconds: 100);
 
   /// Ana sayfa periyodik poll köprüsü.
   static const homeRealtimeBridgeDelay = Duration(seconds: 4);

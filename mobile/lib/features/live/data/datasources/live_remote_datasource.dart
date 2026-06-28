@@ -221,21 +221,19 @@ class LiveRemoteDataSource {
     );
     final name = payload['name']?.toString() ?? 'Sohbet';
 
-    DioException? lastError;
+    // safePost ApiException fırlatır, DioException değil — ApiException yakala.
+    ApiException? lastError;
     for (final path in [ApiEndpoints.chatRoomCreate, ApiEndpoints.chatRooms]) {
       try {
         return await _postCreateVoiceRoom(path, payload, roomName: name);
-      } on DioException catch (e) {
+      } on ApiException catch (e) {
         lastError = e;
-        final code = e.response?.statusCode ?? 0;
+        final code = e.statusCode ?? 0;
         if (code != 404 && code != 405) rethrow;
       }
     }
     throw lastError ??
-        DioException(
-          requestOptions: RequestOptions(path: ApiEndpoints.chatRoomCreate),
-          message: 'Oda açılamadı — sunucu yanıt vermedi',
-        );
+        ApiException('Oda açılamadı — sunucu yanıt vermedi');
   }
 
   Future<VoiceRoomEntity> _postCreateVoiceRoom(
@@ -250,15 +248,13 @@ class LiveRemoteDataSource {
       options: Options(
         contentType: Headers.jsonContentType,
         headers: const {'Accept': 'application/json'},
+        receiveTimeout: const Duration(seconds: 20),
       ),
     );
     final body = res.data;
     if (body is String &&
         (body.contains('<!DOCTYPE') || body.contains('<html'))) {
-      throw DioException(
-        requestOptions: res.requestOptions,
-        message: 'Oda açılamadı — oturum gerekli',
-      );
+      throw const ApiException('Oda açılamadı — oturum gerekli', statusCode: 401);
     }
     Map<String, dynamic>? map;
     if (body is Map<String, dynamic>) {

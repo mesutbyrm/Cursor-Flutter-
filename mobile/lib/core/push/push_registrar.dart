@@ -46,6 +46,9 @@ class PushRegistrar {
           await _dio.safePost(path, data: payload);
           _lastSentToken = token;
           debugPrint('Push token registered via $path');
+          if (OneSignalBootstrap.isReady) {
+            await _deregisterStaleFcmToken();
+          }
           return;
         } on ApiException catch (e) {
           if (e.statusCode == 404 || e.statusCode == 405) continue;
@@ -56,6 +59,23 @@ class PushRegistrar {
       }
     } finally {
       _registering = false;
+    }
+  }
+
+  /// OneSignal aktifken eski FCM token'ı backend'den kaldırır.
+  /// Backend her iki token'a da bildirim gönderirse çift bildirim oluşur.
+  Future<void> _deregisterStaleFcmToken() async {
+    if (!FirebaseBootstrap.isReady) return;
+    final fcmToken = await PushNotificationService.instance.currentFcmToken();
+    if (fcmToken == null || fcmToken.isEmpty) return;
+    try {
+      await _dio.safeDelete(
+        ApiEndpoints.registerFcmDevice,
+        data: {'token': fcmToken, 'fcmToken': fcmToken},
+      );
+      debugPrint('Stale FCM token deregistered from backend');
+    } catch (e) {
+      debugPrint('FCM deregister skipped: $e');
     }
   }
 
