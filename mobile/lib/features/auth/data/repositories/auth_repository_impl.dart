@@ -1,5 +1,6 @@
 import 'package:cookie_jar/cookie_jar.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/loading_timeout.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../domain/entities/active_session_entity.dart';
@@ -168,8 +169,13 @@ class AuthRepositoryImpl implements AuthRepository {
       final merged = _mergeRoleHints(um, me);
       final dto = UserDto.fromJson(merged);
       return dto.toEntity(role: dto.roleFrom(merged));
+    } on ApiException catch (e) {
+      if (e.statusCode == 401 || e.statusCode == 403) {
+        await _tokens.clear();
+      }
+      return null;
     } catch (_) {
-      await _tokens.clear();
+      // Ağ / zaman aşımı — oturumu silme; kullanıcı kendi çıkış yapana kadar token kalsın.
       return null;
     }
   }

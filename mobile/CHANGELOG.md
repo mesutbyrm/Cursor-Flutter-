@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.425+429 (2026-06-28)
+
+### Sesli oda — Agora token, orta müzik, oturum
+
+- **Agora hatası:** Sunucu token öncelikli; boş token yalnızca yedek (token geçersiz uyarısı giderildi)
+- **Müzik UI:** Mini oynatıcı koltukların altında ortada; !istek sonrası burada görünür
+- **Kuyruk:** Yeni istek çalan şarkıyı kesmez, sıraya girer
+- **Kapat:** Yalnızca isteği yapan, oda sahibi ve admin görebilir
+- **Oturum:** Ağ hatasında token silinmez; kullanıcı kendi çıkış yapana kadar oturum korunur
+
 ## 1.0.424+428 (2026-06-27)
 
 ### Kararlılık — sesli oda, Agora, presence, oda açma

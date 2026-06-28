@@ -118,12 +118,18 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   Future<UserEntity?> build() async {
     AppStartupLog.authStart();
     _cancelBootWatchdog();
-    _bootWatchdog = Timer(_bootTimeout + const Duration(milliseconds: 200), () {
+    _bootWatchdog = Timer(_bootTimeout + const Duration(milliseconds: 200), () async {
       final current = state;
-      if (current.isLoading && !current.hasValue) {
-        AppStartupLog.authFinish(hasUser: false, error: true);
-        state = const AsyncValue.data(null);
+      if (!current.isLoading || current.hasValue) return;
+      final token = await ref.read(tokenStorageProvider).readAccess();
+      if (token != null &&
+          token.isNotEmpty &&
+          token != TokenStorage.sessionCookieMarker) {
+        // Yavaş ağ — token varken zorla çıkış yapma.
+        return;
       }
+      AppStartupLog.authFinish(hasUser: false, error: true);
+      state = const AsyncValue.data(null);
     });
     ref.onDispose(_cancelBootWatchdog);
 
