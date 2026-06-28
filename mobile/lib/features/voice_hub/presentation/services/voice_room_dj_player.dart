@@ -223,6 +223,33 @@ class VoiceRoomDjPlayer {
     String? preResolvedStream,
     Duration? startPosition,
   }) async {
+    final direct = _absolutizeStreamUrl(serverStreamUrl ?? musicUrl);
+    if (direct != null && direct.startsWith('http')) {
+      if (YoutubeStreamResolver.isYoutubeStreamApiUrl(direct)) {
+        final resolved = await _resolveSource(direct);
+        if (resolved != null &&
+            resolved.startsWith('http') &&
+            !YoutubeStreamResolver.isYoutubeStreamApiUrl(resolved)) {
+          return playServerStream(
+            streamUrl: resolved,
+            playing: playing,
+            startPosition: startPosition ?? Duration.zero,
+            nowPlaying: nowPlaying,
+            muted: muted,
+            videoId: ChatRoomDjState.videoIdFromLoose(direct),
+          );
+        }
+      } else if (!ChatRoomDjState.isEphemeralStreamUrl(direct)) {
+        final ok = await playServerStream(
+          streamUrl: direct,
+          playing: playing,
+          startPosition: startPosition ?? Duration.zero,
+          nowPlaying: nowPlaying,
+          muted: muted,
+        );
+        if (ok) return true;
+      }
+    }
     _muted = muted;
 
     if (!playing) {
