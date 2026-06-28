@@ -34,6 +34,7 @@ import 'audio/voice_room_audio_coordinator.dart';
 import 'audio/voice_room_music_audio_session.dart';
 import 'providers/chat_room_providers.dart';
 import '../music/presentation/widgets/music_search_picker_sheet.dart';
+import 'sheets/music_mode_picker_sheet.dart';
 import 'providers/pk_battle_remote_provider.dart';
 import '../domain/pk/pk_duration_options.dart';
 import 'utils/voice_room_image_prefetch.dart';
@@ -66,6 +67,7 @@ import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_dj_music_slide_panel.dart';
 import 'widgets/voice_room/voice_room_center_music_panel.dart';
+import 'widgets/voice_room/voice_room_join_entry_strip.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import '../video/presentation/widgets/room_video_overlay.dart';
@@ -1194,10 +1196,19 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           final hit = await showMusicSearchPickerSheet(context, ref, query: q);
           ctrl.clearPendingMusicSearch();
           if (!mounted || hit == null) return;
-          // Ortadan !istek — önceki davranış: videolu müzik (ortada YouTube oynatıcı)
+          final dj = ref.read(voiceRoomLiveProvider(_liveRoomKey)).dj;
+          final mode = await showMusicModePickerSheet(
+            context,
+            audioCost: dj.musicRequestCost,
+            videoCost: dj.videoRequestCost > 0
+                ? dj.videoRequestCost
+                : dj.musicRequestCost,
+            songTitle: hit.title,
+          );
+          if (!mounted || mode == null) return;
           final err = await ctrl.submitSelectedSong(
             hit,
-            withVideo: true,
+            withVideo: mode,
             skipPayment: skipPayment,
           );
           if (!mounted || err == null) return;
@@ -1528,6 +1539,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             canControlMusic: canControlMusic,
                             canCloseMusic: canCloseMusic,
                           ),
+                        if (!keyboardOpen)
+                          VoiceRoomJoinEntryStrip(
+                            events: live.realtimeEvents,
+                            messages: live.messages,
+                            enterBanner: staffBanner,
+                          ),
                         RoomVideoOverlay(
                           roomKey: _liveRoomKey,
                           perms: perms,
@@ -1563,10 +1580,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         Expanded(
                           child: VoiceWebChatOverlay(
                             messages: live.messages,
-                            hideOfficialJoinInChat: staffBanner != null,
+                            hideOfficialJoinInChat: true,
                             maxHeight: chatH,
                             embedded: true,
-                            welcomeMarquee: staffBanner,
+                            welcomeMarquee: null,
                             roomName: room.nameTr,
                             pinnedAnnouncement: live.pinnedAnnouncement,
                             onUserTap: (id, _) {
@@ -1611,7 +1628,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                   session: room,
                                   live: live,
                                   canControlMusic: canControlMusic,
-                                  staffBanner: staffBanner,
+                                  staffBanner: null,
                                 ),
                             ],
                           ),

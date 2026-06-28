@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.427+431 (2026-06-26)
+
+### Admin profil + sesli oda iyileştirmeleri
+
+- **Profil stats:** Takipçi/takip/ziyaret/yayın backend yedekleri (site profil, ziyaretçi listesi, yayın geçmişi)
+- **Oturum:** Profil yenilemede token korunur; ağ hatasında çıkış yapılmaz
+- **Admin panel:** Kullanıcı yönetimi ve ajans rotaları düzeltildi
+- **Sesli oda:** Online sayaca tıklayınca katılımcı listesi; kullanıcıya moderasyon/hediye
+- **Müzik:** !istek sonrası ses/videolu seçim; kapat (X) video+ses durdurur
+- **Giriş animasyonu:** Tek şerit — sağdan sola yetki+isim+“odaya giriş yaptı”
+- **Oda ayarları:** Grid düzen, tekrarlayan menüler kaldırıldı
+
 ## 1.0.426+430 (2026-06-26)
 
 ### Sesli oda — Premium müzik kartı (web parity)

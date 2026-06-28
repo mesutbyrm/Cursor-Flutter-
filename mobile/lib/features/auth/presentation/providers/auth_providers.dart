@@ -247,14 +247,29 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   }
 
   Future<void> refreshMe() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(
-      () => LoadingTimeout.run(
+    final previous = state.valueOrNull;
+    state = previous != null
+        ? AsyncValue<UserEntity?>.loading().copyWithPrevious(
+            AsyncValue.data(previous),
+          )
+        : const AsyncValue.loading();
+    try {
+      final user = await LoadingTimeout.run(
         _resolvedUser(),
         timeout: _bootTimeout,
         message: 'Oturum yenilenemedi',
-      ),
-    );
+      );
+      state = AsyncValue.data(user ?? previous);
+      if (user != null) {
+        unawaited(_enrichUserAfterBoot(user));
+      }
+    } catch (e, st) {
+      if (previous != null) {
+        state = AsyncValue.data(previous);
+      } else {
+        state = AsyncValue.error(e, st);
+      }
+    }
   }
 
   /// Tam ekran loading dialog yok — yalnızca buton içi spinner.

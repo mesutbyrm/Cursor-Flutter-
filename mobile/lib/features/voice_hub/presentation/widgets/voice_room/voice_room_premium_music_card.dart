@@ -11,6 +11,7 @@ import '../../../domain/entities/chat_room_dj_state.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../../providers/chat_room_providers.dart';
 import '../../providers/voice_room_ui_provider.dart';
+import '../../../video/presentation/room_video_controller.dart';
 import '../../services/voice_room_dj_player.dart';
 import '../../theme/voice_room_tokens.dart';
 import '../premium/voice_glass.dart';
@@ -249,12 +250,17 @@ class _VoiceRoomPremiumMusicCardState
                                   IconButton(
                                     visualDensity: VisualDensity.compact,
                                     onPressed: () async {
-                                      await ref
-                                          .read(
-                                            voiceRoomLiveProvider(widget.liveKey)
-                                                .notifier,
-                                          )
-                                          .stopMusic();
+                                      final liveCtrl = ref.read(
+                                        voiceRoomLiveProvider(widget.liveKey)
+                                            .notifier,
+                                      );
+                                      final videoCtrl = ref.read(
+                                        roomVideoControllerProvider(
+                                          widget.liveKey,
+                                        ).notifier,
+                                      );
+                                      await liveCtrl.stopMusic();
+                                      videoCtrl.clear();
                                     },
                                     icon: Icon(
                                       Icons.close_rounded,

@@ -295,7 +295,7 @@ class _SpeakerListSheetState extends State<_SpeakerListSheet>
             children: [
               const SizedBox(height: 10),
               const Text(
-                'Konuşmacı Listesi',
+                'Odada — Katılımcılar',
                 style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
               ),
               TabBar(

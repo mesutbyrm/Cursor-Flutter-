@@ -14,7 +14,6 @@ import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import 'voice_room_sheets.dart';
-import 'voice_room_tools_sheet.dart';
 import 'voice_youtube_song_sheet.dart';
 
 Future<void> showVoiceRoomHubSettingsSheet(
@@ -320,6 +319,60 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
     final ui = ref.watch(voiceRoomUiProvider);
     final canBg = widget.perms.canChangeBackground;
 
+    final tiles = <({IconData icon, String label, String subtitle, VoidCallback onTap})>[
+      (
+        icon: Icons.settings_rounded,
+        label: 'Oda ayarları',
+        subtitle: 'Mesaj, müzik, moderasyon',
+        onTap: _openRoomSettings,
+      ),
+      (
+        icon: Icons.queue_music_rounded,
+        label: 'Şarkı isteği',
+        subtitle: 'YouTube · ${widget.live.dj.musicRequestCost}J',
+        onTap: _openSongRequest,
+      ),
+      (
+        icon: Icons.badge_rounded,
+        label: 'Rumuz',
+        subtitle: 'Sohbet adınız',
+        onTap: _changeNickname,
+      ),
+      (
+        icon: Icons.terminal_rounded,
+        label: 'Komutlar',
+        subtitle: '!kick, !ban, !dj…',
+        onTap: _openRoomCommands,
+      ),
+      (
+        icon: Icons.headphones_rounded,
+        label: 'DJ yönetimi',
+        subtitle: '${widget.live.dj.djCount}/${widget.live.dj.maxDj}',
+        onTap: _openDjManage,
+      ),
+      (
+        icon: Icons.people_rounded,
+        label: 'Dinleyici listesi',
+        subtitle: '${widget.live.presence.length} çevrimiçi',
+        onTap: () {
+          Navigator.pop(context);
+          showVoiceSpeakerListSheet(
+            context,
+            presence: widget.live.presence,
+            room: widget.room,
+            onUserTap: widget.onUserTap,
+          );
+        },
+      ),
+      if (canBg)
+        (
+          icon: Icons.wallpaper_rounded,
+          label: 'Arka plan',
+          subtitle: 'Oda görseli',
+          onTap: _loadBackgrounds,
+        ),
+    ];
+
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
       minChildSize: 0.45,
@@ -333,99 +386,109 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                'Ayarlar',
+                'Oda Ayarları',
                 style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20),
               ),
             ),
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.settings_rounded, color: VoiceRoomTokens.neonPurple),
-              title: const Text('Oda ayarları'),
-              subtitle: const Text('Mesajlar, müzik, moderasyon'),
-              onTap: _openRoomSettings,
-            ),
-            ListTile(
-              leading: const Icon(Icons.queue_music_rounded, color: AppThemeColors.accentPink),
-              title: const Text('Şarkı isteği'),
-              subtitle: Text(
-                'YouTube ara · ${widget.live.dj.musicRequestCost} jeton / istek',
+            const SizedBox(height: 12),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                childAspectRatio: 0.88,
               ),
-              onTap: _openSongRequest,
-            ),
-            ListTile(
-              leading: const Icon(Icons.badge_rounded, color: VoiceRoomTokens.neonBlue),
-              title: const Text('Rumuz değiştir'),
-              subtitle: const Text('Sohbette görünen oda adınız'),
-              onTap: _changeNickname,
-            ),
-            ListTile(
-              leading: const Icon(Icons.terminal_rounded, color: VoiceRoomTokens.neonBlue),
-              title: const Text('Oda komutları'),
-              subtitle: const Text('Moderasyon komutları'),
-              onTap: _openRoomCommands,
-            ),
-            ListTile(
-              leading: const Icon(Icons.build_rounded, color: VoiceRoomTokens.neonPurple),
-              title: const Text('Oda araçları'),
-              subtitle: const Text('Kurallar, komutlar, jeton'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {
-                Navigator.pop(context);
-                showVoiceRoomToolsSheet(
-                  context,
-                  ref,
-                  room: widget.room,
-                  perms: widget.perms,
-                  isOwner: widget.isOwner,
+              itemCount: tiles.length,
+              itemBuilder: (context, i) {
+                final t = tiles[i];
+                return Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: t.onTap,
+                    borderRadius: BorderRadius.circular(14),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.12),
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(t.icon, color: VoiceRoomTokens.neonBlue, size: 22),
+                          const SizedBox(height: 6),
+                          Text(
+                            t.label,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 11,
+                              color: Colors.white,
+                            ),
+                          ),
+                          if (t.subtitle.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              t.subtitle,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.white.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.headphones_rounded, color: AppThemeColors.coinGold),
-              title: Text('DJ (${widget.live.dj.djCount}/${widget.live.dj.maxDj})'),
-              subtitle: const Text('DJ ekle veya çıkar'),
-              onTap: _openDjManage,
-            ),
-            if (canBg) ...[
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.wallpaper_rounded),
-                title: const Text('Oda arka planı'),
-                subtitle: const Text('Siteden görsel seç'),
-                onTap: _loadBackgrounds,
-              ),
-              if (_loadingBg)
-                const Center(child: Padding(
+            if (canBg && _loadingBg)
+              const Center(
+                child: Padding(
                   padding: EdgeInsets.all(12),
                   child: CircularProgressIndicator(strokeWidth: 2),
-                ))
-              else if (_backgrounds.isNotEmpty)
-                SizedBox(
-                  height: 120,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    itemCount: _backgrounds.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
-                    itemBuilder: (_, i) {
-                      final url = _backgrounds[i];
-                      return GestureDetector(
-                        onTap: () => _applyBackground(url),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: CanlifalNetworkImage(
-                            url: url,
-                            width: 160,
-                            height: 120,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
                 ),
+              )
+            else if (canBg && _backgrounds.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 120,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: _backgrounds.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (_, i) {
+                    final url = _backgrounds[i];
+                    return GestureDetector(
+                      onTap: () => _applyBackground(url),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: CanlifalNetworkImage(
+                          url: url,
+                          width: 160,
+                          height: 120,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ],
-            const Divider(),
+            const Divider(height: 24),
             SwitchListTile(
               title: const Text('Hoparlör modu'),
               subtitle: const Text('Kulaklık / hoparlör'),
@@ -434,17 +497,12 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                 ref.read(voiceRoomUiProvider.notifier).toggleHeadphones();
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.people_rounded),
-              title: const Text('Dinleyici listesi'),
-              onTap: () {
-                Navigator.pop(context);
-                showVoiceSpeakerListSheet(
-                  context,
-                  presence: widget.live.presence,
-                  room: widget.room,
-                  onUserTap: widget.onUserTap,
-                );
+            SwitchListTile(
+              title: const Text('Arka plan müziği'),
+              subtitle: const Text('Oda DJ sesi'),
+              value: ui.backgroundMusicEnabled,
+              onChanged: (_) {
+                ref.read(voiceRoomUiProvider.notifier).toggleBackgroundMusic();
               },
             ),
           ],

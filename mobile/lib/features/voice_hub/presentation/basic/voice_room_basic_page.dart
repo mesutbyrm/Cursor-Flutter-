@@ -37,7 +37,10 @@ import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'voice_room_basic_moderation_section.dart';
 import 'voice_room_basic_premium_section.dart';
+import '../widgets/voice_room/voice_room_join_entry_strip.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
+import '../sheets/music_mode_picker_sheet.dart';
+import '../sheets/voice_room_sheets.dart';
 import '../utils/voice_music_access.dart';
 import '../widgets/premium_2026/voice_live_action_bar_2026.dart';
 import '../widgets/premium_2026/voice_live_header_2026.dart';
@@ -526,13 +529,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
       final banner = next.enterBanner;
       if (banner != null && banner != prev?.enterBanner) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(banner),
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        // Giriş bildirimi koltuk altı şeritte (VoiceRoomJoinEntryStrip).
       }
 
       final kick = next.kickStrikeWarning;
@@ -573,9 +570,18 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           final hit = await showMusicSearchPickerSheet(context, ref, query: q);
           ctrl.clearPendingMusicSearch();
           if (!mounted || hit == null) return;
+          final dj = ref.read(voiceRoomLiveProvider(_liveRoomKey)).dj;
+          final mode = await showMusicModePickerSheet(
+            context,
+            audioCost: dj.musicRequestCost,
+            videoCost: dj.videoRequestCost > 0
+                ? dj.videoRequestCost
+                : dj.musicRequestCost,
+          );
+          if (!mounted || mode == null) return;
           final err = await ctrl.submitSelectedSong(
             hit,
-            withVideo: false,
+            withVideo: mode,
             skipPayment: skipPayment,
           );
           if (!mounted || err == null) return;
@@ -622,6 +628,12 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   hostAvatarUrl: hostAvatar,
                   onBack: () => unawaited(_confirmLeave()),
                   onExit: () => unawaited(_confirmLeave()),
+                  onAudience: () => showVoiceSpeakerListSheet(
+                    context,
+                    presence: live.presence,
+                    room: room,
+                    onUserTap: (u) => _openUser(u, room, perms),
+                  ),
                   onMore: () => _openTools(
                     room,
                     live,
@@ -654,10 +666,10 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     perms: perms,
                     user: user,
                   ),
-                  VoiceRoomBasicJoinTicker(
+                  VoiceRoomJoinEntryStrip(
                     events: live.realtimeEvents,
                     messages: live.messages,
-                    onlineCount: online,
+                    enterBanner: live.enterBanner,
                   ),
                   VoiceRoomBasicFloatingMiniPlayer(
                     room: room,

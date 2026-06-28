@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/navigation/native_site_routes.dart';
 import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../../admin/presentation/providers/admin_providers.dart';
 import '../../../../admin/presentation/providers/staff_access_provider.dart';
@@ -38,7 +37,7 @@ class ProfileAdminCard extends ConsumerWidget {
       (
         icon: Icons.people_alt_rounded,
         label: 'Kullanıcı Yönetimi',
-        onTap: () => openNativeSitePath(context, '/admin'),
+        onTap: () => context.push('/admin'),
       ),
       (
         icon: Icons.live_tv_rounded,
@@ -48,7 +47,7 @@ class ProfileAdminCard extends ConsumerWidget {
       (
         icon: Icons.business_rounded,
         label: 'Ajans Yönetimi',
-        onTap: () => openNativeSitePath(context, '/ajans'),
+        onTap: () => context.push('/ajans/dashboard'),
       ),
       (
         icon: Icons.analytics_rounded,

@@ -110,5 +110,13 @@ void openNativeSitePath(BuildContext context, String path) {
     context.go('/profile');
     return;
   }
+  if (p == '/admin' || p.startsWith('/admin/')) {
+    context.push('/admin');
+    return;
+  }
+  if (p == '/ajans' || p.startsWith('/ajans')) {
+    context.push('/ajans/dashboard');
+    return;
+  }
   context.push('/content-hub');
 }

@@ -117,6 +117,27 @@ class ProfileRemoteDataSource {
     }
   }
 
+  /// Ziyaretçi sayısı — stats API boş dönerse yedek.
+  Future<int> profileVisitorCount() async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.meProfileVisitors);
+      final data = res.data;
+      if (data is Map) {
+        final total = data['total'] ??
+            data['count'] ??
+            (data['data'] is Map ? (data['data'] as Map)['total'] : null);
+        if (total is num) return total.toInt();
+        final list = (data['data'] as List?) ??
+            (data['visitors'] as List?) ??
+            (data['items'] as List?);
+        if (list != null) return list.length;
+      } else if (data is List) {
+        return data.length;
+      }
+    } catch (_) {}
+    return 0;
+  }
+
   Future<List<GiftReceivedSummaryEntity>> giftsReceivedSummary() async {
     try {
       final res =

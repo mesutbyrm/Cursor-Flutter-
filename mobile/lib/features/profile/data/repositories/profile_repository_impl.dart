@@ -53,7 +53,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<ProfileStatsEntity> myStats() async {
-    final pair = await NetworkPerf.parallel<Object?>([
+    final results = await NetworkPerf.parallel<Object?>([
       () async {
         try {
           return await _remote.myStats();
@@ -68,9 +68,25 @@ class ProfileRepositoryImpl implements ProfileRepository {
           return null;
         }
       }(),
+      () async {
+        try {
+          return await _remote.broadcastHistory();
+        } catch (_) {
+          return const <BroadcastHistoryItemEntity>[];
+        }
+      }(),
+      () async {
+        try {
+          return await _remote.profileVisitorCount();
+        } catch (_) {
+          return 0;
+        }
+      }(),
     ]);
-    var stats = pair[0] as ProfileStatsEntity;
-    final profile = pair[1] as UserEntity?;
+    var stats = results[0] as ProfileStatsEntity;
+    final profile = results[1] as UserEntity?;
+    final broadcasts = results[2] as List<BroadcastHistoryItemEntity>;
+    final visitorCount = results[3] as int;
 
     if (profile != null) {
       stats = ProfileStatsEntity(
@@ -82,6 +98,33 @@ class ProfileRepositoryImpl implements ProfileRepository {
         giftsReceivedCoins: stats.giftsReceivedCoins,
         earningsJeton: stats.earningsJeton,
         approvedTopUpTotal: stats.approvedTopUpTotal,
+        profileViews: stats.profileViews > 0 ? stats.profileViews : visitorCount,
+      );
+    } else if (stats.profileViews == 0 && visitorCount > 0) {
+      stats = ProfileStatsEntity(
+        liveStreams: stats.liveStreams,
+        likes: stats.likes,
+        followers: stats.followers,
+        following: stats.following,
+        giftsReceivedCount: stats.giftsReceivedCount,
+        giftsReceivedCoins: stats.giftsReceivedCoins,
+        earningsJeton: stats.earningsJeton,
+        approvedTopUpTotal: stats.approvedTopUpTotal,
+        profileViews: visitorCount,
+      );
+    }
+
+    if (stats.liveStreams == 0 && broadcasts.isNotEmpty) {
+      stats = ProfileStatsEntity(
+        liveStreams: broadcasts.length,
+        likes: stats.likes,
+        followers: stats.followers,
+        following: stats.following,
+        giftsReceivedCount: stats.giftsReceivedCount,
+        giftsReceivedCoins: stats.giftsReceivedCoins,
+        earningsJeton: stats.earningsJeton,
+        approvedTopUpTotal: stats.approvedTopUpTotal,
+        profileViews: stats.profileViews,
       );
     }
 
@@ -95,6 +138,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         giftsReceivedCoins: stats.giftsReceivedCoins,
         earningsJeton: stats.earningsJeton,
         approvedTopUpTotal: stats.approvedTopUpTotal,
+        profileViews: stats.profileViews,
       );
     }
 
