@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.420+424 (2026-06-27)
+
+### Sesli oda Agora — web ile aynı token akışı
+
+- **Kök neden:** `VoiceAgoraEngine` boş `onError` mesajında `StateError('Agora: ')` fırlatıyordu
+- **Token:** `POST /api/agora/token` + kanal `voice_room_{odaId}` (web ile aynı)
+- **Güvenlik:** Tüm Agora adımları try/catch; tam stack trace log; UI çökmez, okunabilir hata
+- **Sıra:** mikrofon izni → token → `initialize()` → `joinChannel()`
+- **App ID:** sunucu yanıtı + `AGORA_VOICE_APP_ID` yedek doğrulaması
+
 ## 1.0.419+423 (2026-06-27)
 
 ### Admin ödeme talepleri ve sesli oda açma

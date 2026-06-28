@@ -1,3 +1,4 @@
+import 'package:canlifal_social/features/agora/domain/agora_channel_names.dart';
 import 'package:canlifal_social/features/voice_hub/data/datasources/chat_room_remote_datasource.dart';
 import 'package:canlifal_social/features/voice_hub/presentation/audio/voice_agora_engine.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,8 +29,15 @@ void main() {
   });
 
   group('VoiceAgoraEngine', () {
-    test('uses empty token and communication profile constants', () {
+    test('exposes microphone permission helper', () {
       expect(VoiceAgoraEngine.requestMicrophonePermission, isNotNull);
+    });
+
+    test('forVoiceRoom channel matches entity trtcRoomId convention', () {
+      expect(
+        AgoraChannelNames.forVoiceRoom('room-abc'),
+        'voice_room_room-abc',
+      );
     });
   });
 }

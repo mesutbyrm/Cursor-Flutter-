@@ -204,8 +204,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   }) async {
     if (!_agora.isSupported) return;
     try {
-      final cred = await ref.read(agoraRemoteProvider).fetchToken(
-            channelName: room.trtcRoomId,
+      final cred = await ref.read(agoraRemoteProvider).fetchVoiceRoomToken(
+            roomId: room.apiRoomKey,
             role: publishVideo ? 'host' : 'audience',
           );
       await _agora.joinVoiceRoomVideo(

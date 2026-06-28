@@ -6,18 +6,30 @@ import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../core/config/env.dart';
+import '../../../agora/data/datasources/agora_remote_datasource.dart';
+import '../../../agora/domain/agora_channel_names.dart';
+import '../../../agora/domain/entities/agora_credentials.dart';
+import '../../data/services/voice_room_debug_log.dart';
+import 'voice_agora_exception.dart';
 
-/// Sesli sohbet — Agora App ID Only (token boş), kanal = oda `roomId`.
+/// Sesli sohbet — web ile aynı: `POST /api/agora/token` + `voice_room_{id}` kanalı.
 class VoiceAgoraEngine {
+  VoiceAgoraEngine({AgoraRemoteDataSource? tokenSource})
+      : _tokenSource = tokenSource;
+
+  final AgoraRemoteDataSource? _tokenSource;
+
   RtcEngine? _engine;
   RtcEngineEventHandler? _handler;
   var _inChannel = false;
   var _micOn = true;
   String _channelId = '';
+  AgoraCredentials? _lastCredentials;
 
   bool get isSupported => !kIsWeb;
   bool get inChannel => _inChannel;
   bool get micOn => _micOn;
+  AgoraCredentials? get lastCredentials => _lastCredentials;
 
   static Future<bool> requestMicrophonePermission() async {
     if (kIsWeb) return false;
@@ -30,107 +42,397 @@ class VoiceAgoraEngine {
       return true;
     } on MissingPluginException {
       return false;
-    } catch (_) {
+    } catch (e, st) {
+      _logFailure('requestMicrophonePermission', e, st);
       return false;
     }
   }
 
-  Future<void> joinVoice(String roomId, {bool publishMic = true}) async {
+  Future<void> joinVoice(
+    String roomId, {
+    bool publishMic = true,
+  }) async {
     if (!isSupported) {
-      throw StateError('Agora yalnızca Android/iOS üzerinde desteklenir');
-    }
-    final channel = roomId.trim();
-    if (channel.isEmpty) {
-      throw StateError('Agora kanal adı boş');
-    }
-    final ok = await requestMicrophonePermission();
-    if (!ok) throw StateError('Mikrofon izni verilmedi');
-
-    if (_inChannel && _channelId == channel) {
-      setMicEnabled(publishMic);
-      return;
-    }
-    if (_inChannel) {
-      await leave();
-      await Future<void>.delayed(const Duration(milliseconds: 200));
+      throw const VoiceAgoraException(
+        'Agora yalnızca Android ve iOS cihazlarda desteklenir.',
+        phase: 'platform',
+      );
     }
 
-    final appId = Env.agoraVoiceAppId.trim();
-    if (appId.isEmpty) {
-      throw StateError('Agora App ID eksik');
+    final rawRoomId = roomId.trim();
+    if (rawRoomId.isEmpty) {
+      throw const VoiceAgoraException(
+        'Oda kimliği boş — ses bağlantısı kurulamadı.',
+        phase: 'validate',
+      );
     }
 
-    _engine = createAgoraRtcEngine();
-    await _engine!.initialize(RtcEngineContext(appId: appId));
-    await _engine!.enableAudio();
-    await _engine!.setDefaultAudioRouteToSpeakerphone(true);
-    await _engine!.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
+    final channel = AgoraChannelNames.forVoiceRoom(rawRoomId);
+    VoiceRoomDebugLog.log('audio.agora.prepare', {
+      'roomId': rawRoomId,
+      'channel': channel,
+      'publishMic': publishMic,
+    });
 
-    final joinCompleter = Completer<void>();
-    final prevHandler = _handler;
-    _handler = RtcEngineEventHandler(
-      onJoinChannelSuccess: (connection, elapsed) {
-        _inChannel = true;
-        if (!joinCompleter.isCompleted) joinCompleter.complete();
-      },
-      onLeaveChannel: (connection, stats) => _inChannel = false,
-      onError: (err, msg) {
-        if (!joinCompleter.isCompleted) {
-          joinCompleter.completeError(StateError('Agora: $msg'));
+    try {
+      final micOk = await requestMicrophonePermission();
+      if (!micOk) {
+        throw const VoiceAgoraException(
+          'Mikrofon izni verilmedi. Ayarlardan mikrofonu açıp tekrar deneyin.',
+          phase: 'permission',
+        );
+      }
+
+      if (_inChannel && _channelId == channel) {
+        setMicEnabled(publishMic);
+        return;
+      }
+
+      if (_inChannel) {
+        await leave();
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+      }
+
+      final tokenSource = _tokenSource;
+      if (tokenSource == null) {
+        throw const VoiceAgoraException(
+          'Agora token servisi yapılandırılmadı.',
+          phase: 'token_source',
+        );
+      }
+
+      final role = publishMic ? 'host' : 'audience';
+      AgoraCredentials credentials;
+      try {
+        credentials = await tokenSource.fetchVoiceRoomToken(
+          roomId: rawRoomId,
+          role: role,
+        );
+      } catch (e, st) {
+        _logFailure('fetchVoiceRoomToken', e, st, extra: {'channel': channel});
+        throw VoiceAgoraException(
+          'Agora token alınamadı: ${_friendlyError(e)}',
+          cause: e,
+          stackTrace: st,
+          phase: 'token',
+        );
+      }
+
+      _validateCredentials(credentials, expectedChannel: channel);
+
+      final appId = credentials.appId.trim().isNotEmpty
+          ? credentials.appId.trim()
+          : Env.agoraVoiceAppId.trim();
+      if (appId.isEmpty) {
+        throw const VoiceAgoraException(
+          'Agora App ID eksik (sunucu yanıtı ve AGORA_VOICE_APP_ID boş).',
+          phase: 'app_id',
+        );
+      }
+
+      VoiceRoomDebugLog.log('audio.agora.token', {
+        'channel': credentials.channelName,
+        'uid': credentials.uid,
+        'appIdPrefix': appId.length >= 8 ? appId.substring(0, 8) : appId,
+        'tokenLength': credentials.token.length,
+        'envAppId': Env.agoraVoiceAppId.trim().isNotEmpty,
+      });
+
+      await _createAndInitializeEngine(appId);
+
+      final clientRole = publishMic
+          ? ClientRoleType.clientRoleBroadcaster
+          : ClientRoleType.clientRoleAudience;
+      try {
+        await _engine!.setClientRole(role: clientRole);
+        await _engine!.setDefaultAudioRouteToSpeakerphone(true);
+      } catch (e, st) {
+        _logFailure('engine.configure', e, st);
+        throw VoiceAgoraException(
+          'Agora ses motoru yapılandırılamadı: ${_friendlyError(e)}',
+          cause: e,
+          stackTrace: st,
+          phase: 'configure',
+        );
+      }
+
+      final joinCompleter = Completer<void>();
+      final prevHandler = _handler;
+      _handler = RtcEngineEventHandler(
+        onJoinChannelSuccess: (connection, elapsed) {
+          _inChannel = true;
+          VoiceRoomDebugLog.log('audio.agora.joined', {
+            'channel': connection.channelId ?? channel,
+            'elapsedMs': elapsed,
+          });
+          if (!joinCompleter.isCompleted) joinCompleter.complete();
+        },
+        onLeaveChannel: (connection, stats) {
+          _inChannel = false;
+        },
+        onError: (err, msg) {
+          final text = _formatAgoraError(err, msg);
+          VoiceRoomDebugLog.log('audio.agora.error', {
+            'code': err.name,
+            'message': text,
+          });
+          if (_shouldIgnoreAgoraError(err)) return;
+          if (!joinCompleter.isCompleted) {
+            joinCompleter.completeError(
+              VoiceAgoraException(
+                text,
+                phase: 'agora_callback',
+              ),
+            );
+          }
+        },
+      );
+      if (prevHandler != null) {
+        try {
+          _engine!.unregisterEventHandler(prevHandler);
+        } catch (e, st) {
+          _logFailure('unregisterEventHandler', e, st);
         }
-      },
-    );
-    if (prevHandler != null) _engine!.unregisterEventHandler(prevHandler);
-    _engine!.registerEventHandler(_handler!);
+      }
+      _engine!.registerEventHandler(_handler!);
 
-    _channelId = channel;
-    await _engine!.joinChannel(
-      token: '',
-      channelId: channel,
-      uid: 0,
-      options: const ChannelMediaOptions(
-        channelProfile: ChannelProfileType.channelProfileCommunication,
-        clientRoleType: ClientRoleType.clientRoleBroadcaster,
-        publishMicrophoneTrack: true,
-        autoSubscribeAudio: true,
-      ),
-    );
+      _channelId = credentials.channelName;
+      _lastCredentials = credentials;
 
-    await joinCompleter.future.timeout(
-      const Duration(seconds: 20),
-      onTimeout: () => throw StateError('Agora kanala bağlanılamadı'),
-    );
-    _inChannel = true;
-    setMicEnabled(publishMic);
+      try {
+        await _engine!.joinChannel(
+          token: credentials.token,
+          channelId: credentials.channelName,
+          uid: credentials.uid,
+          options: ChannelMediaOptions(
+            channelProfile: ChannelProfileType.channelProfileCommunication,
+            clientRoleType: clientRole,
+            publishMicrophoneTrack: publishMic,
+            autoSubscribeAudio: true,
+          ),
+        );
+      } on AgoraRtcException catch (e, st) {
+        if (e.code == -17 || e.code == 17) {
+          VoiceRoomDebugLog.log('audio.agora.duplicate_join', {'channel': channel});
+          if (!joinCompleter.isCompleted) joinCompleter.complete();
+          _inChannel = true;
+        } else {
+          _logFailure('joinChannel', e, st);
+          throw VoiceAgoraException(
+            'Agora kanala girilemedi (${e.code}): ${e.message ?? e.toString()}',
+            cause: e,
+            stackTrace: st,
+            phase: 'join_channel',
+          );
+        }
+      } catch (e, st) {
+        _logFailure('joinChannel', e, st);
+        throw VoiceAgoraException(
+          'Agora kanala girilemedi: ${_friendlyError(e)}',
+          cause: e,
+          stackTrace: st,
+          phase: 'join_channel',
+        );
+      }
+
+      try {
+        await joinCompleter.future.timeout(
+          const Duration(seconds: 20),
+          onTimeout: () => throw VoiceAgoraException(
+            'Agora kanala bağlanma zaman aşımı (20 sn). '
+            'Kanal: $channel',
+            phase: 'join_timeout',
+          ),
+        );
+      } on VoiceAgoraException {
+        rethrow;
+      } catch (e, st) {
+        _logFailure('joinCompleter', e, st);
+        throw VoiceAgoraException(
+          'Agora bağlantısı tamamlanamadı: ${_friendlyError(e)}',
+          cause: e,
+          stackTrace: st,
+          phase: 'join_wait',
+        );
+      }
+
+      _inChannel = true;
+      setMicEnabled(publishMic);
+    } on VoiceAgoraException {
+      rethrow;
+    } catch (e, st) {
+      _logFailure('joinVoice', e, st);
+      throw VoiceAgoraException(
+        'Ses bağlantısı kurulamadı: ${_friendlyError(e)}',
+        cause: e,
+        stackTrace: st,
+        phase: 'joinVoice',
+      );
+    }
+  }
+
+  Future<void> _createAndInitializeEngine(String appId) async {
+    try {
+      if (_engine != null) {
+        await leave();
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+      }
+      _engine = createAgoraRtcEngine();
+      await _engine!.initialize(
+        RtcEngineContext(
+          appId: appId,
+          channelProfile: ChannelProfileType.channelProfileCommunication,
+        ),
+      );
+      await _engine!.enableAudio();
+      VoiceRoomDebugLog.log('audio.agora.initialized', {
+        'appIdPrefix': appId.length >= 8 ? appId.substring(0, 8) : appId,
+      });
+    } catch (e, st) {
+      _logFailure('initialize', e, st);
+      throw VoiceAgoraException(
+        'Agora motoru başlatılamadı: ${_friendlyError(e)}',
+        cause: e,
+        stackTrace: st,
+        phase: 'initialize',
+      );
+    }
+  }
+
+  void _validateCredentials(
+    AgoraCredentials credentials, {
+    required String expectedChannel,
+  }) {
+    if (credentials.token.trim().isEmpty) {
+      throw VoiceAgoraException(
+        'Sunucu boş Agora token döndürdü (kanal: ${credentials.channelName}).',
+        phase: 'token_validate',
+      );
+    }
+    if (credentials.channelName.trim().isEmpty) {
+      throw VoiceAgoraException(
+        'Sunucu Agora kanal adı döndürmedi.',
+        phase: 'token_validate',
+      );
+    }
+    final expected = expectedChannel.trim();
+    final actual = credentials.channelName.trim();
+    if (expected.isNotEmpty &&
+        actual.isNotEmpty &&
+        actual != expected &&
+        !actual.endsWith(expected.replaceFirst('voice_room_', ''))) {
+      VoiceRoomDebugLog.log('audio.agora.channel_mismatch', {
+        'expected': expected,
+        'actual': actual,
+      });
+    }
   }
 
   void setMicEnabled(bool enabled) {
     final engine = _engine;
     if (engine == null || !_inChannel) return;
-    engine.muteLocalAudioStream(!enabled);
-    _micOn = enabled;
+    try {
+      engine.muteLocalAudioStream(!enabled);
+      _micOn = enabled;
+    } catch (e, st) {
+      _logFailure('setMicEnabled', e, st);
+    }
   }
 
   void setRemoteAudioMuted(bool muted) {
-    _engine?.muteAllRemoteAudioStreams(muted);
+    try {
+      _engine?.muteAllRemoteAudioStreams(muted);
+    } catch (e, st) {
+      _logFailure('setRemoteAudioMuted', e, st);
+    }
   }
 
   Future<void> leave() async {
-    if (_engine != null) {
+    final engine = _engine;
+    if (engine == null) {
+      _inChannel = false;
+      _micOn = false;
+      _channelId = '';
+      _lastCredentials = null;
+      return;
+    }
+    try {
       if (_inChannel) {
-        await _engine!.leaveChannel();
+        await engine.leaveChannel();
       }
+    } catch (e, st) {
+      _logFailure('leaveChannel', e, st);
+    }
+    try {
       if (_handler != null) {
-        _engine!.unregisterEventHandler(_handler!);
+        engine.unregisterEventHandler(_handler!);
         _handler = null;
       }
-      await _engine!.release();
-      _engine = null;
+    } catch (e, st) {
+      _logFailure('unregisterOnLeave', e, st);
     }
+    try {
+      await engine.release();
+    } catch (e, st) {
+      _logFailure('release', e, st);
+    }
+    _engine = null;
     _inChannel = false;
     _micOn = false;
     _channelId = '';
+    _lastCredentials = null;
+    VoiceRoomDebugLog.log('audio.agora.left', {});
   }
 
-  Future<void> dispose() async => leave();
+  Future<void> dispose() async {
+    try {
+      await leave();
+    } catch (e, st) {
+      _logFailure('dispose', e, st);
+    }
+  }
+
+  static bool _shouldIgnoreAgoraError(ErrorCodeType err) {
+    return err == ErrorCodeType.errJoinChannelRejected;
+  }
+
+  static String _formatAgoraError(ErrorCodeType err, String msg) {
+    final detail = msg.trim();
+    if (detail.isNotEmpty) return 'Agora hatası (${err.name}): $detail';
+    return switch (err) {
+      ErrorCodeType.errInvalidAppId =>
+        'Agora App ID geçersiz. AGORA_VOICE_APP_ID ve sunucu yanıtını kontrol edin.',
+      ErrorCodeType.errInvalidToken =>
+        'Agora token geçersiz veya süresi dolmuş. Odaya tekrar girin.',
+      ErrorCodeType.errTokenExpired =>
+        'Agora token süresi doldu. Odaya tekrar girin.',
+      ErrorCodeType.errJoinChannelRejected =>
+        'Agora kanala katılım reddedildi. Birkaç saniye sonra tekrar deneyin.',
+      _ => 'Agora hatası (${err.name}). Bağlantıyı kontrol edip tekrar deneyin.',
+    };
+  }
+
+  static String _friendlyError(Object e) {
+    if (e is VoiceAgoraException) return e.message;
+    final raw = e.toString();
+    if (raw.startsWith('ApiException')) {
+      return raw.replaceFirst(RegExp(r'^ApiException(\(\d+\))?: '), '');
+    }
+    return raw.replaceFirst('Bad state: ', '');
+  }
+
+  static void _logFailure(
+    String phase,
+    Object e,
+    StackTrace st, {
+    Map<String, Object?>? extra,
+  }) {
+    VoiceRoomDebugLog.log('audio.agora.fail', {
+      'phase': phase,
+      'error': e.toString(),
+      'stack': st.toString(),
+      ...?extra,
+    });
+    debugPrint('[VoiceAgora] FAIL phase=$phase error=$e\n$st');
+  }
 }

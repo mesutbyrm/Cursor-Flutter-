@@ -15,6 +15,14 @@ void main() {
       );
     });
 
+    test('forVoiceRoom uses voice_room_ prefix for bare id', () {
+      expect(AgoraChannelNames.forVoiceRoom('abc123'), 'voice_room_abc123');
+      expect(
+        AgoraChannelNames.forVoiceRoom('voice_room_abc123'),
+        'voice_room_abc123',
+      );
+    });
+
     test('empty input returns empty', () {
       expect(AgoraChannelNames.forRoom(''), '');
       expect(AgoraChannelNames.forRoom('  '), '');
