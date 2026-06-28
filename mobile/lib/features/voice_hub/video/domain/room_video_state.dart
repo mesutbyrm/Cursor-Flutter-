@@ -15,6 +15,7 @@ class RoomVideoState extends Equatable {
     this.positionMs = 0,
     this.trackStartedAtMs,
     this.nowPlaying,
+    this.isDismissing = false,
   });
 
   final String? videoId;
@@ -24,6 +25,7 @@ class RoomVideoState extends Equatable {
   final int positionMs;
   final int? trackStartedAtMs;
   final MusicQueueItem? nowPlaying;
+  final bool isDismissing;
 
   bool get hasActiveVideo => YoutubeVideoId.isValid(videoId);
 
@@ -47,6 +49,7 @@ class RoomVideoState extends Equatable {
     bool clearTrackStartedAt = false,
     MusicQueueItem? nowPlaying,
     bool clearNowPlaying = false,
+    bool? isDismissing,
   }) {
     return RoomVideoState(
       videoId: clearVideoId ? null : (videoId ?? this.videoId),
@@ -58,6 +61,7 @@ class RoomVideoState extends Equatable {
           ? null
           : (trackStartedAtMs ?? this.trackStartedAtMs),
       nowPlaying: clearNowPlaying ? null : (nowPlaying ?? this.nowPlaying),
+      isDismissing: isDismissing ?? this.isDismissing,
     );
   }
 
@@ -97,5 +101,6 @@ class RoomVideoState extends Equatable {
         positionMs,
         trackStartedAtMs,
         nowPlaying?.id,
+        isDismissing,
       ];
 }

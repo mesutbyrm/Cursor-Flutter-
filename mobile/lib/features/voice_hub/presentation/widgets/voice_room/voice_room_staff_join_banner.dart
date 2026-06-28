@@ -2,29 +2,33 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_theme_colors.dart';
+import 'package:canlifal_social/core/auth/voice_staff_rank.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import '../../../domain/entities/voice_room_realtime_event.dart';
 import '../../../domain/voice_official_join.dart';
 import '../../theme/voice_room_tokens.dart';
 
-/// Koltuk altı giriş şeridi — yalnızca normal üyeler, sağdan sola kayarak kaybolur.
-class VoiceRoomJoinEntryStrip extends StatefulWidget {
-  const VoiceRoomJoinEntryStrip({
+/// Üst şerit — yetkili/VIP girişleri herkese sağdan sola gösterilir.
+class VoiceRoomStaffJoinBanner extends StatefulWidget {
+  const VoiceRoomStaffJoinBanner({
     super.key,
     required this.events,
     required this.messages,
+    this.enterBanner,
   });
 
   final List<VoiceRoomRealtimeEvent> events;
   final List<ChatRoomMessage> messages;
+  final String? enterBanner;
 
   @override
-  State<VoiceRoomJoinEntryStrip> createState() => _VoiceRoomJoinEntryStripState();
+  State<VoiceRoomStaffJoinBanner> createState() =>
+      _VoiceRoomStaffJoinBannerState();
 }
 
-class _JoinLine {
-  _JoinLine({
+class _StaffJoinLine {
+  _StaffJoinLine({
     required this.name,
     required this.roleLabel,
     required this.roleColor,
@@ -37,13 +41,14 @@ class _JoinLine {
   final IconData icon;
 }
 
-class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
+class _VoiceRoomStaffJoinBannerState extends State<VoiceRoomStaffJoinBanner>
     with SingleTickerProviderStateMixin {
-  final _queue = <_JoinLine>[];
-  _JoinLine? _active;
+  final _queue = <_StaffJoinLine>[];
+  _StaffJoinLine? _active;
   AnimationController? _ctrl;
   Animation<Offset>? _slide;
   Animation<double>? _fade;
+  String? _lastBanner;
   int _lastEventCount = 0;
   int _lastJoinMsgCount = 0;
 
@@ -54,7 +59,7 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
   }
 
   @override
-  void didUpdateWidget(covariant VoiceRoomJoinEntryStrip oldWidget) {
+  void didUpdateWidget(covariant VoiceRoomStaffJoinBanner oldWidget) {
     super.didUpdateWidget(oldWidget);
     _collectNewEntries();
   }
@@ -65,22 +70,23 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
     _collectNewEntries();
   }
 
-  bool _isStaffJoin(String content, ChatRoomUserRef? user) {
-    return VoiceOfficialJoin.isEntranceWorthy(
-      content: content,
-      membership: user?.membership,
-      chatRole: user?.chatRole,
-    );
-  }
-
   void _collectNewEntries() {
+    final banner = widget.enterBanner?.trim();
+    if (banner != null &&
+        banner.isNotEmpty &&
+        banner != _lastBanner &&
+        _active == null) {
+      _lastBanner = banner;
+      _enqueueStaffLine(banner);
+    }
+
     if (widget.events.length > _lastEventCount) {
       final fresh = widget.events.take(widget.events.length - _lastEventCount);
       _lastEventCount = widget.events.length;
       for (final e in fresh) {
         if (e.kind == VoiceRoomRealtimeKind.join &&
-            !_isStaffJoin(e.message, null)) {
-          _enqueue(_parseLine(e.message, user: null));
+            VoiceOfficialJoin.isEntranceWorthy(content: e.message)) {
+          _enqueueStaffLine(e.message);
         }
       }
     }
@@ -92,19 +98,61 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
       final fresh = joins.skip(_lastJoinMsgCount);
       _lastJoinMsgCount = joins.length;
       for (final m in fresh) {
-        if (!_isStaffJoin(m.content, m.user)) {
-          _enqueue(_parseLine(m.content, user: m.user));
+        if (VoiceOfficialJoin.isEntranceWorthy(
+          content: m.content,
+          membership: m.user?.membership,
+          chatRole: m.user?.chatRole,
+        )) {
+          _enqueueStaffLine(m.content, user: m.user);
         }
       }
     }
   }
 
-  _JoinLine _parseLine(String raw, {ChatRoomUserRef? user}) {
+  void _enqueueStaffLine(String raw, {ChatRoomUserRef? user}) {
+    _queue.add(_parseStaffLine(raw, user: user));
+    if (_active == null) _showNext();
+  }
+
+  _StaffJoinLine _parseStaffLine(String raw, {ChatRoomUserRef? user}) {
     final text = raw.trim();
-    var roleLabel = 'Üye';
-    var roleColor = VoiceRoomTokens.neonBlue;
-    var icon = Icons.person_rounded;
+    final rank = VoiceStaffRankParser.resolve(
+      username: user?.nickname ?? user?.name,
+      chatRole: user?.chatRole,
+    );
+    var roleLabel = 'Yetkili';
+    var roleColor = AppThemeColors.liveRed;
+    var icon = Icons.admin_panel_settings_rounded;
     var name = user?.displayName ?? text;
+
+    switch (rank) {
+      case VoiceStaffRank.founder:
+        roleLabel = 'Kurucu';
+        roleColor = VoiceRoomTokens.gold;
+        icon = Icons.workspace_premium_rounded;
+      case VoiceStaffRank.admin:
+        roleLabel = 'Admin';
+        roleColor = AppThemeColors.liveRed;
+        icon = Icons.admin_panel_settings_rounded;
+      case VoiceStaffRank.sop:
+      case VoiceStaffRank.op:
+        roleLabel = 'Mod';
+        roleColor = VoiceRoomTokens.neonPurple;
+        icon = Icons.shield_rounded;
+      case VoiceStaffRank.voice:
+        roleLabel = 'DJ';
+        roleColor = AppThemeColors.accentPink;
+        icon = Icons.headphones_rounded;
+      case VoiceStaffRank.none:
+        final m = user?.membership?.toLowerCase() ?? '';
+        if (m.contains('gold') || m.contains('vip')) {
+          roleLabel = 'VIP';
+          roleColor = AppThemeColors.coinGold;
+          icon = Icons.diamond_rounded;
+        } else if (text.contains('Admin') || text.contains('admin')) {
+          roleLabel = 'Admin';
+        }
+    }
 
     if (user == null) {
       final joinedMatch = RegExp(
@@ -116,20 +164,16 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
       } else if (text.contains(' — ')) {
         name = text.split(' — ').first.trim();
       }
+      name = VoiceOfficialJoin.formatEntranceBanner(name).replaceAll('📣 ', '');
     }
 
     if (name.length > 28) name = '${name.substring(0, 26)}…';
-    return _JoinLine(
+    return _StaffJoinLine(
       name: name.isEmpty ? 'Kullanıcı' : name,
       roleLabel: roleLabel,
       roleColor: roleColor,
       icon: icon,
     );
-  }
-
-  void _enqueue(_JoinLine line) {
-    _queue.add(line);
-    if (_active == null) _showNext();
   }
 
   Future<void> _showNext() async {
@@ -181,8 +225,10 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
       return const SizedBox.shrink();
     }
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 2, 8, 4),
+    return Positioned(
+      top: MediaQuery.paddingOf(context).top + 52,
+      left: 8,
+      right: 8,
       child: FadeTransition(
         opacity: _fade!,
         child: SlideTransition(
@@ -192,27 +238,36 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
               borderRadius: BorderRadius.circular(14),
               gradient: LinearGradient(
                 colors: [
-                  line.roleColor.withValues(alpha: 0.28),
-                  Colors.black.withValues(alpha: 0.55),
+                  line.roleColor.withValues(alpha: 0.42),
+                  Colors.black.withValues(alpha: 0.72),
                 ],
               ),
-              border: Border.all(color: line.roleColor.withValues(alpha: 0.45)),
+              border: Border.all(color: line.roleColor.withValues(alpha: 0.55)),
+              boxShadow: [
+                BoxShadow(
+                  color: line.roleColor.withValues(alpha: 0.25),
+                  blurRadius: 12,
+                  spreadRadius: 1,
+                ),
+              ],
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: line.roleColor.withValues(alpha: 0.25),
+                      color: line.roleColor.withValues(alpha: 0.28),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: line.roleColor.withValues(alpha: 0.5)),
+                      border:
+                          Border.all(color: line.roleColor.withValues(alpha: 0.55)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(line.icon, size: 12, color: line.roleColor),
+                        Icon(line.icon, size: 13, color: line.roleColor),
                         const SizedBox(width: 4),
                         Text(
                           line.roleLabel,
@@ -225,7 +280,7 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: RichText(
                       maxLines: 1,
@@ -239,9 +294,9 @@ class _VoiceRoomJoinEntryStripState extends State<VoiceRoomJoinEntryStrip>
                         children: [
                           TextSpan(
                             text: line.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w900,
-                              color: AppThemeColors.coinGold,
+                              color: line.roleColor,
                             ),
                           ),
                           const TextSpan(text: ' '),

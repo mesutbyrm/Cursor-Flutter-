@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.429+433 (2026-06-26)
+
+### Sesli oda UX — admin koltuk, müzik, chat, ayarlar
+
+- **Site admin:** Odaya girince otomatik sağ alt koltuk (11); en yüksek yetki önceliği
+- **!istek videolu:** Arka plan videosu soldan sağa kapanır; müzik kartı koltuk altında sıfırlanır
+- **Video kuyruk:** Parça bitince sıra boşsa anında kapanır; sırada varsa hemen sonraki başlar; ses videodan gelir
+- **Chat + klavye:** Yazarken sohbet kaydırılabilir; son mesajlar görünür; giriş alanı klavyeye sabit
+- **Giriş animasyonu:** Yetkililer üstte (herkese), normal üyeler altta; sağdan sola
+- **Chat:** Kullanıcı adına tıklayınca profil; rol/VIP renkli isimler
+- **Ayarlar:** Yalnızca ikon buton grid (metin/subtitle kaldırıldı)
+
 ## 1.0.428+432 (2026-06-26)
 
 ### Oda oluşturma — web ile birebir JSON

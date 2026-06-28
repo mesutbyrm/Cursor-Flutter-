@@ -27,6 +27,7 @@ import 'providers/voice_gift_leaderboard_provider.dart';
 import '../../auth/domain/entities/user_entity.dart';
 import '../../agora/presentation/agora_room_manager.dart';
 import '../../agora/presentation/providers/agora_providers.dart';
+import '../domain/entities/chat_room_message.dart';
 import '../domain/entities/chat_room_presence.dart';
 import '../domain/entities/chat_room_sse_event.dart';
 import '../domain/entities/chat_room_my_permissions.dart';
@@ -68,6 +69,7 @@ import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_dj_music_slide_panel.dart';
 import 'widgets/voice_room/voice_room_center_music_panel.dart';
 import 'widgets/voice_room/voice_room_join_entry_strip.dart';
+import 'widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
 import '../video/presentation/widgets/room_video_overlay.dart';
@@ -92,6 +94,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   var _participants = <String, Map<String, dynamic>>{};
   var _agoraReady = false;
   final _messageCtrl = TextEditingController();
+  final _chatScrollCtrl = ScrollController();
+  var _scrollChatToLatest = false;
   var _audioJoining = false;
   var _audioReady = false;
   String? _audioError;
@@ -225,6 +229,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     _sseParticipantsSub = null;
     _participants.clear();
     _messageCtrl.dispose();
+    _chatScrollCtrl.dispose();
     _messageFocus.dispose();
     final audio = _audio;
     _audio = null;
@@ -300,9 +305,42 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     if (text.isEmpty) return;
     _messageCtrl.clear();
     _messageFocus.requestFocus();
+    setState(() => _scrollChatToLatest = true);
     unawaited(
       ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).sendMessage(text),
     );
+    Future<void>.delayed(const Duration(milliseconds: 120), () {
+      if (mounted) setState(() => _scrollChatToLatest = false);
+    });
+  }
+
+  void _openUserFromChat(
+    String userId,
+    String name,
+    ChatRoomMessage message, {
+    required VoiceRoomEntity room,
+    required VoiceRoomLiveState live,
+    required VoiceRoomPermissions perms,
+    required bool isOwner,
+  }) {
+    ChatRoomPresence? found;
+    for (final e in live.presence) {
+      if (e.id == userId) {
+        found = e;
+        break;
+      }
+    }
+    final user = message.user;
+    found ??= ChatRoomPresence(
+      id: userId,
+      name: user?.name ?? name,
+      nickname: user?.nickname,
+      image: user?.image,
+      chatRole: user?.chatRole,
+      roleSymbol: user?.roleSymbol,
+      membership: user?.membership,
+    );
+    _openUser(found, perms: perms, room: room, isOwner: isOwner);
   }
 
   void _toggleMic() {
@@ -1543,7 +1581,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           VoiceRoomJoinEntryStrip(
                             events: live.realtimeEvents,
                             messages: live.messages,
-                            enterBanner: staffBanner,
                           ),
                         RoomVideoOverlay(
                           roomKey: _liveRoomKey,
@@ -1586,19 +1623,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             welcomeMarquee: null,
                             roomName: room.nameTr,
                             pinnedAnnouncement: live.pinnedAnnouncement,
-                            onUserTap: (id, _) {
-                              for (final e in live.presence) {
-                                if (e.id == id) {
-                                  _openUser(
-                                    e,
-                                    perms: perms,
-                                    room: room,
-                                    isOwner: isOwner,
-                                  );
-                                  break;
-                                }
-                              }
-                            },
+                            scrollController: _chatScrollCtrl,
+                            scrollToLatest: _scrollChatToLatest,
+                            onUserTap: (id, name, msg) => _openUserFromChat(
+                              id,
+                              name,
+                              msg,
+                              room: room,
+                              live: live,
+                              perms: perms,
+                              isOwner: isOwner,
+                            ),
                           ),
                         ),
                         if (live.isAnyoneTyping)
@@ -1692,6 +1727,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 isOwner: isOwner,
                 isDj: isDj,
               ),
+            VoiceRoomStaffJoinBanner(
+              events: live.realtimeEvents,
+              messages: live.messages,
+              enterBanner: staffBanner,
+            ),
           ],
         ),
       ),

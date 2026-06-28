@@ -124,7 +124,7 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
       VoiceRoomDebugLog.log('roomVideo.ended.fail', {'error': '$e'});
     }
     _endingResetTimer?.cancel();
-    _endingResetTimer = Timer(const Duration(seconds: 4), () {
+    _endingResetTimer = Timer(const Duration(milliseconds: 800), () {
       if (!_disposed) _endingHandled = false;
     });
   }
@@ -284,7 +284,7 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
       return _thumbFallback(video);
     }
 
-    return RepaintBoundary(
+    Widget player = RepaintBoundary(
       child: IgnorePointer(
         ignoring: true,
         child: Center(
@@ -329,6 +329,32 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
         ),
       ),
     );
+
+    if (video.isDismissing) {
+      player = ClipRect(
+        child: Align(
+          alignment: Alignment.centerLeft,
+          widthFactor: 0.0,
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 1.0, end: 0.0),
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInCubic,
+            builder: (context, factor, child) {
+              return ClipRect(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: factor.clamp(0.0, 1.0),
+                  child: child,
+                ),
+              );
+            },
+            child: player,
+          ),
+        ),
+      );
+    }
+
+    return player;
   }
 
   Widget _thumbFallback(RoomVideoState video) {

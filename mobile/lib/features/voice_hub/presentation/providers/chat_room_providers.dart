@@ -1721,20 +1721,41 @@ class VoiceRoomLiveController
   Future<void> _onDjTrackComplete() async {
     try {
       VoiceRoomDebugLog.log('music.track_complete.advance');
+      final videoCtrl = ref.read(roomVideoControllerProvider(_roomKey).notifier);
+      if (ref.read(roomVideoControllerProvider(_roomKey)).hasActiveVideo) {
+        await videoCtrl.dismissAnimated();
+      }
       await ref
           .read(chatRoomRemoteProvider)
           .completeMusicQueue(_roomKey, alternateKey: _musicAlternateKey);
-      await refresh();
-      final dj = state.dj;
-      final videoId = ChatRoomDjState.videoIdFromLoose(
-        dj.nowPlaying?.youtubeUrl ?? dj.playbackResolveSeed ?? '',
-      );
-      if (!dj.playing || videoId == null || dj.nowPlaying == null) {
+      await refresh(includeDj: true);
+      var dj = state.dj;
+      final hasQueue = dj.musicQueue.isNotEmpty;
+      final hasNowPlaying = dj.nowPlaying != null;
+      if (!hasQueue && !hasNowPlaying) {
         ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+        await ref.read(voiceRoomDjPlayerProvider).stop();
+        ref.read(voiceRoomMusicSessionProvider.notifier).dismissFromServerStop();
         _lastDjPlaybackSignature = _djPlaybackSignature(
           dj,
           muted: !ref.read(voiceRoomUiProvider).backgroundMusicEnabled,
         );
+        return;
+      }
+      if (hasNowPlaying && dj.playing) {
+        ref.read(voiceRoomMusicSessionProvider.notifier).onMusicStartedFromServer();
+        _lastDjPlaybackSignature = '';
+        await _playDjInBackground(dj);
+        return;
+      }
+      if (hasQueue) {
+        await _syncMusicFromServer(optimisticUi: false);
+        dj = state.dj;
+        if (dj.nowPlaying != null) {
+          ref.read(voiceRoomMusicSessionProvider.notifier).onMusicStartedFromServer();
+          _lastDjPlaybackSignature = '';
+          await _playDjInBackground(dj);
+        }
       }
     } catch (e) {
       VoiceRoomDebugLog.log('music.track_complete.fail', {'error': '$e'});
@@ -1935,6 +1956,15 @@ class VoiceRoomLiveController
   }) async {
     state = state.copyWith(sending: true, clearPendingMusicSearch: true);
     try {
+      if (withVideo) {
+        final videoState = ref.read(roomVideoControllerProvider(_roomKey));
+        if (videoState.hasActiveVideo) {
+          await ref
+              .read(roomVideoControllerProvider(_roomKey).notifier)
+              .dismissAnimated();
+        }
+        ref.read(voiceRoomMusicSessionProvider.notifier).onMusicStartedFromServer();
+      }
       final result = await ref.read(enqueueSongUseCaseProvider)(
             roomId: _roomKey,
             alternateRoomId: _musicAlternateKey,
@@ -2758,6 +2788,8 @@ class VoiceRoomLiveController
     required List<ChatRoomPresence> presence,
   }) {
     if (myPriority >= 4) return 1;
+    // Site admin — sağ alt koltuk (11); düşük öncelikli kullanıcıyı yer değiştirir.
+    if (myPriority >= 3) return 11;
     final occupied = <int, ChatRoomPresence>{
       for (final p in presence)
         if (p.seatIndex != null) p.seatIndex!: p,

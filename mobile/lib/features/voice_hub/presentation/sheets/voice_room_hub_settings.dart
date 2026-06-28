@@ -319,41 +319,35 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
     final ui = ref.watch(voiceRoomUiProvider);
     final canBg = widget.perms.canChangeBackground;
 
-    final tiles = <({IconData icon, String label, String subtitle, VoidCallback onTap})>[
+    final tiles = <({IconData icon, String label, VoidCallback onTap})>[
       (
         icon: Icons.settings_rounded,
         label: 'Oda ayarları',
-        subtitle: 'Mesaj, müzik, moderasyon',
         onTap: _openRoomSettings,
       ),
       (
         icon: Icons.queue_music_rounded,
         label: 'Şarkı isteği',
-        subtitle: 'YouTube · ${widget.live.dj.musicRequestCost}J',
         onTap: _openSongRequest,
       ),
       (
         icon: Icons.badge_rounded,
         label: 'Rumuz',
-        subtitle: 'Sohbet adınız',
         onTap: _changeNickname,
       ),
       (
         icon: Icons.terminal_rounded,
         label: 'Komutlar',
-        subtitle: '!kick, !ban, !dj…',
         onTap: _openRoomCommands,
       ),
       (
         icon: Icons.headphones_rounded,
         label: 'DJ yönetimi',
-        subtitle: '${widget.live.dj.djCount}/${widget.live.dj.maxDj}',
         onTap: _openDjManage,
       ),
       (
         icon: Icons.people_rounded,
         label: 'Dinleyici listesi',
-        subtitle: '${widget.live.presence.length} çevrimiçi',
         onTap: () {
           Navigator.pop(context);
           showVoiceSpeakerListSheet(
@@ -368,9 +362,24 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
         (
           icon: Icons.wallpaper_rounded,
           label: 'Arka plan',
-          subtitle: 'Oda görseli',
           onTap: _loadBackgrounds,
         ),
+      (
+        icon: ui.headphonesOn
+            ? Icons.headset_rounded
+            : Icons.headset_off_rounded,
+        label: 'Hoparlör',
+        onTap: () =>
+            ref.read(voiceRoomUiProvider.notifier).toggleHeadphones(),
+      ),
+      (
+        icon: ui.backgroundMusicEnabled
+            ? Icons.music_note_rounded
+            : Icons.music_off_rounded,
+        label: 'Oda müziği',
+        onTap: () =>
+            ref.read(voiceRoomUiProvider.notifier).toggleBackgroundMusic(),
+      ),
     ];
 
     return DraggableScrollableSheet(
@@ -383,71 +392,40 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
         child: ListView(
           controller: scroll,
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12),
-              child: Text(
-                'Oda Ayarları',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20),
-              ),
-            ),
-            const SizedBox(height: 12),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 8),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
+                crossAxisCount: 4,
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
-                childAspectRatio: 0.88,
+                childAspectRatio: 0.92,
               ),
               itemCount: tiles.length,
               itemBuilder: (context, i) {
                 final t = tiles[i];
-                return Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: t.onTap,
-                    borderRadius: BorderRadius.circular(14),
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.12),
-                        ),
-                      ),
-                      padding: const EdgeInsets.all(10),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(t.icon, color: VoiceRoomTokens.neonBlue, size: 22),
-                          const SizedBox(height: 6),
-                          Text(
-                            t.label,
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 11,
-                              color: Colors.white,
-                            ),
+                return Tooltip(
+                  message: t.label,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: t.onTap,
+                      borderRadius: BorderRadius.circular(14),
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.12),
                           ),
-                          if (t.subtitle.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              t.subtitle,
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: Colors.white.withValues(alpha: 0.6),
-                              ),
-                            ),
-                          ],
-                        ],
+                        ),
+                        padding: const EdgeInsets.all(10),
+                        child: Icon(
+                          t.icon,
+                          color: VoiceRoomTokens.neonBlue,
+                          size: 26,
+                        ),
                       ),
                     ),
                   ),
@@ -488,23 +466,6 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                 ),
               ),
             ],
-            const Divider(height: 24),
-            SwitchListTile(
-              title: const Text('Hoparlör modu'),
-              subtitle: const Text('Kulaklık / hoparlör'),
-              value: ui.headphonesOn,
-              onChanged: (_) {
-                ref.read(voiceRoomUiProvider.notifier).toggleHeadphones();
-              },
-            ),
-            SwitchListTile(
-              title: const Text('Arka plan müziği'),
-              subtitle: const Text('Oda DJ sesi'),
-              value: ui.backgroundMusicEnabled,
-              onChanged: (_) {
-                ref.read(voiceRoomUiProvider.notifier).toggleBackgroundMusic();
-              },
-            ),
           ],
         ),
       ),

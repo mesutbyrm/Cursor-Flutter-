@@ -669,7 +669,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   VoiceRoomJoinEntryStrip(
                     events: live.realtimeEvents,
                     messages: live.messages,
-                    enterBanner: live.enterBanner,
                   ),
                   VoiceRoomBasicFloatingMiniPlayer(
                     room: room,

@@ -35,7 +35,7 @@ class VoiceRoomResponsiveMetrics {
   }
 
   double get chatBlockH {
-    if (keyboardOpen) return (screenH * 0.2).clamp(80.0, 140.0);
+    if (keyboardOpen) return (screenH * 0.32).clamp(140.0, 260.0);
     final available = screenH * 0.34;
     return available.clamp(100.0, 200.0);
   }

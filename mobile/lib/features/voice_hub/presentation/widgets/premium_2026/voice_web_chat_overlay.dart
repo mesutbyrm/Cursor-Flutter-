@@ -8,7 +8,7 @@ import '../../utils/voice_chat_message_filters.dart';
 import '../chat/chat_message_widgets.dart';
 
 /// Web tarzı şeffaf sohbet — arka plan üzerinde yüzen mesajlar.
-class VoiceWebChatOverlay extends StatelessWidget {
+class VoiceWebChatOverlay extends StatefulWidget {
   const VoiceWebChatOverlay({
     super.key,
     required this.messages,
@@ -19,22 +19,59 @@ class VoiceWebChatOverlay extends StatelessWidget {
     this.welcomeMarquee,
     this.roomName,
     this.pinnedAnnouncement,
+    this.scrollController,
+    this.scrollToLatest = false,
   });
 
   final List<ChatRoomMessage> messages;
-  final void Function(String userId, String name)? onUserTap;
+  final void Function(String userId, String name, ChatRoomMessage message)?
+      onUserTap;
   final bool hideOfficialJoinInChat;
   final double maxHeight;
   final bool embedded;
   final String? welcomeMarquee;
   final String? roomName;
   final String? pinnedAnnouncement;
+  final ScrollController? scrollController;
+  final bool scrollToLatest;
+
+  @override
+  State<VoiceWebChatOverlay> createState() => _VoiceWebChatOverlayState();
+}
+
+class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
+  ScrollController? _ownedScroll;
+
+  ScrollController get _scroll =>
+      widget.scrollController ?? (_ownedScroll ??= ScrollController());
+
+  @override
+  void dispose() {
+    _ownedScroll?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant VoiceWebChatOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.scrollToLatest ||
+        widget.messages.length != oldWidget.messages.length) {
+      _jumpToLatest();
+    }
+  }
+
+  void _jumpToLatest() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scroll.hasClients) return;
+      _scroll.jumpTo(0);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final visible = messages.where((m) {
+    final visible = widget.messages.where((m) {
       if (!VoiceChatMessageFilters.shouldShow(m)) return false;
-      if (hideOfficialJoinInChat &&
+      if (widget.hideOfficialJoinInChat &&
           m.kind == ChatMessageKind.systemJoin &&
           VoiceOfficialJoin.isOfficialEntrance(m.content)) {
         return false;
@@ -46,7 +83,7 @@ class VoiceWebChatOverlay extends StatelessWidget {
         : visible;
 
     if (slice.isEmpty) {
-      final marquee = welcomeMarquee?.trim();
+      final marquee = widget.welcomeMarquee?.trim();
       if (marquee != null && marquee.isNotEmpty) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -65,7 +102,7 @@ class VoiceWebChatOverlay extends StatelessWidget {
               _WelcomeEntranceMarquee(
                 message: VoiceOfficialJoin.formatEntranceBanner(
                   marquee,
-                  roomName: roomName,
+                  roomName: widget.roomName,
                 ),
               ),
             ],
@@ -88,14 +125,17 @@ class VoiceWebChatOverlay extends StatelessWidget {
       );
     }
 
-    final pinned = pinnedAnnouncement?.trim();
+    final pinned = widget.pinnedAnnouncement?.trim();
     final hasPinned = pinned != null && pinned.isNotEmpty;
 
     final list = ListView.builder(
+      controller: _scroll,
       reverse: true,
-      shrinkWrap: embedded,
-      physics: embedded
-          ? const NeverScrollableScrollPhysics()
+      shrinkWrap: widget.embedded,
+      physics: widget.embedded
+          ? const AlwaysScrollableScrollPhysics(
+              parent: ClampingScrollPhysics(),
+            )
           : const ClampingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       itemCount: slice.length + (hasPinned ? 1 : 0),
@@ -114,15 +154,17 @@ class VoiceWebChatOverlay extends StatelessWidget {
         return ChatMessageWidget(
           key: ValueKey(msg.id),
           message: msg,
-          onUserTap: onUserTap,
+          onUserTap: widget.onUserTap == null
+              ? null
+              : (id, name) => widget.onUserTap!(id, name, msg),
         );
       },
     );
 
-    if (embedded) {
+    if (widget.embedded) {
       return RepaintBoundary(
         child: SizedBox(
-          height: maxHeight,
+          height: widget.maxHeight,
           width: double.infinity,
           child: list,
         ),
@@ -130,7 +172,7 @@ class VoiceWebChatOverlay extends StatelessWidget {
     }
 
     return SizedBox(
-      height: maxHeight,
+      height: widget.maxHeight,
       child: Stack(
         children: [
           list,

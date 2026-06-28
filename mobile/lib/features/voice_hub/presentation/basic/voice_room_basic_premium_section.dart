@@ -26,6 +26,7 @@ import '../sheets/voice_youtube_song_sheet.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_permissions.dart';
+import '../widgets/chat/chat_message_widgets.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import '../widgets/voice_room/voice_room_premium_music_card.dart';
 import '../widgets/premium_2026/voice_web_owner_stage.dart';
@@ -449,10 +450,15 @@ class VoiceRoomBasicChatFeed extends StatelessWidget {
     }
 
     return ListView.builder(
+      reverse: true,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       itemCount: visible.length,
       itemBuilder: (context, index) {
-        return _ChatLine(message: visible[index]);
+        final msg = visible[visible.length - 1 - index];
+        return ChatMessageWidget(
+          key: ValueKey(msg.id),
+          message: msg,
+        );
       },
     );
   }
@@ -639,43 +645,6 @@ class _MiniBtn extends StatelessWidget {
               Text(label, style: const TextStyle(fontSize: 9)),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ChatLine extends StatelessWidget {
-  const _ChatLine({required this.message});
-
-  final ChatRoomMessage message;
-
-  @override
-  Widget build(BuildContext context) {
-    final name = message.user?.displayName?.trim().isNotEmpty == true
-        ? message.user!.displayName!.trim()
-        : (message.user?.name ?? 'Biri');
-    if (message.kind == ChatMessageKind.gift) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(
-          '$name ${message.giftEmoji ?? '🎁'} hediye gönderdi',
-          style: const TextStyle(fontSize: 13, color: VoiceRoomTokens.gold),
-        ),
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: RichText(
-        text: TextSpan(
-          style: DefaultTextStyle.of(context).style.copyWith(fontSize: 13),
-          children: [
-            TextSpan(
-              text: '$name: ',
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-            TextSpan(text: message.content),
-          ],
         ),
       ),
     );

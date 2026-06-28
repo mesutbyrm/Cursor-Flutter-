@@ -101,6 +101,17 @@ class RoomVideoController extends AutoDisposeFamilyNotifier<RoomVideoState, Stri
     state = const RoomVideoState();
     _stopTicker();
   }
+
+  /// Soldan sağa kapanma animasyonu — ardından video durumu temizlenir.
+  Future<void> dismissAnimated() async {
+    if (!state.hasActiveVideo) {
+      clear();
+      return;
+    }
+    state = state.copyWith(isPlaying: false, isDismissing: true);
+    await Future<void>.delayed(const Duration(milliseconds: 420));
+    clear();
+  }
 }
 
 final roomVideoControllerProvider = AutoDisposeNotifierProviderFamily<
