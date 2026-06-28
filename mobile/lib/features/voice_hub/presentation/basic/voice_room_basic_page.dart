@@ -30,6 +30,7 @@ import '../providers/voice_room_ui_provider.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../domain/voice_music_sync.dart';
 import '../utils/voice_room_permissions.dart';
+import '../utils/voice_room_speak_access.dart';
 import '../theme/voice_room_tokens.dart';
 import '../widgets/premium/voice_gift_flight_overlay.dart';
 import '../widgets/premium_2026/voice_cosmic_background.dart';
@@ -199,17 +200,30 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
     try {
       final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+      ChatRoomPresence? selfPresence;
+      for (final p in live.presence) {
+        if (p.id == user.id) {
+          selfPresence = p;
+          break;
+        }
+      }
       final perms = VoiceRoomPermissions.forUser(
         user: user,
         room: room,
+        selfPresence: selfPresence,
         server: live.serverPermissions,
       );
-      final isOwner = _isRoomOwner(user, room) || perms.isSiteAdmin;
+      final canSpeak = VoiceRoomSpeakAccess.canSpeak(
+        user: user,
+        perms: perms,
+        room: room,
+        presence: live.presence,
+      );
       final roomId = room.apiRoomKey;
       await _audio!.join(
         roomId: roomId,
         remote: ref.read(chatRoomRemoteProvider),
-        enableMic: isOwner,
+        enableMic: canSpeak && perms.isSiteAdmin,
       );
       if (!mounted) return;
       unawaited(VoiceRoomMusicAudioSession.activateForPlayback());
@@ -238,6 +252,37 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       return;
     }
     final muted = !_isMicMuted;
+    if (!muted) {
+      final user = ref.read(authControllerProvider).valueOrNull;
+      final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+      final room = _effectiveRoom();
+      ChatRoomPresence? selfPresence;
+      for (final p in live.presence) {
+        if (p.id == user?.id) {
+          selfPresence = p;
+          break;
+        }
+      }
+      final perms = VoiceRoomPermissions.forUser(
+        user: user,
+        room: room,
+        selfPresence: selfPresence,
+        server: live.serverPermissions,
+      );
+      if (!VoiceRoomSpeakAccess.canSpeak(
+        user: user,
+        perms: perms,
+        room: room,
+        presence: live.presence,
+      )) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Konuşmak için koltuğa oturmalısınız'),
+          ),
+        );
+        return;
+      }
+    }
     _audio!.setMicEnabled(!muted);
     if (mounted) setState(() => _isMicMuted = muted);
   }
@@ -597,6 +642,36 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
             SnackBar(content: Text(err)),
           );
           ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).clearError();
+        }
+      }
+
+      if (_audioReady) {
+        final user = ref.read(authControllerProvider).valueOrNull;
+        if (user != null) {
+          final room = _effectiveRoom();
+          ChatRoomPresence? selfPresence;
+          for (final p in next.presence) {
+            if (p.id == user.id) {
+              selfPresence = p;
+              break;
+            }
+          }
+          final perms = VoiceRoomPermissions.forUser(
+            user: user,
+            room: room,
+            selfPresence: selfPresence,
+            server: next.serverPermissions,
+          );
+          final canSpeak = VoiceRoomSpeakAccess.canSpeak(
+            user: user,
+            perms: perms,
+            room: room,
+            presence: next.presence,
+          );
+          if (!canSpeak && !_isMicMuted) {
+            _audio?.setMicEnabled(false);
+            if (mounted) setState(() => _isMicMuted = true);
+          }
         }
       }
     });

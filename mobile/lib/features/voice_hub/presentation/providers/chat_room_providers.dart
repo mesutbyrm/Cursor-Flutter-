@@ -36,6 +36,7 @@ import '../utils/voice_room_permissions.dart';
 import '../utils/kick_strike_ui.dart';
 import '../utils/voice_sse_dj_payload.dart';
 import '../utils/voice_music_access.dart';
+import '../utils/voice_room_seat_priority.dart';
 import '../utils/voice_room_message_merge.dart';
 import '../widgets/voice_room/voice_room_music_request_flash.dart';
 import '../basic/voice_room_basic_mode.dart';
@@ -2776,74 +2777,30 @@ class VoiceRoomLiveController
     );
   }
 
-  int _seatRolePriority(ChatRoomPresence occupant) {
-    final room = _roomMeta;
-    if (room.ownerId == occupant.id ||
-        occupant.chatRole == 'owner' ||
-        occupant.chatRole == 'founder') {
-      return 4;
-    }
-    if (occupant.chatRole == 'admin' || occupant.chatRole == 'superadmin') {
-      return 3;
-    }
-    if (occupant.chatRole == 'moderator' ||
-        occupant.chatRole == 'mod' ||
-        occupant.chatRole == 'op' ||
-        occupant.chatRole == 'sop') {
-      return 2;
-    }
-    if (occupant.chatRole == 'dj' || room.djUserIds.contains(occupant.id)) {
-      return 1;
-    }
-    return 0;
-  }
-
   int? _privilegedRolePriority(
     UserEntity user,
     ChatRoomMyPermissions? server,
     ChatRoomPresence? self,
   ) {
-    final perms = VoiceRoomPermissions.forUser(
-      user: user,
+    final tier = VoiceRoomSeatPriority.forUser(
+      user,
       room: _roomMeta,
-      selfPresence: self,
+      self: self,
       server: server,
     );
-    if (server?.isRoomOwner == true || perms.isRoomOwner) return 4;
-    if (server?.isGlobalAdmin == true || perms.isSiteAdmin) return 3;
-    final role = (server?.role ?? self?.chatRole ?? '').toLowerCase();
-    if (role == 'moderator' ||
-        role == 'mod' ||
-        role == 'op' ||
-        role == 'sop' ||
-        perms.canModerate) {
-      return 2;
-    }
-    if (role == 'dj' ||
-        _roomMeta.djUserIds.contains(user.id) ||
-        perms.canManageDj) {
-      return 1;
-    }
-    return null;
+    if (!VoiceRoomSeatPriority.shouldAutoSit(tier)) return null;
+    return tier;
   }
 
   int? _pickAutoSeatIndex({
     required int myPriority,
     required List<ChatRoomPresence> presence,
   }) {
-    if (myPriority >= 4) return 1;
-    // Site admin — sağ alt koltuk (11); düşük öncelikli kullanıcıyı yer değiştirir.
-    if (myPriority >= 3) return 11;
-    final occupied = <int, ChatRoomPresence>{
-      for (final p in presence)
-        if (p.seatIndex != null) p.seatIndex!: p,
-    };
-    for (var seat = 2; seat <= 11; seat++) {
-      final occupant = occupied[seat];
-      if (occupant == null) return seat;
-      if (myPriority > _seatRolePriority(occupant)) return seat;
-    }
-    return null;
+    return VoiceRoomSeatPriority.pickAutoSeatIndex(
+      myTier: myPriority,
+      presence: presence,
+      room: _roomMeta,
+    );
   }
 
   Future<void> _tryAutoPrivilegedSeat() async {

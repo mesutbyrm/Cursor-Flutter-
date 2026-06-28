@@ -4,9 +4,11 @@ import '../../../../agora/presentation/agora_room_manager.dart';
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../domain/entities/chat_room_presence.dart';
 import '../../utils/voice_room_seat_layout.dart';
+import '../../utils/voice_room_seat_priority.dart';
 import 'voice_mic_seat.dart';
 
-/// canlifal.com: sol Admin (koltuk 1) + sağda 2×5 (koltuk 2–11).
+/// canlifal.com: sol Kurucu (koltuk 1) + sağda 2×5 (koltuk 2–11).
+/// Koltuk 11 (sağ alt admin) yalnızca doluysa görünür; sahip yoksa koltuk 1 boş kalır.
 class VoiceWebOwnerStage extends StatelessWidget {
   const VoiceWebOwnerStage({
     super.key,
@@ -54,8 +56,13 @@ class VoiceWebOwnerStage extends StatelessWidget {
         final totalH = gridH.clamp(112.0, 176.0);
 
         final seats = VoiceRoomSeatLayout(room: room, presence: presence).build();
-        _ensureOwnerOnSeatOne(seats);
+        final showAdminSeat = VoiceRoomSeatPriority.showAdminSeat(seats);
         final host = seats[1];
+
+        final topInternal = const [2, 3, 4, 5, 6];
+        final bottomInternal = showAdminSeat
+            ? const [7, 8, 9, 10, 11]
+            : const [7, 8, 9, 10];
 
         return SizedBox(
           height: totalH,
@@ -68,7 +75,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
                   user: host,
                   seatIndex: 1,
                   size: hostSize,
-                  isHost: true,
+                  isHost: host != null,
                   room: room,
                   djUserIds: _effectiveDjIds,
                   speaking:
@@ -86,18 +93,17 @@ class VoiceWebOwnerStage extends StatelessWidget {
                     children: [
                       _seatRow(
                         seats: seats,
-                        displayNums: const [2, 3, 4, 5, 6],
-                        internalNums: const [2, 3, 4, 5, 6],
+                        internalNums: topInternal,
                         size: cell,
                         gap: gap,
                       ),
                       const SizedBox(height: gap),
                       _seatRow(
                         seats: seats,
-                        displayNums: const [7, 8, 9, 10, 11],
-                        internalNums: const [7, 8, 9, 10, 11],
+                        internalNums: bottomInternal,
                         size: cell,
                         gap: gap,
+                        columns: bottomInternal.length,
                       ),
                     ],
                   ),
@@ -110,44 +116,24 @@ class VoiceWebOwnerStage extends StatelessWidget {
     );
   }
 
-  void _ensureOwnerOnSeatOne(Map<int, ChatRoomPresence> seats) {
-    if (seats.containsKey(1)) return;
-    final ownerId = room.ownerId;
-    ChatRoomPresence? ownerUser;
-    if (ownerId != null) {
-      for (final p in presence) {
-        if (p.id == ownerId) {
-          ownerUser = p;
-          break;
-        }
-      }
-    }
-    ownerUser ??= ChatRoomPresence(
-      id: ownerId ?? 'owner',
-      name: room.ownerName ?? 'Admin',
-      image: room.ownerAvatarUrl,
-      chatRole: 'owner',
-      seatIndex: 1,
-    );
-    seats[1] = ownerUser;
-  }
-
   Widget _seatRow({
     required Map<int, ChatRoomPresence> seats,
-    required List<int> displayNums,
     required List<int> internalNums,
     required double size,
     required double gap,
+    int columns = 5,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(displayNums.length, (col) {
+      children: List.generate(columns, (col) {
+        if (col >= internalNums.length) {
+          return SizedBox(width: size);
+        }
         final internal = internalNums[col];
-        final displayNum = displayNums[col];
         final user = seats[internal];
         return VoiceMicSeat(
           user: user,
-          seatIndex: displayNum,
+          seatIndex: internal,
           size: size,
           room: room,
           djUserIds: _effectiveDjIds,

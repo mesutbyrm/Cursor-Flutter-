@@ -77,10 +77,7 @@ class VoiceRoomSeatsPanel extends StatelessWidget {
           speaking: speakingUserId == u.id,
         );
       }
-      return _OwnerReservedSeat(
-        ownerName: room.ownerName,
-        avatarUrl: room.ownerAvatarUrl,
-      );
+      return _EmptySeat(index: index);
     }
 
     final u = seats[index];
@@ -93,80 +90,6 @@ class VoiceRoomSeatsPanel extends StatelessWidget {
       );
     }
     return _EmptySeat(index: index);
-  }
-}
-
-class _OwnerReservedSeat extends StatelessWidget {
-  const _OwnerReservedSeat({this.ownerName, this.avatarUrl});
-
-  final String? ownerName;
-  final String? avatarUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final label = ownerName?.trim().isNotEmpty == true ? ownerName!.trim() : 'Sahip';
-
-    return SizedBox(
-      width: 64,
-      child: Column(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppThemeColors.coinGold.withValues(alpha: 0.55),
-                    width: 2,
-                    strokeAlign: BorderSide.strokeAlignInside,
-                  ),
-                ),
-                child: ClipOval(
-                  child: avatarUrl != null && avatarUrl!.isNotEmpty
-                      ? ColorFiltered(
-                          colorFilter: ColorFilter.mode(
-                            Colors.black.withValues(alpha: 0.35),
-                            BlendMode.darken,
-                          ),
-                          child: CanlifalNetworkImage(
-                            url: avatarUrl!,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      : ColoredBox(
-                          color: context.colors.surfaceContainer.withValues(alpha: 0.6),
-                          child: Icon(
-                            Icons.person_outline_rounded,
-                            color: AppThemeColors.coinGold.withValues(alpha: 0.7),
-                            size: 28,
-                          ),
-                        ),
-                ),
-              ),
-              const Positioned(
-                top: -8,
-                right: -4,
-                child: Text('👑', style: TextStyle(fontSize: 18)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-              color: AppThemeColors.coinGold.withValues(alpha: 0.85),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 

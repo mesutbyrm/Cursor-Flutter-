@@ -54,6 +54,7 @@ import 'utils/voice_music_access.dart';
 import '../../profile/presentation/providers/profile_providers.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
+import 'utils/voice_room_speak_access.dart';
 import 'utils/voice_room_responsive_metrics.dart';
 import 'widgets/premium/voice_gift_flight_overlay.dart';
 import 'widgets/premium/voice_glass.dart';
@@ -351,6 +352,25 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       return;
     }
     final muted = !_isMicMuted;
+    if (!muted) {
+      final user = ref.read(authControllerProvider).valueOrNull;
+      final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+      final room = _effectiveRoom();
+      final perms = _perms(user, live.presence, server: live.serverPermissions);
+      if (!VoiceRoomSpeakAccess.canSpeak(
+        user: user,
+        perms: perms,
+        room: room,
+        presence: live.presence,
+      )) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Konuşmak için koltuğa oturmalısınız'),
+          ),
+        );
+        return;
+      }
+    }
     _audio?.setMicEnabled(!muted);
     if (mounted) setState(() => _isMicMuted = muted);
   }
@@ -477,20 +497,32 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     try {
       final liveForPerms = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+      ChatRoomPresence? selfPresence;
+      for (final p in liveForPerms.presence) {
+        if (p.id == user.id) {
+          selfPresence = p;
+          break;
+        }
+      }
       final perms = VoiceRoomPermissions.forUser(
         user: user,
         room: room,
+        selfPresence: selfPresence,
         server: liveForPerms.serverPermissions,
       );
-      final isOwner =
-          _isRoomOwner(user.id, user.username, room) || perms.isSiteAdmin;
+      final canSpeak = VoiceRoomSpeakAccess.canSpeak(
+        user: user,
+        perms: perms,
+        room: room,
+        presence: liveForPerms.presence,
+      );
       final roomId = room.apiRoomKey;
       await _audio!.join(
         roomId: roomId,
         remote: ref.read(chatRoomRemoteProvider),
-        enableMic: isOwner,
+        enableMic: canSpeak && perms.isSiteAdmin,
       );
-      if (isOwner) {
+      if (canSpeak && perms.isSiteAdmin) {
         _audio?.setMicEnabled(true);
       }
       if (mounted) {
@@ -1311,12 +1343,43 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           }
         }
       } else if (wasPlaying && !nowPlaying && _micAutoMutedByMusic) {
-        _audio?.setMicEnabled(true);
-        if (mounted) {
-          setState(() {
-            _isMicMuted = false;
-            _micAutoMutedByMusic = false;
-          });
+        final user = ref.read(authControllerProvider).valueOrNull;
+        final room = _effectiveRoom();
+        final speakPerms = _perms(user, next.presence, server: next.serverPermissions);
+        if (VoiceRoomSpeakAccess.canSpeak(
+          user: user,
+          perms: speakPerms,
+          room: room,
+          presence: next.presence,
+        )) {
+          _audio?.setMicEnabled(true);
+          if (mounted) {
+            setState(() {
+              _isMicMuted = false;
+              _micAutoMutedByMusic = false;
+            });
+          }
+        } else if (mounted) {
+          setState(() => _micAutoMutedByMusic = false);
+        }
+      }
+
+      if (_audioReady) {
+        final user = ref.read(authControllerProvider).valueOrNull;
+        if (user != null) {
+          final room = _effectiveRoom();
+          final speakPerms =
+              _perms(user, next.presence, server: next.serverPermissions);
+          final canSpeak = VoiceRoomSpeakAccess.canSpeak(
+            user: user,
+            perms: speakPerms,
+            room: room,
+            presence: next.presence,
+          );
+          if (!canSpeak && !_isMicMuted) {
+            _audio?.setMicEnabled(false);
+            if (mounted) setState(() => _isMicMuted = true);
+          }
         }
       }
     });

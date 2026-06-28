@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.431+435 (2026-06-26)
+
+### Faz 2 — Yetki ve Koltuk Sistemi
+
+- **Otomatik koltuk:** Admin → sağ alt (11), Kurucu → koltuk 1, moderatörler (&/@) yetkiye göre
+- **Koltuk önceliği:** Admin > Kurucu > & > @ > + > V (VIP) > Normal
+- **Admin koltuğu (11):** Yalnızca doluysa görünür; boşken gizli
+- **Konuşma:** Koltukta olmayan konuşamaz; site admin her yerden konuşabilir
+- **Kurucu çıkışı:** Odada değilken profil resmi koltukta gösterilmez
+
 ## 1.0.430+434 (2026-06-26)
 
 ### Faz 1 — Ses ve Müzik Sistemi
