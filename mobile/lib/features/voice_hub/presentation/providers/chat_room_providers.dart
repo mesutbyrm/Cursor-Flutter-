@@ -2235,7 +2235,7 @@ class VoiceRoomLiveController
     );
     final shouldPlay = (sync?.isPlaying ?? effectiveDj.playing) &&
         _hasDjPlayableSource(effectiveDj, sync: sync, videoId: videoId);
-    final withVideo = effectiveDj.nowPlaying?.isVideoRequest == true;
+    final withVideo = videoId != null;
     final startPos = Duration(
       milliseconds: VoicePlaybackLimits.clampPositionMs(
         sync?.resolvedPositionMs() ?? 0,

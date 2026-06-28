@@ -175,7 +175,8 @@ class YoutubeStreamResolver {
     return null;
   }
 
-  /// videoId ile tüm kaynakları paralel dene (web Piped sırası).
+  /// videoId ile tüm kaynakları paralel dene.
+  /// Android'de googlevideo URL'leri backend proxy üzerinden çalınır — önce bunlar denenir.
   Future<String?> resolveByVideoId(String id) async {
     final trimmed = id.trim();
     if (trimmed.isEmpty) return null;
@@ -194,6 +195,19 @@ class YoutubeStreamResolver {
       _resolveViaInvidiousParallel(trimmed),
       _resolveViaYoutubeExplode(trimmed),
     ]);
+
+    // Android'de önce googlevideo URL'lerini tercih et — backend proxy'sinden güvenle geçer.
+    if (!kIsWeb && Platform.isAndroid) {
+      for (final stream in results) {
+        if (stream != null &&
+            stream.startsWith('http') &&
+            stream.toLowerCase().contains('googlevideo.com')) {
+          final wrapped = wrapForMobilePlayback(stream);
+          _remember(trimmed, wrapped);
+          return wrapped;
+        }
+      }
+    }
 
     for (final stream in results) {
       if (stream != null && stream.startsWith('http')) {
