@@ -21,7 +21,7 @@ class _AdminVoiceRoomSettingsPanelState
 
   @override
   void dispose() {
-    for (final c in _controllers.values) {
+    for (final c in Map.from(_controllers).values) {
       c.dispose();
     }
     super.dispose();
@@ -36,7 +36,7 @@ class _AdminVoiceRoomSettingsPanelState
 
   Future<void> _save() async {
     final patch = <String, dynamic>{};
-    for (final e in _controllers.entries) {
+    for (final e in Map.from(_controllers).entries) {
       final v = int.tryParse(e.value.text.trim());
       if (v != null) patch[e.key] = v;
     }

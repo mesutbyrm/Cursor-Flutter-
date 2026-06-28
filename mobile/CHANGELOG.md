@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.424+428 (2026-06-27)
+
+### Kararlılık — sesli oda, Agora, presence, oda açma
+
+- **ConcurrentModificationError:** Map/List döngülerinde `Map.from` / `List.from` kopyası
+- **Agora ses:** App ID only (`f1cf983a…`), boş token, kanal = oda kimliği; `POST /voice` join korundu
+- **SSE DJ müzik:** `audioplayers` ile doğrudan `musicUrl` yedek oynatma
+- **Presence:** SSE `presence` olayı tam kullanıcı listesini yazar (~10 sn); ayrı join/leave birleştirildi
+- **setState:** Sesli oda sayfalarında `mounted` kontrolü
+- **Oda açma:** `POST /rooms/create` gövdesi JSON nesnesi olarak gönderilir (çift encode düzeltmesi)
+- **Heartbeat:** 25 sn presence POST (mevcut)
+
 ## 1.0.423+427 (2026-06-27)
 
 ### Sesli oda müzik — oynatma + DJ etiketi

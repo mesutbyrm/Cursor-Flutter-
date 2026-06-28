@@ -49,6 +49,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/youtube_stream_resolver.dart';
 import '../audio/voice_room_dj_stream_loader.dart';
 import '../services/voice_room_dj_player.dart';
+import '../services/voice_room_sse_audio_player.dart';
 import '../services/voice_room_music_control_delegate.dart';
 import '../../video/domain/youtube_video_id.dart';
 import '../../video/presentation/room_video_controller.dart';
@@ -93,6 +94,12 @@ final voiceRoomDjPlayerProvider = Provider<VoiceRoomDjPlayer>((ref) {
     ref.watch(youtubeStreamResolverProvider),
     ref.watch(voiceRoomDjStreamLoaderProvider),
   );
+  ref.onDispose(p.dispose);
+  return p;
+});
+
+final voiceRoomSseAudioPlayerProvider = Provider<VoiceRoomSseAudioPlayer>((ref) {
+  final p = VoiceRoomSseAudioPlayer();
   ref.onDispose(p.dispose);
   return p;
 });
@@ -779,6 +786,11 @@ class VoiceRoomLiveController
     ref.read(voiceRoomGiftSocketProvider).disconnect();
     unawaited(ref.read(voiceRoomMusicSessionProvider.notifier).closePlayer());
     unawaited(ref.read(voiceRoomDjPlayerProvider).shutdown());
+    unawaited(
+      ref
+          .read(voiceRoomSseAudioPlayerProvider)
+          .handleDjEvent(const {'playing': false}),
+    );
     if (_roomKey.isNotEmpty) {
       ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
     }
@@ -2107,6 +2119,7 @@ class VoiceRoomLiveController
       dj = dj.copyWith(djUsers: state.dj.djUsers);
     }
     _commitDjUi(dj);
+    unawaited(ref.read(voiceRoomSseAudioPlayerProvider).handleDjEvent(map));
     final sync = RoomPlaybackSync.fromPayload(map);
     _syncRoomVideo(dj, sync: sync);
     final ui = ref.read(voiceRoomUiProvider);

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 
 import '../../../../core/config/env.dart';
@@ -243,7 +241,7 @@ class LiveRemoteDataSource {
     final name = roomName?.trim();
     final res = await _dio.safePost<dynamic>(
       path,
-      data: jsonEncode(payload),
+      data: payload,
       options: Options(
         contentType: Headers.jsonContentType,
         headers: const {'Accept': 'application/json'},
@@ -324,7 +322,15 @@ class LiveRemoteDataSource {
   static String _formatCreateRoomError(Map<String, dynamic> map) {
     final raw = map['error'] ?? map['message'] ?? map['detail'];
     final msg = raw?.toString().trim();
-    if (msg != null && msg.isNotEmpty) return msg;
+    if (msg != null && msg.isNotEmpty) {
+      final lower = msg.toLowerCase();
+      if (lower.contains('name') &&
+          lower.contains('description') &&
+          lower.contains('icon')) {
+        return 'Oda adı, açıklama ve simge gerekli — lütfen tekrar deneyin.';
+      }
+      return msg;
+    }
     return 'Oda açılamadı. Jeton bakiyenizi ve oturumunuzu kontrol edin.';
   }
 

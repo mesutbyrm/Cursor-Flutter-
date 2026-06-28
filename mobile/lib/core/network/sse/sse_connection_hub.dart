@@ -96,11 +96,11 @@ class SseConnectionHub {
   }
 
   Future<void> dispose() async {
-    for (final lease in _voiceRooms.values) {
+    for (final lease in Map.from(_voiceRooms).values) {
       await lease.service.disconnect();
     }
     _voiceRooms.clear();
-    for (final lease in _videoStreams.values) {
+    for (final lease in Map.from(_videoStreams).values) {
       await lease.service.disconnect();
     }
     _videoStreams.clear();

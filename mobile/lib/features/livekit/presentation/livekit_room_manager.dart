@@ -63,7 +63,7 @@ class LiveKitRoomManager {
   void setRemoteAudioMuted(bool muted) {
     final room = _room;
     if (room == null) return;
-    for (final p in room.remoteParticipants.values) {
+    for (final p in List.from(room.remoteParticipants.values)) {
       for (final pub in p.audioTrackPublications) {
         final track = pub.track;
         if (track == null) continue;

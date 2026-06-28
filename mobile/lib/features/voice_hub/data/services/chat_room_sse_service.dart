@@ -180,7 +180,7 @@ class ChatRoomSseService extends BaseSseService {
         return;
       case ChatRoomSseEventType.presence:
         final users = _parseUsers(map);
-        if (users != null && users.isNotEmpty) _onPresence?.call(users);
+        if (users != null) _onPresence?.call(users);
         return;
       case ChatRoomSseEventType.userJoin:
         // Üretimde ayrı join yok — tam liste `presence` ile gelir.

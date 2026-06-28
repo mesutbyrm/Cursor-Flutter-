@@ -129,7 +129,7 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
 
   void _disposeAll() {
     final keys = _subs.keys.toList();
-    for (final sub in _subs.values) {
+    for (final sub in List.from(_subs.values)) {
       sub.cancel();
     }
     _subs.clear();

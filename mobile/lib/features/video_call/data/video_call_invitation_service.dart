@@ -52,7 +52,7 @@ class VideoCallInvitationService {
   }
 
   void dispose() {
-    for (final t in _timeouts.values) {
+    for (final t in List.from(_timeouts.values)) {
       t.cancel();
     }
     _timeouts.clear();

@@ -6,18 +6,13 @@ import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../core/config/env.dart';
-import '../../../agora/data/datasources/agora_remote_datasource.dart';
-import '../../../agora/domain/agora_channel_names.dart';
 import '../../../agora/domain/entities/agora_credentials.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import 'voice_agora_exception.dart';
 
-/// Sesli sohbet — web ile aynı: `POST /api/agora/token` + `voice_room_{id}` kanalı.
+/// Sesli sohbet — App ID only (token boş), kanal = oda kimliği.
 class VoiceAgoraEngine {
-  VoiceAgoraEngine({AgoraRemoteDataSource? tokenSource})
-      : _tokenSource = tokenSource;
-
-  final AgoraRemoteDataSource? _tokenSource;
+  VoiceAgoraEngine();
 
   RtcEngine? _engine;
   RtcEngineEventHandler? _handler;
@@ -67,11 +62,12 @@ class VoiceAgoraEngine {
       );
     }
 
-    final channel = AgoraChannelNames.forVoiceRoom(rawRoomId);
+    final channel = rawRoomId;
     VoiceRoomDebugLog.log('audio.agora.prepare', {
       'roomId': rawRoomId,
       'channel': channel,
       'publishMic': publishMic,
+      'mode': 'app_id_only',
     });
 
     try {
@@ -93,49 +89,20 @@ class VoiceAgoraEngine {
         await Future<void>.delayed(const Duration(milliseconds: 250));
       }
 
-      final tokenSource = _tokenSource;
-      if (tokenSource == null) {
-        throw const VoiceAgoraException(
-          'Agora token servisi yapılandırılmadı.',
-          phase: 'token_source',
-        );
-      }
-
-      final role = publishMic ? 'host' : 'audience';
-      AgoraCredentials credentials;
-      try {
-        credentials = await tokenSource.fetchVoiceRoomToken(
-          roomId: rawRoomId,
-          role: role,
-        );
-      } catch (e, st) {
-        _logFailure('fetchVoiceRoomToken', e, st, extra: {'channel': channel});
-        throw VoiceAgoraException(
-          'Agora token alınamadı: ${_friendlyError(e)}',
-          cause: e,
-          stackTrace: st,
-          phase: 'token',
-        );
-      }
-
-      _validateCredentials(credentials, expectedChannel: channel);
-
-      final appId = credentials.appId.trim().isNotEmpty
-          ? credentials.appId.trim()
-          : Env.agoraVoiceAppId.trim();
+      final appId = Env.agoraVoiceAppId.trim();
       if (appId.isEmpty) {
         throw const VoiceAgoraException(
-          'Agora App ID eksik (sunucu yanıtı ve AGORA_VOICE_APP_ID boş).',
+          'Agora App ID eksik (AGORA_VOICE_APP_ID).',
           phase: 'app_id',
         );
       }
 
       VoiceRoomDebugLog.log('audio.agora.token', {
-        'channel': credentials.channelName,
-        'uid': credentials.uid,
+        'channel': channel,
+        'uid': 0,
         'appIdPrefix': appId.length >= 8 ? appId.substring(0, 8) : appId,
-        'tokenLength': credentials.token.length,
-        'envAppId': Env.agoraVoiceAppId.trim().isNotEmpty,
+        'tokenLength': 0,
+        'mode': 'app_id_only',
       });
 
       await _createAndInitializeEngine(appId);
@@ -196,14 +163,19 @@ class VoiceAgoraEngine {
       }
       _engine!.registerEventHandler(_handler!);
 
-      _channelId = credentials.channelName;
-      _lastCredentials = credentials;
+      _channelId = channel;
+      _lastCredentials = AgoraCredentials(
+        appId: appId,
+        token: '',
+        channelName: channel,
+        uid: 0,
+      );
 
       try {
         await _engine!.joinChannel(
-          token: credentials.token,
-          channelId: credentials.channelName,
-          uid: credentials.uid,
+          token: '',
+          channelId: channel,
+          uid: 0,
           options: ChannelMediaOptions(
             channelProfile: ChannelProfileType.channelProfileCommunication,
             clientRoleType: clientRole,
@@ -296,35 +268,6 @@ class VoiceAgoraEngine {
         stackTrace: st,
         phase: 'initialize',
       );
-    }
-  }
-
-  void _validateCredentials(
-    AgoraCredentials credentials, {
-    required String expectedChannel,
-  }) {
-    if (credentials.token.trim().isEmpty) {
-      throw VoiceAgoraException(
-        'Sunucu boş Agora token döndürdü (kanal: ${credentials.channelName}).',
-        phase: 'token_validate',
-      );
-    }
-    if (credentials.channelName.trim().isEmpty) {
-      throw VoiceAgoraException(
-        'Sunucu Agora kanal adı döndürmedi.',
-        phase: 'token_validate',
-      );
-    }
-    final expected = expectedChannel.trim();
-    final actual = credentials.channelName.trim();
-    if (expected.isNotEmpty &&
-        actual.isNotEmpty &&
-        actual != expected &&
-        !actual.endsWith(expected.replaceFirst('voice_room_', ''))) {
-      VoiceRoomDebugLog.log('audio.agora.channel_mismatch', {
-        'expected': expected,
-        'actual': actual,
-      });
     }
   }
 

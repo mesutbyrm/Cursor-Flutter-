@@ -174,7 +174,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
                           ),
                         ),
                         SizedBox(height: 6),
-                        for (final e in cfg.entries)
+                        for (final e in Map.from(cfg).entries)
                           if (e.value != '—')
                             Text(
                               '${e.key}: ${e.value}',

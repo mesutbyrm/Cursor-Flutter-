@@ -148,50 +148,17 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         ref.read(voiceRoomSseForProvider(_liveRoomKey)).events.listen((event) {
       if (!mounted) return;
       if (event.type == ChatRoomSseEventType.presence) {
-        final raw = event.data['users'];
+        final raw = event.data['users'] ?? event.data['presence'];
         if (raw is! List) return;
+        final users = List<Map<String, dynamic>>.from(
+          raw.whereType<Map>().map((u) => Map<String, dynamic>.from(u)),
+        );
+        if (!mounted) return;
         setState(() {
           _participants = {
-            for (final u in raw.whereType<Map>())
-              (u['id']?.toString() ?? ''): Map<String, dynamic>.from(u),
+            for (final u in users)
+              (u['id']?.toString() ?? ''): u,
           }..removeWhere((key, _) => key.isEmpty);
-        });
-        return;
-      }
-      final data = event.data;
-      if (event.type == ChatRoomSseEventType.userJoin) {
-        final users = data['users'];
-        if (users is List && users.isNotEmpty) {
-          setState(() {
-            _participants = {
-              for (final u in users.whereType<Map>())
-                (u['id']?.toString() ?? ''): Map<String, dynamic>.from(u),
-            }..removeWhere((key, _) => key.isEmpty);
-          });
-          return;
-        }
-        final userId =
-            data['userId']?.toString() ?? data['id']?.toString() ?? '';
-        if (userId.isEmpty) return;
-        setState(() {
-          _participants[userId] = data;
-        });
-      } else if (event.type == ChatRoomSseEventType.userLeave) {
-        final users = data['users'];
-        if (users is List && users.isNotEmpty) {
-          setState(() {
-            _participants = {
-              for (final u in users.whereType<Map>())
-                (u['id']?.toString() ?? ''): Map<String, dynamic>.from(u),
-            }..removeWhere((key, _) => key.isEmpty);
-          });
-          return;
-        }
-        final userId =
-            data['userId']?.toString() ?? data['id']?.toString() ?? '';
-        if (userId.isEmpty) return;
-        setState(() {
-          _participants.remove(userId);
         });
       }
     });
@@ -344,7 +311,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
     final muted = !_isMicMuted;
     _audio?.setMicEnabled(!muted);
-    setState(() => _isMicMuted = muted);
+    if (mounted) setState(() => _isMicMuted = muted);
   }
 
   void _onChatChanged(String text) {
@@ -385,7 +352,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     if (showFullscreen) {
       final rarity = PremiumGiftCatalog2026.rarity(event.giftId);
       final duration = rarity.fullscreenDuration;
-      setState(() => _fullscreenGift = event);
+      if (mounted) setState(() => _fullscreenGift = event);
       Future.delayed(duration, () {
         if (mounted && _fullscreenGift?.id == event.id) {
           setState(() => _fullscreenGift = null);

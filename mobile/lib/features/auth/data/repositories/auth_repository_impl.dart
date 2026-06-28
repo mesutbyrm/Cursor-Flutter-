@@ -77,7 +77,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final dm = data is Map<String, dynamic>
           ? data
           : Map<String, dynamic>.from(data);
-      for (final entry in dm.entries) {
+      for (final entry in Map.from(dm).entries) {
         if (merged[entry.key] == null) {
           merged[entry.key] = entry.value;
         }

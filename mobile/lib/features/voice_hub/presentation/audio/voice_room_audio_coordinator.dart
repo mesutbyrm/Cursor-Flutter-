@@ -1,19 +1,17 @@
 import 'dart:async';
 
-import '../../../agora/data/datasources/agora_remote_datasource.dart';
 import '../../data/datasources/chat_room_remote_datasource.dart';
 import '../../data/services/voice_room_debug_log.dart';
 import '../../domain/entities/voice_audio_engine.dart';
 import 'voice_agora_engine.dart';
 import 'voice_room_music_audio_session.dart';
 
-/// canlifal.com sesli oda — Agora token + `POST /voice` `{type: join}`.
+/// canlifal.com sesli oda — App ID only Agora + `POST /voice` `{type: join}`.
 class VoiceRoomAudioCoordinator {
   VoiceRoomAudioCoordinator({
     VoiceAgoraEngine? agora,
     ChatRoomRemoteDataSource? remote,
-    AgoraRemoteDataSource? agoraToken,
-  })  : _agora = agora ?? VoiceAgoraEngine(tokenSource: agoraToken),
+  })  : _agora = agora ?? VoiceAgoraEngine(),
         _remote = remote;
 
   final VoiceAgoraEngine _agora;

@@ -236,7 +236,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     }
     final muted = !_isMicMuted;
     _audio!.setMicEnabled(!muted);
-    setState(() => _isMicMuted = muted);
+    if (mounted) setState(() => _isMicMuted = muted);
   }
 
   void _onChatChanged(String text) {
@@ -248,7 +248,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
   void _toggleSpeaker() {
     ref.read(voiceRoomUiProvider.notifier).toggleHeadphones();
     _audio?.setHeadphonesOn(ref.read(voiceRoomUiProvider).headphonesOn);
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   void _startGiftRealtime() {
@@ -276,7 +276,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       combo: event.combo,
     );
     if (showFullscreen) {
-      setState(() => _fullscreenGift = event);
+      if (mounted) setState(() => _fullscreenGift = event);
       final duration = PremiumGiftCatalog2026.rarity(event.giftId).fullscreenDuration;
       Future.delayed(duration, () {
         if (mounted && _fullscreenGift?.id == event.id) {
@@ -291,7 +291,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final tier = ref.read(vipTierProvider);
     if (!tier.hasEntranceFx) return;
     _vipEntrancePlayed = true;
-    setState(() => _showVipEntrance = true);
+    if (mounted) setState(() => _showVipEntrance = true);
   }
 
   void _openGiftShop(

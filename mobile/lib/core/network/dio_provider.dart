@@ -68,7 +68,7 @@ final dioProvider = Provider<Dio>((ref) {
         } else {
           options.headers.remove('Authorization');
         }
-        for (final entry in deviceRequestHeaders().entries) {
+        for (final entry in Map.from(deviceRequestHeaders()).entries) {
           options.headers[entry.key] = entry.value;
         }
         handler.next(options);

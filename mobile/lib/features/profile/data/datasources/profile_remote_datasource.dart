@@ -757,7 +757,7 @@ List<Map<String, dynamic>> _jetonListRoot(Map<String, dynamic> body) {
     final inner = pick(map, ['packages', 'items', 'list', 'rows']);
     if (inner is List) return asJsonList(inner);
   }
-  for (final k in body.keys) {
+  for (final k in List.from(body.keys)) {
     final v = body[k];
     if (v is List && v.isNotEmpty && v.first is Map) {
       return asJsonList(v);
