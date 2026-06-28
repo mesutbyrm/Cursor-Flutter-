@@ -13,6 +13,7 @@ import '../utils/voice_music_access.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_glass.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
+import 'voice_room_authority_sheet.dart';
 import 'voice_room_hub_settings.dart';
 import 'voice_room_sheets.dart';
 import 'voice_youtube_song_sheet.dart';
@@ -77,6 +78,13 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
       isDj: isDj,
     );
     final role = VoiceRoomMenuRole.label(perms, user: user, live: live);
+    final canManageAuthority = perms.isSiteAdmin ||
+        perms.isRoomOwner ||
+        perms.canModerate ||
+        perms.canManageRoom ||
+        perms.canMuteUsers ||
+        perms.canKickUsers ||
+        perms.canBanUsers;
     final bottom = MediaQuery.paddingOf(context).bottom;
 
     final actions = <_MenuAction>[
@@ -207,6 +215,34 @@ class _VoiceRoomMenuSheet extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               _UserHeader(user: user, role: role),
+              if (canManageAuthority) ...[
+                const SizedBox(height: 14),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: VoiceRoomTokens.neonPurple.withValues(alpha: 0.85),
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    showVoiceRoomAuthoritySheet(
+                      context,
+                      ref,
+                      room: room,
+                      live: live,
+                      perms: perms,
+                      isOwner: isOwner,
+                    );
+                  },
+                  icon: const Icon(Icons.admin_panel_settings_rounded),
+                  label: const Text(
+                    'Yetki Ver',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
               GridView.builder(
                 shrinkWrap: true,

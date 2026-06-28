@@ -172,6 +172,17 @@ class VoiceModerationNotifier extends StateNotifier<AsyncValue<void>> {
         () => _live.banUserModeration(userId: userId),
       );
 
+  Future<bool> unbanUser(String userId) => _run(
+        () => _live.unbanUserModeration(userId: userId),
+      );
+
+  Future<bool> assignRoleSymbol(String userId, String symbol) => _run(
+        () => _live.assignRoleToUser(
+              targetUserId: userId,
+              roleSymbol: symbol,
+            ),
+      );
+
   Future<bool> addDj(String userId) => _run(() => _live.addRoomDj(userId));
 
   Future<bool> removeDj(String userId) => _run(() => _live.removeRoomDj(userId));

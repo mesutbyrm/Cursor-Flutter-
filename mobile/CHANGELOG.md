@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.433+437 (2026-06-26)
+
+### Faz 4 — Yetki Yönetimi
+
+- **Yetki Ver** düğmesi (3 nokta menüsünde)
+- Popup: odadaki kullanıcı listesi → kişi seçimi
+- **Rol:** +V, @, &, Admin
+- **Moderasyon:** Sessize al, Ban, Ban kaldır, Kanaldan at, Mikrofon kapat/aç
+- Tüm işlemler tek popup üzerinden
+
 ## 1.0.432+436 (2026-06-26)
 
 ### Faz 3 — Yeni Menü (3 nokta)
