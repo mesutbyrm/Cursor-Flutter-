@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 import '../../../../core/config/env.dart';
@@ -153,39 +155,68 @@ class LiveRemoteDataSource {
     return (name: name, description: description, icon: icon);
   }
 
+  /// Üretim `POST /api/chat/rooms/create` gövdesi — name, description, icon zorunlu.
+  static Map<String, dynamic> buildVoiceRoomCreatePayload({
+    required String roomType,
+    bool vip = false,
+    String? roomName,
+  }) {
+    final meta = voiceRoomCreateMetadata(
+      roomType: roomType,
+      roomName: roomName,
+    );
+    final cost = openRoomJetonCost(vip: vip, roomType: roomType);
+    final name = meta.name;
+    final description = meta.description;
+    final icon = meta.icon;
+    final isVip = vip || roomType == 'vip';
+
+    return {
+      'cost': cost,
+      'jeton': cost,
+      'jetonCost': cost,
+      'coins': cost,
+      'amount': cost,
+      'isVip': isVip,
+      if (isVip) 'vip': true,
+      'roomType': roomType,
+      'type': 'voice',
+      'category': 'voice',
+      'name': name,
+      'nameTr': name,
+      'title': name,
+      'roomName': name,
+      'description': description,
+      'descTr': description,
+      'desc': description,
+      'icon': icon,
+      'room': {
+        'name': name,
+        'nameTr': name,
+        'title': name,
+        'description': description,
+        'descTr': description,
+        'desc': description,
+        'icon': icon,
+        'type': 'voice',
+        'roomType': roomType,
+      },
+    };
+  }
+
   /// canlifal.com `POST /api/chat/rooms/create` (yedek: `POST /api/chat/rooms`)
   Future<VoiceRoomEntity> createVoiceChatRoom({
     bool vip = false,
     String? roomType,
     String? roomName,
   }) async {
-    final resolvedType = roomType ??
-        (vip ? 'vip' : 'normal');
-    final cost = openRoomJetonCost(vip: vip, roomType: resolvedType);
-    final meta = voiceRoomCreateMetadata(
+    final resolvedType = roomType ?? (vip ? 'vip' : 'normal');
+    final payload = buildVoiceRoomCreatePayload(
       roomType: resolvedType,
+      vip: vip,
       roomName: roomName,
     );
-    final name = meta.name;
-    final payload = <String, dynamic>{
-      'cost': cost,
-      'jeton': cost,
-      'jetonCost': cost,
-      'coins': cost,
-      'amount': cost,
-      'isVip': vip || resolvedType == 'vip',
-      if (vip || resolvedType == 'vip') 'vip': true,
-      'roomType': resolvedType,
-      'type': resolvedType,
-      'name': name,
-      'nameTr': name,
-      'title': name,
-      'roomName': name,
-      'description': meta.description,
-      'descTr': meta.description,
-      'desc': meta.description,
-      'icon': meta.icon,
-    };
+    final name = payload['name']?.toString() ?? 'Sohbet';
 
     DioException? lastError;
     for (final path in [ApiEndpoints.chatRoomCreate, ApiEndpoints.chatRooms]) {
@@ -212,7 +243,11 @@ class LiveRemoteDataSource {
     final name = roomName?.trim();
     final res = await _dio.safePost<dynamic>(
       path,
-      data: payload,
+      data: jsonEncode(payload),
+      options: Options(
+        contentType: Headers.jsonContentType,
+        headers: const {'Accept': 'application/json'},
+      ),
     );
     final body = res.data;
     if (body is String &&

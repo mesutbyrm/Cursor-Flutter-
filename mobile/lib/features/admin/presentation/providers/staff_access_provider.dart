@@ -29,7 +29,9 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
   }
 
   final wallet = ref.watch(walletBalancesProvider);
-  final siteRole = wallet.valueOrNull?.role;
+  final walletRole = wallet.valueOrNull?.role;
+  final authRole = user.role;
+  final siteRole = walletRole?.trim().isNotEmpty == true ? walletRole : authRole;
   final username = user.username;
 
   final canManage = StaffRoles.isAdminOrManager(

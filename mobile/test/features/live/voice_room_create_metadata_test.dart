@@ -41,4 +41,23 @@ void main() {
       expect(meta.name.length, 40);
     });
   });
+
+  group('buildVoiceRoomCreatePayload', () {
+    test('includes required production fields as JSON-ready map', () {
+      final payload = LiveRemoteDataSource.buildVoiceRoomCreatePayload(
+        roomType: 'normal',
+        roomName: 'Test Oda',
+      );
+      expect(payload['name'], 'Test Oda');
+      expect(payload['description'], isNotEmpty);
+      expect(payload['icon'], isNotEmpty);
+      expect(payload['nameTr'], payload['name']);
+      expect(payload['descTr'], payload['description']);
+      expect(payload['type'], 'voice');
+      final room = payload['room'] as Map<String, dynamic>;
+      expect(room['name'], payload['name']);
+      expect(room['description'], payload['description']);
+      expect(room['icon'], payload['icon']);
+    });
+  });
 }

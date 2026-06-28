@@ -44,8 +44,12 @@ export async function notifyStaffPaymentPending(input: {
   senderInfo?: string | null;
   notes?: string | null;
 }) {
-  const staff = await prisma.user.findMany({
+  const staffByRole = await prisma.user.findMany({
     where: { role: { in: [...STAFF_ROLES] } },
+    select: { id: true },
+  });
+  const staffByUsername = await prisma.user.findMany({
+    where: { username: { in: ["admin", "yonetici"] } },
     select: { id: true },
   });
   const isJeton = input.requestType === "jeton";
@@ -68,7 +72,10 @@ export async function notifyStaffPaymentPending(input: {
     method: input.method,
   };
 
-  const notifyIds = new Set(staff.map((s) => s.id));
+  const notifyIds = new Set([
+    ...staffByRole.map((s) => s.id),
+    ...staffByUsername.map((s) => s.id),
+  ]);
 
   // Admin e-posta hesabı staff listesinde değilse uygulama içi bildirim de gönder.
   const alertUser = await prisma.user.findUnique({

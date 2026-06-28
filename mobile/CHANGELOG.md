@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.419+423 (2026-06-27)
+
+### Admin ödeme talepleri ve sesli oda açma
+
+- **Admin paneli:** Bekleyen jeton/CFC talepleri `cfc-payment-requests`, `payment-notifications` ve `payment-requests` uçlarından birleştirilir; eski bekleyen talepler de listelenir
+- **Admin bildirimleri:** Ödeme bildirimleri sekmesi site bildirimleri + ödeme kayıtlarından doldurulur
+- **Staff rolü:** Oturum `role` alanı cüzdan yanıtı yoksa admin yetkisi için kullanılır
+- **Sesli oda aç:** Oluşturma gövdesi `jsonEncode` + `application/json`; `name`, `description`, `icon` ve iç içe `room` nesnesi gönderilir
+
 ## 1.0.418+422 (2026-06-27)
 
 ### Sesli sohbet — API dokümantasyonu (Agora + SSE)
