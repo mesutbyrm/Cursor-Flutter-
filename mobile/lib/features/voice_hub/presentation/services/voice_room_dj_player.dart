@@ -754,9 +754,11 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
     final startupLogDeadline = DateTime.now().add(startupLogAt);
     var startupLogged = false;
     var loadingSince = DateTime.now();
+    var seenNonIdle = false;
     while (DateTime.now().isBefore(deadline)) {
       _refreshDiagnostics();
       final state = _player.processingState;
+      if (state != ja.ProcessingState.idle) seenNonIdle = true;
       if (state == ja.ProcessingState.loading) {
         if (DateTime.now().difference(loadingSince).inSeconds >= 12) {
           VoiceRoomMusicPipelineLog.playResult(
@@ -771,6 +773,18 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
         }
       } else {
         loadingSince = DateTime.now();
+      }
+      // URL yükleme hatası: loading/buffering sonrası idle'a dönüş → hemen başarısız say.
+      if (seenNonIdle && state == ja.ProcessingState.idle && !_player.playing) {
+        VoiceRoomMusicPipelineLog.playResult(
+          started: false,
+          url: _currentSource ?? '(none)',
+          processingState: state.name,
+          playing: false,
+          durationMs: currentDurationMs,
+          detail: 'idle_after_load',
+        );
+        return false;
       }
       if (_player.playing &&
           (state == ja.ProcessingState.ready ||
