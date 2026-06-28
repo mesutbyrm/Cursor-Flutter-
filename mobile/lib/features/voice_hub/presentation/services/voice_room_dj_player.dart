@@ -284,7 +284,6 @@ class VoiceRoomDjPlayer {
       }
     }
 
-    final direct = _absolutizeStreamUrl(serverStreamUrl ?? musicUrl);
     if (direct != null && direct.startsWith('http')) {
       if (YoutubeStreamResolver.isYoutubeStreamApiUrl(direct)) {
         final resolved = await _resolveSource(direct);
