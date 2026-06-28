@@ -158,13 +158,19 @@ class ChatRoomSseService extends BaseSseService {
         }
         return;
       case ChatRoomSseEventType.dj:
-      case ChatRoomSseEventType.music: {
+      case ChatRoomSseEventType.music:
+      case ChatRoomSseEventType.musicStarted:
+      case ChatRoomSseEventType.musicStopped: {
         final djMap = unwrapVoiceSseDjPayload(map);
         VoiceRoomDebugLog.djUpdate(
           roomId: _roomId ?? '',
           playing: voiceSseDjIsPlaying(djMap),
           musicUrl: djMap['musicUrl']?.toString(),
-          source: 'sse',
+          source: type == ChatRoomSseEventType.musicStarted
+              ? 'sse.music_started'
+              : type == ChatRoomSseEventType.musicStopped
+                  ? 'sse.music_stopped'
+                  : 'sse',
         );
         _onDjUpdate?.call(djMap);
         return;

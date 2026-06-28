@@ -27,7 +27,7 @@ import '../theme/voice_room_tokens.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
-import '../widgets/voice_room/voice_room_music_mini_player.dart';
+import '../widgets/voice_room/voice_room_premium_music_card.dart';
 import '../widgets/premium_2026/voice_web_owner_stage.dart';
 import 'voice_room_basic_moderation_section.dart';
 
@@ -908,7 +908,7 @@ class VoiceRoomBasicProfilePreview extends StatelessWidget {
   }
 }
 
-/// Müzik çalarken ince mini player (isteğe bağlı üst bant).
+/// Müzik çalarken koltuk altı premium kart (web parity).
 class VoiceRoomBasicFloatingMiniPlayer extends ConsumerWidget {
   const VoiceRoomBasicFloatingMiniPlayer({
     super.key,
@@ -916,6 +916,7 @@ class VoiceRoomBasicFloatingMiniPlayer extends ConsumerWidget {
     required this.liveKey,
     required this.live,
     required this.canControlMusic,
+    required this.canCloseMusic,
     required this.perms,
   });
 
@@ -923,51 +924,31 @@ class VoiceRoomBasicFloatingMiniPlayer extends ConsumerWidget {
   final String liveKey;
   final VoiceRoomLiveState live;
   final bool canControlMusic;
+  final bool canCloseMusic;
   final VoiceRoomPermissions perms;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dj = live.dj;
-    final ui = ref.watch(voiceRoomUiProvider);
     final musicSession = ref.watch(voiceRoomMusicSessionProvider);
-    final show = (dj.playing || dj.nowPlaying != null) &&
+    final show = (dj.playing || dj.nowPlaying != null || dj.musicQueue.isNotEmpty) &&
         !musicSession.dismissed &&
         !musicSession.userDismissedPlayer;
     if (!show) return const SizedBox.shrink();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: VoiceRoomMusicMiniPlayer(
+    return VoiceRoomPremiumMusicCard(
+      room: room,
+      liveKey: liveKey,
+      dj: dj,
+      canClose: canCloseMusic,
+      listenerCount: live.onlineCountFor(room),
+      likeCount: live.musicLikeCount,
+      onQueueTap: () => showRoomMusicQueueSheet(
+        context,
+        ref,
+        liveKey: liveKey,
         dj: dj,
-        canControl: canControlMusic,
-        canModerate: canControlMusic,
-        musicMuted: !ui.backgroundMusicEnabled,
-        showClose: true,
-        onPlayPause: () async {
-          final notifier = ref.read(voiceRoomLiveProvider(liveKey).notifier);
-          if (dj.playing) {
-            await notifier.pauseMusic();
-          } else {
-            await notifier.resumeMusic();
-          }
-        },
-        onSkip: canControlMusic
-            ? () => ref.read(voiceRoomLiveProvider(liveKey).notifier).skipMusic()
-            : null,
-        onStop: canControlMusic
-            ? () => ref.read(voiceRoomLiveProvider(liveKey).notifier).stopMusic()
-            : null,
-        onMuteToggle: () =>
-            ref.read(voiceRoomUiProvider.notifier).toggleBackgroundMusic(),
-        onClose: () =>
-            ref.read(voiceRoomLiveProvider(liveKey).notifier).closeMusicPlayer(),
-        onTap: () => showRoomMusicQueueSheet(
-          context,
-          ref,
-          liveKey: liveKey,
-          dj: dj,
-          canControlMusic: canControlMusic,
-        ),
+        canControlMusic: canControlMusic,
       ),
     );
   }

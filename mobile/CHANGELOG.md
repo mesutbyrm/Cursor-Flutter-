@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.426+430 (2026-06-26)
+
+### Sesli oda — Premium müzik kartı (web parity)
+
+- **Yeni UI:** Mini player kaldırıldı; koltuk altında tam genişlik premium kart (vinyl, waveform, glassmorphism, RGB)
+- **SSE:** `music_started` / `music_stopped` olayları ile senkron açılış/kapanış animasyonu
+- **Kapat (X):** Yalnızca oda sahibi, isteği yapan, admin/süper admin
+- **Şarkı değişimi:** Kart açık kalır; kapak, bilgi ve progress güncellenir
+- **İstatistik:** Beğeni sayısı ve dinleyici sayısı kartta gösterilir
+
 ## 1.0.425+429 (2026-06-28)
 
 ### Sesli oda — Agora token, orta müzik, oturum

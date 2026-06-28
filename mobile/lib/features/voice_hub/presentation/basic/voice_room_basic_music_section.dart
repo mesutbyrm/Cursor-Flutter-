@@ -6,16 +6,14 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../providers/chat_room_providers.dart';
-import '../providers/voice_room_ui_provider.dart';
-import '../services/voice_room_dj_player.dart';
 import '../sheets/voice_youtube_song_sheet.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_permissions.dart';
-import '../widgets/voice_room/voice_room_music_mini_player.dart';
+import '../widgets/voice_room/voice_room_premium_music_card.dart';
 import '../widgets/voice_room/voice_room_music_queue_section.dart';
 import '../widgets/voice_room/voice_room_music_request_flash.dart';
 
-/// Web parity müzik — !istek, kuyruk, mini player, oynat/duraklat/sonraki.
+/// Web parity müzik — !istek, kuyruk, premium müzik kartı.
 class VoiceRoomBasicMusicSection extends ConsumerWidget {
   const VoiceRoomBasicMusicSection({
     super.key,
@@ -39,13 +37,15 @@ class VoiceRoomBasicMusicSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dj = live.dj;
-    final ui = ref.watch(voiceRoomUiProvider);
     final musicSession = ref.watch(voiceRoomMusicSessionProvider);
-    final musicMuted = !ui.backgroundMusicEnabled;
-    final showMiniPlayer = (dj.playing || dj.nowPlaying != null) &&
+    final showMiniPlayer = (dj.playing || dj.nowPlaying != null || dj.musicQueue.isNotEmpty) &&
         !musicSession.dismissed &&
         !musicSession.userDismissedPlayer;
     final user = ref.watch(authControllerProvider).valueOrNull;
+    final canCloseMusic = perms.isRoomOwner ||
+        perms.isSiteAdmin ||
+        perms.canModerate ||
+        (user != null && dj.nowPlaying?.requestedBy?.id == user.id);
     final jeton = VoiceMusicAccess.jetonFromBalances(
       ref.watch(walletBalancesProvider).valueOrNull,
     );
@@ -134,37 +134,14 @@ class VoiceRoomBasicMusicSection extends ConsumerWidget {
             ),
           ),
         if (showMiniPlayer)
-          VoiceRoomMusicMiniPlayer(
+          VoiceRoomPremiumMusicCard(
+            room: room,
+            liveKey: liveKey,
             dj: dj,
-            canControl: canControlMusic,
-            canModerate: canControlMusic,
-            musicMuted: musicMuted,
-            showClose: true,
-            onPlayPause: () async {
-              final notifier =
-                  ref.read(voiceRoomLiveProvider(liveKey).notifier);
-              if (dj.playing) {
-                await notifier.pauseMusic();
-              } else {
-                await notifier.resumeMusic();
-              }
-            },
-            onPrevious: () {
-              ref.read(voiceRoomDjPlayerProvider).seekToStart();
-            },
-            onSkip: canControlMusic
-                ? () => ref.read(voiceRoomLiveProvider(liveKey).notifier).skipMusic()
-                : null,
-            onStop: canControlMusic
-                ? () => ref.read(voiceRoomLiveProvider(liveKey).notifier).stopMusic()
-                : null,
-            onMuteToggle: () => ref
-                .read(voiceRoomUiProvider.notifier)
-                .toggleBackgroundMusic(),
-            onClose: () => ref
-                .read(voiceRoomLiveProvider(liveKey).notifier)
-                .closeMusicPlayer(),
-            onTap: () => showRoomMusicQueueSheet(
+            canClose: canCloseMusic,
+            listenerCount: live.onlineCountFor(room),
+            likeCount: live.musicLikeCount,
+            onQueueTap: () => showRoomMusicQueueSheet(
               context,
               ref,
               liveKey: liveKey,

@@ -6,6 +6,8 @@ enum ChatRoomSseEventType {
   dj,
   song,
   music,
+  musicStarted,
+  musicStopped,
   userJoin,
   userLeave,
   roomUpdate,
@@ -42,6 +44,14 @@ ChatRoomSseEventType chatRoomSseEventTypeFrom(String? raw) {
       return ChatRoomSseEventType.song;
     case 'music':
       return ChatRoomSseEventType.music;
+    case 'music_started':
+    case 'musicstarted':
+    case 'music_start':
+      return ChatRoomSseEventType.musicStarted;
+    case 'music_stopped':
+    case 'musicstopped':
+    case 'music_stop':
+      return ChatRoomSseEventType.musicStopped;
     case 'user_join':
     case 'user_joined':
     case 'userjoined':

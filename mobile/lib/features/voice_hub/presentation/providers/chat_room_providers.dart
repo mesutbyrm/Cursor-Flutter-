@@ -139,6 +139,7 @@ class VoiceRoomLiveState {
     this.kickStrikeWarning,
     this.kickStrikeCount = 0,
     this.realtimeEvents = const [],
+    this.musicLikeCount = 0,
   });
 
   final List<ChatRoomMessage> messages;
@@ -166,6 +167,7 @@ class VoiceRoomLiveState {
   final String? kickStrikeWarning;
   final int kickStrikeCount;
   final List<VoiceRoomRealtimeEvent> realtimeEvents;
+  final int musicLikeCount;
 
   bool get isAnyoneTyping => typingUsers.isNotEmpty;
 
@@ -210,6 +212,7 @@ class VoiceRoomLiveState {
     int? kickStrikeCount,
     bool clearKickStrikeWarning = false,
     List<VoiceRoomRealtimeEvent>? realtimeEvents,
+    int? musicLikeCount,
     bool clearError = false,
   }) {
     return VoiceRoomLiveState(
@@ -259,6 +262,7 @@ class VoiceRoomLiveState {
           ? 0
           : (kickStrikeCount ?? this.kickStrikeCount),
       realtimeEvents: realtimeEvents ?? this.realtimeEvents,
+      musicLikeCount: musicLikeCount ?? this.musicLikeCount,
     );
   }
 }
@@ -2016,8 +2020,39 @@ class VoiceRoomLiveController
     return incoming.asVideoRequest();
   }
 
+  Future<void> _handleMusicStoppedFromSse() async {
+    VoiceRoomDebugLog.log('music.sse.stopped', {'room': _roomKey});
+    await ref.read(voiceRoomDjPlayerProvider).stop();
+    ref.read(voiceRoomMusicSessionProvider.notifier).dismissFromServerStop();
+    ref.read(roomVideoControllerProvider(_roomKey).notifier).clear();
+    state = state.copyWith(
+      dj: state.dj.copyWith(
+        playing: false,
+        clearNowPlaying: true,
+        clearMusicUrl: true,
+        musicQueue: const [],
+      ),
+      musicLikeCount: 0,
+    );
+    _lastDjPlaybackSignature = '';
+  }
+
   Future<void> _applyDjRealtimePayload(Map<String, dynamic> payload) async {
     final map = unwrapVoiceSseDjPayload(payload);
+    final signal = voiceSseMusicSignal(map);
+    if (signal == VoiceSseMusicSignal.stopped) {
+      await _handleMusicStoppedFromSse();
+      return;
+    }
+    if (signal == VoiceSseMusicSignal.started) {
+      ref.read(voiceRoomMusicSessionProvider.notifier).onMusicStartedFromServer();
+      ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
+      VoiceRoomDebugLog.log('music.sse.started', {
+        'room': _roomKey,
+        'musicUrl': map['musicUrl']?.toString(),
+      });
+    }
+    final likes = voiceSseLikeCount(map);
     final np = map['nowPlaying'];
     String? title;
     String? eventVideoId;
@@ -2127,6 +2162,9 @@ class VoiceRoomLiveController
       dj = dj.copyWith(djUsers: state.dj.djUsers);
     }
     _commitDjUi(dj);
+    if (likes != null) {
+      state = state.copyWith(musicLikeCount: likes);
+    }
     unawaited(ref.read(voiceRoomSseAudioPlayerProvider).handleDjEvent(map));
     final sync = RoomPlaybackSync.fromPayload(map);
     _syncRoomVideo(dj, sync: sync);
@@ -4075,6 +4113,26 @@ class VoiceRoomMusicSessionNotifier extends Notifier<VoiceRoomMusicSessionState>
       visible: false,
       dismissed: true,
       clearRoom: true,
+      dj: const ChatRoomDjState(),
+    );
+    _closeDetachedKeepAlive();
+  }
+
+  void onMusicStartedFromServer() {
+    state = state.copyWith(
+      dismissed: false,
+      userDismissedPlayer: false,
+      visible: true,
+    );
+  }
+
+  void dismissFromServerStop() {
+    _syncTimer?.cancel();
+    _syncTimer = null;
+    state = state.copyWith(
+      visible: false,
+      dismissed: true,
+      userDismissedPlayer: false,
       dj: const ChatRoomDjState(),
     );
     _closeDetachedKeepAlive();
