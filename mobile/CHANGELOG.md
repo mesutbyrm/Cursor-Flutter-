@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.432+436 (2026-06-26)
+
+### Faz 3 — Yeni Menü (3 nokta)
+
+- **Üst:** 👤 kullanıcı adı + **Yetkisi** etiketi
+- **Alt:** Material 3 büyük ikon kartları (yazısız; tooltip ile)
+- **Kartlar:** PK Daveti, Oda Ayarları, Kullanıcı Ayarları, Şarkı İsteği, DJ Paneli, Arkaplan
+- RTC ve Basic oda sayfalarında aynı menü
+
 ## 1.0.431+435 (2026-06-26)
 
 ### Faz 2 — Yetki ve Koltuk Sistemi

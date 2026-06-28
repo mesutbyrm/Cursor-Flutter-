@@ -37,6 +37,7 @@ import '../widgets/premium_2026/voice_cosmic_background.dart';
 import '../../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'voice_room_basic_moderation_section.dart';
+import '../sheets/voice_room_menu_sheet.dart';
 import 'voice_room_basic_premium_section.dart';
 import '../widgets/voice_room/voice_room_join_entry_strip.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
@@ -429,20 +430,15 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     UserEntity? user,
     bool canControlMusic,
   ) {
-    showVoiceRoomBasicToolsSheet(
+    showVoiceRoomMenuSheet(
       context,
       ref,
       room: room,
-      liveKey: _liveRoomKey,
       live: live,
       perms: perms,
       isOwner: isOwner,
-      onPk: () => openVoiceRoomBasicPkInvite(context, room),
-      onOpenUser: (p) => _openUser(p, room, perms),
-      onSendIstek: _sendIstek,
-      istekCtrl: _istekCtrl,
-      canControlMusic: canControlMusic,
-      user: user,
+      onUserTap: (p) => _openUser(p, room, perms),
+      onPkInvite: () => openVoiceRoomBasicPkInvite(context, room),
     );
   }
 

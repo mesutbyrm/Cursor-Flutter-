@@ -47,7 +47,7 @@ import 'providers/voice_room_ui_provider.dart';
 import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'sheets/voice_room_speak_queue_sheet.dart';
-import 'sheets/voice_room_hub_settings.dart';
+import 'sheets/voice_room_menu_sheet.dart';
 import 'sheets/voice_room_moderation_sheet.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'utils/voice_music_access.dart';
@@ -960,7 +960,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     required VoiceRoomPermissions perms,
     required bool isOwner,
   }) {
-    showVoiceRoomHubSettingsSheet(
+    showVoiceRoomMenuSheet(
       context,
       ref,
       room: room,
@@ -968,6 +968,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       perms: perms,
       isOwner: isOwner,
       onUserTap: _openUser,
+      onPkInvite: () => unawaited(_openPkInvite(room)),
     );
   }
 

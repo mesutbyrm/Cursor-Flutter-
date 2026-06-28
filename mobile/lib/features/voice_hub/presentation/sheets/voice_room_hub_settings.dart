@@ -16,6 +16,22 @@ import '../widgets/premium/voice_neon_avatar.dart';
 import 'voice_room_sheets.dart';
 import 'voice_youtube_song_sheet.dart';
 
+Future<void> showVoiceRoomBackgroundSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  required VoiceRoomEntity room,
+}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => ProviderScope(
+      parent: ProviderScope.containerOf(context),
+      child: _VoiceRoomBackgroundSheet(room: room),
+    ),
+  );
+}
+
 Future<void> showVoiceRoomHubSettingsSheet(
   BuildContext context,
   WidgetRef ref, {
@@ -466,6 +482,113 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VoiceRoomBackgroundSheet extends ConsumerStatefulWidget {
+  const _VoiceRoomBackgroundSheet({required this.room});
+
+  final VoiceRoomEntity room;
+
+  @override
+  ConsumerState<_VoiceRoomBackgroundSheet> createState() =>
+      _VoiceRoomBackgroundSheetState();
+}
+
+class _VoiceRoomBackgroundSheetState
+    extends ConsumerState<_VoiceRoomBackgroundSheet> {
+  List<String> _backgrounds = const [];
+  var _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  Future<void> _load() async {
+    try {
+      final urls = await ref
+          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
+          .fetchBackgrounds();
+      if (mounted) setState(() => _backgrounds = urls);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _apply(String url) async {
+    final err = await ref
+        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
+        .setRoomBackground(url);
+    if (!mounted) return;
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(err ?? 'Arka plan güncellendi')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    return DraggableScrollableSheet(
+      initialChildSize: 0.45,
+      minChildSize: 0.32,
+      maxChildSize: 0.7,
+      expand: false,
+      builder: (_, __) => VoiceGlass(
+        borderRadius: 24,
+        padding: EdgeInsets.fromLTRB(16, 16, 16, bottom + 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Arkaplan',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+            ),
+            const SizedBox(height: 12),
+            if (_loading)
+              const Expanded(
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              )
+            else if (_backgrounds.isEmpty)
+              Expanded(
+                child: Center(
+                  child: Text(
+                    'Arka plan bulunamadı',
+                    style: TextStyle(
+                      color: context.colors.onSurfaceMuted,
+                    ),
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _backgrounds.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 10),
+                  itemBuilder: (_, i) {
+                    final url = _backgrounds[i];
+                    return GestureDetector(
+                      onTap: () => _apply(url),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: CanlifalNetworkImage(
+                          url: url,
+                          width: 180,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
           ],
         ),
       ),
