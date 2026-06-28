@@ -24,11 +24,17 @@ class LiveRepositoryImpl implements LiveRepository {
     bool vip = false,
     String? roomType,
     String? roomName,
+    String paymentType = 'jeton',
+    String? description,
+    String? icon,
   }) =>
       _remote.createVoiceChatRoom(
         vip: vip,
         roomType: roomType,
         roomName: roomName,
+        paymentType: paymentType,
+        description: description,
+        icon: icon,
       );
 
   @override

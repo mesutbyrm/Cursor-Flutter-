@@ -42,22 +42,80 @@ void main() {
     });
   });
 
+  group('resolveRoomTypeEnum', () {
+    test('maps free and vip to uppercase enums', () {
+      expect(
+        LiveRemoteDataSource.resolveRoomTypeEnum('free'),
+        'FREE',
+      );
+      expect(
+        LiveRemoteDataSource.resolveRoomTypeEnum('normal'),
+        'NORMAL',
+      );
+      expect(
+        LiveRemoteDataSource.resolveRoomTypeEnum('vip'),
+        'VIP',
+      );
+      expect(
+        LiveRemoteDataSource.resolveRoomTypeEnum('normal', vip: true),
+        'VIP',
+      );
+    });
+  });
+
+  group('normalizePaymentType', () {
+    test('accepts jeton and cfc only', () {
+      expect(LiveRemoteDataSource.normalizePaymentType('jeton'), 'jeton');
+      expect(LiveRemoteDataSource.normalizePaymentType('cfc'), 'cfc');
+      expect(LiveRemoteDataSource.normalizePaymentType('CFC'), 'cfc');
+      expect(LiveRemoteDataSource.normalizePaymentType(null), 'jeton');
+      expect(LiveRemoteDataSource.normalizePaymentType(''), 'jeton');
+    });
+  });
+
   group('buildVoiceRoomCreatePayload', () {
-    test('includes required production fields as JSON-ready map', () {
+    test('matches web JSON.stringify(D) shape exactly', () {
       final payload = LiveRemoteDataSource.buildVoiceRoomCreatePayload(
         roomType: 'normal',
         roomName: 'Test Oda',
       );
+      expect(payload.keys.toList(), [
+        'name',
+        'description',
+        'icon',
+        'paymentType',
+        'roomType',
+      ]);
       expect(payload['name'], 'Test Oda');
       expect(payload['description'], isNotEmpty);
       expect(payload['icon'], isNotEmpty);
-      expect(payload['nameTr'], payload['name']);
-      expect(payload['descTr'], payload['description']);
-      expect(payload['type'], 'voice');
-      final room = payload['room'] as Map<String, dynamic>;
-      expect(room['name'], payload['name']);
-      expect(room['description'], payload['description']);
-      expect(room['icon'], payload['icon']);
+      expect(payload['paymentType'], 'jeton');
+      expect(payload['roomType'], 'NORMAL');
+    });
+
+    test('free room uses FREE roomType enum', () {
+      final payload = LiveRemoteDataSource.buildVoiceRoomCreatePayload(
+        roomType: 'free',
+        roomName: 'Ücretsiz Oda',
+      );
+      expect(payload['roomType'], 'FREE');
+      expect(payload['paymentType'], 'jeton');
+    });
+
+    test('vip room uses VIP roomType enum', () {
+      final payload = LiveRemoteDataSource.buildVoiceRoomCreatePayload(
+        roomType: 'vip',
+        roomName: 'VIP Oda',
+      );
+      expect(payload['roomType'], 'VIP');
+    });
+
+    test('supports cfc paymentType', () {
+      final payload = LiveRemoteDataSource.buildVoiceRoomCreatePayload(
+        roomType: 'normal',
+        paymentType: 'cfc',
+      );
+      expect(payload['paymentType'], 'cfc');
     });
   });
 }

@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.428+432 (2026-06-26)
+
+### Oda oluşturma — web ile birebir JSON
+
+- **POST /api/chat/rooms/create** gövdesi web ile aynı: `name`, `description`, `icon`, `paymentType`, `roomType`
+- **paymentType:** `jeton` | `cfc` (küçük harf, web parity)
+- **roomType:** `FREE` | `NORMAL` | `VIP` (büyük harf enum)
+- Eski yedek alanlar kaldırıldı (`cost`, `jeton`, nested `room`, vb.)
+
 ## 1.0.427+431 (2026-06-26)
 
 ### Admin profil + sesli oda iyileştirmeleri

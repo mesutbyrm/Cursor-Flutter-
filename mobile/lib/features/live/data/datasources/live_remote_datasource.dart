@@ -132,6 +132,29 @@ class LiveRemoteDataSource {
     return vip ? voiceRoomVipOpenJetonCost : voiceRoomNormalOpenJetonCost;
   }
 
+  /// Web `roomType` enum — `FREE` | `NORMAL` | `VIP` (büyük harf).
+  static String resolveRoomTypeEnum(String roomType, {bool vip = false}) {
+    if (vip || roomType.toLowerCase() == 'vip') return 'VIP';
+    switch (roomType.toLowerCase()) {
+      case 'free':
+      case 'ucretsiz':
+      case 'ücretsiz':
+        return 'FREE';
+      case 'normal':
+      case 'standard':
+        return 'NORMAL';
+      default:
+        return 'NORMAL';
+    }
+  }
+
+  /// Web ödeme yöntemi — `jeton` | `cfc` (küçük harf).
+  static String normalizePaymentType(String? raw) {
+    final v = raw?.trim().toLowerCase();
+    if (v == 'cfc') return 'cfc';
+    return 'jeton';
+  }
+
   /// Üretim `POST /api/chat/rooms/create` — name, description ve icon zorunlu.
   static ({String name, String description, String icon}) voiceRoomCreateMetadata({
     required String roomType,
@@ -153,52 +176,28 @@ class LiveRemoteDataSource {
     return (name: name, description: description, icon: icon);
   }
 
-  /// Üretim `POST /api/chat/rooms/create` gövdesi — name, description, icon zorunlu.
+  /// Web ile birebir `POST /api/chat/rooms/create` gövdesi.
   static Map<String, dynamic> buildVoiceRoomCreatePayload({
     required String roomType,
     bool vip = false,
     String? roomName,
+    String paymentType = 'jeton',
+    String? description,
+    String? icon,
   }) {
     final meta = voiceRoomCreateMetadata(
       roomType: roomType,
       roomName: roomName,
     );
-    final cost = openRoomJetonCost(vip: vip, roomType: roomType);
-    final name = meta.name;
-    final description = meta.description;
-    final icon = meta.icon;
-    final isVip = vip || roomType == 'vip';
-
+    final desc = description?.trim();
+    final ic = icon?.trim();
     return {
-      'cost': cost,
-      'jeton': cost,
-      'jetonCost': cost,
-      'coins': cost,
-      'amount': cost,
-      'isVip': isVip,
-      if (isVip) 'vip': true,
-      'roomType': roomType,
-      'type': 'voice',
-      'category': 'voice',
-      'name': name,
-      'nameTr': name,
-      'title': name,
-      'roomName': name,
-      'description': description,
-      'descTr': description,
-      'desc': description,
-      'icon': icon,
-      'room': {
-        'name': name,
-        'nameTr': name,
-        'title': name,
-        'description': description,
-        'descTr': description,
-        'desc': description,
-        'icon': icon,
-        'type': 'voice',
-        'roomType': roomType,
-      },
+      'name': meta.name,
+      'description':
+          (desc != null && desc.isNotEmpty) ? desc : meta.description,
+      'icon': (ic != null && ic.isNotEmpty) ? ic : meta.icon,
+      'paymentType': normalizePaymentType(paymentType),
+      'roomType': resolveRoomTypeEnum(roomType, vip: vip),
     };
   }
 
@@ -207,12 +206,18 @@ class LiveRemoteDataSource {
     bool vip = false,
     String? roomType,
     String? roomName,
+    String paymentType = 'jeton',
+    String? description,
+    String? icon,
   }) async {
     final resolvedType = roomType ?? (vip ? 'vip' : 'normal');
     final payload = buildVoiceRoomCreatePayload(
       roomType: resolvedType,
       vip: vip,
       roomName: roomName,
+      paymentType: paymentType,
+      description: description,
+      icon: icon,
     );
     final name = payload['name']?.toString() ?? 'Sohbet';
 

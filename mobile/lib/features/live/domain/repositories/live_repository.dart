@@ -13,6 +13,9 @@ abstract class LiveRepository {
     bool vip = false,
     String? roomType,
     String? roomName,
+    String paymentType = 'jeton',
+    String? description,
+    String? icon,
   });
 
   Future<String> createVideoStream({
