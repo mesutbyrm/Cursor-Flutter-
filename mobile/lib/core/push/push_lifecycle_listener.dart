@@ -41,7 +41,9 @@ class PushLifecycleListener extends ConsumerStatefulWidget {
 
 class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
   Timer? _pushSyncTimer;
+  Timer? _adminPollTimer;
   bool _pushSyncing = false;
+  int _lastPendingCount = -1;
 
   @override
   void initState() {
@@ -132,6 +134,34 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
       authControllerProvider,
       _queuePushSync,
     );
+
+    _adminPollTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (!mounted) return;
+      _pollAdminPayments();
+    });
+  }
+
+  Future<void> _pollAdminPayments() async {
+    final access = ref.read(staffAccessProvider);
+    if (!access.canManagePayments) return;
+    try {
+      ref.invalidate(adminPaymentRequestsProvider);
+      final requests = await ref.read(adminPaymentRequestsProvider.future);
+      final count = requests.length;
+      if (_lastPendingCount >= 0 && count > _lastPendingCount) {
+        final newCount = count - _lastPendingCount;
+        unawaited(
+          PushNotificationService.instance.showLocal(
+            id: 9001,
+            title: 'Yeni Ödeme Talebi',
+            body: '$newCount yeni ödeme talebi bekliyor',
+            payload: '/admin',
+            urgent: true,
+          ),
+        );
+      }
+      _lastPendingCount = count;
+    } catch (_) {}
   }
 
   void _queuePushSync(
@@ -191,6 +221,7 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
 
   @override
   void dispose() {
+    _adminPollTimer?.cancel();
     _pushSyncTimer?.cancel();
     super.dispose();
   }

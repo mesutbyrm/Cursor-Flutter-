@@ -30,12 +30,15 @@ Future<void> showVoiceRoomHubSettingsSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => _HubSettingsSheet(
-      room: room,
-      live: live,
-      perms: perms,
-      isOwner: isOwner,
-      onUserTap: onUserTap,
+    builder: (ctx) => ProviderScope(
+      parent: ProviderScope.containerOf(context),
+      child: _HubSettingsSheet(
+        room: room,
+        live: live,
+        perms: perms,
+        isOwner: isOwner,
+        onUserTap: onUserTap,
+      ),
     ),
   );
 }

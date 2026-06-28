@@ -21,11 +21,14 @@ Future<void> showVoiceRoomDjSheet(
   return showDialog(
     context: context,
     barrierColor: Colors.black.withValues(alpha: 0.65),
-    builder: (ctx) => _DjDialog(
-      room: room,
-      live: live,
-      perms: perms,
-      isOwner: isOwner,
+    builder: (ctx) => ProviderScope(
+      parent: ProviderScope.containerOf(context),
+      child: _DjDialog(
+        room: room,
+        live: live,
+        perms: perms,
+        isOwner: isOwner,
+      ),
     ),
   );
 }

@@ -8,7 +8,6 @@ import '../../../../core/navigation/wallet_navigation.dart';
 import '../../../../core/network/api_exception.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../live/data/datasources/live_remote_datasource.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../live/presentation/providers/live_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -22,8 +21,11 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
     return;
   }
 
-  const normalCost = LiveRemoteDataSource.voiceRoomNormalOpenJetonCost;
-  const vipCost = LiveRemoteDataSource.voiceRoomVipOpenJetonCost;
+  final settings = ref.read(platformVoiceRoomSettingsProvider).valueOrNull ??
+      PlatformVoiceRoomSettings.fallback;
+  ref.read(platformVoiceRoomSettingsProvider.future).catchError((_) {});
+  final normalCost = settings.normalOpenCost;
+  final vipCost = settings.vipOpenCost;
   var balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ??
       ref.read(authControllerProvider).valueOrNull?.coinBalance ??
       0;

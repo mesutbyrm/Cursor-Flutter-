@@ -22,10 +22,13 @@ Future<void> showRoomMusicQueueSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (ctx) => _RoomMusicQueueSheet(
-      liveKey: liveKey,
-      dj: dj,
-      canControlMusic: canControlMusic,
+    builder: (ctx) => ProviderScope(
+      parent: ProviderScope.containerOf(context),
+      child: _RoomMusicQueueSheet(
+        liveKey: liveKey,
+        dj: dj,
+        canControlMusic: canControlMusic,
+      ),
     ),
   );
 }

@@ -218,14 +218,17 @@ Future<void> showVoiceRoomModerationSheet({
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (_) => _VoiceRoomModerationSheet(
-      roomKey: roomKey,
-      targetUser: targetUser,
-      perms: effectivePerms,
-      isOwner: owner,
-      isTargetDj: isTargetDj,
-      canAddModerators: allowMods,
-      onGift: onGift,
+    builder: (_) => ProviderScope(
+      parent: ProviderScope.containerOf(context),
+      child: _VoiceRoomModerationSheet(
+        roomKey: roomKey,
+        targetUser: targetUser,
+        perms: effectivePerms,
+        isOwner: owner,
+        isTargetDj: isTargetDj,
+        canAddModerators: allowMods,
+        onGift: onGift,
+      ),
     ),
   );
 }

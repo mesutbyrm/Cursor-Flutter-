@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/live_stream_entity.dart';
@@ -58,6 +59,52 @@ final voiceRoomByIdProvider =
     }
   }
   return ref.watch(liveRepositoryProvider).fetchVoiceRoomById(id);
+});
+
+class PlatformVoiceRoomSettings {
+  const PlatformVoiceRoomSettings({
+    required this.normalOpenCost,
+    required this.vipOpenCost,
+    required this.musicRequestCost,
+    required this.freeRoomMaxUsers,
+    required this.normalRoomMaxUsers,
+    required this.vipRoomMaxUsers,
+  });
+
+  final int normalOpenCost;
+  final int vipOpenCost;
+  final int musicRequestCost;
+  final int freeRoomMaxUsers;
+  final int normalRoomMaxUsers;
+  final int vipRoomMaxUsers;
+
+  static const fallback = PlatformVoiceRoomSettings(
+    normalOpenCost: 100,
+    vipOpenCost: 5000,
+    musicRequestCost: 10,
+    freeRoomMaxUsers: 50,
+    normalRoomMaxUsers: 100,
+    vipRoomMaxUsers: 500,
+  );
+}
+
+final platformVoiceRoomSettingsProvider =
+    FutureProvider<PlatformVoiceRoomSettings>((ref) async {
+  final dio = ref.watch(dioProvider);
+  final res = await dio.get<Map<String, dynamic>>(
+    ApiEndpoints.platformVoiceRoomSettings,
+  );
+  final d = res.data ?? {};
+  int _int(String key, int fallback) =>
+      (d[key] as num?)?.toInt() ?? fallback;
+  return PlatformVoiceRoomSettings(
+    normalOpenCost: _int('normalOpenCost', 100),
+    vipOpenCost: _int('vipOpenCost', 5000),
+    musicRequestCost: _int('musicRequestCost', 10),
+    freeRoomMaxUsers: _int('freeRoomMaxUsers', 50),
+    normalRoomMaxUsers: _int('normalRoomMaxUsers', 100),
+    vipRoomMaxUsers: _int('vipRoomMaxUsers', 500),
+  );
 });
 
 /// Giriş yapan kullanıcının sahip olduğu sesli oda (ownerId veya slug = username).

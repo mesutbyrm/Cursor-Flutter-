@@ -35,9 +35,12 @@ class VoiceRoomDjStreamLoader {
     final u = url.trim().toLowerCase();
     if (!u.startsWith('http')) return false;
     if (u.contains('/api/chat/youtube-audio')) return false;
-    return u.contains('googlevideo.com') ||
-        u.contains('youtube.com/api/');
+    return u.contains('googlevideo.com') || u.contains('youtube.com/api/');
   }
+
+  /// Backend'in kendi ses proxy'si — zaten kimlik doğrulamalı, tekrar sarmaya gerek yok.
+  static bool isBackendAudioProxy(String url) =>
+      url.trim().toLowerCase().contains('/api/chat/youtube-audio');
 
   /// Web ile aynı: doğrudan stream URL (googlevideo dahil). İndirme yedek.
   Future<String?> preparePlaybackSource(String streamUrl) async {
@@ -69,7 +72,10 @@ class VoiceRoomDjStreamLoader {
       targets.add(u);
     }
 
-    if (trimmed.contains('/api/chat/youtube-audio')) {
+    if (isBackendAudioProxy(trimmed)) {
+      if (!kIsWeb && Platform.isAndroid) {
+        add(await downloadFallback(trimmed));
+      }
       add(trimmed);
       return targets;
     }
@@ -91,7 +97,7 @@ class VoiceRoomDjStreamLoader {
   static String clientPlaybackUrl(String streamUrl) {
     final trimmed = streamUrl.trim();
     if (trimmed.isEmpty) return trimmed;
-    if (trimmed.contains('/api/chat/youtube-audio')) return trimmed;
+    if (isBackendAudioProxy(trimmed)) return trimmed;
     if (!kIsWeb && Platform.isAndroid && needsLocalDownload(trimmed)) {
       return proxyPlaybackUrl(trimmed) ?? trimmed;
     }
@@ -100,7 +106,8 @@ class VoiceRoomDjStreamLoader {
 
   Future<String?> downloadFallback(String streamUrl) async {
     final trimmed = streamUrl.trim();
-    if (trimmed.isEmpty || !needsLocalDownload(trimmed)) return null;
+    if (trimmed.isEmpty) return null;
+    if (!needsLocalDownload(trimmed) && !isBackendAudioProxy(trimmed)) return null;
 
     final key = trimmed;
     final cached = _cache[key];
@@ -122,7 +129,7 @@ class VoiceRoomDjStreamLoader {
         trimmed,
         file.path,
         options: Options(
-          headers: youtubeStreamHeaders,
+          headers: isBackendAudioProxy(trimmed) ? null : youtubeStreamHeaders,
           receiveTimeout: const Duration(seconds: 90),
           followRedirects: true,
         ),
