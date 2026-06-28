@@ -43,6 +43,7 @@ import '../widgets/voice_room/voice_room_join_entry_strip.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
 import '../sheets/music_mode_picker_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
+import '../sheets/voice_youtube_song_sheet.dart';
 import '../utils/voice_music_access.dart';
 import '../widgets/premium_2026/voice_live_action_bar_2026.dart';
 import '../widgets/premium_2026/voice_live_header_2026.dart';
@@ -777,24 +778,26 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     micEnabled: _audioReady && !_audioJoining,
                     onMic: _toggleMic,
                     onGift: () => _openGiftShop(room, live.presence),
-                    onMusic: () => _openTools(
-                      room,
-                      live,
-                      perms,
-                      isOwner,
-                      user,
-                      canControlMusic,
+                    onMusicRequest: () => showVoiceYoutubeSongSheet(
+                      context,
+                      ref,
+                      room: room,
                     ),
-                    onEffects: _toggleSpeaker,
-                    onInvite: () => _shareRoom(room),
-                    onSettings: () => _openTools(
-                      room,
-                      live,
-                      perms,
-                      isOwner,
-                      user,
-                      canControlMusic,
+                    onMusicAudio: () => showVoiceYoutubeSongSheet(
+                      context,
+                      ref,
+                      room: room,
+                      preferVideo: false,
                     ),
+                    onMusicVideo: () => showVoiceYoutubeSongSheet(
+                      context,
+                      ref,
+                      room: room,
+                      preferVideo: true,
+                    ),
+                    headphonesOn: ui.headphonesOn,
+                    onToggleAudioOutput: _toggleSpeaker,
+                    onInvite: () => unawaited(_shareRoom(room)),
                   ),
                 ],
               ],

@@ -61,6 +61,7 @@ import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/voice_room/voice_room_spec_footer.dart';
 import 'sheets/voice_room_commands_panel.dart';
+import 'sheets/voice_youtube_song_sheet.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'utils/kick_strike_ui.dart';
 import 'widgets/premium_2026/voice_timed_duyuru.dart';
@@ -1162,9 +1163,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _perms(user, live.presence, server: live.serverPermissions);
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
-    final jeton = VoiceMusicAccess.jetonFromBalances(
-      ref.watch(walletBalancesProvider).valueOrNull,
-    );
     final isDj = perms.canManageDj ||
         live.dj.canPlayMusic ||
         (user != null && room.djUserIds.contains(user.id)) ||
@@ -1741,28 +1739,35 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 VoiceRoomSpecFooter(
                   controller: _messageCtrl,
                   focusNode: _messageFocus,
-                  coinBalance: jeton,
                   onSend: () => _sendChatMessage(room),
-                  onHome: () => context.go('/voice-rooms'),
                   onToggleAudioOutput: _toggleHeadphones,
                   headphonesOn: ui.headphonesOn,
                   onMicToggle: _toggleMic,
                   micOn: !_isMicMuted,
                   micEnabled: _audioReady,
-                  onRoomSettings: () => _openHubSettings(
+                  onMusicRequest: () => showVoiceYoutubeSongSheet(
+                    context,
+                    ref,
+                    room: room,
+                  ),
+                  onMusicAudio: () => showVoiceYoutubeSongSheet(
+                    context,
+                    ref,
+                    room: room,
+                    preferVideo: false,
+                  ),
+                  onMusicVideo: () => showVoiceYoutubeSongSheet(
+                    context,
+                    ref,
+                    room: room,
+                    preferVideo: true,
+                  ),
+                  onGift: () => _openGiftShop(
                     context,
                     room: room,
-                    live: live,
-                    perms: perms,
-                    isOwner: isOwner,
+                    presence: live.presence,
                   ),
-                  onUserSettings: () => showVoiceEffectsSheet(context, ref),
-                  onTopUp: () => openJetonStore(context, ref: ref),
-                  onGiftTap: () => _openGiftShop(
-                        context,
-                        room: room,
-                        presence: live.presence,
-                      ),
+                  onInvite: () => unawaited(_shareRoom()),
                   onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
                   onChanged: _onChatChanged,
                 ),

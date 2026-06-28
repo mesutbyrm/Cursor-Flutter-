@@ -26,6 +26,7 @@ Future<void> showVoiceYoutubeSongSheet(
   required VoiceRoomEntity room,
   VoiceRoomPermissions? perms,
   bool? isOwner,
+  bool? preferVideo,
 }) {
   final container = ProviderScope.containerOf(context);
   return showModalBottomSheet<void>(
@@ -34,7 +35,7 @@ Future<void> showVoiceYoutubeSongSheet(
     backgroundColor: Colors.transparent,
     builder: (ctx) => UncontrolledProviderScope(
       container: container,
-      child: _YoutubeSongSheet(room: room),
+      child: _YoutubeSongSheet(room: room, preferVideo: preferVideo),
     ),
   );
 }
@@ -66,9 +67,10 @@ Future<void> showVoiceMusicControlHub(
 }
 
 class _YoutubeSongSheet extends ConsumerStatefulWidget {
-  const _YoutubeSongSheet({required this.room});
+  const _YoutubeSongSheet({required this.room, this.preferVideo});
 
   final VoiceRoomEntity room;
+  final bool? preferVideo;
 
   @override
   ConsumerState<_YoutubeSongSheet> createState() => _YoutubeSongSheetState();
@@ -160,12 +162,13 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
     final audioCost = liveDj.musicRequestCost;
     final videoCost = liveDj.videoRequestCost;
 
-    final withVideo = await showMusicModePickerSheet(
-      context,
-      audioCost: audioCost,
-      videoCost: videoCost,
-      songTitle: hit.title,
-    );
+    final withVideo = widget.preferVideo ??
+        await showMusicModePickerSheet(
+          context,
+          audioCost: audioCost,
+          videoCost: videoCost,
+          songTitle: hit.title,
+        );
     if (!mounted || withVideo == null) return;
 
     setState(() => _submitting = true);

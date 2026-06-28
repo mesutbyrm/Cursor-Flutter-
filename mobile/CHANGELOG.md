@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.435+439 (2026-06-26)
+
+### Faz 6 — Alt Menü
+
+- **Sol:** 🎧 Hoparlör ↔ Kulaklık (toggle)
+- **Yanı:** 🎵 Müzik İste + **Sesli** / **Videolu** kısayolları
+- **Orta:** 🎤 Mikrofon
+- **Sağ:** 🎁 Hediye · 📨 Davet
+- RTC ve Basic oda sayfalarında aynı alt menü
+
 ## 1.0.434+438 (2026-06-26)
 
 ### Faz 5 — Yasak Kelime Sistemi
