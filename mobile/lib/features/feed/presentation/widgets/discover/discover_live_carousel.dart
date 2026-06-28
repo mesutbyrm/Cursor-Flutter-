@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/theme/app_spacing.dart';
 import '../discover_premium_2026/discover_premium_visual.dart';
@@ -265,11 +265,10 @@ class _LiveCardShell extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   if (imageUrl != null && imageUrl!.isNotEmpty)
-                    CachedNetworkImage(
-                      imageUrl: imageUrl!,
+                    CanlifalNetworkImage(
+                      url: imageUrl!,
                       fit: BoxFit.cover,
-                      memCacheWidth: 480,
-                      errorWidget: (_, _, _) => _placeholder(),
+                      errorWidget: _placeholder(),
                     )
                   else
                     _placeholder(),

@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
@@ -270,7 +270,7 @@ class _ListenerTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
         backgroundImage: user.image != null && user.image!.isNotEmpty
-            ? CachedNetworkImageProvider(user.image!)
+            ? canlifalImageProvider(user.image!)
             : null,
         child: user.image == null || user.image!.isEmpty
             ? const Icon(Icons.person)

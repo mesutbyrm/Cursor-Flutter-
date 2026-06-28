@@ -3,20 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../../core/bootstrap/startup_perf.dart';
 import '../../../../messages/presentation/providers/messages_providers.dart';
 import '../../../../notifications/presentation/providers/notifications_providers.dart';
 import 'ultra_fortune_liquid_surface.dart';
 import 'ultra_fortune_tokens.dart';
 
 /// Ultra premium header — Liquid Glass butonlar, altın başlık.
-class UltraFortuneAppBar extends ConsumerWidget {
+class UltraFortuneAppBar extends StatelessWidget {
   const UltraFortuneAppBar({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final top = MediaQuery.paddingOf(context).top;
-    final unreadMessages = ref.watch(messagesUnreadCountProvider);
-    final unreadNotifications = ref.watch(notificationsUnreadCountProvider);
 
     final titleStyle = GoogleFonts.playfairDisplay(
       fontSize: 20,
@@ -64,17 +63,7 @@ class UltraFortuneAppBar extends ConsumerWidget {
               ],
             ),
           ),
-          _GlassIconButton(
-            icon: Icons.chat_bubble_outline_rounded,
-            badgeCount: unreadMessages,
-            onTap: () => context.push('/messages'),
-          ),
-          const SizedBox(width: 8),
-          _GlassIconButton(
-            icon: Icons.notifications_none_rounded,
-            badgeCount: unreadNotifications,
-            onTap: () => context.push('/notifications'),
-          ),
+          const _FortuneAppBarBadgesGate(),
         ],
       ),
     );
@@ -110,6 +99,73 @@ class UltraFortuneAppBar extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _FortuneAppBarBadgesGate extends StatefulWidget {
+  const _FortuneAppBarBadgesGate();
+
+  @override
+  State<_FortuneAppBarBadgesGate> createState() => _FortuneAppBarBadgesGateState();
+}
+
+class _FortuneAppBarBadgesGateState extends State<_FortuneAppBarBadgesGate> {
+  var _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.delayed(LazyLoadPerf.fortuneBadges, () {
+      if (mounted) setState(() => _ready = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_ready) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _GlassIconButton(
+            icon: Icons.chat_bubble_outline_rounded,
+            onTap: () => context.push('/messages'),
+          ),
+          const SizedBox(width: 8),
+          _GlassIconButton(
+            icon: Icons.notifications_none_rounded,
+            onTap: () => context.push('/notifications'),
+          ),
+        ],
+      );
+    }
+    return const _FortuneAppBarBadges();
+  }
+}
+
+class _FortuneAppBarBadges extends ConsumerWidget {
+  const _FortuneAppBarBadges();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadMessages = ref.watch(messagesUnreadCountProvider);
+    final unreadNotifications = ref.watch(notificationsUnreadCountProvider);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _GlassIconButton(
+          icon: Icons.chat_bubble_outline_rounded,
+          badgeCount: unreadMessages,
+          onTap: () => context.push('/messages'),
+        ),
+        const SizedBox(width: 8),
+        _GlassIconButton(
+          icon: Icons.notifications_none_rounded,
+          badgeCount: unreadNotifications,
+          onTap: () => context.push('/notifications'),
+        ),
+      ],
     );
   }
 }

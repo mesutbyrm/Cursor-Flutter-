@@ -1,18 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/dio_provider.dart';
-import '../../../livekit/data/datasources/livekit_remote_datasource.dart';
-import '../../../trtc/data/datasources/trtc_remote_datasource.dart';
+import '../../../agora/presentation/providers/agora_providers.dart';
 import '../audio/voice_room_audio_coordinator.dart';
-
-final liveKitRemoteProvider = Provider<LiveKitRemoteDataSource>((ref) {
-  return LiveKitRemoteDataSource(ref.watch(dioProvider));
-});
+import 'chat_room_providers.dart';
 
 final voiceRoomAudioCoordinatorProvider = Provider<VoiceRoomAudioCoordinator>((ref) {
   final coord = VoiceRoomAudioCoordinator(
-    liveKitRemote: ref.watch(liveKitRemoteProvider),
-    trtcRemote: TrtcRemoteDataSource(ref.watch(dioProvider)),
+    remote: ref.watch(chatRoomRemoteProvider),
+    agoraToken: ref.watch(agoraRemoteProvider),
   );
   ref.onDispose(coord.dispose);
   return coord;

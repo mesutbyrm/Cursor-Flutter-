@@ -1,12 +1,11 @@
-import 'dart:ui';
-
+import 'package:canlifal_social/core/performance/effects_perf.dart';
+import 'package:canlifal_social/core/widgets/themed_glass_card.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/ui/premium_2026/premium_2026_tokens.dart';
 import '../../core/theme/pf_theme.dart';
 
-/// Premium cam efektli kart.
+/// Premium cam efektli kart — merkezi glass + RepaintBoundary.
 class PfGlassCard extends StatelessWidget {
   const PfGlassCard({
     super.key,
@@ -26,10 +25,13 @@ class PfGlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.p26;
-    final content = ClipRRect(
-      borderRadius: BorderRadius.circular(t.radiusSheet),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+    final card = EffectsPerf.repaint(
+      ThemedGlassCard(
+        padding: padding,
+        margin: margin,
+        blur: 16,
+        borderRadius: BorderRadius.circular(t.radiusSheet),
+        onTap: onTap,
         child: DecoratedBox(
           decoration: BoxDecoration(
             gradient: gradient ??
@@ -45,28 +47,19 @@ class PfGlassCard extends StatelessWidget {
             border: Border.all(color: t.glassBorder.withValues(alpha: 0.35)),
             boxShadow: t.shadowAmbient,
           ),
-          child: Padding(padding: padding, child: child),
+          child: child,
         ),
       ),
     );
 
-    final wrapped = onTap != null
-        ? Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(t.radiusSheet),
-              child: content,
-            ),
-          )
-        : content;
-
-    return Padding(
-      padding: margin ?? EdgeInsets.zero,
-      child: wrapped.animate().fadeIn(duration: 280.ms).slideY(
-            begin: 0.04,
-            curve: Curves.easeOutCubic,
-          ),
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
+      builder: (context, opacity, child) {
+        return Opacity(opacity: opacity, child: child);
+      },
+      child: card,
     );
   }
 }

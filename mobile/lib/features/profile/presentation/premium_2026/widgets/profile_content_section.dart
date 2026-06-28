@@ -1,8 +1,10 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/performance/animation_perf.dart';
+import 'package:canlifal_social/core/widgets/lazy_list_views.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/theme/app_theme_colors.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
@@ -32,15 +34,18 @@ class ProfileContentSection extends ConsumerStatefulWidget {
 class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
+  late final TabIndexListenable _tabIndex;
 
   @override
   void initState() {
     super.initState();
     _tabs = TabController(length: 6, vsync: this);
+    _tabIndex = TabIndexListenable(_tabs);
   }
 
   @override
   void dispose() {
+    _tabIndex.dispose();
     _tabs.dispose();
     super.dispose();
   }
@@ -71,10 +76,10 @@ class _ProfileContentSectionState extends ConsumerState<ProfileContentSection>
             ],
           ),
           const SizedBox(height: 12),
-          AnimatedBuilder(
-            animation: _tabs,
+          ListenableBuilder(
+            listenable: _tabIndex,
             builder: (context, _) {
-              return switch (_tabs.index) {
+              return switch (_tabIndex.index) {
                 1 => _FortunesTab(),
                 2 => _LiveStreamsTab(),
                 3 => _WatchedTab(),
@@ -119,9 +124,7 @@ class _VideoGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    return LazyNestedGridView(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: 8,
@@ -157,7 +160,7 @@ class _VideoCard extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               if (thumb != null && thumb.isNotEmpty)
-                CachedNetworkImage(imageUrl: thumb, fit: BoxFit.cover)
+                CanlifalNetworkImage(url: thumb, fit: BoxFit.cover)
               else
                 Center(
                   child: Icon(
@@ -261,9 +264,7 @@ class _FortunesTab extends ConsumerWidget {
         if (items.isEmpty) {
           return const _EmptyMessage('Henüz fal kaydı yok');
         }
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+        return LazyNestedGridView(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             crossAxisSpacing: 10,
@@ -341,9 +342,7 @@ class _LiveStreamsTab extends ConsumerWidget {
         if (items.isEmpty) {
           return const _EmptyMessage('Henüz canlı yayın yok');
         }
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+        return LazyNestedGridView(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             crossAxisSpacing: 10,
@@ -426,9 +425,7 @@ class _FavoritesTab extends ConsumerWidget {
         if (items.isEmpty) {
           return const _EmptyMessage('Henüz favori yok');
         }
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+        return LazyNestedGridView(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             crossAxisSpacing: 10,
@@ -448,8 +445,8 @@ class _FavoritesTab extends ConsumerWidget {
                     if (fav.imageUrl != null && fav.imageUrl!.isNotEmpty)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: CachedNetworkImage(
-                          imageUrl: fav.imageUrl!,
+                        child: CanlifalNetworkImage(
+                          url: fav.imageUrl!,
                           height: 48,
                           width: double.infinity,
                           fit: BoxFit.cover,
@@ -522,9 +519,7 @@ class _ShortsGrid extends StatelessWidget {
     if (videos.isEmpty) {
       return const _EmptyMessage('Henüz izlenen video yok');
     }
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    return LazyNestedGridView(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: 8,
@@ -542,7 +537,7 @@ class _ShortsGrid extends StatelessWidget {
             child: DecoratedBox(
               decoration: const BoxDecoration(color: Color(0xFF1A0F3D)),
               child: thumb != null && thumb.isNotEmpty
-                  ? CachedNetworkImage(imageUrl: thumb, fit: BoxFit.cover)
+                  ? CanlifalNetworkImage(url: thumb, fit: BoxFit.cover)
                   : const Center(
                       child: Icon(Icons.play_circle_outline_rounded),
                     ),
@@ -561,9 +556,7 @@ class _ContentSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
+      child: LazyNestedGridView(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
           crossAxisSpacing: 8,

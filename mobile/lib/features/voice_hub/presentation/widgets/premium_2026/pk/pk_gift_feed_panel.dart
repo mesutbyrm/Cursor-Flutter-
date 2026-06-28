@@ -1,7 +1,7 @@
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../domain/entities/chat_room_message.dart';
 import '../../../theme/voice_room_tokens.dart';
@@ -79,7 +79,7 @@ class _GiftFeedRow extends StatelessWidget {
                 radius: 16,
                 backgroundColor: Colors.white12,
                 backgroundImage: user?.image != null && user!.image!.isNotEmpty
-                    ? CachedNetworkImageProvider(user.image!)
+                    ? canlifalImageProvider(user.image!)
                     : null,
                 child: user?.image == null || user!.image!.isEmpty
                     ? Text(

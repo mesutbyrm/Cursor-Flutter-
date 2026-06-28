@@ -13,13 +13,30 @@ class AgoraRemoteDataSource {
 
   final Dio _dio;
 
+  /// Sesli oda — web kanalı `voice_room_{id}`, üretim token uç noktası.
+  Future<AgoraCredentials> fetchVoiceRoomToken({
+    required String roomId,
+    required String role,
+    int uid = 0,
+  }) {
+    return fetchToken(
+      channelName: AgoraChannelNames.forVoiceRoom(roomId),
+      role: role,
+      uid: uid,
+      normalizeChannel: false,
+    );
+  }
+
   /// [role] — `host` (yayıncı) veya `audience` (izleyici).
   Future<AgoraCredentials> fetchToken({
     required String channelName,
     required String role,
     int uid = 0,
+    bool normalizeChannel = true,
   }) async {
-    final channel = AgoraChannelNames.forRoom(channelName);
+    final channel = normalizeChannel
+        ? AgoraChannelNames.forRoom(channelName)
+        : channelName.trim();
     final started = DateTime.now();
     LiveDebugLog.log('agora.token.request', {
       'channel': channel,

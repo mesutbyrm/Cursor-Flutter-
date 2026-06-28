@@ -13,6 +13,8 @@ export 'voice_grid_stage.dart';
 export 'voice_half_circle_stage.dart';
 export 'voice_live_action_bar_2026.dart';
 export 'voice_room_audience_strip.dart';
+export 'voice_room_type_badge.dart';
+export 'voice_top_spenders_strip.dart';
 export 'voice_web_bottom_nav.dart';
 export 'voice_web_chat_overlay.dart';
 export 'voice_web_owner_stage.dart';

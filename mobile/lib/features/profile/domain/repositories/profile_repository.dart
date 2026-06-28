@@ -34,7 +34,7 @@ abstract class ProfileRepository {
 
 abstract class WalletRepository {
   Future<int> coinBalance();
-  Future<WalletBalances> balances();
+  Future<WalletBalances> balances({bool forceRefresh = false});
   Future<List<JetonPackageEntity>> jetonPackages();
   Future<PaymentConfigEntity> paymentConfig();
   Future<void> submitPaymentRequest(Map<String, dynamic> body);

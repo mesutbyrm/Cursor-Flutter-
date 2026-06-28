@@ -1,5 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../domain/entities/chat_room_presence.dart';
 import '../../../../domain/pk/pk_battle_state.dart';
@@ -118,7 +118,7 @@ class _TeamAvatar extends StatelessWidget {
         radius: 20,
         backgroundColor: color.withValues(alpha: 0.2),
         backgroundImage:
-            img != null && img.isNotEmpty ? CachedNetworkImageProvider(img) : null,
+            img != null && img.isNotEmpty ? canlifalImageProvider(img) : null,
         child: img == null || img.isEmpty
             ? Icon(Icons.person, size: 20, color: color)
             : null,

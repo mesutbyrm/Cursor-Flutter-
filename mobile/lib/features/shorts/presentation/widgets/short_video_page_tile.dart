@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/performance/list_perf.dart';
@@ -227,14 +227,13 @@ class _ShortVideoPageTileState extends ConsumerState<ShortVideoPageTile> {
     return ColoredBox(
       color: Colors.black,
       child: thumb != null && thumb.isNotEmpty
-          ? CachedNetworkImage(
-              imageUrl: thumb,
+          ? CanlifalNetworkImage(
+              url: thumb,
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,
-              memCacheWidth: 720,
-              errorWidget: (_, _, _) => _centerMsg(showError),
-              placeholder: (_, _) => _centerMsg(false),
+              errorWidget: _centerMsg(showError),
+              placeholder: _centerMsg(false),
             )
           : _centerMsg(showError),
     );

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/performance/network_perf.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../domain/game_models.dart';
@@ -86,9 +87,12 @@ class GamesHubPage extends ConsumerWidget {
     ref.invalidate(gameLeaderboardProvider);
     ref.invalidate(gameMiniScoresProvider);
     ref.invalidate(gameTournamentsProvider);
-    await Future.wait([
+    await NetworkPerf.parallel([
       ref.read(gameCatalogProvider.future),
       ref.read(gameRoomsProvider.future),
+      ref.read(gameLeaderboardProvider.future),
+      ref.read(gameMiniScoresProvider.future),
+      ref.read(gameTournamentsProvider.future),
     ]);
   }
 }

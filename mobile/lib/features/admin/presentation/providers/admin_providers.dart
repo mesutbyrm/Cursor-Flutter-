@@ -15,7 +15,7 @@ const paymentNotificationTypes = {
   'jeton_payment_rejected',
 };
 
-/// Bekleyen jeton/CFC ödeme talepleri — canlifal.com admin API.
+/// Bekleyen jeton/CFC ödeme talepleri — birden fazla admin uç noktası birleştirilir.
 final adminPaymentRequestsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   if (!ref.watch(staffAccessProvider).canManagePayments) {
@@ -23,31 +23,77 @@ final adminPaymentRequestsProvider =
   }
 
   final dio = ref.watch(dioProvider);
+  final merged = <String, Map<String, dynamic>>{};
+  ApiException? last403;
 
-  try {
-    final res = await dio.safeGet<dynamic>(
-      ApiEndpoints.adminCfcPaymentRequests,
-      query: {'status': 'pending', 'limit': 50},
-    );
-    final parsed = _parsePaymentRequests(res.data);
-    if (parsed.isNotEmpty) return parsed;
-  } on ApiException catch (e) {
-    if (e.statusCode != 403 && e.statusCode != 404) rethrow;
+  Future<void> ingest(String path, Map<String, String> query) async {
+    try {
+      final res = await dio.safeGet<dynamic>(path, query: query);
+      for (final row in _parsePaymentRequests(res.data)) {
+        final id = row['id']?.toString().trim();
+        if (id == null || id.isEmpty) continue;
+        merged[id] = row;
+      }
+    } on ApiException catch (e) {
+      if (e.statusCode == 403) {
+        last403 = e;
+        return;
+      }
+      if (e.statusCode == 404) return;
+      rethrow;
+    }
   }
 
-  try {
-    final legacy = await dio.safeGet<dynamic>(
-      ApiEndpoints.adminPaymentRequests,
-      query: {'status': 'pending', 'limit': 50},
+  await Future.wait([
+    ingest(ApiEndpoints.adminCfcPaymentRequests, {
+      'status': 'pending',
+      'limit': '50',
+    }),
+    ingest(ApiEndpoints.adminCfcPaymentRequests, {
+      'status': 'all',
+      'limit': '50',
+    }),
+    ingest(ApiEndpoints.adminPaymentNotifications, {
+      'status': 'pending',
+      'limit': '50',
+    }),
+    ingest(ApiEndpoints.adminPaymentNotifications, {
+      'status': 'all',
+      'limit': '50',
+    }),
+    ingest(ApiEndpoints.adminPaymentRequests, {
+      'status': 'pending',
+      'limit': '50',
+    }),
+    ingest(ApiEndpoints.adminPaymentRequests, {
+      'status': 'all',
+      'limit': '50',
+    }),
+  ]);
+
+  if (merged.isEmpty && last403 != null) {
+    throw ApiException(
+      'Admin ödeme listesine erişilemedi. Hesabınızın sitede admin/yönetici '
+      'rolü olduğundan emin olun.',
+      statusCode: 403,
     );
-    return _parsePaymentRequests(legacy.data);
-  } on ApiException catch (e) {
-    if (e.statusCode == 403 || e.statusCode == 404) return const [];
-    rethrow;
   }
+
+  final pending = merged.values
+      .where((r) => _paymentRequestStatus(r) == 'pending')
+      .toList()
+    ..sort((a, b) {
+      final ta = DateTime.tryParse(a['createdAt']?.toString() ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      final tb = DateTime.tryParse(b['createdAt']?.toString() ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      return tb.compareTo(ta);
+    });
+
+  return pending;
 });
 
-/// Admin hesabına düşen ödeme bildirimleri (site).
+/// Admin hesabına düşen ödeme bildirimleri (site + ödeme talep kayıtları).
 final adminPaymentNotificationsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   if (!ref.watch(staffAccessProvider).canManagePayments) {
@@ -55,16 +101,64 @@ final adminPaymentNotificationsProvider =
   }
 
   final dio = ref.watch(dioProvider);
+  final merged = <String, Map<String, dynamic>>{};
+
+  void addNotif(Map<String, dynamic> n) {
+    final id = (n['id'] ?? n['targetId'] ?? n['paymentRequestId'])?.toString();
+    if (id == null || id.isEmpty) return;
+    merged[id] = n;
+  }
+
   try {
     final res = await dio.safeGet<dynamic>(
       ApiEndpoints.adminNotifications,
-      query: {'payment': '1'},
+      query: {'payment': '1', 'limit': '100'},
     );
-    return _filterPaymentNotifications(_parseNotificationItems(res.data));
+    for (final n in _filterPaymentNotifications(_parseNotificationItems(res.data))) {
+      addNotif(n);
+    }
   } on ApiException catch (e) {
-    if (e.statusCode == 403) return const [];
-    rethrow;
+    if (e.statusCode != 403 && e.statusCode != 404) rethrow;
   }
+
+  try {
+    final res = await dio.safeGet<dynamic>(
+      ApiEndpoints.adminPaymentNotifications,
+      query: {'status': 'all', 'limit': '50'},
+    );
+    for (final row in _parsePaymentRequests(res.data)) {
+      final id = row['id']?.toString();
+      if (id == null || id.isEmpty) continue;
+      addNotif({
+        'id': id,
+        'title': row['requestType'] == 'jeton'
+            ? 'Jeton ödeme talebi'
+            : 'CFC ödeme talebi',
+        'body': paymentRequestSummary(row),
+        'type': row['requestType'] == 'jeton'
+            ? 'jeton_payment_request'
+            : 'cfc_payment_request',
+        'targetId': id,
+        'targetPath': '/admin',
+        'read': row['status'] != 'pending',
+        'createdAt': row['createdAt'],
+        'data': {'paymentRequestId': id},
+      });
+    }
+  } on ApiException catch (e) {
+    if (e.statusCode != 403 && e.statusCode != 404) rethrow;
+  }
+
+  final list = merged.values.toList()
+    ..sort((a, b) {
+      final ta = DateTime.tryParse(a['createdAt']?.toString() ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      final tb = DateTime.tryParse(b['createdAt']?.toString() ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      return tb.compareTo(ta);
+    });
+
+  return list;
 });
 
 /// Site ödeme ayarları özeti (admin).
@@ -107,6 +201,9 @@ final adminPendingPaymentsCountProvider = Provider<int>((ref) {
 /// Geriye dönük alias.
 final adminCfcPaymentRequestsProvider = adminPaymentRequestsProvider;
 
+String _paymentRequestStatus(Map<String, dynamic> r) =>
+    (r['status'] ?? 'pending').toString().toLowerCase().trim();
+
 List<Map<String, dynamic>> _parsePaymentRequests(dynamic data) {
   if (data is String &&
       (data.contains('<!DOCTYPE') || data.contains('<html'))) {
@@ -122,6 +219,12 @@ List<Map<String, dynamic>> _parsePaymentRequests(dynamic data) {
   }
   if (data is Map && data['data'] is List) {
     return (data['data'] as List).map((e) => asJsonMap(e)).toList();
+  }
+  if (data is Map) {
+    for (final key in ['items', 'paymentNotifications']) {
+      final list = data[key];
+      if (list is List) return list.map((e) => asJsonMap(e)).toList();
+    }
   }
   if (data is List) {
     return data.map((e) => asJsonMap(e)).toList();

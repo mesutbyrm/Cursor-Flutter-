@@ -10,12 +10,14 @@ class ProfileStats extends StatelessWidget {
   const ProfileStats({
     super.key,
     required this.state,
+    this.followersLoading = false,
     this.onFollowersTap,
     this.onFollowingTap,
     this.onVisitorsTap,
   });
 
   final ProfileScreenState state;
+  final bool followersLoading;
   final VoidCallback? onFollowersTap;
   final VoidCallback? onFollowingTap;
   final VoidCallback? onVisitorsTap;
@@ -33,6 +35,7 @@ class ProfileStats extends StatelessWidget {
               child: _StatCell(
                 label: 'Takipçi',
                 value: profileFormatCount(state.followers),
+                isLoading: followersLoading,
                 onTap: onFollowersTap,
               ),
             ),
@@ -83,11 +86,13 @@ class _StatCell extends StatelessWidget {
   const _StatCell({
     required this.label,
     required this.value,
+    this.isLoading = false,
     this.onTap,
   });
 
   final String label;
   final String value;
+  final bool isLoading;
   final VoidCallback? onTap;
 
   @override
@@ -100,11 +105,11 @@ class _StatCell extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              value,
+              isLoading ? '…' : value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: isLoading ? 0.45 : 1),
                 fontWeight: FontWeight.w900,
                 fontSize: 17,
               ),

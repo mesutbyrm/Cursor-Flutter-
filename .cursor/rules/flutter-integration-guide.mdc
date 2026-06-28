@@ -1,0 +1,26 @@
+---
+description: Tek kaynak Flutter entegrasyon kılavuzu — tüm API, auth, SSE, retry ve repository işleri buna göre yapılır.
+alwaysApply: true
+---
+
+# Flutter entegrasyon kılavuzu (zorunlu)
+
+**Tek referans:** [`docs/FLUTTER_ENTegrasyon_KILAVUZU.md`](../../docs/FLUTTER_ENTegrasyon_KILAVUZU.md) (27 Haziran 2026).
+
+## Kurallar
+
+1. **Backend değiştirme** — Yeni endpoint, tablo veya sunucu iş mantığı ekleme. Yalnızca mevcut `https://canlifal.com/api/*` uçları.
+2. **Base URL** — `https://canlifal.com`; auth: JWT `Authorization: Bearer <accessToken>`.
+3. **Endpoint / body** — Kılavuz §9 tablolarındaki HTTP metodu, path ve JSON alanları kullan (ör. chat voice: `{ "action": "join" }`, presence: `{ "action": "join"|"leave" }`).
+4. **Mimari hedef** — Repository katmanı + Riverpod; DTO’lar kılavuz §2 ile uyumlu; SSE §5–6; HTTP retry §7; hatalar §8.
+5. **SSE** — Yalnızca kılavuzdaki 5 endpoint; reconnect: exponential backoff, max 20 deneme, 401’de refresh sonra yeniden bağlan.
+6. **Token** — `flutter_secure_storage`; 401 → `POST /api/auth/mobile-refresh`; refresh fail → login.
+7. **Dışına çıkma** — Eski `sesli-sohbet-api-dokumantasyonu.md`, yerel `api/` mirror veya envanter raporu ile **çelişen** yeni path/body icat etme. Çelişki varsa **bu kılavuz** önceliklidir.
+8. **Mevcut kod** — Refactor sırasında kılavuza yaklaştır; yeni özellik doğrudan kılavuz §9 repository grubuna göre ekle.
+
+## Hızlı kontrol listesi
+
+- [ ] Path `api_endpoints.dart` / ilgili repository’de kılavuz §9 ile aynı mı?
+- [ ] Request body alan adları (`action`, `giftId`, `receiverUserId` vb.) kılavuzla aynı mı?
+- [ ] Auth + refresh akışı §1 ile uyumlu mu?
+- [ ] Gerçek zamanlı iş SSE mi (Socket.IO değil)?

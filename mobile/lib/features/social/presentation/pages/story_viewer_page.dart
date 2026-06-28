@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../domain/entities/social_story_ring_entity.dart';
 
@@ -51,10 +51,10 @@ class _StoryViewerPageState extends State<StoryViewerPage> {
         fit: StackFit.expand,
         children: [
           if (url != null && url.isNotEmpty)
-            CachedNetworkImage(
-              imageUrl: url,
+            CanlifalNetworkImage(
+              url: url,
               fit: BoxFit.contain,
-              errorWidget: (_, _, _) => const Center(
+              errorWidget: const Center(
                 child: Icon(
                   Icons.broken_image_outlined,
                   color: Colors.white54,

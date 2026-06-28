@@ -1,10 +1,10 @@
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter/services.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../profile/presentation/widgets/premium/profile_glass.dart';
@@ -152,7 +152,7 @@ class _RoomAvatar extends StatelessWidget {
       ),
       child: ClipOval(
         child: url != null && url!.isNotEmpty
-            ? CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover)
+            ? CanlifalNetworkImage(url: url!, fit: BoxFit.cover)
             : ColoredBox(
                 color: context.colors.surfaceContainer,
                 child: Center(

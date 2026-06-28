@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/performance/list_perf.dart';
@@ -40,34 +42,44 @@ class ChatMessagesListNotifier
     extends FamilyAsyncNotifier<ChatMessagesListState, String> {
   @override
   Future<ChatMessagesListState> build(String conversationId) async {
-    final userId = ref.watch(authControllerProvider).valueOrNull?.id;
+    final initial = await _load(conversationId);
+    unawaited(refresh(silent: true, forceRefresh: true));
+    return initial;
+  }
+
+  Future<ChatMessagesListState> _load(
+    String conversationId, {
+    bool forceRefresh = false,
+    ChatMessagesListState? previous,
+  }) async {
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
     final all = await ref.read(messagesRepositoryProvider).messages(
           conversationId,
           currentUserId: userId,
+          forceRefresh: forceRefresh,
         );
-    final visible = ListPerf.defaultPageSize.clamp(0, all.length);
+    var visible = ListPerf.defaultPageSize.clamp(0, all.length);
+    if (previous != null && all.length > previous.all.length) {
+      visible = (previous.visibleCount + (all.length - previous.all.length))
+          .clamp(visible, all.length);
+    } else if (previous != null) {
+      visible = previous.visibleCount.clamp(visible, all.length);
+    }
     return ChatMessagesListState(all: all, visibleCount: visible);
   }
 
-  Future<void> refresh() async {
+  Future<void> refresh({
+    bool silent = false,
+    bool forceRefresh = false,
+  }) async {
     final id = arg;
-    final prev = state.valueOrNull;
-    state = const AsyncLoading<ChatMessagesListState>().copyWithPrevious(state);
+    if (!silent) {
+      state = const AsyncLoading<ChatMessagesListState>().copyWithPrevious(state);
+    }
+    final previous = state.valueOrNull;
     ref.invalidate(chatMessagesProvider(id));
     state = await AsyncValue.guard(() async {
-      final userId = ref.read(authControllerProvider).valueOrNull?.id;
-      final all = await ref.read(messagesRepositoryProvider).messages(
-            id,
-            currentUserId: userId,
-          );
-      var visible = ListPerf.defaultPageSize.clamp(0, all.length);
-      if (prev != null && all.length > prev.all.length) {
-        visible = (prev.visibleCount + (all.length - prev.all.length))
-            .clamp(visible, all.length);
-      } else if (prev != null) {
-        visible = prev.visibleCount.clamp(visible, all.length);
-      }
-      return ChatMessagesListState(all: all, visibleCount: visible);
+      return _load(id, forceRefresh: forceRefresh, previous: previous);
     });
   }
 

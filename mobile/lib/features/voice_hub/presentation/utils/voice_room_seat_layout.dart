@@ -46,7 +46,7 @@ class VoiceRoomSeatLayout {
       }
       bySeat[1] = hostUser;
       withoutSeat.remove(hostUser);
-      for (final entry in bySeat.entries.toList()) {
+      for (final entry in Map.from(bySeat).entries) {
         if (entry.key != 1 && entry.value.id == hostUser.id) {
           withoutSeat.add(entry.value);
           bySeat.remove(entry.key);

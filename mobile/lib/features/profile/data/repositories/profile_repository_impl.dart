@@ -1,3 +1,4 @@
+import '../../../../core/performance/network_perf.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
@@ -52,13 +53,26 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<ProfileStatsEntity> myStats() async {
-    ProfileStatsEntity stats = const ProfileStatsEntity();
-    try {
-      stats = await _remote.myStats();
-    } catch (_) {}
+    final pair = await NetworkPerf.parallel<Object?>([
+      () async {
+        try {
+          return await _remote.myStats();
+        } catch (_) {
+          return const ProfileStatsEntity();
+        }
+      }(),
+      () async {
+        try {
+          return await _remote.mySiteProfile();
+        } catch (_) {
+          return null;
+        }
+      }(),
+    ]);
+    var stats = pair[0] as ProfileStatsEntity;
+    final profile = pair[1] as UserEntity?;
 
-    try {
-      final profile = await _remote.mySiteProfile();
+    if (profile != null) {
       stats = ProfileStatsEntity(
         liveStreams: stats.liveStreams,
         likes: stats.likes,
@@ -69,24 +83,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
         earningsJeton: stats.earningsJeton,
         approvedTopUpTotal: stats.approvedTopUpTotal,
       );
-    } catch (_) {}
-
-    if (stats.liveStreams == 0) {
-      try {
-        final history = await _canlifal.broadcastHistory(page: 1, limit: 100);
-        if (history.items.isNotEmpty) {
-          stats = ProfileStatsEntity(
-            liveStreams: history.items.length,
-            likes: stats.likes,
-            followers: stats.followers,
-            following: stats.following,
-            giftsReceivedCount: stats.giftsReceivedCount,
-            giftsReceivedCoins: stats.giftsReceivedCoins,
-            earningsJeton: stats.earningsJeton,
-            approvedTopUpTotal: stats.approvedTopUpTotal,
-          );
-        }
-      } catch (_) {}
     }
 
     if (stats.likes == 0 && stats.giftsReceivedCount > 0) {
@@ -166,7 +162,8 @@ class WalletRepositoryImpl implements WalletRepository {
   Future<int> coinBalance() => _remote.balance();
 
   @override
-  Future<WalletBalances> balances() => _remote.balances();
+  Future<WalletBalances> balances({bool forceRefresh = false}) =>
+      _remote.balances(forceRefresh: forceRefresh);
 
   @override
   Future<List<JetonPackageEntity>> jetonPackages() => _remote.jetonPackages();

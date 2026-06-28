@@ -10,7 +10,9 @@ const STAFF_ROLES = new Set([
   "yardim",
 ]);
 
-/** admin, yönetici, moderatör, destek, yardım */
+const MANAGER_USERNAMES = new Set(["admin", "yonetici"]);
+
+/** admin, yönetici, moderatör, destek, yardım (+ admin/yonetici kullanıcı adı) */
 export async function requireStaff(
   req: Request,
   res: Response,
@@ -22,9 +24,14 @@ export async function requireStaff(
   }
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { role: true },
+    select: { role: true, username: true },
   });
-  if (!user || !STAFF_ROLES.has(user.role.toLowerCase())) {
+  const roleOk =
+    user != null && STAFF_ROLES.has(user.role.toLowerCase());
+  const usernameOk =
+    user?.username != null &&
+    MANAGER_USERNAMES.has(user.username.toLowerCase().trim());
+  if (!roleOk && !usernameOk) {
     return jsonError(res, 403, "Yetkiniz yok");
   }
   return next();

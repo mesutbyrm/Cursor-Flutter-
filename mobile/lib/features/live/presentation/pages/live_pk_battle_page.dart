@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../agora/presentation/agora_room_manager.dart';
 import '../../../voice_hub/domain/pk/pk_battle_mode.dart';
@@ -44,6 +44,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   final _agora = AgoraRoomManager();
   var _lastGiftSideLeft = true;
   var _agoraReady = false;
+  Timer? _pkPollTimer;
 
   String? get _streamId => widget.session.streamId?.trim();
 
@@ -92,7 +93,8 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
   }
 
   void _pollPk() {
-    Timer.periodic(const Duration(seconds: 3), (t) async {
+    _pkPollTimer?.cancel();
+    _pkPollTimer = Timer.periodic(const Duration(seconds: 3), (t) async {
       if (!mounted) {
         t.cancel();
         return;
@@ -115,6 +117,7 @@ class _LivePkBattlePageState extends ConsumerState<LivePkBattlePage> {
 
   @override
   void dispose() {
+    _pkPollTimer?.cancel();
     ref.read(liveGiftControllerProvider).detach();
     ref.read(liveGiftSocketBridgeProvider).disconnect();
     ref.read(pkBattleRemoteProvider.notifier).disconnectSocket();
@@ -372,8 +375,8 @@ class _PkVideoPane extends StatelessWidget {
     } else if (!isLocal && agora != null && remoteUid != null && remoteUid! > 0) {
       videoChild = AgoraRemoteVideoView(manager: agora!, uid: remoteUid!);
     } else if (thumbnailUrl != null && thumbnailUrl!.isNotEmpty) {
-      videoChild = CachedNetworkImage(
-        imageUrl: thumbnailUrl!,
+      videoChild = CanlifalNetworkImage(
+        url: thumbnailUrl!,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,

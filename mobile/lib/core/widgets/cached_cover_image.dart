@@ -1,7 +1,11 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-/// Liste / kart kapak görselleri — disk + bellek önbelleği.
+import '../images/canlifal_network_image.dart';
+
+export '../images/canlifal_image_urls.dart';
+export '../images/canlifal_network_image.dart';
+
+/// Liste / kart kapak görselleri — thumbnail + disk/bellek cache.
 class CachedCoverImage extends StatelessWidget {
   const CachedCoverImage({
     super.key,
@@ -11,6 +15,7 @@ class CachedCoverImage extends StatelessWidget {
     this.height,
     this.borderRadius,
     this.fallback,
+    this.onTapOpenFull = false,
   });
 
   final String url;
@@ -19,31 +24,28 @@ class CachedCoverImage extends StatelessWidget {
   final double? height;
   final BorderRadius? borderRadius;
   final Widget? fallback;
+  final bool onTapOpenFull;
 
   @override
   Widget build(BuildContext context) {
-    Widget img = CachedNetworkImage(
-      imageUrl: url,
+    return CanlifalNetworkImage(
+      url: url,
       width: width,
       height: height,
       fit: fit,
-      placeholder: (_, _) => _placeholder(),
-      errorWidget: (_, _, _) => fallback ?? _placeholder(),
+      borderRadius: borderRadius,
+      onTapOpenFull: onTapOpenFull,
+      errorWidget: fallback,
+      placeholder: fallback ?? _placeholder(),
     );
-
-    if (borderRadius != null) {
-      img = ClipRRect(borderRadius: borderRadius!, child: img);
-    }
-    return img;
   }
 
   Widget _placeholder() {
     return ColoredBox(
       color: Colors.white.withValues(alpha: 0.06),
-      child: fallback ??
-          const Center(
-            child: Icon(Icons.image_outlined, color: Colors.white38, size: 28),
-          ),
+      child: const Center(
+        child: Icon(Icons.image_outlined, color: Colors.white38, size: 28),
+      ),
     );
   }
 }

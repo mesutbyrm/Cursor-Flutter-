@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +8,7 @@ import 'package:canlifal_social/features/home/presentation/theme/home_approved_d
 import 'package:canlifal_social/features/home/presentation/widgets/approved/home_section_title.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 final _homeOnlinePsychicsProvider =
     FutureProvider.autoDispose<List<PsychicEntity>>((ref) async {
@@ -149,8 +149,8 @@ class _PsychicCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   child: psychic.avatarUrl != null &&
                           psychic.avatarUrl!.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: psychic.avatarUrl!,
+                      ? CanlifalNetworkImage(
+                          url: psychic.avatarUrl!,
                           width: 56,
                           height: 56,
                           fit: BoxFit.cover,

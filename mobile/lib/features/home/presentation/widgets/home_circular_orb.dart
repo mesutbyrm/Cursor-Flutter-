@@ -1,5 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/widgets/user_avatar.dart';
@@ -55,7 +55,7 @@ class HomeCircularOrb extends StatelessWidget {
                   child: imageUrl != null && imageUrl!.isNotEmpty
                       ? CircleAvatar(
                           radius: avatarR,
-                          backgroundImage: CachedNetworkImageProvider(
+                          backgroundImage: canlifalImageProvider(
                             imageUrl!,
                           ),
                         )

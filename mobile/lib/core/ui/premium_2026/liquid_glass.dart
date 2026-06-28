@@ -1,9 +1,7 @@
-import 'dart:ui';
-
+import 'package:canlifal_social/core/performance/effects_perf.dart';
+import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter/material.dart';
 
-import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
-import '../platform_blur.dart';
 import 'premium_2026_tokens.dart';
 import 'premium_motion.dart';
 
@@ -19,6 +17,7 @@ class LiquidGlass extends StatelessWidget {
     this.elevated = false,
     this.onTap,
     this.gradientBorder,
+    this.tier,
   });
 
   final Widget child;
@@ -29,15 +28,16 @@ class LiquidGlass extends StatelessWidget {
   final bool elevated;
   final VoidCallback? onTap;
   final Gradient? gradientBorder;
+  final GlassTier? tier;
 
   @override
   Widget build(BuildContext context) {
     final t = context.p26;
     final c = context.colors;
     final radius = borderRadius ?? BorderRadius.circular(t.radiusLiquid);
-    final blurEnabled = c.useGlassBlur && PlatformBlur.supportsBackdropBlur;
-    final effectiveBlur = blurEnabled ? blur : 0.0;
-    // Android: blur kapalıyken yarı saydam fill gri yıkama yapar — opak yüzey.
+    final blurEnabled = EffectsPerf.blurEnabled(context);
+    final tierSigma = tier != null ? EffectsPerf.sigma(tier!, context) : null;
+    final effectiveBlur = tierSigma ?? (blurEnabled ? blur : 0.0);
     final fill = blurEnabled
         ? (elevated ? t.glassFillElevated : t.glassFill)
         : (elevated ? const Color(0xFF1E1638) : const Color(0xFF18102C));
@@ -92,15 +92,11 @@ class LiquidGlass extends StatelessWidget {
       ),
     );
 
-    if (effectiveBlur > 0) {
-      inner = ClipRRect(
-        borderRadius: radius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: effectiveBlur, sigmaY: effectiveBlur),
-          child: inner,
-        ),
-      );
-    }
+    inner = EffectsPerf.backdrop(
+      sigma: effectiveBlur,
+      borderRadius: radius,
+      child: inner,
+    );
 
     inner = Container(
       decoration: BoxDecoration(
@@ -115,16 +111,15 @@ class LiquidGlass extends StatelessWidget {
       inner = Padding(padding: margin!, child: inner);
     }
 
+    inner = EffectsPerf.repaint(inner);
+
     if (onTap == null) return inner;
 
-    return PressableScale(
-      onTap: onTap!,
-      child: inner,
-    );
+    return PressableScale(onTap: onTap!, child: inner);
   }
 }
 
-/// Animasyonlu cam kart — durum değişimlerinde yumuşak geçiş.
+/// Animasyonlu cam kart — blur katmanı press animasyonundan izole.
 class LiquidGlassCard extends StatefulWidget {
   const LiquidGlassCard({
     super.key,
@@ -148,28 +143,24 @@ class _LiquidGlassCardState extends State<LiquidGlassCard> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedScale(
-      scale: _pressed ? 0.98 : 1,
-      duration: PremiumMotion.fast,
-      curve: PremiumMotion.spring,
-      child: AnimatedContainer(
-        duration: PremiumMotion.medium,
-        curve: PremiumMotion.easeOut,
-        child: LiquidGlass(
-          padding: widget.padding,
-          elevated: widget.elevated,
-          onTap: widget.onTap == null
-              ? null
-              : () {
-                  setState(() => _pressed = true);
-                  widget.onTap!();
-                  Future.delayed(PremiumMotion.fast, () {
-                    if (mounted) setState(() => _pressed = false);
-                  });
-                },
-          child: widget.child,
-        ),
-      ),
+    final glass = LiquidGlass(
+      padding: widget.padding,
+      elevated: widget.elevated,
+      onTap: widget.onTap == null
+          ? null
+          : () {
+              setState(() => _pressed = true);
+              widget.onTap!();
+              Future.delayed(PremiumMotion.fast, () {
+                if (mounted) setState(() => _pressed = false);
+              });
+            },
+      child: widget.child,
+    );
+
+    return EffectsPerf.pressScale(
+      blurredChild: glass,
+      pressed: _pressed,
     );
   }
 }
@@ -201,11 +192,10 @@ class _PressableScaleState extends State<PressableScale> {
       onTapUp: (_) => setState(() => _down = false),
       onTapCancel: () => setState(() => _down = false),
       onTap: widget.onTap,
-      child: AnimatedScale(
-        scale: _down ? widget.scaleDown : 1,
-        duration: PremiumMotion.fast,
-        curve: PremiumMotion.spring,
-        child: widget.child,
+      child: EffectsPerf.pressScale(
+        blurredChild: widget.child,
+        pressed: _down,
+        scaleDown: widget.scaleDown,
       ),
     );
   }

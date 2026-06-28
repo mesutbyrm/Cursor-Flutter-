@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
@@ -103,7 +103,7 @@ class _AdvisorCard extends StatelessWidget {
                     ? CircleAvatar(
                         radius: 38,
                         backgroundImage:
-                            CachedNetworkImageProvider(advisor.avatarUrl!),
+                            canlifalImageProvider(advisor.avatarUrl!),
                       )
                     : UserAvatar(radius: 38),
               ),

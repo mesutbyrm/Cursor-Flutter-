@@ -3,21 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/widgets/canlifal_logo.dart';
+import '../../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../messages/presentation/providers/messages_providers.dart';
 import '../../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../../../profile/presentation/providers/profile_providers.dart';
 import '../../theme/home_approved_design.dart';
 
 /// Onaylı mockup — logo, arama, bildirim, mesaj, jeton.
-class HomeHeader extends ConsumerWidget {
+class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final top = MediaQuery.paddingOf(context).top;
-    final unreadNotif = ref.watch(notificationsUnreadCountProvider);
-    final unreadMsg = ref.watch(messagesUnreadCountProvider);
-    final jeton = ref.watch(walletBalancesProvider).valueOrNull?.jeton ?? 0;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -33,23 +31,7 @@ class HomeHeader extends ConsumerWidget {
             children: [
               const CanlifalWordmark(fontSize: 24, compact: true),
               const Spacer(),
-              _IconBadge(
-                icon: Icons.notifications_none_rounded,
-                badge: unreadNotif,
-                onTap: () => context.push('/notifications'),
-              ),
-              const SizedBox(width: 10),
-              _IconBadge(
-                icon: Icons.chat_bubble_outline_rounded,
-                badge: unreadMsg,
-                onTap: () => context.push('/messages'),
-              ),
-              const SizedBox(width: 10),
-              _CoinPill(
-                balance: jeton,
-                onTap: () => context.push('/jeton-store'),
-                onAdd: () => context.push('/jeton-store'),
-              ),
+              const _HomeHeaderBadges(),
             ],
           ),
           const SizedBox(height: 12),
@@ -85,6 +67,74 @@ class HomeHeader extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Bildirim, mesaj, jeton — anında render; cüzdan shell prefetch ile güncellenir.
+class _HomeHeaderBadges extends ConsumerWidget {
+  const _HomeHeaderBadges();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: const [
+        _NotificationBadge(),
+        SizedBox(width: 10),
+        _MessagesBadge(),
+        SizedBox(width: 10),
+        _HomeJetonPill(),
+      ],
+    );
+  }
+}
+
+class _NotificationBadge extends ConsumerWidget {
+  const _NotificationBadge();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadNotif = ref.watch(notificationsUnreadCountProvider);
+    return _IconBadge(
+      icon: Icons.notifications_none_rounded,
+      badge: unreadNotif,
+      onTap: () => context.push('/notifications'),
+    );
+  }
+}
+
+class _MessagesBadge extends ConsumerWidget {
+  const _MessagesBadge();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadMsg = ref.watch(messagesUnreadCountProvider);
+    return _IconBadge(
+      icon: Icons.chat_bubble_outline_rounded,
+      badge: unreadMsg,
+      onTap: () => context.push('/messages'),
+    );
+  }
+}
+
+/// Rozetler — jeton oturum cache + cüzdan API.
+class _HomeJetonPill extends ConsumerWidget {
+  const _HomeJetonPill();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final walletJeton = ref.watch(
+      walletBalancesProvider.select((w) => w.valueOrNull?.jeton),
+    );
+    final authJeton = ref.watch(
+      authControllerProvider.select((a) => a.valueOrNull?.coinBalance),
+    );
+    final jeton = walletJeton ?? authJeton ?? 0;
+    return _CoinPill(
+      balance: jeton,
+      onTap: () => context.push('/jeton-store'),
+      onAdd: () => context.push('/jeton-store'),
     );
   }
 }

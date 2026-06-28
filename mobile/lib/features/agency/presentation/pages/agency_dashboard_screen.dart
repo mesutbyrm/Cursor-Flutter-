@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/theme/app_theme_extensions.dart';
 import '../../domain/entities/agency_entity.dart';
@@ -128,7 +128,7 @@ class _AgencyHeader extends StatelessWidget {
                 radius: 28,
                 backgroundColor: const Color(0xFF2196F3),
                 backgroundImage:
-                    agency.logoUrl != null ? CachedNetworkImageProvider(agency.logoUrl!) : null,
+                    agency.logoUrl != null ? canlifalImageProvider(agency.logoUrl!) : null,
                 child: agency.logoUrl == null
                     ? const Icon(Icons.business, color: Colors.white, size: 28)
                     : null,
@@ -292,7 +292,7 @@ class _MemberTile extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundImage:
-              member.avatarUrl != null ? CachedNetworkImageProvider(member.avatarUrl!) : null,
+              member.avatarUrl != null ? canlifalImageProvider(member.avatarUrl!) : null,
           child: member.avatarUrl == null
               ? Text(member.name.isNotEmpty ? member.name[0] : '?')
               : null,

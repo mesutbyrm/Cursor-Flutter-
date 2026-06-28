@@ -125,6 +125,8 @@ class _PushLifecycleListenerState extends ConsumerState<PushLifecycleListener> {
           ref.refreshWalletCache(force: true);
         },
       );
+      PushNavigationHandler.staffCanManagePayments = () =>
+          ref.read(staffAccessProvider).canManagePayments;
       _queuePushSync(null, ref.read(authControllerProvider));
     });
 

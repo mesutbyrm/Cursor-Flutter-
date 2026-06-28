@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../core/di/pf_providers.dart';
 import '../../core/theme/pf_theme.dart';
@@ -56,7 +56,7 @@ class _PfProfilePageState extends ConsumerState<PfProfilePage> {
                   radius: 40,
                   backgroundColor: PfTheme.purple,
                   backgroundImage:
-                      user.photoUrl != null ? CachedNetworkImageProvider(user.photoUrl!) : null,
+                      user.photoUrl != null ? canlifalImageProvider(user.photoUrl!) : null,
                   child: user.photoUrl == null
                       ? Text(
                           user.displayName[0],

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/ui/pro_glass/pro_glass.dart';
 import '../../../../core/ui/responsive/responsive_layout.dart';
+import '../providers/payment_requests_notifier.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/jeton_payment_status_listener.dart';
 import '../widgets/jeton_premium_purchase_view.dart';
@@ -34,6 +35,7 @@ class JetonPurchasePage extends ConsumerWidget {
                     onRefresh: () async {
                       ref.refreshWalletCache(force: true);
                       ref.invalidate(paymentConfigProvider);
+                      ref.invalidate(paymentRequestsNotifierProvider);
                       await ref.read(walletBalancesProvider.future);
                     },
                     child: ListView(

@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../../../voice_hub/presentation/widgets/voice_room_grid_tile.dart';
@@ -101,10 +101,10 @@ class _MiniPresenceAvatar extends StatelessWidget {
         ],
       ),
       child: ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: url,
+        child: CanlifalNetworkImage(
+          url: url,
           fit: BoxFit.cover,
-          placeholder: (_, _) => ColoredBox(
+          placeholder: ColoredBox(
             color: context.colors.surfaceContainer,
             child: Icon(
               Icons.person,
@@ -112,7 +112,7 @@ class _MiniPresenceAvatar extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.6),
             ),
           ),
-          errorWidget: (_, _, _) => ColoredBox(
+          errorWidget: ColoredBox(
             color: context.colors.surfaceContainer,
             child: Icon(
               Icons.person,

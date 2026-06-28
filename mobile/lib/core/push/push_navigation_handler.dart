@@ -10,6 +10,7 @@ class PushNavigationHandler {
   PushNavigationHandler._();
 
   static GoRouter? _router;
+  static bool Function()? staffCanManagePayments;
   static void Function()? onPushReceived;
   static void Function(Map<String, dynamic> data)? onFortuneInvite;
   static void Function(PsychicSessionUpdatePayload update)? onSessionUpdate;
@@ -132,7 +133,11 @@ class PushNavigationHandler {
     );
 
     try {
-      navigateFromNotification(router, entity);
+      navigateFromNotification(
+        router,
+        entity,
+        staffCanManagePayments: staffCanManagePayments?.call() ?? false,
+      );
     } catch (e, st) {
       debugPrint('Push navigation failed: $e\n$st');
     }

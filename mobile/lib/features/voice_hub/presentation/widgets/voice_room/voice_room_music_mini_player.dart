@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/theme/app_theme_colors.dart';
 import '../../theme/voice_room_tokens.dart';
@@ -119,7 +119,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
             diag.playbackSource ??
             dj.musicUrl ??
             displayTrack.youtubeUrl;
-        final debugLine = _debugLine(diag, debugUrl);
+        final debugLine = _debugLine(diag, debugUrl, dj.musicUrl);
 
         return Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
@@ -385,10 +385,19 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
         );
   }
 
-  String? _debugLine(VoiceRoomMusicDiagnostics diag, String? url) {
+  String? _debugLine(
+    VoiceRoomMusicDiagnostics diag,
+    String? url,
+    String? serverMusicUrl,
+  ) {
     final parts = <String>[];
     if (url != null && url.isNotEmpty) {
-      parts.add('url=${_shortUrl(url)}');
+      parts.add('play=${_shortUrl(url)}');
+    }
+    if (serverMusicUrl != null &&
+        serverMusicUrl.isNotEmpty &&
+        serverMusicUrl != url) {
+      parts.add('srv=${_shortUrl(serverMusicUrl)}');
     }
     if (diag.processingState != null) {
       parts.add('state=${diag.processingState}');
@@ -415,7 +424,7 @@ class VoiceRoomMusicMiniPlayer extends ConsumerWidget {
   Widget _thumb(MusicQueueItem track) {
     final url = track.thumbUrl;
     if (url != null && url.isNotEmpty) {
-      return CachedNetworkImage(imageUrl: url, fit: BoxFit.cover);
+      return CanlifalNetworkImage(url: url, fit: BoxFit.cover);
     }
     return ColoredBox(
       color: AppThemeColors.accentPurple.withValues(alpha: 0.4),

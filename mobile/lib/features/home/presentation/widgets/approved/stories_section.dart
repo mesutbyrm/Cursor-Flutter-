@@ -1,9 +1,10 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../../core/widgets/lazy_list_views.dart';
 import '../../../../../core/widgets/user_avatar.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../auth/domain/entities/user_entity.dart';
@@ -38,18 +39,19 @@ class StoriesSection extends ConsumerWidget {
             withStories.where((r) => r.user.id != me?.id).toList();
         return SizedBox(
           height: HomeApprovedDesign.storySize + 36,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
+          child: LazyHorizontalListView(
             padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-            children: [
-              _OwnStoryChip(user: me),
-              ...others.map(
-                (r) => Padding(
-                  padding: const EdgeInsets.only(left: 12),
-                  child: _StoryChip(ring: r),
-                ),
-              ),
-            ],
+            itemCount: 1 + others.length,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return _OwnStoryChip(user: me);
+              }
+              final ring = others[index - 1];
+              return Padding(
+                padding: const EdgeInsets.only(left: 12),
+                child: _StoryChip(ring: ring),
+              );
+            },
           ),
         );
       },
@@ -174,8 +176,8 @@ class _StoryChip extends StatelessWidget {
                   ),
                   child: ClipOval(
                     child: ring.user.avatarUrl != null
-                        ? CachedNetworkImage(
-                            imageUrl: ring.user.avatarUrl!,
+                        ? CanlifalNetworkImage(
+                            url: ring.user.avatarUrl!,
                             fit: BoxFit.cover,
                             width: HomeApprovedDesign.storySize,
                             height: HomeApprovedDesign.storySize,

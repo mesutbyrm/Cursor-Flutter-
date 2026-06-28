@@ -4,10 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/live_debug_log.dart';
+import '../../../../core/performance/network_perf.dart';
+import '../../../../core/network/sse/sse_hub_provider.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../live_psychics/presentation/providers/psychic_live_event_bus.dart';
 import '../../domain/entities/live_stream_chat_message.dart';
 import '../../domain/entities/live_fortune_request_entity.dart';
+import '../../domain/entities/live_stream_entity.dart';
 import '../../domain/utils/live_chat_guard.dart';
 import '../widgets/broadcast_room/live_room_chat_message.dart';
 import 'live_providers.dart';
@@ -71,7 +74,7 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
   LiveRoomState build(String streamId) {
     ref.onDispose(() {
       _poll?.cancel();
-      ref.read(videoStreamSseServiceProvider).disconnect();
+      ref.read(sseConnectionHubProvider).releaseVideoStream(streamId);
       unawaited(ref.read(liveRemoteProvider).leaveVideoStream(streamId));
     });
     Future.microtask(() => _bootstrap(streamId));
@@ -81,21 +84,31 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
   Future<void> _bootstrap(String streamId) async {
     try {
       final remote = ref.read(liveRemoteProvider);
-      final count = await remote.joinVideoStream(streamId);
-      state = state.copyWith(viewerCount: count, clearError: true);
-      final history = await remote.fetchStreamMessages(streamId);
-      _mergeMessages(history);
+      final boot = await NetworkPerf.parallel([
+        remote.joinVideoStream(streamId),
+        remote.fetchStreamMessages(streamId),
+      ]);
+      state = state.copyWith(viewerCount: boot[0] as int, clearError: true);
+      _mergeMessages(boot[1] as List<LiveStreamChatMessage>);
       _startRealtime(streamId);
       _poll = Timer.periodic(const Duration(seconds: 12), (_) async {
         if (state.streamEnded) return;
         try {
           if (!state.sseConnected) {
-            final latest = await remote.fetchStreamMessages(streamId);
-            _mergeMessages(latest);
-          }
-          final meta = await remote.fetchStream(streamId);
-          if (meta != null && !meta.isLive) {
-            state = state.copyWith(streamEnded: true);
+            final poll = await NetworkPerf.parallel([
+              remote.fetchStreamMessages(streamId),
+              remote.fetchStream(streamId),
+            ]);
+            _mergeMessages(poll[0] as List<LiveStreamChatMessage>);
+            final meta = poll[1] as LiveStreamEntity?;
+            if (meta != null && !meta.isLive) {
+              state = state.copyWith(streamEnded: true);
+            }
+          } else {
+            final meta = await remote.fetchStream(streamId);
+            if (meta != null && !meta.isLive) {
+              state = state.copyWith(streamEnded: true);
+            }
           }
         } catch (_) {}
       });
@@ -106,8 +119,11 @@ class LiveRoomController extends AutoDisposeFamilyNotifier<LiveRoomState, String
 
   void _startRealtime(String streamId) {
     final storage = ref.read(tokenStorageProvider);
+    final hub = ref.read(sseConnectionHubProvider);
+    hub.attachVideoStream(streamId);
+    final sse = hub.videoStream(streamId);
 
-    ref.read(videoStreamSseServiceProvider).connect(
+    sse.connect(
       streamId: streamId,
       accessToken: storage.readAccess,
       onConnected: () {

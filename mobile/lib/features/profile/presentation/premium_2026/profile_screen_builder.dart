@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../admin/presentation/providers/staff_access_provider.dart';
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../wallet/domain/wallet_balances.dart';
 import '../../../fortune/presentation/providers/fortune_access_providers.dart';
 import '../../../live_psychics/presentation/controllers/psychics_list_controller.dart';
 import '../../domain/entities/daily_task_entity.dart';
@@ -9,7 +10,32 @@ import '../../domain/entities/profile_stats_entity.dart';
 import '../providers/profile_providers.dart';
 import 'profile_screen_state.dart';
 
-/// Mevcut provider'lardan birleşik profil durumu.
+/// Oturum kullanıcısından minimum profil durumu — ek API yok.
+ProfileScreenState profileScreenStateFromUser(UserEntity user) {
+  return ProfileScreenState(
+    user: user,
+    jeton: user.coinBalance,
+  );
+}
+
+/// Cüzdan verisi geldiğinde birleştirilmiş durum.
+ProfileScreenState buildProfileWalletState(
+  ProfileScreenState base,
+  WalletBalances? wallet,
+) {
+  final membership = wallet?.membership?.trim();
+  final hasMembership = membership != null && membership.isNotEmpty;
+  return base.copyWith(
+    wallet: wallet,
+    jeton: wallet?.jeton ?? base.jeton,
+    cfc: wallet?.cfc ?? base.cfc,
+    membership: hasMembership ? membership : null,
+    membershipDays: wallet?.membershipDaysRemaining,
+    isVip: hasMembership,
+  );
+}
+
+/// Mevcut provider'lardan birleşik profil durumu (yenileme / tam yükleme).
 ProfileScreenState buildProfileScreenState(WidgetRef ref, UserEntity user) {
   final wallet = ref.watch(walletBalancesProvider).valueOrNull;
   final stats =
@@ -20,20 +46,13 @@ ProfileScreenState buildProfileScreenState(WidgetRef ref, UserEntity user) {
   final staff = ref.watch(staffAccessProvider);
   final approved = ref.watch(approvedPsychicProvider);
 
-  final membership = wallet?.membership?.trim();
-  final hasMembership = membership != null && membership.isNotEmpty;
+  var state = buildProfileWalletState(
+    profileScreenStateFromUser(user).copyWith(stats: stats, level: level),
+    wallet,
+  );
 
-  return ProfileScreenState(
-    user: user,
-    wallet: wallet,
-    stats: stats,
-    level: level,
-    jeton: wallet?.jeton ?? user.coinBalance,
-    cfc: wallet?.cfc ?? 0,
+  return state.copyWith(
     adCredits: access?.adCredits ?? wallet?.fortuneAdCredits ?? 0,
-    membership: hasMembership ? membership : null,
-    membershipDays: wallet?.membershipDaysRemaining,
-    isVip: hasMembership,
     isStaff: staff.canManagePayments,
     isAdmin: staff.canManagePayments,
     isApprovedTeller: approved.isApprovedTeller,

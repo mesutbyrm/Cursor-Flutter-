@@ -1,10 +1,9 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
-import '../../performance/list_perf.dart';
-import '../platform_blur.dart';
+import 'package:canlifal_social/core/performance/effects_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:flutter/material.dart';
+
 import '../../widgets/themed_glass_card.dart';
 import '../premium_2026/premium_motion.dart';
 
@@ -20,6 +19,7 @@ class ProGlassCard extends StatelessWidget {
     this.elevated = false,
     this.animateIn = true,
     this.borderRadius,
+    this.tier,
   });
 
   final Widget child;
@@ -31,12 +31,15 @@ class ProGlassCard extends StatelessWidget {
   final bool animateIn;
   final BorderRadius? borderRadius;
 
+  /// Liste/grid satırı için [GlassTier.static] — blur kapalı.
+  final GlassTier? tier;
+
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
-    final effectiveBlur =
-        c.useGlassBlur && PlatformBlur.supportsBackdropBlur ? blur : 0.0;
-    Widget card = ThemedGlassCard(
+    final effectiveBlur = tier == GlassTier.static
+        ? 0.0
+        : (EffectsPerf.blurEnabled(context) ? blur : 0.0);
+    final card = ThemedGlassCard(
       padding: padding,
       margin: margin,
       borderRadius: borderRadius,
@@ -45,8 +48,6 @@ class ProGlassCard extends StatelessWidget {
       onTap: onTap,
       child: child,
     );
-
-    card = ListPerf.repaint(card);
 
     if (!animateIn) return card;
 
@@ -69,7 +70,7 @@ class ProGlassCard extends StatelessWidget {
   }
 }
 
-/// Hafif cam — listelerde düşük blur (performans).
+/// Hafif cam — listelerde blur yok (gölge + fill).
 class ProGlassListTile extends StatelessWidget {
   const ProGlassListTile({
     super.key,
@@ -85,7 +86,8 @@ class ProGlassListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ProGlassCard(
-      blur: 12,
+      tier: GlassTier.static,
+      blur: 0,
       elevated: false,
       animateIn: false,
       padding: padding,
@@ -109,24 +111,13 @@ class ProGlassTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final sigma =
-        c.useGlassBlur && PlatformBlur.supportsBackdropBlur ? 20.0 : 0.0;
-    Widget bar = Container(
-      height: height,
+    return EffectsPerf.chromeBar(
+      context: context,
       decoration: BoxDecoration(
         color: c.glassFill,
         border: Border(bottom: BorderSide(color: c.divider)),
       ),
-      child: child,
+      child: SizedBox(height: height, child: child),
     );
-    if (sigma > 0) {
-      bar = ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-          child: bar,
-        ),
-      );
-    }
-    return bar;
   }
 }

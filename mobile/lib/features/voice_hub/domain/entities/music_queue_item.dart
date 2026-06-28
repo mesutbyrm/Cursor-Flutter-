@@ -85,6 +85,25 @@ class MusicQueueItem extends Equatable {
   bool get isVideoRequest => requestType == 'video' || withVideo;
   bool get isAudioRequest => requestType == 'audio' || !isVideoRequest;
 
+  /// İstemci video isteği gönderdiğinde sunucu bayrağı eksikse tamamlar.
+  MusicQueueItem asVideoRequest() {
+    if (isVideoRequest) return this;
+    return MusicQueueItem(
+      id: id,
+      title: title,
+      youtubeUrl: youtubeUrl,
+      createdAt: createdAt,
+      thumbUrl: thumbUrl,
+      requestedBy: requestedBy,
+      giftTo: giftTo,
+      note: note,
+      uploader: uploader,
+      duration: duration,
+      requestType: 'video',
+      withVideo: true,
+    );
+  }
+
   String get artistLine {
     final parts = <String>[];
     if (uploader != null && uploader!.isNotEmpty) parts.add(uploader!);

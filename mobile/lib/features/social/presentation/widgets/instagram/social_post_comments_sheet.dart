@@ -61,7 +61,9 @@ class _SocialPostCommentsSheetState
     extends ConsumerState<SocialPostCommentsSheet> {
   final _controller = TextEditingController();
   var _sending = false;
-  late Future<List<SocialCommentEntity>> _future;
+  List<SocialCommentEntity>? _items;
+  Object? _loadError;
+  var _loading = true;
 
   @override
   void initState() {
@@ -69,8 +71,26 @@ class _SocialPostCommentsSheetState
     _reload();
   }
 
-  void _reload() {
-    _future = ref.read(socialRepositoryProvider).fetchComments(widget.postId);
+  Future<void> _reload() async {
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
+    try {
+      final list =
+          await ref.read(socialRepositoryProvider).fetchComments(widget.postId);
+      if (!mounted) return;
+      setState(() {
+        _items = list;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = e;
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -97,7 +117,7 @@ class _SocialPostCommentsSheetState
       await ref.read(socialRepositoryProvider).addComment(widget.postId, text);
       ref.read(socialNotifierProvider.notifier).bumpCommentCount(widget.postId);
       _controller.clear();
-      setState(_reload);
+      await _reload();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Yorum gönderildi')),
@@ -143,63 +163,7 @@ class _SocialPostCommentsSheetState
                 ],
               ),
             ),
-            Expanded(
-              child: FutureBuilder<List<SocialCommentEntity>>(
-                future: _future,
-                builder: (context, snap) {
-                  if (snap.connectionState != ConnectionState.done) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snap.hasError) {
-                    return Center(
-                      child: Text(ApiException.userMessage(snap.error!)),
-                    );
-                  }
-                  final items = snap.data ?? const [];
-                  if (items.isEmpty) {
-                    return Center(
-                      child: Text(
-                        widget.initialCount > 0
-                            ? 'Yorumlar yüklenemedi veya gizli.'
-                            : 'İlk yorumu sen yaz.',
-                        style: TextStyle(color: context.colors.onSurfaceMuted),
-                      ),
-                    );
-                  }
-                  return ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: items.length,
-                    separatorBuilder: (_, _) => const Divider(height: 20),
-                    itemBuilder: (context, i) {
-                      final c = items[i];
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          UserAvatar(url: c.author.avatarUrl, radius: 18),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  c.author.display,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(c.text),
-                              ],
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
+            Expanded(child: _buildCommentsList(context)),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
               child: Row(
@@ -241,6 +205,59 @@ class _SocialPostCommentsSheetState
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCommentsList(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_loadError != null) {
+      return Center(
+        child: Text(ApiException.userMessage(_loadError!)),
+      );
+    }
+    final items = _items ?? const [];
+    if (items.isEmpty) {
+      return Center(
+        child: Text(
+          widget.initialCount > 0
+              ? 'Yorumlar yüklenemedi veya gizli.'
+              : 'İlk yorumu sen yaz.',
+          style: TextStyle(color: context.colors.onSurfaceMuted),
+        ),
+      );
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const Divider(height: 20),
+      itemBuilder: (context, i) {
+        final c = items[i];
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            UserAvatar(url: c.author.avatarUrl, radius: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    c.author.display,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(c.text),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

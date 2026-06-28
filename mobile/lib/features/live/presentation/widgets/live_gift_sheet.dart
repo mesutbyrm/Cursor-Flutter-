@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/config/env.dart';
 import '../../../../core/network/api_exception.dart';
@@ -162,11 +162,10 @@ class _GiftTile extends StatelessWidget {
               Expanded(
                 child: url.isEmpty
                     ? const Icon(Icons.card_giftcard, size: 36)
-                    : CachedNetworkImage(
-                        imageUrl: url,
+                    : CanlifalNetworkImage(
+                        url: url,
                         fit: BoxFit.contain,
-                        errorWidget: (context, url, error) =>
-                            const Icon(Icons.card_giftcard),
+                        errorWidget: const Icon(Icons.card_giftcard),
                       ),
               ),
               const SizedBox(height: 4),

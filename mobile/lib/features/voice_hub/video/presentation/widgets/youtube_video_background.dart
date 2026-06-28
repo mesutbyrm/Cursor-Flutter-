@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -37,9 +38,13 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
   var _playerReady = false;
   var _loadFailed = false;
   var _endingHandled = false;
+  var _disposed = false;
+  Timer? _endingResetTimer;
 
   @override
   void dispose() {
+    _disposed = true;
+    _endingResetTimer?.cancel();
     _controller = null;
     _webView = null;
     super.dispose();
@@ -89,7 +94,7 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     _webView = WebViewWidget.fromPlatformCreationParams(
       params: widgetParams,
     );
-    if (mounted) setState(() {});
+    if (mounted && !_disposed) setState(() {});
   }
 
   void _onBridgeMessage(JavaScriptMessage message) {
@@ -118,8 +123,9 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     } catch (e) {
       VoiceRoomDebugLog.log('roomVideo.ended.fail', {'error': '$e'});
     }
-    Future<void>.delayed(const Duration(seconds: 4), () {
-      _endingHandled = false;
+    _endingResetTimer?.cancel();
+    _endingResetTimer = Timer(const Duration(seconds: 4), () {
+      if (!_disposed) _endingHandled = false;
     });
   }
 
@@ -330,15 +336,12 @@ class _YoutubeVideoBackgroundState extends ConsumerState<YoutubeVideoBackground>
     if (thumb == null || thumb.isEmpty) {
       return const ColoredBox(color: Color(0x66000000));
     }
-    return Image.network(
-      thumb,
+    return CanlifalNetworkImage(
+      url: thumb,
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      errorBuilder: (_, e, _) {
-        VoiceRoomDebugLog.log('roomVideo.thumb.fail', {'error': e.toString()});
-        return const ColoredBox(color: Color(0x66000000));
-      },
+      errorWidget: const ColoredBox(color: Color(0x66000000)),
     );
   }
 }

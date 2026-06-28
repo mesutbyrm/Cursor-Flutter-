@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/performance/animation_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,7 +31,7 @@ class DailyFortuneOpenPage extends ConsumerStatefulWidget {
 class _DailyFortuneOpenPageState extends ConsumerState<DailyFortuneOpenPage> {
   var _opening = false;
   final _scroll = ScrollController();
-  double _scrollOffset = 0;
+  final _scrollParallax = ScrollParallaxNotifier();
   FortuneReadingResult? _inlineResult;
 
   FortuneTypeEntity get type => widget.type;
@@ -38,11 +39,12 @@ class _DailyFortuneOpenPageState extends ConsumerState<DailyFortuneOpenPage> {
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(() => setState(() => _scrollOffset = _scroll.offset));
+    _scrollParallax.bind(_scroll);
   }
 
   @override
   void dispose() {
+    _scrollParallax.dispose();
     _scroll.dispose();
     super.dispose();
   }
@@ -114,7 +116,7 @@ class _DailyFortuneOpenPageState extends ConsumerState<DailyFortuneOpenPage> {
                   children: [
                     DailyFortunePremiumHero(
                       height: 300,
-                      parallaxOffset: _scrollOffset,
+                      scrollParallax: _scrollParallax,
                     ),
                     const SizedBox(height: 28),
                     PremiumFortuneOpenButton(

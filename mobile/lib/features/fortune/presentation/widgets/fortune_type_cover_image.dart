@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../data/fortune_type_images.dart';
@@ -38,13 +38,12 @@ class FortuneTypeCoverImage extends StatelessWidget {
             fit: fit,
             errorBuilder: (_, _, _) => const SizedBox.shrink(),
           ),
-        CachedNetworkImage(
-          imageUrl: url,
+        CanlifalNetworkImage(
+          url: url,
           fit: fit,
-          memCacheWidth: imageWidth > 1080 ? 1080 : imageWidth,
-          fadeInDuration: const Duration(milliseconds: 350),
-          placeholder: (_, _) => FortuneImageShimmer(accent: accent),
-          errorWidget: (_, _, _) => const SizedBox.shrink(),
+          thumbnailWidth: imageWidth > 1080 ? 1080 : imageWidth,
+          placeholder: FortuneImageShimmer(accent: accent),
+          errorWidget: const SizedBox.shrink(),
         ),
         if (showOverlay)
           DecoratedBox(

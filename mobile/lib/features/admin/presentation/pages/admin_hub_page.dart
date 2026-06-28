@@ -6,10 +6,12 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/performance/network_perf.dart';
 import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -235,8 +237,10 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
         },
       );
       _refreshAll();
-      await ref.read(adminPaymentRequestsProvider.future);
-      await ref.read(adminPaymentNotificationsProvider.future);
+      await NetworkPerf.parallel([
+        ref.read(adminPaymentRequestsProvider.future),
+        ref.read(adminPaymentNotificationsProvider.future),
+      ]);
       ref.refreshWalletCache(force: true);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -342,7 +346,7 @@ class _PendingPaymentsTab extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               InteractiveViewer(
-                child: Image.network(url, fit: BoxFit.contain),
+                child: CanlifalNetworkImage.full(url: url, fit: BoxFit.contain),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx),

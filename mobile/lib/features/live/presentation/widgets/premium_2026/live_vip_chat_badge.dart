@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 /// Sohbet rozetleri — VIP, seviye, falcı, moderatör.
@@ -81,12 +83,20 @@ class LiveVipEntranceBanner extends StatefulWidget {
 }
 
 class _LiveVipEntranceBannerState extends State<LiveVipEntranceBanner> {
+  Timer? _doneTimer;
+
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 3), () {
+    _doneTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) widget.onDone?.call();
     });
+  }
+
+  @override
+  void dispose() {
+    _doneTimer?.cancel();
+    super.dispose();
   }
 
   @override

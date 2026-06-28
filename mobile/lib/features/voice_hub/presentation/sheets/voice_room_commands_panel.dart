@@ -21,6 +21,7 @@ Future<void> showVoiceRoomCommandsPanel(
   required VoiceRoomPermissions perms,
   required bool isOwner,
 }) {
+  final container = ProviderScope.containerOf(context);
   return showGeneralDialog(
     context: context,
     barrierDismissible: true,
@@ -43,10 +44,13 @@ Future<void> showVoiceRoomCommandsPanel(
             child: SizedBox(
               width: (w * 0.92).clamp(300.0, 420.0),
               height: MediaQuery.sizeOf(ctx).height,
-              child: _VoiceRoomCommandsPanel(
-                room: room,
-                perms: perms,
-                isOwner: isOwner,
+              child: UncontrolledProviderScope(
+                container: container,
+                child: _VoiceRoomCommandsPanel(
+                  room: room,
+                  perms: perms,
+                  isOwner: isOwner,
+                ),
               ),
             ),
           ),
@@ -491,22 +495,24 @@ class _VoiceRoomCommandsPanelState extends ConsumerState<_VoiceRoomCommandsPanel
                   color: const Color(0xFF38BDF8),
                 ),
                 if (canModerate)
-                  GridView.count(
+                  GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 1.55,
-                    children: _modGrid
-                        .map(
-                          (c) => _PromoActionCard(
-                            card: c,
-                            compact: true,
-                            onTap: () => _onPromoTap(c),
-                          ),
-                        )
-                        .toList(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 1.55,
+                    ),
+                    itemCount: _modGrid.length,
+                    itemBuilder: (context, index) {
+                      final c = _modGrid[index];
+                      return _PromoActionCard(
+                        card: c,
+                        compact: true,
+                        onTap: () => _onPromoTap(c),
+                      );
+                    },
                   )
                 else
                   Text(

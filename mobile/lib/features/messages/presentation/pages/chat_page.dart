@@ -9,10 +9,11 @@ import '../../../../core/widgets/discover_tab_layout.dart';
 import '../../../feed/presentation/widgets/discover/discover_background.dart';
 import '../../../moderation/domain/entities/report_target.dart';
 import '../../../moderation/presentation/utils/open_report_flow.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/chat_messages_list_notifier.dart';
 import '../providers/messages_providers.dart';
-import '../widgets/chat_composer.dart';
-import '../widgets/chat_message_bubble.dart';
+import '../widgets/chat_composer_bar.dart';
+import '../widgets/chat_messages_list_pane.dart';
 import '../widgets/chat_typing_indicator.dart';
 
 class ChatPage extends ConsumerStatefulWidget {
@@ -27,9 +28,7 @@ class ChatPage extends ConsumerStatefulWidget {
 class _ChatPageState extends ConsumerState<ChatPage> {
   final _text = TextEditingController();
   final _scroll = ScrollController();
-  var _sending = false;
   var _peerTyping = false;
-  Timer? _typingHideTimer;
   Timer? _poll;
 
   @override
@@ -39,9 +38,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     _poll = Timer.periodic(const Duration(seconds: 8), (_) {
       if (!mounted) return;
       ref
-          .read(chatMessagesListNotifierProvider(widget.conversationId)
-              .notifier)
-          .refresh();
+          .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
+          .refresh(silent: true, forceRefresh: true);
     });
   }
 
@@ -49,7 +47,6 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   void dispose() {
     _poll?.cancel();
     _scroll.removeListener(_onScroll);
-    _typingHideTimer?.cancel();
     _text.dispose();
     _scroll.dispose();
     super.dispose();
@@ -59,8 +56,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     if (!_scroll.hasClients) return;
     if (_scroll.position.pixels <= ListPerf.preloadThresholdPx) {
       ref
-          .read(chatMessagesListNotifierProvider(widget.conversationId)
-              .notifier)
+          .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
           .loadOlder();
     }
   }
@@ -77,40 +73,23 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     });
   }
 
-  void _onComposerChanged(String value) {
-    // Typing indicator is driven by SSE events from peer, not local input.
-  }
-
-  Future<void> _send() async {
-    final t = _text.text.trim();
-    if (t.isEmpty || _sending) return;
-    setState(() => _sending = true);
-    try {
-      await ref
-          .read(messagesRepositoryProvider)
-          .sendMessage(widget.conversationId, t);
-      _text.clear();
-      await ref
-          .read(chatMessagesListNotifierProvider(widget.conversationId)
-              .notifier)
-          .refresh();
-      ref.invalidate(conversationsProvider);
-      _scrollToEnd();
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
+  Future<void> _sendMessage(String text) async {
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    await ref.read(messagesRepositoryProvider).sendMessage(
+          widget.conversationId,
+          text,
+          currentUserId: userId,
+        );
+    _text.clear();
+    await ref
+        .read(chatMessagesListNotifierProvider(widget.conversationId).notifier)
+        .refresh(forceRefresh: true);
+    ref.invalidate(conversationsProvider);
+    _scrollToEnd();
   }
 
   @override
   Widget build(BuildContext context) {
-    final msgs =
-        ref.watch(chatMessagesListNotifierProvider(widget.conversationId));
-
-    ref.listen(chatMessagesListNotifierProvider(widget.conversationId),
-        (_, next) {
-      next.whenData((_) => _scrollToEnd());
-    });
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
@@ -151,64 +130,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               ),
             ),
             Expanded(
-              child: msgs.when(
-                loading: () => const DiscoverAccentLoader(),
-                error: (e, _) => DiscoverEmptyState(
-                  icon: Icons.chat_bubble_outline,
-                  message: e.toString(),
-                ),
-                data: (state) {
-                  if (state.all.isEmpty) {
-                    return const DiscoverEmptyState(
-                      icon: Icons.waving_hand_rounded,
-                      message: 'Mesaj yok — ilk mesajı gönder.',
-                    );
-                  }
-                  final rows = state.visible;
-                  final showOlder = state.hasMore;
-                  return ListView.builder(
-                    cacheExtent: ListPerf.cacheExtent, controller: _scroll,
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                    physics: ListPerf.listPhysics,
-                    itemCount: rows.length + (showOlder ? 1 : 0),
-                    itemBuilder: (ctx, i) {
-                      if (showOlder && i == 0) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Center(
-                            child: TextButton.icon(
-                              onPressed: () => ref
-                                  .read(
-                                    chatMessagesListNotifierProvider(
-                                      widget.conversationId,
-                                    ).notifier,
-                                  )
-                                  .loadOlder(),
-                              icon: const Icon(Icons.expand_less_rounded),
-                              label: Text(
-                                state.olderHiddenCount > 0
-                                    ? '${state.olderHiddenCount} eski mesaj'
-                                    : 'Daha fazla yükle',
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                      final idx = showOlder ? i - 1 : i;
-                      return ListPerf.repaint(
-                        ChatMessageBubble(message: rows[idx]),
-                      );
-                    },
-                  );
-                },
+              child: ChatMessagesListPane(
+                conversationId: widget.conversationId,
+                scrollController: _scroll,
+                onScrollToEnd: _scrollToEnd,
               ),
             ),
             if (_peerTyping) const ChatTypingIndicator(),
-            ChatComposer(
+            ChatComposerBar(
               controller: _text,
-              sending: _sending,
-              onSend: _send,
-              onChanged: _onComposerChanged,
+              onSend: _sendMessage,
             ),
           ],
         ),

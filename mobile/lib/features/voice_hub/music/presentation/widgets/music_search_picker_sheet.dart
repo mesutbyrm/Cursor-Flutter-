@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../domain/entities/music_queue_item.dart';
 import '../providers/room_music_providers.dart';
@@ -13,6 +13,7 @@ Future<YoutubeSearchHit?> showMusicSearchPickerSheet(
   WidgetRef ref, {
   required String query,
 }) async {
+  final container = ProviderScope.containerOf(context);
   return showModalBottomSheet<YoutubeSearchHit>(
     context: context,
     isScrollControlled: true,
@@ -20,8 +21,8 @@ Future<YoutubeSearchHit?> showMusicSearchPickerSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (ctx) => ProviderScope(
-      parent: ProviderScope.containerOf(context),
+    builder: (ctx) => UncontrolledProviderScope(
+      container: container,
       child: _MusicSearchPicker(initialQuery: query),
     ),
   );
@@ -292,7 +293,7 @@ class _SearchResultTile extends StatelessWidget {
                   width: thumb,
                   height: thumb,
                   child: hit.thumbUrl != null && hit.thumbUrl!.isNotEmpty
-                      ? CachedNetworkImage(imageUrl: hit.thumbUrl!, fit: BoxFit.cover)
+                      ? CanlifalNetworkImage(url: hit.thumbUrl!, fit: BoxFit.cover)
                       : const ColoredBox(
                           color: Color(0xFF2A2A3A),
                           child: Icon(Icons.music_note, color: Colors.white38),

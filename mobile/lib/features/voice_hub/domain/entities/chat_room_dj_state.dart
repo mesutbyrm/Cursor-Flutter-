@@ -199,10 +199,14 @@ class ChatRoomDjState {
     final trimmed = url.trim();
     if (trimmed.isEmpty) return null;
     if (trimmed.length <= 15 && !trimmed.contains('/')) return trimmed;
-    final watch = RegExp(r'(?:v=|youtu\.be/)([a-zA-Z0-9_-]{6,})').firstMatch(trimmed);
+    final watch = RegExp(
+      r'(?:v=|youtu\.be/|videoId=)([a-zA-Z0-9_-]{6,})',
+    ).firstMatch(trimmed);
     if (watch != null) return watch.group(1);
     try {
       final u = Uri.parse(trimmed);
+      final fromQuery = u.queryParameters['videoId'] ?? u.queryParameters['v'];
+      if (fromQuery != null && fromQuery.isNotEmpty) return fromQuery;
       if (u.host.contains('googlevideo.com')) {
         return u.queryParameters['v'] ?? u.queryParameters['id'];
       }

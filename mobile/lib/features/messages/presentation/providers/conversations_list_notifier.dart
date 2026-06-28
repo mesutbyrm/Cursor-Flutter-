@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/performance/list_perf.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/message_entities.dart';
 import 'messages_providers.dart';
 
@@ -36,17 +39,42 @@ class ConversationsListState {
 class ConversationsListNotifier extends AsyncNotifier<ConversationsListState> {
   @override
   Future<ConversationsListState> build() async {
-    final all = await ref.read(messagesRepositoryProvider).conversations();
-    final visible = ListPerf.defaultPageSize.clamp(0, all.length);
+    final userId = ref.watch(authControllerProvider).valueOrNull?.id;
+    final initial = await _load(userId: userId);
+    unawaited(refresh(silent: true, forceRefresh: true));
+    return initial;
+  }
+
+  Future<ConversationsListState> _load({
+    required String? userId,
+    bool forceRefresh = false,
+    ConversationsListState? previous,
+  }) async {
+    final all = await ref.read(messagesRepositoryProvider).conversations(
+          forceRefresh: forceRefresh,
+          cacheUserId: userId,
+        );
+    final defaultVisible = ListPerf.defaultPageSize.clamp(0, all.length);
+    final visible = previous?.visibleCount.clamp(defaultVisible, all.length) ??
+        defaultVisible;
     return ConversationsListState(all: all, visibleCount: visible);
   }
 
-  Future<void> refresh() async {
-    state = const AsyncLoading<ConversationsListState>().copyWithPrevious(state);
+  Future<void> refresh({
+    bool silent = false,
+    bool forceRefresh = false,
+  }) async {
+    if (!silent) {
+      state = const AsyncLoading<ConversationsListState>().copyWithPrevious(state);
+    }
+    final userId = ref.read(authControllerProvider).valueOrNull?.id;
+    final previous = state.valueOrNull;
     state = await AsyncValue.guard(() async {
-      final all = await ref.read(messagesRepositoryProvider).conversations();
-      final visible = ListPerf.defaultPageSize.clamp(0, all.length);
-      return ConversationsListState(all: all, visibleCount: visible);
+      return _load(
+        userId: userId,
+        forceRefresh: forceRefresh,
+        previous: previous,
+      );
     });
   }
 

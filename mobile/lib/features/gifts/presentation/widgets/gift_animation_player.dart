@@ -1,6 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:rive/rive.dart' hide LinearGradient;
 
 import '../../../live/domain/entities/live_gift_event.dart';
@@ -151,7 +153,7 @@ class _RivePlayer extends StatelessWidget {
   }
 }
 
-class _SvgaPlayer extends StatelessWidget {
+class _SvgaPlayer extends StatefulWidget {
   const _SvgaPlayer({
     required this.networkUrl,
     required this.emoji,
@@ -163,14 +165,22 @@ class _SvgaPlayer extends StatelessWidget {
   final double size;
 
   @override
-  Widget build(BuildContext context) {
-    if (networkUrl != null && networkUrl!.isNotEmpty) {
-      return FutureBuilder(
-        future: GiftCacheService.instance.getBytes(networkUrl!),
-        builder: (_, snap) => _pulseEmoji(emoji, size),
-      );
+  State<_SvgaPlayer> createState() => _SvgaPlayerState();
+}
+
+class _SvgaPlayerState extends State<_SvgaPlayer> {
+  @override
+  void initState() {
+    super.initState();
+    final url = widget.networkUrl;
+    if (url != null && url.isNotEmpty) {
+      unawaited(GiftCacheService.instance.getBytes(url));
     }
-    return _pulseEmoji(emoji, size);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _pulseEmoji(widget.emoji, widget.size);
   }
 
   Widget _pulseEmoji(String e, double s) {
@@ -198,13 +208,12 @@ class _IconOrEmoji extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (iconUrl != null && iconUrl!.isNotEmpty) {
-      return CachedNetworkImage(
-        imageUrl: iconUrl!,
+      return CanlifalNetworkImage(
+        url: iconUrl!,
         width: size,
         height: size,
         fit: BoxFit.contain,
-        errorWidget: (_, _, _) =>
-            Text(emoji, style: TextStyle(fontSize: size * 0.45)),
+        errorWidget: Text(emoji, style: TextStyle(fontSize: size * 0.45)),
       );
     }
     return Text(emoji, style: TextStyle(fontSize: size * 0.45));

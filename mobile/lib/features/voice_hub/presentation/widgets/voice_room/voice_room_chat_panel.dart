@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../domain/entities/chat_room_message.dart';
 
@@ -180,7 +180,7 @@ class _Avatar extends StatelessWidget {
       ),
       child: ClipOval(
         child: url != null && url!.isNotEmpty
-            ? CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover)
+            ? CanlifalNetworkImage(url: url!, fit: BoxFit.cover)
             : ColoredBox(
                 color: AppThemeColors.dark.surfaceContainer,
                 child: const Icon(Icons.person, size: 16, color: Colors.white54),

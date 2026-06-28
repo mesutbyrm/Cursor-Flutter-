@@ -2,6 +2,7 @@ import 'dart:async';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/sse/base_sse_service.dart';
+import '../../../../core/network/sse/sse_reconnect_policy.dart';
 import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_sse_event.dart';
@@ -44,7 +45,17 @@ class ChatRoomSseService extends BaseSseService {
   String streamPath() => ApiEndpoints.chatRoomStream(_roomId ?? '');
 
   @override
-  bool get requiresAuth => false;
+  bool get requiresAuth => true;
+
+  String? get activeRoomId => _roomId;
+
+  bool isLiveForRoom(String roomId) {
+    final id = roomId.trim();
+    if (_roomId != id || id.isEmpty) return false;
+    final phase = status.value.phase;
+    return phase == SseConnectionPhase.connected ||
+        phase == SseConnectionPhase.connecting;
+  }
 
   Future<void> connect({
     required String roomId,
@@ -83,6 +94,13 @@ class ChatRoomSseService extends BaseSseService {
     _onFortuneRequest = onFortuneRequest;
     _onPk = onPk;
     _onTyping = onTyping;
+    if (isLiveForRoom(id)) {
+      VoiceRoomDebugLog.log('sse.connect.skip', {
+        'roomId': id,
+        'reason': 'already_connected',
+      });
+      return;
+    }
     VoiceRoomDebugLog.sseConnect(roomId: id, url: streamUrlFor(id));
     await super.openConnection(accessToken: accessToken);
   }
@@ -165,16 +183,21 @@ class ChatRoomSseService extends BaseSseService {
         if (users != null && users.isNotEmpty) _onPresence?.call(users);
         return;
       case ChatRoomSseEventType.userJoin:
+        // Üretimde ayrı join yok — tam liste `presence` ile gelir.
+        final snapshot = _parseUsers(map);
+        if (snapshot != null && snapshot.isNotEmpty) {
+          _onPresence?.call(snapshot);
+          return;
+        }
         _onUserJoin?.call(map);
-        final joined = _parseUsers(map);
-        if (joined != null && joined.isNotEmpty) _onPresence?.call(joined);
         return;
       case ChatRoomSseEventType.userLeave:
-        _onUserLeave?.call(map);
         final remaining = _parseUsers(map);
         if (remaining != null && remaining.isNotEmpty) {
           _onPresence?.call(remaining);
+          return;
         }
+        _onUserLeave?.call(map);
         return;
       case ChatRoomSseEventType.roomUpdate:
         _onRoomUpdate?.call(map);

@@ -1,10 +1,11 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/widgets/lazy_list_views.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -26,12 +27,13 @@ Future<void> showVoiceYoutubeSongSheet(
   VoiceRoomPermissions? perms,
   bool? isOwner,
 }) {
+  final container = ProviderScope.containerOf(context);
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => ProviderScope(
-      parent: ProviderScope.containerOf(context),
+    builder: (ctx) => UncontrolledProviderScope(
+      container: container,
       child: _YoutubeSongSheet(room: room),
     ),
   );
@@ -311,57 +313,67 @@ class _YoutubeSongSheetState extends ConsumerState<_YoutubeSongSheet> {
                 child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
               ),
             Flexible(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                shrinkWrap: true,
+              child: Column(
                 children: [
-                  ..._hits.map((h) {
-                    final sel = _selected?.videoId == h.videoId;
-                    return _SearchResultTile(
-                      hit: h,
-                      selected: sel,
-                      onTap: () => setState(() => _selected = h),
-                    );
-                  }),
-                  if (_selected != null) ...[
-                    const SizedBox(height: 12),
-                    _SelectedSongField(title: _selected!.title),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _giftCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'Kime armağan? (opsiyonel)',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.45),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.06),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
+                  Expanded(
+                    child: LazyListView(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      itemCount: _hits.length,
+                      itemBuilder: (context, index) {
+                        final h = _hits[index];
+                        final sel = _selected?.videoId == h.videoId;
+                        return _SearchResultTile(
+                          hit: h,
+                          selected: sel,
+                          onTap: () => setState(() => _selected = h),
+                        );
+                      },
+                    ),
+                  ),
+                  if (_selected != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: Column(
+                        children: [
+                          _SelectedSongField(title: _selected!.title),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _giftCtrl,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              hintText: 'Kime armağan? (opsiyonel)',
+                              hintStyle: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.45),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white.withValues(alpha: 0.06),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _noteCtrl,
+                            style: const TextStyle(color: Colors.white),
+                            maxLines: 2,
+                            decoration: InputDecoration(
+                              hintText: 'Kısa not (opsiyonel)',
+                              hintStyle: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.45),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white.withValues(alpha: 0.06),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _noteCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                        hintText: 'Kısa not (opsiyonel)',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.45),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.06),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -438,8 +450,8 @@ class _SearchResultTile extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: hit.thumbUrl != null && hit.thumbUrl!.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: hit.thumbUrl!,
+                      ? CanlifalNetworkImage(
+                          url: hit.thumbUrl!,
                           width: 72,
                           height: 48,
                           fit: BoxFit.cover,

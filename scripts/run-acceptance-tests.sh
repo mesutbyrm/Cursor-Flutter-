@@ -48,7 +48,6 @@ fi
 if [[ "$CLIENT_FAIL" -eq 0 ]]; then
   {
     echo ""
-    echo "| 18 | Müzik sistemi (!istek) | ✅ PASS | flutter test |"
     echo "| 19 | Tema değiştirme | ✅ PASS | flutter test |"
     echo "| 20b | İstemci performans | ✅ PASS | flutter test |"
   } >>"$REPORT_DIR/ACCEPTANCE_TEST_REPORT.md"

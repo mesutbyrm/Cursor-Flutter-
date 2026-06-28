@@ -1,8 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/images/canlifal_image_urls.dart';
+import '../../../../core/images/canlifal_network_image.dart';
 import '../../../../core/widgets/hero_tags.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/user_avatar.dart';
@@ -80,13 +81,15 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
                     if (p.mediaUrl != null && p.mediaUrl!.isNotEmpty)
                       HeroPostImage(
                         postId: p.id,
-                        child: CachedNetworkImage(
-                          imageUrl: p.mediaUrl!,
+                        child: CanlifalNetworkImage(
+                          url: p.mediaUrl,
                           fit: BoxFit.cover,
-                          placeholder: (_, _) => Container(
+                          thumbnailWidth: CanlifalImageUrls.feedThumbnailWidth,
+                          onTapOpenFull: true,
+                          placeholder: Container(
                             color: AppTheme.surfaceElevated,
                           ),
-                          errorWidget: (_, _, _) => Container(
+                          errorWidget: Container(
                             color: AppTheme.surfaceElevated,
                             alignment: Alignment.center,
                             child: const Icon(

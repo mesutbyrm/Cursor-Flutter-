@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/bootstrap/startup_perf.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/performance/list_perf.dart';
 import '../../../../core/ui/premium/premium_skeleton.dart';
@@ -14,6 +15,7 @@ import '../../../shell/presentation/widgets/branch_quick_actions.dart';
 import '../../../voice_hub/presentation/voice_rooms_body.dart';
 import '../providers/live_streams_list_notifier.dart';
 import '../providers/live_providers.dart';
+import '../../../../core/performance/lazy_screen_section.dart';
 import '../utils/open_live_stream.dart';
 import '../widgets/live_discover_category_chips.dart';
 import '../widgets/live_stream_list_tile.dart';
@@ -166,15 +168,18 @@ class _VoiceTabState extends State<_VoiceTab> with AutomaticKeepAliveClientMixin
   }
 }
 
-class _LiveStreamsTab extends ConsumerWidget {
+class _LiveStreamsTab extends ConsumerStatefulWidget {
   const _LiveStreamsTab({required this.scrollController});
 
   final ScrollController scrollController;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final live = ref.watch(liveStreamsListNotifierProvider);
+  ConsumerState<_LiveStreamsTab> createState() => _LiveStreamsTabState();
+}
 
+class _LiveStreamsTabState extends ConsumerState<_LiveStreamsTab> {
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -183,11 +188,15 @@ class _LiveStreamsTab extends ConsumerWidget {
           child: LiveStreamsBranchQuickActions(),
         ),
         const SizedBox(height: 8),
-        const LiveDiscoverCategoryChips(),
+        LazyScreenSection(
+          delay: LazyLoadPerf.liveCategories,
+          child: const LiveDiscoverCategoryChips(),
+        ),
         const SizedBox(height: 8),
         Expanded(
-          child: live.when(
-            loading: () => ListView.separated(
+          child: LazyScreenGate(
+            delay: LazyLoadPerf.liveList,
+            placeholder: ListView.separated(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
               itemCount: 4,
               separatorBuilder: (_, _) => const SizedBox(height: 12),
@@ -195,59 +204,84 @@ class _LiveStreamsTab extends ConsumerWidget {
                 child: PremiumLiveCardSkeleton(),
               ),
             ),
-            error: (e, _) => DiscoverEmptyState(
-              icon: Icons.live_tv_outlined,
-              message: ApiException.userMessage(e),
-              actionLabel: 'Yenile',
-              action: () =>
-                  ref.read(liveStreamsListNotifierProvider.notifier).refresh(),
+            builder: (_) => _LiveStreamsList(
+              scrollController: widget.scrollController,
             ),
-            data: (streams) {
-              if (streams.isEmpty) {
-                return const DiscoverEmptyState(
-                  icon: Icons.videocam_off_outlined,
-                  message:
-                      'Şu an canlı yayın yok.\nYeni yayınlar burada görünecek.',
-                );
-              }
-              final hasMore = ref
-                  .read(liveStreamsListNotifierProvider.notifier)
-                  .hasMore;
-              final extra = hasMore ? 1 : 0;
-              return ListView.separated(
-                cacheExtent: ListPerf.cacheExtent, controller: scrollController,
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                physics: ListPerf.listPhysics,
-                itemCount: streams.length + extra,
-                separatorBuilder: (_, _) => const SizedBox(height: 12),
-                itemBuilder: (ctx, i) {
-                  if (i >= streams.length) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                    );
-                  }
-                  final s = streams[i];
-                  return ListPerf.repaint(
-                    LiveStreamListTile(
-                      stream: s,
-                      onTap: s.isLive
-                          ? () => openLiveStreamNative(context, ref, s)
-                          : null,
-                    ),
-                  );
-                },
-              );
-            },
           ),
         ),
       ],
+    );
+  }
+}
+
+class _LiveStreamsList extends ConsumerWidget {
+  const _LiveStreamsList({required this.scrollController});
+
+  final ScrollController scrollController;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final live = ref.watch(liveStreamsListNotifierProvider);
+
+    return live.when(
+      loading: () => ListView.separated(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+        itemCount: 4,
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        itemBuilder: (_, _) => const RepaintBoundary(
+          child: PremiumLiveCardSkeleton(),
+        ),
+      ),
+      error: (e, _) => DiscoverEmptyState(
+        icon: Icons.live_tv_outlined,
+        message: ApiException.userMessage(e),
+        actionLabel: 'Yenile',
+        action: () =>
+            ref.read(liveStreamsListNotifierProvider.notifier).refresh(),
+      ),
+      data: (streams) {
+        if (streams.isEmpty) {
+          return const DiscoverEmptyState(
+            icon: Icons.videocam_off_outlined,
+            message:
+                'Şu an canlı yayın yok.\nYeni yayınlar burada görünecek.',
+          );
+        }
+        final hasMore =
+            ref.read(liveStreamsListNotifierProvider.notifier).hasMore;
+        final extra = hasMore ? 1 : 0;
+        return ListView.separated(
+          cacheExtent: ListPerf.cacheExtent,
+          controller: scrollController,
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+          physics: ListPerf.listPhysics,
+          itemCount: streams.length + extra,
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          itemBuilder: (ctx, i) {
+            if (i >= streams.length) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              );
+            }
+            final s = streams[i];
+            return ListPerf.repaint(
+              LiveStreamListTile(
+                stream: s,
+                onTap: s.isLive
+                    ? () => openLiveStreamNative(context, ref, s)
+                    : null,
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -1,13 +1,16 @@
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter/services.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
+
+import 'package:canlifal_social/features/vip_gold/domain/voice_room_access.dart';
 
 import '../../../../live/domain/entities/voice_room_entity.dart';
 import '../../theme/voice_room_tokens.dart';
+import 'voice_room_type_badge.dart';
 
 /// Üst bar — yayıncı profili en üstte, tek satır kompakt.
 class VoiceLiveHeader2026 extends StatelessWidget {
@@ -40,11 +43,7 @@ class VoiceLiveHeader2026 extends StatelessWidget {
   final String? hostAvatarUrl;
   final bool following;
 
-  bool get _roomIsVip {
-    final t =
-        '${room.nameTr} ${room.descTr ?? ''} ${room.slug}'.toLowerCase();
-    return t.contains('vip') || t.contains('gold');
-  }
+  bool get _roomIsVip => room.resolvedRoomType == 'VIP';
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +76,7 @@ class VoiceLiveHeader2026 extends StatelessWidget {
                   radius: 22,
                   backgroundColor: Colors.white12,
                   backgroundImage: hostAvatarUrl != null && hostAvatarUrl!.isNotEmpty
-                      ? CachedNetworkImageProvider(hostAvatarUrl!)
+                      ? canlifalImageProvider(hostAvatarUrl!)
                       : null,
                   child: hostAvatarUrl == null || hostAvatarUrl!.isEmpty
                       ? Text(room.icon ?? '🎤', style: const TextStyle(fontSize: 20))
@@ -108,6 +107,9 @@ class VoiceLiveHeader2026 extends StatelessWidget {
                           if (_roomIsVip) ...[
                             const SizedBox(width: 6),
                             _vipChip(),
+                          ] else if (room.resolvedRoomType == 'FREE') ...[
+                            const SizedBox(width: 6),
+                            const VoiceRoomTypeBadge(roomType: 'FREE', compact: true),
                           ],
                         ],
                       ),

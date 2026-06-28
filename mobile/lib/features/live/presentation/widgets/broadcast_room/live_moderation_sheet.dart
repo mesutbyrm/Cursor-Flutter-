@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../../core/network/api_exception.dart';
 import '../../../data/datasources/live_stream_extras_datasource.dart';
@@ -129,7 +129,7 @@ class _LiveModerationSheet extends ConsumerWidget {
               CircleAvatar(
                 radius: 24,
                 backgroundImage: targetAvatarUrl != null && targetAvatarUrl!.isNotEmpty
-                    ? CachedNetworkImageProvider(targetAvatarUrl!)
+                    ? canlifalImageProvider(targetAvatarUrl!)
                     : null,
                 backgroundColor: const Color(0xFF6C3FC5),
                 child: targetAvatarUrl == null || targetAvatarUrl!.isEmpty

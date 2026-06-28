@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/navigation/native_site_routes.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
@@ -357,13 +357,13 @@ class _FeatureLeading extends StatelessWidget {
     if (image != null && image.startsWith('http')) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: CachedNetworkImage(
-          imageUrl: image,
+        child: CanlifalNetworkImage(
+          url: image,
           width: 46,
           height: 46,
           fit: BoxFit.cover,
-          placeholder: (_, _) => _IconBox(icon: item.icon),
-          errorWidget: (_, _, _) => _IconBox(icon: item.icon),
+          placeholder: _IconBox(icon: item.icon),
+          errorWidget: _IconBox(icon: item.icon),
         ),
       );
     }

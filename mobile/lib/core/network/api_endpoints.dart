@@ -266,6 +266,12 @@ abstract final class ApiEndpoints {
 
   static String chatRoomGifts(String roomId) => '/api/chat/rooms/$roomId/gifts';
 
+  /// Seste olanlar — `GET/POST /api/chat/rooms/{roomId}/voice` (join/leave body).
+  static String chatRoomVoice(String roomId) => '/api/chat/rooms/$roomId/voice';
+
+  /// Yazıyor göstergesi — `GET/POST /api/chat/rooms/{roomId}/typing`.
+  static String chatRoomTyping(String roomId) => '/api/chat/rooms/$roomId/typing';
+
   /// Üretim PK — `GET/POST /api/chat/rooms/{roomId}/pk`
   static String chatRoomPk(String roomId) => '/api/chat/rooms/$roomId/pk';
 

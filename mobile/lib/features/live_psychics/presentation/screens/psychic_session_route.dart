@@ -7,6 +7,58 @@ import 'package:canlifal_social/features/live_psychics/presentation/screens/psyc
 import 'package:canlifal_social/features/live_psychics/presentation/screens/psychic_video_session_screen.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/screens/psychic_waiting_screen.dart';
 
+/// Diskten oturum yükler — FutureBuilder yerine tek rebuild.
+class _PsychicSessionRestoreGate extends StatefulWidget {
+  const _PsychicSessionRestoreGate({
+    required this.psychicId,
+    this.session,
+    required this.onSession,
+  });
+
+  final String psychicId;
+  final PsychicSessionEntity? session;
+  final Widget Function(PsychicSessionEntity session) onSession;
+
+  @override
+  State<_PsychicSessionRestoreGate> createState() =>
+      _PsychicSessionRestoreGateState();
+}
+
+class _PsychicSessionRestoreGateState extends State<_PsychicSessionRestoreGate> {
+  PsychicSessionEntity? _restored;
+  var _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.session != null) return;
+    _loading = true;
+    PsychicSessionStore.load().then((value) {
+      if (!mounted) return;
+      setState(() {
+        _restored = value;
+        _loading = false;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final direct = widget.session;
+    if (direct != null) return widget.onSession(direct);
+    if (_loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    final restored = _restored;
+    if (restored != null && restored.sessionId.isNotEmpty) {
+      return widget.onSession(restored);
+    }
+    return PsychicProfileScreen(psychicId: widget.psychicId);
+  }
+}
+
 /// `extra` kaybolunca (izin diyaloğu / process restore) oturumu diskten yükler.
 class PsychicSessionRoute extends StatelessWidget {
   const PsychicSessionRoute({
@@ -20,23 +72,10 @@ class PsychicSessionRoute extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (session != null) {
-      return PsychicVideoSessionScreen(session: session!);
-    }
-    return FutureBuilder<PsychicSessionEntity?>(
-      future: PsychicSessionStore.load(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        final restored = snapshot.data;
-        if (restored != null && restored.sessionId.isNotEmpty) {
-          return PsychicVideoSessionScreen(session: restored);
-        }
-        return PsychicProfileScreen(psychicId: psychicId);
-      },
+    return _PsychicSessionRestoreGate(
+      psychicId: psychicId,
+      session: session,
+      onSession: (s) => PsychicVideoSessionScreen(session: s),
     );
   }
 }
@@ -53,23 +92,10 @@ class PsychicWaitingRoute extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (session != null) {
-      return PsychicWaitingScreen(session: session!);
-    }
-    return FutureBuilder<PsychicSessionEntity?>(
-      future: PsychicSessionStore.load(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        final restored = snapshot.data;
-        if (restored != null && restored.sessionId.isNotEmpty) {
-          return PsychicWaitingScreen(session: restored);
-        }
-        return PsychicProfileScreen(psychicId: psychicId);
-      },
+    return _PsychicSessionRestoreGate(
+      psychicId: psychicId,
+      session: session,
+      onSession: (s) => PsychicWaitingScreen(session: s),
     );
   }
 }
@@ -86,23 +112,10 @@ class PsychicAdTransitionRoute extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (session != null) {
-      return PsychicAdScreen(session: session!);
-    }
-    return FutureBuilder<PsychicSessionEntity?>(
-      future: PsychicSessionStore.load(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        final restored = snapshot.data;
-        if (restored != null && restored.sessionId.isNotEmpty) {
-          return PsychicAdScreen(session: restored);
-        }
-        return PsychicProfileScreen(psychicId: psychicId);
-      },
+    return _PsychicSessionRestoreGate(
+      psychicId: psychicId,
+      session: session,
+      onSession: (s) => PsychicAdScreen(session: s),
     );
   }
 }

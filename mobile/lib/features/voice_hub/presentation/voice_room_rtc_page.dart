@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/performance/voice_room_entry_perf.dart';
 import '../../../core/network/token_storage.dart';
 import '../../../core/widgets/cached_cover_image.dart';
 import '../../../core/navigation/wallet_navigation.dart';
@@ -29,7 +30,6 @@ import '../../agora/presentation/providers/agora_providers.dart';
 import '../domain/entities/chat_room_presence.dart';
 import '../domain/entities/chat_room_sse_event.dart';
 import '../domain/entities/chat_room_my_permissions.dart';
-import '../../trtc/presentation/providers/trtc_providers.dart';
 import 'audio/voice_room_audio_coordinator.dart';
 import 'audio/voice_room_music_audio_session.dart';
 import 'providers/chat_room_providers.dart';
@@ -58,7 +58,6 @@ import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/voice_room/voice_room_spec_footer.dart';
 import 'sheets/voice_room_commands_panel.dart';
-import 'sheets/music_mode_picker_sheet.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
 import 'utils/kick_strike_ui.dart';
 import 'widgets/premium_2026/voice_timed_duyuru.dart';
@@ -72,7 +71,7 @@ import '../video/presentation/widgets/room_video_overlay.dart';
 import '../video/presentation/widgets/youtube_video_background.dart';
 import '../video/presentation/room_video_controller.dart';
 
-/// Premium sesli sohbet — LiveKit (öncelik) / TRTC + uçan hediyeler.
+/// Sesli sohbet odası — Agora (App ID only) + canlifal.com chat API.
 class VoiceRoomRtcPage extends ConsumerStatefulWidget {
   const VoiceRoomRtcPage({super.key, required this.room});
 
@@ -87,10 +86,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   final _agora = AgoraRoomManager();
   StreamSubscription<LiveGiftEvent>? _giftSub;
   StreamSubscription<ChatRoomSseEvent>? _sseParticipantsSub;
-  final _participants = <String, Map<String, dynamic>>{};
+  var _participants = <String, Map<String, dynamic>>{};
   var _agoraReady = false;
   final _messageCtrl = TextEditingController();
-  var _audioJoining = true;
+  var _audioJoining = false;
   var _audioReady = false;
   String? _audioError;
   String? _loginError;
@@ -136,7 +135,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (roomKey.isEmpty) {
         unawaited(ref.read(voiceRoomsProvider.future));
       }
-      _joinRoom();
+      _startGiftRealtime();
+      unawaited(_joinAudioBackground());
       _prefetchRoomImages();
       _bindSseParticipants();
     });
@@ -145,10 +145,31 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   void _bindSseParticipants() {
     _sseParticipantsSub?.cancel();
     _sseParticipantsSub =
-        ref.read(voiceRoomSseServiceProvider).events.listen((event) {
+        ref.read(voiceRoomSseForProvider(_liveRoomKey)).events.listen((event) {
       if (!mounted) return;
+      if (event.type == ChatRoomSseEventType.presence) {
+        final raw = event.data['users'];
+        if (raw is! List) return;
+        setState(() {
+          _participants = {
+            for (final u in raw.whereType<Map>())
+              (u['id']?.toString() ?? ''): Map<String, dynamic>.from(u),
+          }..removeWhere((key, _) => key.isEmpty);
+        });
+        return;
+      }
       final data = event.data;
       if (event.type == ChatRoomSseEventType.userJoin) {
+        final users = data['users'];
+        if (users is List && users.isNotEmpty) {
+          setState(() {
+            _participants = {
+              for (final u in users.whereType<Map>())
+                (u['id']?.toString() ?? ''): Map<String, dynamic>.from(u),
+            }..removeWhere((key, _) => key.isEmpty);
+          });
+          return;
+        }
         final userId =
             data['userId']?.toString() ?? data['id']?.toString() ?? '';
         if (userId.isEmpty) return;
@@ -156,6 +177,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           _participants[userId] = data;
         });
       } else if (event.type == ChatRoomSseEventType.userLeave) {
+        final users = data['users'];
+        if (users is List && users.isNotEmpty) {
+          setState(() {
+            _participants = {
+              for (final u in users.whereType<Map>())
+                (u['id']?.toString() ?? ''): Map<String, dynamic>.from(u),
+            }..removeWhere((key, _) => key.isEmpty);
+          });
+          return;
+        }
         final userId =
             data['userId']?.toString() ?? data['id']?.toString() ?? '';
         if (userId.isEmpty) return;
@@ -173,8 +204,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   }) async {
     if (!_agora.isSupported) return;
     try {
-      final cred = await ref.read(agoraRemoteProvider).fetchToken(
-            channelName: room.trtcRoomId,
+      final cred = await ref.read(agoraRemoteProvider).fetchVoiceRoomToken(
+            roomId: room.apiRoomKey,
             role: publishVideo ? 'host' : 'audience',
           );
       await _agora.joinVoiceRoomVideo(
@@ -314,10 +345,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final muted = !_isMicMuted;
     _audio?.setMicEnabled(!muted);
     setState(() => _isMicMuted = muted);
-    // Mikrofon yalnızca TRTC/LiveKit client-side; backend REST yok.
-    // TODO(mic-sync): Socket.IO'da mic/audio-state event'i YOK (mobile/lib/core/socket
-    // klasörü de yok). Diğer kullanıcılara mic durumu senkronu için backend'de yeni
-    // event/endpoint gerekir — ayrı backend talebi.
+  }
+
+  void _onChatChanged(String text) {
+    ref
+        .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
+        .notifyTyping(text.trim().isNotEmpty);
   }
 
   void _toggleHeadphones() {
@@ -371,14 +404,14 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     }
   }
 
-  Future<void> _joinRoom() async {
+  Future<void> _joinAudioBackground() async {
     if (!mounted) return;
     setState(() {
       _audioJoining = true;
       _audioError = null;
     });
 
-    final user = await _waitForAuth();
+    final user = await _waitForAuth(timeout: VoiceRoomEntryPerf.entryBudget);
     if (!mounted) return;
     if (user == null) {
       setState(() {
@@ -417,6 +450,9 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       return;
     }
 
+    _startGiftRealtime();
+    unawaited(_connectPkBattle());
+
     _audio = ref.read(voiceRoomAudioCoordinatorProvider);
     if (!_audio!.isSupported) {
       if (mounted) {
@@ -438,19 +474,20 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         room: room,
         server: liveForPerms.serverPermissions,
       );
+      final isOwner =
+          _isRoomOwner(user.id, user.username, room) || perms.isSiteAdmin;
+      final roomId = room.apiRoomKey;
       await _audio!.join(
-        trtcRoomId: room.trtcRoomId,
-        userId: user.id,
-        isHost: _isRoomOwner(user.id, user.username, room) || perms.isSiteAdmin,
-        liveKitRemote: ref.read(liveKitRemoteProvider),
-        trtcRemote: ref.read(trtcRemoteProvider),
+        roomId: roomId,
+        remote: ref.read(chatRoomRemoteProvider),
+        enableMic: isOwner,
       );
-      if (perms.isSiteAdmin) {
+      if (isOwner) {
         _audio?.setMicEnabled(true);
       }
       if (mounted) {
         ref.read(voiceRoomDiagnosticProvider.notifier).setTrtc(
-              roomId: room.trtcRoomId,
+              roomId: roomId,
               result: 1,
             );
         ref.read(voiceRoomDiagnosticProvider.notifier).setAudioReady(true);
@@ -638,7 +675,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       return;
     }
     try {
-      await context.push('/voice-room/$key/pk-invite', extra: room.stableSessionKey);
+      await context.push('/voice-room/$key/pk-invite', extra: room);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -996,7 +1033,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
               (p) => ListTile(
                 leading: CircleAvatar(
                   backgroundImage: p.image != null && p.image!.isNotEmpty
-                      ? CachedNetworkImageProvider(p.image!)
+                      ? canlifalImageProvider(p.image!)
                       : null,
                   child: p.image == null || p.image!.isEmpty
                       ? const Icon(Icons.person)
@@ -1185,17 +1222,10 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           final hit = await showMusicSearchPickerSheet(context, ref, query: q);
           ctrl.clearPendingMusicSearch();
           if (!mounted || hit == null) return;
-          final liveDj = ref.read(voiceRoomLiveProvider(_liveRoomKey)).dj;
-          final picked = await showMusicModePickerSheet(
-            context,
-            audioCost: liveDj.musicRequestCost,
-            videoCost: liveDj.videoRequestCost,
-            songTitle: hit.title,
-          );
-          if (!mounted || picked == null) return;
+          // Ortadan !istek — önceki davranış: videolu müzik (ortada YouTube oynatıcı)
           final err = await ctrl.submitSelectedSong(
             hit,
-            withVideo: picked,
+            withVideo: true,
             skipPayment: skipPayment,
           );
           if (!mounted || err == null) return;
@@ -1295,7 +1325,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       final wasGuest = prev?.valueOrNull == null;
       final nowUser = next.valueOrNull;
       if (wasGuest && nowUser != null && _loginError != null && !_audioReady) {
-        unawaited(_joinRoom());
+        unawaited(_joinAudioBackground());
       }
     });
 
@@ -1304,7 +1334,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       if (synced.apiRoomKey.isEmpty) return;
       final hadKey = _roomSynced(prev?.valueOrNull).apiRoomKey.isNotEmpty;
       if (!hadKey && !_audioReady && !_leaving) {
-        unawaited(_joinRoom());
+        unawaited(_joinAudioBackground());
       }
     });
 
@@ -1396,7 +1426,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               trailing: TextButton(
-                                onPressed: _joinRoom,
+                                onPressed: _joinAudioBackground,
                                 child: const Text('Tekrar'),
                               ),
                             ),
@@ -1637,6 +1667,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                         presence: live.presence,
                       ),
                   onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
+                  onChanged: _onChatChanged,
                 ),
               ],
             ),

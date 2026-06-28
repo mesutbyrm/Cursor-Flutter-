@@ -1,9 +1,10 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/widgets/lazy_list_views.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../providers/chat_room_providers.dart';
@@ -104,43 +105,47 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
 
   Future<void> _changeNickname() async {
     final controller = TextEditingController();
-    final err = await showDialog<String?>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Oda rumuzu'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Sohbette görünecek rumuz',
-            border: OutlineInputBorder(),
+    try {
+      final err = await showDialog<String?>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Oda rumuzu'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: 'Sohbette görünecek rumuz',
+              border: OutlineInputBorder(),
+            ),
+            maxLength: 32,
           ),
-          maxLength: 32,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('İptal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, controller.text),
+              child: const Text('Kaydet'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('İptal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('Kaydet'),
-          ),
-        ],
-      ),
-    );
-    if (!mounted || err == null) return;
-    final message = await ref
-        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
-        .updateRoomNickname(err);
-    if (!mounted) return;
-    if (message != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rumuz güncellendi')),
-      );
+      if (!mounted || err == null) return;
+      final message = await ref
+          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
+          .updateRoomNickname(err);
+      if (!mounted) return;
+      if (message != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Rumuz güncellendi')),
+        );
+      }
+    } finally {
+      controller.dispose();
     }
   }
 
@@ -255,9 +260,11 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                   ),
                 ),
               Expanded(
-                child: ListView(
+                child: LazyListView(
                   controller: scroll,
-                  children: widget.live.presence.map((u) {
+                  itemCount: widget.live.presence.length,
+                  itemBuilder: (context, index) {
+                    final u = widget.live.presence[index];
                     final isDj = widget.live.dj.djUsers.any((d) => d.id == u.id);
                     return ListTile(
                       leading: VoiceNeonAvatar(url: u.image, size: 40),
@@ -298,7 +305,7 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                             )
                           : null,
                     );
-                  }).toList(),
+                  },
                 ),
               ),
             ],
@@ -406,8 +413,8 @@ class _HubSettingsSheetState extends ConsumerState<_HubSettingsSheet> {
                         onTap: () => _applyBackground(url),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: CachedNetworkImage(
-                            imageUrl: url,
+                          child: CanlifalNetworkImage(
+                            url: url,
                             width: 160,
                             height: 120,
                             fit: BoxFit.cover,

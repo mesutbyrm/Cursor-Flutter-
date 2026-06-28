@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_stream_entity.dart';
@@ -153,7 +153,7 @@ class _LivePkInvitePageState extends ConsumerState<LivePkInvitePage> {
                   ),
                   leading: CircleAvatar(
                     backgroundImage: s.thumbnailUrl != null && s.thumbnailUrl!.isNotEmpty
-                        ? CachedNetworkImageProvider(s.thumbnailUrl!)
+                        ? canlifalImageProvider(s.thumbnailUrl!)
                         : null,
                     child: s.thumbnailUrl == null || s.thumbnailUrl!.isEmpty
                         ? const Icon(Icons.live_tv_rounded)

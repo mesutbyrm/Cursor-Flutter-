@@ -1,3 +1,4 @@
+import 'package:canlifal_social/core/widgets/lazy_list_views.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -12,6 +13,7 @@ class ProfileWalletCard extends StatelessWidget {
   const ProfileWalletCard({
     super.key,
     required this.state,
+    this.cfcLoading = false,
     this.onTopUp,
     this.onCfcTopUp,
     this.onEarnings,
@@ -21,6 +23,7 @@ class ProfileWalletCard extends StatelessWidget {
   });
 
   final ProfileScreenState state;
+  final bool cfcLoading;
   final VoidCallback? onTopUp;
   final VoidCallback? onCfcTopUp;
   final VoidCallback? onEarnings;
@@ -62,6 +65,7 @@ class ProfileWalletCard extends StatelessWidget {
                         value: profileFormatCount(state.cfc),
                         icon: Icons.diamond_rounded,
                         color: AppThemeColors.diamondBlue,
+                        isLoading: cfcLoading,
                       ),
                     ),
                   ],
@@ -107,51 +111,52 @@ class ProfileWalletCard extends StatelessWidget {
             ),
           ).animate().fadeIn(delay: 120.ms),
           const SizedBox(height: 12),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 2.4,
-            children: [
-              ProfileActionTile(
-                icon: Icons.add_card_rounded,
-                label: 'Jeton Yükle',
-                onTap: onTopUp,
-                gradient: [const Color(0xFF4A3818), const Color(0xFF1A1408)],
-              ),
-              ProfileActionTile(
-                icon: Icons.diamond_outlined,
-                label: 'CFC Yükle',
-                onTap: onCfcTopUp,
-                gradient: [const Color(0xFF183050), const Color(0xFF081018)],
-              ),
-              ProfileActionTile(
-                icon: Icons.trending_up_rounded,
-                label: 'Kazançlar',
-                onTap: onEarnings,
-                gradient: [const Color(0xFF1A3040), const Color(0xFF081018)],
-              ),
-              ProfileActionTile(
-                icon: Icons.receipt_long_rounded,
-                label: 'İşlem Geçmişi',
-                onTap: onTransactions,
-                gradient: [const Color(0xFF281838), const Color(0xFF100818)],
-              ),
-              ProfileActionTile(
-                icon: Icons.payment_rounded,
-                label: 'Ödeme Bildirimi',
-                onTap: onPaymentNotice,
-                gradient: [const Color(0xFF301828), const Color(0xFF140810)],
-              ),
-              ProfileActionTile(
-                icon: Icons.workspace_premium_rounded,
-                label: 'Abonelikler',
-                onTap: onSubscriptions,
-                gradient: [const Color(0xFF3A3010), const Color(0xFF181008)],
-              ),
-            ],
+          LazyNestedGridView(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 2.4,
+            ),
+            itemCount: 6,
+            itemBuilder: (context, index) => switch (index) {
+              0 => ProfileActionTile(
+                  icon: Icons.add_card_rounded,
+                  label: 'Jeton Yükle',
+                  onTap: onTopUp,
+                  gradient: [const Color(0xFF4A3818), const Color(0xFF1A1408)],
+                ),
+              1 => ProfileActionTile(
+                  icon: Icons.diamond_outlined,
+                  label: 'CFC Yükle',
+                  onTap: onCfcTopUp,
+                  gradient: [const Color(0xFF183050), const Color(0xFF081018)],
+                ),
+              2 => ProfileActionTile(
+                  icon: Icons.trending_up_rounded,
+                  label: 'Kazançlar',
+                  onTap: onEarnings,
+                  gradient: [const Color(0xFF1A3040), const Color(0xFF081018)],
+                ),
+              3 => ProfileActionTile(
+                  icon: Icons.receipt_long_rounded,
+                  label: 'İşlem Geçmişi',
+                  onTap: onTransactions,
+                  gradient: [const Color(0xFF281838), const Color(0xFF100818)],
+                ),
+              4 => ProfileActionTile(
+                  icon: Icons.payment_rounded,
+                  label: 'Ödeme Bildirimi',
+                  onTap: onPaymentNotice,
+                  gradient: [const Color(0xFF301828), const Color(0xFF140810)],
+                ),
+              _ => ProfileActionTile(
+                  icon: Icons.workspace_premium_rounded,
+                  label: 'Abonelikler',
+                  onTap: onSubscriptions,
+                  gradient: [const Color(0xFF3A3010), const Color(0xFF181008)],
+                ),
+            },
           ),
         ],
       ),
@@ -165,12 +170,14 @@ class _BalanceBlock extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.color,
+    this.isLoading = false,
   });
 
   final String label;
   final String value;
   final IconData icon;
   final Color color;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -183,11 +190,11 @@ class _BalanceBlock extends StatelessWidget {
           Icon(icon, color: color, size: 22),
           const SizedBox(height: 8),
           Text(
-            value,
+            isLoading ? '…' : value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: isLoading ? 0.45 : 1),
               fontWeight: FontWeight.w900,
               fontSize: 20,
             ),

@@ -7,18 +7,19 @@ void main() {
       expect(AgoraChannelNames.forRoom('abc123'), 'room_abc123');
     });
 
-    test('preserves existing room_ prefix', () {
+    test('preserves existing room_ and live- prefixes', () {
       expect(AgoraChannelNames.forRoom('room_abc123'), 'room_abc123');
-    });
-
-    test('preserves voice_room_ and live- prefixes', () {
-      expect(
-        AgoraChannelNames.forRoom('voice_room_cuid'),
-        'voice_room_cuid',
-      );
       expect(
         AgoraChannelNames.forRoom('live-123456'),
         'live-123456',
+      );
+    });
+
+    test('forVoiceRoom uses voice_room_ prefix for bare id', () {
+      expect(AgoraChannelNames.forVoiceRoom('abc123'), 'voice_room_abc123');
+      expect(
+        AgoraChannelNames.forVoiceRoom('voice_room_abc123'),
+        'voice_room_abc123',
       );
     });
 

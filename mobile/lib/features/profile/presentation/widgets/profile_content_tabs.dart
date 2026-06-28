@@ -1,7 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:canlifal_social/core/performance/animation_perf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../core/theme/app_theme_extensions.dart';
@@ -24,15 +25,18 @@ class ProfileContentTabs extends ConsumerStatefulWidget {
 class _ProfileContentTabsState extends ConsumerState<ProfileContentTabs>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
+  late final TabIndexListenable _tabIndex;
 
   @override
   void initState() {
     super.initState();
     _tabs = TabController(length: 3, vsync: this);
+    _tabIndex = TabIndexListenable(_tabs);
   }
 
   @override
   void dispose() {
+    _tabIndex.dispose();
     _tabs.dispose();
     super.dispose();
   }
@@ -56,10 +60,10 @@ class _ProfileContentTabsState extends ConsumerState<ProfileContentTabs>
           ],
         ),
         const SizedBox(height: 8),
-        AnimatedBuilder(
-          animation: _tabs,
+        ListenableBuilder(
+          listenable: _tabIndex,
           builder: (context, _) {
-            switch (_tabs.index) {
+            switch (_tabIndex.index) {
               case 1:
                 return _FortuneTab(userId: widget.userId);
               case 2:
@@ -191,7 +195,7 @@ class _WatchedTile extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(color: const Color(0xFF1A0F3D)),
         child: thumb != null && thumb.isNotEmpty
-            ? CachedNetworkImage(imageUrl: thumb, fit: BoxFit.cover)
+            ? CanlifalNetworkImage(url: thumb, fit: BoxFit.cover)
             : const Center(child: Icon(Icons.play_circle_outline_rounded)),
       ),
     );

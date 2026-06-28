@@ -1,6 +1,450 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.420+424 (2026-06-27)
+
+### Sesli oda Agora — web ile aynı token akışı
+
+- **Kök neden:** `VoiceAgoraEngine` boş `onError` mesajında `StateError('Agora: ')` fırlatıyordu
+- **Token:** `POST /api/agora/token` + kanal `voice_room_{odaId}` (web ile aynı)
+- **Güvenlik:** Tüm Agora adımları try/catch; tam stack trace log; UI çökmez, okunabilir hata
+- **Sıra:** mikrofon izni → token → `initialize()` → `joinChannel()`
+- **App ID:** sunucu yanıtı + `AGORA_VOICE_APP_ID` yedek doğrulaması
+
+## 1.0.419+423 (2026-06-27)
+
+### Admin ödeme talepleri ve sesli oda açma
+
+- **Admin paneli:** Bekleyen jeton/CFC talepleri `cfc-payment-requests`, `payment-notifications` ve `payment-requests` uçlarından birleştirilir; eski bekleyen talepler de listelenir
+- **Admin bildirimleri:** Ödeme bildirimleri sekmesi site bildirimleri + ödeme kayıtlarından doldurulur
+- **Staff rolü:** Oturum `role` alanı cüzdan yanıtı yoksa admin yetkisi için kullanılır
+- **Sesli oda aç:** Oluşturma gövdesi `jsonEncode` + `application/json`; `name`, `description`, `icon` ve iç içe `room` nesnesi gönderilir
+
+## 1.0.418+422 (2026-06-27)
+
+### Sesli sohbet — API dokümantasyonu (Agora + SSE)
+
+- **Agora:** App ID only (`f1cf983a38114b04a4e9102c303ba63e`), token `''`, kanal = oda `roomId`
+- **Giriş akışı:** POST presence → GET messages → SSE → heartbeat 25 sn
+- **Voice:** `POST /voice` `{type: join|leave}` sonra Agora katılımı
+- **SSE:** presence tam liste, dj `musicUrl`, typing, gift, system
+- **Çıkış:** DELETE presence `?leave=1`, Agora leave/release
+- TRTC/LiveKit sesli oda yolu kaldırıldı (Agora tek motor)
+
+## 1.0.417+421 (2026-06-27)
+
+### Jeton, admin ödeme ve sesli oda düzeltmeleri
+
+- **Jeton al:** Mevcut jeton bakiyesi oturum cache fallback ile gösterilir; cüzdan API zaman aşımı 12s
+- **Bekleyen ödeme:** Jeton sayfasında bekleyen talep banner'ı; admin için panel kısayolu
+- **Admin bildirimleri:** `jeton_payment_request` / `cfc_payment_request` admin hesabında `/admin` paneline yönlendirir
+- **Sesli oda aç:** `POST /api/chat/rooms/create` için zorunlu `name`, `description`, `icon` alanları gönderilir
+
+## 1.0.416+420 (2026-06-27)
+
+### Entegrasyon kılavuzu — tek kaynak
+
+- **`docs/FLUTTER_ENTegrasyon_KILAVUZU.md`** repoya eklendi; agent kuralı + `AGENTS.md` güncellendi
+- Chat presence/voice body: kılavuz §9.3 — `{action: join|leave}` (`type` kaldırıldı)
+- Presence çıkış: önce `POST .../presence` + `{action: leave}`
+
+## 1.0.415+419 (2026-06-27)
+
+### Sesli sohbet — API dokümantasyonu uyumu
+
+- **Referans:** `docs/FLUTTER_ENTegrasyon_KILAVUZU.md` §9.3 (tek kaynak)
+- **Presence heartbeat:** 20s → **25s**
+- **`POST /voice`:** `{action: join|leave}` — mikrofon + çıkış
+- **`POST /typing`:** yazıyor göstergesi
+- **`GET /gifts` lider tablosu:** oda açılışında API seed
+- **Presence:** `{action: join|leave}` (kılavuz §9.3)
+
+## 1.0.414+418 (2026-06-27)
+
+### Sesli sohbet — Premium 2026 UI (yalnızca arayüz)
+
+- **Backend değişmedi:** mevcut canlifal.com API, SSE, JWT, PostgreSQL — endpoint/tablo/iş mantığı aynı
+- **Keşfet:** `VoiceDiscoverHub2026` varsayılan (referans mockup — sekmeler, VIP, PK, trend)
+- **Oda içi:** `VoiceLiveHeader2026` + `VoiceLiveActionBar2026` + top spender şeridi
+- **Oda tipi rozetleri:** FREE / NORMAL / VIP (`resolvedRoomType`)
+- **Top 3 hediye:** `voiceSessionGiftLeaderboardProvider` artık UI'da görünür
+
+## 1.0.413+417 (2026-06-27)
+
+### Performans — Görev 16: Mesajlar cache-first
+
+- **`MessagesLoadPerf` + `CacheFirstLoader`:** konuşma listesi ve sohbet thread'i disk cache'den anında açılır
+- **Arka plan güncelleme:** açılış sonrası ve 8s/20s poll sessiz `forceRefresh` ile UI güncellenir
+- **Gönder sonrası:** thread + konuşma cache temizlenir, zorunlu yenileme
+- **Shell prefetch:** `conversationsListNotifierProvider` kabukta ısıtılır
+- **Lazy gate kaldırıldı:** mesaj listesi / sohbet pane cache ile gecikmesiz render
+
+## 1.0.412+416 (2026-06-27)
+
+### Performans — Görev 17: Widget rebuild & sızıntı temizliği
+
+- **`WidgetPerf` / `CancellableDelay`:** gecikmeli callback'ler dispose'da iptal
+- **Bellek:** PK poll timer, chat `listenManual`, rumuz dialog controller, HLS video init, YouTube WebView, lazy live room timer'ları
+- **FutureBuilder kaldırıldı:** falcı oturum restore, profil takip listesi, shorts/social yorum sheet'leri
+- **StreamBuilder → Riverpod:** premium fal sohbet mesajları `pfMessagesStreamProvider`
+- **SVGA hediye:** FutureBuilder yerine arka planda cache prefetch
+- **`LazyScreenSection` / animasyon parçacıkları:** iptal edilebilir timer
+
+## 1.0.411+415 (2026-06-27)
+
+### Performans — Görev 9: JSON isolate parse
+
+- **`JsonIsolatePerf`:** ≥50 KB JSON gövdeleri `compute` ile ayrı isolate'te decode
+- **Dio:** `FusedTransformer` eşiği açıkça `JsonIsolatePerf.largeThreshold` ile hizalandı
+- **Disk cache:** `ApiHttpCache` + `ApiCacheStore` okuma yolları isolate decode kullanır
+- **Küçük yanıtlar:** eşik altında senkron parse (gereksiz isolate maliyeti yok)
+- **SSE / push:** küçük olay gövdeleri mevcut senkron parse ile kalır
+
+## 1.0.410+414 (2026-06-27)
+
+### Performans — Görev 15: Profil bağımsız yükleme
+
+- **`ProfileLoadPerf`:** Jeton, CFC, takipçi, gönderiler paralel prefetch
+- **Jeton:** oturum `coinBalance` anında; cüzdan API gelince güncellenir
+- **CFC:** yalnızca CFC alanı yüklenirken `…` gösterir; Jeton bekletmez
+- **Takipçi:** auth sayacı anında; istatistik API arka planda
+- **Gönderiler:** içerik bölümü gecikmesiz; video sekmesi kendi skeleton'ı
+- **`myStats`:** broadcastHistory takipçi yolunu artık bloklamaz
+- **Shell prefetch:** `profileStatsProvider` kabukta ısıtılır
+
+## 1.0.409+413 (2026-06-27)
+
+### Performans — Görev 14: Canlı yayın hızlı giriş
+
+- **`LiveEntryPerf`:** liste dokunuşunda Agora token + join önbelleği; `fetchAgoraParallel`
+- **Anında navigasyon:** swipe/oda ekranı token beklemeden açılır; doğrulama arka planda
+- **HLS köprüsü:** `LivePlaybackBridge` — Agora hazır olana kadar HLS/thumbnail (izleyici)
+- **Bağlanırken bekleme yok:** tam ekran spinner kaldırıldı; küçük “Canlı bağlanıyor” rozeti
+- **Backend:** yalnızca `https://canlifal.com` — yeni backend yok
+
+## 1.0.408+412 (2026-06-27)
+
+### CI — Gate 3 jeton yetersizliği SKIP
+
+- Test kullanıcısında jeton yoksa (HTTP 400) falcı + Agora API erişilebilirse Gate 3 SKIP
+- Admin `staffExempt` yedek denemesi korundu
+
+## 1.0.407+411 (2026-06-27)
+
+### CI — release gate Gate 3 düzeltmesi + Görev 18 APK
+
+- **Gate 3 (canlı falcı):** oturum artık danışan token'ı ile oluşturuluyor (mobil akış); `duration` + `anchorUserId` alanları; falcı kimliği `/api/me` + liste eşlemesi
+- **402/403:** jeton/yetki engelinde falcı API erişilebilirse SKIP (APK engellenmez)
+- **Görev 18 performans serisi** (`1.0.406+410`) aynı kod tabanı — bu sürüm CI geçişi + APK yayını
+
+## 1.0.406+410 (2026-06-27)
+
+### Performans — Görev 18: Sonuç (performans serisi tamamlandı)
+
+**Hedef:** Anında açılış, anında dokunma tepkisi, akıcı geçişler, yağ gibi scroll, gecikmesiz jeton — **aynı canlifal.com backend** (yeni backend yok).
+
+| Görev | Konu | Modül |
+|-------|------|-------|
+| 1 | Açılış ≤1s, SDK defer | `StartupPerf` |
+| 2 | Lazy ekran bölümleri | `LazyLoadPerf` |
+| 3 | HTTP API cache | `ApiHttpCache` |
+| 4 | Görsel cache / thumbnail | `CanlifalNetworkImage` |
+| 5 | Lazy liste/grid | `LazyListView` |
+| 6 | Hedefli state rebuild | `StatePerf` |
+| 7 | Animasyon 60 FPS | `AnimationPerf` |
+| 8 | Paralel API | `NetworkPerf` |
+| 10 | Blur/glass önbellek | `EffectsPerf` |
+| 11 | Scroll frame drop yok | `ScrollPerf` |
+| 12 | Merkezi SSE | `SseConnectionHub` |
+| 13 | Sesli oda hızlı giriş | `VoiceRoomEntryPerf` |
+| 18 | Jeton anında, geçişler | `PerfResult` |
+
+- **Jeton pill:** 1,2 sn gecikme kaldırıldı; oturum `coinBalance` + cüzdan API
+- **Shell prefetch:** cüzdan/bildirim 400 ms'de arka planda
+- **Sayfa geçişleri:** fade-slide 240 ms
+- **Backend:** yalnızca `https://canlifal.com` — API, DB, iş mantığı web ile aynı
+
+## 1.0.405+409 (2026-06-27)
+
+### Performans — Görev 13: Sesli oda hızlı giriş
+
+- **`VoiceRoomEntryPerf`:** liste dokunuşunda AudioSession + TRTC token önbelleği
+- **Oda bootstrap:** SSE hemen; presence/DJ/hediye arka planda paralel
+- **RTC / Basic sayfa:** UI anında; ses TRTC/LiveKit arka planda bağlanır
+- **Shell prefetch:** AudioSession kabuk açılışında ısıtılır
+- **`loading: false`:** oda ekranı spinner beklemeden açılır
+
+## 1.0.404+408 (2026-06-27)
+
+### Performans — Görev 12: SSE (merkezi bağlantı)
+
+- **`SseConnectionHub`:** oda/yayın başına tek SSE, ref sayacı ile paylaşım
+- **`sseConnectionHubProvider`:** keepAlive merkezi hub
+- **Sesli oda:** keşfet presence + canlı oda aynı bağlantıyı paylaşır (12 ayrı bağlantı kaldırıldı)
+- **`ChatRoomSseService`:** aynı oda için yeniden bağlanma atlanır (`isLiveForRoom`)
+- **Canlı video yayın:** hub üzerinden attach/release — sayfa dispose'da ref sıfırlanınca kapanır
+- **`voiceRoomSseForProvider` / `videoStreamSseForProvider`:** oda/yayın bazlı servis erişimi
+
+## 1.0.403+407 (2026-06-27)
+
+### Performans — Görev 8: Ağ işlemleri (paralel API)
+
+- **`NetworkPerf`:** `parallel()` + `waitSilent()` — bağımsız istekler `Future.wait` ile
+- **Profil stats:** `/me/stats` + site profili paralel
+- **Profil refresh:** auth, cüzdan, stats, level, hediye, fal erişimi paralel
+- **`refreshMe`:** oturum + site profili paralel
+- **Ana sayfa refresh:** shorts feed dahil 11 provider paralel
+- **Bildirimler:** liste + activity feed paralel
+- **Canlı oda:** join + mesaj geçmişi; poll mesaj + meta paralel
+- **Sesli oda DJ refresh:** fetchDj + queue + musicState paralel
+- **Oyunlar / admin / fal erişim / logout cache:** paralel batch
+
+## 1.0.402+406 (2026-06-27)
+
+### Performans — Görev 11: Scroll (takılma / frame drop yok)
+
+- **`ScrollPerf`:** feed/chat/grid cacheExtent, throttle'lı sayfalama, `ScrollPerf.item`
+- **`LazyNestedGridView`:** iç içe grid — lazy builder + `NeverScrollableScrollPhysics`
+- **`LazyListView` / `LazyGridView`:** `addAutomaticKeepAlives: false`, `addRepaintBoundaries: false`
+- **Ana sayfa / profil / sosyal feed:** `CustomScrollView` cacheExtent
+- **Canlı & sesli chat:** chat cacheExtent + izole satır repaint
+- **Profil içerik gridleri:** 6 sekme `LazyNestedGridView`
+- **Bildirimler:** `ScrollPerf.bindPagination` — scroll listener throttle
+- **Fal sonucu / jeton / cüzdan:** scroll cache + lazy grid
+
+## 1.0.401+405 (2026-06-27)
+
+### Performans — Görev 10: Görsel efektler (blur / shadow / glass)
+
+- **`EffectsPerf` / `GlassTier`:** blur filter önbelleği, gölge önbelleği, `RepaintBoundary`
+- **`ThemedGlassCard` / `LiquidGlass` / `ProGlass`:** merkezi blur; liste satırında blur kapalı
+- **`ProGlassListTile`:** `GlassTier.static` — gölge + fill, BackdropFilter yok
+- **Canlı chat feed:** balon başına blur kaldırıldı — opak fill
+- **Sesli oda chat dock:** tek `chromeBar` blur katmanı (feed + input)
+- **Ana sayfa grid:** 8 hücre blur yok; CTA tek elevated blur
+- **`PfGlassCard`:** `ThemedGlassCard` + opacity animasyon (blur yeniden oluşturulmaz)
+- **Fal geçiş overlay:** sabit σ=12 blur, yalnızca opaklık animasyonu
+- **Neon quick action:** BackdropFilter kaldırıldı, gölge önbelleği
+
+## 1.0.398+402 (2026-06-27)
+
+### Performans — Görev 7: Animasyon (60–120 FPS, UI thread kilidi yok)
+
+- **`AnimationPerf`:** izole `RepaintBoundary`, paint-only katman, parçacık sınırları
+- **`ScrollParallaxNotifier`:** scroll parallax yalnızca arka plan katmanını yeniler — sayfa setState yok
+- **`TabIndexListenable`:** sekme swipe sırasında her karede değil, index değişince rebuild
+- **`FloatingEmojiPaintLayer`:** hediye/PK yüzen emojiler — CustomPaint + `repaint`, setState yok
+- **`DeferredTickerMode`:** açılışta animasyon ticker'ı 120ms ertelenir
+- **Canlı etkileşim overlay:** parçacık fizikleri paint katmanında; TextPainter cache
+- **Sesli oda parçacıkları:** önceden hesaplanmış yörüngeler — paint içinde Random yok
+- **Kozmik fal arka planı:** yıldız/orbit alanları önbellek; parallax izole
+- **Canlı chat feed:** liste satırlarından `flutter_animate` kaldırıldı
+
+## 1.0.397+401 (2026-06-27)
+
+### Performans — Görev 6: State yönetimi (hedefli rebuild)
+
+- **`StatePerf` / `SelectiveConsumer`:** `ref.select` ile izole widget rebuild
+- **Sosyal akış:** feed watch `SocialFeedScrollView`'a taşındı — app bar/composer etkilenmez
+- **Sohbet:** mesaj listesi + composer ayrı state; gönderim yalnızca composer'ı yeniler
+- **Mesajlar:** `ConversationsListSliver` — liste watch sayfa dışında
+- **Canlı oda:** yayın süresi `LiveElapsedTimePill` — 1 Hz timer tüm sayfayı rebuild etmez
+- **Ana sayfa rozetleri:** bildirim / mesaj / jeton ayrı `Consumer` + `select`
+- **Profil cüzdan:** `walletBalancesProvider.select` — jeton değişince yalnızca ilgili kart
+- **Sesli oda keşif:** `VoiceRoomOnlineCount` — presence satır bazlı
+
+## 1.0.396+400 (2026-06-27)
+
+### Performans — Görev 5: Liste performansı
+
+- **`LazyListView` / `LazyHorizontalListView` / `LazyGridView`:** `ListView.builder` sarmalayıcıları
+- **Story şeritleri:** `SocialStoriesRail`, `StoriesSection` — yatay lazy builder
+- **Canlı yayın:** sesli oda keşif story satırı, yayıncı kontrol merkezi (fal/konuk)
+- **Mesajlar:** konuşma listesi `SliverList.builder`
+- **Sosyal akış:** feed `SliverList.builder`
+- **Sesli oda:** DJ presence listesi, YouTube/müzik arama sonuçları lazy
+- **GridView.count → GridView.builder:** moderasyon komut paneli
+
+## 1.0.395+399 (2026-06-27)
+
+### Performans — Görev 4: Görsel optimizasyonu
+
+- **`CanlifalNetworkImage`:** tüm ağ görselleri `CachedNetworkImage` + ortak disk cache
+- **Thumbnail varsayılan:** liste/kart/avatar için düşük çözünürlük URL (`CanlifalImageUrls`)
+- **Tam çözünürlük isteğe bağlı:** `CanlifalNetworkImage.full` ve dokununca tam ekran viewer
+- **Disk cache:** 30 gün, 600 dosya (`CanlifalImageCacheManager`)
+- **Prefetch:** `prefetchCanlifalImages` — oda/feed kapakları önceden cache
+- **Kapsam:** feed, sosyal, ana sayfa, canlı, sesli oda, profil, fal modülleri migrate edildi
+
+## 1.0.394+398 (2026-06-27)
+
+### Performans — Görev 3: API optimizasyonu
+
+- **`ApiCacheInterceptor`:** tüm cacheable GET istekleri için Dio katmanında cache
+- **Bellek cache:** LRU (256 girdi) + TTL
+- **Disk cache:** `ApiCacheStore` ham JSON (`SharedPreferences`)
+- **TTL:** endpoint bazlı (`ApiCachePolicy`) — canlı 15 sn, mesaj 30 sn, banner 5 dk vb.
+- **Dedupe:** aynı URL + auth için eşzamanlı tek HTTP isteği
+- **Stale fallback:** ağ hatasında süresi dolmuş disk/bellek yanıtı
+- **Bypass:** `forceRefresh` / `noCache` extra; çıkışta tüm cache temizlenir
+
+## 1.0.393+397 (2026-06-27)
+
+### Performans — Görev 2: Lazy loading
+
+- **`LazyScreenSection` / `LazyScreenGate`:** ekran açıldıktan sonra kademeli mount
+- **Profil:** header anında; istatistik → cüzdan → premium → yayıncı → içerik sırayla (80–640 ms)
+- **Canlı yayın:** liste 120 ms, kategoriler 200 ms; oda içi hediye/PK 400–700 ms
+- **Sesli oda listesi:** odalar önce; SSE presence 450 ms; canlı yayın şeridi 900 ms
+- **Fal hub:** hero anında; kehanet/türler/günlük enerji kademeli; rozetler 1 sn
+- **Mesajlar / bildirimler / sohbet:** liste API 80–100 ms gecikmeli
+
+## 1.0.392+396 (2026-06-27)
+
+### Performans — Görev 1: Uygulama açılışı
+
+- **Splash üst sınırı 1 sn:** auth bootstrap cap 2 sn → 1 sn
+- **Auth hızlı yol:** açılışta yalnızca `/api/me`; site profili + OneSignal login arka planda
+- **SDK erteleme:** AdMob preload, FCM token ve `logAppOpen` runApp sonrasına alındı
+- **Ana sayfa ilk kare:** üst bar rozetleri, banner, canlı yayın ve realtime poll geciktirildi
+- **Kabuk prefetch:** bildirim/cüzdan/mesaj istekleri 2 sn gecikmeli; SSE presence 3 sn
+
+## 1.0.391+395 (2026-06-27)
+
+### Sesli oda — UI düzenlemesi (temel mod)
+
+- **PK düzeltmesi:** davet sayfasına tam oda nesnesi gönderilir (`extra: room`)
+- **Çark menüsü:** hediye yanında ⚙️ — PK, efekt, tema, oda sustur, DJ, !istek, kuyruk
+- **Koltuk altı:** katılımcı şeridi ve “Katılımcılar” butonu kaldırıldı
+- **Giriş ticker:** koltukların altında açılır/kapanır kayan “odaya girenler” bandı
+- **Sabit alt bar:** mesaj yaz + kompakt mic/ses/jeton/çık (jeton → mağaza, odadan çıkmadan)
+- **Sohbet:** mesaj listesi ortada; yazı alanı klavye üstünde sabit
+
+## 1.0.390+394 (2026-06-27)
+
+### Sesli oda — premium özellikler (web parity, temel mod)
+
+- **Hediyeler:** mağaza, uçan animasyon, fullscreen nadir hediye, SSE + gift socket
+- **PK:** davet, gelen PK dialog, aktif PK sayfasına geçiş
+- **Efektler:** ses efekt paneli (`showVoiceEffectsSheet`)
+- **Oda temaları:** kozmik arka plan + hub ayarlarından tema seçimi
+- **Sohbet + emoji:** mesaj gönderme, hediye satırları, emoji picker
+- **Profil kartları:** neon avatar, rol rozeti, hediye kısayolu
+- **VIP giriş animasyonu:** üyelik tier’ına göre overlay
+- **Backend:** değişiklik yok — mevcut canlifal.com API/SSE
+
+## 1.0.389+393 (2026-06-27)
+
+### Sesli oda — moderasyon (web parity, temel mod)
+
+- **Sahne:** Admin koltuk 1 + 2×5 koltuk grid; dokun → moderasyon / koltuk ata
+- **Admin / Moderatör / Yetkili:** rol rozeti; kullanıcıya dokun → moderasyon paneli
+- **Kick / Ban / Sessize alma:** mevcut moderasyon sheet temel modda bağlandı
+- **Mikrofon izni:** +V ses ver, koltuğa al/indir, konuşma isteği
+- **Oda susturma:** yetkililer için tek dokunuşla oda mute/unmute
+- **Katılımcı şeridi:** dokun → profil veya moderasyon
+
+## 1.0.388+392 (2026-06-27)
+
+### Sesli oda — müzik sistemi (web parity, temel mod)
+
+- **!istek:** sohbet komutu + arama sheet; jeton / ücretsiz komut yolu
+- **Kuyruk:** sıradaki şarkılar, tam kuyruk sheet (silme DJ için)
+- **DJ:** panel hub, oynat/duraklat/sonraki/durdur (sunucu sync)
+- **Mini player:** kapak, ilerleme, kontroller
+- **SSE:** `dj` / `song` olayları temel modda aktif; otomatik oynatma
+
+## 1.0.387+391 (2026-06-27)
+
+### Sesli oda — SSE gerçek zamanlı olaylar (temel mod)
+
+- **SSE akışı:** giriş/çıkış, presence, mikrofon (`isSpeaking`), susturma, moderasyon, oda güncellemesi
+- **`VoiceRoomBasicPage`:** canlı olay listesi, katılımcı şeridi (mic göstergesi), SSE bağlantı durumu
+- **`onRoomUpdate`:** SSE oda güncellemeleri artık işleniyor
+- **Temel mod:** DJ/hediye/PK SSE yan etkileri atlanır; yalnızca oda olayları
+
+## 1.0.386+390 (2026-06-27)
+
+### Sesli oda — aşama 1 (temel akış)
+
+- **Temel mod (varsayılan):** oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcı listesi, oda sahibi
+- **Hafif oturum:** presence + SSE; DJ, PK, hediye ve müzik alt sistemleri başlatılmaz
+- **Tam web UI:** `--dart-define=VOICE_ROOM_FULL=true` ile eski RTC sayfası
+
+## 1.0.385+389 (2026-06-27)
+
+### Sesli oda sistemi — web parity ile yeniden eklendi
+
+- **Modüller:** `voice_hub/` (SSE, TRTC, DJ müzik, PK, hediye, video overlay), `livekit/` yedek RTC
+- **Canlifal web ile aynı API:** `/api/chat/rooms/*`, SSE `…/stream`, presence 20s, TRTC `voice_room_{id}`, `!istek`, IRC rolleri
+- **Müzik:** Android googlevideo → `/api/chat/youtube-audio` proxy önce (backend parity); CDN ve yerel önbellek yedek
+- **ProviderScope:** `!istek` arama, şarkı sheet ve komut paneli modal güvenli
+- **Rotalar:** `/voice-rooms`, `/voice-room/:id`, PK sayfaları; ana sayfa / keşfet / canlı sekmesi sesli oda bölümleri
+- **Android:** `AudioService` + ExoPlayer probe (DJ müzik teşhisi)
+
+## 1.0.384+388 (2026-06-27)
+
+### Sesli oda kaldırma — Android derleme düzeltmesi
+
+- **MainActivity:** `FlutterActivity` (audio_service kaldırıldı)
+- **AndroidManifest:** AudioService / MediaButtonReceiver / media playback FGS kaldırıldı
+- **ExoPlayerProbe:** sesli oda müzik teşhisi silindi
+
+## 1.0.383+387 (2026-06-27)
+
+### Sesli sohbet odaları tamamen kaldırıldı
+
+- **Kaldırılan modüller:** `voice_hub/`, `livekit/`, sesli oda entity/widget/sayfa dosyaları
+- **Canlı sekmesi:** yalnızca video yayınları; sesli oda sekmesi ve global müzik çubuğu yok
+- **Rotalar:** `/voice-rooms`, `/voice-room/:id`, PK sayfaları (`/pk/*`, `/live/pk*`) kaldırıldı
+- **Ana sayfa / keşfet / sosyal:** sesli oda bölümleri ve kısayollar canlı yayına yönlendirildi
+- **Bağımlılıklar:** `livekit_client`, `just_audio`, `audio_service`, `audio_session`, `youtube_explode_dart`, `flutter_webrtc` kaldırıldı
+
+## 1.0.382+386 (2026-06-26)
+
+### Sesli oda müzik — backend proxy parity + ProviderScope
+
+- **Backend ile aynı akış:** Android googlevideo → `GET /api/chat/youtube-audio?url=` (Referer sunucuda) önce; CDN ve yerel önbellek yedek
+- **`playServerStream`:** Çözümleme sonrası ham googlevideo URL ile hedef listesi (proxy çift dönüşüm yok)
+- **Loading takılması:** 12 sn loading timeout → sonraki hedefe geçiş
+- **ProviderScope:** `!istek` arama, şarkı sheet ve oda komutları paneli `UncontrolledProviderScope` ile sarmalandı (`Bileşen hatası` giderildi)
+
+## 1.0.381+385 (2026-06-26)
+
+### Sesli oda müzik — Android Source error düzeltmesi
+
+- **Android oynatma sırası:** googlevideo doğrudan CDN + Referer başlıkları önce; yerel önbellek ikinci; `/api/chat/youtube-audio` proxy en son (sık 404 / Source error)
+- **`clientPlaybackUrl`:** Artık googlevideo'yu proxy'ye çevirmiyor — çözümlenmiş akış doğrudan oynatılır
+- **Güvenlik:** `youtube-stream` JSON uç noktası `just_audio`'ya asla verilmez; çözümleme başarısızsa watch URL adayları denenir
+- **Teşhis:** Mini player `play=` ve `srv=` ile oynatılan vs sunucu URL'sini ayırır
+
+## 1.0.380+384 (2026-06-26)
+
+### Sesli oda müzik — kalıcı oynatma düzeltmesi
+
+- **Hibrit oynatma:** Videolu isteklerde ses `just_audio` ile her zaman çalar; YouTube overlay sessiz (`mute: 1`)
+- **Mini player kapatma** artık oda içi müziği durdurmaz (`userDismissedPlayer` yalnızca UI)
+- **youtube-stream API** URL'si çözümlenip doğrudan akışa dönüştürülür
+- **SSE:** `withVideo` bayrağı sunucu düşürse istemci korur
+- **Android:** `/api/chat/youtube-audio` çift proxy hatası giderildi
+
+## 1.0.379+383 (2026-06-26)
+
+### Sesli oda — ortadan !istek videolu müzik
+
+- **!istek (sohbet):** Şarkı seçiminden sonra otomatik **videolu** mod (ortada YouTube oynatıcı)
+- **`withVideo` yedek:** Sunucu bayrağı eksikse istemci `nowPlaying.asVideoRequest()` ile video modunu korur
+- **Oynatma:** `isVideoRequest` ile ses-only parçalar video overlay açmaz
+
+## 1.0.378+382 (2026-06-26)
+
+### Sesli oda müzik — youtube-stream URL çözümleme
+
+- **`/api/chat/youtube-stream?videoId=`** artık doğrudan oynatılmıyor; önce JSON'dan gerçek ses akışı URL'si alınıyor
+- **`videoIdFrom`:** `videoId` sorgu parametresi desteği
+- **`just_audio`:** `ProcessingState.ready` olunca otomatik `play()` (loading'de takılma)
+- **Android:** `usesCleartextTraffic="true"` (HTTP yedek akışlar)
+
 ## 1.0.377+381 (2026-06-26)
 
 ### CI — derleme hatası

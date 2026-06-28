@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
 import '../../../profile/presentation/widgets/premium/profile_glass.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
@@ -54,7 +54,7 @@ class VoiceRoomCard extends StatelessWidget {
               children: [
                 if (bg != null && bg.isNotEmpty)
                   Positioned.fill(
-                    child: CachedNetworkImage(imageUrl: bg, fit: BoxFit.cover),
+                    child: CanlifalNetworkImage(url: bg, fit: BoxFit.cover),
                   )
                 else
                   const Positioned.fill(
@@ -151,7 +151,7 @@ class VoiceRoomCard extends StatelessWidget {
                             CircleAvatar(
                               radius: large ? 16 : 13,
                               backgroundImage:
-                                  CachedNetworkImageProvider(room.ownerAvatarUrl!),
+                                  canlifalImageProvider(room.ownerAvatarUrl!),
                             )
                           else
                             CircleAvatar(
@@ -226,7 +226,7 @@ class VoiceRoomCard extends StatelessWidget {
                 left: i * 12.0,
                 child: CircleAvatar(
                   radius: 12,
-                  backgroundImage: CachedNetworkImageProvider(show[i]),
+                  backgroundImage: canlifalImageProvider(show[i]),
                 ),
               ),
           ],

@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:canlifal_social/core/bootstrap/app_startup_log.dart';
+import 'package:canlifal_social/core/bootstrap/startup_perf.dart';
+import 'package:canlifal_social/core/performance/scroll_perf.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import '../providers/home_providers.dart';
 import '../providers/home_realtime_bridge.dart';
@@ -33,6 +38,7 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   HomeRealtimeBridge? _realtimeBridge;
+  Timer? _realtimeStartTimer;
 
   @override
   void initState() {
@@ -40,12 +46,17 @@ class _HomePageState extends ConsumerState<HomePage> {
     _realtimeBridge = ref.read(homeRealtimeBridgeProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      AppStartupLog.homeScreenRender('/feed');
+    });
+    _realtimeStartTimer = Timer(StartupPerf.homeRealtimeBridgeDelay, () {
+      if (!mounted) return;
       _realtimeBridge?.start();
     });
   }
 
   @override
   void dispose() {
+    _realtimeStartTimer?.cancel();
     // ref kullanılamaz — ConsumerState dispose sırasında Riverpod hata verir.
     _realtimeBridge?.dispose();
     _realtimeBridge = null;
@@ -71,15 +82,22 @@ class _HomePageState extends ConsumerState<HomePage> {
             : context.colors.surface,
         onRefresh: _onRefresh,
         child: CustomScrollView(
+          cacheExtent: ScrollPerf.feedCacheExtent,
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
           ),
           slivers: [
             const SliverToBoxAdapter(child: HomeHeader()),
-            const SliverToBoxAdapter(child: HomeBannerCarousel()),
+            const SliverToBoxAdapter(
+              child: HomeDeferredSection(
+                delay: StartupPerf.homeBannerDelay,
+                child: HomeBannerCarousel(),
+              ),
+            ),
             const SliverToBoxAdapter(child: HomeQuickActions()),
             const SliverToBoxAdapter(
               child: HomeDeferredSection(
+                delay: StartupPerf.homeLiveSectionDelay,
                 child: LiveBroadcastSection(),
               ),
             ),

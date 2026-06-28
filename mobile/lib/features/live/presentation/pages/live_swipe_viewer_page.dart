@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/performance/live_entry_perf.dart';
+import '../../domain/entities/live_broadcast_session.dart';
 import '../../domain/entities/live_swipe_feed_args.dart';
 import 'live_broadcast_room_page.dart';
-import '../utils/open_live_stream.dart';
-import '../../domain/entities/live_broadcast_session.dart';
 
 /// TikTok tarzı dikey swipe — yayınlar arası geçiş.
 class LiveSwipeViewerPage extends ConsumerStatefulWidget {
@@ -21,15 +21,15 @@ class LiveSwipeViewerPage extends ConsumerStatefulWidget {
 class _LiveSwipeViewerPageState extends ConsumerState<LiveSwipeViewerPage> {
   late PageController _pageCtrl;
   late int _index;
-  final _sessions = <LiveBroadcastSession?>[];
 
   @override
   void initState() {
     super.initState();
     _index = widget.args.initialIndex.clamp(0, widget.args.streams.length - 1);
     _pageCtrl = PageController(initialPage: _index);
-    _sessions.addAll(List.filled(widget.args.streams.length, null));
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSession(_index));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _prewarmAdjacent(_index);
+    });
   }
 
   @override
@@ -38,12 +38,12 @@ class _LiveSwipeViewerPageState extends ConsumerState<LiveSwipeViewerPage> {
     super.dispose();
   }
 
-  Future<void> _loadSession(int i) async {
-    if (_sessions[i] != null) return;
-    final stream = widget.args.streams[i];
-    final session = await buildLiveSessionForStream(ref, stream);
-    if (!mounted) return;
-    setState(() => _sessions[i] = session);
+  void _prewarmAdjacent(int i) {
+    final streams = widget.args.streams;
+    for (final j in [i - 1, i, i + 1]) {
+      if (j < 0 || j >= streams.length) continue;
+      LiveEntryPerf.prewarmOnStreamTap(ref, streams[j]);
+    }
   }
 
   @override
@@ -64,21 +64,15 @@ class _LiveSwipeViewerPageState extends ConsumerState<LiveSwipeViewerPage> {
         itemCount: streams.length,
         onPageChanged: (i) {
           setState(() => _index = i);
-          _loadSession(i);
-          if (i + 1 < streams.length) _loadSession(i + 1);
+          _prewarmAdjacent(i);
         },
         itemBuilder: (context, i) {
           if ((i - _index).abs() > 1) {
             return const ColoredBox(color: Colors.black);
           }
-          final session = _sessions[i];
-          if (session == null) {
-            return const Center(
-              child: CircularProgressIndicator(color: Colors.white54),
-            );
-          }
+          final stream = streams[i];
           return LiveBroadcastRoomPage(
-            session: session,
+            session: LiveBroadcastSession.fromStream(stream),
             embeddedInSwipe: true,
             onSwipeClose: () => context.pop(),
           );

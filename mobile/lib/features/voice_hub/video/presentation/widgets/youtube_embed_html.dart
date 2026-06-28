@@ -53,6 +53,7 @@ abstract final class YoutubeEmbedHtml {
         videoId: '$videoId',
         playerVars: {
           autoplay: $autoplay,
+          mute: 1,
           controls: 0,
           playsinline: 1,
           rel: 0,

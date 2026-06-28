@@ -106,18 +106,26 @@ class VoiceRoomDjPlayer {
     final resolvedVideoId = videoId ??
         VoiceRoomMusicPipelineLog.videoIdFromUrl(nowPlaying?.youtubeUrl ?? '') ??
         ChatRoomDjState.videoIdFromLoose(streamUrl);
-    var url = VoiceRoomDjStreamLoader.clientPlaybackUrl(streamUrl.trim());
-    if (YoutubeStreamResolver.isYoutubePageUrl(url)) {
+    var url = streamUrl.trim();
+    if (YoutubeStreamResolver.needsResolveBeforePlay(url)) {
       final resolved = await _resolveSource(url);
       if (resolved == null || !resolved.startsWith('http')) {
         VoiceRoomDebugLog.musicError(
-          phase: 'playServerStream.youtube_unresolved',
+          phase: 'playServerStream.unresolved',
           url: url,
           videoId: resolvedVideoId,
         );
         return false;
       }
-      url = VoiceRoomDjStreamLoader.clientPlaybackUrl(resolved);
+      url = resolved.trim();
+    }
+    if (YoutubeStreamResolver.isYoutubeStreamApiUrl(url)) {
+      VoiceRoomDebugLog.musicError(
+        phase: 'playServerStream.unresolved_api',
+        url: url,
+        videoId: resolvedVideoId,
+      );
+      return false;
     }
     if (!url.startsWith('http')) {
       VoiceRoomMusicPipelineLog.nullMusicUrl(
@@ -197,13 +205,30 @@ class VoiceRoomDjPlayer {
   }) async {
     final direct = _absolutizeStreamUrl(serverStreamUrl ?? musicUrl);
     if (direct != null && direct.startsWith('http')) {
-      return playServerStream(
-        streamUrl: direct,
-        playing: playing,
-        startPosition: startPosition ?? Duration.zero,
-        nowPlaying: nowPlaying,
-        muted: muted,
-      );
+      if (YoutubeStreamResolver.isYoutubeStreamApiUrl(direct)) {
+        final resolved = await _resolveSource(direct);
+        if (resolved != null &&
+            resolved.startsWith('http') &&
+            !YoutubeStreamResolver.isYoutubeStreamApiUrl(resolved)) {
+          return playServerStream(
+            streamUrl: resolved,
+            playing: playing,
+            startPosition: startPosition ?? Duration.zero,
+            nowPlaying: nowPlaying,
+            muted: muted,
+            videoId: ChatRoomDjState.videoIdFromLoose(direct),
+          );
+        }
+        // Çözümleme başarısız — aday listesi (nowPlaying watch URL vb.) ile devam et.
+      } else {
+        return playServerStream(
+          streamUrl: direct,
+          playing: playing,
+          startPosition: startPosition ?? Duration.zero,
+          nowPlaying: nowPlaying,
+          muted: muted,
+        );
+      }
     }
     _muted = muted;
 
@@ -228,6 +253,8 @@ class VoiceRoomDjPlayer {
 
     addCandidate(resolveSeed);
     addCandidate(fallbackYoutubeUrl);
+    addCandidate(musicUrl);
+    addCandidate(serverStreamUrl);
     if (nowPlaying != null) {
       addCandidate(nowPlaying.youtubeUrl);
       final videoId = VoiceRoomMusicPipelineLog.videoIdFromUrl(
@@ -298,8 +325,20 @@ class VoiceRoomDjPlayer {
     if (trimmed.contains('/api/chat/youtube-audio')) {
       return trimmed;
     }
+    if (YoutubeStreamResolver.isYoutubeStreamApiUrl(trimmed)) {
+      final absolute = _absolutizeStreamUrl(trimmed) ?? trimmed;
+      return _resolver.resolvePlayableUrl(absolute);
+    }
     if (trimmed.startsWith('/')) {
-      return trimmed;
+      final absolute = _absolutizeStreamUrl(trimmed);
+      if (absolute == null) return null;
+      if (YoutubeStreamResolver.isYoutubeStreamApiUrl(absolute)) {
+        return _resolver.resolvePlayableUrl(absolute);
+      }
+      if (YoutubeStreamResolver.needsResolveBeforePlay(absolute)) {
+        return _resolver.resolvePlayableUrl(absolute);
+      }
+      return absolute;
     }
     return _resolver.resolvePlayableUrl(trimmed);
   }
@@ -648,9 +687,25 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
     final deadline = DateTime.now().add(timeout);
     final startupLogDeadline = DateTime.now().add(startupLogAt);
     var startupLogged = false;
+    var loadingSince = DateTime.now();
     while (DateTime.now().isBefore(deadline)) {
       _refreshDiagnostics();
       final state = _player.processingState;
+      if (state == ja.ProcessingState.loading) {
+        if (DateTime.now().difference(loadingSince).inSeconds >= 12) {
+          VoiceRoomMusicPipelineLog.playResult(
+            started: false,
+            url: _currentSource ?? '(none)',
+            processingState: state.name,
+            playing: _player.playing,
+            durationMs: currentDurationMs,
+            detail: 'loading_timeout_12s',
+          );
+          return false;
+        }
+      } else {
+        loadingSince = DateTime.now();
+      }
       if (_player.playing &&
           (state == ja.ProcessingState.ready ||
               state == ja.ProcessingState.buffering)) {
@@ -855,6 +910,9 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
     String? candidateLabel,
     bool deferMediaSession = false,
   }) async {
+    if (YoutubeStreamResolver.isYoutubeStreamApiUrl(source)) {
+      throw StateError('youtube-stream API URL cannot be played directly');
+    }
     _completionFired = false;
     final needsReload = _currentSource != source ||
         _player.processingState == ja.ProcessingState.idle ||
@@ -961,7 +1019,49 @@ class VoiceRoomAudioHandler extends audio.BaseAudioHandler
         ),
       );
     }
-    await playLocal();
+    await _playWhenReady();
+  }
+
+  /// `setAudioSource` sonrası loading'de takılı kalırsa ready olunca oynat.
+  Future<void> _playWhenReady() async {
+    if (_player.playing &&
+        (_player.processingState == ja.ProcessingState.ready ||
+            _player.processingState == ja.ProcessingState.buffering)) {
+      return;
+    }
+    if (_player.processingState == ja.ProcessingState.ready) {
+      await playLocal();
+      return;
+    }
+
+    StreamSubscription<ja.PlayerState>? sub;
+    try {
+      sub = _player.playerStateStream.listen((state) {
+        if (state.processingState == ja.ProcessingState.ready &&
+            !state.playing &&
+            _currentSource != null) {
+          unawaited(playLocal());
+        }
+      });
+      await _player.processingStateStream
+          .firstWhere(
+            (s) =>
+                s == ja.ProcessingState.ready ||
+                s == ja.ProcessingState.completed,
+          )
+          .timeout(const Duration(seconds: 45));
+      if (!_player.playing &&
+          _player.processingState == ja.ProcessingState.ready) {
+        await playLocal();
+      }
+    } on TimeoutException {
+      if (!_player.playing &&
+          _player.processingState == ja.ProcessingState.ready) {
+        await playLocal();
+      }
+    } finally {
+      await sub?.cancel();
+    }
   }
 
   Future<void> playLocal() async {

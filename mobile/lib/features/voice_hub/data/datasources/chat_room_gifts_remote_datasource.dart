@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/util/json_util.dart';
+import '../../../gifts/domain/gift_leaderboard_entry.dart';
 import '../../../live/data/datasources/live_gifts_remote_datasource.dart';
 import '../../../live/domain/entities/live_gift_event.dart';
 import '../../../live/domain/entities/live_gift_type.dart';
@@ -53,6 +55,45 @@ class ChatRoomGiftsRemoteDataSource {
     return VoiceGiftSendResult(
       revenue: VoiceGiftRevenueBreakdown.fromJson(revenueMap),
     );
+  }
+
+  /// Oda hediye lider tablosu — `GET /api/chat/rooms/{roomId}/gifts`.
+  Future<List<GiftLeaderboardEntry>> fetchRoomGiftLeaderboard({
+    required String roomId,
+  }) async {
+    try {
+      final res = await _dio.safeGet<dynamic>(ApiEndpoints.chatRoomGifts(roomId));
+      return _parseLeaderboard(res.data);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  List<GiftLeaderboardEntry> _parseLeaderboard(dynamic body) {
+    dynamic list;
+    if (body is Map) {
+      final map = Map<String, dynamic>.from(body);
+      final data = map['data'] is Map
+          ? Map<String, dynamic>.from(map['data'] as Map)
+          : map;
+      list = pick(data, [
+        'leaderboard',
+        'leaders',
+        'topGifters',
+        'topSpenders',
+        'rankings',
+        'items',
+        'entries',
+      ]);
+    } else {
+      list = body;
+    }
+    if (list is! List) return const [];
+    return list
+        .whereType<Map>()
+        .map((e) => GiftLeaderboardEntry.fromJson(Map<String, dynamic>.from(e)))
+        .where((e) => e.displayName.isNotEmpty && e.displayName != '—')
+        .toList();
   }
 
   Future<List<LiveGiftEvent>> fetchRoomGiftEvents({

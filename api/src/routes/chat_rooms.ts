@@ -88,11 +88,14 @@ chatRoomsRouter.get("/rooms", async (_req, res) => {
 chatRoomsRouter.post("/rooms/create", requireAuth, async (req, res) => {
   const user = await loadUser(req.userId);
   if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum açmanız gerekiyor");
+  const body = req.body?.room ?? req.body ?? {};
   const vip =
     req.body?.isVip === true ||
     req.body?.vip === true ||
     req.body?.roomType === "vip" ||
-    req.body?.type === "vip";
+    req.body?.type === "vip" ||
+    body?.roomType === "vip" ||
+    body?.type === "vip";
   const costRaw =
     req.body?.cost ?? req.body?.jeton ?? req.body?.coins ?? req.body?.amount;
   const cost =
@@ -102,18 +105,57 @@ chatRoomsRouter.post("/rooms/create", requireAuth, async (req, res) => {
         ? Number.parseInt(costRaw, 10)
         : undefined;
   const name =
-    typeof req.body?.name === "string"
-      ? req.body.name
-      : typeof req.body?.nameTr === "string"
-        ? req.body.nameTr
-        : typeof req.body?.roomName === "string"
-          ? req.body.roomName
-          : typeof req.body?.title === "string"
-            ? req.body.title
-            : undefined;
+    typeof body?.name === "string"
+      ? body.name
+      : typeof body?.nameTr === "string"
+        ? body.nameTr
+        : typeof body?.roomName === "string"
+          ? body.roomName
+          : typeof body?.title === "string"
+            ? body.title
+            : typeof req.body?.name === "string"
+              ? req.body.name
+              : typeof req.body?.nameTr === "string"
+                ? req.body.nameTr
+                : undefined;
+  const description =
+    typeof body?.description === "string"
+      ? body.description
+      : typeof body?.descTr === "string"
+        ? body.descTr
+        : typeof body?.desc === "string"
+          ? body.desc
+          : typeof req.body?.description === "string"
+            ? req.body.description
+            : typeof req.body?.descTr === "string"
+              ? req.body.descTr
+              : undefined;
+  const icon =
+    typeof body?.icon === "string"
+      ? body.icon
+      : typeof req.body?.icon === "string"
+        ? req.body.icon
+        : undefined;
+  if (!name?.trim() || !description?.trim() || !icon?.trim()) {
+    return fail(
+      res,
+      400,
+      "BAD_REQUEST",
+      "Name, description and icon are required",
+    );
+  }
   const roomTypeRaw =
-    req.body?.roomType ?? req.body?.type ?? (vip ? "vip" : undefined);
-  const result = await createVoiceChatRoom(user, { vip, cost, name, roomType: roomTypeRaw });
+    req.body?.roomType ??
+    req.body?.type ??
+    body?.roomType ??
+    body?.type ??
+    (vip ? "vip" : undefined);
+  const result = await createVoiceChatRoom(user, {
+    vip,
+    cost,
+    name: name.trim(),
+    roomType: roomTypeRaw,
+  });
   if (!result.ok) {
     const code = result.error?.includes("jeton") ? 402 : 400;
     return fail(res, code, "BAD_REQUEST", result.error ?? "Oda açılamadı");

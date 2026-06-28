@@ -47,11 +47,6 @@ class FirebaseBootstrap {
       await PushNotificationService.instance.init();
 
       if (!kIsWeb && !OneSignalBootstrap.isReady) {
-        // İzin giriş sonrası otomatik istenmez — ModalBarrier / gri ekran riski.
-        final token = await messaging!.getToken();
-        if (token != null) {
-          debugPrint('FCM token: ${token.substring(0, 12)}…');
-        }
         messaging!.onTokenRefresh.listen((token) {
           debugPrint('FCM token refreshed: ${token.substring(0, 12)}…');
           OneSignalBootstrap.onPushTokenChanged?.call();
@@ -65,21 +60,29 @@ class FirebaseBootstrap {
       }
 
       // OneSignal aktifse FCM doğrudan dinlenmiyor — çift bildirim önlenir
-// OneSignal, FCM'i kendi içinde teslimat kanalı olarak kullanır
-if (!OneSignalBootstrap.isReady) {
-  await PushNotificationService.instance.bindForegroundFcm(messaging!);
-} else {
-  // OneSignal varken sadece token yenilemeyi dinle, bildirim gösterme
-  messaging!.onTokenRefresh.listen((token) {
-    debugPrint('FCM token refreshed: ${token.substring(0, 12)}…');
-    OneSignalBootstrap.onPushTokenChanged?.call();
-  });
-}
+      if (!OneSignalBootstrap.isReady) {
+        await PushNotificationService.instance.bindForegroundFcm(messaging!);
+      }
 
       _ready = true;
-      await analytics!.logAppOpen();
     } catch (e, st) {
       debugPrint('Firebase init failed: $e\n$st');
+    }
+  }
+
+  /// İlk kare sonrası — token, analytics (açılışı bloklamaz).
+  static Future<void> runDeferredTasks() async {
+    if (!_ready || messaging == null) return;
+    try {
+      if (!kIsWeb && !OneSignalBootstrap.isReady) {
+        final token = await messaging!.getToken();
+        if (token != null) {
+          debugPrint('FCM token: ${token.substring(0, 12)}…');
+        }
+      }
+      await analytics?.logAppOpen();
+    } catch (e) {
+      debugPrint('Firebase deferred tasks failed: $e');
     }
   }
 

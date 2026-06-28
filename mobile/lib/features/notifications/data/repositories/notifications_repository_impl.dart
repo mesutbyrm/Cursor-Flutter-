@@ -4,6 +4,7 @@ import '../datasources/notifications_remote_datasource.dart';
 import '../../../profile/data/datasources/canlifal_user_api_datasource.dart';
 import '../../../profile/domain/entities/profile_stats_entity.dart';
 import '../../../../core/config/env.dart';
+import '../../../../core/performance/network_perf.dart';
 import '../../../../core/offline/cache_first_loader.dart';
 
 class NotificationsRepositoryImpl implements NotificationsRepository {
@@ -40,16 +41,28 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       }
     }
 
-    try {
-      addAll(await _remote.list());
-    } catch (_) {}
-
-    if (Env.useMobileAuth) {
-      try {
-        final page = await _canlifal.fetchActivity();
-        addAll(page.items.map(_activityToNotification));
-      } catch (_) {}
-    }
+    final pair = await NetworkPerf.parallel([
+      () async {
+        try {
+          return await _remote.list();
+        } catch (_) {
+          return <AppNotificationEntity>[];
+        }
+      }(),
+      () async {
+        if (!Env.useMobileAuth) return <ProfileActivityItemEntity>[];
+        try {
+          final page = await _canlifal.fetchActivity();
+          return page.items;
+        } catch (_) {
+          return <ProfileActivityItemEntity>[];
+        }
+      }(),
+    ]);
+    addAll(pair[0] as List<AppNotificationEntity>);
+    addAll(
+      (pair[1] as List<ProfileActivityItemEntity>).map(_activityToNotification),
+    );
 
     final list = byId.values.toList()
       ..sort((a, b) {

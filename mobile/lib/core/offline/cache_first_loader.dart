@@ -11,15 +11,18 @@ abstract final class CacheFirstLoader {
     required T Function(Map<String, dynamic> json) decode,
     Duration maxAge = const Duration(minutes: 15),
     bool forceRefresh = false,
+    bool refreshInBackground = true,
   }) async {
     if (!forceRefresh) {
       final cached = await ApiCacheStore.read(cacheKey, decode, maxAge: maxAge);
       if (cached != null) {
-        unawaited(_refreshInBackground(
-          cacheKey: cacheKey,
-          fetch: fetch,
-          encode: encode,
-        ));
+        if (refreshInBackground) {
+          unawaited(_refreshInBackground(
+            cacheKey: cacheKey,
+            fetch: fetch,
+            encode: encode,
+          ));
+        }
         return cached;
       }
     }

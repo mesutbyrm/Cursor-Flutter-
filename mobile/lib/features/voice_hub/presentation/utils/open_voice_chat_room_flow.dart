@@ -23,11 +23,12 @@ Future<void> showOpenVoiceChatRoomFlow(BuildContext context, WidgetRef ref) asyn
 
   final settings = ref.read(platformVoiceRoomSettingsProvider).valueOrNull ??
       PlatformVoiceRoomSettings.fallback;
-  // Fetch settings in background so next open has fresh values.
   ref.read(platformVoiceRoomSettingsProvider.future).catchError((_) {});
   final normalCost = settings.normalOpenCost;
   final vipCost = settings.vipOpenCost;
-  var balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ?? 0;
+  var balance = ref.read(walletBalancesProvider).valueOrNull?.jeton ??
+      ref.read(authControllerProvider).valueOrNull?.coinBalance ??
+      0;
   // Önbellekli bakiye ile hemen sheet aç; güncelleme arka planda.
   ref.read(walletBalancesProvider.future).then((b) {
     balance = b.jeton;

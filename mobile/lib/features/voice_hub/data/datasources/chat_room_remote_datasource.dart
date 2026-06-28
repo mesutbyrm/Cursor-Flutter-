@@ -60,6 +60,40 @@ class ChatRoomRemoteDataSource {
 
   static String seatsPath(String roomId) => '/api/chat/rooms/$roomId/seats';
 
+  static String voicePath(String roomId) => ApiEndpoints.chatRoomVoice(roomId);
+
+  static String typingPath(String roomId) => ApiEndpoints.chatRoomTyping(roomId);
+
+  /// Üretim presence/voice — API dokümantasyonu (`type` join/leave, heartbeat POST).
+  static const presenceHeartbeatInterval = Duration(seconds: 25);
+
+  /// Odaya giriş — `POST /presence` (gövde yok).
+  Future<void> postPresence(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(presencePath(key));
+    });
+  }
+
+  /// Heartbeat — `POST /presence` her 25 sn.
+  Future<void> presenceHeartbeat(
+    String roomKey, {
+    String? alternateKey,
+  }) =>
+      postPresence(roomKey, alternateKey: alternateKey);
+
+  /// Odaya giriş: POST presence + GET presence listesi.
+  Future<List<ChatRoomPresence>> enterPresence(
+    String roomKey, {
+    String? alternateKey,
+    String? nickname,
+  }) async {
+    await postPresence(roomKey, alternateKey: alternateKey);
+    return fetchPresence(roomKey, alternateKey: alternateKey);
+  }
+
   Map<String, dynamic>? _unwrapMap(dynamic body) {
     if (body is Map<String, dynamic>) {
       if (body['success'] == true && body['data'] != null) {
@@ -215,7 +249,7 @@ class ChatRoomRemoteDataSource {
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final nick = nickname?.trim();
-      final body = <String, dynamic>{};
+      final body = <String, dynamic>{'action': 'join'};
       if (nick != null && nick.isNotEmpty) body['nickname'] = nick;
       if (seatIndex != null && seatIndex >= 0) body['seatIndex'] = seatIndex;
       final res = await _dio.safePost<dynamic>(
@@ -239,9 +273,15 @@ class ChatRoomRemoteDataSource {
   Future<void> leavePresence(String roomKey, {String? alternateKey}) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       try {
+        await _dio.safeDelete<dynamic>('${presencePath(key)}?leave=1');
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      } catch (_) {}
+      try {
         await _dio.safePost<dynamic>(
-          '${presencePath(key)}?_delete=1&leave=1',
-          data: '{}',
+          presencePath(key),
+          data: jsonEncode({'type': 'leave'}),
           options: Options(contentType: 'application/json'),
         );
         return;
@@ -249,12 +289,72 @@ class ChatRoomRemoteDataSource {
         if (e.statusCode != 404 && e.statusCode != 405) rethrow;
       } catch (_) {}
       try {
-        await _dio.safeDelete<dynamic>('${presencePath(key)}?leave=1');
-        return;
-      } on ApiException catch (e) {
-        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
-      }
-      await _dio.safeDelete<dynamic>(presencePath(key));
+        await _dio.safePost<dynamic>(
+          presencePath(key),
+          data: jsonEncode({'action': 'leave'}),
+          options: Options(contentType: 'application/json'),
+        );
+      } catch (_) {}
+    });
+  }
+
+  Future<void> joinVoiceSession(String roomKey, {String? alternateKey}) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        voicePath(key),
+        data: jsonEncode({'type': 'join'}),
+        options: Options(contentType: 'application/json'),
+      );
+    });
+  }
+
+  Future<void> leaveVoiceSession(String roomKey, {String? alternateKey}) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        voicePath(key),
+        data: jsonEncode({'type': 'leave'}),
+        options: Options(contentType: 'application/json'),
+      );
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> fetchVoiceUsers(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(voicePath(key));
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['voiceUsers'] ?? map['users'] ?? map['data'];
+      if (raw is! List) return const [];
+      return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+    });
+  }
+
+  Future<void> setTyping(
+    String roomKey, {
+    required bool isTyping,
+    String? alternateKey,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      await _dio.safePost<dynamic>(
+        typingPath(key),
+        data: jsonEncode({'isTyping': isTyping}),
+        options: Options(contentType: 'application/json'),
+      );
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> fetchTypingUsers(
+    String roomKey, {
+    String? alternateKey,
+  }) async {
+    return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      final res = await _dio.safeGet<dynamic>(typingPath(key));
+      final map = _unwrapMap(res.data) ?? asJsonMap(res.data);
+      final raw = map['typingUsers'] ?? map['users'] ?? map['data'];
+      if (raw is! List) return const [];
+      return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
     });
   }
 

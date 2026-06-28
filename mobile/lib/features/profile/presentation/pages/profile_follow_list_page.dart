@@ -15,7 +15,7 @@ import '../../../feed/presentation/widgets/discover/discover_background.dart';
 
 enum ProfileFollowTab { followers, following }
 
-class ProfileFollowListPage extends ConsumerWidget {
+class ProfileFollowListPage extends ConsumerStatefulWidget {
   const ProfileFollowListPage({
     super.key,
     required this.userId,
@@ -26,85 +26,120 @@ class ProfileFollowListPage extends ConsumerWidget {
   final ProfileFollowTab tab;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final future = tab == ProfileFollowTab.followers
-        ? ProfileRemoteDataSource(ref.watch(dioProvider)).followers(userId)
-        : ProfileRemoteDataSource(ref.watch(dioProvider)).following(userId);
+  ConsumerState<ProfileFollowListPage> createState() =>
+      _ProfileFollowListPageState();
+}
 
+class _ProfileFollowListPageState extends ConsumerState<ProfileFollowListPage> {
+  List<UserEntity>? _users;
+  Object? _error;
+  var _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final ds = ProfileRemoteDataSource(ref.read(dioProvider));
+      final list = widget.tab == ProfileFollowTab.followers
+          ? await ds.followers(widget.userId)
+          : await ds.following(widget.userId);
+      if (!mounted) return;
+      setState(() {
+        _users = list;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e;
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: DiscoverBackground(
         child: DiscoverSubPage(
-          title: tab == ProfileFollowTab.followers ? 'Takipçi' : 'Takip',
-          body: FutureBuilder<List<UserEntity>>(
-            future: future,
-            builder: (context, snap) {
-              if (snap.connectionState != ConnectionState.done) {
-                return const Center(child: DiscoverAccentLoader());
-              }
-              if (snap.hasError) {
-                return DiscoverEmptyState(
-                  icon: Icons.error_outline_rounded,
-                  message: ApiException.userMessage(snap.error!),
-                );
-              }
-              final users = snap.data ?? const [];
-              if (users.isEmpty) {
-                return DiscoverEmptyState(
-                  icon: Icons.people_outline_rounded,
-                  message: tab == ProfileFollowTab.followers
-                      ? 'Henüz takipçi yok.'
-                      : 'Henüz kimseyi takip etmiyorsun.',
-                );
-              }
-              return LazyPaginatedListView(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                itemCount: users.length,
-                itemBuilder: (context, i) {
-                  final u = users[i];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: ProGlassListTile(
-                    onTap: () => context.push('/user/${u.id}'),
-                    child: Row(
-                      children: [
-                        UserAvatar(url: u.avatarUrl, radius: 22),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                u.display,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              Text(
-                                '@${u.username}',
-                                style: TextStyle(
-                                  color: context.colors.onSurfaceMuted
-                                      .withValues(alpha: 0.85),
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          color: context.colors.onSurfaceMuted.withValues(alpha: 0.6),
-                        ),
-                      ],
-                    ),
-                  ),
-                  );
-                },
-              );
-            },
-          ),
+          title: widget.tab == ProfileFollowTab.followers ? 'Takipçi' : 'Takip',
+          body: _buildBody(context),
         ),
       ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    if (_loading) {
+      return const Center(child: DiscoverAccentLoader());
+    }
+    if (_error != null) {
+      return DiscoverEmptyState(
+        icon: Icons.error_outline_rounded,
+        message: ApiException.userMessage(_error!),
+      );
+    }
+    final users = _users ?? const [];
+    if (users.isEmpty) {
+      return DiscoverEmptyState(
+        icon: Icons.people_outline_rounded,
+        message: widget.tab == ProfileFollowTab.followers
+            ? 'Henüz takipçi yok.'
+            : 'Henüz kimseyi takip etmiyorsun.',
+      );
+    }
+    return LazyPaginatedListView(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+      itemCount: users.length,
+      itemBuilder: (context, i) {
+        final u = users[i];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: ProGlassListTile(
+            onTap: () => context.push('/user/${u.id}'),
+            child: Row(
+              children: [
+                UserAvatar(url: u.avatarUrl, radius: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        u.display,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        '@${u.username}',
+                        style: TextStyle(
+                          color: context.colors.onSurfaceMuted
+                              .withValues(alpha: 0.85),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.6),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
