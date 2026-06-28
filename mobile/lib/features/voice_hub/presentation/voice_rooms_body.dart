@@ -84,10 +84,7 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     final liveStreams = _liveStreamsReady
         ? ref.watch(liveStreamsProvider)
         : const AsyncValue<List<LiveStreamEntity>>.data([]);
-    final mq = MediaQuery.paddingOf(context);
-    final topPad = widget.embeddedInLiveShellTab
-        ? 8.0
-        : mq.top + kToolbarHeight + 4;
+    final topPad = widget.embeddedInLiveShellTab ? 0.0 : 4.0;
 
     return rooms.when(
       loading: () => const DiscoverAccentLoader(),

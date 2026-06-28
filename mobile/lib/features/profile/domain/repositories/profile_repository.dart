@@ -38,6 +38,7 @@ abstract class WalletRepository {
   Future<List<JetonPackageEntity>> jetonPackages();
   Future<PaymentConfigEntity> paymentConfig();
   Future<void> submitPaymentRequest(Map<String, dynamic> body);
+  Future<void> cancelPaymentRequest(String requestId);
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests();
   Future<PagedResult<CfcPaymentRequestEntity>> myPaymentRequestsPage({
     int page,

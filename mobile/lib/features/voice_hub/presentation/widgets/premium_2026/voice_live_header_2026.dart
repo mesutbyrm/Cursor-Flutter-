@@ -56,7 +56,7 @@ class VoiceLiveHeader2026 extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(4, 2, 4, 8),
+          padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.28),
             border: Border(

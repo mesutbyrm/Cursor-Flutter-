@@ -522,6 +522,28 @@ class WalletRemoteDataSource {
         .catchError((_) {});
   }
 
+  /// Bekleyen ödeme talebini iptal — `PATCH /api/payment/requests`.
+  Future<void> cancelPaymentRequest(String requestId) async {
+    final id = requestId.trim();
+    if (id.isEmpty) {
+      throw const ApiException('Geçersiz talep kimliği');
+    }
+    try {
+      await _dio.safePatch<dynamic>(
+        ApiEndpoints.paymentRequestsCancel,
+        data: {'requestId': id, 'action': 'cancel'},
+      );
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.statusCode == 405) {
+        throw ApiException(
+          'Talep iptali sunucuda desteklenmiyor. Destek ile iletişime geçin.',
+          statusCode: e.statusCode,
+        );
+      }
+      rethrow;
+    }
+  }
+
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests() async {
     final page = await myPaymentRequestsPage(page: 1);
     return page.items;

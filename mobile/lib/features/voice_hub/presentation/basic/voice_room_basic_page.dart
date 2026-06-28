@@ -593,13 +593,14 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       },
       child: Scaffold(
         resizeToAvoidBottomInset: true,
-        extendBodyBehindAppBar: true,
         backgroundColor: VoiceRoomTokens.bgDeep,
         body: Stack(
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
-            Column(
+            SafeArea(
+              bottom: false,
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 VoiceLiveHeader2026(
@@ -701,6 +702,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   ),
                 ],
               ],
+            ),
             ),
             VoiceGiftFlightOverlay(
               events: flightQueue,

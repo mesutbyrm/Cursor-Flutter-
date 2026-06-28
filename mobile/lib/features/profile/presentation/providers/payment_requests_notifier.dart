@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../wallet/domain/cfc_payment_request_entity.dart';
+import '../../../notifications/presentation/providers/notifications_providers.dart';
 import 'profile_providers.dart';
 
 class PaymentRequestsNotifier
@@ -53,6 +54,14 @@ class PaymentRequestsNotifier
   }
 
   bool get hasMore => !_end;
+
+  Future<void> cancelPending(String requestId) async {
+    await ref.read(walletRepositoryProvider).cancelPaymentRequest(requestId);
+    try {
+      await ref.read(notificationsRepositoryProvider).clearPaymentNotifications();
+    } catch (_) {}
+    await refresh();
+  }
 }
 
 final paymentRequestsNotifierProvider =

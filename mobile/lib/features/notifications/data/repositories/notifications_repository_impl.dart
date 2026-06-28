@@ -126,4 +126,11 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       await _canlifal.markAllActivityRead();
     }
   }
+
+  @override
+  Future<void> clearPaymentNotifications() async {
+    try {
+      await _remote.clearPaymentNotifications();
+    } catch (_) {}
+  }
 }

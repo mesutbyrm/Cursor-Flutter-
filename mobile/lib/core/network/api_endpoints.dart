@@ -324,6 +324,7 @@ abstract final class ApiEndpoints {
 
   static const paymentConfig = '/api/payment/config';
   static const paymentRequests = '/api/payment/requests';
+  static const paymentRequestsCancel = '/api/payment/requests';
   static const adminCfcPaymentRequests = '/api/admin/cfc-payment-requests';
   static const adminCfcPaymentPatch = '/api/admin/cfc-payment-requests';
   static const adminCfcSettings = '/api/admin/cfc-settings';
@@ -504,6 +505,7 @@ abstract final class ApiEndpoints {
       '/api/messages/conversations/$id/messages';
 
   static const notifications = '/api/notifications';
+  static const notificationsPaymentClear = '/api/notifications/payment';
   static String notificationRead(String id) => '/api/notifications/$id/read';
 
   /// FCM cihaz token kaydı (canlifal.com veya self-hosted API).

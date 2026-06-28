@@ -24,35 +24,57 @@ class VoiceRoomsHubPage extends ConsumerWidget {
         }
       },
       child: Scaffold(
-      extendBodyBehindAppBar: true,
       backgroundColor: VoiceRoomTokens.bgDeep,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: ShaderMask(
-          shaderCallback: (b) => VoiceRoomTokens.neonRing.createShader(b),
-          child: Text(
-            'Sesli Sohbet',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: titleSize,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Yenile',
-            onPressed: () => ref.invalidate(voiceRoomsProvider),
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
-      ),
-      body: const Stack(
+      body: Stack(
         fit: StackFit.expand,
         children: [
-          DecoratedBox(decoration: BoxDecoration(gradient: VoiceRoomTokens.roomGradient)),
-          VoiceRoomsBody(),
+          const DecoratedBox(decoration: BoxDecoration(gradient: VoiceRoomTokens.roomGradient)),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 4, 8, 0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        tooltip: 'Geri',
+                        onPressed: () {
+                          if (context.canPop()) {
+                            context.pop();
+                          } else {
+                            context.go('/feed');
+                          }
+                        },
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                      ),
+                      Expanded(
+                        child: ShaderMask(
+                          shaderCallback: (b) =>
+                              VoiceRoomTokens.neonRing.createShader(b),
+                          child: Text(
+                            'Sesli Sohbet',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: titleSize,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Yenile',
+                        onPressed: () => ref.invalidate(voiceRoomsProvider),
+                        icon: const Icon(Icons.refresh_rounded),
+                      ),
+                    ],
+                  ),
+                ),
+                const Expanded(child: VoiceRoomsBody()),
+              ],
+            ),
+          ),
         ],
       ),
     ),

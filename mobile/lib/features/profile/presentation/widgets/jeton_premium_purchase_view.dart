@@ -530,7 +530,7 @@ class _JetonPremiumPurchaseViewState
   }
 }
 
-class _PendingPaymentBanner extends StatelessWidget {
+class _PendingPaymentBanner extends ConsumerWidget {
   const _PendingPaymentBanner({
     required this.request,
     required this.staffCanManage,
@@ -540,7 +540,7 @@ class _PendingPaymentBanner extends StatelessWidget {
   final bool staffCanManage;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ProGlassCard(
       blur: 12,
       animateIn: false,
@@ -568,14 +568,69 @@ class _PendingPaymentBanner extends StatelessWidget {
                     color: context.colors.onSurfaceMuted,
                   ),
                 ),
-                if (staffCanManage) ...[
-                  const SizedBox(height: 8),
-                  TextButton.icon(
-                    onPressed: () => context.push('/admin'),
-                    icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
-                    label: const Text('Admin panelinde onayla'),
-                  ),
-                ],
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () async {
+                        final ok = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Talebi iptal et'),
+                            content: const Text(
+                              'Bekleyen jeton ödeme talebiniz silinecek. '
+                              'Yeni bir ödeme bildirimi gönderebilirsiniz.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Vazgeç'),
+                              ),
+                              FilledButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text('İptal et'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (ok != true || !context.mounted) return;
+                        try {
+                          await ref
+                              .read(paymentRequestsNotifierProvider.notifier)
+                              .cancelPending(request.id);
+                          ref.invalidate(notificationsListProvider);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Bekleyen talep ve ödeme bildirimleri temizlendi.',
+                                ),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(ApiException.userMessage(e)),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                      label: const Text('Talebi iptal et'),
+                    ),
+                    if (staffCanManage)
+                      TextButton.icon(
+                        onPressed: () => context.push('/admin'),
+                        icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
+                        label: const Text('Admin paneli'),
+                      ),
+                  ],
+                ),
               ],
             ),
           ),

@@ -411,6 +411,46 @@ walletRouter.get("/payment/requests", requireAuth, async (req, res) => {
   });
 });
 
+/** PATCH /api/payment/requests — kullanıcı kendi bekleyen talebini iptal eder */
+walletRouter.patch("/payment/requests", requireAuth, async (req, res) => {
+  const requestId = req.body?.requestId?.toString();
+  const action = req.body?.action?.toString();
+  if (!requestId || action !== "cancel") {
+    return jsonError(res, 400, "Geçersiz istek");
+  }
+
+  const row = await prisma.cfcPaymentRequest.findFirst({
+    where: { id: requestId, userId: req.userId!, status: "pending" },
+  });
+  if (!row) {
+    return jsonError(res, 404, "Bekleyen talep bulunamadı");
+  }
+
+  await prisma.cfcPaymentRequest.update({
+    where: { id: requestId },
+    data: {
+      status: "cancelled",
+      reviewNote: "Kullanıcı iptal etti",
+    },
+  });
+
+  await prisma.appNotification.deleteMany({
+    where: {
+      userId: req.userId!,
+      targetId: requestId,
+    },
+  });
+
+  await writePaymentAudit({
+    userId: req.userId!,
+    requestId,
+    action: "cancelled",
+    detail: `${row.requestType} · kullanıcı iptali`,
+  });
+
+  return res.status(200).json({ success: true, requestId, status: "cancelled" });
+});
+
 /** GET /api/admin/cfc-payment-requests */
 walletRouter.get(
   "/admin/cfc-payment-requests",

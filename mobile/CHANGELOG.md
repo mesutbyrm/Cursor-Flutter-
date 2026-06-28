@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.421+425 (2026-06-27)
+
+### Sesli oda UI + jeton talep temizliği
+
+- **Sesli odalar ana sayfa:** Status bar altında kalmama için `SafeArea`; çift AppBar kaldırıldı
+- **Oda sayfası:** `SafeArea` ile üst bar (saat/kamera/şarj) altında düzgün hizalama
+- **Jeton bekleyen talep:** "Talebi iptal et" — `PATCH /api/payment/requests` + ödeme bildirimleri temizlenir
+- **Bildirimler:** `DELETE /api/notifications/payment` ile jeton/CFC ödeme bildirimleri silinir
+
 ## 1.0.420+424 (2026-06-27)
 
 ### Sesli oda Agora — web ile aynı token akışı

@@ -57,3 +57,20 @@ notificationsRouter.patch("/:id/read", optionalAuth, async (req, res) => {
   });
   return ok(res, { read: true });
 });
+
+/** DELETE /api/notifications/payment — jeton/CFC ödeme bildirimlerini temizle */
+notificationsRouter.delete("/payment", requireAuth, async (req, res) => {
+  const userId = req.userId!;
+  const types = [
+    "jeton_payment_request",
+    "cfc_payment_request",
+    "jeton_payment_approved",
+    "jeton_payment_rejected",
+    "cfc_payment_approved",
+    "cfc_payment_rejected",
+  ];
+  const result = await prisma.appNotification.deleteMany({
+    where: { userId, type: { in: types } },
+  });
+  return ok(res, { deleted: result.count, success: true });
+});

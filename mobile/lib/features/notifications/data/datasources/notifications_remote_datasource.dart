@@ -84,6 +84,10 @@ class NotificationsRemoteDataSource {
     await _dio.safePatch(ApiEndpoints.notificationRead(id), data: const {});
   }
 
+  Future<void> clearPaymentNotifications() async {
+    await _dio.safeDelete(ApiEndpoints.notificationsPaymentClear);
+  }
+
   List<AppNotificationEntity> _dedupeNotifications(
     List<AppNotificationEntity> items,
   ) {
