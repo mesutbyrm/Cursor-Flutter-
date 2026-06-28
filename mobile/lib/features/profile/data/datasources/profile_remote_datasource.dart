@@ -481,7 +481,10 @@ class WalletRemoteDataSource {
           }
         }
 
-        if (code >= 200 && code < 300) return;
+        if (code >= 200 && code < 300) {
+          _triggerAdminPaymentNotification(body);
+          return;
+        }
       } on ApiException catch (e) {
         if (e.statusCode == 404 || e.statusCode == 405) {
           lastError = e;
@@ -495,6 +498,22 @@ class WalletRemoteDataSource {
         const ApiException(
           'Ödeme bildirimi sunucuya ulaşamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.',
         );
+  }
+
+  void _triggerAdminPaymentNotification(Map<String, dynamic> body) {
+    _dio
+        .post<dynamic>(
+          ApiEndpoints.adminPaymentNotifications,
+          data: {
+            'type': body['requestType'] == 'jeton'
+                ? 'jeton_payment_request'
+                : 'cfc_payment_request',
+            'coins': body['coins'],
+            'method': body['method'],
+            if (body['senderInfo'] != null) 'senderInfo': body['senderInfo'],
+          },
+        )
+        .catchError((_) {});
   }
 
   Future<List<CfcPaymentRequestEntity>> myPaymentRequests() async {
