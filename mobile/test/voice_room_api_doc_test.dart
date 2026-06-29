@@ -5,10 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ChatRoomRemoteDataSource API doc', () {
-    test('presence heartbeat interval is 25 seconds', () {
+    test('presence heartbeat interval is 12 seconds', () {
       expect(
         ChatRoomRemoteDataSource.presenceHeartbeatInterval.inSeconds,
-        25,
+        12,
       );
     });
 
