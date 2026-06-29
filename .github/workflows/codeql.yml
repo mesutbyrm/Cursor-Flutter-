@@ -1,4 +1,6 @@
-# CodeQL — Flutter Android (java-kotlin, manual build) + API (JS/TS) + Actions.
+# CodeQL — yalnızca bu repoda bulunan diller:
+#   actions, javascript-typescript (api/), java-kotlin (mobile/android)
+# Kaldırıldı: Swift, Ruby, C/C++, Python (kaynak yok veya Flutter odak dışı)
 name: CodeQL
 
 on:
@@ -8,6 +10,10 @@ on:
     branches: [main]
   schedule:
     - cron: '34 15 * * 4'
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   analyze:
@@ -28,7 +34,6 @@ jobs:
             build-mode: none
           - language: javascript-typescript
             build-mode: none
-          # Flutter Android — CodeQL autobuild Gradle/Kotlin algılayamaz; manual build zorunlu.
           - language: java-kotlin
             build-mode: manual
 
@@ -77,15 +82,11 @@ jobs:
             dart run build_runner build --delete-conflicting-outputs
           fi
 
-          # gradlew repoda gitignore nedeniyle olmayabilir — eksikse Flutter şablonu ile oluştur.
           if [[ ! -f android/gradlew ]]; then
             flutter create --platforms=android .
           fi
           chmod +x android/gradlew
-          if [[ ! -x android/gradlew ]]; then
-            echo "android/gradlew bulunamadı veya çalıştırılabilir değil." >&2
-            exit 1
-          fi
+          test -x android/gradlew
 
           flutter build apk --debug
 
