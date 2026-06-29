@@ -1,4 +1,4 @@
-# CodeQL — Flutter mobil (Android/Kotlin) + API (JS/TS) + Actions.
+# CodeQL — Flutter Android (java-kotlin, manual build) + API (JS/TS) + Actions.
 name: CodeQL
 
 on:
@@ -13,6 +13,7 @@ jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       security-events: write
       packages: read
@@ -27,19 +28,13 @@ jobs:
             build-mode: none
           - language: javascript-typescript
             build-mode: none
-          # Flutter Android — Gradle/Kotlin; otomatik build algılanmaz, manuel APK derlemesi gerekir.
+          # Flutter Android — CodeQL autobuild Gradle/Kotlin algılayamaz; manual build zorunlu.
           - language: java-kotlin
             build-mode: manual
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: ${{ matrix.language }}
-          build-mode: ${{ matrix.build-mode }}
 
       - name: Setup Java 17
         if: matrix.language == 'java-kotlin'
@@ -59,6 +54,12 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
       - name: Accept Android licenses
         if: matrix.language == 'java-kotlin'
         working-directory: mobile
@@ -68,8 +69,24 @@ jobs:
         if: matrix.language == 'java-kotlin'
         working-directory: mobile
         run: |
-          set -eux
+          set -euxo pipefail
+
           flutter pub get
+
+          if grep -qE '^[[:space:]]*build_runner:' pubspec.yaml; then
+            dart run build_runner build --delete-conflicting-outputs
+          fi
+
+          # gradlew repoda gitignore nedeniyle olmayabilir — eksikse Flutter şablonu ile oluştur.
+          if [[ ! -f android/gradlew ]]; then
+            flutter create --platforms=android .
+          fi
+          chmod +x android/gradlew
+          if [[ ! -x android/gradlew ]]; then
+            echo "android/gradlew bulunamadı veya çalıştırılabilir değil." >&2
+            exit 1
+          fi
+
           flutter build apk --debug
 
       - name: Perform CodeQL Analysis
