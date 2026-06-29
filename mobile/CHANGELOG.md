@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.440+444 (2026-06-26)
+
+### Faz 12 — Yeni koltuk tasarımı
+
+- Altıgen koltuklar kaldırıldı; **tam yuvarlak avatarlar**
+- **Premium cam efekti** (glass overlay + parıltı)
+- Yetkiye göre **animasyonlu neon çerçeve** (Admin, Host, DJ, Mod, VIP)
+- Hafif **parlayan neon halka** — mikrofon açıkken dış halka döner
+- **Konuşurken ses dalgası** animasyonu + ritmik nabız (büyüyüp küçülme)
+- **Mikrofon kapalı:** gri görünüm, mic-off rozeti, animasyon yok
+- Boş koltuklar cam yuvarlak stile güncellendi
+
 ## 1.0.439+443 (2026-06-26)
 
 ### Faz 11 — @ Etiket sistemi

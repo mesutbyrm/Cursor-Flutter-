@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:canlifal_social/core/images/canlifal_image_urls.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
@@ -51,7 +50,77 @@ abstract final class SeatAvatarRoleResolver {
   }
 }
 
-/// Profil resmini tam kaplayan animasyonlu koltuk çerçevesi.
+abstract final class SeatAvatarStyle {
+  static List<Color> ringGradient(SeatAvatarRole role, {required bool micOpen}) {
+    if (!micOpen) {
+      return [
+        const Color(0xFF6B7280),
+        const Color(0xFF4B5563),
+        const Color(0xFF374151),
+      ];
+    }
+    return switch (role) {
+      SeatAvatarRole.admin => [
+          const Color(0xFF7C4DFF),
+          const Color(0xFF00E5FF),
+          const Color(0xFFFFD54F),
+          Colors.white.withValues(alpha: 0.85),
+        ],
+      SeatAvatarRole.host => [
+          const Color(0xFFFFF3B0),
+          VoiceRoomTokens.gold,
+          const Color(0xFFFF8F00),
+          Colors.white.withValues(alpha: 0.8),
+        ],
+      SeatAvatarRole.dj => [
+          VoiceRoomTokens.neonBlue,
+          VoiceRoomTokens.neonPink,
+          VoiceRoomTokens.neonPurple,
+        ],
+      SeatAvatarRole.moderator => [
+          VoiceRoomTokens.neonPurple,
+          const Color(0xFFE040FB),
+          VoiceRoomTokens.neonBlue,
+        ],
+      SeatAvatarRole.vip => [
+          const Color(0xFFFFD54F),
+          const Color(0xFFFF8A65),
+          VoiceRoomTokens.neonPink,
+        ],
+      SeatAvatarRole.guest => [
+          VoiceRoomTokens.neonPurple.withValues(alpha: 0.85),
+          VoiceRoomTokens.neonBlue.withValues(alpha: 0.75),
+          VoiceRoomTokens.neonPink.withValues(alpha: 0.65),
+        ],
+    };
+  }
+
+  static Color accent(SeatAvatarRole role, {required bool micOpen}) {
+    if (!micOpen) return const Color(0xFF9CA3AF);
+    return switch (role) {
+      SeatAvatarRole.admin => const Color(0xFF00E5FF),
+      SeatAvatarRole.host => VoiceRoomTokens.gold,
+      SeatAvatarRole.dj => VoiceRoomTokens.neonBlue,
+      SeatAvatarRole.moderator => VoiceRoomTokens.neonPurple,
+      SeatAvatarRole.vip => VoiceRoomTokens.gold,
+      SeatAvatarRole.guest => VoiceRoomTokens.neonPurple,
+    };
+  }
+
+  static bool animatedRoleFrame(SeatAvatarRole role) =>
+      role != SeatAvatarRole.guest;
+
+  static double ringWidth(SeatAvatarRole role) => switch (role) {
+        SeatAvatarRole.admin => 3.4,
+        SeatAvatarRole.host => 3.2,
+        SeatAvatarRole.dj => 2.8,
+        SeatAvatarRole.moderator => 2.6,
+        SeatAvatarRole.vip => 2.4,
+        SeatAvatarRole.guest => 2.0,
+      };
+}
+
+/// Faz 12 — tam yuvarlak cam koltuk: neon halka, mikrofon durumu, konuşma dalgası.
 class VoiceSeatAvatarFrame extends StatefulWidget {
   const VoiceSeatAvatarFrame({
     super.key,
@@ -59,440 +128,425 @@ class VoiceSeatAvatarFrame extends StatefulWidget {
     required this.size,
     this.role = SeatAvatarRole.guest,
     this.speaking = false,
+    this.micOpen = true,
   });
 
   final String? imageUrl;
   final double size;
   final SeatAvatarRole role;
   final bool speaking;
+  final bool micOpen;
 
   @override
   State<VoiceSeatAvatarFrame> createState() => _VoiceSeatAvatarFrameState();
 }
 
 class _VoiceSeatAvatarFrameState extends State<VoiceSeatAvatarFrame>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _spin;
+  late final AnimationController _pulse;
+  late final AnimationController _orbit;
 
   @override
   void initState() {
     super.initState();
     _spin = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 8),
+      duration: const Duration(seconds: 5),
     )..repeat();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _orbit = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    );
+    _syncAnimations();
+  }
+
+  @override
+  void didUpdateWidget(covariant VoiceSeatAvatarFrame oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncAnimations();
+  }
+
+  void _syncAnimations() {
+    if (widget.speaking && widget.micOpen) {
+      if (!_pulse.isAnimating) _pulse.repeat(reverse: true);
+    } else {
+      _pulse.stop();
+      _pulse.value = 0;
+    }
+    if (widget.micOpen) {
+      if (!_orbit.isAnimating) _orbit.repeat();
+    } else {
+      _orbit.stop();
+      _orbit.value = 0;
+    }
+    if (SeatAvatarStyle.animatedRoleFrame(widget.role) && widget.micOpen) {
+      if (!_spin.isAnimating) _spin.repeat();
+    } else if (!widget.micOpen) {
+      _spin.stop();
+    }
   }
 
   @override
   void dispose() {
     _spin.dispose();
+    _pulse.dispose();
+    _orbit.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!kIsWeb &&
-        defaultTargetPlatform == TargetPlatform.android &&
-        widget.role == SeatAvatarRole.guest) {
-      return _androidSimpleAvatar();
-    }
-
-    final border = _borderWidth;
-    final inner = widget.size - border * 2;
+    final ring = SeatAvatarStyle.ringWidth(widget.role);
+    final inner = widget.size - ring * 2;
+    final accent = SeatAvatarStyle.accent(widget.role, micOpen: widget.micOpen);
+    final gradient =
+        SeatAvatarStyle.ringGradient(widget.role, micOpen: widget.micOpen);
+    final pulseScale = widget.speaking && widget.micOpen ? 1 + _pulse.value * 0.08 : 1.0;
+    final glowBlur = widget.micOpen
+        ? (widget.speaking ? 12 + _pulse.value * 16 : 8.0)
+        : 0.0;
 
     return RepaintBoundary(
-      child: SizedBox(
-        width: widget.size,
-        height: widget.size,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            if (_animatedRing) _animatedRingWidget(),
-            CustomPaint(
-              size: Size(widget.size, widget.size),
-              painter: _SeatFramePainter(
-                role: widget.role,
-                speaking: widget.speaking,
-                spin: _spin.value,
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.all(border),
-              child: ClipPath(
-                clipper: _clipperForRole(),
-                child: SizedBox(
-                  width: inner,
-                  height: inner,
-                  child: _avatarImage(inner),
-                ),
-              ),
-            ),
-            if (widget.role == SeatAvatarRole.host)
-              Positioned(
-                top: -2,
-                child: SizedBox(
-                  width: widget.size * 0.32,
-                  height: widget.size * 0.32,
-                  child: Lottie.asset(
-                    'assets/gifts/lottie/crown.json',
-                    repeat: true,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => Icon(
-                      Icons.workspace_premium_rounded,
-                      size: widget.size * 0.22,
-                      color: VoiceRoomTokens.gold,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_spin, _pulse, _orbit]),
+        builder: (context, child) {
+          return Transform.scale(
+            scale: pulseScale,
+            child: SizedBox(
+              width: widget.size + 10,
+              height: widget.size + 10,
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  if (widget.speaking && widget.micOpen)
+                    CustomPaint(
+                      size: Size(widget.size + 10, widget.size + 10),
+                      painter: _SpeakingWavePainter(
+                        progress: _pulse.value,
+                        accent: accent,
+                        baseRadius: widget.size / 2 + 2,
+                      ),
                     ),
-                  ),
-                ),
-              ),
-            if (widget.role == SeatAvatarRole.dj && widget.speaking)
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: _miniEq(),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _androidSimpleAvatar() {
-    final url = widget.imageUrl?.trim();
-    final ring = switch (widget.role) {
-      SeatAvatarRole.host || SeatAvatarRole.admin => VoiceRoomTokens.gold,
-      SeatAvatarRole.dj => VoiceRoomTokens.neonBlue,
-      SeatAvatarRole.moderator => VoiceRoomTokens.neonPurple,
-      SeatAvatarRole.vip => VoiceRoomTokens.gold,
-      SeatAvatarRole.guest => VoiceRoomTokens.neonPurple.withValues(alpha: 0.7),
-    };
-    return SizedBox(
-      width: widget.size,
-      height: widget.size,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: widget.speaking ? ring : ring.withValues(alpha: 0.85),
-            width: widget.speaking ? 3 : 2,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(2),
-          child: ClipOval(
-            child: url != null && url.isNotEmpty
-                ? CanlifalNetworkImage(
-                    url: url,
+                  if (widget.micOpen)
+                    CustomPaint(
+                      size: Size(widget.size + 8, widget.size + 8),
+                      painter: _OrbitingRingPainter(
+                        progress: _orbit.value,
+                        accent: accent,
+                        radius: widget.size / 2 + 3,
+                      ),
+                    ),
+                  Container(
                     width: widget.size,
                     height: widget.size,
-                    fit: BoxFit.cover,
-                    thumbnailWidth: CanlifalImageUrls.avatarThumbnailWidth,
-                  )
-                : ColoredBox(
-                    color: Colors.white.withValues(alpha: 0.08),
-                    child: Icon(
-                      Icons.person_rounded,
-                      size: widget.size * 0.48,
-                      color: Colors.white54,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: glowBlur > 0
+                          ? VoiceRoomTokens.neonGlow(
+                              accent,
+                              blur: glowBlur,
+                            )
+                          : null,
+                    ),
+                    child: CustomPaint(
+                      painter: _NeonRingPainter(
+                        progress: _spin.value,
+                        colors: gradient,
+                        strokeWidth: ring,
+                        micOpen: widget.micOpen,
+                        animated: SeatAvatarStyle.animatedRoleFrame(widget.role) &&
+                            widget.micOpen,
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(ring),
+                        child: ClipOval(
+                          child: SizedBox(
+                            width: inner,
+                            height: inner,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                child!,
+                                _GlassOverlay(micOpen: widget.micOpen),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-          ),
-        ),
+                  if (widget.role == SeatAvatarRole.host)
+                    Positioned(
+                      top: -2,
+                      child: SizedBox(
+                        width: widget.size * 0.32,
+                        height: widget.size * 0.32,
+                        child: Lottie.asset(
+                          'assets/gifts/lottie/crown.json',
+                          repeat: true,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) => Icon(
+                            Icons.workspace_premium_rounded,
+                            size: widget.size * 0.22,
+                            color: widget.micOpen
+                                ? VoiceRoomTokens.gold
+                                : Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+        child: _avatarImage(inner),
       ),
     );
   }
-
-  bool get _animatedRing =>
-      widget.role == SeatAvatarRole.moderator ||
-      widget.role == SeatAvatarRole.admin ||
-      widget.role == SeatAvatarRole.vip;
-
-  double get _borderWidth => switch (widget.role) {
-        SeatAvatarRole.admin => 3.6,
-        SeatAvatarRole.host => 3.4,
-        SeatAvatarRole.dj => 3.0,
-        SeatAvatarRole.moderator => 2.8,
-        SeatAvatarRole.vip => 2.6,
-        SeatAvatarRole.guest => 2.0,
-      };
-
-  Widget _animatedRingWidget() {
-    return AnimatedBuilder(
-      animation: _spin,
-      builder: (context, _) {
-        return CustomPaint(
-          size: Size(widget.size + 6, widget.size + 6),
-          painter: _ParticleRingPainter(
-            role: widget.role,
-            t: _spin.value,
-            speaking: widget.speaking,
-          ),
-        );
-      },
-    );
-  }
-
-  CustomClipper<Path> _clipperForRole() => switch (widget.role) {
-        SeatAvatarRole.host || SeatAvatarRole.admin => _HostClipper(),
-        SeatAvatarRole.dj || SeatAvatarRole.moderator => _HexClipper(),
-        _ => _RoundedClipper(),
-      };
 
   Widget _avatarImage(double inner) {
     final url = widget.imageUrl?.trim();
+    Widget image;
     if (url != null && url.isNotEmpty) {
-      return CanlifalNetworkImage(
+      image = CanlifalNetworkImage(
         url: url,
         width: inner,
         height: inner,
         fit: BoxFit.cover,
-        thumbnailWidth: (inner * 2).round(),
+        thumbnailWidth: CanlifalImageUrls.avatarThumbnailWidth,
+      );
+    } else {
+      image = ColoredBox(
+        color: Colors.white.withValues(alpha: 0.08),
+        child: Icon(
+          Icons.person_rounded,
+          size: inner * 0.48,
+          color: widget.micOpen ? Colors.white54 : Colors.white30,
+        ),
       );
     }
-    return ColoredBox(
-      color: Colors.white.withValues(alpha: 0.08),
-      child: Icon(Icons.person_rounded, size: inner * 0.48, color: Colors.white54),
-    );
+    if (!widget.micOpen) {
+      return ColorFiltered(
+        colorFilter: const ColorFilter.matrix(<double>[
+          0.35, 0.35, 0.35, 0, 0,
+          0.35, 0.35, 0.35, 0, 0,
+          0.35, 0.35, 0.35, 0, 0,
+          0, 0, 0, 1, 0,
+        ]),
+        child: image,
+      );
+    }
+    return image;
   }
+}
 
-  Widget _miniEq() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(3, (i) {
-        final h = 6.0 + math.sin(_spin.value * math.pi * 4 + i) * 4;
-        return Container(
-          width: 3,
-          height: h,
-          margin: const EdgeInsets.only(left: 1),
-          decoration: BoxDecoration(
-            color: VoiceRoomTokens.neonBlue,
-            borderRadius: BorderRadius.circular(2),
+class _GlassOverlay extends StatelessWidget {
+  const _GlassOverlay({required this.micOpen});
+
+  final bool micOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: micOpen
+                ? [
+                    Colors.white.withValues(alpha: 0.22),
+                    Colors.white.withValues(alpha: 0.04),
+                    Colors.transparent,
+                  ]
+                : [
+                    Colors.white.withValues(alpha: 0.08),
+                    Colors.black.withValues(alpha: 0.18),
+                  ],
           ),
-        );
-      }),
+        ),
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(-0.55, -0.65),
+                radius: 0.95,
+                colors: [
+                  Colors.white.withValues(alpha: micOpen ? 0.28 : 0.1),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
 
-class _SeatFramePainter extends CustomPainter {
-  _SeatFramePainter({
-    required this.role,
-    required this.speaking,
-    required this.spin,
+class _NeonRingPainter extends CustomPainter {
+  _NeonRingPainter({
+    required this.progress,
+    required this.colors,
+    required this.strokeWidth,
+    required this.micOpen,
+    required this.animated,
   });
 
-  final SeatAvatarRole role;
-  final bool speaking;
-  final double spin;
+  final double progress;
+  final List<Color> colors;
+  final double strokeWidth;
+  final bool micOpen;
+  final bool animated;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final path = _outerPath(size);
-    final colors = _gradientColors();
+    final rect = Offset.zero & size;
     final paint = Paint()
-      ..shader = LinearGradient(
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    if (animated) {
+      paint.shader = SweepGradient(
+        colors: [...colors, colors.first],
+        transform: GradientRotation(progress * math.pi * 2),
+      ).createShader(rect);
+    } else {
+      paint.shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: colors,
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = switch (role) {
-        SeatAvatarRole.admin => 3.6,
-        SeatAvatarRole.host => 3.4,
-        SeatAvatarRole.dj => 3.0,
-        SeatAvatarRole.moderator => 2.8,
-        SeatAvatarRole.vip => 2.6,
-        SeatAvatarRole.guest => 2.0,
-      };
-    canvas.drawPath(path, paint);
-    if (speaking && !kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      canvas.drawPath(
-        path,
+      ).createShader(rect);
+    }
+
+    canvas.drawCircle(
+      rect.center,
+      size.width / 2 - strokeWidth / 2,
+      paint,
+    );
+
+    if (micOpen) {
+      canvas.drawCircle(
+        rect.center,
+        size.width / 2 - strokeWidth / 2,
         Paint()
-          ..color = colors.first.withValues(alpha: 0.35)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 4,
-      );
-    } else if (speaking) {
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = colors.first.withValues(alpha: 0.25)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 6
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+          ..strokeWidth = strokeWidth * 0.5
+          ..color = Colors.white.withValues(alpha: 0.35),
       );
     }
-  }
-
-  List<Color> _gradientColors() => switch (role) {
-        SeatAvatarRole.admin => [
-            const Color(0xFF7C4DFF),
-            const Color(0xFF00E5FF),
-            const Color(0xFFFFD54F),
-          ],
-        SeatAvatarRole.host => [
-            const Color(0xFFFFD54F),
-            const Color(0xFFFFB300),
-            const Color(0xFFFF8F00),
-          ],
-        SeatAvatarRole.dj => [
-            VoiceRoomTokens.neonBlue,
-            VoiceRoomTokens.neonPink,
-          ],
-        SeatAvatarRole.moderator => [
-            VoiceRoomTokens.neonPurple,
-            const Color(0xFFE040FB),
-          ],
-        SeatAvatarRole.vip => [
-            const Color(0xFFFFD54F),
-            const Color(0xFFFF8A65),
-          ],
-        SeatAvatarRole.guest => [
-            VoiceRoomTokens.neonPurple.withValues(alpha: 0.8),
-            VoiceRoomTokens.neonBlue.withValues(alpha: 0.6),
-          ],
-      };
-
-  Path _outerPath(Size size) {
-    if (role == SeatAvatarRole.host || role == SeatAvatarRole.admin) {
-      return _hostPath(size);
-    }
-    if (role == SeatAvatarRole.dj || role == SeatAvatarRole.moderator) {
-      return _hexPath(size);
-    }
-    return _roundPath(size);
-  }
-
-  Path _hostPath(Size size) {
-    final w = size.width;
-    final h = size.height;
-    final r = w * 0.22;
-    return Path()
-      ..moveTo(w / 2, 0)
-      ..lineTo(w - r, r * 0.55)
-      ..lineTo(w - r * 0.35, h)
-      ..lineTo(r * 0.35, h)
-      ..lineTo(r, r * 0.55)
-      ..close();
-  }
-
-  Path _hexPath(Size size) {
-    final w = size.width;
-    final h = size.height;
-    final cx = w / 2;
-    final cy = h / 2;
-    final rad = w / 2 - 1;
-    final path = Path();
-    for (var i = 0; i < 6; i++) {
-      final a = (math.pi / 3) * i - math.pi / 2;
-      final x = cx + rad * math.cos(a);
-      final y = cy + rad * math.sin(a);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    path.close();
-    return path;
-  }
-
-  Path _roundPath(Size size) {
-    final w = size.width;
-    final h = size.height;
-    final r = w * 0.28;
-    return Path()
-      ..moveTo(r, 0)
-      ..lineTo(w - r, 0)
-      ..quadraticBezierTo(w, 0, w, r)
-      ..lineTo(w, h - r)
-      ..quadraticBezierTo(w, h, w - r, h)
-      ..lineTo(r, h)
-      ..quadraticBezierTo(0, h, 0, h - r)
-      ..lineTo(0, r)
-      ..quadraticBezierTo(0, 0, r, 0)
-      ..close();
   }
 
   @override
-  bool shouldRepaint(covariant _SeatFramePainter old) =>
-      old.role != role || old.speaking != speaking || old.spin != spin;
+  bool shouldRepaint(covariant _NeonRingPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.micOpen != micOpen ||
+      oldDelegate.animated != animated;
 }
 
-class _ParticleRingPainter extends CustomPainter {
-  _ParticleRingPainter({
-    required this.role,
-    required this.t,
-    required this.speaking,
+class _OrbitingRingPainter extends CustomPainter {
+  _OrbitingRingPainter({
+    required this.progress,
+    required this.accent,
+    required this.radius,
   });
 
-  final SeatAvatarRole role;
-  final double t;
-  final bool speaking;
+  final double progress;
+  final Color accent;
+  final double radius;
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (!speaking && role != SeatAvatarRole.admin && role != SeatAvatarRole.moderator) {
-      return;
-    }
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final rad = size.width / 2;
-    final color = switch (role) {
-      SeatAvatarRole.admin => const Color(0xFF00E5FF),
-      SeatAvatarRole.moderator => const Color(0xFFE040FB),
-      SeatAvatarRole.vip => const Color(0xFFFFD54F),
-      _ => Colors.white,
-    };
-    final paint = Paint()..color = color.withValues(alpha: 0.85);
-    for (var i = 0; i < 8; i++) {
-      final a = t * math.pi * 2 + i * (math.pi / 4);
-      final pr = rad + 2 + math.sin(t * math.pi * 2 + i) * 2;
-      canvas.drawCircle(
-        Offset(cx + math.cos(a) * pr, cy + math.sin(a) * pr),
-        2.2,
+    final center = Offset(size.width / 2, size.height / 2);
+    final paint = Paint()
+      ..color = accent.withValues(alpha: 0.75)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round;
+
+    const segments = 3;
+    for (var i = 0; i < segments; i++) {
+      final start = progress * math.pi * 2 + i * (math.pi * 2 / segments);
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        start,
+        math.pi / 3.5,
+        false,
         paint,
       );
     }
   }
 
   @override
-  bool shouldRepaint(covariant _ParticleRingPainter old) => old.t != t;
+  bool shouldRepaint(covariant _OrbitingRingPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
 
-class _HostClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) => _SeatFramePainter(
-        role: SeatAvatarRole.host,
-        speaking: false,
-        spin: 0,
-      )._hostPath(size);
+class _SpeakingWavePainter extends CustomPainter {
+  _SpeakingWavePainter({
+    required this.progress,
+    required this.accent,
+    required this.baseRadius,
+  });
+
+  final double progress;
+  final Color accent;
+  final double baseRadius;
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
-}
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
 
-class _HexClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) => _SeatFramePainter(
-        role: SeatAvatarRole.dj,
-        speaking: false,
-        spin: 0,
-      )._hexPath(size);
+    for (var i = 0; i < 3; i++) {
+      final phase = (progress + i * 0.33) % 1.0;
+      final expand = phase * 10;
+      final alpha = (1 - phase) * 0.4;
+      canvas.drawCircle(
+        center,
+        baseRadius + expand,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..color = accent.withValues(alpha: alpha),
+      );
+    }
+
+    const barCount = 14;
+    for (var i = 0; i < barCount; i++) {
+      final angle = (i / barCount) * math.pi * 2;
+      final amp = 2 + math.sin((progress * math.pi * 2) + i * 0.55) * 6;
+      final inner = baseRadius - 1;
+      final outer = inner + amp;
+      final p1 = Offset(
+        center.dx + inner * math.cos(angle),
+        center.dy + inner * math.sin(angle),
+      );
+      final p2 = Offset(
+        center.dx + outer * math.cos(angle),
+        center.dy + outer * math.sin(angle),
+      );
+      canvas.drawLine(
+        p1,
+        p2,
+        Paint()
+          ..strokeWidth = 1.8
+          ..strokeCap = StrokeCap.round
+          ..color = accent.withValues(alpha: 0.75),
+      );
+    }
+  }
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
-}
-
-class _RoundedClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) => _SeatFramePainter(
-        role: SeatAvatarRole.guest,
-        speaking: false,
-        spin: 0,
-      )._roundPath(size);
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+  bool shouldRepaint(covariant _SpeakingWavePainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }

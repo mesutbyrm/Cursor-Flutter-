@@ -677,6 +677,7 @@ class VoiceRoomLiveController
           membership: p.membership ?? prev.membership,
           seatIndex: p.seatIndex ?? prev.seatIndex,
           isSpeaking: p.isSpeaking || prev.isSpeaking,
+          isMuted: p.isMuted,
         ),
       );
     }

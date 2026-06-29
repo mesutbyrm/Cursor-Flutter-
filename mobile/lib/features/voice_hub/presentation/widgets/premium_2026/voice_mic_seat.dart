@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
@@ -8,16 +7,16 @@ import '../../../../live/domain/entities/voice_room_entity.dart';
 import 'package:canlifal_social/features/vip_gold/domain/vip_tier.dart';
 import 'package:canlifal_social/features/vip_gold/presentation/widgets/vip_badge.dart';
 import '../../theme/voice_room_tokens.dart';
-import 'voice_audio_wave_ring.dart';
 import 'voice_seat_avatar_frame.dart';
 
-/// Tek mikrofon koltuğu — boş, kilitli veya dolu.
+/// Tek mikrofon koltuğu — boş, kilitli veya dolu (Faz 12 cam yuvarlak tasarım).
 class VoiceMicSeat extends StatelessWidget {
   const VoiceMicSeat({
     super.key,
     this.user,
     required this.seatIndex,
     this.speaking = false,
+    this.micOpen,
     this.size = 56,
     this.isHost = false,
     this.locked = false,
@@ -33,6 +32,8 @@ class VoiceMicSeat extends StatelessWidget {
   final ChatRoomPresence? user;
   final int seatIndex;
   final bool speaking;
+  /// null ise [ChatRoomPresence.micOpen] veya koltukta varsayılan açık.
+  final bool? micOpen;
   final double size;
   final bool isHost;
   final bool locked;
@@ -43,6 +44,9 @@ class VoiceMicSeat extends StatelessWidget {
   final bool agoraReady;
   final String? selfUserId;
   final int? remoteAgoraUid;
+
+  bool _resolveMicOpen(ChatRoomPresence u) =>
+      micOpen ?? (u.seatIndex != null ? !u.isMuted : false);
 
   @override
   Widget build(BuildContext context) {
@@ -59,12 +63,14 @@ class VoiceMicSeat extends StatelessWidget {
     final vip = vipTier.isVip;
     final levelLabel = _levelLabel(user!);
     final videoChild = _agoraVideoChild();
+    final micOn = _resolveMicOpen(user!);
 
-    final avatar = Column(
+    return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Stack(
           clipBehavior: Clip.none,
+          alignment: Alignment.center,
           children: [
             GestureDetector(
               onTap: onTap,
@@ -86,6 +92,7 @@ class VoiceMicSeat extends StatelessWidget {
                             room?.djUserIds.contains(user!.id) == true,
                       ),
                       speaking: speaking,
+                      micOpen: micOn,
                     ),
             ),
             if (vip && !isHost)
@@ -102,7 +109,14 @@ class VoiceMicSeat extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                   decoration: BoxDecoration(
-                    gradient: VoiceRoomTokens.neonRing,
+                    gradient: micOn
+                        ? VoiceRoomTokens.neonRing
+                        : LinearGradient(
+                            colors: [
+                              Colors.grey.shade600,
+                              Colors.grey.shade700,
+                            ],
+                          ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -136,6 +150,24 @@ class VoiceMicSeat extends StatelessWidget {
                   ),
                 ),
               ),
+            if (!micOn)
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.65),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: Icon(
+                    Icons.mic_off_rounded,
+                    size: size * 0.16,
+                    color: Colors.grey.shade400,
+                  ),
+                ),
+              ),
           ],
         ),
         const SizedBox(height: 4),
@@ -146,23 +178,12 @@ class VoiceMicSeat extends StatelessWidget {
           style: TextStyle(
             fontSize: size > 60 ? 11 : 9,
             fontWeight: FontWeight.w800,
-            color: isHost ? VoiceRoomTokens.gold : Colors.white,
+            color: isHost
+                ? (micOn ? VoiceRoomTokens.gold : Colors.grey.shade500)
+                : (micOn ? Colors.white : Colors.white54),
           ),
         ),
       ],
-    );
-
-    if (!speaking && !isHost) return avatar;
-
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return _AndroidSpeakingGlow(active: speaking || isHost, child: avatar);
-    }
-
-    return VoiceAudioWaveRing(
-      size: size,
-      active: speaking,
-      goldHost: isHost,
-      child: avatar,
     );
   }
 
@@ -174,7 +195,6 @@ class VoiceMicSeat extends StatelessWidget {
     if (self != null && uid == self && manager.isHost && manager.cameraOn) {
       return AgoraLocalVideoView(manager: manager);
     }
-    // Uzak kamera yalnızca HOST koltuğunda — tüm koltuklara yansıtılmaz.
     if (!isHost) return null;
     final remote = remoteAgoraUid ?? manager.remoteUid;
     if (remote != null &&
@@ -194,77 +214,6 @@ String? _levelLabel(ChatRoomPresence user) {
   final seat = user.seatIndex;
   if (seat != null && seat > 1) return 'Lv$seat';
   return null;
-}
-
-class _AndroidSpeakingGlow extends StatefulWidget {
-  const _AndroidSpeakingGlow({required this.active, required this.child});
-
-  final bool active;
-  final Widget child;
-
-  @override
-  State<_AndroidSpeakingGlow> createState() => _AndroidSpeakingGlowState();
-}
-
-class _AndroidSpeakingGlowState extends State<_AndroidSpeakingGlow>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulse = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    );
-    _sync();
-  }
-
-  @override
-  void didUpdateWidget(covariant _AndroidSpeakingGlow oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _sync();
-  }
-
-  void _sync() {
-    if (widget.active) {
-      _pulse.repeat(reverse: true);
-    } else {
-      _pulse.stop();
-      _pulse.value = 0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!widget.active) return widget.child;
-    return AnimatedBuilder(
-      animation: _pulse,
-      builder: (context, child) {
-        final glow = 4 + _pulse.value * 6;
-        return Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: VoiceRoomTokens.gold.withValues(alpha: 0.35 + _pulse.value * 0.25),
-                blurRadius: glow,
-                spreadRadius: 1,
-              ),
-            ],
-          ),
-          child: child,
-        );
-      },
-      child: widget.child,
-    );
-  }
 }
 
 class _EmptySeat extends StatelessWidget {
@@ -292,27 +241,59 @@ class _EmptySeat extends StatelessWidget {
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.04),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: locked
+                    ? [
+                        Colors.white.withValues(alpha: 0.04),
+                        Colors.white.withValues(alpha: 0.02),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.12),
+                        Colors.white.withValues(alpha: 0.04),
+                      ],
+              ),
               border: Border.all(
                 color: locked
                     ? context.colors.onSurfaceMuted.withValues(alpha: 0.35)
-                    : VoiceRoomTokens.neonPurple.withValues(alpha: 0.55),
-                width: 1.8,
-                strokeAlign: BorderSide.strokeAlignInside,
+                    : VoiceRoomTokens.neonPurple.withValues(alpha: 0.5),
+                width: 2,
               ),
               boxShadow: locked
                   ? null
                   : [
                       BoxShadow(
-                        color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.15),
-                        blurRadius: 10,
+                        color: VoiceRoomTokens.neonPurple.withValues(alpha: 0.2),
+                        blurRadius: 12,
                       ),
                     ],
             ),
-            child: Icon(
-              locked ? Icons.lock_rounded : Icons.add_rounded,
-              color: locked ? context.colors.onSurfaceMuted : Colors.white54,
-              size: size * 0.32,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: Container(
+                    width: size * 0.55,
+                    height: size * 0.55,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.white.withValues(alpha: locked ? 0.06 : 0.18),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Icon(
+                  locked ? Icons.lock_rounded : Icons.add_rounded,
+                  color: locked ? context.colors.onSurfaceMuted : Colors.white54,
+                  size: size * 0.32,
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 4),
