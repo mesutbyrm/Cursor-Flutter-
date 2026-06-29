@@ -16,6 +16,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
     required this.presence,
     this.djUserIds,
     this.speakingUserId,
+    this.speakingUserIds = const {},
     this.onUserTap,
     this.onSeatTap,
     this.agora,
@@ -28,6 +29,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
   final List<ChatRoomPresence> presence;
   final List<String>? djUserIds;
   final String? speakingUserId;
+  final Set<String> speakingUserIds;
   final void Function(ChatRoomPresence user)? onUserTap;
   final void Function(int internalSeatIndex, ChatRoomPresence? user)? onSeatTap;
   final AgoraRoomManager? agora;
@@ -37,6 +39,13 @@ class VoiceWebOwnerStage extends StatelessWidget {
 
   List<String> get _effectiveDjIds =>
       djUserIds ?? room.djUserIds;
+
+  bool _isSpeaking(ChatRoomPresence? user) {
+    if (user == null) return false;
+    return speakingUserIds.contains(user.id) ||
+        speakingUserId == user.id ||
+        user.isSpeaking;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,8 +87,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
                   isHost: host != null,
                   room: room,
                   djUserIds: _effectiveDjIds,
-                  speaking:
-                      speakingUserId == host?.id || host?.isSpeaking == true,
+                  speaking: _isSpeaking(host),
                   onTap: () => onSeatTap?.call(1, host),
                   agora: agora,
                   agoraReady: agoraReady,
@@ -137,7 +145,7 @@ class VoiceWebOwnerStage extends StatelessWidget {
           size: size,
           room: room,
           djUserIds: _effectiveDjIds,
-          speaking: speakingUserId == user?.id || user?.isSpeaking == true,
+          speaking: _isSpeaking(user),
           onTap: () => onSeatTap?.call(internal, user),
           agora: agora,
           agoraReady: agoraReady,

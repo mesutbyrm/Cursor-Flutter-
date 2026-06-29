@@ -13,7 +13,6 @@ abstract final class VoiceRoomSpeakAccess {
     required List<ChatRoomPresence> presence,
   }) {
     if (user == null) return false;
-    if (perms.isSiteAdmin) return true;
     final onStage = voiceWebOnStageIds(room: room, presence: presence);
     return onStage.contains(user.id);
   }

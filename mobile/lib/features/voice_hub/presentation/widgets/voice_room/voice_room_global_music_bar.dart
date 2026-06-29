@@ -72,17 +72,15 @@ class VoiceRoomGlobalMusicBar extends ConsumerWidget {
             },
             onStop: session.canStopMusic
                 ? () async {
-                    await ctrl.stopMusic();
+                    await ctrl.closeMusicPlayer();
                   }
                 : null,
             onMuteToggle: () {
               ref.read(voiceRoomUiProvider.notifier).toggleBackgroundMusic();
             },
-            onClose: session.canStopMusic
-                ? () async {
-                    await ctrl.stopMusic();
-                  }
-                : null,
+            onClose: () async {
+              await ctrl.closeMusicPlayer();
+            },
           ),
         ),
       ),

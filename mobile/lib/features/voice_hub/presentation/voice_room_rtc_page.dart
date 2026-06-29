@@ -520,11 +520,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       await _audio!.join(
         roomId: roomId,
         remote: ref.read(chatRoomRemoteProvider),
-        enableMic: canSpeak && perms.isSiteAdmin,
+        enableMic: false,
       );
-      if (canSpeak && perms.isSiteAdmin) {
-        _audio?.setMicEnabled(true);
-      }
       if (mounted) {
         ref.read(voiceRoomDiagnosticProvider.notifier).setTrtc(
               roomId: roomId,
@@ -1184,13 +1181,20 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         if (p.isSpeaking) p.id,
     };
     if (!_isMicMuted && user != null) speakingIds.add(user.id);
-    final speakingId = (!_isMicMuted && user != null)
-        ? user.id
-        : (speakingIds.isNotEmpty ? speakingIds.first : null);
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
     final metrics = VoiceRoomResponsiveMetrics.of(context);
     final keyboardOpen = metrics.keyboardOpen;
     final chatMaxH = metrics.chatBlockH;
+    final musicSession = ref.watch(voiceRoomMusicSessionProvider);
+    final hasActiveMusicPlayer = (live.dj.playing ||
+            live.dj.nowPlaying != null ||
+            live.dj.musicQueue.isNotEmpty) &&
+        !musicSession.dismissed &&
+        !musicSession.userDismissedPlayer;
+    final showDjSlidePanel = VoiceMusicAccess.canShowDjMusicPanel(
+      perms: perms,
+      isDj: isDj,
+    );
     final duyuru = ((room.descTr ?? room.rulesTr)?.trim().isNotEmpty == true)
         ? (room.descTr ?? room.rulesTr)!.trim()
         : 'Sohbet odasına hoş geldiniz. Saygılı olun, keyifli sohbetler!';
@@ -1614,7 +1618,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           room: room,
                           presence: live.presence,
                           djUserIds: mergedDjIds,
-                          speakingUserId: speakingId,
+                          speakingUserIds: speakingIds,
                           onUserTap: _openUser,
                           onSeatTap: (seatIndex, user) => unawaited(
                             _onSeatTap(
@@ -1636,7 +1640,12 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           messages: live.messages,
                           enterBanner: live.enterBanner,
                         ),
-                        if (!keyboardOpen)
+                        if (live.moderatorAnnouncement?.trim().isNotEmpty == true)
+                          VoiceRoomDuyuruTicker(
+                            key: ValueKey(live.moderatorAnnouncement),
+                            text: live.moderatorAnnouncement!,
+                          ),
+                        if (!keyboardOpen && !showDjSlidePanel)
                           VoiceRoomCenterMusicPanel(
                             room: room,
                             live: live,
@@ -1648,7 +1657,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           perms: perms,
                           isDj: isDj,
                         ),
-                        if (!keyboardOpen)
+                        if (!keyboardOpen && !hasActiveMusicPlayer)
                           VoiceRoomPersistentDuyuru(
                             roomKey: room.apiRoomKey.isNotEmpty
                                 ? room.apiRoomKey
@@ -1788,16 +1797,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 perms: perms,
                 isOwner: isOwner,
                 isDj: isDj,
-              ),
-            if (live.moderatorAnnouncement?.trim().isNotEmpty == true)
-              Positioned(
-                top: MediaQuery.paddingOf(context).top + 2,
-                left: 0,
-                right: 0,
-                child: VoiceRoomDuyuruTicker(
-                  key: ValueKey(live.moderatorAnnouncement),
-                  text: live.moderatorAnnouncement!,
-                ),
               ),
           ],
         ),

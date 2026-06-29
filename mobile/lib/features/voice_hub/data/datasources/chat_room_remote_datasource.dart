@@ -1976,8 +1976,11 @@ class ChatRoomRemoteDataSource {
             data: jsonEncode({
               'content': content,
               if (nick != null && nick.isNotEmpty) 'nickname': nick,
-              if (mentionedUserIds.isNotEmpty)
+              if (mentionedUserIds.isNotEmpty) ...{
                 'mentionedUserIds': mentionedUserIds,
+                'mentionUserIds': mentionedUserIds,
+                'mentions': mentionedUserIds,
+              },
             }),
             options: Options(contentType: 'application/json'),
           )

@@ -206,9 +206,9 @@ class _VoiceSeatAvatarFrameState extends State<VoiceSeatAvatarFrame>
     final accent = SeatAvatarStyle.accent(widget.role, micOpen: widget.micOpen);
     final gradient =
         SeatAvatarStyle.ringGradient(widget.role, micOpen: widget.micOpen);
-    final pulseScale = widget.speaking && widget.micOpen ? 1 + _pulse.value * 0.08 : 1.0;
+    final pulseScale = widget.speaking && widget.micOpen ? 1 + _pulse.value * 0.12 : 1.0;
     final glowBlur = widget.micOpen
-        ? (widget.speaking ? 12 + _pulse.value * 16 : 8.0)
+        ? (widget.speaking ? 16 + _pulse.value * 20 : 8.0)
         : 0.0;
 
     return RepaintBoundary(
@@ -509,22 +509,22 @@ class _SpeakingWavePainter extends CustomPainter {
 
     for (var i = 0; i < 3; i++) {
       final phase = (progress + i * 0.33) % 1.0;
-      final expand = phase * 10;
-      final alpha = (1 - phase) * 0.4;
+      final expand = phase * 14;
+      final alpha = (1 - phase) * 0.65;
       canvas.drawCircle(
         center,
         baseRadius + expand,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2
+          ..strokeWidth = 2.8
           ..color = accent.withValues(alpha: alpha),
       );
     }
 
-    const barCount = 14;
+    const barCount = 18;
     for (var i = 0; i < barCount; i++) {
       final angle = (i / barCount) * math.pi * 2;
-      final amp = 2 + math.sin((progress * math.pi * 2) + i * 0.55) * 6;
+      final amp = 3 + math.sin((progress * math.pi * 2) + i * 0.55) * 9;
       final inner = baseRadius - 1;
       final outer = inner + amp;
       final p1 = Offset(
@@ -539,9 +539,9 @@ class _SpeakingWavePainter extends CustomPainter {
         p1,
         p2,
         Paint()
-          ..strokeWidth = 1.8
+          ..strokeWidth = 2.4
           ..strokeCap = StrokeCap.round
-          ..color = accent.withValues(alpha: 0.75),
+          ..color = accent.withValues(alpha: 0.92),
       );
     }
   }

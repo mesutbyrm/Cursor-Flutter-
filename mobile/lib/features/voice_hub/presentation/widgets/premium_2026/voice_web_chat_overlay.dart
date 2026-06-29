@@ -21,6 +21,7 @@ class VoiceWebChatOverlay extends StatefulWidget {
     this.pinnedAnnouncement,
     this.scrollController,
     this.scrollToLatest = false,
+    this.showAvatar = true,
   });
 
   final List<ChatRoomMessage> messages;
@@ -34,6 +35,7 @@ class VoiceWebChatOverlay extends StatefulWidget {
   final String? pinnedAnnouncement;
   final ScrollController? scrollController;
   final bool scrollToLatest;
+  final bool showAvatar;
 
   @override
   State<VoiceWebChatOverlay> createState() => _VoiceWebChatOverlayState();
@@ -154,6 +156,7 @@ class _VoiceWebChatOverlayState extends State<VoiceWebChatOverlay> {
         return ChatMessageWidget(
           key: ValueKey(msg.id),
           message: msg,
+          showAvatar: widget.showAvatar,
           onUserTap: widget.onUserTap == null
               ? null
               : (id, name) => widget.onUserTap!(id, name, msg),

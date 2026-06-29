@@ -43,6 +43,7 @@ import '../utils/voice_room_seat_priority.dart';
 import '../utils/voice_room_message_merge.dart';
 import '../widgets/voice_room/voice_room_music_request_flash.dart';
 import '../basic/voice_room_basic_mode.dart';
+import '../../../notifications/presentation/providers/notifications_providers.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/chat_room_my_permissions.dart';
 import '../../domain/entities/moderation_result.dart';
@@ -713,12 +714,10 @@ class VoiceRoomLiveController
   }
 
   void _notifyRealtimeIfBasic(VoiceRoomRealtimeKind kind, String message) {
-    if (!VoiceRoomBasicMode.enabled) return;
     _pushRealtimeEvent(kind, message);
   }
 
   void _pushBasicChatEvent(ChatRoomMessage msg) {
-    if (!VoiceRoomBasicMode.enabled) return;
     final name = msg.user?.displayName.trim().isNotEmpty == true
         ? msg.user!.displayName.trim()
         : (msg.user?.name.trim().isNotEmpty == true
@@ -746,7 +745,6 @@ class VoiceRoomLiveController
   }
 
   void _detectMicChanges(List<ChatRoomPresence> next) {
-    if (!VoiceRoomBasicMode.enabled) return;
     final prev = {for (final p in state.presence) p.id: p.isSpeaking};
     for (final p in next) {
       final was = prev[p.id];
@@ -1073,9 +1071,7 @@ class VoiceRoomLiveController
             if (exists) return;
             state = state.copyWith(messages: [...state.messages, msg]);
             _onMusicRelatedChatMessage(msg);
-            if (VoiceRoomBasicMode.enabled) {
-              _pushBasicChatEvent(msg);
-            }
+            _pushBasicChatEvent(msg);
             if (msg.kind == ChatMessageKind.systemJoin &&
                 VoiceOfficialJoin.isEntranceWorthy(
                   content: msg.content,
@@ -1412,10 +1408,12 @@ class VoiceRoomLiveController
       moderatorAnnouncement: text,
       clearPinnedAnnouncement: true,
     );
-    _announcementTimer = Timer(VoiceRoomDuyuruAccess.displayTtl, () {
-      if (!_sessionActive) return;
-      state = state.copyWith(clearModeratorAnnouncement: true);
-    });
+    if (VoiceRoomDuyuruAccess.displayTtl > Duration.zero) {
+      _announcementTimer = Timer(VoiceRoomDuyuruAccess.displayTtl, () {
+        if (!_sessionActive) return;
+        state = state.copyWith(clearModeratorAnnouncement: true);
+      });
+    }
   }
 
   void showModerationToast(String text) {
@@ -2746,6 +2744,7 @@ class VoiceRoomLiveController
     for (final m in merged) {
       if (prevIds.contains(m.id)) continue;
       if (m.kind != ChatMessageKind.systemJoin) continue;
+      _pushRealtimeEvent(VoiceRoomRealtimeKind.join, m.content.trim());
       if (!VoiceOfficialJoin.isEntranceWorthy(
         content: m.content,
         membership: m.user?.membership,
@@ -2818,7 +2817,7 @@ class VoiceRoomLiveController
   }
 
   Future<void> _tryAutoPrivilegedSeat() async {
-    if (_autoSeatAttempted || _roomKey.isEmpty || !state.selfInRoom) return;
+    if (_roomKey.isEmpty || !state.selfInRoom) return;
     final user = ref.read(authControllerProvider).valueOrNull;
     if (user == null) return;
 
@@ -2840,6 +2839,7 @@ class VoiceRoomLiveController
       self,
     );
     if (priority == null) return;
+    if (_autoSeatAttempted) return;
 
     final seatIndex = _pickAutoSeatIndex(
       myPriority: priority,
@@ -2847,7 +2847,6 @@ class VoiceRoomLiveController
     );
     if (seatIndex == null) return;
 
-    _autoSeatAttempted = true;
     VoiceRoomDebugLog.log('seat.auto_join', {
       'room': _roomKey,
       'seat': seatIndex,
@@ -2863,6 +2862,12 @@ class VoiceRoomLiveController
       await refresh();
     } catch (e) {
       await assignSeat(seatIndex: seatIndex);
+    }
+    for (final p in state.presence) {
+      if (p.id == user.id && p.seatIndex != null) {
+        _autoSeatAttempted = true;
+        break;
+      }
     }
   }
 
@@ -2892,6 +2897,52 @@ class VoiceRoomLiveController
       clearMusicRequestFlash: true,
     );
     _triggerChatClearedBanner();
+  }
+
+  Future<void> _deliverMentionNotifications({
+    required UserEntity? actor,
+    required List<String> mentionedUserIds,
+    required String preview,
+  }) async {
+    if (mentionedUserIds.isEmpty) return;
+    try {
+      await ref.read(chatRoomRemoteProvider).notifyRoomMentions(
+            roomKey: _roomKey,
+            alternateKey: _musicAlternateKey,
+            mentionedUserIds: mentionedUserIds,
+            preview: preview,
+          );
+    } catch (_) {}
+
+    ref.invalidate(notificationsListProvider);
+
+    final actorName = actor?.display.trim().isNotEmpty == true
+        ? actor!.display.trim()
+        : (actor?.username.trim().isNotEmpty == true
+            ? actor!.username.trim()
+            : 'Biri');
+    final selfId = ref.read(authControllerProvider).valueOrNull?.id;
+    for (final id in mentionedUserIds) {
+      ChatRoomPresence? target;
+      for (final p in state.presence) {
+        if (p.id == id) {
+          target = p;
+          break;
+        }
+      }
+      final targetName = target?.displayName.trim().isNotEmpty == true
+          ? target!.displayName.trim()
+          : (target?.name.trim().isNotEmpty == true
+              ? target!.name.trim()
+              : 'Kullanıcı');
+      _pushRealtimeEvent(
+        VoiceRoomRealtimeKind.system,
+        '$actorName, $targetName senden bahsetti.',
+      );
+      if (id == selfId) {
+        showModerationToast('$actorName senden bahsetti.');
+      }
+    }
   }
 
   Future<void> sendMessage(String text) async {
@@ -3030,12 +3081,11 @@ class VoiceRoomLiveController
       state = state.copyWith(messages: list, clearError: true);
       if (mentionedUserIds.isNotEmpty) {
         unawaited(
-          ref.read(chatRoomRemoteProvider).notifyRoomMentions(
-                roomKey: _roomKey,
-                alternateKey: _musicAlternateKey,
-                mentionedUserIds: mentionedUserIds,
-                preview: trimmed,
-              ),
+          _deliverMentionNotifications(
+            actor: user,
+            mentionedUserIds: mentionedUserIds,
+            preview: trimmed,
+          ),
         );
       }
       if (isClear && (perms.canModerate || perms.isRoomOwner)) {

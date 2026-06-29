@@ -226,7 +226,7 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
       await _audio!.join(
         roomId: roomId,
         remote: ref.read(chatRoomRemoteProvider),
-        enableMic: canSpeak && perms.isSiteAdmin,
+        enableMic: false,
       );
       if (!mounted) return;
       unawaited(VoiceRoomMusicAudioSession.activateForPlayback());
@@ -808,16 +808,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                   ref.read(voiceGiftFlightQueueProvider.notifier).dequeue(id),
             ),
             PremiumGiftFullscreenOverlay(event: _fullscreenGift),
-            if (live.moderatorAnnouncement?.trim().isNotEmpty == true)
-              Positioned(
-                top: MediaQuery.paddingOf(context).top + 2,
-                left: 0,
-                right: 0,
-                child: VoiceRoomDuyuruTicker(
-                  key: ValueKey(live.moderatorAnnouncement),
-                  text: live.moderatorAnnouncement!,
-                ),
-              ),
             if (_showVipEntrance && user != null)
               VipEntranceOverlay(
                 tier: ref.watch(vipTierProvider),

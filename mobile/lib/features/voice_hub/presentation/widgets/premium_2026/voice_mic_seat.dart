@@ -45,8 +45,7 @@ class VoiceMicSeat extends StatelessWidget {
   final String? selfUserId;
   final int? remoteAgoraUid;
 
-  bool _resolveMicOpen(ChatRoomPresence u) =>
-      micOpen ?? (u.seatIndex != null ? !u.isMuted : false);
+  bool _resolveMicOpen(ChatRoomPresence u) => micOpen ?? u.micOpen;
 
   @override
   Widget build(BuildContext context) {

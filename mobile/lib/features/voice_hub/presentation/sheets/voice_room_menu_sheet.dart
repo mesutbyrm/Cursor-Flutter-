@@ -384,10 +384,29 @@ class _MenuActionCard extends StatelessWidget {
                   : null,
             ),
             child: Center(
-              child: Icon(
-                action.icon,
-                size: 44,
-                color: enabled ? c : c.withValues(alpha: 0.35),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    action.icon,
+                    size: 40,
+                    color: enabled ? c : c.withValues(alpha: 0.35),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    action.tooltip,
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: enabled
+                          ? Colors.white.withValues(alpha: 0.92)
+                          : Colors.white.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

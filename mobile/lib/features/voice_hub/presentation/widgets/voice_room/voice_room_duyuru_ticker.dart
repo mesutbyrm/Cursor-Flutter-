@@ -5,15 +5,17 @@ import 'package:flutter/material.dart';
 import '../../theme/voice_room_tokens.dart';
 import '../../utils/voice_room_duyuru_access.dart';
 
-/// Faz 10 — üst kayan duyuru bandı (tüm kullanıcılar görür).
+/// Faz 10 — koltuk altı kayan duyuru bandı (sağdan sola, 2 geçiş).
 class VoiceRoomDuyuruTicker extends StatefulWidget {
   const VoiceRoomDuyuruTicker({
     super.key,
     required this.text,
+    this.scrollPasses = VoiceRoomDuyuruAccess.scrollPasses,
     this.ttl = VoiceRoomDuyuruAccess.displayTtl,
   });
 
   final String text;
+  final int scrollPasses;
   final Duration ttl;
 
   @override
@@ -26,6 +28,7 @@ class _VoiceRoomDuyuruTickerState extends State<VoiceRoomDuyuruTicker>
   Timer? _hideTimer;
   var _visible = true;
   double _segmentWidth = 0;
+  var _passesDone = 0;
 
   static const _style = TextStyle(
     fontSize: 13,
@@ -47,6 +50,7 @@ class _VoiceRoomDuyuruTickerState extends State<VoiceRoomDuyuruTicker>
       _scroll?.dispose();
       _scroll = null;
       _hideTimer?.cancel();
+      _passesDone = 0;
       setState(() => _visible = true);
       _start();
     }
@@ -54,9 +58,11 @@ class _VoiceRoomDuyuruTickerState extends State<VoiceRoomDuyuruTicker>
 
   void _start() {
     if (widget.text.trim().isEmpty) return;
-    _hideTimer = Timer(widget.ttl, () {
-      if (mounted) setState(() => _visible = false);
-    });
+    if (widget.ttl > Duration.zero) {
+      _hideTimer = Timer(widget.ttl, () {
+        if (mounted) setState(() => _visible = false);
+      });
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) => _setupScroll());
   }
 
@@ -70,17 +76,27 @@ class _VoiceRoomDuyuruTickerState extends State<VoiceRoomDuyuruTicker>
     )..layout();
     _segmentWidth = painter.width;
     final viewport = context.size?.width ?? 320;
-    final needsScroll = _segmentWidth > viewport * 0.55;
+    final needsScroll = _segmentWidth > viewport * 0.45;
     _scroll?.dispose();
     if (!needsScroll) {
       setState(() {});
       return;
     }
-    final durationMs = (_segmentWidth * 28).clamp(8000, 24000).round();
+    final durationMs = (_segmentWidth * 28).clamp(6000, 20000).round();
     _scroll = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: durationMs),
-    )..repeat();
+    );
+    _scroll!.addStatusListener((status) {
+      if (status != AnimationStatus.completed || !mounted) return;
+      _passesDone++;
+      if (_passesDone >= widget.scrollPasses) {
+        _scroll!.stop();
+        return;
+      }
+      _scroll!.forward(from: 0);
+    });
+    _scroll!.forward(from: 0);
     setState(() {});
   }
 
@@ -120,8 +136,8 @@ class _VoiceRoomDuyuruTickerState extends State<VoiceRoomDuyuruTicker>
     return Material(
       color: Colors.transparent,
       child: Container(
-        margin: const EdgeInsets.fromLTRB(8, 0, 8, 4),
-        height: 36,
+        margin: const EdgeInsets.fromLTRB(10, 0, 10, 6),
+        height: 34,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [

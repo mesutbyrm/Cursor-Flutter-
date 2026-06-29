@@ -4,7 +4,9 @@ import 'voice_room_permissions.dart';
 abstract final class VoiceRoomDuyuruAccess {
   static const int maxLength = 100;
   static const int jetonCost = 5;
-  static const Duration displayTtl = Duration(seconds: 15);
+  /// 0 = otomatik gizleme yok (Faz 10).
+  static const Duration displayTtl = Duration.zero;
+  static const int scrollPasses = 2;
 
   static bool isAdminFree(VoiceRoomPermissions perms) =>
       perms.isSiteAdmin || perms.canModerate || perms.isRoomOwner;

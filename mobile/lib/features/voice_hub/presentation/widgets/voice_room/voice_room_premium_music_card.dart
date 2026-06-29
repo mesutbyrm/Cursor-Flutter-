@@ -246,8 +246,7 @@ class _VoiceRoomPremiumMusicCardState
                                     ],
                                   ),
                                 ),
-                                if (widget.canClose)
-                                  IconButton(
+                                IconButton(
                                     visualDensity: VisualDensity.compact,
                                     onPressed: () async {
                                       final liveCtrl = ref.read(
@@ -259,14 +258,14 @@ class _VoiceRoomPremiumMusicCardState
                                           widget.liveKey,
                                         ).notifier,
                                       );
-                                      await liveCtrl.stopMusic();
+                                      await liveCtrl.closeMusicPlayer();
                                       videoCtrl.clear();
                                     },
                                     icon: Icon(
                                       Icons.close_rounded,
                                       color: Colors.white.withValues(alpha: 0.85),
                                     ),
-                                    tooltip: 'Müziği durdur',
+                                    tooltip: 'Müzik panelini kapat',
                                   ),
                               ],
                             ),

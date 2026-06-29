@@ -1,6 +1,18 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.442+446 (2026-06-26)
+
+### Sesli oda — Faz 1–12 düzeltmeleri
+
+- **Faz 1:** Müzik X tuşu `closeMusicPlayer()` ile kapanır; oda duyuru bandı müzik çalarken gizlenir (çift panel azaltıldı); DJ paneli açıkken merkez player gizlenir
+- **Faz 2:** Koltuk 11 her zaman görünür; yetkili otomatik koltuk yeniden dener; koltukta değilken konuşma kapalı (admin dahil)
+- **Faz 3:** Menü kartlarında ikon altında etiket; sohbette profil resmi + görünen ad
+- **Faz 7–9:** Giriş olayları RTC modunda da yayınlanır — «giriş yaptı» toast ve yetkili giriş animasyonu herkese görünür
+- **Faz 10:** `!duyuru` koltuk altında, sağdan sola 2 geçiş; 15 sn otomatik kapanma kaldırıldı
+- **Faz 11:** @ bahsetme bildirimi + odada «senden bahsetti» satırı; çoklu API alanı desteği
+- **Faz 12:** Konuşma dalgası güçlendirildi; çoklu konuşan koltuk desteği
+
 ## 1.0.441+445 (2026-06-29)
 
 ### Sesli oda — 12 Faz birleşik sürüm (APK)

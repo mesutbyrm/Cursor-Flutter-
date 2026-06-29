@@ -136,9 +136,8 @@ abstract final class VoiceRoomSeatPriority {
   static bool shouldAutoSit(int tier) =>
       tier >= tierOp || tier == tierDj;
 
-  /// Sağ alt admin koltuğu (11) yalnızca doluysa gösterilir.
-  static bool showAdminSeat(Map<int, ChatRoomPresence> seats) =>
-      seats[11] != null;
+  /// Sağ alt admin koltuğu (11) — admin oturabilsin diye her zaman görünür.
+  static bool showAdminSeat(Map<int, ChatRoomPresence> seats) => true;
 
   static int? pickAutoSeatIndex({
     required int myTier,
