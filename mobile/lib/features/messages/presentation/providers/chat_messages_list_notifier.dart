@@ -42,9 +42,7 @@ class ChatMessagesListNotifier
     extends FamilyAsyncNotifier<ChatMessagesListState, String> {
   @override
   Future<ChatMessagesListState> build(String conversationId) async {
-    final initial = await _load(conversationId);
-    unawaited(refresh(silent: true, forceRefresh: true));
-    return initial;
+    return _load(conversationId);
   }
 
   Future<ChatMessagesListState> _load(

@@ -71,6 +71,33 @@ class FortuneRemoteDataSource {
     return _apiSlugFor(type.slug);
   }
 
+  FortuneSseSession openStreamSession({
+    required FortuneTypeEntity type,
+    String? userInput,
+    bool? yesNoChoice,
+    DateTime? birthDate,
+    FortuneCloudImageInput? images,
+    required String accessToken,
+    String? paymentMethod,
+    int? jetonCost,
+  }) {
+    final slug = _readingSlug(type, images);
+    final body = _fortuneBody(
+      type: type,
+      userInput: userInput,
+      yesNoChoice: yesNoChoice,
+      birthDate: birthDate,
+      images: images,
+      paymentMethod: paymentMethod,
+      jetonCost: jetonCost,
+    );
+    return _sse.openReading(
+      apiSlug: slug,
+      body: body,
+      accessToken: accessToken,
+    );
+  }
+
   Stream<FortuneStreamUpdate> streamFortune({
     required FortuneTypeEntity type,
     String? userInput,

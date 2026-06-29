@@ -8,6 +8,9 @@ import 'api_exception.dart';
 import 'api_endpoints.dart';
 import 'device_headers.dart';
 import 'api_cache_interceptor.dart';
+import 'api_retry_interceptor.dart';
+import 'api_timing_interceptor.dart';
+import 'connectivity/connectivity_service.dart';
 import 'cookie_jar_provider.dart';
 import 'payment_request_interceptor.dart';
 import 'token_storage.dart';
@@ -41,7 +44,9 @@ final dioProvider = Provider<Dio>((ref) {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Connection': 'keep-alive',
       },
+      persistentConnection: true,
     ),
   );
 
@@ -53,6 +58,15 @@ final dioProvider = Provider<Dio>((ref) {
   dio.interceptors.add(CookieManager(cookieJar));
   dio.interceptors.add(PaymentRequestInterceptor());
   dio.interceptors.add(VoiceRoomApiLogInterceptor());
+  dio.interceptors.add(ApiTimingInterceptor());
+
+  final connectivity = ref.read(connectivityServiceProvider);
+  dio.interceptors.add(
+    ApiRetryInterceptor(
+      dioGetter: () => dio,
+      connectivity: connectivity,
+    ),
+  );
 
   dio.interceptors.add(
     InterceptorsWrapper(
@@ -143,11 +157,13 @@ extension DioApi on Dio {
     String path, {
     Map<String, dynamic>? query,
     bool forceRefresh = false,
+    CancelToken? cancelToken,
   }) async {
     try {
       return await get<T>(
         path,
         queryParameters: query,
+        cancelToken: cancelToken,
         options: Options(
           extra: forceRefresh ? {'forceRefresh': true} : null,
         ),
@@ -162,6 +178,7 @@ extension DioApi on Dio {
     Object? data,
     Map<String, dynamic>? query,
     Options? options,
+    CancelToken? cancelToken,
   }) async {
     try {
       return await post<T>(
@@ -169,6 +186,7 @@ extension DioApi on Dio {
         data: data,
         queryParameters: query,
         options: options,
+        cancelToken: cancelToken,
       );
     } on DioException catch (e) {
       throw _mapDio(e);

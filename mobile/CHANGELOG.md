@@ -1,6 +1,17 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.444+448 (2026-06-26)
+
+### Performans & ağ optimizasyonu (Görev 19)
+
+- **HTTP:** keep-alive, GET retry (2×), istek süresi ölçümü, `CancelToken` scope
+- **Çevrimdışı:** `connectivity_plus` — offline banner + GET stale cache
+- **Tekrar istek:** mesaj/sohbet/bildirim açılış çift fetch kaldırıldı
+- **SSE:** fal stream iptali (`FortuneSseSession.cancel`)
+- **Metrik:** `AppPerfMetrics`, route geçiş süresi, `docs/PERFORMANCE_REPORT.md`
+- Cüzdan çift invalidate düzeltmesi; discover oda poll 30s
+
 ## 1.0.443+447 (2026-06-26)
 
 ### Fal & Tarot — UX ve sosyal paylaşım

@@ -2,7 +2,7 @@ name: canlifal_social
 description: Canlifal — modern sosyal medya istemcisi (REST + JWT, Clean Architecture).
 publish_to: 'none'
 
-version: 1.0.443+447
+version: 1.0.444+448
 
 environment:
   sdk: ^3.8.0
@@ -16,6 +16,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   dio: ^5.8.0+1
   dio_cookie_manager: ^3.1.1
+  connectivity_plus: ^6.1.4
   cookie_jar: ^4.0.8
   path_provider: ^2.1.2
   url_launcher: ^6.3.1

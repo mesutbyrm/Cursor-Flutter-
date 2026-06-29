@@ -33,7 +33,11 @@ abstract class BaseSseService {
         baseUrl: Env.apiBaseUrl,
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: Duration.zero,
-        headers: {'Accept': 'text/event-stream'},
+        headers: {
+          'Accept': 'text/event-stream',
+          'Connection': 'keep-alive',
+        },
+        persistentConnection: true,
       ),
     );
   }

@@ -55,7 +55,7 @@ class _VoiceRoomsBodyState extends ConsumerState<VoiceRoomsBody>
     _liveStreamsTimer = Timer(LazyLoadPerf.voiceRoomLiveStreams, () {
       if (mounted) setState(() => _liveStreamsReady = true);
     });
-    _roomListRefresh = Timer.periodic(const Duration(seconds: 25), (_) {
+    _roomListRefresh = Timer.periodic(const Duration(seconds: 30), (_) {
       if (!mounted) return;
       ref.invalidate(voiceRoomsProvider);
     });

@@ -33,9 +33,7 @@ class NotificationsListNotifier extends AsyncNotifier<NotificationsListState> {
   @override
   Future<NotificationsListState> build() async {
     ref.keepAlive();
-    final all = await ref
-        .read(notificationsRepositoryProvider)
-        .fetch(forceRefresh: true);
+    final all = await ref.read(notificationsRepositoryProvider).fetch();
     final visible = ListPerf.defaultPageSize.clamp(0, all.length);
     return NotificationsListState(all: all, visibleCount: visible);
   }

@@ -60,6 +60,10 @@ abstract final class PerfResult {
   /// Görev 17 — gereksiz rebuild/setState/timer sızıntı temizliği
   static const moduleWidgetPerf = 'WidgetPerf / CancellableDelay';
 
+  /// Görev 19 — HTTP retry, timing, connectivity, request scope
+  static const moduleNetworkV2 =
+      'ApiRetryInterceptor / ConnectivityService / AppPerfMetrics';
+
   /// Görev 18 — jeton/cüzdan anında, geçişler akıcı
   static const moduleWalletUi = 'WalletBalancesNotifier + shell prefetch';
 }

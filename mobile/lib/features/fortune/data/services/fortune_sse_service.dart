@@ -20,6 +20,27 @@ class FortuneStreamChunk {
   final bool done;
 }
 
+/// İptal edilebilir fal SSE oturumu.
+class FortuneSseSession {
+  FortuneSseSession._({
+    required this.stream,
+    required CancelToken cancelToken,
+    required Dio dio,
+  })  : _cancelToken = cancelToken,
+        _dio = dio;
+
+  final Stream<FortuneStreamChunk> stream;
+  final CancelToken _cancelToken;
+  final Dio _dio;
+
+  void cancel([String reason = 'user_cancelled']) {
+    if (!_cancelToken.isCancelled) {
+      _cancelToken.cancel(reason);
+    }
+    _dio.close(force: true);
+  }
+}
+
 class FortuneSseService {
   FortuneSseService();
 
@@ -32,20 +53,61 @@ class FortuneSseService {
         headers: {
           'Accept': 'text/event-stream',
           'Content-Type': 'application/json',
+          'Connection': 'keep-alive',
         },
+        persistentConnection: true,
       ),
     );
   }
 
-  /// SSE akışı; hata veya JSON yanıtında `onFallback` çağrılabilir.
+  /// SSE akışı; [FortuneSseSession.cancel] ile iptal edilir.
+  FortuneSseSession openReading({
+    required String apiSlug,
+    required Map<String, dynamic> body,
+    required String accessToken,
+  }) {
+    final dio = _streamDio();
+    final cancel = CancelToken();
+    final controller = StreamController<FortuneStreamChunk>();
+
+    unawaited(_pump(
+      dio: dio,
+      cancel: cancel,
+      apiSlug: apiSlug,
+      body: body,
+      accessToken: accessToken,
+      controller: controller,
+    ));
+
+    return FortuneSseSession._(
+      stream: controller.stream,
+      cancelToken: cancel,
+      dio: dio,
+    );
+  }
+
+  /// Geriye dönük uyumluluk.
   Stream<FortuneStreamChunk> streamReading({
     required String apiSlug,
     required Map<String, dynamic> body,
     required String accessToken,
-  }) async* {
-    final dio = _streamDio();
-    final cancel = CancelToken();
-  try {
+  }) {
+    return openReading(
+      apiSlug: apiSlug,
+      body: body,
+      accessToken: accessToken,
+    ).stream;
+  }
+
+  Future<void> _pump({
+    required Dio dio,
+    required CancelToken cancel,
+    required String apiSlug,
+    required Map<String, dynamic> body,
+    required String accessToken,
+    required StreamController<FortuneStreamChunk> controller,
+  }) async {
+    try {
       final res = await dio.post<ResponseBody>(
         ApiEndpoints.fortuneReading(apiSlug),
         data: body,
@@ -69,6 +131,7 @@ class FortuneSseService {
       String? fortuneId;
 
       await for (final chunk in byteStream) {
+        if (cancel.isCancelled) break;
         buffer.write(utf8.decode(chunk, allowMalformed: true));
         var raw = buffer.toString().replaceAll('\r\n', '\n');
         while (true) {
@@ -87,22 +150,24 @@ class FortuneSseService {
               final type = map['type']?.toString() ?? '';
               if (type == 'done') {
                 fortuneId = map['fortuneId']?.toString();
-                yield FortuneStreamChunk(
-                  content: acc.toString(),
-                  fortuneId: fortuneId,
-                  done: true,
+                controller.add(
+                  FortuneStreamChunk(
+                    content: acc.toString(),
+                    fortuneId: fortuneId,
+                    done: true,
+                  ),
                 );
+                await controller.close();
                 return;
               }
               final piece = map['content']?.toString() ?? '';
               if (piece.isNotEmpty) {
                 acc.write(piece);
-                yield FortuneStreamChunk(content: acc.toString());
+                controller.add(FortuneStreamChunk(content: acc.toString()));
               }
             } catch (_) {
-              // Tek satır düz metin SSE
               acc.write(payload);
-              yield FortuneStreamChunk(content: acc.toString());
+              controller.add(FortuneStreamChunk(content: acc.toString()));
             }
           }
         }
@@ -112,25 +177,36 @@ class FortuneSseService {
       }
 
       if (acc.isNotEmpty) {
-        yield FortuneStreamChunk(
-          content: acc.toString(),
-          fortuneId: fortuneId,
-          done: true,
+        controller.add(
+          FortuneStreamChunk(
+            content: acc.toString(),
+            fortuneId: fortuneId,
+            done: true,
+          ),
         );
       } else {
         final tail = buffer.toString().trim();
         final fromJson = _parseJsonFortuneBody(tail);
         if (fromJson != null) {
-          yield FortuneStreamChunk(
-            content: fromJson.text,
-            fortuneId: fromJson.fortuneId,
-            done: true,
+          controller.add(
+            FortuneStreamChunk(
+              content: fromJson.text,
+              fortuneId: fromJson.fortuneId,
+              done: true,
+            ),
           );
-        } else {
-          throw StateError('empty_fortune_stream');
+        } else if (!cancel.isCancelled) {
+          controller.addError(StateError('empty_fortune_stream'));
         }
       }
+    } catch (e, st) {
+      if (!controller.isClosed && !cancel.isCancelled) {
+        controller.addError(e, st);
+      }
     } finally {
+      if (!controller.isClosed) {
+        await controller.close();
+      }
       cancel.cancel('done');
       dio.close(force: true);
     }

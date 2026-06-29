@@ -2423,7 +2423,6 @@ class VoiceRoomLiveController
         state = state.copyWith(dj: dj, clearError: true);
       }
       invalidateWalletCacheFromRef(ref);
-      invalidateWalletCacheFromRef(ref);
       VoiceRoomDebugLog.log('music.sync.ok', {
         'playing': dj.playing,
         'queue': dj.musicQueue.length,
@@ -2653,7 +2652,6 @@ class VoiceRoomLiveController
         }
       }
 
-      invalidateWalletCacheFromRef(ref);
       invalidateWalletCacheFromRef(ref);
 
       var queue = result.queue;
@@ -3902,7 +3900,6 @@ class VoiceRoomLiveController
             const Duration(seconds: 45),
             onTimeout: () => throw TimeoutException('Şarkı isteği zaman aşımı'),
           );
-      invalidateWalletCacheFromRef(ref);
       invalidateWalletCacheFromRef(ref);
       VoiceRoomDebugLog.log('music.request.ok', {
         'playing': result.playing,

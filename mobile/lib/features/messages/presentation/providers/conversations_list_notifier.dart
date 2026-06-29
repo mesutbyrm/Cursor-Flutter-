@@ -40,9 +40,7 @@ class ConversationsListNotifier extends AsyncNotifier<ConversationsListState> {
   @override
   Future<ConversationsListState> build() async {
     final userId = ref.watch(authControllerProvider).valueOrNull?.id;
-    final initial = await _load(userId: userId);
-    unawaited(refresh(silent: true, forceRefresh: true));
-    return initial;
+    return _load(userId: userId);
   }
 
   Future<ConversationsListState> _load({

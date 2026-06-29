@@ -15,6 +15,7 @@ import 'core/firebase/firebase_bootstrap.dart';
 import 'core/network/cookie_jar_provider.dart';
 import 'core/onesignal/onesignal_bootstrap.dart';
 import 'core/offline/api_cache_store.dart';
+import 'core/performance/app_perf_metrics.dart';
 import 'core/performance/network_perf.dart';
 import 'core/storage/local_cache.dart';
 import 'core/storage/theme_preferences.dart';
@@ -22,6 +23,7 @@ import 'features/voice_hub/data/services/voice_room_debug_log.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppPerfMetrics.mark('cold_start');
   PaintingBinding.instance.imageCache
     ..maximumSize = 150
     ..maximumSizeBytes = 80 << 20;
@@ -51,6 +53,7 @@ Future<void> main() async {
   AppStartupLog.log('Crash reporting init done');
 
   GoogleFonts.config.allowRuntimeFetching = false;
+  AppPerfMetrics.end('cold_start');
 
   PersistCookieJar? jar;
   try {

@@ -320,7 +320,7 @@ class FortuneReadingCoordinator {
     int? jetonCost,
     required bool Function() cancelled,
   }) async {
-    final stream = ref.read(fortuneRepositoryProvider).streamFortune(
+    final session = ref.read(fortuneRemoteProvider).openStreamSession(
           type: type,
           userInput: userInput,
           yesNoChoice: yesNoChoice,
@@ -330,6 +330,14 @@ class FortuneReadingCoordinator {
           paymentMethod: paymentMethod,
           jetonCost: jetonCost,
         );
+
+    final stream = session.stream.map(
+      (chunk) => FortuneStreamUpdate(
+        text: chunk.content,
+        fortuneId: chunk.fortuneId,
+        done: chunk.done,
+      ),
+    );
 
     var text = '';
     String? fortuneId;
@@ -345,6 +353,7 @@ class FortuneReadingCoordinator {
     sub = stream.listen(
       (update) {
         if (cancelled()) {
+          session.cancel('user_cancelled');
           finish();
           return;
         }
@@ -359,10 +368,16 @@ class FortuneReadingCoordinator {
       cancelOnError: true,
     );
 
-    Timer(_streamMaxWait, finish);
+    Timer(_streamMaxWait, () {
+      session.cancel('timeout');
+      finish();
+    });
     await done.future;
     await sub.cancel();
     idleTimer?.cancel();
+    if (!cancelled()) {
+      session.cancel('done');
+    }
 
     if (cancelled() || text.trim().isEmpty) return null;
     return (text: text, fortuneId: fortuneId);
