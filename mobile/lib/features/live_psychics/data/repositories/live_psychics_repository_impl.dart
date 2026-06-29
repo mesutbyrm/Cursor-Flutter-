@@ -197,7 +197,7 @@ class LivePsychicsRepositoryImpl implements LivePsychicsRepository {
 
   @override
   Future<bool> sendTip({
-    required String sessionId,
+    String? sessionId,
     required int amount,
     String? tellerId,
     String? tellerUserId,

@@ -32,6 +32,10 @@ void openNativeSitePath(BuildContext context, String path) {
     context.push(p.startsWith('/') ? p : '/$p');
     return;
   }
+  if (p == '/shorts' || p.startsWith('/shorts/')) {
+    context.push(p.startsWith('/') ? p : '/$p');
+    return;
+  }
   if (p == '/games-hub' ||
       p == '/oyunlar' ||
       p == '/games' ||

@@ -14,7 +14,6 @@ import '../widgets/approved/home_horoscope_section.dart';
 import '../widgets/approved/home_quick_actions.dart';
 import '../widgets/home_banner_carousel.dart';
 import '../widgets/approved/discover_section.dart';
-import '../widgets/approved/fan_club_section.dart';
 import '../widgets/approved/fortune_section.dart';
 import '../widgets/approved/gold_section.dart';
 import '../widgets/approved/home_header.dart';
@@ -141,12 +140,6 @@ class _HomePageState extends ConsumerState<HomePage> {
               child: HomeDeferredSection(
                 delay: Duration(milliseconds: 520),
                 child: DiscoverSection(),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: HomeDeferredSection(
-                delay: Duration(milliseconds: 600),
-                child: FanClubSection(),
               ),
             ),
             const SliverToBoxAdapter(

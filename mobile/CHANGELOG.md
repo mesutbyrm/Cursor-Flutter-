@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.446+450 (2026-06-26)
+
+### Ana sayfa & canlı falcılar
+
+- **Alt menü:** Profil yanındaki Jeton sekmesi → **Fal & Tarot** (`/fortune`)
+- **Üst bar:** Canlifal logosu ile bildirim arasına **Keşfet** — trend videolar (`/shorts`)
+- **Keşfet grid:** Canlı Futbol, Dizi & Film, Ünlüler, Fan Club kaldırıldı; Oyunlar, Trendler, Davet Et, Hediyeler kaldı
+- **Fan Club bölümü** ana sayfa akışından çıkarıldı
+- **Canlı Falcılar bahşiş:** seans içi `POST /api/room/{id}/tip`; profilden `POST /api/teller/gifts` + **Bahşiş Ver** butonu
+
 ## 1.0.445+449 (2026-06-29)
 
 ### Admin paneli — web paritesi & ödeme talepleri

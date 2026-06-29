@@ -868,20 +868,39 @@ class LivePsychicsRemoteDataSource {
   }
 
   Future<bool> sendTip({
-    required String sessionId,
+    String? sessionId,
     required int amount,
     String? tellerId,
     String? tellerUserId,
   }) async {
+    final sid = sessionId?.trim() ?? '';
+    if (sid.isNotEmpty) {
+      try {
+        await _dio.safePost<dynamic>(
+          ApiEndpoints.liveFortuneRoomTip(sid),
+          data: {'amount': amount},
+        );
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    final tid = tellerId?.trim() ?? '';
+    if (tid.isEmpty) return false;
+
     try {
+      final body = <String, dynamic>{
+        'tellerId': tid,
+        'amount': amount,
+      };
+      final uid = tellerUserId?.trim();
+      if (uid != null && uid.isNotEmpty) {
+        body['tellerUserId'] = uid;
+      }
       await _dio.safePost<dynamic>(
         ApiEndpoints.tellerGifts,
-        data: {
-          'sessionId': sessionId.trim(),
-          'amount': amount,
-          'tellerId': ?tellerId,
-          'tellerUserId': ?tellerUserId,
-        },
+        data: body,
       );
       return true;
     } catch (_) {

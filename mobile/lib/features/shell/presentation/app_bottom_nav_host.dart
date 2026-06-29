@@ -63,11 +63,12 @@ class AppBottomNavHost extends ConsumerWidget {
       return HomeBottomTab.social;
     }
     if (path.startsWith('/live')) return HomeBottomTab.live;
-    if (path.startsWith('/jeton-store') || path.startsWith('/wallet')) {
-      return HomeBottomTab.jeton;
-    }
     if (path.startsWith('/profile')) return HomeBottomTab.profile;
-    if (path.startsWith('/fortune')) return HomeBottomTab.home;
+    if (path.startsWith('/fortune') ||
+        path.startsWith('/jeton-store') ||
+        path.startsWith('/wallet')) {
+      return HomeBottomTab.fortune;
+    }
     if (path.startsWith('/messages') ||
         path.startsWith('/notifications') ||
         path.startsWith('/content-hub')) {
@@ -95,7 +96,7 @@ class AppBottomNavHost extends ConsumerWidget {
         HomeBottomTab.home => 0,
         HomeBottomTab.social => 1,
         HomeBottomTab.live => 2,
-        HomeBottomTab.jeton => 3,
+        HomeBottomTab.fortune => 3,
         HomeBottomTab.profile => 4,
       };
       return ColoredBox(
@@ -117,7 +118,7 @@ class AppBottomNavHost extends ConsumerWidget {
                       router.go('/live');
                     }
                   case 3:
-                    router.push('/jeton-store');
+                    router.go('/fortune');
                   case 4:
                     router.go('/profile');
                 }
@@ -142,9 +143,9 @@ class AppBottomNavHost extends ConsumerWidget {
                   label: Text('Yayın'),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.diamond_outlined),
-                  selectedIcon: Icon(Icons.diamond_rounded),
-                  label: Text('Jeton'),
+                  icon: Icon(Icons.auto_awesome_outlined),
+                  selectedIcon: Icon(Icons.auto_awesome_rounded),
+                  label: Text('Fal'),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.person_outline),
@@ -178,7 +179,7 @@ class AppBottomNavHost extends ConsumerWidget {
             },
             onCreateLongPress: () =>
                 AppBottomNavHost.showCreateSheet(context, router),
-            onJeton: () => router.push('/jeton-store'),
+            onFortune: () => router.go('/fortune'),
             onProfile: () => router.go('/profile'),
           ),
         ],

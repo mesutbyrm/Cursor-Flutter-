@@ -10,6 +10,8 @@ import 'package:canlifal_social/core/widgets/user_avatar.dart';
 import 'package:canlifal_social/features/auth/presentation/providers/auth_providers.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/psychic_booking_feedback_provider.dart';
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_entity.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
+import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_tip_sheet.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychic_flow.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_booking_sheet.dart';
@@ -64,6 +66,7 @@ class PsychicProfileScreen extends ConsumerWidget {
                     isStaff: isStaff,
                     booking: booking,
                     onBook: () => _book(context, ref, psychic, balance, isStaff),
+                    onTip: () => _tip(context, ref, psychic, balance, isStaff),
                   );
                 },
               ),
@@ -153,6 +156,67 @@ class PsychicProfileScreen extends ConsumerWidget {
       ref.read(_profileBookingProvider.notifier).state = false;
     }
   }
+
+  Future<void> _tip(
+    BuildContext context,
+    WidgetRef ref,
+    PsychicEntity psychic,
+    int balance,
+    bool isStaff,
+  ) async {
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bahşiş için giriş yapın')),
+      );
+      return;
+    }
+    if (isStaff) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Staff hesabından bahşiş gönderilemez')),
+      );
+      return;
+    }
+
+    final amount = await showPsychicTipSheet(
+      context,
+      psychicName: psychic.name,
+      jetonBalance: balance,
+    );
+    if (!context.mounted || amount == null) return;
+
+    if (balance < amount) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Yetersiz jeton. Gerekli: $amount, bakiye: $balance',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final ok = await ref.read(livePsychicsRepositoryProvider).sendTip(
+          amount: amount,
+          tellerId: psychic.id,
+          tellerUserId: psychic.userId,
+        );
+    if (!context.mounted) return;
+
+    if (ok) {
+      await ref.refreshWalletCache();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$amount jeton bahşiş gönderildi — teşekkürler!'),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bahşiş gönderilemedi')),
+      );
+    }
+  }
 }
 
 class _ProfileBody extends ConsumerWidget {
@@ -162,6 +226,7 @@ class _ProfileBody extends ConsumerWidget {
     required this.isStaff,
     required this.booking,
     required this.onBook,
+    required this.onTip,
   });
 
   final PsychicEntity psychic;
@@ -169,6 +234,7 @@ class _ProfileBody extends ConsumerWidget {
   final bool isStaff;
   final bool booking;
   final VoidCallback onBook;
+  final VoidCallback onTip;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -325,6 +391,30 @@ class _ProfileBody extends ConsumerWidget {
             ),
           ),
         ),
+        if (!isStaff) ...[
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onTip,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppThemeColors.accentPink,
+                side: BorderSide(
+                  color: AppThemeColors.accentPink.withValues(alpha: 0.65),
+                ),
+                minimumSize: const Size.fromHeight(46),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: const Icon(Icons.card_giftcard_rounded),
+              label: const Text(
+                'Bahşiş Ver',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+        ],
         reviewsAsync.when(
           loading: () => const SizedBox.shrink(),
           error: (_, _) => const SizedBox.shrink(),

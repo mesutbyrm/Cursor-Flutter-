@@ -80,12 +80,52 @@ class _HomeHeaderBadges extends ConsumerWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: const [
+        _DiscoverBadge(),
+        SizedBox(width: 10),
         _NotificationBadge(),
         SizedBox(width: 10),
         _MessagesBadge(),
         SizedBox(width: 10),
         _HomeJetonPill(),
       ],
+    );
+  }
+}
+
+class _DiscoverBadge extends StatelessWidget {
+  const _DiscoverBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/shorts'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: HomeApprovedDesign.surface,
+          borderRadius: BorderRadius.circular(HomeApprovedDesign.pillRadius),
+          border: Border.all(color: HomeApprovedDesign.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.explore_rounded,
+              size: 16,
+              color: HomeApprovedDesign.purple.withValues(alpha: 0.95),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Keşfet',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: HomeApprovedDesign.textPrimary.withValues(alpha: 0.95),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

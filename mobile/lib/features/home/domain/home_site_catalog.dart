@@ -38,20 +38,6 @@ class HomeFanClubItem {
 abstract final class HomeSiteCatalog {
   static const discoverTiles = <HomeDiscoverTile>[
     HomeDiscoverTile(
-      id: 'football',
-      label: 'Canlı Futbol',
-      icon: Icons.sports_soccer_rounded,
-      gradient: [Color(0xFF22C55E), Color(0xFF14532D)],
-      route: '/live',
-    ),
-    HomeDiscoverTile(
-      id: 'series',
-      label: 'Dizi & Film',
-      icon: Icons.movie_creation_rounded,
-      gradient: [Color(0xFFEF4444), Color(0xFF7F1D1D)],
-      route: '/content-hub',
-    ),
-    HomeDiscoverTile(
       id: 'games',
       label: 'Oyunlar',
       icon: Icons.sports_esports_rounded,
@@ -63,21 +49,7 @@ abstract final class HomeSiteCatalog {
       label: 'Trendler',
       icon: Icons.local_fire_department_rounded,
       gradient: [Color(0xFFFF6B35), Color(0xFFB832FF)],
-      route: '/feed',
-    ),
-    HomeDiscoverTile(
-      id: 'celebrities',
-      label: 'Ünlüler',
-      icon: Icons.star_rounded,
-      gradient: [Color(0xFFFBBF24), Color(0xFFB45309)],
-      route: '/celebrities-hub',
-    ),
-    HomeDiscoverTile(
-      id: 'fanclub',
-      label: 'Fan Club',
-      icon: Icons.favorite_rounded,
-      gradient: [Color(0xFFFF4FD8), Color(0xFF7B2FF7)],
-      route: '/fan-club-hub',
+      route: '/shorts',
     ),
     HomeDiscoverTile(
       id: 'invite',

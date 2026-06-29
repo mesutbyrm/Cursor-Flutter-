@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/navigation/wallet_navigation.dart';
 import '../../../../voice_hub/presentation/utils/open_voice_chat_room_flow.dart';
 import '../../theme/home_approved_design.dart';
 
@@ -41,10 +40,10 @@ class HomeQuickActions extends ConsumerWidget {
           const SizedBox(width: 8),
           Expanded(
             child: _ActionChip(
-              icon: Icons.monetization_on_rounded,
-              label: 'Jeton',
-              colors: const [Color(0xFFB45309), Color(0xFFEAB308)],
-              onTap: () => openJetonStore(context, ref: ref),
+              icon: Icons.auto_awesome_rounded,
+              label: 'Fal & Tarot',
+              colors: const [Color(0xFF2563EB), Color(0xFF7C3AED)],
+              onTap: () => context.go('/fortune'),
             ),
           ),
           const SizedBox(width: 8),

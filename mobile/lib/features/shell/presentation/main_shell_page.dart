@@ -38,7 +38,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
       case 2:
         return HomeBottomTab.live;
       case 3:
-        return HomeBottomTab.home;
+        return HomeBottomTab.fortune;
       case 4:
         return HomeBottomTab.profile;
       default:
@@ -105,7 +105,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
           onSocial: () => _goBranch(1),
           onCreate: () => _onYayinTap(context),
           onCreateLongPress: () => _onYayinLongPress(context),
-          onJeton: () => context.push('/jeton-store'),
+          onFortune: () => _goBranch(3),
           onProfile: () => _goBranch(4),
         ),
       ),

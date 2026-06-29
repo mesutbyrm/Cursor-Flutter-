@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme_extensions.dart';
 import '../../theme/home_approved_design.dart';
 
-/// Onaylı mockup — Ana Sayfa, Sosyal, Yayın/Medya, Jeton, Profil.
+/// Onaylı mockup — Ana Sayfa, Sosyal, Yayın/Medya, Fal & Tarot, Profil.
 class BottomNavigationWidget extends StatelessWidget {
   const BottomNavigationWidget({
     super.key,
@@ -12,7 +12,7 @@ class BottomNavigationWidget extends StatelessWidget {
     required this.onSocial,
     required this.onCreate,
     this.onCreateLongPress,
-    required this.onJeton,
+    required this.onFortune,
     required this.onProfile,
   });
 
@@ -21,7 +21,7 @@ class BottomNavigationWidget extends StatelessWidget {
   final VoidCallback onSocial;
   final VoidCallback onCreate;
   final VoidCallback? onCreateLongPress;
-  final VoidCallback onJeton;
+  final VoidCallback onFortune;
   final VoidCallback onProfile;
 
   @override
@@ -64,10 +64,10 @@ class BottomNavigationWidget extends StatelessWidget {
             onLongPress: onCreateLongPress,
           ),
           _NavItem(
-            icon: Icons.diamond_rounded,
-            label: 'Jeton',
-            active: activeTab == HomeBottomTab.jeton,
-            onTap: onJeton,
+            icon: Icons.auto_awesome_rounded,
+            label: 'Fal & Tarot',
+            active: activeTab == HomeBottomTab.fortune,
+            onTap: onFortune,
           ),
           _NavItem(
             icon: Icons.person_rounded,
@@ -81,7 +81,7 @@ class BottomNavigationWidget extends StatelessWidget {
   }
 }
 
-enum HomeBottomTab { home, social, live, jeton, profile }
+enum HomeBottomTab { home, social, live, fortune, profile }
 
 class _NavItem extends StatelessWidget {
   const _NavItem({
