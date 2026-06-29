@@ -10,22 +10,7 @@ import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import '../providers/home_providers.dart';
 import '../providers/home_realtime_bridge.dart';
 import '../theme/home_approved_design.dart';
-import '../widgets/approved/home_horoscope_section.dart';
-import '../widgets/approved/home_quick_actions.dart';
-import '../widgets/home_banner_carousel.dart';
-import '../widgets/approved/discover_section.dart';
-import '../widgets/approved/fortune_section.dart';
-import '../widgets/approved/gold_section.dart';
-import '../widgets/approved/home_header.dart';
-import '../widgets/approved/live_broadcast_section.dart';
-import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychics_home_section.dart';
-import '../widgets/approved/more_fortunes_button.dart';
-import '../widgets/approved/stories_section.dart';
-import '../widgets/approved/trending_video_section.dart';
-import '../widgets/approved/voice_room_section.dart';
-import '../widgets/home_deferred_section.dart';
-import '../widgets/home_game_center_section.dart';
-import '../widgets/home_games_row.dart';
+import '../widgets/home_page_sections.dart';
 
 /// Onaylı ana sayfa mockup — piksel uyumlu bölüm sırası.
 class HomePage extends ConsumerStatefulWidget {
@@ -56,7 +41,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void dispose() {
     _realtimeStartTimer?.cancel();
-    // ref kullanılamaz — ConsumerState dispose sırasında Riverpod hata verir.
     _realtimeBridge?.dispose();
     _realtimeBridge = null;
     super.dispose();
@@ -85,89 +69,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
           ),
-          slivers: [
-            const SliverToBoxAdapter(child: HomeHeader()),
-            const SliverToBoxAdapter(
-              child: HomeDeferredSection(
-                delay: StartupPerf.homeBannerDelay,
-                child: HomeBannerCarousel(),
-              ),
-            ),
-            const SliverToBoxAdapter(child: HomeQuickActions()),
-            const SliverToBoxAdapter(
-              child: HomeDeferredSection(
-                delay: StartupPerf.homeLiveSectionDelay,
-                child: LiveBroadcastSection(),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: HomeDeferredSection(
-                delay: Duration(milliseconds: 80),
-                child: VoiceRoomSection(),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: HomeDeferredSection(
-                delay: Duration(milliseconds: 120),
-                child: PsychicsHomeSection(),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: HomeDeferredSection(
-                delay: Duration(milliseconds: 200),
-                child: FortuneSection(),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: HomeDeferredSection(
-                delay: Duration(milliseconds: 280),
-                child: StoriesSection(),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: HomeDeferredSection(
-                delay: Duration(milliseconds: 360),
-                child: HomeHoroscopeSection(),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: HomeDeferredSection(
-                delay: Duration(milliseconds: 440),
-                child: TrendingVideoSection(),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: HomeDeferredSection(
-                delay: Duration(milliseconds: 520),
-                child: DiscoverSection(),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: HomeDeferredSection(
-                delay: Duration(milliseconds: 680),
-                child: GoldSection(),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: HomeDeferredSection(
-                delay: Duration(milliseconds: 760),
-                child: HomeGameCenterSection(),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: HomeDeferredSection(
-                delay: Duration(milliseconds: 840),
-                child: HomeGamesRow(),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: HomeDeferredSection(
-                delay: Duration(milliseconds: 900),
-                child: MoreFortunesButton(),
-              ),
-            ),
-            SliverToBoxAdapter(child: SizedBox(height: 72 + bottom)),
-          ],
+          slivers: HomePageSections.slivers(bottomInset: bottom),
         ),
       ),
     );

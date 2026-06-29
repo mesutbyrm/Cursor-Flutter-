@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.447+451 (2026-06-26)
+
+### Performans & UX
+
+- **Ana sayfa:** yapay gecikmeler kaldırıldı (0 ms); bölümler `HomePageSections` + `RepaintBoundary`
+- **Kabuk prefetch:** 400 ms → anında; sekme geçişleri hafifletildi
+- **Yatay listeler:** canlı yayın, trend video, falcılar — `RepaintBoundary` izolasyonu
+- **Falcı paneli:** FAZ 1 teşhis kartı kaldırıldı; `.select()` ile gereksiz rebuild azaltıldı
+- **Orta alt menü:** her dokunuşta **Canlı yayın aç** / **Video yükle** seçenekleri
+
 ## 1.0.446+450 (2026-06-26)
 
 ### Ana sayfa & canlı falcılar

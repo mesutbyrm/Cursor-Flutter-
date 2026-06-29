@@ -63,16 +63,18 @@ class TrendingVideoSection extends ConsumerWidget {
           actionLabel: 'Tümünü Gör >',
           onAction: () => context.push('/shorts'),
         ),
-        SizedBox(
-          height: HomeApprovedDesign.trendThumb,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-            itemCount: videos.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (_, i) => _TrendThumb(
-              video: videos[i],
-              onTap: () => context.push('/shorts?videoId=${videos[i].id}'),
+        RepaintBoundary(
+          child: SizedBox(
+            height: HomeApprovedDesign.trendThumb,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+              itemCount: videos.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              itemBuilder: (_, i) => _TrendThumb(
+                video: videos[i],
+                onTap: () => context.push('/shorts?videoId=${videos[i].id}'),
+              ),
             ),
           ),
         ),

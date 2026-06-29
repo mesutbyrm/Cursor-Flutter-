@@ -72,16 +72,18 @@ class PsychicsHomeSection extends ConsumerWidget {
           actionLabel: 'Tümünü Gör >',
           onAction: () => context.push('/canli-falcilar'),
         ),
-        SizedBox(
-          height: HomeApprovedDesign.tellerCardH,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(
-              horizontal: HomeApprovedDesign.hPad,
+        RepaintBoundary(
+          child: SizedBox(
+            height: HomeApprovedDesign.tellerCardH,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(
+                horizontal: HomeApprovedDesign.hPad,
+              ),
+              itemCount: list.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              itemBuilder: (_, i) => _PsychicCard(psychic: list[i]),
             ),
-            itemCount: list.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (_, i) => _PsychicCard(psychic: list[i]),
           ),
         ),
         const SizedBox(height: 8),

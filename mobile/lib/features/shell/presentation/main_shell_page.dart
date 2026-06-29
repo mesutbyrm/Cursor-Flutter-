@@ -47,11 +47,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
   }
 
   void _onYayinTap(BuildContext context) {
-    if (widget.navigationShell.currentIndex == 2) {
-      ShellUi.showCreateSheet(context, GoRouter.of(context));
-      return;
-    }
-    _goBranch(2);
+    ShellUi.showCreateSheet(context, GoRouter.of(context));
   }
 
   void _onYayinLongPress(BuildContext context) {
@@ -73,7 +69,9 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
       }
     });
 
-    final authed = ref.watch(authControllerProvider).valueOrNull;
+    final authed = ref.watch(
+      authControllerProvider.select((a) => a.valueOrNull),
+    );
     if (authed != null && !_prefetched) {
       _prefetched = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {

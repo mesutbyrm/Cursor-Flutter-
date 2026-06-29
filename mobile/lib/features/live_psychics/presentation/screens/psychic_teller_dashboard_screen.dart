@@ -14,7 +14,6 @@ import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_r
 import 'package:canlifal_social/features/live_psychics/domain/entities/psychic_session_entity.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/controllers/psychics_list_controller.dart';
 import 'package:canlifal_social/features/live_psychics/presentation/providers/live_psychics_providers.dart';
-import 'package:canlifal_social/features/live_psychics/presentation/widgets/psychic_invite_diagnostic_card.dart';
 
 class PsychicTellerDashboardState {
   const PsychicTellerDashboardState({
@@ -216,11 +215,25 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dash = ref.watch(psychicTellerDashboardProvider);
+    final loading = ref.watch(
+      psychicTellerDashboardProvider.select((s) => s.loading),
+    );
+    final togglingOnline = ref.watch(
+      psychicTellerDashboardProvider.select((s) => s.togglingOnline),
+    );
+    final requests = ref.watch(
+      psychicTellerDashboardProvider.select((s) => s.requests),
+    );
+    final processingId = ref.watch(
+      psychicTellerDashboardProvider.select((s) => s.processingId),
+    );
+    final dashProfile = ref.watch(
+      psychicTellerDashboardProvider.select((s) => s.profile),
+    );
     final approved = ref.watch(approvedPsychicProvider);
-    final profile = dash.profile ?? approved.profile;
+    final profile = dashProfile ?? approved.profile;
 
-    if ((dash.loading || (approved.loading && !approved.checked)) &&
+    if ((loading || (approved.loading && !approved.checked)) &&
         profile == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -304,56 +317,85 @@ class PsychicTellerDashboardScreen extends ConsumerWidget {
           child: RefreshIndicator(
             onRefresh: () =>
                 ref.read(psychicTellerDashboardProvider.notifier).refresh(),
-            child: ListView(
+            child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-              children: [
-                _ProfileHeader(
-                  profile: profile,
-                  toggling: dash.togglingOnline,
-                  onToggleOnline: () => ref
-                      .read(psychicTellerDashboardProvider.notifier)
-                      .toggleOnline(),
-                ),
-                const PsychicInviteDiagnosticCard(),
-                const SizedBox(height: 12),
-                _TellerStatGrid(
-                  profile: profile,
-                  pendingCount: dash.requests.length,
-                ),
-                const SizedBox(height: 12),
-                _QuickActions(profile: profile),
-                const SizedBox(height: 12),
-                _TellerStatsPanel(tellerId: profile.id),
-                const SizedBox(height: 16),
-                Text(
-                  'Bekleyen talepler (${dash.requests.length})',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 12),
-                if (dash.requests.isEmpty)
-                  Text(
-                    profile.isOnline
-                        ? 'Bekleyen talep yok. Danışanlar sizi listede görebilir.'
-                        : 'Çevrimiçi olduğunuzda gelen talepler burada görünür.',
-                    style: TextStyle(color: context.colors.onSurfaceMuted),
-                  )
-                else
-                  ...dash.requests.map(
-                    (req) => _PendingTile(
-                      request: req,
-                      processing: dash.processingId == req.sessionId,
-                      onAccept: () => ref
+              itemCount: 6 + requests.length,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return RepaintBoundary(
+                    child: _ProfileHeader(
+                      profile: profile,
+                      toggling: togglingOnline,
+                      onToggleOnline: () => ref
                           .read(psychicTellerDashboardProvider.notifier)
-                          .accept(context, req),
-                      onHold: () => ref
-                          .read(psychicTellerDashboardProvider.notifier)
-                          .hold(req),
-                      onReject: () => ref
-                          .read(psychicTellerDashboardProvider.notifier)
-                          .reject(req),
+                          .toggleOnline(),
                     ),
+                  );
+                }
+                if (index == 1) {
+                  return RepaintBoundary(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _TellerStatGrid(
+                        profile: profile,
+                        pendingCount: requests.length,
+                      ),
+                    ),
+                  );
+                }
+                if (index == 2) {
+                  return RepaintBoundary(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _QuickActions(profile: profile),
+                    ),
+                  );
+                }
+                if (index == 3) {
+                  return RepaintBoundary(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _TellerStatsPanel(tellerId: profile.id),
+                    ),
+                  );
+                }
+                if (index == 4) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 16, bottom: 12),
+                    child: Text(
+                      'Bekleyen talepler (${requests.length})',
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  );
+                }
+                if (index == 5) {
+                  if (requests.isEmpty) {
+                    return Text(
+                      profile.isOnline
+                          ? 'Bekleyen talep yok. Danışanlar sizi listede görebilir.'
+                          : 'Çevrimiçi olduğunuzda gelen talepler burada görünür.',
+                      style: TextStyle(color: context.colors.onSurfaceMuted),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }
+                final req = requests[index - 6];
+                return RepaintBoundary(
+                  child: _PendingTile(
+                    request: req,
+                    processing: processingId == req.sessionId,
+                    onAccept: () => ref
+                        .read(psychicTellerDashboardProvider.notifier)
+                        .accept(context, req),
+                    onHold: () => ref
+                        .read(psychicTellerDashboardProvider.notifier)
+                        .hold(req),
+                    onReject: () => ref
+                        .read(psychicTellerDashboardProvider.notifier)
+                        .reject(req),
                   ),
-              ],
+                );
+              },
             ),
           ),
         ),

@@ -70,17 +70,19 @@ class LiveBroadcastSection extends ConsumerWidget {
           actionLabel: 'Tümünü Gör >',
           onAction: () => context.go('/live'),
         ),
-        SizedBox(
-          height: HomeApprovedDesign.liveCardH,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
-            itemCount: streams.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (context, i) => _LiveCard(
-              stream: streams[i],
-              eager: i < 5,
-              onTap: () => openLiveStreamNative(context, ref, streams[i]),
+        RepaintBoundary(
+          child: SizedBox(
+            height: HomeApprovedDesign.liveCardH,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: HomeApprovedDesign.hPad),
+              itemCount: streams.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              itemBuilder: (context, i) => _LiveCard(
+                stream: streams[i],
+                eager: i < 5,
+                onTap: () => openLiveStreamNative(context, ref, streams[i]),
+              ),
             ),
           ),
         ),

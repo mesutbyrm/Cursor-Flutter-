@@ -10,7 +10,7 @@ abstract final class StartupPerf {
   static const deferredSdkDelay = Duration(milliseconds: 800);
 
   /// Kabuk prefetch — bildirim, cüzdan, mesajlar (jeton gecikmesiz).
-  static const shellPrefetchDelay = Duration(milliseconds: 400);
+  static const shellPrefetchDelay = Duration.zero;
 
   /// SSE presence + psikolog/ajans yenileme.
   static const shellRealtimeDelay = Duration(seconds: 3);
@@ -22,7 +22,7 @@ abstract final class StartupPerf {
   static const homeBannerDelay = Duration.zero;
 
   /// Canlı yayın bölümü ilk istek.
-  static const homeLiveSectionDelay = Duration(milliseconds: 100);
+  static const homeLiveSectionDelay = Duration.zero;
 
   /// Ana sayfa periyodik poll köprüsü.
   static const homeRealtimeBridgeDelay = Duration(seconds: 4);

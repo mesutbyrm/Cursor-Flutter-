@@ -81,18 +81,6 @@ abstract final class ShellUi {
                   router.push('/shorts/upload');
                 },
               ),
-              ListTile(
-                leading: Icon(Icons.auto_awesome_rounded, color: colors.primary),
-                title: Text('Fal & Tarot', style: TextStyle(color: colors.onSurface)),
-                subtitle: Text(
-                  'Fal merkezine git',
-                  style: TextStyle(color: colors.onSurfaceVariant),
-                ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  router.go('/fortune');
-                },
-              ),
             ],
           ),
         ),
