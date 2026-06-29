@@ -313,8 +313,8 @@ class VoiceRoomBasicCompactControls extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final jeton = VoiceMusicAccess.jetonFromBalances(
-      ref.watch(walletBalancesProvider).valueOrNull,
+    final jeton = ref.watch(
+      walletBalancesProvider.select((a) => a.valueOrNull?.jeton ?? 0),
     );
 
     return Padding(
