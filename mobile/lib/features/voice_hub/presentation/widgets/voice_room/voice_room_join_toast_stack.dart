@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/chat_room_message.dart';
 import '../../../domain/entities/voice_room_realtime_event.dart';
 import '../../../domain/voice_official_join.dart';
+import '../../utils/voice_staff_chat_style.dart';
 
 /// Faz 7 — altta yığılan giriş bildirimleri: «Ali giriş yaptı.» (10 sn).
 class VoiceRoomJoinToastStack extends StatefulWidget {
@@ -62,7 +63,8 @@ class _VoiceRoomJoinToastStackState extends State<VoiceRoomJoinToastStack> {
       final fresh = widget.events.take(widget.events.length - _lastEventCount);
       _lastEventCount = widget.events.length;
       for (final e in fresh) {
-        if (e.kind == VoiceRoomRealtimeKind.join) {
+        if (e.kind == VoiceRoomRealtimeKind.join &&
+            !VoiceStaffChatStyle.isStaffEntry(content: e.message)) {
           _enqueueFromRaw(e.message, user: null);
         }
       }
@@ -75,12 +77,19 @@ class _VoiceRoomJoinToastStackState extends State<VoiceRoomJoinToastStack> {
       final fresh = joins.skip(_lastJoinMsgCount);
       _lastJoinMsgCount = joins.length;
       for (final m in fresh) {
+        if (VoiceStaffChatStyle.isStaffEntry(
+          content: m.content,
+          user: m.user,
+        )) {
+          continue;
+        }
         _enqueueFromRaw(m.content, user: m.user);
       }
     }
   }
 
   void _enqueueFromRaw(String raw, {ChatRoomUserRef? user}) {
+    if (VoiceStaffChatStyle.isStaffEntry(content: raw, user: user)) return;
     final name = _parseName(raw, user: user);
     if (name.isEmpty) return;
     final line = '$name giriş yaptı.';

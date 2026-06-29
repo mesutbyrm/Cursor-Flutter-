@@ -280,6 +280,7 @@ class ChatRoomSseService extends BaseSseService {
       case 'ROLE_CHANGED':
       case 'ROLE_REMOVED':
       case 'ENTRY_ANNOUNCEMENT':
+        _onSystem?.call(map);
         return;
       default:
         if (map['message'] != null) {

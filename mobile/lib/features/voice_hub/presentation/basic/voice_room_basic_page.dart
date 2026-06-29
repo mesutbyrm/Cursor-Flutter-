@@ -39,10 +39,7 @@ import '../../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'voice_room_basic_moderation_section.dart';
 import '../sheets/voice_room_menu_sheet.dart';
 import 'voice_room_basic_premium_section.dart';
-import '../widgets/voice_room/voice_room_join_toast_stack.dart';
-import '../widgets/voice_room/voice_room_duyuru_ticker.dart';
 import '../../music/presentation/widgets/music_search_picker_sheet.dart';
-import '../sheets/music_mode_picker_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
 import '../sheets/voice_youtube_song_sheet.dart';
 import '../utils/voice_music_access.dart';
@@ -51,8 +48,6 @@ import '../widgets/premium_2026/voice_live_header_2026.dart';
 import '../widgets/premium_2026/voice_top_spenders_strip.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../../core/navigation/wallet_navigation.dart';
-import '../../video/presentation/widgets/youtube_video_background.dart';
-import '../../video/presentation/room_video_controller.dart';
 
 /// Aşama 1 — oda listesi, giriş/çıkış, mikrofon, hoparlör, katılımcılar, oda sahibi.
 class VoiceRoomBasicPage extends ConsumerStatefulWidget {
@@ -530,8 +525,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     final jeton = ref.watch(
       walletBalancesProvider.select((a) => a.valueOrNull?.jeton ?? 0),
     );
-    final videoActive =
-        ref.watch(roomVideoControllerProvider(_liveRoomKey)).hasActiveVideo;
     String? hostAvatar;
     final ownerId = room.ownerId;
     if (ownerId != null) {
@@ -600,32 +593,30 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
 
       final q = next.pendingMusicSearchQuery;
       if (q != null &&
-          q.isNotEmpty &&
           prev?.pendingMusicSearchQuery != q &&
           mounted) {
         final skipPayment = next.pendingMusicSearchSkipPayment;
         final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
-        unawaited(() async {
-          final hit = await showMusicSearchPickerSheet(context, ref, query: q);
-          ctrl.clearPendingMusicSearch();
-          if (!mounted || hit == null) return;
-          final dj = ref.read(voiceRoomLiveProvider(_liveRoomKey)).dj;
-          final mode = await showMusicModePickerSheet(
+        ctrl.clearPendingMusicSearch();
+        unawaited(
+          showMusicSearchPickerSheet(
             context,
-            audioCost: dj.musicRequestCost,
-            videoCost: dj.videoRequestCost > 0
-                ? dj.videoRequestCost
-                : dj.musicRequestCost,
-          );
-          if (!mounted || mode == null) return;
-          final err = await ctrl.submitSelectedSong(
-            hit,
-            withVideo: mode,
-            skipPayment: skipPayment,
-          );
-          if (!mounted || err == null) return;
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-        }());
+            ref,
+            query: q,
+            onSelected: (hit) async {
+              if (!mounted) return;
+              final err = await ctrl.submitSelectedSong(
+                hit,
+                withVideo: true,
+                skipPayment: skipPayment,
+              );
+              if (!mounted || err == null) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(err)),
+              );
+            },
+          ),
+        );
       }
 
       if (next.error != null && next.error != prev?.error && mounted) {
@@ -681,10 +672,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
           fit: StackFit.expand,
           children: [
             VoiceCosmicBackground(imageUrl: bgUrl),
-            if (videoActive)
-              Positioned.fill(
-                child: YoutubeVideoBackground(roomKey: _liveRoomKey),
-              ),
             SafeArea(
               bottom: false,
               child: Column(
@@ -735,16 +722,11 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     perms: perms,
                     user: user,
                   ),
-                  VoiceRoomBasicFloatingMiniPlayer(
-                    room: room,
-                    liveKey: _liveRoomKey,
-                    live: live,
-                    canControlMusic: canControlMusic,
-                    canCloseMusic: canCloseMusic,
-                    perms: perms,
-                  ),
                   Expanded(
-                    child: VoiceRoomBasicChatFeed(messages: live.messages),
+                    child: VoiceRoomBasicChatFeed(
+                      messages: live.messages,
+                      events: live.realtimeEvents,
+                    ),
                   ),
                   if (live.error != null)
                     Padding(
@@ -766,10 +748,6 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     selfUserId: user?.id,
                     onEmoji: () =>
                         showVoiceRoomBasicEmojiPicker(context, _messageCtrl),
-                  ),
-                  VoiceRoomJoinToastStack(
-                    events: live.realtimeEvents,
-                    messages: live.messages,
                   ),
                   VoiceLiveActionBar2026(
                     micOn: !_isMicMuted,

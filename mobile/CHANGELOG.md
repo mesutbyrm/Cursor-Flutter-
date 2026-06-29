@@ -1,6 +1,19 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.449+453 (2026-06-26)
+
+### Sesli odalar — hız, giriş, müzik, arka plan
+
+- **Performans:** presence heartbeat 25 sn → 12 sn; oda açılışı mesaj/presence paralel; bootstrap hafifletildi
+- **Canlı sayaç:** giriş/çıkış anında hub sayacı güncellenir (SSE leave + presence patch)
+- **Yetkili giriş:** ENTRY_ANNOUNCEMENT SSE düzeltildi; admin/mod girişi koltuk altında sağdan sola marquee — odadaki herkes görür
+- **Normal giriş:** sohbet alanında «Ali giriş yaptı.» 10 sn (yetkililer hariç)
+- **!istek:** müzik arama popup (1 harf); seçimden sonra popup açık kalır; koltuk altı tam genişlik YouTube şeridi; eski müzik kartı/arka plan videosu kaldırıldı
+- **!kapat:** müzik ve video anında kapanır
+- **Arka plan:** hazır liste kaldırıldı; galeriden özel görsel yükleme
+- **Yetkili koltuk:** girişte otomatik rütbe koltuğu hemen denenir
+
 ## 1.0.448+452 (2026-06-26)
 
 ### Admin panel & oturum

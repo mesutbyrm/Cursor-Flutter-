@@ -16,6 +16,16 @@ abstract final class VoiceMusicSync {
     return t.startsWith('!istek') || t.startsWith('/istek');
   }
 
+  static bool isBareIstekCommand(String text) {
+    final t = text.trim();
+    return RegExp(r'^[!/]istek\s*$', caseSensitive: false).hasMatch(t);
+  }
+
+  static bool isKapatCommand(String text) {
+    final t = text.trim().toLowerCase();
+    return t == '!kapat' || t == '/kapat';
+  }
+
   /// Üretim sohbet formatı: `[SONG_REQUEST_FREE] videoId|başlık|||`
   static SongRequestFreePayload? parseSongRequestFree(String content) {
     final raw = content.trim();

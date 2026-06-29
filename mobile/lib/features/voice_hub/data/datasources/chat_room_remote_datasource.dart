@@ -65,7 +65,7 @@ class ChatRoomRemoteDataSource {
   static String typingPath(String roomId) => ApiEndpoints.chatRoomTyping(roomId);
 
   /// Üretim presence/voice — API dokümantasyonu (`type` join/leave, heartbeat POST).
-  static const presenceHeartbeatInterval = Duration(seconds: 25);
+  static const presenceHeartbeatInterval = Duration(seconds: 12);
 
   /// Odaya giriş — `POST /presence` (gövde yok).
   Future<void> postPresence(
@@ -464,9 +464,39 @@ class ChatRoomRemoteDataSource {
       }
     } catch (_) {}
     if (urls.isEmpty) {
-      return VoiceRoomBackgroundCatalog.siteDefaults();
+      return const [];
     }
     return urls;
+  }
+
+  /// Yetkili giriş — odadaki herkese ENTRY_ANNOUNCEMENT SSE tetikler.
+  Future<void> postEntryAnnouncement({
+    required String roomKey,
+    String? alternateKey,
+    required String userName,
+    String? roleSymbol,
+    String? entryType,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _postModeration(
+          roomKey: key,
+          action: 'entry_announcement',
+          message: userName,
+        );
+        return;
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+      }
+      await _postModeration(
+        roomKey: key,
+        action: 'announce',
+        message: '${roleSymbol ?? ''} $userName odaya katıldı${entryType != null && entryType.isNotEmpty ? ' ($entryType)' : ''}'
+            .trim(),
+        ttl: 8,
+        skipPayment: true,
+      );
+    });
   }
 
   Future<void> advanceMusicQueue(String roomKey, {String? alternateKey}) async {

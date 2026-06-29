@@ -1,13 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/chat_room_message.dart';
+import '../../../domain/entities/chat_room_presence.dart';
 import '../../../domain/entities/voice_room_realtime_event.dart';
 import '../../../domain/voice_official_join.dart';
 import '../../theme/voice_room_tokens.dart';
 import '../../utils/voice_staff_chat_style.dart';
 
-/// Faz 9 — yetkili giriş animasyonu: koltuk altı, sağdan sola.
-/// Örnek: «👑 Admin Mesut odaya giriş yaptı» — tüm kullanıcılar görür.
+/// Yetkili giriş — koltuk altı sağdan sola kayan bant (tüm kullanıcılar).
 class VoiceRoomStaffJoinBanner extends StatefulWidget {
   const VoiceRoomStaffJoinBanner({
     super.key,
@@ -40,16 +42,22 @@ class _VoiceRoomStaffJoinBannerState extends State<VoiceRoomStaffJoinBanner>
   final _queue = <_StaffJoinLine>[];
   final _seen = <String>{};
   _StaffJoinLine? _active;
-  AnimationController? _ctrl;
-  Animation<Offset>? _slide;
-  Animation<double>? _fade;
+  AnimationController? _scroll;
   String? _lastBanner;
   int _lastEventCount = 0;
   int _lastJoinMsgCount = 0;
+  double _segmentWidth = 0;
+
+  static const _style = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w800,
+    color: Colors.white,
+    letterSpacing: 0.2,
+  );
 
   @override
   void dispose() {
-    _ctrl?.dispose();
+    _scroll?.dispose();
     super.dispose();
   }
 
@@ -145,71 +153,92 @@ class _VoiceRoomStaffJoinBannerState extends State<VoiceRoomStaffJoinBanner>
   Future<void> _showNext() async {
     if (!mounted || _queue.isEmpty) return;
     _active = _queue.removeAt(0);
-    _ctrl?.dispose();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3400),
-    );
-    _slide = Tween<Offset>(
-      begin: const Offset(1.2, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _ctrl!,
-      curve: const Interval(0, 0.25, curve: Curves.easeOutCubic),
-    ));
-    _fade = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 10),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 70),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 20),
-    ]).animate(_ctrl!);
+    _scroll?.dispose();
+    _scroll = null;
     setState(() {});
-    await _ctrl!.forward();
-    if (!mounted) return;
-    setState(() => _active = null);
-    if (_queue.isNotEmpty) {
-      await Future<void>.delayed(const Duration(milliseconds: 140));
-      if (mounted) _showNext();
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startMarquee());
+  }
+
+  void _startMarquee() {
+    if (!mounted || _active == null) return;
+    final line = _active!.line;
+    final painter = TextPainter(
+      text: TextSpan(text: '$line     ', style: _style),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+    )..layout();
+    _segmentWidth = painter.width;
+    final viewport = context.size?.width ?? 320;
+    final durationMs = (_segmentWidth * 22).clamp(4500, 14000).round();
+    _scroll = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: durationMs),
+    );
+    _scroll!.addStatusListener((status) {
+      if (status != AnimationStatus.completed || !mounted) return;
+      _active = null;
+      _scroll?.dispose();
+      _scroll = null;
+      if (_queue.isNotEmpty) {
+        unawaited(_showNext());
+      } else {
+        setState(() {});
+      }
+    });
+    _scroll!.forward(from: 0);
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     _collectNewEntries();
     final line = _active;
-    if (line == null || _ctrl == null || _slide == null || _fade == null) {
+    if (line == null || _scroll == null) {
       return const SizedBox.shrink();
     }
 
+    final label = line.line;
+    final marquee = AnimatedBuilder(
+      animation: _scroll!,
+      builder: (context, _) {
+        final dx = -_scroll!.value * _segmentWidth;
+        return Transform.translate(
+          offset: Offset(dx, 0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('$label     ', style: _style),
+              Text('$label     ', style: _style),
+            ],
+          ),
+        );
+      },
+    );
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 0, 10, 6),
-      child: FadeTransition(
-        opacity: _fade!,
-        child: SlideTransition(
-          position: _slide!,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                colors: [
-                  line.accent.withValues(alpha: 0.38),
-                  Colors.black.withValues(alpha: 0.78),
-                ],
-              ),
-              border: Border.all(color: line.accent.withValues(alpha: 0.65)),
-              boxShadow: VoiceRoomTokens.neonGlow(line.accent, blur: 14),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              child: Text(
-                line.line,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white.withValues(alpha: 0.96),
-                  shadows: VoiceStaffChatStyle.nameGlow(line.accent),
-                ),
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          gradient: LinearGradient(
+            colors: [
+              line.accent.withValues(alpha: 0.42),
+              Colors.black.withValues(alpha: 0.82),
+            ],
+          ),
+          border: Border.all(color: line.accent.withValues(alpha: 0.55)),
+          boxShadow: VoiceRoomTokens.neonGlow(line.accent, blur: 10),
+        ),
+        child: SizedBox(
+          height: 34,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OverflowBox(
+                alignment: Alignment.centerLeft,
+                maxWidth: double.infinity,
+                child: marquee,
               ),
             ),
           ),

@@ -35,7 +35,7 @@ import 'audio/voice_room_audio_coordinator.dart';
 import 'audio/voice_room_music_audio_session.dart';
 import 'providers/chat_room_providers.dart';
 import '../music/presentation/widgets/music_search_picker_sheet.dart';
-import 'sheets/music_mode_picker_sheet.dart';
+import 'sheets/voice_room_hub_settings.dart';
 import 'providers/pk_battle_remote_provider.dart';
 import '../domain/pk/pk_duration_options.dart';
 import 'utils/voice_room_image_prefetch.dart';
@@ -69,7 +69,7 @@ import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_dj_music_slide_panel.dart';
-import 'widgets/voice_room/voice_room_center_music_panel.dart';
+import 'widgets/voice_room/voice_room_seat_video_strip.dart';
 import 'widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
@@ -774,99 +774,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
   }
 
   Future<void> _pickBackground(BuildContext context, VoiceRoomEntity room) async {
-    final urls =
-        await ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier).fetchBackgrounds();
-    if (!context.mounted || urls.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Arka plan listesi alınamadı')),
-      );
-      return;
-    }
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.55,
-        minChildSize: 0.35,
-        maxChildSize: 0.85,
-        builder: (_, scroll) => VoiceGlass(
-          borderRadius: 24,
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Oda arka planı',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'canlifal.com görselleri',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: context.colors.onSurfaceMuted.withValues(alpha: 0.9),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: GridView.builder(
-                  controller: scroll,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 1.35,
-                  ),
-                  itemCount: urls.length,
-                  itemBuilder: (_, i) {
-                    final url = urls[i];
-                    return GestureDetector(
-                      onTap: () async {
-                        Navigator.pop(ctx);
-                        final err = await ref
-                            .read(voiceRoomLiveProvider(_liveRoomKey).notifier)
-                            .setRoomBackground(url);
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(err ?? 'Arka plan güncellendi'),
-                          ),
-                        );
-                      },
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            CachedCoverImage(url: url, fit: BoxFit.cover),
-                            Positioned(
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
-                                color: Colors.black54,
-                                child: Text(
-                                  url.split('/').last,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 9),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    await showVoiceRoomBackgroundSheet(context, ref, room: room);
   }
 
   List<ChatRoomPresence> _seatedPresence(List<ChatRoomPresence> presence) {
@@ -1259,33 +1167,30 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
       final q = next.pendingMusicSearchQuery;
       if (q != null &&
-          q.isNotEmpty &&
           prev?.pendingMusicSearchQuery != q &&
           mounted) {
         final skipPayment = next.pendingMusicSearchSkipPayment;
         final ctrl = ref.read(voiceRoomLiveProvider(_liveRoomKey).notifier);
-        unawaited(() async {
-          final hit = await showMusicSearchPickerSheet(context, ref, query: q);
-          ctrl.clearPendingMusicSearch();
-          if (!mounted || hit == null) return;
-          final dj = ref.read(voiceRoomLiveProvider(_liveRoomKey)).dj;
-          final mode = await showMusicModePickerSheet(
+        ctrl.clearPendingMusicSearch();
+        unawaited(
+          showMusicSearchPickerSheet(
             context,
-            audioCost: dj.musicRequestCost,
-            videoCost: dj.videoRequestCost > 0
-                ? dj.videoRequestCost
-                : dj.musicRequestCost,
-            songTitle: hit.title,
-          );
-          if (!mounted || mode == null) return;
-          final err = await ctrl.submitSelectedSong(
-            hit,
-            withVideo: mode,
-            skipPayment: skipPayment,
-          );
-          if (!mounted || err == null) return;
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-        }());
+            ref,
+            query: q,
+            onSelected: (hit) async {
+              if (!mounted) return;
+              final err = await ctrl.submitSelectedSong(
+                hit,
+                withVideo: true,
+                skipPayment: skipPayment,
+              );
+              if (!mounted || err == null) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(err)),
+              );
+            },
+          ),
+        );
       }
 
       final toast = next.moderationToast;
@@ -1562,8 +1467,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
-                              if (videoActive)
-                                YoutubeVideoBackground(roomKey: _liveRoomKey),
                               LayoutBuilder(
                                   builder: (context, constraints) {
                                     final chatH = keyboardOpen
@@ -1645,13 +1548,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             key: ValueKey(live.moderatorAnnouncement),
                             text: live.moderatorAnnouncement!,
                           ),
-                        if (!keyboardOpen && !showDjSlidePanel)
-                          VoiceRoomCenterMusicPanel(
-                            room: room,
-                            live: live,
-                            canControlMusic: canControlMusic,
-                            canCloseMusic: canCloseMusic,
-                          ),
+                        VoiceRoomSeatVideoStrip(roomKey: _liveRoomKey),
                         RoomVideoOverlay(
                           roomKey: _liveRoomKey,
                           perms: perms,

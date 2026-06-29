@@ -7,31 +7,45 @@ import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 import '../../../domain/entities/music_queue_item.dart';
 import '../providers/room_music_providers.dart';
 
-/// Web parity — anlık YouTube arama, 300ms debounce, önbellek (use case).
-Future<YoutubeSearchHit?> showMusicSearchPickerSheet(
+/// Web parity — anlık YouTube arama; seçimden sonra sheet açık kalabilir.
+Future<void> showMusicSearchPickerSheet(
   BuildContext context,
   WidgetRef ref, {
   required String query,
+  bool stayOpenOnSelect = true,
+  void Function(YoutubeSearchHit hit)? onSelected,
 }) async {
   final container = ProviderScope.containerOf(context);
-  return showModalBottomSheet<YoutubeSearchHit>(
+  await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    isDismissible: true,
+    enableDrag: true,
     backgroundColor: const Color(0xFF12121A),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
     builder: (ctx) => UncontrolledProviderScope(
       container: container,
-      child: _MusicSearchPicker(initialQuery: query),
+      child: _MusicSearchPicker(
+        initialQuery: query,
+        stayOpenOnSelect: stayOpenOnSelect,
+        onSelected: onSelected,
+      ),
     ),
   );
 }
 
 class _MusicSearchPicker extends ConsumerStatefulWidget {
-  const _MusicSearchPicker({required this.initialQuery});
+  const _MusicSearchPicker({
+    required this.initialQuery,
+    this.stayOpenOnSelect = true,
+    this.onSelected,
+  });
 
   final String initialQuery;
+  final bool stayOpenOnSelect;
+  final void Function(YoutubeSearchHit hit)? onSelected;
 
   @override
   ConsumerState<_MusicSearchPicker> createState() => _MusicSearchPickerState();
@@ -44,6 +58,8 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
   var _searching = false;
   List<YoutubeSearchHit> _hits = const [];
   String? _error;
+  String? _selectedId;
+  String? _selectedTitle;
 
   @override
   void initState() {
@@ -51,8 +67,9 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
     _queryCtrl = TextEditingController(text: widget.initialQuery);
     _queryCtrl.addListener(() => _onQueryChanged(_queryCtrl.text));
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.initialQuery.trim().length >= 2) {
-        _search(widget.initialQuery.trim());
+      final q = widget.initialQuery.trim();
+      if (q.isNotEmpty) {
+        _search(q);
       }
     });
   }
@@ -67,7 +84,7 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
   void _onQueryChanged(String value) {
     _debounce?.cancel();
     final trimmed = value.trim();
-    if (trimmed.length < 2) {
+    if (trimmed.isEmpty) {
       setState(() {
         _hits = const [];
         _searching = false;
@@ -75,7 +92,7 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
       });
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 300), () => _search(trimmed));
+    _debounce = Timer(const Duration(milliseconds: 280), () => _search(trimmed));
   }
 
   Future<void> _search(String q) async {
@@ -202,6 +219,20 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
                 color: Color(0xFF8B5CF6),
                 backgroundColor: Colors.white12,
               ),
+            if (_selectedTitle != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+                child: Text(
+                  'Çalıyor: $_selectedTitle',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF8B5CF6),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
             Expanded(child: _buildBody(scrollController, bottom)),
             Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, bottom + 12),
@@ -233,10 +264,10 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
         ),
       );
     }
-    if (_queryCtrl.text.trim().length < 2) {
+    if (_queryCtrl.text.trim().isEmpty) {
       return const Center(
         child: Text(
-          'En az 2 karakter yazın',
+          'Harf veya şarkı adı yazın',
           style: TextStyle(color: Colors.white60),
         ),
       );
@@ -256,7 +287,17 @@ class _MusicSearchPickerState extends ConsumerState<_MusicSearchPicker> {
         return _SearchResultTile(
           hit: hit,
           compact: i < 3,
-          onTap: () => Navigator.pop(context, hit),
+          selected: _selectedId == hit.videoId,
+          onTap: () {
+            setState(() {
+              _selectedId = hit.videoId;
+              _selectedTitle = hit.title;
+            });
+            widget.onSelected?.call(hit);
+            if (!widget.stayOpenOnSelect) {
+              Navigator.pop(context);
+            }
+          },
         );
       },
     );
@@ -268,17 +309,21 @@ class _SearchResultTile extends StatelessWidget {
     required this.hit,
     required this.onTap,
     this.compact = false,
+    this.selected = false,
   });
 
   final YoutubeSearchHit hit;
   final VoidCallback onTap;
   final bool compact;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
     final thumb = compact ? 56.0 : 72.0;
     return Material(
-      color: const Color(0xFF1E1E2A),
+      color: selected
+          ? const Color(0xFF8B5CF6).withValues(alpha: 0.22)
+          : const Color(0xFF1E1E2A),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,

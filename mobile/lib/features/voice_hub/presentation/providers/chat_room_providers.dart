@@ -40,7 +40,9 @@ import '../utils/voice_music_access.dart';
 import '../utils/voice_room_duyuru_access.dart';
 import '../utils/voice_room_mention.dart';
 import '../utils/voice_room_seat_priority.dart';
+import '../utils/voice_staff_chat_style.dart';
 import '../utils/voice_room_message_merge.dart';
+import 'voice_rooms_presence_provider.dart';
 import '../widgets/voice_room/voice_room_music_request_flash.dart';
 import '../basic/voice_room_basic_mode.dart';
 import '../../../notifications/presentation/providers/notifications_providers.dart';
@@ -538,7 +540,7 @@ class VoiceRoomLiveController
 
     try {
       await _joinPresence();
-      await _loadInitialMessages();
+      unawaited(_loadInitialMessages());
     } catch (_) {
       state = state.copyWith(loading: false);
     }
@@ -855,6 +857,66 @@ class VoiceRoomLiveController
     return false;
   }
 
+  void _patchHubPresenceCount(int count) {
+    if (_roomKey.isEmpty) return;
+    ref.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(_roomKey, count);
+    final alt = _roomMeta.slug.trim();
+    if (alt.isNotEmpty && alt != _roomKey) {
+      ref.read(voiceRoomsPresenceProvider.notifier).patchRoomCount(alt, count);
+    }
+  }
+
+  Future<void> _broadcastStaffEntryIfNeeded() async {
+    if (_roomKey.isEmpty) return;
+    final user = ref.read(authControllerProvider).valueOrNull;
+    if (user == null) return;
+    ChatRoomPresence? self;
+    for (final p in state.presence) {
+      if (p.id == user.id) {
+        self = p;
+        break;
+      }
+    }
+    final userRef = ChatRoomUserRef(
+      id: user.id,
+      name: user.display,
+      nickname: user.username,
+      image: user.avatarUrl,
+      chatRole: self?.chatRole,
+    );
+    if (!VoiceStaffChatStyle.isStaffEntry(
+      content: '',
+      user: userRef,
+    ) &&
+        !VoiceRoomPermissions.forUser(
+          user: user,
+          room: _roomMeta,
+          selfPresence: self,
+          server: state.serverPermissions,
+        ).isSiteAdmin &&
+        !VoiceRoomPermissions.forUser(
+          user: user,
+          room: _roomMeta,
+          selfPresence: self,
+          server: state.serverPermissions,
+        ).canModerate) {
+      return;
+    }
+    final name = user.displayName?.trim().isNotEmpty == true
+        ? user.displayName!.trim()
+        : user.username;
+    final symbol = self?.roleSymbol?.trim() ?? '';
+    try {
+      await ref.read(chatRoomRemoteProvider).postEntryAnnouncement(
+            roomKey: _roomKey,
+            alternateKey: _roomMeta.slug,
+            userName: name,
+            roleSymbol: symbol.isNotEmpty ? symbol : null,
+            entryType: VoiceStaffChatStyle.entryRoleLabel(userRef),
+          );
+    } catch (_) {}
+  }
+
   Future<void> _joinPresence() async {
     if (_roomKey.isEmpty) {
       state = state.copyWith(loading: false, error: 'Geçersiz oda kimliği');
@@ -895,6 +957,9 @@ class VoiceRoomLiveController
       ref
           .read(voiceRoomDiagnosticProvider.notifier)
           .setPresence(joined: true, count: merged.length);
+      _patchHubPresenceCount(merged.length);
+      unawaited(_tryAutoPrivilegedSeat());
+      unawaited(_broadcastStaffEntryIfNeeded());
     } on Object catch (e) {
       VoiceRoomDebugLog.log('api.presence.join.fail', {'error': e.toString()});
       ref.read(voiceRoomDiagnosticProvider.notifier).setPresence(joined: false);
@@ -1033,7 +1098,7 @@ class VoiceRoomLiveController
           },
           onDjUpdate: (payload) {
             if (payload.isNotEmpty) {
-              if (!VoiceRoomBasicMode.enabled) {
+              if (VoiceRoomBasicMode.musicEnabled) {
                 _applyRoomVideoPayload(payload);
               }
               unawaited(_applyDjRealtimePayload(payload));
@@ -1042,11 +1107,10 @@ class VoiceRoomLiveController
             }
           },
           onSong: (payload) {
-            if (!VoiceRoomBasicMode.enabled) {
+            if (VoiceRoomBasicMode.musicEnabled) {
               _applyRoomVideoPayload(payload);
             }
             unawaited(_applyDjRealtimePayload(payload));
-            _showMusicRequestFlashLine('🎵 Şarkı kuyruğa eklendi');
           },
           onGift: (payload) {
             if (!VoiceRoomBasicMode.premiumEnabled &&
@@ -1064,6 +1128,22 @@ class VoiceRoomLiveController
             }
           },
           onMessage: (msg) {
+            if (msg.kind == ChatMessageKind.systemJoin) {
+              _pushBasicChatEvent(msg);
+              if (VoiceStaffChatStyle.isStaffEntry(
+                content: msg.content,
+                user: msg.user,
+              )) {
+                if (_markEntranceOnce(msg.content)) {
+                  final line = VoiceStaffChatStyle.formatStaffEntryLine(
+                    msg.user?.displayName ?? msg.content,
+                    user: msg.user,
+                  );
+                  state = state.copyWith(enterBanner: line);
+                }
+              }
+              return;
+            }
             if (VoiceRoomBasicMode.enabled && !VoiceRoomBasicMode.premiumEnabled) {
               return;
             }
@@ -1095,6 +1175,7 @@ class VoiceRoomLiveController
             ref
                 .read(voiceRoomDiagnosticProvider.notifier)
                 .setPresence(joined: true, count: merged.length);
+            _patchHubPresenceCount(merged.length);
             if (!wasSse) _schedulePoll();
           },
           onUserJoin: _handleSseUserJoin,
@@ -1344,12 +1425,33 @@ class VoiceRoomLiveController
           ? user.displayName.trim()
           : user.name.trim();
       if (name.isEmpty) continue;
-      final symbol = user.roleSymbol?.trim() ?? '';
-      final prefix = symbol.isNotEmpty ? '$symbol ' : '';
-      final banner = '$prefix$name odaya katıldı';
-      _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.join, banner);
-      if (_markEntranceOnce(banner)) {
-        _showEnterBanner(banner);
+      final userRef = ChatRoomUserRef(
+        id: user.id,
+        name: user.name,
+        nickname: user.nickname,
+        image: user.image,
+        chatRole: user.chatRole,
+      );
+      final isStaff = VoiceStaffChatStyle.isStaffEntry(
+        content: '${user.roleSymbol ?? ''} $name',
+        user: userRef,
+      );
+      if (isStaff) {
+        final line = VoiceStaffChatStyle.formatStaffEntryLine(name, user: userRef);
+        _notifyRealtimeIfBasic(VoiceRoomRealtimeKind.join, line);
+        if (_markEntranceOnce(line)) {
+          state = state.copyWith(enterBanner: line);
+          _enterBannerTimer?.cancel();
+          _enterBannerTimer = Timer(const Duration(seconds: 10), () {
+            if (!_sessionActive) return;
+            state = state.copyWith(clearEnterBanner: true);
+          });
+        }
+      } else {
+        _notifyRealtimeIfBasic(
+          VoiceRoomRealtimeKind.join,
+          '$name giriş yaptı.',
+        );
       }
     }
   }
@@ -1376,6 +1478,7 @@ class VoiceRoomLiveController
     final remaining = state.presence.where((p) => p.id != userId).toList();
     if (remaining.length == state.presence.length) return;
     state = state.copyWith(presence: remaining);
+    _patchHubPresenceCount(remaining.length);
     ref
         .read(voiceRoomDiagnosticProvider.notifier)
         .setPresence(joined: true, count: remaining.length);
@@ -1807,16 +1910,16 @@ class VoiceRoomLiveController
 
   Future<void> _warmBackgrounds() async {
     try {
-      final urls = await ref.read(chatRoomRemoteProvider).fetchBackgrounds();
-      if (urls.isEmpty) return;
       final roomBg = _roomMeta.backgroundImageUrl?.trim();
       final current = state.backgroundUrl?.trim();
       final pick = (current != null && current.isNotEmpty)
           ? current
           : (roomBg != null && roomBg.isNotEmpty)
           ? roomBg
-          : urls.first;
-      state = state.copyWith(backgroundUrl: pick);
+          : null;
+      if (pick != null) {
+        state = state.copyWith(backgroundUrl: pick);
+      }
     } catch (_) {}
   }
 
@@ -2948,21 +3051,27 @@ class VoiceRoomLiveController
     if (trimmed.isEmpty || _roomKey.isEmpty) return;
     unawaited(_stopTyping());
 
+    if (VoiceMusicSync.isKapatCommand(trimmed)) {
+      await closeMusicPlayer();
+      return;
+    }
+
     if (VoiceMusicSync.isIstekCommand(trimmed)) {
       final song = VoiceMusicSync.parseIstekSongTitle(trimmed);
-      if (song == null || song.isEmpty) {
-        state = state.copyWith(error: 'Kullanım: !istek Sanatçı - Şarkı adı');
-        _showMusicRequestFlashLine('🎵 Kullanım: !istek Sanatçı - Şarkı adı');
+      if (song == null && !VoiceMusicSync.isBareIstekCommand(trimmed)) {
+        state = state.copyWith(error: 'Kullanım: !istek veya !istek Sanatçı - Şarkı');
         return;
       }
-      VoiceRoomDebugLog.log('music.istek.search', {'song': song, 'room': _roomKey});
+      VoiceRoomDebugLog.log('music.istek.search', {'song': song ?? '', 'room': _roomKey});
       ref.read(voiceRoomMusicSessionProvider.notifier).clearUserDismissed();
-      _showMusicRequestFlashLine('🔍 «$song» aranıyor…');
-      unawaited(_postChatLineOnly(trimmed));
+      if (song != null && song.isNotEmpty) {
+        unawaited(_postChatLineOnly(trimmed));
+      }
       state = state.copyWith(
-        pendingMusicSearchQuery: song,
+        pendingMusicSearchQuery: song ?? '',
         pendingMusicSearchSkipPayment: true,
         clearError: true,
+        clearMusicRequestFlash: true,
       );
       return;
     }

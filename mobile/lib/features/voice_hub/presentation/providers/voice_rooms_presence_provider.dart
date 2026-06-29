@@ -122,6 +122,13 @@ class VoiceRoomsPresenceNotifier extends Notifier<VoiceRoomsPresenceState> {
     return null;
   }
 
+  void patchRoomCount(String roomId, int count) {
+    if (roomId.isEmpty || count < 0) return;
+    final counts = Map<String, int>.from(state.counts);
+    counts[roomId] = count;
+    state = state.copyWith(counts: counts);
+  }
+
   void _disconnectRoom(String roomId) {
     _subs.remove(roomId)?.cancel();
     ref.read(sseConnectionHubProvider).releaseVoiceRoom(roomId);

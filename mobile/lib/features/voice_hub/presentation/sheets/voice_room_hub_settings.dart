@@ -1,9 +1,17 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:canlifal_social/core/images/canlifal_network_image.dart';
 
+import '../../../../core/config/env.dart';
+import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/dio_provider.dart';
 import '../../../../core/widgets/lazy_list_views.dart';
 import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../domain/entities/chat_room_presence.dart';
@@ -501,44 +509,98 @@ class _VoiceRoomBackgroundSheet extends ConsumerStatefulWidget {
 
 class _VoiceRoomBackgroundSheetState
     extends ConsumerState<_VoiceRoomBackgroundSheet> {
-  List<String> _backgrounds = const [];
-  var _loading = true;
+  var _uploading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
-  }
-
-  Future<void> _load() async {
-    try {
-      final urls = await ref
-          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
-          .fetchBackgrounds();
-      if (mounted) setState(() => _backgrounds = urls);
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _apply(String url) async {
-    final err = await ref
-        .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
-        .setRoomBackground(url);
-    if (!mounted) return;
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(err ?? 'Arka plan güncellendi')),
+  Future<String> _uploadFile(File file) async {
+    final dio = ref.read(dioProvider);
+    final contentType = _contentType(file.path);
+    final fileName = file.path.split(Platform.pathSeparator).last;
+    final presigned = await dio.safePost<dynamic>(
+      ApiEndpoints.uploadPresigned,
+      data: {
+        'fileName': fileName,
+        'contentType': contentType,
+        'isPublic': true,
+      },
     );
+    final map = presigned.data is Map
+        ? Map<String, dynamic>.from(presigned.data as Map)
+        : <String, dynamic>{};
+    if (map['success'] == true && map['data'] is Map) {
+      map.addAll(Map<String, dynamic>.from(map['data'] as Map));
+    }
+    final uploadUrl = map['uploadUrl']?.toString();
+    final cloudPath = map['cloud_storage_path']?.toString();
+    if (uploadUrl == null ||
+        uploadUrl.isEmpty ||
+        cloudPath == null ||
+        cloudPath.isEmpty) {
+      throw const ApiException('Yükleme bağlantısı alınamadı');
+    }
+    final bytes = await file.readAsBytes();
+    final putDio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 45),
+        sendTimeout: const Duration(seconds: 90),
+      ),
+    );
+    try {
+      await putDio.put<void>(
+        uploadUrl,
+        data: bytes,
+        options: Options(headers: {'Content-Type': contentType}),
+      );
+    } finally {
+      putDio.close(force: true);
+    }
+    if (cloudPath.startsWith('http')) return cloudPath;
+    return '${Env.siteOrigin}/api/upload/get-url?path=${Uri.encodeComponent(cloudPath)}';
+  }
+
+  static String _contentType(String path) {
+    final lower = path.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
+  }
+
+  Future<void> _pickFromGallery() async {
+    if (_uploading) return;
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1920,
+      maxHeight: 1080,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    setState(() => _uploading = true);
+    try {
+      final url = await _uploadFile(File(picked.path));
+      final err = await ref
+          .read(voiceRoomLiveProvider(widget.room.liveKey).notifier)
+          .setRoomBackground(url);
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(err ?? 'Arka plan güncellendi')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.userMessage(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
     return DraggableScrollableSheet(
-      initialChildSize: 0.45,
-      minChildSize: 0.32,
-      maxChildSize: 0.7,
+      initialChildSize: 0.32,
+      minChildSize: 0.24,
+      maxChildSize: 0.45,
       expand: false,
       builder: (_, __) => VoiceGlass(
         borderRadius: 24,
@@ -547,48 +609,30 @@ class _VoiceRoomBackgroundSheetState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Arkaplan',
+              'Oda arka planı',
               style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
             ),
-            const SizedBox(height: 12),
-            if (_loading)
-              const Expanded(
-                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-              )
-            else if (_backgrounds.isEmpty)
-              Expanded(
-                child: Center(
-                  child: Text(
-                    'Arka plan bulunamadı',
-                    style: TextStyle(
-                      color: context.colors.onSurfaceMuted,
-                    ),
-                  ),
-                ),
-              )
-            else
-              Expanded(
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _backgrounds.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 10),
-                  itemBuilder: (_, i) {
-                    final url = _backgrounds[i];
-                    return GestureDetector(
-                      onTap: () => _apply(url),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: CanlifalNetworkImage(
-                          url: url,
-                          width: 180,
-                          height: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    );
-                  },
-                ),
+            const SizedBox(height: 8),
+            Text(
+              'Galeriden kendi görselinizi seçin.',
+              style: TextStyle(
+                color: context.colors.onSurfaceMuted,
+                fontSize: 13,
+                height: 1.35,
               ),
+            ),
+            const Spacer(),
+            FilledButton.icon(
+              onPressed: _uploading ? null : _pickFromGallery,
+              icon: _uploading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.photo_library_rounded),
+              label: Text(_uploading ? 'Yükleniyor…' : 'Galeriden seç'),
+            ),
           ],
         ),
       ),

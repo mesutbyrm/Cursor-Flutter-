@@ -16,6 +16,7 @@ import '../../domain/entities/chat_room_message.dart';
 import '../../domain/entities/chat_room_presence.dart';
 import '../../domain/entities/voice_room_realtime_event.dart';
 import '../../domain/pk/pk_duration_options.dart';
+import '../widgets/voice_room/voice_room_join_toast_stack.dart';
 import '../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_remote_provider.dart';
@@ -173,9 +174,14 @@ class _VoiceRoomBasicJoinTickerState extends State<VoiceRoomBasicJoinTicker> {
 
 /// Sohbet akışı — kaydırılabilir mesaj listesi.
 class VoiceRoomBasicChatFeed extends StatelessWidget {
-  const VoiceRoomBasicChatFeed({super.key, required this.messages});
+  const VoiceRoomBasicChatFeed({
+    super.key,
+    required this.messages,
+    this.events = const [],
+  });
 
   final List<ChatRoomMessage> messages;
+  final List<VoiceRoomRealtimeEvent> events;
 
   @override
   Widget build(BuildContext context) {
@@ -186,30 +192,43 @@ class VoiceRoomBasicChatFeed extends StatelessWidget {
               m.kind == ChatMessageKind.gift,
         )
         .toList();
-    if (visible.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            'Sohbet mesajları burada görünür.',
-            style: Theme.of(context).textTheme.bodySmall,
-            textAlign: TextAlign.center,
+
+    return Stack(
+      children: [
+        if (visible.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Sohbet mesajları burada görünür.',
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+        else
+          ListView.builder(
+            reverse: true,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            itemCount: visible.length,
+            itemBuilder: (context, index) {
+              final msg = visible[visible.length - 1 - index];
+              return ChatMessageWidget(
+                key: ValueKey(msg.id),
+                message: msg,
+              );
+            },
+          ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 4,
+          child: VoiceRoomJoinToastStack(
+            events: events,
+            messages: messages,
           ),
         ),
-      );
-    }
-
-    return ListView.builder(
-      reverse: true,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      itemCount: visible.length,
-      itemBuilder: (context, index) {
-        final msg = visible[visible.length - 1 - index];
-        return ChatMessageWidget(
-          key: ValueKey(msg.id),
-          message: msg,
-        );
-      },
+      ],
     );
   }
 }
