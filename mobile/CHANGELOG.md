@@ -1,6 +1,15 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.439+443 (2026-06-26)
+
+### Faz 11 — @ Etiket sistemi
+
+- Yazarken `@` girilince oda kullanıcıları listesi açılır
+- Kişi seçilince `@Mesut` metne eklenir
+- Etiketlenen kullanıcıya bildirim: «Ali senden bahsetti.»
+- RTC ve Basic sohbet girişinde; `mentionedUserIds` API ile sunucuya iletilir
+
 ## 1.0.438+442 (2026-06-26)
 
 ### Faz 10 — Duyuru sistemi

@@ -1755,6 +1755,8 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                     presence: live.presence,
                   ),
                   onInvite: () => unawaited(_shareRoom()),
+                  presence: live.presence,
+                  selfUserId: user?.id,
                   events: live.realtimeEvents,
                   messages: live.messages,
                   onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),

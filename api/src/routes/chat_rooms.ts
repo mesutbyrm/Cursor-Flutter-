@@ -50,6 +50,7 @@ import {
   listRoomBannedWords,
   addRoomBannedWord,
   removeRoomBannedWord,
+  notifyVoiceRoomMentions,
 } from "../lib/chatRoomStore";
 import {
   emitChatRoomDjUpdate,
@@ -700,7 +701,11 @@ chatRoomsRouter.post("/rooms/:roomId/messages", requireAuth, async (req, res) =>
           : typeof req.body?.text === "string"
             ? req.body.text
             : "";
-  const row = await addTextMessage(roomId, user, content);
+  const mentionedRaw = req.body?.mentionedUserIds;
+  const mentionedUserIds = Array.isArray(mentionedRaw)
+    ? mentionedRaw.map((id) => String(id)).filter(Boolean)
+    : undefined;
+  const row = await addTextMessage(roomId, user, content, mentionedUserIds);
   if (!row) return fail(res, 400, "BAD_REQUEST", "Mesaj gönderilemedi");
   emitChatRoomMessage(resolveRoomId(roomId), row);
   const cmd = content.trim().toLowerCase();
@@ -708,6 +713,29 @@ chatRoomsRouter.post("/rooms/:roomId/messages", requireAuth, async (req, res) =>
     emitChatRoomDjUpdate(roomId);
   }
   return res.status(200).json({ message: row, success: true });
+});
+
+chatRoomsRouter.post("/rooms/:roomId/mentions", requireAuth, async (req, res) => {
+  const roomId = req.params.roomId;
+  const user = await loadUser(req.userId);
+  if (!user) return fail(res, 401, "UNAUTHORIZED", "Oturum gerekli");
+  const mentionedRaw = req.body?.mentionedUserIds;
+  const mentionedUserIds = Array.isArray(mentionedRaw)
+    ? mentionedRaw.map((id) => String(id)).filter(Boolean)
+    : [];
+  const preview =
+    typeof req.body?.preview === "string"
+      ? req.body.preview
+      : typeof req.body?.content === "string"
+        ? req.body.content
+        : "";
+  await notifyVoiceRoomMentions({
+    roomId,
+    actor: user,
+    mentionedUserIds,
+    preview,
+  });
+  return res.status(200).json({ success: true });
 });
 
 chatRoomsRouter.delete("/rooms/:roomId/messages", requireAuth, async (req, res) => {

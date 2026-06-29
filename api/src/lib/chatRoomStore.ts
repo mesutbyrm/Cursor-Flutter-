@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { User } from "@prisma/client";
 import { prisma } from "./prisma";
+import { createNotification } from "./notifications";
 import {
   appendMusicItem,
   advanceRoomQueue,
@@ -737,7 +738,74 @@ function containsBannedWord(roomId: string, text: string) {
   return false;
 }
 
-export async function addTextMessage(roomId: string, user: User, content: string) {
+function parseMentionHandles(content: string): string[] {
+  const handles = new Set<string>();
+  const re = /@([^\s@]+)/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(content)) !== null) {
+    const h = match[1]?.trim().toLowerCase();
+    if (h) handles.add(h);
+  }
+  return [...handles];
+}
+
+function resolveMentionedUserIds(roomId: string, content: string): string[] {
+  const handles = parseMentionHandles(content);
+  if (handles.length === 0) return [];
+  const ids = new Set<string>();
+  for (const p of roomMap(roomId).values()) {
+    const keys = [
+      p.nickname?.trim().toLowerCase(),
+      p.name?.trim().toLowerCase(),
+    ].filter(Boolean) as string[];
+    if (handles.some((h) => keys.includes(h))) {
+      ids.add(p.id);
+    }
+  }
+  return [...ids];
+}
+
+export async function notifyVoiceRoomMentions(input: {
+  roomId: string;
+  actor: User;
+  mentionedUserIds?: string[];
+  preview: string;
+}) {
+  const roomKey = resolveRoomId(input.roomId);
+  const actorName =
+    input.actor.displayName?.trim() ||
+    input.actor.username?.trim() ||
+    "Biri";
+  const ids =
+    input.mentionedUserIds && input.mentionedUserIds.length > 0
+      ? input.mentionedUserIds
+      : resolveMentionedUserIds(roomKey, input.preview);
+  for (const userId of ids) {
+    if (!userId || userId === input.actor.id) continue;
+    void createNotification({
+      userId,
+      title: `${actorName} senden bahsetti.`,
+      body: input.preview.slice(0, 120),
+      type: "mention",
+      targetPath: `/voice-room/${roomKey}`,
+      targetId: roomKey,
+      urgent: true,
+      data: {
+        event: "mention",
+        roomId: roomKey,
+        actorId: input.actor.id,
+        actorName,
+      },
+    });
+  }
+}
+
+export async function addTextMessage(
+  roomId: string,
+  user: User,
+  content: string,
+  mentionedUserIds?: string[],
+) {
   const trimmed = content.trim();
   if (!trimmed) return null;
   if (isRoomBanned(roomId, user.id)) return null;
@@ -806,6 +874,12 @@ export async function addTextMessage(roomId: string, user: User, content: string
       user,
       priv.admin ? "admin" : priv.owner ? "owner" : "listener",
     ),
+  });
+  void notifyVoiceRoomMentions({
+    roomId,
+    actor: user,
+    mentionedUserIds,
+    preview: trimmed,
   });
   return row;
 }

@@ -27,6 +27,7 @@ import '../theme/voice_room_tokens.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/chat/chat_message_widgets.dart';
+import '../widgets/voice_room/voice_room_mention_text_field.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import '../widgets/voice_room/voice_room_premium_music_card.dart';
 import '../widgets/premium_2026/voice_web_owner_stage.dart';
@@ -214,19 +215,36 @@ class VoiceRoomBasicChatFeed extends StatelessWidget {
 }
 
 /// Sabit mesaj çubuğu — klavye üstünde.
-class VoiceRoomBasicMessageBar extends StatelessWidget {
+class VoiceRoomBasicMessageBar extends StatefulWidget {
   const VoiceRoomBasicMessageBar({
     super.key,
     required this.controller,
     required this.onSend,
     required this.onEmoji,
     this.onChanged,
+    this.presence = const [],
+    this.selfUserId,
   });
 
   final TextEditingController controller;
   final VoidCallback onSend;
   final VoidCallback onEmoji;
   final ValueChanged<String>? onChanged;
+  final List<ChatRoomPresence> presence;
+  final String? selfUserId;
+
+  @override
+  State<VoiceRoomBasicMessageBar> createState() => _VoiceRoomBasicMessageBarState();
+}
+
+class _VoiceRoomBasicMessageBarState extends State<VoiceRoomBasicMessageBar> {
+  late final FocusNode _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -238,13 +256,20 @@ class VoiceRoomBasicMessageBar extends StatelessWidget {
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            onPressed: onEmoji,
+            onPressed: widget.onEmoji,
             icon: const Icon(Icons.emoji_emotions_outlined, size: 22),
           ),
           Expanded(
-            child: TextField(
-              controller: controller,
-              onChanged: onChanged,
+            child: VoiceRoomMentionTextField(
+              controller: widget.controller,
+              focusNode: _focusNode,
+              presence: widget.presence,
+              excludeUserId: widget.selfUserId,
+              onChanged: widget.onChanged,
+              onSubmitted: (_) => widget.onSend(),
+              hintText: 'Mesaj yaz…',
+              minLines: 1,
+              maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'Mesaj yaz…',
                 isDense: true,
@@ -254,15 +279,13 @@ class VoiceRoomBasicMessageBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => onSend(),
             ),
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            onPressed: onSend,
+            onPressed: widget.onSend,
             icon: const Icon(Icons.send_rounded, size: 22),
           ),
         ],

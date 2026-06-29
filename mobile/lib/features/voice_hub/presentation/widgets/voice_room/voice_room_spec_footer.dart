@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
 import '../../../domain/entities/chat_room_message.dart';
+import '../../../domain/entities/chat_room_presence.dart';
 import '../../../domain/entities/voice_room_realtime_event.dart';
 import '../../theme/voice_room_tokens.dart';
 import 'voice_room_bottom_action_bar.dart';
 import 'voice_room_join_toast_stack.dart';
+import 'voice_room_mention_text_field.dart';
 
 /// Alt bar — mesaj satırı + Faz 6 aksiyon menüsü.
 class VoiceRoomSpecFooter extends StatelessWidget {
@@ -24,6 +26,8 @@ class VoiceRoomSpecFooter extends StatelessWidget {
     required this.onMusicVideo,
     required this.onGift,
     required this.onInvite,
+    this.presence = const [],
+    this.selfUserId,
     this.events = const [],
     this.messages = const [],
     this.onEmojiTap,
@@ -43,6 +47,8 @@ class VoiceRoomSpecFooter extends StatelessWidget {
   final VoidCallback onMusicVideo;
   final VoidCallback onGift;
   final VoidCallback onInvite;
+  final List<ChatRoomPresence> presence;
+  final String? selfUserId;
   final List<VoiceRoomRealtimeEvent> events;
   final List<ChatRoomMessage> messages;
   final VoidCallback? onEmojiTap;
@@ -79,15 +85,14 @@ class VoiceRoomSpecFooter extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: TextField(
+                  child: VoiceRoomMentionTextField(
                     controller: controller,
                     focusNode: focusNode,
+                    presence: presence,
+                    excludeUserId: selfUserId,
                     onChanged: onChanged,
-                    style: const TextStyle(fontSize: 14, color: Colors.white),
-                    minLines: 1,
-                    maxLines: 3,
-                    textInputAction: TextInputAction.send,
                     onSubmitted: (_) => onSend(),
+                    hintText: 'Mesajınızı yazın...',
                     decoration: InputDecoration(
                       hintText: 'Mesajınızı yazın...',
                       hintStyle: TextStyle(

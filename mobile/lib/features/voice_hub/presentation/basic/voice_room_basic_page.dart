@@ -762,6 +762,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
                     controller: _messageCtrl,
                     onSend: _sendChatMessage,
                     onChanged: _onChatChanged,
+                    presence: live.presence,
+                    selfUserId: user?.id,
                     onEmoji: () =>
                         showVoiceRoomBasicEmojiPicker(context, _messageCtrl),
                   ),

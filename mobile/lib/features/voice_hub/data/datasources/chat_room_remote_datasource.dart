@@ -1966,6 +1966,7 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     required String content,
     String? nickname,
+    List<String> mentionedUserIds = const [],
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final nick = nickname?.trim();
@@ -1975,6 +1976,8 @@ class ChatRoomRemoteDataSource {
             data: jsonEncode({
               'content': content,
               if (nick != null && nick.isNotEmpty) 'nickname': nick,
+              if (mentionedUserIds.isNotEmpty)
+                'mentionedUserIds': mentionedUserIds,
             }),
             options: Options(contentType: 'application/json'),
           )
@@ -2021,6 +2024,31 @@ class ChatRoomRemoteDataSource {
         );
       }
       throw ApiException('Mesaj gönderilemedi (HTTP $code)', statusCode: code);
+    });
+  }
+
+  /// Faz 11 — @ etiket bildirimi (yerel API / yedek uç).
+  Future<void> notifyRoomMentions({
+    required String roomKey,
+    String? alternateKey,
+    required List<String> mentionedUserIds,
+    required String preview,
+  }) async {
+    if (mentionedUserIds.isEmpty) return;
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _dio.safePost<dynamic>(
+          '/api/chat/rooms/$key/mentions',
+          data: jsonEncode({
+            'mentionedUserIds': mentionedUserIds,
+            'preview': preview,
+          }),
+          options: Options(contentType: 'application/json'),
+        );
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 405) return;
+        rethrow;
+      }
     });
   }
 }

@@ -38,6 +38,7 @@ import '../utils/kick_strike_ui.dart';
 import '../utils/voice_sse_dj_payload.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_duyuru_access.dart';
+import '../utils/voice_room_mention.dart';
 import '../utils/voice_room_seat_priority.dart';
 import '../utils/voice_room_message_merge.dart';
 import '../widgets/voice_room/voice_room_music_request_flash.dart';
@@ -2984,6 +2985,11 @@ class VoiceRoomLiveController
       );
     }
 
+    final mentionedUserIds = VoiceRoomMention.resolveMentionedUserIds(
+      trimmed,
+      state.presence,
+    ).where((id) => id != user?.id).toList();
+
     try {
       ChatRoomMessage? sent;
       try {
@@ -2993,6 +2999,7 @@ class VoiceRoomLiveController
               roomKey: _roomKey,
               content: trimmed,
               nickname: _effectiveNickname(user),
+              mentionedUserIds: mentionedUserIds,
             )
             .timeout(const Duration(seconds: 22));
       } on TimeoutException {
@@ -3020,6 +3027,16 @@ class VoiceRoomLiveController
       }
       list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
       state = state.copyWith(messages: list, clearError: true);
+      if (mentionedUserIds.isNotEmpty) {
+        unawaited(
+          ref.read(chatRoomRemoteProvider).notifyRoomMentions(
+                roomKey: _roomKey,
+                alternateKey: _musicAlternateKey,
+                mentionedUserIds: mentionedUserIds,
+                preview: trimmed,
+              ),
+        );
+      }
       if (isClear && (perms.canModerate || perms.isRoomOwner)) {
         _applyLocalChatClear();
       }
