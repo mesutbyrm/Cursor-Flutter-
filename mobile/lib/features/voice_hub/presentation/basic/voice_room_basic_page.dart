@@ -527,8 +527,8 @@ class _VoiceRoomBasicPageState extends ConsumerState<VoiceRoomBasicPage> {
     );
     final flightQueue = ref.watch(voiceGiftFlightQueueProvider);
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
-    final jeton = VoiceMusicAccess.jetonFromBalances(
-      ref.watch(walletBalancesProvider).valueOrNull,
+    final jeton = ref.watch(
+      walletBalancesProvider.select((a) => a.valueOrNull?.jeton ?? 0),
     );
     final videoActive =
         ref.watch(roomVideoControllerProvider(_liveRoomKey)).hasActiveVideo;

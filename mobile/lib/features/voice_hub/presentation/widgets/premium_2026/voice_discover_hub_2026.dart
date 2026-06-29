@@ -306,17 +306,19 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
     }
     i--;
     if (i == 0) {
-      return SizedBox(
-        height: metrics.popularRowHeight,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: popular.take(10).length,
-          separatorBuilder: (_, _) => const SizedBox(width: 12),
-          itemBuilder: (context, j) => _PopularRoomCard(
-            room: popular[j],
-            index: j,
-            width: metrics.popularCardWidth,
-            onTap: () => widget.onRoomTap(popular[j]),
+      return RepaintBoundary(
+        child: SizedBox(
+          height: metrics.popularRowHeight,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: popular.take(10).length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, j) => _PopularRoomCard(
+              room: popular[j],
+              index: j,
+              width: metrics.popularCardWidth,
+              onTap: () => widget.onRoomTap(popular[j]),
+            ),
           ),
         ),
       );
@@ -340,15 +342,17 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
           style: TextStyle(color: context.colors.onSurfaceMuted.withValues(alpha: 0.9)),
         );
       }
-      return SizedBox(
-        height: 140,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: live.length.clamp(0, 12),
-          separatorBuilder: (_, _) => const SizedBox(width: 12),
-          itemBuilder: (context, j) => _LiveStreamCard(
-            stream: live[j],
-            onTap: () => openLiveFromDiscover(context, ref, live[j]),
+      return RepaintBoundary(
+        child: SizedBox(
+          height: 140,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: live.length.clamp(0, 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, j) => _LiveStreamCard(
+              stream: live[j],
+              onTap: () => openLiveFromDiscover(context, ref, live[j]),
+            ),
           ),
         ),
       );
@@ -406,15 +410,17 @@ class _VoiceDiscoverHub2026State extends ConsumerState<VoiceDiscoverHub2026> {
       }
       i--;
       if (i == 0) {
-        return SizedBox(
-          height: 120,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: vipRooms.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (context, j) => _VipRoomCard(
-              room: vipRooms[j],
-              onTap: () => widget.onRoomTap(vipRooms[j]),
+        return RepaintBoundary(
+          child: SizedBox(
+            height: 120,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: vipRooms.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (context, j) => _VipRoomCard(
+                room: vipRooms[j],
+                onTap: () => widget.onRoomTap(vipRooms[j]),
+              ),
             ),
           ),
         );

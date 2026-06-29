@@ -47,8 +47,8 @@ class VoiceRoomBasicMusicSection extends ConsumerWidget {
       perms: perms,
       nowPlaying: dj.nowPlaying,
     );
-    final jeton = VoiceMusicAccess.jetonFromBalances(
-      ref.watch(walletBalancesProvider).valueOrNull,
+    final jeton = ref.watch(
+      walletBalancesProvider.select((a) => a.valueOrNull?.jeton ?? 0),
     );
     final canRequest = VoiceMusicAccess.canRequestSongs(
       dj: dj,
