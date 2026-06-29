@@ -502,6 +502,27 @@ class ChatRoomRemoteDataSource {
     });
   }
 
+  Future<void> reorderMusicQueue({
+    required String roomKey,
+    String? alternateKey,
+    required List<String> orderedItemIds,
+  }) async {
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _dio.safePatch<dynamic>(
+          '/api/chat/rooms/$key/music-queue',
+          data: {'order': orderedItemIds},
+        );
+      } on ApiException catch (e) {
+        if (e.statusCode != 404 && e.statusCode != 405) rethrow;
+        await _dio.safePost<dynamic>(
+          '/api/chat/rooms/$key/music-queue/reorder',
+          data: {'order': orderedItemIds},
+        );
+      }
+    });
+  }
+
   Future<MusicClearResult> clearMusicQueue({
     required String roomKey,
     String? alternateKey,
@@ -710,6 +731,8 @@ class ChatRoomRemoteDataSource {
     int? duration,
     String? message,
     int? ttl,
+    bool skipPayment = false,
+    int? jetonCost,
   }) async {
     final res = await _dio.safePost<dynamic>(
       moderationPath(roomKey),
@@ -721,6 +744,8 @@ class ChatRoomRemoteDataSource {
         if (reason != null && reason.isNotEmpty) 'reason': reason,
         if (message != null && message.trim().isNotEmpty) 'message': message.trim(),
         if (ttl != null && ttl > 0) 'ttl': ttl,
+        if (skipPayment) 'skipPayment': true,
+        if (jetonCost != null && jetonCost > 0) 'jetonCost': jetonCost,
         'duration': ?duration,
       }),
       options: Options(contentType: 'application/json'),
@@ -734,6 +759,8 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     required String message,
     int ttl = 15,
+    bool skipPayment = false,
+    int? jetonCost,
   }) async {
     await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       await _postModeration(
@@ -741,6 +768,8 @@ class ChatRoomRemoteDataSource {
         action: 'announce',
         message: message,
         ttl: ttl,
+        skipPayment: skipPayment,
+        jetonCost: jetonCost,
       );
     });
   }
@@ -1937,6 +1966,7 @@ class ChatRoomRemoteDataSource {
     String? alternateKey,
     required String content,
     String? nickname,
+    List<String> mentionedUserIds = const [],
   }) async {
     return _withRoomKeyFallback(roomKey, alternateKey, (key) async {
       final nick = nickname?.trim();
@@ -1946,6 +1976,8 @@ class ChatRoomRemoteDataSource {
             data: jsonEncode({
               'content': content,
               if (nick != null && nick.isNotEmpty) 'nickname': nick,
+              if (mentionedUserIds.isNotEmpty)
+                'mentionedUserIds': mentionedUserIds,
             }),
             options: Options(contentType: 'application/json'),
           )
@@ -1992,6 +2024,31 @@ class ChatRoomRemoteDataSource {
         );
       }
       throw ApiException('Mesaj gönderilemedi (HTTP $code)', statusCode: code);
+    });
+  }
+
+  /// Faz 11 — @ etiket bildirimi (yerel API / yedek uç).
+  Future<void> notifyRoomMentions({
+    required String roomKey,
+    String? alternateKey,
+    required List<String> mentionedUserIds,
+    required String preview,
+  }) async {
+    if (mentionedUserIds.isEmpty) return;
+    await _withRoomKeyFallback(roomKey, alternateKey, (key) async {
+      try {
+        await _dio.safePost<dynamic>(
+          '/api/chat/rooms/$key/mentions',
+          data: jsonEncode({
+            'mentionedUserIds': mentionedUserIds,
+            'preview': preview,
+          }),
+          options: Options(contentType: 'application/json'),
+        );
+      } on ApiException catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 405) return;
+        rethrow;
+      }
     });
   }
 }

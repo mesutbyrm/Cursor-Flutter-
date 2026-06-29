@@ -20,19 +20,20 @@ import '../../music/presentation/widgets/room_music_queue_sheet.dart';
 import '../providers/chat_room_providers.dart';
 import '../providers/pk_battle_remote_provider.dart';
 import '../providers/voice_room_ui_provider.dart';
-import '../sheets/voice_room_hub_settings.dart';
+import '../sheets/voice_room_menu_sheet.dart';
 import '../sheets/voice_room_sheets.dart';
 import '../sheets/voice_youtube_song_sheet.dart';
 import '../theme/voice_room_tokens.dart';
 import '../utils/voice_music_access.dart';
 import '../utils/voice_room_permissions.dart';
 import '../widgets/chat/chat_message_widgets.dart';
+import '../widgets/voice_room/voice_room_mention_text_field.dart';
 import '../widgets/premium/voice_neon_avatar.dart';
 import '../widgets/voice_room/voice_room_premium_music_card.dart';
 import '../widgets/premium_2026/voice_web_owner_stage.dart';
 import 'voice_room_basic_moderation_section.dart';
 
-/// Çark menüsü — PK, efekt, tema, moderasyon, DJ, !istek.
+/// Çark menüsü — Faz 3 menüsüne yönlendirir (geriye uyumluluk).
 Future<void> showVoiceRoomBasicToolsSheet(
   BuildContext context,
   WidgetRef ref, {
@@ -48,267 +49,16 @@ Future<void> showVoiceRoomBasicToolsSheet(
   required bool canControlMusic,
   UserEntity? user,
 }) {
-  final pk = ref.read(pkBattleRemoteProvider);
-  final pkActive = pk != null && !pk.isEnded;
-  final authUser = user ?? ref.read(authControllerProvider).valueOrNull;
-  final dj = live.dj;
-  final jeton = VoiceMusicAccess.jetonFromBalances(
-    ref.read(walletBalancesProvider).valueOrNull,
-  );
-  final isDj = authUser != null &&
-      (room.djUserIds.contains(authUser.id) ||
-          dj.djUsers.any((u) => u.id == authUser.id));
-  final showDjHub = VoiceMusicAccess.canShowDjMusicPanel(
+  return showVoiceRoomMenuSheet(
+    context,
+    ref,
+    room: room,
+    live: live,
     perms: perms,
-    isDj: isDj,
+    isOwner: isOwner,
+    onUserTap: onOpenUser,
+    onPkInvite: onPk,
   );
-  final canRequest = VoiceMusicAccess.canRequestSongs(
-    dj: dj,
-    perms: perms,
-    jetonBalance: jeton,
-  );
-  final canRoomMute =
-      perms.canMuteRoom || perms.isRoomOwner || perms.isSiteAdmin;
-  final roleLabel = _roleLabel(perms);
-  final onStage = voiceWebOnStageIds(room: room, presence: live.presence);
-  final selfOnStage = authUser != null && onStage.contains(authUser.id);
-  final canRequestSpeak = authUser != null &&
-      !selfOnStage &&
-      !perms.canAssignSeats &&
-      !perms.canTakeSeat;
-  final ui = ref.read(voiceRoomUiProvider);
-
-  return showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: const Color(0xFF14101F),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (ctx) => SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(8, 12, 8, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (roleLabel != null)
-              ListTile(
-                leading: Icon(_roleIcon(perms)),
-                title: Text(roleLabel),
-                subtitle: const Text('Oda yetkiniz'),
-              ),
-            ListTile(
-              leading: Icon(
-                pkActive ? Icons.flash_on_rounded : Icons.sports_mma_rounded,
-                color: VoiceRoomTokens.neonPink,
-              ),
-              title: Text(pkActive ? 'PK savaşı (aktif)' : 'PK daveti gönder'),
-              onTap: () {
-                Navigator.pop(ctx);
-                if (pkActive) {
-                  final key =
-                      room.apiRoomKey.isNotEmpty ? room.apiRoomKey : room.id;
-                  context.push('/voice-room/$key/pk', extra: room);
-                } else {
-                  onPk();
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.auto_awesome_rounded),
-              title: const Text('Ses efektleri'),
-              onTap: () {
-                Navigator.pop(ctx);
-                showVoiceEffectsSheet(context, ref);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.wallpaper_rounded),
-              title: const Text('Oda teması'),
-              onTap: () {
-                Navigator.pop(ctx);
-                showVoiceRoomHubSettingsSheet(
-                  context,
-                  ref,
-                  room: room,
-                  live: live,
-                  perms: perms,
-                  isOwner: isOwner,
-                  onUserTap: onOpenUser,
-                );
-              },
-            ),
-            if (canRoomMute)
-              ListTile(
-                leading: Icon(
-                  live.roomMuted
-                      ? Icons.volume_up_rounded
-                      : Icons.volume_off_rounded,
-                ),
-                title: Text(
-                  live.roomMuted ? 'Oda sesini aç' : 'Odayı sustur',
-                ),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  final mute = !live.roomMuted;
-                  final err = await ref
-                      .read(voiceRoomLiveProvider(liveKey).notifier)
-                      .toggleRoomMute(mute: mute);
-                  if (!context.mounted) return;
-                  if (err != null) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text(err)));
-                  }
-                },
-              ),
-            if (canRequestSpeak)
-              ListTile(
-                leading: Icon(
-                  ui.requestSpeakPending
-                      ? Icons.hourglass_top_rounded
-                      : Icons.record_voice_over_outlined,
-                ),
-                title: Text(
-                  ui.requestSpeakPending
-                      ? 'Konuşma isteği bekliyor'
-                      : 'Konuşma iste',
-                ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  unawaited(
-                    requestVoiceRoomBasicSpeak(
-                      context: context,
-                      ref: ref,
-                      liveKey: liveKey,
-                      pending: ui.requestSpeakPending,
-                    ),
-                  );
-                },
-              ),
-            if (showDjHub)
-              ListTile(
-                leading: const Icon(Icons.headphones_rounded),
-                title: const Text('DJ paneli'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  showVoiceMusicControlHub(
-                    context,
-                    ref,
-                    room: room,
-                    perms: perms,
-                  );
-                },
-              ),
-            if (canRequest || dj.musicEnabled)
-              ListTile(
-                leading: const Icon(Icons.music_note_rounded),
-                title: const Text('Şarkı iste (!istek)'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  showVoiceYoutubeSongSheet(
-                    context,
-                    ref,
-                    room: room,
-                    perms: perms,
-                  );
-                },
-              ),
-            if (dj.musicQueue.isNotEmpty || dj.nowPlaying != null)
-              ListTile(
-                leading: const Icon(Icons.queue_music_rounded),
-                title: Text('Müzik kuyruğu (${dj.musicQueue.length})'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  showRoomMusicQueueSheet(
-                    context,
-                    ref,
-                    liveKey: liveKey,
-                    dj: dj,
-                    canControlMusic: canControlMusic,
-                  );
-                },
-              ),
-            ListTile(
-              leading: const Icon(Icons.people_outline_rounded),
-              title: const Text('Katılımcı listesi'),
-              onTap: () {
-                Navigator.pop(ctx);
-                showVoiceSpeakerListSheet(
-                  context,
-                  presence: live.presence,
-                  room: room,
-                  onUserTap: onOpenUser,
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.share_rounded),
-              title: const Text('Odayı paylaş'),
-              onTap: () {
-                Navigator.pop(ctx);
-                shareVoiceRoom(context, room);
-              },
-            ),
-            if (canRequest || dj.musicEnabled) ...[
-              const Divider(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: istekCtrl,
-                        decoration: const InputDecoration(
-                          hintText: '!istek Sanatçı - Şarkı',
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        textInputAction: TextInputAction.send,
-                        onSubmitted: (_) {
-                          onSendIstek();
-                          Navigator.pop(ctx);
-                        },
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        onSendIstek();
-                        Navigator.pop(ctx);
-                      },
-                      icon: const Icon(Icons.send_rounded),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-String? _roleLabel(VoiceRoomPermissions p) {
-  if (p.isSiteAdmin) return 'Admin';
-  if (p.isRoomOwner) return 'Oda sahibi';
-  if (p.canBanUsers) return 'Yetkili (&)';
-  if (p.canModerate) return 'Moderatör';
-  return null;
-}
-
-IconData _roleIcon(VoiceRoomPermissions p) {
-  if (p.isSiteAdmin) return Icons.admin_panel_settings_rounded;
-  if (p.isRoomOwner) return Icons.star_rounded;
-  if (p.canBanUsers) return Icons.verified_user_rounded;
-  return Icons.shield_rounded;
 }
 
 /// Koltukların altında — yalnızca odaya girişler (açılır/kapanır, kayan yazı).
@@ -465,19 +215,36 @@ class VoiceRoomBasicChatFeed extends StatelessWidget {
 }
 
 /// Sabit mesaj çubuğu — klavye üstünde.
-class VoiceRoomBasicMessageBar extends StatelessWidget {
+class VoiceRoomBasicMessageBar extends StatefulWidget {
   const VoiceRoomBasicMessageBar({
     super.key,
     required this.controller,
     required this.onSend,
     required this.onEmoji,
     this.onChanged,
+    this.presence = const [],
+    this.selfUserId,
   });
 
   final TextEditingController controller;
   final VoidCallback onSend;
   final VoidCallback onEmoji;
   final ValueChanged<String>? onChanged;
+  final List<ChatRoomPresence> presence;
+  final String? selfUserId;
+
+  @override
+  State<VoiceRoomBasicMessageBar> createState() => _VoiceRoomBasicMessageBarState();
+}
+
+class _VoiceRoomBasicMessageBarState extends State<VoiceRoomBasicMessageBar> {
+  late final FocusNode _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -489,13 +256,20 @@ class VoiceRoomBasicMessageBar extends StatelessWidget {
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            onPressed: onEmoji,
+            onPressed: widget.onEmoji,
             icon: const Icon(Icons.emoji_emotions_outlined, size: 22),
           ),
           Expanded(
-            child: TextField(
-              controller: controller,
-              onChanged: onChanged,
+            child: VoiceRoomMentionTextField(
+              controller: widget.controller,
+              focusNode: _focusNode,
+              presence: widget.presence,
+              excludeUserId: widget.selfUserId,
+              onChanged: widget.onChanged,
+              onSubmitted: (_) => widget.onSend(),
+              hintText: 'Mesaj yaz…',
+              minLines: 1,
+              maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'Mesaj yaz…',
                 isDense: true,
@@ -505,15 +279,13 @@ class VoiceRoomBasicMessageBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => onSend(),
             ),
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            onPressed: onSend,
+            onPressed: widget.onSend,
             icon: const Icon(Icons.send_rounded, size: 22),
           ),
         ],
@@ -918,6 +690,7 @@ class VoiceRoomBasicFloatingMiniPlayer extends ConsumerWidget {
         liveKey: liveKey,
         dj: dj,
         canControlMusic: canControlMusic,
+        canStopMusic: canCloseMusic,
       ),
     );
   }

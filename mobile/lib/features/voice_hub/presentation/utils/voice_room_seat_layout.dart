@@ -60,12 +60,13 @@ class VoiceRoomSeatLayout {
       bySeat.remove(1);
     }
 
-    // Kalan kullanıcıları 0–14 arası boş koltuklara doldur (sahip hariç).
+    // Kalan kullanıcıları boş koltuklara doldur (sahip hariç; 11 yalnızca admin).
     var next = 0;
     void place(ChatRoomPresence u) {
       if (hostUser != null && u.id == hostUser.id) return;
       if (ownerId != null && u.id == ownerId) return;
-      while (next <= seatCount - 1 && bySeat.containsKey(next)) {
+      while (next <= seatCount - 1 &&
+          (bySeat.containsKey(next) || next == 11)) {
         next++;
       }
       if (next <= seatCount - 1) {

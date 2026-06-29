@@ -1,6 +1,123 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.440+444 (2026-06-26)
+
+### Faz 12 — Yeni koltuk tasarımı
+
+- Altıgen koltuklar kaldırıldı; **tam yuvarlak avatarlar**
+- **Premium cam efekti** (glass overlay + parıltı)
+- Yetkiye göre **animasyonlu neon çerçeve** (Admin, Host, DJ, Mod, VIP)
+- Hafif **parlayan neon halka** — mikrofon açıkken dış halka döner
+- **Konuşurken ses dalgası** animasyonu + ritmik nabız (büyüyüp küçülme)
+- **Mikrofon kapalı:** gri görünüm, mic-off rozeti, animasyon yok
+- Boş koltuklar cam yuvarlak stile güncellendi
+
+## 1.0.439+443 (2026-06-26)
+
+### Faz 11 — @ Etiket sistemi
+
+- Yazarken `@` girilince oda kullanıcıları listesi açılır
+- Kişi seçilince `@Mesut` metne eklenir
+- Etiketlenen kullanıcıya bildirim: «Ali senden bahsetti.»
+- RTC ve Basic sohbet girişinde; `mentionedUserIds` API ile sunucuya iletilir
+
+## 1.0.438+442 (2026-06-26)
+
+### Faz 10 — Duyuru sistemi
+
+- Komut: `!duyuru Mesaj`
+- **Admin / yetkili:** ücretsiz
+- **Diğer kullanıcılar:** 5 jeton
+- Maksimum **100 karakter**
+- Duyuru ekranın **üst kısmında kayan bant** olarak gösterilir (15 sn, tüm kullanıcılar)
+
+## 1.0.437+441 (2026-06-26)
+
+### Faz 9 — Yetkili giriş animasyonu
+
+- Yetkili odaya girince koltukların **altından** sağdan sola animasyon geçer
+- Örnek: «👑 Admin Mesut odaya giriş yaptı»
+- Yetkiye göre emoji ve neon renk (Admin, Kurucu, SOP, Mod, DJ, Voice)
+- **Tüm kullanıcılar** görür — RTC ve Basic oda
+- VIP/Gold girişleri bu animasyona dahil değil (Faz 7 alt toast devam eder)
+
+## 1.0.436+440 (2026-06-26)
+
+### Faz 7 — Sohbet giriş bildirimleri
+
+- Odaya giren **herkes** altta görünür: «Ali giriş yaptı.»
+- Birden fazla giriş üst üste listelenir
+- **10 saniye** sonra otomatik kaybolur
+- RTC ve Basic oda alt menüsünün hemen üstünde
+
+### Faz 8 — Yetkili sohbet tasarımı
+
+- Yetkililer: animasyonlu neon profil çerçevesi (dönen halka + parıltı yayı + nabız)
+- Yetkiye göre renk: Admin altın, Kurucu/SOP turuncu, OP mavi, Voice yeşil, DJ pembe
+- Kullanıcı adı **kutu içinde değil**; hafif ışıklı neon metin (siyah halo ile okunaklı)
+- Mesaj gövdesi hafif neon gölge ile okunabilir kalır
+- Premium canlı sohbet de aynı `ChatMessageWidget` tasarımını kullanır
+
+## 1.0.435+439 (2026-06-26)
+
+### Faz 6 — Alt Menü
+
+- **Sol:** 🎧 Hoparlör ↔ Kulaklık (toggle)
+- **Yanı:** 🎵 Müzik İste + **Sesli** / **Videolu** kısayolları
+- **Orta:** 🎤 Mikrofon
+- **Sağ:** 🎁 Hediye · 📨 Davet
+- RTC ve Basic oda sayfalarında aynı alt menü
+
+## 1.0.434+438 (2026-06-26)
+
+### Faz 5 — Yasak Kelime Sistemi
+
+- Regex ile **tam kelime** eşleşmesi (kelime sınırı)
+- Büyük/küçük harf duyarsız (`am`, `AM`, `Am` engellenir)
+- İçinde geçen kelimeler engellenmez (`ama`, `amca`, `aman` geçer)
+- Oda girişinde yasaklı kelime listesi yüklenir; gönderim öncesi istemci kontrolü
+- Yerel API mirror aynı regex mantığına güncellendi
+
+## 1.0.433+437 (2026-06-26)
+
+### Faz 4 — Yetki Yönetimi
+
+- **Yetki Ver** düğmesi (3 nokta menüsünde)
+- Popup: odadaki kullanıcı listesi → kişi seçimi
+- **Rol:** +V, @, &, Admin
+- **Moderasyon:** Sessize al, Ban, Ban kaldır, Kanaldan at, Mikrofon kapat/aç
+- Tüm işlemler tek popup üzerinden
+
+## 1.0.432+436 (2026-06-26)
+
+### Faz 3 — Yeni Menü (3 nokta)
+
+- **Üst:** 👤 kullanıcı adı + **Yetkisi** etiketi
+- **Alt:** Material 3 büyük ikon kartları (yazısız; tooltip ile)
+- **Kartlar:** PK Daveti, Oda Ayarları, Kullanıcı Ayarları, Şarkı İsteği, DJ Paneli, Arkaplan
+- RTC ve Basic oda sayfalarında aynı menü
+
+## 1.0.431+435 (2026-06-26)
+
+### Faz 2 — Yetki ve Koltuk Sistemi
+
+- **Otomatik koltuk:** Admin → sağ alt (11), Kurucu → koltuk 1, moderatörler (&/@) yetkiye göre
+- **Koltuk önceliği:** Admin > Kurucu > & > @ > + > V (VIP) > Normal
+- **Admin koltuğu (11):** Yalnızca doluysa görünür; boşken gizli
+- **Konuşma:** Koltukta olmayan konuşamaz; site admin her yerden konuşabilir
+- **Kurucu çıkışı:** Odada değilken profil resmi koltukta gösterilmez
+
+## 1.0.430+434 (2026-06-26)
+
+### Faz 1 — Ses ve Müzik Sistemi
+
+- **Arka plan müzik:** Odadan çıkınca çalmaya devam; yalnızca farklı odaya girince durur
+- **Durdurma yetkisi:** Müziği yalnızca oda sahibi, site admin veya şarkıyı isteyen durdurabilir
+- **Kuyruk:** Yeni istek mevcut parçayı kesmez; otomatik sıra
+- **Jeton:** Sesli istek 10, videolu istek 20 jeton
+- **DJ paneli:** Kuyruk görüntüle, sil, sırala, geç, tekrar çal; global mini player
+
 ## 1.0.429+433 (2026-06-26)
 
 ### Sesli oda UX — admin koltuk, müzik, chat, ayarlar

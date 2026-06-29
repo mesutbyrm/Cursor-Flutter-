@@ -11,6 +11,7 @@ class ChatRoomPresence extends ChatRoomUserRef {
     super.membership,
     this.seatIndex,
     this.isSpeaking = false,
+    this.isMuted = false,
   });
 
   factory ChatRoomPresence.fromJson(Map<String, dynamic> json) {
@@ -25,9 +26,14 @@ class ChatRoomPresence extends ChatRoomUserRef {
       membership: base.membership,
       seatIndex: json['seatIndex'] as int?,
       isSpeaking: json['isSpeaking'] == true,
+      isMuted: json['isMuted'] == true,
     );
   }
 
   final int? seatIndex;
   final bool isSpeaking;
+  final bool isMuted;
+
+  /// Mikrofon açık — koltukta ve susturulmamış.
+  bool get micOpen => seatIndex != null && !isMuted;
 }

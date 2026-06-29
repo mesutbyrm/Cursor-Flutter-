@@ -109,11 +109,18 @@ String? _routeFromTypeAndText(
       }
       return '/voice-rooms';
     case 'follow':
-    case 'mention':
     case 'comment':
     case 'like':
       if (n.targetId != null && n.targetId!.isNotEmpty) {
         return '/user/${n.targetId}';
+      }
+      return '/social';
+    case 'mention':
+      if (n.targetPath != null && n.targetPath!.contains('voice-room')) {
+        return n.targetPath!;
+      }
+      if (n.targetId != null && n.targetId!.isNotEmpty) {
+        return '/voice-room/${n.targetId}';
       }
       return '/social';
     case 'social':

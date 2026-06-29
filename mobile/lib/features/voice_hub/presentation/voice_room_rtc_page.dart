@@ -47,28 +47,29 @@ import 'providers/voice_room_ui_provider.dart';
 import '../../vip_gold/presentation/providers/vip_membership_provider.dart';
 import '../../vip_gold/presentation/widgets/vip_entrance_overlay.dart';
 import 'sheets/voice_room_speak_queue_sheet.dart';
-import 'sheets/voice_room_hub_settings.dart';
+import 'sheets/voice_room_menu_sheet.dart';
 import 'sheets/voice_room_moderation_sheet.dart';
 import 'sheets/voice_room_sheets.dart';
 import 'utils/voice_music_access.dart';
 import '../../profile/presentation/providers/profile_providers.dart';
 import 'theme/voice_room_tokens.dart';
 import 'utils/voice_room_permissions.dart';
+import 'utils/voice_room_speak_access.dart';
 import 'utils/voice_room_responsive_metrics.dart';
 import 'widgets/premium/voice_gift_flight_overlay.dart';
 import 'widgets/premium/voice_glass.dart';
 import 'widgets/premium_2026/voice_cosmic_background.dart';
 import 'widgets/voice_room/voice_room_spec_footer.dart';
 import 'sheets/voice_room_commands_panel.dart';
+import 'sheets/voice_youtube_song_sheet.dart';
 import 'widgets/premium_2026/voice_room_persistent_duyuru.dart';
+import 'widgets/voice_room/voice_room_duyuru_ticker.dart';
 import 'utils/kick_strike_ui.dart';
-import 'widgets/premium_2026/voice_timed_duyuru.dart';
 import 'widgets/premium_2026/voice_web_chat_overlay.dart';
 import 'widgets/premium_2026/voice_web_owner_stage.dart';
 import 'widgets/premium_2026/voice_web_room_header.dart';
 import 'widgets/voice_room/voice_dj_music_slide_panel.dart';
 import 'widgets/voice_room/voice_room_center_music_panel.dart';
-import 'widgets/voice_room/voice_room_join_entry_strip.dart';
 import 'widgets/voice_room/voice_room_staff_join_banner.dart';
 import 'widgets/voice_room/voice_room_bottom_dock.dart';
 import 'widgets/voice_room_error_boundary.dart';
@@ -351,6 +352,25 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       return;
     }
     final muted = !_isMicMuted;
+    if (!muted) {
+      final user = ref.read(authControllerProvider).valueOrNull;
+      final live = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+      final room = _effectiveRoom();
+      final perms = _perms(user, live.presence, server: live.serverPermissions);
+      if (!VoiceRoomSpeakAccess.canSpeak(
+        user: user,
+        perms: perms,
+        room: room,
+        presence: live.presence,
+      )) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Konuşmak için koltuğa oturmalısınız'),
+          ),
+        );
+        return;
+      }
+    }
     _audio?.setMicEnabled(!muted);
     if (mounted) setState(() => _isMicMuted = muted);
   }
@@ -477,20 +497,32 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
 
     try {
       final liveForPerms = ref.read(voiceRoomLiveProvider(_liveRoomKey));
+      ChatRoomPresence? selfPresence;
+      for (final p in liveForPerms.presence) {
+        if (p.id == user.id) {
+          selfPresence = p;
+          break;
+        }
+      }
       final perms = VoiceRoomPermissions.forUser(
         user: user,
         room: room,
+        selfPresence: selfPresence,
         server: liveForPerms.serverPermissions,
       );
-      final isOwner =
-          _isRoomOwner(user.id, user.username, room) || perms.isSiteAdmin;
+      final canSpeak = VoiceRoomSpeakAccess.canSpeak(
+        user: user,
+        perms: perms,
+        room: room,
+        presence: liveForPerms.presence,
+      );
       final roomId = room.apiRoomKey;
       await _audio!.join(
         roomId: roomId,
         remote: ref.read(chatRoomRemoteProvider),
-        enableMic: isOwner,
+        enableMic: canSpeak && perms.isSiteAdmin,
       );
-      if (isOwner) {
+      if (canSpeak && perms.isSiteAdmin) {
         _audio?.setMicEnabled(true);
       }
       if (mounted) {
@@ -928,7 +960,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     required VoiceRoomPermissions perms,
     required bool isOwner,
   }) {
-    showVoiceRoomHubSettingsSheet(
+    showVoiceRoomMenuSheet(
       context,
       ref,
       room: room,
@@ -936,6 +968,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
       perms: perms,
       isOwner: isOwner,
       onUserTap: _openUser,
+      onPkInvite: () => unawaited(_openPkInvite(room)),
     );
   }
 
@@ -1129,9 +1162,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
     final user = ref.watch(authControllerProvider).valueOrNull;
     final perms = _perms(user, live.presence, server: live.serverPermissions);
     final isOwner = perms.isRoomOwner || perms.isSiteAdmin;
-    final jeton = VoiceMusicAccess.jetonFromBalances(
-      ref.watch(walletBalancesProvider).valueOrNull,
-    );
     final isDj = perms.canManageDj ||
         live.dj.canPlayMusic ||
         (user != null && room.djUserIds.contains(user.id)) ||
@@ -1142,10 +1172,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         perms.isRoomOwner ||
         perms.isSiteAdmin ||
         isDj;
-    final canCloseMusic = isOwner ||
-        perms.isSiteAdmin ||
-        perms.canModerate ||
-        (user != null && live.dj.nowPlaying?.requestedBy?.id == user.id);
+    final canCloseMusic = VoiceMusicAccess.canStopMusic(
+      user: user,
+      perms: perms,
+      nowPlaying: live.dj.nowPlaying,
+    );
     final videoState = ref.watch(roomVideoControllerProvider(_liveRoomKey));
     final videoActive = videoState.hasActiveVideo;
     final speakingIds = <String>{
@@ -1157,7 +1188,6 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
         ? user.id
         : (speakingIds.isNotEmpty ? speakingIds.first : null);
     final bgUrl = live.backgroundUrl ?? room.backgroundImageUrl;
-    final staffBanner = live.enterBanner;
     final metrics = VoiceRoomResponsiveMetrics.of(context);
     final keyboardOpen = metrics.keyboardOpen;
     final chatMaxH = metrics.chatBlockH;
@@ -1310,12 +1340,43 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
           }
         }
       } else if (wasPlaying && !nowPlaying && _micAutoMutedByMusic) {
-        _audio?.setMicEnabled(true);
-        if (mounted) {
-          setState(() {
-            _isMicMuted = false;
-            _micAutoMutedByMusic = false;
-          });
+        final user = ref.read(authControllerProvider).valueOrNull;
+        final room = _effectiveRoom();
+        final speakPerms = _perms(user, next.presence, server: next.serverPermissions);
+        if (VoiceRoomSpeakAccess.canSpeak(
+          user: user,
+          perms: speakPerms,
+          room: room,
+          presence: next.presence,
+        )) {
+          _audio?.setMicEnabled(true);
+          if (mounted) {
+            setState(() {
+              _isMicMuted = false;
+              _micAutoMutedByMusic = false;
+            });
+          }
+        } else if (mounted) {
+          setState(() => _micAutoMutedByMusic = false);
+        }
+      }
+
+      if (_audioReady) {
+        final user = ref.read(authControllerProvider).valueOrNull;
+        if (user != null) {
+          final room = _effectiveRoom();
+          final speakPerms =
+              _perms(user, next.presence, server: next.serverPermissions);
+          final canSpeak = VoiceRoomSpeakAccess.canSpeak(
+            user: user,
+            perms: speakPerms,
+            room: room,
+            presence: next.presence,
+          );
+          if (!canSpeak && !_isMicMuted) {
+            _audio?.setMicEnabled(false);
+            if (mounted) setState(() => _isMicMuted = true);
+          }
         }
       }
     });
@@ -1570,6 +1631,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                           selfUserId: user?.id,
                           remoteAgoraUid: _agora.remoteUid,
                         ),
+                        VoiceRoomStaffJoinBanner(
+                          events: live.realtimeEvents,
+                          messages: live.messages,
+                          enterBanner: live.enterBanner,
+                        ),
                         if (!keyboardOpen)
                           VoiceRoomCenterMusicPanel(
                             room: room,
@@ -1577,26 +1643,11 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                             canControlMusic: canControlMusic,
                             canCloseMusic: canCloseMusic,
                           ),
-                        if (!keyboardOpen)
-                          VoiceRoomJoinEntryStrip(
-                            events: live.realtimeEvents,
-                            messages: live.messages,
-                          ),
                         RoomVideoOverlay(
                           roomKey: _liveRoomKey,
                           perms: perms,
                           isDj: isDj,
                         ),
-                        if (!keyboardOpen &&
-                            (live.moderatorAnnouncement?.trim().isNotEmpty ==
-                                true))
-                          VoiceTimedDuyuru(
-                            key: ValueKey(live.moderatorAnnouncement),
-                            roomKey: room.apiRoomKey.isNotEmpty
-                                ? room.apiRoomKey
-                                : room.id,
-                            text: live.moderatorAnnouncement!,
-                          ),
                         if (!keyboardOpen)
                           VoiceRoomPersistentDuyuru(
                             roomKey: room.apiRoomKey.isNotEmpty
@@ -1663,7 +1714,7 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                                   session: room,
                                   live: live,
                                   canControlMusic: canControlMusic,
-                                  staffBanner: null,
+                                  canStopMusic: canCloseMusic,
                                 ),
                             ],
                           ),
@@ -1675,28 +1726,39 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 VoiceRoomSpecFooter(
                   controller: _messageCtrl,
                   focusNode: _messageFocus,
-                  coinBalance: jeton,
                   onSend: () => _sendChatMessage(room),
-                  onHome: () => context.go('/voice-rooms'),
                   onToggleAudioOutput: _toggleHeadphones,
                   headphonesOn: ui.headphonesOn,
                   onMicToggle: _toggleMic,
                   micOn: !_isMicMuted,
                   micEnabled: _audioReady,
-                  onRoomSettings: () => _openHubSettings(
+                  onMusicRequest: () => showVoiceYoutubeSongSheet(
+                    context,
+                    ref,
+                    room: room,
+                  ),
+                  onMusicAudio: () => showVoiceYoutubeSongSheet(
+                    context,
+                    ref,
+                    room: room,
+                    preferVideo: false,
+                  ),
+                  onMusicVideo: () => showVoiceYoutubeSongSheet(
+                    context,
+                    ref,
+                    room: room,
+                    preferVideo: true,
+                  ),
+                  onGift: () => _openGiftShop(
                     context,
                     room: room,
-                    live: live,
-                    perms: perms,
-                    isOwner: isOwner,
+                    presence: live.presence,
                   ),
-                  onUserSettings: () => showVoiceEffectsSheet(context, ref),
-                  onTopUp: () => openJetonStore(context, ref: ref),
-                  onGiftTap: () => _openGiftShop(
-                        context,
-                        room: room,
-                        presence: live.presence,
-                      ),
+                  onInvite: () => unawaited(_shareRoom()),
+                  presence: live.presence,
+                  selfUserId: user?.id,
+                  events: live.realtimeEvents,
+                  messages: live.messages,
                   onEmojiTap: () => _showEmojiPicker(context, _messageCtrl),
                   onChanged: _onChatChanged,
                 ),
@@ -1727,11 +1789,16 @@ class _VoiceRoomRtcPageState extends ConsumerState<VoiceRoomRtcPage> {
                 isOwner: isOwner,
                 isDj: isDj,
               ),
-            VoiceRoomStaffJoinBanner(
-              events: live.realtimeEvents,
-              messages: live.messages,
-              enterBanner: staffBanner,
-            ),
+            if (live.moderatorAnnouncement?.trim().isNotEmpty == true)
+              Positioned(
+                top: MediaQuery.paddingOf(context).top + 2,
+                left: 0,
+                right: 0,
+                child: VoiceRoomDuyuruTicker(
+                  key: ValueKey(live.moderatorAnnouncement),
+                  text: live.moderatorAnnouncement!,
+                ),
+              ),
           ],
         ),
       ),

@@ -49,7 +49,7 @@ class _VoiceRoomToolsSheet extends ConsumerWidget {
   final bool isOwner;
 
   static const _roomCommands = [
-    ('!duyuru', 'Duyuru yayınla (moderatör)'),
+    ('!duyuru', 'Duyuru yayınla (yetkili ücretsiz / 5 jeton)'),
     ('!temizle', 'Sohbeti temizle'),
     ('!muzik', 'Müzik / DJ bilgisi'),
   ];
@@ -314,7 +314,7 @@ class _BannedWordsSectionState extends ConsumerState<_BannedWordsSection> {
       children: [
         const _SectionTitle('Yasaklı kelimeler'),
         Text(
-          'Bu kelimeler sohbette engellenir (oda moderatörleri).',
+          'Tam kelime eşleşmesi — örn. «am» yalnızca «am» engellenir; «ama», «amca» geçer.',
           style: TextStyle(fontSize: 11, color: context.colors.onSurfaceMuted),
         ),
         const SizedBox(height: 8),

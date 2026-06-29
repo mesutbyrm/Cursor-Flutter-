@@ -3,6 +3,7 @@ import '../../../live/domain/entities/voice_room_entity.dart';
 import '../../../wallet/domain/wallet_balances.dart';
 import '../../domain/entities/chat_room_dj_state.dart';
 import '../../domain/entities/chat_room_presence.dart';
+import '../../domain/entities/music_queue_item.dart';
 import 'voice_room_permissions.dart';
 
 /// «Müzik Aç» kartı: DJ yetkisi veya yeterli jeton.
@@ -35,7 +36,35 @@ abstract final class VoiceMusicAccess {
   }) {
     if (!dj.musicEnabled) return false;
     if (dj.canRequestMusic) return true;
-    return jetonBalance >= dj.musicRequestCost;
+    return jetonBalance >= audioRequestCost(dj);
+  }
+
+  /// Sesli istek — 10 jeton (sunucu yoksa varsayılan).
+  static int audioRequestCost(ChatRoomDjState dj) =>
+      dj.musicRequestCost > 0 ? dj.musicRequestCost : 10;
+
+  /// Videolu istek — 20 jeton (sunucu yoksa varsayılan).
+  static int videoRequestCost(ChatRoomDjState dj) =>
+      dj.videoRequestCost > 0 ? dj.videoRequestCost : 20;
+
+  static bool canAffordRequest({
+    required ChatRoomDjState dj,
+    required int jetonBalance,
+    required bool withVideo,
+  }) {
+    final cost = withVideo ? videoRequestCost(dj) : audioRequestCost(dj);
+    return jetonBalance >= cost;
+  }
+
+  /// Müziği durdurma — yalnızca oda sahibi, site admin veya isteyen.
+  static bool canStopMusic({
+    required UserEntity? user,
+    required VoiceRoomPermissions perms,
+    required MusicQueueItem? nowPlaying,
+  }) {
+    if (user == null) return false;
+    if (perms.isRoomOwner || perms.isSiteAdmin) return true;
+    return nowPlaying?.requestedBy?.id == user.id;
   }
 
   static int jetonFromBalances(WalletBalances? balances) =>

@@ -1,55 +1,64 @@
 import 'package:flutter/material.dart';
-import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:canlifal_social/core/theme/app_theme_extensions.dart';
 
+import '../../../domain/entities/chat_room_message.dart';
+import '../../../domain/entities/chat_room_presence.dart';
+import '../../../domain/entities/voice_room_realtime_event.dart';
 import '../../theme/voice_room_tokens.dart';
+import 'voice_room_bottom_action_bar.dart';
+import 'voice_room_join_toast_stack.dart';
+import 'voice_room_mention_text_field.dart';
 
-/// Alt bar — mesaj satırı + ana sayfa / hoparlör / mikrofon / ayarlar / jeton.
+/// Alt bar — mesaj satırı + Faz 6 aksiyon menüsü.
 class VoiceRoomSpecFooter extends StatelessWidget {
   const VoiceRoomSpecFooter({
     super.key,
     required this.controller,
     required this.focusNode,
-    required this.coinBalance,
     required this.onSend,
-    required this.onHome,
     required this.onToggleAudioOutput,
     required this.headphonesOn,
     required this.onMicToggle,
     required this.micOn,
     required this.micEnabled,
-    required this.onRoomSettings,
-    required this.onUserSettings,
-    required this.onTopUp,
-    this.onGiftTap,
+    required this.onMusicRequest,
+    required this.onMusicAudio,
+    required this.onMusicVideo,
+    required this.onGift,
+    required this.onInvite,
+    this.presence = const [],
+    this.selfUserId,
+    this.events = const [],
+    this.messages = const [],
     this.onEmojiTap,
     this.onChanged,
   });
 
   final TextEditingController controller;
   final FocusNode focusNode;
-  final int coinBalance;
   final VoidCallback onSend;
-  final VoidCallback onHome;
   final VoidCallback onToggleAudioOutput;
   final bool headphonesOn;
   final VoidCallback onMicToggle;
   final bool micOn;
   final bool micEnabled;
-  final VoidCallback onRoomSettings;
-  final VoidCallback onUserSettings;
-  final VoidCallback onTopUp;
-  final VoidCallback? onGiftTap;
+  final VoidCallback onMusicRequest;
+  final VoidCallback onMusicAudio;
+  final VoidCallback onMusicVideo;
+  final VoidCallback onGift;
+  final VoidCallback onInvite;
+  final List<ChatRoomPresence> presence;
+  final String? selfUserId;
+  final List<VoiceRoomRealtimeEvent> events;
+  final List<ChatRoomMessage> messages;
   final VoidCallback? onEmojiTap;
   final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.paddingOf(context).bottom;
-
     return RepaintBoundary(
       child: Container(
-        padding: EdgeInsets.fromLTRB(10, 6, 10, bottom + 6),
+        padding: const EdgeInsets.fromLTRB(10, 6, 10, 0),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.92),
           border: Border(
@@ -76,15 +85,14 @@ class VoiceRoomSpecFooter extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: TextField(
+                  child: VoiceRoomMentionTextField(
                     controller: controller,
                     focusNode: focusNode,
+                    presence: presence,
+                    excludeUserId: selfUserId,
                     onChanged: onChanged,
-                    style: const TextStyle(fontSize: 14, color: Colors.white),
-                    minLines: 1,
-                    maxLines: 3,
-                    textInputAction: TextInputAction.send,
                     onSubmitted: (_) => onSend(),
+                    hintText: 'Mesajınızı yazın...',
                     decoration: InputDecoration(
                       hintText: 'Mesajınızı yazın...',
                       hintStyle: TextStyle(
@@ -135,181 +143,23 @@ class VoiceRoomSpecFooter extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
-                Material(
-                  color: AppThemeColors.coinGold.withValues(alpha: 0.18),
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: onGiftTap,
-                    child: const SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: Icon(
-                        Icons.card_giftcard_rounded,
-                        color: AppThemeColors.coinGold,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Expanded(
-                  child: _IconAction(
-                    icon: Icons.home_rounded,
-                    label: 'Ana Sayfa',
-                    onTap: onHome,
-                  ),
-                ),
-                Expanded(
-                  child: _IconAction(
-                    icon: headphonesOn
-                        ? Icons.headphones_rounded
-                        : Icons.volume_up_rounded,
-                    label: headphonesOn ? 'Kulaklık' : 'Hoparlör',
-                    onTap: onToggleAudioOutput,
-                    active: headphonesOn,
-                  ),
-                ),
-                Expanded(
-                  child: Center(
-                    child: Material(
-                      color: micOn
-                          ? VoiceRoomTokens.neonPurple
-                          : Colors.white.withValues(alpha: 0.12),
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: micEnabled ? onMicToggle : null,
-                        child: SizedBox(
-                          width: 48,
-                          height: 48,
-                          child: Icon(
-                            micOn ? Icons.mic_rounded : Icons.mic_off_rounded,
-                            color: micEnabled
-                                ? Colors.white
-                                : Colors.white.withValues(alpha: 0.35),
-                            size: 24,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: _IconAction(
-                    icon: Icons.meeting_room_rounded,
-                    label: 'Oda',
-                    onTap: onRoomSettings,
-                  ),
-                ),
-                Expanded(
-                  child: _IconAction(
-                    icon: Icons.person_rounded,
-                    label: 'Profil',
-                    onTap: onUserSettings,
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _formatCoins(coinBalance),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 9,
-                          color: AppThemeColors.diamondBlue,
-                        ),
-                      ),
-                      Material(
-                        color: VoiceRoomTokens.neonPurple,
-                        borderRadius: BorderRadius.circular(14),
-                        child: InkWell(
-                          onTap: onTopUp,
-                          borderRadius: BorderRadius.circular(14),
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                            child: Text(
-                              'Jeton Yükle',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 8,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            VoiceRoomJoinToastStack(
+              events: events,
+              messages: messages,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static String _formatCoins(int n) {
-    if (n >= 1000) {
-      final s = n.toString();
-      final buf = StringBuffer();
-      for (var i = 0; i < s.length; i++) {
-        if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
-        buf.write(s[i]);
-      }
-      return '${buf.toString()} Jeton';
-    }
-    return '$n Jeton';
-  }
-}
-
-class _IconAction extends StatelessWidget {
-  const _IconAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.active = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: active ? VoiceRoomTokens.neonPurple : Colors.white70,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 7,
-                fontWeight: FontWeight.w800,
-                color: active
-                    ? VoiceRoomTokens.neonPurple
-                    : Colors.white.withValues(alpha: 0.65),
-              ),
+            VoiceRoomBottomActionBar(
+              headphonesOn: headphonesOn,
+              onToggleAudioOutput: onToggleAudioOutput,
+              onMusicRequest: onMusicRequest,
+              onMusicAudio: onMusicAudio,
+              onMusicVideo: onMusicVideo,
+              micOn: micOn,
+              micEnabled: micEnabled,
+              onMicToggle: onMicToggle,
+              onGift: onGift,
+              onInvite: onInvite,
             ),
           ],
         ),
