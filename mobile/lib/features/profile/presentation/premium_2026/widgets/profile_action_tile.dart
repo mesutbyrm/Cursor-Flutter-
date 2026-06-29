@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:canlifal_social/core/theme/app_theme_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../profile_theme.dart';
@@ -13,6 +14,7 @@ class ProfileActionTile extends StatelessWidget {
     this.gradient,
     this.iconColor,
     this.delayMs = 0,
+    this.badge,
   });
 
   final IconData icon;
@@ -21,6 +23,7 @@ class ProfileActionTile extends StatelessWidget {
   final List<Color>? gradient;
   final Color? iconColor;
   final int delayMs;
+  final int? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -51,10 +54,38 @@ class ProfileActionTile extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    icon,
-                    size: 28,
-                    color: iconColor ?? Colors.white.withValues(alpha: 0.95),
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(
+                        icon,
+                        size: 28,
+                        color: iconColor ?? Colors.white.withValues(alpha: 0.95),
+                      ),
+                      if (badge != null && badge! > 0)
+                        Positioned(
+                          right: -10,
+                          top: -8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppThemeColors.liveRed,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              badge! > 99 ? '99+' : '$badge',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 10),
                   Text(

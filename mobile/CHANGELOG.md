@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.445+449 (2026-06-29)
+
+### Admin paneli — web paritesi & ödeme talepleri
+
+- **Admin Paneli** (`/admin/panel`): profilden erişim; jeton/CFC yükle-çıkar, Gold/Premium/Diamond üyelik, kullanıcı yönetimi
+- **Kullanıcı arama:** harf yazınca anında liste (`/api/admin/users/search` + fallback)
+- **İstatistikler:** bugün üyeler, jeton alanlar, oda/yayın, en çok kazanan/hediye atanlar — kırmızı rozet sayıları
+- **Ödeme talepleri:** admin GET istekleri cache dışı + `forceRefresh`; üretim JSON parse genişletildi
+- **API:** `/api/admin/users/credits`, `grant-membership`, `finance`, `activity-feed`, `leaderboards`
+
 ## 1.0.444+448 (2026-06-26)
 
 ### Performans & ağ optimizasyonu (Görev 19)

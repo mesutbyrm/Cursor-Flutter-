@@ -28,8 +28,12 @@ final adminPaymentRequestsProvider =
 
   Future<void> ingest(String path, Map<String, String> query) async {
     try {
-      final res = await dio.safeGet<dynamic>(path, query: query);
-      for (final row in _parsePaymentRequests(res.data)) {
+      final res = await dio.safeGet<dynamic>(
+        path,
+        query: query,
+        forceRefresh: true,
+      );
+      for (final row in parseAdminPaymentRequests(res.data)) {
         final id = row['id']?.toString().trim();
         if (id == null || id.isEmpty) continue;
         merged[id] = row;
@@ -113,6 +117,7 @@ final adminPaymentNotificationsProvider =
     final res = await dio.safeGet<dynamic>(
       ApiEndpoints.adminNotifications,
       query: {'payment': '1', 'limit': '100'},
+      forceRefresh: true,
     );
     for (final n in _filterPaymentNotifications(_parseNotificationItems(res.data))) {
       addNotif(n);
@@ -125,8 +130,9 @@ final adminPaymentNotificationsProvider =
     final res = await dio.safeGet<dynamic>(
       ApiEndpoints.adminPaymentNotifications,
       query: {'status': 'all', 'limit': '50'},
+      forceRefresh: true,
     );
-    for (final row in _parsePaymentRequests(res.data)) {
+    for (final row in parseAdminPaymentRequests(res.data)) {
       final id = row['id']?.toString();
       if (id == null || id.isEmpty) continue;
       addNotif({
@@ -170,7 +176,10 @@ final adminSitePaymentSettingsProvider =
 
   final dio = ref.watch(dioProvider);
   try {
-    final res = await dio.safeGet<dynamic>(ApiEndpoints.adminCfcSettings);
+    final res = await dio.safeGet<dynamic>(
+      ApiEndpoints.adminCfcSettings,
+      forceRefresh: true,
+    );
     final map = _unwrapMap(res.data);
     return {
       'WhatsApp': _str(map, [
@@ -204,31 +213,45 @@ final adminCfcPaymentRequestsProvider = adminPaymentRequestsProvider;
 String _paymentRequestStatus(Map<String, dynamic> r) =>
     (r['status'] ?? 'pending').toString().toLowerCase().trim();
 
-List<Map<String, dynamic>> _parsePaymentRequests(dynamic data) {
+List<Map<String, dynamic>> parseAdminPaymentRequests(dynamic data) {
   if (data is String &&
       (data.contains('<!DOCTYPE') || data.contains('<html'))) {
     return const [];
   }
-  if (data is Map && data['requests'] is List) {
-    return (data['requests'] as List).map((e) => asJsonMap(e)).toList();
-  }
-  if (data is Map && data['success'] == true && data['data'] is Map) {
-    final inner = data['data'] as Map;
-    final list = inner['requests'];
-    if (list is List) return list.map((e) => asJsonMap(e)).toList();
-  }
-  if (data is Map && data['data'] is List) {
-    return (data['data'] as List).map((e) => asJsonMap(e)).toList();
-  }
-  if (data is Map) {
-    for (final key in ['items', 'paymentNotifications']) {
-      final list = data[key];
-      if (list is List) return list.map((e) => asJsonMap(e)).toList();
-    }
-  }
+  return flattenAdminList(data);
+}
+
+/// Admin listeleri — acceptance test ile aynı birleştirme mantığı.
+List<Map<String, dynamic>> flattenAdminList(dynamic data) {
   if (data is List) {
     return data.map((e) => asJsonMap(e)).toList();
   }
+  if (data is! Map) return const [];
+
+  final map = asJsonMap(data);
+  for (final key in [
+    'requests',
+    'items',
+    'notifications',
+    'paymentNotifications',
+    'cfcPaymentRequests',
+    'paymentRequests',
+    'data',
+  ]) {
+    final val = map[key];
+    if (val is List) {
+      return val.map((e) => asJsonMap(e)).toList();
+    }
+    if (val is Map) {
+      final nested = flattenAdminList(val);
+      if (nested.isNotEmpty) return nested;
+    }
+  }
+
+  if (map['success'] == true && map['data'] != null) {
+    return flattenAdminList(map['data']);
+  }
+
   return const [];
 }
 

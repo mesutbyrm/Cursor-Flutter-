@@ -46,6 +46,7 @@ abstract final class ApiCachePolicy {
     '/api/auth/',
     '/auth/mobile-',
     '/auth/refresh',
+    '/api/admin/',
     '/stream',
     '/sse',
     '/token',

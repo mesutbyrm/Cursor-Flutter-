@@ -338,6 +338,22 @@ abstract final class ApiEndpoints {
   static const adminVoiceRoomFinanceAudit = '/api/admin/voice-room-finance-audit';
   static const platformVoiceRoomSettings = '/api/platform/voice-room-settings';
 
+  /// Admin panel — kullanıcı, kredi, finans (canlifal.com web ile aynı).
+  static const adminUsers = '/api/admin/users';
+  static const adminUsersStats = '/api/admin/users/stats';
+  static const adminUsersCredits = '/api/admin/users/credits';
+  static const adminUsersGrantMembership = '/api/admin/users/grant-membership';
+  static const adminCredits = '/api/admin/credits';
+  static const adminFinance = '/api/admin/finance';
+  static const adminActivityFeed = '/api/admin/activity-feed';
+  static const adminWithdrawals = '/api/admin/withdrawals';
+  static const activities = '/api/activities';
+
+  static String adminUser(String userId) => '/api/admin/users/$userId';
+
+  static String adminUsersSearch(String query) =>
+      '/api/admin/users/search?q=${Uri.encodeComponent(query.trim())}';
+
   /// Arkadaş daveti — bağlantı veya kod (oturum gerekir).
   static const referral = '/api/referral';
 

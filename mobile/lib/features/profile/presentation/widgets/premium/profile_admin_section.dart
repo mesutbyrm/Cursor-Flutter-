@@ -33,7 +33,7 @@ class ProfileAdminSection extends ConsumerWidget {
           title: 'Yönetim paneli — ${access.roleLabel}',
         ),
         ProfileGlass(
-          onTap: () => context.push('/admin'),
+          onTap: () => context.push('/admin/panel'),
           padding: const EdgeInsets.all(16),
           borderColor: AppThemeColors.liveRed.withValues(alpha: 0.4),
           child: Row(
@@ -50,7 +50,7 @@ class ProfileAdminSection extends ConsumerWidget {
                   ),
                 ),
                 child: Icon(
-                  Icons.payments_rounded,
+                  Icons.dashboard_customize_rounded,
                   color: Colors.white,
                   size: 28,
                 ),
@@ -61,12 +61,12 @@ class ProfileAdminSection extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Ödeme istekleri',
+                      'Admin Paneli',
                       style: ProfileTypography.cardTitle(context),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Jeton/CFC talepleri canlifal.com’dan · onay ve bildirimler',
+                      'Ödeme, jeton/CFC, üyelik, kullanıcı yönetimi',
                       style: ProfileTypography.cardSubtitle(context),
                     ),
                   ],

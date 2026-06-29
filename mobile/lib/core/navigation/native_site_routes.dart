@@ -110,6 +110,10 @@ void openNativeSitePath(BuildContext context, String path) {
     context.go('/profile');
     return;
   }
+  if (p == '/admin/panel' || p.startsWith('/admin/panel/')) {
+    context.push('/admin/panel');
+    return;
+  }
   if (p == '/admin' || p.startsWith('/admin/')) {
     context.push('/admin');
     return;

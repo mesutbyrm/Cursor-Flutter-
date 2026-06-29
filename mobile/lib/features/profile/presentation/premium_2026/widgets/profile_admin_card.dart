@@ -28,41 +28,54 @@ class ProfileAdminCard extends ConsumerWidget {
       }
     });
 
-    final items = <({IconData icon, String label, VoidCallback onTap})>[
+    final items = <({IconData icon, String label, VoidCallback onTap, int badge})>[
+      (
+        icon: Icons.dashboard_customize_rounded,
+        label: 'Admin Paneli',
+        badge: pending,
+        onTap: () => context.push('/admin/panel'),
+      ),
       (
         icon: Icons.payments_rounded,
         label: 'Ödeme İstekleri',
+        badge: pending,
         onTap: () => context.push('/admin'),
       ),
       (
         icon: Icons.people_alt_rounded,
         label: 'Kullanıcı Yönetimi',
-        onTap: () => context.push('/admin'),
+        badge: 0,
+        onTap: () => context.push('/admin/panel'),
       ),
       (
         icon: Icons.live_tv_rounded,
         label: 'Yayın Yönetimi',
+        badge: 0,
         onTap: () => context.go('/live'),
       ),
       (
         icon: Icons.business_rounded,
         label: 'Ajans Yönetimi',
+        badge: 0,
         onTap: () => context.push('/ajans/dashboard'),
       ),
       (
         icon: Icons.analytics_rounded,
         label: 'Raporlar',
-        onTap: () => context.push('/admin'),
+        badge: 0,
+        onTap: () => context.push('/admin/panel'),
       ),
       (
         icon: Icons.support_agent_rounded,
         label: 'Destek Talepleri',
+        badge: 0,
         onTap: () => context.push('/profile/help'),
       ),
       (
         icon: Icons.gavel_rounded,
         label: 'Moderasyon',
-        onTap: () => context.push('/admin'),
+        badge: 0,
+        onTap: () => context.push('/admin/panel'),
       ),
     ];
 
@@ -115,6 +128,7 @@ class ProfileAdminCard extends ConsumerWidget {
                     AppThemeColors.liveRed.withValues(alpha: 0.35),
                     ProfilePremiumTheme.deepBg,
                   ],
+                  badge: item.badge > 0 ? item.badge : null,
                 );
               },
             ),
