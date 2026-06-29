@@ -5,6 +5,15 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/util/json_util.dart';
 
+const _adminCallTimeout = Duration(seconds: 8);
+
+Future<T> _adminTimeout<T>(Future<T> future) {
+  return future.timeout(
+    _adminCallTimeout,
+    onTimeout: () => throw ApiException('timeout', statusCode: 408),
+  );
+}
+
 /// canlifal.com admin API — web paneli ile aynı uç noktalar.
 class AdminRemoteDataSource {
   AdminRemoteDataSource(this._dio);
@@ -20,7 +29,9 @@ class AdminRemoteDataSource {
       ApiEndpoints.usersSearch(q),
     ]) {
       try {
-        final res = await _dio.safeGet<dynamic>(path, forceRefresh: true);
+        final res = await _adminTimeout(
+          _dio.safeGet<dynamic>(path, forceRefresh: true),
+        );
         final items = _flattenList(res.data);
         if (items.isNotEmpty) return items;
       } on ApiException catch (e) {
@@ -33,9 +44,11 @@ class AdminRemoteDataSource {
   }
 
   Future<Map<String, dynamic>> fetchUser(String userId) async {
-    final res = await _dio.safeGet<dynamic>(
-      ApiEndpoints.adminUser(userId),
-      forceRefresh: true,
+    final res = await _adminTimeout(
+      _dio.safeGet<dynamic>(
+        ApiEndpoints.adminUser(userId),
+        forceRefresh: true,
+      ),
     );
     return _unwrapMap(res.data);
   }
@@ -108,10 +121,12 @@ class AdminRemoteDataSource {
 
     Future<void> merge(String path, Map<String, String>? query) async {
       try {
-        final res = await _dio.safeGet<dynamic>(
-          path,
-          query: query,
-          forceRefresh: true,
+        final res = await _adminTimeout(
+          _dio.safeGet<dynamic>(
+            path,
+            query: query,
+            forceRefresh: true,
+          ),
         );
         if (res.data is Map) {
           merged.addAll(_unwrapMap(res.data));
@@ -133,10 +148,12 @@ class AdminRemoteDataSource {
   Future<List<Map<String, dynamic>>> fetchActivities({int limit = 100}) async {
     for (final path in [ApiEndpoints.adminActivityFeed, ApiEndpoints.activities]) {
       try {
-        final res = await _dio.safeGet<dynamic>(
-          path,
-          query: {'limit': '$limit'},
-          forceRefresh: true,
+        final res = await _adminTimeout(
+          _dio.safeGet<dynamic>(
+            path,
+            query: {'limit': '$limit'},
+            forceRefresh: true,
+          ),
         );
         final items = _flattenList(res.data, listKey: 'activities');
         if (items.isNotEmpty) return items;
@@ -150,26 +167,36 @@ class AdminRemoteDataSource {
 
   Future<Map<String, dynamic>> fetchLeaderboards({String period = 'today'}) async {
     try {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.leaderboards,
-        query: {'period': period},
-        forceRefresh: true,
+      final res = await _adminTimeout(
+        _dio.safeGet<dynamic>(
+          ApiEndpoints.leaderboards,
+          query: {'period': period},
+          forceRefresh: true,
+        ),
       );
       if (res.data is Map) return asJsonMap(res.data);
-    } on ApiException catch (_) {}
+    } on ApiException catch (e) {
+      if (e.statusCode != 403 && e.statusCode != 404 && e.statusCode != 408) {
+        rethrow;
+      }
+    }
     return const {};
   }
 
   Future<int> pendingWithdrawalsCount() async {
     try {
-      final res = await _dio.safeGet<dynamic>(
-        ApiEndpoints.adminWithdrawals,
-        query: {'status': 'pending', 'limit': '50'},
-        forceRefresh: true,
+      final res = await _adminTimeout(
+        _dio.safeGet<dynamic>(
+          ApiEndpoints.adminWithdrawals,
+          query: {'status': 'pending', 'limit': '50'},
+          forceRefresh: true,
+        ),
       );
       return _flattenList(res.data).length;
     } on ApiException catch (e) {
-      if (e.statusCode == 403 || e.statusCode == 404) return 0;
+      if (e.statusCode == 403 || e.statusCode == 404 || e.statusCode == 408) {
+        return 0;
+      }
       rethrow;
     }
   }

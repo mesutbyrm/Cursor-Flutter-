@@ -45,7 +45,7 @@ class ProfileAdminCard extends ConsumerWidget {
         icon: Icons.people_alt_rounded,
         label: 'Kullanıcı Yönetimi',
         badge: 0,
-        onTap: () => context.push('/admin/panel'),
+        onTap: () => context.push('/admin/users'),
       ),
       (
         icon: Icons.live_tv_rounded,
@@ -63,7 +63,7 @@ class ProfileAdminCard extends ConsumerWidget {
         icon: Icons.analytics_rounded,
         label: 'Raporlar',
         badge: 0,
-        onTap: () => context.push('/admin/panel'),
+        onTap: () => context.push('/admin/reports'),
       ),
       (
         icon: Icons.support_agent_rounded,
@@ -75,7 +75,7 @@ class ProfileAdminCard extends ConsumerWidget {
         icon: Icons.gavel_rounded,
         label: 'Moderasyon',
         badge: 0,
-        onTap: () => context.push('/admin/panel'),
+        onTap: () => context.push('/admin/moderation'),
       ),
     ];
 

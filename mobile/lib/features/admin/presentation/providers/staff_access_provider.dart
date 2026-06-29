@@ -28,8 +28,9 @@ final staffAccessProvider = Provider<StaffAccess>((ref) {
     return const StaffAccess(canManagePayments: false);
   }
 
-  final wallet = ref.watch(walletBalancesProvider);
-  final walletRole = wallet.valueOrNull?.role;
+  final walletRole = ref.watch(
+    walletBalancesProvider.select((w) => w.valueOrNull?.role),
+  );
   final authRole = user.role;
   final siteRole = walletRole?.trim().isNotEmpty == true ? walletRole : authRole;
   final username = user.username;

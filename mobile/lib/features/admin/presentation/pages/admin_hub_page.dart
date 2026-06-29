@@ -36,7 +36,7 @@ class _AdminHubPageState extends ConsumerState<AdminHubPage>
   void initState() {
     super.initState();
     _tabs = TabController(length: 3, vsync: this);
-    _poll = Timer.periodic(const Duration(seconds: 5), (_) {
+    _poll = Timer.periodic(const Duration(seconds: 30), (_) {
       if (!mounted) return;
       ref.invalidate(adminPaymentRequestsProvider);
       ref.invalidate(adminPaymentNotificationsProvider);

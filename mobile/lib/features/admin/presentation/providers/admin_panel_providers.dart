@@ -19,20 +19,32 @@ final adminPanelBadgeCountsProvider =
   }
 
   final remote = ref.watch(adminRemoteProvider);
-  final pendingPayments =
-      ref.watch(adminPendingPaymentsCountProvider);
 
-  final results = await Future.wait([
-    remote.fetchDashboardStats(),
-    remote.fetchActivities(limit: 200),
-    remote.fetchLeaderboards(period: 'today'),
-    remote.pendingWithdrawalsCount(),
-  ]);
+  int pendingPayments = 0;
+  try {
+    final rows = await ref
+        .read(adminPaymentRequestsProvider.future)
+        .timeout(const Duration(seconds: 8));
+    pendingPayments = rows.length;
+  } catch (_) {}
 
-  final stats = results[0] as Map<String, dynamic>;
-  final activities = results[1] as List<Map<String, dynamic>>;
-  final leaderboards = results[2] as Map<String, dynamic>;
-  final pendingWithdrawals = results[3] as int;
+  Map<String, dynamic> stats = {};
+  List<Map<String, dynamic>> activities = const [];
+  Map<String, dynamic> leaderboards = const {};
+  var pendingWithdrawals = 0;
+
+  try {
+    stats = await remote.fetchDashboardStats();
+  } catch (_) {}
+  try {
+    activities = await remote.fetchActivities(limit: 80);
+  } catch (_) {}
+  try {
+    leaderboards = await remote.fetchLeaderboards(period: 'today');
+  } catch (_) {}
+  try {
+    pendingWithdrawals = await remote.pendingWithdrawalsCount();
+  } catch (_) {}
 
   final today = DateTime.now();
   bool isToday(String? iso) {

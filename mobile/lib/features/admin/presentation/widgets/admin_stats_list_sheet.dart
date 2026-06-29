@@ -143,6 +143,7 @@ class _AdminStatsListBody extends ConsumerWidget {
 
   Future<List<Map<String, dynamic>>> _load(WidgetRef ref) async {
     final remote = ref.read(adminRemoteProvider);
+    const timeout = Duration(seconds: 8);
     final today = DateTime.now();
 
     bool isToday(String? iso) {
@@ -158,7 +159,10 @@ class _AdminStatsListBody extends ConsumerWidget {
     switch (kind) {
       case AdminStatsKind.topEarners:
       case AdminStatsKind.topGiftSenders:
-        final boards = await remote.fetchLeaderboards(period: 'today');
+        final boards = await remote.fetchLeaderboards(period: 'today').timeout(
+          timeout,
+          onTimeout: () => throw ApiException('timeout', statusCode: 408),
+        );
         final key = kind == AdminStatsKind.topEarners
             ? 'topEarners'
             : 'topGiftSenders';
@@ -172,7 +176,10 @@ class _AdminStatsListBody extends ConsumerWidget {
       case AdminStatsKind.todayJetonBuyers:
       case AdminStatsKind.roomOpeners:
       case AdminStatsKind.broadcasters:
-        final activities = await remote.fetchActivities(limit: 200);
+        final activities = await remote.fetchActivities(limit: 80).timeout(
+          timeout,
+          onTimeout: () => throw ApiException('timeout', statusCode: 408),
+        );
         return activities.where((a) {
           if (!isToday(a['createdAt']?.toString())) return false;
           final type = (a['activityType'] ?? '').toString();

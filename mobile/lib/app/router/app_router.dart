@@ -25,6 +25,7 @@ import '../../features/fortune/presentation/pages/fortune_ready_readings_page.da
 
 import '../../features/admin/presentation/pages/admin_panel_page.dart';
 import '../../features/admin/presentation/pages/admin_hub_page.dart';
+import '../../features/admin/presentation/pages/admin_sub_pages.dart';
 import '../../features/fortune/presentation/pages/fortune_tarot_hub_page.dart';
 import '../../features/fortune/presentation/pages/fortune_types_all_page.dart';
 import '../../features/games/presentation/game_center/pages/game_center_leaderboard_page.dart';
@@ -485,6 +486,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/panel',
         builder: (context, state) => const AdminPanelPage(),
+      ),
+      GoRoute(
+        path: '/admin/users',
+        builder: (context, state) => const AdminUsersPage(),
+      ),
+      GoRoute(
+        path: '/admin/reports',
+        builder: (context, state) => const AdminReportsPage(),
+      ),
+      GoRoute(
+        path: '/admin/moderation',
+        builder: (context, state) => const AdminModerationPage(),
       ),
       GoRoute(
         path: '/gift-send',

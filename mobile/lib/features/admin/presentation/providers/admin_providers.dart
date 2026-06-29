@@ -47,28 +47,12 @@ final adminPaymentRequestsProvider =
   }
 
   await Future.wait([
-    ingest(ApiEndpoints.adminCfcPaymentRequests, {
-      'status': 'pending',
-      'limit': '50',
-    }),
-    ingest(ApiEndpoints.adminCfcPaymentRequests, {
-      'status': 'all',
-      'limit': '50',
-    }),
-    ingest(ApiEndpoints.adminPaymentNotifications, {
-      'status': 'pending',
-      'limit': '50',
-    }),
-    ingest(ApiEndpoints.adminPaymentNotifications, {
-      'status': 'all',
-      'limit': '50',
-    }),
     ingest(ApiEndpoints.adminPaymentRequests, {
       'status': 'pending',
       'limit': '50',
     }),
-    ingest(ApiEndpoints.adminPaymentRequests, {
-      'status': 'all',
+    ingest(ApiEndpoints.adminCfcPaymentRequests, {
+      'status': 'pending',
       'limit': '50',
     }),
   ]);

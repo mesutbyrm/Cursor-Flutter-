@@ -12,6 +12,7 @@ import '../../../../core/network/cookie_jar_provider.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/loading_timeout.dart';
 import '../../../../core/performance/network_perf.dart';
+import '../../../../core/auth/session_user_cache.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
@@ -35,6 +36,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
     ref.watch(nativeAuthDataSourceProvider),
     ref.watch(tokenStorageProvider),
     ref.watch(cookieJarProvider),
+    ref.watch(sessionUserCacheProvider),
   );
 });
 
@@ -100,6 +102,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
       final enriched = await _withSiteProfile(base);
       if (enriched != null && state.valueOrNull?.id == enriched.id) {
         state = AsyncValue.data(enriched);
+        await ref.read(sessionUserCacheProvider).write(enriched);
       }
     } catch (_) {}
 
@@ -118,14 +121,33 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   Future<UserEntity?> build() async {
     AppStartupLog.authStart();
     _cancelBootWatchdog();
+
+    final tokenStorage = ref.read(tokenStorageProvider);
+    final sessionCache = ref.read(sessionUserCacheProvider);
+    final token = await tokenStorage.readAccess();
+    final hasToken = token != null &&
+        token.isNotEmpty &&
+        token != TokenStorage.sessionCookieMarker;
+
+    if (hasToken) {
+      final cached = await sessionCache.read();
+      if (cached != null) {
+        AppStartupLog.authFinish(hasUser: true);
+        unawaited(_enrichUserAfterBoot(cached));
+        return cached;
+      }
+    }
+
     _bootWatchdog = Timer(_bootTimeout + const Duration(milliseconds: 200), () async {
       final current = state;
       if (!current.isLoading || current.hasValue) return;
-      final token = await ref.read(tokenStorageProvider).readAccess();
-      if (token != null &&
-          token.isNotEmpty &&
-          token != TokenStorage.sessionCookieMarker) {
-        // Yavaş ağ — token varken zorla çıkış yapma.
+      if (hasToken) {
+        final cached = await sessionCache.read();
+        if (cached != null) {
+          AppStartupLog.authFinish(hasUser: true);
+          state = AsyncValue.data(cached);
+          unawaited(_enrichUserAfterBoot(cached));
+        }
         return;
       }
       AppStartupLog.authFinish(hasUser: false, error: true);
@@ -141,10 +163,19 @@ class AuthController extends AsyncNotifier<UserEntity?> {
       );
       AppStartupLog.authFinish(hasUser: user != null);
       if (user != null) {
+        await sessionCache.write(user);
         unawaited(_enrichUserAfterBoot(user));
       }
       return user;
     } catch (_) {
+      if (hasToken) {
+        final cached = await sessionCache.read();
+        if (cached != null) {
+          AppStartupLog.authFinish(hasUser: true);
+          unawaited(_enrichUserAfterBoot(cached));
+          return cached;
+        }
+      }
       AppStartupLog.authFinish(hasUser: false, error: true);
       return null;
     } finally {
@@ -242,6 +273,7 @@ class AuthController extends AsyncNotifier<UserEntity?> {
       ApiHttpCache.clearAll(),
       ApiCacheStore.clearAll(),
     ]);
+    await ref.read(sessionUserCacheProvider).clear();
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncValue.data(null);
   }

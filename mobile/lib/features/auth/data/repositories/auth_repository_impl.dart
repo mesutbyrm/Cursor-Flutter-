@@ -2,6 +2,7 @@ import 'package:cookie_jar/cookie_jar.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/loading_timeout.dart';
+import '../../../../core/auth/session_user_cache.dart';
 import '../../../../core/network/token_storage.dart';
 import '../../domain/entities/active_session_entity.dart';
 import '../../domain/entities/user_entity.dart';
@@ -16,12 +17,14 @@ class AuthRepositoryImpl implements AuthRepository {
     this._native,
     this._tokens,
     this._cookieJar,
+    this._sessionCache,
   );
 
   final AuthRemoteDataSource _remote;
   final NativeAuthDataSource _native;
   final TokenStorage _tokens;
   final CookieJar _cookieJar;
+  final SessionUserCache _sessionCache;
 
   static String? _pickToken(Map<String, dynamic> m) {
     final v = m['accessToken'] ?? m['access_token'] ?? m['token'];
@@ -97,13 +100,17 @@ class AuthRepositoryImpl implements AuthRepository {
     if (um != null) {
       final merged = _mergeRoleHints(um, body);
       final dto = UserDto.fromJson(merged);
-      return dto.toEntity(role: dto.roleFrom(merged));
+      final entity = dto.toEntity(role: dto.roleFrom(merged));
+      await _sessionCache.write(entity);
+      return entity;
     }
     final me = await _remote.me();
     final um2 = _userMap(me) ?? me;
     final merged2 = _mergeRoleHints(um2, me);
     final dto = UserDto.fromJson(merged2);
-    return dto.toEntity(role: dto.roleFrom(merged2));
+    final entity = dto.toEntity(role: dto.roleFrom(merged2));
+    await _sessionCache.write(entity);
+    return entity;
   }
 
   @override
@@ -168,14 +175,21 @@ class AuthRepositoryImpl implements AuthRepository {
       final um = _userMap(me) ?? me;
       final merged = _mergeRoleHints(um, me);
       final dto = UserDto.fromJson(merged);
-      return dto.toEntity(role: dto.roleFrom(merged));
+      final entity = dto.toEntity(role: dto.roleFrom(merged));
+      await _sessionCache.write(entity);
+      return entity;
     } on ApiException catch (e) {
       if (e.statusCode == 401 || e.statusCode == 403) {
         await _tokens.clear();
+        await _sessionCache.clear();
+      } else {
+        final cached = await _sessionCache.read();
+        if (cached != null) return cached;
       }
       return null;
     } catch (_) {
-      // Ağ / zaman aşımı — oturumu silme; kullanıcı kendi çıkış yapana kadar token kalsın.
+      final cached = await _sessionCache.read();
+      if (cached != null) return cached;
       return null;
     }
   }
@@ -221,5 +235,6 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> logout() async {
     await _cookieJar.deleteAll();
     await _tokens.clear();
+    await _sessionCache.clear();
   }
 }

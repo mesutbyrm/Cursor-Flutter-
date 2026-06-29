@@ -1,6 +1,16 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.448+452 (2026-06-26)
+
+### Admin panel & oturum
+
+- **Admin paneli:** menü anında açılır; istatistik rozetleri arka planda yüklenir (sonsuz spinner düzeltildi)
+- **Kullanıcı yönetimi / Raporlar / Moderasyon:** ayrı sayfalar (`/admin/users`, `/admin/reports`, `/admin/moderation`)
+- **Admin API:** tüm çağrılara 8 sn zaman aşımı; ödeme listesi 6 → 2 uç nokta
+- **Ödeme hub:** arka plan yenileme 5 sn → 30 sn (pil/ağ yükü azaltıldı)
+- **Oturum kalıcılığı:** son kullanıcı güvenli depoda; açılış timeout 1 sn → 12 sn; ağ hatasında token varsa çıkış istemez
+
 ## 1.0.447+451 (2026-06-26)
 
 ### Performans & UX

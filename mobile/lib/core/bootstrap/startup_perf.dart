@@ -3,8 +3,8 @@ abstract final class StartupPerf {
   /// Splash / auth bootstrap üst sınırı.
   static const bootstrapCap = Duration(seconds: 1);
 
-  /// Auth oturum kontrolü zaman aşımı.
-  static const authBootTimeout = Duration(seconds: 1);
+  /// Auth oturum kontrolü — ağ yavaş olsa bile token varsa cache kullanılır.
+  static const authBootTimeout = Duration(seconds: 12);
 
   /// runApp sonrası ağır SDK init gecikmesi (AdMob, analytics).
   static const deferredSdkDelay = Duration(milliseconds: 800);
