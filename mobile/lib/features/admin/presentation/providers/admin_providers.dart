@@ -28,11 +28,9 @@ final adminPaymentRequestsProvider =
 
   Future<void> ingest(String path, Map<String, String> query) async {
     try {
-      final res = await dio.safeGet<dynamic>(
-        path,
-        query: query,
-        forceRefresh: true,
-      );
+      final res = await dio
+          .safeGet<dynamic>(path, query: query, forceRefresh: true)
+          .timeout(const Duration(seconds: 10), onTimeout: () => throw ApiException('timeout', statusCode: 408));
       for (final row in parseAdminPaymentRequests(res.data)) {
         final id = row['id']?.toString().trim();
         if (id == null || id.isEmpty) continue;
@@ -43,7 +41,7 @@ final adminPaymentRequestsProvider =
         last403 = e;
         return;
       }
-      if (e.statusCode == 404) return;
+      if (e.statusCode == 404 || e.statusCode == 408) return;
       rethrow;
     }
   }
