@@ -1,6 +1,27 @@
 # Sürüm notları — canlifal_social
 
 
+## 1.0.441+445 (2026-06-29)
+
+### Sesli oda — 12 Faz birleşik sürüm (APK)
+
+Tüm sesli oda fazları `main` dalında birleştirildi:
+
+| Faz | Özet |
+|-----|------|
+| 1 | Arka plan müzik, kuyruk, DJ paneli, jeton (10/20) |
+| 2 | Yetki ve koltuk önceliği (Admin 11, Kurucu 1, …) |
+| 3 | Material 3 üç nokta menüsü |
+| 4 | Yetki Ver popup (rol + moderasyon) |
+| 5 | Yasak kelime — tam kelime regex |
+| 6 | Alt menü (hoparlör, müzik, mic, hediye, davet) |
+| 7 | Giriş toastları («Ali giriş yaptı», 10 sn) |
+| 8 | Yetkili sohbet neon avatar + metin |
+| 9 | Yetkili giriş animasyonu (koltuk altı) |
+| 10 | `!duyuru` — üst kayan bant (5 jeton) |
+| 11 | @ etiket + «Ali senden bahsetti» bildirimi |
+| 12 | Yuvarlak cam koltuk, neon halka, ses dalgası |
+
 ## 1.0.440+444 (2026-06-26)
 
 ### Faz 12 — Yeni koltuk tasarımı
